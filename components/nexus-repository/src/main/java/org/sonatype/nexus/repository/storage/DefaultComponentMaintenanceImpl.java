@@ -12,8 +12,11 @@
  */
 package org.sonatype.nexus.repository.storage;
 
-import java.util.List;
+
+import java.util.Collections;
 import java.util.function.BooleanSupplier;
+import java.util.List;
+import java.util.Set;
 
 import javax.inject.Named;
 
@@ -42,19 +45,19 @@ public class DefaultComponentMaintenanceImpl
    * Deletes the component directly, with no additional bookkeeping.
    */
   @Override
-  public void deleteComponent(final EntityId componentId) {
-    deleteComponent(componentId, true);
+  public Set<String> deleteComponent(final EntityId componentId) {
+    return deleteComponent(componentId, true);
   }
 
   /**
    * Deletes the component directly, with no additional bookkeeping.
    */
   @Override
-  public void deleteComponent(final EntityId componentId, final boolean deleteBlobs) {
+  public Set<String> deleteComponent(final EntityId componentId, final boolean deleteBlobs) {
     checkNotNull(componentId);
     UnitOfWork.begin(getRepository().facet(StorageFacet.class).txSupplier());
     try {
-      deleteComponentTx(componentId, deleteBlobs);
+      return deleteComponentTx(componentId, deleteBlobs);
     }
     finally {
       UnitOfWork.end();
@@ -62,14 +65,14 @@ public class DefaultComponentMaintenanceImpl
   }
 
   @TransactionalDeleteBlob
-  protected void deleteComponentTx(final EntityId componentId, final boolean deleteBlobs) {
+  protected Set<String> deleteComponentTx(final EntityId componentId, final boolean deleteBlobs) {
     StorageTx tx = UnitOfWork.currentTx();
     Component component = tx.findComponentInBucket(componentId, tx.findBucket(getRepository()));
     if (component == null) {
-      return;
+      return Collections.emptySet();
     }
     log.debug("Deleting component: {}", component.toStringExternal());
-    tx.deleteComponent(component, deleteBlobs);
+    return tx.deleteComponent(component, deleteBlobs);
   }
 
   /**
@@ -77,17 +80,17 @@ public class DefaultComponentMaintenanceImpl
    */
   @Override
   @Guarded(by = STARTED)
-  public void deleteAsset(final EntityId assetId) {
-    deleteAsset(assetId, true);
+  public Set<String> deleteAsset(final EntityId assetId) {
+    return deleteAsset(assetId, true);
   }
 
   @Override
   @Guarded(by = STARTED)
-  public void deleteAsset(final EntityId assetId, final boolean deleteBlob) {
+  public Set<String> deleteAsset(final EntityId assetId, final boolean deleteBlob) {
     checkNotNull(assetId);
     UnitOfWork.begin(getRepository().facet(StorageFacet.class).txSupplier());
     try {
-      deleteAssetTx(assetId, deleteBlob);
+      return deleteAssetTx(assetId, deleteBlob);
     }
     finally {
       UnitOfWork.end();
@@ -148,14 +151,15 @@ public class DefaultComponentMaintenanceImpl
   }
 
   @TransactionalDeleteBlob
-  protected void deleteAssetTx(final EntityId assetId, final boolean deleteBlob) {
+  protected Set<String> deleteAssetTx(final EntityId assetId, final boolean deleteBlob) {
     StorageTx tx = UnitOfWork.currentTx();
     Asset asset = tx.findAsset(assetId, tx.findBucket(getRepository()));
     if (asset == null) {
-      return;
+      return Collections.emptySet();
     }
     log.info("Deleting asset: {}", asset);
     tx.deleteAsset(asset, deleteBlob);
+    return Collections.singleton(asset.name());
   }
 
   protected long doBatchDelete(final List<EntityId> entityIds, final BooleanSupplier cancelledCheck) {

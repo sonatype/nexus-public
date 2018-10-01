@@ -34,14 +34,14 @@ public interface DatabasePool
   /**
    * Returns the number of available connections in the pool.
    *
-   * @since 3.next
+   * @since 3.14
    */
   int getAvailableCount();
 
   /**
    * Returns the current number of connections in the pool.
    *
-   * @since 3.next
+   * @since 3.14
    */
   int getPoolSize();
 

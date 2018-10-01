@@ -15,7 +15,7 @@
 /**
  * Cleanup Policy grid.
  *
- * @since 3.next
+ * @since 3.14
  */
 Ext.define('NX.coreui.view.cleanuppolicy.CleanupPolicyList', {
   extend: 'NX.view.drilldown.Master',

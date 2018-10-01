@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.npm.internal;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -55,18 +56,18 @@ public interface NpmHostedFacet
   /**
    * Deletes complete package along with all belonging tarballs too (if any).
    *
-   * @return {@code true} if package existed.
+   * @return name of deleted asset(s).
    */
-  boolean deletePackage(NpmPackageId packageId, @Nullable String revision) throws IOException;
+  Set<String> deletePackage(NpmPackageId packageId, @Nullable String revision) throws IOException;
 
   /**
    * Deletes complete package along with all belonging tarballs too (if any), maybe deletes the blobs.
    *
-   * @return {@code true} if package existed.
+   * @return name of deleted asset(s).
    *
    * @since 3.9
    */
-  boolean deletePackage(NpmPackageId packageId, @Nullable String revision, boolean deleteBlobs) throws IOException;
+  Set<String> deletePackage(NpmPackageId packageId, @Nullable String revision, boolean deleteBlobs) throws IOException;
 
   /**
    * Returns the tarball content or {@code null}.
@@ -77,18 +78,18 @@ public interface NpmHostedFacet
   /**
    * Deletes given tarball, if exists.
    *
-   * @return {@code true} if tarball existed.
+   * @return name of deleted asset(s).
    */
-  boolean deleteTarball(NpmPackageId packageId, String tarballName) throws IOException;
+  Set<String> deleteTarball(NpmPackageId packageId, String tarballName) throws IOException;
 
   /**
    * Deletes given tarball, if exists, and maybe deletes the blob.
    *
-   * @return {@code true} if tarball existed.
+   * @return name of deleted asset(s).
    *
    * @since 3.9
    */
-  boolean deleteTarball(NpmPackageId packageId, String tarballName, boolean deleteBlob) throws IOException;
+  Set<String> deleteTarball(NpmPackageId packageId, String tarballName, boolean deleteBlob) throws IOException;
 
   /**
    * Updates the package root.

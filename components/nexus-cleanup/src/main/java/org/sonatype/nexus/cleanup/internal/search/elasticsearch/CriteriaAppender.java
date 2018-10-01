@@ -15,7 +15,7 @@ package org.sonatype.nexus.cleanup.internal.search.elasticsearch;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 
 /**
- * @since 3.next
+ * @since 3.14
  */
 public interface CriteriaAppender
 {

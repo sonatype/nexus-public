@@ -238,7 +238,7 @@ class ComponentComponent
   @ExceptionMetered
   @RequiresAuthentication
   @Validate
-  void deleteComponent(@NotEmpty final String componentModelString)
+  Set<String> deleteComponent(@NotEmpty final String componentModelString)
   {
     ComponentXO componentXO = objectMapper.readValue(componentModelString, ComponentXO.class)
     Repository repository = repositoryManager.get(componentXO.repositoryName)
@@ -251,9 +251,11 @@ class ComponentComponent
     List<Component> components = componentFinder.findMatchingComponents(repository, componentXO.id,
         componentXO.group, componentXO.name, componentXO.version)
 
+    Set<String> deletedAssets = new HashSet<>()
     for (Component component : components) {
-      maintenanceService.deleteComponent(repository, component)
+      deletedAssets.addAll(maintenanceService.deleteComponent(repository, component))
     }
+    return deletedAssets
   }
 
   @DirectMethod
@@ -261,7 +263,7 @@ class ComponentComponent
   @ExceptionMetered
   @RequiresAuthentication
   @Validate
-  void deleteAsset(@NotEmpty final String assetId, @NotEmpty final String repositoryName) {
+  Set<String> deleteAsset(@NotEmpty final String assetId, @NotEmpty final String repositoryName) {
     Repository repository = repositoryManager.get(repositoryName)
     StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
 
@@ -274,8 +276,10 @@ class ComponentComponent
       storageTx.close()
     }
     if (asset != null) {
-      maintenanceService.deleteAsset(repository, asset)
+      return maintenanceService.deleteAsset(repository, asset)
     }
+
+    return Collections.emptySet()
   }
 
   /**

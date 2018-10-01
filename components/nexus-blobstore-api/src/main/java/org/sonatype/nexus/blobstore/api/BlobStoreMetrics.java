@@ -47,7 +47,7 @@ public interface BlobStoreMetrics
    * An estimate of the remaining space available in the blob store, in bytes, for each file store the blob store spans.
    * The map keys are implementation defined and should uniquely identify the file store.
    *
-   * @since 3.next
+   * @since 3.14
    */
   Map<String, Long> getAvailableSpaceByFileStore();
 }

@@ -19,7 +19,7 @@ import org.elasticsearch.search.SearchHit;
 /**
  *
  *
- * @since 3.next
+ * @since 3.14
  */
 public interface SearchResultComponentGenerator
 {

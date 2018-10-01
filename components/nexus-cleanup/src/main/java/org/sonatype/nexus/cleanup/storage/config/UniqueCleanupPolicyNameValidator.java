@@ -25,7 +25,7 @@ import static org.sonatype.nexus.cleanup.storage.CleanupPolicy.NONE_POLICY;
 /**
  * Ensure that Cleanup Policy names are unique case-insensitively.
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named
 public class UniqueCleanupPolicyNameValidator

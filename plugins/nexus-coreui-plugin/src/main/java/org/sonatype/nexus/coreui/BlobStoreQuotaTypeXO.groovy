@@ -18,7 +18,7 @@ import org.hibernate.validator.constraints.NotBlank
 /**
  * BlobStore Quota Type exchange object.
  *
- * @since 3.next
+ * @since 3.14
  */
 @ToString(includePackage = false, includeNames = true)
 class BlobStoreQuotaTypeXO

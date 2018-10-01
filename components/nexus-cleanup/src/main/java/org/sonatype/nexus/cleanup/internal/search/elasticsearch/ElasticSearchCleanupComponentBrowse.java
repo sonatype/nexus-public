@@ -57,7 +57,7 @@ import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
 /**
  * Finds components for cleanup using Elastic Search.
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named
 @Singleton

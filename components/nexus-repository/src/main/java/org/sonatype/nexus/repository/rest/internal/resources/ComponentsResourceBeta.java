@@ -48,7 +48,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
 /**
- * @deprecated since 3.next, use {@link ComponentsResource} instead.
+ * @deprecated since 3.14, use {@link ComponentsResource} instead.
  */
 @Deprecated
 @Named

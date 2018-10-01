@@ -26,7 +26,7 @@ import static java.lang.String.format;
 /**
  * A {@link BlobStoreQuota} which checks that a blob store isn't using more space the limit.
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named(SpaceUsedQuota.ID)
 @Singleton

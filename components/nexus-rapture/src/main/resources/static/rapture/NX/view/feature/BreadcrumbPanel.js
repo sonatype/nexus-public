@@ -15,7 +15,7 @@
 /**
  * Breadcrumb panel.
  *
- * @since 3.next
+ * @since 3.14
  */
 Ext.define('NX.view.feature.BreadcrumbPanel', {
   extend: 'Ext.panel.Panel',

@@ -22,8 +22,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -270,7 +272,7 @@ public final class MavenFacetUtils
   /**
    * Performs a {@link MavenFacet#delete(MavenPath...)} for passed in list of {@link MavenPath} and all hashes
    *
-   * @since 3.next
+   * @since 3.14
    */
   public static void deleteWithHashes(final MavenFacet mavenFacet, final List<MavenPath> mavenPaths) throws IOException {
     final ArrayList<MavenPath> paths = new ArrayList<>();
@@ -281,5 +283,17 @@ public final class MavenFacetUtils
       }
     }
     mavenFacet.delete(paths.toArray(new MavenPath[paths.size()]));
+  }
+
+  /**
+   * @return a collection of path of a given {@link MavenPath} and it's hashes' paths
+   */
+  public static Set<String> getPathWithHashes(final MavenPath mavenPath) {
+    Set<String> paths = new HashSet<>();
+    paths.add(mavenPath.main().getPath());
+    for (HashType hashType : HashType.values()) {
+      paths.add(mavenPath.main().hash(hashType).getPath());
+    }
+    return paths;
   }
 }

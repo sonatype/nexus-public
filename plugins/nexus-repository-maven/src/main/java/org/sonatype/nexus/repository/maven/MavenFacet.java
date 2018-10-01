@@ -84,7 +84,7 @@ public interface MavenFacet
   Asset put(MavenPath path, AssetBlob assetBlob, AttributesMap contentAttributes) throws IOException;
 
   /**
-   * @since 3.next
+   * @since 3.14
    *
    * @param path of the asset to check
    * @return true if it exists

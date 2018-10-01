@@ -19,7 +19,7 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
 /**
  * Appends criteria for querying on the most recent blob_updated date from a components assets.
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named(LAST_BLOB_UPDATED_KEY)
 public class LastBlobUpdatedCriteriaAppender

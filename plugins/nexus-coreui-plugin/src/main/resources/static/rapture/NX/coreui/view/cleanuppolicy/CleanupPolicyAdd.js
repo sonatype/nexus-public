@@ -15,7 +15,7 @@
 /**
  * Add  Cleanup Policy panel.
  *
- * @since 3.next
+ * @since 3.14
  */
 Ext.define('NX.coreui.view.cleanuppolicy.CleanupPolicyAdd', {
   extend: 'NX.view.AddPanel',

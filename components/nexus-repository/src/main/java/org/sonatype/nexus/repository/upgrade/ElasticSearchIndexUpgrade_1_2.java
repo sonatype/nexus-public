@@ -26,7 +26,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Updates the $data-dir/elasticsearch/nexus.lsn file with a reindex marker string to
  * trigger the IndexSyncService service to update all indexes.
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named
 @Singleton

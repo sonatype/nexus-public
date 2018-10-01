@@ -17,7 +17,7 @@ import java.util.function.BooleanSupplier;
 /**
  * Runs cleanup by looping through all repositories and evaluating their cleanup policies.
  * 
- * @since 3.next
+ * @since 3.14
  */
 public interface CleanupService
 {

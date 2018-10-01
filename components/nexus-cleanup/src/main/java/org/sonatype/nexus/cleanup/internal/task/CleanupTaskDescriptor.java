@@ -20,7 +20,7 @@ import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 /**
  * Task descriptor for {@link CleanupTask}.
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named
 @Singleton

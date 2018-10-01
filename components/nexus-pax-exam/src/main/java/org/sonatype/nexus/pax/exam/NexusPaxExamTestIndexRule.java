@@ -42,7 +42,7 @@ public class NexusPaxExamTestIndexRule
   /**
    * Last chance capture of log files when there's a failure outside of normal notification.
    *
-   * @since 3.next
+   * @since 3.14
    */
   static void captureLogsOnFailure(final Failure failure) {
     try {

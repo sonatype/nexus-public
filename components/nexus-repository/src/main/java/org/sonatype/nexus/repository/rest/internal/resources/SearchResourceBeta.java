@@ -43,7 +43,7 @@ import static org.sonatype.nexus.repository.rest.internal.resources.SearchResour
 import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
 /**
- * @deprecated since 3.next, use {@link SearchResource} instead.
+ * @deprecated since 3.14, use {@link SearchResource} instead.
  */
 @Deprecated
 @Named

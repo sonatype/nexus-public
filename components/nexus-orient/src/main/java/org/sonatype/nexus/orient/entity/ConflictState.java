@@ -17,7 +17,7 @@ import java.util.function.Supplier;
 /**
  * Potential conflict states - values are ordered from 'least' to 'most' amount of conflict.
  *
- * @since 3.next
+ * @since 3.14
  */
 public enum ConflictState
 {

@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.Repository;
 /**
  * Finds components that match a given set of parameters.
  *
- * @since 3.next
+ * @since 3.14
  */
 public interface ComponentFinder
 {

@@ -38,7 +38,7 @@ public interface BlobStoreConfigurationStore
   /**
    * Update an existing BlobStoreConfiguration.
    *
-   * @since 3.next
+   * @since 3.14
    */
   void update(BlobStoreConfiguration configuration);
 
@@ -50,7 +50,7 @@ public interface BlobStoreConfigurationStore
   /**
    * Find a BlobStoreConfiguration by name.
    *
-   * @since 3.next
+   * @since 3.14
    */
   BlobStoreConfiguration read(String name);
 
@@ -60,7 +60,7 @@ public interface BlobStoreConfigurationStore
    * @param name of the child to search on
    * @return list of {@link BlobStoreConfiguration} for the parent groups
    *
-   * @since 3.next
+   * @since 3.14
    */
   List<BlobStoreConfiguration> findParents(String name);
 }

@@ -34,7 +34,7 @@ import static com.google.common.base.Preconditions.checkState;
  *
  * Defaults to {@code ehcache}.
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named("default")
 @Singleton

@@ -38,7 +38,7 @@ import static org.sonatype.nexus.formfields.FormField.MANDATORY;
 /**
  * A {@link BlobStoreDescriptor} for {@link BlobStoreGroup}.
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named(BlobStoreGroup.TYPE)
 public class BlobStoreGroupDescriptor

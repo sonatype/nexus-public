@@ -34,7 +34,7 @@ import static org.sonatype.nexus.cleanup.internal.service.CleanupServiceImpl.CLE
 /**
  * Event handler for {@link CleanupPolicy}'s
  *
- * @since 3.next
+ * @since 3.14
  */
 @Singleton
 @Named

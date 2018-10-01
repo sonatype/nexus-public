@@ -14,6 +14,8 @@ package org.sonatype.nexus.repository.storage;
 
 import java.util.function.BooleanSupplier;
 
+import java.util.Set;
+
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Facet;
 
@@ -28,33 +30,37 @@ public interface ComponentMaintenance
 {
   /**
    * Deletes a component from storage.
+   *
+   * @return name(s) of removed asset(s)
    */
-  void deleteComponent(EntityId componentId);
+  Set<String> deleteComponent(EntityId componentId);
 
   /**
    * Deletes a component and maybe the associated blobs.
    *
    * @param componentId entity id of the component to delete
    * @param deleteBlobs should blob deletion be requested
+   * @return name(s) of removed asset(s)
    *
    * @since 3.9
    */
-  void deleteComponent(EntityId componentId, boolean deleteBlobs);
+  Set<String> deleteComponent(EntityId componentId, boolean deleteBlobs);
 
   /**
    * Deletes an asset from storage.
+   * @return name of removed asset(s)
    */
-  void deleteAsset(EntityId assetId);
+  Set<String> deleteAsset(EntityId assetId);
 
   /**
    * Deletes an asset and maybe the associated blob.
    *
    * @param assetId entity id of the asset to delete
    * @param deleteBlob should blob deletion be requested
-   *
+   * @return name of removed asset(s)
    * @since 3.9
    */
-  void deleteAsset(EntityId assetId, boolean deleteBlob);
+  Set<String> deleteAsset(EntityId assetId, boolean deleteBlob);
 
   /**
    * Deletes a list of components
@@ -64,14 +70,14 @@ public interface ComponentMaintenance
    * @param batchSize number of components to commit at a time
    * @return number of components deleted
    *
-   * @since 3.next
+   * @since 3.14
    */
   long deleteComponents(Iterable<EntityId> components, BooleanSupplier cancelledCheck, int batchSize);
 
   /**
    * Runs at the end of deleteComponents.
    *
-   * @since 3.next
+   * @since 3.14
    */
   void after();
 

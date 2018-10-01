@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.maintenance.internal;
 
+import java.util.Set;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -54,7 +56,7 @@ public class MaintenanceServiceImpl
   }
 
   @Override
-  public void deleteAsset(final Repository repository, final Asset asset) {
+  public Set<String> deleteAsset(final Repository repository, final Asset asset) {
     checkNotNull(repository);
     checkNotNull(asset);
 
@@ -64,11 +66,11 @@ public class MaintenanceServiceImpl
       throw new AuthorizationException();
     }
 
-    getComponentMaintenanceFacet(repository).deleteAsset(asset.getEntityMetadata().getId());
+    return getComponentMaintenanceFacet(repository).deleteAsset(asset.getEntityMetadata().getId());
   }
 
   @Override
-  public void deleteComponent(final Repository repository, final Component component) {
+  public Set<String> deleteComponent(final Repository repository, final Component component) {
     checkNotNull(repository);
     checkNotNull(component);
 
@@ -89,7 +91,7 @@ public class MaintenanceServiceImpl
       storageTx.close();
     }
 
-    getComponentMaintenanceFacet(repository).deleteComponent(component.getEntityMetadata().getId());
+    return getComponentMaintenanceFacet(repository).deleteComponent(component.getEntityMetadata().getId());
   }
 
   private boolean canDeleteAssetInRepository(final Repository repository,

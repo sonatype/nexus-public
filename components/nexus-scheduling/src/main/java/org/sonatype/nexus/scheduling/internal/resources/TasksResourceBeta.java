@@ -36,7 +36,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
 /**
- * @deprecated since 3.next, use {@link TasksResource} instead.
+ * @deprecated since 3.14, use {@link TasksResource} instead.
  */
 @Deprecated
 @Named

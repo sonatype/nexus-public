@@ -30,7 +30,7 @@ import static java.util.Collections.rotate;
 /**
  * {@link FillPolicy} that divides writes to member blob stores evenly based upon a round robin selection.
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named(RoundRobinFillPolicy.TYPE)
 public class RoundRobinFillPolicy

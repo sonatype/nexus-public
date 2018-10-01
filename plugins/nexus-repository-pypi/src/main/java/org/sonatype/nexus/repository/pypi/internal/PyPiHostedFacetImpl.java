@@ -20,6 +20,8 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.common.collect.AttributesMap;
+import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.IllegalOperationException;
@@ -52,6 +54,7 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiDataUtils.toConten
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.normalizeName;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.packagesPath;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
+import static org.sonatype.nexus.repository.view.Content.CONTENT_ETAG;
 
 /**
  * {@link PyPiHostedFacet} implementation.
@@ -106,7 +109,19 @@ public class PyPiHostedFacetImpl
     if (asset.markAsDownloaded()) {
       tx.saveAsset(asset);
     }
-    return toContent(asset, tx.requireBlob(asset.requireBlobRef()));
+    Content content = toContent(asset, tx.requireBlob(asset.requireBlobRef()));
+    mayAddEtag(content.getAttributes(), asset.getChecksum(HashAlgorithm.SHA1));
+    return content;
+  }
+
+  private void mayAddEtag(final AttributesMap attributesMap, final HashCode hashCode) {
+    if (attributesMap.contains(CONTENT_ETAG)) {
+      return;
+    }
+
+    if (hashCode != null) {
+      attributesMap.set(CONTENT_ETAG, "{SHA1{" + hashCode + "}}");
+    }
   }
 
   @Override

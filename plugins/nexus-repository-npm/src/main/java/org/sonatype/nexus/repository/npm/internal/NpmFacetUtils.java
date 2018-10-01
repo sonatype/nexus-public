@@ -14,9 +14,12 @@ package org.sonatype.nexus.repository.npm.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -346,7 +349,7 @@ public final class NpmFacetUtils
   /**
    * Deletes the package root and all related tarballs too.
    */
-  static boolean deletePackageRoot(final StorageTx tx,
+  static Set<String> deletePackageRoot(final StorageTx tx,
                                    final Repository repository,
                                    final NpmPackageId packageId,
                                    final boolean deleteBlobs)
@@ -354,15 +357,16 @@ public final class NpmFacetUtils
     // find package asset -> delete
     Asset packageRootAsset = findPackageRootAsset(tx, tx.findBucket(repository), packageId);
     if (packageRootAsset == null) {
-      return false;
+      return Collections.emptySet();
     }
     tx.deleteAsset(packageRootAsset, deleteBlobs);
     // find all tarball components -> delete
     Iterable<Component> npmTarballs = findPackageTarballComponents(tx, repository, packageId);
+    Set<String> deletedAssetNames = new HashSet<>();
     for (Component npmTarball : npmTarballs) {
-      tx.deleteComponent(npmTarball, deleteBlobs);
+      deletedAssetNames.addAll(tx.deleteComponent(npmTarball, deleteBlobs));
     }
-    return true;
+    return deletedAssetNames;
   }
 
   /**

@@ -23,7 +23,7 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
 /**
  * Adds criteria for querying on isPrerelease
  * 
- * @since 3.next
+ * @since 3.14
  */
 @Named(IS_PRERELEASE_KEY)
 public class PrereleaseCriteriaAppender

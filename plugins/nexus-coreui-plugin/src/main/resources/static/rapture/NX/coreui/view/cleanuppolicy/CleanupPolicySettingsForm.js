@@ -15,7 +15,7 @@
 /**
  * Cleanup Policy "Settings" form.
  *
- * @since 3.next
+ * @since 3.14
  */
 var criteriaConfiguration = null;
 

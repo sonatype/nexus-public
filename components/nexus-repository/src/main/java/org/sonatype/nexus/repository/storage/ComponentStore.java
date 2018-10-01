@@ -39,7 +39,7 @@ public interface ComponentStore
    * @param formatAttributes
    * @return All the components that match the specified parameters
    *
-   * @since 3.next
+   * @since 3.14
    */
   List<Component> getAllMatchingComponents(final Repository repository,
                                            final String group,

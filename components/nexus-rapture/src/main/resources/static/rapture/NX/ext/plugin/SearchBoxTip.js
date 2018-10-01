@@ -15,7 +15,7 @@
 /**
  * Plugin that shows a tooltip below a search box with some hints about syntax
  *
- * @since 3.next
+ * @since 3.14
  */
 Ext.define('NX.ext.plugin.SearchBoxTip', {
   extend: 'Ext.plugin.Abstract',

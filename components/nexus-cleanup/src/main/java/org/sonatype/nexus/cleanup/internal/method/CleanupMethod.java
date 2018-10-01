@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.Repository;
 /**
  * Cleans up components.
  * 
- * @since 3.next
+ * @since 3.14
  */
 public interface CleanupMethod
 {

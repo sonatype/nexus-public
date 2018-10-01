@@ -30,7 +30,7 @@ import com.google.common.collect.ImmutableMap;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * @since 3.next
+ * @since 3.14
  */
 @Singleton
 @Named(Maven2Format.NAME)

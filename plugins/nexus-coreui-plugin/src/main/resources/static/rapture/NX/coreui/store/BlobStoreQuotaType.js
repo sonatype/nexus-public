@@ -15,7 +15,7 @@
 /**
  * Blob store Quota Type store.
  *
- * @since 3.next
+ * @since 3.14
  */
 Ext.define('NX.coreui.store.BlobStoreQuotaType', {
   extend: 'Ext.data.Store',

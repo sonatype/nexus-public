@@ -29,7 +29,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * This lets us use a partitioned pool while keeping the overall blocking nature of a non-partitioned pool.
  *
- * @since 3.next
+ * @since 3.14
  */
 public class DatabasePoolWithOverflowImpl
   extends DatabasePoolSupport

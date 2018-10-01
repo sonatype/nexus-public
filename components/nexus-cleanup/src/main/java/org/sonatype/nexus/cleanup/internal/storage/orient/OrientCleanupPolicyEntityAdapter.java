@@ -47,7 +47,7 @@ import static org.sonatype.nexus.cleanup.storage.CleanupPolicy.ALL_CLEANUP_POLIC
 /**
  * Entity adapter for {@link CleanupPolicy}
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named
 @Singleton

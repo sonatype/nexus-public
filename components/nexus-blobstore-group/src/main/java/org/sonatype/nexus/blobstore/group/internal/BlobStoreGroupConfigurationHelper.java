@@ -23,7 +23,7 @@ import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup.MEMBERS
 /**
  * Helper for blob store group attributes in {@link BlobStoreConfiguration}.
  *
- * @since 3.next
+ * @since 3.14
  */
 public class BlobStoreGroupConfigurationHelper {
 

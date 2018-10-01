@@ -224,7 +224,7 @@ public interface BlobStore
   /**
    * Identifies if the instance is available to be written to
    * @return {@code true} if the blob store can be written to
-   * @since 3.next
+   * @since 3.14
    */
   boolean isWritable();
 
@@ -232,7 +232,7 @@ public interface BlobStore
    * Identifies if the instance can be a member of a group
    *
    * @return {@code true} if the blob store can be a member of a group
-   * @since 3.next
+   * @since 3.14
    */
   default boolean isGroupable() { return true; }
 }

@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import java.util.Collections;
+import java.util.Set;
+
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.EntityId;
@@ -32,20 +35,20 @@ public class SingleAssetComponentMaintenance
    * Deletes both the asset and its component.
    */
   @TransactionalDeleteBlob
-  protected void deleteAssetTx(final EntityId assetId, final boolean deleteBlob) {
+  protected Set<String> deleteAssetTx(final EntityId assetId, final boolean deleteBlob) {
     StorageTx tx = UnitOfWork.currentTx();
     final Asset asset = tx.findAsset(assetId, tx.findBucket(getRepository()));
     if (asset == null) {
-      return;
+      return Collections.emptySet();
     }
     final EntityId componentId = asset.componentId();
     if (componentId == null) {
       // Assets without components should be deleted on their own
-      super.deleteAssetTx(assetId, deleteBlob);
+      return super.deleteAssetTx(assetId, deleteBlob);
     }
     else {
       // Otherwise, delete the component, which in turn cascades down to the asset
-      deleteComponentTx(componentId, deleteBlob);
+      return deleteComponentTx(componentId, deleteBlob);
     }
   }
 }

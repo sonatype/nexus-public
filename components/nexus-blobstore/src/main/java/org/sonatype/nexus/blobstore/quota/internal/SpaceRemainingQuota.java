@@ -26,7 +26,7 @@ import static java.lang.String.format;
 /**
  * A {@link BlobStoreQuota} which checks that a blob store has at least a certain amount of space left.
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named(SpaceRemainingQuota.ID)
 @Singleton

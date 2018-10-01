@@ -21,7 +21,7 @@ import static java.util.Optional.ofNullable;
 /**
  * Tracks test counters for Pax-Exam based ITs.
  *
- * @since 3.next
+ * @since 3.14
  */
 public class TestCounters
 {

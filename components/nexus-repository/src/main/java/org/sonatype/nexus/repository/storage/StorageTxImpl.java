@@ -17,9 +17,11 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -554,23 +556,27 @@ public class StorageTxImpl
 
   @Override
   @Guarded(by = ACTIVE)
-  public void deleteComponent(final Component component) {
-    deleteComponent(component, true);
+  public Set<String> deleteComponent(final Component component) {
+    return deleteComponent(component, true);
   }
 
   @Override
   @Guarded(by = ACTIVE)
-  public void deleteComponent(final Component component, final boolean deleteBlobs) {
-    deleteComponent(component, true, deleteBlobs);
+  public Set<String> deleteComponent(final Component component, final boolean deleteBlobs) {
+    return deleteComponent(component, true, deleteBlobs);
   }
 
-  private void deleteComponent(final Component component, final boolean checkWritePolicy, final boolean deleteBlobs) {
+  private Set<String> deleteComponent(final Component component, final boolean checkWritePolicy, final boolean deleteBlobs) {
     checkNotNull(component);
+
+    Set<String> deletedAssets = new HashSet<>();
 
     for (Asset asset : browseAssets(component)) {
       deleteAsset(asset, checkWritePolicy ? writePolicySelector.select(asset, writePolicy) : null, deleteBlobs);
+      deletedAssets.add(asset.name());
     }
     componentEntityAdapter.deleteEntity(db, component);
+    return deletedAssets;
   }
 
   @Override

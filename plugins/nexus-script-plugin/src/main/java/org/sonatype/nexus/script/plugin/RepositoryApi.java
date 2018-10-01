@@ -216,7 +216,7 @@ public interface RepositoryApi
   /**
    * Create a Docker hosted repository.
    *
-   * @since 3.next
+   * @since 3.14
    * @param name The name of the new Repository
    * @param httpPort The http port to accept traffic for this Repository on (optional)
    * @param httpsPort The https port to accept traffic for this Repository on (optional)

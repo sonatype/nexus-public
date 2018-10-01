@@ -53,8 +53,9 @@ public class NexusContextModule
 
   private final Map<?, ?> nexusProperties;
 
-  public NexusContextModule(final BundleContext bundleContext, final ServletContext servletContext,
-      final Map<?, ?> nexusProperties)
+  public NexusContextModule(final BundleContext bundleContext,
+                            final ServletContext servletContext,
+                            final Map<?, ?> nexusProperties)
   {
     this.bundleContext = checkNotNull(bundleContext);
     this.servletContext = checkNotNull(servletContext);

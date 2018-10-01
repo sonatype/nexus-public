@@ -39,7 +39,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * EhCache JCache {@link CacheBuilder}.
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named("ehcache")
 public class EhCacheBuilder<K, V>

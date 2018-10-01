@@ -15,7 +15,7 @@
 /**
  * Cleanup Policy model.
  *
- * @since 3.next
+ * @since 3.14
  */
 Ext.define('NX.coreui.model.CleanupPolicy', {
   extend: 'Ext.data.Model',

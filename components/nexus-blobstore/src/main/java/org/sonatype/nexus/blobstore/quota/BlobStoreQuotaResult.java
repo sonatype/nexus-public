@@ -17,7 +17,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Holds result for the evaluation of {@link BlobStoreQuota}.
  *
- * @since 3.next
+ * @since 3.14
  */
 public class BlobStoreQuotaResult
 {

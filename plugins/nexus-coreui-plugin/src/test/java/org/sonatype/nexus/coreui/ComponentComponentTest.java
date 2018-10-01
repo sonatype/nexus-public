@@ -65,6 +65,7 @@ import org.mockito.Mock;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
@@ -207,11 +208,11 @@ public class ComponentComponentTest
     Asset asset = mock(Asset.class);
     VariableSource variableSource = mock(VariableSource.class);
     Bucket bucket = mock(Bucket.class);
+    when(maintenanceService.deleteAsset(repository, asset)).thenReturn(Collections.singleton("assetname"));
     when(variableResolverAdapter.fromAsset(asset)).thenReturn(variableSource);
     when(storageTx.findBucket(repository)).thenReturn(bucket);
     when(storageTx.findAsset(new DetachedEntityId("testAssetId"), bucket)).thenReturn(asset);
-    underTest.deleteAsset("testAssetId", "testRepositoryName");
-    verify(maintenanceService).deleteAsset(repository, asset);
+    assertThat(underTest.deleteAsset("testAssetId", "testRepositoryName"), contains("assetname"));
   }
 
   @Test

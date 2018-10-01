@@ -15,7 +15,7 @@ package org.sonatype.nexus.blobstore.restore;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * @since 3.next
+ * @since 3.14
  */
 public class RestoreBlobDataSupport
 {

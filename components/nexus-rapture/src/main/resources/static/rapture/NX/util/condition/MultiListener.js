@@ -15,7 +15,7 @@
 /**
  * A {@link NX.util.condition.Condition} that calls a function after event(s) fire.
  *
- * @since 3.next
+ * @since 3.14
  */
 Ext.define('NX.util.condition.MultiListener', {
   extend: 'NX.util.condition.Condition',

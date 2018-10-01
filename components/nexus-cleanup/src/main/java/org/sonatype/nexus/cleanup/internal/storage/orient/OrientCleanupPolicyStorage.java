@@ -39,7 +39,7 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
 /**
  * Orient specific storage for Cleanup Policies
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named("orient")
 @ManagedLifecycle(phase = SCHEMAS)

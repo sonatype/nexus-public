@@ -45,7 +45,7 @@ public interface ContentPermissionChecker
    * Ensure that either the view permission or the content selector permission is permitted for the desired
    * repositories
    *
-   * @since 3.next
+   * @since 3.14
    */
   boolean isPermitted(Set<String> repositoryNames,
                       String repositoryFormat,

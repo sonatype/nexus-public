@@ -29,7 +29,7 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
 /**
  * Defines which cleanup policy fields to display for npm.
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named(NpmFormat.NAME)
 @Singleton

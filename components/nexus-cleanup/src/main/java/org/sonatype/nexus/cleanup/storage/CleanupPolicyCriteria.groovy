@@ -33,7 +33,7 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
 /**
  *  Collection of the criteria associated with a Cleanup Policy
  *
- *  @since 3.next
+ *  @since 3.14
  */
 @Builder
 @ToString(includePackage = false, includeNames = true)

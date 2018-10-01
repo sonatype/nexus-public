@@ -15,7 +15,7 @@
 /**
  * Repository Formats store.
  *
- * @since 3.next
+ * @since 3.14
  */
 Ext.define('NX.coreui.store.RepositoryFormat', {
   extend: 'Ext.data.Store',

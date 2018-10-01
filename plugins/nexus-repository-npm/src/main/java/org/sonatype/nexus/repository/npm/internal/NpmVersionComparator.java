@@ -19,7 +19,7 @@ import org.sonatype.nexus.common.app.VersionComparator;
 /**
  * Utility class for Npm version comparison
  *
- * @since 3.next
+ * @since 3.14
  */
 public final class NpmVersionComparator
 {

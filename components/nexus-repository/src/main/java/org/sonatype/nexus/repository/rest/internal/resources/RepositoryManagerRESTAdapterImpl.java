@@ -63,13 +63,9 @@ public class RepositoryManagerRESTAdapterImpl
       //browse implies complete access to the repository.
       return repository;
     }
-    else if (repositoryPermissionChecker.userCanViewRepository(repository)) {
-      //user knows the repository exists but does not have the appropriate permission to browse, return a 403
-      throw new WebApplicationException(FORBIDDEN);
-    }
     else {
-      //User does not know the repository exists because they can not VIEW or BROWSE, return a 404 
-      throw new NotFoundException("Unable to locate repository with id " + repositoryId);
+      //repository exists but user does not have the appropriate permission to browse, return a 403
+      throw new WebApplicationException(FORBIDDEN);
     }
   }
 

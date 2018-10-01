@@ -21,7 +21,7 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 /**
  * Chooses a group member to store a new blob.
  *
- * @since 3.next
+ * @since 3.14
  */
 public interface FillPolicy {
 

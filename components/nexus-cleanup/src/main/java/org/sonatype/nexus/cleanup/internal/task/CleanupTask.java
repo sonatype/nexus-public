@@ -23,7 +23,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Runs cleanup via the cleanup service.
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named
 public class CleanupTask

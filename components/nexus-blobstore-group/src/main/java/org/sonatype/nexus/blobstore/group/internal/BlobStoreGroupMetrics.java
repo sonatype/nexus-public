@@ -25,7 +25,7 @@ import static java.util.Collections.unmodifiableMap;
  * An implementation of {@link BlobStoreMetrics} that combines metrics
  * from member metrics.
  *
- * @since 3.next
+ * @since 3.14
  */
 public class BlobStoreGroupMetrics
     implements BlobStoreMetrics

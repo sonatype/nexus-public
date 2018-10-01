@@ -28,7 +28,7 @@ import static org.sonatype.nexus.repository.search.IndexSyncService.INDEX_UPGRAD
  * Upgrading of elasticsearch requires writing to a file. The elasticsearch upgrades
  * now have a common interface so that only a single upgrade will actually run.
  *
- * @since 3.next
+ * @since 3.14
  */
 public class ElasticSearchIndexUpgradeSupport
     extends ComponentSupport

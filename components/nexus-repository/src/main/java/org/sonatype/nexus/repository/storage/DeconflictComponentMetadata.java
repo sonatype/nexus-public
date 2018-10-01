@@ -27,7 +27,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
  *
  * "last_updated" - book-keeping attribute, we're only interested in the latest time
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named
 @Singleton

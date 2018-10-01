@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.maintenance.internal;
 
+import java.util.Collections;
+
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityMetadata;
@@ -37,6 +39,8 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import static java.util.Collections.singletonList;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -148,10 +152,9 @@ public class MaintenanceServiceImplTest
   public void testDeleteAsset() {
     when(contentPermissionChecker.isPermitted("maven-releases", "maven2", BreadActions.DELETE, variableSource))
         .thenReturn(true);
+    when(componentMaintenance.deleteAsset(assetEntityId)).thenReturn(Collections.singleton("assetname"));
 
-    underTest.deleteAsset(mavenReleases, assetOne);
-
-    verify(componentMaintenance).deleteAsset(assetEntityId);
+    assertThat(underTest.deleteAsset(mavenReleases, assetOne), contains("assetname"));
   }
 
   @Test(expected = IllegalOperationException.class)

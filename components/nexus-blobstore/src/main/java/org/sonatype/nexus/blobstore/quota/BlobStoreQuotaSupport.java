@@ -28,7 +28,7 @@ import static java.lang.String.format;
  * A base class for {@link BlobStoreQuota} that holds constants which map to config values in {@link
  * BlobStoreConfiguration}
  *
- * @since 3.next
+ * @since 3.14
  */
 public abstract class BlobStoreQuotaSupport
     extends ComponentSupport

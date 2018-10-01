@@ -17,7 +17,7 @@ import org.elasticsearch.action.search.SearchResponse;
 /**
  * Generates search results consumable by the UI
  *
- * @since 3.next
+ * @since 3.14
  */
 public interface SearchResultsGenerator
 {

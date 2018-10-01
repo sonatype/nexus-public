@@ -33,6 +33,10 @@ Ext.define('NX.coreui.view.logging.LogViewer', {
 
       items: {
         xtype: 'textarea',
+
+        plugins: {
+          responsive: false
+        },
         cls: 'nx-log-viewer-field nx-monospace-field',
         readOnly: true,
         hideLabel: true,

@@ -15,7 +15,7 @@
 /**
  * Content panel.
  *
- * @since 3.next
+ * @since 3.14
  */
 Ext.define('NX.view.feature.BreadcrumbViewController', {
   extend: 'Ext.app.ViewController',

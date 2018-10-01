@@ -30,7 +30,7 @@ import static org.sonatype.nexus.repository.maven.internal.Constants.SNAPSHOT_VE
 /**
  * Maven implementation of {@link DefaultComponentMetadataProducer}
  *
- * @since 3.next
+ * @since 3.14
  */
 @Singleton
 @Named(Maven2Format.NAME)

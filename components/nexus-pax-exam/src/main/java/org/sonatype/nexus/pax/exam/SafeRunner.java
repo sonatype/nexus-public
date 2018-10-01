@@ -34,7 +34,7 @@ import static org.sonatype.nexus.pax.exam.NexusPaxExamTestIndexRule.captureLogsO
  * only fires off test notifications once the container is up, much of the early output was left in "null-output.txt"
  * which was then overwritten by subsequent test classes.
  *
- * @since 3.next
+ * @since 3.14
  */
 public class SafeRunner
     extends Runner

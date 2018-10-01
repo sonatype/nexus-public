@@ -43,7 +43,7 @@ public interface BlobStoreApi
    * @param name the name for the new BlobStore
    * @param memberNames name of the member BlobStores
    * @param fillPolicy name of the fill policy
-   * @since 3.next
+   * @since 3.14
    */
   BlobStoreConfiguration createBlobStoreGroup(String name, List<String> memberNames, String fillPolicy);
 

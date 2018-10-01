@@ -23,7 +23,7 @@ import javax.inject.Singleton;
 /**
  * Supplies local {@link Cooperation} points.
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named("local")
 @Singleton

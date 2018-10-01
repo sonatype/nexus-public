@@ -17,7 +17,7 @@ import org.sonatype.nexus.common.entity.EntityMetadata;
 /**
  * Event to be sent when a cleanup policy item has been deleted
  *
- * @since 3.next
+ * @since 3.14
  */
 public class CleanupPolicyDeletedEvent
     extends CleanupPolicyEvent

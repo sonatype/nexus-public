@@ -142,14 +142,14 @@ public class BlobStoreConfigurationEntityAdapter
   }
 
   /**
-   * @since 3.next
+   * @since 3.14
    */
   public boolean update(final ODatabaseDocumentTx db, final BlobStoreConfiguration entity) {
     return update.execute(db, entity, entity.getName());
   }
 
   /**
-   * @since 3.next
+   * @since 3.14
    */
   public BlobStoreConfiguration getByName(final ODatabaseDocumentTx db, final String name) {
     return read.execute(db, name);
@@ -160,7 +160,7 @@ public class BlobStoreConfigurationEntityAdapter
    *
    * @return the {@link BlobStoreConfiguration}s that have a group member matching {@code name}
    *
-   * @since 3.next
+   * @since 3.14
    */
   public List<BlobStoreConfiguration> getParents(final ODatabaseDocumentTx db, final String name) {
     String query = format("SELECT FROM %s WHERE ? in attributes.group.members", getTypeName());

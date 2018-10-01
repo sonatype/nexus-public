@@ -32,7 +32,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
  *
  * "maven2.packaging" - optional attribute, non-null wins over null
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named
 @Singleton

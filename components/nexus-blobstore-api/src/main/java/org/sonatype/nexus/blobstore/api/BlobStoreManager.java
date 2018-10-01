@@ -42,7 +42,7 @@ public interface BlobStoreManager
   /**
    * Update an existing BlobStore
    *
-   * @since 3.next
+   * @since 3.14
    */
   BlobStore update(BlobStoreConfiguration blobStoreConfiguration) throws Exception;
 
@@ -60,7 +60,7 @@ public interface BlobStoreManager
   /**
    * Delete a BlobStore by name, even if it is use.
    *
-   * @since 3.next
+   * @since 3.14
    */
   void forceDelete(String name) throws Exception;
 
@@ -74,7 +74,7 @@ public interface BlobStoreManager
   /**
    * Returns the number of other blob stores that use the named blob store.
    *
-   * @since 3.next
+   * @since 3.14
    */
   long blobStoreUsageCount(String blobStoreName);
 
@@ -83,7 +83,7 @@ public interface BlobStoreManager
    * @param blobStore
    * @return true if member is promotable
    *
-   * @since 3.next
+   * @since 3.14
    */
   boolean isPromotable(BlobStore blobStore);
 }

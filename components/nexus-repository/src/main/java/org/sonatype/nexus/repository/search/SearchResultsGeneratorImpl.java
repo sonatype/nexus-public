@@ -30,7 +30,7 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
 /**
  * Generates search results consumable by the UI
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named
 @Singleton

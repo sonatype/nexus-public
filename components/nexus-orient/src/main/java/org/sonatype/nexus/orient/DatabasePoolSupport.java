@@ -29,7 +29,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Scaffolding for {@link DatabasePool} implementations.
  *
- * @since 3.next
+ * @since 3.14
  */
 public abstract class DatabasePoolSupport
   extends LifecycleSupport

@@ -27,7 +27,7 @@ import org.sonatype.nexus.repository.storage.Component;
 /**
  * Npm implementation of {@link DefaultComponentMetadataProducer}
  *
- * @since 3.next
+ * @since 3.14
  */
 @Singleton
 @Named(NpmFormat.NAME)

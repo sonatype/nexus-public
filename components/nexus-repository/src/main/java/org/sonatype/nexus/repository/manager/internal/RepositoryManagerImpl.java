@@ -397,7 +397,7 @@ public class RepositoryManagerImpl
    * Retrieve a list of all groups that contain the desired repository, either directly or transitively through
    * another group.
    *
-   * @since 3.next
+   * @since 3.14
    */
   @Override
   @Guarded(by = STARTED)

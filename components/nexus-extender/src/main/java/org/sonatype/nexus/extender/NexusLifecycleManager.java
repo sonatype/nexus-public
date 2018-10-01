@@ -61,7 +61,7 @@ public class NexusLifecycleManager
   private volatile Phase currentPhase = OFF;
 
   @Inject
-  public NexusLifecycleManager(BeanLocator locator) {
+  public NexusLifecycleManager(final BeanLocator locator) {
     this.lifecycles = locator.locate(Key.get(Lifecycle.class, Named.class));
 
     locator.watch(Key.get(BundleContext.class), new BundleContextMediator(), this);
@@ -73,7 +73,7 @@ public class NexusLifecycleManager
   }
 
   @Override
-  public synchronized void to(Phase targetPhase) throws Exception {
+  public synchronized void to(final Phase targetPhase) throws Exception {
 
     final int target = targetPhase.ordinal();
     int current = currentPhase.ordinal();
@@ -119,7 +119,7 @@ public class NexusLifecycleManager
    * Refreshes the lifecycle index, starting/stopping any components belonging
    * to the current or earlier phases as they appear/disappear from the index.
    */
-  private void reindex(Phase targetPhase) throws Exception {
+  private void reindex(final Phase targetPhase) throws Exception {
     ListMultimap<Phase, BeanEntry<Named, Lifecycle>> index = index(targetPhase);
 
     // remove entries from current index that also exist in new index, start any new entries
@@ -148,7 +148,9 @@ public class NexusLifecycleManager
   /**
    * Starts the given lifecycle component, propagating lifecycle errors only when requested.
    */
-  private void startComponent(Phase phase, Lifecycle lifecycle, boolean propagateErrors) throws Exception {
+  private void startComponent(final Phase phase, final Lifecycle lifecycle, final boolean propagateErrors)
+      throws Exception
+  {
     try {
       if (components.put(phase, lifecycle)) {
         log.debug("Start {}: {}", phase, lifecycle);
@@ -166,7 +168,9 @@ public class NexusLifecycleManager
   /**
    * Stops the given lifecycle component, propagating lifecycle errors only when requested.
    */
-  private void stopComponent(Phase phase, Lifecycle lifecycle, boolean propagateErrors) throws Exception {
+  private void stopComponent(final Phase phase, final Lifecycle lifecycle, final boolean propagateErrors)
+      throws Exception
+  {
     try {
       if (components.remove(phase, lifecycle)) {
         log.debug("Stop {}: {}", phase, lifecycle);
@@ -184,7 +188,7 @@ public class NexusLifecycleManager
   /**
    * Creates a multilevel index containing all managed lifecycles up to and including the target phase.
    */
-  private ListMultimap<Phase, BeanEntry<Named, Lifecycle>> index(Phase targetPhase) {
+  private ListMultimap<Phase, BeanEntry<Named, Lifecycle>> index(final Phase targetPhase) {
     ListMultimap<Phase, BeanEntry<Named, Lifecycle>> index = ArrayListMultimap.create();
 
     final int target = targetPhase.ordinal();
@@ -206,12 +210,16 @@ public class NexusLifecycleManager
       implements Mediator<Annotation, BundleContext, NexusLifecycleManager>
   {
     @Override
-    public void add(BeanEntry<Annotation, BundleContext> entry, NexusLifecycleManager manager) throws Exception {
+    public void add(final BeanEntry<Annotation, BundleContext> entry, final NexusLifecycleManager manager)
+        throws Exception
+    {
       manager.sync();
     }
 
     @Override
-    public void remove(BeanEntry<Annotation, BundleContext> entry, NexusLifecycleManager manager) throws Exception {
+    public void remove(final BeanEntry<Annotation, BundleContext> entry, final NexusLifecycleManager manager)
+        throws Exception
+    {
       manager.sync();
     }
   }

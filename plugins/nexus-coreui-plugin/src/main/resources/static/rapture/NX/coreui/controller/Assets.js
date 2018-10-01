@@ -399,7 +399,11 @@ Ext.define('NX.coreui.controller.Assets', {
             //Manually managing sync'ing the local AssetStore as AssetStore.load() won't run a callback if the load
             //results in no data being returned.
             var assetStore = assetList.getStore();
-            assetStore.remove(assetStore.findRecord('id', asset.getId()));
+
+            response.data.forEach(function(assetName) {
+              assetStore.remove(assetStore.findRecord('name', assetName));
+            });
+
             me.navigateBackOnAssetDelete(asset.get('componentId'), assetStore);
             NX.Messages.add({text: NX.I18n.format('AssetInfo_Delete_Success', asset.get('name')), type: 'success'});
           }
@@ -416,7 +420,7 @@ Ext.define('NX.coreui.controller.Assets', {
    */
   navigateBackOnAssetDelete: function(componentId, assetStore) {
     var me = this;
-    if (!me.getComponentDetails() || !componentId || assetStore.find('componentId', componentId) > -1) {
+    if (!me.getComponentDetails() || !componentId || me.countAssetsInComponent(assetStore, componentId) > 0) {
       // Asset being deleted either does not have an associated component in scope, or is not the last Asset
       //<if debug>
       me.logDebug('Asset deleted with no component in scope or as last remaining asset');
@@ -430,6 +434,17 @@ Ext.define('NX.coreui.controller.Assets', {
       me.refreshComponentList();
       NX.Bookmarks.navigateBackSegments(NX.Bookmarks.getBookmark(), 2);
     }
+  },
+
+  countAssetsInComponent: function(assetStore, componentId) {
+    var count = 0;
+    assetStore.each(function(asset){
+      if (asset.get('componentId') === componentId) {
+        count++;
+      }
+    });
+
+    return count;
   },
 
   fetchComponentModelFromView: function() {

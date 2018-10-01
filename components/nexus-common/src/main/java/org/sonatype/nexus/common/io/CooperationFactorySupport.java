@@ -20,7 +20,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 /**
  * Common scaffolding for {@link CooperationFactory} implementations.
  *
- * @since 3.next
+ * @since 3.14
  */
 public abstract class CooperationFactorySupport
     extends LifecycleSupport

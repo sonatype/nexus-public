@@ -21,7 +21,7 @@ import org.sonatype.nexus.rest.ExceptionMapperSupport;
 import static org.sonatype.nexus.rest.SimpleApiResponse.badRequest;
 
 /**
- * @since 3.next
+ * @since 3.14
  */
 @Named
 @Singleton

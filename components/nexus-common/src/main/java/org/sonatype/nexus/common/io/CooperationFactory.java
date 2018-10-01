@@ -17,7 +17,7 @@ import org.sonatype.goodies.common.Time;
 /**
  * Supplies {@link Cooperation} points.
  *
- * @since 3.next
+ * @since 3.14
  */
 public interface CooperationFactory
 {

@@ -65,10 +65,13 @@ public class NexusBundleModule
 
   private final String imports;
 
-  public NexusBundleModule(final Bundle bundle, final MutableBeanLocator locator, final Map<?, ?> nexusProperties,
+  public NexusBundleModule(final Bundle bundle,
+                           final MutableBeanLocator locator,
+                           final Map<?, ?> nexusProperties,
                            final ServletContextModule servletContextModule,
                            final List<AbstractInterceptorModule> interceptorModules,
-                           final List<TypeConverterSupport> converterModules, final LifecycleModule lifecycleModule)
+                           final List<TypeConverterSupport> converterModules,
+                           final LifecycleModule lifecycleModule)
   {
     super(bundle, locator);
 
@@ -109,31 +112,31 @@ public class NexusBundleModule
     return new SpaceModule(space, BeanScanning.GLOBAL_INDEX);
   }
 
-  private void maybeAddSecurityFilter(List<Module> modules) {
+  private void maybeAddSecurityFilter(final List<Module> modules) {
     if (imports.contains("org.sonatype.nexus.security")) {
       modules.add(securityFilterModule);
     }
   }
 
-  private void maybeAddServletContext(List<Module> modules) {
+  private void maybeAddServletContext(final List<Module> modules) {
     if (imports.contains("com.google.inject.servlet")) {
       modules.add(servletContextModule);
     }
   }
 
-  private void maybeAddMetricsRegistry(List<Module> modules) {
+  private void maybeAddMetricsRegistry(final List<Module> modules) {
     if (imports.contains("com.codahale.metrics")) {
       modules.add(metricsRegistryModule);
     }
   }
 
-  private void maybeAddWebResources(List<Module> modules) {
+  private void maybeAddWebResources(final List<Module> modules) {
     if (space.getBundle().getEntry("static") != null) {
       modules.add(webResourcesModule);
     }
   }
 
-  private void addInterceptors(List<Module> modules) {
+  private void addInterceptors(final List<Module> modules) {
     modules.add(shiroAopModule);
     modules.add(instrumentationModule);
     modules.add(validationModule);

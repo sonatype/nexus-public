@@ -33,7 +33,7 @@ import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.TYPE_KEY;
 /**
  * Default implementation of {@link BlobStoreQuotaService}
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named
 @Singleton

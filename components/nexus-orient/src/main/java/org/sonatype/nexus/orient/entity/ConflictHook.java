@@ -49,7 +49,7 @@ import static org.sonatype.nexus.orient.entity.ConflictState.IGNORE;
  * It may decide to ALLOW the update if there is no actual conflict, MERGE changes, or DENY the update if
  * the conflict exists and cannot be resolved by merging.
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named
 @Singleton

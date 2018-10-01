@@ -19,7 +19,7 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
 /**
  * Appends criteria for querying on lastDownloaded.
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named(LAST_DOWNLOADED_KEY)
 public class LastDownloadedCriteriaAppender

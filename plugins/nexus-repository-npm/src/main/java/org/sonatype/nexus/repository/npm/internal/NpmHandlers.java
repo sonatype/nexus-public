@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.npm.internal;
 
+import java.util.Set;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -200,8 +202,8 @@ public final class NpmHandlers
       log.debug("[deletePackage] repository: {} tokens: {}", repository.getName(), state.getTokens());
 
       NpmPackageId packageId = packageId(state);
-      boolean deleted = repository.facet(NpmHostedFacet.class).deletePackage(packageId, revision(state));
-      if (deleted) {
+      Set<String> deleted = repository.facet(NpmHostedFacet.class).deletePackage(packageId, revision(state));
+      if (!deleted.isEmpty()) {
         return NpmResponses.ok();
       }
       else {
@@ -242,8 +244,8 @@ public final class NpmHandlers
 
       NpmPackageId packageId = packageId(state);
       String tarballName = tarballName(state);
-      boolean deleted = repository.facet(NpmHostedFacet.class).deleteTarball(packageId, tarballName);
-      if (deleted) {
+      Set<String> deleted = repository.facet(NpmHostedFacet.class).deleteTarball(packageId, tarballName);
+      if (!deleted.isEmpty()) {
         return NpmResponses.ok();
       }
       else {

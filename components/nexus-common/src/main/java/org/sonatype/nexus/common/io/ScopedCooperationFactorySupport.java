@@ -26,7 +26,7 @@ import static java.util.stream.Collectors.toMap;
 /**
  * Scaffolding for scoped {@link CooperationFactory} implementations.
  *
- * @since 3.next
+ * @since 3.14
  */
 public abstract class ScopedCooperationFactorySupport
     extends CooperationFactorySupport

@@ -212,7 +212,6 @@
                     <include name="etc/equinox-debug.properties"/>
                     <include name="etc/regions-config.xml"/>
                     <include name="etc/org.apache.felix.eventadmin.impl.EventAdmin"/>
-                    <include name="etc/org.apache.karaf.kar.cfg"/>
                     <include name="etc/org.apache.karaf.features.obr.cfg"/>
                     <include name="etc/org.apache.karaf.features.repos.cfg"/>
                     <include name="etc/org.apache.karaf.command.acl.*.cfg"/>
@@ -350,9 +349,11 @@
             <feature>wrap</feature>
             <feature>bundle</feature>
             <feature>config</feature>
+            <feature>deployer</feature>
             <feature>diagnostic</feature>
             <feature>feature</feature>
             <feature>jaas</feature>
+            <feature>kar</feature>
             <feature>log</feature>
             <feature>package</feature>
             <feature>shell</feature>

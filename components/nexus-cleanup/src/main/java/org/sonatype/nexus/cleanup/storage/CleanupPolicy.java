@@ -19,7 +19,7 @@ import org.sonatype.nexus.common.entity.AbstractEntity;
 /**
  * Represents a configured cleanup policy
  *
- * @since 3.next
+ * @since 3.14
  */
 public class CleanupPolicy
     extends AbstractEntity

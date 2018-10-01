@@ -23,7 +23,7 @@ import org.junit.runner.Runner;
 /**
  * Specifies the {@link Runner} that {@link SafeRunner} should delegate to.
  *
- * @since 3.next
+ * @since 3.14
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

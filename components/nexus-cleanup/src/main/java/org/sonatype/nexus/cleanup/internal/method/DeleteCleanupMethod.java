@@ -25,7 +25,7 @@ import org.sonatype.nexus.repository.storage.ComponentMaintenance;
 /**
  * Provides a delete mechanism for cleanup
  * 
- * @since 3.next
+ * @since 3.14
  */
 @Named
 public class DeleteCleanupMethod

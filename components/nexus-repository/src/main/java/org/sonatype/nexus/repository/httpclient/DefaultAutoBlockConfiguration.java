@@ -21,7 +21,7 @@ import static org.sonatype.nexus.repository.http.HttpStatus.PROXY_AUTHENTICATION
 /**
  * Default configuration for auto-blocking.
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named
 @Singleton

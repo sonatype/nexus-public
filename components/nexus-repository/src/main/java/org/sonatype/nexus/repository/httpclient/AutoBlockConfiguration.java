@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.httpclient;
 /**
  * Provides format specific configuration for what to auto-block.
  * 
- * @since 3.next
+ * @since 3.14
  */
 public interface AutoBlockConfiguration
 {

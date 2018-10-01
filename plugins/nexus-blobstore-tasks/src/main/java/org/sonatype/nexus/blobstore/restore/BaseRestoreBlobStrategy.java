@@ -28,6 +28,7 @@ import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.StorageFacet;
+import org.sonatype.nexus.repository.transaction.TransactionalStoreMetadata;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -102,25 +103,35 @@ public abstract class BaseRestoreBlobStrategy<T>
       }
 
       if (!isDryRun) {
-        List<HashAlgorithm> hashTypes = getHashAlgorithms();
-
-        AssetBlob assetBlob = new AssetBlob(nodeAccess, blobStoreManager.get(blobStoreName), blobStore -> blob,
-            blobData.getProperty(HEADER_PREFIX + CONTENT_TYPE_HEADER),
-            hash(hashTypes, blob.getInputStream()), true);
-
-        createAssetFromBlob(assetBlob, restoreData);
+        doCreateAssetFromBlob(blobData, restoreData, blob);
       }
 
       log.info("{}Restored asset, blob store: {}, repository: {}, path: {}, blob name: {}, blob id: {}",
           logPrefix, blobStoreName, repoName, path, blobName, blob.getId());
     }
-    catch (IOException e) {
+    catch (Exception e) {
       log.error("Error while restoring asset: blob store: {}, repository: {}, path: {}, blob name: {}, blob id: {}",
           blobStoreName, repoName, path, blobName, blob.getId(), e);
     }
     finally {
       UnitOfWork.end();
     }
+  }
+
+  @TransactionalStoreMetadata
+  protected void doCreateAssetFromBlob(final RestoreBlobData blobData,
+                                       final T restoreData,
+                                       final Blob blob) throws IOException
+  {
+    List<HashAlgorithm> hashTypes = getHashAlgorithms();
+
+    AssetBlob assetBlob = new AssetBlob(nodeAccess,
+        blobStoreManager.get(blobData.getBlobStoreName()),
+        blobStore -> blob,
+        blobData.getProperty(HEADER_PREFIX + CONTENT_TYPE_HEADER),
+        hash(hashTypes, blob.getInputStream()), true);
+
+    createAssetFromBlob(assetBlob, restoreData);
   }
 
   /**

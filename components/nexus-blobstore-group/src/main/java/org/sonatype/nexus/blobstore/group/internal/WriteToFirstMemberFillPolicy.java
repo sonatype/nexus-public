@@ -24,7 +24,7 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 /**
  * {@link FillPolicy} that writes to first blobstore in group.
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named(WriteToFirstMemberFillPolicy.TYPE)
 public class WriteToFirstMemberFillPolicy

@@ -15,7 +15,7 @@
 /**
  * Configuration for repository cleanup policy facet.
  *
- * @since 3.next
+ * @since 3.14
  */
 Ext.define('NX.coreui.view.repository.facet.CleanupPolicyFacet', {
   extend: 'Ext.form.FieldContainer',

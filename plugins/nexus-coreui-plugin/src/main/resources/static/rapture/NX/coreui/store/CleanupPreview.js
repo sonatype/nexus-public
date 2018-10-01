@@ -15,7 +15,7 @@
 /**
  * Cleanup preview.
  *
- * @since 3.next
+ * @since 3.14
  */
 Ext.define('NX.coreui.store.CleanupPreview', {
   extend: 'Ext.data.Store',

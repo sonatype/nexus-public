@@ -42,7 +42,7 @@ public interface RestoreBlobStrategy
   /**
    * Runs after all blobs have been restored to the database.
    * 
-   * @since 3.next
+   * @since 3.14
    * 
    * @param updateAssets whether updating assets is expected or not
    */

@@ -122,10 +122,16 @@ public class RepositoryManagerRESTAdapterImplTest
     }
   }
 
-  @Test(expected = NotFoundException.class)
-  public void getRepository_notFoundWithNoPermissions() {
+  @Test
+  public void getRepository_cannotReadOrBrowse() {
     configurePermissions(repository, !PERMIT_BROWSE, !PERMIT_READ);
-    underTest.getRepository(REPOSITORY_NAME);
+    try {
+      underTest.getRepository(REPOSITORY_NAME);
+      fail(); //should have thrown exception
+    }
+    catch (WebApplicationException e) {
+      assertThat(e.getResponse().getStatus(), is(403));
+    }
   }
 
   private void configurePermissions(final Repository repository, final boolean permitBrowse, final boolean permitRead) {

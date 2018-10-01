@@ -17,7 +17,7 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 /**
  * {@link ONeedRetryException} thrown when we want to retry upserting a {@link BrowseNode} due to a collision.
  *
- * @since 3.next
+ * @since 3.14
  */
 class BrowseNodeCollisionException
     extends ONeedRetryException

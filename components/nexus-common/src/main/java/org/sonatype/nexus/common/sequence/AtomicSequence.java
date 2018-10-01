@@ -15,7 +15,7 @@ package org.sonatype.nexus.common.sequence;
 /**
  * Atomic sequence of monotonically increasing numbers.
  *
- * @since 3.next
+ * @since 3.14
  */
 @FunctionalInterface
 public interface AtomicSequence

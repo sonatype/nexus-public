@@ -33,7 +33,7 @@ import static org.sonatype.nexus.repository.search.IndexSyncService.INDEX_UPGRAD
 import static org.sonatype.nexus.repository.upgrade.ElasticSearchIndexUpgradeSupport.NEXUS_LSN;
 
 /**
- * @since 3.next
+ * @since 3.14
  */
 public abstract class ElasticSearchIndexUpgradeTestSupport
     extends TestSupport

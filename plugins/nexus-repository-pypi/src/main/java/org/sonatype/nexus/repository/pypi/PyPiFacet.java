@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 
 /**
- * @since 3.next
+ * @since 3.14
  */
 @Facet.Exposed
 public interface PyPiFacet

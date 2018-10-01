@@ -122,7 +122,16 @@ public class AssetDownloadCountStoreImpl
   protected void doStop() {
     historicDataCleaner.stop();
     if (cache != null) {
-      cache.removeAll();
+      log.debug("Saving asset download count cache to DB");
+      /*
+      All cache entries need to be saved before the DB stops.
+      The listener's events are processed asynchronously, so they can't guarantee that.
+      So, we manually save each entry and then call cache.clear()
+      clear method removes all entries from the cache without notifying any listeners to avoid double counting
+       */
+      cache.forEach(entry -> cacheRemovalListener.accept(entry.getKey(), entry.getValue()));
+      cache.clear();
+      log.debug("Asset download counts saved successfully");
     }
     cache = null;
   }

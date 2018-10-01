@@ -19,7 +19,7 @@ import org.sonatype.nexus.common.entity.EntityMetadata;
 /**
  * Base class for Cleanup Policy Storage events
  *
- * @since 3.next
+ * @since 3.14
  */
 public class CleanupPolicyEvent
     extends EntityCreatedEvent

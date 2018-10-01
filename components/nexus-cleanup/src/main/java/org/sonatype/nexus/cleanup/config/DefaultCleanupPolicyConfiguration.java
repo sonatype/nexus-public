@@ -26,7 +26,7 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
 /**
  * Defines which default cleanup policy fields to display.
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named("default")
 @Singleton

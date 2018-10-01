@@ -37,7 +37,7 @@ import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup.MEMBERS
  * The way it works is that the existing blobstore is renamed via database update. A new group is created that has the
  * existing blobstore's original name and then contains the original blobstore.
  *
- * @since 3.next
+ * @since 3.14
  */
 @Singleton
 public class BlobStorePromoter

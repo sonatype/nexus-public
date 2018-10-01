@@ -19,7 +19,7 @@ import org.hibernate.validator.constraints.NotBlank
 /**
  * Search Result Component object.
  *
- * @since 3.next
+ * @since 3.14
  */
 @ToString(includePackage = false, includeNames = true)
 @EqualsAndHashCode(includes = ['id'])

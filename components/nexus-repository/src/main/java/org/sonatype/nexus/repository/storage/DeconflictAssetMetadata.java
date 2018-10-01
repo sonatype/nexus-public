@@ -39,7 +39,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
  * "cache.cache_token"     - for invalidation: "invalidated" always wins, non-null wins over null
  * "content.last_modified" - book-keeping attribute, we're only interested in the latest time
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named
 @Singleton

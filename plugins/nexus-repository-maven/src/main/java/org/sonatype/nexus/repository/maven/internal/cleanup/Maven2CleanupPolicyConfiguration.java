@@ -29,7 +29,7 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
 /**
  * Defines which cleanup policy fields to display for maven.
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named(Maven2Format.NAME)
 @Singleton

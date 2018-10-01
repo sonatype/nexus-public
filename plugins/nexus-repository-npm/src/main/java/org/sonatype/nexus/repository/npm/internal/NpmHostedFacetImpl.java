@@ -13,7 +13,9 @@
 package org.sonatype.nexus.repository.npm.internal;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -265,15 +267,15 @@ public class NpmHostedFacetImpl
 
   @Override
   @TransactionalDeleteBlob
-  public boolean deletePackage(final NpmPackageId packageId, @Nullable final String revision) throws IOException {
+  public Set<String> deletePackage(final NpmPackageId packageId, @Nullable final String revision) throws IOException {
     return deletePackage(packageId, revision, true);
   }
 
   @Override
   @TransactionalDeleteBlob
-  public boolean deletePackage(final NpmPackageId packageId,
-                               @Nullable final String revision,
-                               final boolean deleteBlobs)
+  public Set<String> deletePackage(final NpmPackageId packageId,
+                                   @Nullable final String revision,
+                                   final boolean deleteBlobs)
       throws IOException
   {
     checkNotNull(packageId);
@@ -301,13 +303,13 @@ public class NpmHostedFacetImpl
 
   @Override
   @TransactionalDeleteBlob
-  public boolean deleteTarball(final NpmPackageId packageId, final String tarballName) {
+  public Set<String> deleteTarball(final NpmPackageId packageId, final String tarballName) {
     return deleteTarball(packageId, tarballName, true);
   }
 
   @Override
   @TransactionalDeleteBlob
-  public boolean deleteTarball(final NpmPackageId packageId, final String tarballName, final boolean deleteBlob) {
+  public Set<String> deleteTarball(final NpmPackageId packageId, final String tarballName, final boolean deleteBlob) {
     checkNotNull(packageId);
     checkNotNull(tarballName);
     StorageTx tx = UnitOfWork.currentTx();
@@ -315,13 +317,12 @@ public class NpmHostedFacetImpl
 
     Asset tarballAsset = NpmFacetUtils.findTarballAsset(tx, bucket, packageId, tarballName);
     if (tarballAsset == null) {
-      return false;
+      return Collections.emptySet();
     }
     Component tarballComponent = tx.findComponentInBucket(tarballAsset.componentId(), bucket);
     if (tarballComponent == null) {
-      return false;
+      return Collections.emptySet();
     }
-    tx.deleteComponent(tarballComponent, deleteBlob);
-    return true;
+    return tx.deleteComponent(tarballComponent, deleteBlob);
   }
 }

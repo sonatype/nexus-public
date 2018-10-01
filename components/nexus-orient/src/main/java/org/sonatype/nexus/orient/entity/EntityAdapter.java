@@ -498,7 +498,7 @@ public abstract class EntityAdapter<T extends Entity>
   /**
    * Override this method to enable conflict resolution for entities managed by this adapter.
    *
-   * @since 3.next
+   * @since 3.14
    */
   public boolean resolveConflicts() {
     return false;
@@ -509,7 +509,7 @@ public abstract class EntityAdapter<T extends Entity>
    *
    * @return {@link ConflictState#MERGE} if this results in further changes to {@code changeRecord}
    *
-   * @since 3.next
+   * @since 3.14
    */
   public ConflictState resolve(final ODocument storedRecord, final ODocument changeRecord) {
     return deconflictSteps.stream()
@@ -522,7 +522,7 @@ public abstract class EntityAdapter<T extends Entity>
   /**
    * Does one last round of comparison between the (hopefully) deconflicted records.
    *
-   * @since 3.next
+   * @since 3.14
    */
   protected ConflictState compare(final ODocument storedRecord, final ODocument changeRecord) {
     for (Entry<String, Object> property : storedRecord) {

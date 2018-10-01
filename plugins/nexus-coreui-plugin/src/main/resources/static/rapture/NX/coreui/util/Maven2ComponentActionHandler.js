@@ -15,7 +15,7 @@
 /**
  * Maven2 Component Details Provider.
  *
- * @since 3.next
+ * @since 3.14
  */
 Ext.define('NX.coreui.util.Maven2ComponentActionHandler', {
   alias: 'nx-coreui-maven2-component-action-handler',

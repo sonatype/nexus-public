@@ -27,7 +27,7 @@ import static org.sonatype.nexus.pax.exam.TestCounters.nextInstallDirectory;
  *
  * Uses {@link TestCounters} to track a sequence of numeric directories, one per NXRM installation.
  *
- * @since 3.next
+ * @since 3.14
  */
 public class NexusPaxExamTestFactory
     implements TestContainerFactory

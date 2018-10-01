@@ -26,7 +26,7 @@ import javax.annotation.Nullable;
  * If the original thread takes too long then one of the waiting threads may be woken up to repeat the request.
  * Further threads may be woken up if that thread takes too long, with each wakeup staggered by the same timeout.
  *
- * @since 3.next
+ * @since 3.14
  */
 public interface Cooperation
 {

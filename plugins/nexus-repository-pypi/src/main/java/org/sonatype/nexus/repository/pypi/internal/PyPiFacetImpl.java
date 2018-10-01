@@ -49,7 +49,7 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.normaliz
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
 /**
- * @since 3.next
+ * @since 3.14
  */
 @Named
 public class PyPiFacetImpl

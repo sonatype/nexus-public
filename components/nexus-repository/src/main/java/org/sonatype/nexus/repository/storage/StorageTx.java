@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -149,7 +150,7 @@ public interface StorageTx
    * in this same TX, if any. The returned {@link Iterable} may throw {@link RuntimeException} if timeout to
    * receive new elements is breached.
    *
-   * @since 3.next
+   * @since 3.14
    * 
    * @see OrientAsyncHelper
    */
@@ -362,18 +363,20 @@ public interface StorageTx
 
   /**
    * Deletes an existing component and all constituent assets.
+   * @return set of asset names that were removed
    */
-  void deleteComponent(Component component);
+  Set<String> deleteComponent(Component component);
 
   /**
    * Deletes an existing component, all constituent assets, and maybe requests deletion of the asset blobs.
    *
    * @param component to be deleted
    * @param deleteBlobs should asset blob deletion be requested
+   * @return set of asset names that were removed
    *
    * @since 3.9
    */
-  void deleteComponent(Component component, boolean deleteBlobs);
+  Set<String> deleteComponent(Component component, boolean deleteBlobs);
 
   /**
    * Deletes an existing asset and requests the blob to be deleted.

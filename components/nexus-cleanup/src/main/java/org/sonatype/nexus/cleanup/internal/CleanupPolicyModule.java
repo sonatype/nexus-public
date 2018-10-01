@@ -22,7 +22,7 @@ import com.google.inject.AbstractModule;
 /**
  * Cleanup policy module
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named
 public class CleanupPolicyModule

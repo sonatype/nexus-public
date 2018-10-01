@@ -32,7 +32,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 /**
  * Instantiates the cleanup task on system startup if it does not already exist
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named
 @Singleton

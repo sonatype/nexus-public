@@ -20,7 +20,7 @@ import static org.elasticsearch.index.query.QueryBuilders.rangeQuery;
 /**
  * Appends criteria for less than a given time.
  * 
- * @since 3.next
+ * @since 3.14
  */
 public abstract class LessThanTimeCriteriaAppender
   implements CriteriaAppender

@@ -21,7 +21,7 @@ import org.sonatype.nexus.common.log.LoggerLevel;
 /**
  * Configures S3 loggers.
  *
- * @since 3.next
+ * @since 3.14
  */
 @Singleton
 @Named

@@ -115,14 +115,14 @@ public interface SearchService
   /**
    * Search component metadata and browse results with content selectors applied.
    *
-   * @since 3.next
+   * @since 3.14
    */
   Iterable<SearchHit> browse(QueryBuilder query);
 
   /**
    * Search component metadata and browse results (paged) in selected repositories
    *
-   * @since 3.next
+   * @since 3.14
    */
   SearchResponse searchUnrestrictedInRepos(final QueryBuilder query,
                                            @Nullable final List<SortBuilder> sort,

@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * {@link BlobStoreConfiguration} updated event.
  *
- * @since 3.next
+ * @since 3.14
  */
 public class BlobStoreConfigurationUpdatedEvent
     extends EntityUpdatedEvent

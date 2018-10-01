@@ -15,7 +15,7 @@
 /**
  * Cleanup Policy feature panel.
  *
- * @since 3.next
+ * @since 3.14
  */
 Ext.define('NX.coreui.view.cleanuppolicy.CleanupPolicyFeature', {
   extend: 'NX.view.drilldown.Drilldown',

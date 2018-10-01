@@ -34,7 +34,7 @@ import static org.sonatype.nexus.orient.entity.ConflictState.MERGE;
 /**
  * Provides re-usable generic deconfliction methods.
  *
- * @since 3.next
+ * @since 3.14
  */
 public abstract class DeconflictStepSupport<T extends Entity>
     extends ComponentSupport

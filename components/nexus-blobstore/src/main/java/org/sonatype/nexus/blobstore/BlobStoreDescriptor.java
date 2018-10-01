@@ -41,7 +41,7 @@ public interface BlobStoreDescriptor
   /**
    * @return true if the blob store can be modified after creating.
    *
-   * @since 3.next
+   * @since 3.14
    */
   default boolean isModifiable() {
     return false;
@@ -50,7 +50,7 @@ public interface BlobStoreDescriptor
   /**
    * Validate configuration.
    *
-   * @since 3.next
+   * @since 3.14
    */
   default void validateConfig(BlobStoreConfiguration config) {
   }
@@ -58,7 +58,7 @@ public interface BlobStoreDescriptor
   /**
    * @return true if the blob store type is enabled.
    *
-   * @since 3.next
+   * @since 3.14
    */
   default boolean isEnabled() {
     return true;
@@ -67,7 +67,7 @@ public interface BlobStoreDescriptor
   /**
    * @return true if the configuration has a dependency on another blobstore with the given name
    *
-   * @since 3.next
+   * @since 3.14
    */
   default boolean configHasDependencyOn(BlobStoreConfiguration config, String blobStoreName) {
     return false;

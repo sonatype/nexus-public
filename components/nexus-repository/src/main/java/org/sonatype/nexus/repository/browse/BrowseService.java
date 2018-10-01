@@ -46,7 +46,7 @@ public interface BrowseService
    * Returns a {@link BrowseResult} of assets for the specified component. Note that the Repository passed in is not
    * necessarily the Repository where the component resides (in the case of a group Repository).
    *
-   * @since 3.next
+   * @since 3.14
    */
   BrowseResult<Asset> browseComponentAssets(final Repository repository, final Component component);
 

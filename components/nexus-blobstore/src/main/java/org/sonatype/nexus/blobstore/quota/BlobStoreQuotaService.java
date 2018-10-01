@@ -17,7 +17,7 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 /**
  * For a {@link BlobStore}, checks it usage against its quotas
  *
- * @since 3.next
+ * @since 3.14
  */
 @FunctionalInterface
 public interface BlobStoreQuotaService

@@ -35,7 +35,7 @@ import static java.lang.Boolean.TRUE;
 /**
  * {@link CompletableFuture} that has various features added to help with cooperation.
  *
- * @since 3.next
+ * @since 3.14
  */
 public class CooperatingFuture<T>
     extends CompletableFuture<T>

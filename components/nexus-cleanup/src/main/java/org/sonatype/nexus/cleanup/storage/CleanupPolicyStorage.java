@@ -19,7 +19,7 @@ import javax.annotation.Nullable;
 import org.sonatype.goodies.lifecycle.Lifecycle;
 
 /**
- * @since 3.next
+ * @since 3.14
  */
 public interface CleanupPolicyStorage
     extends Lifecycle

@@ -16,7 +16,7 @@ import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobDataSupport;
 
 /**
- * @since 3.next
+ * @since 3.14
  */
 public class PyPiRestoreBlobData
     extends RestoreBlobDataSupport

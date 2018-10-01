@@ -76,7 +76,7 @@ import static org.sonatype.nexus.cleanup.storage.CleanupPolicyXO.toCleanupPolicy
 /**
  * Cleanup policies {@link DirectComponent}.
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named
 @Singleton

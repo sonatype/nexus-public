@@ -19,7 +19,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 /**
  * Represents a specific step in deconflicting differences between entity records.
  *
- * @since 3.next
+ * @since 3.14
  */
 public interface DeconflictStep<T extends Entity>
 {

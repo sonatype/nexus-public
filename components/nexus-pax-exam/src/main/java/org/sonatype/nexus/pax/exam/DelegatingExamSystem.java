@@ -23,7 +23,7 @@ import org.ops4j.pax.exam.TestProbeBuilder;
 /**
  * Simple delegating {@link ExamSystem}.
  *
- * @since 3.next
+ * @since 3.14
  */
 public class DelegatingExamSystem
     implements ExamSystem

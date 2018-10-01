@@ -59,7 +59,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 /**
  * A {@link BlobStore} consisting of other blob stores.
  *
- * @since 3.next
+ * @since 3.14
  */
 @Named(BlobStoreGroup.TYPE)
 public class BlobStoreGroup
@@ -358,7 +358,7 @@ public class BlobStoreGroup
   /**
    * Functional interface for caller delegation of BlobStore creation
    *
-   * @since 3.next
+   * @since 3.14
    */
   @FunctionalInterface
   private interface CreateBlobFunction {

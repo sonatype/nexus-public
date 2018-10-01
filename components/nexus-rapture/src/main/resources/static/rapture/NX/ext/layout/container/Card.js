@@ -16,7 +16,7 @@
  * **{@link Ext.layout.container.Card}** override the setActiveItem method to allow for animation when switching items.
  * To accomplish this we needed to copy the full method from the ExtJS framework and then make changes.
  *
- * @since 3.next
+ * @since 3.14
  */
 Ext.define('NX.ext.layout.container.Card', {
   override: 'Ext.layout.container.Card',

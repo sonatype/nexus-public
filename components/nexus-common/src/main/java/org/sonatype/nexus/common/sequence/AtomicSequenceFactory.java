@@ -17,7 +17,7 @@ import java.util.function.LongSupplier;
 /**
  * Supplies {@link AtomicSequence}s.
  *
- * @since 3.next
+ * @since 3.14
  */
 public interface AtomicSequenceFactory
 {

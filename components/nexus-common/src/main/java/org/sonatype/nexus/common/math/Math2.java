@@ -18,7 +18,7 @@ import static java.lang.Math.max;
 /**
  * Math helpers.
  *
- * @since 3.next
+ * @since 3.14
  */
 public final class Math2
 {

@@ -15,7 +15,7 @@
 /**
  * Cleanup Policies controller.
  *
- * @since 3.next
+ * @since 3.14
  */
 Ext.define('NX.coreui.controller.CleanupPolicies', {
   extend: 'NX.controller.Drilldown',

@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.storage.Component;
 /**
  * Finds components to be cleaned up.
  * 
- * @since 3.next
+ * @since 3.14
  */
 public interface CleanupComponentBrowse
 {

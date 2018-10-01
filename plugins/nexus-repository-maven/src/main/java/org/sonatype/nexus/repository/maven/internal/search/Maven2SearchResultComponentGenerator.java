@@ -34,7 +34,7 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.VERSION;
 
 /**
- * @since 3.next
+ * @since 3.14
  */
 @Singleton
 @Named(Maven2Format.NAME)

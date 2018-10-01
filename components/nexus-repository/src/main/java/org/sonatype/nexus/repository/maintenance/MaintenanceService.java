@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.maintenance;
 
+import java.util.Set;
+
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
@@ -25,11 +27,13 @@ public interface MaintenanceService
 {
   /**
    * Delete an asset in the specified repository.
+   * @return Set of asset names that were removed
    */
-  void deleteAsset(Repository repository, Asset asset);
+  Set<String> deleteAsset(Repository repository, Asset asset);
 
   /**
    * Delete a component in the specified repository.
+   * @return Set of asset names that were removed
    */
-  void deleteComponent(Repository repository, Component component);
+  Set<String> deleteComponent(Repository repository, Component component);
 }

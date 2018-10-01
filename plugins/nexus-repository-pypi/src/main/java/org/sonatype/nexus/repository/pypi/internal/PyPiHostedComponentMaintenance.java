@@ -12,6 +12,10 @@
  */
 package org.sonatype.nexus.repository.pypi.internal;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.EntityId;
@@ -38,23 +42,24 @@ public class PyPiHostedComponentMaintenance
    * Deletes the asset. If the associated component has no additional assets, then the component is also deleted.
    */
   @TransactionalDeleteBlob
-  protected void deleteAssetTx(final EntityId assetId, final boolean deleteBlob) {
+  protected Set<String> deleteAssetTx(final EntityId assetId, final boolean deleteBlob) {
     StorageTx tx = UnitOfWork.currentTx();
     final Bucket bucket = tx.findBucket(getRepository());
     final Asset asset = tx.findAsset(assetId, bucket);
     if (asset == null) {
-      return;
+      return Collections.emptySet();
     }
-    super.deleteAssetTx(assetId, deleteBlob);
+    Set<String> deletedAssets = new HashSet<>();
+    deletedAssets.addAll(super.deleteAssetTx(assetId, deleteBlob));
 
     final EntityId componentId = asset.componentId();
-    if (componentId == null) {
-      return;
+    if (componentId != null) {
+      final Component component = tx.findComponentInBucket(componentId, bucket);
+      if (component != null && !tx.browseAssets(component).iterator().hasNext()) {
+        deletedAssets.addAll(deleteComponentTx(componentId, deleteBlob));
+      }
     }
-    final Component component = tx.findComponentInBucket(componentId, bucket);
-    if (component == null || tx.browseAssets(component).iterator().hasNext()) {
-      return;
-    }
-    deleteComponentTx(componentId, deleteBlob);
+
+    return deletedAssets;
   }
 }

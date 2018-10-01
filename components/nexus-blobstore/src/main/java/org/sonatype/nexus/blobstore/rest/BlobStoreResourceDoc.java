@@ -18,7 +18,7 @@ import io.swagger.annotations.ApiOperation;
 /**
  * REST facade for {@link BlobStoreResource}
  *
- * @since 3.next
+ * @since 3.14
  */
 @Api(value = "Blob Store")
 public interface BlobStoreResourceDoc
