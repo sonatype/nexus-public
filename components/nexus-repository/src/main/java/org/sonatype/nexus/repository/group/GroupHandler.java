@@ -37,6 +37,8 @@ import static java.util.Collections.unmodifiableSet;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
 
+import org.apache.shiro.authz.AuthorizationException;
+
 /**
  * Group handler.
  *
@@ -129,7 +131,7 @@ public class GroupHandler
       dispatched.add(member);
 
       final ViewFacet view = member.facet(ViewFacet.class);
-      final Response response = view.dispatch(request, context);
+      final Response response = dispatchWithSafeFilterByAuth(view, request, context);
       log.trace("Member {} response {}", member, response.getStatus());
       if (isValidResponse(response)) {
         return response;
@@ -178,7 +180,7 @@ public class GroupHandler
       dispatched.add(member);
 
       final ViewFacet view = member.facet(ViewFacet.class);
-      final Response response = view.dispatch(request, context);
+      final Response response = dispatchWithSafeFilterByAuth(view, request, context);
       log.trace("Member {} response {}", member, response.getStatus());
 
       responses.put(member, response);
@@ -186,6 +188,23 @@ public class GroupHandler
     return responses;
   }
 
+  /**
+   * Returns response code for nested repository or NotFound for filtered by AuthorizationException
+   */
+  protected Response dispatchWithSafeFilterByAuth(@Nonnull final ViewFacet view,
+                                                  @Nonnull final Request request,
+                                                  @Nonnull final Context context)
+    throws Exception
+  {
+    try {
+      return view.dispatch(request, context);
+
+    } catch (AuthorizationException e) {
+
+      log.trace("Filtered by auth for path={}", request.getPath());
+      return notFoundResponse(context);
+    }
+  }
 
   /**
    * Returns standard 404 with no message. Override for format specific messaging.

@@ -37,6 +37,8 @@ public class SecurityHandler
   @VisibleForTesting
   static final String AUTHORIZED_KEY = "security.authorized";
 
+  private final boolean AUTHORIZE_ALWAYS = true;
+
   @Nonnull
   @Override
   public Response handle(@Nonnull final Context context) throws Exception {
@@ -44,7 +46,10 @@ public class SecurityHandler
 
     //we employ the model that one security check per request is all that is necessary, if this handler is in a nested
     //repository (because this is a group repository), there is no need to check authz again
-    if (context.getAttributes().get(AUTHORIZED_KEY) == null) {
+
+    //Optional: Implements exclusive rules by auth validation for all nested repositories
+
+    if (AUTHORIZE_ALWAYS || context.getAttributes().get(AUTHORIZED_KEY) == null) {
       securityFacet.ensurePermitted(context.getRequest());
       context.getAttributes().set(AUTHORIZED_KEY, true);
     }
