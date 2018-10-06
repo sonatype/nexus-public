@@ -68,7 +68,7 @@ class MultipartUploaderTest
       def chunks = []
       while (true) {
         chunks << multipartUploader.readChunk(input)
-        if (chunks[-1] == null) {
+        if (chunks[-1].available() == 0) {
           break
         }
       }
@@ -79,10 +79,24 @@ class MultipartUploaderTest
 
     where:
       inputSize || expectedChunkSizes
-      0         || [null]
-      99        || [99, null]
-      100       || [100, null]
-      101       || [100, 1, null]
-      500       || [100, 100, 100, 100, 100, null]
+      0         || [0]
+      99        || [99, 0]
+      100       || [100, 0]
+      101       || [100, 1, 0]
+      500       || [100, 100, 100, 100, 100, 0]
+  }
+
+  def 'upload uses putObject for small uploads'() {
+    given: 'A multipart uploader'
+      MultipartUploader multipartUploader = new MultipartUploader(100)
+      AmazonS3 s3 = Mock()
+
+    when: 'an upload is started'
+      def input = new ByteArrayInputStream(new byte[50])
+      multipartUploader.upload(s3, 'bucketName', 'key', input)
+
+    then: 'the putObject method is called'
+      1 * s3.putObject(_, _, _, _)
+      0 * s3.initiateMultipartUpload(_)
   }
 }
