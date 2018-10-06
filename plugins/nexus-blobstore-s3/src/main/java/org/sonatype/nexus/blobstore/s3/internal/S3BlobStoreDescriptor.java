@@ -20,6 +20,7 @@ import javax.inject.Named;
 import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
+import org.sonatype.nexus.formfields.CheckboxFormField;
 import org.sonatype.nexus.formfields.ComboboxFormField;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.NumberTextFormField;
@@ -96,6 +97,12 @@ public class S3BlobStoreDescriptor
 
     @DefaultMessage("An API signature version which may be required for third party object stores using the S3 API")
     String signerTypeHelp();
+
+    @DefaultMessage("Configures the client to use path-style access")
+    String forcePathStyleLabel();
+
+    @DefaultMessage("Setting this flag will result in path-style access being used for all requests")
+    String forcePathStyleHelp();
   }
 
   private static final Messages messages = I18N.create(Messages.class);
@@ -109,6 +116,7 @@ public class S3BlobStoreDescriptor
   private final FormField endpoint;
   private final FormField expiration;
   private final FormField signerType;
+  private final FormField forcePathStyle;
 
   public S3BlobStoreDescriptor() {
     this.bucket = new StringTextFormField(
@@ -171,6 +179,12 @@ public class S3BlobStoreDescriptor
         AmazonS3Factory.DEFAULT
     ).withStoreApi("s3_S3.signertypes");
     this.signerType.getAttributes().put("sortProperty", "order");
+    this.forcePathStyle = new CheckboxFormField(
+        S3BlobStore.FORCE_PATH_STYLE_KEY,
+        messages.forcePathStyleLabel(),
+        messages.forcePathStyleHelp(),
+        FormField.OPTIONAL
+    );
   }
 
   @Override
@@ -181,6 +195,6 @@ public class S3BlobStoreDescriptor
   @Override
   public List<FormField> getFormFields() {
     return Arrays.asList(bucket, accessKeyId, secretAccessKey, sessionToken, assumeRole, region, endpoint,
-        expiration, signerType);
+        expiration, signerType, forcePathStyle);
   }
 }
