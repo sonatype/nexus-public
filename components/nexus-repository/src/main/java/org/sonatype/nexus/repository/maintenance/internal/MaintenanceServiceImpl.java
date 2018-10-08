@@ -60,9 +60,7 @@ public class MaintenanceServiceImpl
     checkNotNull(repository);
     checkNotNull(asset);
 
-    String repositoryFormat = repository.getFormat().toString();
-    if (!canDeleteAssetInRepository(repository, repositoryFormat, variableResolverAdapterManager.get(repositoryFormat),
-        asset)) {
+    if (!canDeleteAsset(repository, asset)) {
       throw new AuthorizationException();
     }
 
@@ -74,24 +72,39 @@ public class MaintenanceServiceImpl
     checkNotNull(repository);
     checkNotNull(component);
 
-    String repositoryFormat = repository.getFormat().toString();
-    VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(repositoryFormat);
-
-    StorageTx storageTx = repository.facet(StorageFacet.class).txSupplier().get();
-
-    try {
-      storageTx.begin();
-      for (Asset asset : storageTx.browseAssets(component)) {
-        if (!canDeleteAssetInRepository(repository, repositoryFormat, variableResolverAdapter, asset)) {
-          throw new AuthorizationException();
-        }
-      }
-    }
-    finally {
-      storageTx.close();
+    if (!canDeleteComponent(repository, component)) {
+      throw new AuthorizationException();
     }
 
     return getComponentMaintenanceFacet(repository).deleteComponent(component.getEntityMetadata().getId());
+  }
+
+  @Override
+  public boolean canDeleteComponent(final Repository repository, final Component component) {
+    boolean canDeleteComponent = true;
+    String repositoryFormat = repository.getFormat().toString();
+    VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(repositoryFormat);
+
+    try (StorageTx storageTx = repository.facet(StorageFacet.class).txSupplier().get()) {
+      storageTx.begin();
+      for (Asset asset : storageTx.browseAssets(component)) {
+        if (!canDeleteAssetInRepository(repository, repositoryFormat, variableResolverAdapter, asset)) {
+          canDeleteComponent = false;
+          break;
+        }
+      }
+    }
+
+    return canDeleteComponent;
+  }
+
+  @Override
+  public boolean canDeleteAsset(final Repository repository,
+                                final Asset asset)
+  {
+    String repositoryFormat = repository.getFormat().toString();
+    return canDeleteAssetInRepository(repository, repositoryFormat,
+        variableResolverAdapterManager.get(repositoryFormat), asset);
   }
 
   private boolean canDeleteAssetInRepository(final Repository repository,

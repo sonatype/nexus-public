@@ -20,6 +20,7 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.template.TemplateHelper;
@@ -130,11 +131,19 @@ public class PyPiHostedFacetImpl
       throws IOException
   {
     checkNotNull(filename);
+
+    TempBlob tempBlob = payload.getTempBlob();
+
+    // We extract the metadata from the blobs to get access to the original name of the package.
+    // Note that not all format/packaging types provide this information
+    // Names that contain an underscore are pre-normalized at build time when packaged as either wheel/egg format therefore
+    // the original name is lost. All other combinations at the time of testing contain the original name in the metadata.
+    Map<String, String> attributesFromBlob = PyPiInfoUtils.extractMetadata(tempBlob.getBlob().getInputStream());
+    attributes.putAll(attributesFromBlob);
+
     final String name = checkNotNull(attributes.get(P_NAME));
     final String version = checkNotNull(attributes.get(P_VERSION));
     final String normalizedName = normalizeName(name);
-
-    TempBlob tempBlob = payload.getTempBlob();
 
     if (attributes.containsKey("md5_digest")) {
       String expectedDigest = attributes.get("md5_digest");
@@ -165,7 +174,7 @@ public class PyPiHostedFacetImpl
       // See https://bugs.python.org/issue10510 for the "fixed" Python distutils issue.
       //
       component = tx.createComponent(bucket, getRepository().getFormat()).name(normalizedName).version(version);
-      component.formatAttributes().set(P_NAME, name);
+      setComponentName(component.formatAttributes(), name);
       component.formatAttributes().set(P_VERSION, version);
     }
 
@@ -183,6 +192,19 @@ public class PyPiHostedFacetImpl
     saveAsset(tx, asset, tempBlob, payload);
 
     return asset;
+  }
+
+  /**
+   * We supply all variants of the name. According to pep-503 '-', '.' and '_' are to be treated equally.
+   * This allows searching for this component to be found using any combination of the substituted characters.
+   * @param attributes associated with the component
+   * @param name of the component to be saved
+   */
+  private void setComponentName(final NestedAttributesMap attributes, final String name) {
+    attributes.set(P_NAME, name);
+    attributes.set("name_dash", normalizeName(name, "-"));
+    attributes.set("name_dot", normalizeName(name, "."));
+    attributes.set("name_underscore", normalizeName(name, "_"));
   }
 
   @Override

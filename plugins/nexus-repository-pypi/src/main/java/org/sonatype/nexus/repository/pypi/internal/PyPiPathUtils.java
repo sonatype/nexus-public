@@ -91,6 +91,13 @@ public final class PyPiPathUtils
   }
 
   /**
+   * Normalizes a name following the algorithm outlined in PEP 503.
+   */
+  static String normalizeName(final String name, final String replace) {
+    return name.replaceAll("[\\-\\_\\.]+", replace).toLowerCase(Locale.ENGLISH);
+  }
+
+  /**
    * @param path for an asset
    * @return {@code true} if the {@code path} represents an index
    *

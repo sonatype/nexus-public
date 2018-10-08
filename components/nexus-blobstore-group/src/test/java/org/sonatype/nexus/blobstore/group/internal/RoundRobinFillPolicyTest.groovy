@@ -15,6 +15,7 @@ package org.sonatype.nexus.blobstore.group.internal
 
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
+import org.sonatype.nexus.blobstore.group.BlobStoreGroup
 
 import spock.lang.Specification
 import spock.lang.Unroll

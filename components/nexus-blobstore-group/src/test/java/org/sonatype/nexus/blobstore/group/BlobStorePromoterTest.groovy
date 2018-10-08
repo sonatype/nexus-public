@@ -17,12 +17,11 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreException
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
 import org.sonatype.nexus.blobstore.file.FileBlobStore
-import org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup
 
 import spock.lang.Specification
 
-import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup.CONFIG_KEY
-import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup.MEMBERS_KEY
+import static BlobStoreGroup.CONFIG_KEY
+import static BlobStoreGroup.MEMBERS_KEY
 
 /**
  * Tests {@link BlobStorePromoter}

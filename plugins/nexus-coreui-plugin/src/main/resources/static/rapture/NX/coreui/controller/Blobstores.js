@@ -204,6 +204,7 @@ Ext.define('NX.coreui.controller.Blobstores', {
         list = me.getList();
 
     if (list) {
+      me.getStore('Blobstore').clearFilter();
       me.getStore('BlobstoreType').load();
       me.getStore('BlobStoreQuotaType').load();
     }

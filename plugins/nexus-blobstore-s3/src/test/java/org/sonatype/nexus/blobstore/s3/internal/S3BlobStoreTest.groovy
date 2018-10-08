@@ -79,26 +79,37 @@ class S3BlobStoreTest
     config.attributes = [s3: [bucket: 'mybucket']]
   }
 
-  def "Get blob"() {
+  @Unroll
+  def "Get blob with bucket prefix #prefix"() {
     given: 'A mocked S3 setup'
+      def cfg = new BlobStoreConfiguration()
+      cfg.attributes = [s3: [bucket: 'mybucket', prefix: prefix]]
+      def pathPrefix = prefix ? (prefix + "/") : ""
+
       def blobId = new BlobId('test')
       def attributesS3Object = mockS3Object(attributesContents)
       def contentS3Object = mockS3Object('hello world')
       1 * s3.doesBucketExist('mybucket') >> true
       1 * s3.getBucketLifecycleConfiguration('mybucket') >>
           blobStore.makeLifecycleConfiguration(null, S3BlobStore.DEFAULT_EXPIRATION_IN_DAYS)
-      1 * s3.doesObjectExist('mybucket', 'metadata.properties') >> false
-      1 * s3.doesObjectExist('mybucket', propertiesLocation(blobId)) >> true
-      1 * s3.getObject('mybucket', propertiesLocation(blobId)) >> attributesS3Object
-      1 * s3.getObject('mybucket', bytesLocation(blobId)) >> contentS3Object
+      1 * s3.doesObjectExist('mybucket', pathPrefix + 'metadata.properties') >> false
+      1 * s3.doesObjectExist('mybucket', pathPrefix + propertiesLocation(blobId)) >> true
+      1 * s3.getObject('mybucket', pathPrefix + propertiesLocation(blobId)) >> attributesS3Object
+      1 * s3.getObject('mybucket', pathPrefix + bytesLocation(blobId)) >> contentS3Object
 
     when: 'An existing blob is read'
-      blobStore.init(config)
+      blobStore.init(cfg)
       blobStore.doStart()
       def blob = blobStore.get(blobId)
 
     then: 'The contents are read from s3'
       blob.inputStream.text == 'hello world'
+
+    where:
+      prefix   | _
+      null     | _
+      ""       | _
+      "prefix" | _
   }
 
   def 'set lifecycle on pre-existing bucket if not present'() {
@@ -112,14 +123,19 @@ class S3BlobStoreTest
       1 * s3.setBucketLifecycleConfiguration('mybucket', !null)
   }
 
-  def 'soft delete successful'() {
+  @Unroll
+  def 'soft delete successful with bucket prefix #prefix'() {
     given: 'blob exists'
       def blobId = new BlobId('soft-delete-success')
-      blobStore.init(config)
+      def cfg = new BlobStoreConfiguration()
+      cfg.attributes = [s3: [bucket: 'mybucket', prefix: prefix]]
+      def pathPrefix = prefix ? (prefix + "/") : ""
+
+      blobStore.init(cfg)
       blobStore.doStart()
       def attributesS3Object = mockS3Object(attributesContents)
-      1 * s3.doesObjectExist('mybucket', propertiesLocation(blobId)) >> true
-      1 * s3.getObject('mybucket', propertiesLocation(blobId)) >> attributesS3Object
+      1 * s3.doesObjectExist('mybucket', pathPrefix + propertiesLocation(blobId)) >> true
+      1 * s3.getObject('mybucket', pathPrefix + propertiesLocation(blobId)) >> attributesS3Object
 
     when: 'blob is deleted'
       def deleted = blobStore.delete(blobId, 'successful test')
@@ -134,6 +150,12 @@ class S3BlobStoreTest
         assert args[0].getKey().endsWith(BLOB_ATTRIBUTE_SUFFIX) == true
         assert args[0].getTagging().getTagSet() == [S3BlobStore.DELETED_TAG]
       }
+
+    where:
+      prefix   | _
+      null     | _
+      ""       | _
+      "prefix" | _
   }
 
   def 'soft delete returns false when blob does not exist'() {

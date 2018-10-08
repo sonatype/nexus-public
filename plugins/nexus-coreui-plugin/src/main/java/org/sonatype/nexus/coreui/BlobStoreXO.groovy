@@ -59,4 +59,10 @@ class BlobStoreXO
   boolean inUse
 
   boolean promotable
+
+  /**
+   * the name of the group to which this blob store belongs, or null if not in a group
+   * @since 3.next
+   */
+  String groupName
 }

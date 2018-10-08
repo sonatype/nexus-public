@@ -21,6 +21,7 @@ import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
 import org.sonatype.nexus.formfields.ComboboxFormField;
+import org.sonatype.nexus.formfields.CheckboxFormField;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.NumberTextFormField;
 import org.sonatype.nexus.formfields.PasswordFormField;
@@ -48,6 +49,12 @@ public class S3BlobStoreDescriptor
 
     @DefaultMessage("S3 Bucket Name (must be between 3 and 63 characters long containing only lower-case characters, numbers, periods, and dashes)")
     String bucketHelp();
+
+    @DefaultMessage("Prefix")
+    String prefixLabel();
+
+    @DefaultMessage("S3 Path prefix")
+    String prefixHelp();
 
     @DefaultMessage("Access Key ID (Optional)")
     String accessKeyIdLabel();
@@ -96,11 +103,18 @@ public class S3BlobStoreDescriptor
 
     @DefaultMessage("An API signature version which may be required for third party object stores using the S3 API")
     String signerTypeHelp();
+
+    @DefaultMessage("Configures the client to use path-style access")
+    String forcePathStyleLabel();
+
+    @DefaultMessage("Setting this flag will result in path-style access being used for all requests")
+    String forcePathStyleHelp();
   }
 
   private static final Messages messages = I18N.create(Messages.class);
 
   private final FormField bucket;
+  private final FormField prefix;
   private final FormField accessKeyId;
   private final FormField secretAccessKey;
   private final FormField sessionToken;
@@ -109,6 +123,7 @@ public class S3BlobStoreDescriptor
   private final FormField endpoint;
   private final FormField expiration;
   private final FormField signerType;
+  private final FormField forcePathStyle;
 
   public S3BlobStoreDescriptor() {
     this.bucket = new StringTextFormField(
@@ -117,6 +132,12 @@ public class S3BlobStoreDescriptor
         messages.bucketHelp(),
         FormField.MANDATORY,
         S3BlobStore.BUCKET_REGEX
+    );
+    this.prefix = new StringTextFormField(
+        S3BlobStore.BUCKET_PREFIX,
+        messages.prefixLabel(),
+        messages.prefixHelp(),
+        FormField.OPTIONAL
     );
     this.accessKeyId = new StringTextFormField(
         S3BlobStore.ACCESS_KEY_ID_KEY,
@@ -171,6 +192,12 @@ public class S3BlobStoreDescriptor
         AmazonS3Factory.DEFAULT
     ).withStoreApi("s3_S3.signertypes");
     this.signerType.getAttributes().put("sortProperty", "order");
+    this.forcePathStyle = new CheckboxFormField(
+        S3BlobStore.FORCE_PATH_STYLE_KEY,
+        messages.forcePathStyleLabel(),
+        messages.forcePathStyleHelp(),
+        FormField.MANDATORY
+    ).withInitialValue(false);
   }
 
   @Override
@@ -180,7 +207,7 @@ public class S3BlobStoreDescriptor
 
   @Override
   public List<FormField> getFormFields() {
-    return Arrays.asList(bucket, accessKeyId, secretAccessKey, sessionToken, assumeRole, region, endpoint,
-        expiration, signerType);
+    return Arrays.asList(bucket, prefix, accessKeyId, secretAccessKey, sessionToken, assumeRole, region, endpoint,
+        expiration, signerType, forcePathStyle);
   }
 }

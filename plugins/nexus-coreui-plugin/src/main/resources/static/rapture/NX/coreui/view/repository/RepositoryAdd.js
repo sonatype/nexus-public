@@ -61,5 +61,19 @@ Ext.define('NX.coreui.view.repository.RepositoryAdd', {
       name: 'recipe',
       value: me.recipe.getId()
     });
+
+    // do not allow repositories to select blob stores that are assigned to a blob store group
+    var storage = me.down('nx-coreui-repository-storage-facet').down('combo');
+    if (storage && storage.name === 'attributes.storage.blobStoreName') {
+      storage.getStore().clearFilter(true);
+      storage.getStore().filter([
+        {
+          filterFn: function(item) {
+            var blobStore = item.data;
+            return !blobStore.groupName;
+          }
+        }
+      ]);
+    }
   }
 });

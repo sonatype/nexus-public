@@ -69,6 +69,12 @@
     </dependency>
 
     <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-blobstore-group</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.apache.karaf.bundle</groupId>
       <artifactId>org.apache.karaf.bundle.core</artifactId>
       <scope>provided</scope>

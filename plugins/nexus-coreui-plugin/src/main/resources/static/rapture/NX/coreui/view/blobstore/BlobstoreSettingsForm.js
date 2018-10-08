@@ -146,6 +146,34 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
           }
         }
         this.callParent(arguments);
+
+        if (type === 'group') {
+          me.filterGroupStore(values['name'], values);
+        }
+      }
+    });
+  },
+
+  /**
+   * @private
+   */
+  filterGroupStore: function(selectedBlobStoreName, values) {
+    var me = this,
+        members = me.down('nx-coreui-formfield-settingsfieldset').down('nx-itemselector'),
+        membersValue = values['property_members'];
+
+    if (!members || !membersValue || members.name !== 'property_members') {
+      return;
+    }
+
+    members.getStore().load({
+      params: {
+        filter: [{property: 'blobStoreName', value: selectedBlobStoreName}]
+      },
+      callback: function() {
+        members.suspendEvents();
+        members.setValue(membersValue);
+        members.resumeEvents();
       }
     });
   },

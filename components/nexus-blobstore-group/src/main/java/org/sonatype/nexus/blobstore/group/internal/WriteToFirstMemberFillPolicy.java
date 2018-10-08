@@ -20,6 +20,7 @@ import javax.inject.Named;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.BlobStore;
+import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 
 /**
  * {@link FillPolicy} that writes to first blobstore in group.

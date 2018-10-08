@@ -24,6 +24,10 @@ Ext.define('NX.coreui.view.component.ComponentDetails', {
 
   cls: 'nx-coreui-component-details',
 
+  requires: [
+    'NX.ext.button.Button'
+  ],
+
   /**
    * Currently shown component model.
    */
@@ -44,21 +48,21 @@ Ext.define('NX.coreui.view.component.ComponentDetails', {
         dock: 'bottom',
         items: [
           {
-            xtype: 'button',
+            xtype: 'nx-button',
             text: NX.I18n.get('ComponentDetails_Delete_Button'),
             glyph: 'xf056@FontAwesome' /* fa-minus-circle */,
             action: 'deleteComponent',
             hidden: true
           },
           {
-            xtype: 'button',
+            xtype: 'nx-button',
             text: NX.I18n.get('ComponentDetails_Browse_Snapshots_Button'),
             glyph: 'xf1c0@FontAwesome' /* fa-database */,
             action: 'browseComponent',
             hidden: true
           },
           {
-            xtype: 'button',
+            xtype: 'nx-button',
             text: NX.I18n.get('ComponentDetails_Analyze_Button'),
             glyph: 'xf085@FontAwesome' /* fa-gears */,
             action: 'analyzeApplication'

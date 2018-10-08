@@ -34,6 +34,7 @@ import org.eclipse.sisu.Mediator;
 import org.eclipse.sisu.inject.BeanLocator;
 import org.osgi.framework.BundleContext;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.reverse;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.OFF;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
@@ -52,6 +53,8 @@ public class NexusLifecycleManager
 {
   private static final Phase[] PHASES = Phase.values();
 
+  private final BeanLocator locator;
+
   private final Iterable<? extends BeanEntry<Named, Lifecycle>> lifecycles;
 
   private final Multimap<Phase, Lifecycle> components = HashMultimap.create();
@@ -62,6 +65,7 @@ public class NexusLifecycleManager
 
   @Inject
   public NexusLifecycleManager(final BeanLocator locator) {
+    this.locator = checkNotNull(locator);
     this.lifecycles = locator.locate(Key.get(Lifecycle.class, Named.class));
 
     locator.watch(Key.get(BundleContext.class), new BundleContextMediator(), this);
@@ -73,46 +77,50 @@ public class NexusLifecycleManager
   }
 
   @Override
-  public synchronized void to(final Phase targetPhase) throws Exception {
+  public void to(final Phase targetPhase) throws Exception {
+    synchronized (locator) {
 
-    final int target = targetPhase.ordinal();
-    int current = currentPhase.ordinal();
+      final int target = targetPhase.ordinal();
+      int current = currentPhase.ordinal();
 
-    // refresh index and start/stop components which appeared/disappeared since last index
-    if (current < target) {
-      reindex(targetPhase);
-    }
-    else {
-      reindex(currentPhase);
-    }
-
-    // moving forwards to later phase, start components in priority order
-    while (current < target) {
-      Phase nextPhase = PHASES[++current];
-      log.info("Start {}", nextPhase);
-      boolean propagateNonTaskErrors = !TASKS.equals(nextPhase);
-      for (BeanEntry<Named, Lifecycle> entry : cachedIndex.get(nextPhase)) {
-        startComponent(nextPhase, entry.getValue(), propagateNonTaskErrors);
+      // refresh index and start/stop components which appeared/disappeared since last index
+      if (current < target) {
+        reindex(targetPhase);
       }
-      currentPhase = nextPhase;
-    }
-
-    // rolling back to earlier phase, stop components in reverse priority order
-    while (current > target) {
-      Phase prevPhase = PHASES[--current];
-      log.info("Stop {}", currentPhase);
-      for (BeanEntry<Named, Lifecycle> entry : reverse(cachedIndex.get(currentPhase))) {
-        stopComponent(currentPhase, entry.getValue(), false);
+      else {
+        reindex(currentPhase);
       }
-      currentPhase = prevPhase;
+
+      // moving forwards to later phase, start components in priority order
+      while (current < target) {
+        Phase nextPhase = PHASES[++current];
+        log.info("Start {}", nextPhase);
+        boolean propagateNonTaskErrors = !TASKS.equals(nextPhase);
+        for (BeanEntry<Named, Lifecycle> entry : cachedIndex.get(nextPhase)) {
+          startComponent(nextPhase, entry.getValue(), propagateNonTaskErrors);
+        }
+        currentPhase = nextPhase;
+      }
+
+      // rolling back to earlier phase, stop components in reverse priority order
+      while (current > target) {
+        Phase prevPhase = PHASES[--current];
+        log.info("Stop {}", currentPhase);
+        for (BeanEntry<Named, Lifecycle> entry : reverse(cachedIndex.get(currentPhase))) {
+          stopComponent(currentPhase, entry.getValue(), false);
+        }
+        currentPhase = prevPhase;
+      }
     }
   }
 
   /**
    * Starts/stops components that have appeared/disappeared since the last change.
    */
-  public synchronized void sync() throws Exception {
-    reindex(currentPhase);
+  public void sync() throws Exception {
+    synchronized (locator) {
+      reindex(currentPhase);
+    }
   }
 
   /**
@@ -121,6 +129,9 @@ public class NexusLifecycleManager
    */
   private void reindex(final Phase targetPhase) throws Exception {
     ListMultimap<Phase, BeanEntry<Named, Lifecycle>> index = index(targetPhase);
+    if (index.equals(cachedIndex)) {
+      return; // nothing has changed
+    }
 
     // remove entries from current index that also exist in new index, start any new entries
     for (int p = 1; p <= currentPhase.ordinal(); p++) {

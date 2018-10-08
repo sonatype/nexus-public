@@ -19,7 +19,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreException
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics
 import org.sonatype.nexus.blobstore.group.BlobStorePromoter
-import org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup
+import org.sonatype.nexus.blobstore.group.BlobStoreGroup
 import org.sonatype.nexus.common.app.ApplicationDirectories
 import org.sonatype.nexus.repository.manager.RepositoryManager
 

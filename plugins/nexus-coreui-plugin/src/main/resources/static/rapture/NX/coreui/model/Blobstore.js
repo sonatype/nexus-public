@@ -34,6 +34,7 @@ Ext.define('NX.coreui.model.Blobstore', {
     {name: 'repositoryUseCount', type: 'int'},
     {name: 'blobStoreUseCount', type: 'int'},
     {name: 'inUse', type: 'boolean'},
-    {name: 'promotable', type: 'boolean'}
+    {name: 'promotable', type: 'boolean'},
+    {name: 'groupName', type: 'string'}
   ]
 });

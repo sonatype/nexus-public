@@ -10,27 +10,29 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.group.internal;
-
-import java.util.Map;
-
-import javax.annotation.Nullable;
-
-import org.sonatype.nexus.blobstore.api.BlobStore;
-import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
+/*global Ext, NX*/
 
 /**
- * Chooses a group member to store a new blob.
+ * A button with custom behaviour
  *
- * @since 3.14
+ * @since 3.next
  */
-public interface FillPolicy {
+Ext.define('NX.ext.button.Button', {
+  extend: 'Ext.button.Button',
+  alias: 'widget.nx-button',
 
-  String getName();
+  disableWithTooltip: function(tooltipText) {
+    this.disable();
+    Ext.tip.QuickTipManager.register({
+      showDelay: 50,
+      target: this.getId(),
+      text  : tooltipText,
+      trackMouse: true
+    });
 
-  /**
-   * Choose the blob store group member to write a new blob to.
-   */
-  @Nullable
-  BlobStore chooseBlobStore(BlobStoreGroup blobStoreGroup, Map<String, String> headers);
-}
+    // hack to workaround ExtJS bug which prevents tooltips on disabled buttons
+    // See https://www.sencha.com/forum/showthread.php?310184-Show-Tooltip-on-disabled-Button
+    this.btnEl.dom.style.pointerEvents = "all";
+  }
+
+});

@@ -66,6 +66,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     {ref: 'componentAssetInfo', selector: 'nx-coreui-component-componentassetinfo'},
     {ref: 'deleteComponentButton', selector: 'nx-coreui-component-componentinfo button[action=deleteComponent]'},
     {ref: 'deleteAssetButton', selector: 'nx-coreui-component-componentassetinfo button[action=deleteAsset]'},
+    {ref: 'analyzeApplicationButton', selector: 'nx-coreui-component-componentinfo button[action=analyzeApplication]'},
     {ref: 'analyzeApplicationWindow', selector: 'nx-coreui-component-analyze-window'},
     {ref: 'rootContainer', selector: 'nx-main'}
   ],
@@ -107,7 +108,8 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
           refresh: me.loadStores
         },
         '#State': {
-          changed: me.stateChanged
+          changed: me.stateChanged,
+          userchanged: me.loadStores
         }
       },
       component: {
@@ -376,8 +378,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     var me = this,
         containerView = me.getComponentAssetTree(),
         componentInfoPanel,
-        assetInfoPanel,
-        currentRepository;
+        assetInfoPanel;
 
     me.removeSideContent();
     me.bookmarkNode(node);
@@ -389,14 +390,14 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
         flex: 2
       }));
       componentInfoPanel.getEl() && componentInfoPanel.getEl().mask(NX.I18n.get('ComponentDetails_Loading_Mask'));
-      currentRepository = me.getCurrentRepository();
-      if (currentRepository && currentRepository.get('type') !== 'group') {
-        me.getDeleteComponentButton().show();
-      }
       NX.direct.coreui_Component.readComponent(node.get('componentId'), me.getCurrentRepository().get('name'), function(response) {
+        var componentModel;
         me.maybeUnmask(componentInfoPanel);
         if (me.isPanelVisible(componentInfoPanel) && me.isResponseSuccessful(response)) {
-          componentInfoPanel.setModel(me.getComponentModel().create(response.data));
+          componentModel = me.getComponentModel().create(response.data);
+          componentInfoPanel.setModel(componentModel);
+          me.updateDeleteComponentButton(me.getCurrentRepository(), componentModel);
+          me.updateAnalyzeButton(componentModel);
          }
       });
     }
@@ -406,10 +407,6 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
         iconCls: 'nx-icon-tree-asset-x16'
       }));
       assetInfoPanel.getEl() && assetInfoPanel.getEl().mask(NX.I18n.get('ComponentDetails_Loading_Mask'));
-      currentRepository = me.getCurrentRepository();
-      if (currentRepository && currentRepository.get('type') !== 'group') {
-        me.getDeleteAssetButton().show();
-      }
 
       NX.direct.coreui_Component.readAsset(node.get('assetId'), me.getCurrentRepository().get('name'), function(response) {
         if (me.isPanelVisible(assetInfoPanel) && me.isResponseSuccessful(response)) {
@@ -429,6 +426,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
         me.maybeUnmask(assetInfoPanel);
         if (me.isPanelVisible(assetInfoPanel) && me.isResponseSuccessful(response)) {
           assetInfoPanel.setModel(asset, me.getComponentModel().create(response.data));
+          me.updateDeleteAssetButton(me.getCurrentRepository(), asset);
         }
       });
     }
@@ -436,6 +434,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
       me.maybeUnmask(assetInfoPanel);
       if (me.isPanelVisible(assetInfoPanel)) {
         assetInfoPanel.setModel(asset, me.getComponentModel().create({}));
+        me.updateDeleteAssetButton(me.getCurrentRepository(), asset);
       }
     }
   },

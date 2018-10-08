@@ -23,21 +23,22 @@ Ext.define('NX.coreui.view.component.ComponentInfo', {
   cls: 'nx-coreui-component-componentinfo',
   requires: [
     'NX.I18n',
-    'NX.coreui.util.RepositoryUrls'
+    'NX.coreui.util.RepositoryUrls',
+    'NX.ext.button.Button'
   ],
   dockedItems: {
     xtype: 'nx-actions',
     dock: 'top',
     items: [
       {
-        xtype: 'button',
+        xtype: 'nx-button',
         text: NX.I18n.get('ComponentDetails_Delete_Button'),
         glyph: 'xf056@FontAwesome' /* fa-minus-circle */,
         action: 'deleteComponent',
         hidden: true
       },
       {
-        xtype: 'button',
+        xtype: 'nx-button',
         text: NX.I18n.get('ComponentDetails_Analyze_Button'),
         glyph: 'xf085@FontAwesome' /* fa-gears */,
         action: 'analyzeApplication'

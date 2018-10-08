@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.coreui
 
+import javax.annotation.Nullable
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
@@ -24,11 +25,13 @@ import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreException
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
+import org.sonatype.nexus.blobstore.group.BlobStoreGroup
 import org.sonatype.nexus.blobstore.group.BlobStorePromoter
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuota
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport
 import org.sonatype.nexus.common.app.ApplicationDirectories
 import org.sonatype.nexus.extdirect.DirectComponentSupport
+import org.sonatype.nexus.extdirect.model.StoreLoadParameters
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.validation.Validate
 import org.sonatype.nexus.validation.group.Create
@@ -77,15 +80,31 @@ class BlobStoreComponent
   @ExceptionMetered
   @RequiresPermissions('nexus:blobstores:read')
   List<BlobStoreXO> read() {
-    blobStoreManager.browse().collect { asBlobStoreXO(it) }
+    def blobStores = blobStoreManager.browse()
+    def blobStoreGroups = blobStores.findAll { it.blobStoreConfiguration.type == BlobStoreGroup.TYPE }.
+        collect { it as BlobStoreGroup }
+
+    blobStores.collect { asBlobStoreXO(it, blobStoreGroups) }
   }
 
   @DirectMethod
   @Timed
   @ExceptionMetered
   @RequiresPermissions('nexus:blobstores:read')
-  List<BlobStoreXO> readGroupable() {
-    blobStoreManager.browse().findAll{ it.isGroupable() }.collect { asBlobStoreXO(it) }
+  List<BlobStoreXO> readGroupable(final @Nullable StoreLoadParameters parameters) {
+    def blobStores = blobStoreManager.browse()
+    def blobStoreGroups = blobStores.findAll { it.blobStoreConfiguration.type == BlobStoreGroup.TYPE }.
+        collect { it as BlobStoreGroup }
+    def selectedBlobStoreName = parameters.getFilter('blobStoreName')
+    def otherGroups = blobStoreGroups.findAll {
+      !selectedBlobStoreName || it.blobStoreConfiguration.name != selectedBlobStoreName
+    }
+
+    blobStores.findAll {
+      it.isGroupable() &&
+          !repositoryManager.browseForBlobStore(it.blobStoreConfiguration.name).any() &&
+          !otherGroups.any { group -> group.members.contains(it) }
+    }.collect { asBlobStoreXO(it) }
   }
 
   @DirectMethod
@@ -174,7 +193,7 @@ class BlobStoreComponent
     'on'.equalsIgnoreCase(value)  || '1'.equalsIgnoreCase(value))
   }
 
-  BlobStoreXO asBlobStoreXO(final BlobStore blobStore) {
+  BlobStoreXO asBlobStoreXO(final BlobStore blobStore, final Collection<BlobStoreGroup> blobStoreGroups = []) {
     Map quotaAttributes = blobStore.getBlobStoreConfiguration().attributes.get(BlobStoreQuotaSupport.ROOT_KEY)
 
     return new BlobStoreXO(
@@ -191,7 +210,8 @@ class BlobStoreComponent
         promotable: blobStoreManager.isPromotable(blobStore),
         isQuotaEnabled: quotaAttributes != null,
         quotaType: quotaAttributes?.get(BlobStoreQuotaSupport.TYPE_KEY),
-        quotaLimit: (Long) (quotaAttributes?.getOrDefault(BlobStoreQuotaSupport.LIMIT_KEY, 0L) ?: 0L) / MILLION
+        quotaLimit: (Long) (quotaAttributes?.getOrDefault(BlobStoreQuotaSupport.LIMIT_KEY, 0L) ?: 0L) / MILLION,
+        groupName: blobStoreGroups.find { it.members.contains(blobStore) }?.blobStoreConfiguration?.name
     )
   }
 

@@ -75,6 +75,12 @@ Ext.define('NX.coreui.app.PluginStrings', {
     ComponentDetails_Analyze_Success: 'Analysis in process. Email will be sent when report is ready.',
     ComponentDetails_Loading_Mask: 'Loading...',
 
+    ComponentUtils_Delete_Button_Unauthenticated: 'Please sign in first',
+    ComponentUtils_Delete_Asset_No_Permissions: 'You do not have permission to delete this asset',
+    ComponentUtils_Delete_Component_No_Permissions: 'You do not have permission to delete this component',
+
+    AnalyzeApplication_Button_Unauthenticated: 'Please sign in first',
+
     AnalyzeApplicationWindow_Title: 'Analyze Application',
     AnalyzeApplicationWindow_Form_Asset_FieldLabel: 'Application asset',
     AnalyzeApplicationWindow_Form_Asset_HelpText: 'Select the asset that contains the application',
@@ -94,7 +100,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     '<a href="http://links.sonatype.com/products/insight/ac/home" target="_blank" class="x-link">here</a>.</p>',
     AnalyzeApplicationWindow_Loading_Mask: 'Loading',
     AnalyzeApplicationWindow_No_Assets_Error_Title: 'Component has no application assets',
-    AnalyzeApplicationWindow_No_Assets_Error_Message: 'The component you are analyzing has no application assets, please select another component for analysis.',
+    AnalyzeApplicationWindow_No_Assets_Error_Message: 'This component has no application assets or you do not have read permission for any of it\'s application assets',
 
     HealthCheckInfo_Most_Popular_Version_Label: 'Most popular version',
     HealthCheckInfo_Age_Label: 'Age',

@@ -24,15 +24,19 @@ import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
+import org.sonatype.nexus.repository.internal.blobstore.BlobStoreConfigurationStore;
 import org.sonatype.nexus.repository.storage.StorageFacetImpl.Config;
+import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.security.ClientInfo;
 import org.sonatype.nexus.security.ClientInfoProvider;
+import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import com.google.common.io.ByteStreams;
 import org.junit.Before;
@@ -43,15 +47,19 @@ import org.mockito.Matchers;
 import org.mockito.Mock;
 
 import static com.google.common.hash.HashCode.fromString;
+import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 import static org.sonatype.nexus.repository.storage.StorageFacetConstants.STORAGE;
 
 /**
@@ -71,6 +79,9 @@ public class StorageFacetImplTest
 
   @Mock
   private BlobStoreManager blobStoreManager;
+
+  @Mock
+  private BlobStoreConfigurationStore blobStoreConfigurationStore;
 
   @Mock
   private BlobStoreConfiguration blobStoreConfiguration;
@@ -129,6 +140,9 @@ public class StorageFacetImplTest
   @Mock
   private ComponentFactory componentFactory;
 
+  @Mock
+  private ConstraintViolationFactory violationFactory;
+
   @Captor
   private ArgumentCaptor<Map<String, String>> mapArgumentCaptor;
 
@@ -140,7 +154,9 @@ public class StorageFacetImplTest
     config.blobStoreName = BLOB_STORE_NAME;
     when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
     when(blobStoreConfiguration.getName()).thenReturn(BLOB_STORE_NAME);
+    when(blobStoreConfiguration.getType()).thenReturn(FileBlobStore.TYPE);
     when(repository.facet(ConfigurationFacet.class)).thenReturn(configurationFacet);
+    when(repository.getType()).thenReturn(new HostedType());
     when(configurationFacet
         .readSection(any(Configuration.class), eq(STORAGE), eq(StorageFacetImpl.Config.class)))
         .thenReturn(config);
@@ -151,6 +167,7 @@ public class StorageFacetImplTest
     underTest = new StorageFacetImpl(
         nodeAccess,
         blobStoreManager,
+        blobStoreConfigurationStore,
         () -> databaseInstance,
         bucketEntityAdapter,
         componentEntityAdapter,
@@ -159,7 +176,8 @@ public class StorageFacetImplTest
         contentValidatorSelector,
         mimeRulesSourceSelector,
         storageFacetManager,
-        componentFactory);
+        componentFactory,
+        violationFactory);
     underTest.attach(repository);
   }
 
@@ -226,5 +244,19 @@ public class StorageFacetImplTest
       assertThat(mapArgumentCaptor.getValue(), hasEntry(BlobStore.CREATED_BY_HEADER, "jpicard"));
     }
     verify(blobStore).deleteHard(blobId);
+  }
+
+  @Test
+  public void blobStoreGroupMemberAsStorageCreatesConstraintViolation() throws Exception {
+    underTest.doConfigure(configuration);
+    when(blobStoreManager.get(BLOB_STORE_NAME)).thenReturn(blobStore);
+    BlobStoreConfiguration groupConfig = mock(BlobStoreConfiguration.class);
+    when(groupConfig.getName()).thenReturn("group1");
+    when(blobStoreConfigurationStore.findParents(BLOB_STORE_NAME)).thenReturn(singletonList(groupConfig));
+
+    underTest.validate(configuration);
+    verify(violationFactory, times(1)).createViolation(format("%s.%s.blobStoreName", P_ATTRIBUTES, STORAGE),
+        format("Blob Store '%s' is a member of Blob Store Groups: 'group1' and cannot be set as storage",
+            BLOB_STORE_NAME));
   }
 }

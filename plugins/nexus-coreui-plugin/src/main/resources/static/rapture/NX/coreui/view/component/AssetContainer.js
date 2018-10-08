@@ -21,7 +21,8 @@ Ext.define('NX.coreui.view.component.AssetContainer', {
   extend: 'Ext.Panel',
   alias: 'widget.nx-coreui-component-assetcontainer',
   requires: [
-    'NX.Icons'
+    'NX.Icons',
+    'NX.ext.button.Button'
   ],
 
   /**
@@ -42,7 +43,7 @@ Ext.define('NX.coreui.view.component.AssetContainer', {
         xtype: 'nx-actions',
         items: [
           {
-            xtype: 'button',
+            xtype: 'nx-button',
             text: NX.I18n.get('AssetInfo_Delete_Button'),
             glyph: 'xf056@FontAwesome' /* fa-minus-circle */,
             action: 'deleteAsset',

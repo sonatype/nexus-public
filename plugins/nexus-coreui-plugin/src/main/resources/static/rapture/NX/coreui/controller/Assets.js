@@ -176,6 +176,7 @@ Ext.define('NX.coreui.controller.Assets', {
 
     this.updateDeleteButtonVisibility();
     this.updateBrowseButtonVisibility();
+    this.updateAnalyzeButton(componentModel);
   },
 
   /**
@@ -210,45 +211,33 @@ Ext.define('NX.coreui.controller.Assets', {
    * @public
    */
   updateAssetContainer: function (gridView, td, cellIndex, assetModel) {
-    this.getAssetContainer().refreshInfo(assetModel);
-    this.bindDeleteAssetButton(this.getDeleteAssetButton());
+    var me = this;
+
+    me.getAssetContainer().refreshInfo(assetModel);
+
+    me.getRepository(assetModel.get('repositoryName'), function (repository) {
+      me.updateDeleteAssetButton(repository, assetModel);
+    });
   },
 
   /**
-   * Enable 'Delete' when user has 'delete' permission. Button will be hidden for group repositories.
+   * Get the current repository
    *
-   * @private
-   */
-  bindDeleteAssetButton: function(button) {
-    this.bindButton(button, this.getAssetContainer().assetModel.get('repositoryName'));
-  },
-
-  /**
-   * Bind/Hide delete button.
-   *
-   * @param button to be shown/hidden
    * @param repositoryName name of repository
+   * @param callback function which will get passed the repository
    *
    * @private
    */
-  bindButton: function(button, repositoryName) {
+  getRepository: function(repositoryName, callback) {
     var repositoryStore = this.repositoryStore,
-        repository,
-        showButtonFunction = function(repository) {
-          if (repository && repository.get('type') !== 'group') {
-            button.show();
-          }
-        };
+        repository = repositoryStore.getAt(repositoryStore.find('name', repositoryName));
 
-    //check for repositoryName in RepositoryStore and conditionally hide button for groups
-    button.hide();
-    repository = repositoryStore.getAt(repositoryStore.find('name', repositoryName));
     if (repository) {
-      showButtonFunction(repository);
+      callback(repository);
     }
     else {
       repositoryStore.load(function() {
-        showButtonFunction(repositoryStore.getAt(repositoryStore.find('name', repositoryName)));
+        callback(repositoryStore.getAt(repositoryStore.find('name', repositoryName)));
       });
     }
   },
@@ -285,15 +274,18 @@ Ext.define('NX.coreui.controller.Assets', {
    * @private
    */
   updateDeleteButtonVisibility: function() {
-    var componentModel = this.fetchComponentModelFromView(),
-        formatSpecificActionHandler = this.getFormatSpecificActionHandler(componentModel),
-        button = this.getDeleteComponentButton();
+    var me = this,
+        componentModel = me.fetchComponentModelFromView(),
+        formatSpecificActionHandler = me.getFormatSpecificActionHandler(componentModel),
+        button = me.getDeleteComponentButton();
 
     if (componentModel &&
         (!formatSpecificActionHandler ||
             !formatSpecificActionHandler.updateDeleteButtonVisibility(button, componentModel))
     ) {
-      this.bindButton(button, componentModel.get('repositoryName'));
+      me.getRepository(componentModel.get('repositoryName'), function(repository) {
+        me.updateDeleteComponentButton(repository, componentModel);
+      });
     }
   },
 

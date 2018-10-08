@@ -36,4 +36,20 @@ public interface MaintenanceService
    * @return Set of asset names that were removed
    */
   Set<String> deleteComponent(Repository repository, Component component);
+
+  /**
+   * Check if a component can be deleted.
+   * @return true if the component can be deleted, false otherwise
+   *
+   * @since 3.next
+   */
+  boolean canDeleteComponent(Repository repository, Component component);
+
+  /**
+   * Check if an asset can be deleted.
+   * @return true if the asset can be deleted, false otherwise
+   *
+   * @since 3.next
+   */
+  boolean canDeleteAsset(Repository repository, Asset asset);
 }

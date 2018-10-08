@@ -238,24 +238,64 @@ class ComponentComponent
   @ExceptionMetered
   @RequiresAuthentication
   @Validate
+  boolean canDeleteComponent(@NotEmpty final String componentModelString)
+  {
+    ComponentXO componentXO = objectMapper.readValue(componentModelString, ComponentXO.class)
+    Repository repository = repositoryManager.get(componentXO.repositoryName)
+    List<Component> components = getComponents(componentXO, repository)
+
+    for (Component component : components) {
+      if (!maintenanceService.canDeleteComponent(repository, component)) {
+        return false
+      }
+    }
+
+    return true
+  }
+
+  @DirectMethod
+  @Timed
+  @ExceptionMetered
+  @RequiresAuthentication
+  @Validate
   Set<String> deleteComponent(@NotEmpty final String componentModelString)
   {
     ComponentXO componentXO = objectMapper.readValue(componentModelString, ComponentXO.class)
     Repository repository = repositoryManager.get(componentXO.repositoryName)
-
-    ComponentFinder componentFinder = componentFinders.get(componentXO.format)
-    if (null == componentFinder) {
-      componentFinder = componentFinders.get(DEFAULT_COMPONENT_FINDER_KEY)
-    }
-
-    List<Component> components = componentFinder.findMatchingComponents(repository, componentXO.id,
-        componentXO.group, componentXO.name, componentXO.version)
+    List<Component> components = getComponents(componentXO, repository)
 
     Set<String> deletedAssets = new HashSet<>()
     for (Component component : components) {
       deletedAssets.addAll(maintenanceService.deleteComponent(repository, component))
     }
     return deletedAssets
+  }
+
+  private List<Component> getComponents(final ComponentXO componentXO, Repository repository) {
+    ComponentFinder componentFinder = componentFinders.get(componentXO.format)
+    if (null == componentFinder) {
+      componentFinder = componentFinders.get(DEFAULT_COMPONENT_FINDER_KEY)
+    }
+
+    return componentFinder.findMatchingComponents(repository, componentXO.id, componentXO.group,
+        componentXO.name, componentXO.version)
+  }
+
+  @DirectMethod
+  @Timed
+  @ExceptionMetered
+  @RequiresAuthentication
+  @Validate
+  boolean canDeleteAsset(@NotEmpty final String assetId, @NotEmpty final String repositoryName)
+  {
+    Repository repository = repositoryManager.get(repositoryName)
+    Asset asset = getAsset(assetId, repository)
+
+    if (asset != null) {
+      return maintenanceService.canDeleteAsset(repository, asset)
+    }
+
+    return false
   }
 
   @DirectMethod
@@ -265,9 +305,19 @@ class ComponentComponent
   @Validate
   Set<String> deleteAsset(@NotEmpty final String assetId, @NotEmpty final String repositoryName) {
     Repository repository = repositoryManager.get(repositoryName)
+    Asset asset = getAsset(assetId, repository)
+
+    if (asset != null) {
+      return maintenanceService.deleteAsset(repository, asset)
+    }
+
+    return Collections.emptySet()
+  }
+
+  private Asset getAsset(final String assetId, final Repository repository) {
+    Asset asset = null
     StorageTx storageTx = repository.facet(StorageFacet).txSupplier().get()
 
-    Asset asset
     try {
       storageTx.begin()
       asset = storageTx.findAsset(new DetachedEntityId(assetId), storageTx.findBucket(repository))
@@ -275,11 +325,8 @@ class ComponentComponent
     finally {
       storageTx.close()
     }
-    if (asset != null) {
-      return maintenanceService.deleteAsset(repository, asset)
-    }
 
-    return Collections.emptySet()
+    return asset
   }
 
   /**

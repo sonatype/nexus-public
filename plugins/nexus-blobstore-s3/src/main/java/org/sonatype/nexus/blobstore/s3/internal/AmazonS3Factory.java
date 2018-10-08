@@ -42,6 +42,7 @@ import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.REGION_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SECRET_ACCESS_KEY_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SESSION_TOKEN_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SIGNERTYPE_KEY;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.FORCE_PATH_STYLE_KEY;
 
 /**
  * Creates configured AmazonS3 clients.
@@ -61,6 +62,7 @@ public class AmazonS3Factory
     String secretAccessKey = blobStoreConfiguration.attributes(CONFIG_KEY).get(SECRET_ACCESS_KEY_KEY, String.class);
     String region = blobStoreConfiguration.attributes(CONFIG_KEY).get(REGION_KEY, String.class);
     String signerType = blobStoreConfiguration.attributes(CONFIG_KEY).get(SIGNERTYPE_KEY, String.class);
+    String forcePathStyle = blobStoreConfiguration.attributes(CONFIG_KEY).get(FORCE_PATH_STYLE_KEY, String.class);
 
     if (!isNullOrEmpty(accessKeyId) && !isNullOrEmpty(secretAccessKey)) {
       String sessionToken = blobStoreConfiguration.attributes(CONFIG_KEY).get(SESSION_TOKEN_KEY, String.class);
@@ -86,6 +88,8 @@ public class AmazonS3Factory
       clientConfiguration.setSignerOverride(signerType);
       builder = builder.withClientConfiguration(clientConfiguration);
     }
+
+    builder = builder.withPathStyleAccessEnabled(Boolean.parseBoolean(forcePathStyle));
 
     return builder.build();
   }

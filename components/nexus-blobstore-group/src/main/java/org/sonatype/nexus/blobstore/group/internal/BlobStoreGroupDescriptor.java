@@ -24,14 +24,18 @@ import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 import org.sonatype.nexus.formfields.ComboboxFormField;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.ItemselectFormField;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Iterables.size;
+import static com.google.common.collect.Streams.stream;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
-import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup.MEMBERS_KEY;
+import static org.sonatype.nexus.blobstore.group.BlobStoreGroup.MEMBERS_KEY;
 import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroupConfigurationHelper.memberNames;
 import static org.sonatype.nexus.formfields.FormField.MANDATORY;
 
@@ -63,15 +67,20 @@ public class BlobStoreGroupDescriptor
 
   private final BlobStoreManager blobStoreManager;
 
+  private final RepositoryManager repositoryManager;
+
   private final ItemselectFormField members;
 
   private final FormField fillPolicy;
 
   @Inject
   public BlobStoreGroupDescriptor(@Named("${nexus.blobstoregroups.enabled:-false}") final boolean isEnabled,
-                                  final BlobStoreManager blobStoreManager) {
+                                  final BlobStoreManager blobStoreManager,
+                                  final RepositoryManager repositoryManager)
+  {
     this.isEnabled = isEnabled;
     this.blobStoreManager = checkNotNull(blobStoreManager);
+    this.repositoryManager = checkNotNull(repositoryManager);
     this.members = new ItemselectFormField(
         MEMBERS_KEY,
         messages.membersLabel(),
@@ -109,19 +118,44 @@ public class BlobStoreGroupDescriptor
   @Override
   public void validateConfig(final BlobStoreConfiguration config) {
     List<String> memberNames = memberNames(config);
+    validateNotEmptyOrSelfReferencing(config.getName(), memberNames);
+    validateEligibleMembers(memberNames);
+  }
+
+  private void validateNotEmptyOrSelfReferencing(final String name, final List<String> memberNames) {
     if (memberNames.isEmpty()) {
-      throw new ValidationException("Blob Store '" + config.getName() + "' cannot be empty");
+      throw new ValidationException("Blob Store '" + name + "' cannot be empty");
     }
+
+    if (memberNames.contains(name)) {
+      throw new ValidationException("Blob Store '" + name + "' cannot contain itself");
+    }
+  }
+
+  private void validateEligibleMembers(final List<String> memberNames) {
     for (String memberName : memberNames) {
-      if (config.getName().equals(memberName)) {
-        throw new ValidationException("Blob Store '" + config.getName() + "' cannot contain itself");
-      }
       BlobStore member = blobStoreManager.get(memberName);
       if (!member.isGroupable()) {
         BlobStoreConfiguration memberConfig = member.getBlobStoreConfiguration();
         throw new ValidationException(
-            format("Blob Store '%s' is of type '%s' and is not eligible to be a group member.", memberName,
+            format("Blob Store '%s' is of type '%s' and is not eligible to be a group member", memberName,
                 memberConfig.getType()));
+      }
+
+      BlobStoreGroup group = stream(blobStoreManager.browse())
+          .filter(store -> store.getBlobStoreConfiguration().getType().equals(BlobStoreGroup.TYPE))
+          .map(BlobStoreGroup.class::cast).filter(g -> g.getMembers().contains(member)).findFirst().orElse(null);
+      if (group != null) {
+        throw new ValidationException(
+            format("Blob Store '%s' is already a member of Blob Store Group '%s'", memberName,
+                group.getBlobStoreConfiguration().getName()));
+      }
+
+      int repoCount = size(repositoryManager.browseForBlobStore(memberName));
+      if (repoCount > 0) {
+        throw new ValidationException(format(
+            "Blob Store '%s' is set as storage for %s repositories and is not eligible to be a group member",
+            memberName, repoCount));
       }
     }
   }

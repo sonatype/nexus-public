@@ -22,7 +22,8 @@ Ext.define('NX.coreui.view.component.ComponentAssetInfo', {
   alias: 'widget.nx-coreui-component-componentassetinfo',
   requires: [
     'NX.I18n',
-    'NX.coreui.util.RepositoryUrls'
+    'NX.coreui.util.RepositoryUrls',
+    'NX.ext.button.Button'
   ],
 
   autoScroll: true,
@@ -32,7 +33,7 @@ Ext.define('NX.coreui.view.component.ComponentAssetInfo', {
     xtype: 'nx-actions',
     items: [
       {
-        xtype: 'button',
+        xtype: 'nx-button',
         text: NX.I18n.get('AssetInfo_Delete_Button'),
         glyph: 'xf056@FontAwesome' /* fa-minus-circle */,
         action: 'deleteAsset',

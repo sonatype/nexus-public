@@ -75,6 +75,8 @@ public class S3BlobStoreMetricsStore
 
   private String bucket;
 
+  private String bucketPrefix;
+
   private S3PropertiesFile propertiesFile;
 
   private AmazonS3 s3;
@@ -105,7 +107,7 @@ public class S3BlobStoreMetricsStore
     totalSize = new AtomicLong();
     dirty = new AtomicBoolean();
 
-    propertiesFile = new S3PropertiesFile(s3, bucket, nodeAccess.getId() + METRICS_SUFFIX + METRICS_EXTENSION);
+    propertiesFile = new S3PropertiesFile(s3, bucket, bucketPrefix + nodeAccess.getId() + METRICS_SUFFIX + METRICS_EXTENSION);
     if (propertiesFile.exists()) {
       log.info("Loading blob store metrics file {}", propertiesFile);
       propertiesFile.load();
@@ -168,6 +170,13 @@ public class S3BlobStoreMetricsStore
     this.s3 = s3;
   }
 
+
+  public void setBucketPrefix(String bucketPrefix) {
+    checkState(this.bucketPrefix == null, "Do not initialize twice");
+    checkNotNull(bucketPrefix);
+    this.bucketPrefix = bucketPrefix;
+  }
+
   @Guarded(by = STARTED)
   public BlobStoreMetrics getMetrics() {
     Stream<S3PropertiesFile> blobStoreMetricsFiles = backingFiles();
@@ -220,7 +229,7 @@ public class S3BlobStoreMetricsStore
     if (s3 == null) {
       return Stream.empty();
     } else {
-      Stream<S3PropertiesFile> stream = s3.listObjects(bucket, nodeAccess.getId()).getObjectSummaries().stream()
+      Stream<S3PropertiesFile> stream = s3.listObjects(bucket, bucketPrefix + nodeAccess.getId()).getObjectSummaries().stream()
           .filter(summary -> summary.getKey().endsWith(METRICS_EXTENSION))
           .map(summary -> new S3PropertiesFile(s3, bucket, summary.getKey()));
       return stream;

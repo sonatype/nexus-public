@@ -20,7 +20,23 @@
               "properties": {
                 "name": {
                   "type": "string",
-                  "analyzer": "pypi_search"
+                  "analyzer": "pypi_search",
+                  "copy_to": "name.raw"
+                },
+                "name_dot": {
+                  "type": "string",
+                  "analyzer": "pypi_search",
+                  "copy_to": "name.raw"
+                },
+                "name_dash": {
+                  "type": "string",
+                  "analyzer": "pypi_search",
+                  "copy_to": "name.raw"
+                },
+                "name_underscore": {
+                  "type": "string",
+                  "analyzer": "pypi_search",
+                  "copy_to": "name.raw"
                 },
                 "summary": {
                   "type": "string",

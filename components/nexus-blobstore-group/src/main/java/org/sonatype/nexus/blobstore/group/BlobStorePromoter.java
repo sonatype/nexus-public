@@ -22,14 +22,13 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
-import org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
-import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup.CONFIG_KEY;
-import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup.FALLBACK_FILL_POLICY_TYPE;
-import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup.FILL_POLICY_KEY;
-import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup.MEMBERS_KEY;
+import static org.sonatype.nexus.blobstore.group.BlobStoreGroup.CONFIG_KEY;
+import static org.sonatype.nexus.blobstore.group.BlobStoreGroup.FALLBACK_FILL_POLICY_TYPE;
+import static org.sonatype.nexus.blobstore.group.BlobStoreGroup.FILL_POLICY_KEY;
+import static org.sonatype.nexus.blobstore.group.BlobStoreGroup.MEMBERS_KEY;
 
 /**
  * Promotes an existing blobstore to a group blobstore.

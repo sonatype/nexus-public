@@ -67,4 +67,13 @@ class AmazonS3FactoryTest
     where:
       signer << [null, '', 'DEFAULT']
   }
+
+  def 'pathStyleAccess is set when provided in config'() {
+    when: 'pathStyleAccess is provided'
+      config.attributes.s3.forcepathstyle = 'true'
+      def s3 = amazonS3Factory.create(config)
+
+    then: 'The bucket is in the path'
+      s3.getUrl('bucket', 'key').path == '/bucket/key'
+  }
 }

@@ -15,16 +15,21 @@ package org.sonatype.nexus.repository.storage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
+import javax.validation.ConstraintViolation;
 import javax.validation.constraints.NotNull;
 import javax.validation.groups.Default;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStore;
+import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.event.EventHelper;
@@ -37,10 +42,12 @@ import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
+import org.sonatype.nexus.repository.internal.blobstore.BlobStoreConfigurationStore;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.security.ClientInfo;
 import org.sonatype.nexus.security.ClientInfoProvider;
+import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
@@ -49,12 +56,16 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
+import static java.util.stream.Collectors.joining;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;
 import static org.sonatype.nexus.repository.FacetSupport.State.ATTACHED;
 import static org.sonatype.nexus.repository.FacetSupport.State.INITIALISED;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 import static org.sonatype.nexus.repository.storage.StorageFacetConstants.STORAGE;
+import static org.sonatype.nexus.validation.ConstraintViolations.maybeAdd;
+import static org.sonatype.nexus.validation.ConstraintViolations.maybePropagate;
 
 /**
  * Default {@link StorageFacet} implementation.
@@ -69,6 +80,8 @@ public class StorageFacetImpl
   private final NodeAccess nodeAccess;
 
   private final BlobStoreManager blobStoreManager;
+
+  private final BlobStoreConfigurationStore blobStoreConfigurationStore;
 
   private final Provider<DatabaseInstance> databaseInstanceProvider;
 
@@ -89,6 +102,8 @@ public class StorageFacetImpl
   private final StorageFacetManager storageFacetManager;
 
   private final ComponentFactory componentFactory;
+
+  private final ConstraintViolationFactory constraintViolationFactory;
 
   @VisibleForTesting
   static class Config
@@ -119,6 +134,7 @@ public class StorageFacetImpl
   @Inject
   public StorageFacetImpl(final NodeAccess nodeAccess,
                           final BlobStoreManager blobStoreManager,
+                          final BlobStoreConfigurationStore blobStoreConfigurationStore,
                           @Named(ComponentDatabase.NAME) final Provider<DatabaseInstance> databaseInstanceProvider,
                           final BucketEntityAdapter bucketEntityAdapter,
                           final ComponentEntityAdapter componentEntityAdapter,
@@ -127,10 +143,12 @@ public class StorageFacetImpl
                           final ContentValidatorSelector contentValidatorSelector,
                           final MimeRulesSourceSelector mimeRulesSourceSelector,
                           final StorageFacetManager storageFacetManager,
-                          final ComponentFactory componentFactory)
+                          final ComponentFactory componentFactory,
+                          final ConstraintViolationFactory constraintViolationFactory)
   {
     this.nodeAccess = checkNotNull(nodeAccess);
     this.blobStoreManager = checkNotNull(blobStoreManager);
+    this.blobStoreConfigurationStore = checkNotNull(blobStoreConfigurationStore);
     this.databaseInstanceProvider = checkNotNull(databaseInstanceProvider);
 
     this.bucketEntityAdapter = checkNotNull(bucketEntityAdapter);
@@ -141,6 +159,7 @@ public class StorageFacetImpl
     this.mimeRulesSourceSelector = checkNotNull(mimeRulesSourceSelector);
     this.storageFacetManager = checkNotNull(storageFacetManager);
     this.componentFactory = checkNotNull(componentFactory);
+    this.constraintViolationFactory = checkNotNull(constraintViolationFactory);
 
     this.txSupplier = () -> openStorageTx(databaseInstanceProvider.get().acquire());
   }
@@ -150,6 +169,26 @@ public class StorageFacetImpl
     facet(ConfigurationFacet.class).validateSection(configuration, STORAGE, Config.class,
         Default.class, getRepository().getType().getValidationGroup()
     );
+
+    StorageFacetImpl.Config configToValidate = facet(ConfigurationFacet.class)
+        .readSection(configuration, STORAGE, StorageFacetImpl.Config.class);
+    Set<ConstraintViolation<?>> violations = new HashSet<>();
+    maybeAdd(violations, validateBlobStoreNotInGroup(configToValidate.blobStoreName));
+    maybePropagate(violations, log);
+  }
+
+  ConstraintViolation<?> validateBlobStoreNotInGroup(final String blobStoreName) {
+    List<BlobStoreConfiguration> groups = blobStoreConfigurationStore.findParents(blobStoreName);
+
+    if (!groups.isEmpty()) {
+      String groupNames = groups.stream().map(g -> "'" + g.getName() + "'").collect(joining(", "));
+
+      return constraintViolationFactory.createViolation(format("%s.%s.blobStoreName", P_ATTRIBUTES, STORAGE),
+          format("Blob Store '%s' is a member of Blob Store Groups: %s and cannot be set as storage", blobStoreName,
+              groupNames));
+    }
+
+    return null;
   }
 
   @Override
@@ -196,7 +235,7 @@ public class StorageFacetImpl
   }
 
   @Override
-  @Guarded(by = {INITIALISED, ATTACHED} )
+  @Guarded(by = {INITIALISED, ATTACHED})
   public void registerWritePolicySelector(final WritePolicySelector writePolicySelector) {
     checkNotNull(writePolicySelector);
     this.writePolicySelector = writePolicySelector;

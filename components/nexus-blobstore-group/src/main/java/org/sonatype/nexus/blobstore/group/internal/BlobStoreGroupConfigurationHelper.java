@@ -16,9 +16,9 @@ import java.util.List;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 
-import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup.CONFIG_KEY;
-import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup.FILL_POLICY_KEY;
-import static org.sonatype.nexus.blobstore.group.internal.BlobStoreGroup.MEMBERS_KEY;
+import static org.sonatype.nexus.blobstore.group.BlobStoreGroup.CONFIG_KEY;
+import static org.sonatype.nexus.blobstore.group.BlobStoreGroup.FILL_POLICY_KEY;
+import static org.sonatype.nexus.blobstore.group.BlobStoreGroup.MEMBERS_KEY;
 
 /**
  * Helper for blob store group attributes in {@link BlobStoreConfiguration}.

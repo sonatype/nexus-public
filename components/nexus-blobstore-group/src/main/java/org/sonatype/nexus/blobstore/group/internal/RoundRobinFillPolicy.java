@@ -22,6 +22,7 @@ import javax.inject.Named;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.BlobStore;
+import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 
 import com.google.common.annotations.VisibleForTesting;
 

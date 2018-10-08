@@ -91,6 +91,11 @@ public class Maven2BrowseNodeGenerator
     path.add(component.name());
 
     if (!Strings2.isBlank(component.version())) {
+      String baseVersion = component.attributes().child("maven2").get("baseVersion", String.class);
+      if (!component.version().equals(baseVersion)) {
+        // Put the SNAPSHOT version (baseVersion) before the component version in the tree.
+        path.add(baseVersion);
+      }
       path.add(component.version());
     }
 

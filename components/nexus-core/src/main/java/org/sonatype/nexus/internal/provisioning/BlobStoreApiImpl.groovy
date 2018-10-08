@@ -42,7 +42,7 @@ class BlobStoreApiImpl
   @Override
   BlobStoreConfiguration createBlobStoreGroup(final String name, List<String> memberNames, String fillPolicy) {
     return blobStoreManager.create(new BlobStoreConfiguration(name: checkNotNull(name), type: 'Group',
-        attributes: [group: [members: memberNames.join(','), fillPolicy: fillPolicy]])).blobStoreConfiguration
+        attributes: [group: [members: memberNames, fillPolicy: fillPolicy]])).blobStoreConfiguration
   }
 
   @Override

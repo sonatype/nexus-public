@@ -67,7 +67,7 @@ Ext.define('NX.coreui.util.Maven2ComponentActionHandler', {
    */
   browseComponent: function(componentModel, assetModel) {
     var repositoryName, componentGroup, componentName,
-        attributes, version, path;
+        attributes, version, baseVersion, path;
 
     if (componentModel && assetModel) {
       repositoryName = componentModel.get('repositoryName');
@@ -76,9 +76,10 @@ Ext.define('NX.coreui.util.Maven2ComponentActionHandler', {
 
       attributes = assetModel.get('attributes');
       version = attributes.maven2 && attributes.maven2.version;
+      baseVersion = attributes.maven2 && attributes.maven2.baseVersion;
 
       path = 'browse/browse:' + encodeURIComponent(repositoryName) + ':' +
-          encodeURIComponent(componentGroup + '/' + componentName + '/' + version);
+          encodeURIComponent(componentGroup + '/' + componentName + '/' + baseVersion + '/' + version);
 
       NX.Bookmarks.navigateTo(NX.Bookmarks.fromToken(path));
     }
