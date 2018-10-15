@@ -26,6 +26,8 @@ import org.sonatype.nexus.repository.manager.RepositoryManager
 import spock.lang.Specification
 import spock.lang.Subject
 
+import static java.lang.Math.pow
+
 /**
  * Test for {@link BlobStoreComponent}
  */
@@ -122,11 +124,8 @@ class BlobStoreComponentTest
       1 * blobStoreManager.isPromotable(from) >> true
       1 * repositoryManager.blobstoreUsageCount(_ as String) >> 2L
       1 * blobStoreConverter.promote(from) >> Mock(BlobStoreGroup) {
-          getBlobStoreConfiguration() >> Mock(BlobStoreConfiguration) {
-          getName() >> 'name'
-          getType() >> 'type'
-          getAttributes() >> ['group': ['members': 'name-promoted']]
-        }
+          getBlobStoreConfiguration() >> new BlobStoreConfiguration(name: 'name', type: 'type',
+            attributes: ['group': ['members': 'name-promoted'], blobStoreQuotaConfig: [:]])
         getMetrics() >> Mock(BlobStoreMetrics) {
           getBlobCount() >> 1L
           getTotalSize() >> 500L
@@ -137,7 +136,7 @@ class BlobStoreComponentTest
 
       blobStoreXO.name == 'name'
       blobStoreXO.type == 'type'
-      blobStoreXO.attributes == ['group': ['members': 'name-promoted']]
+      blobStoreXO.attributes == ['group': ['members': 'name-promoted'], blobStoreQuotaConfig: [:]]
       blobStoreXO.blobCount == 1L
       blobStoreXO.totalSize == 500L
       blobStoreXO.availableSpace == 450L
@@ -161,4 +160,47 @@ class BlobStoreComponentTest
       BlobStoreException exception = thrown()
       exception.message == 'Blob store (myGroup) could not be promoted to a blob store group'
   }
+
+  def 'given a blob store with a quota, create a proper blobStoreXO'() {
+    setup:
+      def blobStore = Mock(BlobStore) {
+        getBlobStoreConfiguration() >> new BlobStoreConfiguration(name: "test",
+            attributes: [file: [path: 'path'], blobStoreQuotaConfig: [quotaType: 'spaceUsedQuota', quotaLimitBytes: (Long) (10 * pow(10,6))]])
+        getMetrics() >> Mock(BlobStoreMetrics) {
+          getBlobCount() >> 1L
+          getTotalSize() >> 500L
+          getAvailableSpace() >> 450L
+          isUnlimited() >> false
+        }
+      }
+
+    when: 'create the XO'
+      def blobStoreXO = blobStoreComponent.asBlobStoreXO(blobStore)
+
+    then: 'proper object created'
+      blobStoreXO.isQuotaEnabled == 'true'
+      blobStoreXO.quotaType == 'spaceUsedQuota'
+      blobStoreXO.quotaLimit == 10L
+  }
+
+  def 'given a blob store XO with a quota, create a proper blob store config'() {
+    setup:
+      def blobStoreXO = Mock(BlobStoreXO) {
+        getName() >> 'xoTest'
+        getType() >> 'type'
+        getIsQuotaEnabled() >> true
+        getQuotaLimit() >> 10L
+        getQuotaType() >> 'properType'
+        getAttributes() >> [blobStoreQuotaConfig: [quotaType: 'shouldBeClobbered', quotaLimitBytes: 7]]
+      }
+
+    when: 'create the config'
+      def blobStoreConfig = blobStoreComponent.asConfiguration(blobStoreXO)
+
+    then: 'proper object created'
+      blobStoreConfig.name == 'xoTest'
+      blobStoreConfig.type == 'type'
+      blobStoreConfig.attributes == [blobStoreQuotaConfig: [quotaType: 'properType', quotaLimitBytes: 10 * pow(10, 6)]]
+  }
+
 }

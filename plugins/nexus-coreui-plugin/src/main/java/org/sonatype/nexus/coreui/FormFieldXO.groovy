@@ -14,7 +14,6 @@ package org.sonatype.nexus.coreui
 
 import javax.annotation.Nullable
 
-import org.sonatype.nexus.formfields.CheckboxFormField
 import org.sonatype.nexus.formfields.FormField
 import org.sonatype.nexus.formfields.NumberTextFormField
 import org.sonatype.nexus.formfields.Selectable
@@ -96,9 +95,6 @@ class FormFieldXO
   @Nullable
   String nameMapping
 
-  @Nullable
-  String inputValue
-
   /**
    * Create transfer object from field source.
    *
@@ -131,10 +127,6 @@ class FormFieldXO
       result.storeFilters = source.storeFilters
       result.idMapping = source.idMapping
       result.nameMapping = source.nameMapping
-    }
-
-    if (source in CheckboxFormField) {
-      result.inputValue = source.inputValue
     }
 
     return result

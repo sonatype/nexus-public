@@ -32,9 +32,9 @@ import org.elasticsearch.index.query.QueryStringQueryBuilder;
 public class KeywordSearchContribution
     extends SearchContributionSupport
 {
-  // Allow maven/gradle dependency names of the form "group:name:version:classifier@extension"
+  // Allow dependency searches of the form "group:name[:version][:extension][:classifier]"
   private Pattern dependencyPattern = Pattern.compile(
-      "^(?<group>[^\\s:]+):(?<name>[^\\s:]+)(:(?<version>[^\\s:]+))?(:(?<classifier>[^\\s:]+))?(@(?<extension>[^\\s:]+))?$");
+      "^(?<group>[^\\s:]+):(?<name>[^\\s:]+)(:(?<version>[^\\s:]+))?(:(?<extension>[^\\s:]+))?(:(?<classifier>[^\\s:]+))?$");
 
   @Override
   public void contribute(final BoolQueryBuilder query, final String type, final String value) {
@@ -42,44 +42,69 @@ public class KeywordSearchContribution
       return;
     }
 
-    final String group;
-    final String name;
-    final String version;
-
     Matcher gavSearchMatcher = dependencyPattern.matcher(value.trim());
-    if (gavSearchMatcher.matches()) {
-      group = gavSearchMatcher.group("group");
-      name = gavSearchMatcher.group("name");
-      version = gavSearchMatcher.group("version");
-    }
-    else {
-      group = null;
-      name = null;
-      version = null;
-    }
+    final boolean hasGavSearch = gavSearchMatcher.matches();
+    final boolean hasKeywordSearch;
 
     QueryStringQueryBuilder keywordQuery = QueryBuilders.queryStringQuery(value)
         .field("name.case_insensitive")
         .field("group.case_insensitive")
         .field("_all");
 
-    BoolQueryBuilder gavQuery = QueryBuilders.boolQuery();
+    final BoolQueryBuilder gavQuery = QueryBuilders.boolQuery();
 
-    if (group != null && name != null) { // the query could be a group:artifact query or a keyword query
+    if (hasGavSearch) {
+      String group = gavSearchMatcher.group("group");
+      String name = gavSearchMatcher.group("name");
+      String version = gavSearchMatcher.group("version");
+      String extension = gavSearchMatcher.group("extension");
+      String classifier = gavSearchMatcher.group("classifier");
+
+      buildGavQuery(gavQuery, group, name, version, extension, classifier);
+
+      hasKeywordSearch = version == null;
       keywordQuery.lenient(true);
-      gavQuery.must(QueryBuilders.termQuery("group", group));
-      gavQuery.must(QueryBuilders.termQuery("name.raw", name));
     }
     else {
+      hasKeywordSearch = true;
+    }
+
+    if (hasKeywordSearch && !hasGavSearch) {
       query.must(keywordQuery);
     }
-
-    if (version != null) { // the keyword query will be invalid - assume a group:artifact:version query
-      gavQuery.must(QueryBuilders.termQuery("version", version));
+    else if (!hasKeywordSearch && hasGavSearch) {
       query.must(gavQuery);
     }
-    else {
+    else { // hasKeywordSearch && hasGavSearch
       query.must(QueryBuilders.boolQuery().should(keywordQuery).should(gavQuery));
+    }
+  }
+
+  private void buildGavQuery(BoolQueryBuilder gavQuery,
+                             String group,
+                             String name,
+                             String version,
+                             String extension,
+                             String classifier)
+  {
+    if (group != null) {
+      gavQuery.must(QueryBuilders.termQuery("group.raw", group));
+    }
+
+    if (name != null) {
+      gavQuery.must(QueryBuilders.termQuery("name.raw", name));
+    }
+
+    if (version != null) {
+      gavQuery.must(QueryBuilders.termQuery("version", version));
+    }
+
+    if (extension != null) {
+      gavQuery.must(QueryBuilders.termQuery("assets.attributes.maven2.extension", extension));
+    }
+
+    if (classifier != null) {
+      gavQuery.must(QueryBuilders.termQuery("assets.attributes.maven2.classifier", classifier));
     }
   }
 }

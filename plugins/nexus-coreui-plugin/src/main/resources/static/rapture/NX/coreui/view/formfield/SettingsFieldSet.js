@@ -97,7 +97,6 @@ Ext.define('NX.coreui.view.formfield.SettingsFieldSet', {
             name: 'property_' + formField.id,
             factory: factory,
             delimiter: me.delimiter,
-            inputValue: formField.inputValue || undefined,
             listeners: {
               afterrender: {
                 fn: function() {

@@ -354,6 +354,7 @@ public class BlobStoreManagerImpl
   }
 
   @Override
+  @Deprecated
   public boolean isPromotable(final BlobStore blobStore) {
     return blobStore.isGroupable() && store.findParents(blobStore.getBlobStoreConfiguration().getName()).isEmpty();
   }

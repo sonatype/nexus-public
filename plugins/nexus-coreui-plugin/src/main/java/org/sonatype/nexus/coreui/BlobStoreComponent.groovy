@@ -30,6 +30,7 @@ import org.sonatype.nexus.blobstore.group.BlobStorePromoter
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuota
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport
 import org.sonatype.nexus.common.app.ApplicationDirectories
+import org.sonatype.nexus.common.collect.NestedAttributesMap
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters
 import org.sonatype.nexus.repository.manager.RepositoryManager
@@ -194,7 +195,7 @@ class BlobStoreComponent
   }
 
   BlobStoreXO asBlobStoreXO(final BlobStore blobStore, final Collection<BlobStoreGroup> blobStoreGroups = []) {
-    Map quotaAttributes = blobStore.getBlobStoreConfiguration().attributes.get(BlobStoreQuotaSupport.ROOT_KEY)
+    NestedAttributesMap quotaAttributes = blobStore.getBlobStoreConfiguration().attributes(BlobStoreQuotaSupport.ROOT_KEY)
 
     return new BlobStoreXO(
         name: blobStore.blobStoreConfiguration.name,
@@ -208,9 +209,9 @@ class BlobStoreComponent
         blobStoreUseCount: blobStoreManager.blobStoreUsageCount(blobStore.blobStoreConfiguration.name),
         inUse: repositoryManager.isBlobstoreUsed(blobStore.blobStoreConfiguration.name),
         promotable: blobStoreManager.isPromotable(blobStore),
-        isQuotaEnabled: quotaAttributes != null,
-        quotaType: quotaAttributes?.get(BlobStoreQuotaSupport.TYPE_KEY),
-        quotaLimit: (Long) (quotaAttributes?.getOrDefault(BlobStoreQuotaSupport.LIMIT_KEY, 0L) ?: 0L) / MILLION,
+        isQuotaEnabled: !quotaAttributes.isEmpty(),
+        quotaType: quotaAttributes.get(BlobStoreQuotaSupport.TYPE_KEY),
+        quotaLimit: (Long) quotaAttributes.get(BlobStoreQuotaSupport.LIMIT_KEY, Long.class, 0L) / MILLION,
         groupName: blobStoreGroups.find { it.members.contains(blobStore) }?.blobStoreConfiguration?.name
     )
   }

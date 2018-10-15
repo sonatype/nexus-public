@@ -640,7 +640,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
             Ext.each(response.data, function (nodeId) {
               var node = treePanel.getStore().findNode('id', nodeId);
               if (node) {
-                node.remove();
+                me.removeNodeFromTree(node);
               }
             });
             var selectedRecord = treePanel.getSelectionModel().getSelection()[0];

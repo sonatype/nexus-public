@@ -117,9 +117,10 @@ public class BlobStoreGroupDescriptor
 
   @Override
   public void validateConfig(final BlobStoreConfiguration config) {
+    String name = config.getName();
     List<String> memberNames = memberNames(config);
-    validateNotEmptyOrSelfReferencing(config.getName(), memberNames);
-    validateEligibleMembers(memberNames);
+    validateNotEmptyOrSelfReferencing(name, memberNames);
+    validateEligibleMembers(name, memberNames);
   }
 
   private void validateNotEmptyOrSelfReferencing(final String name, final List<String> memberNames) {
@@ -132,7 +133,7 @@ public class BlobStoreGroupDescriptor
     }
   }
 
-  private void validateEligibleMembers(final List<String> memberNames) {
+  private void validateEligibleMembers(final String name, final List<String> memberNames) {
     for (String memberName : memberNames) {
       BlobStore member = blobStoreManager.get(memberName);
       if (!member.isGroupable()) {
@@ -142,8 +143,10 @@ public class BlobStoreGroupDescriptor
                 memberConfig.getType()));
       }
 
+      // target member may not be a member of a different group
       BlobStoreGroup group = stream(blobStoreManager.browse())
-          .filter(store -> store.getBlobStoreConfiguration().getType().equals(BlobStoreGroup.TYPE))
+          .filter(s -> s.getBlobStoreConfiguration().getType().equals(BlobStoreGroup.TYPE))
+          .filter(g -> !g.getBlobStoreConfiguration().getName().equals(name))
           .map(BlobStoreGroup.class::cast).filter(g -> g.getMembers().contains(member)).findFirst().orElse(null);
       if (group != null) {
         throw new ValidationException(
@@ -151,6 +154,7 @@ public class BlobStoreGroupDescriptor
                 group.getBlobStoreConfiguration().getName()));
       }
 
+      // target member may not be set as repository storage
       int repoCount = size(repositoryManager.browseForBlobStore(memberName));
       if (repoCount > 0) {
         throw new ValidationException(format(

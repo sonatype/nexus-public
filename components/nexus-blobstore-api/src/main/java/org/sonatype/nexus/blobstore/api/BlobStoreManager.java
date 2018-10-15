@@ -84,6 +84,7 @@ public interface BlobStoreManager
    * @return true if member is promotable
    *
    * @since 3.14
+   * @deprecated to be removed in 3.15 (NEXUS-17905)
    */
   boolean isPromotable(BlobStore blobStore);
 }

@@ -46,6 +46,11 @@
               if (store.isLoading()) {
                   return false;
               }
+          },
+          nodeexpand: function(node) {
+              if (node.childNodes && node.childNodes.length === 1) {
+                  node.childNodes[0].expand();
+              }
           }
       }
   });
