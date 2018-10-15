@@ -61,6 +61,7 @@ public interface BlobStoreConfigurationStore
    * @return list of {@link BlobStoreConfiguration} for the parent groups
    *
    * @since 3.14
+   * @deprecated to be removed in 3.15 (NEXUS-17905)
    */
   List<BlobStoreConfiguration> findParents(String name);
 }

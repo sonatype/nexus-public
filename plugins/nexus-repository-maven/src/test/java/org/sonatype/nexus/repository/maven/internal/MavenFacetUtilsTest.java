@@ -12,15 +12,9 @@
  */
 package org.sonatype.nexus.repository.maven.internal;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Stream;
 
-import org.sonatype.nexus.repository.maven.MavenPath;
-import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
-import org.sonatype.nexus.repository.maven.MavenPath.SignatureType;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageTestUtil;
@@ -30,13 +24,11 @@ import org.junit.Test;
 
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.COMPONENT_VERSION_COMPARATOR;
-import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.getPathWithHashes;
 import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.isRelease;
 import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.isSnapshot;
 import static org.sonatype.nexus.repository.storage.StorageTestUtil.createBucket;
@@ -78,19 +70,6 @@ public class MavenFacetUtilsTest
   public void testIsRelease() {
     assertTrue(isRelease(createComponent("1.1", "1.1")));
     assertFalse(isRelease(createComponent("1.1-20170918.215642-1", "1.1-SNAPSHOT")));
-  }
-
-  @Test
-  public void testGetPathWithHashes() {
-    Coordinates coordinates = new Coordinates(false, "groupId", "artifactId", "version", null, null, "version", null,
-        "jar", null);
-    MavenPath path = new MavenPath("groupId/artifactId/version/artifactId-version.jar", coordinates);
-
-    HashSet<String> expectedPaths = new HashSet<>(Arrays.asList(
-        "groupId/artifactId/version/artifactId-version.jar.sha1",
-        "groupId/artifactId/version/artifactId-version.jar.md5",
-        "groupId/artifactId/version/artifactId-version.jar"));
-    assertEquals(expectedPaths, getPathWithHashes(path));
   }
 
   private Component createComponent(final String version, final String baseVersion) {

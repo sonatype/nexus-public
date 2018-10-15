@@ -33,7 +33,6 @@ public interface MaintenanceService
 
   /**
    * Delete a component in the specified repository.
-   * @return Set of asset names that were removed
    */
-  Set<String> deleteComponent(Repository repository, Component component);
+  void deleteComponent(Repository repository, Component component);
 }

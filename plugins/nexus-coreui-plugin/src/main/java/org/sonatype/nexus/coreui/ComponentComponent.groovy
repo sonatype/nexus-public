@@ -238,7 +238,7 @@ class ComponentComponent
   @ExceptionMetered
   @RequiresAuthentication
   @Validate
-  Set<String> deleteComponent(@NotEmpty final String componentModelString)
+  void deleteComponent(@NotEmpty final String componentModelString)
   {
     ComponentXO componentXO = objectMapper.readValue(componentModelString, ComponentXO.class)
     Repository repository = repositoryManager.get(componentXO.repositoryName)
@@ -251,11 +251,9 @@ class ComponentComponent
     List<Component> components = componentFinder.findMatchingComponents(repository, componentXO.id,
         componentXO.group, componentXO.name, componentXO.version)
 
-    Set<String> deletedAssets = new HashSet<>()
     for (Component component : components) {
-      deletedAssets.addAll(maintenanceService.deleteComponent(repository, component))
+      maintenanceService.deleteComponent(repository, component)
     }
-    return deletedAssets
   }
 
   @DirectMethod

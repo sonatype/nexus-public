@@ -25,22 +25,9 @@ Ext.define('NX.ext.form.field.ItemSelector', {
     'NX.I18n'
   ],
 
-  plugins: {
-    responsive: true
-  },
-  responsiveConfig: {
-    'width <= 1366': {
-      maxWidth: 600
-    },
-    'width <= 1600': {
-      maxWidth: 800
-    },
-    'width > 1600' : {
-      maxWidth: 1000
-    }
-  },
+  // FIXME: This is not the best way to ensure that forms are limited width
+  width: 600,
   height: 300,
-  width: '100%',
 
   disabledCls: 'nx-itemselector-disabled',
   invalidCls: 'nx-invalid',

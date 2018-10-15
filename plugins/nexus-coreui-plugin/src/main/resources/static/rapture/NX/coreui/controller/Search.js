@@ -289,22 +289,40 @@ Ext.define('NX.coreui.controller.Search', {
         searchResultStore = me.getSearchResultStore(),
         searchCriteriaStore = me.getSearchCriteriaStore(),
         addCriteriaMenu = [],
-        criterias = {}, criteriasPerGroup = {};
+        bookmarkSegments = NX.Bookmarks.getBookmark().getSegments(),
+        bookmarkValues = {},
+        filterSegments,
+        criterias = {}, criteriasPerGroup = {},
+        searchCriteria, queryIndex, pair;
+
+    // Extract the filter object from the URI
+    if (bookmarkSegments && bookmarkSegments.length) {
+      queryIndex = bookmarkSegments[0].indexOf('=');
+      if (queryIndex !== -1) {
+        filterSegments = decodeURIComponent(bookmarkSegments[0].slice(queryIndex + 1)).split(' AND ');
+        for (var i = 0; i < filterSegments.length; ++i) {
+          pair = filterSegments[i].split('=');
+          bookmarkValues[pair[0]] = pair[1];
+        }
+      }
+    }
 
     searchCriteriaPanel.removeAll();
+    searchResultStore.removeAll();
+    searchResultStore.clearFilter(true);
 
     if (searchFilter && searchFilter.get('criterias')) {
       Ext.Array.each(Ext.Array.from(searchFilter.get('criterias')), function(criteria) {
         criterias[criteria['id']] = { value: criteria['value'], hidden: criteria['hidden'] };
       });
     }
-    searchResultStore.getFilters().items.forEach(function(filter) {
-      var existingCriteria = criterias[filter.config.id];
+    Ext.Object.each(bookmarkValues, function(key, value) {
+      var existingCriteria = criterias[key];
       if (existingCriteria) {
-        existingCriteria['value'] = filter.config.value;
+        existingCriteria['value'] = value;
       }
       else {
-        criterias[filter.config.id] = { value: filter.config.value, removable: true };
+        criterias[key] = { value: value, removable: true };
       }
     });
 
@@ -316,12 +334,15 @@ Ext.define('NX.coreui.controller.Search', {
         if (!cmpClass) {
           cmpClass = Ext.ClassManager.getByAlias('widget.nx-coreui-searchcriteria-text');
         }
-        searchCriteriaPanel.add(cmpClass.create(Ext.apply(Ext.clone(criteriaModel.get('config')), {
+        searchCriteria = searchCriteriaPanel.add(cmpClass.create(Ext.apply(Ext.clone(criteriaModel.get('config')), {
           criteriaId: criteriaModel.getId(),
           value: criteria['value'],
           hidden: criteria['hidden'],
           removable: criteria['removable']
         })));
+        if (searchCriteria.value) {
+          me.applyFilter(searchCriteria, false);
+        }
       }
     });
 
@@ -366,64 +387,8 @@ Ext.define('NX.coreui.controller.Search', {
       glyph: 'xf055@FontAwesome' /* fa-plus-circle */,
       menu: addCriteriaMenu
     });
-  },
 
-  /**
-   * @private
-   * Sets the store filters based on the Bookmark
-   */
-  loadBookmark: function() {
-    var me = this,
-        searchFilter = me.getFeature().searchFilter,
-        bookmarkSegments = NX.Bookmarks.getBookmark().getSegments(),
-        bookmarkValues = {},
-        criterias = {},
-        filterSegments,
-        queryIndex,
-        pair;
-
-    // Extract the filter object from the URI
-    if (bookmarkSegments && bookmarkSegments.length) {
-      queryIndex = bookmarkSegments[0].indexOf('=');
-      if (queryIndex !== -1) {
-        filterSegments = decodeURIComponent(bookmarkSegments[0].slice(queryIndex + 1)).split(' AND ');
-        for (var i = 0; i < filterSegments.length; ++i) {
-          pair = filterSegments[i].split('=');
-          bookmarkValues[pair[0]] = pair[1];
-        }
-      }
-    }
-
-    // From the search type (e.g. maven, nuget, custom)
-    if (searchFilter && searchFilter.get('criterias')) {
-      searchFilter.get('criterias').forEach(function(criteria) {
-        if (criteria.value) {
-          criterias[criteria.id] = { value: criteria.value, hidden: criteria.hidden };
-        }
-      });
-    }
-
-    Ext.Object.each(bookmarkValues, function(key, value) {
-      var existingCriteria = criterias[key];
-      if (existingCriteria) {
-        existingCriteria['value'] = value;
-      }
-      else {
-        criterias[key] = { value: value, removable: true };
-      }
-    });
-
-    Ext.Object.each(criterias, function(id, criteria) {
-      if (criteria.value) {
-        me.applyFilter({
-          criteriaId: id,
-          filter: {
-            property: id,
-            value: criteria.value
-          }
-        }, false);
-      }
-    });
+    searchResultStore.load();
   },
 
   /**
@@ -518,9 +483,6 @@ Ext.define('NX.coreui.controller.Search', {
         searchResultStore = me.getSearchResult().getStore(),
         componentModel;
 
-    searchResultStore.clearFilter(true);
-    me.loadBookmark();
-
     // If no search filter has been specified, don't load any stores
     if (!searchResultStore.getFilters().length) {
       return;
@@ -561,10 +523,11 @@ Ext.define('NX.coreui.controller.Search', {
     }
 
     if (filter) {
-      store.addFilter([Ext.apply(filter, { id: searchCriteria.criteriaId })], apply);
+      store.addFilter(Ext.apply(filter, { id: searchCriteria.criteriaId }), apply);
+      store.load();
     }
     else {
-      // TODO code below is a workaround stores not removing filters when remoteFilter = true
+      // TODO code bellow is a workaround stores not removing filters when remoteFilter = true
       store.removeFilter(searchCriteria.criteriaId);
       if (store.getFilters().removeAtKey(searchCriteria.criteriaId) && apply) {
         if (store.getFilters().length) {
@@ -578,7 +541,6 @@ Ext.define('NX.coreui.controller.Search', {
     }
 
     if (apply) {
-      store.load();
       me.onSearchResultSelection(null);
       me.bookmarkFilters();
     }

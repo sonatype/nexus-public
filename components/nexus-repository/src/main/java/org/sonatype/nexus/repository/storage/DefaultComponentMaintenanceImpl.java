@@ -45,19 +45,19 @@ public class DefaultComponentMaintenanceImpl
    * Deletes the component directly, with no additional bookkeeping.
    */
   @Override
-  public Set<String> deleteComponent(final EntityId componentId) {
-    return deleteComponent(componentId, true);
+  public void deleteComponent(final EntityId componentId) {
+    deleteComponent(componentId, true);
   }
 
   /**
    * Deletes the component directly, with no additional bookkeeping.
    */
   @Override
-  public Set<String> deleteComponent(final EntityId componentId, final boolean deleteBlobs) {
+  public void deleteComponent(final EntityId componentId, final boolean deleteBlobs) {
     checkNotNull(componentId);
     UnitOfWork.begin(getRepository().facet(StorageFacet.class).txSupplier());
     try {
-      return deleteComponentTx(componentId, deleteBlobs);
+      deleteComponentTx(componentId, deleteBlobs);
     }
     finally {
       UnitOfWork.end();

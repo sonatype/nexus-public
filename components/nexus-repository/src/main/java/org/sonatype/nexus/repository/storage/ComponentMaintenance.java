@@ -30,21 +30,18 @@ public interface ComponentMaintenance
 {
   /**
    * Deletes a component from storage.
-   *
-   * @return name(s) of removed asset(s)
    */
-  Set<String> deleteComponent(EntityId componentId);
+  void deleteComponent(EntityId componentId);
 
   /**
    * Deletes a component and maybe the associated blobs.
    *
    * @param componentId entity id of the component to delete
    * @param deleteBlobs should blob deletion be requested
-   * @return name(s) of removed asset(s)
    *
    * @since 3.9
    */
-  Set<String> deleteComponent(EntityId componentId, boolean deleteBlobs);
+  void deleteComponent(EntityId componentId, boolean deleteBlobs);
 
   /**
    * Deletes an asset from storage.

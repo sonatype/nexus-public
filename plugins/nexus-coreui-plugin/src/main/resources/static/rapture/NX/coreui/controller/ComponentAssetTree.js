@@ -637,13 +637,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
       componentId = componentModel.get('name') + '/' + componentModel.get('version');
       NX.Dialogs.askConfirmation(NX.I18n.get('ComponentDetails_Delete_Title'), Ext.htmlEncode(NX.I18n.format('ComponentDetails_Delete_Body', componentId)), function() {
         NX.direct.coreui_Component.deleteComponent(JSON.stringify(componentModel.getData()), function(response) {
-          if (Ext.isObject(response) && response.success && Ext.isArray(response.data)) {
-            Ext.each(response.data, function (nodeId) {
-              var node = treePanel.getStore().findNode('id', nodeId);
-              if (node) {
-                node.remove();
-              }
-            });
+          if (Ext.isObject(response) && response.success) {
             var selectedRecord = treePanel.getSelectionModel().getSelection()[0];
             me.removeNodeFromTree(selectedRecord);
             me.removeSideContent();

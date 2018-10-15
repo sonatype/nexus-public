@@ -46,7 +46,6 @@ Ext.define('NX.coreui.view.formfield.factory.FormfieldItemselectFactory', {
           name: formField.id,
           valueField: idMapping,
           displayField: nameMapping,
-          width:600,
 
           itemCls: formField.required ? 'required-field' : '',
           allowBlank: !formField.required,

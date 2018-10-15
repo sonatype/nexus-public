@@ -70,7 +70,7 @@ public class MaintenanceServiceImpl
   }
 
   @Override
-  public Set<String> deleteComponent(final Repository repository, final Component component) {
+  public void deleteComponent(final Repository repository, final Component component) {
     checkNotNull(repository);
     checkNotNull(component);
 
@@ -91,7 +91,7 @@ public class MaintenanceServiceImpl
       storageTx.close();
     }
 
-    return getComponentMaintenanceFacet(repository).deleteComponent(component.getEntityMetadata().getId());
+    getComponentMaintenanceFacet(repository).deleteComponent(component.getEntityMetadata().getId());
   }
 
   private boolean canDeleteAssetInRepository(final Repository repository,

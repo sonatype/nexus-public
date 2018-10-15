@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.maven.internal.hosted;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.BooleanSupplier;
 
 import javax.annotation.Nullable;
@@ -45,17 +44,15 @@ public class MavenHostedComponentMaintenanceFacet
     extends DefaultComponentMaintenanceImpl
 {
   @Override
-  public Set<String> deleteComponent(final EntityId componentId, final boolean deleteBlobs) {
+  public void deleteComponent(final EntityId componentId, final boolean deleteBlobs) {
     String[] coordinates = Transactional.operation
         .withDb(getRepository().facet(StorageFacet.class).txSupplier())
         .call(() -> this.findComponent(componentId));
-    Set<String> deletedAssets = super.deleteComponent(componentId, deleteBlobs);
+    super.deleteComponent(componentId, deleteBlobs);
     if (coordinates != null) {
-      MavenHostedFacet facet = getRepository().facet(MavenHostedFacet.class);
-      Set<String> deletedMetadataPaths = facet.deleteMetadata(coordinates[0], coordinates[1], coordinates[2]);
-      deletedAssets.addAll(deletedMetadataPaths);
+      getRepository().facet(MavenHostedFacet.class)
+          .deleteMetadata(coordinates[0], coordinates[1], coordinates[2]);
     }
-    return deletedAssets;
   }
 
   @Override

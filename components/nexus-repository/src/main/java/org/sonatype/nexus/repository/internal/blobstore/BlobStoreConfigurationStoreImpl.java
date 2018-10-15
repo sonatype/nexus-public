@@ -104,6 +104,7 @@ public class BlobStoreConfigurationStoreImpl
 
   @Override
   @Guarded(by = STARTED)
+  @Deprecated
   public List<BlobStoreConfiguration> findParents(final String name) {
     return inTx(databaseInstance).call(db -> entityAdapter.getParents(db, name));
   }

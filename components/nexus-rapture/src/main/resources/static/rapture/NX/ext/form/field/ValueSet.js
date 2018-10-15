@@ -37,21 +37,8 @@ Ext.define('NX.ext.form.field.ValueSet', {
     }
   },
 
-  plugins: {
-    responsive:true
-  },
-  responsiveConfig: {
-    'width <= 1366': {
-      maxWidth: 600
-    },
-    'width <= 1600': {
-      maxWidth: 800
-    },
-    'width > 1600' : {
-      maxWidth: 1000
-    }
-  },
-  width: '100%',
+  // FIXME: This is not the best way to ensure that forms are limited width
+  width: 600,
 
   /**
    * @cfg {Number} [minValues=0] Minimum number of selections allowed.

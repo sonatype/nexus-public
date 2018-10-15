@@ -15,8 +15,6 @@ package org.sonatype.nexus.repository.maven.internal.hosted.metadata;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -106,10 +104,8 @@ public class MetadataRebuilder
    * @param groupId     scope the work to given groupId.
    * @param artifactId  scope the work to given artifactId (groupId must be given).
    * @param baseVersion scope the work to given baseVersion (groupId and artifactId must ge given).
-   *
-   * @return whether the rebuild actually triggered
    */
-  public boolean rebuild(final Repository repository,
+  public void rebuild(final Repository repository,
                       final boolean update,
                       final boolean rebuildChecksums,
                       @Nullable final String groupId,
@@ -120,7 +116,7 @@ public class MetadataRebuilder
     final StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get();
     UnitOfWork.beginBatch(tx);
     try {
-      return new Worker(repository, update, rebuildChecksums, groupId, artifactId, baseVersion, bufferSize, timeoutSeconds)
+      new Worker(repository, update, rebuildChecksums, groupId, artifactId, baseVersion, bufferSize, timeoutSeconds)
           .rebuildMetadata();
     }
     finally {
@@ -206,9 +202,8 @@ public class MetadataRebuilder
    * @param groupId     scope the work to given groupId.
    * @param artifactId  scope the work to given artifactId (groupId must be given).
    * @param baseVersion scope the work to given baseVersion (groupId and artifactId must ge given).
-   * @return paths of deleted metadata files
    */
-  public Set<String> deleteAndRebuild(final Repository repository, final String groupId,
+  public void deleteAndRebuild(final Repository repository, final String groupId,
                                final String artifactId, final String baseVersion)
   {
     checkNotNull(repository);
@@ -216,26 +211,20 @@ public class MetadataRebuilder
     checkNotNull(artifactId);
     checkNotNull(baseVersion);
 
-    Set<String> deletedPaths = new HashSet<>();
     final StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get();
     UnitOfWork.beginBatch(tx);
     boolean groupChange = false;
     try {
       // Delete the specific GAV
-      MavenPath gavMetadataPath = metadataPath(groupId, artifactId, baseVersion);
-      MetadataUtils.delete(repository, gavMetadataPath);
-      deletedPaths.addAll(MavenFacetUtils.getPathWithHashes(gavMetadataPath));
+      MetadataUtils.delete(repository, metadataPath(groupId, artifactId, baseVersion));
       // Delete the GA; will be rebuilt as necessary but may hold the last GAV in which case rebuild would ignore it
-      MavenPath gaMetadataPath = metadataPath(groupId, artifactId, null);
-      MetadataUtils.delete(repository, gaMetadataPath);
-      deletedPaths.addAll(MavenFacetUtils.getPathWithHashes(gaMetadataPath));
+      MetadataUtils.delete(repository, metadataPath(groupId, artifactId, null));
 
       // Check explicitly for whether or not we have Group level metadata that might need rebuilding, since this
       // is potentially the most expensive possible path to take.
       MavenPath groupPath = metadataPath(groupId, null, null);
       if (MetadataUtils.read(repository, groupPath) != null) {
         MetadataUtils.delete(repository, groupPath);
-        deletedPaths.addAll(MavenFacetUtils.getPathWithHashes(groupPath));
         // we have metadata for plugins at the Group level so we should build that as well
         groupChange = true;
       }
@@ -247,18 +236,11 @@ public class MetadataRebuilder
       UnitOfWork.end();
     }
 
-    boolean rebuild;
     if (groupChange) {
-      rebuild = rebuild(repository, true, false, groupId, null, null);
+      rebuild(repository, true, false, groupId, null, null);
     }
     else {
-      rebuild = rebuild(repository, true, false, groupId, artifactId, null);
-    }
-
-    if (rebuild) {
-      return Collections.emptySet();
-    } else {
-      return deletedPaths;
+      rebuild(repository, true, false, groupId, artifactId, null);
     }
   }
 
@@ -379,10 +361,8 @@ public class MetadataRebuilder
      * Method rebuilding metadata that performs the group level processing. It uses memory conservative "async" SQL
      * approach, and calls {@link #rebuildMetadataInner(String, String, Set)} method as results are arriving.
      */
-    public boolean rebuildMetadata()
+    public void rebuildMetadata()
     {
-      boolean metadataRebuilt = false;
-
       checkCancellation();
       String currentGroupId = null;
       for (ODocument doc : browseGAVs()) {
@@ -400,14 +380,10 @@ public class MetadataRebuilder
           metadataBuilder.onEnterGroupId(groupId);
         }
         rebuildMetadataInner(groupId, artifactId, baseVersions);
-        metadataRebuilt = true;
       }
       if (currentGroupId != null) {
         rebuildMetadataExitGroup(currentGroupId);
-        metadataRebuilt = true;
       }
-
-      return metadataRebuilt;
     }
 
     /**

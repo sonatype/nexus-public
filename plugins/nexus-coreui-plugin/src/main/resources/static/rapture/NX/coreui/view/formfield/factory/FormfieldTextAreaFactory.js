@@ -35,7 +35,6 @@ Ext.define('NX.coreui.view.formfield.factory.FormfieldTextAreaFactory', {
     var item = {
       xtype: 'textarea',
       htmlDecode: true,
-      width: '100%',
       fieldLabel: formField.label,
       itemCls: formField.required ? 'required-field' : '',
       helpText: formField.helpText,

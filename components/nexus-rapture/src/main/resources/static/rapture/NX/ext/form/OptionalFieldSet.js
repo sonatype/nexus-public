@@ -22,21 +22,6 @@ Ext.define('NX.ext.form.OptionalFieldSet', {
   alias: 'widget.nx-optionalfieldset',
   cls: 'nx-optionalfieldset',
 
-  plugins: {
-    responsive:true
-  },
-  responsiveConfig: {
-    'width <= 1366': {
-      maxWidth: 600
-    },
-    'width <= 1600': {
-      maxWidth: 800
-    },
-    'width > 1600' : {
-      maxWidth: 1000
-    }
-  },
-
   /**
    * @override
    */

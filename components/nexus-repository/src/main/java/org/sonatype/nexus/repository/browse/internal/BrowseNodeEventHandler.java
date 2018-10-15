@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.browse.internal;
 
+import java.util.function.Consumer;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -27,6 +29,8 @@ import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.orient.ReplicationModeOverrides.clearReplicationModeOverrides;
+import static org.sonatype.nexus.orient.ReplicationModeOverrides.dontWaitForReplicationResults;
 
 /**
  * Listens to any events that require managing folder data and calls the format-specific handler.
@@ -41,45 +45,44 @@ public class BrowseNodeEventHandler
   private final BrowseNodeManager browseNodeManager;
 
   @Inject
-  public BrowseNodeEventHandler(final BrowseNodeManager browseNodeManager)
-  {
+  public BrowseNodeEventHandler(final BrowseNodeManager browseNodeManager) {
     this.browseNodeManager = checkNotNull(browseNodeManager);
   }
 
   @Subscribe
   @AllowConcurrentEvents
   public void on(final AssetCreatedEvent event) {
-    if (shouldProcess(event)) {
-      browseNodeManager.createFromAsset(event.getRepositoryName(), event.getAsset());
-    }
+    handle(event, e -> browseNodeManager.createFromAsset(e.getRepositoryName(), e.getAsset()));
   }
 
   @Subscribe
   @AllowConcurrentEvents
   public void on(final AssetDeletedEvent event) {
-    if (shouldProcess(event)) {
-      browseNodeManager.deleteAssetNode(event.getAssetId());
-    }
+    handle(event, e -> browseNodeManager.deleteAssetNode(e.getAssetId()));
   }
 
   @Subscribe
   @AllowConcurrentEvents
   public void on(final ComponentDeletedEvent event) {
-    if (shouldProcess(event)) {
-      browseNodeManager.deleteComponentNode(event.getComponentId());
-    }
+    handle(event, e -> browseNodeManager.deleteComponentNode(e.getComponentId()));
   }
 
   @Subscribe
   @AllowConcurrentEvents
   public void on(final ConfigurationDeletedEvent event) {
-    if (shouldProcess(event)) {
-      browseNodeManager.deleteByRepository(event.getRepositoryName());
-    }
+    handle(event, e -> browseNodeManager.deleteByRepository(e.getRepositoryName()));
   }
 
-  private boolean shouldProcess(final EntityEvent event) {
+  private <E extends EntityEvent> void handle(final E event, final Consumer<E> consumer) {
     checkNotNull(event);
-    return event.isLocal();
+    if (event.isLocal()) {
+      dontWaitForReplicationResults();
+      try {
+        consumer.accept(event);
+      }
+      finally {
+        clearReplicationModeOverrides();
+      }
+    }
   }
 }
