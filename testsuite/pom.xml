@@ -80,7 +80,6 @@
           <configuration>
             <argLine>
               -Xmx400m
-              -XX:MaxPermSize=192m
               -XX:+HeapDumpOnOutOfMemoryError
               -XX:HeapDumpPath=${project.build.directory}/failsafe-reports
             </argLine>
