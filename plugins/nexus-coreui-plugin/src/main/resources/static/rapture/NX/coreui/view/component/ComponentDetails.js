@@ -50,7 +50,7 @@ Ext.define('NX.coreui.view.component.ComponentDetails', {
           {
             xtype: 'nx-button',
             text: NX.I18n.get('ComponentDetails_Delete_Button'),
-            glyph: 'xf056@FontAwesome' /* fa-minus-circle */,
+            glyph: 'xf1f8@FontAwesome' /* fa-trash */,
             action: 'deleteComponent',
             hidden: true
           },

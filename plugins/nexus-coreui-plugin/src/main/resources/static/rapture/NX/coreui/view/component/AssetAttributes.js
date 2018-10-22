@@ -28,6 +28,9 @@ Ext.define('NX.coreui.view.component.AssetAttributes', {
 
   manageHeight: false,
 
+  disableSelection: true,
+  rowLines: false,
+
   /**
    * model to display
    */
@@ -50,7 +53,11 @@ Ext.define('NX.coreui.view.component.AssetAttributes', {
       {
         text: 'label',
         flex: 1,
-        dataIndex: 'label'
+        dataIndex: 'label',
+        renderer: function(value, metaData) {
+          metaData.tdAttr = 'data-qtip="' + value + '"';
+          return value;
+        }
       },
       {
         text: 'Value',

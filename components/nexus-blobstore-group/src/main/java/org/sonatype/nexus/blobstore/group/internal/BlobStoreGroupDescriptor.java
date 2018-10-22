@@ -13,6 +13,7 @@
 package org.sonatype.nexus.blobstore.group.internal;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -32,7 +33,6 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.size;
-import static com.google.common.collect.Streams.stream;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static org.sonatype.nexus.blobstore.group.BlobStoreGroup.MEMBERS_KEY;
@@ -144,15 +144,11 @@ public class BlobStoreGroupDescriptor
       }
 
       // target member may not be a member of a different group
-      BlobStoreGroup group = stream(blobStoreManager.browse())
-          .filter(s -> s.getBlobStoreConfiguration().getType().equals(BlobStoreGroup.TYPE))
-          .filter(g -> !g.getBlobStoreConfiguration().getName().equals(name))
-          .map(BlobStoreGroup.class::cast).filter(g -> g.getMembers().contains(member)).findFirst().orElse(null);
-      if (group != null) {
+      Predicate<String> sameGroup = name::equals;
+      blobStoreManager.getParent(memberName).filter(sameGroup.negate()).ifPresent(groupName -> {
         throw new ValidationException(
-            format("Blob Store '%s' is already a member of Blob Store Group '%s'", memberName,
-                group.getBlobStoreConfiguration().getName()));
-      }
+            format("Blob Store '%s' is already a member of Blob Store Group '%s'", memberName, groupName));
+      });
 
       // target member may not be set as repository storage
       int repoCount = size(repositoryManager.browseForBlobStore(memberName));

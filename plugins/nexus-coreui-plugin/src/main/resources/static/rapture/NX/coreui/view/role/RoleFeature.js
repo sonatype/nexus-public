@@ -40,7 +40,7 @@ Ext.define('NX.coreui.view.role.RoleFeature', {
       ],
 
       nxActions: [
-        { xtype: 'button', text: NX.I18n.get('Role_RoleFeature_Delete_Button'), glyph: 'xf056@FontAwesome' /* fa-minus-circle */, action: 'delete', disabled: true }
+        { xtype: 'button', text: NX.I18n.get('Role_RoleFeature_Delete_Button'), glyph: 'xf1f8@FontAwesome' /* fa-trash */, action: 'delete', disabled: true }
       ]
     });
 

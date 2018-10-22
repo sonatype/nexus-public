@@ -38,7 +38,7 @@ Ext.define('NX.coreui.view.repository.RepositoryFeature', {
       tabs: { xtype: 'nx-coreui-repository-settings' },
 
       nxActions: [
-        { xtype: 'button', text: NX.I18n.get('Repository_RepositoryFeature_Delete_Button'), glyph: 'xf056@FontAwesome' /* fa-minus-circle */, action: 'delete', disabled: true },
+        { xtype: 'button', text: NX.I18n.get('Repository_RepositoryFeature_Delete_Button'), glyph: 'xf1f8@FontAwesome' /* fa-trash */, action: 'delete', disabled: true },
         { xtype: 'button', text: NX.I18n.get('Repository_RepositoryFeature_RebuildIndex_Button'), glyph: 'xf0ad@FontAwesome' /* fa-wrench */, action: 'rebuildIndex', disabled: true },
         { xtype: 'button', text: NX.I18n.get('Repository_RepositoryFeature_InvalidateCache_Button'), glyph: 'xf12d@FontAwesome' /* fa-eraser */, action: 'invalidateCache', disabled: true },
         { xtype: 'button', text: NX.I18n.get('Repository_RepositoryFeature_HealthCheckEnable_Button'), glyph: 'xf201@FontAwesome' /* fa-line-chart */, action: 'toggleHealthCheck', disabled: true }

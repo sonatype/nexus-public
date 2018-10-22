@@ -78,6 +78,8 @@ public class TaskConfiguration
 
   private static final String MESSAGE_KEY = ".message";
 
+  private static final String REQUEST_RECOVERY = ".recoverable";
+
   private final Map<String, String> configuration;
 
   public TaskConfiguration() {
@@ -229,6 +231,14 @@ public class TaskConfiguration
     else {
       configuration.put(MESSAGE_KEY, message);
     }
+  }
+
+  public boolean isRecoverable() {
+    return getBoolean(REQUEST_RECOVERY, false);
+  }
+
+  public void setRecoverable(final boolean requestRecovery) {
+    configuration.put(REQUEST_RECOVERY, Boolean.toString(requestRecovery));
   }
 
   //

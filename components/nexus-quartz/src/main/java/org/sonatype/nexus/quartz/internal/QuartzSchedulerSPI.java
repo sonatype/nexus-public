@@ -72,6 +72,7 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.SchedulerMetaData;
 import org.quartz.Trigger;
+import org.quartz.TriggerKey;
 import org.quartz.UnableToInterruptJobException;
 import org.quartz.core.QuartzScheduler;
 import org.quartz.impl.DefaultThreadExecutor;
@@ -85,6 +86,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Maps.filterKeys;
+import static org.quartz.TriggerBuilder.newTrigger;
 import static org.quartz.TriggerKey.triggerKey;
 import static org.quartz.impl.matchers.GroupMatcher.jobGroupEquals;
 import static org.quartz.impl.matchers.KeyMatcher.keyEquals;
@@ -132,6 +134,8 @@ public class QuartzSchedulerSPI
 
   private final LastShutdownTimeService lastShutdownTimeService;
 
+  private final boolean recoverInterruptedJobs;
+
   private Scheduler scheduler;
 
   private QuartzScheduler quartzScheduler;
@@ -144,7 +148,8 @@ public class QuartzSchedulerSPI
                             final Provider<JobStore> jobStoreProvider,
                             final JobFactory jobFactory,
                             final LastShutdownTimeService lastShutdownTimeService,
-                            @Named("${nexus.quartz.poolSize:-20}") final int threadPoolSize)
+                            @Named("${nexus.quartz.poolSize:-20}") final int threadPoolSize,
+                            @Named("${nexus.quartz.recoverInterruptedJobs:-true}") final boolean recoverInterruptedJobs)
       throws Exception
   {
     this.eventManager = checkNotNull(eventManager);
@@ -152,6 +157,7 @@ public class QuartzSchedulerSPI
     this.jobStoreProvider = checkNotNull(jobStoreProvider);
     this.jobFactory = checkNotNull(jobFactory);
     this.lastShutdownTimeService = checkNotNull(lastShutdownTimeService);
+    this.recoverInterruptedJobs = recoverInterruptedJobs;
 
     checkArgument(threadPoolSize > 0, "Invalid thread-pool size: %s", threadPoolSize);
     this.threadPoolSize = threadPoolSize;
@@ -197,6 +203,30 @@ public class QuartzSchedulerSPI
     reattachJobListeners();
 
     updateLastRunStateInfo(lastShutdownTimeService.estimateLastShutdownTime());
+
+    recoverInterruptedJobs();
+  }
+
+  private void recoverInterruptedJobs() throws SchedulerException {
+    if(!recoverInterruptedJobs) {
+      return;
+    }
+    Set<JobKey> jobKeys = scheduler.getJobKeys(jobGroupEquals(GROUP_NAME));
+    for (JobKey jobKey : jobKeys) {
+      JobDetail jobDetail = scheduler.getJobDetail(jobKey);
+      if (jobDetail.requestsRecovery() &&
+          "INTERRUPTED".equals(jobDetail.getJobDataMap().getString("lastRunState.endState"))) {
+        TriggerKey triggerKey = triggerKey(jobKey.getName(), jobKey.getGroup());
+        Trigger oldTrigger = scheduler.getTrigger(triggerKey);
+        Trigger newTrigger = newTrigger()
+            .usingJobData(oldTrigger.getJobDataMap())
+            .withDescription("Retry " + oldTrigger.getDescription())
+            .forJob(jobDetail)
+            .startNow()
+            .build();
+        scheduler.scheduleJob(newTrigger);
+      }
+    }
   }
 
   /**
@@ -633,6 +663,7 @@ public class QuartzSchedulerSPI
     return JobBuilder.newJob(QuartzTaskJob.class)
         .withIdentity(jobKey)
         .withDescription(config.getName())
+        .requestRecovery(config.isRecoverable())
         .usingJobData(new JobDataMap(config.asMap()))
         .build();
   }

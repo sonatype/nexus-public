@@ -22,14 +22,30 @@ Ext.define('NX.ext.direct.RemotingProvider', {
 
   /**
    * Avoid buffering if "enableBuffer" option is false.
+   * Ensure timeout is set on requests.
    *
    * @override
    */
   queueTransaction: function(transaction) {
+    // NEXUS-18220 - Usages of NX.direct.* don't set the user specified connection timeout
+    transaction.timeout = Ext.Ajax.getTimeout();
+
     if (transaction.callbackOptions && transaction.callbackOptions.enableBuffer === false) {
       this.sendTransaction(transaction);
       return;
     }
+    this.callParent(arguments);
+  },
+
+  /**
+   * Ensure timeout is set on requests.
+   *
+   * @since 3.next
+   * @override
+   */
+  sendTransaction: function(transaction) {
+    // NEXUS-18220 - Usages of NX.direct.* don't set the user specified connection timeout
+    transaction.timeout = Ext.Ajax.getTimeout();
     this.callParent(arguments);
   }
 });

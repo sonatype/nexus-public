@@ -204,6 +204,7 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
       row.items.push({
         xtype: 'button',
         text: NX.I18n.get('FeatureGroups_Upload_Asset_Form_Remove_Button'),
+        glyph: 'xf1f8@FontAwesome' /* fa-trash */,
         action: 'remove_upload_asset',
         hidden: true
       });

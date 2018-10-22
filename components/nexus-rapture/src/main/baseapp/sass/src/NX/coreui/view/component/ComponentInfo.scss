@@ -3,15 +3,87 @@
  */
 
 .nx-coreui-component-componentinfo {
+  background-color: $color-none;
   border-top: 1px solid silver;
+  border-left: 1px solid silver;
   > .x-panel-header {
-    background-color: white;
+    background-color: $color-white;
+
     * {
       font-weight: normal;
       font-family: $font-regular;
       font-size: 18px;
       line-height: 20px;
-      color: black;
+      color: $color-night-rider;
+    }
+
+    .x-title-text {
+      display: inline-block;
+    }
+  }
+
+  .nx-actions {
+    background-color: $color-white;
+    border-bottom: solid 1px silver !important;
+  }
+
+  .x-panel-body-default {
+    padding: 0;
+  }
+
+  .x-panel-nx-inset {
+    border: none;
+    margin: 12px;
+    padding: 0;
+
+    .x-panel-header-nx-inset {
+      background-color: $color-gainsboro;
+
+      .x-panel-header-title-nx-inset {
+        color: $color-night-rider;
+      }
+
+      .x-tool-tool-el {
+        background-color: $color-none;
+      }
+
+      .x-tool-img {
+        opacity: 1;
+      }
+
+      .x-tool-img:hover {
+        opacity: 0.7;
+      }
+    }
+  }
+
+  .x-autocontainer-innerCt > .x-panel-nx-inset.x-panel-collapsed.x-panel-nx-inset-collapsed {
+    margin: 12px 12px 0 12px;
+  }
+
+  .x-panel-nx-inset.x-panel-collapsed.x-panel-nx-inset-collapsed {
+    margin: 12px;
+  }
+
+  .x-panel-nx-subsection-framed {
+    border: none;
+    margin: 0;
+  }
+
+  .x-grid-body {
+    background-color: $color-white;
+
+    .x-grid-group-hd {
+      background-color: $color-white;
+      border: none;
+
+      .x-grid-group-title {
+        color: $color-night-rider;
+      }
+    }
+
+    .x-grid-item {
+      background-color: $color-white;
     }
   }
 }

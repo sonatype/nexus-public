@@ -105,7 +105,7 @@ class QuartzSchedulerSPITest
     when(lastShutdownTimeService.estimateLastShutdownTime()).thenReturn(Optional.empty())
 
     underTest = new QuartzSchedulerSPI(
-        eventManager, nodeAccess, provider, mock(JobFactoryImpl), lastShutdownTimeService, 1
+        eventManager, nodeAccess, provider, mock(JobFactoryImpl), lastShutdownTimeService, 1, true
     )
     underTest.start()
     underTest.states.current = STARTED

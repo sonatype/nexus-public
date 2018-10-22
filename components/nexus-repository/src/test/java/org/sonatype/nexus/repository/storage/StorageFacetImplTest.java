@@ -16,6 +16,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
@@ -79,9 +80,6 @@ public class StorageFacetImplTest
 
   @Mock
   private BlobStoreManager blobStoreManager;
-
-  @Mock
-  private BlobStoreConfigurationStore blobStoreConfigurationStore;
 
   @Mock
   private BlobStoreConfiguration blobStoreConfiguration;
@@ -167,7 +165,6 @@ public class StorageFacetImplTest
     underTest = new StorageFacetImpl(
         nodeAccess,
         blobStoreManager,
-        blobStoreConfigurationStore,
         () -> databaseInstance,
         bucketEntityAdapter,
         componentEntityAdapter,
@@ -250,13 +247,13 @@ public class StorageFacetImplTest
   public void blobStoreGroupMemberAsStorageCreatesConstraintViolation() throws Exception {
     underTest.doConfigure(configuration);
     when(blobStoreManager.get(BLOB_STORE_NAME)).thenReturn(blobStore);
+    when(blobStoreManager.getParent(BLOB_STORE_NAME)).thenReturn(Optional.of("group1"));
     BlobStoreConfiguration groupConfig = mock(BlobStoreConfiguration.class);
     when(groupConfig.getName()).thenReturn("group1");
-    when(blobStoreConfigurationStore.findParents(BLOB_STORE_NAME)).thenReturn(singletonList(groupConfig));
 
     underTest.validate(configuration);
     verify(violationFactory, times(1)).createViolation(format("%s.%s.blobStoreName", P_ATTRIBUTES, STORAGE),
-        format("Blob Store '%s' is a member of Blob Store Groups: 'group1' and cannot be set as storage",
+        format("Blob Store '%s' is a member of Blob Store Group 'group1' and cannot be set as storage",
             BLOB_STORE_NAME));
   }
 }

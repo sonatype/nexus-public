@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.internal.blobstore;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
@@ -46,6 +47,7 @@ import com.google.common.eventbus.Subscribe;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Optional.empty;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
 /**
@@ -354,8 +356,15 @@ public class BlobStoreManagerImpl
   }
 
   @Override
-  @Deprecated
-  public boolean isPromotable(final BlobStore blobStore) {
-    return blobStore.isGroupable() && store.findParents(blobStore.getBlobStoreConfiguration().getName()).isEmpty();
+  public boolean isPromotable(final String blobStoreName) {
+    BlobStore blobStore = get(blobStoreName);
+    return blobStore != null && blobStore.isGroupable() &&
+        !store.findParent(blobStore.getBlobStoreConfiguration().getName()).isPresent();
+  }
+
+  @Override
+  public Optional<String> getParent(final String blobStoreName) {
+    BlobStore blobStore = get(blobStoreName);
+    return blobStore == null ? empty() : store.findParent(blobStoreName).map(BlobStoreConfiguration::getName);
   }
 }

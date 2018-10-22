@@ -57,7 +57,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     {ref: 'feature', selector: 'nx-coreui-componentassettreefeature'},
     {ref: 'repositoryList', selector: 'nx-coreui-componentassettreefeature nx-coreui-browse-repository-list'},
     {ref: 'componentAssetTree', selector: 'nx-coreui-componentassettreefeature nx-coreui-component-asset-tree'},
-    {ref: 'componentAssetTreePanel', selector: 'nx-coreui-componentassettreefeature treepanel'},
+    {ref: 'componentAssetTreePanel', selector: 'nx-coreui-componentassettreefeature nx-coreui-component-asset-tree treepanel'},
     {ref: 'treeFilterBox', selector: 'nx-coreui-componentassettreefeature nx-searchbox'},
     {ref: 'advancedSearchLink', selector: 'nx-coreui-componentassettreefeature #nx-coreui-component-asset-tree-advanced-search'},
     {ref: 'uploadButton', selector: 'nx-coreui-componentassettreefeature button[action=upload]'},
@@ -68,7 +68,8 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     {ref: 'deleteAssetButton', selector: 'nx-coreui-component-componentassetinfo button[action=deleteAsset]'},
     {ref: 'analyzeApplicationButton', selector: 'nx-coreui-component-componentinfo button[action=analyzeApplication]'},
     {ref: 'analyzeApplicationWindow', selector: 'nx-coreui-component-analyze-window'},
-    {ref: 'rootContainer', selector: 'nx-main'}
+    {ref: 'rootContainer', selector: 'nx-main'},
+    {ref: 'treeWarning', selector: 'nx-coreui-componentassettreefeature nx-coreui-component-asset-tree #warning'}
   ],
 
   icons: {
@@ -243,6 +244,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     // Update HTML View link
     me.updateHtmlLink(model);
     me.updateUploadButton(model);
+    me.updateRebuildWarning();
 
     me.reloadNodes();
 
@@ -359,8 +361,26 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
   },
 
   stateChanged: function() {
-    var me = this;
-    me.updateUploadButton();
+    this.updateUploadButton();
+    this.updateRebuildWarning();
+  },
+
+  updateRebuildWarning: function() {
+    var warning = this.getTreeWarning(),
+        currentRepository = this.getCurrentRepository(),
+        rebuildingRepositories = NX.State.getValue('rebuildingRepositories') || [];
+
+    if (!warning) {
+      return;
+    }
+
+    if (currentRepository && rebuildingRepositories.indexOf(currentRepository.get('name')) !== -1) {
+      warning.setTitle(NX.I18n.format('ComponentDetails_Rebuild_Warning', currentRepository.get('name')));
+      warning.show();
+    }
+    else {
+      warning.hide();
+    }
   },
 
   bookmarkNode: function(node) {
@@ -378,14 +398,29 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     var me = this,
         containerView = me.getComponentAssetTree(),
         componentInfoPanel,
+        componentInfoPanelTitleText,
         assetInfoPanel;
 
     me.removeSideContent();
     me.bookmarkNode(node);
 
     if ('component' === node.get('type')) {
+      componentInfoPanelTitleText = me.buildPathString(node);
       componentInfoPanel = containerView.add(me.getComponentComponentInfoView().create({
-        title: me.buildPathString(node),
+        title: {
+          text: componentInfoPanelTitleText,
+          listeners: {
+            afterrender: function(me) {
+              Ext.tip.QuickTipManager.register({
+                target: me.getId(),
+                text: componentInfoPanelTitleText
+              });
+            },
+            destroy: function(me) {
+              Ext.tip.QuickTipManager.unregister(me.getId());
+            }
+          }
+        },
         iconCls: 'nx-icon-tree-component-x16',
         flex: 2
       }));

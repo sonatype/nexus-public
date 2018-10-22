@@ -45,6 +45,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Assets_Info_ContentType: 'Content type',
     Assets_Info_FileSize: 'File size',
     Assets_Info_Last_Downloaded: 'Last downloaded',
+    Assets_Info_No_Downloads: 'has not been downloaded',
     Assets_Info_Locally_Cached: 'Locally cached',
     Assets_Info_BlobRef: 'Blob reference',
     Assets_Info_Blob_Created: 'Blob created',
@@ -74,6 +75,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     ComponentDetails_Delete_Success: 'Component deleted: {0}',
     ComponentDetails_Analyze_Success: 'Analysis in process. Email will be sent when report is ready.',
     ComponentDetails_Loading_Mask: 'Loading...',
+    ComponentDetails_Rebuild_Warning: 'Browse tree is being rebuilt; results may not be complete until the rebuild is finished.',
 
     ComponentUtils_Delete_Button_Unauthenticated: 'Please sign in first',
     ComponentUtils_Delete_Asset_No_Permissions: 'You do not have permission to delete this asset',

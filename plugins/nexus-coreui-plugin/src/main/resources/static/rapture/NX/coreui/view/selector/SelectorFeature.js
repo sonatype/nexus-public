@@ -47,7 +47,7 @@ Ext.define('NX.coreui.view.selector.SelectorFeature', {
         {
           xtype: 'button',
           text: NX.I18n.get('Selector_SelectorFeature_Delete_Button'),
-          glyph: 'xf056@FontAwesome' /* fa-minus-circle */,
+          glyph: 'xf1f8@FontAwesome' /* fa-trash */,
           action: 'delete',
           disabled: true
         }

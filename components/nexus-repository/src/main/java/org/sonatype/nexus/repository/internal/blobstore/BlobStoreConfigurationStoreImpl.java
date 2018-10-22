@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.internal.blobstore;
 
 import java.util.List;
+import java.util.Optional;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -104,8 +105,7 @@ public class BlobStoreConfigurationStoreImpl
 
   @Override
   @Guarded(by = STARTED)
-  @Deprecated
-  public List<BlobStoreConfiguration> findParents(final String name) {
-    return inTx(databaseInstance).call(db -> entityAdapter.getParents(db, name));
+  public Optional<BlobStoreConfiguration> findParent(final String name) {
+    return inTx(databaseInstance).call(db -> entityAdapter.getParent(db, name));
   }
 }

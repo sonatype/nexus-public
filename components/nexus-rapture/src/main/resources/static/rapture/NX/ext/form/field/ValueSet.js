@@ -117,11 +117,6 @@ Ext.define('NX.ext.form.field.ValueSet', {
   glyphAddButton: 'xf055@FontAwesome' /* fa-plus-circle */,
 
   /**
-   * @cfg {String} [glyphDeleteButton="xf056@FontAwesome"]
-   */
-  glyphDeleteButton: 'xf056@FontAwesome' /* fa-minus-circle */,
-
-  /**
    * @private {Ext.data.Store} Stores managed values
    */
   store: undefined,

@@ -10,38 +10,21 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext, NX*/
+package org.sonatype.nexus.repository.browse;
+
+import org.sonatype.nexus.repository.Facet;
 
 /**
- * Ssl Certificate Set feature panel.
+ * Provides Browse related information
  *
- * @since 3.0
+ * @since 3.next
  */
-Ext.define('NX.coreui.view.ssl.SslCertificateFeature', {
-  extend: 'NX.view.drilldown.Drilldown',
-  alias: 'widget.nx-coreui-sslcertificate-feature',
-  requires: [
-    'NX.I18n'
-  ],
-
+@Facet.Exposed
+public interface BrowseFacet
+    extends Facet
+{
   /**
-   * @override
+   * @return true if the repository is being rebuilt by an existing task
    */
-  initComponent: function() {
-    Ext.apply(this, {
-      iconName: 'sslcertificate-default',
-
-      masters: [
-        { xtype: 'nx-coreui-sslcertificate-list' }
-      ],
-
-      tabs: { xtype: 'nx-coreui-sslcertificate-details' },
-
-      nxActions: [
-        { xtype: 'button', text: NX.I18n.get('Ssl_SslCertificateFeature_Delete_Button'), glyph: 'xf1f8@FontAwesome' /* fa-trash */, action: 'delete', disabled: true }
-      ]
-    });
-
-    this.callParent();
-  }
-});
+  boolean isRebuilding();
+}

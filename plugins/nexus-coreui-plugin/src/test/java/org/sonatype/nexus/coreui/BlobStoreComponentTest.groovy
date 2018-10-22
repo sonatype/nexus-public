@@ -121,7 +121,7 @@ class BlobStoreComponentTest
 
     then: 'blobStoreManager is called correctly'
       1 * blobStoreManager.get(groupBlobName) >> from
-      1 * blobStoreManager.isPromotable(from) >> true
+      1 * blobStoreManager.isPromotable(groupBlobName) >> true
       1 * repositoryManager.blobstoreUsageCount(_ as String) >> 2L
       1 * blobStoreConverter.promote(from) >> Mock(BlobStoreGroup) {
           getBlobStoreConfiguration() >> new BlobStoreConfiguration(name: 'name', type: 'type',
@@ -156,7 +156,7 @@ class BlobStoreComponentTest
 
     then: 'blobStoreManager is called correctly'
       1 * blobStoreManager.get(groupBlobName) >> blobStore
-      1 * blobStoreManager.isPromotable(blobStore) >> false
+      1 * blobStoreManager.isPromotable(groupBlobName) >> false
       BlobStoreException exception = thrown()
       exception.message == 'Blob store (myGroup) could not be promoted to a blob store group'
   }

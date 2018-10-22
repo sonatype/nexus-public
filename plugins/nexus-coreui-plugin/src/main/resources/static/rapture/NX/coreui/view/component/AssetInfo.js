@@ -24,6 +24,10 @@ Ext.define('NX.coreui.view.component.AssetInfo', {
     'NX.I18n',
     'NX.coreui.util.RepositoryUrls'
   ],
+  
+  mixins: {
+    componentUtils: 'NX.coreui.mixin.ComponentUtils'
+  },
 
   /**
    * model to display
@@ -48,9 +52,14 @@ Ext.define('NX.coreui.view.component.AssetInfo', {
     info[NX.I18n.get('Assets_Info_FileSize')] = Ext.util.Format.fileSize(size);
     info[NX.I18n.get('Assets_Info_Blob_Created')] = Ext.htmlEncode(assetModel.get('blobCreated'));
     info[NX.I18n.get('Assets_Info_Blob_Updated')] = Ext.htmlEncode(assetModel.get('blobUpdated'));
-    info[NX.I18n.get('Assets_Info_Downloaded_Count')] = Ext.htmlEncode(assetModel.get('downloadCount')) + ' '
-            + NX.I18n.get('Assets_Info_Downloaded_Unit');
-    info[NX.I18n.get('Assets_Info_Last_Downloaded')] = Ext.htmlEncode(Ext.Date.format(assetModel.get('lastDownloaded'), 'D M d Y'));
+
+    if (assetModel.get('downloadCount')) {
+      info[NX.I18n.get('Assets_Info_Downloaded_Count')] = Ext.htmlEncode(assetModel.get('downloadCount')) + ' ' +
+          NX.I18n.get('Assets_Info_Downloaded_Unit');
+    }
+
+    info[NX.I18n.get('Assets_Info_Last_Downloaded')] = Ext.htmlEncode(
+        me.mixins.componentUtils.getLastDownloadDateForDisplay(assetModel));
     info[NX.I18n.get('Assets_Info_Locally_Cached')] = Ext.htmlEncode(contentType !== 'unknown' && size > 0);
     info[NX.I18n.get('Assets_Info_BlobRef')] = Ext.htmlEncode(assetModel.get('blobRef'));
     info[NX.I18n.get('Assets_Info_ContainingRepositoryName')] = Ext.htmlEncode(assetModel.get('containingRepositoryName'));

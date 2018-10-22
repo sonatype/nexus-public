@@ -177,9 +177,6 @@ public class MavenFacetImpl
     if (asset == null) {
       return null;
     }
-    if (asset.markAsDownloaded()) {
-      tx.saveAsset(asset);
-    }
 
     final Blob blob = tx.requireBlob(asset.requireBlobRef());
     return toContent(asset, blob);
@@ -355,7 +352,7 @@ public class MavenFacetImpl
     }
 
     putAssetPayload(tx, asset, assetBlob, contentAttributes);
-    asset.markAsDownloaded();
+
     tx.saveAsset(asset);
 
     // avoid re-reading pom.xml if it's a duplicate of the old asset
@@ -426,7 +423,7 @@ public class MavenFacetImpl
     }
 
     putAssetPayload(tx, asset, assetBlob, contentAttributes);
-    asset.markAsDownloaded();
+
     tx.saveAsset(asset);
 
     return asset;

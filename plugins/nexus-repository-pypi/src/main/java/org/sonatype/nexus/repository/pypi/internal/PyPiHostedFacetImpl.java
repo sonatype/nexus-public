@@ -134,13 +134,6 @@ public class PyPiHostedFacetImpl
 
     TempBlob tempBlob = payload.getTempBlob();
 
-    // We extract the metadata from the blobs to get access to the original name of the package.
-    // Note that not all format/packaging types provide this information
-    // Names that contain an underscore are pre-normalized at build time when packaged as either wheel/egg format therefore
-    // the original name is lost. All other combinations at the time of testing contain the original name in the metadata.
-    Map<String, String> attributesFromBlob = PyPiInfoUtils.extractMetadata(tempBlob.getBlob().getInputStream());
-    attributes.putAll(attributesFromBlob);
-
     final String name = checkNotNull(attributes.get(P_NAME));
     final String version = checkNotNull(attributes.get(P_VERSION));
     final String normalizedName = normalizeName(name);
@@ -197,6 +190,8 @@ public class PyPiHostedFacetImpl
   /**
    * We supply all variants of the name. According to pep-503 '-', '.' and '_' are to be treated equally.
    * This allows searching for this component to be found using any combination of the substituted characters.
+   * When using only this technique and not parsing the actual metadata stored in the package, the original name
+   * (if it contained multiple special characters) would not be accounted for in search.
    * @param attributes associated with the component
    * @param name of the component to be saved
    */

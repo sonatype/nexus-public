@@ -40,6 +40,7 @@ import org.sonatype.nexus.jmx.reflect.ManagedObject;
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
 import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.browse.BrowseFacet;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.config.internal.ConfigurationCreatedEvent;
@@ -106,6 +107,8 @@ public class RepositoryManagerImpl
 
   private final Provider<ConfigurationFacet> configFacet;
 
+  private final Provider<BrowseFacet> browseFacet;
+
   private final RepositoryAdminSecurityContributor securityContributor;
 
   private final List<DefaultRepositoriesContributor> defaultRepositoriesContributors;
@@ -121,6 +124,7 @@ public class RepositoryManagerImpl
                                final ConfigurationStore store,
                                final RepositoryFactory factory,
                                final Provider<ConfigurationFacet> configFacet,
+                               final Provider<BrowseFacet> browseFacet,
                                final Map<String, Recipe> recipes,
                                final RepositoryAdminSecurityContributor securityContributor,
                                final List<DefaultRepositoriesContributor> defaultRepositoriesContributors,
@@ -132,6 +136,7 @@ public class RepositoryManagerImpl
     this.store = checkNotNull(store);
     this.factory = checkNotNull(factory);
     this.configFacet = checkNotNull(configFacet);
+    this.browseFacet = checkNotNull(browseFacet);
     this.recipes = checkNotNull(recipes);
     this.securityContributor = checkNotNull(securityContributor);
     this.defaultRepositoriesContributors = checkNotNull(defaultRepositoriesContributors);
@@ -170,6 +175,7 @@ public class RepositoryManagerImpl
 
     // attach mandatory facets
     repository.attach(configFacet.get());
+    repository.attach(browseFacet.get());
 
     // apply recipe to repository
     recipe.apply(repository);

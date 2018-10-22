@@ -208,7 +208,7 @@ class BlobStoreComponent
         repositoryUseCount: repositoryManager.blobstoreUsageCount(blobStore.blobStoreConfiguration.name),
         blobStoreUseCount: blobStoreManager.blobStoreUsageCount(blobStore.blobStoreConfiguration.name),
         inUse: repositoryManager.isBlobstoreUsed(blobStore.blobStoreConfiguration.name),
-        promotable: blobStoreManager.isPromotable(blobStore),
+        promotable: blobStoreManager.isPromotable(blobStore.blobStoreConfiguration.name),
         isQuotaEnabled: !quotaAttributes.isEmpty(),
         quotaType: quotaAttributes.get(BlobStoreQuotaSupport.TYPE_KEY),
         quotaLimit: (Long) quotaAttributes.get(BlobStoreQuotaSupport.LIMIT_KEY, Long.class, 0L) / MILLION,
@@ -223,10 +223,9 @@ class BlobStoreComponent
   @Validate(groups = [Update.class, Default.class])
   BlobStoreXO promoteToGroup(final @NotNull @Valid String fromName) {
     BlobStore from = blobStoreManager.get(fromName)
-    if (blobStoreManager.isPromotable(from)) {
+    if (blobStoreManager.isPromotable(fromName)) {
       return asBlobStoreXO(blobStorePromoter.promote(from))
     }
     throw new BlobStoreException("Blob store (${fromName}) could not be promoted to a blob store group", null)
   }
-
 }

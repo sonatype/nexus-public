@@ -126,6 +126,7 @@ class Maven2ProxyRecipe
         .handler(versionPolicyHandler)
         .handler(contentHeadersHandler)
         .handler(unitOfWorkHandler)
+        .handler(lastDownloadedHandler)
         .handler(proxyHandler)
         .create())
 
@@ -134,6 +135,7 @@ class Maven2ProxyRecipe
         .handler(partialFetchHandler)
         .handler(contentHeadersHandler)
         .handler(unitOfWorkHandler)
+        .handler(lastDownloadedHandler)
         .handler(proxyHandler)
         .create())
 
@@ -142,6 +144,7 @@ class Maven2ProxyRecipe
         .handler(partialFetchHandler)
         .handler(contentHeadersHandler)
         .handler(unitOfWorkHandler)
+        .handler(lastDownloadedHandler)
         .handler(proxyHandler)
         .create())
 
@@ -155,6 +158,7 @@ class Maven2ProxyRecipe
         .handler(versionPolicyHandler)
         .handler(contentHeadersHandler)
         .handler(unitOfWorkHandler)
+        .handler(lastDownloadedHandler)
         .handler(proxyHandler)
         .create())
 

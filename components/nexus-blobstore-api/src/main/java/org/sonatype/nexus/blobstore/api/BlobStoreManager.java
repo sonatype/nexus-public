@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.blobstore.api;
 
+import java.util.Optional;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
@@ -80,11 +82,19 @@ public interface BlobStoreManager
 
   /**
    * Returns true if the blob store is promotable
-   * @param blobStore
+   * @param blobStoreName
    * @return true if member is promotable
    *
-   * @since 3.14
-   * @deprecated to be removed in 3.15 (NEXUS-17905)
+   * @since 3.next
    */
-  boolean isPromotable(BlobStore blobStore);
+  boolean isPromotable(String blobStoreName);
+
+  /**
+   * Returns the parent group of the blob store if it exists
+   * @param blobStoreName
+   * @return {@link java.util.Optional<String>} containing the parent group name if it exists
+   *
+   * @since 3.next
+   */
+  Optional<String> getParent(String blobStoreName);
 }

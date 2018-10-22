@@ -43,6 +43,7 @@ class BlobStoreGroupDescriptorTest
   def setup() {
     blobStoreManager.get(_) >> { String name -> blobStores.computeIfAbsent(name, { k -> mockBlobStore(k, 'mock') }) }
     blobStoreManager.browse() >> blobStores.values()
+    blobStoreManager.getParent(_) >> Optional.empty()
     repositoryManager.browseForBlobStore(_) >> []
   }
 
@@ -98,6 +99,7 @@ class BlobStoreGroupDescriptorTest
               attributes: [group: [members: ['store1']]]))
 
     then: 'a validation exception is thrown'
+      blobStoreManager.getParent('store1') >> Optional.of('group1')
       def exception = thrown(ValidationException)
       exception.message == "Blob Store 'store1' is already a member of Blob Store Group 'group1'"
   }

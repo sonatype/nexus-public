@@ -51,15 +51,34 @@ Ext.define('NX.coreui.view.browse.ComponentAssetTree', {
         }
       }],
       dockedItems: [{
-        xtype: 'nx-actions',
-        dock: 'top',
+        xtype: 'panel',
         items: [{
+          xtype: 'panel',
+          itemId: 'info',
+          ui: 'nx-drilldown-message',
+          cls: 'nx-drilldown-info',
+          iconCls: NX.Icons.cls('drilldown-info', 'x16'),
+          hidden: true
+        },
+        {
+          xtype: 'panel',
+          itemId: 'warning',
+          ui: 'nx-drilldown-message',
+          cls: 'nx-drilldown-warning',
+          iconCls: NX.Icons.cls('drilldown-warning', 'x16'),
+          hidden: true
+        },
+        {
+          xtype: 'nx-actions',
+          dock: 'top',
+          items: [{
             xtype: 'button',
             text: NX.I18n.get('Component_Asset_Tree_Upload_Component'),
             glyph: 'xf093@FontAwesome' /* fa-upload */,
             action: 'upload',
             hidden: true
-          },{
+          },
+          {
             xtype: 'label',
             itemId: 'nx-coreui-component-asset-tree-html-view',
             html: NX.util.Url.asLink("", NX.I18n.get('Component_Asset_Tree_Html_View'), '_blank')
@@ -70,11 +89,13 @@ Ext.define('NX.coreui.view.browse.ComponentAssetTree', {
             emptyText: NX.I18n.get('Grid_Plugin_FilterBox_Empty'),
             searchDelay: 200,
             width: 200
-          },{
+          },
+          {
             xtype: 'label',
             itemId: 'nx-coreui-component-asset-tree-advanced-search',
             html: '<a href="#browse/search">Advanced search...</a>'
           }]
+        }]
       }]
     });
 

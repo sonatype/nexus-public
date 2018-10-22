@@ -844,7 +844,6 @@ public class StorageFacetImplIT
     NodeAccess mockNodeAccess = mock(NodeAccess.class);
     when(mockNodeAccess.getId()).thenReturn(nodeId);
     BlobStoreManager mockBlobStoreManager = mock(BlobStoreManager.class);
-    BlobStoreConfigurationStore mockBlobStoreConfigurationStore = mock(BlobStoreConfigurationStore.class);
     when(mockBlobStoreManager.get(anyString())).thenReturn(mock(BlobStore.class));
     ContentValidatorSelector contentValidatorSelector =
         new ContentValidatorSelector(Collections.emptyMap(), new DefaultContentValidator(new DefaultMimeSupport()));
@@ -854,7 +853,6 @@ public class StorageFacetImplIT
     StorageFacetImpl storageFacetImpl = new StorageFacetImpl(
         mockNodeAccess,
         mockBlobStoreManager,
-        mockBlobStoreConfigurationStore,
         database.getInstanceProvider(),
         bucketEntityAdapter,
         componentEntityAdapter,

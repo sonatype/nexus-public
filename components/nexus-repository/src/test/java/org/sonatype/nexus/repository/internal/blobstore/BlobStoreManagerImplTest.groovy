@@ -260,10 +260,11 @@ class BlobStoreManagerImplTest
   void 'It is promotable when the store finds no parents and the blob store is groupable'() {
     def blobStoreName = 'child'
     def blobStore = mock(BlobStore)
+    underTest.track(blobStoreName, blobStore)
     when(blobStore.isGroupable()).thenReturn(true)
     when(blobStore.getBlobStoreConfiguration()).thenReturn(new BlobStoreConfiguration(name: blobStoreName))
-    when(store.findParents(blobStoreName)).thenReturn([])
-    assert underTest.isPromotable(blobStore)
+    when(store.findParent(blobStoreName)).thenReturn(Optional.empty())
+    assert underTest.isPromotable(blobStoreName)
   }
 
   @Test
@@ -272,8 +273,8 @@ class BlobStoreManagerImplTest
     def blobStore = mock(BlobStore)
     when(blobStore.isGroupable()).thenReturn(true)
     when(blobStore.getBlobStoreConfiguration()).thenReturn(new BlobStoreConfiguration(name: blobStoreName))
-    when(store.findParents(blobStoreName)).thenReturn([new BlobStoreConfiguration()])
-    assert !underTest.isPromotable(blobStore)
+    when(store.findParent(blobStoreName)).thenReturn(Optional.of(new BlobStoreConfiguration()))
+    assert !underTest.isPromotable(blobStoreName)
   }
 
   @Test
@@ -282,8 +283,8 @@ class BlobStoreManagerImplTest
     def blobStore = mock(BlobStore)
     when(blobStore.isGroupable()).thenReturn(false)
     when(blobStore.getBlobStoreConfiguration()).thenReturn(new BlobStoreConfiguration(name: blobStoreName))
-    when(store.findParents(blobStoreName)).thenReturn([])
-    assert !underTest.isPromotable(blobStore)
+    when(store.findParent(blobStoreName)).thenReturn(Optional.empty())
+    assert !underTest.isPromotable(blobStoreName)
   }
 
   private BlobStoreConfiguration createConfig(name = 'foo', type = 'test', attributes = [file:[path:'baz']]) {

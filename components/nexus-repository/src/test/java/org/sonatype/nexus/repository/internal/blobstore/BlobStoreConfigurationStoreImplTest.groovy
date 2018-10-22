@@ -109,9 +109,8 @@ class BlobStoreConfigurationStoreImplTest
     )
     underTest.create(entity)
 
-    def parents = underTest.findParents('member1')
-    assert parents.size() == 1
-    assert parents[0].name == 'parent1'
+    def parent = underTest.findParent('member1').get()
+    assert parent.name == 'parent1'
   }
 
   @Test
@@ -125,8 +124,8 @@ class BlobStoreConfigurationStoreImplTest
     )
     underTest.create(entity)
 
-    def parents = underTest.findParents('member2')
-    assert parents.size() == 0
+    def parent = underTest.findParent('member2')
+    assert !parent.isPresent()
   }
 
   private BlobStoreConfiguration createConfig(name = 'foo', path = 'bar') {

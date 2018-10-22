@@ -14,6 +14,7 @@ package org.sonatype.nexus.blobstore.file;
 
 import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
@@ -702,7 +703,7 @@ public class FileBlobStore
       log.debug("Deleted {}", path);
     }
     else {
-      log.error("No file to delete found at {}", path);
+      log.error("No file to delete found at {}", path, new FileNotFoundException(path.toString()));
     }
     return deleted;
   }

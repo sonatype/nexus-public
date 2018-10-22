@@ -365,7 +365,7 @@ Ext.define('NX.coreui.controller.SslCertificates', {
               formBind: true,
               disabled: true,
               ui: 'nx-primary',
-              glyph: 'xf056@FontAwesome' /* fa-minus-circle */
+              glyph: 'xf1f8@FontAwesome' /* fa-trash */
             });
             button = tbar.down('button[action=remove]');
             me.mon(

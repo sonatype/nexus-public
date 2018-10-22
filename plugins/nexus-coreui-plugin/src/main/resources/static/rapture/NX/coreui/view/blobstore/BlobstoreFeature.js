@@ -38,7 +38,7 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreFeature', {
       tabs: { xtype: 'nx-coreui-blobstore-settings' },
 
       nxActions: [
-        { xtype: 'button', text: NX.I18n.get('Blobstore_BlobstoreFeature_Delete_Button'), glyph: 'xf056@FontAwesome' /* fa-minus-circle */, action: 'delete', disabled: true },
+        { xtype: 'button', text: NX.I18n.get('Blobstore_BlobstoreFeature_Delete_Button'), glyph: 'xf1f8@FontAwesome' /* fa-trash */, action: 'delete', disabled: true },
         { xtype: 'button', text: NX.I18n.get('Blobstore_BlobstoreFeature_Promote_Button'), glyph: 'xf0ad@FontAwesome' /* fa-wrench */, action: 'promoteToGroup', disabled: true}
       ]
     });

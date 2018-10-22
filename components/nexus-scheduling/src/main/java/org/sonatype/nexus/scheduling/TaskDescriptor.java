@@ -70,4 +70,11 @@ public interface TaskDescriptor
    * Exposed tasks are allowed to be created by users.
    */
   boolean isExposed();
+
+  /**
+   * Returns true if the job should be marked as recoverable
+   *
+   * @since 3.next
+   */
+  boolean isRecoverable();
 }

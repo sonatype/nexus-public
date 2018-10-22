@@ -10625,42 +10625,113 @@ fieldset.x-fieldset {
     background-color: #fff;
 }
 
+.nx-coreui-component-componentinfo,
 .nx-coreui-component-componentassetinfo {
     /**
- * @class NX.coreui.view.component.ComponentAssetInfo
+ * @class NX.coreui.view.component.ComponentInfo
  */
+    background-color: transparent;
     border-top: 1px solid silver;
+    border-left: 1px solid silver;
 }
 
+.nx-coreui-component-componentinfo > .x-panel-header,
 .nx-coreui-component-componentassetinfo > .x-panel-header {
-    background-color: white;
+    background-color: #fff;
 }
 
+.nx-coreui-component-componentinfo > .x-panel-header *,
 .nx-coreui-component-componentassetinfo > .x-panel-header * {
     font-weight: normal;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     font-size: 18px;
     line-height: 20px;
-    color: black;
+    color: #333;
 }
 
-.nx-coreui-component-componentinfo {
-    /**
- * @class NX.coreui.view.component.ComponentInfo
- */
-    border-top: 1px solid silver;
+.nx-coreui-component-componentinfo > .x-panel-header .x-title-text,
+.nx-coreui-component-componentassetinfo > .x-panel-header .x-title-text {
+    display: inline-block;
 }
 
-.nx-coreui-component-componentinfo > .x-panel-header {
-    background-color: white;
+.nx-coreui-component-componentinfo .nx-actions,
+.nx-coreui-component-componentassetinfo .nx-actions {
+    background-color: #fff;
+    border-bottom: solid 1px silver !important;
 }
 
-.nx-coreui-component-componentinfo > .x-panel-header * {
-    font-weight: normal;
-    font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    font-size: 18px;
-    line-height: 20px;
-    color: black;
+.nx-coreui-component-componentinfo .x-panel-body-default,
+.nx-coreui-component-componentassetinfo .x-panel-body-default {
+    padding: 0;
+}
+
+.nx-coreui-component-componentinfo .x-panel-nx-inset,
+.nx-coreui-component-componentassetinfo .x-panel-nx-inset {
+    border: none;
+    margin: 12px;
+    padding: 0;
+}
+
+.nx-coreui-component-componentinfo .x-panel-nx-inset .x-panel-header-nx-inset,
+.nx-coreui-component-componentassetinfo .x-panel-nx-inset .x-panel-header-nx-inset {
+    background-color: #ddd;
+}
+
+.nx-coreui-component-componentinfo .x-panel-nx-inset .x-panel-header-nx-inset .x-panel-header-title-nx-inset,
+.nx-coreui-component-componentassetinfo .x-panel-nx-inset .x-panel-header-nx-inset .x-panel-header-title-nx-inset {
+    color: #333;
+}
+
+.nx-coreui-component-componentinfo .x-panel-nx-inset .x-panel-header-nx-inset .x-tool-tool-el,
+.nx-coreui-component-componentassetinfo .x-panel-nx-inset .x-panel-header-nx-inset .x-tool-tool-el {
+    background-color: transparent;
+}
+
+.nx-coreui-component-componentinfo .x-panel-nx-inset .x-panel-header-nx-inset .x-tool-img,
+.nx-coreui-component-componentassetinfo .x-panel-nx-inset .x-panel-header-nx-inset .x-tool-img {
+    opacity: 1;
+}
+
+.nx-coreui-component-componentinfo .x-panel-nx-inset .x-panel-header-nx-inset .x-tool-img:hover,
+.nx-coreui-component-componentassetinfo .x-panel-nx-inset .x-panel-header-nx-inset .x-tool-img:hover {
+    opacity: 0.7;
+}
+
+.nx-coreui-component-componentinfo .x-autocontainer-innerCt > .x-panel-nx-inset.x-panel-collapsed.x-panel-nx-inset-collapsed,
+.nx-coreui-component-componentassetinfo .x-autocontainer-innerCt > .x-panel-nx-inset.x-panel-collapsed.x-panel-nx-inset-collapsed {
+    margin: 12px 12px 0 12px;
+}
+
+.nx-coreui-component-componentinfo .x-panel-nx-inset.x-panel-collapsed.x-panel-nx-inset-collapsed,
+.nx-coreui-component-componentassetinfo .x-panel-nx-inset.x-panel-collapsed.x-panel-nx-inset-collapsed {
+    margin: 12px;
+}
+
+.nx-coreui-component-componentinfo .x-panel-nx-subsection-framed,
+.nx-coreui-component-componentassetinfo .x-panel-nx-subsection-framed {
+    border: none;
+    margin: 0;
+}
+
+.nx-coreui-component-componentinfo .x-grid-body,
+.nx-coreui-component-componentassetinfo .x-grid-body {
+    background-color: #fff;
+}
+
+.nx-coreui-component-componentinfo .x-grid-body .x-grid-group-hd,
+.nx-coreui-component-componentassetinfo .x-grid-body .x-grid-group-hd {
+    background-color: #fff;
+    border: none;
+}
+
+.nx-coreui-component-componentinfo .x-grid-body .x-grid-group-hd .x-grid-group-title,
+.nx-coreui-component-componentassetinfo .x-grid-body .x-grid-group-hd .x-grid-group-title {
+    color: #333;
+}
+
+.nx-coreui-component-componentinfo .x-grid-body .x-grid-item,
+.nx-coreui-component-componentassetinfo .x-grid-body .x-grid-item {
+    background-color: #fff;
 }
 
 .nx-coreui-component-assetattributes .attribute-value {

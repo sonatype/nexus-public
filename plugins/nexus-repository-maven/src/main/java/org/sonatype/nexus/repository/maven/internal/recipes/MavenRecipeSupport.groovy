@@ -38,6 +38,7 @@ import org.sonatype.nexus.repository.view.handlers.ConditionalRequestHandler
 import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler
 import org.sonatype.nexus.repository.view.handlers.ExceptionHandler
 import org.sonatype.nexus.repository.view.handlers.HandlerContributor
+import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler
 import org.sonatype.nexus.repository.view.handlers.TimingHandler
 import org.sonatype.nexus.repository.view.matchers.ActionMatcher
 import org.sonatype.nexus.repository.view.matchers.logic.LogicMatchers
@@ -85,6 +86,9 @@ abstract class MavenRecipeSupport
 
   @Inject
   HandlerContributor handlerContributor
+  
+  @Inject
+  LastDownloadedHandler lastDownloadedHandler
 
   final MavenPathParser mavenPathParser
 

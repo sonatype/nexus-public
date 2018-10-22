@@ -109,7 +109,7 @@ Ext.define('NX.coreui.audit.AuditList', {
           {
             xtype: 'button',
             text: NX.I18n.render(me, 'Clear_Button'),
-            glyph: 'xf056@FontAwesome' /* fa-minus-circle */,
+            glyph: 'xf1f8@FontAwesome' /* fa-trash */,
             action: 'clear',
             disabled: true
           },

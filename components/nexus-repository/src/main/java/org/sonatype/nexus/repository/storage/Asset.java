@@ -222,7 +222,7 @@ public class Asset
   }
 
   /**
-   * Sets the last downloaded timestamp to now, if it has been more than a minute.
+   * Sets the last downloaded timestamp to now, if it has been more than 12 hours.
    *
    * @return {@code true} if the timestamp was changed, otherwise {@code false}
    */

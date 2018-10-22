@@ -113,6 +113,7 @@ class Maven2HostedRecipe
         .handler(versionPolicyHandler)
         .handler(contentHeadersHandler)
         .handler(unitOfWorkHandler)
+        .handler(lastDownloadedHandler)
         .handler(hostedHandler)
         .create())
 
@@ -120,6 +121,7 @@ class Maven2HostedRecipe
         .handler(partialFetchHandler)
         .handler(contentHeadersHandler)
         .handler(unitOfWorkHandler)
+        .handler(lastDownloadedHandler)
         .handler(hostedHandler)
         .create())
 
@@ -127,6 +129,7 @@ class Maven2HostedRecipe
         .handler(partialFetchHandler)
         .handler(contentHeadersHandler)
         .handler(unitOfWorkHandler)
+        .handler(lastDownloadedHandler)
         .handler(archetypeCatalogHandler)
         .create())
 
@@ -135,6 +138,7 @@ class Maven2HostedRecipe
         .handler(versionPolicyHandler)
         .handler(contentHeadersHandler)
         .handler(unitOfWorkHandler)
+        .handler(lastDownloadedHandler)
         .handler(hostedHandler)
         .create())
 

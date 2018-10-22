@@ -26,6 +26,10 @@ Ext.define('NX.coreui.view.component.ComponentAssetInfo', {
     'NX.ext.button.Button'
   ],
 
+  mixins: {
+    componentUtils: 'NX.coreui.mixin.ComponentUtils'
+  },
+
   autoScroll: true,
   cls: 'nx-coreui-component-componentassetinfo',
 
@@ -35,7 +39,7 @@ Ext.define('NX.coreui.view.component.ComponentAssetInfo', {
       {
         xtype: 'nx-button',
         text: NX.I18n.get('AssetInfo_Delete_Button'),
-        glyph: 'xf056@FontAwesome' /* fa-minus-circle */,
+        glyph: 'xf1f8@FontAwesome' /* fa-trash */,
         action: 'deleteAsset',
         hidden: true
       }
@@ -64,10 +68,13 @@ Ext.define('NX.coreui.view.component.ComponentAssetInfo', {
   summary: {},
 
   setModel: function(asset, component) {
+    var me = this;
+
     var summary = this.summary,
         contentType = asset.get('contentType'),
         size = asset.get('size'),
-        attributesPanel = this.lookup('attributesPanel');
+        attributesPanel = this.lookup('attributesPanel'),
+        titleText;
 
     this.assetModel = asset;
     this.componentModel = component;
@@ -82,9 +89,14 @@ Ext.define('NX.coreui.view.component.ComponentAssetInfo', {
     summary[NX.I18n.get('Assets_Info_FileSize')] = Ext.util.Format.fileSize(size);
     summary[NX.I18n.get('Assets_Info_Blob_Created')] = Ext.htmlEncode(asset.get('blobCreated'));
     summary[NX.I18n.get('Assets_Info_Blob_Updated')] = Ext.htmlEncode(asset.get('blobUpdated'));
-    summary[NX.I18n.get('Assets_Info_Downloaded_Count')] = Ext.htmlEncode(asset.get('downloadCount')) + ' '
-            + NX.I18n.get('Assets_Info_Downloaded_Unit');
-    summary[NX.I18n.get('Assets_Info_Last_Downloaded')] = Ext.htmlEncode(Ext.Date.format(asset.get('lastDownloaded'), 'D M d Y'));
+
+    if (asset.get('downloadCount')) {
+      summary[NX.I18n.get('Assets_Info_Downloaded_Count')] = Ext.htmlEncode(asset.get('downloadCount')) + ' '
+          + NX.I18n.get('Assets_Info_Downloaded_Unit');
+    }
+
+    summary[NX.I18n.get('Assets_Info_Last_Downloaded')] = Ext.htmlEncode(
+        me.mixins.componentUtils.getLastDownloadDateForDisplay(asset));
     summary[NX.I18n.get('Assets_Info_Locally_Cached')] = Ext.htmlEncode(contentType !== 'unknown' && size > 0);
     summary[NX.I18n.get('Assets_Info_BlobRef')] = Ext.htmlEncode(asset.get('blobRef'));
     summary[NX.I18n.get('Assets_Info_ContainingRepositoryName')] = Ext.htmlEncode(asset.get('containingRepositoryName'));
@@ -98,7 +110,21 @@ Ext.define('NX.coreui.view.component.ComponentAssetInfo', {
 
     this.showInfo();
 
-    this.setTitle(Ext.htmlEncode(asset.get('name')));
+    titleText = Ext.htmlEncode(asset.get('name'));
+    this.setTitle({
+      text: titleText,
+      listeners: {
+        destroy: function(me) {
+          Ext.tip.QuickTipManager.unregister(me.getId());
+        }
+      }
+    });
+
+    // title is already rendered at this point so can't use afterrender event here
+    Ext.tip.QuickTipManager.register({
+      target: this.down('title').getId(),
+      text: titleText
+    });
 
     this.fireEvent('updated', this, asset, component);
   },

@@ -14,11 +14,13 @@ package org.sonatype.nexus.coreui
 
 import org.sonatype.nexus.common.entity.EntityId
 import org.sonatype.nexus.repository.Repository
+import org.sonatype.nexus.repository.browse.BrowseFacet
 import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.storage.BrowseNode
 import org.sonatype.nexus.repository.storage.BrowseNodeStore
 
+import org.mockito.Mockito
 import spock.lang.Specification
 import spock.lang.Subject
 
@@ -121,5 +123,26 @@ class BrowseComponentTest
       xos*.id   == ['com/boo%2Fgie/down/com', 'com/boo%2Fgie/down/org', 'com/boo%2Fgie/down/n%2Fe%2Ft']
       xos*.type == [FOLDER, COMPONENT, ASSET]
       xos*.leaf == [false, false, true]
+  }
+
+  def 'getState lists rebuilding repositories'() {
+    given: 'Some repositories'
+      def repositories = [mockRepository('A', true), mockRepository('B', false), mockRepository('C', true)]
+      repositoryManager.browse() >> repositories
+
+    when: 'Calling getState()'
+      def state = browseComponent.getState()
+
+    then: 'The state contains the list of rebuilding repositories'
+      assert state['rebuildingRepositories'] == ['A', 'C']
+  }
+
+  Repository mockRepository(String name, boolean rebuilding) {
+    Repository repository = Mock()
+    repository.getName() >> name
+    repository.facet(BrowseFacet) >> Mock(BrowseFacet)
+    repository.facet(BrowseFacet).isRebuilding() >> rebuilding
+
+    return repository
   }
 }

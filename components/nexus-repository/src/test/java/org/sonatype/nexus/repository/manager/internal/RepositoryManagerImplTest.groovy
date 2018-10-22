@@ -99,6 +99,9 @@ class RepositoryManagerImplTest
   Provider<ConfigurationFacet> configurationFacetProvider
 
   @Mock
+  Provider<ConfigurationFacet> browseFacetProvider
+
+  @Mock
   RepositoryAdminSecurityContributor securityContributor
 
   List<DefaultRepositoriesContributor> defaultRepositoriesContributorList
@@ -265,7 +268,7 @@ class RepositoryManagerImplTest
 
   private RepositoryManagerImpl initializeAndStartRepositoryManager(boolean skipDefaultRepositories) {
     repositoryManager = new RepositoryManagerImpl(eventManager, configurationStore, repositoryFactory,
-        configurationFacetProvider, ImmutableMap.of(recipeName, recipe), securityContributor,
+        configurationFacetProvider, browseFacetProvider, ImmutableMap.of(recipeName, recipe), securityContributor,
         defaultRepositoriesContributorList, databaseFreezeService, skipDefaultRepositories, blobStoreManager)
 
     repositoryManager.doStart()
