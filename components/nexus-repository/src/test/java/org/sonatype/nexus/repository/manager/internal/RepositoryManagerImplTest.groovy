@@ -40,14 +40,13 @@ import org.mockito.ArgumentCaptor
 import org.mockito.Mock
 
 import static com.google.common.collect.Lists.asList
-import static com.google.common.collect.Lists.newArrayList
 import static com.google.common.collect.Maps.newHashMap
 import static java.util.Collections.emptyList
 import static java.util.Collections.singletonList
 import static java.util.UUID.randomUUID
 import static java.util.stream.Collectors.toList
 import static org.fest.assertions.api.Assertions.assertThat
-import static org.hamcrest.Matchers.containsInAnyOrder
+import static org.hamcrest.Matchers.contains
 import static org.hamcrest.Matchers.empty
 import static org.hamcrest.Matchers.equalTo
 import static org.hamcrest.Matchers.instanceOf
@@ -418,14 +417,14 @@ class RepositoryManagerImplTest
   void 'retrieve names of all groups a repository is contained in'() {
     repositoryManager = buildRepositoryManagerImpl(true)
     def groupNames = repositoryManager.findContainingGroups(MAVEN_CENTRAL_NAME)
-    assertThat(groupNames, containsInAnyOrder(GROUP_NAME, PARENT_GROUP_NAME))
+    assertThat(groupNames, contains(GROUP_NAME, PARENT_GROUP_NAME))
   }
 
   @Test
   void 'retrieve names of all groups when a circular dependency is present'() {
     repositoryManager = buildRepositoryManagerImpl(true)
     def groupNames = repositoryManager.findContainingGroups(APACHE_SNAPSHOTS_NAME)
-    assertThat(groupNames, containsInAnyOrder(GROUP_NAME, PARENT_GROUP_NAME, CYCLE_A_NAME, CYCLE_B_NAME))
+    assertThat(groupNames, contains(GROUP_NAME, CYCLE_A_NAME, CYCLE_B_NAME, PARENT_GROUP_NAME))
   }
 
   @Test

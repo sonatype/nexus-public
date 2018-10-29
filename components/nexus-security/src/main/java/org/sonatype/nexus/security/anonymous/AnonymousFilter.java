@@ -13,6 +13,7 @@
 package org.sonatype.nexus.security.anonymous;
 
 import java.util.Date;
+import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -25,7 +26,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.ClientInfo;
 
-import com.google.common.collect.EvictingQueue;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.net.HttpHeaders;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
@@ -35,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.newSetFromMap;
 
 /**
  * Binds special anonymous subject if current subject is guest and anonymous access is enabled.
@@ -60,7 +62,8 @@ public class AnonymousFilter
   private final Provider<EventManager> eventManager;
   
   // keep a record of the most recent accesses
-  private final EvictingQueue<ClientInfo> cache = EvictingQueue.create(CACHE_SIZE);
+  private final Set<ClientInfo> cache = newSetFromMap(
+      CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).<ClientInfo, Boolean> build().asMap());
 
   @Inject
   public AnonymousFilter(final Provider<AnonymousManager> anonymousManager, final Provider<EventManager> eventManager) {
@@ -84,10 +87,9 @@ public class AnonymousFilter
         String userId = manager.getConfiguration().getUserId();
         ClientInfo clientInfo = new ClientInfo(userId, request.getRemoteAddr(),
             ((HttpServletRequest) request).getHeader(HttpHeaders.USER_AGENT));
-        if(!cache.contains(clientInfo)) {
+        if (cache.add(clientInfo)) {
           log.trace("Tracking new anonymous access from: {}", clientInfo);
           eventManager.get().post(new AnonymousAccessEvent(clientInfo, new Date()));
-          cache.add(clientInfo);
         }
       }
     }

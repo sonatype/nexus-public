@@ -78,7 +78,7 @@ public class ContentAuthPluginScriptTest
     sourceLookup = new SourceLookup();
     when(variableResolverAdapterManager.get(FORMAT)).thenReturn(variableResolverAdapter);
     when(variableResolverAdapter.fromSourceLookup(eq(sourceLookup), anyMap())).thenReturn(variableSource);
-    when(repositoryManager.findContainingGroups(any())).thenReturn(Collections.emptySet());
+    when(repositoryManager.findContainingGroups(any())).thenReturn(Collections.emptyList());
     underTest = new ContentAuthPluginScript(subject, contentPermissionChecker,
         variableResolverAdapterManager, repositoryManager) {
       @Override

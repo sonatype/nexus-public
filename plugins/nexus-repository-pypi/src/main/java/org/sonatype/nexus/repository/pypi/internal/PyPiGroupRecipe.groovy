@@ -21,7 +21,6 @@ import javax.inject.Singleton
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
-import org.sonatype.nexus.repository.group.GroupFacet
 import org.sonatype.nexus.repository.group.GroupHandler
 import org.sonatype.nexus.repository.http.HttpHandlers
 import org.sonatype.nexus.repository.types.GroupType
@@ -42,7 +41,7 @@ class PyPiGroupRecipe
   public static final String NAME = 'pypi-group'
 
   @Inject
-  Provider<GroupFacet> groupFacet
+  Provider<PyPiGroupFacet> groupFacet
 
   @Inject
   GroupHandler standardGroupHandler
@@ -78,6 +77,9 @@ class PyPiGroupRecipe
         .handler(assetKindHandler.rcurry( AssetKind.INDEX))
         .handler(securityHandler)
         .handler(exceptionHandler)
+        .handler(conditionalRequestHandler)
+        .handler(contentHeadersHandler)
+        .handler(unitOfWorkHandler)
         .handler(indexGroupHandler)
         .create())
 
@@ -87,6 +89,7 @@ class PyPiGroupRecipe
         .handler(securityHandler)
         .handler(exceptionHandler)
         .handler(handlerContributor)
+        .handler(conditionalRequestHandler)
         .handler(standardGroupHandler)
         .create())
 

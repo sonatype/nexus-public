@@ -13,7 +13,7 @@
 /*global Ext, NX*/
 
 /**
- * Ssl use Nexus Truststore combobox.
+ * Ssl use Nexus Truststore checkbox.
  *
  * @since 3.0
  */
@@ -44,6 +44,7 @@ Ext.define('NX.coreui.view.ssl.SslUseTrustStore', {
         {
           xtype: 'checkbox',
           name: me.name,
+          value: me.value,
           boxLabel: me.boxLabel,
           helpText: NX.I18n.get('Ssl_SslUseTrustStore_Certificate_HelpText')
         },

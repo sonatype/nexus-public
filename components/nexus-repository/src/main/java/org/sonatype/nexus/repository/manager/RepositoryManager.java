@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.manager;
 
-import java.util.Set;
+import java.util.List;
 
 import java.util.stream.Stream;
 
@@ -52,7 +52,7 @@ public interface RepositoryManager
 
   long blobstoreUsageCount(String blobStoreName);
 
-  Set<String> findContainingGroups(String name);
+  List<String> findContainingGroups(String repositoryName);
 
   Stream<Repository> browseForCleanupPolicy(final String cleanupPolicyName);
 }

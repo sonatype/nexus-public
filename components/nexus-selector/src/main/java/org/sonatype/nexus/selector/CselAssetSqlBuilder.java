@@ -28,6 +28,7 @@ import org.apache.commons.jexl3.parser.ASTERNode;
 import org.apache.commons.jexl3.parser.ASTIdentifier;
 import org.apache.commons.jexl3.parser.ASTIdentifierAccess;
 import org.apache.commons.jexl3.parser.ASTJexlScript;
+import org.apache.commons.jexl3.parser.ASTNENode;
 import org.apache.commons.jexl3.parser.ASTOrNode;
 import org.apache.commons.jexl3.parser.ASTReference;
 import org.apache.commons.jexl3.parser.ASTReferenceExpression;
@@ -132,6 +133,15 @@ public class CselAssetSqlBuilder
   }
 
   /**
+   * Convert 'a != b' into 'a <> b'
+   * @since 3.next
+   */
+  @Override
+  protected Object visit(final ASTNENode node, final Object data) {
+    return visitOperator(node, "<>", data);
+  }
+
+  /**
    * Convert `a =~ "regex"` into `a matches "regex"`
    */
   @Override
@@ -222,6 +232,9 @@ public class CselAssetSqlBuilder
     if (isPathNode(leftChild, rightChild) || isPathNode(rightChild, leftChild)) {
       visitPath(cselAssetSql, leftChild, rightChild, operator);
     }
+    else if (isNotEqualsOperator(operator)) {
+      visitNotEqualsOperator(cselAssetSql, leftChild, rightChild, operator);
+    }
     else {
       leftChild.jjtAccept(this, data);
 
@@ -231,6 +244,32 @@ public class CselAssetSqlBuilder
     }
 
     return result;
+  }
+
+  private void visitNotEqualsOperator(final CselAssetSql cselAssetSql, final JexlNode leftChild, final JexlNode rightChild, String operator) {
+    StringBuilder result = cselAssetSql.getSqlBuilder();
+
+    JexlNode varNode = rightChild;
+    JexlNode stringNode = leftChild;
+    if (isStringNode(rightChild)) {
+      varNode = leftChild;
+      stringNode = rightChild;
+    }
+
+    result.append("(");
+
+    varNode.jjtAccept(this, cselAssetSql);
+
+    //allow not equals check to allow null values as well
+    result.append(" is null or ");
+
+    varNode.jjtAccept(this, cselAssetSql);
+
+    result.append(" ").append(operator).append(" ");
+
+    stringNode.jjtAccept(this, cselAssetSql);
+
+    result.append(")");
   }
 
   private Object visitPath(final CselAssetSql cselAssetSql,
@@ -260,5 +299,13 @@ public class CselAssetSqlBuilder
   private boolean isPathNode(final JexlNode identifier, final JexlNode literal) {
     return identifier instanceof ASTIdentifier && literal instanceof ASTStringLiteral
         && PATH.equals(((ASTIdentifier) identifier).getName());
+  }
+
+  private boolean isStringNode(final JexlNode node) {
+    return node instanceof ASTStringLiteral;
+  }
+
+  private boolean isNotEqualsOperator(final String operator) {
+    return "<>".equals(operator);
   }
 }

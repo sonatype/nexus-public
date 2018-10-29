@@ -26,6 +26,7 @@ import org.apache.commons.jexl3.parser.ASTERNode;
 import org.apache.commons.jexl3.parser.ASTIdentifier;
 import org.apache.commons.jexl3.parser.ASTIdentifierAccess;
 import org.apache.commons.jexl3.parser.ASTJexlScript;
+import org.apache.commons.jexl3.parser.ASTNENode;
 import org.apache.commons.jexl3.parser.ASTOrNode;
 import org.apache.commons.jexl3.parser.ASTReference;
 import org.apache.commons.jexl3.parser.ASTReferenceExpression;
@@ -98,6 +99,14 @@ public class CselValidator
    */
   @Override
   protected Object visit(final ASTEQNode node, final Object data) {
+    return node.childrenAccept(this, data);
+  }
+
+  /**
+   * Accept equals nodes of the form `a != b`
+   */
+  @Override
+  protected Object visit(final ASTNENode node, final Object data) {
     return node.childrenAccept(this, data);
   }
 

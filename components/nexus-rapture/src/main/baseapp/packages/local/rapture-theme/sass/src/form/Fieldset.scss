@@ -19,9 +19,3 @@ fieldset.nx-form-section {
     padding-top: 0;
   }
 }
-
-fieldset.x-fieldset {
-  // TODO remove this if we upgrade to ExtJS 6.6.0 - NEXUS-18051
-  // See https://www.sencha.com/forum/showthread.php?423768-ExtJS-6-5-0-Fieldset-legend-are-not-visible-in-Safari-11
-  overflow: visible;
-}

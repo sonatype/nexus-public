@@ -42,6 +42,7 @@ import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;
+import org.sonatype.nexus.repository.storage.BucketStore;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentFinder;
 import org.sonatype.nexus.repository.storage.ComponentMaintenance;
@@ -69,6 +70,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -122,6 +124,9 @@ public class ComponentComponentTest
   @Mock
   DefaultComponentFinder defaultComponentFinder;
 
+  @Mock
+  BucketStore bucketStore;
+
   private ObjectMapper objectMapper;
 
   private ComponentComponent underTest;
@@ -139,6 +144,7 @@ public class ComponentComponentTest
     underTest.setCselExpressionValidator(cselExpressionValidator);
     underTest.setObjectMapper(objectMapper);
     underTest.setComponentFinders(componentFinders);
+    underTest.setBucketStore(bucketStore);
 
     when(repositoryManager.get("testRepositoryName")).thenReturn(repository);
     when(repository.getName()).thenReturn("testRepositoryName");
@@ -221,7 +227,7 @@ public class ComponentComponentTest
     Asset asset = mock(Asset.class);
     EntityMetadata entityMetadata = mock(EntityMetadata.class);
     VariableSource variableSource = mock(VariableSource.class);
-    when(contentPermissionChecker.isPermitted(any(),any(), eq(BreadActions.BROWSE), any())).thenReturn(true);
+    when(contentPermissionChecker.isPermitted(anyString(),any(), eq(BreadActions.BROWSE), any())).thenReturn(true);
     when(component.getEntityMetadata()).thenReturn(entityMetadata);
     when(entityMetadata.getId()).thenReturn(new DetachedEntityId("someid"));
     when(storageTx.findComponent(eq(new DetachedEntityId("someid")))).thenReturn(component);
@@ -237,7 +243,7 @@ public class ComponentComponentTest
   public void testReadComponent_notAllowed() {
     Component component = mock(Component.class);
     Asset asset = mock(Asset.class);
-    when(contentPermissionChecker.isPermitted(any(),any(), any(), any())).thenReturn(false);
+    when(contentPermissionChecker.isPermitted(anyString(),any(), any(), any())).thenReturn(false);
     when(storageTx.findComponent(eq(new DetachedEntityId("someid")))).thenReturn(component);
     when(storageTx.browseAssets(component)).thenReturn(Arrays.asList(asset));
 
@@ -280,28 +286,38 @@ public class ComponentComponentTest
   @Test
   public void testReadAsset() {
     Asset asset = mock(Asset.class);
+    Bucket bucket = mock(Bucket.class);
+    EntityId bucketId = mock(EntityId.class);
     EntityMetadata entityMetadata = mock(EntityMetadata.class);
     when(asset.getEntityMetadata()).thenReturn(entityMetadata);
+    when(asset.bucketId()).thenReturn(bucketId);
     when(asset.attributes()).thenReturn(new NestedAttributesMap("attributes", new HashMap<>()));
     when(entityMetadata.getId()).thenReturn(new DetachedEntityId("someid"));
-    when(contentPermissionChecker.isPermitted(any(),any(), eq(BreadActions.BROWSE), any())).thenReturn(true);
+    when(contentPermissionChecker.isPermitted(anyString(),any(), eq(BreadActions.BROWSE), any())).thenReturn(true);
 
     when(browseService.getLastThirtyDays(asset)).thenReturn(10L);
     when(browseService.getAssetById(new DetachedEntityId("someid"), repository)).thenReturn(asset);
-    when(browseService.getRepositoryBucketNames(repository))
-        .thenReturn(Collections.singletonMap(new DetachedEntityId("someid"), "testBucketName"));
+    when(bucketStore.getById(bucketId)).thenReturn(bucket);
+    when(bucket.getRepositoryName()).thenReturn("testRepositoryName");
     AssetXO assetXO = underTest.readAsset("someid", "testRepositoryName");
 
     assertThat(assetXO, is(notNullValue()));
     assertThat(assetXO.getId(), is("someid"));
     assertThat(assetXO.getDownloadCount(), is(10L));
+    assertThat(assetXO.getRepositoryName(), is("testRepositoryName"));
+    assertThat(assetXO.getContainingRepositoryName(), is("testRepositoryName"));
   }
 
   @Test
   public void testReadAsset_notAllowed() {
     Asset asset = mock(Asset.class);
+    Bucket bucket = mock(Bucket.class);
+    EntityId bucketId = mock(EntityId.class);
+    when(asset.bucketId()).thenReturn(bucketId);
+    when(bucketStore.getById(bucketId)).thenReturn(bucket);
+    when(bucket.getRepositoryName()).thenReturn("testRepositoryName");
     when(browseService.getAssetById(new DetachedEntityId("someid"), repository)).thenReturn(asset);
-    when(contentPermissionChecker.isPermitted(any(),any(), any(), any())).thenReturn(false);
+    when(contentPermissionChecker.isPermitted(anyString(),any(), any(), any())).thenReturn(false);
 
     try{
       underTest.readAsset("someid", "testRepositoryName");

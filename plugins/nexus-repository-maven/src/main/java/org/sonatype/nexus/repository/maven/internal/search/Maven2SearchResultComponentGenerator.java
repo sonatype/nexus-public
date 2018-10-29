@@ -16,12 +16,16 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.search.SearchResultComponent;
-import org.sonatype.nexus.repository.search.SearchResultComponentGenerator;
+import org.sonatype.nexus.repository.search.SearchResultComponentGeneratorSupport;
+import org.sonatype.nexus.repository.security.ContentPermissionChecker;
+import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 
 import org.elasticsearch.search.SearchHit;
 
@@ -30,7 +34,6 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.FORMAT;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.GROUP;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.NAME;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REPOSITORY_NAME;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.VERSION;
 
 /**
@@ -39,13 +42,20 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
 @Singleton
 @Named(Maven2Format.NAME)
 public class Maven2SearchResultComponentGenerator
-    implements SearchResultComponentGenerator
+  extends SearchResultComponentGeneratorSupport
 {
+  @Inject
+  public Maven2SearchResultComponentGenerator(final VariableResolverAdapterManager variableResolverAdapterManager,
+                                              final RepositoryManager repositoryManager,
+                                              final ContentPermissionChecker contentPermissionChecker) {
+    super(variableResolverAdapterManager, repositoryManager, contentPermissionChecker);
+  }
+
   @Override
   public SearchResultComponent from(final SearchHit hit, final Set<String> componentIdSet) {
     SearchResultComponent component = null;
     final Map<String, Object> source = hit.getSource();
-    String repositoryName = (String) source.get(REPOSITORY_NAME);
+    String repositoryName = getPrivilegedRepositoryName(source);
     String group = (String) source.get(GROUP);
     String name = (String) source.get(NAME);
     String format = (String) source.get(FORMAT);

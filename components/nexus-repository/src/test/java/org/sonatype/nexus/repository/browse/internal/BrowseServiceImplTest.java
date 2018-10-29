@@ -496,7 +496,7 @@ public class BrowseServiceImplTest
     when(groupFacet.allMembers()).thenReturn(Arrays.asList(groupRepository, mavenReleases));
     when(groupRepository.facet(GroupFacet.class)).thenReturn(groupFacet);
     when(storageTx.findComponent(new DetachedEntityId(componentOneORID.toString()))).thenReturn(componentOne);
-    when(repositoryManager.findContainingGroups(mavenReleases.getName())).thenReturn(Collections.singleton("group-repository"));
+    when(repositoryManager.findContainingGroups(mavenReleases.getName())).thenReturn(Collections.singletonList("group-repository"));
     VariableResolverAdapter variableResolverAdapter = mock(VariableResolverAdapter.class);
     when(variableResolverAdapterManager.get(componentOne.format())).thenReturn(variableResolverAdapter);
     VariableSource variableSourceOne = createVariableSource(assetOne);

@@ -12,13 +12,15 @@
  */
 package org.sonatype.nexus.repository.manager.internal;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -404,24 +406,43 @@ public class RepositoryManagerImpl
    * another group.
    *
    * @since 3.14
+   *
+   * @param repositoryName
+   * @return List of group(s) that contain the supplied repository.  Ordered from closest to the repo to farthest away
+   * i.e. if group A contains group B which contains repo C the returned list would be ordered B,A
    */
   @Override
   @Guarded(by = STARTED)
-  public Set<String> findContainingGroups(final String name) {
-    return findContainingGroups(name, new HashSet<>());
+  public List<String> findContainingGroups(final String repositoryName) {
+    TreeMap<Integer, List<String>> groupNamesByLevel = new TreeMap<>();
+
+    findContainingGroups(repositoryName, groupNamesByLevel, 0);
+
+    return groupNamesByLevel.values().stream().map(repoNames -> {
+      repoNames.sort(null);
+      return repoNames;
+    }).flatMap(Collection::stream).collect(Collectors.toList());
   }
 
-  private Set<String> findContainingGroups(final String name, final Set<String> containingGroups) {
-    for (Repository group : repositories.values()) {
-      boolean containsRepository = group.optionalFacet(GroupFacet.class).filter(groupFacet -> groupFacet.member(name))
-          .isPresent();
-      if (containsRepository && !containingGroups.contains(group.getName())) {
-        containingGroups.add(group.getName());
-        containingGroups.addAll(findContainingGroups(group.getName(), containingGroups));
-      }
-    }
+  private void findContainingGroups(final String name,
+                                    final SortedMap<Integer, List<String>> groupNamesByLevel,
+                                    final int level)
+  {
+    final List<String> newContainingGroups = new ArrayList<>();
 
-    return containingGroups;
+    //find any groups that directly contain the desired repository name (and make sure to only include each name
+    //once to save processing time)
+    repositories.values().stream().filter(repository ->
+        repository.optionalFacet(GroupFacet.class).filter(groupFacet -> groupFacet.member(name)).isPresent()
+            && groupNamesByLevel.values().stream().noneMatch(repoNames -> repoNames.contains(repository.getName())))
+        .forEach(repository -> newContainingGroups.add(repository.getName()));
+
+    List<String> groupNames = groupNamesByLevel.computeIfAbsent(level, newLevel -> new ArrayList<>());
+
+    groupNames.addAll(newContainingGroups);
+
+    //now process each group we found and check if any groups contain it
+    newContainingGroups.forEach( newName -> findContainingGroups(newName, groupNamesByLevel, level + 1));
   }
 
   private void removeRepositoryFromAllGroups(final Repository repositoryToRemove) throws Exception {

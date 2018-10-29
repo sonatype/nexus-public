@@ -244,13 +244,14 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     // Update HTML View link
     me.updateHtmlLink(model);
     me.updateUploadButton(model);
-    me.updateRebuildWarning();
 
     me.reloadNodes();
 
     me.expandTree();
 
     me.selectedRepository = model;
+
+    me.updateRebuildWarning(model.get('name'));
   },
 
   expandTree: function() {
@@ -361,21 +362,23 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
   },
 
   stateChanged: function() {
+    var currentRepository = this.getCurrentRepository(),
+        repositoryName = currentRepository ? currentRepository.get('name') : null;
+
     this.updateUploadButton();
-    this.updateRebuildWarning();
+    this.updateRebuildWarning(repositoryName);
   },
 
-  updateRebuildWarning: function() {
+  updateRebuildWarning: function(repositoryName) {
     var warning = this.getTreeWarning(),
-        currentRepository = this.getCurrentRepository(),
         rebuildingRepositories = NX.State.getValue('rebuildingRepositories') || [];
 
     if (!warning) {
       return;
     }
 
-    if (currentRepository && rebuildingRepositories.indexOf(currentRepository.get('name')) !== -1) {
-      warning.setTitle(NX.I18n.format('ComponentDetails_Rebuild_Warning', currentRepository.get('name')));
+    if (rebuildingRepositories.indexOf(repositoryName) !== -1) {
+      warning.setTitle(NX.I18n.format('ComponentDetails_Rebuild_Warning'));
       warning.show();
     }
     else {

@@ -97,7 +97,10 @@ Ext.define('NX.app.Application', {
     'NX.ext.view.BoundList',
 
     // animated card layout
-    'NX.ext.layout.container.Card'
+    'NX.ext.layout.container.Card',
+
+    // Override for ExtJS 6.6
+    'NX.ext.chart.legend.SpriteLegend'
   ],
 
   name: 'NX',

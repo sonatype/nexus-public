@@ -1806,6 +1806,10 @@ the height of a multi-line element */
     overflow: hidden;
 }
 
+.x-safari11 .x-fieldset {
+    overflow: visible;
+}
+
 .x-fieldset-header {
     overflow: hidden;
 }

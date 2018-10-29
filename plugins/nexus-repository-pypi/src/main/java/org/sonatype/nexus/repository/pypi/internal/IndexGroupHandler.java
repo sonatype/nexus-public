@@ -24,16 +24,15 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.group.GroupHandler;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.http.HttpStatus;
+import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.ContentTypes;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
-import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher.State;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -64,21 +63,32 @@ class IndexGroupHandler
     checkNotNull(context);
     checkNotNull(dispatched);
 
-    GroupFacet groupFacet = context.getRepository().facet(GroupFacet.class);
+    AssetKind assetKind = context.getAttributes().get(AssetKind.class);
+    String name = name(context.getAttributes().require(TokenMatcher.State.class));
 
+    PyPiGroupFacet groupFacet = context.getRepository().facet(PyPiGroupFacet.class);
+    Content content = groupFacet.getFromCache(name, assetKind);
+
+    Map<Repository, Response> memberResponses = getAll(context, groupFacet.members(), dispatched);
+
+    if (groupFacet.isStale(name, content, memberResponses)) {
+      String html = mergeResponses(name, memberResponses);
+      Content newContent = new Content(new StringPayload(html, ContentTypes.TEXT_HTML));
+      return HttpResponses.ok(groupFacet.saveToCache(name, newContent));
+    }
+
+    return HttpResponses.ok(content);
+  }
+
+  private String mergeResponses(final String name, final Map<Repository, Response> remoteResponses) throws Exception {
     Map<String, String> results = new LinkedHashMap<>();
-    for (Entry<Repository, Response> entry : getAll(context, groupFacet.members(), dispatched).entrySet()) {
+    for (Entry<Repository, Response> entry : remoteResponses.entrySet()) {
       Response response = entry.getValue();
       if (response.getStatus().getCode() == HttpStatus.OK && response.getPayload() != null) {
         processResults(response, results);
       }
     }
-
-    State state = context.getAttributes().require(TokenMatcher.State.class);
-    String name = name(state);
-
-    String html = PyPiIndexUtils.buildIndexPage(templateHelper, name, results);
-    return HttpResponses.ok(new StringPayload(html, ContentTypes.TEXT_HTML));
+    return PyPiIndexUtils.buildIndexPage(templateHelper, name, results);
   }
 
   /**

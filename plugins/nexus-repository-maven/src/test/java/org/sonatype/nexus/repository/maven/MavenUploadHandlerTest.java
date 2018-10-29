@@ -66,6 +66,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -418,6 +419,25 @@ public class MavenUploadHandlerTest
     path = paths.get(1);
     assertThat(path.getPath(), is("aParentGroupId/anArtifactId/2.0/anArtifactId-2.0.pom.sha1"));
     assertCoordinates(path.getCoordinates(), "aParentGroupId", "anArtifactId", "2.0", null, "pom.sha1");
+  }
+
+  /**
+   * Test added to address NEXUS-18196 which was fixed parsing large pom files
+   * see, https://github.com/codehaus-plexus/plexus-utils/commit/dd1c85f268f2e56cf0b8b4116119738431c98522
+   */
+  @Test
+  public void testAddingLargePom() throws Exception {
+    when(tempBlob.get()).thenReturn(getClass().getResourceAsStream("large_pom.xml"));
+    ComponentUpload componentUpload = new ComponentUpload();
+
+    AssetUpload assetUpload = new AssetUpload();
+    assetUpload.setPayload(jarPayload);
+    assetUpload.setFields(Collections.singletonMap("extension", "pom"));
+    componentUpload.getAssetUploads().add(assetUpload);
+
+    UploadResponse uploadResponse = underTest.handle(repository, componentUpload);
+
+    assertThat(uploadResponse.getAssetPaths(), is(notNullValue()));
   }
 
   @Test

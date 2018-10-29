@@ -29,7 +29,7 @@
 
   <properties>
     <groovy.version>2.4.15</groovy.version>
-    <ant.version>1.9.11</ant.version>
+    <ant.version>1.9.12</ant.version>
     <spock.version>1.1-groovy-2.4</spock.version>
   </properties>
 

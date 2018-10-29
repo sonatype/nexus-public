@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.cache.CacheControllerHolder.CacheType;
  *
  * @since 3.1
  */
-enum AssetKind
+public enum AssetKind
 {
 
   INDEX(CacheControllerHolder.METADATA),

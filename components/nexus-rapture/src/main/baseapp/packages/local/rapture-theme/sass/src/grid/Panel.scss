@@ -38,3 +38,13 @@
     }
   }
 }
+
+.x-grid-item {
+  .x-grid-row {
+    .x-grid-item-focused {
+      .x-grid-cell-inner:before {
+        border: none;
+      }
+    }
+  }
+}

@@ -36,6 +36,33 @@ public class CselAssetSqlBuilderTest
   }
 
   @Test
+  public void buildWhereClauseHandlesNotEqualsConversion() throws Exception {
+    CselAssetSql whereClause = builder.buildWhereClause("format != \"maven2\"", FORMAT, "a", "");
+
+    assertThat(whereClause.getSql(), is("(format is null or format <> :a0)"));
+    assertThat(whereClause.getSqlParameters().get("a0"), is("maven2"));
+  }
+
+  @Test
+  public void buildWhereClauseHandlesNotEqualsConversion_differentOrder() throws Exception {
+    CselAssetSql whereClause = builder.buildWhereClause("\"maven2\" != format", FORMAT, "a", "");
+
+    assertThat(whereClause.getSql(), is("(format is null or format <> :a0)"));
+    assertThat(whereClause.getSqlParameters().get("a0"), is("maven2"));
+  }
+
+  @Test
+  public void buildWhereClauseHandlesNotEqualsConversion_properSpacing() throws Exception {
+    CselAssetSql whereClause = builder
+        .buildWhereClause("path != \"something\" && format != \"maven2\" && path == \"test\"", FORMAT, "a", "");
+
+    assertThat(whereClause.getSql(), is("name <> :a0 and (format is null or format <> :a1) and name = :a2"));
+    assertThat(whereClause.getSqlParameters().get("a0"), is("something"));
+    assertThat(whereClause.getSqlParameters().get("a1"), is("maven2"));
+    assertThat(whereClause.getSqlParameters().get("a2"), is("test"));
+  }
+
+  @Test
   public void buildWhereClauseHandlesRegexMatching() throws Exception {
     CselAssetSql whereClause = builder.buildWhereClause("path =~ \".*\"", FORMAT, "a", "");
 

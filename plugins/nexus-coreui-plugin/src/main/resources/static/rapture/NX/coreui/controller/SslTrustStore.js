@@ -79,6 +79,7 @@ Ext.define('NX.coreui.controller.SslTrustStore', {
             container.insert(container.items.indexOf(field) + 1, {
               xtype: 'nx-coreui-sslusetruststore',
               name: config.name,
+              value: config.value,
               fieldLabel: field.useTrustStoreFieldLabel,
               boxLabel: field.useTrustStoreBoxLabel,
               useTrustStoreConfig: config,

@@ -12,12 +12,9 @@
  */
 package org.sonatype.nexus.quartz.internal;
 
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor.AbortPolicy;
 import java.util.concurrent.TimeUnit;
@@ -40,9 +37,9 @@ public class QuartzThreadPool
     implements ThreadPool
 {
   /**
-   * The "bare" executor (non-Shiro aware), needed to implement blocking logic and gather some stats.
+   * The "bare" executor (non-Shiro aware), needed to gather stats.
    */
-  private final NexusThreadPoolExecutor threadPoolExecutor;
+  private final ThreadPoolExecutor threadPoolExecutor;
 
   /**
    * The shiro aware executor wrapper service.
@@ -51,6 +48,11 @@ public class QuartzThreadPool
    */
   private final NexusExecutorService nexusExecutorService;
 
+  /**
+   * Used to block execution if thread pool is full.
+   */
+  private final Semaphore semaphore;
+
   private String instanceId;
 
   private String instanceName;
@@ -58,7 +60,7 @@ public class QuartzThreadPool
   public QuartzThreadPool(final int poolSize) {
     checkArgument(poolSize > 0, "Pool size must be greater than zero");
 
-    this.threadPoolExecutor = new NexusThreadPoolExecutor(
+    this.threadPoolExecutor = new ThreadPoolExecutor(
         poolSize, // core-size
         poolSize, // max-size
         0L, // keep-alive
@@ -70,6 +72,8 @@ public class QuartzThreadPool
     // wrapper for Shiro integration
     this.nexusExecutorService = NexusExecutorService.forFixedSubject(
         threadPoolExecutor, FakeAlmightySubject.TASK_SUBJECT);
+
+    semaphore = new Semaphore(poolSize);
   }
 
   @Override
@@ -116,75 +120,47 @@ public class QuartzThreadPool
   @Override
   public boolean runInThread(final Runnable runnable) {
     try {
+      semaphore.acquire();
       // this below is true as we do not use queue on executor combined with abort policy.
       // Meaning, if no exception, the task is accepted for execution
-      nexusExecutorService.submit(runnable);
+      // Use a wrapper to decrement the semaphore after the runnable completes
+      nexusExecutorService.submit(semaphoreReleasingRunnable(runnable));
       return true;
     }
-    catch (RejectedExecutionException e) {
+    catch (RejectedExecutionException | InterruptedException e) {
+      // must decrement semaphore if job failed to submit
+      semaphore.release();
       return false;
     }
+  }
+
+  /**
+   * Wrap a runnable to release the semaphore after completion.
+   */
+  private Runnable semaphoreReleasingRunnable(final Runnable runnable) {
+    return () -> {
+        try {
+          runnable.run();
+        }
+        finally {
+          semaphore.release();
+        }
+    };
   }
 
   @Override
   public int blockForAvailableThreads() {
     try {
-      threadPoolExecutor.getSemaphore().acquire();
+      semaphore.acquire();
       try {
-        return threadPoolExecutor.getSemaphore().availablePermits() + 1;
+        return semaphore.availablePermits() + 1;
       }
       finally {
-        threadPoolExecutor.getSemaphore().release();
+        semaphore.release();
       }
     }
     catch (InterruptedException e) {
       throw new RuntimeException(e);
-    }
-  }
-
-  /**
-   * Nexus specific thread pool executor that helps implementing the blocking logic using a Semaphore and using
-   * the "hooks" on {@link ThreadPoolExecutor} class.
-   */
-  private static class NexusThreadPoolExecutor
-      extends ThreadPoolExecutor
-  {
-    private final Semaphore semaphore;
-
-    public NexusThreadPoolExecutor(final int corePoolSize,
-                                   final int maximumPoolSize,
-                                   final long keepAliveTime,
-                                   final TimeUnit unit,
-                                   final BlockingQueue<Runnable> workQueue,
-                                   final ThreadFactory threadFactory,
-                                   final RejectedExecutionHandler handler)
-    {
-      super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, threadFactory, handler);
-      this.semaphore = new Semaphore(maximumPoolSize);
-    }
-
-    public Semaphore getSemaphore() {
-      return semaphore;
-    }
-
-    @Override
-    protected void beforeExecute(Thread t, Runnable r) {
-      try {
-        semaphore.tryAcquire();
-      }
-      finally {
-        super.beforeExecute(t, r);
-      }
-    }
-
-    @Override
-    protected void afterExecute(Runnable r, Throwable t) {
-      try {
-        semaphore.release();
-      }
-      finally {
-        super.afterExecute(r, t);
-      }
     }
   }
 }

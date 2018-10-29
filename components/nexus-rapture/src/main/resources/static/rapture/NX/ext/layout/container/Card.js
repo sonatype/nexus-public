@@ -86,6 +86,10 @@ Ext.define('NX.ext.layout.container.Card', {
               opacity: 0
             },
             callback: function() {
+              if (oldCard === me.activeItem) {
+                // just in case the user jumped back mid-animation
+                return;
+              }
               oldCard.el.hide();
               oldCard.hiddenByLayout = true;
               oldCard.fireEvent('deactivate');
