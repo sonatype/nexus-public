@@ -574,4 +574,11 @@ public class MetadataServiceIT
     assertThat(count, greaterThan(1)); // we have ALL from registry.npmjs.org + testproject
     assertThat(found, is(true)); // we need to have testproject in there
   }
+
+  @Test
+  public void sqlInjectionDealtWith() throws Exception {
+    // prior to the fix to use parameterized queries for https://issues.sonatype.org/browse/NEXUS-18296
+    // this query would throw an exception as the query was being altered via sql injection
+    assertThat(metadataStore.getPackageByName(npmHostedRepository1, "'" ), nullValue());
+  }
 }
