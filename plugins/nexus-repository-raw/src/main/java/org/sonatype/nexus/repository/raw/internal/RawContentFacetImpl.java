@@ -79,9 +79,6 @@ public class RawContentFacetImpl
     if (asset == null) {
       return null;
     }
-    if (asset.markAsDownloaded()) {
-      tx.saveAsset(asset);
-    }
 
     final Blob blob = tx.requireBlob(asset.requireBlobRef());
     return toContent(asset, blob);
@@ -145,8 +142,6 @@ public class RawContentFacetImpl
       // UPDATE
       asset = tx.firstAsset(component);
     }
-
-    asset.markAsDownloaded();
 
     return asset;
   }

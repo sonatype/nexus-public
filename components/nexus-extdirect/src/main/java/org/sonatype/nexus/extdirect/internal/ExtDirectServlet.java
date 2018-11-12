@@ -20,33 +20,23 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.ConstraintViolation;
-import javax.validation.ConstraintViolationException;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
-import org.sonatype.nexus.analytics.EventData;
-import org.sonatype.nexus.analytics.EventDataFactory;
-import org.sonatype.nexus.analytics.EventRecorder;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.extdirect.DirectComponent;
-import org.sonatype.nexus.extdirect.model.Response;
 import org.sonatype.nexus.security.authc.AntiCsrfFilter;
 
 import com.google.common.base.Function;
@@ -56,7 +46,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Maps.EntryTransformer;
 import com.google.inject.Key;
 import com.softwarementors.extjs.djn.EncodingUtils;
-import com.softwarementors.extjs.djn.api.RegisteredMethod;
 import com.softwarementors.extjs.djn.api.Registry;
 import com.softwarementors.extjs.djn.config.ApiConfiguration;
 import com.softwarementors.extjs.djn.config.GlobalConfiguration;
@@ -66,28 +55,21 @@ import com.softwarementors.extjs.djn.router.processor.poll.PollRequestProcessor;
 import com.softwarementors.extjs.djn.router.processor.standard.form.FormPostRequestData;
 import com.softwarementors.extjs.djn.router.processor.standard.form.upload.FileUploadException;
 import com.softwarementors.extjs.djn.servlet.DirectJNgineServlet;
-import com.softwarementors.extjs.djn.servlet.ssm.SsmDispatcher;
-import org.apache.commons.collections.ListUtils;
 import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.shiro.authz.UnauthenticatedException;
 import org.eclipse.sisu.BeanEntry;
 import org.eclipse.sisu.inject.BeanLocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.commons.lang.StringEscapeUtils.escapeHtml;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
-import static org.sonatype.nexus.extdirect.model.Responses.error;
-import static org.sonatype.nexus.extdirect.model.Responses.invalid;
-import static org.sonatype.nexus.extdirect.model.Responses.success;
 
 /**
  * Ext.Direct Servlet.
@@ -103,30 +85,23 @@ public class ExtDirectServlet
 {
   private static final Logger log = LoggerFactory.getLogger(ExtDirectServlet.class);
 
-  private static final List<Class<Throwable>> SUPPRESSED_EXCEPTIONS = ListUtils
-      .unmodifiableList(Arrays.asList(UnauthenticatedException.class));
-
   private final ApplicationDirectories directories;
 
   private final BeanLocator beanLocator;
 
-  private final Provider<EventRecorder> recorderProvider;
-
-  private final Provider<EventDataFactory> eventDataFactoryProvider;
+  private final ExtDirectDispatcher extDirectDispatcher;
 
   @Inject
   public ExtDirectServlet(final ApplicationDirectories directories,
                           final BeanLocator beanLocator,
-                          final Provider<EventRecorder> recorderProvider,
-                          final Provider<EventDataFactory> eventDataFactoryProvider,
+                          final ExtDirectDispatcher extDirectDispatcher,
                           @Named("${nexus.security.anticsrftoken.enabled:-true}") final boolean antiCsrfTokenEnabled,
                           @Named("${nexus.direct.upload.maxSize:--1}") final long uploadMaxSize)
   {
     super(antiCsrfTokenEnabled, AntiCsrfFilter.ANTI_CSRF_TOKEN_NAME, uploadMaxSize);
     this.directories = checkNotNull(directories);
     this.beanLocator = checkNotNull(beanLocator);
-    this.recorderProvider = checkNotNull(recorderProvider);
-    this.eventDataFactoryProvider = checkNotNull(eventDataFactoryProvider);
+    this.extDirectDispatcher = checkNotNull(extDirectDispatcher);
   }
 
   @Override
@@ -233,120 +208,7 @@ public class ExtDirectServlet
 
   @Override
   protected Dispatcher createDispatcher(final Class<? extends Dispatcher> cls) {
-    return new SsmDispatcher()
-    {
-      @Override
-      protected Object createInvokeInstanceForMethodWithDefaultConstructor(final RegisteredMethod method)
-          throws Exception
-      {
-        if (log.isDebugEnabled()) {
-          log.debug(
-              "Creating instance of action class '{}' mapped to '{}",
-              method.getActionClass().getName(), method.getActionName()
-          );
-        }
-
-        @SuppressWarnings("unchecked")
-        Iterable<BeanEntry<Annotation, Object>> actionInstance = beanLocator.locate(
-            Key.get((Class) method.getActionClass())
-        );
-        return actionInstance.iterator().next().getValue();
-      }
-
-      @Override
-      protected Object invokeMethod(final RegisteredMethod method, final Object actionInstance,
-                                    final Object[] parameters) throws Exception
-      {
-        if (log.isDebugEnabled()) {
-          log.debug("Invoking action method: {}, java-method: {}", method.getFullName(),
-              method.getFullJavaMethodName());
-        }
-
-        Response response = null;
-        EventRecorder recorder = recorderProvider.get();
-        EventData eventData = null;
-        long started = System.nanoTime();
-
-        // Maybe record analytics events
-        if (recorder != null && recorder.isEnabled()) {
-            eventData = eventDataFactoryProvider.get().create("Ext.Direct");
-            eventData.getAttributes().put("type", method.getType().name());
-            eventData.getAttributes().put("name", method.getName());
-            eventData.getAttributes().put("action", method.getActionName());
-        }
-
-        MDC.put(getClass().getName(), method.getFullName());
-
-        try {
-          response = asResponse(super.invokeMethod(method, actionInstance, parameters));
-        }
-        catch (InvocationTargetException e) {
-          response = handleException(method, e.getTargetException());
-        }
-        catch (Throwable e) {
-          response = handleException(method, e);
-        }
-        finally {
-          // Record analytics event
-          if (recorder != null && eventData != null) {
-            if (response != null) {
-              eventData.getAttributes().put("success", String.valueOf(response.isSuccess()));
-            }
-            eventData.setDuration(System.nanoTime() - started);
-            recorder.record(eventData);
-          }
-
-          MDC.remove(getClass().getName());
-        }
-
-        return response;
-      }
-
-      private Response handleException(final RegisteredMethod method, final Throwable e) {
-        // debug logging for sanity (without stacktrace for suppressed exception)
-        log.debug("Failed to invoke action method: {}, java-method: {}, exception message: {}",
-            method.getFullName(), method.getFullJavaMethodName(), e.getMessage(),
-            isSuppressedException(e) ? null : e);
-
-
-        // handle validation message responses which have contents
-        if (e instanceof ConstraintViolationException) {
-          ConstraintViolationException cause = (ConstraintViolationException) e;
-          Set<ConstraintViolation<?>> violations = cause.getConstraintViolations();
-          if (violations != null && !violations.isEmpty()) {
-            return asResponse(invalid(cause));
-          }
-        }
-
-        // exception logging for all non-suppressed exceptions
-        if (!isSuppressedException(e)) {
-          log.error("Failed to invoke action method: {}, java-method: {}",
-              method.getFullName(), method.getFullJavaMethodName(), e);
-        }
-
-        return asResponse(error(e));
-      }
-
-      private boolean isSuppressedException(final Throwable e) {
-        return SUPPRESSED_EXCEPTIONS.stream().anyMatch(ex -> ex.isInstance(e));
-      }
-
-      private Response asResponse(final Object result) {
-        Response response;
-        if (result == null) {
-          response = success();
-        }
-        else {
-          if (result instanceof Response) {
-            response = (Response) result;
-          }
-          else {
-            response = success(result);
-          }
-        }
-        return response;
-      }
-    };
+    return extDirectDispatcher;
   }
 
   @Override

@@ -207,15 +207,15 @@ public class NpmRestoreBlobStrategyTest
 
   @Test
   public void runNpmRepairComponentAfter() throws Exception {
-    underTest.after(true);
+    underTest.after(true, repository);
     
-    Mockito.verify(npmRepairPackageRootComponent).repair();
+    Mockito.verify(npmRepairPackageRootComponent).repairRepository(repository);
   }
 
   @Test
   public void doNotRunNpmRepairComponentAfterWhenUpdatingAssetsDisabled() throws Exception {
-    underTest.after(false);
+    underTest.after(false, repository);
 
-    Mockito.verify(npmRepairPackageRootComponent, Mockito.never()).repair();
+    Mockito.verify(npmRepairPackageRootComponent, Mockito.never()).repairRepository(repository);
   }
 }

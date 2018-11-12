@@ -125,6 +125,7 @@ class NpmProxyRecipe
         .handler(contentHeadersHandler)
         .handler(proxyTargetHandler.rcurry(ProxyTarget.SEARCH_INDEX))
         .handler(unitOfWorkHandler)
+        .handler(lastDownloadedHandler)
         .handler(NpmHandlers.searchIndex)
         .create())
 
@@ -153,6 +154,7 @@ class NpmProxyRecipe
         .handler(contentHeadersHandler)
         .handler(proxyTargetHandler.rcurry(ProxyTarget.PACKAGE))
         .handler(unitOfWorkHandler)
+        .handler(lastDownloadedHandler)
         .handler(proxyHandler)
         .create())
 
@@ -168,6 +170,7 @@ class NpmProxyRecipe
         .handler(contentHeadersHandler)
         .handler(proxyTargetHandler.rcurry(ProxyTarget.TARBALL))
         .handler(unitOfWorkHandler)
+        .handler(lastDownloadedHandler)
         .handler(proxyHandler)
         .create())
 

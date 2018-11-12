@@ -100,6 +100,7 @@ class NpmHostedRecipe
         .handler(conditionalRequestHandler)
         .handler(contentHeadersHandler)
         .handler(unitOfWorkHandler)
+        .handler(lastDownloadedHandler)
         .handler(NpmHandlers.searchIndex)
         .create())
 
@@ -123,6 +124,7 @@ class NpmHostedRecipe
         .handler(conditionalRequestHandler)
         .handler(contentHeadersHandler)
         .handler(unitOfWorkHandler)
+        .handler(lastDownloadedHandler)
         .handler(NpmHandlers.getPackage)
         .create())
 
@@ -181,6 +183,7 @@ class NpmHostedRecipe
         .handler(conditionalRequestHandler)
         .handler(contentHeadersHandler)
         .handler(unitOfWorkHandler)
+        .handler(lastDownloadedHandler)
         .handler(NpmHandlers.getTarball)
         .create())
 

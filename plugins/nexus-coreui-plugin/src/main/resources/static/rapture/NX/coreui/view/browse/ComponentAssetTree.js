@@ -49,6 +49,18 @@ Ext.define('NX.coreui.view.browse.ComponentAssetTree', {
           emptyText: NX.I18n.get('Component_Asset_Tree_EmptyText_View'),
           deferEmptyText: false
         }
+      },
+      {
+        xtype: 'nx-coreui-component-componentinfo',
+        iconCls: 'nx-icon-tree-component-x16',
+        flex: 2,
+        visible: false
+      },
+      {
+        xtype: 'nx-coreui-component-componentassetinfo',
+        flex: 2,
+        iconCls: 'nx-icon-tree-asset-x16',
+        visible: false
       }],
       dockedItems: [{
         xtype: 'panel',

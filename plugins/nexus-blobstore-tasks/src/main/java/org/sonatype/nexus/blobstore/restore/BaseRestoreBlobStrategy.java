@@ -25,6 +25,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.StorageFacet;
@@ -169,7 +170,7 @@ public abstract class BaseRestoreBlobStrategy<T>
       throws IOException;
 
   @Override
-  public void after(final boolean updateAssets) {
-    //no-op    
+  public void after(final boolean updateAssets, final Repository repository) {
+    //no-op
   }
 }

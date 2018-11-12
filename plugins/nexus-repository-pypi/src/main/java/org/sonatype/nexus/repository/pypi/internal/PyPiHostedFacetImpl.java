@@ -107,9 +107,6 @@ public class PyPiHostedFacetImpl
     if (asset == null) {
       return null;
     }
-    if (asset.markAsDownloaded()) {
-      tx.saveAsset(asset);
-    }
     Content content = toContent(asset, tx.requireBlob(asset.requireBlobRef()));
     mayAddEtag(content.getAttributes(), asset.getChecksum(HashAlgorithm.SHA1));
     return content;

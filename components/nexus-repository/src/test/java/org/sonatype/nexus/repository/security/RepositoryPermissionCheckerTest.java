@@ -109,11 +109,6 @@ public class RepositoryPermissionCheckerTest
   }
 
   @Test
-  public void testUserCanViewRepository() {
-    verifyUserAccessOf(underTest::userCanViewRepository, READ);
-  }
-
-  @Test
   public void testUserCanBrowseRepository() {
     verifyUserAccessOf(underTest::userCanBrowseRepository, BROWSE);
   }

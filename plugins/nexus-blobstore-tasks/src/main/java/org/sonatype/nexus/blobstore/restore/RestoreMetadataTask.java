@@ -12,9 +12,11 @@
  */
 package org.sonatype.nexus.blobstore.restore;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
@@ -35,6 +37,7 @@ import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.restore.DefaultIntegrityCheckStrategy.DEFAULT_NAME;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
@@ -116,6 +119,8 @@ public class RestoreMetadataTask
     ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60);
     long processed = 0;
     long undeleted = 0;
+    boolean updateAssets = !dryRun && restore;
+    Set<Repository> touchedRepositories = new HashSet<>();
 
     if (dryRun) {
       log.info("{}Actions will be logged, but no changes will be made.", logPrefix);
@@ -132,6 +137,10 @@ public class RestoreMetadataTask
         {
           undeleted++;
         }
+
+        if (updateAssets) {
+          touchedRepositories.add(c.repository);
+        }
       }
 
       processed++;
@@ -144,11 +153,20 @@ public class RestoreMetadataTask
       }
     }
 
-    for (RestoreBlobStrategy strategy : restoreBlobStrategies.values()) {
-      strategy.after(!dryRun && restore);
-    }
+    updateAssets(touchedRepositories, updateAssets);
 
     progressLogger.flush();
+  }
+
+  private void updateAssets(final Set<Repository> repositories, final boolean updateAssets) {
+    for (Repository repository : repositories) {
+      if (isCanceled()) {
+        break;
+      }
+
+      ofNullable(restoreBlobStrategies.get(repository.getFormat().getValue()))
+          .ifPresent(strategy -> strategy.after(updateAssets, repository));
+    }
   }
 
   private void blobStoreIntegrityCheck(final boolean integrityCheck, final String blobStoreId) {

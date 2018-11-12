@@ -104,6 +104,7 @@ class PyPiHostedRecipe
         .handler(partialFetchHandler)
         .handler(contentHeadersHandler)
         .handler(unitOfWorkHandler)
+        .handler(lastDownloadedHandler)
         .handler(hostedHandlers.getPackage)
         .create())
 

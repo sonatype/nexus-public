@@ -47,15 +47,15 @@ class BlobStoreHealthCheck
 
   @Override
   protected Result check() throws Exception {
-    Collection<String> unhealthyBlobStores = blobStoreManagerProvider.get().browse()
-        .findAll { quotaServiceProvider.get().checkQuota(it)?.violation }
-        .collect { it.getBlobStoreConfiguration().getName() }
+    List<String> violationMessages = blobStoreManagerProvider.get().browse()
+        .collect { blobStore -> quotaServiceProvider.get().checkQuota(blobStore) }
+        .findAll { r -> r?.violation }
+        .collect { r -> r.message }
 
-    String stores = unhealthyBlobStores.join(',')
-    String message = "${unhealthyBlobStores.size()}/${blobStoreManagerProvider.get().browse().size()} " +
-        "blob stores violating their quota. ${stores ? 'Violating blob stores:(' + stores + ')' : ''}"
+    String message = "${violationMessages.size()}/${blobStoreManagerProvider.get().browse().size()} " +
+        "blob stores violating their quota.<br>${violationMessages.join('<br>')}"
 
-    Result healthCheckResult = unhealthyBlobStores ? Result.unhealthy(message) : Result.healthy(message)
+    Result healthCheckResult = violationMessages ? Result.unhealthy(message) : Result.healthy(message)
     return healthCheckResult
   }
 }

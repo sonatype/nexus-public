@@ -184,6 +184,87 @@ Ext.define('NX.coreui.mixin.ComponentUtils', {
       out = NX.I18n.get('Assets_Info_No_Downloads');
     }
     return out;
+  },
+
+  /**
+   * @param asset
+   * @returns {NX.model.Icon} an icon for a given asset
+   */
+  getIconForAsset: function (asset) {
+    var me = this,
+        iconController = NX.getApplication().getIconController();
+
+    switch (asset.get('type')) {
+      case 'folder':
+        return iconController.findIcon('tree-folder', 'x16');
+      case 'component':
+        return iconController.findIcon('tree-component', 'x16');
+      case 'asset':
+        var assetName = asset.get('text');
+        var icon = me.getIconForAssetName(assetName);
+        if (icon) {
+          return icon;
+        }
+        return iconController.findIcon((asset.get('leaf') ? 'tree-asset' : 'tree-asset-folder'), 'x16')
+    }
+  },
+
+  /**
+   * @param assetName
+   * @returns {NX.model.Icon} an icon for a given asset name
+   */
+  getIconForAssetName: function (assetName) {
+    var extension = assetName.substr(assetName.lastIndexOf('.') + 1);
+    extension = this.getExtensionOverrideMaybe(extension);
+
+    return NX.getApplication().getIconController().findIcon('asset-type-' + extension, 'x16');
+  },
+
+  /**
+   * @private
+   * @param extension
+   * @returns {string} extension or an extension override
+   */
+  getExtensionOverrideMaybe: function (extension) {
+    switch (extension) {
+      case 'gem':
+      case 'rb':
+        return 'ruby';
+
+      case 'deb':
+      case 'egg':
+      case 'nupkg':
+      case 'rpm':
+      case 'whl':
+        return 'zip';
+
+      case 'bz2':
+      case 'lzma':
+      case 'rz':
+      case 'xz':
+      case 'Z':
+        return 'gz';
+
+      case 'tbz2':
+      case 'tlz':
+      case 'txz':
+        return 'tgz';
+
+      case 'ear':
+      case 'war':
+        return 'jar';
+
+      case 'sh':
+        return 'bat';
+
+      case 'json':
+      case 'pom':
+      case 'xml':
+        return 'code';
+
+      default:
+        return extension;
+    }
   }
 
 });

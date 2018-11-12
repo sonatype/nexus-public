@@ -126,9 +126,9 @@ public class NpmRestoreBlobStrategy
   }
 
   @Override
-  public void after(final boolean updateAssets) {
+  public void after(final boolean updateAssets, final Repository repository) {
     if (updateAssets) {
-      npmRepairPackageRootComponent.repair();
+      npmRepairPackageRootComponent.repairRepository(repository);
     }
     else {
       log.info("Updating assets disabled so not running repair of npm package metadata");

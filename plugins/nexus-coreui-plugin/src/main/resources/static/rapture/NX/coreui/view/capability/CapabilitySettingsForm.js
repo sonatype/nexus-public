@@ -49,9 +49,13 @@ Ext.define('NX.coreui.view.capability.CapabilitySettingsForm', {
         name: 'enabled',
         allowBlank: false,
         checked: true,
+        inputValue: true,
         editable: true
       },
-      { xtype: 'nx-coreui-formfield-settingsfieldset' }
+      {
+        xtype: 'nx-coreui-formfield-settingsfieldset',
+        delimiter: ','
+      }
     ];
 
     me.editableMarker = NX.I18n.get('Capability_CapabilityAdd_Create_Error');
@@ -84,7 +88,7 @@ Ext.define('NX.coreui.view.capability.CapabilitySettingsForm', {
    */
   getValues: function() {
     var me = this,
-        values = me.getForm().getFieldValues(),
+        values = me.getForm().getValues(),
         capability = {
           id: values.id,
           typeId: values.typeId,

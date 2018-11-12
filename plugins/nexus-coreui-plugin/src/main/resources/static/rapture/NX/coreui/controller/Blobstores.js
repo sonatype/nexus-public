@@ -108,6 +108,10 @@ Ext.define('NX.coreui.controller.Blobstores', {
         },
         'nx-coreui-blobstore-settings-form': {
           submitted: me.loadStores
+        },
+        //Note that this component is from the Task UI
+        'combobox[name=property_fromGroup]': {
+          change: me.fromGroupChanged
         }
       }
     });
@@ -335,5 +339,16 @@ Ext.define('NX.coreui.controller.Blobstores', {
           }
         }
     );
+  },
+
+  fromGroupChanged: function(groupComboBox, newVal, old) {
+    var members = groupComboBox.up().query('[name=property_memberToRemove]')[0];
+    var selectedGroup = groupComboBox.getStore().getById(newVal);
+    var data = Ext.Array.map(selectedGroup.data.attributes.group.members, function(m) {return {name: m, id: m};});
+    members.setValue(null);
+    members.getStore().setData(data);
+    if(!old) {
+      members.reset();
+    }
   }
 });

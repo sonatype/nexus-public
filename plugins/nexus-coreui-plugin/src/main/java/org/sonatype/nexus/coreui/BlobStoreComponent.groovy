@@ -15,6 +15,7 @@ package org.sonatype.nexus.coreui
 import javax.annotation.Nullable
 import javax.inject.Inject
 import javax.inject.Named
+import javax.inject.Provider
 import javax.inject.Singleton
 import javax.validation.Valid
 import javax.validation.constraints.NotNull
@@ -26,7 +27,8 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreException
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup
-import org.sonatype.nexus.blobstore.group.BlobStorePromoter
+import org.sonatype.nexus.blobstore.group.BlobStoreGroupService
+import org.sonatype.nexus.blobstore.group.FillPolicy
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuota
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport
 import org.sonatype.nexus.common.app.ApplicationDirectories
@@ -74,7 +76,10 @@ class BlobStoreComponent
   RepositoryManager repositoryManager
 
   @Inject
-  BlobStorePromoter blobStorePromoter
+  Provider<BlobStoreGroupService> blobStoreGroupService
+
+  @Inject
+  Map<String, FillPolicy> fillPolicies
 
   @DirectMethod
   @Timed
@@ -112,15 +117,22 @@ class BlobStoreComponent
   @Timed
   @ExceptionMetered
   @RequiresPermissions('nexus:blobstores:read')
+  List<BlobStoreXO> readGroups() {
+    blobStoreManager.browse().findAll{ it.blobStoreConfiguration.type == 'Group' }.collect { asBlobStoreXO(it) }
+  }
+
+  @DirectMethod
+  @Timed
+  @ExceptionMetered
+  @RequiresPermissions('nexus:blobstores:read')
   List<BlobStoreTypeXO> readTypes() {
-    blobStoreDescriptors.findAll { key, descriptor ->
-      descriptor.enabled
-    }.collect { key, descriptor ->
+    blobStoreDescriptors.collect { key, descriptor ->
       new BlobStoreTypeXO(
           id: key,
           name: descriptor.name,
           formFields: descriptor.formFields.collect { FormFieldXO.create(it) },
-          isModifiable: descriptor.isModifiable()
+          isModifiable: descriptor.isModifiable(),
+          isEnabled: descriptor.isEnabled()
       )
     }
   }
@@ -223,9 +235,19 @@ class BlobStoreComponent
   @Validate(groups = [Update.class, Default.class])
   BlobStoreXO promoteToGroup(final @NotNull @Valid String fromName) {
     BlobStore from = blobStoreManager.get(fromName)
-    if (blobStoreManager.isPromotable(fromName)) {
-      return asBlobStoreXO(blobStorePromoter.promote(from))
+    if (blobStoreGroupService.get()?.isEnabled() && blobStoreManager.isPromotable(fromName)) {
+      return asBlobStoreXO(blobStoreGroupService.get().promote(from))
     }
     throw new BlobStoreException("Blob store (${fromName}) could not be promoted to a blob store group", null)
+  }
+
+  @DirectMethod
+  @Timed
+  @ExceptionMetered
+  @RequiresPermissions('nexus:blobstores:read')
+  List<FillPolicyXO> fillPolicies() {
+    fillPolicies.collect { id, policy ->
+      new FillPolicyXO(id: id, name: policy.name)
+    }
   }
 }

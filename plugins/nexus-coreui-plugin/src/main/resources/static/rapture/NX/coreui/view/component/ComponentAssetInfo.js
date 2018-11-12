@@ -65,12 +65,12 @@ Ext.define('NX.coreui.view.component.ComponentAssetInfo', {
     }]
   }],
 
-  summary: {},
+  savedInfo: {},
 
   setModel: function(asset, component) {
     var me = this;
 
-    var summary = this.summary,
+    var computedInfo = {},
         contentType = asset.get('contentType'),
         size = asset.get('size'),
         attributesPanel = this.lookup('attributesPanel'),
@@ -79,36 +79,36 @@ Ext.define('NX.coreui.view.component.ComponentAssetInfo', {
     this.assetModel = asset;
     this.componentModel = component;
 
-    summary[NX.I18n.get('Assets_Info_Repository')] = Ext.htmlEncode(asset.get('repositoryName'));
-    summary[NX.I18n.get('Assets_Info_Format')] = Ext.htmlEncode(asset.get('format'));
-    summary[NX.I18n.get('Assets_Info_Group')] = Ext.htmlEncode(component.get('group'));
-    summary[NX.I18n.get('Assets_Info_Name')] = Ext.htmlEncode(component.get('name'));
-    summary[NX.I18n.get('Assets_Info_Version')] = Ext.htmlEncode(component.get('version'));
-    summary[NX.I18n.get('Assets_Info_Path')] = NX.coreui.util.RepositoryUrls.asRepositoryLink(asset, asset.get('format'));
-    summary[NX.I18n.get('Assets_Info_ContentType')] = Ext.htmlEncode(contentType);
-    summary[NX.I18n.get('Assets_Info_FileSize')] = Ext.util.Format.fileSize(size);
-    summary[NX.I18n.get('Assets_Info_Blob_Created')] = Ext.htmlEncode(asset.get('blobCreated'));
-    summary[NX.I18n.get('Assets_Info_Blob_Updated')] = Ext.htmlEncode(asset.get('blobUpdated'));
+    computedInfo[NX.I18n.get('Assets_Info_Repository')] = Ext.htmlEncode(asset.get('repositoryName'));
+    computedInfo[NX.I18n.get('Assets_Info_Format')] = Ext.htmlEncode(asset.get('format'));
+    computedInfo[NX.I18n.get('Assets_Info_Group')] = Ext.htmlEncode(component.get('group'));
+    computedInfo[NX.I18n.get('Assets_Info_Name')] = Ext.htmlEncode(component.get('name'));
+    computedInfo[NX.I18n.get('Assets_Info_Version')] = Ext.htmlEncode(component.get('version'));
+    computedInfo[NX.I18n.get('Assets_Info_Path')] = NX.coreui.util.RepositoryUrls.asRepositoryLink(asset, asset.get('format'));
+    computedInfo[NX.I18n.get('Assets_Info_ContentType')] = Ext.htmlEncode(contentType);
+    computedInfo[NX.I18n.get('Assets_Info_FileSize')] = Ext.util.Format.fileSize(size);
+    computedInfo[NX.I18n.get('Assets_Info_Blob_Created')] = Ext.htmlEncode(asset.get('blobCreated'));
+    computedInfo[NX.I18n.get('Assets_Info_Blob_Updated')] = Ext.htmlEncode(asset.get('blobUpdated'));
 
     if (asset.get('downloadCount')) {
-      summary[NX.I18n.get('Assets_Info_Downloaded_Count')] = Ext.htmlEncode(asset.get('downloadCount')) + ' '
+      computedInfo[NX.I18n.get('Assets_Info_Downloaded_Count')] = Ext.htmlEncode(asset.get('downloadCount')) + ' '
           + NX.I18n.get('Assets_Info_Downloaded_Unit');
     }
 
-    summary[NX.I18n.get('Assets_Info_Last_Downloaded')] = Ext.htmlEncode(
+    computedInfo[NX.I18n.get('Assets_Info_Last_Downloaded')] = Ext.htmlEncode(
         me.mixins.componentUtils.getLastDownloadDateForDisplay(asset));
-    summary[NX.I18n.get('Assets_Info_Locally_Cached')] = Ext.htmlEncode(contentType !== 'unknown' && size > 0);
-    summary[NX.I18n.get('Assets_Info_BlobRef')] = Ext.htmlEncode(asset.get('blobRef'));
-    summary[NX.I18n.get('Assets_Info_ContainingRepositoryName')] = Ext.htmlEncode(asset.get('containingRepositoryName'));
+    computedInfo[NX.I18n.get('Assets_Info_Locally_Cached')] = Ext.htmlEncode(contentType !== 'unknown' && size > 0);
+    computedInfo[NX.I18n.get('Assets_Info_BlobRef')] = Ext.htmlEncode(asset.get('blobRef'));
+    computedInfo[NX.I18n.get('Assets_Info_ContainingRepositoryName')] = Ext.htmlEncode(asset.get('containingRepositoryName'));
 
-    summary[NX.I18n.get('Assets_Info_UploadedBy')] = Ext.htmlEncode(asset.get('createdBy'));
-    summary[NX.I18n.get('Assets_Info_UploadedIp')] = Ext.htmlEncode(asset.get('createdByIp'));
+    computedInfo[NX.I18n.get('Assets_Info_UploadedBy')] = Ext.htmlEncode(asset.get('createdBy'));
+    computedInfo[NX.I18n.get('Assets_Info_UploadedIp')] = Ext.htmlEncode(asset.get('createdByIp'));
 
     if (attributesPanel) {
       attributesPanel.setAssetModel(asset);
     }
 
-    this.showInfo();
+    this.showInfo(Ext.apply({}, this.savedInfo, computedInfo));
 
     titleText = Ext.htmlEncode(asset.get('name'));
     this.setTitle({
@@ -130,13 +130,13 @@ Ext.define('NX.coreui.view.component.ComponentAssetInfo', {
   },
 
   setInfo: function(section, key, value) {
-    this.summary[key] = value;
+    this.savedInfo[key] = value;
   },
 
-  showInfo: function() {
+  showInfo: function(info) {
     var summaryPanel = this.lookup('summaryPanel');
     if (summaryPanel) {
-      summaryPanel.showInfo(this.summary);
+      summaryPanel.showInfo(info);
     }
   }
 

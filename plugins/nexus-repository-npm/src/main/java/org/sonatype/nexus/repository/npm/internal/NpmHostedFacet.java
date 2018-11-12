@@ -35,11 +35,10 @@ public interface NpmHostedFacet
     extends Facet
 {
   /**
-   * Returns the package metadata or {@code null}. If {@code edit} is {@code true}, no "last accessed" maintenance
-   * will happen, as it means client is about to use {@code _rev} field of document as MVCC "version".
+   * Returns the package metadata or {@code null}.
    */
   @Nullable
-  Content getPackage(NpmPackageId packageId, boolean edit) throws IOException;
+  Content getPackage(NpmPackageId packageId) throws IOException;
 
   /**
    * Performs a "publish" of a package as sent by npm CLI.

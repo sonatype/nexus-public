@@ -36,5 +36,8 @@ Ext.define('NX.coreui.store.BlobstoreType', {
     }
   },
 
-  sorters: { property: 'name', direction: 'ASC' }
+  sorters: { property: 'name', direction: 'ASC' },
+  filters: [
+    { property: 'isEnabled', value: true }
+  ]
 });

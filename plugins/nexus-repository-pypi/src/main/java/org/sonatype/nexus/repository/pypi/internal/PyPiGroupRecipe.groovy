@@ -80,6 +80,7 @@ class PyPiGroupRecipe
         .handler(conditionalRequestHandler)
         .handler(contentHeadersHandler)
         .handler(unitOfWorkHandler)
+        .handler(lastDownloadedHandler)
         .handler(indexGroupHandler)
         .create())
 

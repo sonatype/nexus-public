@@ -287,6 +287,27 @@ class BlobStoreManagerImplTest
     assert !underTest.isPromotable(blobStoreName)
   }
 
+  @Test
+  void 'Can start when a blob store fails to restore'() {
+    BlobStore blobStore = mock(BlobStore)
+    when(blobStore.init(any(BlobStoreConfiguration.class))).thenThrow(new IllegalStateException())
+    when(provider.get()).thenReturn(blobStore)
+    when(store.list()).thenReturn(Lists.newArrayList(createConfig('test')))
+    underTest.doStart()
+    // if blob store fails inside init, then it never gets tracked
+    assert !underTest.browse()
+  }
+
+  @Test
+  void 'Can start when a blob store fails to start'() {
+    BlobStore blobStore = mock(BlobStore)
+    when(blobStore.start()).thenThrow(new IllegalStateException())
+    when(provider.get()).thenReturn(blobStore)
+    when(store.list()).thenReturn(Lists.newArrayList(createConfig('test')))
+    underTest.doStart()
+    assert underTest.browse().toList() == [blobStore]
+  }
+
   private BlobStoreConfiguration createConfig(name = 'foo', type = 'test', attributes = [file:[path:'baz']]) {
     def entity = new BlobStoreConfiguration(
         name: name,

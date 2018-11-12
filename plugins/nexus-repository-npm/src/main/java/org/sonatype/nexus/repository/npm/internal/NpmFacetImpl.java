@@ -166,7 +166,6 @@ public class NpmFacetImpl
     asset.formatAttributes().set(P_ASSET_KIND, kind.name());
     tx.attachBlob(asset, assetBlob);
     Content.applyToAsset(asset, Content.maintainLastModified(asset, contentAttributes));
-    asset.markAsDownloaded();
     tx.saveAsset(asset);
   }
 

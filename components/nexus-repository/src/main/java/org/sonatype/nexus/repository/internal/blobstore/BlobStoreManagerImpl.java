@@ -117,16 +117,28 @@ public class BlobStoreManagerImpl
     log.debug("Restoring {} BlobStores", configurations.size());
     for (BlobStoreConfiguration configuration : configurations) {
       log.debug("Restoring BlobStore: {}", configuration);
-      BlobStore blobStore = newBlobStore(configuration);
-      track(configuration.getName(), blobStore);
+      try {
+        BlobStore blobStore = newBlobStore(configuration);
+        track(configuration.getName(), blobStore);
+      }
+      catch (Exception e) {
+        log.error("Unable to restore BlobStore {}", configuration, e);
+      }
 
       // TODO - event publishing
     }
 
     log.debug("Starting {} BlobStores", stores.size());
-    for (BlobStore blobStore : stores.values()) {
-      log.debug("Starting BlobStore: {}", blobStore);
-      blobStore.start();
+    for (Map.Entry<String, BlobStore> entry : stores.entrySet()) {
+      String name = entry.getKey();
+      BlobStore blobStore = entry.getValue();
+      log.debug("Starting BlobStore: {}", name);
+      try {
+        blobStore.start();
+      }
+      catch (Exception e) {
+        log.error("Unable to start BlobStore {}", name, e);
+      }
 
       // TODO - event publishing
     }
@@ -358,7 +370,7 @@ public class BlobStoreManagerImpl
   @Override
   public boolean isPromotable(final String blobStoreName) {
     BlobStore blobStore = get(blobStoreName);
-    return blobStore != null && blobStore.isGroupable() &&
+    return blobStore != null && blobStore.isGroupable() && !blobStore.isReadOnly() &&
         !store.findParent(blobStore.getBlobStoreConfiguration().getName()).isPresent();
   }
 

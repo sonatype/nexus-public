@@ -101,6 +101,13 @@ public interface BlobStore
   Blob create(InputStream blobData, Map<String, String> headers);
 
   /**
+   * Creates a new blob with the provided {@link BlobId}.
+   *
+   * @since 3.next
+   */
+  Blob create(InputStream blobData, Map<String, String> headers, @Nullable BlobId blobId);
+
+  /**
    * Imports a blob by creating a hard link, throwing {@link BlobStoreException} if that's not supported
    * from the source file's location.
    *
@@ -235,4 +242,16 @@ public interface BlobStore
    * @since 3.14
    */
   default boolean isGroupable() { return true; }
+
+  /**
+   * Identifies if the instance is ready only. The read only state is intended to represent a system state and
+   * not the state of the underlying implementation. To communicate the underlying implementations status see
+   * {@link #isWritable()}
+   *
+   * @return {@code true} if the blob store is read only
+   * @since 3.next
+   */
+  default boolean isReadOnly() {
+    return getBlobStoreConfiguration().isReadOnly();
+  }
 }

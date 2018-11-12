@@ -42,7 +42,7 @@ Ext.define('NX.coreui.view.formfield.factory.FormfieldComboFactory', {
    * @param formField form field to create combo for
    * @returns {*} created combo (never null)
    */
-  create: function (formField) {
+  create: function (formField) { // NOSONAR
     var ST = Ext.data.SortTypes,
         item, filters,
         itemConfig = {
@@ -104,6 +104,19 @@ Ext.define('NX.coreui.view.formfield.factory.FormfieldComboFactory', {
         sorters: [{ property: 'sortOrder', direction: 'DESC' }, { property: formField['attributes']['sortProperty'] || 'name', direction: 'ASC' }],
         remoteFilter: true,
         autoLoad: true
+      });
+    } else {
+      itemConfig.store = Ext.create('Ext.data.Store', {
+        fields: [
+          {name: 'id', mapping: formField['idMapping'] || 'id'},
+          {name: 'name', mapping: formField['nameMapping'] || 'name', sortType: ST.asUCString},
+          {name: 'sortOrder', sortType: ST.asInt}
+        ],
+
+        sortOnLoad: true,
+        sorters: [{ property: 'sortOrder', direction: 'DESC' }, { property: formField['attributes']['sortProperty'] || 'name', direction: 'ASC' }],
+        remoteFilter: true,
+        autoLoad: false
       });
     }
     item = Ext.create('Ext.form.ComboBox', itemConfig);

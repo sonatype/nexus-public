@@ -32,4 +32,6 @@ class BlobStoreTypeXO
   List<FormFieldXO> formFields
 
   boolean isModifiable
+
+  boolean isEnabled
 }

@@ -214,9 +214,7 @@ public class NpmProxyFacetImpl
     if (packageRootAsset == null) {
       return null;
     }
-    if (packageRootAsset.markAsDownloaded()) {
-      tx.saveAsset(packageRootAsset);
-    }
+
     NestedAttributesMap packageRoot = NpmFacetUtils.loadPackageRoot(tx, packageRootAsset);
     NpmMetadataUtils.rewriteTarballUrl(getRepository().getName(), packageRoot);
     return NpmFacetUtils.toContent(packageRootAsset, packageRoot);
@@ -372,9 +370,7 @@ public class NpmProxyFacetImpl
     if (asset == null) {
       return null;
     }
-    if (asset.markAsDownloaded()) {
-      tx.saveAsset(asset);
-    }
+
     return toContent(asset, tx.requireBlob(asset.requireBlobRef()));
   }
 

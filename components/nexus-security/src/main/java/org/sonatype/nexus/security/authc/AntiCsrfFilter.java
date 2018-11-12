@@ -14,7 +14,6 @@ package org.sonatype.nexus.security.authc;
 
 import java.io.IOException;
 import java.util.Optional;
-import java.util.UUID;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -31,7 +30,6 @@ import org.sonatype.nexus.common.text.Strings2;
 
 import com.google.common.net.HttpHeaders;
 import org.apache.shiro.web.filter.authc.AuthenticationFilter;
-import org.apache.shiro.web.servlet.SimpleCookie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,13 +55,19 @@ public class AntiCsrfFilter
 
   public static final String ANTI_CSRF_TOKEN_NAME = "NX-ANTI-CSRF-TOKEN";
 
-  private static final String SESSION_COOKIE_NAME = "NXSESSIONID";
+  private static final String DEFAULT_SESSION_COOKIE_NAME = "NXSESSIONID";
 
   private final boolean enabled;
 
+  private final String sessionCookieName;
+
   @Inject
-  public AntiCsrfFilter(@Named("${nexus.security.anticsrftoken.enabled:-true}") final boolean enabled) {
+  public AntiCsrfFilter(@Named("${nexus.security.anticsrftoken.enabled:-true}") final boolean enabled,
+                        @Named("${nexus.sessionCookieName:-" + DEFAULT_SESSION_COOKIE_NAME
+                            + "}") final String sessionCookieName)
+  {
     this.enabled = enabled;
+    this.sessionCookieName = sessionCookieName;
   }
 
   public boolean isEnabled() {
@@ -73,13 +77,10 @@ public class AntiCsrfFilter
   @Override
   protected boolean isAccessAllowed(ServletRequest request, ServletResponse response, Object mappedValue) {
     HttpServletRequest httpRequest = (HttpServletRequest) request;
-    HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-    if (!isEnabled() || !isCsrfCheckWarranted(httpRequest)) {
+    if (!isEnabled()) {
       return true;
     }
-
-    provideAntiCsrfTokenCookieIfAbsent(httpRequest, httpResponse);
 
     return isSafeHttpMethod(httpRequest)
         || isMultiPartFormDataPost(httpRequest) // token is passed as a form field instead of a custom header
@@ -102,12 +103,6 @@ public class AntiCsrfFilter
     return false;
   }
 
-  private boolean isCsrfCheckWarranted(HttpServletRequest request) {
-    String userAgent = request.getHeader("User-Agent");
-
-    return userAgent != null && userAgent.startsWith("Mozilla/");
-  }
-
   private boolean isSafeHttpMethod(final HttpServletRequest request) {
     String method = request.getMethod();
     return HttpMethod.GET.equals(method) || HttpMethod.HEAD.equals(method);
@@ -120,7 +115,7 @@ public class AntiCsrfFilter
   }
 
   private boolean isSessionAndRefererAbsent(final HttpServletRequest request) {
-    return !getCookie(request, SESSION_COOKIE_NAME).isPresent()
+    return !getCookie(request, sessionCookieName).isPresent()
         && isRefererAbsent(request);
   }
 
@@ -142,19 +137,6 @@ public class AntiCsrfFilter
 
   private Optional<String> getAntiCsrfTokenCookie(final HttpServletRequest request) {
     return getCookie(request, ANTI_CSRF_TOKEN_NAME);
-  }
-
-  private void provideAntiCsrfTokenCookieIfAbsent(final HttpServletRequest request,
-                                                  final HttpServletResponse response)
-  {
-    Optional<String> antiCsrfTokenCookie = getAntiCsrfTokenCookie(request);
-    if (!antiCsrfTokenCookie.isPresent()) {
-      SimpleCookie csrfCookie = new SimpleCookie(ANTI_CSRF_TOKEN_NAME);
-      csrfCookie.setValue(UUID.randomUUID().toString());
-      csrfCookie.setPath("/");
-      csrfCookie.setHttpOnly(false);
-      csrfCookie.saveTo(request, response);
-    }
   }
 
   private boolean isAntiCsrfTokenValid(final HttpServletRequest request) {

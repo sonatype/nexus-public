@@ -28,7 +28,6 @@ import org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
-import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.orient.entity.AttachedEntityHelper;
 import org.sonatype.nexus.repository.Repository;
@@ -122,7 +121,6 @@ public final class NpmFacetUtils
         assetKind.getContentType(),
         assetKind.isSkipContentVerification()
     );
-    asset.markAsDownloaded();
     tx.attachBlob(asset, result);
     return result;
   }
@@ -144,7 +142,6 @@ public final class NpmFacetUtils
         assetKind.getContentType(),
         assetKind.isSkipContentVerification()
     );
-    asset.markAsDownloaded();
     tx.attachBlob(asset, result);
     return result;
   }
@@ -317,9 +314,8 @@ public final class NpmFacetUtils
   {
     final Blob blob = tx.requireBlob(packageRootAsset.requireBlobRef());
     NestedAttributesMap metadata = NpmJsonUtils.parse(() -> blob.getInputStream());
-    // add _id & _rev
+    // add _id
     metadata.set(NpmMetadataUtils.META_ID, packageRootAsset.name());
-    metadata.set(NpmMetadataUtils.META_REV, EntityHelper.version(packageRootAsset).getValue());
     return metadata;
   }
 
@@ -332,7 +328,6 @@ public final class NpmFacetUtils
                               final NestedAttributesMap packageRoot) throws IOException
   {
     packageRoot.remove(NpmMetadataUtils.META_ID);
-    packageRoot.remove(NpmMetadataUtils.META_REV);
     packageRoot.remove("_attachments");
     packageRootAsset.formatAttributes().set(
         NpmAttributes.P_NPM_LAST_MODIFIED, NpmMetadataUtils.maintainTime(packageRoot).toDate()
@@ -382,9 +377,7 @@ public final class NpmFacetUtils
     if (asset == null) {
       return null;
     }
-    if (asset.markAsDownloaded()) {
-      tx.saveAsset(asset);
-    }
+
     Blob blob = tx.requireBlob(asset.requireBlobRef());
     Content content = new Content(new BlobPayload(blob, asset.requireContentType()));
     Content.extractFromAsset(asset, HASH_ALGORITHMS, content.getAttributes());

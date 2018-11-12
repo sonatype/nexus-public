@@ -74,14 +74,15 @@ Ext.define('NX.coreui.app.PluginConfig', {
     },
     {
       id: 'NX.coreui.controller.Capabilities',
-      active: function () {
+      active: function() {
         return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
       }
     },
     {
       id: 'NX.coreui.controller.ComponentAssetTree',
       active: function () {
-        return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
+        return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin') &&
+            NX.State.getValue('browseableformats').length > 0;
       }
     },
     'NX.coreui.controller.FeatureGroups',

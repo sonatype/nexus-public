@@ -60,7 +60,9 @@ Ext.define('NX.coreui.view.component.ComponentInfo', {
   summary: {},
 
   setModel: function(componentModel) {
-    var summary = this.summary;
+    var me = this,
+        summary = this.summary,
+        componentName = Ext.htmlEncode(componentModel.get('name'));
 
     this.componentModel = componentModel;
 
@@ -70,9 +72,24 @@ Ext.define('NX.coreui.view.component.ComponentInfo', {
     summary[NX.I18n.get('Search_Assets_Name')] = Ext.htmlEncode(componentModel.get('name'));
     summary[NX.I18n.get('Search_Assets_Version')] = Ext.htmlEncode(componentModel.get('version'));
 
-    this.showInfo();
+    me.showInfo();
 
-    this.fireEvent('updated', this, this.componentModel);
+    me.setTitle({
+      text: componentName,
+      listeners: {
+        destroy: function(me) {
+          Ext.tip.QuickTipManager.unregister(me.getId());
+        }
+      }
+    });
+
+    Ext.tip.QuickTipManager.unregister(me.down('title').getId());
+    Ext.tip.QuickTipManager.register({
+      target: me.down('title').getId(),
+      text: componentName
+    });
+
+    me.fireEvent('updated', me, me.componentModel);
   },
 
   setInfo: function(section, key, value) {

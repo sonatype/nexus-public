@@ -399,7 +399,6 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
 
   selectNode: function(view, node) {
     var me = this,
-        containerView = me.getComponentAssetTree(),
         componentInfoPanel,
         componentInfoPanelTitleText,
         assetInfoPanel;
@@ -409,25 +408,12 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
 
     if ('component' === node.get('type')) {
       componentInfoPanelTitleText = me.buildPathString(node);
-      componentInfoPanel = containerView.add(me.getComponentComponentInfoView().create({
-        title: {
-          text: componentInfoPanelTitleText,
-          listeners: {
-            afterrender: function(me) {
-              Ext.tip.QuickTipManager.register({
-                target: me.getId(),
-                text: componentInfoPanelTitleText
-              });
-            },
-            destroy: function(me) {
-              Ext.tip.QuickTipManager.unregister(me.getId());
-            }
-          }
-        },
-        iconCls: 'nx-icon-tree-component-x16',
-        flex: 2
-      }));
-      componentInfoPanel.getEl() && componentInfoPanel.getEl().mask(NX.I18n.get('ComponentDetails_Loading_Mask'));
+      componentInfoPanel = me.getComponentInfo();
+      componentInfoPanel.setTitle(componentInfoPanelTitleText);
+      componentInfoPanel.setIconCls(me.mixins.componentUtils.getIconForAsset(node).get('cls'));
+      componentInfoPanel.show();
+      componentInfoPanel.mask(NX.I18n.get('ComponentDetails_Loading_Mask'));
+
       NX.direct.coreui_Component.readComponent(node.get('componentId'), me.getCurrentRepository().get('name'), function(response) {
         var componentModel;
         me.maybeUnmask(componentInfoPanel);
@@ -440,11 +426,10 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
       });
     }
     else if ('asset' === node.get('type')) {
-      assetInfoPanel = containerView.add(me.getComponentComponentAssetInfoView().create({
-        flex: 2,
-        iconCls: 'nx-icon-tree-asset-x16'
-      }));
-      assetInfoPanel.getEl() && assetInfoPanel.getEl().mask(NX.I18n.get('ComponentDetails_Loading_Mask'));
+      assetInfoPanel = me.getComponentAssetInfo();
+      assetInfoPanel.setIconCls(me.mixins.componentUtils.getIconForAsset(node).get('cls'));
+      assetInfoPanel.show();
+      assetInfoPanel.mask(NX.I18n.get('ComponentDetails_Loading_Mask'));
 
       NX.direct.coreui_Component.readAsset(node.get('assetId'), me.getCurrentRepository().get('name'), function(response) {
         if (me.isPanelVisible(assetInfoPanel) && me.isResponseSuccessful(response)) {
@@ -501,11 +486,11 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
 
   removeSideContent: function() {
     var me = this,
-        containerView = me.getComponentAssetTree();
+        componentInfo = me.getComponentInfo(),
+        componentAssetInfo = me.getComponentAssetInfo();
 
-    while (containerView.items.getCount() > 1) {
-      containerView.remove(containerView.items.getAt(1));
-    }
+    componentInfo.hide();
+    componentAssetInfo.hide();
   },
 
   buildPathString: function(node) {
@@ -711,7 +696,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
             }
             else {
               selectedRecord.set('type', 'folder');
-              selectedRecord.set('iconCls', selectedRecord.computeIconClass());
+              selectedRecord.set('iconCls', me.mixins.componentUtils.getIconForAsset(selectedRecord).get('cls'));
             }
             me.removeSideContent();
             NX.Messages.add({text: NX.I18n.format('AssetInfo_Delete_Success', asset.get('name')), type: 'success'});

@@ -101,6 +101,7 @@ class PyPiProxyRecipe
         .handler(partialFetchHandler)
         .handler(contentHeadersHandler)
         .handler(unitOfWorkHandler)
+        .handler(lastDownloadedHandler)
         .handler(proxyHandler)
         .create())
 
@@ -115,6 +116,7 @@ class PyPiProxyRecipe
         .handler(partialFetchHandler)
         .handler(contentHeadersHandler)
         .handler(unitOfWorkHandler)
+        .handler(lastDownloadedHandler)
         .handler(proxyHandler)
         .create())
 

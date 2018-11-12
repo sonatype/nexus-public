@@ -54,10 +54,12 @@ public class RepositoryPermissionChecker
     this.selectorManager = checkNotNull(selectorManager);
   }
 
-  public boolean userCanViewRepository(final Repository repository) {
-    return userHasRepositoryViewPermissionTo(READ, repository) || userHasAnyContentSelectorAccessTo(repository);
-  }
-
+  /**
+   * WARNING: This method should _only_ be used to check a single repository to prevent performance problems with large
+   * numbers of content selectors. Use userCanBrowseRepositories instead to check multiple repositories.
+   *
+   * @return true if the user can browse the repository or if the user has a content selector granting access
+   */
   public boolean userCanBrowseRepository(final Repository repository) {
     return userHasRepositoryViewPermissionTo(BROWSE, repository) || userHasAnyContentSelectorAccessTo(repository);
   }
@@ -68,6 +70,8 @@ public class RepositoryPermissionChecker
 
   /**
    * @since 3.13
+   * @param repositories to test against browse permissions and content selector permissions
+   * @return the repositories which the user has access to browse
    */
   public List<Repository> userCanBrowseRepositories(final Repository... repositories) {
     if (repositories.length == 0) {

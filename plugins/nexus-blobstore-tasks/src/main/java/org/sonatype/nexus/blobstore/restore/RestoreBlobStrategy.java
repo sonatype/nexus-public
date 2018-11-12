@@ -15,6 +15,7 @@ package org.sonatype.nexus.blobstore.restore;
 import java.util.Properties;
 
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.repository.Repository;
 
 /**
  * @since 3.4
@@ -42,9 +43,9 @@ public interface RestoreBlobStrategy
   /**
    * Runs after all blobs have been restored to the database.
    * 
-   * @since 3.14
-   * 
+   * @since 3.next
    * @param updateAssets whether updating assets is expected or not
+   * @param repository repository to update
    */
-  void after(boolean updateAssets);
+  void after(boolean updateAssets, final Repository repository);
 }

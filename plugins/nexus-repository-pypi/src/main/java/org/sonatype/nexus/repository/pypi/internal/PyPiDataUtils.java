@@ -191,7 +191,6 @@ public final class PyPiDataUtils
     Content.applyToAsset(asset, Content.maintainLastModified(asset, contentAttributes));
     AssetBlob assetBlob = tx.setBlob(asset, asset.name(), tempBlob, null, contentType, false);
 
-    asset.markAsDownloaded();
     tx.saveAsset(asset);
     return toContent(asset, assetBlob.getBlob());
   }

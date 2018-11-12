@@ -34,7 +34,6 @@
     <module>nexus-blobstore</module>
     <module>nexus-blobstore-api</module>
     <module>nexus-blobstore-file</module>
-    <module>nexus-blobstore-group</module>
     <module>nexus-bootstrap</module>
     <module>nexus-capability</module>
     <module>nexus-cleanup</module>

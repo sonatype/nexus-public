@@ -114,12 +114,12 @@ public abstract class TaskDescriptorSupport
   }
 
   @Override
-  public final boolean isVisible() {
+  public boolean isVisible() {
     return visible;
   }
 
   @Override
-  public final boolean isExposed() {
+  public boolean isExposed() {
     return exposed;
   }
 

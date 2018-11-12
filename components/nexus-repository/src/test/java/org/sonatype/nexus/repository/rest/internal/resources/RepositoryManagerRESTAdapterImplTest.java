@@ -49,8 +49,6 @@ public class RepositoryManagerRESTAdapterImplTest
 
   private static final boolean PERMIT_BROWSE = true;
 
-  private static final boolean PERMIT_READ = true;
-
   @Mock
   RepositoryManager repositoryManager;
 
@@ -99,19 +97,19 @@ public class RepositoryManagerRESTAdapterImplTest
 
   @Test
   public void getRepository_allPermissions() throws Exception {
-    configurePermissions(repository, PERMIT_BROWSE, PERMIT_READ);
+    configurePermissions(repository, PERMIT_BROWSE);
     assertThat(underTest.getRepository(REPOSITORY_NAME), is(repository));
   }
 
   @Test
   public void getRepository_browseOnly() throws Exception {
-    configurePermissions(repository, PERMIT_BROWSE, !PERMIT_READ);
+    configurePermissions(repository, PERMIT_BROWSE);
     assertThat(underTest.getRepository(REPOSITORY_NAME), is(repository));
   }
 
   @Test
   public void getRepository_readOnlyReturnsForbidden() throws Exception {
-    configurePermissions(repository, !PERMIT_BROWSE, PERMIT_READ);
+    configurePermissions(repository, !PERMIT_BROWSE);
 
     try {
       underTest.getRepository(REPOSITORY_NAME);
@@ -124,7 +122,7 @@ public class RepositoryManagerRESTAdapterImplTest
 
   @Test
   public void getRepository_cannotReadOrBrowse() {
-    configurePermissions(repository, !PERMIT_BROWSE, !PERMIT_READ);
+    configurePermissions(repository, !PERMIT_BROWSE);
     try {
       underTest.getRepository(REPOSITORY_NAME);
       fail(); //should have thrown exception
@@ -134,9 +132,8 @@ public class RepositoryManagerRESTAdapterImplTest
     }
   }
 
-  private void configurePermissions(final Repository repository, final boolean permitBrowse, final boolean permitRead) {
+  private void configurePermissions(final Repository repository, final boolean permitBrowse) {
     when(repositoryPermissionChecker.userCanBrowseRepository(repository)).thenReturn(permitBrowse);
-    when(repositoryPermissionChecker.userCanViewRepository(repository)).thenReturn(permitRead);
   }
 
   @Test(expected = NotFoundException.class)

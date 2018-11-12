@@ -174,9 +174,7 @@ public class PyPiProxyFacetImpl
     if (asset == null) {
       return null;
     }
-    if (asset.markAsDownloaded()) {
-      tx.saveAsset(asset);
-    }
+
     return toContent(asset, tx.requireBlob(asset.requireBlobRef()));
   }
 

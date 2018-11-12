@@ -115,10 +115,6 @@ public final class NpmHandlers
     return state.getTokens().get(T_REVISION);
   }
 
-  private static boolean isEdit(final Parameters parameters) {
-    return "true".equals(parameters.get("write"));
-  }
-
   static Handler npmErrorHandler = new Handler()
   {
     @Nonnull
@@ -167,7 +163,7 @@ public final class NpmHandlers
 
       NpmPackageId packageId = packageId(state);
       Content content = repository.facet(NpmHostedFacet.class)
-          .getPackage(packageId, isEdit(context.getRequest().getParameters()));
+          .getPackage(packageId);
       if (content != null) {
         return NpmResponses.ok(content);
       }

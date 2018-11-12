@@ -23,6 +23,7 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.FacetSupport;
@@ -75,20 +76,42 @@ public class NpmHostedFacetImpl
   @Nullable
   @Override
   @TransactionalTouchBlob
-  public Content getPackage(final NpmPackageId packageId, final boolean edit) throws IOException {
+  public Content getPackage(final NpmPackageId packageId) throws IOException {
     checkNotNull(packageId);
-    log.debug("Getting package: {} (edit={})", packageId, edit);
+    log.debug("Getting package: {}", packageId);
     StorageTx tx = UnitOfWork.currentTx();
     Asset packageRootAsset = NpmFacetUtils.findPackageRootAsset(tx, tx.findBucket(getRepository()), packageId);
     if (packageRootAsset == null) {
       return null;
     }
-    if (!edit && packageRootAsset.markAsDownloaded()) {
-      tx.saveAsset(packageRootAsset);
-    }
+
     NestedAttributesMap packageRoot = NpmFacetUtils.loadPackageRoot(tx, packageRootAsset);
+
+    maybeAddRevision(packageRootAsset, packageRoot);
+    
     NpmMetadataUtils.rewriteTarballUrl(getRepository().getName(), packageRoot);
     return NpmFacetUtils.toContent(packageRootAsset, packageRoot);
+  }
+
+  /**
+   * For NEXUS-18094 we moved the revision number to live in the package root file so that the revision number doesn't
+   * change as the database record changes (previously it used the Orient Document Version number). This method allows
+   * us to avoid the need for an upgrade step by upgrading package roots without a rev as they are fetched.
+   */
+  @TransactionalStoreBlob
+  protected void maybeAddRevision(final Asset packageRootAsset, final NestedAttributesMap packageRoot) {
+    if (!packageRoot.contains(NpmMetadataUtils.META_REV)) {
+      String newRevision = EntityHelper.version(packageRootAsset).getValue();
+      packageRoot.set(NpmMetadataUtils.META_ID, packageRootAsset.name());
+      packageRoot.set(NpmMetadataUtils.META_REV, newRevision);
+
+      try {
+        NpmFacetUtils.savePackageRoot(UnitOfWork.currentTx(), packageRootAsset, packageRoot);
+      }
+      catch (IOException e) {
+        log.error("Failed to update revision in package root {}", packageRoot.get(NpmMetadataUtils.NAME), e);
+      }
+    }
   }
 
   @Override
@@ -207,14 +230,46 @@ public class NpmHostedFacetImpl
       }
     }
 
+    boolean createdPackageRoot = false;
     if (packageRootAsset == null) {
       packageRootAsset = tx.createAsset(bucket, getRepository().getFormat()).name(packageId.id());
+      createdPackageRoot = true;
     }
+
+    updateRevision(packageRoot, packageRootAsset, createdPackageRoot);
 
     NpmFacetUtils.savePackageRoot(tx, packageRootAsset, packageRoot);
     if (update) {
       updateDeprecationFlags(tx, packageId, packageRoot);
     }
+  }
+
+  private void updateRevision(final NestedAttributesMap packageRoot,
+                              final Asset packageRootAsset,
+                              final boolean createdPackageRoot)
+  {
+    String newRevision = "1";
+
+    if (!createdPackageRoot) {
+      if (packageRoot.contains(NpmMetadataUtils.META_REV)) {
+        String rev = packageRoot.get(NpmMetadataUtils.META_REV, String.class);
+        newRevision = Integer.toString(Integer.parseInt(rev) + 1);
+      }
+      else {
+        /*
+          This is covering the edge case when a new package is uploaded to a repository where the packageRoot already 
+          exists.
+          
+          If that packageRoot was created using an earlier version of NXRM where we didn't store the rev then we need
+          to add it in. We also add the rev in on download but it is possible that someone is uploading a package where
+          the packageRoot has never been downloaded before.
+         */
+        newRevision = EntityHelper.version(packageRootAsset).getValue();
+      }
+    }
+
+    packageRoot.set(NpmMetadataUtils.META_ID, packageRootAsset.name());
+    packageRoot.set(NpmMetadataUtils.META_REV, newRevision);
   }
 
   /**

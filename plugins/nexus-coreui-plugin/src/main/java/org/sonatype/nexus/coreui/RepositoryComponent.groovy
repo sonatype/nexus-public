@@ -44,7 +44,6 @@ import org.sonatype.nexus.repository.search.RebuildIndexTaskDescriptor
 import org.sonatype.nexus.repository.security.RepositoryAdminPermission
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker
 import org.sonatype.nexus.repository.security.RepositorySelector
-import org.sonatype.nexus.repository.security.RepositoryViewPermission
 import org.sonatype.nexus.repository.types.ProxyType
 import org.sonatype.nexus.scheduling.TaskConfiguration
 import org.sonatype.nexus.scheduling.TaskInfo
@@ -57,7 +56,6 @@ import org.sonatype.nexus.validation.group.Update
 
 import com.codahale.metrics.annotation.ExceptionMetered
 import com.codahale.metrics.annotation.Timed
-import com.google.common.collect.ImmutableList
 import com.google.common.collect.Iterables
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
@@ -129,19 +127,18 @@ class RepositoryComponent
    return formats
   }
 
-  RepositoryViewPermission viewPermission(final Repository repository, final String action) {
-    return new RepositoryViewPermission(repository.getFormat().getValue(), repository.getName(),
-        ImmutableList.of(action))
-  }
-
   @DirectMethod
   @Timed
   @ExceptionMetered
   List<BrowseableFormatXO> getBrowseableFormats() {
-    Set<String> repoIds = StreamSupport.stream(repositoryManager.browse().spliterator(), false)
-        .filter { repository -> securityHelper.allPermitted(viewPermission(repository, BreadActions.BROWSE)) }
-        .map { repository -> repository.getFormat().getValue() }
-        .collect(Collectors.toSet())
+    Collection<Repository> browseableRepositories = repositoryPermissionChecker.
+        userCanBrowseRepositories(Iterables.toArray(repositoryManager.browse(), Repository))
+
+
+    Set<String> repoIds = browseableRepositories.stream().map { repository ->
+      repository.format.value
+    }.collect(Collectors.toSet())
+
     return repoIds.collect { id -> new BrowseableFormatXO(id: id) }
   }
 

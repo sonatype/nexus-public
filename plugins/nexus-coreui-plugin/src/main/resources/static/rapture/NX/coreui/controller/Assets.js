@@ -60,21 +60,35 @@ Ext.define('NX.coreui.controller.Assets', {
   init: function () {
     var me = this;
 
+    var fileExtensionIcons = [{},
+          '3gp', '7z', 'ace', 'ai', 'aif', 'aiff', 'amr', 'asf', 'asx', 'bat', 'bin', 'bmp', 'bup', 'cab', 'cbr', 'cda',
+          'cdl', 'cdr', 'chm', 'dat', 'divx', 'dll', 'dmg', 'doc', 'dss', 'dvf', 'dwg', 'eml', 'eps', 'exe', 'fla',
+          'flv', 'gif', 'gz', 'hqx', 'htm', 'html', 'ifo', 'indd', 'iso', 'jar', 'jpeg', 'jpg', 'lnk', 'log', 'm4a',
+          'm4b', 'm4p', 'm4v', 'mcd', 'mdb', 'mid', 'mov', 'mp2', 'mp4', 'mpeg', 'mpg', 'msi', 'mswmm', 'ogg', 'pdf',
+          'png', 'pps', 'ps', 'psd', 'pst', 'ptb', 'pub', 'qbb', 'qbw', 'qxd', 'ram', 'rar', 'rm', 'rmvb', 'rtf', 'sea',
+          'ses', 'sit', 'sitx', 'ss', 'swf', 'tgz', 'thm', 'tif', 'tmp', 'torrent', 'ttf', 'txt', 'vcd', 'vob', 'wav',
+          'wma', 'wmv', 'wps', 'xls', 'xpi', 'zip'
+    ].reduce(function(icons, extension) {
+      icons['asset-type-' + extension] = {
+        file: 'file_extension_' + extension + '.png',
+        variants: ['x16', 'x32']
+      };
+      return icons;
+    });
+
+    var formatIcons = [{}, 'code', 'ruby'].reduce(function(icons, extension) {
+      icons['asset-type-' + extension] = {
+        file: 'page_white_' + extension + '.png',
+        variants: ['x16', 'x32']
+      };
+      return icons;
+    });
+
+    me.getApplication().getIconController().addIcons(fileExtensionIcons);
+    me.getApplication().getIconController().addIcons(formatIcons);
     me.getApplication().getIconController().addIcons({
       'asset-type-default': {
         file: 'page_white.png',
-        variants: ['x16', 'x32']
-      },
-      'asset-type-application-java-archive': {
-        file: 'file_extension_jar.png',
-        variants: ['x16', 'x32']
-      },
-      'asset-type-text-xml': {
-        file: 'page_white_code.png',
-        variants: ['x16', 'x32']
-      },
-      'asset-type-application-xml': {
-        file: 'page_white_code.png',
         variants: ['x16', 'x32']
       }
     });
@@ -123,8 +137,7 @@ Ext.define('NX.coreui.controller.Assets', {
    */
   showAssetInfo: function (container, assetModel) {
     var info = container.down('nx-coreui-component-assetinfo'),
-        attributes = container.down('nx-coreui-component-assetattributes'),
-        panel;
+        attributes = container.down('nx-coreui-component-assetattributes');
 
     if (!info) {
       container.addTab(

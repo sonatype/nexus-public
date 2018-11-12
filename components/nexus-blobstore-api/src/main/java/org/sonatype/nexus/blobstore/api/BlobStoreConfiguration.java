@@ -14,6 +14,7 @@ package org.sonatype.nexus.blobstore.api;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.AbstractEntity;
@@ -34,6 +35,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class BlobStoreConfiguration
     extends AbstractEntity
 {
+
+  public static final String STATE = "state";
+
+  public static final String READ_ONLY = "readOnly";
+
   private String name;
   
   private String type;
@@ -119,5 +125,17 @@ public class BlobStoreConfiguration
       clone.setAttributes(clonedAttributes);
     }
     return clone;
+  }
+
+  public boolean isReadOnly() {
+    return Optional.ofNullable(attributes)
+        .map(a -> a.get(STATE))
+        .map(a -> a.get(READ_ONLY))
+        .map(Boolean.class::cast)
+        .orElse(Boolean.FALSE);
+  }
+
+  public void setReadOnly(final boolean readOnly) {
+    attributes(STATE).set(READ_ONLY, readOnly);
   }
 }

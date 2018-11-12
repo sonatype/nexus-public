@@ -18,8 +18,8 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreException
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics
-import org.sonatype.nexus.blobstore.group.BlobStorePromoter
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup
+import org.sonatype.nexus.blobstore.group.BlobStoreGroupService
 import org.sonatype.nexus.common.app.ApplicationDirectories
 import org.sonatype.nexus.repository.manager.RepositoryManager
 
@@ -41,12 +41,12 @@ class BlobStoreComponentTest
   
   RepositoryManager repositoryManager = Mock()
 
-  BlobStorePromoter blobStoreConverter = Mock()
+  BlobStoreGroupService blobStoreGroupService = Mock()
 
   @Subject
   BlobStoreComponent blobStoreComponent = new BlobStoreComponent(blobStoreManager: blobStoreManager,
       applicationDirectories: applicationDirectories, repositoryManager: repositoryManager,
-      blobStorePromoter: blobStoreConverter)
+      blobStoreGroupService: { blobStoreGroupService })
 
   def 'Read types returns descriptor data'() {
     given: 'A blobstore descriptor'
@@ -123,7 +123,8 @@ class BlobStoreComponentTest
       1 * blobStoreManager.get(groupBlobName) >> from
       1 * blobStoreManager.isPromotable(groupBlobName) >> true
       1 * repositoryManager.blobstoreUsageCount(_ as String) >> 2L
-      1 * blobStoreConverter.promote(from) >> Mock(BlobStoreGroup) {
+      1 * blobStoreGroupService.isEnabled() >> true
+      1 * blobStoreGroupService.promote(from) >> Mock(BlobStoreGroup) {
           getBlobStoreConfiguration() >> new BlobStoreConfiguration(name: 'name', type: 'type',
             attributes: ['group': ['members': 'name-promoted'], blobStoreQuotaConfig: [:]])
         getMetrics() >> Mock(BlobStoreMetrics) {
@@ -155,6 +156,7 @@ class BlobStoreComponentTest
       blobStoreComponent.promoteToGroup(groupBlobName)
 
     then: 'blobStoreManager is called correctly'
+      1 * blobStoreGroupService.isEnabled() >> true
       1 * blobStoreManager.get(groupBlobName) >> blobStore
       1 * blobStoreManager.isPromotable(groupBlobName) >> false
       BlobStoreException exception = thrown()

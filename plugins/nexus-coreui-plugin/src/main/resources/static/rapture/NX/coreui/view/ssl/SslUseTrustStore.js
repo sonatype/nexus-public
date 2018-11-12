@@ -45,6 +45,7 @@ Ext.define('NX.coreui.view.ssl.SslUseTrustStore', {
           xtype: 'checkbox',
           name: me.name,
           value: me.value,
+          inputValue: true,
           boxLabel: me.boxLabel,
           helpText: NX.I18n.get('Ssl_SslUseTrustStore_Certificate_HelpText')
         },

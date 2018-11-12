@@ -38,7 +38,7 @@ Ext.define('NX.coreui.controller.MetricHealth', {
     {
       ref: 'content',
       selector: 'nx-feature-content'
-    },
+    }
   ],
 
   /**

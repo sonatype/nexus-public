@@ -56,8 +56,8 @@ import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind
 import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.P_NAME;
 import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.P_VERSION;
 import static org.sonatype.nexus.repository.npm.internal.NpmPackageRootMetadataUtils.createFullPackageMetadata;
-import static org.sonatype.nexus.repository.npm.internal.NpmVersionComparator.extractPackageRootVersionUnlessEmpty;
 import static org.sonatype.nexus.repository.npm.internal.NpmPackageRootMetadataUtils.getPackageRoot;
+import static org.sonatype.nexus.repository.npm.internal.NpmVersionComparator.extractPackageRootVersionUnlessEmpty;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
 /**
@@ -115,11 +115,22 @@ public class NpmRepairPackageRootComponent
     log.info("Beginning processing all npm packages for repair");
 
     stream(repositoryManager.browse().spliterator(), false)
-        .filter(r -> r.getFormat().equals(npmFormat) && r.getType().equals(hostedType))
-        .forEach(this::repairRepository);
+        .forEach(this::doRepairRepository);
   }
 
-  private void repairRepository(final Repository repository) {
+  public void repairRepository(final Repository repository) {
+    if (isHostedNpmRepository(repository)) {
+      doRepairRepository(repository);
+    } else {
+      log.info("Not repairing a proxy repository {}", repository.getName());
+    }
+  }
+
+  private boolean isHostedNpmRepository(final Repository repository) {
+    return repository.getFormat().equals(npmFormat) && repository.getType().equals(hostedType);
+  }
+
+  private void doRepairRepository(final Repository repository) {
     String lastId = BEGINNING_ID;
     while (lastId != null) {
       try {

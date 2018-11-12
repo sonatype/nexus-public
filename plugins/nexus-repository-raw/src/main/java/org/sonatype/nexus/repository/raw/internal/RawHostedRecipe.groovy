@@ -41,6 +41,7 @@ import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler
 import org.sonatype.nexus.repository.view.handlers.ExceptionHandler
 import org.sonatype.nexus.repository.view.handlers.IndexHtmlForwardHandler
 import org.sonatype.nexus.repository.view.handlers.HandlerContributor
+import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler
 import org.sonatype.nexus.repository.view.handlers.TimingHandler
 import org.sonatype.nexus.repository.view.matchers.ActionMatcher
 import org.sonatype.nexus.repository.view.matchers.SuffixMatcher
@@ -109,6 +110,9 @@ class RawHostedRecipe
   ContentHeadersHandler contentHeadersHandler
 
   @Inject
+  LastDownloadedHandler lastDownloadedHandler
+
+  @Inject
   HandlerContributor handlerContributor
 
   @Inject
@@ -135,7 +139,9 @@ class RawHostedRecipe
   private ViewFacet configure(final ConfigurableViewFacet facet) {
     Router.Builder builder = new Router.Builder()
 
-    // handle GET / forwards to /index.html
+    // Additional handlers, such as the lastDownloadHandler, are intentionally
+    // not included on this route because this route forwards to the route below.
+    // This route specifically handles GET / and forwards to /index.html.
     builder.route(new Route.Builder()
         .matcher(and(new ActionMatcher(HttpMethods.GET), new SuffixMatcher('/')))
         .handler(timingHandler)
@@ -153,6 +159,7 @@ class RawHostedRecipe
         .handler(partialFetchHandler)
         .handler(contentHeadersHandler)
         .handler(unitOfWorkHandler)
+        .handler(lastDownloadedHandler)
         .handler(rawContentHandler)
         .create())
 

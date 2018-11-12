@@ -177,7 +177,7 @@
       </dependency>
 
       <dependency>
-        <groupId>org.sonatype.nexus</groupId>
+        <groupId>com.sonatype.nexus.plugins</groupId>
         <artifactId>nexus-blobstore-group</artifactId>
         <version>3.15.0-SNAPSHOT</version>
       </dependency>

@@ -19,28 +19,21 @@
  */
 Ext.define('NX.coreui.model.ComponentAssetTree', {
   extend: 'Ext.data.Model',
+  mixins: {
+    componentUtils: 'NX.coreui.mixin.ComponentUtils'
+  },
   fields: [
     {name: 'id', type: 'string', sortType: 'asUCText'},
     {name: 'type', type: 'string', sortType: 'asUCText'},
     {name: 'text', type: 'string', convert: Ext.util.Format.htmlEncode},
     {name: 'iconCls', type: 'string', convert: function(value, record){
-      return record.computeIconClass();
+        var icon = record.mixins.componentUtils.getIconForAsset(record);
+        if (icon) {
+          return icon.get('cls');
+        }
     }},
     {name: 'leaf', type: 'boolean'},
     {name: 'componentId', type: 'string'},
     {name: 'assetId', type: 'string'}
-  ],
-
-  computeIconClass: function() {
-    switch (this.get('type')) {
-      case 'folder':
-        return 'nx-icon-tree-folder-x16';
-      case 'component':
-        return 'nx-icon-tree-component-x16';
-      case 'asset':
-        return this.get('leaf')? 'nx-icon-tree-asset-x16' : 'nx-icon-tree-asset-folder-x16';
-      default:
-        return null;
-    }
-  }
+  ]
 });

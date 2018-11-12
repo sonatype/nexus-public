@@ -127,11 +127,13 @@ public class PyPiGroupFacet
     AttributesMap contentAttributes = Content.maintainLastModified(asset, null);
     contentAttributes.set(CacheInfo.class, cacheController.current());
     Content.applyToAsset(asset, contentAttributes);
-    asset.markAsDownloaded();
 
     AssetBlob blob = updateAsset(tx, asset, content);
 
-    return new Content(new BlobPayload(blob.getBlob(), ContentTypes.TEXT_HTML));
+    Content response = new Content(new BlobPayload(blob.getBlob(), ContentTypes.TEXT_HTML));
+    Content.extractFromAsset(asset, HASH_ALGORITHMS, response.getAttributes());
+    
+    return response;
   }
 
   private DateTime extractLastModified(final Content content) {
@@ -148,8 +150,6 @@ public class PyPiGroupFacet
   protected AssetBlob updateAsset(final StorageTx tx, final Asset asset, final Content content) throws IOException {
     AttributesMap contentAttributes = Content.maintainLastModified(asset, content.getAttributes());
     Content.applyToAsset(asset, contentAttributes);
-
-    asset.markAsDownloaded();
 
     InputStream inputStream = content.openInputStream();
     AssetBlob blob = tx.setBlob(asset,

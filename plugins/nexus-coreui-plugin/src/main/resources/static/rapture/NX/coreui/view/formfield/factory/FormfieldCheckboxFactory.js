@@ -32,7 +32,8 @@ Ext.define('NX.coreui.view.formfield.factory.FormfieldCheckboxFactory', {
     var item = {
       xtype: 'checkbox',
       fieldLabel: formField.label,
-      helpText: formField.helpText
+      helpText: formField.helpText,
+      inputValue: true
     };
     if (formField.initialValue) {
       item.checked = Boolean('true' === formField.initialValue);

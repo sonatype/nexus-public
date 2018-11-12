@@ -21,6 +21,7 @@ import java.util.stream.Stream;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
@@ -48,12 +49,14 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.restore.DefaultIntegrityCheckStrategy.DEFAULT_NAME;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.DRY_RUN;
@@ -61,6 +64,7 @@ import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.RESTORE_BLOBS;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.TYPE_ID;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.UNDELETE_BLOBS;
+import static org.sonatype.nexus.repository.storage.Bucket.REPO_NAME_HEADER;
 
 public class RestoreMetadataTaskTest
     extends TestSupport
@@ -275,7 +279,7 @@ public class RestoreMetadataTaskTest
     
     underTest.execute();
     
-    verify(restoreBlobStrategy).after(true);
+    verify(restoreBlobStrategy).after(true, repository);
   }
 
   @Test
@@ -288,7 +292,7 @@ public class RestoreMetadataTaskTest
 
     underTest.execute();
 
-    verify(restoreBlobStrategy).after(false);
+    verify(restoreBlobStrategy, never()).after(false, repository);
   }
 
   @Test
@@ -301,6 +305,68 @@ public class RestoreMetadataTaskTest
 
     underTest.execute();
 
-    verify(restoreBlobStrategy).after(false);
+    verify(restoreBlobStrategy, never()).after(false, repository);
+  }
+
+  @Test
+  public void whenAfterCallRunningShouldBeCancelable() throws Exception {
+    configuration.setBoolean(RESTORE_BLOBS, true);
+    configuration.setBoolean(UNDELETE_BLOBS, true);
+    configuration.setBoolean(INTEGRITY_CHECK, false);
+
+    RestoreMetadataTask underTest = new RestoreMetadataTask(blobStoreManager, repositoryManager,
+        ImmutableMap.of("maven2", restoreBlobStrategy), blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies) {
+      @Override
+      public boolean isCanceled() {
+        return true;
+      }
+    };
+
+    underTest.configure(configuration);
+
+    underTest.execute();
+
+    verify(restoreBlobStrategy, never()).after(true, repository);
+  }
+
+  @Test
+  public void whenUnknownFormatAfterCallWillNotRun() throws Exception {
+    when(mavenFormat.getValue()).thenReturn("unknownFormat");
+
+    configuration.setBoolean(RESTORE_BLOBS, true);
+    configuration.setBoolean(UNDELETE_BLOBS, true);
+    configuration.setBoolean(INTEGRITY_CHECK, false);
+    underTest.configure(configuration);
+
+    underTest.execute();
+
+    verify(restoreBlobStrategy, never()).after(true, repository);
+  }
+
+  @Test
+  public void whenBlobsFromDifferentRepositoriesNeedUpdatingAfterIsCalledForEachRepository() throws Exception {
+    BlobAttributes blobAttributes2 = mock(BlobAttributes.class);
+    Properties properties = mock(Properties.class);
+    Repository repository2 = mock(Repository.class);
+
+    BlobId blobId2 = new BlobId("86e20baa-0bca-4915-a7dc-9a4f34e72322");
+    when(fileBlobStore.get(blobId2, true)).thenReturn(blob);
+    when(fileBlobStore.getBlobAttributes(blobId2)).thenReturn(blobAttributes2);
+    when(blobAttributes2.getProperties()).thenReturn(properties);
+    when(properties.getProperty(HEADER_PREFIX + REPO_NAME_HEADER)).thenReturn("maven-central2");
+    when(repositoryManager.get("maven-central2")).thenReturn(repository2);
+    when(repository2.getFormat()).thenReturn(mavenFormat);
+
+    when(fileBlobStore.getBlobIdStream()).thenReturn(Stream.of(blobId, blobId2));
+
+    configuration.setBoolean(RESTORE_BLOBS, true);
+    configuration.setBoolean(UNDELETE_BLOBS, true);
+    configuration.setBoolean(INTEGRITY_CHECK, false);
+    underTest.configure(configuration);
+
+    underTest.execute();
+
+    verify(restoreBlobStrategy).after(true, repository);
+    verify(restoreBlobStrategy).after(true, repository2);
   }
 }
