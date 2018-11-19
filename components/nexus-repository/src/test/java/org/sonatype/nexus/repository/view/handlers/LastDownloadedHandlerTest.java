@@ -14,6 +14,8 @@ package org.sonatype.nexus.repository.view.handlers;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
+import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.StorageFacet;
@@ -35,6 +37,7 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -71,6 +74,12 @@ public class LastDownloadedHandlerTest
 
   @Mock
   private Request request;
+  
+  @Mock
+  private EntityMetadata entityMetadata;
+  
+  @Mock
+  private EntityId id;
 
   private AttributesMap attributes;
 
@@ -194,6 +203,11 @@ public class LastDownloadedHandlerTest
 
     when(response.getStatus()).thenReturn(new Status(true, 200));
     when(asset.markAsDownloaded()).thenReturn(true);
+    when(asset.getEntityMetadata()).thenReturn(entityMetadata);
+    
+    when(entityMetadata.getId()).thenReturn(id);
+    
+    when(tx.findAsset(any())).thenReturn(asset);
 
     attributes.set(Asset.class, asset);
   }

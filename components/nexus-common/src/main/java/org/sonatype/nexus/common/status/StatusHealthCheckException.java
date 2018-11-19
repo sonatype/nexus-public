@@ -10,39 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext, NX*/
+package org.sonatype.nexus.common.status;
 
 /**
- * Cleanup preview.
+ * Checked {@link Exception} for {@link StatusHealthCheckStore} operations
  *
- * @since 3.14
+ * @since 3.next
  */
-Ext.define('NX.coreui.store.CleanupPreview', {
-  extend: 'Ext.data.Store',
-  model: 'NX.coreui.model.ComponentPreview',
-
-  proxy: {
-    type: 'direct',
-
-    api: {
-      read: 'NX.direct.cleanup_CleanupPolicy.previewCleanup'
-    },
-
-    reader: {
-      type: 'json',
-      rootProperty: 'data',
-      successProperty: 'success'
-    }
-  },
-
-  remote: true,
-  autoLoad: false,
-
-  buffered: true,
-  pageSize: 50,
-
-  remoteFilter: true,
-  remoteSort: true,
-
-  sorters: { property: 'name', direction: 'ASC' }
-});
+public class StatusHealthCheckException
+    extends Exception
+{
+  public StatusHealthCheckException(final String message, final Throwable cause) {
+    super(message, cause);
+  }
+}

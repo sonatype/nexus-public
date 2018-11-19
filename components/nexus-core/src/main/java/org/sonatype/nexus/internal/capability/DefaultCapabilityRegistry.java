@@ -379,7 +379,7 @@ public class DefaultCapabilityRegistry
 
       if (descriptor == null) {
         log.warn(
-            "Capabilities persistent storage (capabilities.xml?) contains an capability of unknown type {} with"
+            "Capabilities persistent storage contains a capability of unknown type {} with"
                 + " id {}. This capability will not be loaded", item.getType(), id
         );
         continue;

@@ -17,16 +17,25 @@ set here=%cd%
 @REM Backup nexus.properties
 copy private\assemblies\nexus-pro\target\sonatype-work\nexus3\etc\nexus.properties .
 
+@REM Detect docker
+if not defined DOCKER_HOST (set docker="-Dno-docker=true")
+
 @REM allow user to specify custom thread count on the command line
 if "%~1"=="-T" goto :customThreads
 
-call mvn clean install -DskipTests -T 4
+call mvn clean install -DskipTests -T 4 %docker%
 goto :continue
 
 :customThreads
-call mvn clean install -DskipTests -T %~2
+call mvn clean install -DskipTests -T %~2 %docker%
 
 :continue
+@REM Exit if maven did not build successfully
+IF %ERRORLEVEL% NEQ 0 (
+   EXIT /B %ERRORLEVEL%
+)
+
+@REM Enable Debug mode
 set KARAF_DEBUG=true
 
 @REM Set NEXUS_RESOURCE_DIRS for UI development

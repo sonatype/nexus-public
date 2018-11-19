@@ -10,39 +10,32 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext, NX*/
+package org.sonatype.nexus.internal.status;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.core.Response;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 
 /**
- * Cleanup preview.
+ * REST API for status operations
  *
- * @since 3.14
+ * @since 3.next
  */
-Ext.define('NX.coreui.store.CleanupPreview', {
-  extend: 'Ext.data.Store',
-  model: 'NX.coreui.model.ComponentPreview',
-
-  proxy: {
-    type: 'direct',
-
-    api: {
-      read: 'NX.direct.cleanup_CleanupPolicy.previewCleanup'
-    },
-
-    reader: {
-      type: 'json',
-      rootProperty: 'data',
-      successProperty: 'success'
-    }
-  },
-
-  remote: true,
-  autoLoad: false,
-
-  buffered: true,
-  pageSize: 50,
-
-  remoteFilter: true,
-  remoteSort: true,
-
-  sorters: { property: 'name', direction: 'ASC' }
-});
+@Api("status")
+public interface StatusResourceDoc
+{
+  /**
+   * @return 200 if the server is available, 503 otherwise
+   */
+  @GET
+  @ApiOperation("Health check endpoint for server")
+  @ApiResponses({
+      @ApiResponse(code = 200, message = "Available to service requests"),
+      @ApiResponse(code = 503, message = "Unavailable to service requests")
+  })
+  Response isAvailable();
+}

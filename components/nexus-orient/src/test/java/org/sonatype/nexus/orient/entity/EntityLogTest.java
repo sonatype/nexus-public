@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.orient.entity;
 
+import java.util.stream.IntStream;
+
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.AbstractEntity;
 import org.sonatype.nexus.orient.OClassNameBuilder;
@@ -35,6 +37,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
+import static org.sonatype.nexus.orient.entity.EntityLog.ENTITY_LOG_LIMIT_KEY;
 
 /**
  * Tests for {@link EntityLog}.
@@ -321,5 +324,97 @@ public class EntityLogTest
         assertThat(e.getMessage(), containsString(mark.toString()));
       }
     }
+  }
+
+  @Test
+  public void entityLogHasDefaultLimit() throws Exception {
+
+    // this is true when in distributed mode; we set it here for testing purposes
+    STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.setValue(true);
+
+    EntityLog log = new EntityLog(database.getInstanceProvider(), entityAdapter);
+
+    OLogSequenceNumber mark = log.mark();
+
+    try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
+      entityAdapter.register(db);
+      db.begin();
+      IntStream.range(0, 1000).forEach(i -> entityAdapter.addEntity(db, new TestEntity()));
+      db.commit();
+    }
+
+    assertThat(log.since(mark).size(), is(1000));
+
+    try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
+      db.begin();
+      entityAdapter.addEntity(db, new TestEntity());
+      db.commit();
+    }
+
+    try {
+      log.since(mark);
+      fail("Expected UnknownDeltaException");
+    }
+    catch (UnknownDeltaException e) {
+      assertThat(e.getCause().getMessage(), containsString("Too many changes to return"));
+    }
+  }
+
+  @Test
+  public void entityLogRespectsCustomLimit() throws Exception {
+
+    // this is true when in distributed mode; we set it here for testing purposes
+    STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.setValue(true);
+
+    System.setProperty(ENTITY_LOG_LIMIT_KEY, "200");
+
+    EntityLog log = new EntityLog(database.getInstanceProvider(), entityAdapter);
+
+    OLogSequenceNumber mark = log.mark();
+
+    try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
+      entityAdapter.register(db);
+      db.begin();
+      IntStream.range(0, 200).forEach(i -> entityAdapter.addEntity(db, new TestEntity()));
+      db.commit();
+    }
+
+    assertThat(log.since(mark).size(), is(200));
+
+    try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
+      db.begin();
+      entityAdapter.addEntity(db, new TestEntity());
+      db.commit();
+    }
+
+    try {
+      log.since(mark);
+      fail("Expected UnknownDeltaException");
+    }
+    catch (UnknownDeltaException e) {
+      assertThat(e.getCause().getMessage(), containsString("Too many changes to return"));
+    }
+  }
+
+  @Test
+  public void negativeLimitImpliesNoLimit() throws Exception {
+
+    // this is true when in distributed mode; we set it here for testing purposes
+    STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.setValue(true);
+
+    System.setProperty(ENTITY_LOG_LIMIT_KEY, "-1");
+
+    EntityLog log = new EntityLog(database.getInstanceProvider(), entityAdapter);
+
+    OLogSequenceNumber mark = log.mark();
+
+    try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
+      entityAdapter.register(db);
+      db.begin();
+      IntStream.range(0, 1024).forEach(i -> entityAdapter.addEntity(db, new TestEntity()));
+      db.commit();
+    }
+
+    assertThat(log.since(mark).size(), is(1024));
   }
 }

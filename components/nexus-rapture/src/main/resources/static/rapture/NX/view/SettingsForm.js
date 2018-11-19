@@ -133,6 +133,7 @@ Ext.define('NX.view.SettingsForm', {
   loadRecord: function (record) {
     var me = this;
 
+    me.fireEvent('beforerecordloaded', me, record);
     me.callParent(arguments);
     me.fireEvent('recordloaded', me, record);
     me.isValid();

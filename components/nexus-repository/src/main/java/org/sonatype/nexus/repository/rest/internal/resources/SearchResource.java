@@ -92,13 +92,13 @@ public class SearchResource
 
   private final SearchService searchService;
 
-  private static final int PAGE_SIZE = 50;
-
   private final TokenEncoder tokenEncoder;
 
   private final ComponentXOFactory componentXOFactory;
 
   private final Set<SearchResourceExtension> searchResourceExtensions;
+
+  private int pageSize = 50;
 
   @Inject
   public SearchResource(final SearchUtils searchUtils,
@@ -126,14 +126,14 @@ public class SearchResource
     QueryBuilder query = searchUtils.buildQuery(uriInfo);
 
     int from = tokenEncoder.decode(continuationToken, query);
-    SearchResponse response = searchService.search(query, emptyList(), from, PAGE_SIZE);
+    SearchResponse response = searchService.search(query, emptyList(), from, getPageSize());
 
     List<ComponentXO> componentXOs = Arrays.stream(response.getHits().hits())
         .map(this::toComponent)
         .collect(toList());
 
-    return new Page<>(componentXOs, componentXOs.size() == PAGE_SIZE ?
-        tokenEncoder.encode(from, PAGE_SIZE, query) : null);
+    return new Page<>(componentXOs, componentXOs.size() == getPageSize() ?
+        tokenEncoder.encode(from, getPageSize(), query) : null);
   }
 
   private ComponentXO toComponent(final SearchHit hit) {
@@ -176,9 +176,11 @@ public class SearchResource
 
     int from = tokenEncoder.decode(continuationToken, query);
 
-    List<AssetXO> assetXOs = retrieveAssets(query, uriInfo, from);
-    return new Page<>(assetXOs, assetXOs.size() == PAGE_SIZE ?
-        tokenEncoder.encode(from, PAGE_SIZE, query) : null);
+    SearchResponse componentResponse = searchService.search(query, emptyList(), from, getPageSize());
+
+    List<AssetXO> assetXOs = retrieveAssets(componentResponse, uriInfo);
+    return new Page<>(assetXOs, componentResponse.getHits().hits().length == getPageSize() ?
+        tokenEncoder.encode(from, getPageSize(), query) : null);
   }
 
   /**
@@ -195,15 +197,17 @@ public class SearchResource
     return new AssetDownloadResponseProcessor(assetXOs).process();
   }
 
-  private List<AssetXO> retrieveAssets(final QueryBuilder query, final UriInfo uriInfo, final int from) {
-    SearchResponse response = searchService.search(query, emptyList(), from, PAGE_SIZE);
-
+  private List<AssetXO> retrieveAssets(final SearchResponse response, final UriInfo uriInfo) {
     // get the asset specific parameters
     MultivaluedMap<String, String> assetParams = getAssetParams(uriInfo);
 
     return Arrays.stream(response.getHits().hits())
         .flatMap(hit -> extractAssets(hit, assetParams))
         .collect(toList());
+  }
+
+  private List<AssetXO> retrieveAssets(final QueryBuilder query, final UriInfo uriInfo, final int from) {
+    return this.retrieveAssets(searchService.search(query, emptyList(), from, getPageSize()), uriInfo);
   }
 
   private List<AssetXO> retrieveAssets(final QueryBuilder query, final UriInfo uriInfo) {
@@ -235,6 +239,15 @@ public class SearchResource
         .collect(toMap(Entry::getKey, Entry::getValue, (u, v) -> {
           throw new IllegalStateException(format("Duplicate key %s", u));
         }, MultivaluedHashMap::new));
+  }
+
+  private int getPageSize() {
+    return pageSize;
+  }
+
+  @VisibleForTesting
+  void setPageSize(final int pageSize) {
+    this.pageSize = pageSize;
   }
 
 }

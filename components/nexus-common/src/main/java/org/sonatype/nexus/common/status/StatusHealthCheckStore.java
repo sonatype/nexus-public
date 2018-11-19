@@ -10,39 +10,18 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext, NX*/
+package org.sonatype.nexus.common.status;
 
 /**
- * Cleanup preview.
+ * Store used for persisting a timestamp representing the most recent health check request received by the instance
  *
- * @since 3.14
+ * @since 3.next
  */
-Ext.define('NX.coreui.store.CleanupPreview', {
-  extend: 'Ext.data.Store',
-  model: 'NX.coreui.model.ComponentPreview',
-
-  proxy: {
-    type: 'direct',
-
-    api: {
-      read: 'NX.direct.cleanup_CleanupPolicy.previewCleanup'
-    },
-
-    reader: {
-      type: 'json',
-      rootProperty: 'data',
-      successProperty: 'success'
-    }
-  },
-
-  remote: true,
-  autoLoad: false,
-
-  buffered: true,
-  pageSize: 50,
-
-  remoteFilter: true,
-  remoteSort: true,
-
-  sorters: { property: 'name', direction: 'ASC' }
-});
+public interface StatusHealthCheckStore
+{
+  /**
+   * Update the latest timestamp which represents the last health check request. In HA-C this time should be
+   * persisted per node.
+   */
+  void markHealthCheckTime() throws StatusHealthCheckException;
+}

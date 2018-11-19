@@ -55,14 +55,18 @@ import static java.util.Collections.emptySet;
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 import static org.elasticsearch.index.query.QueryBuilders.queryStringQuery;
 import static org.elasticsearch.index.query.QueryBuilders.termQuery;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.collection.IsMapContaining.hasKey;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -315,6 +319,42 @@ public class SearchResourceTest
     Page<AssetXO> assets_inValidAttribute = underTest.searchAssets(null, uriInfo("?assets.attributes.maven3.classifier=foo"));
     List<AssetXO> items_inValidAttribute = assets_inValidAttribute.getItems();
     assertThat(items_inValidAttribute, hasSize(0));
+  }
+
+  @Test
+  public void testSearch_MultipleAssets_Pagination() {
+    SearchResponse multipleAssetsSearchResponse1 = mock(SearchResponse.class);
+    SearchHits multipleAssetSearchHits1 = mock(SearchHits.class);
+    SearchResponse multipleAssetsSearchResponse2 = mock(SearchResponse.class);
+    SearchHits multipleAssetSearchHits2 = mock(SearchHits.class);
+    SearchResponse multipleAssetsSearchResponse3 = mock(SearchResponse.class);
+    SearchHits multipleAssetSearchHits3 = mock(SearchHits.class);
+
+    when(multipleAssetsSearchResponse1.getHits()).thenReturn(multipleAssetSearchHits1);
+    when(multipleAssetsSearchResponse2.getHits()).thenReturn(multipleAssetSearchHits2);
+    when(multipleAssetsSearchResponse3.getHits()).thenReturn(multipleAssetSearchHits3);
+
+    when(multipleAssetSearchHits1.hits()).thenReturn(new SearchHit[] { searchHitMaven_withMultipleAssets });
+    when(multipleAssetSearchHits2.hits()).thenReturn(new SearchHit[] { searchHitMaven_withMultipleAssets });
+    when(multipleAssetSearchHits3.hits()).thenReturn(new SearchHit[] {});
+
+    when(searchService.search(any(), eq(emptyList()), eq(0), eq(1))).thenReturn(multipleAssetsSearchResponse1);
+    when(searchService.search(any(), eq(emptyList()), eq(1), eq(1))).thenReturn(multipleAssetsSearchResponse2);
+    when(searchService.search(any(), eq(emptyList()), eq(2), eq(1))).thenReturn(multipleAssetsSearchResponse3);
+
+    underTest.setPageSize(1);
+
+    Page<AssetXO> assets = underTest.searchAssets(null, uriInfo("?format=maven2"));
+    assertThat(assets.getContinuationToken(), notNullValue());
+    assertThat(assets.getItems(), hasSize(3));
+
+    assets = underTest.searchAssets(assets.getContinuationToken(), uriInfo("?format=maven2"));
+    assertThat(assets.getContinuationToken(), notNullValue());
+    assertThat(assets.getItems(), hasSize(3));
+
+    assets = underTest.searchAssets(assets.getContinuationToken(), uriInfo("?format=maven2"));
+    assertThat(assets.getContinuationToken(), nullValue());
+    assertThat(assets.getItems(), hasSize(0));
   }
 
   @Test

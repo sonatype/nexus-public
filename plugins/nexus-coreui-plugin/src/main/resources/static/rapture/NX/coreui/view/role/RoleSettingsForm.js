@@ -33,8 +33,7 @@ Ext.define('NX.coreui.view.role.RoleSettingsForm', {
 
   initComponent: function() {
     var me = this,
-        idField,
-        roleStore = Ext.create('NX.coreui.store.Role');
+        idField;
 
     me.settingsFormSuccessMessage = me.settingsFormSuccessMessage || function(data) {
       return NX.I18n.get('Role_RoleSettingsForm_Update_Success') + Ext.String.htmlEncode(data['name']);
@@ -48,8 +47,6 @@ Ext.define('NX.coreui.view.role.RoleSettingsForm', {
           return !model.get('readOnly');
         })
     );
-
-    roleStore.load();
 
     if (me.source) {
       idField = {
@@ -121,30 +118,12 @@ Ext.define('NX.coreui.view.role.RoleSettingsForm', {
         buttons: ['add', 'remove'],
         fromTitle: NX.I18n.get('Role_RoleSettingsForm_Roles_FromTitle'),
         toTitle: NX.I18n.get('Role_RoleSettingsForm_Roles_ToTitle'),
-        store: roleStore,
+        store: Ext.create('Ext.data.ChainedStore', {
+          source: 'Role'
+        }),
         valueField: 'id',
         displayField: 'name',
-        delimiter: null,
-        listeners: {
-          /**
-           * Ensure that the reference to the Role we're updating is not displayed.
-           */
-          change: function(roles) {
-            var form = roles.up('form'),
-                record = form.getRecord(),
-                store = roles.getStore();
-            if (record) {
-              store.clearFilter(true);
-              store.filter([
-                {
-                  filterFn: function(item) {
-                    return item.get('id') !== record.get('id');
-                  }
-                }
-              ]);
-            }
-          }
-        }
+        delimiter: null
       }
     ];
 
@@ -166,5 +145,4 @@ Ext.define('NX.coreui.view.role.RoleSettingsForm', {
       scope: me
     });
   }
-
 });

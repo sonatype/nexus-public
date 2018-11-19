@@ -39,6 +39,7 @@ import org.apache.commons.jexl3.parser.Parser;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.selector.LeadingSlashRegexTransformer.trimLeadingSlashes;
 
 /**
  * @since 3.6
@@ -285,13 +286,7 @@ public class CselAssetSqlBuilder
 
     result.append(' ').append(operator).append(' ');
 
-    String literal = string.getLiteral();
-    if (literal.startsWith("/")) {
-      appendStringParameter(cselAssetSql, literal.substring(1));
-    }
-    else {
-      string.jjtAccept(this, cselAssetSql);
-    }
+    appendStringParameter(cselAssetSql, trimLeadingSlashes(string.getLiteral()));
 
     return result;
   }

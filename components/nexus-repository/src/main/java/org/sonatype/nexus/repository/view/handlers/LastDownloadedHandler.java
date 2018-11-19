@@ -14,8 +14,12 @@ package org.sonatype.nexus.repository.view.handlers;
 
 import java.io.IOException;
 
+import javax.inject.Named;
+import javax.inject.Singleton;
+
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
+import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.StorageFacet;
@@ -35,6 +39,8 @@ import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
  *
  * @since 3.next
  */
+@Named
+@Singleton
 public class LastDownloadedHandler
     extends ComponentSupport
     implements Handler
@@ -43,20 +49,31 @@ public class LastDownloadedHandler
   public Response handle(final Context context) throws Exception {
     Response response = context.proceed();
 
-    if (isSuccessfulRequestWithContent(context, response)) {
-      Repository repository = context.getRepository();
-      StorageFacet storageFacet = repository.facet(StorageFacet.class);
-      
-      Content content = (Content) response.getPayload();
+    try {
+      if (isSuccessfulRequestWithContent(context, response)) {
+        Repository repository = context.getRepository();
+        StorageFacet storageFacet = repository.facet(StorageFacet.class);
 
-      AttributesMap attributes = content.getAttributes();
+        Content content = (Content) response.getPayload();
 
-      Asset asset = attributes.get(Asset.class);
+        AttributesMap attributes = content.getAttributes();
 
-      maybeUpdateLastDownloaded(storageFacet, asset);
+        maybeUpdateLastDownloaded(storageFacet, attributes);
+      }
+    }
+    catch (Exception e) {
+      log.error("Failed to update last downloaded time for request {}", context.getRequest().getPath(), e);
     }
 
     return response;
+  }
+
+  protected void maybeUpdateLastDownloaded(final StorageFacet storageFacet, final AttributesMap attributes)
+      throws IOException
+  {
+    Asset asset = attributes.get(Asset.class);
+
+    maybeUpdateLastDownloaded(storageFacet, asset);
   }
 
   private boolean isSuccessfulRequestWithContent(final Context context, final Response response) {
@@ -76,14 +93,19 @@ public class LastDownloadedHandler
     return GET.equals(action) || HEAD.equals(action);
   }
 
-  private void maybeUpdateLastDownloaded(final StorageFacet storageFacet, final Asset asset)
+  protected void maybeUpdateLastDownloaded(final StorageFacet storageFacet, final Asset asset)
       throws IOException
   {
     if (asset != null && asset.markAsDownloaded()) {
       TransactionalStoreMetadata.operation.withDb(storageFacet.txSupplier()).throwing(IOException.class)
           .call(() -> {
             StorageTx tx = UnitOfWork.currentTx();
-            tx.saveAsset(asset);
+            Asset updatedAsset = tx.findAsset(EntityHelper.id(asset));
+
+            if (updatedAsset.markAsDownloaded()) {
+              tx.saveAsset(updatedAsset);
+            }
+
             return null;
           });
     }

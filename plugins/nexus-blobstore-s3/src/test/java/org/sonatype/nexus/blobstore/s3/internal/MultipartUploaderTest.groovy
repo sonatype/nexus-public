@@ -16,6 +16,7 @@ import spock.lang.Specification
 
 import org.sonatype.nexus.blobstore.api.BlobStoreException
 
+import com.amazonaws.SdkClientException
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model.InitiateMultipartUploadResult
 import com.amazonaws.services.s3.model.UploadPartRequest
@@ -41,6 +42,7 @@ class MultipartUploaderTest
       1 * s3.initiateMultipartUpload(_) >> new InitiateMultipartUploadResult(uploadId: 'testupload')
       1 * s3.uploadPart(_) >> new UploadPartResult()
       1 * s3.completeMultipartUpload(_)
+      0 * s3.abortMultipartUpload(_)
   }
 
   def 'upload aborts multipart uploads on error'() {
@@ -55,7 +57,7 @@ class MultipartUploaderTest
     then: 'the upload is aborted'
       thrown(BlobStoreException)
       1 * s3.initiateMultipartUpload(_) >> new InitiateMultipartUploadResult(uploadId: 'testupload')
-      1 * s3.uploadPart(_) >> { UploadPartRequest request -> throw new RuntimeException('') }
+      1 * s3.uploadPart(_) >> { UploadPartRequest request -> throw new SdkClientException('') }
       1 * s3.abortMultipartUpload(_)
   }
 
@@ -68,7 +70,7 @@ class MultipartUploaderTest
       def chunks = []
       while (true) {
         chunks << multipartUploader.readChunk(input)
-        if (chunks[-1] == null) {
+        if (chunks[-1].available() == 0) {
           break
         }
       }
@@ -79,10 +81,24 @@ class MultipartUploaderTest
 
     where:
       inputSize || expectedChunkSizes
-      0         || [null]
-      99        || [99, null]
-      100       || [100, null]
-      101       || [100, 1, null]
-      500       || [100, 100, 100, 100, 100, null]
+      0         || [0]
+      99        || [99, 0]
+      100       || [100, 0]
+      101       || [100, 1, 0]
+      500       || [100, 100, 100, 100, 100, 0]
+  }
+
+  def 'upload uses putObject for small uploads'() {
+    given: 'A multipart uploader'
+      MultipartUploader multipartUploader = new MultipartUploader(100)
+      AmazonS3 s3 = Mock()
+
+    when: 'an upload is started'
+      def input = new ByteArrayInputStream(new byte[50])
+      multipartUploader.upload(s3, 'bucketName', 'key', input)
+
+    then: 'the putObject method is called'
+      1 * s3.putObject(_, _, _, _)
+      0 * s3.initiateMultipartUpload(_)
   }
 }

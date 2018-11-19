@@ -15,6 +15,8 @@ package org.sonatype.nexus.repository.storage;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.AbstractEntity;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
@@ -61,7 +63,8 @@ public class Bucket
   /**
    * Sets the attributes.
    */
-  protected Bucket attributes(final NestedAttributesMap attributes) {
+  @VisibleForTesting
+  public Bucket attributes(final NestedAttributesMap attributes) {
     this.attributes = checkNotNull(attributes);
     return this;
   }
