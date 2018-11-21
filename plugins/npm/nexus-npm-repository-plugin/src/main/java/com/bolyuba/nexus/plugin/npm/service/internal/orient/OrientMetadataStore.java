@@ -20,6 +20,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.annotation.Nullable;
@@ -71,6 +72,18 @@ public class OrientMetadataStore
   private static final String DB_LOCATION = "db/npm";
 
   private static final String BACKUP_LOCATION = "backup/npm";
+
+  private static final String SCHEMA_NAME = PackageRoot.class.getSimpleName().toLowerCase(Locale.US);
+
+  private static final String LIMIT = " limit ";
+
+  private static final String SQL_LIST_PACKAGE_NAMES = "select from " + SCHEMA_NAME + " where repositoryId = ? and @rid > ?";
+
+  private static final String SQL_DELETE_PACKAGES = "delete from " + SCHEMA_NAME + " where repositoryId = ?";
+
+  private static final String SQL_UPDATE_PACKAGES = "select @rid as orid from " + SCHEMA_NAME + " where repositoryId = ? and @rid > ?";
+
+  private static final String SQL_GET_PACKAGE_BY_NAME = "select * from " + SCHEMA_NAME + " where componentId = ?";
 
   private final File databaseDirectory;
 
@@ -221,16 +234,13 @@ public class OrientMetadataStore
   @Override
   public List<String> listPackageNames(final NpmRepository repository) {
     checkNotNull(repository);
-    final EntityHandler<PackageRoot> entityHandler = getHandlerFor(PackageRoot.class);
     try (ODatabaseDocumentTx db = db()) {
       db.begin();
       try {
-        final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
-            "select from " + entityHandler.getSchemaName() + " where repositoryId='" + repository.getId() +
-                "' and @rid > ? limit " + pageSize);
+        final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(SQL_LIST_PACKAGE_NAMES + LIMIT + pageSize);
         ORID last = new ORecordId();
         final List<String> result = Lists.newArrayList();
-        List<ODocument> resultset = db.query(query, last);
+        List<ODocument> resultset = db.query(query, repository.getId(), last);
         while (!resultset.isEmpty()) {
           result.addAll(Lists.transform(resultset, new Function<ODocument, String>()
           {
@@ -239,7 +249,7 @@ public class OrientMetadataStore
             }
           }));
           last = resultset.get(resultset.size() - 1).getIdentity();
-          resultset = db.query(query, last);
+          resultset = db.query(query, repository.getId(), last);
         }
         return result;
       }
@@ -257,7 +267,7 @@ public class OrientMetadataStore
     try (ODatabaseDocumentTx db = db()) {
       db.begin();
       try {
-        final ODocument doc = doGetPackageByName(db, entityHandler, repository, packageName);
+        final ODocument doc = doGetPackageByName(db, repository, packageName);
         if (doc == null) {
           return null;
         }
@@ -272,18 +282,13 @@ public class OrientMetadataStore
   @Override
   public boolean deletePackages(final NpmRepository repository) {
     checkNotNull(repository);
-    final EntityHandler<PackageRoot> entityHandler = getHandlerFor(PackageRoot.class);
     try (ODatabaseDocumentTx db = db()) {
       int recordsDeleted = 0, totalDeleted = 0;
       while (true) {
         db.begin();
         try {
-          recordsDeleted = db.command(
-              new OCommandSQL(
-                  "delete from " + entityHandler.getSchemaName() + " where repositoryId='" + repository.getId() +
-                      "' limit " + pageSize
-              )
-          ).execute();
+          recordsDeleted = db.command(new OCommandSQL(SQL_DELETE_PACKAGES + LIMIT + pageSize))
+              .execute(repository.getId());
         }
         finally {
           db.commit();
@@ -302,11 +307,10 @@ public class OrientMetadataStore
   public boolean deletePackageByName(final NpmRepository repository, final String packageName) {
     checkNotNull(repository);
     checkNotNull(packageName);
-    final EntityHandler<PackageRoot> entityHandler = getHandlerFor(PackageRoot.class);
     try (ODatabaseDocumentTx db = db()) {
       db.begin();
       try {
-        final ODocument doc = doGetPackageByName(db, entityHandler, repository, packageName);
+        final ODocument doc = doGetPackageByName(db, repository, packageName);
         if (doc == null) {
           return false;
         }
@@ -386,11 +390,9 @@ public class OrientMetadataStore
     final EntityHandler<PackageRoot> entityHandler = getHandlerFor(PackageRoot.class);
     int count = 0;
     try (ODatabaseDocumentTx db = db()) {
-      final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(
-          "select @rid as orid from " + entityHandler.getSchemaName() + " where repositoryId='" + repository.getId() +
-              "' and @rid > ? limit " + pageSize);
+      final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(SQL_UPDATE_PACKAGES + LIMIT + pageSize);
       ORID lastProcessedOrid = new ORecordId();
-      List<ODocument> resultset = db.query(query, lastProcessedOrid);
+      List<ODocument> resultset = db.query(query, repository.getId(), lastProcessedOrid);
       int retry = 0;
       while (!resultset.isEmpty()) {
         try {
@@ -426,7 +428,7 @@ public class OrientMetadataStore
           }
         }
         if (retry == 0) {
-          resultset = db.query(query, lastProcessedOrid);
+          resultset = db.query(query, repository.getId(), lastProcessedOrid);
         }
       }
     }
@@ -436,13 +438,11 @@ public class OrientMetadataStore
   // ==
 
   private ODocument doGetPackageByName(final ODatabaseDocumentTx db,
-                                       final EntityHandler<PackageRoot> entityHandler,
                                        final NpmRepository repository,
                                        final String packageName)
   {
-    final List<ODocument> entries = db.query(new OSQLSynchQuery<>(
-        "select * from " + entityHandler.getSchemaName() + " where componentId='" + repository.getId() + ":" +
-            packageName + "'"));
+    final List<ODocument> entries = db
+        .query(new OSQLSynchQuery<>(SQL_GET_PACKAGE_BY_NAME), repository.getId() + ":" + packageName);
     for (ODocument entry : entries) {
       return entry; // we expect only one
     }
@@ -455,7 +455,7 @@ public class OrientMetadataStore
                                       final PackageRoot packageRoot,
                                       final boolean overlay)
   {
-    ODocument doc = doGetPackageByName(db, entityHandler, repository, packageRoot.getName());
+    ODocument doc = doGetPackageByName(db, repository, packageRoot.getName());
     if (doc == null) {
       doc = db.newInstance(entityHandler.getSchemaName());
     }

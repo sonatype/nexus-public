@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.sonatype.nexus.assemblies</groupId>
     <artifactId>nexus-assemblies</artifactId>
-    <version>2.14.10-01</version>
+    <version>2.14.11-01</version>
   </parent>
 
   <artifactId>nexus-bundle-template</artifactId>

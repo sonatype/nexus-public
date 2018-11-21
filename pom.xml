@@ -28,7 +28,7 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>pom</packaging>
 
-  <version>2.14.10-01</version>
+  <version>2.14.11-01</version>
 
   <inceptionYear>2008</inceptionYear>
   <url>http://nexus.sonatype.org/</url>
@@ -92,7 +92,7 @@
     Define nexus versions.  The 'nexus.version' property always refers to the version of the current project.
     These values must always be constants; 'nexus.version' will get update automatically by set-version.
     -->
-    <nexus.version>2.14.10-01</nexus.version>
+    <nexus.version>2.14.11-01</nexus.version>
 
     <!-- FIXME: WTF is this for, part of the http proxy changes, used in subst in test files :-( -->
     <nexus.configuration.version>2.8.0</nexus.configuration.version>
@@ -118,8 +118,8 @@
     Default compile support for Java7+
     A few modules need to remain compatible with Java6 and must override and provide animal-sniffer configuration.
     -->
-    <maven.compiler.source>1.7</maven.compiler.source>
-    <maven.compiler.target>1.7</maven.compiler.target>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
 
     <!--
     Sonar configuration.
@@ -164,123 +164,123 @@
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>base-configuration</artifactId>
-        <version>2.14.10-01</version>
+        <version>2.14.11-01</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-bootstrap</artifactId>
-        <version>2.14.10-01</version>
+        <version>2.14.11-01</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-client-core</artifactId>
-        <version>2.14.10-01</version>
+        <version>2.14.11-01</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-configuration-model</artifactId>
-        <version>2.14.10-01</version>
+        <version>2.14.11-01</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-core</artifactId>
-        <version>2.14.10-01</version>
+        <version>2.14.11-01</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-core</artifactId>
-        <version>2.14.10-01</version>
+        <version>2.14.11-01</version>
         <classifier>tests</classifier>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-csrfguard</artifactId>
-        <version>2.14.10-01</version>
+        <version>2.14.11-01</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-ehcache</artifactId>
-        <version>2.14.10-01</version>
+        <version>2.14.11-01</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-launcher</artifactId>
-        <version>2.14.10-01</version>
+        <version>2.14.11-01</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-ldap-common</artifactId>
-        <version>2.14.10-01</version>
+        <version>2.14.11-01</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-locks</artifactId>
-        <version>2.14.10-01</version>
+        <version>2.14.11-01</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-oss-edition</artifactId>
-        <version>2.14.10-01</version>
+        <version>2.14.11-01</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-plugin-api</artifactId>
-        <version>2.14.10-01</version>
+        <version>2.14.11-01</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-repository-metadata-api</artifactId>
-        <version>2.14.10-01</version>
+        <version>2.14.11-01</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-repository-metadata-model</artifactId>
-        <version>2.14.10-01</version>
+        <version>2.14.11-01</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-scheduler</artifactId>
-        <version>2.14.10-01</version>
+        <version>2.14.11-01</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-security</artifactId>
-        <version>2.14.10-01</version>
+        <version>2.14.11-01</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-security-realms</artifactId>
-        <version>2.14.10-01</version>
+        <version>2.14.11-01</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-webapp</artifactId>
-        <version>2.14.10-01</version>
+        <version>2.14.11-01</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-webapp</artifactId>
         <type>war</type>
-        <version>2.14.10-01</version>
+        <version>2.14.11-01</version>
       </dependency>
 
       <!-- testsupport -->
@@ -290,37 +290,37 @@
         <artifactId>nexus-it-helper-plugin</artifactId>
         <classifier>bundle</classifier>
         <type>zip</type>
-        <version>2.14.10-01</version>
+        <version>2.14.11-01</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-plugin-testsupport</artifactId>
-        <version>2.14.10-01</version>
+        <version>2.14.11-01</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-test-common</artifactId>
-        <version>2.14.10-01</version>
+        <version>2.14.11-01</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-test-harness-launcher</artifactId>
-        <version>2.14.10-01</version>
+        <version>2.14.11-01</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-testsuite-client</artifactId>
-        <version>2.14.10-01</version>
+        <version>2.14.11-01</version>
       </dependency>
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-testsuite-support</artifactId>
-        <version>2.14.10-01</version>
+        <version>2.14.11-01</version>
       </dependency>
 
       <!-- assemblies -->
@@ -328,7 +328,7 @@
       <dependency>
         <groupId>org.sonatype.nexus.assemblies</groupId>
         <artifactId>nexus-bundle-template</artifactId>
-        <version>2.14.10-01</version>
+        <version>2.14.11-01</version>
         <classifier>bundle</classifier>
         <type>zip</type>
       </dependency>
@@ -404,7 +404,6 @@
             <forkMode>once</forkMode>
             <argLine>
               -Xmx300m
-              -XX:MaxPermSize=192m
               -XX:+HeapDumpOnOutOfMemoryError
               -XX:HeapDumpPath=${project.build.directory}/surefire-reports
             </argLine>
@@ -425,7 +424,6 @@
             <forkMode>always</forkMode>
             <argLine>
               -Xmx300m
-              -XX:MaxPermSize=192m
               -XX:+HeapDumpOnOutOfMemoryError
               -XX:HeapDumpPath=${project.build.directory}/failsafe-reports
             </argLine>
@@ -449,7 +447,7 @@
           <configuration>
             <signature>
               <groupId>org.codehaus.mojo.signature</groupId>
-              <artifactId>java17</artifactId>
+              <artifactId>java18</artifactId>
               <version>1.0</version>
             </signature>
           </configuration>
@@ -560,6 +558,14 @@
         <plugin>
           <groupId>org.sonatype.plugins</groupId>
           <artifactId>sisu-maven-plugin</artifactId>
+          <dependencies>
+            <dependency>
+              <!-- version that can read Java8 classes -->
+              <groupId>org.eclipse.sisu</groupId>
+              <artifactId>org.eclipse.sisu.inject</artifactId>
+              <version>0.3.1</version>
+            </dependency>
+            </dependencies>
           <executions>
             <execution>
               <goals>
@@ -645,7 +651,7 @@
         <plugin>
           <groupId>org.sonatype.nexus</groupId>
           <artifactId>nexus-test-environment-maven-plugin</artifactId>
-          <version>2.14.10-01</version>
+          <version>2.14.11-01</version>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -671,23 +677,18 @@
                 </requireMavenVersion>
 
                 <!--
-                Require Java 7+ for building
+                Require Java 8+ for building
                 -->
                 <requireJavaVersion>
-                  <version>[1.7,)</version>
+                  <version>[1.8,)</version>
                 </requireJavaVersion>
 
                 <!--
-                Check all bytecode (both compiled and via dependencies) targets Java 7 or below
+                Check all bytecode (both compiled and via dependencies) targets Java 8 or below
                 -->
                 <enforceBytecodeVersion>
-                  <maxJdkVersion>1.7</maxJdkVersion>
+                  <maxJdkVersion>1.8</maxJdkVersion>
                   <ignoreClasses>
-                    <!-- these optional classes are never loaded on Java7, xstream only loads them on Java8 -->
-                    <ignoreClass>*.thoughtworks.xstream.mapper.LambdaMapper</ignoreClass>
-                    <ignoreClass>*.thoughtworks.xstream.converters.reflection.LambdaConverter</ignoreClass>
-                    <ignoreClass>*.thoughtworks.xstream.converters.time.*</ignoreClass>
-                    <ignoreClass>*.thoughtworks.xstream.core.util.ISO8601JavaTimeConverter</ignoreClass>
                     <ignoreClass>module-info</ignoreClass>
                   </ignoreClasses>
                   <ignoredScopes>
