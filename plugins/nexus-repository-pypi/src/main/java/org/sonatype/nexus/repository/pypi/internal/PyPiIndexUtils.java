@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
@@ -30,6 +31,7 @@ import javax.annotation.Nullable;
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -80,10 +82,27 @@ public final class PyPiIndexUtils
     URL template = PyPiIndexUtils.class.getResource("pypi-index.vm");
     TemplateParameters params = helper.parameters();
     params.set("name", name);
+    params.set("assets", links.entrySet().stream()
+        .map((link) -> ImmutableMap.of(
+            "link", link.getValue(),
+            "file", link.getKey())
+        )
+        .collect(Collectors.toList()));
+    return helper.render(template, params);
+  }
+
+  /**
+   * Returns a string containing the HTML simple root index page for the links, rendered in iteration order.
+   */
+  static String buildRootIndexPage(final TemplateHelper helper, final Map<String, String> links) {
+    checkNotNull(helper);
+    checkNotNull(links);
+    URL template = PyPiIndexUtils.class.getResource("pypi-root-index.vm");
+    TemplateParameters params = helper.parameters();
     params.set("assets", links.entrySet().stream().map((link) -> {
       Map<String, String> data = new HashMap<>();
       data.put("link", link.getValue());
-      data.put("file", link.getKey());
+      data.put("name", link.getKey());
       return data;
     }).collect(Collectors.toList()));
     return helper.render(template, params);
@@ -94,11 +113,12 @@ public final class PyPiIndexUtils
    * assumption based on email discussions with donald@stufft.io that there are no plans to have packages at any
    * location other than under the /packages directory.
    */
-  static Map<String, String> makeLinksRelative(final Map<String, String> oldLinks) {
+  private static Map<String, String> makeLinksRelative(final Map<String, String> oldLinks,
+                                                       final Function<String, String> linkTranslator) {
     checkNotNull(oldLinks);
     Map<String, String> newLinks = new LinkedHashMap<>();
     for (Entry<String, String> oldLink : oldLinks.entrySet()) {
-      String newLink = maybeRewriteLink(oldLink.getValue());
+      String newLink = linkTranslator.apply(oldLink.getValue());
       if (newLink != null) {
         newLinks.put(oldLink.getKey(), newLink);
       }
@@ -110,7 +130,28 @@ public final class PyPiIndexUtils
    * Rewrites an index page so that the links are all relative where possible.
    */
   static Map<String, String> makeIndexRelative(final InputStream in) throws IOException {
-    return PyPiIndexUtils.makeLinksRelative(PyPiIndexUtils.extractLinksFromIndex(in));
+    return makePackageLinksRelative(extractLinksFromIndex(in));
+  }
+
+  /**
+   * Rewrites an index page so that the links are all relative where possible.
+   */
+  static Map<String, String> makePackageLinksRelative(final Map<String, String> oldLinks) {
+    return makeLinksRelative(oldLinks, PyPiIndexUtils::maybeRewriteLink);
+  }
+
+  /**
+   * Rewrites a root index page from a stream so that the links are all relative where possible.
+   */
+  static Map<String, String> makeRootIndexRelative(final InputStream in) throws IOException {
+    return makeRootIndexLinksRelative(extractLinksFromIndex(in));
+  }
+
+  /**
+   * Rewrites a root index page so that the links are all relative where possible.
+   */
+  static Map<String, String> makeRootIndexLinksRelative(final Map<String, String> oldLinks) {
+    return makeLinksRelative(oldLinks, PyPiIndexUtils::maybeRewriteRootLink);
   }
 
   /**
@@ -136,6 +177,15 @@ public final class PyPiIndexUtils
     // weirdness, just log it and continue
     log.warn("Found unexpected PyPI link format, skipping: " + link);
     return null;
+  }
+
+  private static String maybeRewriteRootLink(final String link) {
+    if (link.contains("/simple/")) {
+      String[] split = link.split("/simple/");
+      return split[1];
+    }
+
+    return link;
   }
 
   private PyPiIndexUtils() {

@@ -80,6 +80,17 @@ public final class HostedHandlers
   }
 
   /**
+   * Handle request for root index.
+   */
+  final Handler getRootIndex = context -> {
+    Content content = context.getRepository().facet(PyPiHostedFacet.class).getRootIndex();
+    if (content != null) {
+      return HttpResponses.ok(content);
+    }
+    return HttpResponses.notFound();
+  };
+
+  /**
    * Handle request for index.
    */
   final Handler getIndex = context -> {

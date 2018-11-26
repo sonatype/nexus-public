@@ -27,6 +27,8 @@ import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
+import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_NAME;
+
 /**
  * A component maintenance facet that removes the component once no assets exist for it. Used for PyPI since we have to
  * create a component once the first asset with a new name and version exists, but no component-like structure exists
@@ -54,6 +56,11 @@ public class PyPiHostedComponentMaintenance
 
     final EntityId componentId = asset.componentId();
     if (componentId != null) {
+      deleteRootIndex();
+      
+      // We are deleting a package and therefore need to remove the associated index as it is no longer valid
+      deleteCachedIndex(asset.formatAttributes().get(P_NAME, String.class));
+      
       final Component component = tx.findComponentInBucket(componentId, bucket);
       if (component != null && !tx.browseAssets(component).iterator().hasNext()) {
         deletedAssets.addAll(deleteComponentTx(componentId, deleteBlob));
@@ -61,5 +68,35 @@ public class PyPiHostedComponentMaintenance
     }
 
     return deletedAssets;
+  }
+
+  /**
+   * Deletes the root AND package index if a component has been deleted
+   */
+  @TransactionalDeleteBlob
+  @Override
+  protected Set<String> deleteComponentTx(final EntityId componentId, final boolean deleteBlobs) {
+    StorageTx tx = UnitOfWork.currentTx();
+    Component component = tx.findComponentInBucket(componentId, tx.findBucket(getRepository()));
+    if (component == null) {
+      return Collections.emptySet();
+    }
+
+    deleteRootIndex();
+
+    deleteCachedIndex(component.name());
+
+    log.debug("Deleting component: {}", component.toStringExternal());
+    return tx.deleteComponent(component, deleteBlobs);
+  }
+
+  private void deleteRootIndex() {
+    PyPiHostedFacet facet = getRepository().facet(PyPiHostedFacet.class);
+    facet.deleteRootIndex();
+  }
+
+  private void deleteCachedIndex(final String assetName) {
+    PyPiHostedFacet facet = getRepository().facet(PyPiHostedFacet.class);
+    facet.deleteIndex(assetName);
   }
 }

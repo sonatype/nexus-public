@@ -28,5 +28,6 @@
     <feature>nexus-blobstore-s3</feature>
     <feature>nexus-restore-npm</feature>
     <feature>nexus-restore-pypi</feature>
+    <feature>nexus-restore-raw</feature>
   </feature>
 </features>

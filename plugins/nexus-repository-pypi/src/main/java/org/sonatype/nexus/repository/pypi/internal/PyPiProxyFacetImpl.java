@@ -55,6 +55,7 @@ import org.apache.http.entity.InputStreamEntity;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.pypi.internal.AssetKind.INDEX;
+import static org.sonatype.nexus.repository.pypi.internal.AssetKind.ROOT_INDEX;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_NAME;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_SUMMARY;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_VERSION;
@@ -67,8 +68,12 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiDataUtils.toConten
 import static org.sonatype.nexus.repository.pypi.internal.PyPiFileUtils.extractFilenameFromPath;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiFileUtils.extractNameFromFilename;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiFileUtils.extractVersionFromFilename;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.*;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.buildIndexPage;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.buildRootIndexPage;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.makeIndexRelative;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.makeRootIndexRelative;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiInfoUtils.extractMetadata;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.INDEX_PATH_PREFIX;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.indexPath;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.isSearchRequest;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.matcherState;
@@ -108,6 +113,8 @@ public class PyPiProxyFacetImpl
     }
     TokenMatcher.State state = matcherState(context);
     switch (assetKind) {
+      case ROOT_INDEX:
+        return getAsset(INDEX_PATH_PREFIX);
       case INDEX:
         return getAsset(indexPath(name(state)));
       case PACKAGE:
@@ -125,6 +132,8 @@ public class PyPiProxyFacetImpl
     }
     TokenMatcher.State state = matcherState(context);
     switch (assetKind) {
+      case ROOT_INDEX:
+        return putRootIndex(content);
       case INDEX:
         return putIndex(indexPath(name(state)), content);
       case PACKAGE:
@@ -231,18 +240,34 @@ public class PyPiProxyFacetImpl
     return saveAsset(tx, asset, tempBlob, payload);
   }
 
+  private Content putRootIndex(final Content content) throws IOException {
+    try (InputStream inputStream = content.openInputStream()) {
+      Map<String, String> links = makeRootIndexRelative(inputStream);
+      String indexPage = buildRootIndexPage(templateHelper, links);
+      return storeHtmlPage(content, indexPage, ROOT_INDEX, INDEX_PATH_PREFIX);
+    }
+  }
+
   private Content putIndex(final String name, final Content content) throws IOException {
     String html;
     try (InputStream inputStream = content.openInputStream()) {
       Map<String, String> links = makeIndexRelative(inputStream);
       html = buildIndexPage(templateHelper, name.substring(name.indexOf('/') + 1, name.length() - 1), links);
     }
+    return storeHtmlPage(content, html, INDEX, name);
+  }
+
+  private Content storeHtmlPage(final Content content,
+                                final String indexPage,
+                                final AssetKind rootIndex,
+                                final String indexPathPrefix) throws IOException
+  {
     StorageFacet storageFacet = facet(StorageFacet.class);
-    try (ByteArrayInputStream stream = new ByteArrayInputStream(html.getBytes(StandardCharsets.UTF_8))) {
+    try (ByteArrayInputStream stream = new ByteArrayInputStream(indexPage.getBytes(StandardCharsets.UTF_8))) {
       try (TempBlob tempBlob = storageFacet.createTempBlob(stream, PyPiDataUtils.HASH_ALGORITHMS)) {
         Map<String, Object> attributes = new HashMap<>();
-        attributes.put(P_ASSET_KIND, INDEX);
-        return doPutIndex(name, tempBlob, content, attributes);
+        attributes.put(P_ASSET_KIND, rootIndex);
+        return doPutIndex(indexPathPrefix, tempBlob, content, attributes);
       }
     }
   }

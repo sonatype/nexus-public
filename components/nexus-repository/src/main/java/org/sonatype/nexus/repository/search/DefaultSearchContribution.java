@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.coreui.internal.search;
+package org.sonatype.nexus.repository.search;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -19,20 +19,25 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 
 /**
- * "attributes.nuget.tag" {@link SearchContribution} (adds a match query for tag).
+ * "default" {@link SearchContribution} (adds filter as an ES term filter).
  *
- * @since 3.0
+ * @since 3.next
  */
-@Named("attributes.nuget.tags")
+@Named(DefaultSearchContribution.NAME)
 @Singleton
-public class NugetTagsSearchContribution
+public class DefaultSearchContribution
     extends SearchContributionSupport
 {
+  public static final String NAME = "default";
+
+  private static final String UNESCAPED_SLASHES = "([^\\\\\\\\])(/)";
 
   @Override
   public void contribute(final BoolQueryBuilder query, final String type, final String value) {
     if (value != null) {
-      query.must(QueryBuilders.matchQuery(type, value));
+      // Replace unescaped slashes "a/b" with escaped slashes "\/"
+      String escaped = value.replaceAll(UNESCAPED_SLASHES, "$1\\\\/");
+      query.must(QueryBuilders.queryStringQuery(escaped).field(type).lowercaseExpandedTerms(false));
     }
   }
 

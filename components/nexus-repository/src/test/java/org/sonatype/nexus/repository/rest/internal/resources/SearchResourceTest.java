@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.rest.internal.resources;
 
 import java.net.URI;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,6 +29,7 @@ import org.sonatype.nexus.repository.rest.SearchResourceExtension;
 import org.sonatype.nexus.repository.rest.api.AssetXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
+import org.sonatype.nexus.repository.search.SearchFilter;
 import org.sonatype.nexus.repository.search.SearchService;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.rest.Page;
@@ -167,8 +169,7 @@ public class SearchResourceTest
   @Test
   public void testSearch() {
     //the expected query
-    QueryBuilder expected = boolQuery()
-        .filter(termQuery("format", "maven2"));
+    QueryBuilder expected = boolQuery().must(queryStringQuery("maven2").field("format").lowercaseExpandedTerms(false));
 
     when(searchService.search(queryBuilderArgumentCaptor.capture(), eq(emptyList()), eq(0), eq(50)))
         .thenReturn(searchResponse);
@@ -380,8 +381,7 @@ public class SearchResourceTest
     assertThat(assetXO2.getDownloadUrl(), is("http://localhost:8081/test/bar.three"));
 
     //the expected query
-    QueryBuilder expected = boolQuery()
-        .filter(termQuery("format", "npm"));
+    QueryBuilder expected = boolQuery().must(queryStringQuery("npm").field("format").lowercaseExpandedTerms(false));
     assertThat(queryBuilderArgumentCaptor.getValue().toString(), is(expected.toString()));
   }
 
@@ -405,8 +405,8 @@ public class SearchResourceTest
 
     //the expected query
     QueryBuilder expected = boolQuery()
-        .filter(termQuery("assets.attributes.checksum.sha1", "fifth-sha1"))
-        .filter(termQuery("format", "npm"));
+        .must(queryStringQuery("fifth-sha1").field("assets.attributes.checksum.sha1").lowercaseExpandedTerms(false))
+        .must(queryStringQuery("npm").field("format").lowercaseExpandedTerms(false));
     assertThat(queryBuilderArgumentCaptor.getValue().toString(), is(expected.toString()));
   }
 
@@ -496,9 +496,12 @@ public class SearchResourceTest
   public void testBuildQuery() {
     //the expected query
     QueryBuilder expected = boolQuery()
-        .must(queryStringQuery("someKindOfStringQuery"))
-        .filter(termQuery("format", "maven2"))
-        .filter(termQuery("arbitrary.param", "random"));
+        .must(queryStringQuery("someKindOfStringQuery")
+            .field("name.case_insensitive")
+            .field("group.case_insensitive")
+            .field("_all"))
+        .must(queryStringQuery("maven2").field("format").lowercaseExpandedTerms(false))
+        .must(queryStringQuery("random").field("arbitrary.param").lowercaseExpandedTerms(false));
 
     String uri = "?format=maven2" +
         "&arbitrary.param=random" +

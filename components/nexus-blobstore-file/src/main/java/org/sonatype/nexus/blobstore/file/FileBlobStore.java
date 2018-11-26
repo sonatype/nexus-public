@@ -701,10 +701,9 @@ public class FileBlobStore
     try {
       Path blobDir = getAbsoluteBlobDir();
       if (fileOperations.deleteEmptyDirectory(contentDir)) {
-        Stream.of(storeMetrics.listBackingFiles()).forEach(metricsFile -> deleteQuietly(metricsFile.toPath()));
+        cleanupFiles("Store Metrics files", storeMetrics.listBackingFiles());
         deleteQuietly(blobDir.resolve("metadata.properties"));
-        Stream.of(blobDir.toFile().listFiles((dir, name) -> name.endsWith(DELETIONS_FILENAME)))
-            .forEach(deletionIndex -> deleteQuietly(deletionIndex.toPath()));
+        cleanupFiles("Deletions Index", blobDir.toFile().listFiles((dir, name) -> name.endsWith(DELETIONS_FILENAME)));
         if (!fileOperations.deleteEmptyDirectory(blobDir)) {
           log.warn("Unable to delete non-empty blob store directory {}", blobDir);
         }
@@ -715,6 +714,17 @@ public class FileBlobStore
     }
     catch (Exception e) {
       throw new BlobStoreException(e, null);
+    }
+  }
+
+  private void cleanupFiles(String name, File[] files) {
+    if (files != null) {
+      Stream.of(files)
+          .filter(Objects::nonNull)
+          .map(File::toPath)
+          .forEach(this::deleteQuietly);
+    } else {
+      log.warn("Unable to cleanup file(s) for {}", name);
     }
   }
 

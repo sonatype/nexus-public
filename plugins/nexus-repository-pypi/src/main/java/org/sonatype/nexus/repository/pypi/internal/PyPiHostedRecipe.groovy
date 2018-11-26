@@ -82,6 +82,19 @@ class PyPiHostedRecipe
         .handler(hostedHandlers.search())
         .create())
 
+    builder.route(rootIndexMatcher()
+        .handler(timingHandler)
+        .handler(assetKindHandler.rcurry(AssetKind.ROOT_INDEX))
+        .handler(securityHandler)
+        .handler(exceptionHandler)
+        .handler(conditionalRequestHandler)
+        .handler(partialFetchHandler)
+        .handler(contentHeadersHandler)
+        .handler(unitOfWorkHandler)
+        .handler(lastDownloadedHandler)
+        .handler(hostedHandlers.getRootIndex)
+        .create())
+
     builder.route(indexMatcher()
         .handler(timingHandler)
         .handler(assetKindHandler.rcurry(AssetKind.INDEX))
@@ -91,6 +104,7 @@ class PyPiHostedRecipe
         .handler(partialFetchHandler)
         .handler(contentHeadersHandler)
         .handler(unitOfWorkHandler)
+        .handler(lastDownloadedHandler)
         .handler(hostedHandlers.getIndex)
         .create())
 

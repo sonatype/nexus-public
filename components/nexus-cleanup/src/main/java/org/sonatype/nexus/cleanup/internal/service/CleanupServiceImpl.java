@@ -105,7 +105,7 @@ public class CleanupServiceImpl
                                 final CleanupPolicy policy,
                                 final BooleanSupplier cancelledCheck)
   {
-    log.debug("Deleting components in repository {} using policy {}", repository.getName(), policy.getName());
+    log.info("Deleting components in repository {} using policy {}", repository.getName(), policy.getName());
 
     if (!policy.getCriteria().isEmpty()) {
       Iterable<EntityId> componentsToDelete = browseService.browse(policy, repository);

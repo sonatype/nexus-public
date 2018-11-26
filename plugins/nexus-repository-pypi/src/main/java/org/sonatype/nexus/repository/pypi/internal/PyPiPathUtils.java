@@ -19,6 +19,9 @@ import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**

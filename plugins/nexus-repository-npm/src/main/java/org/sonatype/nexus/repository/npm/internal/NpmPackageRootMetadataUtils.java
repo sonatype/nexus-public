@@ -29,6 +29,7 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 import org.joda.time.DateTime;
 
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.P_NAME;
 import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.findPackageRootAsset;
 import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.loadPackageRoot;
@@ -156,8 +157,12 @@ public class NpmPackageRootMetadataUtils
 
     try {
       NestedAttributesMap packageRoot = getPackageRoot(tx, repository, packageId);
-      if(packageRoot != null) {
-        return getLatestVersionFromPackageRoot(packageRoot);
+      if(nonNull(packageRoot)) {
+
+        String latestVersion = getLatestVersionFromPackageRoot(packageRoot);
+        if (nonNull(latestVersion)) {
+          return latestVersion;
+        }
       }
     }
     catch (IOException ignored) { // NOSONAR

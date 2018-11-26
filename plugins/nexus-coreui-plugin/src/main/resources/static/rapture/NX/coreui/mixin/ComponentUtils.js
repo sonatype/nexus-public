@@ -231,7 +231,6 @@ Ext.define('NX.coreui.mixin.ComponentUtils', {
       case 'rb':
         return 'ruby';
 
-      case 'deb':
       case 'egg':
       case 'nupkg':
       case 'rpm':
@@ -257,10 +256,12 @@ Ext.define('NX.coreui.mixin.ComponentUtils', {
       case 'sh':
         return 'bat';
 
-      case 'json':
       case 'pom':
       case 'xml':
         return 'code';
+
+      case 'deb':
+        return 'debian';
 
       default:
         return extension;

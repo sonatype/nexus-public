@@ -61,10 +61,8 @@ public class BrandingCapabilityDescriptor
     @DefaultMessage("Header HTML snippet")
     String headerHtmlLabel();
 
-    @DefaultMessage(
-        "An HTML snippet to be included in branding header.<br/>"
-            + "Use '$baseUrl' to insert the base URL of the server (e.g. to reference an image)"
-    )
+    @DefaultMessage("An HTML snippet to be included in branding header. Use '$baseUrl' to insert the base URL of the " +
+        "server (e.g. to reference an image)")
     String headerHtmlHelp();
 
     @DefaultMessage("Enable footer")
@@ -76,10 +74,8 @@ public class BrandingCapabilityDescriptor
     @DefaultMessage("Footer HTML snippet")
     String footerHtmlLabel();
 
-    @DefaultMessage(
-        "An HTML snippet to be included in branding footer.<br/>"
-            + "Use '$baseUrl' to insert the base URL of the server (e.g. to reference an image)"
-    )
+    @DefaultMessage("An HTML snippet to be included in branding footer. Use '$baseUrl' to insert the base URL of the " +
+        "server (e.g. to reference an image)")
     String footerHtmlHelp();
   }
 

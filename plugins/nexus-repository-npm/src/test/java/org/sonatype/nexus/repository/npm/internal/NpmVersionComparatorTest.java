@@ -41,6 +41,11 @@ public class NpmVersionComparatorTest
   }
 
   @Test
+  public void shouldReturnPackageWhenPackageRootIsNull() throws Exception {
+    assertThat(extractPackageRootVersionUnlessEmpty.apply(null, "2.0.0"), is("2.0.0"));
+  }
+
+  @Test
   public void shouldReturnPackageWhenLatest() throws Exception {
     assertThat(extractNewestVersion.apply("1.0.0", "2.0.0"), is("2.0.0"));
   }

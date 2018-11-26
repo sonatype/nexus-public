@@ -31,12 +31,24 @@ public interface PyPiHostedFacet
     extends Facet
 {
   /**
+   * Retrieve root index.
+   *
+   * @return simple root HTML
+   */
+  Content getRootIndex();
+
+  /**
+   * Deletes the root index asset
+   */
+  void deleteRootIndex();
+
+  /**
    * Retrieve index.
    *
    * @param name package name
    * @return simple package HTML
    */
-  Content getIndex(String name);
+  Content getIndex(String name) throws IOException;
 
   /**
    * Retrieve package.
@@ -73,4 +85,12 @@ public interface PyPiHostedFacet
    * @return the path
    */
   String createPackagePath(String name, String version, String filename);
+
+  /**
+   * Deletes an index related to a given package
+   * 
+   * @param packageName - packageName to use for finding the index to be removed
+   * @since 3.next
+   */
+  void deleteIndex(String packageName);
 }

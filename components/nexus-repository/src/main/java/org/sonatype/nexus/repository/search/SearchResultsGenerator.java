@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.search;
 
 import java.util.List;
+
 import org.elasticsearch.action.search.SearchResponse;
 /**
  * Generates search results consumable by the UI

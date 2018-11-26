@@ -16,8 +16,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.elasticsearch.search.lookup.SourceLookup;
-
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
@@ -25,6 +23,8 @@ import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.selector.VariableSource;
+
+import org.elasticsearch.search.lookup.SourceLookup;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.FORMAT;

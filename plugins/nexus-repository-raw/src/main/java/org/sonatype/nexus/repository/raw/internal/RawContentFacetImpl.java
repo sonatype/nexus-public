@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.blobstore.api.Blob;
@@ -30,6 +31,7 @@ import org.sonatype.nexus.repository.raw.RawContentFacet;
 import org.sonatype.nexus.repository.raw.RawCoordinatesHelper;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
+import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageFacet;
@@ -43,8 +45,10 @@ import org.sonatype.nexus.repository.transaction.TransactionalTouchMetadata;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.BlobPayload;
+import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
@@ -60,6 +64,13 @@ public class RawContentFacetImpl
     implements RawContentFacet
 {
   private static final List<HashAlgorithm> hashAlgorithms = Arrays.asList(MD5, SHA1);
+
+  private final AssetEntityAdapter assetEntityAdapter;
+
+  @Inject
+  public RawContentFacetImpl(final AssetEntityAdapter assetEntityAdapter) {
+    this.assetEntityAdapter = checkNotNull(assetEntityAdapter);
+  }
 
   // TODO: raw does not have config, this method is here only to have this bundle do Import-Package org.sonatype.nexus.repository.config
   // TODO: as FacetSupport subclass depends on it. Actually, this facet does not need any kind of configuration
@@ -90,6 +101,17 @@ public class RawContentFacetImpl
     try (TempBlob tempBlob = storageFacet.createTempBlob(content, hashAlgorithms)) {
       return doPutContent(path, tempBlob, content);
     }
+  }
+
+  @Override
+  @TransactionalStoreBlob
+  public Asset put(final String path, final AssetBlob assetBlob, @Nullable final AttributesMap contentAttributes) {
+    StorageTx tx = UnitOfWork.currentTx();
+    Asset asset = getOrCreateAsset(getRepository(), path, RawCoordinatesHelper.getGroup(path), path);
+    tx.attachBlob(asset, assetBlob);
+    Content.applyToAsset(asset, Content.maintainLastModified(asset, contentAttributes));
+    tx.saveAsset(asset);
+    return asset;
   }
 
   @TransactionalStoreBlob
@@ -141,6 +163,7 @@ public class RawContentFacetImpl
     else {
       // UPDATE
       asset = tx.firstAsset(component);
+      asset = asset != null ? asset : tx.createAsset(bucket, component).name(assetName);
     }
 
     return asset;
@@ -183,6 +206,13 @@ public class RawContentFacetImpl
     log.debug("Updating cacheInfo of {} to {}", path, cacheInfo);
     CacheInfo.applyToAsset(asset, cacheInfo);
     tx.saveAsset(asset);
+  }
+
+  @Override
+  @Transactional
+  public boolean assetExists(final String name) {
+    StorageTx tx = UnitOfWork.currentTx();
+    return assetEntityAdapter.exists(tx.getDb(), name, tx.findBucket(getRepository()));
   }
 
   private Component findComponent(StorageTx tx, Bucket bucket, String path) {

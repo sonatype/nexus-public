@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.coreui.internal.search;
+package org.sonatype.nexus.repository.search;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,13 +25,15 @@ import org.elasticsearch.index.query.QueryStringQueryBuilder;
 /**
  * "Keyword" {@link SearchContribution} (adds filter as an ES query string).
  *
- * @since 3.0
+ * @since 3.next
  */
-@Named("keyword")
+@Named(KeywordSearchContribution.NAME)
 @Singleton
 public class KeywordSearchContribution
     extends SearchContributionSupport
 {
+  public static final String NAME = "keyword";
+
   // Allow dependency searches of the form "group:name[:version][:extension][:classifier]"
   private Pattern dependencyPattern = Pattern.compile(
       "^(?<group>[^\\s:]+):(?<name>[^\\s:]+)(:(?<version>[^\\s:]+))?(:(?<extension>[^\\s:]+))?(:(?<classifier>[^\\s:]+))?$");

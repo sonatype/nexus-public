@@ -10,22 +10,30 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.coreui.internal.search;
+package org.sonatype.nexus.repository.search;
+
+import javax.inject.Named;
+import javax.inject.Singleton;
 
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 
 /**
- * Support for {@link SearchContribution} implementations.
+ * "attributes.docker.content_digest" {@link SearchContribution} (adds a prefix query for content_digest).
  *
- * @since 3.0
+ * @since 3.next
  */
-public class SearchContributionSupport
-    implements SearchContribution
+@Named("assets.attributes.docker.content_digest")
+@Singleton
+public class DockerContentDigestSearchContribution
+    extends SearchContributionSupport
 {
 
   @Override
   public void contribute(final BoolQueryBuilder query, final String type, final String value) {
-    // do nothing
+    if (value != null) {
+      query.filter(QueryBuilders.termQuery(type, value));
+    }
   }
 
 }

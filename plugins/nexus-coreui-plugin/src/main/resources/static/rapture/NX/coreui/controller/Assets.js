@@ -76,6 +76,13 @@ Ext.define('NX.coreui.controller.Assets', {
       return icons;
     });
 
+    ['debian', 'json'].forEach(function(fileName) {
+      fileExtensionIcons['asset-type-' + fileName] = {
+        file: fileName + '.png',
+        variants: ['x16', 'x32']
+      };
+    });
+
     var formatIcons = [{}, 'code', 'ruby'].reduce(function(icons, extension) {
       icons['asset-type-' + extension] = {
         file: 'page_white_' + extension + '.png',

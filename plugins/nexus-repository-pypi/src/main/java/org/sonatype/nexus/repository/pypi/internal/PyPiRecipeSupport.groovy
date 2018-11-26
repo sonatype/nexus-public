@@ -119,6 +119,17 @@ abstract class PyPiRecipeSupport
   }
 
   /**
+   * Matcher for index mapping.
+   */
+  static Builder rootIndexMatcher() {
+    new Builder().matcher(
+        LogicMatchers.and(
+            new ActionMatcher(GET, HEAD),
+            new TokenMatcher('/simple/')
+        ))
+  }
+
+  /**
    * Matcher for packages mapping.
    */
   static Builder packagesMatcher() {

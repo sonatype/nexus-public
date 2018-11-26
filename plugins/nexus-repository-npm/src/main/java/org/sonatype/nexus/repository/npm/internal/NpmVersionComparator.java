@@ -16,6 +16,8 @@ import java.util.function.BiFunction;
 
 import org.sonatype.nexus.common.app.VersionComparator;
 
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+
 /**
  * Utility class for Npm version comparison
  *
@@ -26,7 +28,7 @@ public final class NpmVersionComparator
   public static final VersionComparator versionComparator = new VersionComparator();
 
   public static final BiFunction<String, String, String> extractPackageRootVersionUnlessEmpty = (packageRootVersion, packageVersion) ->
-      packageRootVersion.isEmpty() ? packageVersion : packageRootVersion;
+      isEmpty(packageRootVersion) ? packageVersion : packageRootVersion;
 
   public static final BiFunction<String, String, String> extractAlwaysPackageVersion = (packageRootVersion, packageVersion) -> packageVersion;
 

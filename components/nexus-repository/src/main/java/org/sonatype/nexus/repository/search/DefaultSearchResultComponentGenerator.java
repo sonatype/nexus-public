@@ -28,7 +28,6 @@ import org.elasticsearch.search.SearchHit;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.FORMAT;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.GROUP;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.NAME;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REPOSITORY_NAME;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.VERSION;
 
 /**

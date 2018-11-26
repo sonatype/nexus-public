@@ -12,10 +12,14 @@
  */
 package org.sonatype.nexus.repository.rest;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.rest.internal.resources.RepositoryManagerRESTAdapter;
+import org.sonatype.nexus.repository.search.DefaultSearchContribution;
+import org.sonatype.nexus.repository.search.KeywordSearchContribution;
+import org.sonatype.nexus.repository.search.SearchContribution;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -50,7 +54,10 @@ public class SearchUtilsTest
         )
     );
 
-    underTest = new SearchUtils(repositoryManagerRESTAdapter, searchMappings);
+    Map<String, SearchContribution> searchContributions = new HashMap<>();
+    searchContributions.put(DefaultSearchContribution.NAME, new DefaultSearchContribution());
+    searchContributions.put(KeywordSearchContribution.NAME, new KeywordSearchContribution());
+    underTest = new SearchUtils(repositoryManagerRESTAdapter, searchMappings, searchContributions);
   }
 
   @Test

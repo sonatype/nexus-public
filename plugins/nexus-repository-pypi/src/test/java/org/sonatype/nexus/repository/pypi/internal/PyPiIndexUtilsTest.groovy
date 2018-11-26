@@ -44,7 +44,7 @@ class PyPiIndexUtilsTest
 
   def 'Correctly rewrite links on an index page, skipping over unprocessable ones'() {
     when: 'Links are rewritten so that the packages directory is a relative link'
-      Map<String, String> links = PyPiIndexUtils.makeLinksRelative([
+      Map<String, String> links = PyPiIndexUtils.makePackageLinksRelative([
           'sample-1.2.0.tar.bz2' : '../../packages/sample-1.2.0.tar.bz2#md5=00c3db1c8ab5d10a2049fe384c8d53e5',
           'sample-1.2.1-py2.py3-none-any.whl' : '/packages/sample-1.2.1-py2.py3-none-any.whl#md5=5c286195d47014fa0ba6e4e5b0801faf',
           'sample-1.2.2-py2.py3-none-any.whl' : 'http://example.com/packages/sample-1.2.1-py2.py3-none-any.whl#md5=5c286195d47014fa0ba6e4e5b0801faf',
@@ -55,6 +55,36 @@ class PyPiIndexUtilsTest
           'sample-1.2.0.tar.bz2' : '../../packages/sample-1.2.0.tar.bz2#md5=00c3db1c8ab5d10a2049fe384c8d53e5',
           'sample-1.2.1-py2.py3-none-any.whl' : '../../packages/sample-1.2.1-py2.py3-none-any.whl#md5=5c286195d47014fa0ba6e4e5b0801faf',
           'sample-1.2.2-py2.py3-none-any.whl' : '../../packages/sample-1.2.1-py2.py3-none-any.whl#md5=5c286195d47014fa0ba6e4e5b0801faf'
+      ]
+  }
+
+  def 'Correctly extract links from a root index page'() {
+    when: 'A valid index page is parsed'
+      Map<String, String> links = getClass().getResourceAsStream('pypi_index.htm').withCloseable { input ->
+        PyPiIndexUtils.extractLinksFromIndex(input)
+      }
+    then: 'the links will be extracted'
+      links == [
+          '1and1' : '/simple/1and1/',
+          'ansible-shell' : '/simple/ansible-shell/',
+          'roleplay' : '/simple/roleplay/',
+          'tibl-cli' : '/simple/tibl-cli/',
+          'zzhfun' : '/simple/zzhfun/'
+      ]
+  }
+
+  def 'Correctly rewrite links on a root index page'() {
+    when: 'A valid index page is parsed'
+      Map<String, String> links = getClass().getResourceAsStream('pypi_index.htm').withCloseable { input ->
+        PyPiIndexUtils.makeRootIndexLinksRelative(PyPiIndexUtils.extractLinksFromIndex(input))
+      }
+    then: 'the links will be extracted'
+      links == [
+          '1and1' : '1and1/',
+          'ansible-shell' : 'ansible-shell/',
+          'roleplay' : 'roleplay/',
+          'tibl-cli' : 'tibl-cli/',
+          'zzhfun' : 'zzhfun/'
       ]
   }
 }

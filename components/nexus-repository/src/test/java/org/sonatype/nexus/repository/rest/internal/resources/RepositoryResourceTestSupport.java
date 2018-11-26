@@ -26,6 +26,9 @@ import org.sonatype.nexus.repository.browse.BrowseService;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.SearchUtils;
+import org.sonatype.nexus.repository.search.DefaultSearchContribution;
+import org.sonatype.nexus.repository.search.KeywordSearchContribution;
+import org.sonatype.nexus.repository.search.SearchContribution;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
@@ -35,6 +38,7 @@ import org.junit.Before;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.mockito.Mockito.when;
@@ -70,7 +74,8 @@ public abstract class RepositoryResourceTestSupport
           new SearchMapping("sha256", "assets.attributes.checksum.sha256", ""),
           new SearchMapping("maven.extension", "assets.attributes.maven2.extension", ""),
           new SearchMapping("maven.classifier", "assets.attributes.maven2.classifier", ""),
-          new SearchMapping("mvn.extension", "assets.attributes.maven2.extension", "")
+          new SearchMapping("mvn.extension", "assets.attributes.maven2.extension", ""),
+          new SearchMapping("q", "keyword", "")
       )
   );
 
@@ -88,7 +93,10 @@ public abstract class RepositoryResourceTestSupport
     storageTxSupplier = () -> storageTx;
     when(storageFacet.txSupplier()).thenReturn(storageTxSupplier);
 
-    searchUtils = new SearchUtils(repositoryManagerRESTAdapter, searchMappings);
+    Map<String, SearchContribution> searchContributions = new HashMap<>();
+    searchContributions.put(DefaultSearchContribution.NAME, new DefaultSearchContribution());
+    searchContributions.put(KeywordSearchContribution.NAME, new KeywordSearchContribution());
+    searchUtils = new SearchUtils(repositoryManagerRESTAdapter, searchMappings, searchContributions);
 
     assetMapUtils = new AssetMapUtils(searchUtils);
   }

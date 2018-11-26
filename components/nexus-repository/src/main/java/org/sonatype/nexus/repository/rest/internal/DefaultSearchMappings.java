@@ -35,7 +35,7 @@ public class DefaultSearchMappings
     implements SearchMappings
 {
   private static final List<SearchMapping> MAPPINGS = ImmutableList.of(
-      new SearchMapping("q", "q", "Query by keyword"),
+      new SearchMapping("q", "keyword", "Query by keyword"),
       new SearchMapping("repository", REPOSITORY_NAME, "Repository name"),
       new SearchMapping("format", "format", "Query by format"),
       new SearchMapping("group", "group.raw", "Component group"),

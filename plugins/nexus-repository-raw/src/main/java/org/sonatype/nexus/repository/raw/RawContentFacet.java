@@ -16,10 +16,12 @@ import java.io.IOException;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 
@@ -37,6 +39,14 @@ public interface RawContentFacet
 
   Content put(String path, Payload content) throws IOException;
 
+  /**
+   * Accepts an {@link AssetBlob}, creates an {@link Asset} if one doesn't already exist at {@code path},
+   * and returns it.
+   *
+   * @since 3.next
+   */
+  Asset put(String path, AssetBlob assetBlob, @Nullable AttributesMap contentAttributes);
+
   boolean delete(String path) throws IOException;
 
   /**
@@ -47,4 +57,11 @@ public interface RawContentFacet
   void setCacheInfo(String path, Content content, CacheInfo cacheInfo) throws IOException;
 
   Asset getOrCreateAsset(Repository repository, String componentName, String componentGroup, String assetName);
+
+  /*
+   * Check for the existence of an {@link Asset} with {@code name}.
+   *
+   * @since 3.next
+   */
+  boolean assetExists(String name);
 }
