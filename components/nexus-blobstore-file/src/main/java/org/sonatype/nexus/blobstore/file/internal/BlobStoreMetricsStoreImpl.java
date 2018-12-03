@@ -148,6 +148,7 @@ public class BlobStoreMetricsStoreImpl
 
   @Override
   protected void doStop() throws Exception {
+    blobStore = null;
     metricsWritingJob.cancel();
     metricsWritingJob = null;
     quotaCheckingJob.cancel();
@@ -163,7 +164,6 @@ public class BlobStoreMetricsStoreImpl
 
   @Override
   public void setStorageDir(final Path storageDirectory) {
-    checkState(this.storageDirectory == null, "Do not initialize twice");
     checkNotNull(storageDirectory);
     checkArgument(Files.isDirectory(storageDirectory));
     this.storageDirectory = storageDirectory;

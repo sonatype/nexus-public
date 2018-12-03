@@ -80,6 +80,7 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
         name: 'isQuotaEnabled',
         itemId: 'isQuotaEnabled',
         boxLabel: NX.I18n.get('Blobstore_BlobstoreSettingsForm_EnableSoftQuota_FieldLabel'),
+        readOnly: true,
         listeners: {
           change: function(checkbox, newValue) {
             var quotaTypeField = me.down('#quotaType');
@@ -99,6 +100,7 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
         queryMode: 'local',
         displayField: 'name',
         valueField: 'id',
+        readOnly: true,
         allowBlank: true
       },
       {
@@ -109,6 +111,7 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
         minValue: 0,
         allowDecimals: false,
         allowExponential: true,
+        readOnly: true,
         allowBlank: true
       },
       {
@@ -173,6 +176,7 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
       callback: function() {
         members.suspendEvents();
         members.setValue(membersValue);
+        members.validateValue();
         members.resumeEvents();
       }
     });
@@ -182,12 +186,13 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
     var me = this;
 
     if (editable || !NX.Permissions.check('nexus:blobstores:update')) {
+      me.quotaFieldsReadOnly(false);
+      NX.getApplication().getController('Blobstores').showWarning(
+          NX.I18n.format('Blobstore_BlobstoreFeature_Editing_Enabled_Message'));
       me.callParent(arguments);
     }
     else {
-      //if we have edit permissions BUT the blobstore doesn't support editing, we still need to be able to modify the quota's values
-      //first set the overall form to be editable so buttons and the like are correct.
-      me.callParent([true]);
+      me.quotaFieldsReadOnly(true);
 
       //if the form has any fields
       if (me.items != null) {
@@ -198,6 +203,15 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
 
         me.setItemsEditable(false, itemsToDisable);
       }
+    }
+  },
+
+  quotaFieldsReadOnly: function(readOnly) {
+    var me = this;
+    if (me.items) {
+      Ext.Array.forEach(['#isQuotaEnabled', '#quotaType', '#quotaLimit'], function(f) {
+        me.down(f).setReadOnly(readOnly);
+      });
     }
   }
 });

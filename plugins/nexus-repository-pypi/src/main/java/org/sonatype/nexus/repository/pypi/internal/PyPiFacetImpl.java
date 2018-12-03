@@ -45,6 +45,7 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiFileUtils.extractV
 import static org.sonatype.nexus.repository.pypi.internal.PyPiInfoUtils.extractMetadata;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.isIndexPath;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.isPackagePath;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.isRootIndexPath;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.normalizeName;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
@@ -74,6 +75,10 @@ public class PyPiFacetImpl
   public Asset put(final String path, final AssetBlob assetBlob) throws IOException {
     if (isPackagePath(path)) {
       return putPackage(path, assetBlob);
+    }
+    else if (isRootIndexPath(path)) {
+      log.info("Not repairing root index");
+      return null;
     }
     else if (isIndexPath(path)) {
       return putIndex(path, assetBlob);

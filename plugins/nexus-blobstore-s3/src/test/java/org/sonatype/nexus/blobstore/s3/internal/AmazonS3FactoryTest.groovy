@@ -70,6 +70,7 @@ class AmazonS3FactoryTest
 
   def 'pathStyleAccess is set when provided in config'() {
     when: 'pathStyleAccess is provided'
+      config.attributes.s3.region = 'us-west-2'
       config.attributes.s3.forcepathstyle = 'true'
       def s3 = amazonS3Factory.create(config)
 

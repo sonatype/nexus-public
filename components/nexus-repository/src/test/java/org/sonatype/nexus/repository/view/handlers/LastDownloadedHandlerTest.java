@@ -36,7 +36,6 @@ import org.mockito.Mock;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -168,6 +167,11 @@ public class LastDownloadedHandlerTest
   @Test
   public void onlyUpdateForGetAndHeadRequests() throws Exception {
     assertDownloadedTimeNotUpdatedFor(PUT, POST, DELETE, OPTIONS);
+  }
+
+  @Test
+  public void handleNullOnSecondFindAsset() throws Exception {
+    underTest.updateLastDownloadedTime(tx, null);
   }
   
   private void assertDownloadedTimeNotUpdatedFor(String... methods) throws Exception {

@@ -754,16 +754,7 @@ def runBuild() {
   }
 
   // execute command
-  def process = new ProcessBuilder("unbuffer", "./mvnw", buildOptions.mavenCommand).redirectErrorStream(true).start()
-  process.inputStream.eachLine {
-    // print to console
-    println it
-    // dump to build.log (strip colour)
-    buildLog << it.replaceAll("\u001B\\[[;\\d]*m", "") + "\n"
-  }
-  process.waitFor()
-
-  def exitValue = process.exitValue()
+  def exitValue = mvnw(buildOptions.mavenCommand).exitValue()
 
   debug("Build process exit value: $exitValue")
 
@@ -1090,10 +1081,14 @@ def sass() {
   mvnw('clean install -Pdriver -Dmode=build -pl :nexus-rapture')
 }
 
+/**
+ * @param cmd a String with the entire command to execute
+ * @return
+ */
 def mvnw(cmd) {
   info("Running command: ./mvnw $cmd")
 
-  def process = new ProcessBuilder("unbuffer", "./mvnw", cmd).redirectErrorStream(true).start()
+  def process = new ProcessBuilder("unbuffer", "./mvnw", *cmd.split()).redirectErrorStream(true).start()
   process.inputStream.eachLine {
     // print to console
     println it
@@ -1103,10 +1098,10 @@ def mvnw(cmd) {
   process.waitFor()
 
   info("Done")
+  return process
 }
 
 // SCRIPT STARTS HERE
-
 removeBuildLog()
 
 if (!processCliOptions(args)) {

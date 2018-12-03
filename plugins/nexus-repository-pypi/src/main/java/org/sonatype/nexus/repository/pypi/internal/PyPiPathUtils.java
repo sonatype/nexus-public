@@ -102,6 +102,16 @@ public final class PyPiPathUtils
 
   /**
    * @param path for an asset
+   * @return {@code true} if the {@code path} represents the root index
+   *
+   * @since 3.next
+   */
+  static boolean isRootIndexPath(final String path) {
+    return path.equals(INDEX_PATH_PREFIX);
+  }
+
+  /**
+   * @param path for an asset
    * @return {@code true} if the {@code path} represents an index
    *
    * @since 3.14

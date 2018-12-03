@@ -41,8 +41,10 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.startsWith;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_SUMMARY;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.INDEX_PATH_PREFIX;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
 public class PyPiFacetImplTest
@@ -172,5 +174,12 @@ public class PyPiFacetImplTest
     verify(tx).attachBlob(asset, assetBlob);
     verify(asset).blobCreated(createdDateTime);
     verify(tx).saveAsset(asset);
+  }
+
+  @Test
+  public void testPutRootIndex() throws Exception {
+    underTest.put(INDEX_PATH_PREFIX, assetBlob);
+
+    verifyZeroInteractions(assetBlob, tx, repository);
   }
 }

@@ -208,15 +208,10 @@ class BlobStoreComponent
 
   BlobStoreXO asBlobStoreXO(final BlobStore blobStore, final Collection<BlobStoreGroup> blobStoreGroups = []) {
     NestedAttributesMap quotaAttributes = blobStore.getBlobStoreConfiguration().attributes(BlobStoreQuotaSupport.ROOT_KEY)
-
-    return new BlobStoreXO(
+    def blobStoreXO = new BlobStoreXO(
         name: blobStore.blobStoreConfiguration.name,
         type: blobStore.blobStoreConfiguration.type,
         attributes: blobStore.blobStoreConfiguration.attributes,
-        blobCount: blobStore.metrics.blobCount,
-        totalSize: blobStore.metrics.totalSize,
-        availableSpace: blobStore.metrics.availableSpace,
-        unlimited: blobStore.metrics.unlimited,
         repositoryUseCount: repositoryManager.blobstoreUsageCount(blobStore.blobStoreConfiguration.name),
         blobStoreUseCount: blobStoreManager.blobStoreUsageCount(blobStore.blobStoreConfiguration.name),
         inUse: repositoryManager.isBlobstoreUsed(blobStore.blobStoreConfiguration.name),
@@ -226,6 +221,15 @@ class BlobStoreComponent
         quotaLimit: (Long) quotaAttributes.get(BlobStoreQuotaSupport.LIMIT_KEY, Long.class, 0L) / MILLION,
         groupName: blobStoreGroups.find { it.members.contains(blobStore) }?.blobStoreConfiguration?.name
     )
+    if (blobStore.isStarted()) {
+      blobStoreXO.with {
+        blobCount = blobStore.metrics.blobCount
+        totalSize = blobStore.metrics.totalSize
+        availableSpace = blobStore.metrics.availableSpace
+        unlimited = blobStore.metrics.unlimited
+      }
+    }
+    return blobStoreXO
   }
 
   @DirectMethod

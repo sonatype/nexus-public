@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.view.handlers;
 
 import java.io.IOException;
 
+import javax.annotation.Nullable;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -24,12 +25,15 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
-import org.sonatype.nexus.repository.transaction.TransactionalStoreMetadata;
+import org.sonatype.nexus.repository.transaction.TransactionalTouchMetadata;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.transaction.UnitOfWork;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
@@ -97,17 +101,24 @@ public class LastDownloadedHandler
       throws IOException
   {
     if (asset != null && asset.markAsDownloaded()) {
-      TransactionalStoreMetadata.operation.withDb(storageFacet.txSupplier()).throwing(IOException.class)
+      TransactionalTouchMetadata.operation.withDb(storageFacet.txSupplier())
+          .throwing(IOException.class)
+          .swallow(ORecordNotFoundException.class)
           .call(() -> {
             StorageTx tx = UnitOfWork.currentTx();
             Asset updatedAsset = tx.findAsset(EntityHelper.id(asset));
 
-            if (updatedAsset.markAsDownloaded()) {
-              tx.saveAsset(updatedAsset);
-            }
+            updateLastDownloadedTime(tx, updatedAsset);
 
             return null;
           });
+    }
+  }
+
+  @VisibleForTesting
+  void updateLastDownloadedTime(final StorageTx tx, @Nullable final Asset updatedAsset) {
+    if (updatedAsset != null && updatedAsset.markAsDownloaded()) {
+      tx.saveAsset(updatedAsset);
     }
   }
 }

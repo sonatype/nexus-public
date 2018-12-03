@@ -369,13 +369,7 @@ Ext.define('NX.coreui.controller.Users', {
     userSourceButton.sourceId = menuItem.source.getId();
 
     me.getUserSearchBox().setValue(undefined);
-    if (userSourceButton.sourceId === 'default') {
-      me.loadStore();
-    }
-    else {
-      me.updateEmptyText();
-      me.getStore('User').removeAll();
-    }
+    me.loadStore();
   },
 
   /**

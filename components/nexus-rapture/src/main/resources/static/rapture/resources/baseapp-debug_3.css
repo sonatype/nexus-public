@@ -8977,18 +8977,24 @@ fieldset.nx-form-section.nx-no-title {
 .x-panel-nx-drilldown-message {
     padding-left: 8px !important;
     padding-right: 8px !important;
+    padding-top: 2px !important;
     background-color: #fff;
 }
 
 .x-panel-nx-drilldown-message .x-panel-header {
     padding: 8px;
     border: 1px solid !important;
-    height: 32px;
+    height: fit-content;
     border-radius: 8px;
 }
 
 .x-panel-nx-drilldown-message .x-panel-header img {
     margin-right: 5px !important;
+}
+
+.x-panel-nx-drilldown-message .x-panel-header .x-title-text {
+    overflow: unset;
+    white-space: unset;
 }
 
 .x-panel-nx-drilldown-message.nx-drilldown-warning .x-panel-header {

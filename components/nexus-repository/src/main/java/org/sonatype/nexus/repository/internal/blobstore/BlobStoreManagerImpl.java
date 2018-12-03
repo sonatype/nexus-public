@@ -29,7 +29,9 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreCreatedEvent;
 import org.sonatype.nexus.blobstore.api.BlobStoreDeletedEvent;
+import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.blobstore.api.BlobStoreUpdatedEvent;
 import org.sonatype.nexus.blobstore.file.FileBlobStoreConfigurationBuilder;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
@@ -208,14 +210,32 @@ public class BlobStoreManagerImpl
   @Guarded(by = STARTED)
   public BlobStore update(final BlobStoreConfiguration configuration) throws Exception {
     checkNotNull(configuration);
+
+    BlobStore blobStore = get(configuration.getName());
+    checkNotNull(blobStore);
+
     log.debug("Updating BlobStore: {} with attributes: {}", configuration.getName(),
         configuration.getAttributes());
     BlobStoreDescriptor blobStoreDescriptor = blobStoreDescriptors.get(configuration.getType());
     blobStoreDescriptor.validateConfig(configuration);
 
-    BlobStore blobStore = get(configuration.getName());
-    store.update(configuration);
-    blobStore.init(configuration);
+    BlobStoreConfiguration currentConfig = blobStore.getBlobStoreConfiguration();
+
+    blobStore.stop();
+    try {
+      blobStore.init(configuration);
+      blobStore.start();
+      store.update(configuration);
+      eventManager.post(new BlobStoreUpdatedEvent(blobStore));
+    } catch (Exception e) {
+      log.error("Failed to update configuration", e);
+      if (blobStore.isStarted()) {
+        blobStore.stop();
+      }
+      blobStore.init(currentConfig);
+      blobStore.start();
+      throw new BlobStoreException("Failed to start blob store with new configuration.", null);
+    }
 
     return blobStore;
   }
@@ -335,7 +355,9 @@ public class BlobStoreManagerImpl
         String name = evt.getName();
         if (stores.containsKey(name)) {
           BlobStore blobStore = blobStore(name);
+          blobStore.stop();
           blobStore.init(event.getEntity());
+          blobStore.start();
         }
       }
       catch (Exception e) {

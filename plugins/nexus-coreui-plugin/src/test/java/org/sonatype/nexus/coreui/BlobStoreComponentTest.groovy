@@ -125,6 +125,7 @@ class BlobStoreComponentTest
       1 * repositoryManager.blobstoreUsageCount(_ as String) >> 2L
       1 * blobStoreGroupService.isEnabled() >> true
       1 * blobStoreGroupService.promote(from) >> Mock(BlobStoreGroup) {
+          isStarted() >> true
           getBlobStoreConfiguration() >> new BlobStoreConfiguration(name: 'name', type: 'type',
             attributes: ['group': ['members': 'name-promoted'], blobStoreQuotaConfig: [:]])
         getMetrics() >> Mock(BlobStoreMetrics) {

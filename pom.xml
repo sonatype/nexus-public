@@ -783,6 +783,8 @@
               <id>resteasy-multipart-provider</id>
               <id>resteasy-validator-provider-11</id>
               <id>resteasy-client</id>
+              <id>swagger-core</id>
+              <id>swagger-jaxrs</id>
             </excludedArtifactIds>
           </configuration>
         </plugin>

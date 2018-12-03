@@ -146,6 +146,10 @@ public class S3BlobStoreMetricsStore
     jobService.stopUsing();
 
     blobCount = null;
+    blobStore = null;
+    bucket = null;
+    s3 = null;
+    bucketPrefix = null;
     totalSize = null;
     dirty = null;
 

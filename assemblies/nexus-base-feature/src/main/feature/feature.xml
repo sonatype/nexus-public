@@ -33,10 +33,10 @@
     <bundle>wrap:${mvn:resteasy-client}$Bundle-SymbolicName=resteasy-client&amp;Fragment-Host=org.sonatype.nexus.siesta</bundle>
 
     <!--
-    Relax Swagger import constraints so we can use latest release of Guava
+    Relax Swagger import constraints so we can use latest release of Guava, and make use of Reflections optional
     -->
     <bundle>wrap:${mvn:swagger-core}$overwrite=merge&amp;Import-Package=com.google.common.*,*</bundle>
-    <bundle>wrap:${mvn:swagger-jaxrs}$overwrite=merge&amp;Import-Package=com.google.common.*,*</bundle>
+    <bundle>wrap:${mvn:swagger-jaxrs}$overwrite=merge&amp;Import-Package=com.google.common.*,org.reflections.*;resolution:=optional,*</bundle>
 
     <!--
     Give our extender bundle its own start level (distinct from the boot start-level)

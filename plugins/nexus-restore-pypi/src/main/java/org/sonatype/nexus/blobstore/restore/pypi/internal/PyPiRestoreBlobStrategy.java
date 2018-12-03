@@ -28,6 +28,7 @@ import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.pypi.PyPiFacet;
+import org.sonatype.nexus.repository.pypi.repair.PyPiRepairIndexComponent;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreMetadata;
 import org.sonatype.nexus.transaction.Transactional;
@@ -46,13 +47,17 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
 public class PyPiRestoreBlobStrategy
     extends BaseRestoreBlobStrategy<PyPiRestoreBlobData>
 {
+  private final PyPiRepairIndexComponent pyPiRepairIndexComponent;
+
   @Inject
   public PyPiRestoreBlobStrategy(final NodeAccess nodeAccess,
                                  final RepositoryManager repositoryManager,
                                  final BlobStoreManager blobStoreManager,
-                                 final DryRunPrefix dryRunPrefix)
+                                 final DryRunPrefix dryRunPrefix,
+                                 final PyPiRepairIndexComponent pyPiRepairIndexComponent)
   {
     super(nodeAccess, repositoryManager, blobStoreManager, dryRunPrefix);
+    this.pyPiRepairIndexComponent = pyPiRepairIndexComponent;
   }
 
   @Override
@@ -89,6 +94,16 @@ public class PyPiRestoreBlobStrategy
       throws IOException
   {
     data.getBlobData().getRepository().facet(PyPiFacet.class).put(getAssetPath(data), assetBlob);
+  }
+
+  @Override
+  public void after(final boolean updateAssets, final Repository repository) {
+    if (updateAssets) {
+      pyPiRepairIndexComponent.repairRepository(repository);
+    }
+    else {
+      log.info("Updating assets disabled so not running repair of PyPi package metadata");
+    }
   }
 
   @Override

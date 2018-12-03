@@ -254,4 +254,12 @@ public interface BlobStore
   default boolean isReadOnly() {
     return getBlobStoreConfiguration().isReadOnly();
   }
+
+  /**
+   * Returns true if the blobstore has been started.
+   *
+   * @return {@code true} if the blobstore has been started.
+   * @since 3.next
+   */
+  boolean isStarted();
 }

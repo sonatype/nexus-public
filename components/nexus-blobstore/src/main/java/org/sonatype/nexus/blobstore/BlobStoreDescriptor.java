@@ -44,7 +44,7 @@ public interface BlobStoreDescriptor
    * @since 3.14
    */
   default boolean isModifiable() {
-    return false;
+    return true;
   }
 
   /**

@@ -25,6 +25,7 @@ import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.pypi.PyPiFacet;
+import org.sonatype.nexus.repository.pypi.repair.PyPiRepairIndexComponent;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.StorageFacet;
@@ -42,6 +43,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
@@ -89,6 +91,9 @@ public class PyPiRestoreBlobStrategyTest
   @Mock
   BlobStore blobStore;
 
+  @Mock
+  PyPiRepairIndexComponent pyPiRepairIndexComponent;
+
   Properties packageProps = new Properties();
 
   Properties indexProps = new Properties();
@@ -97,8 +102,11 @@ public class PyPiRestoreBlobStrategyTest
 
   @Before
   public void setup() {
-    underTest =
-        new PyPiRestoreBlobStrategy(nodeAccess, repositoryManager, blobStoreManager, new DryRunPrefix("dryrun"));
+    underTest = new PyPiRestoreBlobStrategy(nodeAccess,
+        repositoryManager,
+        blobStoreManager,
+        new DryRunPrefix("dryrun"),
+        pyPiRepairIndexComponent);
 
     packageProps.setProperty("@BlobStore.created-by", "admin");
     packageProps.setProperty("size", "5674");
@@ -176,5 +184,20 @@ public class PyPiRestoreBlobStrategyTest
   @Test
   public void testCorrectChecksums() {
     assertThat(underTest.getHashAlgorithms(), equalTo(ImmutableList.of(SHA1, SHA256, MD5)));
+  }
+
+  @Test
+  public void testRestoreRepairIfAssetsUpdated() {
+    underTest.after(true, repository);
+
+    verify(pyPiRepairIndexComponent).repairRepository(repository);
+    verifyNoMoreInteractions(pyPiRepairIndexComponent);
+  }
+
+  @Test
+  public void testRestoreDoesNotRepairIfAssetsNotUpdated() {
+    underTest.after(false, repository);
+
+    verifyZeroInteractions(pyPiRepairIndexComponent);
   }
 }

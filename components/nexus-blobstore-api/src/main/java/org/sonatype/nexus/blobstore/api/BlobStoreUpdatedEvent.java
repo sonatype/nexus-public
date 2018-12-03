@@ -10,17 +10,18 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.rest;
+
+package org.sonatype.nexus.blobstore.api;
 
 /**
- * Constants relating to REST APIs.
+ * Emitted when a {@link BlobStore} has been updated.
  *
- * @since 3.4
+ * @since 3.next
  */
-public class APIConstants
+public class BlobStoreUpdatedEvent
+  extends BlobStoreEvent
 {
-  private APIConstants() {
+  public BlobStoreUpdatedEvent(final BlobStore blobStore) {
+    super(blobStore);
   }
-
-  public static final String V1_API_PREFIX = "/v1";
 }

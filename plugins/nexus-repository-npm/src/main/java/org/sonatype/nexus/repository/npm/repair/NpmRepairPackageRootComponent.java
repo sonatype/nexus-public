@@ -17,12 +17,10 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
 
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Format;
@@ -33,20 +31,16 @@ import org.sonatype.nexus.repository.npm.internal.NpmFormat;
 import org.sonatype.nexus.repository.npm.internal.NpmHostedFacet;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageId;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageParser;
+import org.sonatype.nexus.repository.repair.RepairMetadataComponent;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
-import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
-import org.sonatype.nexus.repository.transaction.TransactionalStoreMetadata;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.HashCode;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Throwables.propagateIfPossible;
-import static java.util.Collections.singletonList;
 import static java.util.stream.StreamSupport.stream;
 import static org.elasticsearch.common.Strings.isNullOrEmpty;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
@@ -69,16 +63,8 @@ import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_K
 @Named
 @Singleton
 public class NpmRepairPackageRootComponent
-    extends ComponentSupport
+    extends RepairMetadataComponent
 {
-  private static final String BEGINNING_ID = "#-1:-1";
-
-  private static final String ASSETS_WHERE = "@RID > :rid";
-
-  private static final String ASSETS_SUFFIX = "ORDER BY @RID LIMIT :limit";
-
-  private static final int BATCH_SIZE = 100;
-
   private static final String SHASUM = "shasum";
 
   private static final String DIST = "dist";
@@ -86,14 +72,6 @@ public class NpmRepairPackageRootComponent
   private static final String VERSIONS = "versions";
 
   private static final String INTEGRITY = "integrity";
-
-  private final RepositoryManager repositoryManager;
-
-  private final Type hostedType;
-
-  private final Format npmFormat;
-
-  private final AssetEntityAdapter assetEntityAdapter;
 
   private final NpmPackageParser npmPackageParser;
 
@@ -104,11 +82,8 @@ public class NpmRepairPackageRootComponent
                                        @Named(HostedType.NAME) final Type hostedType,
                                        @Named(NpmFormat.NAME) final Format npmFormat)
   {
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.assetEntityAdapter = checkNotNull(assetEntityAdapter);
+    super(repositoryManager, assetEntityAdapter, hostedType, npmFormat);
     this.npmPackageParser = checkNotNull(npmPackageParser);
-    this.hostedType = checkNotNull(hostedType);
-    this.npmFormat = checkNotNull(npmFormat);
   }
 
   public void repair() {
@@ -118,60 +93,14 @@ public class NpmRepairPackageRootComponent
         .forEach(this::doRepairRepository);
   }
 
-  public void repairRepository(final Repository repository) {
-    if (isHostedNpmRepository(repository)) {
-      doRepairRepository(repository);
-    } else {
-      log.info("Not repairing a proxy repository {}", repository.getName());
-    }
-  }
-
-  private boolean isHostedNpmRepository(final Repository repository) {
-    return repository.getFormat().equals(npmFormat) && repository.getType().equals(hostedType);
-  }
-
-  private void doRepairRepository(final Repository repository) {
-    String lastId = BEGINNING_ID;
-    while (lastId != null) {
-      try {
-        lastId = processBatch(repository, lastId);
-      }
-      catch (Exception e) {
-        propagateIfPossible(e, RuntimeException.class);
-        throw new RuntimeException(e);
+  @Override
+  public void updateAsset(final Repository repository, final StorageTx tx, final Asset asset) {
+    if (TARBALL.name().equals(asset.formatAttributes().get(P_ASSET_KIND))) {
+      Blob blob = tx.getBlob(asset.blobRef());
+      if (blob != null) {
+        maybeUpdateAsset(repository, asset, blob);
       }
     }
-    log.info("Finished processing all npm packages for repair");
-  }
-
-  @Nullable
-  private String processBatch(final Repository repository, final String lastId) throws Exception {
-    log.info("Processing next batch of npm packages for repair. Starting at id = {} with max batch size = {}",
-        lastId, BATCH_SIZE);
-
-    return TransactionalStoreMetadata.operation
-        .withDb(repository.facet(StorageFacet.class).txSupplier())
-        .throwing(Exception.class)
-        .call(() -> {
-          Iterable<Asset> assets = readAssets(repository, lastId);
-          return updateAssets(repository, assets);
-        });
-  }
-
-  @Nullable
-  private String updateAssets(final Repository repository, final Iterable<Asset> assets) {
-    String lastId = null;
-    StorageTx tx = UnitOfWork.currentTx();
-    for (Asset asset : assets) {
-      lastId = assetEntityAdapter.recordIdentity(asset).toString();
-      if (TARBALL.name().equals(asset.formatAttributes().get(P_ASSET_KIND))) {
-        Blob blob = tx.getBlob(asset.blobRef());
-        if (blob != null) {
-          maybeUpdateAsset(repository, asset, blob);
-        }
-      }
-    }
-    return lastId;
   }
 
   private void maybeUpdateAsset(final Repository repository, final Asset asset, final Blob blob) {
@@ -257,11 +186,5 @@ public class NpmRepairPackageRootComponent
       log.error("Failed to calculate hash for asset {}", asset.name(), e);
     }
     return "";
-  }
-
-  private Iterable<Asset> readAssets(final Repository repository, final String lastId) {
-    StorageTx storageTx = UnitOfWork.currentTx();
-    Map<String, Object> parameters = ImmutableMap.of("rid", lastId, "limit", BATCH_SIZE);
-    return storageTx.findAssets(ASSETS_WHERE, parameters, singletonList(repository), ASSETS_SUFFIX);
   }
 }

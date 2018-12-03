@@ -91,7 +91,7 @@ public class BlobStoreGroupDescriptor
     );
     this.members.setStoreApi("coreui_Blobstore.readGroupable");
     this.members.setIdMapping("name");
-    this.members.setButtons("add", "remove");
+    this.members.setButtons("up", "add", "remove", "down");
     this.members.setFromTitle("Available");
     this.members.setToTitle("Selected");
     this.fillPolicy = new ComboboxFormField<String>(

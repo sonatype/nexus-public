@@ -15,9 +15,11 @@ package org.sonatype.nexus.blobstore.s3.internal;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -45,6 +47,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.iterable.S3Objects;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.BucketLifecycleConfiguration;
+import com.amazonaws.services.s3.model.BucketLifecycleConfiguration.Rule;
 import com.amazonaws.services.s3.model.ObjectTagging;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
@@ -497,7 +500,11 @@ public class S3BlobStore
         .withStatus(BucketLifecycleConfiguration.ENABLED);
 
     if (existing != null) {
-      existing.getRules().add(rule);
+      List<Rule> rules = existing.getRules().stream()
+          .filter(r -> !LIFECYCLE_EXPIRATION_RULE_ID.equals(r.getId()))
+          .collect(Collectors.toList());
+      rules.add(rule);
+      existing.setRules(rules);
       return existing;
     } else {
       return new BucketLifecycleConfiguration().withRules(rule);

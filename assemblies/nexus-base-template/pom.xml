@@ -280,7 +280,7 @@
                 <replace file="${project.build.directory}/assembly/public/swagger-ui/index.html">
                   <replacefilter token="swagger-ui.js" value="swagger-ui.min.js"/>
                   <!-- point to local documentation -->
-                  <replacefilter token="http://petstore.swagger.io/v2/swagger.json" value="../service/rest/swagger.json?_cb=${project.version}"/>
+                  <replacefilter token="https://petstore.swagger.io/v2/swagger.json" value="../service/rest/swagger.json?_cb=${project.version}"/>
                   <!-- disable remote validation and apply alpha sorting to tags and operations list -->
                   <replacefilter token="SwaggerUIBundle({"
                                  value="SwaggerUIBundle({requestInterceptor:function(r){r.headers['NX-ANTI-CSRF-TOKEN']=(document.cookie.match('(^|; )NX-ANTI-CSRF-TOKEN=([^;]*)')||0)[2];return r;},showMutatedRequest:false,validatorUrl:null,docExpansion:'list',tagsSorter:'alpha',operationsSorter:'alpha',defaultModelsExpandDepth:-1,"/>
