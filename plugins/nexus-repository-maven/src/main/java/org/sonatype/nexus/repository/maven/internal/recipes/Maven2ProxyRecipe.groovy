@@ -27,6 +27,7 @@ import org.sonatype.nexus.repository.httpclient.HttpClientFacet
 import org.sonatype.nexus.repository.maven.MavenPathParser
 import org.sonatype.nexus.repository.maven.RemoveSnapshotsFacet
 import org.sonatype.nexus.repository.maven.internal.Maven2Format
+import org.sonatype.nexus.repository.maven.internal.MavenComponentMaintenanceFacet
 import org.sonatype.nexus.repository.maven.internal.MavenSecurityFacet
 import org.sonatype.nexus.repository.maven.internal.VersionPolicyHandler
 import org.sonatype.nexus.repository.maven.internal.matcher.MavenNx2MetaFilesMatcher
@@ -35,7 +36,6 @@ import org.sonatype.nexus.repository.maven.internal.proxy.MavenProxyIndexFacet
 import org.sonatype.nexus.repository.proxy.ProxyHandler
 import org.sonatype.nexus.repository.purge.PurgeUnusedFacet
 import org.sonatype.nexus.repository.search.SearchFacet
-import org.sonatype.nexus.repository.storage.DefaultComponentMaintenanceImpl
 import org.sonatype.nexus.repository.types.ProxyType
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
 import org.sonatype.nexus.repository.view.Route.Builder
@@ -75,7 +75,7 @@ class Maven2ProxyRecipe
   Provider<PurgeUnusedFacet> purgeUnusedFacet
 
   @Inject
-  Provider<DefaultComponentMaintenanceImpl> componentMaintenanceFacet
+  Provider<MavenComponentMaintenanceFacet> componentMaintenanceFacet
 
   @Inject
   NegativeCacheHandler negativeCacheHandler

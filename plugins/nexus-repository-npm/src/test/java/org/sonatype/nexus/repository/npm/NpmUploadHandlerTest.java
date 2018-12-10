@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.npm;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Optional;
 import java.util.Set;
 
@@ -97,8 +98,10 @@ public class NpmUploadHandlerTest
   @Captor
   private ArgumentCaptor<VariableSource> captor;
 
+  private File packageJson;
+
   @Before
-  public void setup() throws IOException {
+  public void setup() throws IOException, URISyntaxException {
     when(contentPermissionChecker.isPermitted(eq(REPO_NAME), eq(NpmFormat.NAME), eq(BreadActions.EDIT), any()))
         .thenReturn(true);
 
@@ -106,12 +109,10 @@ public class NpmUploadHandlerTest
         new NpmPackageParser(), emptySet());
     when(repository.facet(NpmHostedFacet.class)).thenReturn(npmFacet);
 
+    packageJson = new File(NpmUploadHandlerTest.class.getResource("internal/package.json").toURI());
     when(storageFacet.createTempBlob(any(PartPayload.class), any())).thenAnswer(invocation -> {
       TempBlob blob = mock(TempBlob.class);
-
-      File srcFile = new File(NpmUploadHandlerTest.class.getResource("internal/package.json").toURI());
-
-      when(blob.get()).thenAnswer(i -> ArchiveUtils.pack(tempFolder.newFile(), srcFile, "package/package.json"));
+      when(blob.get()).thenAnswer(i -> ArchiveUtils.pack(tempFolder.newFile(), packageJson, "package/package.json"));
       return blob;
     });
 
@@ -187,6 +188,42 @@ public class NpmUploadHandlerTest
     catch (ValidationErrorsException e) {
       assertThat(e.getValidationErrors().size(), is(1));
       assertThat(e.getValidationErrors().get(0).getMessage(), is("Not authorized for requested path '@foo/bar/-/bar-1.5.3.tgz'"));
+    }
+  }
+
+  @Test
+  public void testHandle_pathWithDot() throws IOException, URISyntaxException {
+    packageJson = new File(NpmUploadHandlerTest.class.getResource("internal/package-path-with-dot.json").toURI());
+
+    ComponentUpload component = new ComponentUpload();
+    AssetUpload assetUpload = new AssetUpload();
+    assetUpload.setPayload(payload);
+    component.getAssetUploads().add(assetUpload);
+
+    try {
+      underTest.handle(repository, component);
+      fail("Expected validation exception");
+    }
+    catch (IllegalArgumentException e) {
+      assertThat(e.getMessage(), is("Name starts with '.' or '_': ./bar"));
+    }
+  }
+
+  @Test
+  public void testHandle_pathWithDots() throws IOException, URISyntaxException {
+    packageJson = new File(NpmUploadHandlerTest.class.getResource("internal/package-path-with-dots.json").toURI());
+
+    ComponentUpload component = new ComponentUpload();
+    AssetUpload assetUpload = new AssetUpload();
+    assetUpload.setPayload(payload);
+    component.getAssetUploads().add(assetUpload);
+
+    try {
+      underTest.handle(repository, component);
+      fail("Expected validation exception");
+    }
+    catch (IllegalArgumentException e) {
+      assertThat(e.getMessage(), is("Non URL-safe name: foo/../bar"));
     }
   }
 

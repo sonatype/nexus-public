@@ -21,6 +21,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
+import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
@@ -30,8 +31,13 @@ import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
+import org.sonatype.nexus.repository.storage.AssetCreatedEvent;
+import org.sonatype.nexus.repository.storage.AssetDeletedEvent;
+import org.sonatype.nexus.repository.storage.AssetEvent;
 import org.sonatype.nexus.repository.storage.Bucket;
+import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
+import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalTouchBlob;
 import org.sonatype.nexus.repository.types.GroupType;
@@ -43,14 +49,20 @@ import org.sonatype.nexus.repository.view.payloads.BlobPayload;
 import org.sonatype.nexus.transaction.UnitOfWork;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
+import com.google.common.eventbus.AllowConcurrentEvents;
+import com.google.common.eventbus.Subscribe;
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.repository.pypi.internal.AssetKind.INDEX;
+import static org.sonatype.nexus.repository.pypi.internal.AssetKind.ROOT_INDEX;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiDataUtils.HASH_ALGORITHMS;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiDataUtils.findAsset;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiDataUtils.toContent;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.INDEX_PATH_PREFIX;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 import static org.sonatype.nexus.repository.view.Content.CONTENT_LAST_MODIFIED;
 
 /**
@@ -71,9 +83,51 @@ public class PyPiGroupFacet
     super(repositoryManager, constraintViolationFactory, groupType);
   }
 
+  @Subscribe
+  @Guarded(by = STARTED)
+  @AllowConcurrentEvents
+  public void on(final AssetCreatedEvent event) {
+    maybeDeleteFromCache(event);
+  }
+
+  @Subscribe
+  @Guarded(by = STARTED)
+  @AllowConcurrentEvents
+  public void on(final AssetDeletedEvent event) {
+    maybeDeleteFromCache(event);
+  }
+
+  private void maybeDeleteFromCache(final AssetEvent event) {
+    if (event.isLocal() &&
+        member(event.getRepositoryName()) &&
+        ROOT_INDEX.name().equals(event.getAsset().formatAttributes().get(P_ASSET_KIND, String.class))) {
+      deleteFromCache(INDEX_PATH_PREFIX);
+    }
+  }
+
+  private void deleteFromCache(final String name) {
+    UnitOfWork.begin(getRepository().facet(StorageFacet.class).txSupplier());
+    try {
+      doDeleteFromCache(name);
+    }
+    finally {
+      UnitOfWork.end();
+    }
+  }
+
+  @TransactionalDeleteBlob
+  protected void doDeleteFromCache(final String name) {
+    StorageTx tx = UnitOfWork.currentTx();
+    Asset asset = tx.findAssetWithProperty(P_NAME, name, tx.findBucket(getRepository()));
+    if (asset != null) {
+      log.info("Deleting cached content {} from {}", name, getRepository().getName());
+      tx.deleteAsset(asset);
+    }
+  }
+
   @TransactionalTouchBlob
   public Content getFromCache(final String name, final AssetKind assetKind) {
-    checkArgument(INDEX.equals(assetKind), "Only index files are cached");
+    checkArgument(INDEX.equals(assetKind) || ROOT_INDEX.equals(assetKind), "Only index files are cached");
 
     final StorageTx tx = UnitOfWork.currentTx();
     final Bucket bucket = tx.findBucket(getRepository());

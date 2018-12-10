@@ -44,17 +44,12 @@ public class DatabaseInstanceNames
   public static final String AUDIT = "audit";
 
   /**
-   * Name of the database storing analytics.
-   */
-  public static final String ANALYTICS = "analytics";
-
-  /**
    * Name of the database storing access log data for licensing.
    */
   public static final String ACCESSLOG = "accesslog";
 
   public static final Set<String> DATABASE_NAMES = ImmutableSet.of(
-      ACCESSLOG, ANALYTICS, AUDIT, CONFIG, COMPONENT, SECURITY);
+      ACCESSLOG, AUDIT, CONFIG, COMPONENT, SECURITY);
 
   private DatabaseInstanceNames() {
     // no construction

@@ -18,6 +18,7 @@ import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl
 import org.sonatype.nexus.crypto.internal.RandomBytesGeneratorImpl
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule
+import org.sonatype.nexus.orient.transaction.OrientFunction
 import org.sonatype.nexus.scheduling.CancelableHelper
 import org.sonatype.nexus.scheduling.TaskInterruptedException
 import org.sonatype.nexus.security.UserPrincipalsHelper
@@ -38,6 +39,7 @@ import static org.hamcrest.Matchers.equalTo
 import static org.hamcrest.Matchers.nullValue
 import static org.junit.Assert.fail
 import static org.mockito.Mockito.when
+import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx
 
 /**
  * Tests {@link ApiKeyStoreImpl}
@@ -53,12 +55,13 @@ class ApiKeyStoreImplTest
 
   private static final String PRINCIPAL_B_DOMAIN = 'bar'
 
-  private static final UserStatus USER_STATUS = UserStatus.disabled
-
   private static final boolean CANCELLED = true
 
   @Rule
   public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory('test')
+
+  @Rule
+  public DatabaseInstanceRule database2 = DatabaseInstanceRule.inMemory('nested')
 
   @Mock
   private UserPrincipalsHelper principalsHelper
@@ -178,7 +181,7 @@ class ApiKeyStoreImplTest
     PrincipalCollection principalB = makePrincipals(PRINCIPAL_B_NAME)
     char[] apiKeyForPrincipalA = underTest.createApiKey(PRINCIPAL_A_DOMAIN, principalA)
     underTest.createApiKey(PRINCIPAL_B_NAME, principalB)
-    when(principalsHelper.getUserStatus(principalA)).thenReturn(USER_STATUS)
+    when(principalsHelper.getUserStatus(principalA)).thenReturn(UserStatus.disabled)
     when(principalsHelper.getUserStatus(principalB)).
         thenThrow(new UserNotFoundException(principalB.getPrimaryPrincipal()))
 
@@ -211,6 +214,36 @@ class ApiKeyStoreImplTest
     //Verify that no api keys were purged even though they belong to non-existent users
     assertThat(underTest.getApiKey(PRINCIPAL_A_DOMAIN, principalA), equalTo(apiKeyForPrincipalA))
     assertThat(underTest.getApiKey(PRINCIPAL_B_DOMAIN, principalB), equalTo(apiKeyForPrincipalB))
+  }
+
+  @Test
+  void 'Purge orphaned API keys pauses/resumes TX'() {
+    PrincipalCollection principalA = makePrincipals(PRINCIPAL_A_NAME)
+    PrincipalCollection principalB = makePrincipals(PRINCIPAL_B_NAME)
+    char[] apiKeyForPrincipalA = underTest.createApiKey(PRINCIPAL_A_DOMAIN, principalA)
+    char[] apiKeyForPrincipalB = underTest.createApiKey(PRINCIPAL_B_DOMAIN, principalB)
+
+    // exercise nested DB to make sure we're isolated from any surrounding API-Key transaction
+    when(principalsHelper.getUserStatus(principalA)).
+        thenAnswer({ invocation ->
+          inTx(database2.instanceProvider).throwing(Exception.class).call((OrientFunction) { db ->
+            assertThat(db.name, equalTo('nested'))
+            UserStatus.active
+          })
+        })
+    when(principalsHelper.getUserStatus(principalB)).
+        thenAnswer({ invocation ->
+          inTx(database2.instanceProvider).throwing(Exception.class).call((OrientFunction) { db ->
+            assertThat(db.name, equalTo('nested'))
+            throw new UserNotFoundException(principalB.getPrimaryPrincipal())
+          })
+        })
+
+    underTest.purgeApiKeys()
+
+    // verify that api keys that belong to non-existent users are purged
+    assertThat(underTest.getApiKey(PRINCIPAL_A_DOMAIN, principalA), equalTo(apiKeyForPrincipalA))
+    assertThat(underTest.getApiKey(PRINCIPAL_B_DOMAIN, principalB), nullValue())
   }
 
   private PrincipalCollection makePrincipals(String name) {

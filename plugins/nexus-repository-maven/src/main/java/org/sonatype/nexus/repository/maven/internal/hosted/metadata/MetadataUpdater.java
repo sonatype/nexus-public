@@ -102,7 +102,7 @@ public class MetadataUpdater
                   new Envelope("new:" + mavenPath.getPath(), toMetadata(metadata))
               )
           );
-          write(mavenPath, updated);
+          writeIfUnchanged(mavenPath, oldMetadata, updated);
         }
         return null;
       });
@@ -117,10 +117,22 @@ public class MetadataUpdater
    */
   @VisibleForTesting
   void replace(final MavenPath mavenPath, final Maven2Metadata metadata) {
-    checkNotNull(mavenPath);
-    checkNotNull(metadata);
     try {
-      write(mavenPath, toMetadata(metadata));
+      TransactionalStoreBlob.operation.throwing(IOException.class).call(() -> {
+        checkNotNull(mavenPath);
+        checkNotNull(metadata);
+
+        final Metadata oldMetadata = MetadataUtils.read(repository, mavenPath);
+        if (oldMetadata == null) {
+          // old does not exists, just write it
+          write(mavenPath, toMetadata(metadata));
+        }
+        else {
+          final Metadata updated = toMetadata(metadata);
+          writeIfUnchanged(mavenPath, oldMetadata, updated);
+        }
+        return null;
+      });
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -200,5 +212,16 @@ public class MetadataUpdater
       throws IOException
   {
     MetadataUtils.write(repository, mavenPath, metadata);
+  }
+
+  private void writeIfUnchanged(final MavenPath mavenPath, final Metadata oldMetadata, final Metadata newMetadata)
+      throws IOException
+  {
+    if (repositoryMetadataMerger.metadataEquals(oldMetadata, newMetadata)) {
+      log.info("metadata for {} hasn't changed, skipping", mavenPath);
+    }
+    else {
+      write(mavenPath, newMetadata);
+    }
   }
 }

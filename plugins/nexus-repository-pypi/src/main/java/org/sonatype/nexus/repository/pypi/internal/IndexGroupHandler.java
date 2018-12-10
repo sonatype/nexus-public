@@ -13,9 +13,9 @@
 package org.sonatype.nexus.repository.pypi.internal;
 
 import java.io.InputStream;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -36,6 +36,9 @@ import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.pypi.internal.AssetKind.INDEX;
+import static org.sonatype.nexus.repository.pypi.internal.AssetKind.ROOT_INDEX;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.INDEX_PATH_PREFIX;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.name;
 
 /**
@@ -63,8 +66,14 @@ class IndexGroupHandler
     checkNotNull(context);
     checkNotNull(dispatched);
 
+    String name;
     AssetKind assetKind = context.getAttributes().get(AssetKind.class);
-    String name = name(context.getAttributes().require(TokenMatcher.State.class));
+    if (ROOT_INDEX.equals(assetKind)) {
+      name = INDEX_PATH_PREFIX;
+    }
+    else {
+      name = name(context.getAttributes().require(TokenMatcher.State.class));
+    }
 
     PyPiGroupFacet groupFacet = context.getRepository().facet(PyPiGroupFacet.class);
     Content content = groupFacet.getFromCache(name, assetKind);
@@ -72,7 +81,7 @@ class IndexGroupHandler
     Map<Repository, Response> memberResponses = getAll(context, groupFacet.members(), dispatched);
 
     if (groupFacet.isStale(name, content, memberResponses)) {
-      String html = mergeResponses(name, memberResponses);
+      String html = mergeResponses(name, assetKind, memberResponses);
       Content newContent = new Content(new StringPayload(html, ContentTypes.TEXT_HTML));
       return HttpResponses.ok(groupFacet.saveToCache(name, newContent));
     }
@@ -80,15 +89,24 @@ class IndexGroupHandler
     return HttpResponses.ok(content);
   }
 
-  private String mergeResponses(final String name, final Map<Repository, Response> remoteResponses) throws Exception {
-    Map<String, String> results = new LinkedHashMap<>();
+  private String mergeResponses(final String name,
+                                final AssetKind assetKind,
+                                final Map<Repository, Response> remoteResponses) throws Exception
+  {
+    Map<String, String> results = new TreeMap<>();
     for (Entry<Repository, Response> entry : remoteResponses.entrySet()) {
       Response response = entry.getValue();
       if (response.getStatus().getCode() == HttpStatus.OK && response.getPayload() != null) {
         processResults(response, results);
       }
     }
-    return PyPiIndexUtils.buildIndexPage(templateHelper, name, results);
+
+    if (INDEX.equals(assetKind)) {
+      return PyPiIndexUtils.buildIndexPage(templateHelper, name, results);
+    }
+    else {
+      return PyPiIndexUtils.buildRootIndexPage(templateHelper, results);
+    }
   }
 
   /**

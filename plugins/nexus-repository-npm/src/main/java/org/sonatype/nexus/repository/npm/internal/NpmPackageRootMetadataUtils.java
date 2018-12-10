@@ -118,12 +118,7 @@ public class NpmPackageRootMetadataUtils
     time.set(CREATED, now);
 
     // Hoisting fields from version metadata
-    String bugsUrl = packageJson.child(NpmAttributes.P_BUGS).get(NpmAttributes.P_URL, String.class);
-    if (bugsUrl != null) {
-      packageRoot.set(NpmAttributes.P_BUGS, bugsUrl);
-    }
-
-
+    setBugsUrl(packageJson, packageRoot);
 
     for (String field : FULL_HOISTED_FIELDS) {
       copy(packageRoot, packageJson, field);
@@ -208,6 +203,21 @@ public class NpmPackageRootMetadataUtils
     }
     else if (object != null) {
       map.set(field, object);
+    }
+  }
+
+  private static void setBugsUrl(NestedAttributesMap packageJson, NestedAttributesMap packageRoot) {
+    Object bugs = packageJson.get(NpmAttributes.P_BUGS);
+    String bugsUrl = null;
+
+    if (bugs instanceof String) {
+      bugsUrl = (String) bugs;
+    } else if (bugs != null) {
+      bugsUrl = packageJson.child(NpmAttributes.P_BUGS).get(NpmAttributes.P_URL, String.class);
+    }
+
+    if (bugsUrl != null) {
+      packageRoot.set(NpmAttributes.P_BUGS, bugsUrl);
     }
   }
 }

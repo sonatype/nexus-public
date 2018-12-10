@@ -174,22 +174,6 @@
         </exclusions>
       </dependency>
 
-      <!-- analytics -->
-
-      <dependency>
-        <groupId>com.sonatype.analytics</groupId>
-        <artifactId>analytics-client</artifactId>
-        <version>1.1.0</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.sonatype.analytics</groupId>
-        <artifactId>analytics-assembly</artifactId>
-        <classifier>bundle</classifier>
-        <type>zip</type>
-        <version>1.1.0</version>
-      </dependency>
-
     </dependencies>
   </dependencyManagement>
 

@@ -475,4 +475,15 @@ public class NpmFormatAttributesExtractorTest
 
     assertThat(asset.formatAttributes().get("search_normalized_version"), is("00001b00002b00003"));
   }
+
+  @Test
+  public void testCopyFormatAttributesWithBugsAsString() {
+    NpmFormatAttributesExtractor underTest = new NpmFormatAttributesExtractor(new ImmutableMap.Builder<String, Object>()
+        .put("bugs", "https://www.example.com/bugString")
+        .build());
+
+    underTest.copyFormatAttributes(asset);
+
+    assertThat(asset.formatAttributes().get("bugs_url"), is("https://www.example.com/bugString"));
+  }
 }

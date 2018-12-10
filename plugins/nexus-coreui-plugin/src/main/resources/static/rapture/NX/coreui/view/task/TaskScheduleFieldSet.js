@@ -62,7 +62,7 @@ Ext.define('NX.coreui.view.task.TaskScheduleFieldSet', {
               taskScheduleFields.up().remove(taskScheduleFields);
             }
 
-            if (newValue) {
+            if (newValue && newValue !== 'internal') {
               combo.ownerCt.add({ xtype: 'nx-coreui-task-schedule-' + newValue });
               form.getForm().checkValidity();
               form.isValid();

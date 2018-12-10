@@ -27,8 +27,8 @@ Ext.define('NX.ext.direct.RemotingProvider', {
    * @override
    */
   queueTransaction: function(transaction) {
-    // NEXUS-18220 - Usages of NX.direct.* don't set the user specified connection timeout
-    transaction.timeout = Ext.Ajax.getTimeout();
+    // NEXUS-18220, NEXUS-18494 - Usages of NX.direct.* may not have set the user specified connection timeout
+    transaction.timeout = transaction.timeout || Ext.Ajax.getTimeout();
 
     if (transaction.callbackOptions && transaction.callbackOptions.enableBuffer === false) {
       this.sendTransaction(transaction);
@@ -44,8 +44,8 @@ Ext.define('NX.ext.direct.RemotingProvider', {
    * @override
    */
   sendTransaction: function(transaction) {
-    // NEXUS-18220 - Usages of NX.direct.* don't set the user specified connection timeout
-    transaction.timeout = Ext.Ajax.getTimeout();
+    // NEXUS-18220, NEXUS-18494 - Usages of NX.direct.* may not have set the user specified connection timeout
+    transaction.timeout = transaction.timeout || Ext.Ajax.getTimeout();
     this.callParent(arguments);
   }
 });

@@ -17,12 +17,8 @@ import java.lang.reflect.InvocationTargetException;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.analytics.EventData;
-import org.sonatype.nexus.analytics.EventDataFactory;
-import org.sonatype.nexus.analytics.EventRecorder;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.extdirect.model.Response;
 
@@ -54,20 +50,11 @@ public class ExtDirectDispatcher
 
   private final ExtDirectExceptionHandler exceptionHandler;
 
-  private final Provider<EventRecorder> recorderProvider;
-
-  private final Provider<EventDataFactory> eventDataFactoryProvider;
-
   @Inject
-  public ExtDirectDispatcher(final BeanLocator beanLocator,
-                             final ExtDirectExceptionHandler exceptionHandler,
-                             final Provider<EventRecorder> recorderProvider,
-                             final Provider<EventDataFactory> eventDataFactoryProvider)
+  public ExtDirectDispatcher(final BeanLocator beanLocator, final ExtDirectExceptionHandler exceptionHandler)
   {
     this.beanLocator = checkNotNull(beanLocator);
     this.exceptionHandler = checkNotNull(exceptionHandler);
-    this.recorderProvider = checkNotNull(recorderProvider);
-    this.eventDataFactoryProvider = checkNotNull(eventDataFactoryProvider);
   }
 
   @Override
@@ -89,20 +76,8 @@ public class ExtDirectDispatcher
     log.debug("Invoking action method: {}, java-method: {}", method.getFullName(), method.getFullJavaMethodName());
 
     Response response = null;
-    EventRecorder recorder = recorderProvider.get();
-    EventData eventData = null;
-    long started = System.nanoTime();
-
-    // Maybe record analytics events
-    if (recorder != null && recorder.isEnabled()) {
-      eventData = eventDataFactoryProvider.get().create("Ext.Direct");
-      eventData.getAttributes().put("type", method.getType().name());
-      eventData.getAttributes().put("name", method.getName());
-      eventData.getAttributes().put("action", method.getActionName());
-    }
 
     MDC.put(getClass().getName(), method.getFullName());
-
     try {
       response = asResponse(super.invokeMethod(method, actionInstance, parameters));
     }
@@ -113,15 +88,6 @@ public class ExtDirectDispatcher
       response = asResponse(exceptionHandler.handleException(method, e));
     }
     finally {
-      // Record analytics event
-      if (recorder != null && eventData != null) {
-        if (response != null) {
-          eventData.getAttributes().put("success", String.valueOf(response.isSuccess()));
-        }
-        eventData.setDuration(System.nanoTime() - started);
-        recorder.record(eventData);
-      }
-
       MDC.remove(getClass().getName());
     }
 

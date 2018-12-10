@@ -7224,6 +7224,10 @@ fieldset.nx-form-section.nx-no-title {
     transform: rotate(90deg);
 }
 
+.x-panel-nx-feature-menu .x-panel-body-nx-feature-menu .x-grid-cell-inner-treecolumn {
+    padding: 5px 8px 4px 6px;
+}
+
 .x-panel-nx-feature-content {
     border-color: #444;
     padding: 0;

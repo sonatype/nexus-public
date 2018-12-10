@@ -227,7 +227,9 @@ public class ComponentsResource
 
     Component component = getComponent(repositoryItemIdXO, repository);
 
-    maintenanceService.deleteComponent(repository, component);
+    if (repository != null && component != null) {
+      maintenanceService.deleteComponent(repository, component);
+    }
   }
 
   /**

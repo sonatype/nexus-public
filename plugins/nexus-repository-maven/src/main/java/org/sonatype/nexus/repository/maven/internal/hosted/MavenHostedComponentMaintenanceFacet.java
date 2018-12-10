@@ -22,9 +22,9 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.maven.MavenHostedFacet;
+import org.sonatype.nexus.repository.maven.internal.MavenComponentMaintenanceFacet;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentMaintenance;
-import org.sonatype.nexus.repository.storage.DefaultComponentMaintenanceImpl;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.transaction.Transactional;
@@ -42,7 +42,7 @@ import static org.sonatype.nexus.repository.maven.internal.Attributes.P_GROUP_ID
  */
 @Named
 public class MavenHostedComponentMaintenanceFacet
-    extends DefaultComponentMaintenanceImpl
+    extends MavenComponentMaintenanceFacet
 {
   @Override
   public Set<String> deleteComponent(final EntityId componentId, final boolean deleteBlobs) {

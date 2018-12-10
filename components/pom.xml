@@ -28,7 +28,6 @@
   <packaging>pom</packaging>
 
   <modules>
-    <module>nexus-analytics-api</module>
     <module>nexus-audit</module>
     <module>nexus-base</module>
     <module>nexus-blobstore</module>

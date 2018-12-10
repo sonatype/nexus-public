@@ -555,6 +555,107 @@ public class MavenUploadHandlerTest
     underTest.validatePom(model);
   }
 
+  @Test
+  public void testHandle_doubleDotInGroupId() throws IOException {
+    ComponentUpload componentUpload = new ComponentUpload();
+
+    componentUpload.getFields().put("groupId", "foo/../g/a/v/a-v.jar");
+    componentUpload.getFields().put("artifactId", "artifactId");
+    componentUpload.getFields().put("version", "version");
+
+    AssetUpload assetUpload = new AssetUpload();
+    assetUpload.getFields().put("extension", "jar");
+    assetUpload.setPayload(jarPayload);
+    componentUpload.getAssetUploads().add(assetUpload);
+
+    underTest.handle(repository, componentUpload);
+
+    ArgumentCaptor<MavenPath> pathCapture = ArgumentCaptor.forClass(MavenPath.class);
+    verify(mavenFacet, times(2)).put(pathCapture.capture(), any(Payload.class));
+
+    List<MavenPath> paths = pathCapture.getAllValues();
+
+    assertThat(paths, hasSize(2));
+
+    MavenPath path = paths.get(0);
+    assertNotNull(path);
+    assertThat(path.getPath(), is("foo////g/a/v/a-v/jar/artifactId/version/artifactId-version.jar"));
+    assertCoordinates(path.getCoordinates(), "foo....g.a.v.a-v.jar", "artifactId", "version", null, "jar");
+
+  }
+
+  @Test
+  public void testHandle_doubleDotInArtifactId() throws IOException {
+    ComponentUpload componentUpload = new ComponentUpload();
+
+    componentUpload.getFields().put("groupId", "groupId");
+    componentUpload.getFields().put("artifactId", "/../g/a/v/a-v.jar");
+    componentUpload.getFields().put("version", "version");
+
+    AssetUpload assetUpload = new AssetUpload();
+    assetUpload.getFields().put("extension", "jar");
+    assetUpload.setPayload(jarPayload);
+    componentUpload.getAssetUploads().add(assetUpload);
+
+    try {
+      underTest.handle(repository, componentUpload);
+      fail("Expected ValidationErrorsException");
+    }
+    catch (ValidationErrorsException e) {
+      assertThat(e.getValidationErrors().size(), is(1));
+      assertThat(e.getValidationErrors().get(0).getMessage(),
+          is("Path is not allowed to have '.' or '..' segments: 'groupId//../g/a/v/a-v.jar/version//../g/a/v/a-v.jar-version.jar'"));
+    }
+  }
+
+  @Test
+  public void testHandle_doubleDotInVersion() throws IOException {
+    ComponentUpload componentUpload = new ComponentUpload();
+
+    componentUpload.getFields().put("groupId", "groupId");
+    componentUpload.getFields().put("artifactId", "artifactId");
+    componentUpload.getFields().put("version", "/../g/a/v/a-v.jar");
+
+    AssetUpload assetUpload = new AssetUpload();
+    assetUpload.getFields().put("extension", "jar");
+    assetUpload.setPayload(jarPayload);
+    componentUpload.getAssetUploads().add(assetUpload);
+
+    try {
+      underTest.handle(repository, componentUpload);
+      fail("Expected ValidationErrorsException");
+    }
+    catch (ValidationErrorsException e) {
+      assertThat(e.getValidationErrors().size(), is(1));
+      assertThat(e.getValidationErrors().get(0).getMessage(),
+          is("Path is not allowed to have '.' or '..' segments: 'groupId/artifactId//../g/a/v/a-v.jar/artifactId-/../g/a/v/a-v.jar.jar'"));
+    }
+  }
+
+  @Test
+  public void testHandle_doubleDotInExtension() throws IOException {
+    ComponentUpload componentUpload = new ComponentUpload();
+
+    componentUpload.getFields().put("groupId", "groupId");
+    componentUpload.getFields().put("artifactId", "artifactId");
+    componentUpload.getFields().put("version", "version");
+
+    AssetUpload assetUpload = new AssetUpload();
+    assetUpload.getFields().put("extension", "/../g/a/v/a-v.jar");
+    assetUpload.setPayload(jarPayload);
+    componentUpload.getAssetUploads().add(assetUpload);
+
+    try {
+      underTest.handle(repository, componentUpload);
+      fail("Expected ValidationErrorsException");
+    }
+    catch (ValidationErrorsException e) {
+      assertThat(e.getValidationErrors().size(), is(1));
+      assertThat(e.getValidationErrors().get(0).getMessage(),
+          is("Path is not allowed to have '.' or '..' segments: 'groupId/artifactId/version/artifactId-version./../g/a/v/a-v.jar'"));
+    }
+  }
+
   private static void assertVariableSource(final VariableSource source,
                                            final String path,
                                            final String groupId,

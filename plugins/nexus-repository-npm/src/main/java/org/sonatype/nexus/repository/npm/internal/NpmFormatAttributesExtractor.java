@@ -254,6 +254,11 @@ public class NpmFormatAttributesExtractor
 
   @Nullable
   private String getBugsUrl() {
+    Object bugs = packageJson.get(BUGS);
+    if (bugs instanceof String) {
+      return (String) bugs;
+    }
+
     return extractStringFromMap(BUGS, URL);
   }
 

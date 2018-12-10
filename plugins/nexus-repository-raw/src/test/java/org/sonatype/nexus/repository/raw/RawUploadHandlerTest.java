@@ -210,6 +210,126 @@ public class RawUploadHandlerTest
   }
 
   @Test
+  public void testHandle_dotDirectory() throws IOException {
+    ComponentUpload component = new ComponentUpload();
+    component.getFields().put("directory", ".");
+
+    AssetUpload asset = new AssetUpload();
+    asset.getFields().put("filename", "foo.jar");
+    asset.setPayload(jarPayload);
+    component.getAssetUploads().add(asset);
+
+    try {
+      underTest.handle(repository, component);
+      fail("Expected validation exception");
+    }
+    catch (ValidationErrorsException e) {
+      assertThat(e.getValidationErrors().size(), is(1));
+      assertThat(e.getValidationErrors().get(0).getMessage(), is("Path is not allowed to have '.' or '..' segments: './foo.jar'"));
+    }
+  }
+
+  @Test
+  public void testHandle_doubleDotDirectory() throws IOException {
+    ComponentUpload component = new ComponentUpload();
+    component.getFields().put("directory", "..");
+
+    AssetUpload asset = new AssetUpload();
+    asset.getFields().put("filename", "foo.jar");
+    asset.setPayload(jarPayload);
+    component.getAssetUploads().add(asset);
+
+    try {
+      underTest.handle(repository, component);
+      fail("Expected validation exception");
+    }
+    catch (ValidationErrorsException e) {
+      assertThat(e.getValidationErrors().size(), is(1));
+      assertThat(e.getValidationErrors().get(0).getMessage(), is("Path is not allowed to have '.' or '..' segments: '../foo.jar'"));
+    }
+  }
+
+  @Test
+  public void testHandle_covertDoubleDotDirectory() throws IOException {
+    ComponentUpload component = new ComponentUpload();
+    component.getFields().put("directory", "foo/..");
+
+    AssetUpload asset = new AssetUpload();
+    asset.getFields().put("filename", "foo.jar");
+    asset.setPayload(jarPayload);
+    component.getAssetUploads().add(asset);
+
+    try {
+      underTest.handle(repository, component);
+      fail("Expected validation exception");
+    }
+    catch (ValidationErrorsException e) {
+      assertThat(e.getValidationErrors().size(), is(1));
+      assertThat(e.getValidationErrors().get(0).getMessage(), is("Path is not allowed to have '.' or '..' segments: 'foo/../foo.jar'"));
+    }
+  }
+
+  @Test
+  public void testHandle_dotFilename() throws IOException {
+    ComponentUpload component = new ComponentUpload();
+    component.getFields().put("directory", "foo");
+
+    AssetUpload asset = new AssetUpload();
+    asset.getFields().put("filename", ".");
+    asset.setPayload(jarPayload);
+    component.getAssetUploads().add(asset);
+
+    try {
+      underTest.handle(repository, component);
+      fail("Expected validation exception");
+    }
+    catch (ValidationErrorsException e) {
+      assertThat(e.getValidationErrors().size(), is(1));
+      assertThat(e.getValidationErrors().get(0).getMessage(), is("Path is not allowed to have '.' or '..' segments: 'foo/.'"));
+    }
+  }
+
+  @Test
+  public void testHandle_doubleDotFilename() throws IOException {
+    ComponentUpload component = new ComponentUpload();
+    component.getFields().put("directory", "foo");
+
+    AssetUpload asset = new AssetUpload();
+    asset.getFields().put("filename", "..");
+    asset.setPayload(jarPayload);
+    component.getAssetUploads().add(asset);
+
+    try {
+      underTest.handle(repository, component);
+      fail("Expected validation exception");
+    }
+    catch (ValidationErrorsException e) {
+      assertThat(e.getValidationErrors().size(), is(1));
+      assertThat(e.getValidationErrors().get(0).getMessage(), is("Path is not allowed to have '.' or '..' segments: 'foo/..'"));
+    }
+  }
+
+  @Test
+  public void testHandle_covertDoubleDotFilename() throws IOException {
+    ComponentUpload component = new ComponentUpload();
+    component.getFields().put("directory", "foo");
+
+    AssetUpload asset = new AssetUpload();
+    asset.getFields().put("filename", "foo/../../foo.jar");
+    asset.setPayload(jarPayload);
+    component.getAssetUploads().add(asset);
+
+    try {
+      underTest.handle(repository, component);
+      fail("Expected validation exception");
+    }
+    catch (ValidationErrorsException e) {
+      assertThat(e.getValidationErrors().size(), is(1));
+      assertThat(e.getValidationErrors().get(0).getMessage(), is("Path is not allowed to have '.' or '..' segments: 'foo/foo/../../foo.jar'"));
+    }
+  }
+
+  @Test
   public void testHandle_normalizePath() throws IOException {
     testNormalizePath("/", "goo.jar", "goo.jar");
     testNormalizePath("/foo", "goo.jar", "foo/goo.jar");

@@ -116,8 +116,8 @@ public class MetadataUpdaterTest
       UnitOfWork.end();
     }
     verify(tx, times(1)).commit();
-    verify(mavenFacet, times(2)).get(eq(mavenPath));
-    verify(mavenFacet, times(1)).put(eq(mavenPath), any(Payload.class));
+    verify(mavenFacet, times(1)).get(eq(mavenPath));
+    verify(mavenFacet, times(0)).put(eq(mavenPath), any(Payload.class));
   }
 
   @Test
@@ -137,12 +137,37 @@ public class MetadataUpdaterTest
   }
 
   @Test
-  public void replace() throws IOException {
-    when(mavenFacet.get(mavenPath)).thenReturn(content);
-    testSubject.replace(mavenPath, Maven2Metadata.newGroupLevel(DateTime.now(), new ArrayList<Plugin>()));
-    verify(tx, times(0)).commit();
-    verify(mavenFacet, times(1)).get(eq(mavenPath));
+  public void replaceWithExistingCorrupted() throws IOException {
+    when(mavenFacet.get(mavenPath)).thenReturn(
+        new Content(new StringPayload("ThisIsNotAnXml", "text/xml")), content);
+    UnitOfWork.beginBatch(tx);
+    try {
+      testSubject.replace(mavenPath, Maven2Metadata.newGroupLevel(DateTime.now(), new ArrayList<Plugin>()));
+    }
+    finally {
+      UnitOfWork.end();
+    }
+    verify(tx, times(1)).commit();
+    verify(mavenFacet, times(2)).get(eq(mavenPath));
     verify(mavenFacet, times(1)).put(eq(mavenPath), any(Payload.class));
+  }
+
+  @Test
+  public void replaceWithUnchangedExisting() throws IOException {
+    when(mavenFacet.get(mavenPath)).thenReturn(
+        new Content(
+            new StringPayload("<?xml version=\"1.0\" encoding=\"UTF-8\"?><metadata></metadata>",
+                "text/xml")), content);
+    UnitOfWork.beginBatch(tx);
+    try {
+      testSubject.replace(mavenPath, Maven2Metadata.newGroupLevel(DateTime.now(), new ArrayList<Plugin>()));
+    }
+    finally {
+      UnitOfWork.end();
+    }
+    verify(tx, times(1)).commit();
+    verify(mavenFacet, times(1)).get(eq(mavenPath));
+    verify(mavenFacet, times(0)).put(eq(mavenPath), any(Payload.class));
   }
 
   @Test

@@ -72,7 +72,8 @@ Ext.define('NX.coreui.migration.RepositoriesStep', {
    * @override
    */
   prepare: function () {
-    var me = this;
+    var me = this,
+        uiSettings = NX.State.getValue('uiSettings', {});
 
     me.mask(NX.I18n.render(me, 'Loading_Mask'));
 
@@ -103,6 +104,8 @@ Ext.define('NX.coreui.migration.RepositoriesStep', {
       }
 
       me.unmask();
+    }, me, {
+      timeout: uiSettings['longRequestTimeout'] * 1000
     });
   },
 

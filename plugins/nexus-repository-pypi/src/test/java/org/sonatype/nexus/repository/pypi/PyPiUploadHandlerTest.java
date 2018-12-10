@@ -13,12 +13,15 @@
 package org.sonatype.nexus.repository.pypi;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.pypi.internal.PyPiAttributes;
 import org.sonatype.nexus.repository.pypi.internal.PyPiDataUtils;
 import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
 import org.sonatype.nexus.repository.pypi.internal.PyPiHostedFacet;
@@ -33,9 +36,9 @@ import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.upload.AssetUpload;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
-import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition;
 import org.sonatype.nexus.repository.upload.UploadFieldDefinition.Type;
+import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.security.BreadActions;
@@ -89,6 +92,8 @@ public class PyPiUploadHandlerTest
   @Captor
   private ArgumentCaptor<VariableSource> captor;
 
+  private Map<String, String> metadata;
+
   @Before
   public void setup() throws IOException {
     when(contentPermissionChecker.isPermitted(eq(REPO_NAME), eq(PyPiFormat.NAME), eq(BreadActions.EDIT), any()))
@@ -98,13 +103,26 @@ public class PyPiUploadHandlerTest
     when(repository.facet(PyPiHostedFacet.class)).thenReturn(pyPiFacet);
     when(repository.getName()).thenReturn(REPO_NAME);
 
-    when(pyPiFacet.extractMetadata(any())).thenCallRealMethod();
+    metadata = new HashMap<>();
+    metadata.put("metadata_version", "1.1");
+    metadata.put(PyPiAttributes.P_NAME, "sample");
+    metadata.put(PyPiAttributes.P_VERSION, "1.2.0");
+    metadata.put(PyPiAttributes.P_SUMMARY, "1.2.0");
+    metadata.put(PyPiAttributes.P_HOME_PAGE, "https://github.com/pypa/sampleproject");
+    metadata.put(PyPiAttributes.P_AUTHOR, "The Python Packaging Authority");
+    metadata.put(PyPiAttributes.P_AUTHOR_EMAIL, "pypa-dev@googlegroups.com");
+    metadata.put(PyPiAttributes.P_LICENSE, "MIT");
+    metadata.put(PyPiAttributes.P_DESCRIPTION, "A sample Python project");
+    metadata.put(PyPiAttributes.P_KEYWORDS, "sample setuptools development");
+    metadata.put(PyPiAttributes.P_PLATFORM, "UNKNOWN");
+    metadata.put(PyPiAttributes.P_CLASSIFIERS, "Development Status :: 3 - Alpha\nIntended Audience :: Developers");
+    metadata.put(PyPiAttributes.P_ARCHIVE_TYPE, "zip");
+    when(pyPiFacet.extractMetadata(any())).thenReturn(metadata);
+
     when(pyPiFacet.createPackagePath(any(), any(), any())).thenCallRealMethod();
 
     TempBlob tempBlob = mock(TempBlob.class);
-    when(tempBlob.get()).thenAnswer(invocation -> {
-      return PyPiUploadHandlerTest.class.getResourceAsStream("internal/sample-1.2.0-py2.7.egg");
-    });
+    when(tempBlob.get()).thenAnswer(invocation -> PyPiUploadHandlerTest.class.getResourceAsStream("internal/sample-1.2.0-py2.7.egg"));
     when(storageFacet.createTempBlob(payload, PyPiDataUtils.HASH_ALGORITHMS)).thenReturn(tempBlob);
     when(storageFacet.txSupplier()).thenReturn(() -> storageTx);
     when(repository.facet(StorageFacet.class)).thenReturn(storageFacet);
@@ -179,6 +197,27 @@ public class PyPiUploadHandlerTest
     catch (ValidationErrorsException e) {
       assertThat(e.getValidationErrors().size(), is(1));
       assertThat(e.getValidationErrors().get(0).getMessage(), is("Not authorized for requested path 'packages/sample/1.2.0/sample-1.2.0-py2.7.egg'"));
+    }
+  }
+
+  @Test
+  public void testHandle_dot() throws IOException {
+    metadata.put(PyPiAttributes.P_NAME, "./foo/../bar");
+    metadata.put(PyPiAttributes.P_VERSION, "./foo/../bar");
+    metadata.put(PyPiAttributes.P_ARCHIVE_TYPE, "zip");
+
+    ComponentUpload component = new ComponentUpload();
+    AssetUpload asset = new AssetUpload();
+    asset.setPayload(payload);
+    component.getAssetUploads().add(asset);
+
+    try {
+      underTest.handle(repository, component);
+      fail("Expected validation exception");
+    }
+    catch (ValidationErrorsException e) {
+      assertThat(e.getValidationErrors().size(), is(1));
+      assertThat(e.getValidationErrors().get(0).getMessage(), is("Path is not allowed to have '.' or '..' segments: 'packages/-/foo/-/bar/./foo/../bar/sample-1.2.0-py2.7.egg'"));
     }
   }
 

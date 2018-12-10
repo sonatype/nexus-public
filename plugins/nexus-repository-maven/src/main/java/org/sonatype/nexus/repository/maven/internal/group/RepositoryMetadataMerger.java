@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.stream.IntStream;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -37,6 +38,7 @@ import org.sonatype.nexus.repository.view.Content;
 import com.google.common.base.Strings;
 import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.apache.maven.artifact.repository.metadata.Plugin;
+import org.apache.maven.artifact.repository.metadata.Snapshot;
 import org.apache.maven.artifact.repository.metadata.SnapshotVersion;
 import org.apache.maven.artifact.repository.metadata.Versioning;
 
@@ -171,6 +173,89 @@ public class RepositoryMetadataMerger
         i.remove();
       }
     }
+  }
+
+  /**
+   * Test metadata for equality.  Note timestamp is not considered.
+   */
+  public boolean metadataEquals(final Metadata md1, final Metadata md2) {
+    checkNotNull(md1);
+    checkNotNull(md2);
+    return
+      Objects.equals(md1.getGroupId(), md2.getGroupId()) && // NOSONAR
+      Objects.equals(md1.getArtifactId(), md2.getArtifactId()) &&
+      Objects.equals(md1.getVersion(), md2.getVersion()) &&
+      versioningEquals(md1.getVersioning(), md2.getVersioning()) &&
+      pluginsEquals(md1.getPlugins(), md2.getPlugins()); // NOSONAR
+  }
+
+  private boolean versioningEquals(@Nullable final Versioning v1,
+                                   @Nullable final Versioning v2) { // NOSONAR
+    if (v1 == null || v2 == null) {
+      return v1 == v2; // NOSONAR
+    }
+    else {
+      return
+        Objects.equals(v1.getLatest(), v2.getLatest()) && // NOSONAR
+        Objects.equals(v1.getRelease(), v2.getRelease()) &&
+        snapshotEquals(v1.getSnapshot(), v2.getSnapshot()) &&
+        Objects.equals(v1.getVersions(), v2.getVersions()) &&
+        snapshotVersionsEquals(v1.getSnapshotVersions(), v2.getSnapshotVersions());
+    }
+  }
+
+  private boolean snapshotEquals(@Nullable final Snapshot s1,
+                                 @Nullable final Snapshot s2) {
+    if (s1 == null || s2 == null) {
+      return s1 == s2; // NOSONAR
+    }
+    else {
+      return
+        Objects.equals(s1.getTimestamp(), s2.getTimestamp()) &&
+        s1.getBuildNumber() == s2.getBuildNumber() &&
+        s1.isLocalCopy() == s2.isLocalCopy();
+    }
+  }
+
+  private boolean snapshotVersionsEquals(@Nullable final List<SnapshotVersion> s1,
+                                         @Nullable final List<SnapshotVersion> s2) {
+    if (s1 == null || s2 == null) {
+      return s1 == s2; // NOSONAR
+    }
+    else if (s1.size() != s2.size()) {
+      return false;
+    }
+    else {
+      return IntStream.range(0, s1.size()).allMatch(i -> snapshotVersionEquals(s1.get(i), s2.get(i)));
+    }
+  }
+
+  private boolean snapshotVersionEquals(final SnapshotVersion s1, final SnapshotVersion s2) {
+    return
+      Objects.equals(s1.getClassifier(), s2.getClassifier()) && // NOSONAR
+      Objects.equals(s1.getExtension(), s2.getExtension()) &&
+      Objects.equals(s1.getVersion(), s2.getVersion()) &&
+      Objects.equals(s1.getUpdated(), s2.getUpdated());
+  }
+
+  private boolean pluginsEquals(@Nullable final List<Plugin> p1,
+                                @Nullable final List<Plugin> p2) {
+    if (p1 == null || p2 == null) {
+      return p1 == p2; // NOSONAR
+    }
+    else if (p1.size() != p2.size()) {
+      return false;
+    }
+    else {
+      return IntStream.range(0, p1.size()).allMatch(i -> pluginEquals(p1.get(i), p2.get(i)));
+    }
+  }
+
+  private boolean pluginEquals(final Plugin p1, final Plugin p2) {
+    return
+      Objects.equals(p1.getName(), p2.getName()) &&
+      Objects.equals(p1.getPrefix(), p2.getPrefix()) &&
+      Objects.equals(p1.getArtifactId(), p2.getArtifactId());
   }
 
   /**

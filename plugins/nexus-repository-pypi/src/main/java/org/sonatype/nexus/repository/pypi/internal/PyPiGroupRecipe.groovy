@@ -72,9 +72,21 @@ class PyPiGroupRecipe
   private ViewFacet configure(final ConfigurableViewFacet facet) {
     Router.Builder builder = new Router.Builder()
 
+    builder.route(rootIndexMatcher()
+        .handler(timingHandler)
+        .handler(assetKindHandler.rcurry(AssetKind.ROOT_INDEX))
+        .handler(securityHandler)
+        .handler(exceptionHandler)
+        .handler(conditionalRequestHandler)
+        .handler(contentHeadersHandler)
+        .handler(unitOfWorkHandler)
+        .handler(lastDownloadedHandler)
+        .handler(indexGroupHandler)
+        .create())
+
     builder.route(indexMatcher()
         .handler(timingHandler)
-        .handler(assetKindHandler.rcurry( AssetKind.INDEX))
+        .handler(assetKindHandler.rcurry(AssetKind.INDEX))
         .handler(securityHandler)
         .handler(exceptionHandler)
         .handler(conditionalRequestHandler)

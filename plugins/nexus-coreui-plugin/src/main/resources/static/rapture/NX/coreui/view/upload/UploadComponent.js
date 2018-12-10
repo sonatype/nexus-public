@@ -36,7 +36,8 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
     },
 
     loadRecord: function(uploadDefinition, repository) {
-      var me = this;
+      var me = this,
+          uiSettings = NX.State.getValue('uiSettings', {});
 
       me.uploadDefinition = uploadDefinition;
       me.repository = repository;
@@ -51,6 +52,7 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
           ui: 'nx-inset',
           items: [{
             xtype: 'nx-settingsform',
+            timeout: uiSettings['longRequestTimeout'],
             api: {
               submit: 'NX.direct.coreui_Upload.doUpload'
             },

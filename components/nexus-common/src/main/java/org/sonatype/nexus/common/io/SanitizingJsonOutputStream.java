@@ -26,6 +26,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.util.JsonGeneratorDelegate;
 
 import static com.fasterxml.jackson.core.JsonTokenId.ID_FIELD_NAME;
+import static com.fasterxml.jackson.core.JsonTokenId.ID_STRING;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -124,7 +125,9 @@ public class SanitizingJsonOutputStream
 
     @Override
     public void copyCurrentEvent(JsonParser jp) throws IOException {
-      if (skip > 0) {
+      boolean shouldReplace = skip > 0 && !jp.getText().isEmpty();
+
+      if (shouldReplace) {
         writeString(replacement);
       }
       else {

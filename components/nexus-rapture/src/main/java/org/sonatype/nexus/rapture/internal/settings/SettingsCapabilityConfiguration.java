@@ -39,6 +39,8 @@ public class SettingsCapabilityConfiguration
 
   public static final String REQUEST_TIMEOUT = "requestTimeout";
 
+  public static final String LONG_REQUEST_TIMEOUT = "longRequestTimeout";
+
   public static final String TITLE = "title";
 
   public SettingsCapabilityConfiguration() {
@@ -56,6 +58,7 @@ public class SettingsCapabilityConfiguration
     );
     setSessionTimeout(parseInteger(properties.get(SESSION_TIMEOUT), DEFAULT_SESSION_TIMEOUT));
     setRequestTimeout(parseInteger(properties.get(REQUEST_TIMEOUT), DEFAULT_REQUEST_TIMEOUT));
+    setLongRequestTimeout(parseInteger(properties.get(LONG_REQUEST_TIMEOUT), DEFAULT_LONG_REQUEST_TIMEOUT));
     setTitle(parseString(properties.get(TITLE), DEFAULT_TITLE));
   }
 
@@ -66,6 +69,7 @@ public class SettingsCapabilityConfiguration
     props.put(STATUS_INTERVAL_ANONYMOUS, Integer.toString(getStatusIntervalAnonymous()));
     props.put(SESSION_TIMEOUT, Integer.toString(getSessionTimeout()));
     props.put(REQUEST_TIMEOUT, Integer.toString(getRequestTimeout()));
+    props.put(LONG_REQUEST_TIMEOUT, Integer.toString(getLongRequestTimeout()));
     props.put(TITLE, getTitle());
     return props;
   }
@@ -105,6 +109,7 @@ public class SettingsCapabilityConfiguration
         + ", statusIntervalAnonymous=" + getStatusIntervalAnonymous()
         + ", sessionTimeout=" + getSessionTimeout()
         + ", requestTimeout=" + getRequestTimeout()
+        + ", longRequestTimeout=" + getLongRequestTimeout()
         + "}";
   }
 }

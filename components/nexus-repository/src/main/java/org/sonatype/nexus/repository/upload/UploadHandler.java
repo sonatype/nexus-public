@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.upload;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
@@ -70,6 +71,11 @@ public interface UploadHandler
                                final String path,
                                final Map<String, String> coordinates)
   {
+    boolean dotSegment = Stream.of(path.split("/")).anyMatch(segment -> segment.equals(".") || segment.equals(".."));
+    if (dotSegment) {
+      throw new ValidationErrorsException(format("Path is not allowed to have '.' or '..' segments: '%s'", path));
+    }
+
     VariableSource variableSource = getVariableResolverAdapter().fromCoordinates(format, path, coordinates);
     if (!contentPermissionChecker().isPermitted(repositoryName, format, BreadActions.EDIT, variableSource)) {
       throw new ValidationErrorsException(format("Not authorized for requested path '%s'", path));

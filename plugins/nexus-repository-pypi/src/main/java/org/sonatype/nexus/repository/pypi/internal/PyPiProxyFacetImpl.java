@@ -266,7 +266,7 @@ public class PyPiProxyFacetImpl
     try (ByteArrayInputStream stream = new ByteArrayInputStream(indexPage.getBytes(StandardCharsets.UTF_8))) {
       try (TempBlob tempBlob = storageFacet.createTempBlob(stream, PyPiDataUtils.HASH_ALGORITHMS)) {
         Map<String, Object> attributes = new HashMap<>();
-        attributes.put(P_ASSET_KIND, rootIndex);
+        attributes.put(P_ASSET_KIND, rootIndex.name());
         return doPutIndex(indexPathPrefix, tempBlob, content, attributes);
       }
     }

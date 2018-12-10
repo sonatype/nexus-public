@@ -106,6 +106,12 @@ public class NpmPackageRootMetadataUtilsTest
 
   @Test
   @SuppressWarnings("unchecked")
+  public void bugsFieldAsStringIsSupported() throws Exception {
+    createFullPackageMetadataImpl(extractAlwaysPackageVersion, "package-string-bugs.json");
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
   public void createFullPackageMetadataUsingExtractPackageRootVersionUnlessEmpty()
       throws Exception
   {
@@ -124,11 +130,15 @@ public class NpmPackageRootMetadataUtilsTest
   }
 
   private void createFullPackageMetadata(final BiFunction<String, String, String> function) throws URISyntaxException, IOException {
+    createFullPackageMetadataImpl(function, "package.json");
+  }
+
+  private void createFullPackageMetadataImpl(final BiFunction<String, String, String> function, String packageJsonFilename) throws URISyntaxException, IOException {
     try {
       assertThat(BaseUrlHolder.isSet(), is(false));
       BaseUrlHolder.set("http://localhost:8080/");
 
-      File packageJsonFile = new File(NpmPackageRootMetadataUtilsTest.class.getResource("package.json").toURI());
+      File packageJsonFile = new File(NpmPackageRootMetadataUtilsTest.class.getResource(packageJsonFilename).toURI());
       File archive = tempFolderRule.newFile();
       Map<String, Object> packageJson = new NpmPackageParser()
           .parsePackageJson(() -> ArchiveUtils.pack(archive, packageJsonFile, "package/package.json"));

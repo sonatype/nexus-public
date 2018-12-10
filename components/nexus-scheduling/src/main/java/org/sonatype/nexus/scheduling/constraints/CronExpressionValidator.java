@@ -54,7 +54,7 @@ public class CronExpressionValidator
     }
     catch (IllegalArgumentException e) {
       context.disableDefaultConstraintViolation();
-      context.buildConstraintViolationWithTemplate(e.getMessage())
+      context.buildConstraintViolationWithTemplate(getEscapeHelper().stripJavaEl(e.getMessage()))
           .addConstraintViolation();
       return false;
     }

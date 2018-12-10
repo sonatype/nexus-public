@@ -29,13 +29,14 @@ Ext.define('NX.coreui.view.support.SupportZip', {
    * @override
    */
   initComponent: function () {
-    var me = this;
+    var me = this,
+        uiSettings = NX.State.getValue('uiSettings', {});
 
     me.settingsForm = {
       xtype: 'nx-settingsform',
       settingsFormSubmitMessage: NX.I18n.get('Support_SupportZip_Creating_Message'),
       settingsFormSuccessMessage: NX.I18n.get('Support_SupportZip_Create_Success'),
-      timeout: 60 * 3, // 3 minutes
+      timeout: uiSettings['longRequestTimeout'],
       isDirty: function() { return false; }, // form is never saved, so never dirty
       api: {
         submit: 'NX.direct.atlas_SupportZip.create'

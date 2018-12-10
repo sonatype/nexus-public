@@ -146,7 +146,9 @@ public class AssetsResource
     DetachedEntityId entityId = new DetachedEntityId(repositoryItemIDXO.getId());
     Asset asset = getAsset(id, repository, entityId);
 
-    maintenanceService.deleteAsset(repository, asset);
+    if (repository != null && asset != null) {
+      maintenanceService.deleteAsset(repository, asset);
+    }
   }
 
   private Asset getAsset(final String id, final Repository repository, final DetachedEntityId entityId)

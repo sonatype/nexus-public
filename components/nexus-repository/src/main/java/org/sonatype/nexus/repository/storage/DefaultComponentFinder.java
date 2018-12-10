@@ -46,7 +46,12 @@ public class DefaultComponentFinder
       try (StorageTx storageTx = repository.facet(StorageFacet.class).txSupplier().get()) {
         storageTx.begin();
         Component component = storageTx.findComponent(new DetachedEntityId(componentId));
-        return singletonList(component);
+        if (component != null) {
+          return singletonList(component);
+        }
+        else {
+          return emptyList();
+        }
       }
     }
   }

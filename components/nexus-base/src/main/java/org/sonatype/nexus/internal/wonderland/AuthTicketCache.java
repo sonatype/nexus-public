@@ -42,7 +42,7 @@ public class AuthTicketCache
 
   private final Mutex lock = new Mutex();
 
-  private final Map<String, Long> tokens = Maps.newHashMap();
+  private final Map<UserAuthToken, Long> tokens = Maps.newHashMap();
 
   private final Time expireAfter;
 
@@ -67,9 +67,9 @@ public class AuthTicketCache
   private void expireTokens() {
     boolean trace = log.isTraceEnabled();
     long now = now();
-    Iterator<Entry<String, Long>> iter = tokens.entrySet().iterator();
+    Iterator<Entry<UserAuthToken, Long>> iter = tokens.entrySet().iterator();
     while (iter.hasNext()) {
-      Entry<String, Long> entry = iter.next();
+      Entry<UserAuthToken, Long> entry = iter.next();
       if (isTokenExpired(now, entry)) {
         iter.remove();
         if (trace) {
@@ -80,14 +80,14 @@ public class AuthTicketCache
 
     if (trace && !tokens.isEmpty()) {
       log.trace("Valid tokens:");
-      for (Entry<String, Long> entry : tokens.entrySet()) {
+      for (Entry<UserAuthToken, Long> entry : tokens.entrySet()) {
         log.trace("  {}", entry.getKey());
       }
     }
   }
 
   @VisibleForTesting
-  protected boolean isTokenExpired(final long now, final Entry<String, Long> entry) {
+  protected boolean isTokenExpired(final long now, final Entry<UserAuthToken, Long> entry) {
     long diff = now - entry.getValue();
     return diff > expireAfter.toMillis();
   }
@@ -95,12 +95,13 @@ public class AuthTicketCache
   /**
    * Add token to the cache.
    */
-  public void add(final String token) {
+  public void add(final String user, final String token) {
     synchronized (lock) {
       expireTokens();
+      UserAuthToken key = new UserAuthToken(user, token);
       // Sanity check we don't clobber tokens
-      checkState(!tokens.containsKey(token), "Duplicate token"); //NON-NLS
-      tokens.put(token, now());
+      checkState(!tokens.containsKey(key), "Duplicate token"); //NON-NLS
+      tokens.put(key, now());
     }
   }
 
@@ -109,10 +110,10 @@ public class AuthTicketCache
    *
    * @return True if the token existed (was added and not yet expired)
    */
-  public boolean remove(final String token) {
+  public boolean remove(final String user, final String token) {
     synchronized (lock) {
       expireTokens();
-      Long tmp = tokens.remove(token);
+      Long tmp = tokens.remove(new UserAuthToken(user, token));
       return tmp != null;
     }
   }

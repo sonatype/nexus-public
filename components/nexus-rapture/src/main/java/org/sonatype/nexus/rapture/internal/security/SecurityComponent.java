@@ -135,7 +135,7 @@ public class SecurityComponent
     }
 
     // At this point we should be authenticated, return a new ticket
-    return authTickets.createTicket();
+    return authTickets.createTicket(username);
   }
 
   @DirectMethod

@@ -13,7 +13,7 @@
 /*global Ext, NX*/
 
 /**
- * Analytics Event grid.
+ * Metric Health grid.
  *
  * @since 3.0
  */

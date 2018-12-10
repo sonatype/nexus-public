@@ -215,8 +215,6 @@ Ext.define('NX.app.Application', {
     }
 
     Ext.Ajax.setDefaultHeaders({
-      // HACK: Setting request header to allow analytics to tell if the request came from the UI or not
-      // HACK: This has some issues, will only catch ajax requests, etc... but may be fine for now
       'X-Nexus-UI': 'true',
       'NX-ANTI-CSRF-TOKEN': csrfToken
     });

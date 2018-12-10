@@ -33,6 +33,7 @@ import org.sonatype.nexus.security.UserPrincipalsHelper;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyFactory;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyStore;
 import org.sonatype.nexus.security.user.UserNotFoundException;
+import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
@@ -182,12 +183,17 @@ public class ApiKeyStoreImpl
       List<ApiKey> delete = new ArrayList<>();
       for (ApiKey entity : entityAdapter.browse(db)) {
         checkCancellation();
+        UnitOfWork work = UnitOfWork.pause();
         try {
           principalsHelper.getUserStatus(entity.getPrincipals());
         }
         catch (UserNotFoundException e) {
           log.debug("Stale user found", e);
           delete.add(entity);
+        }
+        finally {
+          UnitOfWork.resume(work);
+          db.activateOnCurrentThread();
         }
       }
       for (ApiKey entity : delete) {

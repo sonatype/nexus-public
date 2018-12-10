@@ -99,6 +99,6 @@ public class AuthenticateResource
     }
 
     // At this point we should be authenticated, return a new ticket
-    return new AuthTicketXO().withT(authTickets.createTicket());
+    return new AuthTicketXO().withT(authTickets.createTicket(username));
   }
 }
