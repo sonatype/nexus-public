@@ -28,7 +28,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.fail;
 
 /**
  * Tests for updating tasks.
@@ -154,14 +153,8 @@ public class UpdatingTasksTest
     taskConfiguration.setEnabled(false);
     taskInfo = taskScheduler().scheduleTask(taskConfiguration, taskScheduler().getScheduleFactory().manual());
 
-    // TODO: UI allows this: runNow disabled task, but backend should now forbid it
-    try {
-      taskInfo.runNow();
-      fail("Disabled task should not be runnable");
-    }
-    catch (IllegalStateException e) {
-      // good
-    }
+    assertThat("Disabled task should not produce a future result", taskInfo.runNow().getCurrentState().getFuture(),
+        nullValue());
 
     taskConfiguration.setEnabled(true);
     taskInfo = taskScheduler().scheduleTask(taskConfiguration, taskScheduler().getScheduleFactory().manual());

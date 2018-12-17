@@ -120,47 +120,51 @@ Ext.define('NX.coreui.view.repository.RepositorySettingsForm', {
     //map repository attributes raw map structure to/from a flattened representation
     Ext.override(me.getForm(), {
       getValues: function() {
-        var processed = { attributes: {} },
-            values = this.callParent(arguments);
-
-        Ext.Object.each(values, function(key, value) {
-          var segments = key.split('.'),
-              parent = processed;
-
-          Ext.each(segments, function(segment, pos) {
-            if (pos === segments.length - 1) {
-              parent[segment] = value;
-            }
-            else {
-              if (!parent[segment]) {
-                parent[segment] = {};
-              }
-              parent = parent[segment];
-            }
-          });
-        });
-
-        return processed;
-      },
-
-      setValues: function(values) {
-        var process = function(child, prefix) {
-              Ext.Object.each(child, function(key, value) {
-                var newPrefix = (prefix ? prefix + '.' : '') + key;
-                if (Ext.isObject(value)) {
-                  process(value, newPrefix);
-                }
-                else {
-                  values[newPrefix] = value;
-                }
-              });
-            };
-
-        process(values);
-
+        return me.doGetValues(this.callParent(arguments));
+        },
+      setValues: function(values) { 
+        me.doSetValues(values);
         this.callParent(arguments);
       }
     });
-  }
+  },
 
+  doGetValues: function(values) {
+    var processed = { attributes: {} };
+
+    Ext.Object.each(values, function(key, value) {
+      var segments = key.split('.'),
+          parent = processed;
+
+      Ext.each(segments, function(segment, pos) {
+        if (pos === segments.length - 1) {
+          parent[segment] = value;
+        }
+        else {
+          if (!parent[segment]) {
+            parent[segment] = {};
+          }
+          parent = parent[segment];
+        }
+      });
+    });
+
+    return processed;
+  },
+
+  doSetValues: function(values) {
+    var process = function(child, prefix) {
+      Ext.Object.each(child, function(key, value) {
+        var newPrefix = (prefix ? prefix + '.' : '') + key;
+        if (Ext.isObject(value)) {
+          process(value, newPrefix);
+        }
+        else {
+          values[newPrefix] = value;
+        }
+      });
+    };
+
+    process(values);
+  }
 });

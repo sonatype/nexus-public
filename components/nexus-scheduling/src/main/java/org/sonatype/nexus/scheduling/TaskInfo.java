@@ -199,8 +199,8 @@ public interface TaskInfo
   boolean remove();
 
   /**
-   * Executes the scheduled task now, unrelated to it's actual schedule. Already running task or disabled task
-   * cannot have this method executed, will throw {@link IllegalStateException}.
+   * Executes the scheduled task now, unrelated to it's actual schedule. Already running task cannot have this method
+   * executed, will throw {@link IllegalStateException}.
    *
    * This also implies that this method will NOT change the state of tasks "original" schedule!
    *
@@ -210,7 +210,7 @@ public interface TaskInfo
    * @param triggerSource the source that triggered this task
    *
    * @throws TaskRemovedException  if task with this ID has been removed from scheduler.
-   * @throws IllegalStateException if task is already running, or, if is disabled.
+   * @throws IllegalStateException if task is already running
    *
    * @since 3.1
    */

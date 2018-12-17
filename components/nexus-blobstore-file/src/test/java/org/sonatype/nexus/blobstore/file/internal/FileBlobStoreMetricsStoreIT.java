@@ -12,15 +12,14 @@
  */
 package org.sonatype.nexus.blobstore.file.internal;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStore;
-import org.sonatype.nexus.blobstore.internal.PeriodicJobServiceImpl;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
-import org.sonatype.nexus.blobstore.quota.BlobStoreQuota;
+import org.sonatype.nexus.blobstore.internal.PeriodicJobServiceImpl;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.property.PropertiesFile;
@@ -41,10 +40,10 @@ import static org.mockito.Mockito.when;
 /**
  * {@link FileBlobStore} integration tests.
  */
-public class BlobStoreMetricsStoreImplIT
+public class FileBlobStoreMetricsStoreIT
     extends TestSupport
 {
-  private BlobStoreMetricsStoreImpl underTest;
+  private FileBlobStoreMetricsStore underTest;
 
   private Path blobStoreDirectory;
 
@@ -61,11 +60,15 @@ public class BlobStoreMetricsStoreImplIT
   @Mock
   BlobStore blobStore;
 
+  @Mock
+  FileOperations fileOperations;
+
   @Before
   public void setUp() throws Exception {
     blobStoreDirectory = util.createTempDir().toPath();
     when(nodeAccess.getId()).thenReturn(UUID.randomUUID().toString());
-    underTest = new BlobStoreMetricsStoreImpl(new PeriodicJobServiceImpl(), nodeAccess, quotaService, QUOTA_CHECK_INTERVAL);
+    underTest = new FileBlobStoreMetricsStore(new PeriodicJobServiceImpl(), nodeAccess, quotaService,
+        QUOTA_CHECK_INTERVAL, fileOperations);
     underTest.setStorageDir(blobStoreDirectory);
     underTest.setBlobStore(blobStore);
   }
@@ -90,10 +93,10 @@ public class BlobStoreMetricsStoreImplIT
   @Test
   public void metricsLoadsExistingPropertyFile() throws Exception {
     PropertiesFile props = new PropertiesFile(
-        blobStoreDirectory.resolve(nodeAccess.getId() + "-" + BlobStoreMetricsStoreImpl.METRICS_FILENAME).toFile());
+        blobStoreDirectory.resolve(nodeAccess.getId() + "-" + FileBlobStoreMetricsStore.METRICS_FILENAME).toFile());
 
-    props.put(BlobStoreMetricsStoreImpl.BLOB_COUNT_PROP_NAME, "32");
-    props.put(BlobStoreMetricsStoreImpl.TOTAL_SIZE_PROP_NAME, "200");
+    props.put(FileBlobStoreMetricsStore.BLOB_COUNT_PROP_NAME, "32");
+    props.put(FileBlobStoreMetricsStore.TOTAL_SIZE_PROP_NAME, "200");
 
     props.store();
 
@@ -105,15 +108,16 @@ public class BlobStoreMetricsStoreImplIT
 
   @Test
   public void listBackingFiles() throws Exception {
-    underTest = new BlobStoreMetricsStoreImpl(new PeriodicJobServiceImpl(), nodeAccess, quotaService, 5);
-    File[] backingFiles = underTest.listBackingFiles();
-    assertThat("backing files is empty", backingFiles.length, is(0));
+    underTest = new FileBlobStoreMetricsStore(new PeriodicJobServiceImpl(), nodeAccess, quotaService, 5,
+        fileOperations);
+    Stream backingFiles = underTest.backingFiles();
+    assertThat("backing files is empty", backingFiles.count(), is(0L));
 
     underTest.setStorageDir(blobStoreDirectory);
     underTest.start();
 
-    backingFiles = underTest.listBackingFiles();
-    assertThat("backing files contains the data file", backingFiles.length, is(1));
+    backingFiles = underTest.backingFiles();
+    assertThat("backing files contains the data file", backingFiles.count(), is(1L));
   }
 
   @Test

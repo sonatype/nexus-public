@@ -50,7 +50,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.blobstore.file.internal.BlobCollisionException;
-import org.sonatype.nexus.blobstore.file.internal.BlobStoreMetricsStore;
+import org.sonatype.nexus.blobstore.file.internal.FileBlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.file.internal.FileOperations;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.io.DirectoryHelper;
@@ -75,6 +75,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.cache.CacheLoader.from;
 import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
+import static java.util.Arrays.stream;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.removeEnd;
@@ -136,7 +137,7 @@ public class FileBlobStore
 
   private final Path basedir;
 
-  private BlobStoreMetricsStore storeMetrics;
+  private FileBlobStoreMetricsStore metricsStore;
 
   private LoadingCache<BlobId, FileBlob> liveBlobs;
 
@@ -152,14 +153,14 @@ public class FileBlobStore
   public FileBlobStore(final BlobIdLocationResolver blobIdLocationResolver,
                        final FileOperations fileOperations,
                        final ApplicationDirectories directories,
-                       final BlobStoreMetricsStore storeMetrics,
+                       final FileBlobStoreMetricsStore metricsStore,
                        final NodeAccess nodeAccess,
                        final DryRunPrefix dryRunPrefix)
   {
     super(blobIdLocationResolver, dryRunPrefix);
     this.fileOperations = checkNotNull(fileOperations);
     this.basedir = directories.getWorkDirectory(BASEDIR).toPath();
-    this.storeMetrics = checkNotNull(storeMetrics);
+    this.metricsStore = checkNotNull(metricsStore);
     this.nodeAccess = checkNotNull(nodeAccess);
     this.supportsHardLinkCopy = true;
     this.supportsAtomicMove = true;
@@ -169,13 +170,13 @@ public class FileBlobStore
   public FileBlobStore(final Path contentDir, //NOSONAR
                        final BlobIdLocationResolver blobIdLocationResolver,
                        final FileOperations fileOperations,
-                       final BlobStoreMetricsStore storeMetrics,
+                       final FileBlobStoreMetricsStore metricsStore,
                        final BlobStoreConfiguration configuration,
                        final ApplicationDirectories directories,
                        final NodeAccess nodeAccess,
                        final DryRunPrefix dryRunPrefix)
   {
-    this(blobIdLocationResolver, fileOperations, directories, storeMetrics, nodeAccess, dryRunPrefix);
+    this(blobIdLocationResolver, fileOperations, directories, metricsStore, nodeAccess, dryRunPrefix);
     this.contentDir = checkNotNull(contentDir);
     this.blobStoreConfiguration = checkNotNull(configuration);
   }
@@ -210,9 +211,9 @@ public class FileBlobStore
       metadata.setProperty(REBUILD_DELETED_BLOB_INDEX_KEY, "true");
       metadata.store();
     }
-    storeMetrics.setStorageDir(storageDir);
-    storeMetrics.setBlobStore(this);
-    storeMetrics.start();
+    metricsStore.setStorageDir(storageDir);
+    metricsStore.setBlobStore(this);
+    metricsStore.start();
   }
 
   private void maybeUpgradeLegacyIndexFile(final Path deletedIndexPath) throws IOException {
@@ -238,7 +239,7 @@ public class FileBlobStore
     }
     finally {
       deletedBlobIndex = null;
-      storeMetrics.stop();
+      metricsStore.stop();
     }
   }
 
@@ -345,23 +346,23 @@ public class FileBlobStore
         if (existingSize != null) {
           overwrite(temporaryBlobPath, blobPath);
           overwrite(temporaryAttributePath, attributePath);
-          storeMetrics.recordDeletion(existingSize);
+          metricsStore.recordDeletion(existingSize);
         }
         else {
           move(temporaryBlobPath, blobPath);
           move(temporaryAttributePath, attributePath);
         }
 
-        storeMetrics.recordAddition(blobAttributes.getMetrics().getContentSize());
+        metricsStore.recordAddition(blobAttributes.getMetrics().getContentSize());
 
         return blob;
       }
       catch (Exception e) {
         // Something went wrong, clean up the files we created
-        deleteQuietly(temporaryAttributePath);
-        deleteQuietly(temporaryBlobPath);
-        deleteQuietly(attributePath);
-        deleteQuietly(blobPath);
+        fileOperations.deleteQuietly(temporaryAttributePath);
+        fileOperations.deleteQuietly(temporaryBlobPath);
+        fileOperations.deleteQuietly(attributePath);
+        fileOperations.deleteQuietly(blobPath);
         throw new BlobStoreException(e, blobId);
       }
     }
@@ -499,7 +500,7 @@ public class FileBlobStore
       delete(attributePath);
 
       if (blobDeleted && contentSize != null) {
-        storeMetrics.recordDeletion(contentSize);
+        metricsStore.recordDeletion(contentSize);
       }
 
       return blobDeleted;
@@ -524,7 +525,7 @@ public class FileBlobStore
   @Override
   @Guarded(by = STARTED)
   public BlobStoreMetrics getMetrics() {
-    return storeMetrics.getMetrics();
+    return metricsStore.getMetrics();
   }
 
   @Override
@@ -643,15 +644,6 @@ public class FileBlobStore
     return deleted;
   }
 
-  private void deleteQuietly(final Path path) {
-    try {
-      fileOperations.delete(path);
-    }
-    catch (IOException e) {
-      log.warn("Blob store unable to delete {}", path, e);
-    }
-  }
-
   private void move(final Path source, final Path target) throws IOException {
     if (supportsAtomicMove) {
       try {
@@ -701,9 +693,17 @@ public class FileBlobStore
     try {
       Path blobDir = getAbsoluteBlobDir();
       if (fileOperations.deleteEmptyDirectory(contentDir)) {
-        cleanupFiles("Store Metrics files", storeMetrics.listBackingFiles());
-        deleteQuietly(blobDir.resolve("metadata.properties"));
-        cleanupFiles("Deletions Index", blobDir.toFile().listFiles((dir, name) -> name.endsWith(DELETIONS_FILENAME)));
+        metricsStore.remove();
+        fileOperations.deleteQuietly(blobDir.resolve("metadata.properties"));
+        File[] files = blobDir.toFile().listFiles((dir, name) -> name.endsWith(DELETIONS_FILENAME));
+        if (files != null) {
+          stream(files)
+              .map(File::toPath)
+              .forEach(fileOperations::deleteQuietly);
+        }
+        else {
+          log.warn("Unable to cleanup file(s) for Deletions Index");
+        }
         if (!fileOperations.deleteEmptyDirectory(blobDir)) {
           log.warn("Unable to delete non-empty blob store directory {}", blobDir);
         }
@@ -714,17 +714,6 @@ public class FileBlobStore
     }
     catch (Exception e) {
       throw new BlobStoreException(e, null);
-    }
-  }
-
-  private void cleanupFiles(String name, File[] files) {
-    if (files != null) {
-      Stream.of(files)
-          .filter(Objects::nonNull)
-          .map(File::toPath)
-          .forEach(this::deleteQuietly);
-    } else {
-      log.warn("Unable to cleanup file(s) for {}", name);
     }
   }
 

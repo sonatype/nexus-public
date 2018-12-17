@@ -193,6 +193,17 @@ public class SimpleFileOperations
     return deleted;
   }
 
+  @Override
+  public boolean deleteQuietly(final Path path) {
+    try {
+      return delete(path);
+    }
+    catch (Exception e) {
+      log.warn("Unable to delete path {}", path, e);
+      return false;
+    }
+  }
+
   /**
    * Removes the directory and all of its contents.
    */

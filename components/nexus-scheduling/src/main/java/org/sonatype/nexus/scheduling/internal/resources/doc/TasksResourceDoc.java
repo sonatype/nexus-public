@@ -41,7 +41,8 @@ public interface TasksResourceDoc
   @ApiOperation("Run task")
   @ApiResponses(value = {
       @ApiResponse(code = 204, message = "Task was run"),
-      @ApiResponse(code = 404, message = "Task not found")
+      @ApiResponse(code = 404, message = "Task not found"),
+      @ApiResponse(code = 405, message = "Task is disabled")
   })
   void run(@ApiParam(value = "Id of the task to run") final String id);
 

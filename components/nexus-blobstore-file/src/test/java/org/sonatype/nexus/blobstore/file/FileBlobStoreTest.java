@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.blobstore.file;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystemException;
@@ -30,7 +29,7 @@ import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
-import org.sonatype.nexus.blobstore.file.internal.BlobStoreMetricsStore;
+import org.sonatype.nexus.blobstore.file.internal.FileBlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.file.internal.FileOperations;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.log.DryRunPrefix;
@@ -60,7 +59,6 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -99,7 +97,7 @@ public class FileBlobStoreTest
   private ApplicationDirectories appDirs;
 
   @Mock
-  private BlobStoreMetricsStore metrics;
+  private FileBlobStoreMetricsStore metrics;
 
   @Mock
   private LoadingCache loadingCache;
@@ -424,23 +422,5 @@ public class FileBlobStoreTest
     write(propertiesPath, EMPTY_BLOB_STORE_PROPERTIES);
 
     assertNull(underTest.getBlobAttributes(new BlobId("test-blob")));
-  }
-
-  @Test
-  public void nullMetricsFilesIsHandledSafely() throws IOException {
-    when(fileOperations.deleteEmptyDirectory(any())).thenReturn(true);
-    when(metrics.listBackingFiles()).thenReturn(null);
-    underTest.remove();
-    verify(metrics, times(1)).listBackingFiles();
-  }
-
-  @Test
-  public void arrayContainingNullIsHandledSafely() throws IOException {
-    when(fileOperations.deleteEmptyDirectory(any())).thenReturn(true);
-    File[] files = new File[]{mock(File.class), null, mock(File.class)};
-    when(metrics.listBackingFiles()).thenReturn(files);
-    underTest.remove();
-    verify(files[0], times(1)).toPath();
-    verify(files[2], times(1)).toPath();
   }
 }

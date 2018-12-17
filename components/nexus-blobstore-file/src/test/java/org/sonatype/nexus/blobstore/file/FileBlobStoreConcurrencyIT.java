@@ -33,8 +33,8 @@ import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
-import org.sonatype.nexus.blobstore.file.internal.BlobStoreMetricsStore;
-import org.sonatype.nexus.blobstore.file.internal.BlobStoreMetricsStoreImpl;
+import org.sonatype.nexus.blobstore.file.internal.FileBlobStoreMetricsStore;
+import org.sonatype.nexus.blobstore.file.internal.FileOperations;
 import org.sonatype.nexus.blobstore.file.internal.SimpleFileOperations;
 import org.sonatype.nexus.blobstore.internal.PeriodicJobServiceImpl;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
@@ -78,7 +78,7 @@ public class FileBlobStoreConcurrencyIT
 
   private FileBlobStore underTest;
 
-  private BlobStoreMetricsStore metricsStore;
+  private FileBlobStoreMetricsStore metricsStore;
 
   @Mock
   NodeAccess nodeAccess;
@@ -88,6 +88,9 @@ public class FileBlobStoreConcurrencyIT
 
   @Mock
   BlobStoreQuotaService quotaService;
+
+  @Mock
+  FileOperations fileOperations;
 
   @Before
   public void setUp() throws Exception {
@@ -103,7 +106,9 @@ public class FileBlobStoreConcurrencyIT
     final BlobStoreConfiguration config = new BlobStoreConfiguration();
     config.attributes(FileBlobStore.CONFIG_KEY).set(FileBlobStore.PATH_KEY, root.toString());
 
-    metricsStore = spy(new BlobStoreMetricsStoreImpl(new PeriodicJobServiceImpl(), nodeAccess, quotaService, QUOTA_CHECK_INTERVAL));
+    metricsStore = spy(
+        new FileBlobStoreMetricsStore(new PeriodicJobServiceImpl(), nodeAccess, quotaService, QUOTA_CHECK_INTERVAL,
+            fileOperations));
 
     this.underTest = new FileBlobStore(content,
         new DefaultBlobIdLocationResolver(),

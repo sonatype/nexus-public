@@ -95,6 +95,16 @@ public interface FileOperations
   boolean delete(Path path) throws IOException;
 
   /**
+   * Deletes the path and does not throw exceptions on failure
+   *
+   * @param path to be deleted
+   * @return {@code true} if the path was deleted, {@code false} otherwise
+   *
+   * @since 3.next
+   */
+  boolean deleteQuietly(Path path);
+
+  /**
    * Recursively deletes all files and subdirectories, then the directory itself.
    */
   void deleteDirectory(Path directory) throws IOException;

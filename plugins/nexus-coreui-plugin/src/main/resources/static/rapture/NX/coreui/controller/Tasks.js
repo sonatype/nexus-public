@@ -470,20 +470,25 @@ Ext.define('NX.coreui.controller.Tasks', {
     description = me.getDescription(model);
 
     if (model) {
-      description = me.getDescription(model);
-      NX.Dialogs.askConfirmation(NX.I18n.get('Tasks_RunConfirm_Title'),
-        NX.I18n.format('Tasks_RunConfirm_HelpText', description), function() {
-        me.getContent().getEl().mask(NX.I18n.get('Tasks_Run_Mask'));
-        NX.direct.coreui_Task.run(model.getId(), function(response) {
-          me.getContent().getEl().unmask();
-          if (Ext.isObject(response) && response.success) {
-            me.getStore('Task').load();
-            NX.Messages.add({
-              text: NX.I18n.format('Tasks_Run_Success', description), type: 'success'
-            });
-          }
-        });
-      }, {scope: me});
+      if (model.data.enabled) {
+        description = me.getDescription(model);
+        NX.Dialogs.askConfirmation(NX.I18n.get('Tasks_RunConfirm_Title'),
+            NX.I18n.format('Tasks_RunConfirm_HelpText', description), function() {
+              me.getContent().getEl().mask(NX.I18n.get('Tasks_Run_Mask'));
+              NX.direct.coreui_Task.run(model.getId(), function(response) {
+                me.getContent().getEl().unmask();
+                if (Ext.isObject(response) && response.success) {
+                  me.getStore('Task').load();
+                  NX.Messages.add({
+                    text: NX.I18n.format('Tasks_Run_Success', description), type: 'success'
+                  });
+                }
+              });
+            }, {scope: me});
+      }
+      else {
+        NX.Messages.warning(NX.I18n.get('Tasks_Run_Disabled'));
+      }
     }
   },
 

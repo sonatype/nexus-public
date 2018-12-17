@@ -142,6 +142,8 @@ public class S3BlobStore
 
   private S3Uploader uploader;
 
+  private S3Copier copier;
+
   private S3BlobStoreMetricsStore storeMetrics;
 
   private LoadingCache<BlobId, S3Blob> liveBlobs;
@@ -152,12 +154,14 @@ public class S3BlobStore
   public S3BlobStore(final AmazonS3Factory amazonS3Factory,
                      final BlobIdLocationResolver blobIdLocationResolver,
                      @Named("multipart-uploader") final S3Uploader uploader,
+                     final S3Copier copier,
                      final S3BlobStoreMetricsStore storeMetrics,
                      final DryRunPrefix dryRunPrefix)
   {
     super(blobIdLocationResolver, dryRunPrefix);
     this.amazonS3Factory = checkNotNull(amazonS3Factory);
     this.uploader = checkNotNull(uploader);
+    this.copier = checkNotNull(copier);
     this.storeMetrics = checkNotNull(storeMetrics);
   }
 
@@ -289,7 +293,7 @@ public class S3BlobStore
     Blob sourceBlob = checkNotNull(get(blobId));
     String sourcePath = contentPath(sourceBlob.getId());
     return create(headers, destination -> {
-        s3.copyObject(getConfiguredBucket(), sourcePath, getConfiguredBucket(), destination);
+        copier.copy(s3, getConfiguredBucket(), sourcePath, destination);
         BlobMetrics metrics = sourceBlob.getMetrics();
         return new StreamMetrics(metrics.getContentSize(), metrics.getSha1Hash());
     }, null);

@@ -79,11 +79,61 @@ Ext.define('NX.coreui.view.repository.facet.DockerConnectorFacet', {
             name: 'attributes.docker.forceBasicAuth',
             fieldLabel: NX.I18n.get('Repository_Facet_DockerProxyFacet_BasicAuth_FieldLabel'),
             helpText: NX.I18n.get('Repository_Facet_DockerProxyFacet_BasicAuth_BoxLabel'),
-            value: true
+            value: false
           }
         ]
       }
     ];
+
+    Ext.override(me.up('form'), {
+      doGetValues: function(values) {
+        var processed = { attributes: {} };
+
+        Ext.Object.each(values, function(key, value) {
+          if (key === 'attributes.docker.forceBasicAuth') {
+            value = !value;
+          }
+
+          var segments = key.split('.'),
+              parent = processed;
+
+          Ext.each(segments, function(segment, pos) {
+            if (pos === segments.length - 1) {
+              parent[segment] = value;
+            }
+            else {
+              if (!parent[segment]) {
+                parent[segment] = {};
+              }
+              parent = parent[segment];
+            }
+          });
+        });
+
+        return processed;
+      },
+
+      doSetValues: function(values) {
+        var process = function(child, prefix) {
+          Ext.Object.each(child, function(key, value) {
+            var newPrefix = (prefix ? prefix + '.' : '') + key;
+
+            if (newPrefix === 'attributes.docker.forceBasicAuth') {
+              value = !value;
+            }
+
+            if (Ext.isObject(value)) {
+              process(value, newPrefix);
+            }
+            else {
+              values[newPrefix] = value;
+            }
+          });
+        };
+
+        process(values);
+      }
+    });
 
     me.callParent();
   },

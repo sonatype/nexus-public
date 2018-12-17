@@ -17,7 +17,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Properties;
 
 import org.sonatype.goodies.common.FileReplacer;
 
@@ -35,7 +34,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 public class PropertiesFile
-    extends Properties
+    extends ImplicitSourcePropertiesFile
 {
   private static final Logger log = LoggerFactory.getLogger(PropertiesFile.class);
 
@@ -77,5 +76,10 @@ public class PropertiesFile
 
   public File getFile() {
     return file;
+  }
+
+  @Override
+  public boolean exists() throws IOException {
+    return file.exists();
   }
 }
