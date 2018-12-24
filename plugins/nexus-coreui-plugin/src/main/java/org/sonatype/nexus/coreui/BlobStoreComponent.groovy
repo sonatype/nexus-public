@@ -218,7 +218,7 @@ class BlobStoreComponent
         promotable: blobStoreManager.isPromotable(blobStore.blobStoreConfiguration.name),
         isQuotaEnabled: !quotaAttributes.isEmpty(),
         quotaType: quotaAttributes.get(BlobStoreQuotaSupport.TYPE_KEY),
-        quotaLimit: (Long) quotaAttributes.get(BlobStoreQuotaSupport.LIMIT_KEY, Long.class, 0L) / MILLION,
+        quotaLimit: quotaAttributes.get(BlobStoreQuotaSupport.LIMIT_KEY, Long.class)?.div(MILLION)?.toLong(),
         groupName: blobStoreGroups.find { it.members.contains(blobStore) }?.blobStoreConfiguration?.name
     )
     if (blobStore.isStarted()) {

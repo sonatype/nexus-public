@@ -262,6 +262,7 @@ class BlobStoreManagerImplTest
     def blobStore = mock(BlobStore)
     underTest.track(blobStoreName, blobStore)
     when(blobStore.isGroupable()).thenReturn(true)
+    when(blobStore.isWritable()).thenReturn(true)
     when(blobStore.getBlobStoreConfiguration()).thenReturn(new BlobStoreConfiguration(name: blobStoreName))
     when(store.findParent(blobStoreName)).thenReturn(Optional.empty())
     assert underTest.isPromotable(blobStoreName)

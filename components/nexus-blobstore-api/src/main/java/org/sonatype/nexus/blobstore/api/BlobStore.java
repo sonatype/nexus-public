@@ -229,11 +229,11 @@ public interface BlobStore
   boolean undelete(@Nullable BlobStoreUsageChecker inUseChecker, BlobId blobId, BlobAttributes attributes, boolean isDryRun);
 
   /**
-   * Identifies if the instance is available to be written to
+   * Identifies if the storage backed by the instance is available to be written to
    * @return {@code true} if the blob store can be written to
    * @since 3.14
    */
-  boolean isWritable();
+  boolean isStorageAvailable();
 
   /**
    * Identifies if the instance can be a member of a group
@@ -244,15 +244,15 @@ public interface BlobStore
   default boolean isGroupable() { return true; }
 
   /**
-   * Identifies if the instance is ready only. The read only state is intended to represent a system state and
-   * not the state of the underlying implementation. To communicate the underlying implementations status see
-   * {@link #isWritable()}
+   * Identifies if the instance is writable. The writable state is a configuration option and not representative of the
+   * underlying storage implementation. To communicate the underlying implementations status see
+   * {@link #isStorageAvailable()}
    *
-   * @return {@code true} if the blob store is read only
+   * @return {@code true} if the blob store is writable
    * @since 3.next
    */
-  default boolean isReadOnly() {
-    return getBlobStoreConfiguration().isReadOnly();
+  default boolean isWritable() {
+    return getBlobStoreConfiguration().isWritable();
   }
 
   /**

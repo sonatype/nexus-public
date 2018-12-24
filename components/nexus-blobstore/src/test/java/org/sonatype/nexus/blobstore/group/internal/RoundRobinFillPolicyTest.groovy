@@ -100,7 +100,8 @@ class RoundRobinFillPolicyTest
 
   private BlobStore mockMember(availability, name, numCalled = _) {
     Mock(BlobStore) {
-      numCalled * isWritable() >> availability;
+      numCalled * isStorageAvailable() >> availability
+      isWritable() >> true
       getBlobStoreConfiguration() >> Mock(BlobStoreConfiguration) { getName() >> name }
     }
   }
@@ -109,11 +110,11 @@ class RoundRobinFillPolicyTest
     given: 'A group with a read only members'
       BlobStoreGroup blobStoreGroup = Mock() {
         getMembers() >> [
-            mockMember('one', true),
-            mockMember('two', false),
-            mockMember('three', true),
-            mockMember('four', true),
-            mockMember('five', false)
+            mockMember('one', false),
+            mockMember('two', true),
+            mockMember('three', false),
+            mockMember('four', false),
+            mockMember('five', true)
         ]
       }
     and: 'the following initial sequence'
@@ -131,10 +132,10 @@ class RoundRobinFillPolicyTest
       4               | 'two'
   }
 
-  private BlobStore mockMember(final String name, final boolean readOnly) {
+  private BlobStore mockMember(final String name, final boolean writable) {
     Mock(BlobStore) {
-      isWritable() >> true
-      isReadOnly() >> readOnly
+      isStorageAvailable() >> true
+      isWritable() >> writable
       getBlobStoreConfiguration() >> Mock(BlobStoreConfiguration) { getName() >> name }
     }
   }

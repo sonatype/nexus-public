@@ -16,13 +16,15 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.AtomicMoveNotSupportedException;
-import java.nio.file.Files;
 import java.nio.file.FileSystemException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver;
@@ -54,6 +56,7 @@ import static com.jayway.awaitility.Awaitility.await;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.tuple.Pair.of;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
@@ -275,6 +278,24 @@ public class FileBlobStoreIT
     // this check is more salient when run on Windows but confirms that direct path BlobIds use unix style paths
     assertThat(blobId.asUniqueString().contains("\\"), is(false));
     assertThat(blobId.asUniqueString().contains("/"), is(true));
+  }
+
+  @Test
+  public void itWillReturnAllBlobIdsInTheStream() {
+    byte[] content = "hello".getBytes();
+    Blob regularBlob = underTest.create(new ByteArrayInputStream(content), ImmutableMap.of(
+        BLOB_NAME_HEADER, "example",
+        CREATED_BY_HEADER, "test"));
+
+    Blob directPathBlob = underTest.create(new ByteArrayInputStream(content), ImmutableMap.of(
+        CREATED_BY_HEADER, "test",
+        BLOB_NAME_HEADER, "health-check/repositoryName/file.txt",
+        DIRECT_PATH_BLOB_HEADER, "true"
+    ));
+
+    List<BlobId> blobIds = underTest.getBlobIdStream().collect(Collectors.toList());
+    assertThat(blobIds.size(), is(equalTo(2)));
+    assertThat(blobIds, containsInAnyOrder(regularBlob.getId(), directPathBlob.getId()));
   }
 
   @Test(expected = IllegalArgumentException.class)

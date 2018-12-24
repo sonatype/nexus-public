@@ -223,23 +223,27 @@ Ext.define('NX.coreui.controller.Blobstores', {
         form = button.up('form'),
         values = form.getValues();
 
-    me.getContent().getEl().mask(NX.I18n.get('Blobstores_Update_Mask'));
-    NX.direct.coreui_Blobstore.update(values, function(response) {
-      me.getContent().getEl().unmask();
-      if (Ext.isObject(response)) {
-        if (response.success) {
-          NX.Messages.add({
-            text: NX.I18n.format('Blobstores_Update_Success',
-                me.getDescription(me.getBlobstoreModel().create(response.data))),
-            type: 'success'
-          });
-          me.getStore('Blobstore').load();
+    NX.Dialogs.askConfirmation(NX.I18n.get('Blobstore_BlobstoreFeature_Update_Title'),
+                               NX.I18n.get('Blobstore_BlobstoreFeature_Update_Warning'),
+                               function () {
+      me.getContent().getEl().mask(NX.I18n.get('Blobstores_Update_Mask'));
+      NX.direct.coreui_Blobstore.update(values, function(response) {
+        me.getContent().getEl().unmask();
+        if (Ext.isObject(response)) {
+          if (response.success) {
+            NX.Messages.add({
+              text: NX.I18n.format('Blobstores_Update_Success',
+                  me.getDescription(me.getBlobstoreModel().create(response.data))),
+              type: 'success'
+            });
+            me.getStore('Blobstore').load();
+          }
+          else if (Ext.isDefined(response.errors)) {
+            form.markInvalid(response.errors);
+          }
         }
-        else if (Ext.isDefined(response.errors)) {
-          form.markInvalid(response.errors);
-        }
-      }
-    });
+      });
+    }, {scope: me});
   },
 
   /**

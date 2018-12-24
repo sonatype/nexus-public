@@ -22,8 +22,6 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 import org.sonatype.nexus.blobstore.group.FillPolicy;
 
-import static com.google.common.base.Predicates.not;
-
 /**
  * {@link FillPolicy} that writes to first blobstore in group.
  *
@@ -48,7 +46,8 @@ public class WriteToFirstMemberFillPolicy
   public BlobStore chooseBlobStore(final BlobStoreGroup blobStoreGroup, final Map<String, String> headers) {
     return blobStoreGroup
         .getMembers().stream()
-        .filter(not(BlobStore::isReadOnly))
+        .filter(BlobStore::isWritable)
+        .filter(BlobStore::isStorageAvailable)
         .findFirst()
         .orElse(null);
   }

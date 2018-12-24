@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -36,6 +37,11 @@ import static org.junit.Assert.assertNull;
 public class NpmMetadataUtilsTest
     extends TestSupport
 {
+  @Before
+  public void setUp() {
+    BaseUrlHolder.unset();
+  }
+
   @Test
   public void extractTarballName() {
     assertThat(NpmMetadataUtils.extractTarballName("somename.tgz"), equalTo("somename.tgz"));

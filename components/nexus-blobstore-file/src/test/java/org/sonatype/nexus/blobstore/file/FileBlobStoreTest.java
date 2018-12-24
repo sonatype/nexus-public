@@ -15,6 +15,7 @@ package org.sonatype.nexus.blobstore.file;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystemException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -124,9 +125,11 @@ public class FileBlobStoreTest
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
+  private Path fullPath;
+
 
   @Before
-  public void initBlobStore() {
+  public void initBlobStore() throws IOException {
     CancelableHelper.set(cancelled);
     when(nodeAccess.getId()).thenReturn("test");
     when(dryRunPrefix.get()).thenReturn("");
@@ -146,16 +149,6 @@ public class FileBlobStoreTest
 
     configuration.setAttributes(attributes);
 
-    when(blobIdLocationResolver.getLocation(any(BlobId.class))).thenAnswer(invocation -> {
-      BlobId blobId = (BlobId) invocation.getArguments()[0];
-      if (blobId == null) {
-        return null;
-      }
-      return blobId.asUniqueString();
-    });
-    when(blobIdLocationResolver.fromHeaders(any(Map.class)))
-        .thenAnswer(invocation -> new BlobId(UUID.randomUUID().toString()));
-
     underTest = new FileBlobStore(util.createTempDir().toPath(),
         blobIdLocationResolver, fileOperations, metrics, configuration,
         appDirs, nodeAccess, dryRunPrefix);
@@ -164,6 +157,21 @@ public class FileBlobStoreTest
 
     underTest.init(configuration);
     underTest.setLiveBlobs(loadingCache);
+
+    fullPath = underTest.getAbsoluteBlobDir()
+        .resolve("content").resolve("vol-03").resolve("chap-44");
+    Files.createDirectories(fullPath);
+
+    when(blobIdLocationResolver.getLocation(any(BlobId.class))).thenAnswer(invocation -> {
+      BlobId blobId = (BlobId) invocation.getArguments()[0];
+      if (blobId == null) {
+        return null;
+      }
+      return fullPath.resolve(blobId.asUniqueString()).toString();
+    });
+    when(blobIdLocationResolver.fromHeaders(any(Map.class)))
+        .thenAnswer(invocation -> new BlobId(UUID.randomUUID().toString()));
+
   }
 
   @After
@@ -243,7 +251,7 @@ public class FileBlobStoreTest
     when(nodeAccess.isOldestNode()).thenReturn(true);
     underTest.doStart();
 
-    write(underTest.getAbsoluteBlobDir().resolve("content").resolve("test-blob.properties"),
+    write(fullPath.resolve("e27f83a9-dc18-4818-b4ca-ae8a9cb813c7.properties"),
         deletedBlobStoreProperties);
 
     checkDeletionsIndex(true);
@@ -261,7 +269,7 @@ public class FileBlobStoreTest
     when(nodeAccess.isOldestNode()).thenReturn(false);
     underTest.doStart();
 
-    write(underTest.getAbsoluteBlobDir().resolve("content").resolve("test-blob.properties"),
+    write(fullPath.resolve("e27f83a9-dc18-4818-b4ca-ae8a9cb813c7.properties"),
         deletedBlobStoreProperties);
 
     checkDeletionsIndex(true);
@@ -337,7 +345,7 @@ public class FileBlobStoreTest
     when(nodeAccess.isOldestNode()).thenReturn(true);
     underTest.doStart();
 
-    write(underTest.getAbsoluteBlobDir().resolve("content").resolve("test-blob.properties"),
+    write(fullPath.resolve("e27f83a9-dc18-4818-b4ca-ae8a9cb813c7.properties"),
         deletedBlobStorePropertiesNoBlobName);
 
     setRebuildMetadataToTrue();
@@ -352,7 +360,7 @@ public class FileBlobStoreTest
     when(nodeAccess.isOldestNode()).thenReturn(true);
     underTest.doStart();
 
-    write(underTest.getAbsoluteBlobDir().resolve("content").resolve("test-blob.properties"),
+    write(fullPath.resolve("e27f83a9-dc18-4818-b4ca-ae8a9cb813c7.properties"), 
         deletedBlobStoreProperties);
 
     setRebuildMetadataToTrue();
@@ -373,12 +381,11 @@ public class FileBlobStoreTest
     when(nodeAccess.isOldestNode()).thenReturn(true);
     underTest.doStart();
 
-    Path contentPath = underTest.getAbsoluteBlobDir().resolve("content");
-    Path bytesPath = contentPath.resolve("test-blob.bytes");
-    Path propertiesPath = contentPath.resolve("test-blob.properties");
+    Path bytesPath = fullPath.resolve("e27f83a9-dc18-4818-b4ca-ae8a9cb813c7.bytes");
+    Path propertiesPath = fullPath.resolve("e27f83a9-dc18-4818-b4ca-ae8a9cb813c7.properties");
     write(propertiesPath, EMPTY_BLOB_STORE_PROPERTIES);
 
-    underTest.delete(new BlobId("test-blob"), "deleting");
+    underTest.delete(new BlobId("e27f83a9-dc18-4818-b4ca-ae8a9cb813c7"), "deleting");
 
     verify(fileOperations).delete(propertiesPath);
     verify(fileOperations).delete(bytesPath);
@@ -405,10 +412,10 @@ public class FileBlobStoreTest
 
   @Test
   public void getBlobAttributes() throws Exception {
-    Path propertiesPath = underTest.getAbsoluteBlobDir().resolve("content").resolve("test-blob.properties");
+    Path propertiesPath = fullPath.resolve("e27f83a9-dc18-4818-b4ca-ae8a9cb813c7.properties");
     write(propertiesPath, VALID_BLOB_STORE_PROPERTIES);
 
-    assertNotNull(underTest.getBlobAttributes(new BlobId("test-blob")));
+    assertNotNull(underTest.getBlobAttributes(new BlobId("e27f83a9-dc18-4818-b4ca-ae8a9cb813c7")));
   }
 
   @Test

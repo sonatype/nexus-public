@@ -79,6 +79,9 @@ public class NpmPackageRootMetadataUtilsTest
 
   @Before
   public void setUp() {
+    // reset for every request
+    BaseUrlHolder.unset();
+      
     when(packageRootAsset.name()).thenReturn("@foo/bar");
     when(packageRootAsset.requireBlobRef()).thenReturn(packageRootBlobRef);
     when(packageRootAsset.formatAttributes()).thenReturn(new NestedAttributesMap("metadata", new HashMap<>()));

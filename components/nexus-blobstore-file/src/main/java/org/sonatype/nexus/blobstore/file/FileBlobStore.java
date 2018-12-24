@@ -94,15 +94,13 @@ import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
  */
 @Named(FileBlobStore.TYPE)
 public class FileBlobStore
-    extends BlobStoreSupport
+    extends BlobStoreSupport<FileAttributesLocation>
 {
   public static final String BASEDIR = "blobs";
 
   public static final String TYPE = "File";
 
   public static final String BLOB_CONTENT_SUFFIX = ".bytes";
-
-  public static final String BLOB_ATTRIBUTE_SUFFIX = ".properties";
 
   @VisibleForTesting
   public static final String CONFIG_KEY = "file";
@@ -484,10 +482,9 @@ public class FileBlobStore
   }
 
   @Override
-  @Guarded(by = STARTED)
-  public boolean deleteHard(final BlobId blobId) {
-    checkNotNull(blobId);
-
+  protected boolean doDeleteHard(final BlobId blobId) {
+    final FileBlob blob = liveBlobs.getUnchecked(blobId);
+    Lock lock = blob.lock();
     try {
       log.debug("Hard deleting blob {}", blobId);
 
@@ -509,6 +506,7 @@ public class FileBlobStore
       throw new BlobStoreException(e, blobId);
     }
     finally {
+      lock.unlock();
       liveBlobs.invalidate(blobId);
     }
   }
@@ -577,7 +575,7 @@ public class FileBlobStore
   }
 
   @Override
-  public boolean isWritable() {
+  public boolean isStorageAvailable() {
     try {
       FileStore fileStore = Files.getFileStore(contentDir);
       long usableSpace = fileStore.getUsableSpace();
@@ -773,7 +771,7 @@ public class FileBlobStore
           .mapToInt(attributes -> {
             try {
               if (attributes.isDeleted()) {
-                String blobId = getBlobIdFromAttributeFilePath(attributes.getPath());
+                String blobId = getBlobIdFromAttributeFilePath(new FileAttributesLocation(attributes.getPath()));
                 deletedBlobIndex.add(blobId.getBytes(StandardCharsets.UTF_8));
                 return 1;
               }
@@ -799,11 +797,6 @@ public class FileBlobStore
     else {
       log.info("Deletions index file rebuild not required");
     }
-  }
-
-  private String getBlobIdFromAttributeFilePath(final Path attributeFilePath) {
-    String filename = attributeFilePath.toFile().getName();
-    return filename.substring(0, filename.length() - BLOB_ATTRIBUTE_SUFFIX.length());
   }
 
   private Stream<Path> getAttributeFilePaths() throws IOException {
@@ -882,6 +875,7 @@ public class FileBlobStore
   public Stream<BlobId> getBlobIdStream() {
     try {
       return getAttributeFilePaths()
+          .map(FileAttributesLocation::new)
           .map(this::getBlobIdFromAttributeFilePath)
           .map(BlobId::new);
     }
@@ -951,6 +945,13 @@ public class FileBlobStore
             blobId, blobPath, e.getMessage(), log.isDebugEnabled() ? e : null);
       return null;
     }
+  }
+
+  @Override
+  public BlobAttributes getBlobAttributes(final FileAttributesLocation attributesFilePath) throws IOException {
+    FileBlobAttributes fileBlobAttributes = new FileBlobAttributes(attributesFilePath.getPath());
+    fileBlobAttributes.load();
+    return fileBlobAttributes;
   }
 
   @Nullable

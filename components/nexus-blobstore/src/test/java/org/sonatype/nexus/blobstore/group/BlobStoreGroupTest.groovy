@@ -12,14 +12,20 @@
  */
 package org.sonatype.nexus.blobstore.group
 
+import java.util.concurrent.TimeUnit
+
+import javax.cache.Cache
+import javax.cache.configuration.MutableConfiguration
 import javax.inject.Provider
 
+import org.sonatype.goodies.common.Time
 import org.sonatype.nexus.blobstore.api.Blob
 import org.sonatype.nexus.blobstore.api.BlobId
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
 import org.sonatype.nexus.blobstore.group.internal.WriteToFirstMemberFillPolicy
+import org.sonatype.nexus.cache.CacheHelper
 
 import com.google.common.hash.HashCode
 import spock.lang.Shared
@@ -27,7 +33,6 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import static java.util.stream.Collectors.toList
-
 /**
  * {@link BlobStoreGroup} tests.
  */
@@ -41,6 +46,16 @@ class BlobStoreGroupTest
 
   FillPolicy testFillPolicy = Mock()
 
+  Cache cache = Mock(Cache)
+
+  Provider<CacheHelper> cacheHelperProvider = Mock() {
+    get() >> Mock(CacheHelper) {
+      maybeCreateCache(_ as String, _ as MutableConfiguration) >> cache
+    }
+  }
+
+  Time time = new Time(2, TimeUnit.DAYS)
+
   Map<String, Provider<FillPolicy>> fillPolicyFactories = [
       writeToFirst: { -> writeToFirstPolicy} as Provider,
       test: { -> testFillPolicy } as Provider
@@ -50,11 +65,15 @@ class BlobStoreGroupTest
   
   @Shared Blob blobTwo = Mock()
 
-  BlobStore one = Mock()
+  BlobStore one = Mock() {
+    getBlobStoreConfiguration() >> Mock(BlobStoreConfiguration) { getName() >> 'one' }
+  }
 
-  BlobStore two = Mock()
+  BlobStore two = Mock() {
+    getBlobStoreConfiguration() >> Mock(BlobStoreConfiguration) { getName() >> 'two' }
+  }
 
-  BlobStoreGroup blobStore = new BlobStoreGroup(blobStoreManager, fillPolicyFactories)
+  BlobStoreGroup blobStore = new BlobStoreGroup(blobStoreManager, fillPolicyFactories, cacheHelperProvider, time)
 
   def config = new BlobStoreConfiguration()
 
@@ -288,5 +307,63 @@ class BlobStoreGroupTest
 
     then: 'a fall back fill policy is used'
       blobStore.fillPolicy instanceof WriteToFirstMemberFillPolicy
+  }
+
+  def 'It will search writable blob stores first'() {
+    given: 'A blob store with two members'
+      config.attributes = [group: [members: ['writableMember', 'nonWritableMember'], fillPolicy: 'test']]
+      blobStore.init(config)
+      blobStore.doStart()
+      blobStoreManager.get('writableMember') >> one
+      blobStoreManager.get('nonWritableMember') >> two
+
+    and: 'One member is read only'
+      one.isWritable() >> true
+      two.isWritable() >> false
+
+    and: 'The members currently contain the same blobId'
+      def blobId = new BlobId('BLOB_ID_VALUE')
+
+    when: 'The member is located'
+      def locatedMember = blobStore.locate(blobId)
+
+    then: 'Only the non read only members value is used'
+      1 * one.exists(blobId) >> true
+      0 * two.exists(blobId) >> true
+
+    and: 'The non read only member was found'
+      one == locatedMember.get()
+
+    and: 'The cache was updated'
+      1 * cache.put(blobId, 'one')
+  }
+
+  def "It will only cache blob ids of writable blob stores"() {
+    given: 'A blob store with two members'
+      config.attributes = [group: [members: ['writableMember', 'nonWritableMember'], fillPolicy: 'test']]
+      blobStore.init(config)
+      blobStore.doStart()
+      blobStoreManager.get('writableMember') >> one
+      blobStoreManager.get('nonWritableMember') >> two
+
+    and: 'One member is not writable'
+      one.isWritable() >> true
+      two.isWritable() >> false
+
+    and: 'The members currently contain the same blobId'
+      def blobId = new BlobId('BLOB_ID_VALUE')
+
+    when: 'The member is located'
+      def locatedMember = blobStore.locate(blobId)
+
+    then: 'the blob is found in the non writable blob store'
+      1 * one.exists(blobId) >> false
+      1 * two.exists(blobId) >> true
+
+    and: 'the non writable member was found'
+      two == locatedMember.get()
+
+    and: 'the cache was not updated'
+      0 * cache.put(_, _)
   }
 }

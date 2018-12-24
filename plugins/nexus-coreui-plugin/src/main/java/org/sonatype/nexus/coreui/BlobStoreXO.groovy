@@ -34,7 +34,7 @@ class BlobStoreXO
   String quotaType
 
   @Range
-  long quotaLimit
+  Long quotaLimit
 
   @NotEmpty
   Map<String, Map<String, Object>> attributes

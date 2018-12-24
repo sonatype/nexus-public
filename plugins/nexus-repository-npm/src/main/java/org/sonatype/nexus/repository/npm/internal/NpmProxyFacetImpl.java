@@ -36,6 +36,8 @@ import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;
+import org.sonatype.nexus.repository.storage.MissingBlobException;
+import org.sonatype.nexus.repository.storage.RetryDeniedException;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.storage.TempBlob;
@@ -227,13 +229,29 @@ public class NpmProxyFacetImpl
     checkNotNull(packageId);
     checkNotNull(payload);
     checkNotNull(tempBlob);
-    return doPutPackageRoot(packageId, NpmFacetUtils.parse(tempBlob), payload);
+
+    NestedAttributesMap packageRoot = NpmFacetUtils.parse(tempBlob);
+    try {
+      return doPutPackageRoot(packageId, packageRoot, payload, true);
+    }
+    catch (RetryDeniedException e) {
+      if (e.getCause() instanceof MissingBlobException) {
+        log.warn("Unable to find blob {} for {}, skipping merge of package root",
+            ((MissingBlobException) e.getCause()).getBlobRef(), packageId);
+
+        return doPutPackageRoot(packageId, packageRoot, payload, false);
+      }
+      else {
+        throw e;
+      }
+    }
   }
 
   @TransactionalStoreBlob
   protected Content doPutPackageRoot(final NpmPackageId packageId,
                                      final NestedAttributesMap packageRoot,
-                                     final Content content) throws IOException
+                                     final Content content,
+                                     final boolean mergePackageRoot) throws IOException
   {
     log.debug("Storing package: {}", packageId);
     StorageTx tx = UnitOfWork.currentTx();
@@ -245,7 +263,7 @@ public class NpmProxyFacetImpl
     if (asset == null) {
       asset = tx.createAsset(bucket, getRepository().getFormat()).name(packageId.id());
     }
-    else {
+    else if (mergePackageRoot) {
       newPackageRoot = mergeNewRootWithExistingRoot(tx, newPackageRoot, asset);
     }
     

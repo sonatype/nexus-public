@@ -13,6 +13,7 @@
 package org.sonatype.nexus.blobstore.quota;
 
 import org.sonatype.nexus.blobstore.api.BlobStore;
+import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 
 /**
  * For a {@link BlobStore}, checks its usage against its quota
@@ -21,6 +22,13 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
  */
 public interface BlobStoreQuota
 {
+  /**
+   * Ensure that the configuration has all the needed values
+   * @param config - the configuration to be validated
+   * @since 3.next
+   */
+  void validateConfig(BlobStoreConfiguration config);
+
   /**
    * @param blobStore - a blob store whose quota needs to be evaluated
    * @return {@link BlobStoreQuotaResult}

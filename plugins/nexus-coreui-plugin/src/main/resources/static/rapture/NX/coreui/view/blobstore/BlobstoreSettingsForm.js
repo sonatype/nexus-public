@@ -83,10 +83,7 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
         readOnly: true,
         listeners: {
           change: function(checkbox, newValue) {
-            var quotaTypeField = me.down('#quotaType');
-            quotaTypeField.setVisible(newValue);
-            var quotaLimitField = me.down('#quotaLimit');
-            quotaLimitField.setVisible(newValue);
+            me.toggleQuotaParamVisibility(newValue);
           }
         }
       },
@@ -100,19 +97,17 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
         queryMode: 'local',
         displayField: 'name',
         valueField: 'id',
-        readOnly: true,
-        allowBlank: true
+        readOnly: true
       },
       {
         xtype: 'numberfield',
         name: 'quotaLimit',
         itemId: 'quotaLimit',
         fieldLabel: NX.I18n.get('Blobstore_BlobstoreSettingsForm_QuotaLimit_FieldLabel'),
-        minValue: 0,
+        minValue: 1,
         allowDecimals: false,
         allowExponential: true,
-        readOnly: true,
-        allowBlank: true
+        readOnly: true
       },
       {
         xtype: 'nx-coreui-formfield-settingsfieldset',
@@ -124,12 +119,7 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
     me.callParent();
 
     var isQuotaEnabledField = me.down('#isQuotaEnabled');
-
-    var quotaTypeField = me.down('#quotaType');
-    quotaTypeField.setVisible(isQuotaEnabledField !== null && isQuotaEnabledField.value);
-
-    var quotaLimitField = me.down('#quotaLimit');
-    quotaLimitField.setVisible(isQuotaEnabledField !== null && isQuotaEnabledField.value);
+    me.toggleQuotaParamVisibility(isQuotaEnabledField !== null && isQuotaEnabledField.value);
 
     //map repository attributes raw map structure to/from a flattened representation
     Ext.override(me.getForm(), {
@@ -156,7 +146,24 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
       }
     });
   },
+  /**
+   * @private
+   */
+  toggleQuotaParamVisibility: function(value) {
+    var me = this,
+        form = me.up('form');
+    var quotaTypeField = me.down('#quotaType');
+    quotaTypeField.setVisible(value);
+    quotaTypeField.setDisabled(!value);
 
+    var quotaLimitField = me.down('#quotaLimit');
+    quotaLimitField.setVisible(value);
+    quotaLimitField.setDisabled(!value);
+
+    if (form && form.rendered) {
+      form.isValid();
+    }
+  },
   /**
    * @private
    */

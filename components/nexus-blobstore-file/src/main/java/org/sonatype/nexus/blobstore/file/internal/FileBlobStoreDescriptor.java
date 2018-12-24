@@ -14,12 +14,15 @@ package org.sonatype.nexus.blobstore.file.internal;
 
 import java.util.List;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
+import org.sonatype.nexus.blobstore.BlobStoreDescriptorSupport;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.StringTextFormField;
 
@@ -34,7 +37,7 @@ import static org.sonatype.nexus.formfields.FormField.MANDATORY;
  */
 @Named(FileBlobStore.TYPE)
 public class FileBlobStoreDescriptor
-    implements BlobStoreDescriptor
+    extends BlobStoreDescriptorSupport
 {
   private interface Messages
       extends MessageBundle
@@ -50,7 +53,9 @@ public class FileBlobStoreDescriptor
 
   private final FormField path;
 
-  public FileBlobStoreDescriptor() {
+  @Inject
+  public FileBlobStoreDescriptor(final BlobStoreQuotaService quotaService) {
+    super(quotaService);
     this.path = new StringTextFormField(
         PATH_KEY,
         messages.pathLabel(),
@@ -68,4 +73,5 @@ public class FileBlobStoreDescriptor
   public List<FormField> getFormFields() {
     return asList(path);
   }
+
 }

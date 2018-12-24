@@ -17,6 +17,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup
 
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * Tests {@link WriteToFirstMemberFillPolicy}.
@@ -26,26 +27,33 @@ class WriteToFirstMemberFillPolicyTest
 {
   WriteToFirstMemberFillPolicy underTest = new WriteToFirstMemberFillPolicy()
 
-  def 'It will skip read only members'() {
-    given: 'A group with a read only members'
+  @Unroll
+  def 'It will skip non available and non writable members'() {
+    given: 'A group with 3 members'
       BlobStoreGroup blobStoreGroup = Mock() {
         getMembers() >> [
-            mockMember('one', true),
-            mockMember('two', true),
-            mockMember('three', false),
-            mockMember('four', true),
-            mockMember('five', false)
+            mockMember('one', available, writable),
+            mockMember('two', available, writable),
+            mockMember('three', true, true),
         ]
       }
     when: 'the policy tries to select the blob store member'
       def blobStore = underTest.chooseBlobStore(blobStoreGroup, [:])
     then:
-      blobStore.blobStoreConfiguration.name == 'three'
+      blobStore.blobStoreConfiguration.name == name
+
+    where:
+      available | writable | name
+      false     | false    | 'three'
+      false     | true     | 'three'
+      true      | false    | 'three'
+      true      | true     | 'one'
   }
 
-  private BlobStore mockMember(final String name, final boolean readOnly) {
+  private BlobStore mockMember(final String name, final boolean available, final boolean writable) {
     Mock(BlobStore) {
-      isReadOnly() >> readOnly
+      isStorageAvailable() >> available
+      isWritable() >> writable
       getBlobStoreConfiguration() >> Mock(BlobStoreConfiguration) { getName() >> name }
     }
   }

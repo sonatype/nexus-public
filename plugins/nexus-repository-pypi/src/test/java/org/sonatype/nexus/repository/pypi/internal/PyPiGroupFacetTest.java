@@ -71,7 +71,7 @@ public class PyPiGroupFacetTest
 
     underTest = new PyPiGroupFacet(repositoryManager, constraintViolationFactory, new GroupType()) {
       @Override
-      protected boolean isStale(@Nullable final Content content) {
+      public boolean isStale(@Nullable final Content content) {
         return false;
       }
     };

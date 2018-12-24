@@ -13,26 +13,24 @@
 package org.sonatype.nexus.repository.npm.internal
 
 import javax.annotation.Nonnull
-import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
 
-import org.sonatype.nexus.common.collect.NestedAttributesMap
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.group.GroupFacet
 import org.sonatype.nexus.repository.group.GroupHandler
-import org.sonatype.nexus.repository.http.HttpStatus
 import org.sonatype.nexus.repository.view.Content
-import org.sonatype.nexus.repository.view.ContentTypes
 import org.sonatype.nexus.repository.view.Context
 import org.sonatype.nexus.repository.view.Response
-import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher
-import org.sonatype.nexus.repository.view.payloads.BytesPayload
+import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher.State
 
-import org.joda.time.DateTime
-
+import static java.util.Objects.isNull
 import static org.sonatype.nexus.repository.http.HttpConditions.makeConditional
 import static org.sonatype.nexus.repository.http.HttpConditions.makeUnconditional
+import static org.sonatype.nexus.repository.http.HttpStatus.OK
+import static org.sonatype.nexus.repository.npm.internal.NpmResponses.notFound
+import static org.sonatype.nexus.repository.npm.internal.NpmResponses.ok
+import static org.sonatype.nexus.repository.group.GroupHandler.DispatchedRepositories
 
 /**
  * Merge metadata results from all member repositories.
@@ -44,74 +42,56 @@ import static org.sonatype.nexus.repository.http.HttpConditions.makeUnconditiona
 class NpmGroupPackageHandler
     extends GroupHandler
 {
-
-  private final boolean mergeMetadata
-
-  /**
-   * @param mergeMetadata whether or not metadata should be merged across all group members (defaults to true)
-   */
-  @Inject
-  NpmGroupPackageHandler(@Named('${nexus.npm.mergeGroupMetadata:-true}') final boolean mergeMetadata) {
-    this.mergeMetadata = mergeMetadata
-  }
-
   @Override
   protected Response doGet(@Nonnull final Context context,
-                           @Nonnull final GroupHandler.DispatchedRepositories dispatched)
+                           @Nonnull final DispatchedRepositories dispatched)
       throws Exception
   {
-    TokenMatcher.State state = context.attributes.require(TokenMatcher.State)
-    Repository repository = context.repository
-    GroupFacet groupFacet = repository.facet(GroupFacet)
+    log.debug '[getPackage] group repository: {} tokens: {}',
+        context.repository.name,
+        context.attributes.require(State.class).tokens
 
-    log.debug '[getPackage] group repository: {} tokens: {}', repository.name, state.tokens
+    return buildMergedPackageRoot(context, dispatched)
+  }
 
+  private Response buildMergedPackageRoot(final Context context,
+                                          final DispatchedRepositories dispatched)
+  {
+    NpmGroupFacet groupFacet = getGroupFacet(context)
+
+    Content content = groupFacet.getFromCache(context)
+
+    // first check cached content against itself only
+    if (isNull(content)) {
+
+      Map responses = getResponses(context, dispatched, groupFacet)
+      if (isNull(responses) || responses.isEmpty()) {
+        return notFound("Not found")
+      }
+
+      return ok(groupFacet.buildPackageRoot(responses, context))
+    }
+
+    return ok(content)
+  }
+
+  private NpmGroupFacet getGroupFacet(final Context context) {
+    return context.getRepository().facet(GroupFacet.class) as NpmGroupFacet
+  }
+
+  private Map<Repository, Response> getResponses(final Context context,
+                                                 final DispatchedRepositories dispatched,
+                                                 final NpmGroupFacet groupFacet)
+  {
     // Remove conditional headers before making "internal" requests: https://issues.sonatype.org/browse/NEXUS-13915
     makeUnconditional(context.getRequest())
 
-    LinkedHashMap<Repository, Response> responses = null
     try {
       // get all and filter for HTTP OK responses
-      responses = getAll(context, groupFacet.members(), dispatched)
-              .findAll { k, v -> v.status.code == HttpStatus.OK }
+      return getAll(context, groupFacet.members(), dispatched).findAll { k, v -> v.status.code == OK }
     }
     finally {
       makeConditional(context.getRequest())
     }
-
-    if (responses == null || responses.isEmpty()) {
-      return NpmResponses.notFound("Not found")
-    }
-
-    // unroll the actual package metadata from content attributes
-    final List<NestedAttributesMap> packages = responses
-        .collect { k, v -> ((Content) v.payload).attributes.get(NestedAttributesMap) }
-
-    def result
-    if (shouldServeFirstResult(packages, NpmHandlers.packageId(state))) {
-      result = packages[0]
-    }
-    else {
-      log.debug("Merging results from {} repositories", responses.size())
-      result = NpmMetadataUtils.merge(packages[0].key, packages.reverse())
-    }
-
-    NpmMetadataUtils.rewriteTarballUrl(repository.name, result)
-
-    Content content = new Content(new BytesPayload(NpmJsonUtils.bytes(result), ContentTypes.APPLICATION_JSON))
-    content.attributes.set(Content.CONTENT_LAST_MODIFIED, DateTime.now())
-    content.attributes.set(NestedAttributesMap, result)
-
-    return NpmResponses.ok(content)
-  }
-
-  /**
-   * @param packages
-   * @param packageId
-   * @return  True if we only have one result or if we have been asked not to merge metadata for non-scoped packages,
-   * false otherwise.
-   */
-  boolean shouldServeFirstResult(List<NestedAttributesMap> packages, NpmPackageId packageId) {
-    return packages.size() == 1 || (!mergeMetadata && !packageId.scope())
   }
 }

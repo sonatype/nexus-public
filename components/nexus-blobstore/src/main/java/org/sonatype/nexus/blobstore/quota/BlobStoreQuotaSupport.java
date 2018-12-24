@@ -16,8 +16,10 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.Math.abs;
 import static java.lang.Math.floor;
 import static java.lang.Math.log10;
@@ -49,7 +51,7 @@ public abstract class BlobStoreQuotaSupport
 
     final double value;
 
-    SIPrefix(String name, double value) {
+    SIPrefix(final String name, final double value) {
       this.name = name;
       this.value = value;
     }
@@ -61,7 +63,7 @@ public abstract class BlobStoreQuotaSupport
 
   public static final String LIMIT_KEY = "quotaLimitBytes";
 
-  public static String convertBytesToSI(long bytes) {
+  public static String convertBytesToSI(final long bytes) {
     SIPrefix prefix;
 
     if (bytes == 0) {
@@ -75,21 +77,41 @@ public abstract class BlobStoreQuotaSupport
     return format("%.2f %s", bytes / prefix.value, prefix.name);
   }
 
-  public static Runnable createQuotaCheckJob(BlobStore blobStore, BlobStoreQuotaService quotaService, Logger logger) {
-    return () -> {
-      try {
-        if (blobStore != null) {
-          BlobStoreQuotaResult result = quotaService.checkQuota(blobStore);
-          if (result != null && result.isViolation()) {
-            logger.warn(result.getMessage());
-          }
-        }
+  public static Runnable createQuotaCheckJob(final BlobStore blobStore,
+                                             final BlobStoreQuotaService quotaService,
+                                             final Logger logger)
+  {
+    return () -> quotaCheckJob(blobStore, quotaService, logger);
+  }
+
+  @VisibleForTesting
+  static void quotaCheckJob(final BlobStore blobStore, final BlobStoreQuotaService quotaService, final Logger logger) {
+    try {
+      BlobStoreQuotaResult result = quotaService.checkQuota(blobStore);
+      if (result != null && result.isViolation()) {
+        logger.warn(result.getMessage());
       }
-      catch (Exception e) {
-        // Don't propagate, as this stops subsequent executions
-        logger.error("Quota check exception for {}",
-            blobStore != null ? blobStore.getBlobStoreConfiguration().getName() : "null", e);
-      }
-    };
+    }
+    catch (Exception e) {
+      // Don't propagate, as this stops subsequent executions
+      logger.error("Quota check exception for {}", blobStore.getBlobStoreConfiguration().getName(), e);
+    }
+  }
+
+  /**
+   * Gets the blob store's quota limit from the blob store's configuration.
+   *
+   * @return the quota's limit
+   * @since 3.next
+   */
+  public static long getLimit(final BlobStoreConfiguration config) {
+    Number limitObj = config.attributes(ROOT_KEY).get(LIMIT_KEY, Number.class);
+    checkArgument(limitObj != null, "Limit not found in configuration");
+    return limitObj.longValue();
+  }
+
+  @Override
+  public String toString() {
+    return getDisplayName();
   }
 }

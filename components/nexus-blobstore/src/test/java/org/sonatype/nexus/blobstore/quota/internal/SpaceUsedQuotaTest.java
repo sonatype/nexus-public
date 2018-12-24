@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.blobstore.quota.internal;
 
+import javax.validation.ValidationException;
+
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
@@ -26,8 +28,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.ROOT_KEY;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.LIMIT_KEY;
+import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.ROOT_KEY;
 
 public class SpaceUsedQuotaTest
     extends TestSupport
@@ -69,5 +71,23 @@ public class SpaceUsedQuotaTest
     when(metrics.getTotalSize()).thenReturn(20L);
 
     assertTrue(quota.check(blobStore).isViolation());
+  }
+
+  @Test
+  public void greaterThanZeroLimitIsValid() {
+    when(attributesMap.get(eq(LIMIT_KEY), eq(Number.class))).thenReturn(10L);
+    quota.validateConfig(config);
+  }
+
+  @Test(expected = ValidationException.class)
+  public void zeroLimitIsInvalid() {
+    when(attributesMap.get(eq(LIMIT_KEY), eq(Number.class))).thenReturn(0);
+    quota.validateConfig(config);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void noLimitIsInvalid() {
+    when(attributesMap.get(eq(LIMIT_KEY), eq(Number.class))).thenReturn(null);
+    quota.validateConfig(config);
   }
 }

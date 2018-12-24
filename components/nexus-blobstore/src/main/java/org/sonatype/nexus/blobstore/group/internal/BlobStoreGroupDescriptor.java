@@ -24,12 +24,14 @@ import javax.validation.ValidationException;
 import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
+import org.sonatype.nexus.blobstore.BlobStoreDescriptorSupport;
 import org.sonatype.nexus.blobstore.BlobStoreUtil;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup;
 import org.sonatype.nexus.blobstore.group.BlobStoreGroupService;
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.formfields.ComboboxFormField;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.ItemselectFormField;
@@ -48,7 +50,7 @@ import static org.sonatype.nexus.formfields.FormField.MANDATORY;
  */
 @Named(BlobStoreGroup.TYPE)
 public class BlobStoreGroupDescriptor
-    implements BlobStoreDescriptor
+    extends BlobStoreDescriptorSupport
 {
   private interface Messages
       extends MessageBundle
@@ -78,8 +80,10 @@ public class BlobStoreGroupDescriptor
   @Inject
   public BlobStoreGroupDescriptor(final BlobStoreManager blobStoreManager,
                                   final BlobStoreUtil blobStoreUtil,
-                                  final Provider<BlobStoreGroupService> blobStoreGroupService)
+                                  final Provider<BlobStoreGroupService> blobStoreGroupService,
+                                  final BlobStoreQuotaService quotaService)
   {
+    super(quotaService);
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.blobStoreUtil = checkNotNull(blobStoreUtil);
     this.blobStoreGroupService = checkNotNull(blobStoreGroupService);
@@ -119,12 +123,13 @@ public class BlobStoreGroupDescriptor
 
   @Override
   public void validateConfig(final BlobStoreConfiguration config) {
+    super.validateConfig(config);
     validateEnabled();
     String name = config.getName();
     List<String> memberNames = memberNames(config);
     validateNotEmptyOrSelfReferencing(name, memberNames);
     validateEligibleMembers(name, memberNames);
-    validateOnlyEmptyOrReadonlyExistingMembersRemoved(name, memberNames);
+    validateOnlyEmptyOrNotWritableExistingMembersRemoved(name, memberNames);
   }
 
   private void validateEnabled() {
@@ -170,7 +175,7 @@ public class BlobStoreGroupDescriptor
     }
   }
 
-  private void validateOnlyEmptyOrReadonlyExistingMembersRemoved(final String name, final List<String> memberNames) {
+  private void validateOnlyEmptyOrNotWritableExistingMembersRemoved(final String name, final List<String> memberNames) {
     BlobStore blobStore = blobStoreManager.get(name);
     if (blobStore != null) {
       BlobStoreConfiguration currentConfiguration = blobStore.getBlobStoreConfiguration();
@@ -178,7 +183,7 @@ public class BlobStoreGroupDescriptor
         for (String existingMemberName : memberNames(currentConfiguration)) {
           if (!memberNames.contains(existingMemberName)) {
             BlobStore existingMember = blobStoreManager.get(existingMemberName);
-            if (!existingMember.isReadOnly() || existingMember.getMetrics().getBlobCount() > 0L) {
+            if (existingMember.isWritable() || existingMember.getMetrics().getBlobCount() > 0L) {
               throw new ValidationException(
                   format("Blob Store '%s' cannot be removed from Blob Store Group '%s', " +
                       "use 'Admin - Remove a member from a blob store group' task instead",

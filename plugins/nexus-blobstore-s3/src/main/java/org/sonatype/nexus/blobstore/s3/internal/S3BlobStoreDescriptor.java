@@ -15,17 +15,39 @@ package org.sonatype.nexus.blobstore.s3.internal;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.inject.Inject;
 import javax.inject.Named;
+import javax.validation.ValidationException;
 
 import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
-import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
-import org.sonatype.nexus.formfields.ComboboxFormField;
+import org.sonatype.nexus.blobstore.BlobStoreDescriptorSupport;
+import org.sonatype.nexus.blobstore.api.BlobStore;
+import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
+import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.formfields.CheckboxFormField;
+import org.sonatype.nexus.formfields.ComboboxFormField;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.NumberTextFormField;
 import org.sonatype.nexus.formfields.PasswordFormField;
 import org.sonatype.nexus.formfields.StringTextFormField;
+
+import static java.lang.String.format;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ACCESS_KEY_ID_KEY;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ASSUME_ROLE_KEY;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.BUCKET_KEY;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.BUCKET_PREFIX_KEY;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.CONFIG_KEY;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ENDPOINT_KEY;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.EXPIRATION_KEY;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.FORCE_PATH_STYLE_KEY;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.REGION_KEY;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SECRET_ACCESS_KEY_KEY;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SESSION_TOKEN_KEY;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SIGNERTYPE_KEY;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * A {@link BlobStoreDescriptor} for {@link S3BlobStore}.
@@ -34,7 +56,7 @@ import org.sonatype.nexus.formfields.StringTextFormField;
  */
 @Named(S3BlobStoreDescriptor.TYPE)
 public class S3BlobStoreDescriptor
-    implements BlobStoreDescriptor
+    extends BlobStoreDescriptorSupport
 {
   public static final String TYPE = "S3";
 
@@ -113,6 +135,8 @@ public class S3BlobStoreDescriptor
 
   private static final Messages messages = I18N.create(Messages.class);
 
+  private final BlobStoreManager blobStoreManager;
+
   private final FormField bucket;
   private final FormField prefix;
   private final FormField accessKeyId;
@@ -125,46 +149,50 @@ public class S3BlobStoreDescriptor
   private final FormField signerType;
   private final FormField forcePathStyle;
 
-  public S3BlobStoreDescriptor() {
+  @Inject
+  public S3BlobStoreDescriptor(final BlobStoreQuotaService quotaService,
+                               final BlobStoreManager blobStoreManager) {
+    super(quotaService);
+    this.blobStoreManager = checkNotNull(blobStoreManager);
     this.bucket = new StringTextFormField(
-        S3BlobStore.BUCKET_KEY,
+        BUCKET_KEY,
         messages.bucketLabel(),
         messages.bucketHelp(),
         FormField.MANDATORY,
         S3BlobStore.BUCKET_REGEX
     );
     this.prefix = new StringTextFormField(
-        S3BlobStore.BUCKET_PREFIX,
+        BUCKET_PREFIX_KEY,
         messages.prefixLabel(),
         messages.prefixHelp(),
         FormField.OPTIONAL
     );
     this.accessKeyId = new StringTextFormField(
-        S3BlobStore.ACCESS_KEY_ID_KEY,
+        ACCESS_KEY_ID_KEY,
         messages.accessKeyIdLabel(),
         messages.accessKeyIdHelp(),
         FormField.OPTIONAL
     );
     this.secretAccessKey = new PasswordFormField(
-        S3BlobStore.SECRET_ACCESS_KEY_KEY,
+        SECRET_ACCESS_KEY_KEY,
         messages.secretAccessKeyLabel(),
         messages.secretAccessKeyHelp(),
         FormField.OPTIONAL
     );
     this.assumeRole = new StringTextFormField(
-        S3BlobStore.ASSUME_ROLE_KEY,
+        ASSUME_ROLE_KEY,
         messages.assumeRoleLabel(),
         messages.assumeRoleHelp(),
         FormField.OPTIONAL
     );
     this.sessionToken = new StringTextFormField(
-        S3BlobStore.SESSION_TOKEN_KEY,
+        SESSION_TOKEN_KEY,
         messages.sessionTokenLabel(),
         messages.sessionTokenHelp(),
         FormField.OPTIONAL
     );
     this.region = new ComboboxFormField<String>(
-        S3BlobStore.REGION_KEY,
+        REGION_KEY,
         messages.regionLabel(),
         messages.regionHelp(),
         FormField.MANDATORY,
@@ -172,20 +200,20 @@ public class S3BlobStoreDescriptor
     ).withStoreApi("s3_S3.regions");
     this.region.getAttributes().put("sortProperty", "order");
     this.endpoint = new StringTextFormField(
-        S3BlobStore.ENDPOINT_KEY,
+        ENDPOINT_KEY,
         messages.endpointLabel(),
         messages.endpointHelp(),
         FormField.OPTIONAL
     );
     this.expiration = new NumberTextFormField(
-        S3BlobStore.EXPIRATION_KEY,
+        EXPIRATION_KEY,
         messages.expirationLabel(),
         messages.expirationHelp(),
         FormField.OPTIONAL)
         .withInitialValue(S3BlobStore.DEFAULT_EXPIRATION_IN_DAYS)
         .withMinimumValue(-1);
     this.signerType = new ComboboxFormField<String>(
-        S3BlobStore.SIGNERTYPE_KEY,
+        SIGNERTYPE_KEY,
         messages.signerTypeLabel(),
         messages.signerTypeHelp(),
         FormField.MANDATORY,
@@ -193,7 +221,7 @@ public class S3BlobStoreDescriptor
     ).withStoreApi("s3_S3.signertypes");
     this.signerType.getAttributes().put("sortProperty", "order");
     this.forcePathStyle = new CheckboxFormField(
-        S3BlobStore.FORCE_PATH_STYLE_KEY,
+        FORCE_PATH_STYLE_KEY,
         messages.forcePathStyleLabel(),
         messages.forcePathStyleHelp(),
         FormField.MANDATORY
@@ -209,5 +237,48 @@ public class S3BlobStoreDescriptor
   public List<FormField> getFormFields() {
     return Arrays.asList(bucket, prefix, accessKeyId, secretAccessKey, sessionToken, assumeRole, region, endpoint,
         expiration, signerType, forcePathStyle);
+  }
+
+  @Override
+  public void validateConfig(final BlobStoreConfiguration config) {
+    super.validateConfig(config);
+    for (BlobStore existingBlobStore : blobStoreManager.browse()) {
+      validateOverlappingBucketWithConfiguration(config, existingBlobStore.getBlobStoreConfiguration());
+    }
+  }
+
+  private void validateOverlappingBucketWithConfiguration(final BlobStoreConfiguration newConfig, // NOSONAR
+                                                          final BlobStoreConfiguration existingConfig) {
+    String newName = newConfig.getName();
+    String newBucket = newConfig.attributes(CONFIG_KEY).get(BUCKET_KEY, String.class, "");
+    String newPrefix = newConfig.attributes(CONFIG_KEY).get(BUCKET_PREFIX_KEY, String.class, "");
+    String newEndpoint = newConfig.attributes(CONFIG_KEY).get(ENDPOINT_KEY, String.class, "");
+
+    if (!existingConfig.getName().equals(newName) && existingConfig.getType().equals(S3BlobStore.TYPE)) {
+      String existingBucket = existingConfig.attributes(CONFIG_KEY).get(BUCKET_KEY, String.class, "");
+      String existingPrefix = existingConfig.attributes(CONFIG_KEY).get(BUCKET_PREFIX_KEY, String.class, "");
+      String existingEndpoint = existingConfig.attributes(CONFIG_KEY).get(ENDPOINT_KEY, String.class, "");
+      if (newBucket.equals(existingBucket) &&
+          newEndpoint.equals(existingEndpoint) &&
+          prefixesOverlap(existingPrefix, newPrefix)) {
+        String message = format("Blob Store '%s' is already using bucket '%s'", existingConfig.getName(),
+            existingBucket);
+        if (!newPrefix.isEmpty() || !existingPrefix.isEmpty()) {
+          message = message + format(" with prefix '%s'", existingPrefix);
+        }
+        if (!newEndpoint.isEmpty() || !existingEndpoint.isEmpty()) {
+          message = message + format(" on endpoint '%s'", existingEndpoint);
+        }
+        throw new ValidationException(message);
+      }
+    }
+  }
+
+  private boolean prefixesOverlap(final String prefix1, final String prefix2) {
+    String prefix1WithDelimiters = ("/" + prefix1 + "/").replaceAll("//", "/");
+    String prefix2WithDelimiters = ("/" + prefix2 + "/").replaceAll("//", "/");
+    return
+        prefix1WithDelimiters.startsWith(prefix2WithDelimiters) ||
+        prefix2WithDelimiters.startsWith(prefix1WithDelimiters);
   }
 }

@@ -38,7 +38,7 @@ public class BlobStoreConfiguration
 
   public static final String STATE = "state";
 
-  public static final String READ_ONLY = "readOnly";
+  public static final String WRITABLE = "writable";
 
   private String name;
   
@@ -127,15 +127,15 @@ public class BlobStoreConfiguration
     return clone;
   }
 
-  public boolean isReadOnly() {
+  public boolean isWritable() {
     return Optional.ofNullable(attributes)
         .map(a -> a.get(STATE))
-        .map(a -> a.get(READ_ONLY))
+        .map(a -> a.get(WRITABLE))
         .map(Boolean.class::cast)
-        .orElse(Boolean.FALSE);
+        .orElse(Boolean.TRUE);
   }
 
-  public void setReadOnly(final boolean readOnly) {
-    attributes(STATE).set(READ_ONLY, readOnly);
+  public void setWritable(final boolean writable) {
+    attributes(STATE).set(WRITABLE, writable);
   }
 }

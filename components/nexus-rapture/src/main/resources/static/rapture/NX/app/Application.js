@@ -125,6 +125,7 @@ Ext.define('NX.app.Application', {
    */
   controllers: [
     'Copy',
+    'DependencySnippet',
     'Logging',
     'State',
     'Bookmarking',

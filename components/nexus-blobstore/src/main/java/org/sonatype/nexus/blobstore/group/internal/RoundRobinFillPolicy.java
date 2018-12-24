@@ -27,7 +27,6 @@ import org.sonatype.nexus.blobstore.group.FillPolicy;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import static com.google.common.base.Predicates.not;
 import static java.util.Collections.rotate;
 
 /**
@@ -75,8 +74,8 @@ public class RoundRobinFillPolicy
     ArrayList<BlobStore> rotatedMembers = new ArrayList<>(members);
     rotate(rotatedMembers, index);
     return rotatedMembers.stream()
-        .filter(not(BlobStore::isReadOnly))
         .filter(BlobStore::isWritable)
+        .filter(BlobStore::isStorageAvailable)
         .findFirst()
         .orElse(null);
   }

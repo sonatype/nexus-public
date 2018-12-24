@@ -15,6 +15,8 @@ package org.sonatype.nexus.blobstore.quota.internal;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.validation.ValidationException;
+
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
@@ -97,5 +99,29 @@ public class BlobStoreQuotaServiceImplTest
   public void missingQuota() {
     when(attributes.get(BlobStoreQuotaSupport.TYPE_KEY, String.class)).thenReturn("non-existent");
     assertThat(service.checkQuota(blobStore), nullValue());
+  }
+
+  @Test
+  public void nullQuotaTypeIsValid() {
+    when(attributes.get(BlobStoreQuotaSupport.TYPE_KEY, String.class)).thenReturn(null);
+    service.validateSoftQuotaConfig(config);
+  }
+
+  @Test(expected = ValidationException.class)
+  public void emptyStringQuotaTypeFails() {
+    when(attributes.get(BlobStoreQuotaSupport.TYPE_KEY, String.class)).thenReturn("");
+    service.validateSoftQuotaConfig(config);
+  }
+
+  @Test(expected = ValidationException.class)
+  public void unknownQuotaTypeFails() {
+    when(attributes.get(BlobStoreQuotaSupport.TYPE_KEY, String.class)).thenReturn("TOTALLY_FAKE");
+    service.validateSoftQuotaConfig(config);
+  }
+
+  @Test
+  public void knownQuotaTypePasses() {
+    when(attributes.get(BlobStoreQuotaSupport.TYPE_KEY, String.class)).thenReturn("passing");
+    service.validateSoftQuotaConfig(config);
   }
 }

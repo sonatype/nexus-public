@@ -15,6 +15,7 @@ package org.sonatype.nexus.blobstore.group;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -22,10 +23,15 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
+import javax.cache.Cache;
+import javax.cache.configuration.MutableConfiguration;
+import javax.cache.expiry.CreatedExpiryPolicy;
+import javax.cache.expiry.Duration;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 
+import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
@@ -37,13 +43,13 @@ import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.blobstore.group.internal.BlobStoreGroupMetrics;
 import org.sonatype.nexus.blobstore.group.internal.WriteToFirstMemberFillPolicy;
+import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import com.google.common.hash.HashCode;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -76,9 +82,15 @@ public class BlobStoreGroup
 
   public static final String FALLBACK_FILL_POLICY_TYPE = WriteToFirstMemberFillPolicy.TYPE;
 
+  public static final String CACHE_NAME = "blobstore-group-blobIds";
+
   private final BlobStoreManager blobStoreManager;
 
   private final Map<String, Provider<FillPolicy>> fillPolicyProviders;
+
+  private Provider<CacheHelper> cacheHelperProvider;
+
+  private Time blobIdCacheTimeout;
 
   private Supplier<List<BlobStore>> members;
 
@@ -87,13 +99,17 @@ public class BlobStoreGroup
   private BlobStoreConfiguration blobStoreConfiguration;
 
   // cache of located blobs that have not been soft deleted
-  private Cache<BlobId, BlobStore> locatedBlobs;
+  private Cache<BlobId, String> locatedBlobs;
 
   @Inject
   public BlobStoreGroup(final BlobStoreManager blobStoreManager,
-                        final Map<String, Provider<FillPolicy>> fillPolicyProviders) {
+                        final Map<String, Provider<FillPolicy>> fillPolicyProviders,
+                        final Provider<CacheHelper> cacheHelperProvider,
+                        @Named("${nexus.blobstore.group.blobId.cache.timeToLive:-2d}") final Time blobIdCacheTimeout) {
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.fillPolicyProviders = checkNotNull(fillPolicyProviders);
+    this.cacheHelperProvider = checkNotNull(cacheHelperProvider);
+    this.blobIdCacheTimeout = checkNotNull(blobIdCacheTimeout);
   }
 
   @Override
@@ -113,8 +129,17 @@ public class BlobStoreGroup
 
   @Override
   protected void doStart() throws Exception {
-    CacheBuilder<Object, Object> builder = CacheBuilder.newBuilder();
-    locatedBlobs = builder.weakValues().build();
+    locatedBlobs = cacheHelperProvider.get().maybeCreateCache(CACHE_NAME, getCacheConfiguration());
+  }
+
+  private MutableConfiguration<BlobId, String> getCacheConfiguration() {
+    return new MutableConfiguration<BlobId, String>()
+        .setStoreByValue(false)
+        .setExpiryPolicyFactory(
+            CreatedExpiryPolicy.factoryOf(new Duration(blobIdCacheTimeout.unit(), blobIdCacheTimeout.value()))
+        )
+        .setManagementEnabled(true)
+        .setStatisticsEnabled(true);
   }
 
   @Override
@@ -151,7 +176,7 @@ public class BlobStoreGroup
       throw new BlobStoreException("Unable to find a member Blob Store of '" + this + "' for create", null);
     }
     Blob blob = createBlobFunction.create(result);
-    locatedBlobs.put(blob.getId(), result);
+    locatedBlobs.put(blob.getId(), result.getBlobStoreConfiguration().getName());
     return blob;
   }
 
@@ -161,7 +186,7 @@ public class BlobStoreGroup
     BlobStore target = locate(blobId)
         .orElseThrow(() -> new BlobStoreException("Unable to find blob", blobId));
     Blob blob = target.copy(blobId, headers);
-    locatedBlobs.put(blob.getId(), target);
+    locatedBlobs.put(blob.getId(), target.getBlobStoreConfiguration().getName());
     return blob;
   }
 
@@ -196,7 +221,7 @@ public class BlobStoreGroup
   @Override
   @Guarded(by = STARTED)
   public boolean delete(final BlobId blobId, final String reason) {
-    locatedBlobs.invalidate(blobId);
+    locatedBlobs.remove(blobId);
     List<BlobStore> locations = members.get().stream()
         .filter((BlobStore member) -> member.exists(blobId))
         .collect(toList());
@@ -213,7 +238,7 @@ public class BlobStoreGroup
   @Override
   @Guarded(by = STARTED)
   public boolean deleteHard(final BlobId blobId) {
-    locatedBlobs.invalidate(blobId);
+    locatedBlobs.remove(blobId);
     List<BlobStore> locations = members.get().stream()
         .filter((BlobStore member) -> member.exists(blobId))
         .collect(toList());
@@ -260,7 +285,7 @@ public class BlobStoreGroup
   }
 
   @Override
-  public boolean isWritable() {
+  public boolean isStorageAvailable() {
     return true;
   }
 
@@ -270,7 +295,7 @@ public class BlobStoreGroup
   }
 
   @Override
-  public boolean isReadOnly() {
+  public boolean isWritable() {
     return false;
   }
 
@@ -335,23 +360,28 @@ public class BlobStoreGroup
     }
   }
 
-  private Optional<BlobStore> locate(BlobId blobId) {
-    BlobStore blobStore = locatedBlobs.getIfPresent(blobId);
-    if (blobStore == null) {
-      blobStore = search(blobId);
-      if (blobStore != null) {
-        locatedBlobs.put(blobId, blobStore);
-      }
+  @VisibleForTesting
+  Optional<BlobStore> locate(final BlobId blobId) {
+    String blobStoreName = locatedBlobs.get(blobId);
+    if (blobStoreName != null) {
+      log.trace("{} location was cached as {}", blobId, blobStoreName);
+      return Optional.ofNullable(blobStoreManager.get(blobStoreName));
     }
-    else {
-      log.trace("{} location was cached as {}", blobId, blobStore);
+
+    BlobStore blobStore = search(blobId);
+    if (blobStore != null && blobStore.isWritable()) {
+      String memberName = blobStore.getBlobStoreConfiguration().getName();
+      log.trace("Caching {} in member {}", blobId, memberName);
+      locatedBlobs.put(blobId, memberName);
     }
+
     return Optional.ofNullable(blobStore);
   }
 
   private BlobStore search(BlobId blobId) {
     log.trace("Searching for {} in {}", blobId, members);
     return members.get().stream()
+      .sorted(Comparator.comparing(BlobStore::isWritable).reversed())
       .filter((BlobStore member) -> member.exists(blobId))
       .findAny()
       .orElse(null);

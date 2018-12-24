@@ -15,6 +15,8 @@ package org.sonatype.nexus.selector;
 import org.apache.commons.jexl3.JexlException;
 import org.apache.commons.jexl3.parser.ASTAddNode;
 import org.apache.commons.jexl3.parser.ASTAndNode;
+import org.apache.commons.jexl3.parser.ASTAnnotatedStatement;
+import org.apache.commons.jexl3.parser.ASTAnnotation;
 import org.apache.commons.jexl3.parser.ASTArguments;
 import org.apache.commons.jexl3.parser.ASTArrayAccess;
 import org.apache.commons.jexl3.parser.ASTArrayLiteral;
@@ -439,6 +441,16 @@ public abstract class AbstractCselParserVisitor extends ParserVisitor
 
   @Override
   protected Object visit(final ASTJxltLiteral node, final Object data) {
+    return reject(node);
+  }
+
+  @Override
+  protected Object visit(final ASTAnnotation node, final Object data) {
+    return reject(node);
+  }
+
+  @Override
+  protected Object visit(final ASTAnnotatedStatement node, final Object data) {
     return reject(node);
   }
 

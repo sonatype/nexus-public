@@ -113,6 +113,7 @@ public final class NpmFacetUtils
                                 final AssetKind assetKind) throws IOException
   {
     asset.formatAttributes().set(P_ASSET_KIND, assetKind.name());
+
     final AssetBlob result = tx.createBlob(
         asset.name(),
         content,

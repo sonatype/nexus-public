@@ -85,19 +85,17 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
  */
 @Named(S3BlobStore.TYPE)
 public class S3BlobStore
-    extends BlobStoreSupport
+    extends BlobStoreSupport<S3AttributesLocation>
 {
   public static final String TYPE = "S3";
 
   public static final String BLOB_CONTENT_SUFFIX = ".bytes";
 
-  public static final String BLOB_ATTRIBUTE_SUFFIX = ".properties";
-
   public static final String CONFIG_KEY = "s3";
 
   public static final String BUCKET_KEY = "bucket";
 
-  public static final String BUCKET_PREFIX = "prefix";
+  public static final String BUCKET_PREFIX_KEY = "prefix";
 
   public static final String ACCESS_KEY_ID_KEY = "accessKeyId";
 
@@ -325,7 +323,7 @@ public class S3BlobStore
           }
 
           if (blobAttributes.isDeleted() && !includeDeleted) {
-            log.warn("Attempt to access soft-deleted blob {} ({})", blobId, blobAttributes);
+            log.warn("Attempt to access soft-deleted blob {} ({}), reason: {}", blobId, blobAttributes, blobAttributes.getDeletedReason());
             return null;
           }
 
@@ -405,10 +403,9 @@ public class S3BlobStore
   }
 
   @Override
-  @Guarded(by = STARTED)
-  public boolean deleteHard(final BlobId blobId) {
-    checkNotNull(blobId);
-
+  protected boolean doDeleteHard(final BlobId blobId) {
+    final S3Blob blob = liveBlobs.getUnchecked(blobId);
+    Lock lock = blob.lock();
     try {
       log.debug("Hard deleting blob {}", blobId);
 
@@ -431,6 +428,7 @@ public class S3BlobStore
       throw new BlobStoreException(e, blobId);
     }
     finally {
+      lock.unlock();
       liveBlobs.invalidate(blobId);
     }
   }
@@ -546,7 +544,7 @@ public class S3BlobStore
   }
 
   private String getBucketPrefix() {
-    return Optional.ofNullable(blobStoreConfiguration.attributes(CONFIG_KEY).get(BUCKET_PREFIX, String.class))
+    return Optional.ofNullable(blobStoreConfiguration.attributes(CONFIG_KEY).get(BUCKET_PREFIX_KEY, String.class))
         .filter(Predicates.not(Strings::isNullOrEmpty))
         .map(s -> s.replaceFirst("/$", "") + "/")
         .orElse("");
@@ -619,10 +617,9 @@ public class S3BlobStore
 
   private Stream<BlobId> blobIdStream(Iterable<S3ObjectSummary> summaries) {
     return stream(summaries.spliterator(), false)
-      .map(S3ObjectSummary::getKey)
-      .map(key -> key.substring(key.lastIndexOf('/') + 1, key.length()))
-      .filter(filename -> filename.endsWith(BLOB_ATTRIBUTE_SUFFIX))
-      .map(filename -> filename.substring(0, filename.length() - BLOB_ATTRIBUTE_SUFFIX.length()))
+      .filter(o -> o.getKey().endsWith(BLOB_ATTRIBUTE_SUFFIX))
+      .map(S3AttributesLocation::new)
+      .map(this::getBlobIdFromAttributeFilePath)
       .map(BlobId::new);
   }
 
@@ -637,6 +634,14 @@ public class S3BlobStore
       log.error("Unable to load S3BlobAttributes for blob id: {}", blobId, e);
       return null;
     }
+  }
+
+  @Override
+  public BlobAttributes getBlobAttributes(final S3AttributesLocation attributesFilePath) throws IOException {
+    S3BlobAttributes s3BlobAttributes = new S3BlobAttributes(s3, getConfiguredBucket(),
+        attributesFilePath.getFullPath());
+    s3BlobAttributes.load();
+    return s3BlobAttributes;
   }
 
   @Override
@@ -659,7 +664,7 @@ public class S3BlobStore
   }
 
   @Override
-  public boolean isWritable() {
+  public boolean isStorageAvailable() {
     try {
       return s3.doesBucketExistV2(getConfiguredBucket());
     } catch (SdkBaseException e) {

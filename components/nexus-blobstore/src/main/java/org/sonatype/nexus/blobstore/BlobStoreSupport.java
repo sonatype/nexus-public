@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
@@ -40,15 +41,22 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
  *
  * @since 3.next
  */
-public abstract class BlobStoreSupport
+public abstract class BlobStoreSupport<T extends AttributesLocation>
     extends StateGuardLifecycleSupport
     implements BlobStore
 {
+  public static final String BLOB_ATTRIBUTE_SUFFIX = ".properties";
+
   protected final BlobIdLocationResolver blobIdLocationResolver;
 
   protected final DryRunPrefix dryRunPrefix;
 
   protected BlobStoreConfiguration blobStoreConfiguration;
+
+  protected static final Pattern UUID_PATTERN = Pattern
+      .compile(
+          ".*vol-\\d{2}/chap-\\d{2}/\\b[0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12}\\b.properties$",
+          Pattern.CASE_INSENSITIVE);
 
   public BlobStoreSupport(final BlobIdLocationResolver blobIdLocationResolver,
                           final DryRunPrefix dryRunPrefix)
@@ -61,8 +69,8 @@ public abstract class BlobStoreSupport
     return Optional.ofNullable(blobId).orElseGet(() -> blobIdLocationResolver.fromHeaders(headers));
   }
 
-  private void checkIsNotReadOnly() {
-    checkState(!isReadOnly(), "Operation not permitted for a read only blob store");
+  private void checkIsWritable() {
+    checkState(isWritable(), "Operation not permitted when blob store is not writable");
   }
 
   @Override
@@ -76,7 +84,7 @@ public abstract class BlobStoreSupport
   public Blob create(final InputStream blobData, final Map<String, String> headers, @Nullable final BlobId blobId) {
     checkNotNull(blobData);
     checkNotNull(headers);
-    checkIsNotReadOnly();
+    checkIsWritable();
 
     checkArgument(headers.containsKey(BLOB_NAME_HEADER), "Missing header: %s", BLOB_NAME_HEADER);
     checkArgument(headers.containsKey(CREATED_BY_HEADER), "Missing header: %s", CREATED_BY_HEADER);
@@ -89,7 +97,6 @@ public abstract class BlobStoreSupport
   @Override
   @Guarded(by = STARTED)
   public boolean delete(final BlobId blobId, final String reason) {
-    checkIsNotReadOnly();
     checkNotNull(blobId);
 
     return doDelete(blobId, reason);
@@ -103,9 +110,6 @@ public abstract class BlobStoreSupport
                           final BlobAttributes attributes,
                           final boolean isDryRun)
   {
-    checkIsNotReadOnly();
-    checkNotNull(attributes);
-    checkIsNotReadOnly();
     checkNotNull(attributes);
     String logPrefix = isDryRun ? dryRunPrefix.get() : "";
     Optional<String> blobName = Optional.of(attributes)
@@ -146,6 +150,15 @@ public abstract class BlobStoreSupport
 
   @Override
   @Guarded(by = STARTED)
+  public boolean deleteHard(final BlobId blobId) {
+    checkNotNull(blobId);
+    return doDeleteHard(blobId);
+  }
+
+  protected abstract boolean doDeleteHard(final BlobId blobId);
+
+  @Override
+  @Guarded(by = STARTED)
   public synchronized void compact() {
     compact(null);
   }
@@ -153,7 +166,6 @@ public abstract class BlobStoreSupport
   @Override
   @Guarded(by = STARTED)
   public synchronized void compact(@Nullable final BlobStoreUsageChecker inUseChecker) {
-    checkIsNotReadOnly();
     doCompact(inUseChecker);
   }
 
@@ -173,4 +185,21 @@ public abstract class BlobStoreSupport
   public BlobStoreConfiguration getBlobStoreConfiguration() {
     return this.blobStoreConfiguration;
   }
+
+  protected abstract BlobAttributes getBlobAttributes(final T attributesFilePath) throws IOException;
+
+  protected String getBlobIdFromAttributeFilePath(final T attributeFilePath) {
+    if (UUID_PATTERN.matcher(attributeFilePath.getFullPath()).matches()) {
+      String filename = attributeFilePath.getFileName();
+      return filename.substring(0, filename.length() - BLOB_ATTRIBUTE_SUFFIX.length());
+    }
+    try {
+      BlobAttributes fileBlobAttributes = getBlobAttributes(attributeFilePath);
+      return blobIdLocationResolver.fromHeaders(fileBlobAttributes.getHeaders()).asUniqueString();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
 }

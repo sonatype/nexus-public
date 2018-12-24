@@ -14,8 +14,10 @@ package org.sonatype.nexus.blobstore.quota.internal;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
+import javax.validation.ValidationException;
 
 import org.sonatype.nexus.blobstore.api.BlobStore;
+import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuota;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaResult;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport;
@@ -38,12 +40,18 @@ public class SpaceUsedQuota
   private static final String DISPLAY_NAME = "Space Used";
 
   @Override
+  public void validateConfig(final BlobStoreConfiguration config) {
+    if (getLimit(config) <= 0) {
+      throw new ValidationException(DISPLAY_NAME + " quotas must have a Quota Limit greater than 0");
+    }
+  }
+
+  @Override
   public BlobStoreQuotaResult check(final BlobStore blobStore) {
     checkNotNull(blobStore);
 
     long usedSpace = blobStore.getMetrics().getTotalSize();
-    Number limitObj = blobStore.getBlobStoreConfiguration().attributes(ROOT_KEY).get(LIMIT_KEY, Number.class);
-    long limit = checkNotNull(limitObj).longValue();
+    long limit = getLimit(blobStore.getBlobStoreConfiguration());
 
     String name = blobStore.getBlobStoreConfiguration().getName();
     String msg = format("Blob store %s is using %s space and has a limit of %s", name,

@@ -10,28 +10,36 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.quota;
+package org.sonatype.nexus.blobstore.file.internal;
 
-import org.sonatype.nexus.blobstore.api.BlobStore;
+import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 
-/**
- * For a {@link BlobStore}, checks it usage against its quotas
- *
- * @since 3.14
- */
-public interface BlobStoreQuotaService
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
+public class FileBlobStoreDescriptorTest
+    extends TestSupport
 {
-  /**
-   * If the config has a quota, ensure that the configuration has all the needed values
-   * @param config - the configuration to be validated
-   * @since 3.next
-   */
-  void validateSoftQuotaConfig(BlobStoreConfiguration config);
+  @Mock
+  BlobStoreQuotaService quotaService;
 
-  /**
-   * @param blobStore - a blob store whose quota needs to be evaluated
-   * @return null if the blob store doesn't have a quota otherwise return a {@link BlobStoreQuotaResult}
-   */
-  BlobStoreQuotaResult checkQuota(BlobStore blobStore);
+  FileBlobStoreDescriptor descriptor;
+
+  @Before
+  public void setup() {
+    descriptor = new FileBlobStoreDescriptor(quotaService);
+  }
+
+  @Test
+  public void descriptorValidationCallQuotaValidation() {
+    BlobStoreConfiguration config = new BlobStoreConfiguration();
+    descriptor.validateConfig(config);
+    verify(quotaService, times(1)).validateSoftQuotaConfig(config);
+  }
 }

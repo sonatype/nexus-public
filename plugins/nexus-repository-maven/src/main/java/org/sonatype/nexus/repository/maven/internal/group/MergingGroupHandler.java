@@ -74,7 +74,6 @@ public class MergingGroupHandler
 
     Content content;
 
-    boolean cacheMergedResult = true;
     try {
       // now check group-level cache to see if it's been invalidated by any updates
       content = groupFacet.getCached(mavenPath);
@@ -85,7 +84,6 @@ public class MergingGroupHandler
     }
     catch (RetryDeniedException e) {
       log.debug("Conflict fetching cached content {} : {}", context.getRepository().getName(), mavenPath.getPath(), e);
-      cacheMergedResult = false;
     }
 
     if (!mavenPath.isHash()) {
@@ -105,12 +103,7 @@ public class MergingGroupHandler
       }
 
       // merge the individual responses and cache the result
-      if (cacheMergedResult) {
-        content = groupFacet.mergeAndCache(mavenPath, responses);
-      }
-      else {
-        content = groupFacet.mergeWithoutCaching(mavenPath, responses);
-      }
+      content = groupFacet.mergeAndCache(mavenPath, responses);
 
       if (content != null) {
         log.trace("Responses merged {} : {}", context.getRepository().getName(), mavenPath.getPath());

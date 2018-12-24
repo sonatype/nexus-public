@@ -25,7 +25,6 @@ import org.sonatype.nexus.repository.Facet
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
-import org.sonatype.nexus.repository.group.GroupFacet
 import org.sonatype.nexus.repository.group.GroupHandler
 import org.sonatype.nexus.repository.http.HttpHandlers
 import org.sonatype.nexus.repository.types.GroupType
@@ -47,7 +46,7 @@ class NpmGroupRecipe
   public static final String NAME = 'npm-group'
 
   @Inject
-  Provider<GroupFacet> groupFacet
+  Provider<NpmGroupFacet> groupFacet
 
   @Inject
   Provider<NpmSearchIndexFacetGroup> npmSearchIndexFacet
@@ -76,6 +75,7 @@ class NpmGroupRecipe
     repository.attach(securityFacet.get())
     repository.attach(tokenFacet.get())
     repository.attach(npmSearchIndexFacet.get())
+    repository.attach(npmFacet.get())
     repository.attach(configure(viewFacet.get()))
   }
 
@@ -104,6 +104,8 @@ class NpmGroupRecipe
     builder.route(packageMatcher(GET)
         .handler(timingHandler)
         .handler(securityHandler)
+        .handler(unitOfWorkHandler)
+        .handler(lastDownloadedHandler)
         .handler(packageHandler)
         .create())
 

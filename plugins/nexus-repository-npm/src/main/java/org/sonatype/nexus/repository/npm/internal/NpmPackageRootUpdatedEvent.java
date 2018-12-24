@@ -10,28 +10,21 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.quota;
+package org.sonatype.nexus.repository.npm.internal;
 
-import org.sonatype.nexus.blobstore.api.BlobStore;
-import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
+import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.entity.EntityMetadata;
+import org.sonatype.nexus.repository.storage.AssetEvent;
+import org.sonatype.nexus.repository.storage.AssetUpdatedEvent;
 
-/**
- * For a {@link BlobStore}, checks it usage against its quotas
- *
- * @since 3.14
- */
-public interface BlobStoreQuotaService
+public class NpmPackageRootUpdatedEvent
+    extends AssetUpdatedEvent
+    implements AssetEvent
 {
-  /**
-   * If the config has a quota, ensure that the configuration has all the needed values
-   * @param config - the configuration to be validated
-   * @since 3.next
-   */
-  void validateSoftQuotaConfig(BlobStoreConfiguration config);
-
-  /**
-   * @param blobStore - a blob store whose quota needs to be evaluated
-   * @return null if the blob store doesn't have a quota otherwise return a {@link BlobStoreQuotaResult}
-   */
-  BlobStoreQuotaResult checkQuota(BlobStore blobStore);
+  public NpmPackageRootUpdatedEvent(final EntityMetadata metadata,
+                                    final String repositoryName,
+                                    final EntityId componentId)
+  {
+    super(metadata, repositoryName, componentId);
+  }
 }

@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.blobstore.quota.internal;
 
+import javax.validation.ValidationException;
+
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
@@ -79,5 +81,23 @@ public class SpaceRemainingQuotaTest
     when(metrics.getAvailableSpace()).thenReturn(5L);
 
     assertFalse(quota.check(blobStore).isViolation());
+  }
+
+  @Test
+  public void greaterThanZeroLimitIsValid() {
+    when(attributesMap.get(eq(LIMIT_KEY), eq(Number.class))).thenReturn(10L);
+    quota.validateConfig(config);
+  }
+
+  @Test(expected = ValidationException.class)
+  public void zeroLimitIsInvalid() {
+    when(attributesMap.get(eq(LIMIT_KEY), eq(Number.class))).thenReturn(0);
+    quota.validateConfig(config);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void noLimitIsInvalid() {
+    when(attributesMap.get(eq(LIMIT_KEY), eq(Number.class))).thenReturn(null);
+    quota.validateConfig(config);
   }
 }

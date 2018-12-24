@@ -21,6 +21,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreManager
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup
 import org.sonatype.nexus.blobstore.group.BlobStoreGroupService
+import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService
 
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -39,8 +40,10 @@ class BlobStoreGroupDescriptorTest
 
   BlobStoreGroupService blobStoreGroupService = Mock()
 
+  BlobStoreQuotaService quotaService = Mock()
+
   BlobStoreGroupDescriptor blobStoreGroupDescriptor =
-      new BlobStoreGroupDescriptor(blobStoreManager, blobStoreUtil, { blobStoreGroupService })
+      new BlobStoreGroupDescriptor(blobStoreManager, blobStoreUtil, { blobStoreGroupService }, quotaService)
 
   def blobStores = [:]
 
@@ -139,6 +142,15 @@ class BlobStoreGroupDescriptorTest
       exception.message ==
             "Blob Store 'nonEmptyStore' cannot be removed from Blob Store Group 'group1', " +
             "use 'Admin - Remove a member from a blob store group' task instead"
+  }
+
+  def 'a group blob store validates its quota'() {
+    when: 'attempting to create a group'
+      blobStoreGroupDescriptor.validateConfig(new BlobStoreConfiguration(name: 'group', type: BlobStoreGroup.TYPE,
+          attributes: [group: [members: ['single']]]))
+
+    then: 'quota validity is checked'
+       1 * quotaService.validateSoftQuotaConfig(*_)
   }
 
   private BlobStoreGroup mockBlobStoreGroup(final String name, final List<BlobStore> members) {

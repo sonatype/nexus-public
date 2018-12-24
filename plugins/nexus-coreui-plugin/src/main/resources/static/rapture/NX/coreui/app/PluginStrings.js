@@ -291,8 +291,9 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_DockerHostedFacet_V1_Enabled_Help: 'Allow clients to use the V1 API to interact with this Repository',
     Repository_Facet_DockerConnectorFacet_Title: 'Repository Connectors',
     Repository_Facet_DockerConnectorFacet_Help: '<em>Connectors allow Docker clients to connect directly ' +
-    'to hosted registries, but are not always required. Consult our <a href="http://links.sonatype.com/products/nexus/docker-ssl-connector/docs" target="_blank">documentation</a>' +
-    ' for which connector is appropriate for your use case.</em>',
+    'to hosted registries, but are not always required. Consult our <a href="https://help.sonatype.com/repomanager3/private-registry-for-docker/ssl-and-repository-connector-configuration" target="_blank">documentation</a>' +
+    ' for which connector is appropriate for your use case. For information on scaling the repositories' +
+    ' see our <a href="https://help.sonatype.com/repomanager3/private-registry-for-docker/scaling-repositories" target="_blank">scaling documentation</a>.</em>',
     Repository_Facet_DockerConnectorFacet_HttpPort_FieldLabel: 'HTTP',
     Repository_Facet_DockerConnectorFacet_HttpPort_HelpText: 'Create an HTTP connector at specified port. Normally used if the server is behind a secure proxy.',
     Repository_Facet_DockerConnectorFacet_HttpsPort_FieldLabel: 'HTTPS',
@@ -449,6 +450,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Blobstore_BlobstoreFeature_Editing_Enabled_Message: 'Updating blob store configuration will cause it to be temporarily unavailable for a short period. Edits to configuration may also leave the blob store in a non-functional state. Use caution when changing values.',
     Blobstore_BlobstoreFeature_Promote_Button: 'Promote to group',
     Blobstore_BlobstoreFeature_Promote_Success: 'Blob store: {0} promoted to blob store group',
+    Blobstore_BlobstoreFeature_Update_Title: 'Update Blob Store?',
+    Blobstore_BlobstoreFeature_Update_Warning: 'Warning: The blob store will be temporarily unavailable for a short period.  This function does not migrate data to a new location.',
     Blobstore_BlobstoreSettings_Title: 'Settings',
     Blobstore_BlobstoreAdd_Type_FieldLabel: 'Type',
     Blobstore_BlobstoreAdd_Type_EmptyText: 'Select a type',

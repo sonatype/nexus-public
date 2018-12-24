@@ -20,7 +20,6 @@ import org.sonatype.nexus.blobstore.api.BlobId
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreException
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker
-import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService
 import org.sonatype.nexus.common.log.DryRunPrefix
 
 import com.amazonaws.SdkClientException
@@ -377,7 +376,7 @@ class S3BlobStoreTest
       blobStore.init(config)
       blobStore.doStart()
     then:
-      blobStore.isWritable() == expectedAvailability
+      blobStore.isStorageAvailable() == expectedAvailability
     where:
       expectedAvailability | response
       true                 | { return true }
