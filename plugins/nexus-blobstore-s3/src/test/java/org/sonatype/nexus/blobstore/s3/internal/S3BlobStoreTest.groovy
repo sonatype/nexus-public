@@ -37,7 +37,6 @@ import spock.lang.Unroll
 
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.BLOB_ATTRIBUTE_SUFFIX
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.BLOB_CONTENT_SUFFIX
-
 /**
  * {@link S3BlobStore} tests.
  */
@@ -49,7 +48,7 @@ class S3BlobStoreTest
 
   BlobIdLocationResolver locationResolver = new DefaultBlobIdLocationResolver()
 
-  S3Uploader uploader =  Mock()
+  S3Uploader uploader = Mock()
 
   S3Copier copier =  Mock()
 
@@ -77,7 +76,40 @@ class S3BlobStoreTest
 
   def setup() {
     amazonS3Factory.create(_) >> s3
-    config.attributes = [s3: [bucket: 'mybucket']]
+    config.attributes = [s3: [bucket: 'mybucket', prefix: 'myPrefix']]
+  }
+
+  @Unroll
+  def 'getBlobIdStream works with prefix #prefix'() {
+    given: 'prefix setup'
+      def cfg = new BlobStoreConfiguration()
+      cfg.attributes = [s3: [bucket: 'mybucket', prefix: prefix]]
+      blobStore.init(cfg)
+      blobStore.doStart()
+
+    when: 'blob id stream is fetched'
+      def blobIdStream = blobStore.getBlobIdStream()
+      def count = blobIdStream.collect(Collectors.toList()).size()
+
+    then: 'the correct request is made'
+      count == 1
+      1 * s3.listObjects(_) >> { listObjectsRequest ->
+        assert listObjectsRequest[0].getPrefix() == expected
+
+        def listing = new ObjectListing()
+        listing.objectSummaries << new S3ObjectSummary(bucketName: 'mybucket', key: expected + 'vol-01/chap-01/12345678-1234-1234-1234-123456789abc.properties')
+        listing.objectSummaries << new S3ObjectSummary(bucketName: 'mybucket', key: expected + 'vol-01/chap-01/12345678-1234-1234-1234-123456789abc.bytes')
+        listing.truncated = false
+
+        return listing
+      }
+
+    where:
+      prefix     | expected
+      'myPrefix' | 'myPrefix/content/'
+      ''         | 'content/'
+      null       | 'content/'
+
   }
 
   @Unroll
@@ -251,8 +283,8 @@ class S3BlobStoreTest
   def 'start will accept a metadata.properties originally created with file blobstore'() {
     given: 'metadata.properties comes from a file blobstore'
       1 * s3.doesBucketExist('mybucket') >> true
-      1 * s3.doesObjectExist('mybucket', 'metadata.properties') >> true
-      1 * s3.getObject('mybucket', 'metadata.properties') >> mockS3Object('type=file/1')
+      1 * s3.doesObjectExist('mybucket', 'myPrefix/metadata.properties') >> true
+      1 * s3.getObject('mybucket', 'myPrefix/metadata.properties') >> mockS3Object('type=file/1')
 
     when: 'doStart is called'
       blobStore.init(config)
@@ -262,11 +294,11 @@ class S3BlobStoreTest
      notThrown(IllegalStateException)
   }
 
-  def 'start rejects a metadata.properties containing something other than file or s3 type' () {
+  def 'start rejects a metadata.properties containing something other than file or s3 type'() {
     given: 'metadata.properties comes from some unknown blobstore'
       1 * s3.doesBucketExist('mybucket') >> true
-      1 * s3.doesObjectExist('mybucket', 'metadata.properties') >> true
-      1 * s3.getObject('mybucket', 'metadata.properties') >> mockS3Object('type=other/12')
+      1 * s3.doesObjectExist('mybucket', 'myPrefix/metadata.properties') >> true
+      1 * s3.getObject('mybucket', 'myPrefix/metadata.properties') >> mockS3Object('type=other/12')
 
     when: 'doStart is called'
       blobStore.init(config)
@@ -288,9 +320,9 @@ class S3BlobStoreTest
 
     then: 'exception is thrown'
       thrown(BlobStoreException)
-      1 * s3.listObjects('mybucket', 'content/') >> new ObjectListing()
+      1 * s3.listObjects('mybucket', 'myPrefix/content/') >> new ObjectListing()
       1 * storeMetrics.remove()
-      1 * s3.deleteObject('mybucket', 'metadata.properties')
+      1 * s3.deleteObject('mybucket', 'myPrefix/metadata.properties')
       1 * s3.deleteBucket('mybucket') >> { args -> throw s3Exception }
   }
 
@@ -306,9 +338,9 @@ class S3BlobStoreTest
 
     then: 'exception is not thrown'
       notThrown(BlobStoreException)
-      1 * s3.listObjects('mybucket', 'content/') >> new ObjectListing()
+      1 * s3.listObjects('mybucket', 'myPrefix/content/') >> new ObjectListing()
       1 * storeMetrics.remove()
-      1 * s3.deleteObject('mybucket', 'metadata.properties')
+      1 * s3.deleteObject('mybucket', 'myPrefix/metadata.properties')
       1 * s3.deleteBucket('mybucket') >> { args -> throw s3Exception }
   }
 
@@ -346,8 +378,8 @@ class S3BlobStoreTest
 
   def 'create direct path blob'() {
     given: 'blob store setup'
-      def expectedBytesPath = 'content/directpath/foo/bar/myblob.bytes'
-      def expectedPropertiesPath = 'content/directpath/foo/bar/myblob.properties'
+      def expectedBytesPath = 'myPrefix/content/directpath/foo/bar/myblob.bytes'
+      def expectedPropertiesPath = 'myPrefix/content/directpath/foo/bar/myblob.properties'
       blobStore.init(config)
       blobStore.doStart()
 

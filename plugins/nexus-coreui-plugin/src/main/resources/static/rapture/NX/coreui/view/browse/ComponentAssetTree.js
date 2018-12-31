@@ -22,7 +22,10 @@ Ext.define('NX.coreui.view.browse.ComponentAssetTree', {
   alias: 'widget.nx-coreui-component-asset-tree',
   requires: [
     'NX.I18n',
-    'NX.State'
+    'NX.State',
+    'NX.coreui.view.component.ComponentInfo',
+    'NX.coreui.view.component.ComponentAssetInfo',
+    'NX.coreui.view.component.ComponentFolderInfo'
   ],
 
   /**
@@ -60,6 +63,12 @@ Ext.define('NX.coreui.view.browse.ComponentAssetTree', {
         xtype: 'nx-coreui-component-componentassetinfo',
         flex: 2,
         iconCls: 'nx-icon-tree-asset-x16',
+        visible: false
+      },
+      {
+        xtype: 'nx-coreui-component-componentfolderinfo',
+        iconCls: 'nx-icon-tree-folder-x16',
+        flex: 2,
         visible: false
       }],
       dockedItems: [{

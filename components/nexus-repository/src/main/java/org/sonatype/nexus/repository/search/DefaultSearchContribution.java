@@ -37,6 +37,9 @@ public class DefaultSearchContribution
     if (value != null) {
       // Replace unescaped slashes "a/b" with escaped slashes "\/"
       String escaped = value.replaceAll(UNESCAPED_SLASHES, "$1\\\\/");
+      if (escaped.startsWith("/")) {
+        escaped = "\\" + escaped;
+      }
       query.must(QueryBuilders.queryStringQuery(escaped).field(type).lowercaseExpandedTerms(false));
     }
   }

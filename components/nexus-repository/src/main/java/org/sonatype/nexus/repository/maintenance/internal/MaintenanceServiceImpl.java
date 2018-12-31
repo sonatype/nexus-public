@@ -13,6 +13,8 @@
 package org.sonatype.nexus.repository.maintenance.internal;
 
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -22,6 +24,7 @@ import org.sonatype.nexus.repository.MissingFacetException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
+import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.repository.storage.Asset;
@@ -30,8 +33,11 @@ import org.sonatype.nexus.repository.storage.ComponentMaintenance;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.security.BreadActions;
+import org.sonatype.nexus.thread.NexusExecutorService;
+import org.sonatype.nexus.thread.NexusThreadFactory;
 
 import org.apache.shiro.authz.AuthorizationException;
+import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
@@ -47,12 +53,24 @@ public class MaintenanceServiceImpl
 
   private final VariableResolverAdapterManager variableResolverAdapterManager;
 
+  private final DeleteFolderService deleteFolderService;
+
+  private final RepositoryPermissionChecker repositoryPermissionChecker;
+
+  private final ExecutorService executorService;
+
   @Inject
   public MaintenanceServiceImpl(final ContentPermissionChecker contentPermissionChecker,
-                                final VariableResolverAdapterManager variableResolverAdapterManager)
+                                final VariableResolverAdapterManager variableResolverAdapterManager,
+                                final DeleteFolderService deleteFolderService,
+                                final RepositoryPermissionChecker repositoryPermissionChecker)
   {
     this.contentPermissionChecker = checkNotNull(contentPermissionChecker);
     this.variableResolverAdapterManager = checkNotNull(variableResolverAdapterManager);
+    this.deleteFolderService = checkNotNull(deleteFolderService);
+    this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
+    this.executorService = NexusExecutorService.forCurrentSubject(Executors.newSingleThreadExecutor(
+            new NexusThreadFactory("delete-path", "Delete path in Tree Browse View", Thread.MIN_PRIORITY)));
   }
 
   @Override
@@ -77,6 +95,21 @@ public class MaintenanceServiceImpl
     }
 
     return getComponentMaintenanceFacet(repository).deleteComponent(component.getEntityMetadata().getId());
+  }
+
+  /**
+   * @since 3.next
+   */
+  @Override
+  public void deleteFolder(final Repository repository, final String path) {
+    checkNotNull(repository);
+    checkNotNull(path);
+
+    if (!canDeleteFolder(repository, path)) {
+      throw new AuthorizationException();
+    }
+
+    executorService.submit(() -> deleteFolderService.deleteFolder(repository, path, DateTime.now(), () -> false));
   }
 
   @Override
@@ -113,6 +146,13 @@ public class MaintenanceServiceImpl
   {
     return contentPermissionChecker.isPermitted(repository.getName(), repositoryFormat, BreadActions.DELETE,
         variableResolverAdapter.fromAsset(asset));
+  }
+
+  @Override
+  public boolean canDeleteFolder(final Repository repository,
+                                 final String folder)
+  {
+    return repositoryPermissionChecker.userCanDeleteInRepository(repository);
   }
 
   private ComponentMaintenance getComponentMaintenanceFacet(final Repository repository) {

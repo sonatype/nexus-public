@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.coreui
 
-import org.sonatype.nexus.repository.storage.BucketStore
-
 import javax.annotation.Nullable
 import javax.inject.Inject
 import javax.inject.Named
@@ -35,6 +33,7 @@ import org.sonatype.nexus.repository.security.RepositorySelector
 import org.sonatype.nexus.repository.security.VariableResolverAdapter
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager
 import org.sonatype.nexus.repository.storage.Asset
+import org.sonatype.nexus.repository.storage.BucketStore
 import org.sonatype.nexus.repository.storage.Component
 import org.sonatype.nexus.repository.storage.ComponentFinder
 import org.sonatype.nexus.repository.storage.ComponentStore
@@ -401,6 +400,27 @@ class ComponentComponent
     else {
       return null
     }
+  }
+
+  @DirectMethod
+  @Timed
+  @ExceptionMetered
+  @RequiresAuthentication
+  @Validate
+  boolean canDeleteFolder(@NotEmpty final String path, @NotEmpty final String repositoryName)
+  {
+    Repository repository = repositoryManager.get(repositoryName)
+    return maintenanceService.canDeleteFolder(repository, path)
+  }
+
+  @DirectMethod
+  @Timed
+  @ExceptionMetered
+  @RequiresAuthentication
+  @Validate
+  void deleteFolder(@NotEmpty final String path, @NotEmpty final String repositoryName) {
+    Repository repository = repositoryManager.get(repositoryName)
+    maintenanceService.deleteFolder(repository, path)
   }
 
   private QueryOptions toQueryOptions(StoreLoadParameters storeLoadParameters) {

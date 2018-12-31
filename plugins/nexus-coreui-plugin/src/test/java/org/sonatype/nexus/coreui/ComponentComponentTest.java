@@ -222,6 +222,14 @@ public class ComponentComponentTest
   }
 
   @Test
+  public void testDeleteFolder() {
+    underTest.deleteFolder("somePath", "testRepositoryName");
+
+    verify(repositoryManager).get("testRepositoryName");
+    verify(maintenanceService).deleteFolder(eq(repository), eq("somePath"));
+  }
+
+  @Test
   public void testReadComponent() {
     Component component = mock(Component.class);
     Asset asset = mock(Asset.class);

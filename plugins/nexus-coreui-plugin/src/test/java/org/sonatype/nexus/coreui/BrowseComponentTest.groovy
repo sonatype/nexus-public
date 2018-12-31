@@ -20,7 +20,6 @@ import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.storage.BrowseNode
 import org.sonatype.nexus.repository.storage.BrowseNodeStore
 
-import org.mockito.Mockito
 import spock.lang.Specification
 import spock.lang.Subject
 
@@ -127,7 +126,11 @@ class BrowseComponentTest
 
   def 'getState lists rebuilding repositories'() {
     given: 'Some repositories'
-      def repositories = [mockRepository('A', true), mockRepository('B', false), mockRepository('C', true)]
+      def repositories = [
+          mockRepository('A', true),
+          mockRepository('B', false),
+          mockRepository('C', true)
+      ]
       repositoryManager.browse() >> repositories
 
     when: 'Calling getState()'

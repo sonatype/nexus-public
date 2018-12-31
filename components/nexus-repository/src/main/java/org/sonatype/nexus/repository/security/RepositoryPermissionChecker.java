@@ -33,6 +33,7 @@ import org.apache.shiro.subject.Subject;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singletonList;
 import static org.sonatype.nexus.security.BreadActions.BROWSE;
+import static org.sonatype.nexus.security.BreadActions.DELETE;
 import static org.sonatype.nexus.security.BreadActions.READ;
 
 /**
@@ -61,7 +62,17 @@ public class RepositoryPermissionChecker
    * @return true if the user can browse the repository or if the user has a content selector granting access
    */
   public boolean userCanBrowseRepository(final Repository repository) {
-    return userHasRepositoryViewPermissionTo(BROWSE, repository) || userHasAnyContentSelectorAccessTo(repository);
+    return userHasRepositoryViewPermissionTo(BROWSE, repository) || userHasAnyContentSelectorAccessTo(repository, BROWSE);
+  }
+
+  /**
+   * @param repository
+   * @return true if user can delete anything within the repository based on repository or content selector privilege
+   *
+   * @since 3.next
+   */
+  public boolean userCanDeleteInRepository(final Repository repository) {
+    return userHasRepositoryViewPermissionTo(DELETE, repository) || userHasAnyContentSelectorAccessTo(repository, DELETE);
   }
 
   private boolean userHasRepositoryViewPermissionTo(final String action, final Repository repository) {
@@ -126,10 +137,10 @@ public class RepositoryPermissionChecker
     return permittedRepositories;
   }
 
-  private boolean userHasAnyContentSelectorAccessTo(final Repository repository) {
+  private boolean userHasAnyContentSelectorAccessTo(final Repository repository, final String action) {
     Subject subject = securityHelper.subject(); //Getting the subject a single time improves performance
     return selectorManager.browse().stream()
         .anyMatch(selector -> securityHelper.anyPermitted(subject,
-            new RepositoryContentSelectorPermission(selector, repository, singletonList(BROWSE))));
+            new RepositoryContentSelectorPermission(selector, repository, singletonList(action))));
   }
 }

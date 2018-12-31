@@ -168,6 +168,30 @@ Ext.define('NX.coreui.mixin.ComponentUtils', {
         deleteButton.disableWithTooltip(NX.I18n.get('ComponentUtils_Delete_Button_Unauthenticated'));
       }
     }
+    else {
+      deleteButton.hide();
+    }
+  },
+
+  updateDeleteFolderButton: function (currentRepository, path) {
+    var me = this,
+        deleteButton = me.getDeleteFolderButton();
+
+    if (path) {
+      me.updateDeleteButton(deleteButton, currentRepository, function() {
+        NX.direct.coreui_Component.canDeleteFolder(path, currentRepository.get('name'),
+            function(response) {
+              if (Ext.isObject(response) && response.success) {
+                if (response.data) {
+                  deleteButton.enable();
+                }
+                else {
+                  deleteButton.disableWithTooltip(NX.I18n.get('ComponentUtils_Delete_Asset_No_Permissions'));
+                }
+              }
+            });
+      });
+    }
   },
 
   /**

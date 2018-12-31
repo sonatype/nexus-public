@@ -67,6 +67,7 @@ import org.joda.time.DateTime;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.common.cache.CacheLoader.from;
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
@@ -126,7 +127,7 @@ public class S3BlobStore
 
   public static final String TYPE_V1 = "s3/1";
 
-  public static final String CONTENT_PREFIX = "content";
+  private static final String CONTENT_PREFIX = "content";
 
   public static final String DIRECT_PATH_PREFIX = CONTENT_PREFIX + "/" + DIRECT_PATH_ROOT;
 
@@ -217,7 +218,7 @@ public class S3BlobStore
    * Returns the location for a blob ID based on whether or not the blob ID is for a temporary or permanent blob.
    */
   private String getLocation(final BlobId id) {
-    return getBucketPrefix() + CONTENT_PREFIX + "/" + blobIdLocationResolver.getLocation(id);
+    return getContentPrefix() + blobIdLocationResolver.getLocation(id);
   }
 
   @Override
@@ -551,13 +552,25 @@ public class S3BlobStore
   }
 
   /**
+   *
+   * @return the complete content prefix, including the trailing slash
+   */
+  private String getContentPrefix() {
+    final String bucketPrefix = getBucketPrefix();
+    if (isNullOrEmpty(bucketPrefix)) {
+      return CONTENT_PREFIX + "/";
+    }
+    return bucketPrefix + CONTENT_PREFIX + "/";
+  }
+
+  /**
    * Delete files known to be part of the S3BlobStore implementation if the content directory is empty.
    */
   @Override
   @Guarded(by = {NEW, STOPPED, FAILED})
   public void remove() {
     try {
-      boolean contentEmpty = s3.listObjects(getConfiguredBucket(), CONTENT_PREFIX + "/").getObjectSummaries().isEmpty();
+      boolean contentEmpty = s3.listObjects(getConfiguredBucket(), getContentPrefix()).getObjectSummaries().isEmpty();
       if (contentEmpty) {
         S3PropertiesFile metadata = new S3PropertiesFile(s3, getConfiguredBucket(), metadataFilePath());
         metadata.remove();
@@ -601,7 +614,7 @@ public class S3BlobStore
 
   @Override
   public Stream<BlobId> getBlobIdStream() {
-    Iterable<S3ObjectSummary> summaries = S3Objects.withPrefix(s3, getConfiguredBucket(), CONTENT_PREFIX);
+    Iterable<S3ObjectSummary> summaries = S3Objects.withPrefix(s3, getConfiguredBucket(), getContentPrefix());
     return blobIdStream(summaries);
   }
 
