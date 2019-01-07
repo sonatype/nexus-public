@@ -54,7 +54,8 @@ class PyPiIndexUtilsTest
       links == [
           'sample-1.2.0.tar.bz2' : '../../packages/sample-1.2.0.tar.bz2#md5=00c3db1c8ab5d10a2049fe384c8d53e5',
           'sample-1.2.1-py2.py3-none-any.whl' : '../../packages/sample-1.2.1-py2.py3-none-any.whl#md5=5c286195d47014fa0ba6e4e5b0801faf',
-          'sample-1.2.2-py2.py3-none-any.whl' : '../../packages/sample-1.2.1-py2.py3-none-any.whl#md5=5c286195d47014fa0ba6e4e5b0801faf'
+          'sample-1.2.2-py2.py3-none-any.whl' : '../../packages/sample-1.2.1-py2.py3-none-any.whl#md5=5c286195d47014fa0ba6e4e5b0801faf',
+          'test' : 'http://example.com/test'
       ]
   }
 

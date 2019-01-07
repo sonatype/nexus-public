@@ -80,7 +80,7 @@ public class AssetDownloadCountStoreImpl
 
   @Inject
   public AssetDownloadCountStoreImpl(@Named(ComponentDatabase.NAME) final Provider<DatabaseInstance> databaseInstance,
-                                     @Named("${nexus.assetdownloads.enabled:-true}") final boolean enabled,
+                                     @Named("${nexus.assetdownloads.enabled:-false}") final boolean enabled,
                                      @Named("${nexus.assetdownloads.cache.size:-10000}") final int cacheSize,
                                      @Named("${nexus.assetdownloads.cache.duration:-3600}") final int cacheDuration,
                                      final AssetDownloadCountEntityAdapter entityAdapter,

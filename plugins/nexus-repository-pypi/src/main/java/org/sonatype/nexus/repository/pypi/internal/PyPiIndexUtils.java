@@ -173,10 +173,8 @@ public final class PyPiIndexUtils
       return "../.." + link.substring(startIndex);
     }
 
-    // Since we're being more permissive/trying to do some ad-hoc cleanup on links as above, when we encounter other
-    // weirdness, just log it and continue
-    log.warn("Found unexpected PyPI link format, skipping: " + link);
-    return null;
+    log.trace("Found index page link without /packages reference, not rewriting: {}", link);
+    return link;
   }
 
   private static String maybeRewriteRootLink(final String link) {

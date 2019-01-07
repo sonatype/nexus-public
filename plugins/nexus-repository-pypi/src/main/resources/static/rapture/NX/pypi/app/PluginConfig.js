@@ -10,18 +10,20 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext*/
+/*global Ext, NX*/
 
 /**
- * Dependency snippet model.
+ * PyPI plugin configuration.
  *
  * @since 3.next
  */
-Ext.define('NX.model.DependencySnippet', {
-  extend: 'Ext.data.Model',
+Ext.define('NX.pypi.app.PluginConfig', {
+  '@aggregate_priority': 100,
 
-  fields: [
-    { name: 'format', type: 'string' },
-    { name: 'snippetGenerator', type: 'auto' }
+  controllers: [
+    {
+      id: 'NX.pypi.controller.PyPiDependencySnippetController',
+      active: true
+    }
   ]
 });

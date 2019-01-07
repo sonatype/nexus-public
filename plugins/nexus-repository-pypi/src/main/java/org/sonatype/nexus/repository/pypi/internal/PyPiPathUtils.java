@@ -19,9 +19,6 @@ import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -83,7 +80,9 @@ public final class PyPiPathUtils
    * Builds a path to a package for a particular path.
    */
   static String packagesPath(final String... parts) {
-    return PACKAGE_PATH_PREFIX + String.join("/", parts);
+    String pkg = String.join("/", parts);
+
+    return pkg.startsWith("packages/") ? pkg : PACKAGE_PATH_PREFIX + pkg;
   }
 
   /**

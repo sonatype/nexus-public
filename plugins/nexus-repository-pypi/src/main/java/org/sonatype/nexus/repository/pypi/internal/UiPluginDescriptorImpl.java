@@ -10,18 +10,32 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext*/
+package org.sonatype.nexus.repository.pypi.internal;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+
+import org.sonatype.nexus.rapture.UiPluginDescriptorSupport;
+
+import org.eclipse.sisu.Priority;
 
 /**
- * Dependency snippet model.
+ * Rapture {@link org.sonatype.nexus.rapture.UiPluginDescriptor} for {@code nexus-repository-pypi}
  *
  * @since 3.next
  */
-Ext.define('NX.model.DependencySnippet', {
-  extend: 'Ext.data.Model',
-
-  fields: [
-    { name: 'format', type: 'string' },
-    { name: 'snippetGenerator', type: 'auto' }
-  ]
-});
+@Named
+@Singleton
+@Priority(Integer.MAX_VALUE - 300) // after proui
+public class UiPluginDescriptorImpl
+    extends UiPluginDescriptorSupport
+{
+  @Inject
+  public UiPluginDescriptorImpl() {
+    super("nexus-repository-pypi");
+    setHasStyle(false);
+    setNamespace("NX.pypi");
+    setConfigClassName("NX.pypi.app.PluginConfig");
+  }
+}

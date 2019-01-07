@@ -8658,6 +8658,22 @@ fieldset.nx-form-section.nx-no-title {
     margin: 0;
 }
 
+.nx-info-dependency-snippet-panel .description {
+    /**
+ * @class NX.view.info.DependencySnippetPanel
+ */
+    color: #444;
+    margin: 10px 2px 0 2px;
+}
+
+.nx-info-dependency-snippet-panel .snippet-text {
+    background-color: #f4f4f4;
+    margin: 5px 0 0 0;
+    overflow: auto;
+    padding: 10px 5px;
+    width: 100%;
+}
+
 .nx-actions {
     /**
  * @class NX.view.drilldown.Actions

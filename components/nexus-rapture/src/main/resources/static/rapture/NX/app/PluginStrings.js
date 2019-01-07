@@ -185,7 +185,12 @@ Ext.define('NX.app.PluginStrings', {
     // SearchBoxTip
     SearchBoxTip_ExactMatch: 'Use <b>""</b> for exact match - "example"',
     SearchBoxTip_Wildcard: 'Use <b>*</b> for wildcard - exampl*',
-    SearchBoxTip_LearnMore: 'Learn more...'
+    SearchBoxTip_LearnMore: 'Learn more...',
+
+    // DependencySnippet Panel
+    DependencySnippetPanel_Title: 'Usage',
+    DependencySnippetPanel_Copy_Button_Tooltip: 'Copy snippet to clipboard'
+
   }
 }, function(obj) {
   NX.I18n.register(obj);

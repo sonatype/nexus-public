@@ -417,6 +417,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
       componentInfoPanel = me.getComponentInfo();
       componentInfoPanel.setTitle(componentInfoPanelTitleText);
       componentInfoPanel.setIconCls(me.mixins.componentUtils.getIconForAsset(node).get('cls'));
+      componentInfoPanel.getDependencySnippetPanel().hide();
       componentInfoPanel.show();
       componentInfoPanel.mask(NX.I18n.get('ComponentDetails_Loading_Mask'));
 
@@ -425,15 +426,14 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
         me.maybeUnmask(componentInfoPanel);
         if (me.isPanelVisible(componentInfoPanel) && me.isResponseSuccessful(response)) {
           componentModel = me.getComponentModel().create(response.data);
-          componentInfoPanel.setModel(componentModel);
-          me.updateDeleteComponentButton(me.getCurrentRepository(), componentModel);
-          me.updateAnalyzeButton(componentModel);
+          me.setComponentModel(componentModel);
          }
       });
     }
     else if ('asset' === node.get('type')) {
       assetInfoPanel = me.getComponentAssetInfo();
       assetInfoPanel.setIconCls(me.mixins.componentUtils.getIconForAsset(node).get('cls'));
+      assetInfoPanel.getDependencySnippetPanel().hide();
       assetInfoPanel.show();
       assetInfoPanel.mask(NX.I18n.get('ComponentDetails_Loading_Mask'));
 
@@ -461,22 +461,53 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     }
   },
 
+  setComponentModel: function(componentModel) {
+    var componentInfoPanel = this.getComponentInfo();
+
+    componentInfoPanel.setModel(componentModel);
+    this.updateDeleteComponentButton(this.getCurrentRepository(), componentModel);
+    this.updateAnalyzeButton(componentModel);
+    this.setDependencySnippets(componentInfoPanel.getDependencySnippetPanel(), componentModel);
+  },
+
   setInfoPanelModel: function(assetInfoPanel, asset) {
-    var me = this;
+    var me = this,
+        componentModel;
+
     if (asset.get('componentId')) {
       NX.direct.coreui_Component.readComponent(asset.get('componentId'), me.getCurrentRepository().get('name'), function (response) {
         me.maybeUnmask(assetInfoPanel);
         if (me.isPanelVisible(assetInfoPanel) && me.isResponseSuccessful(response)) {
-          assetInfoPanel.setModel(asset, me.getComponentModel().create(response.data));
+          componentModel = me.getComponentModel().create(response.data);
+          assetInfoPanel.setModel(asset, componentModel);
           me.updateDeleteAssetButton(me.getCurrentRepository(), asset);
+          me.setDependencySnippets(assetInfoPanel.getDependencySnippetPanel(), componentModel, asset);
         }
       });
     }
     else {
       me.maybeUnmask(assetInfoPanel);
       if (me.isPanelVisible(assetInfoPanel)) {
-        assetInfoPanel.setModel(asset, me.getComponentModel().create({}));
+        componentModel = me.getComponentModel().create({});
+        assetInfoPanel.setModel(asset, componentModel);
         me.updateDeleteAssetButton(me.getCurrentRepository(), asset);
+        me.setDependencySnippets(assetInfoPanel.getDependencySnippetPanel(), componentModel, asset);
+      }
+    }
+  },
+
+  setDependencySnippets: function(dependencySnippetPanel, componentModel, assetModel) {
+    var format, dependencySnippets;
+
+    if (componentModel) {
+      format = componentModel.get('format');
+      dependencySnippets = NX.getApplication().getDependencySnippetController()
+          .getDependencySnippets(format, componentModel, assetModel);
+
+      dependencySnippetPanel.setDependencySnippets(format, dependencySnippets);
+
+      if (dependencySnippets && dependencySnippets.length > 0) {
+        dependencySnippetPanel.show();
       }
     }
   },

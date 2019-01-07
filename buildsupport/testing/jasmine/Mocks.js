@@ -10,18 +10,18 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext*/
 
-/**
- * Dependency snippet model.
- *
- * @since 3.next
- */
-Ext.define('NX.model.DependencySnippet', {
-  extend: 'Ext.data.Model',
+var TestClasses = {};
 
-  fields: [
-    { name: 'format', type: 'string' },
-    { name: 'snippetGenerator', type: 'auto' }
-  ]
-});
+var Ext = {
+  define: function(className, implementationObject) {
+    TestClasses[className] = implementationObject;
+  }
+};
+
+function MockComponent(properties) {
+  this.properties = properties;
+}
+MockComponent.prototype.get = function(propertyName) {
+  return this.properties[propertyName];
+};

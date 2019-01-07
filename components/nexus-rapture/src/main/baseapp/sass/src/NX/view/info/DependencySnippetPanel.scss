@@ -1,0 +1,17 @@
+/**
+ * @class NX.view.info.DependencySnippetPanel
+ */
+
+.nx-info-dependency-snippet-panel {
+  .description {
+    color: $color-charcoal;
+    margin: 10px 2px 0 2px;
+  }
+  .snippet-text {
+    background-color: $color-light-smoke;
+    margin: 5px 0 0 0;
+    overflow: auto;
+    padding: 10px 5px;
+    width: 100%;
+  }
+}

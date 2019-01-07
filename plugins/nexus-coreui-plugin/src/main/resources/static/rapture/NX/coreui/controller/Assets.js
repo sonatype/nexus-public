@@ -54,6 +54,8 @@ Ext.define('NX.coreui.controller.Assets', {
     {ref: 'rootContainer', selector: 'nx-main'}
   ],
 
+  DEPENDENCY_SNIPPET_PANEL_ID: 'snippetPanel',
+
   /**
    * @override
    */
@@ -103,7 +105,7 @@ Ext.define('NX.coreui.controller.Assets', {
     me.listen({
       component: {
         'nx-coreui-component-assetcontainer': {
-          updated: me.showAssetInfo
+          updated: me.showAssetInfo.bind(me)
         },
         'nx-coreui-component-details': {
           updated: me.showComponentDetails
@@ -144,7 +146,10 @@ Ext.define('NX.coreui.controller.Assets', {
    */
   showAssetInfo: function (container, assetModel) {
     var info = container.down('nx-coreui-component-assetinfo'),
-        attributes = container.down('nx-coreui-component-assetattributes');
+        attributes = container.down('nx-coreui-component-assetattributes'),
+        componentDetails = this.getComponentDetails(),
+        componentModel = componentDetails && componentDetails.componentModel,
+        format, dependencySnippets;
 
     if (!info) {
       container.addTab(
@@ -166,7 +171,7 @@ Ext.define('NX.coreui.controller.Assets', {
             ui: 'nx-inset',
             title: NX.I18n.get('Component_AssetInfo_Attributes_Title'),
             itemId: 'attributeInfo',
-            weight: 20,
+            weight: 30,
             autoScroll: true,
             items: [
               {xtype: 'nx-coreui-component-assetattributes'}
@@ -177,6 +182,35 @@ Ext.define('NX.coreui.controller.Assets', {
       attributes = container.down('nx-coreui-component-assetattributes');
     }
     attributes.setAssetModel(assetModel);
+
+    if (componentModel) {
+      format = componentModel.get('format');
+      dependencySnippets = NX.getApplication().getDependencySnippetController()
+          .getDependencySnippets(format, componentModel, assetModel);
+
+      if (dependencySnippets && dependencySnippets.length > 0) {
+        this.getDependencySnippetPanel(container).setDependencySnippets(format, dependencySnippets);
+        container.showTab(this.DEPENDENCY_SNIPPET_PANEL_ID);
+      } else {
+        container.hideTab(this.DEPENDENCY_SNIPPET_PANEL_ID);
+      }
+    }
+  },
+
+  getDependencySnippetPanel: function(container) {
+    if (!container.down('nx-info-dependency-snippet-panel')) {
+      container.addTab(
+          {
+            xtype: 'nx-info-dependency-snippet-panel',
+            title: NX.I18n.get('DependencySnippetPanel_Title'),
+            collapsible: false,
+            itemId: this.DEPENDENCY_SNIPPET_PANEL_ID,
+            weight: 20
+          }
+      );
+    }
+
+    return container.down('nx-info-dependency-snippet-panel');
   },
 
   showComponentDetails: function (container, componentModel) {

@@ -39,6 +39,7 @@ import org.sonatype.nexus.repository.maven.MavenPath.SignatureType;
 import org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind;
 import org.sonatype.nexus.repository.maven.internal.filter.DuplicateDetectionStrategy;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
+import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.view.Content;
@@ -170,33 +171,17 @@ public final class MavenIndexPublisher
     checkNotNull(target);
     checkNotNull(repositories);
     Closer closer = Closer.create();
-    try {
-      List<Iterable<Record>> records = new ArrayList<>();
-      for (Repository repository : repositories) {
-        try {
-          ResourceHandler resourceHandler = closer.register(new Maven2WritableResourceHandler(repository));
-          IndexReader indexReader = closer.register(new IndexReader(null, resourceHandler));
-          ChunkReader chunkReader = closer.register(indexReader.iterator().next());
-          records.add(filter(transform(chunkReader, RECORD_EXPANDER::apply), new RecordTypeFilter(Type.ARTIFACT_ADD)));
-        }
-        catch (IllegalArgumentException e) {
-          throw new IOException(e.getMessage(), e);
-        }
-      }
-
-      try (Maven2WritableResourceHandler resourceHandler = new Maven2WritableResourceHandler(target)) {
-        try (IndexWriter indexWriter = new IndexWriter(resourceHandler, target.getName(), false)) {
-          indexWriter.writeChunk(
-              transform(
-                  decorate(
-                      filter(concat(records), duplicateDetectionStrategy),
-                      target.getName()
-                  ),
-                  RECORD_COMPACTOR::apply
-              ).iterator()
-          );
-        }
-      }
+    try (Maven2WritableResourceHandler resourceHandler = new Maven2WritableResourceHandler(target);
+         IndexWriter indexWriter = new IndexWriter(resourceHandler, target.getName(), false)) {
+      indexWriter.writeChunk(
+          transform(
+              decorate(
+                  filter(concat(getGroupRecords(repositories, closer)), duplicateDetectionStrategy),
+                  target.getName()
+              ),
+              RECORD_COMPACTOR::apply
+          ).iterator()
+      );
     }
     catch (Throwable t) {
       throw closer.rethrow(t);
@@ -272,6 +257,33 @@ public final class MavenIndexPublisher
     );
   }
 
+  private static Iterable<Iterable<Record>> getGroupRecords(final List<Repository> repositories, final Closer closer)
+      throws IOException
+  {
+    UnitOfWork paused = UnitOfWork.pause();
+    try {
+      List<Iterable<Record>> records = new ArrayList<>();
+      for (Repository repository : repositories) {
+        UnitOfWork.begin(repository.facet(StorageFacet.class).txSupplier());
+        try {
+          ResourceHandler resourceHandler = closer.register(new Maven2WritableResourceHandler(repository));
+          IndexReader indexReader = closer.register(new IndexReader(null, resourceHandler));
+          ChunkReader chunkReader = closer.register(indexReader.iterator().next());
+          records.add(filter(transform(chunkReader, RECORD_EXPANDER::apply), new RecordTypeFilter(Type.ARTIFACT_ADD)));
+        }
+        catch (IllegalArgumentException e) {
+          throw new IOException(e.getMessage(), e);
+        }
+        finally {
+          UnitOfWork.end();
+        }
+      }
+      return records;
+    }
+    finally {
+      UnitOfWork.resume(paused);
+    }
+  }
 
   /**
    * Converts orient SQL query result into Maven Indexer Reader {@link Record}. Should be invoked only with documents

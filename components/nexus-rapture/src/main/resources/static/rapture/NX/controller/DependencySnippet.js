@@ -32,45 +32,34 @@ Ext.define('NX.controller.DependencySnippet', {
   ],
 
   /**
-   * Add a new dependency snippet
+   * Add a new dependency snippet generator
    *
    * @public
    */
-  addDependencySnippet: function(format, snippet) {
-    var store = this.getStore('DependencySnippet');
-
-    if (Array.isArray(snippet)) {
-      snippet.forEach(function(element) {
-        store.add({format: format, displayName: element.displayName, snippetTemplate: element.snippetTemplate});
-      })
-    }
-    else {
-      store.add({format: format, displayName: snippet.displayName, snippetTemplate: snippet.snippetTemplate});
-    }
+  addDependencySnippetGenerator: function(format, snippetGenerator) {
+    this.getStore('DependencySnippet').add({
+      format: format,
+      snippetGenerator: snippetGenerator
+    });
   },
 
   /**
-   * Retrieve dependency snippet for a given component and format
+   * Retrieve dependency snippets for a given format, component and asset.
+   * Leave assetModel undefined if requesting snippets for a component.
    *
    * @public
    */
-  findDependencySnippets: function(format, componentModel) {
+  getDependencySnippets: function(format, componentModel, assetModel) {
     var store = this.getStore('DependencySnippet');
+    var dependencySnippets = [];
 
-    return store.queryRecordsBy(function(record) {
+    store.queryRecordsBy(function(record) {
       return format === record.get('format');
-    }).map(function(record) {
-      var snippetTemplate = record.get('snippetTemplate');
-      if (!(snippetTemplate instanceof Ext.XTemplate)) {
-        record.set('snippetTemplate', Ext.create('Ext.XTemplate', snippetTemplate));
-        record.commit();
-      }
-      return record;
-    }).map(function(record) {
-      return {
-        displayName: record.get('displayName'),
-        snippetText: record.get('snippetTemplate').apply(componentModel)
-      }
+    }).forEach(function(record) {
+      var snippets = record.get('snippetGenerator')(componentModel, assetModel);
+      Array.prototype.push.apply(dependencySnippets, snippets);
     });
+
+    return dependencySnippets;
   }
 });

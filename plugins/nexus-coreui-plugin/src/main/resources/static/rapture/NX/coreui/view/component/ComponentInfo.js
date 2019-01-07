@@ -24,7 +24,8 @@ Ext.define('NX.coreui.view.component.ComponentInfo', {
   requires: [
     'NX.I18n',
     'NX.coreui.util.RepositoryUrls',
-    'NX.ext.button.Button'
+    'NX.ext.button.Button',
+    'NX.view.info.DependencySnippetPanel'
   ],
   dockedItems: {
     xtype: 'nx-actions',
@@ -54,6 +55,10 @@ Ext.define('NX.coreui.view.component.ComponentInfo', {
       reference: 'summaryPanel',
       titled: NX.I18n.get('Component_AssetInfo_Info_Title'),
       collapsible: true
+    },
+    {
+      xtype: 'nx-info-dependency-snippet-panel',
+      reference: 'dependencySnippetPanel'
     }
   ],
   autoScroll: true,
@@ -101,5 +106,9 @@ Ext.define('NX.coreui.view.component.ComponentInfo', {
     if (summaryPanel) {
       summaryPanel.showInfo(this.summary);
     }
+  },
+
+  getDependencySnippetPanel: function() {
+    return this.lookup('dependencySnippetPanel');
   }
 });
