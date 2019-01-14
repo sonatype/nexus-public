@@ -54,16 +54,17 @@
       <scope>provided</scope>
     </dependency>
 
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-quartz</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
     <!-- bundles and sub-features belonging to nexus-core-feature -->
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-core</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-quartz</artifactId>
     </dependency>
 
     <dependency>

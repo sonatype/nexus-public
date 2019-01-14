@@ -10,10 +10,33 @@
           <Arg>
             <New class="org.eclipse.jetty.security.ConstraintMapping">
               <Set name="pathSpec">/*</Set>
+              <Set name="method">TRACE</Set>
+              <Set name="constraint">
+                <New class="org.eclipse.jetty.util.security.Constraint">
+                  <Set name="name">Deny TRACE</Set>
+                  <Set name="authenticate">true</Set>
+                  <Set name="roles">
+                    <Array type="String"/>
+                  </Set>
+                </New>
+              </Set>
+            </New>
+          </Arg>
+        </Call>
+        <Call name="addConstraintMapping">
+          <Arg>
+            <New class="org.eclipse.jetty.security.ConstraintMapping">
+              <Set name="pathSpec">/*</Set>
+              <Set name="methodOmissions">
+                <Array type="String">
+                  <Item>TRACE</Item>
+                </Array>
+              </Set>
               <Set name="constraint">
                 <New class="org.eclipse.jetty.util.security.Constraint">
                   <!-- 2 means CONFIDENTIAL. 1 means INTEGRITY -->
                   <Set name="dataConstraint">2</Set>
+                  <Set name="name">Redirect Everything Except TRACE to HTTPS</Set>
                 </New>
               </Set>
             </New>

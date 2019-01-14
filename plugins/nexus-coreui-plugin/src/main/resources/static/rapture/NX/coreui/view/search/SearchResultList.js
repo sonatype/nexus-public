@@ -92,8 +92,9 @@ Ext.define('NX.coreui.view.search.SearchResultList', {
         }
       ],
 
-      trailingBufferZone: 20,
-      leadingBufferZone: 50
+      // Show all results up to the page size
+      trailingBufferZone: 300,
+      leadingBufferZone: 300
     });
 
     this.callParent();

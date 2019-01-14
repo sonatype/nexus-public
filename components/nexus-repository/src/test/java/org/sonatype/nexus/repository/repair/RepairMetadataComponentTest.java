@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.repair;
 
+import java.util.function.BiFunction;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -81,7 +83,8 @@ public class RepairMetadataComponentTest
 
   @Test(expected = UnsupportedOperationException.class)
   public void whenFormatAndTypeMatchShouldRepairRepository() {
-    underTest = new RepairMetadataComponentForTest(repositoryManager, assetEntityAdapter, type, format) {
+    underTest = new RepairMetadataComponentForTest(repositoryManager, assetEntityAdapter, type, format)
+    {
       @Override
       protected void doRepairRepository(final Repository repository) {
         throw new UnsupportedOperationException();
@@ -93,21 +96,23 @@ public class RepairMetadataComponentTest
 
   @Test
   public void whenFormatDoesNotMatchShouldNotRepair() {
-    underTest = new RepairMetadataComponentForTest(repositoryManager, assetEntityAdapter, type, format) {
+    underTest = new RepairMetadataComponentForTest(repositoryManager, assetEntityAdapter, type, format)
+    {
       @Override
       protected void doRepairRepository(final Repository repository) {
         throw new UnsupportedOperationException();
       }
     };
 
-    when(repository.getFormat()).thenReturn(new Format("wrong"){});
+    when(repository.getFormat()).thenReturn(new Format("wrong") { });
 
     underTest.repairRepository(repository);
   }
 
   @Test
   public void whenTypeDoesNotMatchShouldNotRepair() {
-    underTest = new RepairMetadataComponentForTest(repositoryManager, assetEntityAdapter, type, format) {
+    underTest = new RepairMetadataComponentForTest(repositoryManager, assetEntityAdapter, type, format)
+    {
       @Override
       protected void doRepairRepository(final Repository repository) {
         throw new UnsupportedOperationException();
@@ -121,7 +126,8 @@ public class RepairMetadataComponentTest
 
   @Test(expected = UnsupportedOperationException.class)
   public void whenRepairingBeforeCalledOnce() {
-    underTest = new RepairMetadataComponentForTest(repositoryManager, assetEntityAdapter, type, format) {
+    underTest = new RepairMetadataComponentForTest(repositoryManager, assetEntityAdapter, type, format)
+    {
       @Override
       protected void beforeRepair(final Repository repository) {
         throw new UnsupportedOperationException();
@@ -134,7 +140,8 @@ public class RepairMetadataComponentTest
 
   @Test(expected = UnsupportedOperationException.class)
   public void whenRepairingAfterCalledOnce() {
-    underTest = new RepairMetadataComponentForTest(repositoryManager, assetEntityAdapter, type, format) {
+    underTest = new RepairMetadataComponentForTest(repositoryManager, assetEntityAdapter, type, format)
+    {
       @Override
       protected void afterRepair(final Repository repository) {
         throw new UnsupportedOperationException();
@@ -142,7 +149,10 @@ public class RepairMetadataComponentTest
 
       @Nullable
       @Override
-      protected String processBatch(final Repository repository, final String lastId) throws Exception {
+      protected String processBatchWith(final Repository repository,
+                                        final String lastId,
+                                        final BiFunction<Repository, Iterable<Asset>, String> function) throws Exception
+      {
         return null;
       }
     };
@@ -154,12 +164,16 @@ public class RepairMetadataComponentTest
   public void processBatchIteratesUntilNullReturned() {
     int timesToIterate = 2;
 
-    underTest = new RepairMetadataComponentForTest(repositoryManager, assetEntityAdapter, type, format) {
+    underTest = new RepairMetadataComponentForTest(repositoryManager, assetEntityAdapter, type, format)
+    {
       private int iterated = 0;
 
       @Nullable
       @Override
-      protected String processBatch(final Repository repository, final String lastId) throws Exception {
+      protected String processBatchWith(final Repository repository,
+                                        final String lastId,
+                                        final BiFunction<Repository, Iterable<Asset>, String> function) throws Exception
+      {
         this.called++;
         if (iterated++ == timesToIterate) {
           return null;

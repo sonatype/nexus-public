@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.repair;
 
 import java.util.Map;
+import java.util.function.BiFunction;
 
 import javax.annotation.Nullable;
 
@@ -75,38 +76,45 @@ public abstract class RepairMetadataComponent
       doRepairRepository(repository);
     }
     else {
-      log.info("Not running post processing after repairing {} repository {}", repository.getFormat(), repository.getName());
+      log.info("Not running post processing after repairing {} repository {}", repository.getFormat(),
+          repository.getName());
     }
   }
 
-  protected void doRepairRepository(final Repository repository) {
+  protected void doRepairRepositoryWith(final Repository repository,
+                                        final BiFunction<Repository, Iterable<Asset>, String> function)
+  {
     String lastId = BEGINNING_ID;
 
-    beforeRepair(repository);
     while (lastId != null) {
       try {
-        lastId = processBatch(repository, lastId);
+        lastId = processBatchWith(repository, lastId, function);
       }
       catch (Exception e) {
         propagateIfPossible(e, RuntimeException.class);
         throw new RuntimeException(e);
       }
     }
+  }
+
+  protected void doRepairRepository(final Repository repository) {
+    beforeRepair(repository);
+    doRepairRepositoryWith(repository, this::updateAssets);
     afterRepair(repository);
     log.info("Finished processing all {} packages for repair", repository.getFormat());
   }
 
   @Nullable
-  protected String processBatch(final Repository repository, final String lastId) throws Exception {
-    log.info("Processing next batch of {} packages for repair. Starting at id = {} with max batch size = {}",
-        repository.getFormat(), lastId, BATCH_SIZE);
-
+  protected String processBatchWith(final Repository repository,
+                                    final String lastId,
+                                    final BiFunction<Repository, Iterable<Asset>, String> function) throws Exception
+  {
     return TransactionalStoreMetadata.operation
         .withDb(repository.facet(StorageFacet.class).txSupplier())
         .throwing(Exception.class)
         .call(() -> {
           Iterable<Asset> assets = readAssets(repository, lastId);
-          return updateAssets(repository, assets);
+          return function.apply(repository, assets);
         });
   }
 
@@ -121,7 +129,7 @@ public abstract class RepairMetadataComponent
     return lastId;
   }
 
-  private Iterable<Asset> readAssets(final Repository repository, final String lastId) {
+  protected Iterable<Asset> readAssets(final Repository repository, final String lastId) {
     StorageTx storageTx = UnitOfWork.currentTx();
     Map<String, Object> parameters = ImmutableMap.of("rid", lastId, "limit", BATCH_SIZE);
     return storageTx.findAssets(ASSETS_WHERE, parameters, singletonList(repository), ASSETS_SUFFIX);

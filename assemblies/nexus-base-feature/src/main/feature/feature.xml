@@ -39,6 +39,11 @@
     <bundle>wrap:${mvn:swagger-jaxrs}$overwrite=merge&amp;Import-Package=com.google.common.*,org.reflections.*;resolution:=optional,*</bundle>
 
     <!--
+    Widen Quartz optional imports to include c3p0/hikari - use '*' to avoid repeating long list of existing optional imports
+    -->
+    <bundle>wrap:${mvn:quartz}$overwrite=merge&amp;Import-Package=*;resolution:=optional</bundle>
+
+    <!--
     Give our extender bundle its own start level (distinct from the boot start-level)
     -->
     <bundle start-level="100">${mvn:nexus-extender}</bundle>

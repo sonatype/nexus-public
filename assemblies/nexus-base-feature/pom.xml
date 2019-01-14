@@ -73,6 +73,11 @@
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-rapture</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-quartz</artifactId>
+    </dependency>
   </dependencies>
 
   <build>

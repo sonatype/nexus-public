@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.sonatype.nexus.common.text.Strings2;
+import org.sonatype.nexus.selector.internal.SandboxJexlUberspect;
 
 import org.apache.commons.jexl3.JexlBuilder;
 import org.apache.commons.jexl3.JexlContext;
@@ -41,7 +42,7 @@ public class JexlSelector
   // this stops JEXL from using expensive new Throwable().getStackTrace() to find caller info
   private static final JexlInfo CALLER_INFO = new JexlInfo(JexlSelector.class.getName(), 0, 0);
 
-  private static final JexlEngine jexlEngine = new JexlBuilder().create();
+  private static final JexlEngine jexlEngine = new JexlBuilder().uberspect(new SandboxJexlUberspect()).create();
 
   private final Optional<JexlExpression> expression;
 

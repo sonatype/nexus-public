@@ -33,7 +33,12 @@ Ext.define('NX.maven.controller.MavenDependencySnippetController', {
         attributes = assetModel && assetModel.get('attributes'),
         maven2 = attributes && attributes.maven2,
         classifier = maven2 && maven2.classifier,
-        extension = maven2 && maven2.extension;
+        extension = maven2 && maven2.extension,
+        gradleCoordinates;
+
+    gradleCoordinates = group + ':' + name + ':' + version +
+        (classifier ? ':' + classifier : '') +
+        (extension ? '@' + extension : '');
 
     return [
       {
@@ -45,33 +50,21 @@ Ext.define('NX.maven.controller.MavenDependencySnippetController', {
               '  <artifactId>' + name + '</artifactId>\n' +
               '  <version>' + version + '</version>\n' +
               (classifier ? '  <classifier>' + classifier + '</classifier>\n' : '') +
-              (extension ? '  <extension>' + extension + '</extension>\n' : '') +
+              ((extension && 'jar' !== extension) ? '  <type>' + extension + '</type>\n' : '') +
             '</dependency>'
       }, {
         displayName: 'Gradle Groovy DSL',
         snippetText:
-            'compile ' + group + ':' + name + ':' + version +
-            (classifier ? ':' + classifier : '') +
-            (extension ? '@' + extension : '')
+            'implementation \'' + gradleCoordinates + '\''
       }, {
         displayName: 'Gradle Kotlin DSL',
         snippetText:
-            'compile(group = "' + group + '", name = "' + name + '", ' + 'version = "' + version + '"' +
-            (classifier ? ', classifier = "' + classifier + '"' : '') +
-            (extension ? ', ext = "' + extension + '"' : '') +
-          ')'
+            'implementation("' + gradleCoordinates + '")'
       }, {
         displayName: 'Scala SBT',
         snippetText:
             'libraryDependencies += "' + group + '" % "' + name + '" % "' + version + '"' +
             (classifier ? ' classifier "' + classifier + '"' : '')
-      }, {
-        displayName: 'Groovy Grape',
-        snippetText:
-            '@Grapes(\n' +
-            '  @Grab(group=\'' + group + '\', module=\'' + name + '\', version=\'' + version + '\'' +
-            (classifier ? ', classifier=\'{classifier}\'\n' : '' ) + ')\n' +
-            ')'
       }, {
         displayName: 'Apache Ivy',
         snippetText:
@@ -82,10 +75,17 @@ Ext.define('NX.maven.controller.MavenDependencySnippetController', {
                     (extension ? ' ext="' + extension + '"' : '') +
                     (classifier ? ' m:classifier="' + classifier + '"' : '') +
                     ' />\n'
-                :
+                    :
                     ''
             ) +
             '</dependency>'
+      }, {
+        displayName: 'Groovy Grape',
+        snippetText:
+            '@Grapes(\n' +
+            '  @Grab(group=\'' + group + '\', module=\'' + name + '\', version=\'' + version + '\'' +
+            (classifier ? ', classifier=\'' + classifier + '\'' : '' ) + ')\n' +
+            ')'
       }, {
         displayName: 'Leiningen',
         snippetText:

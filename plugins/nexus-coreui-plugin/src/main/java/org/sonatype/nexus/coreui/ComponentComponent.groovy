@@ -58,6 +58,7 @@ import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import org.apache.shiro.authz.AuthorizationException
 import org.apache.shiro.authz.annotation.RequiresAuthentication
+import org.apache.shiro.authz.annotation.RequiresPermissions
 import org.hibernate.validator.constraints.NotEmpty
 
 import static com.google.common.base.Preconditions.checkNotNull
@@ -191,6 +192,7 @@ class ComponentComponent
   @DirectMethod
   @Timed
   @ExceptionMetered
+  @RequiresPermissions('nexus:selectors:*')
   PagedResponse<AssetXO> previewAssets(final StoreLoadParameters parameters) {
     String repositoryName = parameters.getFilter('repositoryName')
     String expression = parameters.getFilter('expression')

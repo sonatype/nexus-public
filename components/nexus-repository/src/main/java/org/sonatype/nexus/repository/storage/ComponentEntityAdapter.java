@@ -108,9 +108,6 @@ public class ComponentEntityAdapter
       format("select from index:%1$s where key = [:%2$s, :%3$s, :%4$s, :%5$s]",
           I_BUCKET_GROUP_NAME_VERSION, P_BUCKET, P_GROUP, P_NAME, P_VERSION);
 
-
-  private static final OSQLSynchQuery<ODocument> EXISTS_QUERY = new OSQLSynchQuery<>(EXISTS_QUERY_STRING, 1);
-
   private final ComponentFactory componentFactory;
 
   private final Set<ComponentEntityAdapterExtension> componentEntityAdapterExtensions;
@@ -198,7 +195,8 @@ public class ComponentEntityAdapter
     params.put(P_NAME, checkNotNull(name));
     params.put(P_VERSION, version);
     params.put(P_BUCKET, recordIdentity(id(checkNotNull(bucket))));
-    return !Iterables.isEmpty(db.command(EXISTS_QUERY).<Iterable<ODocument>>execute(params));
+    OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(EXISTS_QUERY_STRING, 1);
+    return !Iterables.isEmpty(db.command(query).<Iterable<ODocument>>execute(params));
   }
 
   @Override

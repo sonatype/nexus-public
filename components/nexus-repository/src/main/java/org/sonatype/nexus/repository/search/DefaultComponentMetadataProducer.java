@@ -21,6 +21,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -32,9 +34,12 @@ import org.sonatype.nexus.repository.storage.Component;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Streams;
+import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -64,6 +69,8 @@ public class DefaultComponentMetadataProducer
 
   public static final String VERSION = "version";
 
+  public static final String NORMALIZED_VERSION = "normalized_version";
+
   public static final String ASSETS = "assets";
 
   public static final String ID = "id";
@@ -73,6 +80,8 @@ public class DefaultComponentMetadataProducer
   public static final String LAST_BLOB_UPDATED_KEY = "lastBlobUpdated";
 
   public static final String LAST_DOWNLOADED_KEY = "lastDownloaded";
+
+  private static final Logger log = LoggerFactory.getLogger(DefaultComponentMetadataProducer.class);
 
   private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss.SSSZ");
 
@@ -98,6 +107,10 @@ public class DefaultComponentMetadataProducer
     put(metadata, NAME, component.name());
     put(metadata, VERSION, component.version());
     put(metadata, ATTRIBUTES, component.attributes().backing());
+
+    // Prepend numbers in the version with 0s to make each number 5 digits
+    String normalizedVersion = getNormalizedVersion(component);
+    put(metadata, NORMALIZED_VERSION, normalizedVersion);
 
     put(metadata, IS_PRERELEASE_KEY, isPrerelease(component, assets));
     lastBlobUpdated(assets)
@@ -168,6 +181,29 @@ public class DefaultComponentMetadataProducer
     if (value != null) {
       metadata.put(key, value);
     }
+  }
+
+  public String getNormalizedVersion(Component component) {
+    String version = component.version();
+    if (StringUtils.isBlank(version)) {
+      return "";
+    }
+
+    Matcher matcher = Pattern.compile("\\d+").matcher(version);
+    StringBuilder replacementBuilder = new StringBuilder();
+    int position = 0;
+    while (matcher.find()) {
+      replacementBuilder.append(version, position, matcher.start());
+      position = matcher.end();
+      try {
+        replacementBuilder.append(String.format("%09d", Long.parseLong(matcher.group())));
+      }
+      catch (NumberFormatException e) {
+        log.debug("Unable to parse number as long '{}'", matcher.group());
+        replacementBuilder.append(matcher.group());
+      }
+    }
+    return replacementBuilder.toString();
   }
 
 }
