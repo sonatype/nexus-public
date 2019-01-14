@@ -39,7 +39,7 @@ import static com.google.common.base.Preconditions.checkState;
  * Copies a file, using multipart copy if the file is larger or equal to the chunk size.  A normal copyObject request is
  * used instead if only a single chunk would be copied.
  *
- * @since 3.next
+ * @since 3.15
  */
 @Named("multipart-copier")
 public class MultipartCopier

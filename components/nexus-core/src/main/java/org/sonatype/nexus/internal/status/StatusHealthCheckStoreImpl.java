@@ -40,7 +40,7 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
 /**
  * Orient {@link StatusHealthCheckStore} implementation.
  *
- * @since 3.next
+ * @since 3.15
  */
 @Named
 @ManagedLifecycle(phase = SCHEMAS)

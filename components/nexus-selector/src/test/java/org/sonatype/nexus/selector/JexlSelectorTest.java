@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.selector;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.sonatype.goodies.testsupport.TestSupport;
 
 import org.apache.commons.jexl3.JexlException;
@@ -29,11 +31,22 @@ public class JexlSelectorTest
 {
   private VariableSource source;
 
+  private static class SomeObject
+  {
+    @SuppressWarnings("unused")
+    private String foo;
+  }
+
   @Before
   public void setUp() {
+    Map<String, String> writeableMap = new HashMap<>();
+    writeableMap.put("foo", "bar");
+
     source = new VariableSourceBuilder()
         .addResolver(new PropertiesResolver<>("component", of("format", "maven2")))
+        .addResolver(new PropertiesResolver<>("writeableMap", writeableMap))
         .addResolver(new PropertiesResolver<>("asset", of("name", "junit", "group", "Jjunit", "path", "/org/apache/maven/foo/bar/moo.jar")))
+        .addResolver(new ConstantVariableResolver(new SomeObject(), "writeableObj"))
         .addResolver(new ConstantVariableResolver(true, "X"))
         .addResolver(new ConstantVariableResolver(false, "Y"))
         .addResolver(new ConstantVariableResolver("foobar", "someString"))
@@ -134,5 +147,26 @@ public class JexlSelectorTest
     Selector selector = new JexlSelector("someMap['a'] == 'alfa'");
 
     assertTrue(selector.evaluate(source));
+  }
+
+  @Test(expected = JexlException.class)
+  public void testNoConstructor() {
+    Selector selector = new JexlSelector("new('" + JexlSelector.class.getName() + "', 'path = \\'/bar\\'')");
+
+    selector.evaluate(source);
+  }
+
+  @Test(expected = JexlException.class)
+  public void testMethodsBlocked() {
+    Selector selector = new JexlSelector("writeableMap.put('foo', 'xxx')");
+
+    selector.evaluate(source);
+  }
+
+  @Test(expected = JexlException.class)
+  public void testWriteBlocked() {
+    Selector selector = new JexlSelector("writeableObj.foo = 'xxx'");
+
+    selector.evaluate(source);
   }
 }

@@ -21,7 +21,7 @@ import java.util.Properties;
  * or {@link java.io.InputStream}/{@link java.io.OutputStream} internally and does not require a parameter
  * to {@code load()} or {@code store()}
  *
- * @since 3.next
+ * @since 3.15
  */
 public abstract class ImplicitSourcePropertiesFile
     extends Properties

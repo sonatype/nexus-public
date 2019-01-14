@@ -90,7 +90,7 @@ public interface PyPiHostedFacet
    * Deletes an index related to a given package
    * 
    * @param packageName - packageName to use for finding the index to be removed
-   * @since 3.next
+   * @since 3.15
    */
   void deleteIndex(String packageName);
 }

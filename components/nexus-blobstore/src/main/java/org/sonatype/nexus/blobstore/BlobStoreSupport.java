@@ -39,7 +39,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 /**
  * Supports the implementation of {@link BlobStore}.
  *
- * @since 3.next
+ * @since 3.15
  */
 public abstract class BlobStoreSupport<T extends AttributesLocation>
     extends StateGuardLifecycleSupport

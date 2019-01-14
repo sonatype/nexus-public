@@ -15,7 +15,7 @@ package org.sonatype.nexus.internal.wonderland;
 import java.util.Objects;
 
 /**
- * @since 3.next
+ * @since 3.15
  */
 public class UserAuthToken
 {

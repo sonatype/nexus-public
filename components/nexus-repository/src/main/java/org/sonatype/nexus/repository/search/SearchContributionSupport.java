@@ -17,7 +17,7 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 /**
  * Support for {@link SearchContribution} implementations.
  *
- * @since 3.next
+ * @since 3.15
  */
 public class SearchContributionSupport
     implements SearchContribution

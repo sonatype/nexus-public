@@ -35,7 +35,7 @@ import static javax.ws.rs.core.Response.status;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 
 /**
- * @since 3.next
+ * @since 3.15
  */
 @Named
 @Singleton

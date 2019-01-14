@@ -16,7 +16,7 @@ import com.amazonaws.services.s3.AmazonS3;
 
 /**
  * Copies a file in S3.
- * @since 3.next
+ * @since 3.15
  */
 public interface S3Copier {
 

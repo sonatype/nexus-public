@@ -15,7 +15,7 @@
 /**
  * Dependency snippet info panel.
  *
- * @since 3.next
+ * @since 3.15
  */
 Ext.define('NX.view.info.DependencySnippetPanel', {
   extend: 'Ext.panel.Panel',

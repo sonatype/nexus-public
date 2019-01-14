@@ -23,7 +23,7 @@ import static java.util.Optional.ofNullable;
 /**
  * Supports declaring temporary overrides to the replication mode.
  *
- * @since 3.next
+ * @since 3.15
  */
 public class ReplicationModeOverrides
 {

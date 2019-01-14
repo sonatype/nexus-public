@@ -69,7 +69,7 @@ public class RepositoryPermissionChecker
    * @param repository
    * @return true if user can delete anything within the repository based on repository or content selector privilege
    *
-   * @since 3.next
+   * @since 3.15
    */
   public boolean userCanDeleteInRepository(final Repository repository) {
     return userHasRepositoryViewPermissionTo(DELETE, repository) || userHasAnyContentSelectorAccessTo(repository, DELETE);

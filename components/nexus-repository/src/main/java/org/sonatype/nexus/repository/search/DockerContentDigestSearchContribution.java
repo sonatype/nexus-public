@@ -21,7 +21,7 @@ import org.elasticsearch.index.query.QueryBuilders;
 /**
  * "attributes.docker.content_digest" {@link SearchContribution} (adds a prefix query for content_digest).
  *
- * @since 3.next
+ * @since 3.15
  */
 @Named("assets.attributes.docker.content_digest")
 @Singleton

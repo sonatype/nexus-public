@@ -15,7 +15,7 @@
 /**
  * Dependency snippets controller.
  *
- * @since 3.next
+ * @since 3.15
  */
 Ext.define('NX.controller.DependencySnippet', {
   extend: 'NX.app.Controller',

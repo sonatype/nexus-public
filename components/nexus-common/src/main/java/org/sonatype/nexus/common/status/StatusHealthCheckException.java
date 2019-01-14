@@ -15,7 +15,7 @@ package org.sonatype.nexus.common.status;
 /**
  * Checked {@link Exception} for {@link StatusHealthCheckStore} operations
  *
- * @since 3.next
+ * @since 3.15
  */
 public class StatusHealthCheckException
     extends Exception

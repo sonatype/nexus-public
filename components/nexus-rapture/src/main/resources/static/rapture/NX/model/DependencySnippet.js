@@ -15,7 +15,7 @@
 /**
  * Dependency snippet model.
  *
- * @since 3.next
+ * @since 3.15
  */
 Ext.define('NX.model.DependencySnippet', {
   extend: 'Ext.data.Model',

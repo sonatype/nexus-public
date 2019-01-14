@@ -24,7 +24,7 @@ import org.sonatype.nexus.scheduling.TaskScheduler;
 import static org.sonatype.nexus.repository.browse.internal.RebuildBrowseNodesTaskDescriptor.REPOSITORY_NAME_FIELD_ID;
 
 /**
- * @since 3.next
+ * @since 3.15
  */
 @Named
 public class BrowseFacetImpl

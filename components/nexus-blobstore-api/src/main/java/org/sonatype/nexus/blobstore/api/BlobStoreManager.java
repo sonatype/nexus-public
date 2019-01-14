@@ -85,7 +85,7 @@ public interface BlobStoreManager
    * @param blobStoreName
    * @return true if member is promotable
    *
-   * @since 3.next
+   * @since 3.15
    */
   boolean isPromotable(String blobStoreName);
 
@@ -94,7 +94,7 @@ public interface BlobStoreManager
    * @param blobStoreName
    * @return {@link java.util.Optional<String>} containing the parent group name if it exists
    *
-   * @since 3.next
+   * @since 3.15
    */
   Optional<String> getParent(String blobStoreName);
 }

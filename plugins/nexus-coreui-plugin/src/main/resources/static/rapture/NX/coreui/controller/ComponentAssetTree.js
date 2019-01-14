@@ -743,13 +743,13 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
           if (Ext.isObject(response) && response.success) {
             var selectedRecord = treePanel.getSelectionModel().getSelection()[0];
             if (selectedRecord.get('leaf')) {
+              me.removeSideContent();
               me.removeNodeFromTree(selectedRecord);
             }
             else {
               selectedRecord.set('type', 'folder');
               selectedRecord.set('iconCls', me.mixins.componentUtils.getIconForAsset(selectedRecord).get('cls'));
             }
-            me.removeSideContent();
             NX.Messages.add({text: NX.I18n.format('AssetInfo_Delete_Success', asset.get('name')), type: 'success'});
           }
         });

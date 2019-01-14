@@ -23,7 +23,7 @@ import io.swagger.annotations.ApiResponses;
 /**
  * REST API for status operations
  *
- * @since 3.next
+ * @since 3.15
  */
 @Api("status")
 public interface StatusResourceDoc

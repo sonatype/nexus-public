@@ -102,7 +102,7 @@ public abstract class BlobStoreQuotaSupport
    * Gets the blob store's quota limit from the blob store's configuration.
    *
    * @return the quota's limit
-   * @since 3.next
+   * @since 3.15
    */
   public static long getLimit(final BlobStoreConfiguration config) {
     Number limitObj = config.attributes(ROOT_KEY).get(LIMIT_KEY, Number.class);

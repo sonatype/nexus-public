@@ -23,7 +23,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.size;
 
 /**
- * @since 3.next
+ * @since 3.15
  */
 @Named
 @Singleton

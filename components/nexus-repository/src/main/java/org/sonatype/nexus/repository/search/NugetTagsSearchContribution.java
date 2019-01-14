@@ -21,7 +21,7 @@ import org.elasticsearch.index.query.QueryBuilders;
 /**
  * "attributes.nuget.tag" {@link SearchContribution} (adds a match query for tag).
  *
- * @since 3.next
+ * @since 3.15
  */
 @Named("attributes.nuget.tags")
 @Singleton

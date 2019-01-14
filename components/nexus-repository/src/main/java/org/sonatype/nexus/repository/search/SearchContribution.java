@@ -17,7 +17,7 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 /**
  * Contributor to search query/filter.
  *
- * @since 3.next
+ * @since 3.15
  */
 public interface SearchContribution
 {

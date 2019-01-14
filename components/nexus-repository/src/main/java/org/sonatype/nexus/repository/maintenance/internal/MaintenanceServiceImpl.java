@@ -98,7 +98,7 @@ public class MaintenanceServiceImpl
   }
 
   /**
-   * @since 3.next
+   * @since 3.15
    */
   @Override
   public void deleteFolder(final Repository repository, final String path) {

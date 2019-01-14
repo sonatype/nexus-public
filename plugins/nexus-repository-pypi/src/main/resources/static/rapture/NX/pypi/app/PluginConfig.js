@@ -15,7 +15,7 @@
 /**
  * PyPI plugin configuration.
  *
- * @since 3.next
+ * @since 3.15
  */
 Ext.define('NX.pypi.app.PluginConfig', {
   '@aggregate_priority': 100,

@@ -135,7 +135,7 @@ public class CselAssetSqlBuilder
 
   /**
    * Convert 'a != b' into 'a <> b'
-   * @since 3.next
+   * @since 3.15
    */
   @Override
   protected Object visit(final ASTNENode node, final Object data) {
