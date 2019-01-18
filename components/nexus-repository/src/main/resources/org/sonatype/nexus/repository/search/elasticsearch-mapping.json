@@ -91,10 +91,6 @@
           "type": "string",
           "index": "not_analyzed"
         },
-        "normalized_version": {
-          "type": "string",
-          "index": "not_analyzed"
-        },
         "tags": {
           "type": "string",
           "index": "not_analyzed"

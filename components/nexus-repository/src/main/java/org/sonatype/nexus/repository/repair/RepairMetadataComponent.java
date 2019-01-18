@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.repair;
 
 import java.util.Map;
-import java.util.function.BiFunction;
 
 import javax.annotation.Nullable;
 
@@ -39,7 +38,7 @@ import static java.util.Collections.singletonList;
  * Implementations of {@link BaseRestoreBlobStrategy} run a post processing method where implementations
  * of this class should be called if any post processing is to be done on the regenerated {@link Asset}
  *
- * @since 3.next
+ * @since 3.15
  */
 public abstract class RepairMetadataComponent
     extends ComponentSupport
@@ -76,45 +75,38 @@ public abstract class RepairMetadataComponent
       doRepairRepository(repository);
     }
     else {
-      log.info("Not running post processing after repairing {} repository {}", repository.getFormat(),
-          repository.getName());
+      log.info("Not running post processing after repairing {} repository {}", repository.getFormat(), repository.getName());
     }
   }
 
-  protected void doRepairRepositoryWith(final Repository repository,
-                                        final BiFunction<Repository, Iterable<Asset>, String> function)
-  {
+  protected void doRepairRepository(final Repository repository) {
     String lastId = BEGINNING_ID;
 
+    beforeRepair(repository);
     while (lastId != null) {
       try {
-        lastId = processBatchWith(repository, lastId, function);
+        lastId = processBatch(repository, lastId);
       }
       catch (Exception e) {
         propagateIfPossible(e, RuntimeException.class);
         throw new RuntimeException(e);
       }
     }
-  }
-
-  protected void doRepairRepository(final Repository repository) {
-    beforeRepair(repository);
-    doRepairRepositoryWith(repository, this::updateAssets);
     afterRepair(repository);
     log.info("Finished processing all {} packages for repair", repository.getFormat());
   }
 
   @Nullable
-  protected String processBatchWith(final Repository repository,
-                                    final String lastId,
-                                    final BiFunction<Repository, Iterable<Asset>, String> function) throws Exception
-  {
+  protected String processBatch(final Repository repository, final String lastId) throws Exception {
+    log.info("Processing next batch of {} packages for repair. Starting at id = {} with max batch size = {}",
+        repository.getFormat(), lastId, BATCH_SIZE);
+
     return TransactionalStoreMetadata.operation
         .withDb(repository.facet(StorageFacet.class).txSupplier())
         .throwing(Exception.class)
         .call(() -> {
           Iterable<Asset> assets = readAssets(repository, lastId);
-          return function.apply(repository, assets);
+          return updateAssets(repository, assets);
         });
   }
 
@@ -129,7 +121,7 @@ public abstract class RepairMetadataComponent
     return lastId;
   }
 
-  protected Iterable<Asset> readAssets(final Repository repository, final String lastId) {
+  private Iterable<Asset> readAssets(final Repository repository, final String lastId) {
     StorageTx storageTx = UnitOfWork.currentTx();
     Map<String, Object> parameters = ImmutableMap.of("rid", lastId, "limit", BATCH_SIZE);
     return storageTx.findAssets(ASSETS_WHERE, parameters, singletonList(repository), ASSETS_SUFFIX);

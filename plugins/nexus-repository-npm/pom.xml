@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.plugins</groupId>
     <artifactId>nexus-plugins</artifactId>
-    <version>3.15.0-SNAPSHOT</version>
+    <version>3.15.1-01</version>
   </parent>
 
   <artifactId>nexus-repository-npm</artifactId>
@@ -72,10 +72,6 @@
       <artifactId>json-unit</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-rapture</artifactId>
-    </dependency>
   </dependencies>
 
   <build>
@@ -83,80 +79,6 @@
       <plugin>
         <groupId>org.apache.karaf.tooling</groupId>
         <artifactId>karaf-maven-plugin</artifactId>
-      </plugin>
-
-      <plugin>
-        <groupId>org.sonatype.nexus.buildsupport</groupId>
-        <artifactId>extjs-maven-plugin</artifactId>
-        <configuration>
-          <namespace>NX.npm</namespace>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <groupId>org.sonatype.plugins</groupId>
-        <artifactId>yuicompressor-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>plugin-css</id>
-            <phase>none</phase> <!-- no css -->
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>com.github.klieber</groupId>
-        <artifactId>phantomjs-maven-plugin</artifactId>
-      </plugin>
-
-      <plugin>
-        <artifactId>maven-resources-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>copy-mocks</id>
-            <phase>generate-resources</phase>
-            <goals>
-              <goal>copy-resources</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${project.build.directory}/src/mocks</outputDirectory>
-              <overwrite>true</overwrite>
-              <resources>
-                <resource>
-                  <directory>../../buildsupport/testing/jasmine</directory>
-                  <includes>
-                    <include>Mocks.js</include>
-                  </includes>
-                </resource>
-              </resources>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>com.github.searls</groupId>
-        <artifactId>jasmine-maven-plugin</artifactId>
-        <configuration>
-          <preloadSources>
-            <source>${project.build.directory}/src/mocks/Mocks.js</source>
-          </preloadSources>
-          <sourceIncludes>
-            <include>**/NX/**/*.js</include>
-          </sourceIncludes>
-          <specIncludes>
-            <include>**/*-spec.js</include>
-          </specIncludes>
-          <jsSrcDir>${project.basedir}/src/main/resources/static/rapture</jsSrcDir>
-          <jsTestSrcDir>${project.basedir}/src/test/resources/jasmine</jsTestSrcDir>
-          <webDriverClassName>org.openqa.selenium.phantomjs.PhantomJSDriver</webDriverClassName>
-          <webDriverCapabilities>
-            <capability>
-              <name>phantomjs.binary.path</name>
-              <value>${phantomjs.binary}</value>
-            </capability>
-          </webDriverCapabilities>
-        </configuration>
       </plugin>
     </plugins>
   </build>

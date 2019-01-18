@@ -38,7 +38,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Most of the complexity in this implementation is around detecting when a slash is leading, especially
  * since you may have several alternate clauses mixed with a variety of wildcarded and nested expressions.
  *
- * @since 3.next
+ * @since 3.15
  */
 public class LeadingSlashRegexTransformer
 {

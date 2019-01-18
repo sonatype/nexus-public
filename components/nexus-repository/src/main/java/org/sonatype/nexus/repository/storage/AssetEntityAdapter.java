@@ -153,6 +153,8 @@ public class AssetEntityAdapter
   private static final String EXISTS_QUERY_STRING = format("select from index:%1$s where key = [:%2$s, :%3$s]",
       I_BUCKET_NAME, P_BUCKET, P_NAME);
 
+  private static final OSQLSynchQuery<ODocument> EXISTS_QUERY = new OSQLSynchQuery<>(EXISTS_QUERY_STRING, 1);
+
   private final ComponentEntityAdapter componentEntityAdapter;
 
   @Inject
@@ -366,8 +368,7 @@ public class AssetEntityAdapter
         P_BUCKET, recordIdentity(id(checkNotNull(bucket)))
     );
 
-    OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<>(EXISTS_QUERY_STRING, 1);
-    return !isEmpty(db.command(query).<Iterable<ODocument>>execute(params));
+    return !isEmpty(db.command(EXISTS_QUERY).<Iterable<ODocument>>execute(params));
   }
 
   /**

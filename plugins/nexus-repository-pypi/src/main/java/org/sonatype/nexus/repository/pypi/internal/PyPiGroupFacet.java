@@ -68,7 +68,7 @@ import static org.sonatype.nexus.repository.view.Content.CONTENT_LAST_MODIFIED;
 /**
  * PyPi specific implementation of {@link GroupFacetImpl} merging and caching index
  *
- * @since 3.next
+ * @since 3.15
  */
 @Named
 @Facet.Exposed

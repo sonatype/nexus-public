@@ -100,7 +100,7 @@ public interface FileOperations
    * @param path to be deleted
    * @return {@code true} if the path was deleted, {@code false} otherwise
    *
-   * @since 3.next
+   * @since 3.15
    */
   boolean deleteQuietly(Path path);
 

@@ -15,7 +15,7 @@
 /**
  * Dependency snippet store
  *
- * @since 3.next
+ * @since 3.15
  */
 Ext.define('NX.store.DependencySnippet', {
   extend: 'Ext.data.Store',

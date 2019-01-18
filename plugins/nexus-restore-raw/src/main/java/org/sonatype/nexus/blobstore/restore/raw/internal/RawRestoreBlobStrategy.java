@@ -36,7 +36,7 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 
 /**
- * @since 3.next
+ * @since 3.15
  */
 @Named("raw")
 @Singleton

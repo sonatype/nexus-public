@@ -15,7 +15,7 @@ package org.sonatype.nexus.common.status;
 /**
  * Store used for persisting a timestamp representing the most recent health check request received by the instance
  *
- * @since 3.next
+ * @since 3.15
  */
 public interface StatusHealthCheckStore
 {

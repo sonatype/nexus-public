@@ -31,7 +31,7 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REPOSITORY_NAME;
 
 /**
- * @since 3.next
+ * @since 3.15
  */
 public abstract class SearchResultComponentGeneratorSupport
   extends ComponentSupport

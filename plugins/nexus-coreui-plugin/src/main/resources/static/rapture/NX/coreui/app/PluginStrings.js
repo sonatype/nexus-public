@@ -295,9 +295,9 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_DockerHostedFacet_V1_Enabled_Help: 'Allow clients to use the V1 API to interact with this Repository',
     Repository_Facet_DockerConnectorFacet_Title: 'Repository Connectors',
     Repository_Facet_DockerConnectorFacet_Help: '<em>Connectors allow Docker clients to connect directly ' +
-    'to hosted registries, but are not always required. Consult our <a href="https://links.sonatype.com/products/nexus/docker-ssl-connector/docs" target="_blank">documentation</a>' +
+    'to hosted registries, but are not always required. Consult our <a href="https://help.sonatype.com/repomanager3/private-registry-for-docker/ssl-and-repository-connector-configuration" target="_blank">documentation</a>' +
     ' for which connector is appropriate for your use case. For information on scaling the repositories' +
-    ' see our <a href="https://links.sonatype.com/products/nexus/docker-scaling-repositories/docs" target="_blank">scaling documentation</a>.</em>',
+    ' see our <a href="https://help.sonatype.com/repomanager3/private-registry-for-docker/scaling-repositories" target="_blank">scaling documentation</a>.</em>',
     Repository_Facet_DockerConnectorFacet_HttpPort_FieldLabel: 'HTTP',
     Repository_Facet_DockerConnectorFacet_HttpPort_HelpText: 'Create an HTTP connector at specified port. Normally used if the server is behind a secure proxy.',
     Repository_Facet_DockerConnectorFacet_HttpsPort_FieldLabel: 'HTTPS',

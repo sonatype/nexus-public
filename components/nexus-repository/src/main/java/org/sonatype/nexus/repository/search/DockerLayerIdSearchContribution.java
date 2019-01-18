@@ -21,7 +21,7 @@ import org.elasticsearch.index.query.QueryBuilders;
 /**
  * "attributes.docker.layerAncestry" {@link SearchContribution} (adds a prefix query for ancestry).
  *
- * @since 3.next
+ * @since 3.15
  */
 @Named("attributes.docker.layerAncestry")
 @Singleton

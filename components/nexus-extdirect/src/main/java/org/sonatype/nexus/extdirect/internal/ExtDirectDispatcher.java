@@ -36,7 +36,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.extdirect.model.Responses.success;
 
 /**
- * @since 3.next
+ * @since 3.15
  */
 @Named
 @ManagedLifecycle(phase = SERVICES)

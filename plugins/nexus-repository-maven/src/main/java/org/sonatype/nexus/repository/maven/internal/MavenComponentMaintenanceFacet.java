@@ -30,7 +30,7 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 /**
  * maven format specific hosted and proxy {@link ComponentMaintenance}.
  *
- * @since 3.next
+ * @since 3.15
  */
 @Named
 public class MavenComponentMaintenanceFacet

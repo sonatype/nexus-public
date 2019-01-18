@@ -36,7 +36,7 @@ import static org.sonatype.nexus.extdirect.model.Responses.error;
 import static org.sonatype.nexus.extdirect.model.Responses.invalid;
 
 /**
- * @since 3.next
+ * @since 3.15
  */
 @Named
 @ManagedLifecycle(phase = SERVICES)

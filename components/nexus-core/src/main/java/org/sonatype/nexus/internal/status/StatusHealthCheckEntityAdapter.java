@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 /**
  * Entity adapter used to store node health check timestamps
  *
- * @since 3.next
+ * @since 3.15
  */
 @Named
 @Singleton

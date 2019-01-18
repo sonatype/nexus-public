@@ -40,7 +40,6 @@ import org.elasticsearch.search.sort.SortOrder
 import static org.elasticsearch.search.sort.SortBuilders.fieldSort
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.GROUP
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.NAME
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.NORMALIZED_VERSION
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REPOSITORY_NAME
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.VERSION
 
@@ -112,9 +111,6 @@ class SearchComponent
             break
           case 'repositoryName':
             sortBuilders = [fieldSort(REPOSITORY_NAME).order(SortOrder.valueOf(sort.direction))]
-            break
-          case 'version':
-            sortBuilders << fieldSort(NORMALIZED_VERSION).order(SortOrder.valueOf(sort.direction))
             break
           default:
             sortBuilders = [fieldSort(sort.property).order(SortOrder.valueOf(sort.direction))]

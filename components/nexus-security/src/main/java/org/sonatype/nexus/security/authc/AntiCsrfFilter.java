@@ -83,6 +83,7 @@ public class AntiCsrfFilter
     }
 
     return isSafeHttpMethod(httpRequest)
+        || isNotBrowserRequest(httpRequest)
         || isMultiPartFormDataPost(httpRequest) // token is passed as a form field instead of a custom header
                                                 // and is validated in the directnjine code so we just needed
                                                 // to create the cookie above
@@ -101,6 +102,12 @@ public class AntiCsrfFilter
     httpResponse.getWriter().print(ERROR_MESSAGE_TOKEN_MISMATCH);
 
     return false;
+  }
+
+  private boolean isNotBrowserRequest(final HttpServletRequest request) {
+    String userAgent = request.getHeader("User-Agent");
+
+    return userAgent == null || !userAgent.startsWith("Mozilla/");
   }
 
   private boolean isSafeHttpMethod(final HttpServletRequest request) {

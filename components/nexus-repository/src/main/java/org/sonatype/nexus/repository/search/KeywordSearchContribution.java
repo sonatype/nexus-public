@@ -25,7 +25,7 @@ import org.elasticsearch.index.query.QueryStringQueryBuilder;
 /**
  * "Keyword" {@link SearchContribution} (adds filter as an ES query string).
  *
- * @since 3.next
+ * @since 3.15
  */
 @Named(KeywordSearchContribution.NAME)
 @Singleton

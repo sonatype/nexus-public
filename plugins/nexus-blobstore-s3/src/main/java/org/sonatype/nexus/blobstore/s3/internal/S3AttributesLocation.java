@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Location for S3BlobStore attributes files
  *
- * @since 3.next
+ * @since 3.15
  */
 public class S3AttributesLocation
     implements AttributesLocation

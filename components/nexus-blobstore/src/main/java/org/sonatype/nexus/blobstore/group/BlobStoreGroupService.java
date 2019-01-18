@@ -17,7 +17,7 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 /**
  * Blob store group service.
  *
- * @since 3.next
+ * @since 3.15
  */
 public interface BlobStoreGroupService {
   /**

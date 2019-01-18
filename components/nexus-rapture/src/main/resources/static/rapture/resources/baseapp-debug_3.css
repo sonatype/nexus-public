@@ -10678,7 +10678,6 @@ fieldset.nx-form-section.nx-no-title {
 .nx-coreui-component-componentinfo > .x-panel-header .x-title-text,
 .nx-coreui-component-componentassetinfo > .x-panel-header .x-title-text {
     display: inline-block;
-    width: 100%;
 }
 
 .nx-coreui-component-componentinfo .nx-actions,
