@@ -61,7 +61,7 @@
       <dependency>
         <groupId>com.sonatype.insight.scan</groupId>
         <artifactId>insight-test-reverse-proxy</artifactId>
-        <version>${insight-scanner.version}</version>
+        <version>2.11.0-01</version>
       </dependency>
 
       <dependency>
