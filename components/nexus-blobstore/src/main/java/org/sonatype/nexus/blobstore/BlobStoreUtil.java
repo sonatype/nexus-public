@@ -15,7 +15,7 @@ package org.sonatype.nexus.blobstore;
 /**
  * Blob store utilities.
  *
- * @since 3.next
+ * @since 3.15
  */
 public interface BlobStoreUtil {
   /**

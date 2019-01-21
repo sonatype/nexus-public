@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.Facet;
 /**
  * Provides Browse related information
  *
- * @since 3.next
+ * @since 3.15
  */
 @Facet.Exposed
 public interface BrowseFacet

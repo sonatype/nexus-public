@@ -63,7 +63,7 @@ public class PyPiHostedComponentMaintenance
       
       final Component component = tx.findComponentInBucket(componentId, bucket);
       if (component != null && !tx.browseAssets(component).iterator().hasNext()) {
-        deletedAssets.addAll(deleteComponentTx(componentId, deleteBlob));
+        deletedAssets.addAll(deleteComponentTx(componentId, deleteBlob).getAssets());
       }
     }
 
@@ -75,11 +75,11 @@ public class PyPiHostedComponentMaintenance
    */
   @TransactionalDeleteBlob
   @Override
-  protected Set<String> deleteComponentTx(final EntityId componentId, final boolean deleteBlobs) {
+  protected DeletionResult deleteComponentTx(final EntityId componentId, final boolean deleteBlobs) {
     StorageTx tx = UnitOfWork.currentTx();
     Component component = tx.findComponentInBucket(componentId, tx.findBucket(getRepository()));
     if (component == null) {
-      return Collections.emptySet();
+      return new DeletionResult(null, Collections.emptySet());
     }
 
     deleteRootIndex();
@@ -87,7 +87,7 @@ public class PyPiHostedComponentMaintenance
     deleteCachedIndex(component.name());
 
     log.debug("Deleting component: {}", component.toStringExternal());
-    return tx.deleteComponent(component, deleteBlobs);
+    return new DeletionResult(component, tx.deleteComponent(component, deleteBlobs));
   }
 
   private void deleteRootIndex() {

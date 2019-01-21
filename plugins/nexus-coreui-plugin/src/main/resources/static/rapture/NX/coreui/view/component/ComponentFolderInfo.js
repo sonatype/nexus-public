@@ -15,7 +15,7 @@
 /**
  * Folder info panel.
  *
- * @since 3.next
+ * @since 3.15
  */
 Ext.define('NX.coreui.view.component.ComponentFolderInfo', {
   extend: 'Ext.Panel',

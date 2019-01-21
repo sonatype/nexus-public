@@ -46,15 +46,15 @@ public class NpmHostedComponentMaintenanceImpl
 {
   @Override
   @TransactionalDeleteBlob
-  protected Set<String> deleteComponentTx(final EntityId componentId, final boolean deleteBlobs) {
+  protected DeletionResult deleteComponentTx(final EntityId componentId, final boolean deleteBlobs) {
     StorageTx tx = UnitOfWork.currentTx();
     Component component = tx.findComponentInBucket(componentId, tx.findBucket(getRepository()));
     if (component == null) {
-      return Collections.emptySet();
+      return new DeletionResult(null, Collections.emptySet());
     }
     Set<String> deletedAssets = new HashSet<>();
     tx.browseAssets(component).forEach(a -> deletedAssets.addAll(deleteAssetTx(a, deleteBlobs)));
-    return deletedAssets;
+    return new DeletionResult(component, deletedAssets);
   }
 
   /**

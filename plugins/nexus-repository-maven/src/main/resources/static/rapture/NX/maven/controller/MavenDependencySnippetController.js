@@ -13,7 +13,7 @@
 /*global Ext, NX*/
 
 /**
- * @since 3.next
+ * @since 3.15
  */
 Ext.define('NX.maven.controller.MavenDependencySnippetController', {
   extend: 'NX.app.Controller',

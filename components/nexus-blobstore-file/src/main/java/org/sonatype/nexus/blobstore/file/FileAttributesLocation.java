@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Location for FileBlobStore attributes files
  *
- * @since 3.next
+ * @since 3.15
  */
 public class FileAttributesLocation
     implements AttributesLocation

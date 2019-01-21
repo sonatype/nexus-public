@@ -23,7 +23,7 @@ import org.eclipse.sisu.Priority;
 /**
  * Rapture {@link org.sonatype.nexus.rapture.UiPluginDescriptor} for {@code nexus-repository-maven}.
  *
- * @since 3.next
+ * @since 3.15
  */
 @Named
 @Singleton

@@ -16,25 +16,17 @@ import javax.annotation.Nullable
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
-import javax.validation.constraints.NotNull
 
 import org.sonatype.nexus.coreui.internal.UploadService
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.rapture.StateContributor
 import org.sonatype.nexus.repository.upload.UploadConfiguration
 import org.sonatype.nexus.repository.upload.UploadDefinition
-import org.sonatype.nexus.validation.Validate
 
 import com.codahale.metrics.annotation.ExceptionMetered
 import com.codahale.metrics.annotation.Timed
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
-import com.softwarementors.extjs.djn.config.annotations.DirectFormPostMethod
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
-import org.apache.commons.fileupload.FileItem
-import org.apache.shiro.authz.annotation.RequiresPermissions
-
-import javax.ws.rs.WebApplicationException
-import javax.ws.rs.core.Response
 
 /**
  * @since 3.7
@@ -58,19 +50,6 @@ class UploadComponentComponent
   @ExceptionMetered
   Collection<UploadDefinition> getUploadDefinitions() {
     return uploadService.getAvailableDefinitions()
-  }
-
-  @DirectFormPostMethod
-  @Timed
-  @ExceptionMetered
-  @Validate
-  @RequiresPermissions('nexus:component:add')
-  String doUpload(final @NotNull Map<String, String> params, final @NotNull Map<String, FileItem> files) {
-    if (!configuration.enabled) {
-      throw new WebApplicationException(Response.Status.NOT_FOUND)
-    }
-
-    return uploadService.upload(params, files)
   }
 
   @Override

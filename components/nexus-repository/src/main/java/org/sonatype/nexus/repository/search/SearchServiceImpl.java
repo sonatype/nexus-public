@@ -396,17 +396,48 @@ public class SearchServiceImpl
     }
   }
 
+  /**
+   * Use this method with caution. It makes use of the scroll API in ElasticSearch which is not thread safe. If two
+   * matching queries are received from different threads within the configured 1 minute it is possible that scrolling 
+   * through the data will return different pages of the same result set to each of the threads.
+   *
+   * For additional context see: https://issues.sonatype.org/browse/NEXUS-18847
+   * 
+   * @param query
+   * @return an Iterable wrapping the scroll context which times out if not used within 1 minute
+   */
   @Override
   public Iterable<SearchHit> browseUnrestricted(final QueryBuilder query) {
     return browseUnrestrictedInRepos(query, null);
   }
 
+  /**
+   * Use this method with caution. It makes use of the scroll API in ElasticSearch which is not thread safe. If two
+   * matching queries are received from different threads within the configured 1 minute it is possible that scrolling 
+   * through the data will return different pages of the same result set to each of the threads.
+   *
+   * For additional context see: https://issues.sonatype.org/browse/NEXUS-18847
+   * 
+   * @param query
+   * @param repoNames
+   * @return an Iterable wrapping the scroll context which times out if not used within 1 minute
+   */
   @Override
   public Iterable<SearchHit> browseUnrestrictedInRepos(final QueryBuilder query,
                                                        @Nullable final Collection<String> repoNames) {
     return browse(query, repoNames, false, true);
   }
 
+  /**
+   * Use this method with caution. It makes use of the scroll API in ElasticSearch which is not thread safe. If two
+   * matching queries are received from different threads within the configured 1 minute it is possible that scrolling 
+   * through the data will return different pages of the same result set to each of the threads.
+   *
+   * For additional context see: https://issues.sonatype.org/browse/NEXUS-18847
+   * 
+   * @param query
+   * @return an Iterable wrapping the scroll context which times out if not used within 1 minute
+   */
   @Override
   public Iterable<SearchHit> browse(final QueryBuilder query) {
     return browse(query, null, true, false);

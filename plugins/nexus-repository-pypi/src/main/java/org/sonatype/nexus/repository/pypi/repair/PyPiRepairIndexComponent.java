@@ -33,7 +33,7 @@ import static org.sonatype.nexus.repository.pypi.internal.AssetKind.ROOT_INDEX;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
 /**
- * @since 3.next
+ * @since 3.15
  */
 @Named
 @Singleton

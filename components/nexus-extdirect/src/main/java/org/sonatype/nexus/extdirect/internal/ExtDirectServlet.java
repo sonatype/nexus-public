@@ -37,7 +37,7 @@ import org.sonatype.goodies.lifecycle.Lifecycle;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.extdirect.DirectComponent;
-import org.sonatype.nexus.security.authc.AntiCsrfFilter;
+import org.sonatype.nexus.security.authc.AntiCsrfHelper;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
@@ -95,10 +95,9 @@ public class ExtDirectServlet
   public ExtDirectServlet(final ApplicationDirectories directories,
                           final BeanLocator beanLocator,
                           final ExtDirectDispatcher extDirectDispatcher,
-                          @Named("${nexus.security.anticsrftoken.enabled:-true}") final boolean antiCsrfTokenEnabled,
-                          @Named("${nexus.direct.upload.maxSize:--1}") final long uploadMaxSize)
+                          @Named("${nexus.security.anticsrftoken.enabled:-true}") final boolean antiCsrfTokenEnabled)
   {
-    super(antiCsrfTokenEnabled, AntiCsrfFilter.ANTI_CSRF_TOKEN_NAME, uploadMaxSize);
+    super(antiCsrfTokenEnabled, AntiCsrfHelper.ANTI_CSRF_TOKEN_NAME, -1);
     this.directories = checkNotNull(directories);
     this.beanLocator = checkNotNull(beanLocator);
     this.extDirectDispatcher = checkNotNull(extDirectDispatcher);

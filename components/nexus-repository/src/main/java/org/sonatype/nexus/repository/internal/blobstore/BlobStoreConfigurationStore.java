@@ -61,7 +61,7 @@ public interface BlobStoreConfigurationStore
    * @param name of the child to search on
    * @return the {@link Optional<BlobStoreConfiguration>} for the parent group if it exists
    *
-   * @since 3.next
+   * @since 3.15
    */
   Optional<BlobStoreConfiguration> findParent(String name);
 }

@@ -31,13 +31,13 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
     initComponent: function() {
       var me = this;
       me.store = 'UploadDefinition';
+      me.nextPrefix = 0;
 
       me.callParent();
     },
 
     loadRecord: function(uploadDefinition, repository) {
-      var me = this,
-          uiSettings = NX.State.getValue('uiSettings', {});
+      var me = this;
 
       me.uploadDefinition = uploadDefinition;
       me.repository = repository;
@@ -52,10 +52,8 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
           ui: 'nx-inset',
           items: [{
             xtype: 'nx-settingsform',
-            timeout: uiSettings['longRequestTimeout'],
-            api: {
-              submit: 'NX.direct.coreui_Upload.doUpload'
-            },
+            url: NX.util.Url.baseUrl + '/service/rest/internal/ui/upload/' + encodeURIComponent(repository.get('name')),
+            timeout: 0,
             baseParams: {
               'NX-ANTI-CSRF-TOKEN': Ext.util.Cookies.get('NX-ANTI-CSRF-TOKEN')
             },
@@ -75,7 +73,6 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
                 xtype: 'fieldset',
                 cls: 'nx-form-section',
                 itemId: 'nx-coreui-upload-component-assets',
-                nextSuffix: 0,
                 title: NX.I18n.get('FeatureGroups_Upload_Asset_Form_Title'),
                 items: [
                   me.createHeader(),
@@ -97,10 +94,6 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
                 },
                 items: groupedFields,
                 hidden: groupedFields.length === 0
-              }, {
-                xtype: 'hidden',
-                name: 'repositoryName',
-                value: repository.get('name')
               }]
             }],
             dockedItems: [{
@@ -126,13 +119,7 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
           assetPanel = me.down('#nx-coreui-upload-component-assets');
 
       if (assetPanel) {
-        var row = me.createRow(),
-            fields = row.items,
-            suffix = assetPanel.nextSuffix++;
-
-        fields.forEach(function(field) {
-          field.name += suffix;
-        });
+        var row = me.createRow();
 
         assetPanel.insert(assetPanel.items.items.length - 1, row);
       }
@@ -173,6 +160,7 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
 
     createRow: function() {
       var me = this,
+          prefix = me.nextPrefix++,
           row = {
               xtype: 'panel',
               layout: 'column',
@@ -187,7 +175,7 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
                   buttonConfig: {
                       glyph: 'xf016@FontAwesome' /* fa-file-o */
                   },
-                  name: 'file',
+                  name: 'asset' + prefix,
                   width: '300px',
                   listeners: {
                     change: function() {
@@ -200,7 +188,9 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
       var assetFields = me.uploadDefinition.get('assetFields');
 
       assetFields.forEach(function(assetField) {
-          row.items.push(me.createAssetField(assetField));
+        var field = me.createAssetField(assetField);
+        field.name = 'asset' + prefix + '.' + field.name;
+        row.items.push(field);
       });
 
       row.items.push({
@@ -284,17 +274,17 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
     fileChange: function(fileField, value) {
       var me = this,
           regexMap = me.uploadDefinition.get('regexMap'),
-          filename, match, suffix;
+          filename, match, prefix;
 
       if (regexMap && value) {
         filename = value.substring(value.lastIndexOf((value.indexOf('/') === 0) ? '/' : '\\') + 1);
         match = filename.match(regexMap.regex);
 
         if (match) {
-          suffix = (fileField.name.match("file(\\d*)") || [])[1] || '';
+          prefix = (fileField.name.match("^(asset\\d+)") || [])[1];
           regexMap.fieldList.forEach(function(field, index) {
             if (field) {
-              var input = me.down('textfield[name=' + field + suffix + ']') || me.down('textfield[name=' + field + ']') ;
+              var input = me.down('textfield[name=' + prefix + '.' + field + ']') || me.down('textfield[name=' + field + ']');
               if (input) {
                 input.setValue(match[index + 1]);
               }
@@ -315,14 +305,14 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
       }
 
       assetRow.query('textfield,checkboxfield').forEach(function(field) {
-        assetValue[field.name.replace(/[0-9]/g, '')] = trim(field.value);
+        assetValue[field.name.replace(/^asset[0-9]+/g, '')] = trim(field.value);
       });
 
       var duplicate = Ext.Array.findBy(assetRows, function(row) {
         var isDuplicate = true;
         Object.keys(assetValue).forEach(function(fieldName) {
           isDuplicate = isDuplicate &&
-              (trim(row.query('field[name^=' + fieldName + ']')[0].value) === assetValue[fieldName]);
+              (trim(row.query('field[name$=' + fieldName + ']')[0].value) === assetValue[fieldName]);
         });
         return isDuplicate;
       });

@@ -39,7 +39,7 @@ import static java.util.Collections.singletonList;
  * Implementations of {@link BaseRestoreBlobStrategy} run a post processing method where implementations
  * of this class should be called if any post processing is to be done on the regenerated {@link Asset}
  *
- * @since 3.next
+ * @since 3.15
  */
 public abstract class RepairMetadataComponent
     extends ComponentSupport

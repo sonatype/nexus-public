@@ -36,7 +36,7 @@ import static java.util.Collections.singletonList;
  *
  * @since 3.10
  */
-public final class UploadResponse
+public class UploadResponse
 {
   private final List<String> assetPaths;
 

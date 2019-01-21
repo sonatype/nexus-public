@@ -12,32 +12,33 @@
  */
 package org.sonatype.nexus.security.authc;
 
-import javax.servlet.http.Cookie;
+import java.io.IOException;
+import java.io.PrintWriter;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.HttpMethod;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 
-import com.google.common.net.HttpHeaders;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 public class AntiCsrfFilterTest
   extends TestSupport
 {
-  private static final String SESSION_COOKIE = "not-default-sessonid";
-
   private AntiCsrfFilter underTest;
+
+  @Mock
+  private AntiCsrfHelper antiCrsfHelper;
+
+  @Mock
+  private PrintWriter printWriter;
 
   @Mock
   HttpServletRequest httpServletRequest;
@@ -46,116 +47,34 @@ public class AntiCsrfFilterTest
   HttpServletResponse httpServletResponse;
 
   @Before
-  public void setup() {
-    underTest = new AntiCsrfFilter(true, SESSION_COOKIE);
+  public void setup() throws IOException {
+    underTest = new AntiCsrfFilter(antiCrsfHelper);
+    when(httpServletResponse.getWriter()).thenReturn(printWriter);
   }
 
-  /*
-   * Test that the filter passes requests when disabled
-   */
   @Test
-  public void testDisabledFilter() {
-    underTest = new AntiCsrfFilter(false, SESSION_COOKIE);
-    assertThat(underTest.isAccessAllowed(httpServletRequest, httpServletResponse, null), is(true));
-    verifyZeroInteractions(httpServletRequest);
-    verifyZeroInteractions(httpServletResponse);
+  public void testOnAccessDenied() throws IOException {
+    assertFalse(underTest.onAccessDenied(httpServletRequest, httpServletResponse));
+    verify(httpServletResponse).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    verify(httpServletResponse).setContentType("text/plain");
+    verify(printWriter).print(AntiCsrfHelper.ERROR_MESSAGE_TOKEN_MISMATCH);
   }
 
-  /*
-   * Test that the filter allows requests with 'safe' HTTP methods without a token
-   */
   @Test
-  public void testSafeMethodsAllowed() {
-    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.HEAD);
-    assertThat(underTest.isAccessAllowed(httpServletRequest, httpServletResponse, null), is(true));
+  public void testIsEnabled() {
+    when(antiCrsfHelper.isEnabled()).thenReturn(true);
+    assertTrue(underTest.isEnabled());
 
-    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.GET);
-    assertThat(underTest.isAccessAllowed(httpServletRequest, httpServletResponse, null), is(true));
+    when(antiCrsfHelper.isEnabled()).thenReturn(false);
+    assertFalse(underTest.isEnabled());
   }
 
-  /*
-   * Test that the filter does not reject requests without a session and no referrer header set
-   */
   @Test
-  public void testNoSessionAndNoReferrer() {
-    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
-    when(httpServletRequest.getHeader(HttpHeaders.REFERER)).thenReturn("http://localhost:8081");
-    assertThat(underTest.isAccessAllowed(httpServletRequest, httpServletResponse, null), is(false));
+  public void testIsAccessAllowed() {
+    when(antiCrsfHelper.isAccessAllowed(httpServletRequest)).thenReturn(true);
+    assertTrue(underTest.isAccessAllowed(httpServletRequest, httpServletResponse, null));
 
-    reset(httpServletRequest);
-    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
-    when(httpServletRequest.getCookies()).thenReturn(new Cookie[] { new Cookie(SESSION_COOKIE, "avalue") });
-    assertThat(underTest.isAccessAllowed(httpServletRequest, httpServletResponse, null), is(false));
-
-    reset(httpServletRequest);
-    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
-    assertThat(underTest.isAccessAllowed(httpServletRequest, httpServletResponse, null), is(true));
-  }
-
-  /*
-   * Test that a request with a valid CSRF token is allowed
-   */
-  @Test
-  public void testValidCsrfToken() {
-    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
-    when(httpServletRequest.getHeader(HttpHeaders.REFERER)).thenReturn("http://localhost:8081");
-    when(httpServletRequest.getHeader("NX-ANTI-CSRF-TOKEN")).thenReturn("avalue");
-    when(httpServletRequest.getCookies())
-        .thenReturn(new Cookie[] { new Cookie("NX-ANTI-CSRF-TOKEN", "avalue"), new Cookie(SESSION_COOKIE, "avalue") });
-
-    assertThat(underTest.isAccessAllowed(httpServletRequest, httpServletResponse, null), is(true));
-
-    // simple validation, we expect the code to access the cookies twice
-    verify(httpServletRequest, times(2)).getCookies();
-  }
-
-  /*
-   * Test that a request missing a CSRF cookie but with a header is rejected
-   */
-  @Test
-  public void testMissingCsrfCookie() {
-    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
-    when(httpServletRequest.getHeader(HttpHeaders.REFERER)).thenReturn("referrer");
-    when(httpServletRequest.getHeader("NX-ANTI-CSRF-TOKEN")).thenReturn("avalue");
-
-    assertThat(underTest.isAccessAllowed(httpServletRequest, httpServletResponse, null), is(false));
-
-    // simple validation, we expect the code to access the cookies twice
-    verify(httpServletRequest, times(2)).getCookies();
-  }
-
-  /*
-   * Test that a request missing a CSRF header but with a cookie is rejected
-   */
-  @Test
-  public void testMissingCsrfHeader() {
-    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
-    when(httpServletRequest.getHeader(HttpHeaders.REFERER)).thenReturn("referrer");
-    // NX-ANTI-CSRF-TOKEN not set
-    when(httpServletRequest.getCookies())
-        .thenReturn(new Cookie[] { new Cookie("NX-ANTI-CSRF-TOKEN", "avalue"), new Cookie(SESSION_COOKIE, "avalue") });
-
-    assertThat(underTest.isAccessAllowed(httpServletRequest, httpServletResponse, null), is(false));
-
-    // simple validation, we expect the code to access the cookies twice
-    verify(httpServletRequest, times(2)).getCookies();
-  }
-
-  /*
-   * Test that a request with mismatched CSRF tokens is rejected
-   */
-  @Test
-  public void testMismatchedCsrfToken() {
-    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
-    when(httpServletRequest.getHeader(HttpHeaders.REFERER)).thenReturn("referrer");
-    when(httpServletRequest.getHeader("NX-ANTI-CSRF-TOKEN")).thenReturn("some-value");
-    when(httpServletRequest.getCookies())
-        .thenReturn(new Cookie[] { new Cookie("NX-ANTI-CSRF-TOKEN", "some-other-value"),
-            new Cookie(SESSION_COOKIE, "avalue") });
-
-    assertThat(underTest.isAccessAllowed(httpServletRequest, httpServletResponse, null), is(false));
-
-    // simple validation, we expect the code to access the cookies twice
-    verify(httpServletRequest, times(2)).getCookies();
+    when(antiCrsfHelper.isAccessAllowed(httpServletRequest)).thenReturn(false);
+    assertFalse(underTest.isAccessAllowed(httpServletRequest, httpServletResponse, null));
   }
 }

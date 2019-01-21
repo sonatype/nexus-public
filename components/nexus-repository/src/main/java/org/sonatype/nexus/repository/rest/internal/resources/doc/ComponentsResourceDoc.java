@@ -14,6 +14,8 @@ package org.sonatype.nexus.repository.rest.internal.resources.doc;
 
 import java.io.IOException;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.internal.resources.ComponentsResource;
 import org.sonatype.nexus.rest.Page;
@@ -24,7 +26,6 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
-import org.jboss.resteasy.plugins.providers.multipart.MultipartInput;
 
 /**
  * Swagger documentation for {@link ComponentsResource}
@@ -71,6 +72,6 @@ public interface ComponentsResourceDoc
   void uploadComponent(
       @ApiParam(value = "Name of the repository to which you would like to upload the component", required = true)
       final String repository,
-      @ApiParam(hidden = true) @MultipartForm MultipartInput multipartInput)
+      @ApiParam(hidden = true) @MultipartForm HttpServletRequest request)
       throws IOException;
 }

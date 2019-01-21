@@ -42,6 +42,7 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.view.Payload;
+import org.sonatype.nexus.repository.view.payloads.TempBlobPartPayload;
 import org.sonatype.nexus.security.ClientInfo;
 import org.sonatype.nexus.security.ClientInfoProvider;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
@@ -248,6 +249,9 @@ public class StorageFacetImpl
   @Override
   public TempBlob createTempBlob(final Payload payload, final Iterable<HashAlgorithm> hashAlgorithms)
   {
+    if (payload instanceof TempBlobPartPayload) {
+      return ((TempBlobPartPayload) payload).getTempBlob();
+    }
     try (InputStream inputStream = payload.openInputStream()) {
       return createTempBlob(inputStream, hashAlgorithms);
     }

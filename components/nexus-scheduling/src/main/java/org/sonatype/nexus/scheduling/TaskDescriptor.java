@@ -74,7 +74,7 @@ public interface TaskDescriptor
   /**
    * Returns true if the job should be marked as recoverable
    *
-   * @since 3.next
+   * @since 3.15
    */
   boolean isRecoverable();
 }

@@ -226,7 +226,9 @@ public class RaptureWebResourceBundle
   private String generateUrlSuffix() {
     StringBuilder buff = new StringBuilder();
     String version = applicationVersion.getVersion();
+    String edition = applicationVersion.getEdition();
     buff.append("_v=").append(version);
+    buff.append("&_e=").append(edition);
 
     // if version is a SNAPSHOT, then append additional timestamp to disable cache
     if (version.endsWith("SNAPSHOT")) {

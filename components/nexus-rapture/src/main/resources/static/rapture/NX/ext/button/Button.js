@@ -15,7 +15,7 @@
 /**
  * A button with custom behaviour
  *
- * @since 3.next
+ * @since 3.15
  */
 Ext.define('NX.ext.button.Button', {
   extend: 'Ext.button.Button',

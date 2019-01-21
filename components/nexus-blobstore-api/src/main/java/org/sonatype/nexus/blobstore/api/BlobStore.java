@@ -103,7 +103,7 @@ public interface BlobStore
   /**
    * Creates a new blob with the provided {@link BlobId}.
    *
-   * @since 3.next
+   * @since 3.15
    */
   Blob create(InputStream blobData, Map<String, String> headers, @Nullable BlobId blobId);
 
@@ -249,7 +249,7 @@ public interface BlobStore
    * {@link #isStorageAvailable()}
    *
    * @return {@code true} if the blob store is writable
-   * @since 3.next
+   * @since 3.15
    */
   default boolean isWritable() {
     return getBlobStoreConfiguration().isWritable();
@@ -259,7 +259,7 @@ public interface BlobStore
    * Returns true if the blobstore has been started.
    *
    * @return {@code true} if the blobstore has been started.
-   * @since 3.next
+   * @since 3.15
    */
   boolean isStarted();
 }

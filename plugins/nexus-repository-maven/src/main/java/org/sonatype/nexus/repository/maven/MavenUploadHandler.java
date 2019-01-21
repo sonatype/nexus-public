@@ -170,7 +170,7 @@ public class MavenUploadHandler
       try {
         responseData = createAssets(repository, basePath, componentUpload.getAssetUploads());
 
-        if (Boolean.valueOf(componentUpload.getField(GENERATE_POM))) {
+        if (isGeneratePom(componentUpload.getField(GENERATE_POM))) {
           String pomPath = generatePom(repository, basePath, componentUpload.getFields().get(GROUP_ID),
               componentUpload.getFields().get(ARTIFACT_ID), componentUpload.getFields().get(VERSION),
               componentUpload.getFields().get(PACKAGING));
@@ -429,6 +429,10 @@ public class MavenUploadHandler
       version = model.getParent().getVersion();
     }
     return version;
+  }
+
+  private static boolean isGeneratePom(final String generatePom) {
+    return generatePom != null && ("on".equals(generatePom) || Boolean.valueOf(generatePom));
   }
 
   /**

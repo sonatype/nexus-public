@@ -13,11 +13,11 @@
 package org.sonatype.nexus.orient.quorum;
 
 /**
- * Service for interacting with Orient database quorum.
+ * Service for maintenance and repair of Orient databases.
  *
  * @since 3.4
  */
-public interface DatabaseQuorumService
+public interface DatabaseMaintenanceService
 {
   /**
    * @return a {@link DatabaseQuorumStatus} reflecting current state (never null)
@@ -34,4 +34,13 @@ public interface DatabaseQuorumService
    */
   void resetWriteQuorum();
 
+  /**
+   * Logs the current orientdb server status
+   */
+  void logServersStatus();
+
+  /**
+   * Reset the orientdb databases to the given role.
+   */
+  void setDatabaseRole(String role);
 }

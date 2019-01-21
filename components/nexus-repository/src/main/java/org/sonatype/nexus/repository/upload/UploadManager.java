@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.util.Collection;
 
 import javax.annotation.Nullable;
+import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.Asset;
@@ -40,9 +41,11 @@ public interface UploadManager
    * Adds a component to the repository at the appropriate location. Will fail if the repository format does not have an
    * available handler.
    *
+   * @since 3.next
+   *
    * @param repository the {@link Repository} to add the component to
-   * @param upload the upload
+   * @param request the http request containing the multipart upload
    * @return the {@link Asset Assets} created by the operation
    */
-  UploadResponse handle(Repository repository, ComponentUpload upload) throws IOException;
+  UploadResponse handle(Repository repository, HttpServletRequest request) throws IOException;
 }

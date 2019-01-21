@@ -48,7 +48,7 @@ public class SingleAssetComponentMaintenance
     }
     else {
       // Otherwise, delete the component, which in turn cascades down to the asset
-      return deleteComponentTx(componentId, deleteBlob);
+      return deleteComponentTx(componentId, deleteBlob).getAssets();
     }
   }
 }

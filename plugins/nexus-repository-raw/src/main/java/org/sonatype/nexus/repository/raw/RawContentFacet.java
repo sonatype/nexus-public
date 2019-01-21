@@ -43,7 +43,7 @@ public interface RawContentFacet
    * Accepts an {@link AssetBlob}, creates an {@link Asset} if one doesn't already exist at {@code path},
    * and returns it.
    *
-   * @since 3.next
+   * @since 3.15
    */
   Asset put(String path, AssetBlob assetBlob, @Nullable AttributesMap contentAttributes);
 
@@ -61,7 +61,7 @@ public interface RawContentFacet
   /*
    * Check for the existence of an {@link Asset} with {@code name}.
    *
-   * @since 3.next
+   * @since 3.15
    */
   boolean assetExists(String name);
 }

@@ -30,29 +30,55 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class TempBlobPartPayload
     implements PartPayload
 {
-  private final PartPayload payload;
+  private final String name;
+
+  private final String fieldName;
+
+  private final boolean isFormField;
+
+  private final String contentType;
 
   private final TempBlob tempBlob;
 
   public TempBlobPartPayload(final PartPayload payload, final TempBlob tempBlob) throws IOException {
-    this.payload = checkNotNull(payload);
     this.tempBlob = checkNotNull(tempBlob);
+    checkNotNull(payload);
+    this.name = payload.getName();
+    this.fieldName = payload.getFieldName();
+    this.isFormField = payload.isFormField();
+    this.contentType = payload.getContentType();
+  }
+
+  /**
+   * @since 3.next
+   */
+  public TempBlobPartPayload(final String fieldName,
+                             final boolean isFormField,
+                             @Nullable final String name,
+                             @Nullable final String contentType,
+                             final TempBlob tempBlob)
+  {
+    this.tempBlob = checkNotNull(tempBlob);
+    this.fieldName = checkNotNull(fieldName);
+    this.name = name;
+    this.isFormField = isFormField;
+    this.contentType = contentType;
   }
 
   @Nullable
   @Override
   public String getName() {
-    return payload.getName();
+    return name;
   }
 
   @Override
   public String getFieldName() {
-    return payload.getFieldName();
+    return fieldName;
   }
 
   @Override
   public boolean isFormField() {
-    return payload.isFormField();
+    return isFormField;
   }
 
   @Override
@@ -68,7 +94,7 @@ public class TempBlobPartPayload
   @Nullable
   @Override
   public String getContentType() {
-    return payload.getContentType();
+    return contentType;
   }
 
   public TempBlob getTempBlob() {

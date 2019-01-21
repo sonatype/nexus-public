@@ -28,7 +28,7 @@ import org.apache.commons.logging.LogFactory;
 /**
  * Uberspect for Jexl which blocks writes and allows very limited methods
  *
- * @since 3.next
+ * @since 3.15
  */
 public class SandboxJexlUberspect extends Uberspect
 {

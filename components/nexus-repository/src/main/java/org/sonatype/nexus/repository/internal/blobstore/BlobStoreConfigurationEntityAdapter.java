@@ -159,7 +159,7 @@ public class BlobStoreConfigurationEntityAdapter
    *
    * @return the {@link Optional<BlobStoreConfiguration>} which is the parent of the blob store if it exists
    *
-   * @since 3.next
+   * @since 3.15
    */
   public Optional<BlobStoreConfiguration> getParent(final ODatabaseDocumentTx db, final String name) {
     String query = format("SELECT FROM %s WHERE ? in attributes.group.members", getTypeName());

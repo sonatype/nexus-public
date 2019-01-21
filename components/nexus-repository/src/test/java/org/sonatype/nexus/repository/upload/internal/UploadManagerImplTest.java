@@ -19,23 +19,31 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.rest.ComponentUploadExtension;
+import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.types.VirtualType;
-import org.sonatype.nexus.repository.upload.AssetUpload;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadHandler;
+import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.repository.upload.ValidatingComponentUpload;
+import org.sonatype.nexus.repository.upload.internal.BlobStoreMultipartForm.TempBlobFormField;
 import org.sonatype.nexus.rest.ValidationErrorXO;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
+import org.apache.commons.fileupload.FileUploadException;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -50,8 +58,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class UploadManagerImplTest
-    extends TestSupport
+public class UploadManagerImplTest extends TestSupport
 {
   private UploadManagerImpl underTest;
 
@@ -71,14 +78,27 @@ public class UploadManagerImplTest
   Repository repository;
 
   @Mock
+  UploadComponentMultipartHelper blobStoreAwareMultipartHelper;
+
+  @Mock
+  HttpServletRequest request;
+
+  @Mock
   ValidatingComponentUpload validatingComponentUpload;
+
+  @Mock
+  ComponentUploadExtension componentUploadExtension;
+
+  @Captor
+  ArgumentCaptor<ComponentUpload> componentUploadCaptor;
 
   @Before
   public void setup() {
     when(handlerA.getDefinition()).thenReturn(uploadA);
     when(handlerB.getDefinition()).thenReturn(uploadB);
-    when(handlerA.getValidatingComponentUpload(anyObject())).thenReturn(validatingComponentUpload);
-    when(handlerB.getValidatingComponentUpload(anyObject())).thenReturn(validatingComponentUpload);
+    when(handlerA.getValidatingComponentUpload(componentUploadCaptor.capture())).thenReturn(validatingComponentUpload);
+    when(handlerB.getValidatingComponentUpload(componentUploadCaptor.capture())).thenReturn(validatingComponentUpload);
+    when(validatingComponentUpload.getComponentUpload()).thenAnswer(i -> componentUploadCaptor.getValue());
 
     when(repository.getFormat()).thenReturn(new Format("a")
     {
@@ -89,7 +109,8 @@ public class UploadManagerImplTest
     handlers.put("a", handlerA);
     handlers.put("b", handlerB);
 
-    underTest = new UploadManagerImpl(handlers);
+    underTest = new UploadManagerImpl(handlers, blobStoreAwareMultipartHelper,
+        Collections.singleton(componentUploadExtension));
   }
 
   @Test
@@ -104,73 +125,71 @@ public class UploadManagerImplTest
   }
 
   @Test
-  public void testHandle() throws IOException {
-    ComponentUpload component = mock(ComponentUpload.class);
-    when(component.getAssetUploads()).thenReturn(Collections.singletonList(new AssetUpload()));
-    when(validatingComponentUpload.getComponentUpload()).thenReturn(component);
-    underTest.handle(repository, component);
+  public void testHandle() throws IOException, FileUploadException {
+    BlobStoreMultipartForm uploadedForm = new BlobStoreMultipartForm();
+    TempBlobFormField field = new TempBlobFormField("asset1", "foo.jar", mock(TempBlob.class));
+    uploadedForm.putFile("asset1", field);
+    when(blobStoreAwareMultipartHelper.parse(anyObject(), anyObject())).thenReturn(uploadedForm);
+    when(handlerA.handle(anyObject(), anyObject())).thenReturn(mock(UploadResponse.class));
 
-    verify(handlerA, times(1)).handle(repository, component);
-    verify(handlerB, never()).handle(repository, component);
+    underTest.handle(repository, request);
+
+    verify(handlerA, times(1)).handle(repository, componentUploadCaptor.getValue());
+    verify(handlerB, never()).handle(anyObject(), anyObject());
 
     // Try the other, to be sure!
     reset(handlerA, handlerB);
     when(handlerB.getDefinition()).thenReturn(uploadB);
     when(handlerB.getValidatingComponentUpload(anyObject())).thenReturn(validatingComponentUpload);
+    when(handlerB.handle(anyObject(), anyObject())).thenReturn(mock(UploadResponse.class));
 
     when(repository.getFormat()).thenReturn(new Format("b")
     {
     });
 
-    underTest.handle(repository, component);
+    underTest.handle(repository, request);
 
-    verify(handlerB, times(1)).handle(repository, component);
-    verify(handlerA, never()).handle(repository, component);
+    verify(handlerB, times(1)).handle(repository, componentUploadCaptor.getValue());
+    verify(handlerA, never()).handle(anyObject(), anyObject());
   }
 
   @Test
   public void testHandle_unsupportedRepositoryFormat() throws IOException {
-    ComponentUpload component = mock(ComponentUpload.class);
     when(repository.getFormat()).thenReturn(new Format("c")
     {
     });
 
-    expectExceptionOnUpload(repository, component, "Uploading components to 'c' repositories is unsupported");
+    expectExceptionOnUpload(repository, "Uploading components to 'c' repositories is unsupported");
   }
 
   @Test
   public void testHandle_unsupportedRepositoryGroupType() throws IOException {
     when(repository.getType()).thenReturn(new GroupType());
-    expectExceptionOnUpload(repository, mock(ComponentUpload.class),
+    expectExceptionOnUpload(repository,
         "Uploading components to a 'group' type repository is unsupported, must be 'hosted'");
   }
 
   @Test
   public void testHandle_unsupportedRepositoryProxyType() throws IOException {
     when(repository.getType()).thenReturn(new ProxyType());
-    expectExceptionOnUpload(repository, mock(ComponentUpload.class),
+    expectExceptionOnUpload(repository,
         "Uploading components to a 'proxy' type repository is unsupported, must be 'hosted'");
   }
 
   @Test
   public void testHandle_unsupportedRepositoryVirtualType() throws IOException {
     when(repository.getType()).thenReturn(new VirtualType());
-    expectExceptionOnUpload(repository, mock(ComponentUpload.class),
+    expectExceptionOnUpload(repository,
         "Uploading components to a 'virtual' type repository is unsupported, must be 'hosted'");
   }
 
-
-  private void expectExceptionOnUpload(final Repository repository,
-                                       final ComponentUpload component,
-                                       final String message) throws IOException
-  {
+  private void expectExceptionOnUpload(final Repository repository, final String message) throws IOException {
     try {
-      underTest.handle(repository, component);
+      underTest.handle(repository, request);
       fail("Expected exception to be thrown");
     }
     catch (ValidationErrorsException exception) {
-      List<String> messages = exception.getValidationErrors().stream()
-          .map(ValidationErrorXO::getMessage)
+      List<String> messages = exception.getValidationErrors().stream().map(ValidationErrorXO::getMessage)
           .collect(Collectors.toList());
       assertThat(messages, contains(message));
     }

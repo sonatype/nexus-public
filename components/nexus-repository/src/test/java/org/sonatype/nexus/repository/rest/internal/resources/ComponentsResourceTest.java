@@ -12,18 +12,12 @@
  */
 package org.sonatype.nexus.repository.rest.internal.resources;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedHashMap;
-import javax.ws.rs.core.MultivaluedMap;
 
 import org.sonatype.nexus.common.entity.ContinuationTokenHelper;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
@@ -32,8 +26,8 @@ import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.repository.browse.BrowseResult;
 import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
-import org.sonatype.nexus.repository.rest.ComponentsResourceExtension;
 import org.sonatype.nexus.repository.rest.ComponentUploadExtension;
+import org.sonatype.nexus.repository.rest.ComponentsResourceExtension;
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
 import org.sonatype.nexus.repository.rest.internal.api.RepositoryItemIDXO;
@@ -50,8 +44,6 @@ import org.sonatype.nexus.rest.Page;
 import com.google.common.collect.ImmutableSet;
 import com.orientechnologies.orient.core.id.ORID;
 import org.hamcrest.CoreMatchers;
-import org.jboss.resteasy.plugins.providers.multipart.InputPart;
-import org.jboss.resteasy.plugins.providers.multipart.MultipartInput;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -61,7 +53,6 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Spy;
 
-import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -156,7 +147,7 @@ public class ComponentsResourceTest
 
   private Asset assetTwo;
 
-  private void configureComponent(Component component, String group, String name, String version) {
+  private void configureComponent(final Component component, final String group, final String name, final String version) {
     when(component.group()).thenReturn(group);
     when(component.name()).thenReturn(name);
     when(component.version()).thenReturn(version);
@@ -199,8 +190,7 @@ public class ComponentsResourceTest
 
     underTest = new ComponentsResource(repositoryManagerRESTAdapter, browseService, componentEntityAdapter,
         maintenanceService, continuationTokenHelper, uploadManager, uploadConfiguration,
-        new ComponentXOFactory(emptySet()), ImmutableSet.of(componentsResourceExtension),
-        ImmutableSet.of(componentUploadExtension));
+        new ComponentXOFactory(emptySet()), ImmutableSet.of(componentsResourceExtension));
   }
 
   @Test
@@ -266,7 +256,7 @@ public class ComponentsResourceTest
     underTest.getComponents("whatever", mavenReleasesId);
   }
 
-  private RepositoryItemIDXO getRepositoryItemIdXO(Component resultComponent) {
+  private RepositoryItemIDXO getRepositoryItemIdXO(final Component resultComponent) {
     RepositoryItemIDXO repositoryItemXOID = new RepositoryItemIDXO("maven-releases",
         "f10bd0593de3b5e4b377049bcaa80d3e");
 
@@ -278,31 +268,12 @@ public class ComponentsResourceTest
   }
 
   @Test
-  @SuppressWarnings("unchecked")
   public void uploadComponent() throws Exception {
-    MultipartInput multipart = mock(MultipartInput.class);
-    InputPart filePart = mockStreamInputPart("asset", "content");
-    MultivaluedMap<String, String> fileHeaders = mock(MultivaluedMap.class);
-    when(filePart.getHeaders()).thenReturn(fileHeaders);
-    when(fileHeaders.getFirst("Content-Disposition")).thenReturn("form-data; name=asset; filename=foo-0.42.jar");
-    InputPart groupPart = mockTextInputPart("groupId", "com.example");
-    InputPart artifactPart = mockTextInputPart("artifactId", "foo");
-    InputPart versionPart = mockTextInputPart("version", "0.42");
-    InputPart extensionPart = mockTextInputPart("asset.extension", "jar");
-    when(multipart.getParts()).thenReturn(Arrays.asList(filePart, groupPart, artifactPart, versionPart, extensionPart));
+    HttpServletRequest request = mock(HttpServletRequest.class);
 
     UploadResponse uploadResponse = new UploadResponse(new DetachedEntityId(COMPONENT_ID), emptyList());
-    when(uploadManager.handle(eq(mavenReleases), any(ComponentUpload.class))).thenReturn(uploadResponse);
-    underTest.uploadComponent(mavenReleasesId, multipart);
-
-    verify(componentUploadExtension, times(1)).validate(any());
-    verify(uploadManager).handle(eq(mavenReleases), componentUploadCaptor.capture());
-    verify(componentUploadExtension, times(1)).apply(mavenReleases,
-        componentUploadCaptor.getValue(), uploadResponse.getComponentIds());
-
-    assertThat(componentUploadCaptor.getValue().getFields().size(), is(3));
-    assertThat(componentUploadCaptor.getValue().getAssetUploads().size(), is(1));
-    assertThat(componentUploadCaptor.getValue().getAssetUploads().get(0).getFields().size(), is(1));
+    when(uploadManager.handle(mavenReleases, request)).thenReturn(uploadResponse);
+    underTest.uploadComponent(mavenReleasesId, request);
   }
 
   @Test
@@ -317,26 +288,6 @@ public class ComponentsResourceTest
       assertThat(e.getResponse(), is(CoreMatchers.notNullValue()));
       assertThat(e.getResponse().getStatus(), is(404));
     }
-  }
-
-  private static InputPart mockTextInputPart(String name, String value) throws IOException {
-    final InputPart mock = mock(InputPart.class);
-    when(mock.getMediaType()).thenReturn(MediaType.TEXT_PLAIN_TYPE);
-    MultivaluedMap<String, String> headers = new MultivaluedHashMap<>();
-    headers.putSingle(HttpHeaders.CONTENT_DISPOSITION, format("form-data; name=\"%s\"", name));
-    when(mock.getHeaders()).thenReturn(headers);
-    when(mock.getBodyAsString()).thenReturn(value);
-    return mock;
-  }
-
-  private static InputPart mockStreamInputPart(String name, String value) throws IOException {
-    final InputPart mock = mock(InputPart.class);
-    when(mock.getMediaType()).thenReturn(MediaType.APPLICATION_OCTET_STREAM_TYPE);
-    MultivaluedMap<String, String> headers = new MultivaluedHashMap<>();
-    headers.putSingle(HttpHeaders.CONTENT_DISPOSITION, format("form-data; name=\"%s\"", name));
-    when(mock.getHeaders()).thenReturn(headers);
-    when(mock.getBody(InputStream.class, null)).thenReturn(new ByteArrayInputStream(value.getBytes()));
-    return mock;
   }
 
   @Test

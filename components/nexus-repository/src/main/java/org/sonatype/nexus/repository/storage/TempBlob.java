@@ -47,6 +47,8 @@ public class TempBlob
 
   private final BlobStore blobStore;
 
+  private boolean deleted = false;
+
   public TempBlob(final Blob blob,
                   final Map<HashAlgorithm, HashCode> hashes,
                   final boolean hashesVerified,
@@ -82,8 +84,12 @@ public class TempBlob
 
   @Override
   public void close() {
+    if (deleted) {
+      return;
+    }
     try {
       blobStore.deleteHard(blob.getId());
+      deleted = true;
     }
     catch (BlobStoreException e) {
       log.debug("Unable to delete blob {} in blob store {}", blob.getId(),

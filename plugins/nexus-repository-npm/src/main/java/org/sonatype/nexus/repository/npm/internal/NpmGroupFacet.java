@@ -84,7 +84,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 /**
  * NPM specific implementation of {@link GroupFacetImpl} allowing for {@link Cooperation}, merging and caching.
  *
- * @since 3.next
+ * @since 3.15
  */
 @Named
 @Exposed

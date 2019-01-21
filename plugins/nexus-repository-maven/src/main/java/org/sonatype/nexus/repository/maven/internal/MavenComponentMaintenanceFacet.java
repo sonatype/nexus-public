@@ -30,7 +30,7 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 /**
  * maven format specific hosted and proxy {@link ComponentMaintenance}.
  *
- * @since 3.next
+ * @since 3.15
  */
 @Named
 public class MavenComponentMaintenanceFacet
@@ -51,7 +51,7 @@ public class MavenComponentMaintenanceFacet
     if (componentId != null) {
       Component component = tx.findComponent(componentId);
       if (component != null && !tx.browseAssets(component).iterator().hasNext()) {
-        deletedAssets.addAll(deleteComponentTx(componentId, deleteBlob));
+        deletedAssets.addAll(deleteComponentTx(componentId, deleteBlob).getAssets());
       }
     }
 

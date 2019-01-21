@@ -20,6 +20,7 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -30,6 +31,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 
@@ -44,22 +46,17 @@ import org.sonatype.nexus.repository.browse.BrowseService;
 import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.rest.ComponentsResourceExtension;
-import org.sonatype.nexus.repository.rest.ComponentUploadExtension;
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
 import org.sonatype.nexus.repository.rest.internal.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.rest.internal.resources.doc.ComponentsResourceDoc;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
-import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadConfiguration;
 import org.sonatype.nexus.repository.upload.UploadManager;
-import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
-
-import org.jboss.resteasy.plugins.providers.multipart.MultipartInput;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getLast;
@@ -73,7 +70,6 @@ import static org.sonatype.nexus.repository.http.HttpStatus.NOT_FOUND;
 import static org.sonatype.nexus.repository.http.HttpStatus.UNPROCESSABLE_ENTITY;
 import static org.sonatype.nexus.repository.rest.api.AssetXO.fromAsset;
 import static org.sonatype.nexus.repository.rest.internal.api.RepositoryItemIDXO.fromString;
-import static org.sonatype.nexus.repository.rest.internal.resources.ComponentUploadUtils.createComponentUpload;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 
 /**
@@ -109,8 +105,6 @@ public class ComponentsResource
 
   private final Set<ComponentsResourceExtension> componentsResourceExtensions;
 
-  private final Set<ComponentUploadExtension> componentUploadExtensions;
-
   @Inject
   public ComponentsResource(final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter,
                             final BrowseService browseService,
@@ -120,8 +114,7 @@ public class ComponentsResource
                             final UploadManager uploadManager,
                             final UploadConfiguration uploadConfiguration,
                             final ComponentXOFactory componentXOFactory,
-                            final Set<ComponentsResourceExtension> componentsResourceExtensions,
-                            final Set<ComponentUploadExtension> componentsUploadExtensions)
+                            final Set<ComponentsResourceExtension> componentsResourceExtensions)
   {
     this.repositoryManagerRESTAdapter = checkNotNull(repositoryManagerRESTAdapter);
     this.browseService = checkNotNull(browseService);
@@ -132,9 +125,9 @@ public class ComponentsResource
     this.uploadConfiguration = checkNotNull(uploadConfiguration);
     this.componentXOFactory = checkNotNull(componentXOFactory);
     this.componentsResourceExtensions = checkNotNull(componentsResourceExtensions);
-    this.componentUploadExtensions = checkNotNull(componentsUploadExtensions);
   }
 
+  @Override
   @GET
   public Page<ComponentXO> getComponents(@QueryParam("continuationToken") final String continuationToken,
                                          @QueryParam("repository") final String repositoryId)
@@ -165,7 +158,7 @@ public class ComponentsResource
     }
   }
 
-  private ComponentXO fromComponent(Component component, Repository repository) {
+  private ComponentXO fromComponent(final Component component, final Repository repository) {
     String internalId = id(component).getValue();
 
     ComponentXO componentXO = componentXOFactory.createComponentXO();
@@ -191,6 +184,7 @@ public class ComponentsResource
     return componentXO;
   }
 
+  @Override
   @GET
   @Path("/{id}")
   public ComponentXO getComponentById(@PathParam("id") final String id)
@@ -218,6 +212,7 @@ public class ComponentsResource
     }
   }
 
+  @Override
   @DELETE
   @Path("/{id}")
   public void deleteComponent(@PathParam("id") final String id)
@@ -235,9 +230,11 @@ public class ComponentsResource
   /**
    * @since 3.8
    */
+  @Override
   @POST
   @Consumes(MediaType.MULTIPART_FORM_DATA)
-  public void uploadComponent(@QueryParam("repository") final String repositoryId, final MultipartInput multipartInput)
+  public void uploadComponent(@QueryParam("repository") final String repositoryId,
+                              @Context final HttpServletRequest request)
       throws IOException
   {
     if (!uploadConfiguration.isEnabled()) {
@@ -245,19 +242,9 @@ public class ComponentsResource
     }
 
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryId);
-    String format = repository.getFormat().getValue();
-    ComponentUpload componentUpload = createComponentUpload(format, multipartInput);
-
-    for (ComponentUploadExtension componentUploadExtension : componentUploadExtensions) {
-      componentUploadExtension.validate(componentUpload);
-    }
 
     try {
-      UploadResponse uploadResponse = uploadManager.handle(repository, componentUpload);
-
-      for (ComponentUploadExtension componentUploadExtension : componentUploadExtensions) {
-        componentUploadExtension.apply(repository, componentUpload, uploadResponse.getComponentIds());
-      }
+      uploadManager.handle(repository, request);
     } catch (IllegalOperationException e) {
       throw new WebApplicationMessageException(Status.BAD_REQUEST, e.getMessage());
     }

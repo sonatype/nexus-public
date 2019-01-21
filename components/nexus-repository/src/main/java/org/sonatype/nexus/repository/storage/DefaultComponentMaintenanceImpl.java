@@ -18,6 +18,7 @@ import java.util.function.BooleanSupplier;
 import java.util.List;
 import java.util.Set;
 
+import javax.annotation.Nullable;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.EntityId;
@@ -57,7 +58,7 @@ public class DefaultComponentMaintenanceImpl
     checkNotNull(componentId);
     UnitOfWork.begin(getRepository().facet(StorageFacet.class).txSupplier());
     try {
-      return deleteComponentTx(componentId, deleteBlobs);
+      return deleteComponentTx(componentId, deleteBlobs).getAssets();
     }
     finally {
       UnitOfWork.end();
@@ -65,14 +66,14 @@ public class DefaultComponentMaintenanceImpl
   }
 
   @TransactionalDeleteBlob
-  protected Set<String> deleteComponentTx(final EntityId componentId, final boolean deleteBlobs) {
+  protected DeletionResult deleteComponentTx(final EntityId componentId, final boolean deleteBlobs) {
     StorageTx tx = UnitOfWork.currentTx();
     Component component = tx.findComponentInBucket(componentId, tx.findBucket(getRepository()));
     if (component == null) {
-      return Collections.emptySet();
+      return new DeletionResult(null, Collections.emptySet());
     }
     log.debug("Deleting component: {}", component.toStringExternal());
-    return tx.deleteComponent(component, deleteBlobs);
+    return new DeletionResult(component, tx.deleteComponent(component, deleteBlobs));
   }
 
   /**
@@ -135,13 +136,16 @@ public class DefaultComponentMaintenanceImpl
     for (EntityId component : components) {
       if (!cancelledCheck.getAsBoolean()) {
         try {
-          deleteComponentTx(component, true);
+          DeletionResult deletionResult = deleteComponentTx(component, true);
 
-          log.debug("Component with ID '{}' deleted from repository {}", component, getRepository());
+          if (deletionResult.getComponent() != null) {
+            log.info("Deleted component with ID '{}', Attributes '{}' and Assets '{}' from repository {}", component,
+                deletionResult.getComponent().toStringExternal(), deletionResult.getAssets(), getRepository());
+          }
 
           count++;
         }
-        catch (Exception e ) {
+        catch (Exception e) {
           log.debug("Unable to delete component with ID {}", component, e);
         }
       }
@@ -169,5 +173,27 @@ public class DefaultComponentMaintenanceImpl
   @Override
   public void after() {
     //no op
+  }
+
+  protected static class DeletionResult
+  {
+    @Nullable
+    private final Component component;
+
+    private final Set<String> assets;
+
+    public DeletionResult(@Nullable final Component component, final Set<String> assets) {
+      this.component = component;
+      this.assets = checkNotNull(assets);
+    }
+
+    @Nullable
+    public Component getComponent() {
+      return component;
+    }
+
+    public Set<String> getAssets() {
+      return assets;
+    }
   }
 }

@@ -40,7 +40,7 @@ Ext.define('NX.ext.direct.RemotingProvider', {
   /**
    * Ensure timeout is set on requests.
    *
-   * @since 3.next
+   * @since 3.15
    * @override
    */
   sendTransaction: function(transaction) {

@@ -44,6 +44,7 @@ import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.mime.MimeRulesSource;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.IllegalOperationException;
+import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.Repository;
 
 import com.google.common.base.Supplier;
@@ -958,13 +959,20 @@ public class StorageTxImpl
                                       @Nullable final String declaredContentType)
       throws IOException
   {
-    return contentValidator.determineContentType(
-        strictContentValidation,
-        inputStreamSupplier,
-        mimeRulesSource,
-        blobName,
-        declaredContentType
-    );
+    try {
+      return contentValidator.determineContentType(
+          strictContentValidation,
+          inputStreamSupplier,
+          mimeRulesSource,
+          blobName,
+          declaredContentType
+      );
+    }
+    catch (InvalidContentException e) {
+      log.warn(
+          "An exception occurred determining the content type of asset {} in repository {}", blobName, repositoryName);
+      throw e;
+    }
   }
 
   /**

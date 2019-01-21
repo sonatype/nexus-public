@@ -23,7 +23,8 @@ Ext.define('NX.coreui.controller.UploadComponent', {
     'NX.Bookmarks',
     'NX.Conditions',
     'NX.Permissions',
-    'NX.I18n'
+    'NX.I18n',
+    'NX.controller.ExtDirect'
   ],
   masters: [
     'nx-coreui-uploadcomponentfeature nx-coreui-upload-repository-list',
@@ -106,7 +107,7 @@ Ext.define('NX.coreui.controller.UploadComponent', {
         'nx-coreui-upload-component button[action=add_asset]': {
           click: me.addAsset
         },
-        'nx-coreui-upload-component textfield[name^=extension]': {
+        'nx-coreui-upload-component textfield[name$=extension]': {
           change: me.onExtensionChange
         },
         'nx-coreui-upload-component checkbox[name=generate-pom]' : {
@@ -227,7 +228,7 @@ Ext.define('NX.coreui.controller.UploadComponent', {
 
       fp.getForm().submit({
         waitMsg: NX.I18n.get('FeatureGroups_Upload_Wait_Message'),
-        success: function(form, action){
+        success: function(form, action) {
           var message = NX.I18n.format('FeatureGroups_Upload_Successful_Text', form.getValues().repositoryName);
           if (NX.Permissions.check('nexus:search:read')) {
             message += ", " + NX.util.Url.asLink(
@@ -236,6 +237,21 @@ Ext.define('NX.coreui.controller.UploadComponent', {
           }
           me.setSuccessMessage(message);
           me.resetForm();
+        },
+        failure: function(form, action) {
+          var transaction;
+
+          if (!action.result || !action.result.length) {
+            NX.Messages.error('An unknown error occurred uploading components');
+            console.error(action);
+          }
+          else {
+            transaction = {
+              result: action.result[0]
+            };
+            transaction.result.success = false;
+            NX.getApplication().getExtDirectController().checkResponse(null, transaction);
+          }
         }
       });
     }
@@ -301,7 +317,7 @@ Ext.define('NX.coreui.controller.UploadComponent', {
     var me = this,
         form = me.getUploadComponent().down('form'),
         componentCoordinatesFieldset = form.down('fieldset[title="Component coordinates"]'),
-        isPomFilePresent = form.query('textfield[name^=extension][value=pom]').length !== 0;
+        isPomFilePresent = form.query('textfield[name$=extension][value=pom]').length !== 0;
 
     if (componentCoordinatesFieldset === null) {
         return;

@@ -12,57 +12,28 @@
  */
 package org.sonatype.nexus.coreui.internal;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.rest.ComponentUploadExtension;
-import org.sonatype.nexus.repository.types.HostedType;
-import org.sonatype.nexus.repository.upload.AssetUpload;
-import org.sonatype.nexus.repository.upload.ComponentUpload;
-import org.sonatype.nexus.repository.upload.UploadDefinition;
-import org.sonatype.nexus.repository.upload.UploadFieldDefinition;
-import org.sonatype.nexus.repository.upload.UploadHandler;
 import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.repository.upload.UploadResponse;
-import org.sonatype.nexus.repository.upload.ValidatingComponentUpload;
-import org.sonatype.nexus.repository.view.Payload;
 
-import com.google.common.collect.ImmutableSet;
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 
-import static java.util.Collections.emptyList;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasEntry;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.repository.upload.UploadFieldDefinition.Type.STRING;
 
 public class UploadServiceTest
     extends TestSupport
@@ -78,60 +49,27 @@ public class UploadServiceTest
   private RepositoryManager repositoryManager;
 
   @Mock
-  private UploadHandler handler;
-
-  @Mock
-  private ValidatingComponentUpload validatingComponentUpload;
-
-  @Mock
   private Repository repo;
 
-  @Captor
-  ArgumentCaptor<ComponentUpload> componentUploadCaptor;
-
   @Mock
-  private ComponentUploadExtension componentUploadExtension;
+  private HttpServletRequest request;
 
   private EntityId newId = new DetachedEntityId("newId");
 
   @Before
   public void setup() throws IOException {
-    when(repo.getFormat()).thenReturn(new Format("m2")
-    {
-    });
-    when(repo.getType()).thenReturn(new HostedType());
     when(repositoryManager.get(REPO_NAME)).thenReturn(repo);
 
-    UploadDefinition ud = new UploadDefinition("m2", true,
-        Arrays.asList(new UploadFieldDefinition("g", false, STRING), new UploadFieldDefinition("v", true, STRING)),
-        Arrays.asList(new UploadFieldDefinition("e", false, STRING), new UploadFieldDefinition("c", true, STRING)));
-    when(handler.getDefinition()).thenReturn(ud);
-    when(handler.getValidatingComponentUpload(anyObject())).thenReturn(validatingComponentUpload);
+    UploadResponse uploadResponse = new UploadResponse(newId, Collections.singletonList("foo"));
+    when(uploadManager.handle(repo, request)).thenReturn(uploadResponse);
 
-    UploadResponse uploadResponse = new UploadResponse(newId, emptyList());
-    when(handler.handle(any(), any())).thenReturn(uploadResponse);
-    when(uploadManager.getAvailableDefinitions()).thenReturn(Collections.singletonList(ud));
-    when(uploadManager.getByFormat("m2")).thenReturn(ud);
-    when(uploadManager.handle(eq(repo), componentUploadCaptor.capture())).thenAnswer(invocationOnMock -> handler.handle(repo, componentUploadCaptor.getValue()));
-
-    component = new UploadService(repositoryManager, uploadManager, ImmutableSet.of(componentUploadExtension));
-  }
-
-  @Test
-  public void testUpload_missingRepositoryName() throws IOException {
-    try {
-      component.upload(Collections.emptyMap(), Collections.emptyMap());
-      fail("Expected exception to be thrown");
-    }
-    catch (NullPointerException e) {
-      assertThat(e.getMessage(), is("Missing repositoryName parameter"));
-    }
+    component = new UploadService(repositoryManager, uploadManager);
   }
 
   @Test
   public void testUpload_unknownRepository() throws IOException {
     try {
-      component.upload(map("repositoryName", "foo"), Collections.emptyMap());
+      component.upload("foo", request);
       fail("Expected exception to be thrown");
     }
     catch (NullPointerException e) {
@@ -141,48 +79,7 @@ public class UploadServiceTest
 
   @Test
   public void testUpload() throws IOException {
-    // component field 'v' and asset field 'c' are omitted to ensure optional fields don't trigger an error
-    component.upload(map("repositoryName", REPO_NAME, "g", "foo", "e", "jar"),
-        map(mockFile("text/plain", 3L, "stuff")));
-    verify(handler, times(1)).handle(eq(repo), componentUploadCaptor.capture());
-    verify(componentUploadExtension, times(1)).validate(any());
-    verify(componentUploadExtension, times(1)).apply(repo, componentUploadCaptor.getValue(),
-        Collections.singletonList(newId));
-
-    ComponentUpload uc = componentUploadCaptor.getValue();
-    assertThat(uc.getFields(), hasEntry("g", "foo"));
-
-    assertThat(uc.getAssetUploads(), hasSize(1));
-
-    AssetUpload ua = uc.getAssetUploads().get(0);
-    assertThat(ua.getFields(), hasEntry("e", "jar"));
-
-    assertPayload(ua.getPayload(), "text/plain", 3L, "stuff");
-  }
-
-  @Test
-  public void testUpload_multipleAssets() throws IOException {
-    component.upload(
-        map("repositoryName", REPO_NAME, "g", "foo", "v", "1", "e", "jar", "c", "srcs", "e1", "pom", "c1", "n"),
-        map(mockFile("text/plain", 3L, "src"), mockFile("text/xml", 5L, "model")));
-
-    ArgumentCaptor<ComponentUpload> captor = ArgumentCaptor.forClass(ComponentUpload.class);
-    verify(handler, times(1)).handle(eq(repo), captor.capture());
-
-    ComponentUpload uc = captor.getValue();
-    assertThat(uc.getFields(), hasEntry("g", "foo"));
-
-    assertThat(uc.getAssetUploads(), hasSize(2));
-
-    AssetUpload ua = uc.getAssetUploads().get(0);
-    assertThat(ua.getFields(), hasEntry("e", "jar"));
-    assertThat(ua.getFields(), hasEntry("c", "srcs"));
-    assertPayload(ua.getPayload(), "text/plain", 3L, "src");
-
-    ua = uc.getAssetUploads().get(1);
-    assertThat(ua.getFields(), hasEntry("e", "pom"));
-    assertThat(ua.getFields(), hasEntry("c", "n"));
-    assertPayload(ua.getPayload(), "text/xml", 5L, "model");
+    assertThat(component.upload(REPO_NAME, request), is("foo"));
   }
 
   @Test
@@ -192,43 +89,4 @@ public class UploadServiceTest
 
     assertThat(result, is("foo\\-x\\.z\\/bar"));
   }
-
-  private static void assertPayload(final Payload actual,
-                                    final String contentType,
-                                    final long length,
-                                    final String content)
-      throws IOException
-  {
-    assertNotNull(actual);
-    assertThat(actual.getContentType(), is(contentType));
-    assertThat(actual.getSize(), is(length));
-    try (InputStream in = actual.openInputStream()) {
-      assertThat(IOUtils.toString(in), is(content));
-    }
-  }
-
-  private FileItem mockFile(final String contentType, final long length, final String content) throws IOException {
-    FileItem fileItem = mock(FileItem.class);
-    when(fileItem.getContentType()).thenReturn(contentType);
-    when(fileItem.getSize()).thenReturn(length);
-    when(fileItem.getInputStream()).thenReturn(new ByteArrayInputStream(content.getBytes()));
-    return fileItem;
-  }
-
-  private Map<String, FileItem> map(final FileItem... files) {
-    Map<String, FileItem> map = new LinkedHashMap<>(); // using linked so tests can expect a deterministic order
-    for (int i = 0; i < files.length; i++) {
-      map.put("file" + (i > 0 ? i : ""), files[i]);
-    }
-    return map;
-  }
-
-  private Map<String, String> map(final String... strings) {
-    Map<String, String> map = new HashMap<>();
-    for (int i = 0; i < strings.length; i += 2) {
-      map.put(strings[i], strings[i + 1]);
-    }
-    return map;
-  }
-
 }

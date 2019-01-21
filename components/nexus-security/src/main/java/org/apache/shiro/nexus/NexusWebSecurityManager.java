@@ -63,6 +63,10 @@ public class NexusWebSecurityManager
    */
   @Override
   public Subject login(Subject subject, final AuthenticationToken token) {
+    //anonymous user isn't allowed to authenticate
+    if ("anonymous".equals(token.getPrincipal())) {
+      throw new AuthenticationException("Cannot login with anonymous user");
+    }
     try {
       subject = super.login(subject, token);
       UserIdMdcHelper.set(subject);
