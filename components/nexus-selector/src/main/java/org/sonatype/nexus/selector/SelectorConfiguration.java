@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.selector;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -31,7 +32,7 @@ public class SelectorConfiguration
 
   private String description;
 
-  private Map<String,Object> attributes;
+  private Map<String,String> attributes;
 
   public String getName() {
     return name;
@@ -57,12 +58,14 @@ public class SelectorConfiguration
     this.description = description;
   }
 
-  public Map<String,Object> getAttributes() {
+  public Map<String,String> getAttributes() {
     return attributes;
   }
 
-  public void setAttributes(final Map<String,Object> attributes) {
-    this.attributes = attributes;
+  public void setAttributes(final Map<String, Object> attributes) {
+    this.attributes = new HashMap<>(attributes.size());
+    // prevent OrientDB deserialization exceptions by converting value to String - see NEXUS-17850
+    attributes.forEach((key, value) -> this.attributes.put(key, value.toString()));
   }
 
   @Override

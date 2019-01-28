@@ -45,5 +45,7 @@ Ext.define('NX.coreui.view.repository.recipe.BowerProxy', {
     ];
 
     me.callParent();
+
+    me.down('#remoteUrl').setHelpText(NX.I18n.get('Repository_Facet_ProxyFacet_Bower_Remote_HelpText'));
   }
 });

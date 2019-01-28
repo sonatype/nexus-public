@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.blobstore.quota;
 
+import java.util.Locale;
+
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
@@ -74,7 +76,7 @@ public abstract class BlobStoreQuotaSupport
       prefix = SIPrefix.values()[(int) exponent / 3];
     }
 
-    return format("%.2f %s", bytes / prefix.value, prefix.name);
+    return format(Locale.ENGLISH, "%.2f %s", bytes / prefix.value, prefix.name);
   }
 
   public static Runnable createQuotaCheckJob(final BlobStore blobStore,

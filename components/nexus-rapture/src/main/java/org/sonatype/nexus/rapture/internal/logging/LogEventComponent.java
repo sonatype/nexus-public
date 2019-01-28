@@ -14,6 +14,7 @@ package org.sonatype.nexus.rapture.internal.logging;
 
 import java.util.Map;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -42,6 +43,13 @@ import static com.google.common.base.Preconditions.checkState;
 public class LogEventComponent
     extends DirectComponentSupport
 {
+  private final boolean enabled;
+
+  @Inject
+  public LogEventComponent(@Named("${nexus.log.extdirect.recording.enabled:-false}") final boolean enabled) {
+    this.enabled = enabled;
+  }
+
   private static final Map<String, Level> levels = ImmutableMap.of(
       "trace", Level.TRACE,
       "debug", Level.DEBUG,
@@ -54,6 +62,10 @@ public class LogEventComponent
   @Timed
   @ExceptionMetered
   public void recordEvent(final LogEventXO event) {
+    if (!enabled) {
+      return;
+    }
+
     checkNotNull(event);
 
     Level level = levels.get(event.getLevel());

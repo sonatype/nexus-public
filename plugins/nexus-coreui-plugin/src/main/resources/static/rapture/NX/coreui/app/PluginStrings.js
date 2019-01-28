@@ -346,6 +346,14 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_ProxyFacet_Remote_FieldLabel: 'Remote storage',
     Repository_Facet_ProxyFacet_Remote_HelpText: 'Location of the remote repository being proxied',
     Repository_Facet_ProxyFacet_Remote_EmptyText: 'Enter a URL',
+    Repository_Facet_ProxyFacet_Bower_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://registry.bower.io',
+    Repository_Facet_ProxyFacet_Docker_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://registry-1.docker.io',
+    Repository_Facet_ProxyFacet_Maven_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://repo1.maven.org/maven2/',
+    Repository_Facet_ProxyFacet_Npm_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://registry.npmjs.org',
+    Repository_Facet_ProxyFacet_Nuget_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://www.nuget.org/api/v2/',
+    Repository_Facet_ProxyFacet_Pypi_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://pypi.org',
+    Repository_Facet_ProxyFacet_Rubygems_Remote_HelpText: 'Location of the remote repository being proxied, e.g. https://rubygems.org',
+    Repository_Facet_ProxyFacet_Yum_Remote_HelpText: 'Location of the remote repository being proxied, e.g.  http://mirror.centos.org/centos/',
     Ssl_SslUseTrustStore_BoxLabel: 'Use the Nexus truststore',
     Ssl_SslUseTrustStore_Certificate_Button: 'View certificate',
     Ssl_SslUseTrustStore_Certificate_HelpText: 'Use certificates stored in the Nexus truststore to connect to external systems',
@@ -421,8 +429,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     HealthCheckRepositoryColumn_Analyze_Permission_Error: '<span><h2>Insufficient Permissions to Analyze a Repository</h2>' +
     'To analyze a repository your user account must have permissions to start analysis.</span>',
     HealthCheckRepositoryColumn_Loading: 'Loading&hellip;',
-    HealthCheckRepositoryColumn_CollectingTrendData: 'Insufficient trend data',
-    HealthCheckRepositoryColumn_DownloadsDisabled: 'Download trends disabled',
     HealthCheckRepositoryColumn_Unavailable_Tooltip: '<span><h2>Repository Health Check Unavailable</h2>A Repository Health Check (RHC) ' +
     'cannot be performed on this repository, because it is an unsupported type or out of service.<br><br>' +
     '<a href="http://links.sonatype.com/products/clm/rhc/home" ' +
@@ -493,14 +499,14 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Selector_SelectorSettingsForm_Expression_Examples: '<div style="font-size: 11px"><br/>' +
     '<h4>Example Content Selector Expressions:</h4>' +
     '<p>Select all "raw" format content<br/><i>format == "raw"</i></p>' +
-    '<p>Select all "maven2" content with a groupId that starts with "org.sonatype.nexus"<br/><i>format == "maven2" and coordinate.groupId =^ "org.sonatype.nexus"</i></p>' +
+    '<p>Select all "maven2" content along a path that starts with "/org/sonatype/nexus"<br/><i>format == "maven2" and path =^ "/org/sonatype/nexus"</i></p>' +
     '<br/>' +
     '<p>See the <a href="http://links.sonatype.com/products/nexus/selectors/docs" target="_blank">Nexus documentation</a> for more details</p>' +
     '</div>',
     Selector_SelectorSettingsForm_Expression_Examples_jexl: '<div style="font-size: 11px"><br/>' +
     '<h4>Example <a href="http://links.sonatype.com/products/nexus/jexl" target="_blank">JEXL</a> queries:</h4>' +
     '<p>Select all "raw" format content<br/><i>format == "raw"</i></p>' +
-    '<p>Select all "maven2" content with a groupId that starts with "org.sonatype.nexus"<br/><i>format == "maven2" and coordinate.groupId =^ "org.sonatype.nexus"</i></p>' +
+    '<p>Select all "maven2" content along a path that starts with "/org/sonatype/nexus"<br/><i>format == "maven2" and path =^ "/org/sonatype/nexus"</i></p>' +
     '<br/>' +
     '<p>See the <a href="http://links.sonatype.com/products/nexus/selectors/docs" target="_blank">Nexus documentation</a> for more details</p>' +
     '</div>',

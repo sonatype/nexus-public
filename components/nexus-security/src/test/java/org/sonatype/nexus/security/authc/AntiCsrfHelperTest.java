@@ -26,7 +26,6 @@ import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -35,7 +34,9 @@ import static org.mockito.Mockito.when;
 public class AntiCsrfHelperTest
   extends TestSupport
 {
-  private static final String SESSION_COOKIE = "not-default-sessonid";
+  private static final String BROWSER_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36";
+
+  private static final String CLIENT_UA = "npm/6.4.3 node/8.11.0 Linux amd64";
 
   private AntiCsrfHelper underTest;
 
@@ -44,7 +45,7 @@ public class AntiCsrfHelperTest
 
   @Before
   public void setup() {
-    underTest = new AntiCsrfHelper(true, SESSION_COOKIE);
+    underTest = new AntiCsrfHelper(true);
   }
 
   /*
@@ -52,18 +53,9 @@ public class AntiCsrfHelperTest
    */
   @Test
   public void testRequireValidToken_Disabled() {
-    underTest = new AntiCsrfHelper(false, SESSION_COOKIE);
+    underTest = new AntiCsrfHelper(false);
     underTest.requireValidToken(httpServletRequest, "a-token");
     verifyZeroInteractions(httpServletRequest);
-  }
-
-  /*
-   * Requests with a referrer set but no token are invalid.
-   */
-  @Test(expected = UnauthorizedException.class)
-  public void testRequireValidToken_Referrer_NoToken() {
-    when(httpServletRequest.getHeader(HttpHeaders.REFERER)).thenReturn("http://localhost:8081");
-    underTest.requireValidToken(httpServletRequest, null);
   }
 
   /*
@@ -71,58 +63,41 @@ public class AntiCsrfHelperTest
    */
   @Test(expected = UnauthorizedException.class)
   public void testRequireValidToken_Session_NoToken() {
-    when(httpServletRequest.getCookies()).thenReturn(new Cookie[] { new Cookie(SESSION_COOKIE, "avalue") });
+    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT)).thenReturn(BROWSER_UA);
     underTest.requireValidToken(httpServletRequest, null);
   }
 
   /*
-   * Requests without a session and without a referrer are likely non-browser clients.
+   * Requests without a UserAgent or with an arbitrary UserAgent are likely non-browser clients.
    */
   @Test
   public void testRequireValidToken_NoSessionAndNoReferrer() {
     underTest.requireValidToken(httpServletRequest, null);
+
+    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT)).thenReturn(CLIENT_UA);
+    underTest.requireValidToken(httpServletRequest, null);
   }
 
   /*
-   * Requests with a session and matching tokens are valid.
+   * Browser requests with a valid token are allowed
    */
   @Test
   public void testRequireValidToken() {
-    when(httpServletRequest.getHeader(HttpHeaders.REFERER)).thenReturn("http://localhost:8081");
+    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT)).thenReturn(BROWSER_UA);
     when(httpServletRequest.getCookies())
         .thenReturn(new Cookie[] { new Cookie(AntiCsrfHelper.ANTI_CSRF_TOKEN_NAME, "a-value") });
     underTest.requireValidToken(httpServletRequest, "a-value");
   }
 
   /*
-   * Requests with a session and mismatch tokens are invalid.
+   * Requests with a browser UserAgent and mismatched tokens are invalid.
    */
   @Test(expected = UnauthorizedException.class)
   public void testRequireValidToken_tokenMismatch() {
-    when(httpServletRequest.getHeader(HttpHeaders.REFERER)).thenReturn("http://localhost:8081");
+    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT)).thenReturn(BROWSER_UA);
     when(httpServletRequest.getCookies())
         .thenReturn(new Cookie[] { new Cookie(AntiCsrfHelper.ANTI_CSRF_TOKEN_NAME, "a-value") });
     underTest.requireValidToken(httpServletRequest, "a-different-value");
-  }
-
-  /*
-   * Requests with a session and mismatch tokens are invalid.
-   */
-  @Test(expected = UnauthorizedException.class)
-  public void testRequireValidToken_missingCookie() {
-    when(httpServletRequest.getHeader(HttpHeaders.REFERER)).thenReturn("http://localhost:8081");
-    underTest.requireValidToken(httpServletRequest, "a-different-value");
-  }
-
-  /*
-   * Requests with a session and mismatch tokens are invalid.
-   */
-  @Test(expected = UnauthorizedException.class)
-  public void testRequireValidToken_missingToken() {
-    when(httpServletRequest.getHeader(HttpHeaders.REFERER)).thenReturn("http://localhost:8081");
-    when(httpServletRequest.getCookies())
-        .thenReturn(new Cookie[] { new Cookie(AntiCsrfHelper.ANTI_CSRF_TOKEN_NAME, "a-value") });
-    underTest.requireValidToken(httpServletRequest, null);
   }
 
   /*
@@ -130,7 +105,7 @@ public class AntiCsrfHelperTest
    */
   @Test
   public void testIsAccessAllowed_Disabled() {
-    underTest = new AntiCsrfHelper(false, SESSION_COOKIE);
+    underTest = new AntiCsrfHelper(false);
     assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
     verifyZeroInteractions(httpServletRequest);
   }
@@ -148,23 +123,34 @@ public class AntiCsrfHelperTest
   }
 
   /*
-   * Test the behaviours for session & referrer. Requests without a session or referrer should be from non-browser
+   * Test that the filter blocks requests with 'unsafe' HTTP methods without a token
+   */
+  @Test
+  public void testIsAccessAllowed_UnsafeMethodsBlocked() {
+    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT)).thenReturn(BROWSER_UA);
+    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
+    assertThat(underTest.isAccessAllowed(httpServletRequest), is(false));
+
+    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.PUT);
+    assertThat(underTest.isAccessAllowed(httpServletRequest), is(false));
+
+    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.DELETE);
+    assertThat(underTest.isAccessAllowed(httpServletRequest), is(false));
+  }
+
+  /*
+   * Test the behaviour without a User-Agent or with a non-browser User-Agent.
    * clients.
    */
   @Test
-  public void testIsAccessAllowed_NoSessionAndNoReferrer() {
-    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
-    when(httpServletRequest.getHeader(HttpHeaders.REFERER)).thenReturn("http://localhost:8081");
-    assertThat(underTest.isAccessAllowed(httpServletRequest), is(false));
-
-    reset(httpServletRequest);
-    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
-    when(httpServletRequest.getCookies()).thenReturn(new Cookie[] { new Cookie(SESSION_COOKIE, "avalue") });
-    assertThat(underTest.isAccessAllowed(httpServletRequest), is(false));
-
-    reset(httpServletRequest);
+  public void testIsAccessAllowed_NotBrowser() {
     when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
     assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
+
+    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
+    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT)).thenReturn(CLIENT_UA);
+    assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
+
   }
 
   /*
@@ -173,15 +159,14 @@ public class AntiCsrfHelperTest
   @Test
   public void testIsAccessAllowed_ValidCsrfToken() {
     when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
-    when(httpServletRequest.getHeader(HttpHeaders.REFERER)).thenReturn("http://localhost:8081");
+    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT)).thenReturn(BROWSER_UA);
     when(httpServletRequest.getHeader("NX-ANTI-CSRF-TOKEN")).thenReturn("avalue");
-    when(httpServletRequest.getCookies())
-        .thenReturn(new Cookie[] { new Cookie("NX-ANTI-CSRF-TOKEN", "avalue"), new Cookie(SESSION_COOKIE, "avalue") });
+    when(httpServletRequest.getCookies()).thenReturn(new Cookie[] { new Cookie("NX-ANTI-CSRF-TOKEN", "avalue") });
 
     assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
 
-    // simple validation, we expect the code to access the cookies twice
-    verify(httpServletRequest, times(2)).getCookies();
+    // simple validation, we expect the code to access the cookies once
+    verify(httpServletRequest, times(1)).getCookies();
   }
 
   /*
@@ -190,13 +175,13 @@ public class AntiCsrfHelperTest
   @Test
   public void testIsAccessAllowed_MissingCsrfCookie() {
     when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
-    when(httpServletRequest.getHeader(HttpHeaders.REFERER)).thenReturn("referrer");
+    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT)).thenReturn(BROWSER_UA);
     when(httpServletRequest.getHeader("NX-ANTI-CSRF-TOKEN")).thenReturn("avalue");
 
     assertThat(underTest.isAccessAllowed(httpServletRequest), is(false));
 
-    // simple validation, we expect the code to access the cookies twice
-    verify(httpServletRequest, times(2)).getCookies();
+    // simple validation, we expect the code to access the cookies once
+    verify(httpServletRequest, times(1)).getCookies();
   }
 
   /*
@@ -204,16 +189,15 @@ public class AntiCsrfHelperTest
    */
   @Test
   public void testIsAccessAllowed_MissingCsrfHeader() {
+    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT)).thenReturn(BROWSER_UA);
     when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
-    when(httpServletRequest.getHeader(HttpHeaders.REFERER)).thenReturn("referrer");
-    // NX-ANTI-CSRF-TOKEN not set
-    when(httpServletRequest.getCookies())
-        .thenReturn(new Cookie[] { new Cookie("NX-ANTI-CSRF-TOKEN", "avalue"), new Cookie(SESSION_COOKIE, "avalue") });
+    // NX-ANTI-CSRF-TOKEN header not set
+    when(httpServletRequest.getCookies()).thenReturn(new Cookie[] { new Cookie("NX-ANTI-CSRF-TOKEN", "avalue") });
 
     assertThat(underTest.isAccessAllowed(httpServletRequest), is(false));
 
-    // simple validation, we expect the code to access the cookies twice
-    verify(httpServletRequest, times(2)).getCookies();
+    // simple validation, we expect the code to access the cookies once
+    verify(httpServletRequest, times(1)).getCookies();
   }
 
   /*
@@ -221,16 +205,16 @@ public class AntiCsrfHelperTest
    */
   @Test
   public void testIsAccessAllowed_MismatchedCsrfToken() {
+    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT)).thenReturn(BROWSER_UA);
     when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
     when(httpServletRequest.getHeader(HttpHeaders.REFERER)).thenReturn("referrer");
     when(httpServletRequest.getHeader("NX-ANTI-CSRF-TOKEN")).thenReturn("some-value");
     when(httpServletRequest.getCookies())
-        .thenReturn(new Cookie[] { new Cookie("NX-ANTI-CSRF-TOKEN", "some-other-value"),
-            new Cookie(SESSION_COOKIE, "avalue") });
+        .thenReturn(new Cookie[] { new Cookie("NX-ANTI-CSRF-TOKEN", "some-other-value") });
 
     assertThat(underTest.isAccessAllowed(httpServletRequest), is(false));
 
-    // simple validation, we expect the code to access the cookies twice
-    verify(httpServletRequest, times(2)).getCookies();
+    // simple validation, we expect the code to access the cookies once
+    verify(httpServletRequest, times(1)).getCookies();
   }
 }

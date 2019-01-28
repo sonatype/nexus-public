@@ -43,5 +43,7 @@ Ext.define('NX.coreui.view.repository.recipe.PyPiProxy', {
     ];
 
     me.callParent();
+
+    me.down('#remoteUrl').setHelpText(NX.I18n.get('Repository_Facet_ProxyFacet_Pypi_Remote_HelpText'));
   }
 });

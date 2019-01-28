@@ -26,7 +26,6 @@ import javax.ws.rs.core.MediaType;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.text.Strings2;
 
-import com.google.common.net.HttpHeaders;
 import org.apache.shiro.authz.UnauthorizedException;
 
 /**
@@ -42,19 +41,12 @@ public class AntiCsrfHelper extends ComponentSupport
 
   public static final String ANTI_CSRF_TOKEN_NAME = "NX-ANTI-CSRF-TOKEN";
 
-  private static final String DEFAULT_SESSION_COOKIE_NAME = "NXSESSIONID";
-
   private final boolean enabled;
 
-  private final String sessionCookieName;
-
   @Inject
-  public AntiCsrfHelper(@Named("${nexus.security.anticsrftoken.enabled:-true}") final boolean enabled,
-                        @Named("${nexus.sessionCookieName:-" + DEFAULT_SESSION_COOKIE_NAME
-                            + "}") final String sessionCookieName)
+  public AntiCsrfHelper(@Named("${nexus.security.anticsrftoken.enabled:-true}") final boolean enabled)
   {
     this.enabled = enabled;
-    this.sessionCookieName = sessionCookieName;
   }
 
   /**
@@ -72,7 +64,7 @@ public class AntiCsrfHelper extends ComponentSupport
         || isMultiPartFormDataPost(httpRequest) // token is passed as a form field instead of a custom header
                                                 // and is validated in the directnjine code so we just needed
                                                 // to create the cookie above
-        || isSessionAndRefererAbsent(httpRequest)
+        || isNotBrowserRequest(httpRequest)
         || isAntiCsrfTokenValid(httpRequest, Optional.ofNullable(httpRequest.getHeader(ANTI_CSRF_TOKEN_NAME)));
   }
 
@@ -85,8 +77,7 @@ public class AntiCsrfHelper extends ComponentSupport
   public void requireValidToken(final HttpServletRequest httpRequest, @Nullable final String token) {
     Optional<String> optToken = token == null ? Optional.ofNullable(httpRequest.getHeader(ANTI_CSRF_TOKEN_NAME))
         : Optional.of(token);
-    if (!enabled || isSessionAndRefererAbsent(httpRequest)
-        || isAntiCsrfTokenValid(httpRequest, optToken)) {
+    if (!enabled || isNotBrowserRequest(httpRequest) || isAntiCsrfTokenValid(httpRequest, optToken)) {
       return;
     }
     throw new UnauthorizedException(ERROR_MESSAGE_TOKEN_MISMATCH);
@@ -102,12 +93,10 @@ public class AntiCsrfHelper extends ComponentSupport
         && MediaType.MULTIPART_FORM_DATA_TYPE.isCompatible(MediaType.valueOf(request.getContentType()));
   }
 
-  private boolean isSessionAndRefererAbsent(final HttpServletRequest request) {
-    return !getCookie(request, sessionCookieName).isPresent() && isRefererAbsent(request);
-  }
+  private boolean isNotBrowserRequest(final HttpServletRequest request) {
+    String userAgent = request.getHeader("User-Agent");
 
-  private boolean isRefererAbsent(final HttpServletRequest request) {
-    return Strings2.isBlank(request.getHeader(HttpHeaders.REFERER));
+    return userAgent == null || !userAgent.startsWith("Mozilla/");
   }
 
   private Optional<String> getCookie(final HttpServletRequest request, final String cookieName) {

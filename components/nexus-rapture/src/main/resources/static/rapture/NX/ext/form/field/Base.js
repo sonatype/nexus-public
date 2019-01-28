@@ -71,6 +71,11 @@ Ext.define('NX.ext.form.field.Base', {
         me.hide();
       }
     }
+  },
+
+  setHelpText: function (text) {
+    this.beforeSubTpl = '<span class="nx-boxlabel">' +text + '</span>';
+    this.fireEvent('render');
   }
 
 });

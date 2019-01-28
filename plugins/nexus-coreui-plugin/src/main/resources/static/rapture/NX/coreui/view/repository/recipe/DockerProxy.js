@@ -49,6 +49,7 @@ Ext.define('NX.coreui.view.repository.recipe.DockerProxy', {
 
     me.callParent();
 
+    me.down('#remoteUrl').setHelpText(NX.I18n.get('Repository_Facet_ProxyFacet_Docker_Remote_HelpText'));
     me.down('#proxyFieldSet').add(1, {xtype: 'nx-coreui-repository-docker-proxy-facet'});
   }
 });
