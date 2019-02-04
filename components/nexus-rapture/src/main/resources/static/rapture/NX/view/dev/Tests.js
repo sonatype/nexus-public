@@ -35,7 +35,6 @@ Ext.define('NX.view.dev.Tests', {
     { xtype: 'button', text: 'ext error', action: 'testExtError' },
     { xtype: 'button', text: 'message types', action: 'testMessages' },
     { xtype: 'button', text: 'toggle unsupported browser', action: 'toggleUnsupportedBrowser'},
-    { xtype: 'button', text: 'show license expiry warning', action: 'showLicenseWarning'},
     { xtype: 'button', text: 'show quorum warning', action: 'showQuorumWarning'}
   ]
 });

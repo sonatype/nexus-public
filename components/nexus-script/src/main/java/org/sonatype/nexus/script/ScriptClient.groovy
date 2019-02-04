@@ -80,7 +80,7 @@ interface ScriptClient
    */
   @POST
   @Path('{name}/run')
-  @Consumes([TEXT_PLAIN])
+  @Consumes([TEXT_PLAIN, APPLICATION_JSON])
   ScriptResultXO run(@PathParam('name') String name, String args)
 
 }

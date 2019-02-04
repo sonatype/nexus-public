@@ -7054,23 +7054,9 @@
     text-decoration: underline;
 }
 
-.x-panel-nx-warning#nx-database-freeze-warning .x-panel-header {
-    /**
- * Style for the global "node frozen warning" header
- */
-    background-color: #953ea9;
-}
-
 .x-panel-header-text-container-nx-warning#nx-database-freeze-warning {
     margin-left: 6px;
     font-weight: bold;
-}
-
-.x-panel-nx-warning#nx-file-descriptor-warning .x-panel-header {
-    /**
- * Style for the global "file descriptor warning" header
- */
-    background-color: #953ea9;
 }
 
 .x-panel-header-text-container-nx-warning#nx-file-descriptor-warning {
@@ -15315,4 +15301,14 @@
 
 .x-nbr .x-window-nx-message-success-collapsed .x-window-header {
     border-width: 0 !important;
+}
+
+.x-window-nx-message-success-outer-border-l {
+    border-left-color: #606060 !important;
+    border-left-width: 2px !important;
+}
+
+.x-window-nx-message-success-outer-border-b {
+    border-bottom-color: #606060 !important;
+    border-bottom-width: 2px !important;
 }

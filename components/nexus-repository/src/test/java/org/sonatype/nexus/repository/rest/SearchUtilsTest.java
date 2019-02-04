@@ -23,22 +23,33 @@ import org.sonatype.nexus.repository.search.SearchContribution;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import org.hamcrest.Matcher;
+import org.jboss.resteasy.spi.ResteasyUriInfo;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static java.util.Collections.singletonList;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class SearchUtilsTest
     extends TestSupport
 {
-
   static final String VALID_SHA1_ATTRIBUTE_NAME = "assets.attributes.checksum.sha1";
 
   static final String INVALID_SHA1_ATTRIBUTE_NAME = "asset.attributes.checksum.sha1";
 
   static final String SHA1_ALIAS = "sha1";
+
+  private static final String QUERY_STRING = "continuationToken=1&parameter=test&wait=false";
+
+  private static final String URI = "http://localhost";
+
+  private static final String CONTEXT_PATH = "/";
 
   @Mock
   RepositoryManagerRESTAdapter repositoryManagerRESTAdapter;
@@ -93,5 +104,27 @@ public class SearchUtilsTest
   @Test
   public void testIsFullAssetAttributeName_MappedAlias_ReturnsFalse() {
     assertFalse(underTest.isFullAssetAttributeName(SHA1_ALIAS));
+  }
+
+  @Test
+  public void buildQueryRemoveContinuationTokenByDefault() {
+    ResteasyUriInfo uriInfo = new ResteasyUriInfo(URI, QUERY_STRING, CONTEXT_PATH);
+    String query = underTest.buildQuery(uriInfo).toString();
+
+    assertQueryParameters(query, containsString("wait"));
+  }
+
+  @Test
+  public void buildQueryRemoveSelectedParametersIncludingDefault() {
+    ResteasyUriInfo uriInfo = new ResteasyUriInfo(URI, QUERY_STRING, CONTEXT_PATH);
+    String query = underTest.buildQuery(uriInfo, singletonList("wait")).toString();
+
+    assertQueryParameters(query, not(containsString("wait")));
+  }
+
+  private void assertQueryParameters(final String query, final Matcher<String> parameterMatcher) {
+    assertThat(query, containsString("parameter"));
+    assertThat(query, parameterMatcher);
+    assertThat(query, not(containsString("continuationToken")));
   }
 }

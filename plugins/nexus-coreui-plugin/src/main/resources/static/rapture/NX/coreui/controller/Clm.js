@@ -32,13 +32,16 @@ Ext.define('NX.coreui.controller.Clm', {
   ],
   views: [
     'clm.ClmSettings',
-    'clm.ClmDashboard',
     'clm.ClmSettingsTestResults'
   ],
   refs: [
     {
       ref: 'clmSettingsForm',
       selector: 'nx-coreui-clm-settings'
+    },
+    {
+      ref: 'openDashboardButton',
+      selector: 'nx-coreui-clm-settings button[action=open]'
     }
   ],
 
@@ -48,30 +51,20 @@ Ext.define('NX.coreui.controller.Clm', {
   init: function () {
     var me = this;
 
-    // preload icon to avoid a grey icon when clm dashboard feature will be registered
-    me.getApplication().getIconController().addIcons({
-      'feature-clm-dashboard': {
-        file: 'clm_dashboard.png',
-        variants: ['x16', 'x32']
-      }
-    });
-
     me.getApplication().getFeaturesController().registerFeature({
       mode: 'admin',
-      path: '/IQ/Server',
+      path: '/IQ',
       text: NX.I18n.get('Clm_Text'),
       description: NX.I18n.get('Clm_Description'),
       view: { xtype: 'nx-coreui-clm-settings' },
       iconConfig: {
-        file: 'clm_server.png',
+        file: 'three_tags.png',
         variants: ['x16', 'x32']
       },
       visible: function () {
         return NX.Permissions.check('nexus:settings:read');
       }
     }, me);
-
-    me.onClmStateChanged(NX.State.getValue('clm'), undefined, true);
 
     me.listen({
       controller: {
@@ -86,10 +79,8 @@ Ext.define('NX.coreui.controller.Clm', {
         'nx-coreui-clm-settings nx-settingsform': {
           submitted: me.onSubmitted
         },
-        'nx-coreui-clm-dashboard': {
-          activate: me.openDashboardWindow
-        },
-        'nx-coreui-clm-dashboard button[action=open]': {
+        'nx-coreui-clm-settings button[action=open]': {
+          afterrender: me.onClmStateChanged,
           click: me.openDashboardWindow
         }
       }
@@ -126,43 +117,23 @@ Ext.define('NX.coreui.controller.Clm', {
   },
 
   /**
-   * Update the global UI state to register/unregister this Feature.
-   * @param newState
-   * @param oldState
-   * @param avoidMenuRefresh
+   * Enable/disable the openDashboardButton
    * @private
    */
-  onClmStateChanged: function (newState, oldState, avoidMenuRefresh) {
-    var me = this,
-        features = me.getApplication().getFeaturesController(),
-        shouldRefreshMenu = false;
+  onClmStateChanged: function () {
+    var clmState = NX.State.getValue('clm'),
+        openDashboardButton = this.getOpenDashboardButton(),
+        enableOpenDashboardButton = NX.Permissions.check('nexus:settings:read') && clmState && clmState.enabled && clmState.url;
 
-    if (oldState && oldState.enabled && oldState.url) {
-      features.unregisterFeature({
-        mode: 'admin',
-        path: '/IQ/Dashboard'
-      });
-      shouldRefreshMenu = true;
+    // when Capability is modified but page isn't loaded
+    if (!openDashboardButton) {
+      return;
     }
-    if (newState && newState.enabled && newState.url) {
-      features.registerFeature({
-        mode: 'admin',
-        path: '/IQ/Dashboard',
-        text: NX.I18n.get('Clm_Dashboard_Title'),
-        description: NX.I18n.get('Clm_Dashboard_Description'),
-        view: { xtype: 'nx-coreui-clm-dashboard' },
-        weight: 10,
-        // use preloaded icon to avoid a grey icon
-        iconName: 'feature-clm-dashboard',
-        visible: function () {
-          var clmState = NX.State.getValue('clm');
-          return NX.Permissions.check('nexus:settings:read') && clmState && clmState.enabled && clmState.url;
-        }
-      }, me);
-      shouldRefreshMenu = true;
-    }
-    if (!avoidMenuRefresh && shouldRefreshMenu) {
-      me.getController('Menu').refreshMenu();
+
+    if (enableOpenDashboardButton) {
+      openDashboardButton.enable();
+    } else {
+      openDashboardButton.disableWithTooltip(NX.I18n.get('Clm_Dashboard_Disabled_Tooltip'));
     }
   },
 
@@ -173,14 +144,6 @@ Ext.define('NX.coreui.controller.Clm', {
     var state = NX.State.getValue('clm');
 
     NX.Windows.open(state.url);
-  },
-
-  /**
-   * Load the list of applications available from the configured server and show it in a modal window.
-   * @private
-   */
-  loadApplications: function () {
-    this.getClmClmApplicationsView().create().show();
   }
 
 });

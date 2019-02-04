@@ -92,8 +92,7 @@ class ComponentComponent
     Asset asset,
     String componentName,
     String repositoryName,
-    String privilegedRepositoryName,
-    long lastThirty ->
+    String privilegedRepositoryName ->
       new AssetXO(
           id: EntityHelper.id(asset).value,
           name: asset.name() ?: componentName,
@@ -108,7 +107,6 @@ class ComponentComponent
           blobRef: asset.blobRef() ? asset.blobRef().toString() : '',
           componentId: asset.componentId() ? asset.componentId().value : '',
           attributes: asset.attributes().backing(),
-          downloadCount: lastThirty,
           createdBy: asset.createdBy(),
           createdByIp: asset.createdByIp()
       )
@@ -220,7 +218,7 @@ class ComponentComponent
         toQueryOptions(parameters))
     return new PagedResponse<AssetXO>(
         result.total,
-        result.results.collect(ASSET_CONVERTER.rcurry(null, null, null, 0)) // buckets not needed for asset preview screen
+        result.results.collect(ASSET_CONVERTER.rcurry(null, null, null)) // buckets not needed for asset preview screen
     )
   }
 
@@ -396,8 +394,7 @@ class ComponentComponent
             bucketStore.getById(asset.bucketId()).repositoryName), Collections.singletonList(asset), BreadActions.BROWSE)
 
     if (asset) {
-      def lastThirty = browseService.getLastThirtyDays(asset)
-      return ASSET_CONVERTER.call(asset, null, repositoryName, permittedRepositoryName, lastThirty)
+      return ASSET_CONVERTER.call(asset, null, repositoryName, permittedRepositoryName)
     }
     else {
       return null
@@ -475,9 +472,8 @@ class ComponentComponent
                                        Repository repository) {
     List<AssetXO> assetXOs = new ArrayList<>()
     for (Asset asset : assets) {
-      def lastThirty = browseService.getLastThirtyDays(asset)
       def privilegedRepositoryName = getPrivilegedRepositoryName(repository, asset)
-      assetXOs.add(ASSET_CONVERTER.call(asset, componentName, repository.name, privilegedRepositoryName, lastThirty))
+      assetXOs.add(ASSET_CONVERTER.call(asset, componentName, repository.name, privilegedRepositoryName))
     }
     return assetXOs
   }

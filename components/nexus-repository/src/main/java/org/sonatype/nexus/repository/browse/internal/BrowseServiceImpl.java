@@ -34,7 +34,6 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.orient.entity.AttachedEntityHelper;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
-import org.sonatype.nexus.repository.assetdownloadcount.AssetDownloadCountStore;
 import org.sonatype.nexus.repository.browse.BrowseResult;
 import org.sonatype.nexus.repository.browse.BrowseService;
 import org.sonatype.nexus.repository.browse.QueryOptions;
@@ -87,8 +86,6 @@ public class BrowseServiceImpl
 
   private final ComponentEntityAdapter componentEntityAdapter;
 
-  private final AssetDownloadCountStore assetDownloadCountStore;
-
   private final AssetEntityAdapter assetEntityAdapter;
 
   private final VariableResolverAdapterManager variableResolverAdapterManager;
@@ -108,7 +105,6 @@ public class BrowseServiceImpl
                            final ComponentEntityAdapter componentEntityAdapter,
                            final VariableResolverAdapterManager variableResolverAdapterManager,
                            final ContentPermissionChecker contentPermissionChecker,
-                           final AssetDownloadCountStore assetDownloadCountStore,
                            final AssetEntityAdapter assetEntityAdapter,
                            final BrowseAssetsSqlBuilder browseAssetsSqlBuilder,
                            final BrowseComponentsSqlBuilder browseComponentsSqlBuilder,
@@ -119,7 +115,6 @@ public class BrowseServiceImpl
     this.componentEntityAdapter = checkNotNull(componentEntityAdapter);
     this.variableResolverAdapterManager = checkNotNull(variableResolverAdapterManager);
     this.contentPermissionChecker = checkNotNull(contentPermissionChecker);
-    this.assetDownloadCountStore = checkNotNull(assetDownloadCountStore);
     this.assetEntityAdapter = checkNotNull(assetEntityAdapter);
     this.browseAssetsSqlBuilder = checkNotNull(browseAssetsSqlBuilder);
     this.browseComponentsSqlBuilder = checkNotNull(browseComponentsSqlBuilder);
@@ -385,16 +380,5 @@ public class BrowseServiceImpl
     else {
       return Collections.singletonList(repository);
     }
-  }
-
-  @Override
-  public long getLastThirtyDays(Asset asset) {
-    checkNotNull(asset);
-    String repositoryName = bucketStore.getById(asset.bucketId()).getRepositoryName();
-
-    if (assetDownloadCountStore.isEnabled()) {
-      return assetDownloadCountStore.getLastThirtyDays(repositoryName, asset.name());
-    }
-    return 0;
   }
 }

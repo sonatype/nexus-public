@@ -17,7 +17,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
-import org.sonatype.nexus.blobstore.PeriodicJobService.PeriodicJob;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
@@ -25,6 +24,8 @@ import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.property.ImplicitSourcePropertiesFile;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.scheduling.PeriodicJobService;
+import org.sonatype.nexus.scheduling.PeriodicJobService.PeriodicJob;
 
 import com.google.common.annotations.VisibleForTesting;
 

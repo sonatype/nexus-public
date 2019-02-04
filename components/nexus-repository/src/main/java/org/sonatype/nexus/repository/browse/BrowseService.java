@@ -85,9 +85,4 @@ public interface BrowseService
    * Returns a map of bucket IDs to repository names for any buckets that could be referenced by the repository.
    */
   Map<EntityId, String> getRepositoryBucketNames(final Repository repository);
-
-  /**
-   * @return number of downloads in the last 30-days, or zero (0) if the information is not available
-   */
-  long getLastThirtyDays(Asset asset);
 }

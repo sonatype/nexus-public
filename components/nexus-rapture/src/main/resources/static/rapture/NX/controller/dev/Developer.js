@@ -80,9 +80,6 @@ Ext.define('NX.controller.dev.Developer', {
         'nx-dev-tests button[action=toggleUnsupportedBrowser]': {
           click: me.toggleUnsupportedBrowser
         },
-        'nx-dev-tests button[action=showLicenseWarning]': {
-          click: me.showLicenseWarning
-        },
         'nx-dev-tests button[action=showQuorumWarning]': {
           click: me.showQuorumWarning
          },
@@ -203,17 +200,6 @@ Ext.define('NX.controller.dev.Developer', {
    */
   toggleUnsupportedBrowser: function() {
     NX.State.setBrowserSupported(!NX.State.isBrowserSupported());
-  },
-
-  /**
-   * Set state such that a License warning element is shown in the UI.
-   */
-  showLicenseWarning : function() {
-    var me = this,
-        licenseWarnings = me.getController('NX.proui.controller.LicenseWarnings');
-
-    licenseWarnings.daysToWarn = 10000;
-    licenseWarnings.updateLicenseExpiryWarning();
   },
 
   /**

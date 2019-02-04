@@ -303,7 +303,6 @@ public class ComponentComponentTest
     when(entityMetadata.getId()).thenReturn(new DetachedEntityId("someid"));
     when(contentPermissionChecker.isPermitted(anyString(),any(), eq(BreadActions.BROWSE), any())).thenReturn(true);
 
-    when(browseService.getLastThirtyDays(asset)).thenReturn(10L);
     when(browseService.getAssetById(new DetachedEntityId("someid"), repository)).thenReturn(asset);
     when(bucketStore.getById(bucketId)).thenReturn(bucket);
     when(bucket.getRepositoryName()).thenReturn("testRepositoryName");
@@ -311,7 +310,6 @@ public class ComponentComponentTest
 
     assertThat(assetXO, is(notNullValue()));
     assertThat(assetXO.getId(), is("someid"));
-    assertThat(assetXO.getDownloadCount(), is(10L));
     assertThat(assetXO.getRepositoryName(), is("testRepositoryName"));
     assertThat(assetXO.getContainingRepositoryName(), is("testRepositoryName"));
   }
@@ -383,7 +381,7 @@ public class ComponentComponentTest
     return filter;
   }
 
-  private Component makeTestComponent(String format) {
+  private Component makeTestComponent(final String format) {
     Component component = new DefaultComponent();
     component.setEntityMetadata(new DetachedEntityMetadata(
         new DetachedEntityId("testComponentId"),
@@ -395,7 +393,7 @@ public class ComponentComponentTest
     return component;
   }
 
-  private void deleteComponent(Component component, String repositoryName) {
+  private void deleteComponent(final Component component, final String repositoryName) {
     ComponentXO componentXO = ComponentComponent.COMPONENT_CONVERTER(component, repositoryName);
     try {
       underTest.deleteComponent(objectMapper.writeValueAsString(componentXO));

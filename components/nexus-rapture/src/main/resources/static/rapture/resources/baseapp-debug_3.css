@@ -1,14 +1,4 @@
 
-.x-window-nx-message-success-outer-border-l {
-    border-left-color: #606060 !important;
-    border-left-width: 2px !important;
-}
-
-.x-window-nx-message-success-outer-border-b {
-    border-bottom-color: #606060 !important;
-    border-bottom-width: 2px !important;
-}
-
 .x-window-nx-message-success-outer-border-bl {
     border-bottom-color: #606060 !important;
     border-bottom-width: 2px !important;
@@ -6296,6 +6286,14 @@ fieldset.nx-form-section.nx-no-title {
     height: 20px;
 }
 
+.nx-header-panel .nx-health-button-red span span {
+    color: #c70000;
+}
+
+.nx-header-panel .nx-health-button-green span span {
+    color: #0b9743;
+}
+
 .x-btn-nx-header-medium {
     -webkit-border-radius: 3px;
     -moz-border-radius: 3px;
@@ -7189,6 +7187,11 @@ fieldset.nx-form-section.nx-no-title {
     font-size: 1em;
 }
 
+.x-panel-nx-feature-menu .x-panel-body-nx-feature-menu .x-tree-icon.nx-icon-feature-browse-welcome-x16 {
+    filter: grayscale(100%);
+    -webkit-filter: grayscale(100%);
+}
+
 .x-panel-nx-feature-menu .x-panel-body-nx-feature-menu .x-tree-node-text {
     padding-left: 0.5em;
 }
@@ -7202,6 +7205,11 @@ fieldset.nx-form-section.nx-no-title {
     color: #fff;
     filter: saturate(1) grayscale(0);
     -webkit-filter: saturate(1) grayscale(0);
+}
+
+.x-panel-nx-feature-menu .x-panel-body-nx-feature-menu .x-grid-item-selected .x-tree-icon.nx-icon-feature-browse-welcome-x16 {
+    filter: grayscale(100%);
+    -webkit-filter: grayscale(100%);
 }
 
 .x-panel-nx-feature-menu .x-panel-body-nx-feature-menu .x-grid-item-selected .x-tree-expander {

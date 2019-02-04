@@ -23,7 +23,8 @@ Ext.define('NX.view.Main', {
   requires: [
     'NX.I18n',
     'NX.Icons',
-    'NX.view.header.QuickSearch'
+    'NX.view.header.QuickSearch',
+    'Ext.button.Button'
   ],
 
   layout: 'border',
@@ -42,30 +43,6 @@ Ext.define('NX.view.Main', {
           align: 'stretch'
         },
         items: [
-          {
-            xtype: 'panel',
-            ui: 'nx-warning',
-            id: 'nx-database-freeze-warning',
-            iconCls: NX.Icons.cls('drilldown-warning', 'x16'),
-            hidden: true,
-            ariaRole: 'alert'
-          },
-          {
-            xtype: 'panel',
-            ui: 'nx-warning',
-            id: 'nx-license-warning',
-            iconCls: NX.Icons.cls('drilldown-warning', 'x16'),
-            hidden: true,
-            ariaRole: 'alert'
-          },
-          {
-            xtype: 'panel',
-            ui: 'nx-warning',
-            id: 'nx-file-descriptor-warning',
-            iconCls: NX.Icons.cls('drilldown-warning', 'x16'),
-            hidden: true,
-            ariaRole: 'alert'
-          },
           {
             xtype: 'nx-header-panel'
           }
@@ -136,6 +113,21 @@ Ext.define('NX.view.Main', {
       ' ',
       {xtype: 'nx-header-quicksearch', hidden: true},
       '->',
+      {
+        id: 'nx-health-check-warnings',
+        xtype: 'button',
+        name: 'metric-health',
+        tooltip: NX.I18n.get('Header_Health_Tooltip'),
+        glyph: 'xf058@FontAwesome', /* fa-check-circle */
+        autoHide: true,
+        hidden: true,
+        collapseMenu: false,
+        ui: 'nx-mode',
+        cls: ['nx-health-button-green', 'nx-modebutton'],
+        onClick: function() {
+          NX.Bookmarks.navigateTo(NX.Bookmarks.fromToken('admin/support/status'));
+        }
+      },
       {xtype: 'nx-header-refresh', ui: 'nx-header'},
       {xtype: 'nx-header-help', ui: 'nx-header'},
       {

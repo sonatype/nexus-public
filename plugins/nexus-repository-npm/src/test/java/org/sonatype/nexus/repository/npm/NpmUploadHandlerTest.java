@@ -191,40 +191,39 @@ public class NpmUploadHandlerTest
     }
   }
 
-  @Test
-  public void testHandle_pathWithDot() throws IOException, URISyntaxException {
-    packageJson = new File(NpmUploadHandlerTest.class.getResource("internal/package-path-with-dot.json").toURI());
-
-    ComponentUpload component = new ComponentUpload();
-    AssetUpload assetUpload = new AssetUpload();
-    assetUpload.setPayload(payload);
-    component.getAssetUploads().add(assetUpload);
-
-    try {
-      underTest.handle(repository, component);
-      fail("Expected validation exception");
-    }
-    catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), is("Name starts with '.' or '_': ./bar"));
-    }
+  @Test(expected = IllegalArgumentException.class)
+  public void testHandlePathWithDotInScope() throws IOException, URISyntaxException {
+    handlePath("package-path-with-dot-in-scope.json");
   }
 
-  @Test
-  public void testHandle_pathWithDots() throws IOException, URISyntaxException {
-    packageJson = new File(NpmUploadHandlerTest.class.getResource("internal/package-path-with-dots.json").toURI());
+  @Test(expected = IllegalArgumentException.class)
+  public void testHandlePathWithDotInName() throws IOException, URISyntaxException {
+    handlePath("package-path-with-dot-in-name.json");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testHandlePathWithUnderscoreInScope() throws IOException, URISyntaxException {
+    handlePath("package-path-with-underscore-in-scope.json");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testHandlePathWithUnderscoreInName() throws IOException, URISyntaxException {
+    handlePath("package-path-with-underscore-in-name.json");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testHandlePathWithDots() throws IOException, URISyntaxException {
+    handlePath("package-path-with-dots.json");
+  }
+
+  private void handlePath(String jsonFile) throws IOException, URISyntaxException {
+    packageJson = new File(NpmUploadHandlerTest.class.getResource("internal/" + jsonFile).toURI());
 
     ComponentUpload component = new ComponentUpload();
     AssetUpload assetUpload = new AssetUpload();
     assetUpload.setPayload(payload);
     component.getAssetUploads().add(assetUpload);
-
-    try {
-      underTest.handle(repository, component);
-      fail("Expected validation exception");
-    }
-    catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), is("Non URL-safe name: foo/../bar"));
-    }
+    underTest.handle(repository, component);
   }
 
   private Set<UploadDefinitionExtension> getDefinitionExtensions() {

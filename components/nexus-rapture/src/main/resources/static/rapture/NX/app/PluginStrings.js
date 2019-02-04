@@ -49,6 +49,7 @@ Ext.define('NX.app.PluginStrings', {
     Header_BrowseMode_Tooltip: 'Browse server contents',
     Header_AdminMode_Title: 'Administration',
     Header_AdminMode_Tooltip: 'Server administration and configuration',
+    Header_Health_Tooltip: 'System Status',
     Header_QuickSearch_Empty: 'Search components',
     Header_QuickSearch_Tooltip: 'Quick component keyword search',
     Header_Refresh_Tooltip: 'Refresh current view and data',

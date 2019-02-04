@@ -12,7 +12,9 @@
  */
 package org.sonatype.nexus.repository.rest;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -34,6 +36,7 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.StreamSupport.stream;
@@ -113,13 +116,20 @@ public class SearchUtils
    * @param uriInfo {@link UriInfo} to extract query parameters from
    */
   public QueryBuilder buildQuery(final UriInfo uriInfo) {
-    Collection<SearchFilter> searchFilters = convertParameters(uriInfo);
+    Collection<SearchFilter> searchFilters = convertParameters(uriInfo, singletonList(CONTINUATION_TOKEN));
     return buildQuery(searchFilters);
   }
 
-  private Collection<SearchFilter> convertParameters(final UriInfo uriInfo) {
+  public QueryBuilder buildQuery(final UriInfo uriInfo, final List<String> parameters) {
+    ArrayList<String> filterParameters = new ArrayList<>();
+    filterParameters.add(CONTINUATION_TOKEN);
+    filterParameters.addAll(parameters);
+    return buildQuery(convertParameters(uriInfo, filterParameters));
+  }
+
+  private Collection<SearchFilter> convertParameters(final UriInfo uriInfo, final List<String> keys) {
     return uriInfo.getQueryParameters().entrySet().stream()
-        .filter(entry -> !entry.getKey().equals(CONTINUATION_TOKEN))
+        .filter(entry -> !keys.contains(entry.getKey()))
         .map(entry -> entry.getValue().stream().map(value -> {
           String key = searchParams.getOrDefault(entry.getKey(), entry.getKey());
           return new SearchFilter(key, value);

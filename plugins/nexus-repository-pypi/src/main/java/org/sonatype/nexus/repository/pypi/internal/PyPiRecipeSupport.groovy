@@ -35,6 +35,7 @@ import org.sonatype.nexus.repository.view.handlers.HandlerContributor
 import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler
 import org.sonatype.nexus.repository.view.handlers.TimingHandler
 import org.sonatype.nexus.repository.view.matchers.ActionMatcher
+import org.sonatype.nexus.repository.view.matchers.RegexMatcher
 import org.sonatype.nexus.repository.view.matchers.logic.LogicMatchers
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher
 
@@ -114,7 +115,10 @@ abstract class PyPiRecipeSupport
     new Builder().matcher(
         LogicMatchers.and(
             new ActionMatcher(GET, HEAD),
-            new TokenMatcher('/simple/{name}/')
+            LogicMatchers.or(
+                new TokenMatcher('/simple/{name}'),
+                new TokenMatcher('/simple/{name}/')
+            )
         ))
   }
 
@@ -131,11 +135,14 @@ abstract class PyPiRecipeSupport
 
   /**
    * Matcher for packages mapping.
+   * The regex has been added to prevent matching on paths starting with /simple/
+   * although it currently doesnt matter, should the ordering of the routes change, this will protect the routing.
    */
   static Builder packagesMatcher() {
     new Builder().matcher(
         LogicMatchers.and(
             new ActionMatcher(GET, HEAD),
+            new RegexMatcher('^(?!/simple/).*'),
             new TokenMatcher('/{path:.+}')
         ))
   }

@@ -204,12 +204,6 @@ Ext.define('NX.coreui.app.PluginConfig', {
       }
     },
     {
-      id: 'NX.coreui.controller.DatabaseWarnings',
-      active: function () {
-        return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
-      }
-    },
-    {
       id: 'NX.coreui.controller.RealmSettings',
       active: function () {
         return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
@@ -349,7 +343,7 @@ Ext.define('NX.coreui.app.PluginConfig', {
       }
     },
     {
-      id: 'NX.coreui.controller.FileDescriptorWarnings',
+      id: 'NX.coreui.controller.HealthCheckWarnings',
       active: function () {
         return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
       }

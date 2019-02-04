@@ -1,0 +1,56 @@
+{
+  "name": ".bar",
+  "version": "1.5.3",
+  "description": "I pity the foo",
+  "keywords": [
+    "Rocky"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/foo/bar.git"
+  },
+  "engines": {
+    "node": ">= 6.9.0",
+    "npm": ">= 3.0.0"
+  },
+  "author": "Foo Bar Authors",
+  "license": "MIT",
+  "bin": {
+    "myapp" : "./cli.js"
+  },
+  "bugs": {
+    "url": "https://github.com/foo/bar/issues"
+  },
+  "directories": {
+    "bin": "./bin"
+  },
+  "homepage": "https://github.com/foo/bar",
+  "contributors": [{
+    "email": "foo@example.com",
+    "name": "Foo Bar Contributors"
+  }],
+  "main": "index.js",
+  "maintainers": [{
+    "email": "foo@example.com",
+    "name": "Foo Bar Maintainers"
+  }],
+  "readme": "First 64k...",
+  "readmeFilename": "package/README.md",
+  "deprecated": "Deprecated",
+  "dependencies": {
+    "dep": "1.0"
+  },
+  "optionalDependencies": {
+    "opt": "2.0"
+  },
+  "devDependencies": {
+    "dev": "3.0"
+  },
+  "bundleDependencies": {
+    "bundle": "4.0"
+  },
+  "peerDependencies": {
+    "peer": "5.0"
+  },
+  "_hasShrinkwrap" : false
+}

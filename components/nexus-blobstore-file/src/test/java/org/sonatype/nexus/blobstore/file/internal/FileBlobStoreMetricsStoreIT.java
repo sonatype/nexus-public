@@ -19,7 +19,7 @@ import java.util.stream.Stream;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
-import org.sonatype.nexus.blobstore.internal.PeriodicJobServiceImpl;
+import org.sonatype.nexus.scheduling.internal.PeriodicJobServiceImpl;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.property.PropertiesFile;

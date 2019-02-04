@@ -51,8 +51,6 @@ class AssetXO {
 
   Date lastDownloaded
 
-  long downloadCount
-
   @NotEmpty
   String blobRef
 

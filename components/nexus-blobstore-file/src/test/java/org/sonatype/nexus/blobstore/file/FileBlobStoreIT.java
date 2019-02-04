@@ -35,7 +35,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.blobstore.file.internal.FileBlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.file.internal.SimpleFileOperations;
-import org.sonatype.nexus.blobstore.internal.PeriodicJobServiceImpl;
+import org.sonatype.nexus.scheduling.internal.PeriodicJobServiceImpl;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.io.DirectoryHelper;

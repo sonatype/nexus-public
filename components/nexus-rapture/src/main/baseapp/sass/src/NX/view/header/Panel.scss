@@ -29,6 +29,14 @@
     line-height: $font-size-h1;
     height: $font-size-h1;
   }
+
+  .nx-health-button-red span span {
+    color: $color-free-speech-red;
+  }
+
+  .nx-health-button-green span span {
+    color: $color-pigment-green;
+  }
 }
 
 @include extjs-button-medium-ui(

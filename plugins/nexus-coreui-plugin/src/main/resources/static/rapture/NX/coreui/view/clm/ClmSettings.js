@@ -22,7 +22,8 @@ Ext.define('NX.coreui.view.clm.ClmSettings', {
   alias: 'widget.nx-coreui-clm-settings',
   requires: [
     'NX.Conditions',
-    'NX.I18n'
+    'NX.I18n',
+    'NX.ext.button.Button'
   ],
 
   /**
@@ -126,6 +127,19 @@ Ext.define('NX.coreui.view.clm.ClmSettings', {
           helpText: NX.I18n.get('ClmSettings_Properties_HelpText'),
           emptyText: NX.I18n.get('ClmSettings_Properties_EmptyText'),
           allowBlank: true
+        }
+      ]
+    };
+
+    me.dockedItems = {
+      xtype: 'nx-actions',
+      dock: 'top',
+      items: [
+        {
+          xtype: 'nx-button',
+          action: 'open',
+          text: NX.I18n.get('Clm_Dashboard_Description'),
+          glyph: 'xf08e@FontAwesome' /* fa-external-link */
         }
       ]
     };

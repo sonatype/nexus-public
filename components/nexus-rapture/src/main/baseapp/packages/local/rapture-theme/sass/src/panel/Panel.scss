@@ -52,23 +52,9 @@
   text-decoration: underline;
 }
 
-/**
- * Style for the global "node frozen warning" header
- */
-#nx-database-freeze-warning.x-panel-nx-warning .x-panel-header{
-  background-color: $color-alert-purple;
-}
-
 #nx-database-freeze-warning.x-panel-header-text-container-nx-warning {
   margin-left: 6px;
   font-weight: bold;
-}
-
-/**
- * Style for the global "file descriptor warning" header
- */
-#nx-file-descriptor-warning.x-panel-nx-warning .x-panel-header {
-  background-color: $color-alert-purple;
 }
 
 #nx-file-descriptor-warning.x-panel-header-text-container-nx-warning {

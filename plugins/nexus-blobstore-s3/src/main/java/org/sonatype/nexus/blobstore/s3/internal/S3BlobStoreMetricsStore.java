@@ -21,9 +21,9 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.blobstore.AccumulatingBlobStoreMetrics;
 import org.sonatype.nexus.blobstore.BlobStoreMetricsStoreSupport;
-import org.sonatype.nexus.blobstore.PeriodicJobService;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.scheduling.PeriodicJobService;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.google.common.collect.ImmutableMap;

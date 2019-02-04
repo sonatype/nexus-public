@@ -161,4 +161,5 @@ public interface SearchService
   @VisibleForTesting
   boolean isCalmPeriod();
 
+  void waitForCalm();
 }

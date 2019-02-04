@@ -709,7 +709,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     LdapServersConnectionFieldSet_Host_EmptyText: 'Hostname',
     LdapServersConnectionFieldSet_Port_EmptyText: 'Port',
     LdapServersConnectionFieldSet_Base_FieldLabel: 'Search base',
-    LdapServersConnectionFieldSet_Base_HelpText: 'LDAP location to be added to the connection URL (e.g. "dc=sonatype,dc=com")',
+    LdapServersConnectionFieldSet_Base_HelpText: 'LDAP location to be added to the connection URL (e.g. "dc=example,dc=com")',
     LdapServersConnectionFieldSet_AuthMethod_FieldLabel: 'Authentication method',
     LdapServersConnectionFieldSet_AuthMethod_EmptyText: 'Select an authentication method',
     LdapServersConnectionFieldSet_AuthMethod_SimpleItem: 'Simple Authentication',
@@ -738,7 +738,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Ldap_LdapServerUserAndGroupFieldSet_ObjectClass_FieldLabel: 'Object class',
     Ldap_LdapServerUserAndGroupFieldSet_ObjectClass_HelpText: 'LDAP class for user objects (e.g. inetOrgPerson)',
     Ldap_LdapServerUserAndGroupFieldSet_UserFilter_FieldLabel: 'User filter',
-    Ldap_LdapServerUserAndGroupFieldSet_UserFilter_HelpText: 'LDAP search filter to limit user search (e.g. "attribute=foo" or "(l(mail=*@domain.com)(uid=dom*))")',
+    Ldap_LdapServerUserAndGroupFieldSet_UserFilter_HelpText: 'LDAP search filter to limit user search (e.g. "attribute=foo" or "(|(mail=*@example.com)(uid=dom*))")',
     Ldap_LdapServerUserAndGroupFieldSet_UserID_FieldLabel: 'User ID attribute',
     Ldap_LdapServerUserAndGroupFieldSet_RealName_FieldLabel: 'Real name attribute',
     Ldap_LdapServerUserAndGroupFieldSet_Email_FieldLabel: 'Email attribute',
@@ -759,7 +759,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Ldap_LdapServerUserAndGroupFieldSet_GroupMember_FieldLabel: 'Group member attribute',
     Ldap_LdapServerUserAndGroupFieldSet_GroupMember_HelpText: 'LDAP attribute containing the usernames for the group.',
     Ldap_LdapServerUserAndGroupFieldSet_GroupMemberFormat_FieldLabel: 'Group member format',
-    Ldap_LdapServerUserAndGroupFieldSet_GroupMemberFormat_HelpText: 'The format of user ID stored in the group member attribute (e.g. "uid=${username},ou=people,o=sonatype")',
+    Ldap_LdapServerUserAndGroupFieldSet_GroupMemberFormat_HelpText: 'The format of user ID stored in the group member attribute (e.g. "uid=${username},ou=people,dc=example,dc=com")',
     Ldap_LdapServerUserAndGroupFieldSet_GroupMemberOf_FieldLabel: 'Group member of attribute',
     Ldap_LdapServerUserAndGroupFieldSet_GroupMemberOf_HelpText: 'Set this to the attribute used to store the attribute which holds groups DN in the user object',
     Ldap_LdapServerUserAndGroupForm_VerifyGroupMapping_Button: 'Verify user mapping',
@@ -1306,11 +1306,11 @@ Ext.define('NX.coreui.app.PluginStrings', {
 
     //Nexus Lifecycle -> Server
     Clm_ClmSettings_Permission_Error: 'You do not have permission to configure IQ Server',
-    Clm_Text: 'Server',
+    Clm_Text: 'IQ Server',
     Clm_Description: 'Manage IQ Server configuration',
     Clm_Connection_Success: 'Connection to IQ Server verified: {0}',
-    Clm_Dashboard_Title: 'Dashboard',
     Clm_Dashboard_Description: 'Open IQ Server Dashboard',
+    Clm_Dashboard_Disabled_Tooltip: 'IQ Server must be enabled first',
     ClmSettings_Html: '<p><a href="http://www.sonatype.com/nexus/product-overview/nexus-lifecycle" target="_blank">IQ Server</a> ' +
     'can evaluate application and organization policies.</p>' +
     '<p>To enable this feature configure the IQ Server URL, username and password.</p>',
@@ -1582,10 +1582,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
       Initiator: 'Initiator',
       Attribute: 'Attribute: {0}',
       Clear_Button: 'Clear'
-    },
-
-    'NX.coreui.controller.FileDescriptorWarnings': {
-      File_Descriptor_Warning: '<a href="http://links.sonatype.com/products/nexus/system-reqs#filehandles" target="_blank">System Requirement: max file descriptors [{0}] likely too low, increase to at least [{1}].</a>'
     }
   }
 }, function(self) {

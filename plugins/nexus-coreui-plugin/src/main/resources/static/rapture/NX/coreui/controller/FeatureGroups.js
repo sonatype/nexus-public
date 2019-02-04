@@ -58,6 +58,7 @@ Ext.define('NX.coreui.controller.FeatureGroups', {
         text: NX.I18n.get('FeatureGroups_Support_Text'),
         description: NX.I18n.get('FeatureGroups_Support_Description'),
         group: true,
+        expanded: false,
         iconConfig: {
           file: 'support.png',
           variants: ['x16', 'x32']
@@ -69,6 +70,7 @@ Ext.define('NX.coreui.controller.FeatureGroups', {
         text: NX.I18n.get('FeatureGroups_System_Text'),
         description: NX.I18n.get('FeatureGroups_System_Description'),
         group: true,
+        expanded: false,
         weight: 1000,
         iconConfig: {
           file: 'cog.png',

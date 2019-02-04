@@ -54,24 +54,22 @@ public final class NpmPackageId
   private final String id;
 
   public NpmPackageId(@Nullable final String scope, final String name) {
-    if (scope != null) {
-      checkArgument(scope.length() > 0, "Scope cannot be empty string");
-      checkArgument(!scope.startsWith(".") && !scope.startsWith("_"), "Scope starts with '.' or '_': %s", scope);
-      checkArgument(scope.equals(escaper.escape(scope)), "Non URL-safe scope: %s", scope);
-    }
-    checkArgument(name.length() > 0, "Name cannot be empty string");
-    checkArgument(!name.startsWith(".") && !name.startsWith("_"), "Name starts with '.' or '_': %s", name);
-    checkArgument(name.equals(escaper.escape(name)), "Non URL-safe name: %s", name);
 
-    this.scope = scope;
-    this.name = name;
-    if (scope != null) {
-      this.id = "@" + scope + "/" + name;
-    }
-    else {
+    checkArgument(name.length() > 0, "Name cannot be empty string");
+    checkArgument(name.equals(escaper.escape(name)), "Non URL-safe name: %s", name);
+    if (scope == null) {
+      checkArgument(!name.startsWith(".") && !name.startsWith("_"), "Name starts with '.' or '_': %s", name);
       this.id = name;
     }
-    checkArgument(id.length() < 214, "Must be shorter than 214 characters: %s", id);
+    else {
+      checkArgument(scope.length() > 0, "Scope cannot be empty string");
+      checkArgument(scope.equals(escaper.escape(scope)), "Non URL-safe scope: %s", scope);
+      checkArgument(!scope.startsWith(".") && !scope.startsWith("_"), "Scope starts with '.' or '_': %s", scope);
+      this.id = "@" + scope + "/" + name;
+    }
+    checkArgument(this.id.length() < 214, "Must be shorter than 214 characters: %s", id);
+    this.scope = scope;
+    this.name = name;
   }
 
   /**

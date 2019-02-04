@@ -131,9 +131,10 @@ Ext.define('NX.coreui.mixin.ComponentUtils', {
     }
   },
 
-  updateDeleteAssetButton: function(currentRepository, assetModel) {
+  updateDeleteAssetButton: function(currentRepository, assetModel, isFolder) {
     var me = this,
-        deleteAssetButton = me.getDeleteAssetButton();
+        deleteAssetButton = me.getDeleteAssetButton(),
+        deleteAssetFolderButton = me.getDeleteAssetFolderButton && me.getDeleteAssetFolderButton();
 
     if (assetModel) {
       me.updateDeleteButton(deleteAssetButton, currentRepository, function() {
@@ -152,6 +153,17 @@ Ext.define('NX.coreui.mixin.ComponentUtils', {
     }
     else {
       deleteAssetButton.disable();
+    }
+
+    if (deleteAssetFolderButton) {
+      if (isFolder) {
+        deleteAssetFolderButton.show();
+        me.updateDeleteFolderButton(deleteAssetFolderButton, currentRepository, assetModel.get('name'));
+      }
+      else {
+        deleteAssetFolderButton.disable();
+        deleteAssetFolderButton.hide();
+      }
     }
   },
 
@@ -173,9 +185,8 @@ Ext.define('NX.coreui.mixin.ComponentUtils', {
     }
   },
 
-  updateDeleteFolderButton: function (currentRepository, path) {
-    var me = this,
-        deleteButton = me.getDeleteFolderButton();
+  updateDeleteFolderButton: function (deleteButton, currentRepository, path) {
+    var me = this;
 
     if (path) {
       me.updateDeleteButton(deleteButton, currentRepository, function() {

@@ -12,28 +12,35 @@
  */
 package org.sonatype.nexus.repository.npm.internal;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
+
+import java.util.Arrays;
+import java.util.List;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.sonatype.goodies.testsupport.TestSupport;
 
 import com.google.common.base.Strings;
-import org.junit.Test;
-import org.sonatype.nexus.repository.npm.internal.NpmPackageId;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 
 /**
  * Test for {@link NpmPackageId}.
  */
+@RunWith(JUnitParamsRunner.class)
 public class NpmPackageIdTest
     extends TestSupport
 {
   @Test
-  public void parseGood() {
-    final String idStr = "@scope/name";
+  @Parameters
+  public void parseGood(final String idStr, final String expectedScope, final String expectedName) {
     NpmPackageId id = NpmPackageId.parse(idStr);
     assertThat(id.id(), equalTo(idStr));
-    assertThat(id.scope(), equalTo("scope"));
-    assertThat(id.name(), equalTo("name"));
+    assertThat(id.scope(), equalTo(expectedScope));
+    assertThat(id.name(), equalTo(expectedName));
 
     NpmPackageId id2 = NpmPackageId.parse(idStr);
 
@@ -42,24 +49,48 @@ public class NpmPackageIdTest
     assertThat(id2.compareTo(id), equalTo(0));
   }
 
+  @SuppressWarnings("unused")
+  private List<List<String>> parametersForParseGood() {
+    return Arrays.asList(
+        Arrays.asList("@scope/name", "scope", "name"),
+        Arrays.asList("@scope/.name", "scope", ".name"),
+        Arrays.asList("@scope/_name", "scope", "_name"),
+        Arrays.asList("@sc.ope/name", "sc.ope", "name"),
+        Arrays.asList("@sc_ope/name", "sc_ope", "name"),
+        Arrays.asList("@scope/na.me", "scope", "na.me"),
+        Arrays.asList("@scope/na_me", "scope", "na_me"),
+        Arrays.asList("@sc.ope/na.me", "sc.ope", "na.me"),
+        Arrays.asList("@sc_ope/na_me", "sc_ope", "na_me"),
+        Arrays.asList("@sc.ope_/na.me_", "sc.ope_", "na.me_"),
+        Arrays.asList("@sc_ope./na_me.", "sc_ope.", "na_me.")
+      );
+  }
+  
+  
   @Test(expected = IllegalArgumentException.class)
-  public void malformedNonUrlSafeCharacters1() {
-    NpmPackageId.parse("@sco/pe/name");
+  @Parameters
+  public void parseBad(String id) {
+    NpmPackageId.parse(id);
   }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void malformedNonUrlSafeCharacters2() {
-    NpmPackageId.parse("@scópe/name");
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void malformedNameStartsWithDot() {
-    NpmPackageId.parse("@scope/.name");
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void malformedScopeStartsWithDot() {
-    NpmPackageId.parse("@.scope/name");
+  @SuppressWarnings("unused")
+  private List<String> parametersForParseBad() {
+    return Arrays.asList(
+        "",
+        "@/",
+        "@./",
+        "@.scope/",
+        "@_scope/",
+        "scope/",
+        "@scope/",
+        "@/name",
+        "/name",
+        "@/name",
+        "@sco/pe/name",
+        "@scópe/name",
+        "@.scope/name",
+        "@_scope/name"
+      );
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -73,13 +104,4 @@ public class NpmPackageIdTest
     NpmPackageId.parse("@" + Strings.repeat("0123456789", 11) + "/ab" + Strings.repeat("0123456789", 10));
   }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void malformedNoScope() {
-    NpmPackageId.parse("@/name");
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void malformedNoName() {
-    NpmPackageId.parse("@scope/");
-  }
 }

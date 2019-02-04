@@ -36,7 +36,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.file.internal.FileBlobStoreMetricsStore;
 import org.sonatype.nexus.blobstore.file.internal.FileOperations;
 import org.sonatype.nexus.blobstore.file.internal.SimpleFileOperations;
-import org.sonatype.nexus.blobstore.internal.PeriodicJobServiceImpl;
+import org.sonatype.nexus.scheduling.internal.PeriodicJobServiceImpl;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.log.DryRunPrefix;

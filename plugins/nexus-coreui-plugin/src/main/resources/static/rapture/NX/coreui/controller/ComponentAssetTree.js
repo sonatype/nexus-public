@@ -21,6 +21,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
   extend: 'NX.controller.Drilldown',
   requires: [
     'NX.Bookmarks',
+    'NX.Dialogs',
     'NX.Messages',
     'NX.Permissions',
     'NX.I18n',
@@ -68,6 +69,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     {ref: 'componentFolderInfo', selector: 'nx-coreui-component-componentfolderinfo'},
     {ref: 'deleteComponentButton', selector: 'nx-coreui-component-componentinfo button[action=deleteComponent]'},
     {ref: 'deleteAssetButton', selector: 'nx-coreui-component-componentassetinfo button[action=deleteAsset]'},
+    {ref: 'deleteAssetFolderButton', selector: 'nx-coreui-component-componentassetinfo button[action=deleteFolder]'},
     {ref: 'deleteFolderButton', selector: 'nx-coreui-component-componentfolderinfo button[action=deleteFolder]'},
     {ref: 'analyzeApplicationButton', selector: 'nx-coreui-component-componentinfo button[action=analyzeApplication]'},
     {ref: 'analyzeApplicationWindow', selector: 'nx-coreui-component-analyze-window'},
@@ -139,6 +141,9 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
         },
         'nx-coreui-component-componentassetinfo button[action=deleteAsset]': {
           click: me.deleteAsset
+        },
+        'nx-coreui-component-componentassetinfo button[action=deleteFolder]': {
+          click: me.deleteAssetFolder
         },
         'nx-coreui-component-componentfolderinfo button[action=deleteFolder]': {
           click: me.deleteFolder
@@ -407,7 +412,8 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     var me = this,
         componentInfoPanel,
         componentInfoPanelTitleText,
-        assetInfoPanel;
+        assetInfoPanel,
+        isFolder = !node.get('leaf');
 
     me.removeSideContent();
     me.bookmarkNode(node);
@@ -439,7 +445,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
 
       NX.direct.coreui_Component.readAsset(node.get('assetId'), me.getCurrentRepository().get('name'), function(response) {
         if (me.isPanelVisible(assetInfoPanel) && me.isResponseSuccessful(response)) {
-          me.setInfoPanelModel(assetInfoPanel, me.getAssetModel().create(response.data));
+          me.setInfoPanelModel(assetInfoPanel, me.getAssetModel().create(response.data), isFolder);
         }
         else {
           me.maybeUnmask(assetInfoPanel);
@@ -456,7 +462,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
       me.getDeleteFolderButton().show();
       me.getDeleteFolderButton().enable();
       folderInfoPanel.setModel({repositoryName: me.getCurrentRepository().get('name'), folderName: node.get('text'), path: node.get('id')});
-      me.updateDeleteFolderButton(me.getCurrentRepository(), node.get('id'));
+      me.updateDeleteFolderButton(me.getDeleteFolderButton(), me.getCurrentRepository(), node.get('id'));
       me.maybeUnmask(folderInfoPanel);
     }
   },
@@ -470,7 +476,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     this.setDependencySnippets(componentInfoPanel.getDependencySnippetPanel(), componentModel);
   },
 
-  setInfoPanelModel: function(assetInfoPanel, asset) {
+  setInfoPanelModel: function(assetInfoPanel, asset, isFolder) {
     var me = this,
         componentModel;
 
@@ -480,7 +486,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
         if (me.isPanelVisible(assetInfoPanel) && me.isResponseSuccessful(response)) {
           componentModel = me.getComponentModel().create(response.data);
           assetInfoPanel.setModel(asset, componentModel);
-          me.updateDeleteAssetButton(me.getCurrentRepository(), asset);
+          me.updateDeleteAssetButton(me.getCurrentRepository(), asset, isFolder);
           me.setDependencySnippets(assetInfoPanel.getDependencySnippetPanel(), componentModel, asset);
         }
       });
@@ -490,7 +496,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
       if (me.isPanelVisible(assetInfoPanel)) {
         componentModel = me.getComponentModel().create({});
         assetInfoPanel.setModel(asset, componentModel);
-        me.updateDeleteAssetButton(me.getCurrentRepository(), asset);
+        me.updateDeleteAssetButton(me.getCurrentRepository(), asset, isFolder);
         me.setDependencySnippets(assetInfoPanel.getDependencySnippetPanel(), componentModel, asset);
       }
     }
@@ -772,6 +778,29 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
           NX.I18n.format('FolderInfo_Delete_Text', Ext.htmlEncode(model.folderName)),
           function() {
             NX.direct.coreui_Component.deleteFolder(model.path, model.repositoryName,
+                function(response) {
+                  if (Ext.isObject(response) && response.success) {
+                    NX.Messages.add({text: NX.I18n.format('FolderInfo_Delete_Success'), type: 'success'});
+                  }
+                });
+          });
+    }
+  },
+
+  /**
+   * @private
+   * Remove selected Folder.
+   */
+  deleteAssetFolder: function() {
+    var componentAssetInfo = this.getComponentAssetInfo();
+
+    if (componentAssetInfo) {
+      var asset = componentAssetInfo.assetModel;
+      NX.Dialogs.askConfirmation(
+          NX.I18n.get('FolderInfo_Delete_Title'),
+          NX.I18n.format('FolderInfo_Delete_Text', Ext.htmlEncode(asset.get('name'))),
+          function() {
+            NX.direct.coreui_Component.deleteFolder(asset.get('name'), asset.get('repositoryName'),
                 function(response) {
                   if (Ext.isObject(response) && response.success) {
                     NX.Messages.add({text: NX.I18n.format('FolderInfo_Delete_Success'), type: 'success'});

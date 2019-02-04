@@ -18,6 +18,7 @@ import java.security.SecureRandom
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.goodies.testsupport.junit.TestDataRule
 import org.sonatype.nexus.common.app.ApplicationDirectories
+import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.common.node.NodeAccess
 import org.sonatype.nexus.elasticsearch.internal.ClientProvider
 import org.sonatype.nexus.elasticsearch.internal.NodeProvider
@@ -59,6 +60,8 @@ class SearchServiceImplIT
 {
   static final String BASEDIR = new File(System.getProperty('basedir', '')).absolutePath
 
+  private static final int CALM_TIMEOUT = 3000
+
   @Rule
   public TestDataRule testData = new TestDataRule(Paths.get(BASEDIR, 'src/test/it-resources').toFile())
 
@@ -90,6 +93,9 @@ class SearchServiceImplIT
   @Mock
   SearchSubjectHelper searchSubjectHelper
 
+  @Mock
+  EventManager eventManager
+
   SearchServiceImpl searchService
 
   def repositories = []
@@ -111,7 +117,7 @@ class SearchServiceImplIT
     ClientProvider clientProvider = new ClientProvider(nodeProvider)
 
     searchService = new SearchServiceImpl(clientProvider, repositoryManager, securityHelper, searchSubjectHelper,
-        ImmutableList.of(), false, 1000, 1, 0)
+        ImmutableList.of(), eventManager, false, 1000, 1, 0, CALM_TIMEOUT)
 
     when(repositoryConfig.isOnline()).thenReturn(true)
     when(testFormat.getValue()).thenReturn('test-format')

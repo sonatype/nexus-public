@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -34,6 +35,7 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.search.SearchSubjectHelper.SubjectRegistration;
@@ -115,6 +117,10 @@ public class SearchServiceImpl
 
   private final List<IndexSettingsContributor> indexSettingsContributors;
 
+  private EventManager eventManager;
+
+  private int calmTimeout;
+
   private final ConcurrentMap<String, String> repositoryNameMapping;
 
   private final BulkIndexUpdateListener updateListener;
@@ -130,11 +136,13 @@ public class SearchServiceImpl
    * @param repositoryManager the repositoryManager
    * @param securityHelper the securityHelper
    * @param searchSubjectHelper the searchSubjectHelper
-   * @param indexSettingsContributors the indexSetttingsContributors
+   * @param indexSettingsContributors the indexSettingsContributors
+   * @param eventManager the eventManager
    * @param profile whether or not to profile elasticsearch queries (default: false)
    * @param bulkCapacity how many bulk requests to batch before they're automatically flushed (default: 1000)
    * @param concurrentRequests how many bulk requests to execute concurrently (default: 1; 0 means execute synchronously)
    * @param flushInterval how long to wait in milliseconds between flushing bulk requests (default: 0, instantaneous)
+   * @param calmTimeout timeout in ms to wait for a calm period
    */
   @Inject
   public SearchServiceImpl(final Provider<Client> client, //NOSONAR
@@ -142,16 +150,20 @@ public class SearchServiceImpl
                            final SecurityHelper securityHelper,
                            final SearchSubjectHelper searchSubjectHelper,
                            final List<IndexSettingsContributor> indexSettingsContributors,
+                           final EventManager eventManager,
                            @Named("${nexus.elasticsearch.profile:-false}") final boolean profile,
                            @Named("${nexus.elasticsearch.bulkCapacity:-1000}") final int bulkCapacity,
                            @Named("${nexus.elasticsearch.concurrentRequests:-1}") final int concurrentRequests,
-                           @Named("${nexus.elasticsearch.flushInterval:-0}") final int flushInterval)
+                           @Named("${nexus.elasticsearch.flushInterval:-0}") final int flushInterval,
+                           @Named("${nexus.elasticsearch.calmTimeout:-3000}") final int calmTimeout)
   {
     this.client = checkNotNull(client);
     this.repositoryManager = checkNotNull(repositoryManager);
     this.securityHelper = checkNotNull(securityHelper);
     this.searchSubjectHelper = checkNotNull(searchSubjectHelper);
     this.indexSettingsContributors = checkNotNull(indexSettingsContributors);
+    this.eventManager = eventManager;
+    this.calmTimeout = calmTimeout;
     this.repositoryNameMapping = Maps.newConcurrentMap();
     this.updateListener = new BulkIndexUpdateListener();
     this.profile = profile;
@@ -196,6 +208,42 @@ public class SearchServiceImpl
     }
 
     return true;
+  }
+
+  @Override
+  public void waitForCalm() {
+    try {
+      waitFor(eventManager::isCalmPeriod);
+      flush(false); // no need for full fsync here
+      waitFor(this::isCalmPeriod);
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException("Waiting for calm period has been interrupted", e);
+    }
+  }
+
+  private void waitFor(final Callable<Boolean> function)
+      throws InterruptedException
+  {
+    Thread.yield();
+    long end = System.currentTimeMillis() + calmTimeout;
+    do {
+      try {
+        if (function.call()) {
+          return; // success
+        }
+      }
+      catch (final InterruptedException e) {
+        throw e; // cancelled
+      }
+      catch (final Exception e) { //NOSONAR
+        log.debug("Exception thrown whilst waiting", e);
+      }
+      Thread.sleep(100);
+    }
+    while (System.currentTimeMillis() <= end);
+
+    log.warn("Timed out waiting for {} after {} ms", function, calmTimeout);
   }
 
   @Override
