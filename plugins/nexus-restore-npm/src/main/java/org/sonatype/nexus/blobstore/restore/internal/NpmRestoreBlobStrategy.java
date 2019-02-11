@@ -23,6 +23,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.restore.BaseRestoreBlobStrategy;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
+import org.sonatype.nexus.blobstore.restore.internal.NpmRestoreBlobData.NpmType;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Repository;
@@ -31,10 +32,18 @@ import org.sonatype.nexus.repository.npm.NpmFacet;
 import org.sonatype.nexus.repository.npm.repair.NpmRepairPackageRootComponent;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
+import org.sonatype.nexus.repository.storage.Query;
+import org.sonatype.nexus.repository.storage.Query.Builder;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreMetadata;
 import org.sonatype.nexus.repository.transaction.TransactionalTouchBlob;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.npm.NpmCoordinateUtil.extractVersion;
+import static org.sonatype.nexus.repository.npm.NpmCoordinateUtil.getPackageIdName;
+import static org.sonatype.nexus.repository.npm.NpmCoordinateUtil.getPackageIdScope;
+import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
+import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_VERSION;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
 /**
  * @since 3.6.1
@@ -123,6 +132,36 @@ public class NpmRestoreBlobStrategy
       default: // all the cases are covered
         throw new IllegalStateException("Unexpected case encountered");
     }
+  }
+
+  protected boolean componentRequired(final NpmRestoreBlobData data) throws IOException {
+    return data.getType() == NpmType.TARBALL;
+  }
+
+  protected Query getComponentQuery(final NpmRestoreBlobData data) {
+    String version = extractVersion(data.getTarballName());
+
+    String scope = getPackageIdScope(data.getPackageId());
+
+    Builder builder = Query.builder().where(P_NAME).eq(getPackageIdName(data.getPackageId())).and(P_GROUP);
+
+    builder = scope != null ? builder.eq(scope) : builder.isNull();
+
+    return builder.and(P_VERSION).eq(version).build();
+  }
+
+  @Override
+  protected boolean shouldDeleteAsset(final NpmRestoreBlobData restoreData,
+                                      final RestoreBlobData blobData,
+                                      final String path) throws IOException
+  {
+    NpmType type = restoreData.getType();
+    return type == NpmType.REPOSITORY_ROOT || type == NpmType.PACKAGE_ROOT ||
+        super.shouldDeleteAsset(restoreData, blobData, path);
+  }
+
+  protected Repository getRepository(@Nonnull final NpmRestoreBlobData data) {
+    return data.getBlobData().getRepository();
   }
 
   @Override

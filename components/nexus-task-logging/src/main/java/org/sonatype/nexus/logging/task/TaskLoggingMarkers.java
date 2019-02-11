@@ -33,6 +33,11 @@ public class TaskLoggingMarkers
   public static final Marker TASK_LOG_ONLY = MarkerFactory.getMarker("TASK_LOG_ONLY");
 
   /**
+   * Slf4j {@link Marker} to indicate the log should ONLY be logged to the cluster log
+   */
+  public static final Marker CLUSTER_LOG_ONLY = MarkerFactory.getMarker("CLUSTER_LOG_ONLY");
+
+  /**
    * Slf4j {@link Marker} to indicate the log should be logged with the progress logic (nexus.log only gets an entry
    * every minute, every entry goes to task log)
    */

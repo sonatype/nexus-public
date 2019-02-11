@@ -7158,12 +7158,21 @@ fieldset.nx-form-section.nx-no-title {
     border: none;
 }
 
-.x-panel-nx-feature-menu .x-panel-body-nx-feature-menu .x-grid-item {
-    height: 2.8em;
-}
-
 .x-panel-nx-feature-menu .x-panel-body-nx-feature-menu .x-grid-item .x-grid-cell {
     background-color: #ddd;
+    height: 2.5em;
+}
+
+.x-panel-nx-feature-menu .x-panel-body-nx-feature-menu .x-grid-item .x-grid-cell.separator {
+    height: 1em;
+}
+
+.x-panel-nx-feature-menu .x-panel-body-nx-feature-menu .x-grid-item .x-grid-cell.separator .x-grid-cell-inner {
+    border-top: solid 1px #b8b8b8;
+    height: 0;
+    margin: 0 1em;
+    padding: 0 0.5em;
+    width: calc(100% - 2em);
 }
 
 .x-panel-nx-feature-menu .x-panel-body-nx-feature-menu .x-grid-item .x-grid-td {
@@ -7171,7 +7180,7 @@ fieldset.nx-form-section.nx-no-title {
     vertical-align: middle;
 }
 
-.x-panel-nx-feature-menu .x-panel-body-nx-feature-menu .x-grid-item-over .x-grid-cell {
+.x-panel-nx-feature-menu .x-panel-body-nx-feature-menu .x-grid-item-over .x-grid-cell:not(.separator):not(.iq-dashboard-link) {
     background-color: #ebebeb;
 }
 
@@ -7234,6 +7243,34 @@ fieldset.nx-form-section.nx-no-title {
 
 .x-panel-nx-feature-menu .x-panel-body-nx-feature-menu .x-grid-cell-inner-treecolumn {
     padding: 5px 8px 4px 6px;
+}
+
+.x-panel-nx-feature-menu .iq-dashboard-link a.x-tree-node-text {
+    color: #369;
+    padding-left: 0;
+    text-decoration: none;
+}
+
+.x-panel-nx-feature-menu .iq-dashboard-link a.x-tree-node-text:hover {
+    color: #036;
+    text-decoration: underline;
+}
+
+.x-panel-nx-feature-menu .iq-dashboard-link a.x-tree-node-text span.fa-dashboard {
+    padding-right: 0.65em;
+}
+
+.x-panel-nx-feature-menu .iq-dashboard-link a.x-tree-node-text span.fa-external-link {
+    font-size: 0.8em;
+    padding-left: 0.5em;
+}
+
+.x-panel-nx-feature-menu .iq-dashboard-link .x-tree-icon {
+    display: none;
+}
+
+.x-panel-nx-feature-menu .separator {
+    pointer-events: none;
 }
 
 .x-panel-nx-feature-content {

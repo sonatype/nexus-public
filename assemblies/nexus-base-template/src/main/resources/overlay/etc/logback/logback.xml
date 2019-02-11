@@ -30,6 +30,19 @@
     <filter class="org.sonatype.nexus.pax.logging.NexusLogFilter" />
   </appender>
 
+  <appender name="clusterlogfile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <File>${karaf.data}/log/nexus_cluster.log</File>
+    <Append>true</Append>
+    <encoder class="org.sonatype.nexus.pax.logging.NexusLayoutEncoder">
+      <pattern>%d{"yyyy-MM-dd HH:mm:ss,SSSZ"} %-5p [%thread] %node %mdc{userId:-*SYSTEM} %c - %m%n</pattern>
+    </encoder>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>${karaf.data}/log/nexus_cluster-%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+      <maxHistory>90</maxHistory>
+    </rollingPolicy>
+    <filter class="org.sonatype.nexus.pax.logging.ClusterLogFilter" />
+  </appender>
+
   <appender name="tasklogfile" class="ch.qos.logback.classic.sift.SiftingAppender">
     <filter class="org.sonatype.nexus.pax.logging.TaskLogsFilter" />
     <discriminator>
@@ -61,6 +74,7 @@
     <appender-ref ref="osgi"/>
     <appender-ref ref="console"/>
     <appender-ref ref="logfile"/>
+    <appender-ref ref="clusterlogfile"/>
     <appender-ref ref="tasklogfile"/>
     <appender-ref ref="metrics"/>
   </root>

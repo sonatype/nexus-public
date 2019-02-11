@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.blobstore.restore.pypi.internal;
 
+import javax.annotation.Nullable;
+
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobDataSupport;
 
@@ -21,8 +23,16 @@ import org.sonatype.nexus.blobstore.restore.RestoreBlobDataSupport;
 public class PyPiRestoreBlobData
     extends RestoreBlobDataSupport
 {
-  public PyPiRestoreBlobData(final RestoreBlobData blobData)
+  private final String version;
+
+  public PyPiRestoreBlobData(final RestoreBlobData blobData, @Nullable final String version)
   {
     super(blobData);
+    this.version = version;
+  }
+
+  @Nullable
+  public String getVersion() {
+    return version;
   }
 }

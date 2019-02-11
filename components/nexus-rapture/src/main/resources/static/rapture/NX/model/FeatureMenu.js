@@ -38,6 +38,10 @@ Ext.define('NX.model.FeatureMenu', {
     { name: 'grouped', defaultValue: false },
     { name: 'view' },
     { name: 'bookmark' },
-    { name: 'iconName' }
+    { name: 'iconName' },
+    {
+      name: 'separator',
+      type: 'boolean'
+    }
   ]
 });

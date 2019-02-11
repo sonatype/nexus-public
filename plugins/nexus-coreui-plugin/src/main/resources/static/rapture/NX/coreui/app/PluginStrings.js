@@ -1309,6 +1309,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Clm_Text: 'IQ Server',
     Clm_Description: 'Manage IQ Server configuration',
     Clm_Connection_Success: 'Connection to IQ Server verified: {0}',
+    Clm_Dashboard_Link_Text: '<span class="x-fa fa-dashboard"></span>IQ Server Dashboard<span class="x-fa fa-external-link"></span>',
     Clm_Dashboard_Description: 'Open IQ Server Dashboard',
     Clm_Dashboard_Disabled_Tooltip: 'IQ Server must be enabled first',
     ClmSettings_Html: '<p><a href="http://www.sonatype.com/nexus/product-overview/nexus-lifecycle" target="_blank">IQ Server</a> ' +
@@ -1340,7 +1341,9 @@ Ext.define('NX.coreui.app.PluginStrings', {
     ClmSettings_Properties_FieldLabel: 'Properties',
     ClmSettings_Properties_HelpText: 'Additional properties to configure for IQ Server',
     ClmSettings_Properties_EmptyText: 'enter properties',
-    ClmSettings_Properties_Verify_Button: 'Verify connection'
+    ClmSettings_Properties_Verify_Button: 'Verify connection',
+    ClmSettings_Show_Link_FieldLabel: 'Show IQ Server Link',
+    ClmSettings_Show_Link_HelpText: 'Show IQ Server link in Browse menu when server is enabled'
   },
 
   /**

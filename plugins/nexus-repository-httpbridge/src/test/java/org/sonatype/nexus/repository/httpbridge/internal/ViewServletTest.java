@@ -187,6 +187,13 @@ public class ViewServletTest
         "sandbox allow-forms allow-modals allow-popups allow-presentation allow-scripts allow-top-navigation");
   }
 
+  @Test
+  public void responseHasXssProtection() throws Exception {
+    underTest.service(httpServletRequest, servletResponse);
+
+    verify(servletResponse).setHeader(HttpHeaders.X_XSS_PROTECTION, "1; mode=block");
+  }
+
   private void facetThrowsException(final boolean facetThrowsException) throws Exception {
     if (facetThrowsException) {
       when(facet.dispatch(request)).thenThrow(facetException);

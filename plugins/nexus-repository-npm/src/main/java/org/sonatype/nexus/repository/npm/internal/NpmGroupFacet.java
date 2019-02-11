@@ -22,6 +22,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.io.Cooperation;
@@ -38,6 +39,7 @@ import org.sonatype.nexus.repository.storage.AssetDeletedEvent;
 import org.sonatype.nexus.repository.storage.AssetEvent;
 import org.sonatype.nexus.repository.storage.AssetUpdatedEvent;
 import org.sonatype.nexus.repository.storage.Bucket;
+import org.sonatype.nexus.repository.storage.MissingBlobException;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
@@ -67,6 +69,7 @@ import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.joda.time.DateTime.now;
 import static org.sonatype.nexus.common.entity.EntityHelper.id;
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.repository.cache.CacheInfo.invalidateAsset;
 import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.findPackageRootAsset;
 import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.loadPackageRoot;
@@ -79,7 +82,6 @@ import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.merge;
 import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.rewriteTarballUrl;
 import static org.sonatype.nexus.repository.view.Content.applyToAsset;
 import static org.sonatype.nexus.repository.view.Content.maintainLastModified;
-import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
 /**
  * NPM specific implementation of {@link GroupFacetImpl} allowing for {@link Cooperation}, merging and caching.
@@ -195,17 +197,42 @@ public class NpmGroupFacet
       return null;
     }
 
-    NestedAttributesMap packageRoot = loadPackageRootFromCache(packageRootAsset);
+    try {
+      NestedAttributesMap packageRoot = loadPackageRootFromCache(packageRootAsset);
 
-    // Rewrite the tarball url, it normally gets stored in cache, but it could be that the BaseUrl might have changed
-    rewriteTarballUrl(context.getRepository().getName(), packageRoot);
+      // Rewrite the tarball url, it normally gets stored in cache, but it could be that the BaseUrl might have changed
+      rewriteTarballUrl(context.getRepository().getName(), packageRoot);
 
-    // id and rev might have been stored
-    packageRoot.remove(META_ID);
-    packageRoot.remove(META_REV);
+      // id and rev might have been stored
+      packageRoot.remove(META_ID);
+      packageRoot.remove(META_REV);
 
-    Content content = toContent(packageRootAsset, packageRoot);
-    return !isStale(content) ? content : null;
+      Content content = toContent(packageRootAsset, packageRoot);
+      return !isStale(content) ? content : null;
+    }
+    catch (MissingBlobException | BlobStoreException e) {
+      if (log.isTraceEnabled()) {
+        log.info("Missing blob {} containing cached metadata {}, deleting asset and triggering rebuild.  Exception {}",
+            packageRootAsset.blobRef(), packageRootAsset, e);
+      }
+      else {
+        log.info("Missing blob {} containing cached metadata {}, deleting asset and triggering rebuild.",
+            packageRootAsset.blobRef(), packageRootAsset.name());
+      }
+
+      cleanupPackageRootAssetOnlyFromCache(packageRootAsset);
+
+      return null;
+    }
+  }
+
+  @Transactional
+  protected void cleanupPackageRootAssetOnlyFromCache(final Asset packageRootAsset) {
+    checkNotNull(packageRootAsset);
+
+    StorageTx tx = UnitOfWork.currentTx();
+    //Don't delete the blob because we already know it is missing
+    tx.deleteAsset(packageRootAsset, false);
   }
 
   @Nullable

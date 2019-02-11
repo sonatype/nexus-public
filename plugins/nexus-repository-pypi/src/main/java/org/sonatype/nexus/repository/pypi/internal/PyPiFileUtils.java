@@ -60,7 +60,7 @@ public final class PyPiFileUtils
   /**
    * Returns the filename portion of the path.
    */
-  static String extractFilenameFromPath(final String path) {
+  public static String extractFilenameFromPath(final String path) {
     checkNotNull(path);
     return path.substring(path.lastIndexOf('/') + 1);
   }
@@ -80,7 +80,7 @@ public final class PyPiFileUtils
    * delimited by dashes, or will be the element before the python version number. Other file extensions are treated
    * the same as the .egg format as it should hopefully degrade gracefully for the majority of cases.
    */
-  static String extractVersionFromFilename(final String filename) {
+  public static String extractVersionFromFilename(final String filename) {
     checkNotNull(filename);
     String base = removeExtension(filename);
     int begin;

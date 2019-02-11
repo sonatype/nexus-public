@@ -31,8 +31,10 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
+import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.sonatype.nexus.repository.storage.AssetBlob;
+import org.sonatype.nexus.repository.storage.Query;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreMetadata;
 import org.sonatype.nexus.repository.transaction.TransactionalTouchBlob;
 
@@ -40,6 +42,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
+import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
+import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_VERSION;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
 /**
  * @since 3.4
@@ -105,10 +110,34 @@ public class MavenRestoreBlobStrategy
   }
 
   @Override
+  protected boolean componentRequired(@Nonnull final MavenRestoreBlobData data) throws IOException {
+    MavenPath path = data.getMavenPath();
+    return !(mavenPathParser.isRepositoryIndex(path) || mavenPathParser.isRepositoryMetadata(path));
+  }
+
+  @Override
+  protected Query getComponentQuery(@Nonnull final MavenRestoreBlobData data) {
+    Coordinates coordinates = data.getMavenPath().getCoordinates();
+    if (coordinates != null) {
+      return Query.builder()
+          .where(P_GROUP).eq(coordinates.getGroupId())
+          .and(P_NAME).eq(coordinates.getArtifactId())
+          .and(P_VERSION).eq(coordinates.getVersion())
+          .build();
+    }
+    return null;
+  }
+
+  @Override
   @TransactionalStoreMetadata
   protected void createAssetFromBlob(@Nonnull final AssetBlob assetBlob, @Nonnull final MavenRestoreBlobData data)
       throws IOException
   {
     data.getBlobData().getRepository().facet(MavenFacet.class).put(data.getMavenPath(), assetBlob, null);
+  }
+
+  @Override
+  protected Repository getRepository(@Nonnull final MavenRestoreBlobData data) {
+    return data.getBlobData().getRepository();
   }
 }

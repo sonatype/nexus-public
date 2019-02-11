@@ -17,9 +17,20 @@
 
   .x-panel-body-nx-feature-menu {
     .x-grid-item {
-      height: 2.8em;
       .x-grid-cell {
         background-color: $color-gainsboro;
+        height: 2.5em;
+      }
+      .x-grid-cell.separator {
+        height: 1em;
+
+        .x-grid-cell-inner {
+          border-top: solid 1px $color-silver;
+          height: 0;
+          margin: 0 1em;
+          padding: 0 0.5em;
+          width: calc(100% - 2em);
+        }
       }
       .x-grid-td {
         font-size: 1.1em;
@@ -28,7 +39,7 @@
     }
 
     .x-grid-item-over {
-      .x-grid-cell {
+      .x-grid-cell:not(.separator):not(.iq-dashboard-link) {
         background-color: $color-smoke;
       }
       .x-tree-icon {
@@ -92,5 +103,35 @@
     .x-grid-cell-inner-treecolumn {
       padding: 5px 8px 4px 6px;
     }
+  }
+
+  .iq-dashboard-link {
+    a.x-tree-node-text {
+      color: $color-outreach-blue;
+      padding-left: 0;
+      text-decoration: none;
+
+      &:hover {
+        color: $color-outreach-dark-blue;
+        text-decoration: underline;
+      }
+
+      span.fa-dashboard {
+        padding-right: 0.65em;
+      }
+
+      span.fa-external-link {
+        font-size: 0.8em;
+        padding-left: 0.5em;
+      }
+    }
+
+    .x-tree-icon {
+      display: none;
+    }
+  }
+
+  .separator {
+    pointer-events: none;
   }
 }

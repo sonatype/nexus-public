@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
-import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -34,6 +33,8 @@ import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreUpdatedEvent;
 import org.sonatype.nexus.blobstore.file.FileBlobStoreConfigurationBuilder;
 import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.nexus.common.event.EventConsumer;
+import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.Guarded;
@@ -183,18 +184,20 @@ public class BlobStoreManagerImpl
 
     BlobStore blobStore = newBlobStore(configuration);
 
-    try {
-      store.create(configuration);
-    }
-    catch (Exception e) {
+    if (!EventHelper.isReplicating()) {
       try {
-        blobStore.remove();
+        store.create(configuration);
       }
-      catch (Exception removeException) {
-        // if an error occurs on remove log and rethrow original to avoid losing the root cause
-        log.error("Error removing BlobStore {} after create failed", configuration.getName(), removeException);
+      catch (Exception e) {
+        try {
+          blobStore.remove();
+        }
+        catch (Exception removeException) {
+          // if an error occurs on remove log and rethrow original to avoid losing the root cause
+          log.error("Error removing BlobStore {} after create failed", configuration.getName(), removeException);
+        }
+        throw e;
       }
-      throw e;
     }
 
     track(configuration.getName(), blobStore);
@@ -225,7 +228,9 @@ public class BlobStoreManagerImpl
     try {
       blobStore.init(configuration);
       blobStore.start();
-      store.update(configuration);
+      if (!EventHelper.isReplicating()) {
+        store.update(configuration);
+      }
       eventManager.post(new BlobStoreUpdatedEvent(blobStore));
     } catch (Exception e) {
       log.error("Failed to update configuration", e);
@@ -272,7 +277,9 @@ public class BlobStoreManagerImpl
     blobStore.stop();
     blobStore.remove();
     untrack(name);
-    store.delete(blobStore.getBlobStoreConfiguration());
+    if (!EventHelper.isReplicating()) {
+      store.delete(blobStore.getBlobStoreConfiguration());
+    }
     eventManager.post(new BlobStoreDeletedEvent(blobStore));
   }
 
@@ -307,72 +314,29 @@ public class BlobStoreManagerImpl
 
   @Subscribe
   public void on(final BlobStoreConfigurationCreatedEvent event) {
-    handleRemoteOnly(event, evt -> {
-      // only create if not tracked
-      String name = evt.getName();
-      if (!stores.containsKey(name)) {
-        store.list().stream()
-            .filter(c -> c.getName().equals(name))
-            .findFirst()
-            .ifPresent(c -> {
-              try {
-                BlobStore blobStore = newBlobStore(c);
-                track(name, blobStore);
-                blobStore.start();
-              }
-              catch (Exception e) {
-                log.warn("create blob store from remote event failed: {}", name, e);
-              }
-            });
-      }
-    });
+    handleReplication(event, e -> create(e.getConfiguration()));
   }
 
   @Subscribe
   public void on(final BlobStoreConfigurationDeletedEvent event) {
-    handleRemoteOnly(event, evt -> {
-      try {
-        // only delete if tracked
-        String name = evt.getName();
-        if (stores.containsKey(name)) {
-          BlobStore blobStore = blobStore(name);
-          blobStore.stop();
-          blobStore.remove();
-          untrack(name);
-        }
-      }
-      catch (Exception e) {
-        log.warn("delete blob store from remote event failed: {}", evt.getName(), e);
-      }
-    });
+    handleReplication(event, e -> forceDelete(e.getName()));
   }
 
   @Subscribe
   public void on(final BlobStoreConfigurationUpdatedEvent event) {
-    handleRemoteOnly(event, evt -> {
-      try {
-        // only update if tracked
-        String name = evt.getName();
-        if (stores.containsKey(name)) {
-          BlobStore blobStore = blobStore(name);
-          blobStore.stop();
-          blobStore.init(event.getEntity());
-          blobStore.start();
-        }
-      }
-      catch (Exception e) {
-        log.warn("update blob store from remote event failed: {}", evt.getName(), e);
-      }
-    });
+    handleReplication(event, e -> update(e.getConfiguration()));
   }
 
-  private void handleRemoteOnly(final BlobStoreConfigurationEvent event,
-                                final Consumer<BlobStoreConfigurationEvent> consumer)
+  private void handleReplication(final BlobStoreConfigurationEvent event,
+                                 final EventConsumer<BlobStoreConfigurationEvent> consumer)
   {
-    log.trace("handling: {}", event);
-    // skip local events
     if (!event.isLocal()) {
-      consumer.accept(event);
+      try {
+        consumer.accept(event);
+      }
+      catch (Exception e) {
+        log.error("Failed to replicate: {}", event, e);
+      }
     }
   }
 

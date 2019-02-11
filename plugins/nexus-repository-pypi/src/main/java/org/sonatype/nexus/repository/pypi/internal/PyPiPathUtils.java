@@ -105,7 +105,7 @@ public final class PyPiPathUtils
    *
    * @since 3.15
    */
-  static boolean isRootIndexPath(final String path) {
+  public static boolean isRootIndexPath(final String path) {
     return path.equals(INDEX_PATH_PREFIX);
   }
 
@@ -115,7 +115,7 @@ public final class PyPiPathUtils
    *
    * @since 3.14
    */
-  static boolean isIndexPath(final String path) {
+  public static boolean isIndexPath(final String path) {
     return path.startsWith(INDEX_PATH_PREFIX);
   }
 

@@ -12,8 +12,10 @@
  */
 package org.sonatype.nexus.blobstore.restore.raw.internal;
 
+import java.io.IOException;
 import java.util.List;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -29,11 +31,13 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.raw.RawContentFacet;
 import org.sonatype.nexus.repository.storage.AssetBlob;
+import org.sonatype.nexus.repository.storage.Query;
 
 import com.google.common.collect.ImmutableList;
 
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
 /**
  * @since 3.15
@@ -93,5 +97,20 @@ public class RawRestoreBlobStrategy
 
   private RawContentFacet getRawContentFacet(final RawRestoreBlobData data) {
     return data.getBlobData().getRepository().facet(RawContentFacet.class);
+  }
+
+  @Override
+  protected boolean componentRequired(@Nonnull final RawRestoreBlobData data) throws IOException {
+    return true;
+  }
+
+  @Override
+  protected Query getComponentQuery(@Nonnull final RawRestoreBlobData data) {
+    return Query.builder().where(P_NAME).eq(data.getBlobData().getBlobName()).build();
+  }
+
+  @Override
+  protected Repository getRepository(@Nonnull final RawRestoreBlobData data) {
+    return data.getBlobData().getRepository();
   }
 }

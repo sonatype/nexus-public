@@ -82,4 +82,9 @@ public class PropertiesFile
   public boolean exists() throws IOException {
     return file.exists();
   }
+
+  @Override
+  public String toString() {
+    return file + " " + super.toString();
+  }
 }

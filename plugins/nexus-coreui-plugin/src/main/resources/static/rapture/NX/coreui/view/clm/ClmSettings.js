@@ -127,6 +127,12 @@ Ext.define('NX.coreui.view.clm.ClmSettings', {
           helpText: NX.I18n.get('ClmSettings_Properties_HelpText'),
           emptyText: NX.I18n.get('ClmSettings_Properties_EmptyText'),
           allowBlank: true
+        },
+        {
+          xtype: 'checkbox',
+          name: 'showLink',
+          fieldLabel: NX.I18n.get('ClmSettings_Show_Link_FieldLabel'),
+          helpText: NX.I18n.get('ClmSettings_Show_Link_HelpText')
         }
       ]
     };

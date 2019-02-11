@@ -79,15 +79,6 @@ Ext.define('NX.coreui.view.component.ComponentInfo', {
 
     me.showInfo();
 
-    me.setTitle({
-      text: componentName,
-      listeners: {
-        destroy: function(me) {
-          Ext.tip.QuickTipManager.unregister(me.getId());
-        }
-      }
-    });
-
     Ext.tip.QuickTipManager.unregister(me.down('title').getId());
     Ext.tip.QuickTipManager.register({
       target: me.down('title').getId(),

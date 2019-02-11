@@ -41,7 +41,14 @@ public abstract class TaskSupport
 
   private final AtomicBoolean canceledFlag;
 
+  private final boolean taskLoggingEnabled;
+
   public TaskSupport() {
+    this(true);
+  }
+
+  public TaskSupport(final boolean taskLoggingEnabled) {
+    this.taskLoggingEnabled = taskLoggingEnabled;
     this.configuration = createTaskConfiguration();
     this.canceledFlag = new AtomicBoolean(false);
   }
@@ -107,11 +114,15 @@ public abstract class TaskSupport
   }
 
   private void startTaskLogging() {
-    TaskLoggerHelper.start(TaskLoggerFactory.create(this, log, configuration));
+    if(taskLoggingEnabled) {
+      TaskLoggerHelper.start(TaskLoggerFactory.create(this, log, configuration));
+    }
   }
 
   private void finishTaskLogging() {
-    TaskLoggerHelper.finish();
+    if(taskLoggingEnabled) {
+      TaskLoggerHelper.finish();
+    }
   }
 
   /**

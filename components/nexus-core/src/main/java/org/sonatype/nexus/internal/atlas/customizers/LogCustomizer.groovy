@@ -82,5 +82,6 @@ class LogCustomizer
     maybeIncludeFile new File(applicationDirectories.workDirectory, 'log/karaf.log'), 'log', LOW
     maybeIncludeFile new File(applicationDirectories.workDirectory, 'log/request.log'), 'log', LOW
     maybeIncludeFile new File(applicationDirectories.workDirectory, 'log/jvm.log'), 'log', LOW
+    maybeIncludeFile new File(applicationDirectories.workDirectory, 'log/nexus_cluster.log'), 'log', LOW
   }
 }

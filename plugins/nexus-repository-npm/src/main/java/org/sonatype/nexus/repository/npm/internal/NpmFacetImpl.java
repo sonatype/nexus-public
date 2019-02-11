@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.npm.internal;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -38,6 +36,7 @@ import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.npm.NpmCoordinateUtil.extractVersion;
 import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind.PACKAGE_ROOT;
 import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind.REPOSITORY_ROOT;
 import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind.TARBALL;
@@ -54,10 +53,6 @@ public class NpmFacetImpl
     extends FacetSupport
     implements NpmFacet
 {
-  // regex to extract version number from a tarball file name
-  private static final Pattern NPM_VERSION_PATTERN = Pattern
-      .compile("-(\\d+\\.\\d+\\.\\d+[A-Za-z\\d\\-.+]*)\\.(?:tar\\.gz|tgz)");
-
   private final NpmPackageParser npmPackageParser;
 
   @Inject
@@ -183,11 +178,5 @@ public class NpmFacetImpl
       NpmFormatAttributesExtractor formatAttributesExtractor = new NpmFormatAttributesExtractor(formatAttributes);
       formatAttributesExtractor.copyFormatAttributes(asset);
     }
-  }
-
-  private String extractVersion(final String npmPath) {
-    Matcher matcher = NPM_VERSION_PATTERN.matcher(npmPath);
-
-    return matcher.find() ? matcher.group(1) : "";
   }
 }

@@ -211,6 +211,10 @@ Ext.define('NX.app.Application', {
     if (!csrfToken) {
       basePath = NX.util.Url.baseUrl.substring(window.location.origin.length) || null;
       hostname = window.location.hostname;
+      if ((Ext.isEdge || Ext.isIE) && hostname && hostname.indexOf('.') === -1) {
+        // IE & Edge won't set a cookie for domains without a TLD
+        hostname = null;
+      }
       csrfToken = Math.random().toString();
       Ext.util.Cookies.set('NX-ANTI-CSRF-TOKEN', csrfToken, null, basePath, hostname);
     }

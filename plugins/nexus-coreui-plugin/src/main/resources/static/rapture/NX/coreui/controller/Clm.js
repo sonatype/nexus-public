@@ -42,6 +42,10 @@ Ext.define('NX.coreui.controller.Clm', {
     {
       ref: 'openDashboardButton',
       selector: 'nx-coreui-clm-settings button[action=open]'
+    },
+    {
+      ref: 'showLinkCheckbox',
+      selector: 'nx-coreui-clm-settings checkbox[name=showLink]'
     }
   ],
 
@@ -112,7 +116,8 @@ Ext.define('NX.coreui.controller.Clm', {
   onSubmitted: function(form, action) {
     NX.State.setValue('clm', Ext.apply(Ext.clone(NX.State.getValue('clm', {})), {
       enabled: action.result.data.enabled,
-      url: action.result.data.url
+      url: action.result.data.url,
+      showLink: action.result.data.showLink
     }));
   },
 

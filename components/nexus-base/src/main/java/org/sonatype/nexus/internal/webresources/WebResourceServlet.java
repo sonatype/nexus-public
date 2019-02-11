@@ -42,6 +42,7 @@ import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
 import static com.google.common.net.HttpHeaders.IF_MODIFIED_SINCE;
 import static com.google.common.net.HttpHeaders.LAST_MODIFIED;
 import static com.google.common.net.HttpHeaders.X_FRAME_OPTIONS;
+import static com.google.common.net.HttpHeaders.X_XSS_PROTECTION;
 import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
 import static javax.servlet.http.HttpServletResponse.SC_NOT_MODIFIED;
 
@@ -120,6 +121,7 @@ public class WebResourceServlet
 
     // NEXUS-6569 Add X-Frame-Options header
     response.setHeader(X_FRAME_OPTIONS, xframeOptions.getValueForPath(request.getPathInfo()));
+    response.setHeader(X_XSS_PROTECTION, "1; mode=block");
 
     // support resources which need to be prepared before serving
     if (resource instanceof Prepareable) {

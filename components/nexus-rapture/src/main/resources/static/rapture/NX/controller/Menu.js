@@ -137,7 +137,8 @@ Ext.define('NX.controller.Menu', {
         'nx-feature-menu': {
           itemclick: me.onItemClick,
           afterrender: me.onAfterRender,
-          beforecellclick: me.warnBeforeMenuSelect
+          beforecellclick: me.warnBeforeMenuSelect,
+          beforeselect: me.onBeforeSelect
         },
         'nx-main #quicksearch': {
           beforesearch: me.warnBeforeSearch
@@ -223,9 +224,14 @@ Ext.define('NX.controller.Menu', {
         path = featureMenuModel.get('path'),
         forceReselect = forceReselectOrHtmlElement,
         pathIsChanging = path !== me.currentSelectedPath,
-        isGroup = featureMenuModel.get('group');
+        isGroup = featureMenuModel.get('group'),
+        externalLink = featureMenuModel.get('hrefTarget') === '_blank',
+        separator = featureMenuModel.get('separator');
 
-    if (forceReselect || pathIsChanging || isGroup) {
+    if (externalLink || separator) {
+      return;
+    }
+    else if (forceReselect || pathIsChanging || isGroup) {
       me.currentSelectedPath = path;
 
       //<if debug>
@@ -237,6 +243,15 @@ Ext.define('NX.controller.Menu', {
       }
       me.selectFeature(me.getStore('Feature').getById(featureMenuModel.get('path')));
       me.populateFeatureGroupStore(featureMenuModel);
+    }
+  },
+
+  onBeforeSelect: function(panel, featureMenuModel) {
+    var externalLink = featureMenuModel.get('hrefTarget') === '_blank',
+        separator = featureMenuModel.get('separator');
+
+    if (externalLink || separator) {
+      return false;
     }
   },
 
@@ -583,6 +598,8 @@ Ext.define('NX.controller.Menu', {
       { property: 'text', direction: 'ASC' }
     ]);
 
+    me.addExternalLinks();
+
     Ext.resumeLayouts(true);
   },
 
@@ -896,5 +913,32 @@ Ext.define('NX.controller.Menu', {
         return NX.I18n.get('Menu_Browser_Title');
       }
     };
+  },
+
+  addExternalLinks: function() {
+    var rootNode = this.getStore('FeatureMenu').getRootNode(),
+        clmState = NX.State.getValue('clm'),
+        showDashboardUrl = clmState && clmState.enabled && clmState.url,
+        shouldShowDashboardLink = showDashboardUrl && clmState.showLink;
+
+    if (this.mode === 'browse' && shouldShowDashboardLink) {
+      rootNode.appendChild({
+        leaf: true,
+        separator: true,
+        cls: 'separator',
+        iconCls: ' ',
+        text: ' '
+      });
+      rootNode.appendChild({
+        leaf: true,
+        qtip: NX.I18n.get('Clm_Dashboard_Description'),
+        authenticationRequired: false,
+        mode: 'browse',
+        text: NX.I18n.get('Clm_Dashboard_Link_Text'),
+        href: showDashboardUrl,
+        hrefTarget: '_blank',
+        cls: 'iq-dashboard-link'
+      });
+    }
   }
 });

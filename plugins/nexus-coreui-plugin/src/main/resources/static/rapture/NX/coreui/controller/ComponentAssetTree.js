@@ -454,7 +454,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     }
     else if ('folder' === node.get('type')) {
       var folderInfoPanel = me.getComponentFolderInfo();
-      folderInfoPanel.setTitle(node.get('text'));
+      folderInfoPanel.setTitle(Ext.util.Format.htmlEncode(decodeURI(node.getId())));
       folderInfoPanel.setIconCls(me.mixins.componentUtils.getIconForAsset(node).get('cls'));
       folderInfoPanel.show();
 

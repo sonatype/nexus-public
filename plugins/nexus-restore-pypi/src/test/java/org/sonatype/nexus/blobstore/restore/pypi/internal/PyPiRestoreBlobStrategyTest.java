@@ -20,6 +20,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Repository;
@@ -36,6 +37,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Matchers.any;
@@ -94,6 +96,15 @@ public class PyPiRestoreBlobStrategyTest
   @Mock
   PyPiRepairIndexComponent pyPiRepairIndexComponent;
 
+  @Mock
+  PyPiRestoreBlobDataFactory pyPiRestoreBlobDataFactory;
+
+  @Mock
+  PyPiRestoreBlobData pyPiRestoreBlobData;
+
+  @Mock
+  private RestoreBlobData restoreBlobData;
+
   Properties packageProps = new Properties();
 
   Properties indexProps = new Properties();
@@ -106,7 +117,8 @@ public class PyPiRestoreBlobStrategyTest
         repositoryManager,
         blobStoreManager,
         new DryRunPrefix("dryrun"),
-        pyPiRepairIndexComponent);
+        pyPiRepairIndexComponent,
+        pyPiRestoreBlobDataFactory);
 
     packageProps.setProperty("@BlobStore.created-by", "admin");
     packageProps.setProperty("size", "5674");
@@ -139,10 +151,16 @@ public class PyPiRestoreBlobStrategyTest
     when(blob.getInputStream()).thenReturn(new ByteArrayInputStream(blobBytes));
 
     when(blobStoreManager.get(TEST_BLOB_STORE_NAME)).thenReturn(blobStore);
+
+    when(pyPiRestoreBlobDataFactory.create(any())).thenReturn(pyPiRestoreBlobData);
+    when(pyPiRestoreBlobData.getBlobData()).thenReturn(restoreBlobData);
   }
 
   @Test
   public void testPackageRestore() throws Exception {
+    when(restoreBlobData.getRepository()).thenReturn(repository);
+    when(pyPiRestoreBlobData.getBlobData().getBlobName()).thenReturn(PACKAGE_PATH);
+
     underTest.restore(packageProps, blob, TEST_BLOB_STORE_NAME, false);
 
     verify(pyPiFacet).assetExists(PACKAGE_PATH);
@@ -153,6 +171,9 @@ public class PyPiRestoreBlobStrategyTest
 
   @Test
   public void testIndexRestore() throws Exception {
+    when(restoreBlobData.getRepository()).thenReturn(repository);
+    when(pyPiRestoreBlobData.getBlobData().getBlobName()).thenReturn(INDEX_PATH);
+
     underTest.restore(indexProps, blob, TEST_BLOB_STORE_NAME, false);
 
     verify(pyPiFacet).assetExists(INDEX_PATH);
@@ -172,6 +193,8 @@ public class PyPiRestoreBlobStrategyTest
 
   @Test
   public void testRestoreSkipExistingPackage() {
+    when(restoreBlobData.getRepository()).thenReturn(repository);
+    when(pyPiRestoreBlobData.getBlobData().getBlobName()).thenReturn(PACKAGE_PATH);
     when(pyPiFacet.assetExists(PACKAGE_PATH)).thenReturn(true);
 
     underTest.restore(packageProps, blob, TEST_BLOB_STORE_NAME, false);
@@ -199,5 +222,14 @@ public class PyPiRestoreBlobStrategyTest
     underTest.after(false, repository);
 
     verifyZeroInteractions(pyPiRepairIndexComponent);
+  }
+
+  @Test
+  public void blobDataIsCreated() {
+    when(pyPiRestoreBlobDataFactory.create(restoreBlobData)).thenReturn(pyPiRestoreBlobData);
+
+    assertThat(underTest.createRestoreData(restoreBlobData), is(pyPiRestoreBlobData));
+    verify(pyPiRestoreBlobDataFactory).create(restoreBlobData);
+    verifyNoMoreInteractions(pyPiRestoreBlobDataFactory, restoreBlobData);
   }
 }
