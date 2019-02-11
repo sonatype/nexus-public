@@ -34,10 +34,11 @@ define('Sonatype/repoServer/ArtifactInformationPanel', function() {
               links += ', ';
             }
 
-            var path = 'index.html#view-repositories;' + repositories[i].repositoryId + '~browsestorage~' + repositories[i].path;
+            var path = 'index.html#view-repositories;' + encodeURIComponent(repositories[i].repositoryId) 
+                        + '~browsestorage~' + encodeURIComponent(repositories[i].path);
             if (repositories[i].canView)
             {
-              links += '<a href="' + path + '">' + repositories[i].repositoryName + '</a>';
+              links += '<a href="' + path + '">' + NX.htmlRenderer(repositories[i].repositoryName) + '</a>';
             }
             else
             {
@@ -60,7 +61,7 @@ define('Sonatype/repoServer/ArtifactInformationPanel', function() {
           this.setRawValue(repositoryPath);
         }
         else {
-          this.setRawValue('<a href="' + repositoryPath.href + '" target="_blank">' + repositoryPath.path + '</a>');
+          this.setRawValue('<a href="' + repositoryPath.href + '" target="_blank">' + NX.htmlRenderer(repositoryPath.path) + '</a>');
         }
       }
       return this;
@@ -113,7 +114,7 @@ define('Sonatype/repoServer/ArtifactInformationPanel', function() {
                 readOnly : true,
                 formatter : function(value) {
                   if (value) {
-                    return Ext.util.Format.htmlEncode(value);
+                    return NX.htmlRenderer(value);
                   }
                 }
               }, {

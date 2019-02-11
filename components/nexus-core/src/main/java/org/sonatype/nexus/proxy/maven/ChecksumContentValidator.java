@@ -121,7 +121,7 @@ public class ChecksumContentValidator
   {
     RepositoryItemUid uid = item.getRepositoryItemUid();
 
-    ResourceStoreRequest request = new ResourceStoreRequest(item);
+    ResourceStoreRequest request = new ResourceStoreRequest(item, false);
 
     RemoteHashResponse response = null;
     try {
@@ -185,7 +185,7 @@ public class ChecksumContentValidator
       }
 
       String hash = attributes.get(attrname);
-      if (hash == null || request.isRequestAsExpired() || attributes.containsKey(ATTR_REMOTE_HASH_EXPIRED)) {
+      if ((hash == null || request.isRequestAsExpired() || attributes.containsKey(ATTR_REMOTE_HASH_EXPIRED)) && !request.isRequestLocalOnly()) {
         try {
           final StorageFileItem remoteItem =
               (StorageFileItem) proxy.getRemoteStorage().retrieveItem(proxy, request, proxy.getRemoteUrl());

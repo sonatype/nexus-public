@@ -121,11 +121,13 @@ define('Sonatype/repoServer/SearchResultGrid', function() {
     this.columns =  [{
         header : 'Group',
         dataIndex : 'groupId',
-        sortable : true
+        sortable : true,
+        renderer: NX.htmlRenderer
       }, {
         header : 'Artifact',
         dataIndex : 'artifactId',
-        sortable : true
+        sortable : true,
+        renderer: NX.htmlRenderer
       }, {
         header : 'Version',
         dataIndex : 'version',
@@ -258,7 +260,7 @@ define('Sonatype/repoServer/SearchResultGrid', function() {
         formatVersionLink : function(value, p, record, rowIndex, colIndex, store) {
           if (!store.reader.jsonData.collapsed)
           {
-            return record.get('version');
+            return NX.htmlRenderer(record.get('version'));
           }
 
           var latest = record.get('latestRelease');
@@ -268,14 +270,14 @@ define('Sonatype/repoServer/SearchResultGrid', function() {
             latest = record.get('latestSnapshot');
           }
 
-          var linkMarkup = '<a href="#nexus-search;gav~' + record.get('groupId') + '~' + record.get('artifactId')
+          var linkMarkup = '<a href="#nexus-search;gav~' + encodeURIComponent(record.get('groupId')) + '~'
+                  + encodeURIComponent(record.get('artifactId'))
                   + '~~~~kw,versionexpand" onmousedown="cancel_bubble(event)" onclick="cancel_bubble(event); return true;">';
 
           if (store.reader.jsonData.tooManyResults) {
             return linkMarkup + 'Show All Versions</a>';
           } else {
-            return 'Latest: ' + latest + ' ' + linkMarkup + '(Show All Versions)</a>';
-
+            return 'Latest: ' + NX.htmlRenderer(latest) + ' ' + linkMarkup + '(Show All Versions)</a>';
           }
 
         },
@@ -320,12 +322,14 @@ define('Sonatype/repoServer/SearchResultGrid', function() {
                 ver = record.data.latestSnapshot;
               }
             }
-
-            var link = Sonatype.config.repos.urls.redirect + '?r=' + rep + '&g=' + grp + '&a=' + art + '&v=' + ver + '&e=' + ext;
+                    
+            var link = Sonatype.config.repos.urls.redirect + '?r=' + encodeURIComponent(rep)
+                        + '&g=' + encodeURIComponent(grp) + '&a=' + encodeURIComponent(art)
+                        + '&v=' + encodeURIComponent(ver) + '&e=' + encodeURIComponent(ext);
 
             if (!Ext.isEmpty(cls))
             {
-              link += '&c=' + cls;
+              link += '&c=' + encodeURIComponent(cls);
             }
 
             var icon = null;
@@ -350,7 +354,7 @@ define('Sonatype/repoServer/SearchResultGrid', function() {
 
             if (icon)
             {
-              desc = '<img src="' + icon + '" title=' + desc + ' />';
+              desc = '<img src="' + icon + '" title=' + NX.htmlRenderer(desc) + ' />';
             }
 
             desc = '<a href="' + link + '" onmousedown="cancel_bubble(event)" onclick="cancel_bubble(event); return true;" target="_blank">'

@@ -31,7 +31,7 @@ NX.define('Nexus.capabilities.factory.DateFieldFactory', {
   create: function (formField) {
     var item = {
       xtype: 'datefield',
-      htmlDecode: true,
+      renderer: NX.htmlRenderer,
       fieldLabel: formField.label,
       itemCls: formField.required ? 'required-field' : '',
       helpText: formField.helpText,

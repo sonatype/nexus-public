@@ -109,6 +109,14 @@ public class ResourceStoreRequest
   }
 
   /**
+   * Creates a request for a given item.
+   */
+  public ResourceStoreRequest(final StorageItem item, final boolean localOnly) {
+    this(item.getRepositoryItemUid().getPath(), localOnly, false);
+    getRequestContext().setParentContext(item.getItemContext());
+  }
+
+  /**
    * Creates a new request off from a given one, item is expected to be already present (locally).
    */
   public ResourceStoreRequest(final ResourceStoreRequest request) {

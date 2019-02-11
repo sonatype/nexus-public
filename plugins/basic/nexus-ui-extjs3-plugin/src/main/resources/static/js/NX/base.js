@@ -143,7 +143,18 @@ define('NX/base', ['require'], function(require) {
           }
 
           return NX.construct(type, args);
-      }
+      },
 
+      htmlRenderer: (function() {
+        var div = document.createElement('div');
+
+        return function(value) {
+          while (div.hasChildNodes()) {
+            div.removeChild(div.firstChild);
+          }
+          div.appendChild(document.createTextNode(value));
+          return div.innerHTML;
+        }
+      })()
   });
 });

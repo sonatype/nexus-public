@@ -123,7 +123,8 @@ NX.define('Nexus.capabilities.CapabilitiesGridStore', {
           width: 175,
           header: 'Type',
           dataIndex: 'typeName',
-          sortable: true
+          sortable: true,
+          renderer: NX.htmlRenderer
         }
     );
 
@@ -135,7 +136,8 @@ NX.define('Nexus.capabilities.CapabilitiesGridStore', {
               width: 100,
               header: key,
               dataIndex: 'tag$' + key,
-              sortable: true
+              sortable: true,
+              renderer: NX.htmlRenderer
             }
         );
       });
@@ -147,14 +149,16 @@ NX.define('Nexus.capabilities.CapabilitiesGridStore', {
           width: 250,
           header: 'Description',
           dataIndex: 'description',
-          sortable: true
+          sortable: true,
+          renderer: NX.htmlRenderer
         },
         {
           id: 'notes',
           width: 175,
           header: 'Notes',
           dataIndex: 'notes',
-          sortable: true
+          sortable: true,
+          renderer: NX.htmlRenderer
         }
     );
 
