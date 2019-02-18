@@ -38,6 +38,7 @@ import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.CON
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.JMX
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.LOG
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.TASKLOG
+import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.AUDITLOG
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.METRICS
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.SECURITY
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.SYSINFO
@@ -109,6 +110,9 @@ class SupportZipGeneratorImpl
     }
     if (request.taskLog) {
       types << TASKLOG
+    }
+    if (request.auditLog) {
+      types << AUDITLOG
     }
     if (request.jmx) {
       types << JMX

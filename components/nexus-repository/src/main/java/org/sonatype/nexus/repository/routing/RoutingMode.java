@@ -10,32 +10,20 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext, NX*/
+package org.sonatype.nexus.repository.routing;
 
 /**
- * Audit store.
- *
- * @since 3.1
+ * @since 3.next
  */
-Ext.define('NX.coreui.audit.AuditStore', {
-  extend: 'Ext.data.Store',
-  model: 'NX.coreui.audit.AuditModel',
+public enum RoutingMode
+{
+  /**
+   * Allow requests that match the rule(s)
+   */
+  ALLOW,
 
-  pageSize: 250,
-
-  proxy: {
-    type: 'direct',
-
-    api: {
-      read: 'NX.direct.audit_Audit.read'
-    },
-
-    reader: {
-      type: 'json',
-      rootProperty: 'data',
-      successProperty: 'success'
-    }
-  },
-
-  sorters: { property: 'timestamp', direction: 'ASC' }
-});
+  /**
+   * Block requests that match the rule(s)
+   */
+  BLOCK
+}

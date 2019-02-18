@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.rest;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -21,21 +22,34 @@ import org.sonatype.nexus.repository.search.DefaultSearchContribution;
 import org.sonatype.nexus.repository.search.KeywordSearchContribution;
 import org.sonatype.nexus.repository.search.SearchContribution;
 
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.search.sort.SortBuilder;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.hamcrest.Matcher;
 import org.jboss.resteasy.spi.ResteasyUriInfo;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import static java.util.Collections.singletonList;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.powermock.api.mockito.PowerMockito.mock;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(XContentBuilder.class)
 public class SearchUtilsTest
     extends TestSupport
 {
@@ -126,5 +140,153 @@ public class SearchUtilsTest
     assertThat(query, containsString("parameter"));
     assertThat(query, parameterMatcher);
     assertThat(query, not(containsString("continuationToken")));
+  }
+
+  @Test
+  public void testGetSortBuilders_byGroup() throws Exception {
+    List<SortBuilder> sortBuilders = underTest.getSortBuilders("group", "asc");
+    assertThat(sortBuilders.size(), is(3));
+    assertSearchBuilder(sortBuilders.get(0), "group.case_insensitive", "asc");
+    assertSearchBuilder(sortBuilders.get(1), "name.case_insensitive", "asc");
+    assertSearchBuilder(sortBuilders.get(2), "version", "asc");
+  }
+
+  @Test
+  public void testGetSortBuilders_byGroupDescending() throws Exception{
+    List<SortBuilder> sortBuilders = underTest.getSortBuilders("group", "desc");
+    assertThat(sortBuilders.size(), is(3));
+    assertSearchBuilder(sortBuilders.get(0), "group.case_insensitive", "desc");
+    assertSearchBuilder(sortBuilders.get(1), "name.case_insensitive", "asc");
+    assertSearchBuilder(sortBuilders.get(2), "version", "asc");
+  }
+
+  @Test
+  public void testGetSortBuilders_byGroupDefaultSort() throws Exception {
+    List<SortBuilder> sortBuilders = underTest.getSortBuilders("group", null);
+    assertThat(sortBuilders.size(), is(3));
+    assertSearchBuilder(sortBuilders.get(0), "group.case_insensitive", "asc");
+    assertSearchBuilder(sortBuilders.get(1), "name.case_insensitive", "asc");
+    assertSearchBuilder(sortBuilders.get(2), "version", "asc");
+  }
+
+  @Test
+  public void testGetSortBuilders_byName() throws Exception {
+    List<SortBuilder> sortBuilders = underTest.getSortBuilders("name", "asc");
+    assertThat(sortBuilders.size(), is(3));
+    assertSearchBuilder(sortBuilders.get(0), "name.case_insensitive", "asc");
+    assertSearchBuilder(sortBuilders.get(1), "version", "asc");
+    assertSearchBuilder(sortBuilders.get(2), "group.case_insensitive", "asc");
+  }
+
+  @Test
+  public void testGetSortBuilders_byNameDescending() throws Exception{
+    List<SortBuilder> sortBuilders = underTest.getSortBuilders("name", "desc");
+    assertThat(sortBuilders.size(), is(3));
+    assertSearchBuilder(sortBuilders.get(0), "name.case_insensitive", "desc");
+    assertSearchBuilder(sortBuilders.get(1), "version", "asc");
+    assertSearchBuilder(sortBuilders.get(2), "group.case_insensitive", "asc");
+  }
+
+  @Test
+  public void testGetSortBuilders_byNameDefaultSort() throws Exception {
+    List<SortBuilder> sortBuilders = underTest.getSortBuilders("name", null);
+    assertThat(sortBuilders.size(), is(3));
+    assertSearchBuilder(sortBuilders.get(0), "name.case_insensitive", "asc");
+    assertSearchBuilder(sortBuilders.get(1), "version", "asc");
+    assertSearchBuilder(sortBuilders.get(2), "group.case_insensitive", "asc");
+  }
+
+  @Test
+  public void testGetSortBuilders_byRepository() throws Exception {
+    List<SortBuilder> sortBuilders = underTest.getSortBuilders("repository", "asc");
+    assertThat(sortBuilders.size(), is(1));
+    assertSearchBuilder(sortBuilders.get(0), "repository_name", "asc");
+  }
+
+  @Test
+  public void testGetSortBuilders_byRepositoryDescending() throws Exception{
+    List<SortBuilder> sortBuilders = underTest.getSortBuilders("repository", "desc");
+    assertThat(sortBuilders.size(), is(1));
+    assertSearchBuilder(sortBuilders.get(0), "repository_name", "desc");
+  }
+
+  @Test
+  public void testGetSortBuilders_byRepositoryDefaultSort() throws Exception {
+    List<SortBuilder> sortBuilders = underTest.getSortBuilders("repository", null);
+    assertThat(sortBuilders.size(), is(1));
+    assertSearchBuilder(sortBuilders.get(0), "repository_name", "asc");
+  }
+
+  @Test
+  public void testGetSortBuilders_byRepositoryName() throws Exception {
+    List<SortBuilder> sortBuilders = underTest.getSortBuilders("repositoryName", "asc");
+    assertThat(sortBuilders.size(), is(1));
+    assertSearchBuilder(sortBuilders.get(0), "repository_name", "asc");
+  }
+
+  @Test
+  public void testGetSortBuilders_byRepositoryNameDescending() throws Exception{
+    List<SortBuilder> sortBuilders = underTest.getSortBuilders("repositoryName", "desc");
+    assertThat(sortBuilders.size(), is(1));
+    assertSearchBuilder(sortBuilders.get(0), "repository_name", "desc");
+  }
+
+  @Test
+  public void testGetSortBuilders_byRepositoryNameDefaultSort() throws Exception {
+    List<SortBuilder> sortBuilders = underTest.getSortBuilders("repositoryName", null);
+    assertThat(sortBuilders.size(), is(1));
+    assertSearchBuilder(sortBuilders.get(0), "repository_name", "asc");
+  }
+
+  @Test
+  public void testGetSortBuilders_byVersion() throws Exception {
+    List<SortBuilder> sortBuilders = underTest.getSortBuilders("version", "asc");
+    assertThat(sortBuilders.size(), is(1));
+    assertSearchBuilder(sortBuilders.get(0), "normalized_version", "asc");
+  }
+
+  @Test
+  public void testGetSortBuilders_byVersionDescending() throws Exception{
+    List<SortBuilder> sortBuilders = underTest.getSortBuilders("version", "desc");
+    assertThat(sortBuilders.size(), is(1));
+    assertSearchBuilder(sortBuilders.get(0), "normalized_version", "desc");
+  }
+
+  @Test
+  public void testGetSortBuilders_byVersionDefaultSort() throws Exception {
+    List<SortBuilder> sortBuilders = underTest.getSortBuilders("version", null);
+    assertThat(sortBuilders.size(), is(1));
+    assertSearchBuilder(sortBuilders.get(0), "normalized_version", "desc");
+  }
+
+  @Test
+  public void testGetSortBuilders_byOtherField() throws Exception {
+    List<SortBuilder> sortBuilders = underTest.getSortBuilders("otherfield", "asc");
+    assertThat(sortBuilders.size(), is(1));
+    assertSearchBuilder(sortBuilders.get(0), "otherfield", "asc");
+  }
+
+  @Test
+  public void testGetSortBuilders_byOtherFieldDescending() throws Exception{
+    List<SortBuilder> sortBuilders = underTest.getSortBuilders("otherfield", "desc");
+    assertThat(sortBuilders.size(), is(1));
+    assertSearchBuilder(sortBuilders.get(0), "otherfield", "desc");
+  }
+
+  @Test
+  public void testGetSortBuilders_byOtherField_whenNotSupported() throws Exception {
+    List<SortBuilder> sortBuilders = underTest.getSortBuilders("otherfield", "asc", false);
+    assertThat(sortBuilders.isEmpty(), is(true));
+  }
+
+  private void assertSearchBuilder(SortBuilder sortBuilder, String field, String order) throws Exception {
+    //see https://github.com/elastic/elasticsearch/issues/20853 as to why i can't do something simple like
+    //assertThat(sortBuilders.get(0).toString(), is("somejson"));
+    XContentBuilder xContentBuilder = mock(XContentBuilder.class);
+    sortBuilder.toXContent(xContentBuilder, ToXContent.EMPTY_PARAMS);
+    verify(xContentBuilder).startObject(field);
+    verify(xContentBuilder).field("order", order);
+    verify(xContentBuilder).endObject();
+    verifyNoMoreInteractions(xContentBuilder);
   }
 }

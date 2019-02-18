@@ -1,4 +1,4 @@
-#*
+/*
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
  * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
@@ -9,7 +9,26 @@
  * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
- *###
-<p>
-Approximate number of audit records: ${auditStore.approximateSize()}
-</p>
+ */
+package org.sonatype.nexus.repository.routing;
+
+import java.util.List;
+
+import javax.annotation.Nullable;
+
+/**
+ * @since 3.next
+ */
+public interface RoutingRuleStore
+{
+  RoutingRule create(RoutingRule rule);
+
+  void update(RoutingRule rule);
+
+  void delete(RoutingRule rule);
+
+  List<RoutingRule> list();
+
+  @Nullable
+  RoutingRule getByName(String name);
+}

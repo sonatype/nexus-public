@@ -25,6 +25,7 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.sonatype.nexus.logging.task.TaskLogger.TASK_LOG_ONLY_MDC;
 import static org.sonatype.nexus.logging.task.TaskLogger.TASK_LOG_WITH_PROGRESS_MDC;
+import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.AUDIT_LOG_ONLY;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.INTERNAL_PROGRESS;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.PROGRESS;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
@@ -86,6 +87,12 @@ public class NexusLogFilterTest
   @Test
   public void testTaskOnlyMDCConstant_InMDC() {
     MDC.put(TASK_LOG_ONLY_MDC, "anything");
+    assertThat(excludeProgressLogsFilter.decide(event), equalTo(DENY));
+  }
+
+  @Test
+  public void testAuditLogNotWrittenToNexusLog() {
+    MDC.put(MDC_MARKER_ID, AUDIT_LOG_ONLY.getName());
     assertThat(excludeProgressLogsFilter.decide(event), equalTo(DENY));
   }
 }

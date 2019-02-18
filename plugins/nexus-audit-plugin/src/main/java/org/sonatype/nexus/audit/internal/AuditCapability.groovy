@@ -67,9 +67,6 @@ class AuditCapability
   static final Messages messages = I18N.create(Messages.class)
 
   @Inject
-  AuditStore auditStore
-
-  @Inject
   AuditRecorderImpl auditRecorder
 
   @Override
@@ -84,17 +81,6 @@ class AuditCapability
       return messages.enabled()
     }
     return messages.disabled()
-  }
-
-  @Override
-  @Nullable
-  protected String renderStatus() {
-    if (context().active) {
-      return render("$TYPE_ID-status.vm", [
-          auditStore: auditStore
-      ])
-    }
-    return null
   }
 
   @Override

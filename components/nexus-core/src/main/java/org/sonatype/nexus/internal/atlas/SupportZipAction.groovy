@@ -55,6 +55,9 @@ class SupportZipAction
   @Option(name='-a', aliases = '--tasklog', description = 'Include task log files')
   boolean taskLog = true
 
+  @Option(name='-au', aliases = '--auditlog', description = 'Include audit log files')
+  boolean auditLog = true
+
   @Option(name='-Lf', aliases = '--limit-files', description = 'Limit size of included files')
   boolean limitFileSizes = false
 
@@ -71,6 +74,7 @@ class SupportZipAction
         security: security,
         log: log,
         taskLog: taskLog,
+        auditLog: auditLog,
         limitFileSizes: limitFileSizes,
         limitZipSize: limitZipSize
     )

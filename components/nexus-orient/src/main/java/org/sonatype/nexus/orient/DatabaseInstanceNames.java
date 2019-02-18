@@ -39,17 +39,12 @@ public class DatabaseInstanceNames
   public static final String SECURITY = "security";
 
   /**
-   * Name of the database storing records from the audit feature.
-   */
-  public static final String AUDIT = "audit";
-
-  /**
    * Name of the database storing access log data for licensing.
    */
   public static final String ACCESSLOG = "accesslog";
 
   public static final Set<String> DATABASE_NAMES = ImmutableSet.of(
-      ACCESSLOG, AUDIT, CONFIG, COMPONENT, SECURITY);
+      ACCESSLOG, CONFIG, COMPONENT, SECURITY);
 
   private DatabaseInstanceNames() {
     // no construction

@@ -34,6 +34,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseService;
 import org.sonatype.nexus.repository.rest.SearchResourceExtension;
@@ -54,10 +55,12 @@ import org.elasticsearch.search.SearchHit;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
-import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.sonatype.nexus.repository.rest.SearchUtils.CONTINUATION_TOKEN;
+import static org.sonatype.nexus.repository.rest.SearchUtils.SORT_DIRECTION;
+import static org.sonatype.nexus.repository.rest.SearchUtils.SORT_FIELD;
 import static org.sonatype.nexus.repository.rest.api.AssetXO.fromAsset;
 import static org.sonatype.nexus.repository.rest.api.AssetXO.fromElasticSearchMap;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.GROUP;
@@ -120,13 +123,17 @@ public class SearchResource
 
   @GET
   public Page<ComponentXO> search(
-      @QueryParam("continuationToken") final String continuationToken,
+      @QueryParam(CONTINUATION_TOKEN) final String continuationToken,
+      @QueryParam(SORT_FIELD) final String sort,
+      @QueryParam(SORT_DIRECTION) final String direction,
       @Context final UriInfo uriInfo)
   {
     QueryBuilder query = searchUtils.buildQuery(uriInfo);
 
     int from = tokenEncoder.decode(continuationToken, query);
-    SearchResponse response = searchService.search(query, emptyList(), from, getPageSize());
+
+    SearchResponse response = searchService
+        .search(query, searchUtils.getSortBuilders(sort, direction, false), from, getPageSize());
 
     List<ComponentXO> componentXOs = Arrays.stream(response.getHits().hits())
         .map(this::toComponent)
@@ -169,14 +176,17 @@ public class SearchResource
   @GET
   @Path(SEARCH_ASSET_URI)
   public Page<AssetXO> searchAssets(
-      @QueryParam("continuationToken") final String continuationToken,
+      @QueryParam(CONTINUATION_TOKEN) final String continuationToken,
+      @QueryParam(SORT_FIELD) final String sort,
+      @QueryParam(SORT_DIRECTION) final String direction,
       @Context final UriInfo uriInfo)
   {
     QueryBuilder query = searchUtils.buildQuery(uriInfo);
 
     int from = tokenEncoder.decode(continuationToken, query);
 
-    SearchResponse componentResponse = searchService.search(query, emptyList(), from, getPageSize());
+    SearchResponse componentResponse = searchService
+        .search(query, searchUtils.getSortBuilders(sort, direction, false), from, getPageSize());
 
     List<AssetXO> assetXOs = retrieveAssets(componentResponse, uriInfo);
     return new Page<>(assetXOs, componentResponse.getHits().hits().length == getPageSize() ?
@@ -188,13 +198,15 @@ public class SearchResource
    */
   @GET
   @Path(SEARCH_AND_DOWNLOAD_URI)
-  public Response searchAndDownloadAssets(@Context final UriInfo uriInfo)
+  public Response searchAndDownloadAssets(@QueryParam(SORT_FIELD) final String sort,
+                                          @QueryParam(SORT_DIRECTION) final String direction,
+                                          @Context final UriInfo uriInfo)
   {
     QueryBuilder query = searchUtils.buildQuery(uriInfo);
 
-    List<AssetXO> assetXOs = retrieveAssets(query, uriInfo);
+    List<AssetXO> assetXOs = retrieveAssets(query, sort, direction, uriInfo);
 
-    return new AssetDownloadResponseProcessor(assetXOs).process();
+    return new AssetDownloadResponseProcessor(assetXOs, !Strings2.isEmpty(sort)).process();
   }
 
   private List<AssetXO> retrieveAssets(final SearchResponse response, final UriInfo uriInfo) {
@@ -206,12 +218,22 @@ public class SearchResource
         .collect(toList());
   }
 
-  private List<AssetXO> retrieveAssets(final QueryBuilder query, final UriInfo uriInfo, final int from) {
-    return this.retrieveAssets(searchService.search(query, emptyList(), from, getPageSize()), uriInfo);
+  private List<AssetXO> retrieveAssets(final QueryBuilder query,
+                                       final String sort,
+                                       final String direction,
+                                       final UriInfo uriInfo,
+                                       final int from)
+  {
+    return this.retrieveAssets(
+        searchService.search(query, searchUtils.getSortBuilders(sort, direction, false), from, getPageSize()), uriInfo);
   }
 
-  private List<AssetXO> retrieveAssets(final QueryBuilder query, final UriInfo uriInfo) {
-    return this.retrieveAssets(query, uriInfo, 0);
+  private List<AssetXO> retrieveAssets(final QueryBuilder query,
+                                       final String sort,
+                                       final String direction,
+                                       final UriInfo uriInfo)
+  {
+    return this.retrieveAssets(query, sort, direction, uriInfo, 0);
   }
 
   @SuppressWarnings("unchecked")

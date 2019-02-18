@@ -35,12 +35,15 @@ public class AssetDownloadResponseProcessor
 {
   public static final String NO_SEARCH_RESULTS_FOUND = "Asset search returned no results";
 
-  public static final String SEARCH_RETURNED_MULTIPLE_ASSETS = "Search returned multiple assets, please refine search criteria to find a single asset";
+  public static final String SEARCH_RETURNED_MULTIPLE_ASSETS = "Search returned multiple assets, please refine search criteria to find a single asset or use the sort query parameter to retrieve the first result.";
 
   private final List<AssetXO> assetXOs;
 
-  AssetDownloadResponseProcessor(final List<AssetXO> assetXOs) {
+  private final boolean sorted;
+
+  AssetDownloadResponseProcessor(final List<AssetXO> assetXOs, boolean sorted) {
     this.assetXOs = assetXOs;
+    this.sorted = sorted;
   }
 
   /**
@@ -55,11 +58,12 @@ public class AssetDownloadResponseProcessor
       throw new WebApplicationMessageException(NOT_FOUND, NO_SEARCH_RESULTS_FOUND);
     }
 
-    if (assetXOs.size() > 1)  {
+    //if there more than 1 result, and no sort, we throw an error
+    if (assetXOs.size() > 1 && !sorted)  {
       throw new WebApplicationMessageException(BAD_REQUEST, SEARCH_RETURNED_MULTIPLE_ASSETS);
     }
 
-    //Case when only a single assetXO is present
+    //if only 1 result, or sorting enabled, return the 1st one
     return getResponse(assetXOs.get(0));
   }
 

@@ -35,14 +35,6 @@ import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import org.apache.shiro.authz.annotation.RequiresPermissions
 import org.elasticsearch.action.search.SearchResponse
 import org.elasticsearch.index.query.QueryBuilder
-import org.elasticsearch.search.sort.SortOrder
-
-import static org.elasticsearch.search.sort.SortBuilders.fieldSort
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.GROUP
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.NAME
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.NORMALIZED_VERSION
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REPOSITORY_NAME
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.VERSION
 
 /**
  * Search {@link DirectComponent}.
@@ -97,31 +89,9 @@ class SearchComponent
 
     try {
       def sort = parameters?.sort?.get(0)
-      def sortBuilders = []
-      if (sort) {
-        switch (sort.property) {
-          case GROUP:
-            sortBuilders << fieldSort("${GROUP}.case_insensitive").order(SortOrder.valueOf(sort.direction))
-            sortBuilders << fieldSort("${NAME}.case_insensitive").order(SortOrder.ASC)
-            sortBuilders << fieldSort(VERSION).order(SortOrder.ASC)
-            break
-          case NAME:
-            sortBuilders << fieldSort("${NAME}.case_insensitive").order(SortOrder.valueOf(sort.direction))
-            sortBuilders << fieldSort(VERSION).order(SortOrder.ASC)
-            sortBuilders << fieldSort("${GROUP}.case_insensitive").order(SortOrder.ASC)
-            break
-          case 'repositoryName':
-            sortBuilders = [fieldSort(REPOSITORY_NAME).order(SortOrder.valueOf(sort.direction))]
-            break
-          case 'version':
-            sortBuilders << fieldSort(NORMALIZED_VERSION).order(SortOrder.valueOf(sort.direction))
-            break
-          default:
-            sortBuilders = [fieldSort(sort.property).order(SortOrder.valueOf(sort.direction))]
-        }
-      }
 
-      SearchResponse response = searchService.search(query, sortBuilders, parameters.start, parameters.limit)
+      SearchResponse response = searchService.search(query,
+          searchUtils.getSortBuilders(sort?.property, sort?.direction), parameters.start, parameters.limit)
       List<SearchResultComponent> searchResultComponents = searchResultsGenerator.getSearchResultList(response)
 
       return new LimitedPagedResponse<ComponentXO>(

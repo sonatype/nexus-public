@@ -42,9 +42,6 @@ class AuditRecorderImplTest
   NodeAccess nodeAccess
 
   @Mock
-  AuditStore auditStore
-
-  @Mock
   InitiatorProvider initiatorProvider
 
   AuditRecorderImpl underTest
@@ -58,7 +55,7 @@ class AuditRecorderImplTest
     when(initiatorProvider.get()).thenReturn(initiator)
     when(nodeAccess.getId()).thenReturn(nodeId)
 
-    underTest = new AuditRecorderImpl(eventManager, nodeAccess, auditStore, initiatorProvider)
+    underTest = new AuditRecorderImpl(eventManager, nodeAccess, initiatorProvider)
     underTest.enabled = true
   }
 
@@ -76,7 +73,7 @@ class AuditRecorderImplTest
     underTest.enabled = false
     underTest.record(data)
 
-    verifyZeroInteractions(auditStore)
+    verifyZeroInteractions(eventManager)
   }
 
   @Test
@@ -84,14 +81,14 @@ class AuditRecorderImplTest
     AuditData data = makeAuditData()
     underTest.record(data)
 
-    def argument = ArgumentCaptor.forClass(AuditData.class)
-    verify(auditStore).add(argument.capture())
-    verifyNoMoreInteractions(auditStore)
+    def argument = ArgumentCaptor.forClass(Object.class)
+    verify(eventManager).post(argument.capture())
+    verifyNoMoreInteractions(eventManager)
 
-    AuditData captured = argument.value
-    assert captured.timestamp != null
-    assert captured.nodeId == nodeId
-    assert captured.initiator == initiator
+    AuditDataRecordedEvent captured = (AuditDataRecordedEvent) argument.value
+    assert captured.data.timestamp != null
+    assert captured.data.nodeId == nodeId
+    assert captured.data.initiator == initiator
   }
 
   @Test

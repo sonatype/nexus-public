@@ -10,26 +10,28 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.audit.internal;
+package org.sonatype.nexus.pax.logging;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.filter.Filter;
+import ch.qos.logback.core.spi.FilterReply;
+import org.slf4j.MDC;
 
-import org.sonatype.nexus.capability.CapabilityBooterSupport;
-import org.sonatype.nexus.capability.CapabilityRegistry;
+import static ch.qos.logback.core.spi.FilterReply.ACCEPT;
+import static ch.qos.logback.core.spi.FilterReply.DENY;
+import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.AUDIT_LOG_ONLY;
+import static org.sonatype.nexus.pax.logging.NexusLogFilter.MDC_MARKER_ID;
 
 /**
- * Audit {@link CapabilityBooterSupport}.
+ * Logback {@link Filter} for audit logs. Ensures that the audit logs get the appropriate entries.
  *
- * @since 3.1
+ * @since 3.next
  */
-@Named
-@Singleton
-public class AuditCapabilityBooter
-    extends CapabilityBooterSupport
+public class AuditLogFilter
+    extends Filter<ILoggingEvent>
 {
   @Override
-  protected void boot(final CapabilityRegistry registry) throws Exception {
-    maybeAddCapability(registry, AuditCapability.TYPE, true, null, null);
+  public FilterReply decide(final ILoggingEvent event) {
+    return AUDIT_LOG_ONLY.getName().equals(MDC.get(MDC_MARKER_ID)) ? ACCEPT : DENY;
   }
 }

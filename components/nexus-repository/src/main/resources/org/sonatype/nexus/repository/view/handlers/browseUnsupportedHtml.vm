@@ -74,19 +74,11 @@
         This ${repository.format} ${repository.type} repository is not directly browseable at this URL.
       </p>
 
-      #if($treeEnabled)
       <p>
         Please use the <a href="$nexusUrl/#browse/browse:${repository.name}">browse</a>
         or <a href="$nexusUrl/service/rest/repository/browse/${repository.name}/">HTML index</a>
         views to inspect the contents of this repository.
       </p>
-      #else
-        <p>
-          Please use the <a href="$nexusUrl/#browse/browse/components:${repository.name}">component browser</a>
-          or <a href="$nexusUrl/#browse/browse/assets:${repository.name}">asset browser</a>
-          to inspect the contents of this repository.
-        </p>
-      #end
     </div>
   </div>
 </body>

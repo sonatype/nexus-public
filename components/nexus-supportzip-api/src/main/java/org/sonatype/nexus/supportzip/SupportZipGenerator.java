@@ -62,6 +62,12 @@ public interface SupportZipGenerator
     private boolean taskLog;
 
     /**
+     * Include audit log files.
+     * @since 3.next
+     */
+    private boolean auditLog;
+
+    /**
      * Include JMX information.
      */
     private boolean jmx;
@@ -132,6 +138,14 @@ public interface SupportZipGenerator
       this.taskLog = taskLog;
     }
 
+    public boolean isAuditLog() {
+      return auditLog;
+    }
+
+    public void setAuditLog(final boolean auditLog) {
+      this.auditLog = auditLog;
+    }
+
     public boolean isJmx() {
       return jmx;
     }
@@ -166,6 +180,7 @@ public interface SupportZipGenerator
           ", security=" + security +
           ", log=" + log +
           ", tasklog=" + taskLog +
+          ", auditlog=" + auditLog +
           ", jmx=" + jmx +
           ", limitFileSizes=" + limitFileSizes +
           ", limitZipSize=" + limitZipSize +

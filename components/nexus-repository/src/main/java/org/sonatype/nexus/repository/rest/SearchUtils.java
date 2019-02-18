@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.rest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -34,12 +35,21 @@ import org.sonatype.nexus.repository.search.SearchFilter;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.sort.SortBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.StreamSupport.stream;
+import static org.elasticsearch.search.sort.SortBuilders.fieldSort;
+import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.GROUP;
+import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.NAME;
+import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.NORMALIZED_VERSION;
+import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REPOSITORY_NAME;
+import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.VERSION;
 
 /**
  * @since 3.7
@@ -49,9 +59,15 @@ import static java.util.stream.StreamSupport.stream;
 public class SearchUtils
     extends ComponentSupport
 {
-  private static final String CONTINUATION_TOKEN = "continuationToken";
+  public static final String CONTINUATION_TOKEN = "continuationToken";
+
+  public static final String SORT_FIELD = "sort";
+
+  public static final String SORT_DIRECTION = "direction";
 
   private static final String ASSET_PREFIX = "assets.";
+
+  private static final String CI_SUFFIX = ".case_insensitive";
 
   private final RepositoryManagerRESTAdapter repoAdapter;
 
@@ -116,13 +132,16 @@ public class SearchUtils
    * @param uriInfo {@link UriInfo} to extract query parameters from
    */
   public QueryBuilder buildQuery(final UriInfo uriInfo) {
-    Collection<SearchFilter> searchFilters = convertParameters(uriInfo, singletonList(CONTINUATION_TOKEN));
+    Collection<SearchFilter> searchFilters = convertParameters(uriInfo,
+        Arrays.asList(CONTINUATION_TOKEN, SORT_FIELD, SORT_DIRECTION));
     return buildQuery(searchFilters);
   }
 
   public QueryBuilder buildQuery(final UriInfo uriInfo, final List<String> parameters) {
     ArrayList<String> filterParameters = new ArrayList<>();
     filterParameters.add(CONTINUATION_TOKEN);
+    filterParameters.add(SORT_FIELD);
+    filterParameters.add(SORT_DIRECTION);
     filterParameters.addAll(parameters);
     return buildQuery(convertParameters(uriInfo, filterParameters));
   }
@@ -146,5 +165,69 @@ public class SearchUtils
 
   public String getFullAssetAttributeName(final String key) {
     return isFullAssetAttributeName(key) ? key : getAssetSearchParameters().get(key);
+  }
+
+  public List<SortBuilder> getSortBuilders(final String sort, final String direction) {
+    return getSortBuilders(sort, direction, true);
+  }
+
+  public List<SortBuilder> getSortBuilders(final String sort, final String direction, boolean allowAnySort) {
+    if (sort == null) {
+      return emptyList();
+    }
+
+    switch (sort) {
+      case GROUP:
+        return handleGroupSort(direction);
+      case NAME:
+        return handleNameSort(direction);
+      case VERSION:
+        return handleVersionSort(direction);
+      case "repository":
+      case "repositoryName":
+        return handleRepositoryNameSort(direction);
+      default:
+        return handleOtherSort(sort, direction, allowAnySort);
+    }
+  }
+
+  private List<SortBuilder> handleGroupSort(String direction) {
+    return Arrays.asList(fieldSort(GROUP + CI_SUFFIX).order(getValidSortOrder(direction, SortOrder.ASC)),
+        fieldSort(NAME + CI_SUFFIX).order(SortOrder.ASC), fieldSort(VERSION).order(SortOrder.ASC));
+  }
+
+  private List<SortBuilder> handleNameSort(String direction) {
+    return Arrays.asList(fieldSort(NAME + CI_SUFFIX).order(getValidSortOrder(direction, SortOrder.ASC)),
+        fieldSort(VERSION).order(SortOrder.ASC), fieldSort(GROUP + CI_SUFFIX).order(SortOrder.ASC));
+  }
+
+  private List<SortBuilder> handleRepositoryNameSort(String direction) {
+    return singletonList(fieldSort(REPOSITORY_NAME).order(getValidSortOrder(direction, SortOrder.ASC)));
+  }
+
+  private List<SortBuilder> handleVersionSort(String direction) {
+    return singletonList(fieldSort(NORMALIZED_VERSION).order(getValidSortOrder(direction, SortOrder.DESC)));
+  }
+
+  private List<SortBuilder> handleOtherSort(String sort, String direction, boolean allowed) {
+    if (!allowed) {
+      return emptyList();
+    }
+    return singletonList(fieldSort(sort).order(getValidSortOrder(direction, SortOrder.ASC)));
+  }
+
+  private SortOrder getValidSortOrder(String direction, SortOrder defaultValue) {
+    if (direction != null) {
+      switch (direction.toLowerCase()) {
+        case "asc":
+        case "ascending":
+          return SortOrder.ASC;
+        case "desc":
+        case "descending":
+          return SortOrder.DESC;
+      }
+    }
+
+    return defaultValue;
   }
 }

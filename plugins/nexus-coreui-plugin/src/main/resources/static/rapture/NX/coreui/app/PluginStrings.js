@@ -919,6 +919,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Support_SupportZip_Security_BoxLabel: 'Security configuration files',
     Support_SupportZip_LogFiles_BoxLabel: 'Log files',
     Support_SupportZip_TaskLogFiles_BoxLabel: 'Task log files',
+    Support_SupportZip_AuditLogFiles_BoxLabel: 'Audit log files',
     Support_SupportZip_Metrics_BoxLabel: 'System and component metrics',
     Support_SupportZip_JMX_BoxLabel: 'JMX information',
     Support_SupportZip_Options_FieldLabel: 'Options',
@@ -1563,28 +1564,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
 
       Done_Mask: 'Confirming',
       Done_Message: 'Upgrade done'
-    },
-
-    'NX.coreui.audit.AuditController': {
-      Text: 'Audit',
-      Description: 'System audit information',
-      Clear_Title: 'Clear Audit Data',
-      Clear_Body: 'Clear audit data?',
-      Clear_Mask: 'Clearing audit data',
-      Clear_Success: 'Audit data cleared'
-    },
-
-    'NX.coreui.audit.AuditList': {
-      EmptyText: 'No audit data',
-      Filter_EmptyText: 'No audit data matching "$filter"',
-      Domain: 'Domain',
-      Type: 'Type',
-      Context: 'Context',
-      Timestamp: 'Timestamp',
-      NodeId: 'Node ID',
-      Initiator: 'Initiator',
-      Attribute: 'Attribute: {0}',
-      Clear_Button: 'Clear'
     }
   }
 }, function(self) {

@@ -44,6 +44,7 @@ public class SupportBundle
       SECURITY,
       LOG,
       TASKLOG,
+      AUDITLOG,
       JMX
     }
 

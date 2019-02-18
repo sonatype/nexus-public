@@ -59,6 +59,23 @@
     </sift>
   </appender>
 
+  <appender name="auditlogfile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <File>${karaf.data}/log/audit/audit.log</File>
+    <Append>true</Append>
+    <encoder>
+      <pattern>%msg%n</pattern>
+    </encoder>
+    <filter class="org.sonatype.nexus.pax.logging.AuditLogFilter"/>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>${karaf.data}/log/audit/audit-%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+      <maxHistory>90</maxHistory>
+    </rollingPolicy>
+  </appender>
+
+  <logger name="auditlog" additivity="false">
+    <appender-ref ref="auditlogfile"/>
+  </logger>
+
   <appender name="metrics" class="org.sonatype.nexus.pax.logging.InstrumentedAppender"/>
 
   <logger name="org.eclipse.jetty.webapp" level="INFO"/>
