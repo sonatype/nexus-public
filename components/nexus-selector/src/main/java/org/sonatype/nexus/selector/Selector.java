@@ -19,14 +19,21 @@ package org.sonatype.nexus.selector;
  */
 public interface Selector
 {
-
   /**
-   * Evaluate a selector based on the provided source of
-   * variables ({@link VariableSource}) and provide a {@code boolean}
-   * response.
+   * Returns {@code true} if this selector matches against the given variables, otherwise {@code false}.
    *
-   * @param variableSource the source of variable value
-   * @return {@code boolean} response based on selection criteria
+   * @param variableSource the source of variable values
    */
   boolean evaluate(VariableSource variableSource);
+
+  /**
+   * Returns SQL representing this selector for use as a 'where' clause against some queryable values.
+   *
+   * @param sqlBuilder the builder of 'where' clauses for content selectors
+   *
+   * @throws UnsupportedOperationException if this selector cannot be represented as SQL
+   *
+   * @since 3.next
+   */
+  void toSql(SelectorSqlBuilder sqlBuilder);
 }

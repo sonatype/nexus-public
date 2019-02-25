@@ -33,7 +33,10 @@ Ext.define('NX.coreui.view.role.RoleSettingsForm', {
 
   initComponent: function() {
     var me = this,
-        idField;
+        idField,
+        roleStore = Ext.create('NX.coreui.store.Role');
+
+    roleStore.load();
 
     me.settingsFormSuccessMessage = me.settingsFormSuccessMessage || function(data) {
       return NX.I18n.get('Role_RoleSettingsForm_Update_Success') + Ext.String.htmlEncode(data['name']);
@@ -118,9 +121,7 @@ Ext.define('NX.coreui.view.role.RoleSettingsForm', {
         buttons: ['add', 'remove'],
         fromTitle: NX.I18n.get('Role_RoleSettingsForm_Roles_FromTitle'),
         toTitle: NX.I18n.get('Role_RoleSettingsForm_Roles_ToTitle'),
-        store: Ext.create('Ext.data.ChainedStore', {
-          source: 'Role'
-        }),
+        store: roleStore,
         valueField: 'id',
         displayField: 'name',
         delimiter: null

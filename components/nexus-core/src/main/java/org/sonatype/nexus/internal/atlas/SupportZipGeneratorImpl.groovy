@@ -27,21 +27,19 @@ import org.sonatype.nexus.supportzip.SupportBundle.ContentSource
 import org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type
 import org.sonatype.nexus.supportzip.SupportBundleCustomizer
 import org.sonatype.nexus.supportzip.SupportZipGenerator
-import org.sonatype.nexus.supportzip.SupportZipGenerator.Request
-import org.sonatype.nexus.supportzip.SupportZipGenerator.Result
 
 import com.google.common.io.CountingOutputStream
 
 import static com.google.common.base.Preconditions.checkNotNull
 import static com.google.common.base.Preconditions.checkState
+import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.AUDITLOG
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.CONFIG
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.JMX
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.LOG
-import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.TASKLOG
-import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.AUDITLOG
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.METRICS
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.SECURITY
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.SYSINFO
+import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.TASKLOG
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.THREAD
 
 /**
@@ -137,21 +135,26 @@ class SupportZipGeneratorImpl
 
   @Override
   Result generate(final Request request) {
+    generate(request, "support-")
+  }
+
+  @Override
+  Result generate(final Request request, final String prefix) {
     checkNotNull(request)
 
     log.info 'Generating support ZIP: {}', request
 
-    def prefix = downloadService.uniqueName('support-')
+    def uniquePrefix = downloadService.uniqueName(prefix)
 
     // Write zip to temporary file first
-    def file = File.createTempFile("${prefix}-", '.zip').canonicalFile
+    def file = File.createTempFile("${uniquePrefix}-", '.zip').canonicalFile
     log.debug 'Writing ZIP file: {}', file
 
-    def truncated = generate(request, prefix, file.newOutputStream())
+    def truncated = generate(request, uniquePrefix, file.newOutputStream())
     def length = file.length()
 
     // move the file into place
-    def targetFileName = "${prefix}.zip"
+    def targetFileName = "${uniquePrefix}.zip"
     def path = downloadService.move(file, targetFileName)
     log.info 'Created support ZIP file: {}', path
 

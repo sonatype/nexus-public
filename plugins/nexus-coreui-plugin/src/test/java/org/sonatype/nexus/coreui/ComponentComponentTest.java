@@ -51,8 +51,7 @@ import org.sonatype.nexus.repository.storage.DefaultComponentFinder;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.security.BreadActions;
-import org.sonatype.nexus.selector.CselExpressionValidator;
-import org.sonatype.nexus.selector.JexlExpressionValidator;
+import org.sonatype.nexus.selector.SelectorFactory;
 import org.sonatype.nexus.selector.VariableSource;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -113,10 +112,7 @@ public class ComponentComponentTest
   BrowseService browseService;
 
   @Mock
-  JexlExpressionValidator jexlExpressionValidator;
-
-  @Mock
-  CselExpressionValidator cselExpressionValidator;
+  SelectorFactory selectorFactory;
 
   @Mock
   Map<String, ComponentFinder> componentFinders;
@@ -140,8 +136,7 @@ public class ComponentComponentTest
     underTest.setVariableResolverAdapterManager(variableResolverAdapterManager);
     underTest.setMaintenanceService(maintenanceService);
     underTest.setBrowseService(browseService);
-    underTest.setJexlExpressionValidator(jexlExpressionValidator);
-    underTest.setCselExpressionValidator(cselExpressionValidator);
+    underTest.setSelectorFactory(selectorFactory);
     underTest.setObjectMapper(objectMapper);
     underTest.setComponentFinders(componentFinders);
     underTest.setBucketStore(bucketStore);
@@ -352,7 +347,7 @@ public class ComponentComponentTest
         .thenReturn(new BrowseResult<Asset>(0, Collections.emptyList()));
     underTest.previewAssets(createParameters("jexl", "foo"));
 
-    verify(jexlExpressionValidator).validate("foo");
+    verify(selectorFactory).validateSelector("jexl", "foo");
   }
 
   @Test
@@ -361,7 +356,7 @@ public class ComponentComponentTest
         .thenReturn(new BrowseResult<Asset>(0, Collections.emptyList()));
     underTest.previewAssets(createParameters("csel", "foo"));
 
-    verify(cselExpressionValidator).validate("foo");
+    verify(selectorFactory).validateSelector("csel", "foo");
   }
 
   private StoreLoadParameters createParameters(final String type, final String expression) {

@@ -12,9 +12,11 @@
  */
 package org.sonatype.nexus.selector;
 
-import org.apache.commons.jexl3.JexlException;
+import static org.sonatype.nexus.selector.CselToSql.transformCselToSql;
 
 /**
+ * Subset of JEXL selectors that can also be represented as SQL.
+ *
  * @since 3.6
  */
 public class CselSelector
@@ -22,11 +24,12 @@ public class CselSelector
 {
   public static final String TYPE = "csel";
 
-  public CselSelector(final String expression) {
+  public CselSelector(final JexlExpression expression) {
     super(expression);
   }
 
-  public static String prettyExceptionMsg(final JexlException e) {
-    return JexlSelector.prettyExceptionMsg(e).replace("JEXL", "CSEL");
+  @Override
+  public void toSql(final SelectorSqlBuilder sqlBuilder) {
+    transformCselToSql(expression.getSyntaxTree(), sqlBuilder);
   }
 }

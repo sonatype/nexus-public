@@ -24,7 +24,6 @@ import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
 import org.sonatype.nexus.security.SecurityHelper;
-import org.sonatype.nexus.selector.CselAssetSqlBuilder;
 import org.sonatype.nexus.selector.SelectorManager;
 
 import com.google.common.collect.ImmutableMap;
@@ -115,7 +114,6 @@ public class BrowseNodeStoreLoadTest
         browseNodeEntityAdapter,
         securityHelper,
         selectorManager,
-        new CselAssetSqlBuilder(),
         configuration,
         new HashMap<>(),
         ImmutableMap.of(DefaultBrowseNodeComparator.NAME, new DefaultBrowseNodeComparator(new VersionComparator())));

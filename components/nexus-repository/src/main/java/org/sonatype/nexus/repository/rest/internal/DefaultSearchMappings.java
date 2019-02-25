@@ -23,6 +23,7 @@ import org.sonatype.nexus.repository.rest.SearchMappings;
 
 import com.google.common.collect.ImmutableList;
 
+import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.IS_PRERELEASE_KEY;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REPOSITORY_NAME;
 
 /**
@@ -44,7 +45,8 @@ public class DefaultSearchMappings
       new SearchMapping("md5", "assets.attributes.checksum.md5", "Specific MD5 hash of component's asset"),
       new SearchMapping("sha1", "assets.attributes.checksum.sha1", "Specific SHA-1 hash of component's asset"),
       new SearchMapping("sha256", "assets.attributes.checksum.sha256", "Specific SHA-256 hash of component's asset"),
-      new SearchMapping("sha512", "assets.attributes.checksum.sha512", "Specific SHA-512 hash of component's asset")
+      new SearchMapping("sha512", "assets.attributes.checksum.sha512", "Specific SHA-512 hash of component's asset"),
+      new SearchMapping("prerelease", IS_PRERELEASE_KEY, "Prerelease version flag")
   );
 
   @Override

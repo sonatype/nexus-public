@@ -31,7 +31,6 @@ import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
-import org.sonatype.nexus.repository.internal.blobstore.BlobStoreConfigurationStore;
 import org.sonatype.nexus.repository.storage.StorageFacetImpl.Config;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.view.Payload;
@@ -141,6 +140,9 @@ public class StorageFacetImplTest
   @Mock
   private ConstraintViolationFactory violationFactory;
 
+  @Mock
+  private AssetManager assetManager;
+
   @Captor
   private ArgumentCaptor<Map<String, String>> mapArgumentCaptor;
 
@@ -174,7 +176,8 @@ public class StorageFacetImplTest
         mimeRulesSourceSelector,
         storageFacetManager,
         componentFactory,
-        violationFactory);
+        violationFactory
+    );
     underTest.attach(repository);
   }
 

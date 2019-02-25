@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.selector;
 
-import org.apache.commons.jexl3.JexlException;
 import org.apache.commons.jexl3.parser.ASTAddNode;
 import org.apache.commons.jexl3.parser.ASTAndNode;
 import org.apache.commons.jexl3.parser.ASTAnnotatedStatement;
@@ -86,375 +85,377 @@ import org.apache.commons.jexl3.parser.ASTVar;
 import org.apache.commons.jexl3.parser.ASTWhileStatement;
 import org.apache.commons.jexl3.parser.JexlNode;
 import org.apache.commons.jexl3.parser.ParserVisitor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * @since 3.6
+ * Common scaffolding for partial {@link ParserVisitor} implementations.
+ *
+ * @since 3.next
  */
-public abstract class AbstractCselParserVisitor extends ParserVisitor
+abstract class ParserVisitorSupport
+    extends ParserVisitor
 {
-  private static final String UNSUPPORTED_OPERATION = "'Unsupported Operation'";
+  protected static final int LEFT = 0;
 
-  /**
-   * Visit script children.
-   *
-   * @return the result of accepting the script children
-   */
+  protected static final int RIGHT = 1;
+
+  protected final Logger log = LoggerFactory.getLogger(getClass());
+
   @Override
   protected Object visit(final ASTJexlScript node, final Object data) {
-    return node.childrenAccept(this, data);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTBlock node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTIfStatement node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTWhileStatement node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTContinue node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTBreak node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTForeachStatement node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTReturnStatement node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTAssignment node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTVar node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTReference node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTTernaryNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTOrNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTAndNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTBitwiseOrNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTBitwiseXorNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTBitwiseAndNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTEQNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTNENode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTLTNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTGTNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTLENode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTGENode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTERNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTNRNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTSWNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTNSWNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTEWNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTNEWNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTAddNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTSubNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTMulNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTDivNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTModNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTUnaryMinusNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTBitwiseComplNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTNotNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTIdentifier node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTNullLiteral node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTTrueNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTFalseNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTNumberLiteral node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTStringLiteral node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTSetLiteral node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTExtendedLiteral node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTArrayLiteral node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTRangeNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTMapLiteral node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTMapEntry node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTEmptyFunction node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTEmptyMethod node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTSizeFunction node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTFunctionNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTMethodNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTSizeMethod node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTConstructorNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTArrayAccess node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTIdentifierAccess node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTArguments node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTReferenceExpression node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTSetAddNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTSetSubNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTSetMultNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTSetDivNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTSetModNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTSetAndNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTSetOrNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTSetXorNode node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTJxltLiteral node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTAnnotation node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
   @Override
   protected Object visit(final ASTAnnotatedStatement node, final Object data) {
-    return reject(node);
+    return doVisit(node, data);
   }
 
-  protected Object reject(final JexlNode node) {
-    throw new JexlException(node, UNSUPPORTED_OPERATION);
-  }
+  protected abstract Object doVisit(final JexlNode node, final Object data);
 }

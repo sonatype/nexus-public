@@ -41,11 +41,11 @@ import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.security.SecurityHelper;
-import org.sonatype.nexus.selector.CselAssetSql;
-import org.sonatype.nexus.selector.CselAssetSqlBuilder;
 import org.sonatype.nexus.selector.CselSelector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
+import org.sonatype.nexus.selector.SelectorEvaluationException;
 import org.sonatype.nexus.selector.SelectorManager;
+import org.sonatype.nexus.selector.SelectorSqlBuilder;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -73,8 +73,6 @@ public class BrowseNodeStoreImpl
     extends StateGuardLifecycleSupport
     implements BrowseNodeStore
 {
-  private static final String ASSET_FIELD_PREFIX = P_ASSET_ID + '.';
-
   private final Provider<DatabaseInstance> databaseInstance;
 
   private final BrowseNodeEntityAdapter entityAdapter;
@@ -82,8 +80,6 @@ public class BrowseNodeStoreImpl
   private final SecurityHelper securityHelper;
 
   private final SelectorManager selectorManager;
-
-  private final CselAssetSqlBuilder cselAssetSqlBuilder;
 
   private final Map<String, BrowseNodeFilter> browseNodeFilters;
 
@@ -98,7 +94,6 @@ public class BrowseNodeStoreImpl
                              final BrowseNodeEntityAdapter entityAdapter,
                              final SecurityHelper securityHelper,
                              final SelectorManager selectorManager,
-                             final CselAssetSqlBuilder cselAssetSqlBuilder,
                              final BrowseNodeConfiguration configuration,
                              final Map<String, BrowseNodeFilter> browseNodeFilters,
                              final Map<String, BrowseNodeComparator> browseNodeComparators)
@@ -107,7 +102,6 @@ public class BrowseNodeStoreImpl
     this.entityAdapter = checkNotNull(entityAdapter);
     this.securityHelper = checkNotNull(securityHelper);
     this.selectorManager = checkNotNull(selectorManager);
-    this.cselAssetSqlBuilder = checkNotNull(cselAssetSqlBuilder);
     this.browseNodeFilters = checkNotNull(browseNodeFilters);
     this.browseNodeComparators = checkNotNull(browseNodeComparators);
     this.deletePageSize = configuration.getDeletePageSize();
@@ -303,20 +297,35 @@ public class BrowseNodeStoreImpl
       filterBuilder.append('(');
     }
 
+    SelectorSqlBuilder sqlBuilder = new SelectorSqlBuilder()
+        .propertyAlias("path", P_ASSET_ID + ".name")
+        .propertyAlias("format", P_ASSET_ID + ".format")
+        .propertyPrefix(P_ASSET_ID + ".attributes." + format + ".");
+
     int cselCount = 0;
 
     for (SelectorConfiguration selector : selectors) {
       if (CselSelector.TYPE.equals(selector.getType())) {
-        if (cselCount > 0) {
-          filterBuilder.append(" or ");
+        try {
+          sqlBuilder.parameterPrefix("s" + cselCount + "p");
+
+          selectorManager.toSql(selector, sqlBuilder);
+
+          if (cselCount > 0) {
+            filterBuilder.append(" or ");
+          }
+
+          filterBuilder.append('(').append(sqlBuilder.getQueryString()).append(')');
+          filterParameters.putAll(sqlBuilder.getQueryParameters());
+
+          cselCount++;
         }
-
-        String expression = (String) selector.getAttributes().get("expression");
-        CselAssetSql cselAssetSql = cselAssetSqlBuilder.buildWhereClause(
-            expression, format, "s" + (cselCount++) + "p", ASSET_FIELD_PREFIX);
-        filterBuilder.append('(').append(cselAssetSql.getSql()).append(')');
-
-        filterParameters.putAll(cselAssetSql.getSqlParameters());
+        catch (SelectorEvaluationException e) {
+          log.warn("Problem evaluating selector {} as SQL", selector.getName(), e);
+        }
+        finally {
+          sqlBuilder.clearQueryString();
+        }
       }
     }
 

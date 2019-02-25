@@ -39,6 +39,20 @@ public interface DownloadService
       this.length = length;
       this.bytes = bytes;
     }
+
+    /**
+     * @since 3.next
+     */
+    public long getLength() {
+      return length;
+    }
+
+    /**
+     * @since 3.next
+     */
+    public InputStream getBytes() {
+      return bytes;
+    }
   }
 
   /**

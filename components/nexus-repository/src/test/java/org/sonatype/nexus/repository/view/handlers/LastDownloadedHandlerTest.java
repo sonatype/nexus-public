@@ -18,6 +18,7 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.AssetManager;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.view.Content;
@@ -80,6 +81,9 @@ public class LastDownloadedHandlerTest
   @Mock
   private EntityId id;
 
+  @Mock
+  private AssetManager assetManager;
+
   private AttributesMap attributes;
 
   private LastDownloadedHandler underTest;
@@ -88,7 +92,7 @@ public class LastDownloadedHandlerTest
   public void setup() throws Exception {
     configureHappyPath();
 
-    underTest = new LastDownloadedHandler();
+    underTest = new LastDownloadedHandler(assetManager);
 
     UnitOfWork.beginBatch(tx);
   }
@@ -100,6 +104,8 @@ public class LastDownloadedHandlerTest
 
   @Test
   public void shouldMarkAssetAsDownloadedWhenSuccessfulGetRequest() throws Exception {
+    when(assetManager.maybeUpdateLastDownloaded(asset)).thenReturn(true);
+
     Response handledResponse = underTest.handle(context);
 
     verify(tx).saveAsset(asset);
@@ -110,7 +116,8 @@ public class LastDownloadedHandlerTest
   @Test
   public void shouldMarkAssetAsDownloadedWhenSuccessfulHeadRequest() throws Exception {
     when(request.getAction()).thenReturn(HEAD);
-    
+    when(assetManager.maybeUpdateLastDownloaded(asset)).thenReturn(true);
+
     Response handledResponse = underTest.handle(context);
 
     verify(tx).saveAsset(asset);
@@ -121,6 +128,7 @@ public class LastDownloadedHandlerTest
   @Test
   public void shouldMarkAssetAsDownloadedWhenNotModified() throws Exception {
     when(response.getStatus()).thenReturn(new Status(false, 304));
+    when(assetManager.maybeUpdateLastDownloaded(asset)).thenReturn(true);
     
     Response handledResponse = underTest.handle(context);
 
@@ -138,7 +146,7 @@ public class LastDownloadedHandlerTest
 
   @Test
   public void doNotUpdateWhenDateNotChanged() throws Exception {
-    when(asset.markAsDownloaded()).thenReturn(false);
+    when(assetManager.maybeUpdateLastDownloaded(asset)).thenReturn(false);
 
     verifyNoExceptionThrownAndSaveNotCalled();
   }
@@ -206,7 +214,7 @@ public class LastDownloadedHandlerTest
     when(payload.getAttributes()).thenReturn(attributes);
 
     when(response.getStatus()).thenReturn(new Status(true, 200));
-    when(asset.markAsDownloaded()).thenReturn(true);
+    when(assetManager.maybeUpdateLastDownloaded(asset)).thenReturn(true);
     when(asset.getEntityMetadata()).thenReturn(entityMetadata);
     
     when(entityMetadata.getId()).thenReturn(id);

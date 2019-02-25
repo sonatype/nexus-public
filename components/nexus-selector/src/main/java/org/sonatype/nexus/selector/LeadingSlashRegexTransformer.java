@@ -40,7 +40,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 3.15
  */
-public class LeadingSlashRegexTransformer
+class LeadingSlashRegexTransformer
 {
   private final String regex;
 

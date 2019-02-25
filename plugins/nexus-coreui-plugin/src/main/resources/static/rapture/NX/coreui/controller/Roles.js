@@ -112,7 +112,7 @@ Ext.define('NX.coreui.controller.Roles', {
         },
         'nx-coreui-role-settings-form': {
           submitted: me.onSettingsSubmitted,
-          beforerecordloaded: me.updateRoleSelect
+          beforerecordloaded: me.onBeforeRecordLoaded
         }
       }
     });
@@ -260,10 +260,11 @@ Ext.define('NX.coreui.controller.Roles', {
     });
   },
 
-  updateRoleSelect: function(roleSettingsForm, editingRole) {
-    var chainedRoleStore = roleSettingsForm.down('#roles').getStore();
-    chainedRoleStore.clearFilter(true);
-    chainedRoleStore.filterBy(function(role) {
+  onBeforeRecordLoaded: function(roleSettingsForm, editingRole) {
+    var roleStore = roleSettingsForm.down('#roles').getStore();
+    roleStore.load();
+    roleStore.clearFilter(true);
+    roleStore.filterBy(function(role) {
       return role.get('id') !== editingRole.get('id');
     });
   }

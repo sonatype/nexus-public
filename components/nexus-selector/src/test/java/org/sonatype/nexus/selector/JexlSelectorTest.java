@@ -14,6 +14,7 @@ package org.sonatype.nexus.selector;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import org.sonatype.goodies.testsupport.TestSupport;
 
 import org.apache.commons.jexl3.JexlException;
@@ -22,13 +23,18 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static com.google.common.collect.ImmutableMap.of;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
 public class JexlSelectorTest
     extends TestSupport
 {
+  private JexlEngine engine = new JexlEngine();
+
   private VariableSource source;
 
   private static class SomeObject
@@ -57,25 +63,24 @@ public class JexlSelectorTest
   @Test
   public void testPrettyExceptionMsgOneLine() {
     String expression = "&&INVALID";
-    testPrettyExceptionMsg(1, 1, "&&", expression);
+    testPrettyExceptionMsg("parsing error in '&&'", 1, 1, expression);
   }
 
   @Test
   public void testPrettyExceptionMsgMultiLine() {
     String expression = "true\n #INVALID";
     // For some reason JEXL thinks # is at column 3 in line 2
-    testPrettyExceptionMsg(2, 3, "#", expression);
+    testPrettyExceptionMsg("tokenization error in '#'", 2, 3, expression);
   }
 
-  private void testPrettyExceptionMsg(int line, int column, String detail, String expression) {
-    String expected = String.format("Invalid JEXL at line '%s' column '%s'. Error parsing string: '%s'.", line, column,
-        detail);
+  private void testPrettyExceptionMsg(String detail, int line, int column, String expression) {
+    String expected = String.format("%s at line %d column %d", detail, line, column);
     String returned = null;
     try {
-      new JexlSelector(expression);
+      buildSelector(expression);
     }
     catch (JexlException e) {
-      returned = JexlSelector.prettyExceptionMsg(e);
+      returned = JexlEngine.expandExceptionDetail(e);
     }
     assertNotNull("Returned string was not set.", returned);
     assertEquals(expected, returned);
@@ -84,7 +89,7 @@ public class JexlSelectorTest
   @Test
   public void testPrettyExceptionMsgNoDetail() {
     // Setup
-    String expected = "Invalid JEXL at line '2' column '4'.";
+    String expected = "at line 2 column 4";
 
     JexlInfo info = new JexlInfo("", 2, 4);
     // Mocked because JexlException modifies msg internally after construction
@@ -93,7 +98,7 @@ public class JexlSelectorTest
     doReturn("").when(ex).getMessage();
 
     // Execute
-    String returned = JexlSelector.prettyExceptionMsg(ex);
+    String returned = JexlEngine.expandExceptionDetail(ex);
 
     // Verify
     assertNotNull("Returned string was not set.", returned);
@@ -102,71 +107,75 @@ public class JexlSelectorTest
 
   @Test
   public void testComponentFormatHappy() {
-    Selector selector = new JexlSelector("component.format == 'maven2'");
+    Selector selector = buildSelector("component.format == 'maven2'");
 
     assertTrue(selector.evaluate(source));
   }
 
   @Test
   public void testComponentFormatSad() {
-    Selector selector = new JexlSelector("component.format == 'nuget'");
+    Selector selector = buildSelector("component.format == 'nuget'");
 
     assertFalse(selector.evaluate(source));
   }
 
   @Test
   public void testAssetNameHappy() {
-    Selector selector = new JexlSelector("asset.name =~ '^jun.+'");
+    Selector selector = buildSelector("asset.name =~ '^jun.+'");
 
     assertTrue(selector.evaluate(source));
   }
 
   @Test
   public void testAssetNameSad() {
-    Selector selector = new JexlSelector("asset.name =~ '^jun.+' and asset.group =~ '^jun.+'");
+    Selector selector = buildSelector("asset.name =~ '^jun.+' and asset.group =~ '^jun.+'");
 
     assertFalse(selector.evaluate(source));
   }
 
   @Test
   public void testXHappy() {
-    Selector selector = new JexlSelector("X == true and Y == false");
+    Selector selector = buildSelector("X == true and Y == false");
 
     assertTrue(selector.evaluate(source));
   }
 
   @Test
   public void testStringToUppercase() {
-    Selector selector = new JexlSelector("someString.toUpperCase() == 'FOOBAR'");
+    Selector selector = buildSelector("someString.toUpperCase() == 'FOOBAR'");
 
     assertTrue(selector.evaluate(source));
   }
 
   @Test
   public void testMap() {
-    Selector selector = new JexlSelector("someMap['a'] == 'alfa'");
+    Selector selector = buildSelector("someMap['a'] == 'alfa'");
 
     assertTrue(selector.evaluate(source));
   }
 
   @Test(expected = JexlException.class)
   public void testNoConstructor() {
-    Selector selector = new JexlSelector("new('" + JexlSelector.class.getName() + "', 'path = \\'/bar\\'')");
+    Selector selector = buildSelector("new('" + JexlSelector.class.getName() + "', 'path = \\'/bar\\'')");
 
     selector.evaluate(source);
   }
 
   @Test(expected = JexlException.class)
   public void testMethodsBlocked() {
-    Selector selector = new JexlSelector("writeableMap.put('foo', 'xxx')");
+    Selector selector = buildSelector("writeableMap.put('foo', 'xxx')");
 
     selector.evaluate(source);
   }
 
   @Test(expected = JexlException.class)
   public void testWriteBlocked() {
-    Selector selector = new JexlSelector("writeableObj.foo = 'xxx'");
+    Selector selector = buildSelector("writeableObj.foo = 'xxx'");
 
     selector.evaluate(source);
+  }
+
+  private JexlSelector buildSelector(final String expression) {
+    return new JexlSelector(engine.buildExpression(expression));
   }
 }

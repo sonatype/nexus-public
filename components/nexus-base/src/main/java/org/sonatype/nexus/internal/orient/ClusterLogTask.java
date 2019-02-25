@@ -21,6 +21,7 @@ import javax.inject.Provider;
 
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
+import org.sonatype.nexus.orient.quorum.DatabaseMaintenanceService;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
 import com.google.common.collect.ImmutableList;
@@ -30,39 +31,44 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.CLUSTER_LOG_ONLY;
 
 /**
- * Task that logs table counts for config and component databases
+ * Task that logs cluster information
  *
  * @since 3.next
  */
 @Named
-public class ClusteredDbTableCountTask
+public class ClusterLogTask
     extends TaskSupport
 {
   public static final String SEPARATOR = "+--------------------------------+-----------------+\n";
 
   private final List<Provider<DatabaseInstance>> databases;
 
+  private final Provider<DatabaseMaintenanceService> databaseMaintenanceServiceProvider;
+
   @Inject
-  public ClusteredDbTableCountTask(
+  public ClusterLogTask(
       @Named(DatabaseInstanceNames.CONFIG) final Provider<DatabaseInstance> configDb,
-      @Named(DatabaseInstanceNames.COMPONENT) final Provider<DatabaseInstance> componentDb)
+      @Named(DatabaseInstanceNames.COMPONENT) final Provider<DatabaseInstance> componentDb,
+      final Provider<DatabaseMaintenanceService> databaseMaintenanceServiceProvider)
   {
     super(false);
     databases = ImmutableList.of(checkNotNull(configDb), checkNotNull(componentDb));
+    this.databaseMaintenanceServiceProvider = checkNotNull(databaseMaintenanceServiceProvider);
   }
 
   @Override
   protected Object execute() {
     if (log.isInfoEnabled(CLUSTER_LOG_ONLY)) {
       databases.stream().map(Provider::get).forEach(this::logTable);
+      logHaStatus();
     }
     else {
-      log.debug("Logging for database table record counts is not enabled by logging level");
+      log.debug("Logging for cluster information is not enabled by logging level");
     }
     return null;
   }
 
-  private void logTable(DatabaseInstance db) {
+  private void logTable(DatabaseInstance db) {  // NOSONAR
     StringBuilder table = new StringBuilder();
     table.append("\n")
         .append(SEPARATOR)
@@ -78,8 +84,12 @@ public class ClusteredDbTableCountTask
     log.info(CLUSTER_LOG_ONLY, "\n{}", table);
   }
 
+  private void logHaStatus() {
+    log.info(CLUSTER_LOG_ONLY, databaseMaintenanceServiceProvider.get().fullServerStatus());
+  }
+
   @Override
   public String getMessage() {
-    return "Log database table record counts";
+    return "Log cluster information";
   }
 }

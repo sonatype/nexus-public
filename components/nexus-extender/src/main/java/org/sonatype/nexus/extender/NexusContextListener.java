@@ -42,7 +42,6 @@ import com.google.inject.servlet.GuiceFilter;
 import org.apache.karaf.features.Feature;
 import org.apache.karaf.features.FeaturesService;
 import org.apache.karaf.features.FeaturesService.Option;
-import org.eclipse.sisu.bean.BeanManager;
 import org.eclipse.sisu.inject.BeanLocator;
 import org.eclipse.sisu.wire.ParameterKeys;
 import org.eclipse.sisu.wire.WireModule;
@@ -243,11 +242,6 @@ public class NexusContextListener
         System.getProperty(NEXUS_FULL_EDITION, UNKNOWN));
 
     try {
-      lifecycleManager.to(KERNEL);
-
-      // dispose of JSR-250 components before logging goes
-      injector.getInstance(BeanManager.class).unmanage();
-
       lifecycleManager.to(OFF);
     }
     catch (final Exception e) {

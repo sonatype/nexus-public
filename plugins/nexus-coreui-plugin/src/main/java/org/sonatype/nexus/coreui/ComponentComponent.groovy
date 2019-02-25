@@ -41,10 +41,7 @@ import org.sonatype.nexus.repository.storage.StorageFacet
 import org.sonatype.nexus.repository.storage.StorageTx
 import org.sonatype.nexus.security.BreadActions
 import org.sonatype.nexus.security.SecurityHelper
-import org.sonatype.nexus.selector.CselExpressionValidator
-import org.sonatype.nexus.selector.CselSelector
-import org.sonatype.nexus.selector.JexlExpressionValidator
-import org.sonatype.nexus.selector.JexlSelector
+import org.sonatype.nexus.selector.SelectorFactory
 import org.sonatype.nexus.selector.VariableSource
 import org.sonatype.nexus.validation.Validate
 
@@ -125,10 +122,7 @@ class ComponentComponent
   VariableResolverAdapterManager variableResolverAdapterManager
 
   @Inject
-  JexlExpressionValidator jexlExpressionValidator
-
-  @Inject
-  CselExpressionValidator cselExpressionValidator
+  SelectorFactory selectorFactory
 
   @Inject
   BrowseService browseService
@@ -199,13 +193,9 @@ class ComponentComponent
       return null
     }
 
+    selectorFactory.validateSelector(type, expression)
+
     RepositorySelector repositorySelector = RepositorySelector.fromSelector(repositoryName)
-    if (type == JexlSelector.TYPE) {
-      jexlExpressionValidator.validate(expression)
-    }
-    else if (type == CselSelector.TYPE) {
-      cselExpressionValidator.validate(expression)
-    }
     List<Repository> selectedRepositories = getPreviewRepositories(repositorySelector)
     if (!selectedRepositories.size()) {
       return null

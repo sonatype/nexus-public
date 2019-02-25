@@ -63,7 +63,7 @@ public class BlobStoreHealthCheck
         .map(BlobStoreQuotaResult::getMessage)
         .collect(Collectors.toList());
 
-    String message = format("%s/%s blob stores violating their quota.<br>%s", violationMessages.size(),
+    String message = format("%s/%s blob stores violating their quota<br>%s", violationMessages.size(),
         Iterators.size(blobStoreManagerProvider.get().browse().iterator()),
         String.join("<br>", violationMessages));
 

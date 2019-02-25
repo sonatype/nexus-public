@@ -19,9 +19,10 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.selector.CselSelector;
-import org.sonatype.nexus.selector.CselValidator;
+import org.sonatype.nexus.selector.SelectorFactory;
 import org.sonatype.nexus.selector.SelectorManager;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 
 /**
@@ -33,38 +34,31 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 public class ContentSelectorUpgradeManager
     extends StateGuardLifecycleSupport
 {
-  private final CselValidator cselValidator;
+  private final SelectorFactory selectorFactory;
 
   private final SelectorManager selectorManager;
 
   @Inject
-  public ContentSelectorUpgradeManager(final CselValidator cselValidator, final SelectorManager selectorManager) {
-    this.cselValidator = cselValidator;
-    this.selectorManager = selectorManager;
+  public ContentSelectorUpgradeManager(final SelectorFactory selectorFactory, final SelectorManager selectorManager) {
+    this.selectorFactory = checkNotNull(selectorFactory);
+    this.selectorManager = checkNotNull(selectorManager);
   }
 
   @Override
   protected void doStart() throws Exception {
     selectorManager.browseJexl().forEach(config -> {
-      String expression = (String) config.getAttributes().get("expression");
+      String expression = config.getAttributes().get("expression");
       String name = config.getName();
 
-      log.debug("Attempting to upgrade jexl content selector to csel, expression={}", expression);
+      log.debug("Attempting to upgrade JEXL content selector {} to CSEL, expression={}", name, expression);
 
       try {
-        if (cselValidator.validate(expression)) {
-          config.setType(CselSelector.TYPE);
-          selectorManager.update(config);
-        }
-        else {
-          log.warn(
-              "Could not convert deprecated jexl content selector into csel content selector with name={}, expression={}",
-              name, expression);
-        }
+        selectorFactory.validateSelector(CselSelector.TYPE, expression);
+        config.setType(CselSelector.TYPE);
+        selectorManager.update(config);
       }
       catch (Exception e) {
-        log.warn(
-            "Failed to parse jexl content selector for conversion to csel content selector with name={}, expression={}",
+        log.warn("Could not upgrade JEXL content selector {} to CSEL, expression={}",
             name, expression, log.isDebugEnabled() ? e : null);
       }
     });

@@ -32,4 +32,13 @@ public interface ManagedLifecycleManager
    * before the current phase is changed. Similarly components that have disappeared are stopped.
    */
   void to(Phase targetPhase) throws Exception;
+
+  /**
+   * Attempts to bounce the given phase by moving the lifecycle just before it then back towards the current phase,
+   * re-running all the phases in between. If the bounce phase is after the current phase then it simply moves the
+   * lifecycle forwards like {@link #to(Phase)}.
+   *
+   * @since 3.next
+   */
+  void bounce(Phase bouncePhase) throws Exception;
 }

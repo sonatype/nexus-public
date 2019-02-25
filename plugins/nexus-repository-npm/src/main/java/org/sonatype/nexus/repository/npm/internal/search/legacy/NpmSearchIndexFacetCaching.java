@@ -19,11 +19,11 @@ import java.nio.file.Path;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.repository.npm.internal.NpmFacetUtils;
-
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.FacetSupport;
+import org.sonatype.nexus.repository.npm.internal.NpmFacetUtils;
 import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.AssetManager;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
@@ -53,8 +53,12 @@ public abstract class NpmSearchIndexFacetCaching
 {
   private final EventManager eventManager;
 
-  protected NpmSearchIndexFacetCaching(final EventManager eventManager) {
+  private final AssetManager assetManager;
+
+  protected NpmSearchIndexFacetCaching(final EventManager eventManager,
+                                       final AssetManager assetManager) {
     this.eventManager = eventManager;
+    this.assetManager = assetManager;
   }
 
   /**
@@ -116,7 +120,7 @@ public abstract class NpmSearchIndexFacetCaching
         Files.delete(path);
       }
     }
-    else if (asset.markAsDownloaded()) {
+    else if (assetManager.maybeUpdateLastDownloaded(asset)) {
       tx.saveAsset(asset);
     }
     return toContent(asset, tx.requireBlob(asset.requireBlobRef()));

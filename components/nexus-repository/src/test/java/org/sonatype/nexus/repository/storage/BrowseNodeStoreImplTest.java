@@ -28,11 +28,14 @@ import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.security.SecurityHelper;
-import org.sonatype.nexus.selector.CselAssetSqlBuilder;
 import org.sonatype.nexus.selector.CselSelector;
 import org.sonatype.nexus.selector.JexlSelector;
+import org.sonatype.nexus.selector.Selector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
+import org.sonatype.nexus.selector.SelectorFactory;
 import org.sonatype.nexus.selector.SelectorManager;
+import org.sonatype.nexus.selector.SelectorSqlBuilder;
+import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -56,6 +59,8 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -159,6 +164,18 @@ public class BrowseNodeStoreImplTest
     when(byVersion.getAttributes()).thenReturn(ImmutableMap.of("expression", "coordinate.version == \"2.1\""));
     when(jexl.getType()).thenReturn(JexlSelector.TYPE);
 
+    ConstraintViolationFactory violationFactory = mock(ConstraintViolationFactory.class);
+    SelectorFactory selectorFactory = new SelectorFactory(violationFactory);
+
+    doAnswer(invocation -> {
+      SelectorConfiguration config = (SelectorConfiguration) invocation.getArguments()[0];
+      String type = config.getType();
+      String expression = config.getAttributes().get("expression");
+      Selector selector = selectorFactory.createSelector(type, expression);
+      selector.toSql((SelectorSqlBuilder) invocation.getArguments()[1]);
+      return null;
+    }).when(selectorManager).toSql(any(), any());
+
     when(browseNodeFilter.test(any(), any())).thenReturn(true);
 
     underTest = new BrowseNodeStoreImpl(
@@ -166,7 +183,6 @@ public class BrowseNodeStoreImplTest
         browseNodeEntityAdapter,
         securityHelper,
         selectorManager,
-        new CselAssetSqlBuilder(),
         new BrowseNodeConfiguration(true, 1000, DELETE_PAGE_SIZE, 10_000, 10_000, seconds(0)),
         ImmutableMap.of(FORMAT_NAME, browseNodeFilter),
         ImmutableMap.of(DefaultBrowseNodeComparator.NAME, new DefaultBrowseNodeComparator(new VersionComparator())));
@@ -273,6 +289,7 @@ public class BrowseNodeStoreImplTest
 
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
+    verify(selectorManager).toSql(eq(byGroup), any());
     verify(browseNodeEntityAdapter).getByPath(db, REPOSITORY_NAME, queryPath, MAX_NODES,
         "(asset_id.attributes.test-format.groupId = :s0p0)", ImmutableMap.of("s0p0", "org.sonatype"));
     verifyNoMoreInteractions(browseNodeEntityAdapter, securityHelper, selectorManager);
@@ -289,6 +306,7 @@ public class BrowseNodeStoreImplTest
 
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
+    verify(selectorManager).toSql(eq(byGroup), any());
     verify(browseNodeEntityAdapter).getByPath(db, REPOSITORY_NAME, queryPath, MAX_NODES,
         "asset_name_lowercase like :keyword_filter and (asset_id.attributes.test-format.groupId = :s0p0)",
         ImmutableMap.of("keyword_filter", "%wibble%", "s0p0", "org.sonatype"));
@@ -307,6 +325,8 @@ public class BrowseNodeStoreImplTest
 
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
+    verify(selectorManager).toSql(eq(byGroup), any());
+    verify(selectorManager).toSql(eq(byVersion), any());
     verify(browseNodeEntityAdapter).getByPath(db, REPOSITORY_NAME, queryPath, MAX_NODES,
         "((asset_id.attributes.test-format.groupId = :s0p0) or (asset_id.attributes.test-format.version = :s1p0))",
         ImmutableMap.of("s0p0", "org.sonatype", "s1p0", "2.1"));
@@ -325,6 +345,8 @@ public class BrowseNodeStoreImplTest
 
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
+    verify(selectorManager).toSql(eq(byGroup), any());
+    verify(selectorManager).toSql(eq(byVersion), any());
     verify(browseNodeEntityAdapter).getByPath(db, REPOSITORY_NAME, queryPath, MAX_NODES,
         "asset_name_lowercase like :keyword_filter and"
             + " ((asset_id.attributes.test-format.groupId = :s0p0) or (asset_id.attributes.test-format.version = :s1p0))",
@@ -344,6 +366,8 @@ public class BrowseNodeStoreImplTest
 
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
+    verify(selectorManager).toSql(eq(byGroup), any());
+    verify(selectorManager).toSql(eq(byVersion), any());
     verify(browseNodeEntityAdapter).getByPath(db, REPOSITORY_NAME, queryPath, MAX_NODES,
         "((asset_id.attributes.test-format.groupId = :s0p0) or (asset_id.attributes.test-format.version = :s1p0)"
             + " or contentAuth(@this.asset_id, :authz_repository_name, true) = true)",
@@ -363,6 +387,8 @@ public class BrowseNodeStoreImplTest
 
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
+    verify(selectorManager).toSql(eq(byGroup), any());
+    verify(selectorManager).toSql(eq(byVersion), any());
     verify(browseNodeEntityAdapter).getByPath(db, REPOSITORY_NAME, queryPath, MAX_NODES,
         "asset_name_lowercase like :keyword_filter and"
             + " ((asset_id.attributes.test-format.groupId = :s0p0) or (asset_id.attributes.test-format.version = :s1p0)"
@@ -544,7 +570,6 @@ public class BrowseNodeStoreImplTest
         browseNodeEntityAdapter,
         securityHelper,
         selectorManager,
-        new CselAssetSqlBuilder(),
         new BrowseNodeConfiguration(true, 1000, DELETE_PAGE_SIZE, 10_000, 10_000, seconds(0)),
         ImmutableMap.of(FORMAT_NAME, browseNodeFilter),
         ImmutableMap.of(DefaultBrowseNodeComparator.NAME, new DefaultBrowseNodeComparator(new VersionComparator()), FORMAT_NAME, new TestComparator()));

@@ -770,6 +770,7 @@
               <id>httpclient</id>
               <id>jaxb-core</id>
               <id>jaxb-impl</id>
+              <id>metrics-guice</id>
               <id>quartz</id>
               <id>resteasy-jaxrs</id>
               <id>resteasy-atom-provider</id>

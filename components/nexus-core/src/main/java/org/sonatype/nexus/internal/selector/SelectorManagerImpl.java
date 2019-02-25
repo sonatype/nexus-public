@@ -18,7 +18,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 
 import javax.inject.Inject;
@@ -42,12 +41,12 @@ import org.sonatype.nexus.security.role.Role;
 import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserNotFoundException;
-import org.sonatype.nexus.selector.CselSelector;
-import org.sonatype.nexus.selector.JexlSelector;
 import org.sonatype.nexus.selector.Selector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorEvaluationException;
+import org.sonatype.nexus.selector.SelectorFactory;
 import org.sonatype.nexus.selector.SelectorManager;
+import org.sonatype.nexus.selector.SelectorSqlBuilder;
 import org.sonatype.nexus.selector.VariableSource;
 
 import com.google.common.cache.CacheBuilder;
@@ -83,17 +82,24 @@ public class SelectorManagerImpl
 
   private final SecuritySystem securitySystem;
 
-  private volatile SoftReference<List<SelectorConfiguration>> cachedBrowseResult = EMPTY_CACHE;
+  private final LoadingCache<SelectorConfiguration, Selector> selectorCache;
 
-  private LoadingCache<SelectorConfiguration, Selector> selectorCache;
+  private volatile SoftReference<List<SelectorConfiguration>> cachedBrowseResult = EMPTY_CACHE;
 
   @Inject
   public SelectorManagerImpl(final SelectorConfigurationStore store,
-                             final SecuritySystem securitySystem) {
+                             final SecuritySystem securitySystem,
+                             final SelectorFactory selectorFactory)
+  {
     this.store = checkNotNull(store);
     this.securitySystem = checkNotNull(securitySystem);
 
-    selectorCache = CacheBuilder.newBuilder().softValues().build(new SelectorCacheLoader());
+    checkNotNull(selectorFactory);
+    selectorCache = CacheBuilder.newBuilder().softValues().build(CacheLoader.from(config -> {
+      String type = config.getType();
+      String expression = config.getAttributes().get("expression");
+      return selectorFactory.createSelector(type, expression);
+    }));
   }
 
   @Override
@@ -117,8 +123,9 @@ public class SelectorManagerImpl
 
   @Override
   @Guarded(by = STARTED)
-  public List<SelectorConfiguration> browseJexl() {
-    return browse().stream().filter(config -> Objects.equals(JexlSelector.TYPE, config.getType())).collect(toList());
+  public List<SelectorConfiguration> browse(final String selectorType) {
+    checkNotNull(selectorType);
+    return browse().stream().filter(config -> selectorType.equals(config.getType())).collect(toList());
   }
 
   @Override
@@ -158,14 +165,25 @@ public class SelectorManagerImpl
   public boolean evaluate(final SelectorConfiguration selectorConfiguration, final VariableSource variableSource)
       throws SelectorEvaluationException
   {
-    Selector selector = createSelector(selectorConfiguration);
-
     try {
-      return selector.evaluate(variableSource);
+      return selectorCache.get(selectorConfiguration).evaluate(variableSource);
     }
     catch (Exception e) {
-      throw new SelectorEvaluationException("Selector '" + selectorConfiguration.getName() + "' evaluation in error",
-          e);
+      throw new SelectorEvaluationException(
+          "Selector '" + selectorConfiguration.getName() + "' cannot be evaluated", e);
+    }
+  }
+
+  @Override
+  public void toSql(final SelectorConfiguration selectorConfiguration, final SelectorSqlBuilder sqlBuilder)
+      throws SelectorEvaluationException
+  {
+    try {
+      selectorCache.get(selectorConfiguration).toSql(sqlBuilder);
+    }
+    catch (Exception e) {
+      throw new SelectorEvaluationException(
+          "Selector '" + selectorConfiguration.getName() + "' cannot be represented as SQL", e);
     }
   }
 
@@ -250,18 +268,6 @@ public class SelectorManagerImpl
     }
   }
 
-  private Selector createSelector(final SelectorConfiguration config) throws SelectorEvaluationException {
-    try {
-      return selectorCache.get(config);
-    }
-    catch (ExecutionException e) {
-      if (e.getCause() instanceof SelectorEvaluationException) {
-        throw (SelectorEvaluationException) e.getCause();
-      }
-      throw new SelectorEvaluationException("An unknown error occurred creating the selector", e);
-    }
-  }
-
   private Predicate<Privilege> repositoryFormatOrNameMatcher(final List<String> repositoryNames,
                                                              final List<String> formats)
   {
@@ -270,21 +276,5 @@ public class SelectorManagerImpl
 
   private String getContentSelector(final Privilege privilege) {
     return privilege.getPrivilegeProperty(P_CONTENT_SELECTOR);
-  }
-
-  private static class SelectorCacheLoader
-      extends CacheLoader<SelectorConfiguration, Selector>
-  {
-    @Override
-    public Selector load(final SelectorConfiguration config) throws Exception {
-      switch (config.getType()) {
-        case JexlSelector.TYPE:
-          return new JexlSelector((String) config.getAttributes().get("expression"));
-        case CselSelector.TYPE:
-          return new CselSelector((String) config.getAttributes().get("expression"));
-        default:
-          throw new SelectorEvaluationException("Invalid selector type encountered: " + config.getType());
-      }
-    }
   }
 }

@@ -34,7 +34,6 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.attributes.internal.AttributesFacetImpl;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
-import org.sonatype.nexus.repository.internal.blobstore.BlobStoreConfigurationStore;
 import org.sonatype.nexus.repository.search.SearchFacet;
 import org.sonatype.nexus.repository.storage.internal.ComponentSchemaRegistration;
 import org.sonatype.nexus.security.ClientInfoProvider;
@@ -783,7 +782,7 @@ public class StorageFacetImplIT
       Asset asset = tx.findAssetWithProperty(P_NAME, ASSET_NAME, bucket);
       assertThat(asset, notNullValue());
       assertThat(asset.lastDownloaded(), nullValue());
-      assertThat(asset.markAsDownloaded(), is(true));
+      assertThat(asset.markAsDownloaded(12), is(true));
       tx.saveAsset(asset);
       tx.commit();
     }
@@ -793,7 +792,7 @@ public class StorageFacetImplIT
       Asset asset = tx.findAssetWithProperty(P_NAME, ASSET_NAME, bucket);
       assertThat(asset, notNullValue());
       assertThat(asset.lastDownloaded(), notNullValue());
-      assertThat(asset.markAsDownloaded(), is(false));
+      assertThat(asset.markAsDownloaded(12), is(false));
     }
   }
 

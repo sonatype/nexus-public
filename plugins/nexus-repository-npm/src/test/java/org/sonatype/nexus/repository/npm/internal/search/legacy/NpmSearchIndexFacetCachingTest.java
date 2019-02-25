@@ -18,10 +18,6 @@ import java.util.HashMap;
 
 import javax.inject.Inject;
 
-import org.sonatype.nexus.repository.npm.internal.NpmFacetUtils;
-import org.sonatype.nexus.repository.npm.internal.NpmFormat;
-import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexFacetCaching;
-
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobRef;
@@ -29,9 +25,11 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexInvalidatedEvent;
+import org.sonatype.nexus.repository.npm.internal.NpmFacetUtils;
+import org.sonatype.nexus.repository.npm.internal.NpmFormat;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
+import org.sonatype.nexus.repository.storage.AssetManager;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter;
 import org.sonatype.nexus.repository.storage.StorageFacet;
@@ -52,7 +50,6 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Spy;
 
-import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.REPOSITORY_ROOT_ASSET;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -65,6 +62,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.orient.testsupport.OrientExceptionMocker.mockOrientException;
+import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.REPOSITORY_ROOT_ASSET;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
 public class NpmSearchIndexFacetCachingTest
@@ -74,8 +72,8 @@ public class NpmSearchIndexFacetCachingTest
       extends NpmSearchIndexFacetCaching
   {
     @Inject
-    public NpmSearchIndexFacetCachingImpl(final EventManager eventManager) {
-      super(eventManager);
+    public NpmSearchIndexFacetCachingImpl(final EventManager eventManager, final AssetManager assetManager) {
+      super(eventManager, assetManager);
     }
 
     @Override

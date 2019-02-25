@@ -13,6 +13,7 @@
 package org.sonatype.nexus.supportzip;
 
 import java.io.OutputStream;
+import java.io.Serializable;
 
 /**
  * Generates a support ZIP file.
@@ -25,7 +26,10 @@ public interface SupportZipGenerator
    * Request to generate a support ZIP file.
    */
   class Request
+      implements Serializable
   {
+    private static final long serialVersionUID = 6382836653403012753L;
+
     /**
      * Include system information report.
      */
@@ -260,6 +264,11 @@ public interface SupportZipGenerator
    * Generate a support ZIP for the given request.
    */
   Result generate(Request request);
+
+  /**
+   * Generate a support ZIP for the given request with a custom prefix.
+   */
+  Result generate(Request request, String prefix);
 
   /**
    * Generate a support ZIP.

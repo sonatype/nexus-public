@@ -165,7 +165,7 @@ public class NpmUploadHandlerTest
 
     assertThat(source.getVariableSet(), hasSize(5));
     assertThat(source.get("format"), is(Optional.of(NpmFormat.NAME)));
-    assertThat(source.get("path"), is(Optional.of("/@foo/bar/-/bar-1.5.3.tgz")));
+    assertThat(source.get("path"), is(Optional.of("@foo/bar/-/bar-1.5.3.tgz")));
     assertThat(source.get("coordinate.packageScope"), is(Optional.of("foo")));
     assertThat(source.get("coordinate.packageName"), is(Optional.of("bar")));
     assertThat(source.get("coordinate.version"), is(Optional.of("1.5.3")));

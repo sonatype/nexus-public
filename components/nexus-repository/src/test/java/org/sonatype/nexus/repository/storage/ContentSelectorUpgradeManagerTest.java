@@ -18,9 +18,10 @@ import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.selector.CselSelector;
-import org.sonatype.nexus.selector.CselValidator;
 import org.sonatype.nexus.selector.JexlSelector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
+import org.sonatype.nexus.selector.SelectorEvaluationException;
+import org.sonatype.nexus.selector.SelectorFactory;
 import org.sonatype.nexus.selector.SelectorManager;
 
 import org.junit.Test;
@@ -30,6 +31,7 @@ import org.mockito.Mock;
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -41,7 +43,7 @@ public class ContentSelectorUpgradeManagerTest
   private ContentSelectorUpgradeManager manager;
 
   @Mock
-  private CselValidator cselValidator;
+  private SelectorFactory selectorFactory;
 
   @Mock
   private SelectorManager selectorManager;
@@ -51,7 +53,6 @@ public class ContentSelectorUpgradeManagerTest
     SelectorConfiguration jexlSelector = createSelector("valid", JexlSelector.TYPE);
 
     when(selectorManager.browseJexl()).thenReturn(asList(jexlSelector));
-    when(cselValidator.validate((String) jexlSelector.getAttributes().get("expression"))).thenReturn(true);
 
     manager.doStart();
 
@@ -66,7 +67,9 @@ public class ContentSelectorUpgradeManagerTest
     SelectorConfiguration jexlSelector = createSelector("invalid", JexlSelector.TYPE);
 
     when(selectorManager.browseJexl()).thenReturn(asList(jexlSelector));
-    when(cselValidator.validate((String) jexlSelector.getAttributes().get("expression"))).thenReturn(false);
+
+    String expression = jexlSelector.getAttributes().get("expression");
+    doThrow(SelectorEvaluationException.class).when(selectorFactory).validateSelector(CselSelector.TYPE, expression);
 
     manager.doStart();
 

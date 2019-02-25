@@ -28,13 +28,13 @@ import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils;
-
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.event.EventAware.Asynchronous;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.group.GroupFacet;
+import org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils;
+import org.sonatype.nexus.repository.storage.AssetManager;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.view.Content;
@@ -71,8 +71,8 @@ public class NpmSearchIndexFacetGroup
     implements Asynchronous
 {
   @Inject
-  public NpmSearchIndexFacetGroup(final EventManager eventManager) {
-    super(eventManager);
+  public NpmSearchIndexFacetGroup(final EventManager eventManager, final AssetManager assetManager) {
+    super(eventManager, assetManager);
   }
 
   @Subscribe

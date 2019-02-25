@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.view.handlers;
 import java.io.IOException;
 
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -23,6 +24,7 @@ import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.AssetManager;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.transaction.TransactionalTouchMetadata;
@@ -49,6 +51,13 @@ public class LastDownloadedHandler
     extends ComponentSupport
     implements Handler
 {
+  private final AssetManager assetManager;
+
+  @Inject
+  public LastDownloadedHandler(final AssetManager assetManager) {
+    this.assetManager = assetManager;
+  }
+
   @Override
   public Response handle(final Context context) throws Exception {
     Response response = context.proceed();
@@ -100,7 +109,7 @@ public class LastDownloadedHandler
   protected void maybeUpdateLastDownloaded(final StorageFacet storageFacet, final Asset asset)
       throws IOException
   {
-    if (asset != null && asset.markAsDownloaded()) {
+    if (asset != null && assetManager.maybeUpdateLastDownloaded(asset)) {
       TransactionalTouchMetadata.operation.withDb(storageFacet.txSupplier())
           .throwing(IOException.class)
           .swallow(ORecordNotFoundException.class)
@@ -117,7 +126,7 @@ public class LastDownloadedHandler
 
   @VisibleForTesting
   void updateLastDownloadedTime(final StorageTx tx, @Nullable final Asset updatedAsset) {
-    if (updatedAsset != null && updatedAsset.markAsDownloaded()) {
+    if (updatedAsset != null && assetManager.maybeUpdateLastDownloaded(updatedAsset)) {
       tx.saveAsset(updatedAsset);
     }
   }

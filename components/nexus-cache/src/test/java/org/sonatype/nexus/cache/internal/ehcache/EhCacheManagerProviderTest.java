@@ -39,13 +39,14 @@ public class EhCacheManagerProviderTest
   @Before
   public void setUp() throws Exception {
     underTest = new EhCacheManagerProvider(getClass().getResource("ehcache-test.xml").toURI());
+    underTest.start();
   }
 
   @After
   public void tearDown() throws Exception {
     // safety check that we always cleanup
     if (underTest != null) {
-      underTest.destroy();
+      underTest.stop();
     }
   }
 
@@ -59,8 +60,8 @@ public class EhCacheManagerProviderTest
     CacheManager cacheManager2 = underTest.get();
     assertThat(cacheManager2, is(cacheManager));
 
-    // after destroy get should fail
-    underTest.destroy();
+    // after stop get should fail
+    underTest.stop();
     try {
       underTest.get();
       fail();
@@ -68,6 +69,7 @@ public class EhCacheManagerProviderTest
     catch (IllegalStateException e) {
       // expected
     }
+    underTest.start();
   }
 
   @Test

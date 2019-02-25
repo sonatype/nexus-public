@@ -21,14 +21,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.common.app.BindAsLifecycleSupport;
+import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.thread.TcclBlock;
 import org.sonatype.nexus.elasticsearch.PluginLocator;
@@ -48,6 +49,7 @@ import org.elasticsearch.plugins.PluginManager.OutputMode;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
 
 /**
  * ElasticSearch {@link Node} provider.
@@ -55,9 +57,10 @@ import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
  * @since 3.0
  */
 @Named
+@ManagedLifecycle(phase = STORAGE)
 @Singleton
 public class NodeProvider
-    extends ComponentSupport
+    extends LifecycleSupport
     implements Provider<Node>
 {
   private final ApplicationDirectories directories;
@@ -138,8 +141,8 @@ public class NodeProvider
     return pluginLocators.stream().map(PluginLocator::pluginClass).collect(Collectors.toList());
   }
 
-  @PreDestroy
-  public synchronized void shutdown() {
+  @Override
+  protected void doStop() {
     if (node != null) {
       log.debug("Shutting down");
       try {
@@ -149,5 +152,16 @@ public class NodeProvider
         node = null;
       }
     }
+  }
+
+  /**
+   * Provider implementations are not automatically exposed under additional interfaces.
+   * This small module is a workaround to expose this provider as a (managed) lifecycle.
+   */
+  @Named
+  private static class BindAsLifecycle
+      extends BindAsLifecycleSupport<NodeProvider>
+  {
+    // empty
   }
 }

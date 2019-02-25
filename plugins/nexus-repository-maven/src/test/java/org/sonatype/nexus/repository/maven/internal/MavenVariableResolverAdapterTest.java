@@ -87,7 +87,7 @@ public class MavenVariableResolverAdapterTest
             COORDINATE_ARTIFACT_ID_VARIABLE, COORDINATE_VERSION_VARIABLE, COORDINATE_EXTENSION_VARIABLE,
             COORDINATE_CLASSIFIER_VARIABLE));
     assertThat(source.get(FORMAT_VARIABLE).get(), is(Maven2Format.NAME));
-    assertThat(source.get(PATH_VARIABLE).get(), is("/mygroupid/myartifactid/1.0/myartifactid-1.0.jar"));
+    assertThat(source.get(PATH_VARIABLE).get(), is("mygroupid/myartifactid/1.0/myartifactid-1.0.jar"));
     assertThat(source.get(COORDINATE_GROUP_ID_VARIABLE).get(), is("mygroupid"));
     assertThat(source.get(COORDINATE_ARTIFACT_ID_VARIABLE).get(), is("myartifactid"));
     assertThat(source.get(COORDINATE_VERSION_VARIABLE).get(), is("1.0"));
@@ -107,7 +107,7 @@ public class MavenVariableResolverAdapterTest
             COORDINATE_CLASSIFIER_VARIABLE));
     assertThat(source.get(FORMAT_VARIABLE).get(), is(Maven2Format.NAME));
     assertThat(source.get(PATH_VARIABLE).get(),
-        is("/mygroupid/myartifactid/1.0-SNAPSHOT/myartifactid-1.0-20160414.160310-3.jar"));
+        is("mygroupid/myartifactid/1.0-SNAPSHOT/myartifactid-1.0-20160414.160310-3.jar"));
     assertThat(source.get(COORDINATE_GROUP_ID_VARIABLE).get(), is("mygroupid"));
     assertThat(source.get(COORDINATE_ARTIFACT_ID_VARIABLE).get(), is("myartifactid"));
     assertThat(source.get(COORDINATE_VERSION_VARIABLE).get(), is("1.0-SNAPSHOT"));
@@ -126,7 +126,7 @@ public class MavenVariableResolverAdapterTest
             COORDINATE_ARTIFACT_ID_VARIABLE, COORDINATE_VERSION_VARIABLE, COORDINATE_EXTENSION_VARIABLE,
             COORDINATE_CLASSIFIER_VARIABLE));
     assertThat(source.get(FORMAT_VARIABLE).get(), is(Maven2Format.NAME));
-    assertThat(source.get(PATH_VARIABLE).get(), is("/mygroupid/myartifactid/1.0/myartifactid-1.0-sources.jar"));
+    assertThat(source.get(PATH_VARIABLE).get(), is("mygroupid/myartifactid/1.0/myartifactid-1.0-sources.jar"));
     assertThat(source.get(COORDINATE_GROUP_ID_VARIABLE).get(), is("mygroupid"));
     assertThat(source.get(COORDINATE_ARTIFACT_ID_VARIABLE).get(), is("myartifactid"));
     assertThat(source.get(COORDINATE_VERSION_VARIABLE).get(), is("1.0"));
@@ -146,7 +146,7 @@ public class MavenVariableResolverAdapterTest
             COORDINATE_ARTIFACT_ID_VARIABLE, COORDINATE_VERSION_VARIABLE, COORDINATE_EXTENSION_VARIABLE,
             COORDINATE_CLASSIFIER_VARIABLE));
     assertThat(source.get(FORMAT_VARIABLE).get(), is(Maven2Format.NAME));
-    assertThat(source.get(PATH_VARIABLE).get(), is("/mygroupid/myartifactid/1.0/myartifactid-1.0.jar"));
+    assertThat(source.get(PATH_VARIABLE).get(), is("mygroupid/myartifactid/1.0/myartifactid-1.0.jar"));
     assertThat(source.get(COORDINATE_GROUP_ID_VARIABLE).get(), is("mygroupid"));
     assertThat(source.get(COORDINATE_ARTIFACT_ID_VARIABLE).get(), is("myartifactid"));
     assertThat(source.get(COORDINATE_VERSION_VARIABLE).get(), is("1.0"));
@@ -168,7 +168,7 @@ public class MavenVariableResolverAdapterTest
             COORDINATE_CLASSIFIER_VARIABLE));
     assertThat(source.get(FORMAT_VARIABLE).get(), is(Maven2Format.NAME));
     assertThat(source.get(PATH_VARIABLE).get(),
-        is("/mygroupid/myartifactid/1.0-SNAPSHOT/myartifactid-1.0-20160414.160310-3.jar"));
+        is("mygroupid/myartifactid/1.0-SNAPSHOT/myartifactid-1.0-20160414.160310-3.jar"));
     assertThat(source.get(COORDINATE_GROUP_ID_VARIABLE).get(), is("mygroupid"));
     assertThat(source.get(COORDINATE_ARTIFACT_ID_VARIABLE).get(), is("myartifactid"));
     assertThat(source.get(COORDINATE_VERSION_VARIABLE).get(), is("1.0-SNAPSHOT"));
@@ -188,7 +188,7 @@ public class MavenVariableResolverAdapterTest
             COORDINATE_ARTIFACT_ID_VARIABLE, COORDINATE_VERSION_VARIABLE, COORDINATE_EXTENSION_VARIABLE,
             COORDINATE_CLASSIFIER_VARIABLE));
     assertThat(source.get(FORMAT_VARIABLE).get(), is(Maven2Format.NAME));
-    assertThat(source.get(PATH_VARIABLE).get(), is("/mygroupid/myartifactid/1.0/myartifactid-1.0-sources.jar"));
+    assertThat(source.get(PATH_VARIABLE).get(), is("mygroupid/myartifactid/1.0/myartifactid-1.0-sources.jar"));
     assertThat(source.get(COORDINATE_GROUP_ID_VARIABLE).get(), is("mygroupid"));
     assertThat(source.get(COORDINATE_ARTIFACT_ID_VARIABLE).get(), is("myartifactid"));
     assertThat(source.get(COORDINATE_VERSION_VARIABLE).get(), is("1.0"));
@@ -208,7 +208,7 @@ public class MavenVariableResolverAdapterTest
             COORDINATE_ARTIFACT_ID_VARIABLE, COORDINATE_VERSION_VARIABLE, COORDINATE_EXTENSION_VARIABLE,
             COORDINATE_CLASSIFIER_VARIABLE));
     assertThat(source.get(FORMAT_VARIABLE).get(), is(Maven2Format.NAME));
-    assertThat(source.get(PATH_VARIABLE).get(), is("/mygroupid/myartifactid/1.0/myartifactid-1.0.jar"));
+    assertThat(source.get(PATH_VARIABLE).get(), is("mygroupid/myartifactid/1.0/myartifactid-1.0.jar"));
     assertThat(source.get(COORDINATE_GROUP_ID_VARIABLE).get(), is("mygroupid"));
     assertThat(source.get(COORDINATE_ARTIFACT_ID_VARIABLE).get(), is("myartifactid"));
     assertThat(source.get(COORDINATE_VERSION_VARIABLE).get(), is("1.0"));
@@ -229,7 +229,7 @@ public class MavenVariableResolverAdapterTest
             COORDINATE_CLASSIFIER_VARIABLE));
     assertThat(source.get(FORMAT_VARIABLE).get(), is(Maven2Format.NAME));
     assertThat(source.get(PATH_VARIABLE).get(),
-        is("/mygroupid/myartifactid/1.0-SNAPSHOT/myartifactid-1.0-20160414.160310-3.jar"));
+        is("mygroupid/myartifactid/1.0-SNAPSHOT/myartifactid-1.0-20160414.160310-3.jar"));
     assertThat(source.get(COORDINATE_GROUP_ID_VARIABLE).get(), is("mygroupid"));
     assertThat(source.get(COORDINATE_ARTIFACT_ID_VARIABLE).get(), is("myartifactid"));
     assertThat(source.get(COORDINATE_VERSION_VARIABLE).get(), is("1.0-SNAPSHOT"));
@@ -249,7 +249,7 @@ public class MavenVariableResolverAdapterTest
             COORDINATE_ARTIFACT_ID_VARIABLE, COORDINATE_VERSION_VARIABLE, COORDINATE_EXTENSION_VARIABLE,
             COORDINATE_CLASSIFIER_VARIABLE));
     assertThat(source.get(FORMAT_VARIABLE).get(), is(Maven2Format.NAME));
-    assertThat(source.get(PATH_VARIABLE).get(), is("/mygroupid/myartifactid/1.0/myartifactid-1.0-sources.jar"));
+    assertThat(source.get(PATH_VARIABLE).get(), is("mygroupid/myartifactid/1.0/myartifactid-1.0-sources.jar"));
     assertThat(source.get(COORDINATE_GROUP_ID_VARIABLE).get(), is("mygroupid"));
     assertThat(source.get(COORDINATE_ARTIFACT_ID_VARIABLE).get(), is("myartifactid"));
     assertThat(source.get(COORDINATE_VERSION_VARIABLE).get(), is("1.0"));
@@ -269,7 +269,7 @@ public class MavenVariableResolverAdapterTest
             COORDINATE_ARTIFACT_ID_VARIABLE, COORDINATE_VERSION_VARIABLE, COORDINATE_EXTENSION_VARIABLE,
             COORDINATE_CLASSIFIER_VARIABLE));
     assertThat(source.get(FORMAT_VARIABLE).get(), is(Maven2Format.NAME));
-    assertThat(source.get(PATH_VARIABLE).get(), is("/mygroupid/myartifactid/1.0/myartifactid-1.0.jar"));
+    assertThat(source.get(PATH_VARIABLE).get(), is("mygroupid/myartifactid/1.0/myartifactid-1.0.jar"));
     assertThat(source.get(COORDINATE_GROUP_ID_VARIABLE).get(), is("mygroupid"));
     assertThat(source.get(COORDINATE_ARTIFACT_ID_VARIABLE).get(), is("myartifactid"));
     assertThat(source.get(COORDINATE_VERSION_VARIABLE).get(), is("1.0"));
@@ -291,7 +291,7 @@ public class MavenVariableResolverAdapterTest
             COORDINATE_CLASSIFIER_VARIABLE));
     assertThat(source.get(FORMAT_VARIABLE).get(), is(Maven2Format.NAME));
     assertThat(source.get(PATH_VARIABLE).get(),
-        is("/mygroupid/myartifactid/1.0-SNAPSHOT/myartifactid-1.0-20160414.160310-3.jar"));
+        is("mygroupid/myartifactid/1.0-SNAPSHOT/myartifactid-1.0-20160414.160310-3.jar"));
     assertThat(source.get(COORDINATE_GROUP_ID_VARIABLE).get(), is("mygroupid"));
     assertThat(source.get(COORDINATE_ARTIFACT_ID_VARIABLE).get(), is("myartifactid"));
     assertThat(source.get(COORDINATE_VERSION_VARIABLE).get(), is("1.0-SNAPSHOT"));
@@ -311,7 +311,7 @@ public class MavenVariableResolverAdapterTest
             COORDINATE_ARTIFACT_ID_VARIABLE, COORDINATE_VERSION_VARIABLE, COORDINATE_EXTENSION_VARIABLE,
             COORDINATE_CLASSIFIER_VARIABLE));
     assertThat(source.get(FORMAT_VARIABLE).get(), is(Maven2Format.NAME));
-    assertThat(source.get(PATH_VARIABLE).get(), is("/mygroupid/myartifactid/1.0/myartifactid-1.0-sources.jar"));
+    assertThat(source.get(PATH_VARIABLE).get(), is("mygroupid/myartifactid/1.0/myartifactid-1.0-sources.jar"));
     assertThat(source.get(COORDINATE_GROUP_ID_VARIABLE).get(), is("mygroupid"));
     assertThat(source.get(COORDINATE_ARTIFACT_ID_VARIABLE).get(), is("myartifactid"));
     assertThat(source.get(COORDINATE_VERSION_VARIABLE).get(), is("1.0"));

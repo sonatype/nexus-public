@@ -26,9 +26,10 @@ import org.sonatype.nexus.repository.storage.Component
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter
 import org.sonatype.nexus.repository.storage.ComponentFactory
 import org.sonatype.nexus.repository.storage.DefaultComponent
-import org.sonatype.nexus.selector.CselAssetSql
-import org.sonatype.nexus.selector.CselAssetSqlBuilder
-import org.sonatype.nexus.selector.CselSelector
+import org.sonatype.nexus.selector.JexlSelector
+import org.sonatype.nexus.selector.SelectorFactory
+import org.sonatype.nexus.selector.SelectorSqlBuilder
+import org.sonatype.nexus.validation.ConstraintViolationFactory
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx
@@ -36,6 +37,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.mockito.Mock
 
 import static java.util.Collections.emptySet
 import static org.hamcrest.CoreMatchers.is
@@ -53,7 +55,10 @@ class SelectorPathExpressionTest
   @Rule
   public DatabaseInstanceRule database = inFilesystem('test')
 
-  private CselAssetSqlBuilder cselAssetSqlBuilder = new CselAssetSqlBuilder()
+  @Mock
+  private ConstraintViolationFactory violationFactory
+
+  private SelectorFactory selectorFactory
 
   private VariableResolverAdapter variableResolverAdapter = new SimpleVariableResolverAdapter()
 
@@ -67,6 +72,8 @@ class SelectorPathExpressionTest
 
   @Before
   void setUp() throws Exception {
+    selectorFactory = new SelectorFactory(violationFactory)
+
     ComponentFactory componentFactory = new ComponentFactory(emptySet())
 
     bucketEntityAdapter = new BucketEntityAdapter()
@@ -107,17 +114,25 @@ class SelectorPathExpressionTest
   }
 
   private Iterable<String> evaluateAsSQL(final String expression) {
-    CselAssetSql csel = cselAssetSqlBuilder.buildWhereClause(expression, FORMAT_NAME, 'p', '')
+    SelectorSqlBuilder builder = new SelectorSqlBuilder()
+
+    builder.propertyAlias('format', 'format')
+    builder.propertyAlias('path', 'name')
+    builder.propertyPrefix('attributes.' + FORMAT_NAME + '.')
+    builder.parameterPrefix('p')
+
+    selectorFactory.createSelector('csel', expression).toSql(builder)
+
     database.getInstance().acquire().withCloseable { db ->
-      db.query(new OSQLSynchQuery("select from asset where ${csel.sql}"), csel.sqlParameters)
+      db.query(new OSQLSynchQuery("select from asset where ${builder.queryString}"), builder.queryParameters)
           .collect { it.field('name') }
     }
   }
 
   private Iterable<String> evaluateAsJEXL(final String expression) {
-    CselSelector csel = new CselSelector(expression)
+    JexlSelector jexl = selectorFactory.createSelector('jexl', expression)
     database.getInstance().acquire().withCloseable { db ->
-      db.browseClass('asset').findAll { csel.evaluate(variableResolverAdapter.fromDocument(it)) }
+      db.browseClass('asset').findAll { jexl.evaluate(variableResolverAdapter.fromDocument(it)) }
           .collect { it.field('name') }
     }
   }

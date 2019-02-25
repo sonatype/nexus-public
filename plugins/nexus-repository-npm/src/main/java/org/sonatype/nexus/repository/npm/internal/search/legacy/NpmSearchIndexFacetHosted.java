@@ -25,14 +25,14 @@ import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.npm.internal.NpmFacetUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmJsonUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageId;
-
-import org.sonatype.nexus.common.collect.NestedAttributesMap;
-import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.AssetManager;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.view.Content;
@@ -57,8 +57,8 @@ public class NpmSearchIndexFacetHosted
     extends NpmSearchIndexFacetCaching
 {
   @Inject
-  public NpmSearchIndexFacetHosted(final EventManager eventManager) {
-    super(eventManager);
+  public NpmSearchIndexFacetHosted(final EventManager eventManager, final AssetManager assetManager) {
+    super(eventManager, assetManager);
   }
 
   /**

@@ -33,11 +33,20 @@ public interface SelectorManager
   List<SelectorConfiguration> browse();
 
   /**
-   * Return all existing content selectors.
+   * Return all JEXL content selectors.
    *
    * @since 3.6
    */
-  List<SelectorConfiguration> browseJexl();
+  default List<SelectorConfiguration> browseJexl() {
+    return browse(JexlSelector.TYPE);
+  }
+
+  /**
+   * Return all content selectors of the given type.
+   *
+   * @since 3.next
+   */
+  List<SelectorConfiguration> browse(String selectorType);
 
   /**
    * @return the content selectors for the active user
@@ -69,7 +78,19 @@ public interface SelectorManager
 
   /**
    * Evaluate the specified content selector against the given variable source.
+   *
+   * @throws SelectorEvaluationException if the given selector cannot be evaluated
    */
   boolean evaluate(SelectorConfiguration selectorConfiguration, VariableSource variableSource)
+      throws SelectorEvaluationException;
+
+  /**
+   * Convert the specified content selector to SQL for use as a 'where' clause.
+   *
+   * @throws SelectorEvaluationException if the given selector cannot be converted
+   *
+   * @since 3.next
+   */
+  void toSql(SelectorConfiguration selectorConfiguration, SelectorSqlBuilder sqlBuilder)
       throws SelectorEvaluationException;
 }

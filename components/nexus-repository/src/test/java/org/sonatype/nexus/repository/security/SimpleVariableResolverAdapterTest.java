@@ -73,7 +73,7 @@ public class SimpleVariableResolverAdapterTest
 
     assertThat(source.getVariableSet(), containsInAnyOrder(FORMAT_VARIABLE, PATH_VARIABLE));
     assertThat(source.get(FORMAT_VARIABLE).get(), is(TEST_FORMAT));
-    assertThat(source.get(PATH_VARIABLE).get(), is(TEST_PATH_WITH_SLASH));
+    assertThat(source.get(PATH_VARIABLE).get(), is(TEST_PATH_WITHOUT_SLASH));
   }
 
   @Test
@@ -86,7 +86,7 @@ public class SimpleVariableResolverAdapterTest
 
     assertThat(source.getVariableSet(), containsInAnyOrder(FORMAT_VARIABLE, PATH_VARIABLE));
     assertThat(source.get(FORMAT_VARIABLE).get(), is(TEST_FORMAT));
-    assertThat(source.get(PATH_VARIABLE).get(), is(TEST_PATH_WITH_SLASH));
+    assertThat(source.get(PATH_VARIABLE).get(), is(TEST_PATH_WITHOUT_SLASH));
   }
 
   @Test
@@ -99,7 +99,7 @@ public class SimpleVariableResolverAdapterTest
 
     assertThat(source.getVariableSet(), containsInAnyOrder(FORMAT_VARIABLE, PATH_VARIABLE));
     assertThat(source.get(FORMAT_VARIABLE).get(), is(TEST_FORMAT));
-    assertThat(source.get(PATH_VARIABLE).get(), is(TEST_PATH_WITH_SLASH));
+    assertThat(source.get(PATH_VARIABLE).get(), is(TEST_PATH_WITHOUT_SLASH));
   }
 
   @Test
@@ -112,6 +112,6 @@ public class SimpleVariableResolverAdapterTest
 
     assertThat(source.getVariableSet(), containsInAnyOrder(FORMAT_VARIABLE, PATH_VARIABLE));
     assertThat(source.get(FORMAT_VARIABLE).get(), is(TEST_FORMAT));
-    assertThat(source.get(PATH_VARIABLE).get(), is(TEST_PATH_WITH_SLASH));
+    assertThat(source.get(PATH_VARIABLE).get(), is(TEST_PATH_WITHOUT_SLASH));
   }
 }

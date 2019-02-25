@@ -302,7 +302,8 @@ public class StorageFacetImpl
             config.strictContentTypeValidation,
             contentValidatorSelector.validator(getRepository()),
             mimeRulesSourceSelector.ruleSource(getRepository()),
-            componentFactory)
+            componentFactory
+        )
     );
   }
 

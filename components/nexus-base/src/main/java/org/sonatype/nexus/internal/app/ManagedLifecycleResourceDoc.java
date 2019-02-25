@@ -10,36 +10,26 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.orient;
+package org.sonatype.nexus.internal.app;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
-
-import org.sonatype.nexus.scheduling.TaskConfiguration;
-import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 
 /**
- * Descriptor for task to log table counts
+ * REST API to manage the Nexus application lifecycle.
  *
- * since 3.next
+ * @since 3.next
  */
-@Named
-@Singleton
-public class ClusteredDbTableCountTaskDescriptor
-    extends TaskDescriptorSupport
+@Api("lifecycle")
+public interface ManagedLifecycleResourceDoc
 {
-  public static final String TYPE_ID = "cluster.periodicLogging";
+  @ApiOperation("Get current lifecycle phase")
+  String getPhase();
 
-  public ClusteredDbTableCountTaskDescriptor() {
-    super(TYPE_ID,
-        ClusteredDbTableCountTask.class,
-        "Admin - Log database table record counts",
-        true,
-        true);
-  }
+  @ApiOperation("Move to new lifecycle phase")
+  void setPhase(@ApiParam("The phase to move to") final String phase);
 
-  @Override
-  public void initializeConfiguration(final TaskConfiguration configuration) {
-    configuration.setBoolean(MULTINODE_KEY, true);
-  }
+  @ApiOperation(value = "Bounce lifecycle phase", notes = "Re-runs all phases from the given phase to the current phase")
+  void bounce(@ApiParam("The phase to bounce") final String phase);
 }

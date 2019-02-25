@@ -25,7 +25,6 @@ import org.sonatype.nexus.extender.modules.ServletContextModule;
 import com.google.inject.Key;
 import com.google.inject.Module;
 import org.eclipse.sisu.BeanEntry;
-import org.eclipse.sisu.bean.LifecycleModule;
 import org.eclipse.sisu.inject.MutableBeanLocator;
 import org.eclipse.sisu.launch.SisuBundlePlan;
 import org.eclipse.sisu.wire.EntryListAdapter;
@@ -48,8 +47,6 @@ public class NexusBundlePlan
 
   private final List<TypeConverterSupport> converterModules;
 
-  private final LifecycleModule lifecycleModule;
-
   public NexusBundlePlan(final MutableBeanLocator locator) {
     super(locator);
 
@@ -58,7 +55,6 @@ public class NexusBundlePlan
     servletContextModule = new ServletContextModule(getFirstValue(locator.locate(Key.get(ServletContext.class))));
     interceptorModules = new EntryListAdapter<>(locator.locate(Key.get(AbstractInterceptorModule.class)));
     converterModules = new EntryListAdapter<>(locator.locate(Key.get(TypeConverterSupport.class)));
-    lifecycleModule = new LifecycleModule();
   }
 
   @Override
@@ -69,7 +65,7 @@ public class NexusBundlePlan
   @Override
   protected Module compose(final Bundle bundle) {
     return new NexusBundleModule(bundle, locator, nexusProperties, //
-        servletContextModule, interceptorModules, converterModules, lifecycleModule);
+        servletContextModule, interceptorModules, converterModules);
   }
 
   private static <T> T getFirstValue(final Iterable<? extends BeanEntry<?, T>> entries) {

@@ -40,6 +40,11 @@ public interface DatabaseMaintenanceService
   void logServersStatus();
 
   /**
+   * Logs the current orientdb server status
+   */
+  String fullServerStatus();
+
+  /**
    * Reset the orientdb databases to the given role.
    */
   void setDatabaseRole(String role);

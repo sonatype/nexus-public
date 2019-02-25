@@ -36,6 +36,7 @@ import org.osgi.framework.BundleContext;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.reverse;
+import static java.lang.Math.max;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.OFF;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 
@@ -112,6 +113,19 @@ public class NexusLifecycleManager
         currentPhase = prevPhase;
       }
     }
+  }
+
+  @Override
+  public void bounce(final Phase bouncePhase) throws Exception {
+    Phase targetPhase = currentPhase;
+    // re-run the given phase by moving to just before it before moving back
+    if (bouncePhase.ordinal() <= targetPhase.ordinal()) {
+      to(Phase.values()[max(0, bouncePhase.ordinal() - 1)]);
+    }
+    else {
+      targetPhase = bouncePhase; // bounce phase is later, just move to it
+    }
+    to(targetPhase);
   }
 
   /**

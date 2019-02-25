@@ -23,7 +23,6 @@ import org.sonatype.nexus.validation.ValidationModule;
 import com.google.common.base.Strings;
 import com.google.inject.Module;
 import org.apache.shiro.guice.aop.ShiroAopModule;
-import org.eclipse.sisu.bean.LifecycleModule;
 import org.eclipse.sisu.inject.MutableBeanLocator;
 import org.eclipse.sisu.launch.BundleModule;
 import org.eclipse.sisu.space.BeanScanning;
@@ -61,8 +60,6 @@ public class NexusBundleModule
 
   private final List<TypeConverterSupport> converterModules;
 
-  private final LifecycleModule lifecycleModule;
-
   private final String imports;
 
   public NexusBundleModule(final Bundle bundle,
@@ -70,8 +67,7 @@ public class NexusBundleModule
                            final Map<?, ?> nexusProperties,
                            final ServletContextModule servletContextModule,
                            final List<AbstractInterceptorModule> interceptorModules,
-                           final List<TypeConverterSupport> converterModules,
-                           final LifecycleModule lifecycleModule)
+                           final List<TypeConverterSupport> converterModules)
   {
     super(bundle, locator);
 
@@ -79,7 +75,6 @@ public class NexusBundleModule
     this.servletContextModule = servletContextModule;
     this.interceptorModules = interceptorModules;
     this.converterModules = converterModules;
-    this.lifecycleModule = lifecycleModule;
 
     imports = Strings.nullToEmpty(bundle.getHeaders().get(Constants.IMPORT_PACKAGE));
   }
@@ -144,7 +139,5 @@ public class NexusBundleModule
     for (AbstractInterceptorModule aim : interceptorModules) {
       modules.add(aim);
     }
-
-    modules.add(lifecycleModule);
   }
 }

@@ -222,13 +222,13 @@ public class Asset
   }
 
   /**
-   * Sets the last downloaded timestamp to now, if it has been more than 12 hours.
+   * Sets the last downloaded timestamp to now, if it has been longer than {@param updateWindow}
    *
    * @return {@code true} if the timestamp was changed, otherwise {@code false}
    */
-  public boolean markAsDownloaded() {
+  public boolean markAsDownloaded(final int updateWindow) {
     DateTime now = DateTime.now();
-    if (lastDownloaded == null || lastDownloaded.isBefore(now.minusHours(12))) {
+    if (lastDownloaded == null || lastDownloaded.isBefore(now.minusSeconds(updateWindow))) {
       lastDownloaded(now);
       return true;
     }

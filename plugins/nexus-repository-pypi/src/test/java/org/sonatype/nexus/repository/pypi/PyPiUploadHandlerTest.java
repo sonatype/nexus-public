@@ -174,7 +174,7 @@ public class PyPiUploadHandlerTest
     VariableSource source = captor.getValue();
 
     assertThat(source.get("format"), is(Optional.of(PyPiFormat.NAME)));
-    assertThat(source.get("path"), is(Optional.of("/packages/sample/1.2.0/sample-1.2.0-py2.7.egg")));
+    assertThat(source.get("path"), is(Optional.of("packages/sample/1.2.0/sample-1.2.0-py2.7.egg")));
     assertThat(source.get("coordinate.name"), is(Optional.of("sample")));
     assertThat(source.get("coordinate.version"), is(Optional.of("1.2.0")));
 

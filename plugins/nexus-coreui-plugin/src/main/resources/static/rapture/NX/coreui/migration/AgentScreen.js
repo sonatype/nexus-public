@@ -48,6 +48,17 @@ Ext.define('NX.coreui.migration.AgentScreen', {
           fieldLabel: NX.I18n.render(me, "Token_FieldLabel"),
           helpText: NX.I18n.render(me, "Token_HelpText"),
           allowBlank: false
+        },
+        {
+          xtype: 'numberfield',
+          name: 'fetchSize',
+          fieldLabel: NX.I18n.render(me, "FetchSize_FieldLabel"),
+          helpText: NX.I18n.render(me, "FetchSize_HelpText"),
+          allowBlank: false,
+          allowDecimals: false,
+          allowExponential: false,
+          minValue: 1,
+          value: 100
         }
       ],
 

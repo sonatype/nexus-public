@@ -266,9 +266,9 @@ public class MavenUploadHandlerTest
 
     List<VariableSource> sources = captor.getAllValues();
 
-    assertVariableSource(sources.get(0), "/org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.jar", "org.apache.maven",
+    assertVariableSource(sources.get(0), "org/apache/maven/tomcat/5.0.28/tomcat-5.0.28.jar", "org.apache.maven",
         "tomcat", "5.0.28", null, "jar");
-    assertVariableSource(sources.get(1), "/org/apache/maven/tomcat/5.0.28/tomcat-5.0.28-sources.jar",
+    assertVariableSource(sources.get(1), "org/apache/maven/tomcat/5.0.28/tomcat-5.0.28-sources.jar",
         "org.apache.maven", "tomcat", "5.0.28", "sources", "jar");
 
     verify(mavenHostedFacet).rebuildMetadata("org.apache.maven", "tomcat", "5.0.28", false);

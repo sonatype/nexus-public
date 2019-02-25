@@ -1381,7 +1381,9 @@ Ext.define('NX.coreui.app.PluginStrings', {
       Endpoint_FieldLabel: 'URL',
       Endpoint_HelpText: "The base URL of the remote server",
       Token_FieldLabel: 'Access Token',
-      Token_HelpText: "The access token from the remote server's upgrade-agent settings"
+      Token_HelpText: "The access token from the remote server's upgrade-agent settings",
+      FetchSize_FieldLabel: 'Fetch Size',
+      FetchSize_HelpText: "Batch size of changes pulled from NXRM2 at once. Lower the value if you are having issues during the Synchronizing step."
     },
 
     'NX.coreui.migration.AgentStep': {

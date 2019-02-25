@@ -210,7 +210,7 @@ public class DefaultComponentMetadataProducerTest
     Bucket bucket = createBucket(REPO_NAME);
     Component component = createDetachedComponent(bucket, GROUP, NAME, VERSION);
     Asset expected = createDetachedAsset(bucket, NAME, component);
-    expected.markAsDownloaded();
+    expected.markAsDownloaded(1);
     Iterable<Asset> assets = newArrayList(
         createDetachedAsset(bucket, "asset1", component),
         expected,

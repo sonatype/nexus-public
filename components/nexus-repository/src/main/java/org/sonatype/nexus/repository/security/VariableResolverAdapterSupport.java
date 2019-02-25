@@ -43,7 +43,7 @@ public abstract class VariableResolverAdapterSupport
   @Override
   public VariableSource fromRequest(final Request request, final Repository repository) {
     VariableSourceBuilder builder = new VariableSourceBuilder();
-    builder.addResolver(new ConstantVariableResolver(request.getPath(), PATH));
+    builder.addResolver(new ConstantVariableResolver(request.getPath().substring(1), PATH));
     builder.addResolver(new ConstantVariableResolver(repository.getFormat().getValue(), FORMAT));
     addFromRequest(builder, request);
 
@@ -58,7 +58,7 @@ public abstract class VariableResolverAdapterSupport
     String format = document.field(AssetEntityAdapter.P_FORMAT, String.class);
 
     VariableSourceBuilder builder = new VariableSourceBuilder();
-    builder.addResolver(new ConstantVariableResolver('/' + path, PATH));
+    builder.addResolver(new ConstantVariableResolver(path, PATH));
     builder.addResolver(new ConstantVariableResolver(format, FORMAT));
     addFromDocument(builder, document);
 
@@ -70,7 +70,7 @@ public abstract class VariableResolverAdapterSupport
   @Override
   public VariableSource fromAsset(final Asset asset) {
     VariableSourceBuilder builder = new VariableSourceBuilder();
-    builder.addResolver(new ConstantVariableResolver('/' + asset.name(), PATH));
+    builder.addResolver(new ConstantVariableResolver(asset.name(), PATH));
     builder.addResolver(new ConstantVariableResolver(asset.format(), FORMAT));
     addFromAsset(builder, asset);
 
@@ -82,7 +82,7 @@ public abstract class VariableResolverAdapterSupport
   @Override
   public VariableSource fromCoordinates(final String format, final String path, final Map<String, String> coordinates) {
     VariableSourceBuilder builder = new VariableSourceBuilder();
-    builder.addResolver(new ConstantVariableResolver('/' + checkNotNull(path), PATH));
+    builder.addResolver(new ConstantVariableResolver(checkNotNull(path), PATH));
     builder.addResolver(new ConstantVariableResolver(checkNotNull(format), FORMAT));
 
     addCoordinates(builder, coordinates);
@@ -93,7 +93,7 @@ public abstract class VariableResolverAdapterSupport
   public VariableSource fromSourceLookup(final SourceLookup sourceLookup, final Map<String, Object> asset) {
     VariableSourceBuilder builder = new VariableSourceBuilder();
     builder.addResolver(
-        new ConstantVariableResolver('/' + checkNotNull((String) asset.get(DefaultComponentMetadataProducer.NAME)), PATH));
+        new ConstantVariableResolver(checkNotNull((String) asset.get(DefaultComponentMetadataProducer.NAME)), PATH));
     builder.addResolver(
         new ConstantVariableResolver(checkNotNull(sourceLookup.get(DefaultComponentMetadataProducer.FORMAT)), FORMAT));
     addFromSourceLookup(builder, sourceLookup, asset);

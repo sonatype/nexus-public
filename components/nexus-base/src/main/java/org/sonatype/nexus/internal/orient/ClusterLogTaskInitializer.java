@@ -31,18 +31,18 @@ import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.schedule.Cron;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.internal.orient.ClusteredDbTableCountTaskDescriptor.TYPE_ID;
+import static org.sonatype.nexus.internal.orient.ClusterLogTaskDescriptor.TYPE_ID;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.CLUSTER_LOG_ONLY;
 
 /**
- * Component to create cluster db count logging using quartz to periodically execute
+ * Component to create cluster logging task using quartz to periodically execute
  *
- * since 3.next
+ * @since 3.next
  */
 @Named
 @Singleton
 @ManagedLifecycle(phase = Phase.TASKS)
-public class ClusteredDbTableCountTaskInitializer
+public class ClusterLogTaskInitializer
     extends ComponentSupport
     implements Lifecycle
 {
@@ -55,7 +55,7 @@ public class ClusteredDbTableCountTaskInitializer
   private final boolean enabled;
 
   @Inject
-  public ClusteredDbTableCountTaskInitializer(
+  public ClusterLogTaskInitializer(
       final NodeAccess nodeAccess,
       final TaskScheduler taskScheduler,
       @Named("${nexus.log.cluster.enabled:-true}") final boolean enabled)

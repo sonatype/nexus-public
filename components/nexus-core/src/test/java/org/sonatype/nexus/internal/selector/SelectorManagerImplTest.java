@@ -27,8 +27,10 @@ import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.selector.CselSelector;
 import org.sonatype.nexus.selector.JexlSelector;
+import org.sonatype.nexus.selector.Selector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorEvaluationException;
+import org.sonatype.nexus.selector.SelectorFactory;
 import org.sonatype.nexus.selector.VariableSource;
 
 import org.junit.Before;
@@ -41,6 +43,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.security.RepositoryContentSelectorPrivilegeDescriptor.P_REPOSITORY;
 import static org.sonatype.nexus.repository.security.RepositorySelector.ALL;
@@ -54,6 +57,9 @@ public class SelectorManagerImplTest
 
   @Mock
   private SecuritySystem securitySystem;
+
+  @Mock
+  private SelectorFactory selectorFactory;
 
   @Mock
   private AuthorizationManager authorizationManager;
@@ -70,7 +76,7 @@ public class SelectorManagerImplTest
 
   @Before
   public void setUp() throws Exception {
-    this.manager = new SelectorManagerImpl(store, securitySystem);
+    this.manager = new SelectorManagerImpl(store, securitySystem, selectorFactory);
 
     when(securitySystem.getAuthorizationManager(DEFAULT_SOURCE)).thenReturn(authorizationManager);
     when(securitySystem.currentUser()).thenReturn(user);
@@ -78,6 +84,14 @@ public class SelectorManagerImplTest
     selectorConfigurations = new ArrayList<>();
 
     when(store.browse()).thenReturn(selectorConfigurations);
+
+    Selector alwaysTrueSelector = mock(Selector.class);
+    when(alwaysTrueSelector.evaluate(variableSource)).thenReturn(true);
+    Selector alwaysFalseSelector = mock(Selector.class);
+    when(alwaysFalseSelector.evaluate(variableSource)).thenReturn(false);
+
+    when(selectorFactory.createSelector(JexlSelector.TYPE, "true")).thenReturn(alwaysTrueSelector);
+    when(selectorFactory.createSelector(JexlSelector.TYPE, "false")).thenReturn(alwaysFalseSelector);
   }
 
   @Test

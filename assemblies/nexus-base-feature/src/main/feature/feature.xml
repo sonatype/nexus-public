@@ -33,6 +33,11 @@
     <bundle>wrap:${mvn:resteasy-client}$Bundle-SymbolicName=resteasy-client&amp;Fragment-Host=org.sonatype.nexus.siesta</bundle>
 
     <!--
+    Relax Metrics-Guice import constraints so we can use latest release of dropwizard/codahale metrics
+    -->
+    <bundle>wrap:${mvn:metrics-guice}$overwrite=merge&amp;Import-Package=com.codahale.metrics*,*</bundle>
+
+    <!--
     Relax Swagger import constraints so we can use latest release of Guava, and make use of Reflections optional
     -->
     <bundle>wrap:${mvn:swagger-core}$overwrite=merge&amp;Import-Package=com.google.common.*,*</bundle>
