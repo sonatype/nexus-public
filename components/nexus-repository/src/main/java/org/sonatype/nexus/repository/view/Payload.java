@@ -15,8 +15,11 @@ package org.sonatype.nexus.repository.view;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 import javax.annotation.Nullable;
+
+import com.google.common.io.ByteStreams;
 
 /**
  * Payload.
@@ -44,5 +47,17 @@ public interface Payload
   @Override
   default void close() throws IOException {
     // no underlying resources to clean-up by default
+  }
+
+  /**
+   * Provide a handle on the copying of the {@link InputStream} to the given {@link OutputStream}.
+   * Callers are required to handle the flushing and closing of the streams. By default we
+   * do a {@link ByteStreams#copy(InputStream, OutputStream)}.
+   *
+   * @param input  {@link InputStream}
+   * @param output {@link OutputStream}
+   */
+  default void copy(final InputStream input, final OutputStream output) throws IOException {
+    ByteStreams.copy(input, output);
   }
 }

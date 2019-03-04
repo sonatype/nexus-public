@@ -50,6 +50,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
+import static org.sonatype.nexus.common.app.ManagedLifecycleManager.isShuttingDown;
 
 /**
  * ElasticSearch {@link Node} provider.
@@ -143,7 +144,8 @@ public class NodeProvider
 
   @Override
   protected void doStop() {
-    if (node != null) {
+    // elasticsearch cannot be restarted, so avoid shutting it down when bouncing the service
+    if (node != null && isShuttingDown()) {
       log.debug("Shutting down");
       try {
         node.close();

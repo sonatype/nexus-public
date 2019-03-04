@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
@@ -42,6 +43,9 @@ public class RoutingRuleStoreImplTest extends TestSupport
 {
   @Rule
   public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory("test");
+
+  @Rule
+  public ExpectedException thrown = ExpectedException.none();
 
   private RoutingRuleStoreImpl underTest;
 
@@ -65,6 +69,15 @@ public class RoutingRuleStoreImplTest extends TestSupport
   }
 
   @Test
+  public void testCreate_duplicateName() throws Exception {
+    underTest.start();
+    createRoutingRule("foo", "bar");
+    thrown.expect(ValidationErrorsException.class);
+    thrown.expectMessage("A rule with the same name already exists. Name must be unique.");
+    createRoutingRule("foo", "pub");
+  }
+
+  @Test
   public void testUpdate() throws Exception {
     underTest.start();
     RoutingRule routingRule = createRoutingRule("asdf", "asdf");
@@ -75,6 +88,17 @@ public class RoutingRuleStoreImplTest extends TestSupport
     assertThat(routingRule.name(), is("asdf"));
     assertThat(routingRule.mode(), is(RoutingMode.BLOCK));
     assertThat(routingRule.matchers(), contains("asdf2"));
+  }
+
+  @Test
+  public void testUpdate_duplicateName() throws Exception {
+    underTest.start();
+    createRoutingRule("dup", "bar");
+    RoutingRule routingRule = createRoutingRule("foo", "bar");
+    routingRule.name("dup");
+    thrown.expect(ValidationErrorsException.class);
+    thrown.expectMessage("A rule with the same name already exists. Name must be unique.");
+    underTest.update(routingRule);
   }
 
   @Test
@@ -208,7 +232,7 @@ public class RoutingRuleStoreImplTest extends TestSupport
                                                 final String message)
   {
     for (ValidationErrorXO error : e.getValidationErrors()) {
-      if (id.equals(error.getId()) && message.equals(error.getMessage())) {
+      if (id.equals(error.getId()) && error.getMessage().startsWith(message)) {
         return;
       }
     }

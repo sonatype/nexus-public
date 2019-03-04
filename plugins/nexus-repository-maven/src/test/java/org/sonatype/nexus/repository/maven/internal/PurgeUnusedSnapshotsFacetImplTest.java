@@ -201,7 +201,7 @@ public class PurgeUnusedSnapshotsFacetImplTest
 
     // finally, assert the actual queries
     String query = "sql.LET $a = (SELECT FROM component WHERE bucket = %s AND @RID > %s ORDER BY @RID LIMIT %d); " +
-        "LET $b = (SELECT component, max(last_downloaded) as lastdownloaded " +
+        "LET $b = (SELECT component, max(ifnull(last_downloaded, blob_created)) as lastdownloaded " +
         "FROM asset WHERE ((bucket = #1:1 AND component = $a[0]) OR " +
         "(bucket = #1:1 AND component = $a[1]) OR " +
         "(bucket = #1:1 AND component = $a[2]) OR " +

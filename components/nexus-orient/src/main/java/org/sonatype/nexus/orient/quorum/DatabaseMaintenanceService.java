@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.orient.quorum;
 
+import java.util.Map;
+
 /**
  * Service for maintenance and repair of Orient databases.
  *
@@ -43,6 +45,11 @@ public interface DatabaseMaintenanceService
    * Logs the current orientdb server status
    */
   String fullServerStatus();
+
+  /**
+   * Retrieve the current database profiler statistics.
+   */
+  Map<String, Object> profilerStatistics();
 
   /**
    * Reset the orientdb databases to the given role.

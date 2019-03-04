@@ -12,8 +12,10 @@
  */
 package org.sonatype.nexus.repository.npm.internal;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,6 +26,9 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.blobstore.api.BlobStore;
+import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind;
 
 import org.sonatype.nexus.blobstore.api.Blob;
@@ -35,22 +40,31 @@ import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
+import org.sonatype.nexus.repository.storage.MissingAssetBlobException;
 import org.sonatype.nexus.repository.storage.Query;
+import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.view.Content;
-import org.sonatype.nexus.repository.view.ContentTypes;
 import org.sonatype.nexus.repository.view.payloads.BlobPayload;
-import org.sonatype.nexus.repository.view.payloads.BytesPayload;
+import org.sonatype.nexus.repository.view.payloads.StreamPayload;
+import org.sonatype.nexus.repository.view.payloads.StreamPayload.InputStreamSupplier;
+import org.sonatype.nexus.thread.io.StreamCopier;
 
 import com.google.common.base.Supplier;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import static com.google.common.collect.Maps.newHashMap;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Objects.isNull;
 import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind.TARBALL;
 import static java.util.Collections.singletonList;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
+import static org.sonatype.nexus.repository.npm.internal.NpmJsonUtils.serialize;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_VERSION;
@@ -148,26 +162,40 @@ public final class NpmFacetUtils
   }
 
   /**
-   * Creates a {@link Content} out of passed in package metadata.
-   */
-  @Nonnull
-  static Content toContent(final Asset packageRootAsset, final NestedAttributesMap packageRoot) {
-    Content content = new Content(new BytesPayload(NpmJsonUtils.bytes(packageRoot), ContentTypes.APPLICATION_JSON));
-    Content.extractFromAsset(packageRootAsset, HASH_ALGORITHMS, content.getAttributes());
-    content.getAttributes().set(NestedAttributesMap.class, packageRoot);
-    return content;
-  }
-
-  /**
    * Convert an asset blob to {@link Content}.
    *
    * @return content of asset blob
    */
-  @Nonnull
   public static Content toContent(final Asset asset, final Blob blob) {
     Content content = new Content(new BlobPayload(blob, asset.requireContentType()));
     Content.extractFromAsset(asset, HASH_ALGORITHMS, content.getAttributes());
     return content;
+  }
+
+  /**
+   * Convert an {@link Asset} representing a package root to a {@link Content} via a {@link StreamPayload}.
+   *
+   * @param repository              {@link Repository} to look up package root from.
+   * @param packageRootAsset        {@link Asset} associated with blob holding package root.
+   * @return Content of asset blob
+   */
+  public static NpmContent toContent(final Repository repository, final Asset packageRootAsset)
+  {
+    NpmContent content = new NpmContent(toPayload(repository, packageRootAsset));
+    Content.extractFromAsset(packageRootAsset, HASH_ALGORITHMS, content.getAttributes());
+    return content;
+  }
+
+  /**
+   * Build a {@link NpmStreamPayload} out of the {@link InputStream} representing the package root.
+   *
+   * @param repository              {@link Repository} to look up package root from.
+   * @param packageRootAsset        {@link Asset} associated with blob holding package root.
+   */
+  public static NpmStreamPayload toPayload(final Repository repository,
+                                           final Asset packageRootAsset)
+  {
+    return new NpmStreamPayload(loadPackageRoot(repository, packageRootAsset));
   }
 
   /**
@@ -309,7 +337,6 @@ public final class NpmFacetUtils
    * Returns the package root JSON content by reading up package root asset's blob and parsing it. It also decorates
    * the JSON document with some fields.
    */
-  @Nonnull
   public static NestedAttributesMap loadPackageRoot(final StorageTx tx,
                                                     final Asset packageRootAsset) throws IOException
   {
@@ -318,6 +345,32 @@ public final class NpmFacetUtils
     // add _id
     metadata.set(NpmMetadataUtils.META_ID, packageRootAsset.name());
     return metadata;
+  }
+
+  /**
+   * Returns a {@link Supplier} that will get the {@link InputStream} for the package root associated with the given
+   * {@link Asset}.
+   *
+   * return {@link InputStreamSupplier}
+   */
+  public static InputStreamSupplier loadPackageRoot(final Repository repository,
+                                                    final Asset packageRootAsset)
+  {
+    return () -> packageRootAssetToInputStream(repository, packageRootAsset);
+  }
+
+  /**
+   * Returns a new {@link InputStream} that returns an error object. Mostly useful for NPM Responses that have already
+   * been written with a successful status (like a 200) but just before streaming out content found an issue preventing
+   * the intended content to be streamed out.
+   *
+   * @return InputStream
+   */
+  public static InputStream errorInputStream(final String message) {
+    NestedAttributesMap errorObject = new NestedAttributesMap("error", newHashMap());
+    errorObject.set("success", false);
+    errorObject.set("error", "Failed to stream response due to: " + message);
+    return new ByteArrayInputStream(NpmJsonUtils.bytes(errorObject));
   }
 
   /**
@@ -336,7 +389,9 @@ public final class NpmFacetUtils
     storeContent(
         tx,
         packageRootAsset,
-        NpmJsonUtils.supplier(NpmJsonUtils.bytes(packageRoot)),
+        new StreamCopier<Supplier<InputStream>>(
+            outputStream -> serialize(new OutputStreamWriter(outputStream, UTF_8), packageRoot),
+            inputStream -> () -> inputStream).read(),
         AssetKind.PACKAGE_ROOT
     );
     tx.saveAsset(packageRootAsset);
@@ -422,5 +477,26 @@ public final class NpmFacetUtils
         TARBALL.getContentType(),
         TARBALL.isSkipContentVerification()
     );
+  }
+
+  private static InputStream packageRootAssetToInputStream(final Repository repository, final Asset packageRootAsset) {
+    BlobStore blobStore = repository.facet(StorageFacet.class).blobStore();
+    if (isNull(blobStore)) {
+      throw new MissingAssetBlobException(packageRootAsset);
+    }
+
+    BlobRef blobRef = packageRootAsset.requireBlobRef();
+    Blob blob = blobStore.get(blobRef.getBlobId());
+    if (isNull(blob)) {
+      throw new MissingAssetBlobException(packageRootAsset);
+    }
+
+    try {
+      return blob.getInputStream();
+    } catch (BlobStoreException ignore) { // NOSONAR
+      // we want any issue with the blob store stream to be caught during the getting of the input stream as throw the
+      // the same type of exception as a missing asset blob, so that we can pass the associated asset around.
+      throw new MissingAssetBlobException(packageRootAsset);
+    }
   }
 }

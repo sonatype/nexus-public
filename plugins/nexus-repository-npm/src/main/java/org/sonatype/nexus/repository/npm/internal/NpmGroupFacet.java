@@ -13,16 +13,15 @@
 package org.sonatype.nexus.repository.npm.internal;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.goodies.common.Time;
-import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.io.Cooperation;
@@ -39,7 +38,7 @@ import org.sonatype.nexus.repository.storage.AssetDeletedEvent;
 import org.sonatype.nexus.repository.storage.AssetEvent;
 import org.sonatype.nexus.repository.storage.AssetUpdatedEvent;
 import org.sonatype.nexus.repository.storage.Bucket;
-import org.sonatype.nexus.repository.storage.MissingBlobException;
+import org.sonatype.nexus.repository.storage.MissingAssetBlobException;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
@@ -68,17 +67,17 @@ import static java.util.Objects.nonNull;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.joda.time.DateTime.now;
-import static org.sonatype.nexus.common.entity.EntityHelper.id;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.repository.cache.CacheInfo.invalidateAsset;
+import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.errorInputStream;
 import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.findPackageRootAsset;
-import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.loadPackageRoot;
 import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.savePackageRoot;
 import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.toContent;
+import static org.sonatype.nexus.repository.npm.internal.NpmFieldFactory.REMOVE_DEFAULT_FIELDS_MATCHERS;
+import static org.sonatype.nexus.repository.npm.internal.NpmFieldFactory.rewriteTarballUrlMatcher;
 import static org.sonatype.nexus.repository.npm.internal.NpmHandlers.packageId;
-import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.META_ID;
-import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.META_REV;
-import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.merge;
+import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.mergeContents;
+import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.parseContent;
 import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.rewriteTarballUrl;
 import static org.sonatype.nexus.repository.view.Content.applyToAsset;
 import static org.sonatype.nexus.repository.view.Content.maintainLastModified;
@@ -164,7 +163,7 @@ public class NpmGroupFacet
 
         if (failover) {
           // re-check cache when failing over to new thread
-          Content latestContent = packageRootCooperation.join(() -> getFromCache(context));
+          Content latestContent = packageRootCooperation.join(() -> getFromCache(responses, context));
           if (nonNull(latestContent)) {
             return latestContent;
           }
@@ -185,54 +184,42 @@ public class NpmGroupFacet
    * Get {@link Content} wrapping the NPM Package root for the {@link Context} of the current request
    * to a Group Repository.
    *
+   * @param responses {@link Map} of {@link Repository}s in a given group and the {@link Response}
+   *                  for the associated {@link Repository}
    * @param context {@link Context} of the current request to a Group Repository
    * @return Content
    * @throws IOException if unable to load package root
    */
   @Nullable
-  public Content getFromCache(final Context context) throws IOException {
-
+  public NpmContent getFromCache(final Map<Repository, Response> responses, final Context context) throws IOException
+  {
     Asset packageRootAsset = getPackageRootAssetFromCache(context);
     if (isNull(packageRootAsset)) {
       return null;
     }
 
-    try {
-      NestedAttributesMap packageRoot = loadPackageRootFromCache(packageRootAsset);
+    NpmContent npmContent = toContent(getRepository(), packageRootAsset);
+    npmContent.fieldMatchers(rewriteTarballUrlMatcher(getRepository(), packageRootAsset.name()));
+    npmContent.missingBlobInputStreamSupplier(
+        (missingBlobException) -> buildMergedPackageRootOnMissingBlob(responses, context, missingBlobException));
 
-      // Rewrite the tarball url, it normally gets stored in cache, but it could be that the BaseUrl might have changed
-      rewriteTarballUrl(context.getRepository().getName(), packageRoot);
-
-      // id and rev might have been stored
-      packageRoot.remove(META_ID);
-      packageRoot.remove(META_REV);
-
-      Content content = toContent(packageRootAsset, packageRoot);
-      return !isStale(content) ? content : null;
-    }
-    catch (MissingBlobException | BlobStoreException e) {
-      if (log.isTraceEnabled()) {
-        log.info("Missing blob {} containing cached metadata {}, deleting asset and triggering rebuild.  Exception {}",
-            packageRootAsset.blobRef(), packageRootAsset, e);
-      }
-      else {
-        log.info("Missing blob {} containing cached metadata {}, deleting asset and triggering rebuild.",
-            packageRootAsset.blobRef(), packageRootAsset.name());
-      }
-
-      cleanupPackageRootAssetOnlyFromCache(packageRootAsset);
-
-      return null;
-    }
+    return !isStale(npmContent) ? npmContent : null;
   }
 
-  @Transactional
-  protected void cleanupPackageRootAssetOnlyFromCache(final Asset packageRootAsset) {
-    checkNotNull(packageRootAsset);
+  /**
+   * @see #getFromCache(Map, Context)
+   */
+  @Nullable
+  public NpmContent getFromCache(final Context context) throws IOException
+  {
+    Asset packageRootAsset = getPackageRootAssetFromCache(context);
+    if (isNull(packageRootAsset)) {
+      return null;
+    }
 
-    StorageTx tx = UnitOfWork.currentTx();
-    //Don't delete the blob because we already know it is missing
-    tx.deleteAsset(packageRootAsset, false);
+    NpmContent npmContent = toContent(getRepository(), packageRootAsset);
+    npmContent.fieldMatchers(rewriteTarballUrlMatcher(getRepository(), packageRootAsset.name()));
+    return !isStale(npmContent) ? npmContent : null;
   }
 
   @Nullable
@@ -242,13 +229,6 @@ public class NpmGroupFacet
 
     StorageTx tx = UnitOfWork.currentTx();
     return findPackageRootAsset(tx, tx.findBucket(getRepository()), packageId(matcherState(context)));
-  }
-
-  @Transactional
-  protected NestedAttributesMap loadPackageRootFromCache(final Asset asset) throws IOException {
-    StorageTx tx = UnitOfWork.currentTx();
-    Asset latest = tx.findAsset(id(asset), tx.findBucket(getRepository()));
-    return loadPackageRoot(tx, latest);
   }
 
   @Nullable
@@ -266,24 +246,22 @@ public class NpmGroupFacet
       return null;
     }
 
-    List<NestedAttributesMap> packages = responses
-        .entrySet().stream().map(entry -> getNestedAttributesMap(entry.getValue().getPayload()))
-        .filter(Objects::nonNull)
-        .collect(toList());
+    List<Content> contents = responses
+        .values().stream().map(response -> (Content) response.getPayload()).collect(toList());
 
     NestedAttributesMap result;
     NpmPackageId packageId = packageId(matcherState(context));
 
-    if (shouldServeFirstResult(packages, packageId)) {
-      result = packages.get(0);
+    if (shouldServeFirstResult(contents, packageId)) {
+      result = parseContent(contents.get(0));
     }
     else {
       log.debug("Merging results from {} repositories", responses.size());
 
       // we make the last package the dominant one, by reversing the list
-      reverse(packages);
+      reverse(contents);
 
-      result = merge(packages.get(0).getKey(), packages);
+      result = mergeContents(contents);
     }
 
     rewriteTarballUrl(context.getRepository().getName(), result);
@@ -293,17 +271,13 @@ public class NpmGroupFacet
 
   protected Content saveToCache(final NpmPackageId packageId, final NestedAttributesMap result) throws IOException {
     Asset packageRootAsset = savePackageRootToCache(packageId, result);
-    Content content = toContent(packageRootAsset, result);
-
-    // remove the id and rev from the return results, but still allowing them to be saved
-    result.remove(META_ID);
-    result.remove(META_REV);
-
-    return content;
+    return toContent(getRepository(), packageRootAsset).fieldMatchers(REMOVE_DEFAULT_FIELDS_MATCHERS);
   }
 
   @TransactionalStoreBlob
-  protected Asset savePackageRootToCache(final NpmPackageId packageId, final NestedAttributesMap result) throws IOException {
+  protected Asset savePackageRootToCache(final NpmPackageId packageId, final NestedAttributesMap result)
+      throws IOException
+  {
     StorageTx tx = UnitOfWork.currentTx();
 
     Asset asset = getAsset(tx, packageId);
@@ -314,6 +288,37 @@ public class NpmGroupFacet
     savePackageRoot(tx, asset, result);
 
     return asset;
+  }
+
+  protected InputStream buildMergedPackageRootOnMissingBlob(final Map<Repository, Response> responses,
+                                                            final Context context,
+                                                            final MissingAssetBlobException e) throws IOException
+  {
+    if (log.isTraceEnabled()) {
+      log.info("Missing blob {} containing cached metadata {}, deleting asset and triggering rebuild. Exception {}",
+          e.getBlobRef(), e.getAsset(), e);
+    }
+    else {
+      log.info("Missing blob {} containing cached metadata {}, deleting asset and triggering rebuild.",
+          e.getBlobRef(), e.getAsset().name());
+    }
+
+    cleanupPackageRootAssetOnlyFromCache(e.getAsset());
+
+    Content content = buildMergedPackageRoot(responses, context);
+    // it should never be null, but we are being kind and return an error stream.
+    return nonNull(content) ? content.openInputStream() :
+        errorInputStream("Unable to retrieve merged package root on recovery for missing blob");
+  }
+
+  @Transactional
+  protected void cleanupPackageRootAssetOnlyFromCache(final Asset packageRootAsset) {
+    checkNotNull(packageRootAsset);
+
+    StorageTx tx = UnitOfWork.currentTx();
+
+    // Don't delete the blob because we already know it is missing
+    tx.deleteAsset(packageRootAsset, false);
   }
 
   @Subscribe
@@ -362,7 +367,7 @@ public class NpmGroupFacet
    * false otherwise.
    */
   @VisibleForTesting
-  protected boolean shouldServeFirstResult(final List<NestedAttributesMap> packages, final NpmPackageId packageId) {
+  protected boolean shouldServeFirstResult(final List packages, final NpmPackageId packageId) {
     return packages.size() == 1 || (!mergeMetadata && isEmpty(packageId.scope()));
   }
 

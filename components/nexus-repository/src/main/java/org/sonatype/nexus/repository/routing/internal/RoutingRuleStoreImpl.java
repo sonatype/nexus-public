@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.routing.internal;
 
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -36,6 +37,7 @@ import org.sonatype.nexus.validation.constraint.NamePatternConstants;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
@@ -83,7 +85,7 @@ public class RoutingRuleStoreImpl extends StateGuardLifecycleSupport implements 
     checkNotNull(rule);
     validate(rule);
 
-    inTxRetry(databaseInstance).run(db -> entityAdapter.addEntity(db, rule));
+    persist(entityAdapter::addEntity, rule);
 
     return rule;
   }
@@ -94,7 +96,7 @@ public class RoutingRuleStoreImpl extends StateGuardLifecycleSupport implements 
     checkNotNull(rule);
     validate(rule);
 
-    inTxRetry(databaseInstance).run(db -> entityAdapter.editEntity(db, rule));
+    persist(entityAdapter::editEntity, rule);
   }
 
   @Override
@@ -159,6 +161,18 @@ public class RoutingRuleStoreImpl extends StateGuardLifecycleSupport implements 
 
     if (!exception.getValidationErrors().isEmpty()) {
       throw exception;
+    }
+  }
+
+  private void persist(BiConsumer<ODatabaseDocumentTx, RoutingRule> entityFunction, RoutingRule rule) {
+    try {
+      inTxRetry(databaseInstance).run(db -> entityFunction.accept(db, rule));
+    }
+    catch (ORecordDuplicatedException e) {
+      if (RoutingRuleEntityAdapter.I_NAME.equals(e.getIndexName())) {
+        throw new ValidationErrorsException("name", "A rule with the same name already exists. Name must be unique.");
+      }
+      throw e;
     }
   }
 }

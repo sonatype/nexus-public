@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.orient;
 
-import org.sonatype.goodies.lifecycle.LifecycleSupport;
+import org.sonatype.goodies.common.ComponentSupport;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
@@ -21,22 +21,23 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Default {@link DatabaseInstance} implementation.
  *
+ * This is a thin re-usable wrapper around {@link DatabaseManager} and the latest {@link DatabasePool}.
+ *
  * @since 3.0
  */
 public class DatabaseInstanceImpl
-  extends LifecycleSupport
+  extends ComponentSupport
   implements DatabaseInstance
 {
   private final DatabaseManager databaseManager;
 
   private final String name;
 
-  private final DatabasePool pool;
+  private volatile DatabasePool pool;
 
   public DatabaseInstanceImpl(final DatabaseManager databaseManager, final String name) {
     this.databaseManager = checkNotNull(databaseManager);
     this.name = checkNotNull(name);
-    this.pool = databaseManager.pool(name);
   }
 
   @Override
@@ -44,36 +45,18 @@ public class DatabaseInstanceImpl
     return name;
   }
 
-  // promote to public
-  @Override
-  public boolean isStarted() {
-    return super.isStarted();
-  }
-
-  @Override
-  protected void doStart() throws Exception {
-    // ensure the database is created
-    databaseManager.connect(name, true).close();
-  }
-
   @Override
   public ODatabaseDocumentTx connect() {
-    ensureStarted();
-
     return databaseManager.connect(name, false);
   }
 
   @Override
   public ODatabaseDocumentTx acquire() {
-    ensureStarted();
-
-    return pool.acquire();
+    return pool().acquire();
   }
 
   @Override
   public DatabaseExternalizer externalizer() {
-    ensureStarted();
-
     return databaseManager.externalizer(name);
   }
 
@@ -86,7 +69,6 @@ public class DatabaseInstanceImpl
 
   @Override
   public void setFrozen(final boolean frozen) {
-    ensureStarted();
     try (ODatabaseDocumentTx db = connect()) {
       if (frozen) {
         db.freeze(true);
@@ -99,9 +81,26 @@ public class DatabaseInstanceImpl
 
   @Override
   public boolean isFrozen() {
-    ensureStarted();
     try (ODatabaseDocumentTx db = connect()) {
       return db.isFrozen();
     }
+  }
+
+  /**
+   * @since 3.next
+   */
+  void releasePool() {
+    pool = null;
+  }
+
+  private DatabasePool pool() {
+    if (pool == null) {
+      synchronized (this) {
+        if (pool == null) {
+          pool = databaseManager.pool(name);
+        }
+      }
+    }
+    return pool;
   }
 }

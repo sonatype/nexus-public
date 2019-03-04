@@ -1,0 +1,87 @@
+{
+  "_id": "id",
+  "_rev": "rev",
+  "name": "dominant",
+  "versions": {
+    "1.0": {
+      "version": "1.0",
+      "foo": "baz",
+      "foo2": "bar2"
+    }
+  },
+  "dist-tags": {
+    "latest": "1.0.0"
+  },
+  "notinrecessive": "always present",
+  "languages": {
+    "en": {
+      "alphabet": [
+        "a",
+        "b",
+        "c"
+      ]
+    }
+  },
+  "alphabet": [
+    "a",
+    "b",
+    "c"
+  ],
+  "dominant-numbers": [
+    9,
+    8,
+    7
+  ],
+  "maintainers": [
+    {
+      "name": "j1",
+      "email": "j1@sonatype.com"
+    },
+    {
+      "name": "j2",
+      "email": "j2@sonatype.com"
+    }
+  ],
+  "dominant-maintainers": [
+    {
+      "name": "nate",
+      "email": "nate@sonatype.com"
+    }
+  ],
+  "array-of-arrays": [
+    [
+      "ab",
+      "cd",
+      "ef"
+    ],
+    [
+      "uv",
+      "wx",
+      "yz"
+    ]
+  ],
+  "dominant-array-of-arrays": [
+    [
+      "ab",
+      "cd",
+      "ef"
+    ],
+    [
+      "uv",
+      "wx",
+      "yz"
+    ]
+  ],
+  "null-array": [
+    null,
+    null,
+    null
+  ],
+  "mixed-array": [
+    "circle",
+    3.14,
+    {
+      "color": "blue"
+    }
+  ]
+}

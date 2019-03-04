@@ -1,0 +1,47 @@
+{
+  "name": "third",
+  "maintainers": [
+    {
+      "email": "third@example.com",
+      "name": "third"
+    },
+    {
+      "email": "third2@example.com",
+      "name": "third2"
+    }
+  ],
+  "keywords": [
+    "array",
+    "third"
+  ],
+  "multi-depth": {
+    "first": {
+      "title": "This is the first depth",
+      "second": {
+        "title": "This is the second depth",
+        "third": {
+          "title": "This is the third depth",
+          "description": "The third file has a description for godeep third"
+        }
+      }
+    }
+  },
+  "reverse-multi-depth": {
+    "first": {
+      "title": "This is the first depth"
+    }
+  },
+  "dependencies": {
+    "equire(\"orchestrator\"": "*",
+    "@types/node": "*",
+    "@types/orchestrator": "*",
+    "funcky(\"fieldname\"": {
+      "test": "value"
+    }
+  },
+  "multi-depth-merge": {
+    "first": {
+      "summary": "We have here the first depth from the third response"
+    }
+  }
+}

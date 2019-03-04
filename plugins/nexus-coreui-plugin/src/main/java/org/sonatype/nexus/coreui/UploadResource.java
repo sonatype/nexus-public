@@ -13,6 +13,7 @@
 package org.sonatype.nexus.coreui;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -36,7 +37,10 @@ import org.sonatype.nexus.validation.Validate;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+
+import static com.softwarementors.extjs.djn.EncodingUtils.htmlEncode;
 
 /*
  * Endpoint used by the Nexus RM UI for component uploads
@@ -54,10 +58,13 @@ public class UploadResource extends ComponentSupport implements Resource
 
   private UploadConfiguration configuration;
 
+  private ObjectMapper objectMapper;
+
   @Inject
-  public UploadResource(final UploadService uploadService, final UploadConfiguration configuration) {
+  public UploadResource(final UploadService uploadService, final UploadConfiguration configuration, final ObjectMapper objectMapper) {
     this.uploadService = uploadService;
     this.configuration = configuration;
+    this.objectMapper = objectMapper;
   }
 
   @Timed
@@ -68,14 +75,24 @@ public class UploadResource extends ComponentSupport implements Resource
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
   @RequiresPermissions("nexus:component:add")
-  public Packet postComponent(@PathParam("repositoryName") final String repositoryName,
-                              @Context final HttpServletRequest request)
+  public Response postComponent(@PathParam("repositoryName") final String repositoryName,
+                                @Context final HttpServletRequest request)
       throws IOException
   {
-    if (!configuration.isEnabled()) {
-      throw new WebApplicationException(Response.Status.NOT_FOUND);
+    try {
+      if (!configuration.isEnabled()) {
+        throw new WebApplicationException(Response.Status.NOT_FOUND);
+      }
+      Packet responseJson = new Packet(uploadService.upload(repositoryName, request));
+      return Response.ok().type(MediaType.TEXT_HTML_TYPE)
+          .entity(htmlWrap(objectMapper.writeValueAsString(responseJson))).build();
     }
-    return new Packet(uploadService.upload(repositoryName, request));
+    catch (Exception e) {
+      log.error("Unable to perform upload to repository {}", repositoryName, e);
+      ErrorPacket responseJson = new ErrorPacket(e.getMessage());
+      return Response.ok().type(MediaType.TEXT_HTML_TYPE)
+          .entity(htmlWrap(objectMapper.writeValueAsString(Arrays.asList(responseJson)))).build();
+    }
   }
 
   public static class Packet
@@ -93,5 +110,42 @@ public class UploadResource extends ComponentSupport implements Resource
     public String getData() {
       return data;
     }
+  }
+
+  public static class ErrorPacket
+  {
+    private String message;
+
+    public ErrorPacket(final String message) {
+      this.message = message;
+    }
+
+    public boolean isSuccess() {
+      return false;
+    }
+
+    public int getTid() {
+      return 1;
+    }
+
+    public String getAction() {
+      return "upload";
+    }
+
+    public String getMethod() {
+      return "upload";
+    }
+
+    public String getType() {
+      return "rpc";
+    }
+
+    public String getMessage() {
+      return message;
+    }
+  }
+
+  private String htmlWrap(final String contents) {
+    return "<html><body><textarea>" + htmlEncode(contents) + "</textarea></body></html>";
   }
 }

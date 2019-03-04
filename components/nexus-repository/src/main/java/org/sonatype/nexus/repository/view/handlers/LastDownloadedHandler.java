@@ -37,6 +37,8 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 import com.google.common.annotations.VisibleForTesting;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 
+import static org.sonatype.nexus.orient.ReplicationModeOverrides.clearReplicationModeOverrides;
+import static org.sonatype.nexus.orient.ReplicationModeOverrides.dontWaitForReplicationResults;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
 
@@ -110,17 +112,23 @@ public class LastDownloadedHandler
       throws IOException
   {
     if (asset != null && assetManager.maybeUpdateLastDownloaded(asset)) {
-      TransactionalTouchMetadata.operation.withDb(storageFacet.txSupplier())
-          .throwing(IOException.class)
-          .swallow(ORecordNotFoundException.class)
-          .call(() -> {
-            StorageTx tx = UnitOfWork.currentTx();
-            Asset updatedAsset = tx.findAsset(EntityHelper.id(asset));
+      dontWaitForReplicationResults();
+      try {
+        TransactionalTouchMetadata.operation.withDb(storageFacet.txSupplier())
+            .throwing(IOException.class)
+            .swallow(ORecordNotFoundException.class)
+            .call(() -> {
+              StorageTx tx = UnitOfWork.currentTx();
+              Asset updatedAsset = tx.findAsset(EntityHelper.id(asset));
 
-            updateLastDownloadedTime(tx, updatedAsset);
+              updateLastDownloadedTime(tx, updatedAsset);
 
-            return null;
-          });
+              return null;
+            });
+      }
+      finally {
+        clearReplicationModeOverrides();
+      }
     }
   }
 

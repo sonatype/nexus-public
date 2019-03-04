@@ -1,0 +1,34 @@
+{
+  "name": "second",
+  "maintainers": [
+    {
+      "email": "second@example.com",
+      "name": "second"
+    }
+  ],
+  "keywords": [
+    "array",
+    "second"
+  ],
+  "multi-depth": {
+    "first": {
+      "title": "This is the first depth",
+      "second" : {
+        "title": "This is the second depth"
+      }
+    }
+  },
+  "reverse-multi-depth": {
+    "first": {
+      "title": "This is the first depth",
+      "second": {
+        "title": "This is the second depth"
+      }
+    }
+  },
+  "multi-depth-merge": {
+    "first": {
+      "description": "We have here the first depth from the second response"
+    }
+  }
+}

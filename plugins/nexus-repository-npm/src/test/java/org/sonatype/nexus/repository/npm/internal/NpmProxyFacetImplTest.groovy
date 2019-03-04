@@ -13,8 +13,6 @@
 package org.sonatype.nexus.repository.npm.internal
 
 import org.sonatype.nexus.repository.npm.NpmFacet
-import org.sonatype.nexus.repository.npm.internal.NpmPackageId
-import org.sonatype.nexus.repository.npm.internal.NpmProxyFacetImpl
 import org.sonatype.nexus.repository.npm.internal.NpmProxyFacetImpl.ProxyTarget
 
 import org.sonatype.goodies.testsupport.TestSupport

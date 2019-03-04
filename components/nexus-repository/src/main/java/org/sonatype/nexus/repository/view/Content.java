@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.view;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Date;
 import java.util.Map;
 
@@ -108,6 +109,11 @@ public class Content
   @Override
   public void close() throws IOException {
     payload.close();
+  }
+
+  @Override
+  public void copy(final InputStream inputStream, final OutputStream outputStream) throws IOException {
+    payload.copy(inputStream, outputStream);
   }
 
   @Nonnull

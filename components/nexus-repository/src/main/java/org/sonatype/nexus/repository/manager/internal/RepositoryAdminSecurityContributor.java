@@ -49,12 +49,12 @@ public class RepositoryAdminSecurityContributor
    */
   @Override
   protected void initial(final SecurityConfiguration model) {
-    model.addPrivilege(privilege(ALL, ALL, ALL));
-    model.addPrivilege(privilege(ALL, ALL, BROWSE));
-    model.addPrivilege(privilege(ALL, ALL, READ));
-    model.addPrivilege(privilege(ALL, ALL, EDIT));
-    model.addPrivilege(privilege(ALL, ALL, ADD));
-    model.addPrivilege(privilege(ALL, ALL, DELETE));
+    maybeAddPrivilege(model, privilege(ALL, ALL, ALL));
+    maybeAddPrivilege(model, privilege(ALL, ALL, BROWSE));
+    maybeAddPrivilege(model, privilege(ALL, ALL, READ));
+    maybeAddPrivilege(model, privilege(ALL, ALL, EDIT));
+    maybeAddPrivilege(model, privilege(ALL, ALL, ADD));
+    maybeAddPrivilege(model, privilege(ALL, ALL, DELETE));
   }
 
   /**
@@ -66,11 +66,11 @@ public class RepositoryAdminSecurityContributor
     final String name = repository.getName();
     apply((model, configurationManager) -> {
       // no per-repo repository-admin ADD action
-      model.addPrivilege(privilege(format, name, ALL));
-      model.addPrivilege(privilege(format, name, BROWSE));
-      model.addPrivilege(privilege(format, name, READ));
-      model.addPrivilege(privilege(format, name, EDIT));
-      model.addPrivilege(privilege(format, name, DELETE));
+      maybeAddPrivilege(model, privilege(format, name, ALL));
+      maybeAddPrivilege(model, privilege(format, name, BROWSE));
+      maybeAddPrivilege(model, privilege(format, name, READ));
+      maybeAddPrivilege(model, privilege(format, name, EDIT));
+      maybeAddPrivilege(model, privilege(format, name, DELETE));
     });
   }
 

@@ -189,6 +189,14 @@ Ext.define('NX.State', {
     return this.getValue('receiving');
   },
 
+  /**
+   * Return whether or not the NXRM instance is a HA-C
+   */
+  isClustered: function() {
+    return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-hazelcast-plugin') &&
+        this.getValue('nodes', {})['enabled'];
+  },
+
   getValue: function (key, defaultValue) {
     return this.controller().getValue(key, defaultValue);
   },

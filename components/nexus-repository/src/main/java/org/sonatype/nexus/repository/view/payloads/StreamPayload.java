@@ -84,4 +84,19 @@ public class StreamPayload
     @Nonnull
     InputStream get() throws IOException;
   }
+
+  /**
+   * Returns an {@link InputStream} and takes in an argument
+   */
+  public interface InputStreamFunction<T>
+  {
+    /**
+     * Applies this function to the given argument.
+     *
+     * @param t the function argument
+     * @return the function result
+     */
+    @Nonnull
+    InputStream apply(T t) throws IOException;
+  }
 }

@@ -1,0 +1,51 @@
+{
+  "name": "first",
+  "maintainers": [
+    {
+      "email": "first@example.com",
+      "name": "first"
+    },
+    {
+      "email": "first2@example.com",
+      "name": "first2"
+    }
+  ],
+  "keywords": [
+    "array",
+    "first"
+  ],
+  "multi-depth": {
+    "first": {
+      "title": "This is the first depth"
+    }
+  },
+  "reverse-multi-depth": {
+    "first": {
+      "title": "This is the first depth",
+      "second": {
+        "title": "This is the second depth",
+        "third": {
+          "title": "This is the third depth",
+          "description": "The first file has a description for reversegodeep third"
+        }
+      }
+    }
+  },
+  "multi-depth-merge": {
+    "first": {
+      "title": "This is the first depth"
+    }
+  },
+  "dependencies": {
+    "equire(\"orchestrator\"": "*",
+    "@types/node": "*",
+    "@types/orchestrator": "*",
+    "funcky(\"fieldname\"": {
+      "godeep": {
+        "first": {
+          "title": "This is the first depth"
+        }
+      }
+    }
+  }
+}

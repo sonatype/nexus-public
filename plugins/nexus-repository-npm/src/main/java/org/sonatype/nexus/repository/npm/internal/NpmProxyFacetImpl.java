@@ -23,6 +23,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Named;
 
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheControllerHolder;
@@ -36,6 +37,7 @@ import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;
+import org.sonatype.nexus.repository.storage.MissingAssetBlobException;
 import org.sonatype.nexus.repository.storage.MissingBlobException;
 import org.sonatype.nexus.repository.storage.RetryDeniedException;
 import org.sonatype.nexus.repository.storage.StorageFacet;
@@ -59,11 +61,15 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
+import static java.util.Objects.nonNull;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.P_NAME;
+import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.errorInputStream;
 import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.findRepositoryRootAsset;
 import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.saveRepositoryRoot;
 import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.toContent;
+import static org.sonatype.nexus.repository.npm.internal.NpmFieldFactory.rewriteTarballUrlMatcher;
 import static org.sonatype.nexus.repository.npm.internal.NpmHandlers.packageId;
 import static org.sonatype.nexus.repository.npm.internal.NpmHandlers.tarballName;
 import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.VERSIONS;
@@ -99,7 +105,7 @@ public class NpmProxyFacetImpl
       return null; // we do not cache search results
     }
     else if (ProxyTarget.PACKAGE == proxyTarget) {
-      return getPackageRoot(packageId(matcherState(context)));
+      return getPackageRoot(context, packageId(matcherState(context)));
     }
     else if (ProxyTarget.TARBALL == proxyTarget) {
       TokenMatcher.State state = matcherState(context);
@@ -209,7 +215,7 @@ public class NpmProxyFacetImpl
 
   @Nullable
   @TransactionalTouchBlob
-  public Content getPackageRoot(final NpmPackageId packageId) throws IOException {
+  public Content getPackageRoot(final Context context, final NpmPackageId packageId) throws IOException {
     checkNotNull(packageId);
     StorageTx tx = UnitOfWork.currentTx();
     Asset packageRootAsset = NpmFacetUtils.findPackageRootAsset(tx, tx.findBucket(getRepository()), packageId);
@@ -217,9 +223,10 @@ public class NpmProxyFacetImpl
       return null;
     }
 
-    NestedAttributesMap packageRoot = NpmFacetUtils.loadPackageRoot(tx, packageRootAsset);
-    NpmMetadataUtils.rewriteTarballUrl(getRepository().getName(), packageRoot);
-    return NpmFacetUtils.toContent(packageRootAsset, packageRoot);
+    return toContent(getRepository(), packageRootAsset)
+        .fieldMatchers(rewriteTarballUrlMatcher(getRepository(), packageId.id()))
+        .packageId(packageRootAsset.name())
+        .missingBlobInputStreamSupplier(missingBlobException -> doGetOnMissingBlob(context, missingBlobException));
   }
 
   private Content putPackageRoot(final NpmPackageId packageId,
@@ -234,16 +241,8 @@ public class NpmProxyFacetImpl
     try {
       return doPutPackageRoot(packageId, packageRoot, payload, true);
     }
-    catch (RetryDeniedException e) {
-      if (e.getCause() instanceof MissingBlobException) {
-        log.warn("Unable to find blob {} for {}, skipping merge of package root",
-            ((MissingBlobException) e.getCause()).getBlobRef(), packageId);
-
-        return doPutPackageRoot(packageId, packageRoot, payload, false);
-      }
-      else {
-        throw e;
-      }
+    catch (RetryDeniedException | MissingBlobException e) {
+      return maybeHandleMissingBlob(e, packageId, packageRoot, payload);
     }
   }
 
@@ -251,14 +250,15 @@ public class NpmProxyFacetImpl
   protected Content doPutPackageRoot(final NpmPackageId packageId,
                                      final NestedAttributesMap packageRoot,
                                      final Content content,
-                                     final boolean mergePackageRoot) throws IOException
+                                     final boolean mergePackageRoot)
+      throws IOException
   {
     log.debug("Storing package: {}", packageId);
     StorageTx tx = UnitOfWork.currentTx();
     Bucket bucket = tx.findBucket(getRepository());
 
-    NestedAttributesMap newPackageRoot =  packageRoot;
-        
+    NestedAttributesMap newPackageRoot = packageRoot;
+
     Asset asset = NpmFacetUtils.findPackageRootAsset(tx, bucket, packageId);
     if (asset == null) {
       asset = tx.createAsset(bucket, getRepository().getFormat()).name(packageId.id());
@@ -266,13 +266,14 @@ public class NpmProxyFacetImpl
     else if (mergePackageRoot) {
       newPackageRoot = mergeNewRootWithExistingRoot(tx, newPackageRoot, asset);
     }
-    
+
     Content.applyToAsset(asset, Content.maintainLastModified(asset, content.getAttributes()));
     NpmFacetUtils.savePackageRoot(tx, asset, newPackageRoot);
-    // we must have the round-trip to equip record with _rev rewrite the URLs (ret val is served to client)
-    NestedAttributesMap storedPackageRoot = NpmFacetUtils.loadPackageRoot(tx, asset);
-    NpmMetadataUtils.rewriteTarballUrl(getRepository().getName(), storedPackageRoot);
-    return NpmFacetUtils.toContent(asset, storedPackageRoot);
+
+    return toContent(getRepository(), asset)
+        .fieldMatchers(rewriteTarballUrlMatcher(getRepository(), packageId.id()))
+        .revId(asset.name())
+        .packageId(packageId.id());
   }
 
   /*
@@ -286,15 +287,12 @@ public class NpmProxyFacetImpl
   {
     NestedAttributesMap existingPackageRoot = NpmFacetUtils.loadPackageRoot(tx, asset);
     List<String> cachedVersions = findCachedVersionsRemovedFromRemote(existingPackageRoot, newPackageRoot, tx);
-    
     NestedAttributesMap mergedRoot = newPackageRoot;
-    
     if (!cachedVersions.isEmpty()) {
       mergedRoot = merge(existingPackageRoot.getKey(), ImmutableList.of(existingPackageRoot, newPackageRoot));
 
       removeVersionsNotCachedAndNotInNewRoot(mergedRoot, existingPackageRoot, cachedVersions);
     }
-    
     return mergedRoot;
   }
 
@@ -467,6 +465,47 @@ public class NpmProxyFacetImpl
 
   private TokenMatcher.State matcherState(final Context context) {
     return context.getAttributes().require(TokenMatcher.State.class);
+  }
+
+  private Content maybeHandleMissingBlob(final RuntimeException e,
+                                         final NpmPackageId packageId,
+                                         final NestedAttributesMap packageRoot,
+                                         final Content payload) throws IOException
+  {
+    BlobRef blobRef = null;
+
+    if (e instanceof MissingBlobException) {
+      blobRef = ((MissingBlobException) e).getBlobRef();
+    }
+    else if (e.getCause() instanceof MissingBlobException) {
+      blobRef = ((MissingBlobException) e.getCause()).getBlobRef();
+    }
+
+    if (nonNull(blobRef)) {
+      log.warn("Unable to find blob {} for {}, skipping merge of package root", blobRef, packageId);
+      return doPutPackageRoot(packageId, packageRoot, payload, false);
+    }
+
+    // when we have no blob ref, just throw the original runtime exception
+    throw e;
+  }
+
+  private InputStream doGetOnMissingBlob(final Context context, final MissingAssetBlobException e)
+  {
+    log.warn("Unable to find blob {} for {}, will check remote", e.getBlobRef(), getUrl(context));
+
+    return Transactional.operation.withDb(facet(StorageFacet.class).txSupplier()).call(() -> {
+      try {
+        return doGet(context, null).openInputStream();
+      }
+      catch (IOException e1) {
+        log.error("Unable to check remote for missing blob {} at {}", e.getBlobRef(), getUrl(context), e1);
+
+        // we are likely being requested after a 200 ok response is given, stream out error stream.
+        return errorInputStream(format("Missing blob for %s. Unable to check remote %s for retrieving latest copy.",
+            e.getAsset().name(), getUrl(context)));
+      }
+    });
   }
 
   /**

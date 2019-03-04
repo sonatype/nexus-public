@@ -121,7 +121,6 @@ public class LocalNodeAccess
   }
 
   @Override
-  @Guarded(by = STARTED)
   public boolean isClustered() {
     return false;
   }

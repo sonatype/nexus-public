@@ -54,12 +54,12 @@ public class RepositoryFormatSecurityContributor
     String format = this.format.getValue();
 
     // add repository-view <format> ALL privileges
-    model.addPrivilege(privilege(format, ALL, ALL));
-    model.addPrivilege(privilege(format, ALL, BROWSE));
-    model.addPrivilege(privilege(format, ALL, READ));
-    model.addPrivilege(privilege(format, ALL, EDIT));
-    model.addPrivilege(privilege(format, ALL, ADD));
-    model.addPrivilege(privilege(format, ALL, DELETE));
+    maybeAddPrivilege(model, privilege(format, ALL, ALL));
+    maybeAddPrivilege(model, privilege(format, ALL, BROWSE));
+    maybeAddPrivilege(model, privilege(format, ALL, READ));
+    maybeAddPrivilege(model, privilege(format, ALL, EDIT));
+    maybeAddPrivilege(model, privilege(format, ALL, ADD));
+    maybeAddPrivilege(model, privilege(format, ALL, DELETE));
   }
 
   /**
@@ -72,12 +72,12 @@ public class RepositoryFormatSecurityContributor
 
     apply((model, configurationManager) -> {
       // add repository-view <format> <name> privileges
-      model.addPrivilege(privilege(format, name, ALL));
-      model.addPrivilege(privilege(format, name, BROWSE));
-      model.addPrivilege(privilege(format, name, READ));
-      model.addPrivilege(privilege(format, name, EDIT));
-      model.addPrivilege(privilege(format, name, ADD));
-      model.addPrivilege(privilege(format, name, DELETE));
+      maybeAddPrivilege(model, privilege(format, name, ALL));
+      maybeAddPrivilege(model, privilege(format, name, BROWSE));
+      maybeAddPrivilege(model, privilege(format, name, READ));
+      maybeAddPrivilege(model, privilege(format, name, EDIT));
+      maybeAddPrivilege(model, privilege(format, name, ADD));
+      maybeAddPrivilege(model, privilege(format, name, DELETE));
     });
   }
 

@@ -22,8 +22,16 @@ Ext.define('NX.coreui.view.support.SupportZip', {
   alias: 'widget.nx-coreui-support-supportzip',
   requires: [
     'NX.Conditions',
-    'NX.I18n'
+    'NX.I18n',
+    'NX.State'
   ],
+  listeners: {
+    afterrender: function () {
+      if (!NX.State.isClustered()) {
+        this.query('button[action=hazips]')[0].setVisible(false);
+      }
+    }
+  },
 
   /**
    * @override
@@ -141,6 +149,14 @@ Ext.define('NX.coreui.view.support.SupportZip', {
           glyph: 'xf019@FontAwesome' /* fa-download */,
           action: 'submit',
           ui: 'nx-primary'
+        },
+        {
+          text: NX.I18n.get('Support_HA_SupportZip_Create_Button'),
+          formBind: true,
+          glyph: 'xf019@FontAwesome' /* fa-download */,
+          action: 'hazips',
+          ui: 'nx-primary',
+          disabled: !NX.State.isClustered()
         }
       ]
     };

@@ -31,8 +31,6 @@ import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.Status;
 
-import com.google.common.io.ByteStreams;
-
 /**
  * Default {@link HttpResponseSender}.
  *
@@ -80,7 +78,7 @@ public class DefaultHttpResponseSender
 
           if (request != null && !HttpMethods.HEAD.equals(request.getAction())) {
             try (InputStream input = payload.openInputStream(); OutputStream output = httpResponse.getOutputStream()) {
-              ByteStreams.copy(input, output);
+              payload.copy(input, output);
             }
           }
         }

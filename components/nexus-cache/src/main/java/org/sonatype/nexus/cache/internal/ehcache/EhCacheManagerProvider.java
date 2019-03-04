@@ -22,7 +22,6 @@ import javax.cache.spi.CachingProvider;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
-import javax.inject.Singleton;
 
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
@@ -45,7 +44,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
  */
 @Named("ehcache")
 @ManagedLifecycle(phase = STORAGE)
-@Singleton
+// not a singleton because we want to provide a new manager when bouncing services
 public class EhCacheManagerProvider
     extends LifecycleSupport
     implements Provider<CacheManager>
@@ -54,6 +53,7 @@ public class EhCacheManagerProvider
 
   private final URI configUri;
 
+  // provide same manager instance until bounced
   private volatile CacheManager cacheManager;
 
   @Inject

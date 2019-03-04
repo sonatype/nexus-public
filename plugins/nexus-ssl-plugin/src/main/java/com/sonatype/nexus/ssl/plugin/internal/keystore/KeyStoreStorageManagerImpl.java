@@ -79,6 +79,7 @@ public class KeyStoreStorageManagerImpl
   @Override
   protected void doStop() throws Exception {
     storages.forEach(eventManager::unregister);
+    storages.clear();
   }
 
   @Override

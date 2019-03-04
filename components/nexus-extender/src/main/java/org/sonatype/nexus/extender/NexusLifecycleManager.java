@@ -18,7 +18,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.lifecycle.Lifecycle;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.app.ManagedLifecycle.Phase;
@@ -49,8 +48,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
  */
 @Singleton
 public class NexusLifecycleManager
-    extends ComponentSupport
-    implements ManagedLifecycleManager
+    extends ManagedLifecycleManager
 {
   private static final Phase[] PHASES = Phase.values();
 
@@ -79,6 +77,13 @@ public class NexusLifecycleManager
 
   @Override
   public void to(final Phase targetPhase) throws Exception {
+    if (targetPhase == OFF) {
+      registerShutdown();
+    }
+    else if (isShuttingDown()) {
+      return; // cannot go back once shutdown has begun
+    }
+
     synchronized (locator) {
 
       final int target = targetPhase.ordinal();

@@ -96,9 +96,6 @@ Ext.define('NX.controller.User', {
         'nx-signin button[action=signin]': {
           click: me.signIn
         },
-        'nx-authenticate': {
-          beforerender: NX.util.Window.closeWindows
-        },
         'nx-authenticate button[action=authenticate]': {
           click: me.doAuthenticateAction
         }
@@ -119,6 +116,10 @@ Ext.define('NX.controller.User', {
     else if (!user && oldUser) {
       NX.Messages.add({text: NX.I18n.get('User_SignedOut_Message'), type: 'default'});
       me.fireEvent('signout');
+    }
+
+    if (!user) {
+      NX.util.Window.closeWindows();
     }
 
     me.manageButtons();

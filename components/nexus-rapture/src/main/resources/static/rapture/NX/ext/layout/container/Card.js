@@ -45,6 +45,7 @@ Ext.define('NX.ext.layout.container.Card', {
       newCard = owner.add(newCard);
       Ext.resumeLayouts();
     }
+
     // Is this a valid, different card?
     if (newCard && oldCard !== newCard) {
       // Fire the beforeactivate and beforedeactivate events on the cards
@@ -110,6 +111,7 @@ Ext.define('NX.ext.layout.container.Card', {
             opacity: 1
           },
           callback: function() {
+            var parent = newCard.findParentBy(function(parent) { return parent.getScrollable(); });
             // Make sure the position is set correctly after animation, these styles are added by ExtJS during animation
             newCard.setStyle('top', '');
             newCard.setStyle('left', '');
@@ -117,7 +119,10 @@ Ext.define('NX.ext.layout.container.Card', {
             newCard.fireEvent('activate', newCard, oldCard);
 
             // Make sure the view remains scrolled to the top after activation
-            newCard.findParentBy(function(parent) { return parent.getScrollable(); }).scrollTo(0, 0);
+            parent.scrollTo(0, 0);
+
+            // Force the x of the region to reset in case the animation gets off somewhere along the way.
+            newCard.setX(parent.getX());
           }
         };
         newCard.animate(newCardAnimation);

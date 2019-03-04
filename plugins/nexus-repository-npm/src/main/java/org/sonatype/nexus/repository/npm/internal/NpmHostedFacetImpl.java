@@ -46,6 +46,8 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.toContent;
+import static org.sonatype.nexus.repository.npm.internal.NpmFieldFactory.rewriteTarballUrlMatcher;
 import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.selectVersionByTarballName;
 import static org.sonatype.nexus.repository.npm.internal.NpmPackageRootMetadataUtils.createFullPackageMetadata;
 import static org.sonatype.nexus.repository.npm.internal.NpmVersionComparator.extractAlwaysPackageVersion;
@@ -86,11 +88,11 @@ public class NpmHostedFacetImpl
     }
 
     NestedAttributesMap packageRoot = NpmFacetUtils.loadPackageRoot(tx, packageRootAsset);
-
     maybeAddRevision(packageRootAsset, packageRoot);
-    
-    NpmMetadataUtils.rewriteTarballUrl(getRepository().getName(), packageRoot);
-    return NpmFacetUtils.toContent(packageRootAsset, packageRoot);
+
+    return toContent(getRepository(), packageRootAsset)
+        .fieldMatchers(rewriteTarballUrlMatcher(getRepository().getName(), packageId.id()))
+        .packageId(packageRootAsset.name());
   }
 
   /**

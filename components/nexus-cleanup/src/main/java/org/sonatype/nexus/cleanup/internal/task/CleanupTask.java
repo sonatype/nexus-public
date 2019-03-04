@@ -17,8 +17,10 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.cleanup.service.CleanupService;
 import org.sonatype.nexus.scheduling.TaskSupport;
+import org.sonatype.nexus.logging.task.TaskLogging;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.logging.task.TaskLogType.TASK_LOG_ONLY;
 
 /**
  * Runs cleanup via the cleanup service.
@@ -26,6 +28,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.14
  */
 @Named
+@TaskLogging(TASK_LOG_ONLY)
 public class CleanupTask
     extends TaskSupport
 {

@@ -27,6 +27,7 @@ import org.sonatype.nexus.scheduling.TaskSupport;
 import com.google.common.collect.ImmutableList;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 
+import static java.util.stream.Collectors.joining;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.CLUSTER_LOG_ONLY;
 
@@ -61,6 +62,7 @@ public class ClusterLogTask
     if (log.isInfoEnabled(CLUSTER_LOG_ONLY)) {
       databases.stream().map(Provider::get).forEach(this::logTable);
       logHaStatus();
+      logProfilerStatistics();
     }
     else {
       log.debug("Logging for cluster information is not enabled by logging level");
@@ -86,6 +88,13 @@ public class ClusterLogTask
 
   private void logHaStatus() {
     log.info(CLUSTER_LOG_ONLY, databaseMaintenanceServiceProvider.get().fullServerStatus());
+  }
+
+  private void logProfilerStatistics() {
+    String statisticsString = databaseMaintenanceServiceProvider.get().profilerStatistics().entrySet().stream()
+        .map(e -> "  " + e.getKey() + ": " + e.getValue())
+        .collect(joining("\n"));
+    log.info(CLUSTER_LOG_ONLY, "Profiler statistics:\n" + statisticsString);
   }
 
   @Override

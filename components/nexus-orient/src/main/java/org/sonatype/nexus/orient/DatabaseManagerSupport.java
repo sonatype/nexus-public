@@ -81,47 +81,15 @@ public abstract class DatabaseManagerSupport
 
   @Override
   protected void doStart() throws Exception {
+    // relax instances check; may not be empty if we are bouncing the lifecycle
     checkState(pools.isEmpty());
-    checkState(instances.isEmpty());
   }
 
   @Override
   protected void doStop() throws Exception {
+    // release pools for cleanup, but keep instance wrappers so we can re-use them
+    instances.values().forEach(DatabaseInstanceImpl::releasePool);
     stopAllPools();
-    stopAllInstances();
-  }
-
-  /**
-   * Stop all instances and stop tracking.
-   *
-   * Usage is protected by lifecycle lock, and use of ensureStarted.
-   */
-  private void stopAllInstances() {
-    if (instances.isEmpty()) {
-      return;
-    }
-
-    log.info("Stopping {} instances", instances.size());
-
-    Iterator<DatabaseInstanceImpl> iter = instances.values().iterator();
-    while (iter.hasNext()) {
-      DatabaseInstanceImpl instance = iter.next();
-
-      if (instance.isStarted()) {
-        log.info("Stopping instance: {}", instance.getName());
-        try {
-          instance.stop();
-        }
-        catch (Exception e) {
-          log.warn("Failed to stop instance: {}", instance.getName(), e);
-        }
-      }
-      else {
-        log.info("Instance already stopped: {}", instance.getName());
-      }
-
-      iter.remove();
-    }
   }
 
   /**
@@ -303,7 +271,10 @@ public abstract class DatabaseManagerSupport
     else {
       instance = new DatabaseInstanceImpl(this, name);
     }
-    Lifecycles.start(instance);
+
+    // ensure the database is created
+    connect(name, true).close();
+
     log.debug("Created database instance: {}", instance);
     return instance;
   }

@@ -13,6 +13,8 @@
 package org.sonatype.nexus.audit.internal;
 
 import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.sonatype.nexus.audit.AuditData;
 
@@ -20,9 +22,16 @@ import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.joda.time.DateTime.parse;
+import static org.joda.time.format.DateTimeFormat.forPattern;
+import static org.junit.Assert.assertTrue;
 
 public class AuditDTOTest
 {
+  private static final long TEST_TIMESTAMP = 1549375691779L;
+
+  private static final Pattern TIMESTAMP_PATTERN = Pattern.compile("(\\{\"timestamp\":\")([^\"]*)(\".*)");
+
   private AuditDTO underTest;
 
   @Test
@@ -34,8 +43,15 @@ public class AuditDTOTest
   @Test
   public void testToString_withData() {
     underTest = new AuditDTO(makeAuditData());
-    assertThat(underTest.toString(),
-          is("{\"timestamp\":\"2019-02-05 09:08:11,779-0500\",\"nodeId\":\"testnodeid\",\"initiator\":\"testinitiator\",\"domain\":\"testdomain\",\"type\":\"testtype\",\"context\":\"testcontext\",\"attributes\":{\"testattribute1\":\"testvalue1\",\"testattribute2\":\"testvalue2\"}}"));
+
+    Matcher timestampMatcher = TIMESTAMP_PATTERN.matcher(underTest.toString());
+    assertTrue(timestampMatcher.matches());
+    String timestamp = timestampMatcher.group(2);
+
+    assertThat(parse(timestamp, forPattern("yyyy-MM-dd HH:mm:ss,SSSZ")).getMillis(), is(TEST_TIMESTAMP));
+
+    assertThat(timestampMatcher.replaceAll("$1<TIMESTAMP>$3"), is(
+        "{\"timestamp\":\"<TIMESTAMP>\",\"nodeId\":\"testnodeid\",\"initiator\":\"testinitiator\",\"domain\":\"testdomain\",\"type\":\"testtype\",\"context\":\"testcontext\",\"attributes\":{\"testattribute1\":\"testvalue1\",\"testattribute2\":\"testvalue2\"}}"));
   }
 
   private static AuditData makeAuditData() {
@@ -45,7 +61,7 @@ public class AuditDTOTest
     data.setContext("testcontext");
     data.setInitiator("testinitiator");
     data.setNodeId("testnodeid");
-    data.setTimestamp(new Date(1549375691779L));
+    data.setTimestamp(new Date(TEST_TIMESTAMP));
     data.getAttributes().put("testattribute1", "testvalue1");
     data.getAttributes().put("testattribute2", "testvalue2");
     return data;

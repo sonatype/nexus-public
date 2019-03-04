@@ -25,12 +25,14 @@ Ext.define('NX.coreui.controller.SupportZip', {
     'NX.util.Base64',
     'NX.util.Url',
     'NX.util.DownloadHelper',
-    'NX.I18n'
+    'NX.I18n',
+    'NX.Dialogs'
   ],
 
   views: [
     'support.SupportZip',
-    'support.SupportZipCreated'
+    'support.SupportZipCreated',
+    'support.SupportZipHaCreated'
   ],
 
   /**
@@ -46,6 +48,10 @@ Ext.define('NX.coreui.controller.SupportZip', {
       },
       'supportzip-truncated': {
         file: 'warning.png',
+        variants: ['x16', 'x32']
+      },
+      'supportzip-error': {
+        file: 'exclamation.png',
         variants: ['x16', 'x32']
       }
     });
@@ -70,8 +76,14 @@ Ext.define('NX.coreui.controller.SupportZip', {
         'nx-coreui-support-supportzip form': {
           submitted: me.showSupportZipCreatedWindow
         },
+        'nx-coreui-support-supportzip form button[action=hazips]': {
+          click: me.createHaSupportZips
+        },
         'nx-coreui-support-supportzipcreated button[action=download]': {
           click: me.download
+        },
+        'nx-coreui-support-supportziphacreated button[action=download]': {
+          click: me.downloadNode
         }
       }
     });
@@ -86,12 +98,60 @@ Ext.define('NX.coreui.controller.SupportZip', {
 
   /**
    * @private
+   */
+  createHaSupportZips: function(button) {
+    var form = button.up('form'),
+        formData = form.getForm();
+
+    if (formData.isValid()) {
+      form.mask(NX.I18n.get('Support_SupportZip_Creating_Message'));
+
+      Ext.Ajax.request({
+        url: NX.util.Url.baseUrl + '/service/rest/v1/nodes/supportzips',
+        jsonData: formData.getFieldValues(false),
+        callback: function(options, success, response) {
+          form.unmask();
+
+          if (success) {
+            var zipWidget = Ext.widget('nx-coreui-support-supportziphacreated');
+            Ext.Array.each(Ext.JSON.decode(response.responseText), function(nodeZip) {
+              zipWidget.addNode(nodeZip);
+            });
+            zipWidget.center();
+          }
+          else {
+            NX.Dialogs.showError(NX.I18n.get('Support_HA_SupportZip_Failed_Title'),
+                NX.I18n.get('Support_HA_SupportZip_Failed_Message'));
+          }
+        }
+      });
+    }
+  },
+
+  /**
+   * @private
    * Download support ZIP file.
    */
   download: function (button) {
     var win = button.up('window'),
         fileName = win.down('form').getValues().name;
 
+    this.doDownload(fileName, function() { win.close(); });
+  },
+
+  /**
+   * @private
+   * Download support ZIP file of an HA-C node
+   */
+  downloadNode: function (button) {
+    this.doDownload(button.up('form').getValues().name);
+  },
+
+  /**
+   * @private
+   * Requests the download
+   */
+  doDownload: function (fileName, onSuccess) {
     NX.Security.doWithAuthenticationToken(
         NX.I18n.get('SupportZip_Authenticate_Text'),
         {
@@ -99,10 +159,12 @@ Ext.define('NX.coreui.controller.SupportZip', {
             NX.util.DownloadHelper.downloadUrl(NX.util.Url.urlOf(
                 'service/rest/wonderland/download/' + fileName + '?t=' + NX.util.Base64.encode(authToken)
             ));
-            win.close();
+
+            if (Ext.isFunction(onSuccess)) {
+              onSuccess.call();
+            }
           }
         }
     );
   }
-
 });

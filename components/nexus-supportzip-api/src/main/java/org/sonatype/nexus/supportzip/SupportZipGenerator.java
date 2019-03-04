@@ -195,8 +195,10 @@ public interface SupportZipGenerator
   /**
    * Result of support ZIP generate request.
    */
-  class Result
+  class Result implements Serializable
   {
+    private static final long serialVersionUID = -3253827134366752809L;
+
     /**
      * True if the ZIP or any of its contents had been truncated.
      */

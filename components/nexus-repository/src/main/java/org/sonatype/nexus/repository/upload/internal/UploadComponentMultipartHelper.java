@@ -39,8 +39,8 @@ import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.ParameterParser;
 import org.apache.commons.fileupload.RequestContext;
-import org.apache.commons.fileupload.disk.DiskFileItem;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
 
 import static java.lang.String.format;
@@ -166,7 +166,7 @@ public class UploadComponentMultipartHelper
       parser.setLowerCaseNames(true);
       // Parameter parser can handle null input
       Map<String, String> params = parser.parse(contentType, ';');
-      return params.getOrDefault("charset", DiskFileItem.DEFAULT_CHARSET);
+      return params.getOrDefault("charset", Charsets.UTF_8.name());
     }
   }
 }

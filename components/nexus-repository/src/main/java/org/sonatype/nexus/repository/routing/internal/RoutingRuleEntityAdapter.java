@@ -45,7 +45,7 @@ public class RoutingRuleEntityAdapter
 
   private static final String P_DESCRIPTION = "description";
 
-  private static final String I_NAME = new OIndexNameBuilder().type(DB_CLASS).property(P_NAME).build();
+  static final String I_NAME = new OIndexNameBuilder().type(DB_CLASS).property(P_NAME).build();
 
   private final ReadEntityByPropertyAction<RoutingRule> read = new ReadEntityByPropertyAction<>(this, P_NAME);
 

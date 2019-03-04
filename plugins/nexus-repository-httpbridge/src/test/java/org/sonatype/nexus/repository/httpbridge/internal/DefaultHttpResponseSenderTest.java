@@ -122,7 +122,6 @@ public class DefaultHttpResponseSenderTest
     order.verify(payload).getContentType();
     order.verify(payload, atLeastOnce()).getSize();
     order.verify(payload).openInputStream();
-    order.verify(input, atLeastOnce()).read(any(byte[].class));
     order.verify(input).close();
     order.verify(payload).close();
 
@@ -133,7 +132,7 @@ public class DefaultHttpResponseSenderTest
   public void payloadClosedAfterError() throws Exception {
     when(request.getAction()).thenReturn(HttpMethods.GET);
 
-    doThrow(new IOException("Dropped")).when(output).write(any(byte[].class), anyInt(), anyInt());
+    doThrow(new IOException("Dropped")).when(payload).copy(input, output);
 
     try {
       underTest.send(request, HttpResponses.ok(payload), httpServletResponse);
@@ -148,7 +147,6 @@ public class DefaultHttpResponseSenderTest
     order.verify(payload).getContentType();
     order.verify(payload, atLeastOnce()).getSize();
     order.verify(payload).openInputStream();
-    order.verify(input, atLeastOnce()).read(any(byte[].class));
     order.verify(input).close();
     order.verify(payload).close();
 

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.common.app;
 
+import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle.Phase;
 
 /**
@@ -19,19 +20,20 @@ import org.sonatype.nexus.common.app.ManagedLifecycle.Phase;
  *
  * @since 3.3
  */
-public interface ManagedLifecycleManager
+public abstract class ManagedLifecycleManager
+    extends ComponentSupport
 {
   /**
    * Returns the current phase.
    */
-  Phase getCurrentPhase();
+  public abstract Phase getCurrentPhase();
 
   /**
    * Attempts to move to the target phase by starting (or stopping) components phase-by-phase. If any components have
    * appeared since the last request which belong to the current phase or earlier then they are automatically started
    * before the current phase is changed. Similarly components that have disappeared are stopped.
    */
-  void to(Phase targetPhase) throws Exception;
+  public abstract void to(final Phase targetPhase) throws Exception;
 
   /**
    * Attempts to bounce the given phase by moving the lifecycle just before it then back towards the current phase,
@@ -40,5 +42,30 @@ public interface ManagedLifecycleManager
    *
    * @since 3.next
    */
-  void bounce(Phase bouncePhase) throws Exception;
+  public abstract void bounce(final Phase bouncePhase) throws Exception;
+
+  /**
+   * Are we in the process of shutting down? (ie. moving to the {@code OFF} phase)
+   *
+   * @since 3.next
+   */
+  public static boolean isShuttingDown() {
+    return shuttingDown;
+  }
+
+  private static volatile boolean shuttingDown;
+
+  protected ManagedLifecycleManager() {
+    shuttingDown = false;
+  }
+
+  /**
+   * Flag that we are in the process of shutting down.
+   *
+   * @since 3.next
+   */
+  protected void registerShutdown() {
+    log.info("Shutting down");
+    shuttingDown = true;
+  }
 }

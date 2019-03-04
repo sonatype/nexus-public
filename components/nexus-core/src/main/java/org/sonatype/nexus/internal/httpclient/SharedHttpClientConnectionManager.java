@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.app.ManagedLifecycleManager.isShuttingDown;
 import static org.sonatype.nexus.httpclient.HttpSchemes.HTTP;
 import static org.sonatype.nexus.httpclient.HttpSchemes.HTTPS;
 
@@ -125,6 +126,9 @@ public class SharedHttpClientConnectionManager
     evictionThread.interrupt();
     evictionThread = null;
 
-    super.shutdown();
+    // underlying pool cannot be restarted, so avoid shutting it down when bouncing the service
+    if (isShuttingDown()) {
+      super.shutdown();
+    }
   }
 }

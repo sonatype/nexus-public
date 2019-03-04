@@ -476,7 +476,7 @@ Ext.define('NX.controller.Drilldown', {
    */
   onDelete: function () {
     var me = this,
-        selection = Ext.ComponentQuery.query('nx-drilldown-master')[0].getSelectionModel().getSelection(),
+        selection = me.getSelection(),
         description;
 
     if (Ext.isDefined(selection) && selection.length > 0) {
@@ -860,5 +860,14 @@ Ext.define('NX.controller.Drilldown', {
         modelId = (bookmarkSegments.length > 1) && decodeURIComponent(bookmarkSegments[1]);
 
     return modelId;
+  },
+
+  getSelection: function() {
+    return Ext.ComponentQuery.query('nx-drilldown-master')[0].getSelectionModel().getSelection();
+  },
+
+  getSelectedModel: function() {
+    var selection = this.getSelection();
+    return selection && selection[0];
   }
 });

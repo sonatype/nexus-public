@@ -21,7 +21,8 @@ Ext.define('NX.coreui.view.system.Nodes', {
   extend: 'NX.view.drilldown.Drilldown',
   alias: 'widget.nx-coreui-system-nodes',
   requires: [
-    'NX.I18n'
+    'NX.I18n',
+    'NX.State'
   ],
 
   /**
@@ -31,8 +32,7 @@ Ext.define('NX.coreui.view.system.Nodes', {
 
     var me = this;
     me.iconName = 'node-default';
-    if (NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-hazelcast-plugin')
-        && NX.State.getValue('nodes', {})['enabled']) {
+    if (NX.State.isClustered()) {
       me.masters = [{xtype: 'nx-coreui-system-nodelist'}];
       me.tabs = {
         xtype: 'nx-coreui-system-node-settings',

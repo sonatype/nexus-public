@@ -82,7 +82,7 @@ public class PurgeUnusedSnapshotsFacetImpl
       // first part of Orient command query - looping components
       "LET $a = (SELECT FROM component WHERE bucket = %s AND @RID > %s ORDER BY @RID LIMIT %d); " +
       // second part - asset join with GROUP BY for lastdownloaded date
-      "LET $b = (SELECT component, max(last_downloaded) as lastdownloaded " +
+      "LET $b = (SELECT component, max(ifnull(last_downloaded, blob_created)) as lastdownloaded " +
       "FROM asset WHERE (%s) GROUP BY component ORDER BY component); " +
       // third part - further filter out non-snapshots and non-date matches
       "SELECT FROM $b WHERE (" +

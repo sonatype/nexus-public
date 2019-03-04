@@ -417,7 +417,14 @@ public class DefaultCapabilityRegistry
         );
       }
 
-      final DefaultCapabilityReference reference = create(id, capabilityType(item.getType()), descriptor);
+      DefaultCapabilityReference reference = references.get(id);
+      if (reference != null) {
+        // already loaded, update instead...
+        doUpdate(reference, item, properties);
+        continue;
+      }
+
+      reference = create(id, capabilityType(item.getType()), descriptor);
 
       reference.setNotes(item.getNotes());
       reference.load(properties);

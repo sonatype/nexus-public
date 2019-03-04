@@ -19,15 +19,18 @@ import javax.inject.Singleton
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.group.GroupFacet
 import org.sonatype.nexus.repository.group.GroupHandler
-import org.sonatype.nexus.repository.view.Content
+import org.sonatype.nexus.repository.storage.MissingAssetBlobException
+import org.sonatype.nexus.repository.storage.StorageFacet
 import org.sonatype.nexus.repository.view.Context
 import org.sonatype.nexus.repository.view.Response
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher.State
+import org.sonatype.nexus.transaction.Transactional
 
 import static java.util.Objects.isNull
 import static org.sonatype.nexus.repository.http.HttpConditions.makeConditional
 import static org.sonatype.nexus.repository.http.HttpConditions.makeUnconditional
 import static org.sonatype.nexus.repository.http.HttpStatus.OK
+import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.errorInputStream
 import static org.sonatype.nexus.repository.npm.internal.NpmResponses.notFound
 import static org.sonatype.nexus.repository.npm.internal.NpmResponses.ok
 import static org.sonatype.nexus.repository.group.GroupHandler.DispatchedRepositories
@@ -59,7 +62,7 @@ class NpmGroupPackageHandler
   {
     NpmGroupFacet groupFacet = getGroupFacet(context)
 
-    Content content = groupFacet.getFromCache(context)
+    NpmContent content = groupFacet.getFromCache(context)
 
     // first check cached content against itself only
     if (isNull(content)) {
@@ -72,11 +75,20 @@ class NpmGroupPackageHandler
       return ok(groupFacet.buildPackageRoot(responses, context))
     }
 
+    // only add missing blob handler if we actually had content, no need otherwise
+    content.missingBlobInputStreamSupplier {
+      missingBlobException -> handleMissingBlob(context, dispatched, groupFacet, missingBlobException)
+    }
+
     return ok(content)
   }
 
   private NpmGroupFacet getGroupFacet(final Context context) {
     return context.getRepository().facet(GroupFacet.class) as NpmGroupFacet
+  }
+
+  private StorageFacet getStorageFacet(final Context context) {
+    return context.getRepository().facet(StorageFacet.class) as StorageFacet
   }
 
   private Map<Repository, Response> getResponses(final Context context,
@@ -92,6 +104,26 @@ class NpmGroupPackageHandler
     }
     finally {
       makeConditional(context.getRequest())
+    }
+  }
+
+  private InputStream handleMissingBlob(final Context context,
+                                        final DispatchedRepositories dispatched,
+                                        final NpmGroupFacet groupFacet,
+                                        final MissingAssetBlobException e)
+  {
+    Map responses = getResponses(context, dispatched, groupFacet)
+
+    // why check the response? It might occur that the members don't have cache on their own and that their remote
+    // doesn't have any responses (404) for the request. For this to occur allot must be wrong on its own already.
+    if (responses.isEmpty()) {
+      // We can't change the status of a response, as we are streaming out therefor be kind and return an error stream
+      return errorInputStream("Members had no metadata to merge for repository " + context.repository.name)
+    }
+
+    return Transactional.operation.withDb(getStorageFacet(context).txSupplier()).call {
+      // we default back on building a merged package root if we didn't have a blob for the associated asset
+      return groupFacet.buildMergedPackageRootOnMissingBlob(responses, context, e)
     }
   }
 }
