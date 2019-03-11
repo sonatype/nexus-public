@@ -12,9 +12,6 @@
  */
 package org.sonatype.nexus.coreui
 
-import java.util.stream.Collectors
-
-import javax.annotation.Nullable
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
@@ -22,16 +19,13 @@ import javax.inject.Singleton
 import org.sonatype.nexus.common.encoding.EncodingUtil
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
-import org.sonatype.nexus.rapture.StateContributor
 import org.sonatype.nexus.repository.Repository
-import org.sonatype.nexus.repository.browse.BrowseFacet
 import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.storage.BrowseNodeStore
 
 import com.codahale.metrics.annotation.ExceptionMetered
 import com.codahale.metrics.annotation.Timed
-import com.google.common.collect.Streams
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import groovy.transform.PackageScope
@@ -46,7 +40,6 @@ import groovy.transform.PackageScope
 @DirectAction(action = 'coreui_Browse')
 class BrowseComponent
     extends DirectComponentSupport
-    implements StateContributor
 {
   @PackageScope static final FOLDER = "folder"
   @PackageScope static final COMPONENT = "component"
@@ -90,19 +83,6 @@ class BrowseComponent
           assetId: browseNode.assetId != null ? browseNode.assetId.value : null
       )
     }
-  }
-
-  @Override
-  @Nullable
-  Map<String, Object> getState() {
-    return [
-        'browseTreeMaxNodes'    : configuration.maxNodes,
-        'rebuildingRepositories': Streams.stream(repositoryManager.browse()).filter({ repository ->
-          repository.facet(BrowseFacet).rebuilding
-        }).map({ repository ->
-          repository.name
-        }).collect(Collectors.toList())
-    ]
   }
 
   def isRoot(String path) {

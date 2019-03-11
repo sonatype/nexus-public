@@ -34,6 +34,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.core.IsEqual.equalTo;
+import static org.joda.time.Duration.standardHours;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -210,7 +211,7 @@ public class DefaultComponentMetadataProducerTest
     Bucket bucket = createBucket(REPO_NAME);
     Component component = createDetachedComponent(bucket, GROUP, NAME, VERSION);
     Asset expected = createDetachedAsset(bucket, NAME, component);
-    expected.markAsDownloaded(1);
+    expected.markAsDownloaded(standardHours(12));
     Iterable<Asset> assets = newArrayList(
         createDetachedAsset(bucket, "asset1", component),
         expected,

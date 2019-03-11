@@ -98,9 +98,6 @@ class RepositoryManagerImplTest
   Provider<ConfigurationFacet> configurationFacetProvider
 
   @Mock
-  Provider<ConfigurationFacet> browseFacetProvider
-
-  @Mock
   RepositoryAdminSecurityContributor securityContributor
 
   List<DefaultRepositoriesContributor> defaultRepositoriesContributorList
@@ -179,6 +176,9 @@ class RepositoryManagerImplTest
 
   @Mock
   EntityMetadata entityMetadata
+
+  @Mock
+  GroupMemberMappingCache groupMemberMappingCache
 
   //Subject of the test
   RepositoryManagerImpl repositoryManager
@@ -267,8 +267,9 @@ class RepositoryManagerImplTest
 
   private RepositoryManagerImpl initializeAndStartRepositoryManager(boolean skipDefaultRepositories) {
     repositoryManager = new RepositoryManagerImpl(eventManager, configurationStore, repositoryFactory,
-        configurationFacetProvider, browseFacetProvider, ImmutableMap.of(recipeName, recipe), securityContributor,
-        defaultRepositoriesContributorList, databaseFreezeService, skipDefaultRepositories, blobStoreManager)
+        configurationFacetProvider, ImmutableMap.of(recipeName, recipe), securityContributor,
+        defaultRepositoriesContributorList, databaseFreezeService, skipDefaultRepositories, blobStoreManager,
+        groupMemberMappingCache)
 
     repositoryManager.doStart()
     return repositoryManager
@@ -411,27 +412,6 @@ class RepositoryManagerImplTest
     BucketUpdatedEvent bucketEvent = new BucketUpdatedEvent(entityMetadata, 'some-deleted-repo$uuid')
     repositoryManager.onBucketUpdated(bucketEvent)
     verify(eventManager, never()).post(isA(RepositoryMetadataUpdatedEvent))
-  }
-
-  @Test
-  void 'retrieve names of all groups a repository is contained in'() {
-    repositoryManager = buildRepositoryManagerImpl(true)
-    def groupNames = repositoryManager.findContainingGroups(MAVEN_CENTRAL_NAME)
-    assertThat(groupNames, contains(GROUP_NAME, PARENT_GROUP_NAME))
-  }
-
-  @Test
-  void 'retrieve names of all groups when a circular dependency is present'() {
-    repositoryManager = buildRepositoryManagerImpl(true)
-    def groupNames = repositoryManager.findContainingGroups(APACHE_SNAPSHOTS_NAME)
-    assertThat(groupNames, contains(GROUP_NAME, CYCLE_A_NAME, CYCLE_B_NAME, PARENT_GROUP_NAME))
-  }
-
-  @Test
-  void 'retrieve names of repo not in group'() {
-    repositoryManager = buildRepositoryManagerImpl(true)
-    def groupNames = repositoryManager.findContainingGroups(UNGROUPED_REPO_NAME)
-    assertThat(groupNames, empty())
   }
 
   @Test

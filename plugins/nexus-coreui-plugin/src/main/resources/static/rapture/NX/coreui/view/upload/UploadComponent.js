@@ -79,6 +79,7 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
                   me.createRow(),
                   {
                     xtype: 'button',
+                    glyph: 'xf055@FontAwesome' /* fa-plus-circle */,
                     text: NX.I18n.get('FeatureGroups_Upload_Asset_Form_Add_Asset_Button'),
                     action: 'add_asset',
                     hidden: !me.uploadDefinition.get('multipleUpload')

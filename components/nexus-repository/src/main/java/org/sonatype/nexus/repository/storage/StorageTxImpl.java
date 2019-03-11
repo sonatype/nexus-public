@@ -64,6 +64,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static org.sonatype.nexus.common.entity.EntityHelper.id;
+import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.isDownloading;
 import static org.sonatype.nexus.repository.storage.Asset.CHECKSUM;
 import static org.sonatype.nexus.repository.storage.Asset.HASHES_NOT_VERIFIED;
 import static org.sonatype.nexus.repository.storage.Asset.PROVENANCE;
@@ -502,6 +503,9 @@ public class StorageTxImpl
     asset.bucketId(id(bucket));
     asset.format(format);
     asset.attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
+    if (isDownloading()) {
+      asset.lastDownloaded(DateTime.now());
+    }
     return asset;
   }
 

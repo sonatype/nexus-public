@@ -25,6 +25,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import com.google.common.hash.HashCode;
 import org.joda.time.DateTime;
+import org.joda.time.Duration;
 
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_BLOB_REF;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_CONTENT_TYPE;
@@ -222,13 +223,13 @@ public class Asset
   }
 
   /**
-   * Sets the last downloaded timestamp to now, if it has been longer than {@param updateWindow}
+   * Sets the last downloaded timestamp to now, if it has been longer than {@param lastDownloadedInterval}
    *
    * @return {@code true} if the timestamp was changed, otherwise {@code false}
    */
-  public boolean markAsDownloaded(final int updateWindow) {
+  public boolean markAsDownloaded(final Duration lastDownloadedInterval) {
     DateTime now = DateTime.now();
-    if (lastDownloaded == null || lastDownloaded.isBefore(now.minusSeconds(updateWindow))) {
+    if (lastDownloaded == null || lastDownloaded.isBefore(now.minus(lastDownloadedInterval))) {
       lastDownloaded(now);
       return true;
     }

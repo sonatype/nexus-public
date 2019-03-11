@@ -41,6 +41,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.RepositoryTaskSupport.ALL_REPOSITORIES;
 
 public class RemoveSnapshotsTaskTest
     extends TestSupport
@@ -63,7 +64,7 @@ public class RemoveSnapshotsTaskTest
     configuration = new TaskConfiguration();
     configuration.setId("test");
     configuration.setTypeId("test");
-    configuration.setString(RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID, "*");
+    configuration.setString(RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID, ALL_REPOSITORIES);
 
     when(mavenFacet.getVersionPolicy()).thenReturn(VersionPolicy.SNAPSHOT);
 

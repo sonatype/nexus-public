@@ -62,6 +62,7 @@ import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.lang.Boolean.TRUE;
 
 /**
  * A support class which implements basic payload logic; subclasses provide format-specific operations.
@@ -102,6 +103,8 @@ public abstract class ProxyFacetSupport
           '}';
     }
   }
+
+  private static final ThreadLocal<Boolean> downloading = new ThreadLocal<>();
 
   private Config config;
 
@@ -236,12 +239,25 @@ public abstract class ProxyFacetSupport
   }
 
   /**
+   * Is the current thread actively downloading (ie. fetch + store) from the upstream proxy?
+   *
+   * @since 3.next
+   */
+  public static boolean isDownloading() {
+    return TRUE.equals(downloading.get());
+  }
+
+  /**
    * @since 3.4
    */
   protected Content doGet(final Context context, @Nullable final Content staleContent) throws IOException {
     Content remote = null, content = staleContent;
 
+    boolean nested = isDownloading();
     try {
+      if (!nested) {
+        downloading.set(TRUE);
+      }
       remote = fetch(context, content);
       if (remote != null) {
         content = store(context, remote);
@@ -261,6 +277,9 @@ public abstract class ProxyFacetSupport
       logContentOrThrow(content, context, null, e.getCause()); // "special" path (for now) for npm and similar peculiar formats
     }
     finally {
+      if (!nested) {
+        downloading.remove();
+      }
       if (remote != null && !remote.equals(content)) {
         Closeables.close(remote, true);
       }

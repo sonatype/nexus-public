@@ -17,8 +17,10 @@ import java.util.Map;
 import org.sonatype.nexus.capability.CapabilityConfigurationSupport;
 
 import org.hibernate.validator.constraints.NotBlank;
+import org.joda.time.Duration;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.joda.time.Duration.standardHours;
 
 /**
  * {@link StorageSettingsCapability} configuration.
@@ -28,30 +30,30 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class StorageSettingsCapabilityConfiguration
     extends CapabilityConfigurationSupport
 {
-  public static final String LAST_DOWNLOADED = "lastDownloaded";
+  public static final String LAST_DOWNLOADED_INTERVAL = "lastDownloadedInterval";
 
-  public static final int DEFAULT_LAST_DOWNLOADED = 12; // hours
+  public static final Duration DEFAULT_LAST_DOWNLOADED_INTERVAL = standardHours(12);
 
   @NotBlank
-  private String lastDownloaded;
+  private String lastDownloadedInterval;
 
   public StorageSettingsCapabilityConfiguration(final Map<String,String> properties) {
     checkNotNull(properties);
-    this.lastDownloaded = properties.get(LAST_DOWNLOADED);
+    this.lastDownloadedInterval = properties.get(LAST_DOWNLOADED_INTERVAL);
   }
 
-  public String getLastDownloaded() {
-    return lastDownloaded;
+  public String getLastDownloadedInterval() {
+    return lastDownloadedInterval;
   }
 
-  public void setLastDownloaded(final String lastDownloaded) {
-    this.lastDownloaded = lastDownloaded;
+  public void setLastDownloadedInterval(final String lastDownloadedInterval) {
+    this.lastDownloadedInterval = lastDownloadedInterval;
   }
 
   @Override
   public String toString() {
     return getClass().getSimpleName() + "{" +
-        "lastDownloaded='" + lastDownloaded + '\'' +
+        "lastDownloadedInterval='" + lastDownloadedInterval + '\'' +
         '}';
   }
 }

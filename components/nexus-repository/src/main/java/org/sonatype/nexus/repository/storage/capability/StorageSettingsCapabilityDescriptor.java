@@ -59,7 +59,7 @@ public class StorageSettingsCapabilityDescriptor
     String assetLabel();
 
     @DefaultMessage("'Last Downloaded' Update Interval (hours)")
-    String lastAccessedLabel();
+    String lastDownloadedIntervalLabel();
   }
 
   private static final Messages messages = I18N.create(Messages.class);
@@ -69,12 +69,12 @@ public class StorageSettingsCapabilityDescriptor
   public StorageSettingsCapabilityDescriptor() {
     this.formFields = ImmutableList.of(
         new NumberTextFormField(
-            StorageSettingsCapabilityConfiguration.LAST_DOWNLOADED,
+            StorageSettingsCapabilityConfiguration.LAST_DOWNLOADED_INTERVAL,
             messages.assetLabel(),
-            messages.lastAccessedLabel(),
+            messages.lastDownloadedIntervalLabel(),
             MANDATORY
         )
-        .withInitialValue(StorageSettingsCapabilityConfiguration.DEFAULT_LAST_DOWNLOADED)
+        .withInitialValue(StorageSettingsCapabilityConfiguration.DEFAULT_LAST_DOWNLOADED_INTERVAL.getStandardHours())
         .withMinimumValue(1)
     );
   }

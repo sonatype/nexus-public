@@ -59,6 +59,7 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.joda.time.Duration.standardHours;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
@@ -782,7 +783,7 @@ public class StorageFacetImplIT
       Asset asset = tx.findAssetWithProperty(P_NAME, ASSET_NAME, bucket);
       assertThat(asset, notNullValue());
       assertThat(asset.lastDownloaded(), nullValue());
-      assertThat(asset.markAsDownloaded(12), is(true));
+      assertThat(asset.markAsDownloaded(standardHours(12)), is(true));
       tx.saveAsset(asset);
       tx.commit();
     }
@@ -792,7 +793,7 @@ public class StorageFacetImplIT
       Asset asset = tx.findAssetWithProperty(P_NAME, ASSET_NAME, bucket);
       assertThat(asset, notNullValue());
       assertThat(asset.lastDownloaded(), notNullValue());
-      assertThat(asset.markAsDownloaded(12), is(false));
+      assertThat(asset.markAsDownloaded(standardHours(12)), is(false));
     }
   }
 

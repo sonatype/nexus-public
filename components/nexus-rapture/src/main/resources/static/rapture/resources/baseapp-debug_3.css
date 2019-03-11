@@ -193,24 +193,6 @@ fieldset.nx-form-section.nx-no-title {
     padding-top: 0;
 }
 
-fieldset.nx-coreui-routing-rules-settings-form-matchers {
-    margin-bottom: 0;
-    padding-bottom: 0;
-}
-
-fieldset.nx-coreui-routing-rules-settings-form-matchers .x-fieldset-body {
-    padding-left: 0;
-}
-
-fieldset.nx-coreui-routing-rules-settings-form-matchers label {
-    font-weight: bold;
-    margin-bottom: 5px;
-}
-
-fieldset.nx-coreui-routing-rules-settings-form-matchers .nx-matcher-remove-button {
-    margin-left: 10px;
-}
-
 .nx-monospace-field textarea,
 .nx-monospace-field input {
     /**
@@ -10838,6 +10820,37 @@ fieldset.nx-coreui-routing-rules-settings-form-matchers .nx-matcher-remove-butto
  * @class NX.coreui.view.logging.LogViewer
  */
     background-color: #fff !important;
+}
+
+.nx-mode-common-text {
+    /**
+ * @class NX.coreui.view.routing.RoutingRulesSettingsForm
+ */
+    padding: 5px 0 0 5px;
+}
+
+fieldset.nx-coreui-routing-rules-settings-form-matchers {
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+fieldset.nx-coreui-routing-rules-settings-form-matchers .x-fieldset-body {
+    padding-left: 0;
+}
+
+fieldset.nx-coreui-routing-rules-settings-form-matchers .nx-matchers-label {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+fieldset.nx-coreui-routing-rules-settings-form-matchers .nx-matchers-help-text {
+    display: block;
+    font-size: 11px;
+    padding: 5px 0;
+}
+
+fieldset.nx-coreui-routing-rules-settings-form-matchers .nx-matcher-remove-button {
+    margin-left: 10px;
 }
 
 .nx-coreui-searchfeature .criteria {

@@ -55,18 +55,32 @@ Ext.define('NX.coreui.view.routing.RoutingRulesSettingsForm', {
             {
               name: 'description',
               itemId: 'description',
-              fieldLabel: NX.I18n.get('RoutingRules_Description_Label')
+              fieldLabel: NX.I18n.get('RoutingRules_Description_Label'),
+              allowBlank: true
             },
             {
-              xtype: 'combo',
-              name: 'mode',
+              xtype: 'fieldcontainer',
+              itemId: 'modeContainer',
               fieldLabel: NX.I18n.get('RoutingRules_Mode_Label'),
-              editable: false,
-              store: [
-                ['ALLOW', NX.I18n.get('RoutingRules_Mode_Allow_Text')],
-                ['BLOCK', NX.I18n.get('RoutingRules_Mode_Block_Text')]
-              ],
-              value: 'ALLOW'
+              layout: 'hbox',
+              items: [
+                {
+                  xtype: 'combo',
+                  name: 'mode',
+                  editable: false,
+                  width: '80px',
+                  store: [
+                    ['ALLOW', NX.I18n.get('RoutingRules_Mode_Allow_Text')],
+                    ['BLOCK', NX.I18n.get('RoutingRules_Mode_Block_Text')]
+                  ],
+                  value: 'ALLOW'
+                },
+                {
+                  xtype: 'label',
+                  text: NX.I18n.get('RoutingRules_Mode_Common_Text'),
+                  cls: 'nx-mode-common-text'
+                }
+              ]
             },
             {
               xtype: 'fieldset',
@@ -75,15 +89,20 @@ Ext.define('NX.coreui.view.routing.RoutingRulesSettingsForm', {
               items: [
                 {
                   xtype: 'label',
-                  text: NX.I18n.get('RoutingRules_Matchers_Label'),
-                  width: 305,
-                  height: 25
+                  cls: 'nx-matchers-label',
+                  text: NX.I18n.get('RoutingRules_Matchers_Label')
+                },
+                {
+                  xtype: 'label',
+                  cls: 'nx-matchers-help-text',
+                  text: NX.I18n.get('RoutingRules_Matchers_Description')
                 }
               ]
             },
             {
               xtype: 'button',
-              glyph: 'xf0fe@FontAwesome', /* fa-plus-square */
+              glyph: 'xf055@FontAwesome' /* fa-plus-circle */,
+              text: NX.I18n.get('RoutingRules_Matchers_Add_Button'),
               tooltip: NX.I18n.get('RoutingRules_Matchers_Add_Button'),
               handler: me.onAddMatcherClick.bind(this)
             }
@@ -137,12 +156,18 @@ Ext.define('NX.coreui.view.routing.RoutingRulesSettingsForm', {
   },
 
   onAddMatcherClick: function() {
-    var textFields;
+    var textFields, lastTextField;
 
     this.addMatcherRow();
 
     textFields = this.getMatcherFields();
-    textFields[textFields.length - 1].focus();
+    lastTextField = textFields[textFields.length - 1];
+
+    // show "This field is required" message immediately to prevent Add
+    // button from moving when multiple empty matchers are added
+    lastTextField.validate();
+
+    lastTextField.focus();
   },
 
   onRemoveMatcherClick: function(button) {

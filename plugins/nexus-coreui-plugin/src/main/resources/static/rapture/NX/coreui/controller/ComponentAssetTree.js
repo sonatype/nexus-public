@@ -388,7 +388,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
       return;
     }
 
-    if (rebuildingRepositories.indexOf(repositoryName) !== -1) {
+    if (rebuildingRepositories.indexOf('*') !== -1 || rebuildingRepositories.indexOf(repositoryName) !== -1) {
       warning.setTitle(NX.I18n.format('ComponentDetails_Rebuild_Warning'));
       warning.show();
     }

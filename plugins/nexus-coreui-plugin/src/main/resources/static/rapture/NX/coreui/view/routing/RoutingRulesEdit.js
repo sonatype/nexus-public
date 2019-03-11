@@ -29,11 +29,13 @@ Ext.define('NX.coreui.view.routing.RoutingRulesEdit', {
       buttons: [
         {
           text: NX.I18n.get('SettingsForm_Save_Button'),
-          action: 'save', ui: 'nx-primary',
+          action: 'save',
+          ui: 'nx-primary',
           bindToEnter: false
         },
         {
           text: NX.I18n.get('SettingsForm_Discard_Button'),
+          action: 'discard',
           handler: me.onDiscardClick.bind(me)
         }
       ]

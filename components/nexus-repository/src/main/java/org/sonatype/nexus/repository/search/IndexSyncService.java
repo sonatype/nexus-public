@@ -55,6 +55,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 import static org.sonatype.nexus.orient.DatabaseInstanceNames.COMPONENT;
+import static org.sonatype.nexus.repository.RepositoryTaskSupport.ALL_REPOSITORIES;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_COMPONENT;
 import static org.sonatype.nexus.repository.storage.BucketEntityAdapter.P_REPOSITORY_NAME;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_BUCKET;
@@ -197,7 +198,7 @@ public class IndexSyncService
    */
   private void rebuildIndex() {
     TaskConfiguration taskConfig = taskScheduler.createTaskConfigurationInstance(RebuildIndexTaskDescriptor.TYPE_ID);
-    taskConfig.setString(RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID, "*");
+    taskConfig.setString(RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID, ALL_REPOSITORIES);
     try {
       taskScheduler.submit(taskConfig);
     }

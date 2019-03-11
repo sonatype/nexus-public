@@ -12,15 +12,11 @@
  */
 package org.sonatype.nexus.repository.manager.internal;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.SortedMap;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -42,7 +38,6 @@ import org.sonatype.nexus.jmx.reflect.ManagedObject;
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
 import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.browse.BrowseFacet;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.config.internal.ConfigurationCreatedEvent;
@@ -109,8 +104,6 @@ public class RepositoryManagerImpl
 
   private final Provider<ConfigurationFacet> configFacet;
 
-  private final Provider<BrowseFacet> browseFacet;
-
   private final RepositoryAdminSecurityContributor securityContributor;
 
   private final List<DefaultRepositoriesContributor> defaultRepositoriesContributors;
@@ -121,30 +114,32 @@ public class RepositoryManagerImpl
 
   private final BlobStoreManager blobStoreManager;
 
+  private final GroupMemberMappingCache groupMemberMappingCache;
+
   @Inject
   public RepositoryManagerImpl(final EventManager eventManager,
                                final ConfigurationStore store,
                                final RepositoryFactory factory,
                                final Provider<ConfigurationFacet> configFacet,
-                               final Provider<BrowseFacet> browseFacet,
                                final Map<String, Recipe> recipes,
                                final RepositoryAdminSecurityContributor securityContributor,
                                final List<DefaultRepositoriesContributor> defaultRepositoriesContributors,
                                final DatabaseFreezeService databaseFreezeService,
                                @Named("${nexus.skipDefaultRepositories:-false}") final boolean skipDefaultRepositories,
-                               final BlobStoreManager blobStoreManager)
+                               final BlobStoreManager blobStoreManager,
+                               final GroupMemberMappingCache groupMemberMappingCache)
   {
     this.eventManager = checkNotNull(eventManager);
     this.store = checkNotNull(store);
     this.factory = checkNotNull(factory);
     this.configFacet = checkNotNull(configFacet);
-    this.browseFacet = checkNotNull(browseFacet);
     this.recipes = checkNotNull(recipes);
     this.securityContributor = checkNotNull(securityContributor);
     this.defaultRepositoriesContributors = checkNotNull(defaultRepositoriesContributors);
     this.databaseFreezeService = checkNotNull(databaseFreezeService);
     this.skipDefaultRepositories = skipDefaultRepositories;
     this.blobStoreManager = checkNotNull(blobStoreManager);
+    this.groupMemberMappingCache = checkNotNull(groupMemberMappingCache);
   }
 
   /**
@@ -177,7 +172,6 @@ public class RepositoryManagerImpl
 
     // attach mandatory facets
     repository.attach(configFacet.get());
-    repository.attach(browseFacet.get());
 
     // apply recipe to repository
     recipe.apply(repository);
@@ -246,6 +240,8 @@ public class RepositoryManagerImpl
     restoreRepositories(configurations);
 
     startRepositories();
+
+    groupMemberMappingCache.init(this);
   }
 
   private void provisionDefaultRepositories() {
@@ -414,35 +410,7 @@ public class RepositoryManagerImpl
   @Override
   @Guarded(by = STARTED)
   public List<String> findContainingGroups(final String repositoryName) {
-    TreeMap<Integer, List<String>> groupNamesByLevel = new TreeMap<>();
-
-    findContainingGroups(repositoryName, groupNamesByLevel, 0);
-
-    return groupNamesByLevel.values().stream().map(repoNames -> {
-      repoNames.sort(null);
-      return repoNames;
-    }).flatMap(Collection::stream).collect(Collectors.toList());
-  }
-
-  private void findContainingGroups(final String name,
-                                    final SortedMap<Integer, List<String>> groupNamesByLevel,
-                                    final int level)
-  {
-    final List<String> newContainingGroups = new ArrayList<>();
-
-    //find any groups that directly contain the desired repository name (and make sure to only include each name
-    //once to save processing time)
-    repositories.values().stream().filter(repository ->
-        repository.optionalFacet(GroupFacet.class).filter(groupFacet -> groupFacet.member(name)).isPresent()
-            && groupNamesByLevel.values().stream().noneMatch(repoNames -> repoNames.contains(repository.getName())))
-        .forEach(repository -> newContainingGroups.add(repository.getName()));
-
-    List<String> groupNames = groupNamesByLevel.computeIfAbsent(level, newLevel -> new ArrayList<>());
-
-    groupNames.addAll(newContainingGroups);
-
-    //now process each group we found and check if any groups contain it
-    newContainingGroups.forEach( newName -> findContainingGroups(newName, groupNamesByLevel, level + 1));
+    return groupMemberMappingCache.getGroups(repositoryName);
   }
 
   private void removeRepositoryFromAllGroups(final Repository repositoryToRemove) throws Exception {

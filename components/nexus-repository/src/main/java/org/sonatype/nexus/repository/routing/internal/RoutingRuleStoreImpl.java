@@ -23,6 +23,7 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.text.Strings2;
@@ -116,6 +117,13 @@ public class RoutingRuleStoreImpl extends StateGuardLifecycleSupport implements 
   public RoutingRule getByName(final String name) {
     checkNotNull(name);
     return inTx(databaseInstance).call(db -> entityAdapter.read(db, name));
+  }
+
+  @Override
+  public RoutingRule getById(final String id) {
+    checkNotNull(id);
+
+    return inTx(databaseInstance).call(db -> entityAdapter.read(db, new DetachedEntityId(id)));
   }
 
   @VisibleForTesting

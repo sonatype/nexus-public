@@ -1,0 +1,31 @@
+/**
+ * @class NX.coreui.view.routing.RoutingRulesSettingsForm
+ */
+
+.nx-mode-common-text {
+  padding: 5px 0 0 5px;
+}
+
+fieldset.nx-coreui-routing-rules-settings-form-matchers {
+  margin-bottom: 0;
+  padding-bottom: 0;
+
+  .x-fieldset-body {
+    padding-left: 0;
+  }
+
+  .nx-matchers-label {
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+
+  .nx-matchers-help-text {
+    display: block;
+    font-size: 11px;
+    padding: 5px 0;
+  }
+
+  .nx-matcher-remove-button {
+    margin-left: 10px;
+  }
+}

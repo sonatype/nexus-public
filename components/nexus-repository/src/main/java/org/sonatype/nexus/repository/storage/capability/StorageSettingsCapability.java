@@ -20,10 +20,12 @@ import javax.inject.Named;
 import org.sonatype.nexus.capability.CapabilitySupport;
 import org.sonatype.nexus.repository.storage.AssetManager;
 
+import org.joda.time.Duration;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Integer.parseInt;
-import static org.sonatype.nexus.repository.storage.AssetManager.ONE_HOUR_IN_SECONDS;
-import static org.sonatype.nexus.repository.storage.capability.StorageSettingsCapabilityConfiguration.DEFAULT_LAST_DOWNLOADED;
+import static org.joda.time.Duration.standardHours;
+import static org.sonatype.nexus.repository.storage.capability.StorageSettingsCapabilityConfiguration.DEFAULT_LAST_DOWNLOADED_INTERVAL;
 
 /**
  * Storage settings capability.
@@ -48,27 +50,33 @@ public class StorageSettingsCapability
 
   @Override
   protected void onUpdate(final StorageSettingsCapabilityConfiguration config) throws Exception {
-    if (!context().isActive()) {
-      return;
+    if (context().isActive()) {
+      configureDownloadedInterval(config);
     }
-
-    log.info("Using configured value of {} hours for lastDownloaded update frequency", config.getLastDownloaded());
-    assetManager.setExpireInSeconds(convertToSeconds(parseInt(config.getLastDownloaded())));
   }
 
   @Override
   protected void onActivate(final StorageSettingsCapabilityConfiguration config) throws Exception {
-    log.info("Using configured value of {} hours for lastDownloaded update frequency", config.getLastDownloaded());
-    assetManager.setExpireInSeconds(convertToSeconds(parseInt(config.getLastDownloaded())));
+    configureDownloadedInterval(config);
   }
 
   @Override
   protected void onPassivate(final StorageSettingsCapabilityConfiguration config) throws Exception {
-    log.info("Reverting back to {} hours for lastDownloaded update frequency", DEFAULT_LAST_DOWNLOADED);
-    assetManager.setExpireInSeconds(convertToSeconds(DEFAULT_LAST_DOWNLOADED));
+    resetDownloadedInterval();
   }
 
-  private int convertToSeconds(final int configuredValue) {
-    return configuredValue * ONE_HOUR_IN_SECONDS;
+  private void configureDownloadedInterval(final StorageSettingsCapabilityConfiguration config) {
+    log.info("Using configured value of {} hours for LastDownloaded interval", config.getLastDownloadedInterval());
+    assetManager.setLastDownloadedInterval(parseAsHours(config.getLastDownloadedInterval()));
+  }
+
+  private void resetDownloadedInterval() {
+    log.info("Reverting back to {} hours for LastDownloaded interval",
+        DEFAULT_LAST_DOWNLOADED_INTERVAL.getStandardHours());
+    assetManager.setLastDownloadedInterval(DEFAULT_LAST_DOWNLOADED_INTERVAL);
+  }
+
+  private Duration parseAsHours(final String hours) {
+    return standardHours(parseInt(hours));
   }
 }

@@ -43,6 +43,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static org.sonatype.nexus.repository.RepositoryTaskSupport.ALL_REPOSITORIES;
 import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind.PACKAGE_ROOT;
 import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind.REPOSITORY_ROOT;
 import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind.TARBALL;
@@ -186,7 +187,7 @@ public class ReindexNpmRepositoryTaskTest
     configuration.setName(TASK_NAME);
     configuration.setId(TASK_ID);
     configuration.setTypeId(ReindexNpmRepositoryTaskDescriptor.TYPE_ID);
-    configuration.setString(RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID, "*");
+    configuration.setString(RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID, ALL_REPOSITORIES);
 
     underTest = new ReindexNpmRepositoryTask(npmPackageParser, assetEntityAdapter);
     underTest.install(repositoryManager, new GroupType());

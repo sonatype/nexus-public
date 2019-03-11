@@ -19,8 +19,9 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.joda.time.Duration;
 
-import static org.sonatype.nexus.repository.storage.capability.StorageSettingsCapabilityConfiguration.DEFAULT_LAST_DOWNLOADED;
+import static org.sonatype.nexus.repository.storage.capability.StorageSettingsCapabilityConfiguration.DEFAULT_LAST_DOWNLOADED_INTERVAL;
 
 /**
  * Responsible for altering the runtime behaviour of assets
@@ -32,30 +33,27 @@ import static org.sonatype.nexus.repository.storage.capability.StorageSettingsCa
 public class AssetManager
     extends ComponentSupport
 {
-  public static final int ONE_HOUR_IN_SECONDS = 3600;
-
-  private int expireInSeconds;
+  private Duration lastDownloadedInterval;
 
   @Inject
   public AssetManager() {
-    this.expireInSeconds = DEFAULT_LAST_DOWNLOADED;
+    this.lastDownloadedInterval = DEFAULT_LAST_DOWNLOADED_INTERVAL;
   }
 
-  public void setExpireInSeconds(final int expireInSeconds) {
-    if (expireInSeconds < ONE_HOUR_IN_SECONDS) {
-      log.warn(
-          "A lastDownloaded setting of {} has been configured, a value less than {} seconds (1 hour) is not recommended for performance reason",
-          expireInSeconds, ONE_HOUR_IN_SECONDS);
+  public void setLastDownloadedInterval(final Duration lastDownloadedInterval) {
+    if (lastDownloadedInterval.getStandardHours() < 1) {
+      log.warn("A lastDownloaded interval of {} seconds has been configured, a value less than"
+          + " 1 hour is not recommended for performance reasons", lastDownloadedInterval.getStandardSeconds());
     }
-    this.expireInSeconds = expireInSeconds;
+    this.lastDownloadedInterval = lastDownloadedInterval;
   }
 
   @VisibleForTesting
-  public int getExpireInSeconds() {
-    return expireInSeconds;
+  public Duration getLastDownloadedInterval() {
+    return lastDownloadedInterval;
   }
 
   public boolean maybeUpdateLastDownloaded(final Asset asset) {
-    return asset.markAsDownloaded(expireInSeconds);
+    return asset.markAsDownloaded(lastDownloadedInterval);
   }
 }
