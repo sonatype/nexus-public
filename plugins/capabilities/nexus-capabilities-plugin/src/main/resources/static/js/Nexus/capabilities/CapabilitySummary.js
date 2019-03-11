@@ -49,12 +49,12 @@ NX.define('Nexus.capabilities.CapabilitySummary', {
       items: [
         {
           xtype: 'textarea',
-          htmlDecode: true,
           helpText: "Optional notes about configured capability",
           name: 'notes',
           anchor: '-20px',
           allowBlank: true,
-          disabled: !editable
+          disabled: !editable,
+          renderer: NX.htmlRenderer
         }
       ],
 
@@ -166,8 +166,8 @@ NX.define('Nexus.capabilities.CapabilitySummary', {
         '<table>',
         '<tpl for="properties">',
         '<tr class="nx-capabilities-CapabilitySummary-properties-entry">',
-        '<td class="nx-capabilities-CapabilitySummary-properties-name">{name}</td>',
-        '<td class="nx-capabilities-CapabilitySummary-properties-value">{value}</td>',
+        '<td class="nx-capabilities-CapabilitySummary-properties-name">{name:htmlEncode}</td>',
+        '<td class="nx-capabilities-CapabilitySummary-properties-value">{value:htmlEncode}</td>',
         '</tr>',
         '</tpl>',
         '</tr>',

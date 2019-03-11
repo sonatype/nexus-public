@@ -53,19 +53,24 @@ public abstract class AbstractUiContributionBuilder<T>
     Properties props = new Properties();
 
     String path = String.format("/META-INF/maven/%s/%s/pom.properties", groupId, artifactId);
-    InputStream input = owner.getClass().getResourceAsStream(path);
+    try (InputStream input = owner.getClass().getResourceAsStream(path)) {
 
-    if (input == null) {
-      log.warn("Unable to detect version; failed to load: {}", path);
-      return null;
-    }
+      if (input == null) {
+        log.warn("Unable to detect version; failed to load: {}", path);
+        return null;
+      }
 
-    try {
-      props.load(input);
+      try {
+        props.load(input);
+      }
+      catch (IOException e) {
+        log.warn("Unable to detect version; failed to load: {}", path, e);
+        return null;
+      }
+
     }
     catch (IOException e) {
-      log.warn("Failed to load POM: {}", path, e);
-      return null;
+      log.warn("Failed to close {} properly while detecting version", path, e);
     }
 
     return props.getProperty("version");

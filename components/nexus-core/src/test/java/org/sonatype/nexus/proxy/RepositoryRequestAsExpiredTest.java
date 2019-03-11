@@ -21,6 +21,7 @@ import org.sonatype.nexus.configuration.model.CLocalStorage;
 import org.sonatype.nexus.configuration.model.CRemoteStorage;
 import org.sonatype.nexus.configuration.model.CRepository;
 import org.sonatype.nexus.configuration.model.DefaultCRepository;
+import org.sonatype.nexus.proxy.item.StorageItem;
 import org.sonatype.nexus.proxy.maven.ChecksumPolicy;
 import org.sonatype.nexus.proxy.maven.RepositoryPolicy;
 import org.sonatype.nexus.proxy.maven.maven2.M2Repository;
@@ -58,7 +59,11 @@ public class RepositoryRequestAsExpiredTest
     // it is the request we are interested in
     this.record = new Record();
     this.server =
-        Server.withPort(0).serve("/").withBehaviours(record, Behaviours.error(404, "don't bother yourself"));
+        Server.withPort(0)
+            //simply serving up an empty zip file and its hash
+            .serve("/activemq/activemq-core/1.3/activemq-core-1.3.jar.sha1").withBehaviours(record, Behaviours.content("b04f3ee8f5e43fa3b162981b50bb72fe1acabb33"))
+            .serve("/activemq/activemq-core/1.3/activemq-core-1.3.jar").withBehaviours(record, Behaviours.content(new byte[] {80,75,05,06,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00}))
+            .serve("/").withBehaviours(record, Behaviours.error(404, "don't bother yourself"));
     server.start();
   }
 
@@ -141,6 +146,49 @@ public class RepositoryRequestAsExpiredTest
     catch (ItemNotFoundException e) {
       // suppress it
     }
+  }
+
+  @Test
+  public void testSha1RequestStaysLocalWhenNotAvailable() throws Exception {
+    try {
+      final ResourceStoreRequest request = new ResourceStoreRequest("/activemq/activemq-core/1.3/activemq-core-1.3.jar.sha1",
+          true, false);
+      getRepository().retrieveItem(request);
+    }
+    catch (ItemNotFoundException e) {
+      // suppress it
+    }
+    assertThat(record.getRequests(), hasSize(0));
+  }
+
+  @Test
+  public void testSha1RequestStaysLocalWhenExpired() throws Exception {
+    //get the jar and its sha1 into the proxy repo (note localOnly is false)
+    StorageItem storageItem = getRepository().retrieveItem(new ResourceStoreRequest("/activemq/activemq-core/1.3/activemq-core-1.3.jar",
+        false, false));
+    ResourceStoreRequest request = new ResourceStoreRequest("/activemq/activemq-core/1.3/activemq-core-1.3.jar.sha1",
+        false, false);
+    getRepository().retrieveItem(request);
+
+    //validating that the remote server has received 2 requests
+    assertThat(record.getRequests(), hasSize(2));
+
+    //mark the hashes expired
+    storageItem.getRepositoryItemAttributes().put("remote.hash.expired", "true");
+    getRepository().getAttributesHandler().storeAttributes(storageItem);
+
+    try {
+      //now get the sha1 again, but with localOnly set to true
+      request = new ResourceStoreRequest("/activemq/activemq-core/1.3/activemq-core-1.3.jar.sha1",
+          true, false);
+      getRepository().retrieveItem(request);
+    }
+    catch (ItemNotFoundException e) {
+      //I don't care if this pass/fails, I just want to see if remote was contacted again
+    }
+
+    //make sure no new requests went to the remote server
+    assertThat(record.getRequests(), hasSize(2));
   }
 
   @Test
