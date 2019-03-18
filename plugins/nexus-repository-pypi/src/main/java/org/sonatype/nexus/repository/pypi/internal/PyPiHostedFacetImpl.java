@@ -35,7 +35,6 @@ import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.storage.TempBlob;
-import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreMetadata;
 import org.sonatype.nexus.repository.transaction.TransactionalTouchBlob;
@@ -244,8 +243,9 @@ public class PyPiHostedFacetImpl
       }
     }
 
+    PyPiIndexFacet indexFacet = facet(PyPiIndexFacet.class);
     // A package has been added or redeployed and therefore the cached index is no longer relevant
-    deleteIndex(name);
+    indexFacet.deleteIndex(name);
     
     StorageTx tx = UnitOfWork.currentTx();
     Bucket bucket = tx.findBucket(getRepository());
@@ -270,7 +270,7 @@ public class PyPiHostedFacetImpl
       component.formatAttributes().set(P_VERSION, version);
 
       //A new component so we will need to regenerate the root index
-      deleteRootIndex();
+      indexFacet.deleteRootIndex();
     }
 
     component.formatAttributes().set(P_SUMMARY, attributes.get(P_SUMMARY)); // use the most recent summary received?
@@ -287,29 +287,6 @@ public class PyPiHostedFacetImpl
     saveAsset(tx, asset, tempBlob, payload);
 
     return asset;
-  }
-
-  @TransactionalDeleteBlob
-  public void deleteIndex(final String packageName)
-  {
-    StorageTx tx = UnitOfWork.currentTx();
-    Bucket bucket = tx.findBucket(getRepository());
-
-    String indexPath = PyPiPathUtils.indexPath(packageName);
-    Asset cachedIndex = findAsset(tx, bucket, indexPath);
-    if (cachedIndex != null) {
-      tx.deleteAsset(cachedIndex);
-    }
-  }
-
-  @TransactionalDeleteBlob
-  public void deleteRootIndex() {
-    StorageTx tx = UnitOfWork.currentTx();
-    Bucket bucket = tx.findBucket(getRepository());
-    Asset rootIndex = findAsset(tx, bucket, INDEX_PATH_PREFIX);
-    if (rootIndex != null) {
-      tx.deleteAsset(rootIndex);
-    }
   }
 
   /**

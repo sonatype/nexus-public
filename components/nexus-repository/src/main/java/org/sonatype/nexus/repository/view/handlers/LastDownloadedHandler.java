@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.view.handlers;
 
-import java.io.IOException;
-
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -22,19 +20,19 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.entity.EntityHelper;
-import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetManager;
-import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
-import org.sonatype.nexus.repository.transaction.TransactionalTouchMetadata;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Response;
+import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 
 import static org.sonatype.nexus.orient.ReplicationModeOverrides.clearReplicationModeOverrides;
@@ -66,14 +64,8 @@ public class LastDownloadedHandler
 
     try {
       if (isSuccessfulRequestWithContent(context, response)) {
-        Repository repository = context.getRepository();
-        StorageFacet storageFacet = repository.facet(StorageFacet.class);
-
         Content content = (Content) response.getPayload();
-
-        AttributesMap attributes = content.getAttributes();
-
-        maybeUpdateLastDownloaded(storageFacet, attributes);
+        maybeUpdateLastDownloaded(content.getAttributes());
       }
     }
     catch (Exception e) {
@@ -83,12 +75,34 @@ public class LastDownloadedHandler
     return response;
   }
 
-  protected void maybeUpdateLastDownloaded(final StorageFacet storageFacet, final AttributesMap attributes)
-      throws IOException
-  {
-    Asset asset = attributes.get(Asset.class);
+  protected void maybeUpdateLastDownloaded(final AttributesMap attributes) {
+    maybeUpdateLastDownloaded(attributes.get(Asset.class));
+  }
 
-    maybeUpdateLastDownloaded(storageFacet, asset);
+  protected void maybeUpdateLastDownloaded(@Nullable final Asset asset) {
+    // check to see if we need to update the last-downloaded time before starting any TX
+    if (asset != null && assetManager.maybeUpdateLastDownloaded(asset)) {
+      dontWaitForReplicationResults();
+      try {
+        tryPersistLastDownloadedTime(asset);
+      }
+      finally {
+        clearReplicationModeOverrides();
+      }
+    }
+  }
+
+  @Transactional(swallow = {
+      // silently skip if the record has been deleted, someone else updated it, or the system is in read-only mode
+      ORecordNotFoundException.class, ONeedRetryException.class, OModificationOperationProhibitedException.class })
+  @VisibleForTesting
+  protected void tryPersistLastDownloadedTime(final Asset asset) {
+    StorageTx tx = UnitOfWork.currentTx();
+    // reload asset in case it's changed since it was stored in the response
+    Asset latestAsset = tx.findAsset(EntityHelper.id(asset));
+    if (latestAsset != null && assetManager.maybeUpdateLastDownloaded(latestAsset)) {
+      tx.saveAsset(latestAsset);
+    }
   }
 
   private boolean isSuccessfulRequestWithContent(final Context context, final Response response) {
@@ -106,36 +120,5 @@ public class LastDownloadedHandler
     String action = context.getRequest().getAction();
     
     return GET.equals(action) || HEAD.equals(action);
-  }
-
-  protected void maybeUpdateLastDownloaded(final StorageFacet storageFacet, final Asset asset)
-      throws IOException
-  {
-    if (asset != null && assetManager.maybeUpdateLastDownloaded(asset)) {
-      dontWaitForReplicationResults();
-      try {
-        TransactionalTouchMetadata.operation.withDb(storageFacet.txSupplier())
-            .throwing(IOException.class)
-            .swallow(ORecordNotFoundException.class)
-            .call(() -> {
-              StorageTx tx = UnitOfWork.currentTx();
-              Asset updatedAsset = tx.findAsset(EntityHelper.id(asset));
-
-              updateLastDownloadedTime(tx, updatedAsset);
-
-              return null;
-            });
-      }
-      finally {
-        clearReplicationModeOverrides();
-      }
-    }
-  }
-
-  @VisibleForTesting
-  void updateLastDownloadedTime(final StorageTx tx, @Nullable final Asset updatedAsset) {
-    if (updatedAsset != null && assetManager.maybeUpdateLastDownloaded(updatedAsset)) {
-      tx.saveAsset(updatedAsset);
-    }
   }
 }

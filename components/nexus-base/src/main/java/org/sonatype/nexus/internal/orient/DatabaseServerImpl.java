@@ -42,6 +42,7 @@ import org.sonatype.nexus.orient.DatabaseServer;
 import org.sonatype.nexus.orient.OrientConfigCustomizer;
 import org.sonatype.nexus.orient.entity.EntityHook;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.eventbus.Subscribe;
@@ -100,6 +101,8 @@ public class DatabaseServerImpl
 
   private final boolean httpListenerEnabled;
 
+  private final boolean disableUnusedDbsOnStartup;
+
   private boolean dynamicPlugins;
 
   private final String binaryPortRange;
@@ -118,6 +121,7 @@ public class DatabaseServerImpl
                             @Named("${nexus.orient.dynamicPlugins:-false}") final boolean dynamicPlugins,
                             @Named("${nexus.orient.binaryListener.portRange:-2424-2430}") final String binaryPortRange,
                             @Named("${nexus.orient.httpListener.portRange:-2480-2490}") final String httpPortRange,
+                            @Named("${nexus.orient.disableUnusedDbsOnStartup:-true}") final boolean disableUnusedDbsOnStartup,
                             final NodeAccess nodeAccess,
                             final EntityHook entityHook)
   {
@@ -130,6 +134,7 @@ public class DatabaseServerImpl
     this.binaryPortRange = binaryPortRange;
     this.httpPortRange = httpPortRange;
     this.entityHook = checkNotNull(entityHook);
+    this.disableUnusedDbsOnStartup = disableUnusedDbsOnStartup;
 
     if (nodeAccess.isClustered()) {
       this.binaryListenerEnabled = true; // clustered mode requires binary listener
@@ -155,6 +160,11 @@ public class DatabaseServerImpl
 
   @Override
   protected void doStart() throws Exception {
+    if (disableUnusedDbsOnStartup) {
+      // rename db file for any databases we no longer use, so they won't be errantly loaded
+      disableUnusedDatabases();
+    }
+
     // global startup
     Orient.instance().startup();
 
@@ -187,6 +197,30 @@ public class DatabaseServerImpl
     log.info("Activated");
 
     this.orientServer = server;
+  }
+
+  @VisibleForTesting
+  void disableUnusedDatabases() {
+    File dbDir = applicationDirectories.getWorkDirectory("db");
+
+    renameDatabaseOcfFile(new File(dbDir, "audit"));
+    renameDatabaseOcfFile(new File(dbDir, "analytics"));
+  }
+
+  private void renameDatabaseOcfFile(File databaseDirectory) {
+    File dbOcfFileSource = new File(databaseDirectory, "database.ocf");
+
+    if (dbOcfFileSource.exists()) {
+      if (dbOcfFileSource.renameTo(new File(databaseDirectory, "database.ocf.bak"))) {
+        log.info("Renamed unused {}/database.ocf file to database.ocf.bak for '{}' database.",
+            databaseDirectory.toString(), databaseDirectory.getName());
+      }
+      else {
+        log.error(
+            "Unable to properly rename {}/database.ocf for '{}' database.  You should manually do this to avoid needless replication.",
+            databaseDirectory.toString(), databaseDirectory.getName());
+      }
+    }
   }
 
   private OServerConfiguration createConfiguration() {

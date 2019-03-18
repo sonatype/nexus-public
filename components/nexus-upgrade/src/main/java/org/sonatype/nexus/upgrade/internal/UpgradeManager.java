@@ -127,9 +127,10 @@ public class UpgradeManager
    * Returns ordered list of upgrades that should be applied to the current installation.
    * 
    * @param modelVersions The models and versions currently installed
+   * @param localOnly Whether only local upgrades should be selected
    * @return ordered list of upgrades that should be applied
    */
-  public List<Upgrade> selectUpgrades(final Map<String, String> modelVersions) {
+  public List<Upgrade> selectUpgrades(final Map<String, String> modelVersions, final boolean localOnly) {
 
     List<Upgrade> upgrades = upgradeIndex.entrySet().stream()
         .filter(e -> applies(modelVersions, e.getKey()))
@@ -144,7 +145,14 @@ public class UpgradeManager
       throw new IllegalStateException(message);
     }
 
-    return order(modelVersions, upgrades);
+    Stream<UpgradeStep> upgradeSteps = order(modelVersions, upgrades);
+    if (localOnly) {
+      upgradeSteps = upgradeSteps.filter(step -> localModels.contains(step.getModel()));
+    }
+
+    return upgradeSteps
+        .map(UpgradeStep::getUpgrade)
+        .collect(toList());
   }
 
   /**
@@ -331,7 +339,7 @@ public class UpgradeManager
   /**
    * Orders the given upgrades so any dependent upgrades appear earlier on in the sequence.
    */
-  private List<Upgrade> order(final Map<String, String> modelVersions, final List<Upgrade> upgrades) {
+  private Stream<UpgradeStep> order(final Map<String, String> modelVersions, final List<Upgrade> upgrades)  {
     DependencyResolver<DependencySource<UpgradePoint>> resolver = new DependencyResolver<>();
     resolver.setWarnOnMissingDependencies(warnOnMissingDependencies);
 
@@ -344,8 +352,7 @@ public class UpgradeManager
     return resolver.resolve()
         .getOrdered().stream()
         .map(UpgradeStep::unwrap)
-        .filter(Objects::nonNull)
-        .collect(toList());
+        .filter(Objects::nonNull);
   }
 
   /**

@@ -22,7 +22,8 @@ Ext.define('NX.coreui.view.routing.RoutingRulesAdd', {
   alias: 'widget.nx-coreui-routing-rules-add',
   requires: [
     'NX.Conditions',
-    'NX.I18n'
+    'NX.I18n',
+    'NX.coreui.view.routing.RoutingRulesSinglePreview'
   ],
 
   defaultFocus: 'name',
@@ -45,6 +46,7 @@ Ext.define('NX.coreui.view.routing.RoutingRulesAdd', {
     this.callParent();
 
     this.down('nx-coreui-routing-rules-settings-form').addMatcherRow();
+    this.items.get(0).add({xtype: 'nx-coreui-routing-rules-single-preview'});
   }
 
 });

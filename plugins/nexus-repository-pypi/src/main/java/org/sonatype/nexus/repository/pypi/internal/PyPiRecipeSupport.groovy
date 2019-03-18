@@ -21,6 +21,7 @@ import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.attributes.AttributesFacet
 import org.sonatype.nexus.repository.http.PartialFetchHandler
 import org.sonatype.nexus.repository.pypi.PyPiFacet
+import org.sonatype.nexus.repository.routing.RoutingRuleHandler
 import org.sonatype.nexus.repository.search.SearchFacet
 import org.sonatype.nexus.repository.security.SecurityHandler
 import org.sonatype.nexus.repository.storage.StorageFacet
@@ -71,6 +72,9 @@ abstract class PyPiRecipeSupport
 
   @Inject
   TimingHandler timingHandler
+
+  @Inject
+  RoutingRuleHandler routingHandler
 
   @Inject
   SecurityHandler securityHandler

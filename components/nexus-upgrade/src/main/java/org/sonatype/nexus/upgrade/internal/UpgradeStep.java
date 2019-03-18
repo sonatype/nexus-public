@@ -53,8 +53,8 @@ public class UpgradeStep
   }
 
   @Nullable
-  public static Upgrade unwrap(final DependencySource<UpgradePoint> source) {
-    return source instanceof UpgradeStep ? ((UpgradeStep) source).upgrade : null;
+  public static UpgradeStep unwrap(final DependencySource<UpgradePoint> source) {
+    return source instanceof UpgradeStep ? (UpgradeStep) source : null;
   }
 
   public String getModel() {
@@ -63,6 +63,13 @@ public class UpgradeStep
 
   public String getVersion() {
     return upgrades.to();
+  }
+
+  /**
+   * @since 3.next
+   */
+  public Upgrade getUpgrade() {
+    return upgrade;
   }
 
   @Override

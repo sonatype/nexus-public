@@ -14,9 +14,7 @@ package org.sonatype.nexus.upgrade.internal;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -34,7 +32,6 @@ import org.sonatype.nexus.upgrade.UpgradeService;
 import com.google.common.base.Throwables;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Predicates.alwaysTrue;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.UPGRADE;
 
 /**
@@ -78,13 +75,15 @@ public class UpgradeServiceImpl
 
     modelVersions = validate(modelVersionStore.load());
 
-    List<Upgrade> upgrades = upgradeManager.selectUpgrades(modelVersions);
+    // if we're joining an existing cluster then only consider local upgrades
+    boolean localOnly = !nodeAccess.isOldestNode();
+    List<Upgrade> upgrades = upgradeManager.selectUpgrades(modelVersions, localOnly);
     if (upgrades.isEmpty()) {
       return; // nothing to upgrade
     }
 
     try {
-      if (nodeAccess.isFreshNode()) {
+      if (modelVersionStore.isNewInstance()) {
         doInventory(upgrades);
       }
       else {
@@ -109,16 +108,7 @@ public class UpgradeServiceImpl
    * Takes an inventory of all upgrades bundled into this first-time installation.
    */
   private void doInventory(List<Upgrade> upgrades) {
-    Predicate<Upgrades> inventoryFilter = alwaysTrue();
-
-    if (!nodeAccess.isOldestNode()) {
-      // joining existing cluster; only take local inventory as cluster inventory is already taken
-      Set<String> localModels = upgradeManager.getLocalModels();
-      inventoryFilter = (upgrade) -> localModels.contains(upgrade.model());
-    }
-
     upgrades.stream().map(upgradeManager::getMetadata)
-        .filter(inventoryFilter)
         .forEach(upgrade -> modelVersions.put(upgrade.model(), upgrade.to()));
   }
 

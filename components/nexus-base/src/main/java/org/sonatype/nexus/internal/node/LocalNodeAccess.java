@@ -53,8 +53,6 @@ public class LocalNodeAccess
 
   private String id;
 
-  private boolean freshNode;
-
   private Map<String, String> memberAliases = Collections.emptyMap();
 
   @Inject
@@ -79,8 +77,6 @@ public class LocalNodeAccess
           "Silver Spring",
           "MD",
           "US");
-
-      freshNode = true; // nodes with newly created identities are considered 'fresh'
     }
 
     certificate = keyStoreManager.getCertificate();
@@ -128,11 +124,6 @@ public class LocalNodeAccess
   @Override
   public Set<String> getMemberIds() {
     return memberAliases.keySet();
-  }
-
-  @Override
-  public boolean isFreshNode() {
-    return freshNode;
   }
 
   @Override

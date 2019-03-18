@@ -30,14 +30,18 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response.Status;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.repository.rest.api.RoutingRuleTestXO;
 import org.sonatype.nexus.repository.rest.api.RoutingRuleXO;
+import org.sonatype.nexus.repository.routing.RoutingMode;
 import org.sonatype.nexus.repository.routing.RoutingRule;
+import org.sonatype.nexus.repository.routing.RoutingRuleHelper;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 import org.sonatype.nexus.rest.Resource;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.sonatype.nexus.common.entity.EntityHelper.id;
 
 /**
  * @since 3.next
@@ -56,11 +60,25 @@ public class RoutingRulesResource
   @Inject
   private RoutingRuleStore routingRuleStore;
 
+  @Inject
+  private RoutingRuleHelper routingRuleHelper;
+
   @POST
   @RequiresPermissions("nexus:repository-admin:*:*:add")
   public void createRoutingRule(RoutingRuleXO routingRuleXO)
   {
     routingRuleStore.create(fromXO(routingRuleXO));
+  }
+
+  @POST
+  @Path("/test")
+  @RequiresPermissions("nexus:repository-admin:*:*:read")
+  public boolean isAllowed(RoutingRuleTestXO routingRuleTestXO)
+  {
+    String path = routingRuleTestXO.getPath();
+    List<String> matchers = routingRuleTestXO.getMatchers();
+    RoutingMode mode = routingRuleTestXO.getMode();
+    return routingRuleHelper.isAllowed(mode, matchers, path);
   }
 
   @GET
@@ -107,6 +125,7 @@ public class RoutingRulesResource
 
   private static RoutingRuleXO toXO(RoutingRule routingRule) {
     RoutingRuleXO routingRuleXO = new RoutingRuleXO();
+    routingRuleXO.setId(id(routingRule).getValue());
     routingRuleXO.setName(routingRule.name());
     routingRuleXO.setDescription(routingRule.description());
     routingRuleXO.setMode(routingRule.mode());

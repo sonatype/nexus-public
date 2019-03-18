@@ -19,6 +19,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.scheduling.PeriodicJobService;
 import org.sonatype.nexus.scheduling.PeriodicJobService.PeriodicJob;
@@ -30,7 +31,8 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
 /**
  * Refreshes and caches the state of system {@link com.codahale.metrics.health.HealthCheck}s at the configured time
@@ -40,7 +42,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
  */
 @Named
 @Singleton
-@ManagedLifecycle(phase = TASKS)
+@ManagedLifecycle(phase = SERVICES)
 public class HealthCheckCacheManager
     extends StateGuardLifecycleSupport
 {
@@ -98,6 +100,7 @@ public class HealthCheckCacheManager
     };
   }
 
+  @Guarded(by = STARTED)
   public Map<String, Result> getResults() {
     return cache.asMap();
   }

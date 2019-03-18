@@ -105,6 +105,11 @@ public class UpgradeServiceTest
 
     UpgradeManager upgradeManager = new UpgradeManager(asList(checkpoints), asList(upgrades), false);
     upgradeService = new UpgradeServiceImpl(upgradeManager, modelVersionStore, nodeAccess);
+
+    // defaults to testing non-clustered existing instance
+    when(modelVersionStore.isNewInstance()).thenReturn(false);
+    when(nodeAccess.isClustered()).thenReturn(false);
+    when(nodeAccess.isOldestNode()).thenReturn(true);
   }
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -145,9 +150,7 @@ public class UpgradeServiceTest
 
   @Test
   public void testInventoryTakenForFreshInstallation() throws Exception {
-    when(nodeAccess.isFreshNode()).thenReturn(true);
-    when(nodeAccess.isOldestNode()).thenReturn(true);
-    when(nodeAccess.isClustered()).thenReturn(false);
+    when(modelVersionStore.isNewInstance()).thenReturn(true);
 
     upgradeService.start();
 
@@ -166,8 +169,7 @@ public class UpgradeServiceTest
 
   @Test
   public void testInventoryTakenForFreshCluster() throws Exception {
-    when(nodeAccess.isFreshNode()).thenReturn(true);
-    when(nodeAccess.isOldestNode()).thenReturn(true);
+    when(modelVersionStore.isNewInstance()).thenReturn(true);
     when(nodeAccess.isClustered()).thenReturn(true);
 
     upgradeService.start();
@@ -187,9 +189,9 @@ public class UpgradeServiceTest
 
   @Test
   public void testLocalInventoryTakenForFreshNodeJoiningExistingCluster() throws Exception {
-    when(nodeAccess.isFreshNode()).thenReturn(true);
-    when(nodeAccess.isOldestNode()).thenReturn(false);
+    when(modelVersionStore.isNewInstance()).thenReturn(true);
     when(nodeAccess.isClustered()).thenReturn(true);
+    when(nodeAccess.isOldestNode()).thenReturn(false);
 
     upgradeService.start();
 
@@ -236,6 +238,44 @@ public class UpgradeServiceTest
 
     order.verify(checkpointFoo).end();
     order.verify(checkpointWibble).end();
+
+    verifyNoMoreInteractions(
+        checkpointFoo,
+        checkpointBar,
+        checkpointWibble,
+        upgradeFoo_1_1,
+        upgradeFoo_1_2,
+        upgradeBar_1_1,
+        upgradeWibble_2_0);
+  }
+
+  @Test
+  public void testOnlyLocalUpgradesForNodeJoiningExistingCluster() throws Exception {
+    when(nodeAccess.isClustered()).thenReturn(true);
+    when(nodeAccess.isOldestNode()).thenReturn(false);
+
+    when(modelVersionStore.load()).thenReturn(new HashMap<>(ImmutableMap.of("foo", "1.1")));
+
+    upgradeService.start();
+
+    assertThat(verifyModelVersionsSaved(), is(ImmutableMap.of("foo", "1.2")));
+
+    InOrder order = inOrder(
+        checkpointFoo,
+        checkpointBar,
+        checkpointWibble,
+        upgradeFoo_1_1,
+        upgradeFoo_1_2,
+        upgradeBar_1_1,
+        upgradeWibble_2_0);
+
+    order.verify(checkpointFoo).begin("1.1");
+
+    order.verify(upgradeFoo_1_2).apply();
+
+    order.verify(checkpointFoo).commit();
+
+    order.verify(checkpointFoo).end();
 
     verifyNoMoreInteractions(
         checkpointFoo,

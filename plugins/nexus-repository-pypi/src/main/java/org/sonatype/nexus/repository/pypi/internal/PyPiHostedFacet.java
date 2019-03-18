@@ -38,11 +38,6 @@ public interface PyPiHostedFacet
   Content getRootIndex();
 
   /**
-   * Deletes the root index asset
-   */
-  void deleteRootIndex();
-
-  /**
    * Retrieve index.
    *
    * @param name package name
@@ -85,12 +80,4 @@ public interface PyPiHostedFacet
    * @return the path
    */
   String createPackagePath(String name, String version, String filename);
-
-  /**
-   * Deletes an index related to a given package
-   * 
-   * @param packageName - packageName to use for finding the index to be removed
-   * @since 3.15
-   */
-  void deleteIndex(String packageName);
 }

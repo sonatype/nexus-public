@@ -66,7 +66,7 @@ public class UpgradeManagerTest
 
     Map<String, String> modelVersions = ImmutableMap.of();
 
-    List<Upgrade> plan = upgradeManager.selectUpgrades(modelVersions);
+    List<Upgrade> plan = upgradeManager.selectUpgrades(modelVersions, false);
 
     assertThat(plan, contains(
         instanceOf(org.sonatype.nexus.upgrade.example.UpgradeFoo_1_1.class),
@@ -104,7 +104,7 @@ public class UpgradeManagerTest
 
     Map<String, String> modelVersions = ImmutableMap.of("foo", "1.1");
 
-    List<Upgrade> plan = upgradeManager.selectUpgrades(modelVersions);
+    List<Upgrade> plan = upgradeManager.selectUpgrades(modelVersions, false);
 
     assertThat(plan, contains(
         instanceOf(org.sonatype.nexus.upgrade.example.UpgradeBar_1_1.class),
@@ -141,7 +141,7 @@ public class UpgradeManagerTest
 
     Map<String, String> modelVersions = ImmutableMap.of("foo", "1.1", "bar", "1.1");
 
-    List<Upgrade> plan = upgradeManager.selectUpgrades(modelVersions);
+    List<Upgrade> plan = upgradeManager.selectUpgrades(modelVersions, false);
 
     assertThat(plan, containsInAnyOrder(
         instanceOf(org.sonatype.nexus.upgrade.example.UpgradeFoo_1_2.class),
@@ -176,7 +176,7 @@ public class UpgradeManagerTest
 
     Map<String, String> modelVersions = ImmutableMap.of("foo", "1.3", "bar", "1.2", "wibble", "2.1", "qux", "1.7");
 
-    List<Upgrade> plan = upgradeManager.selectUpgrades(modelVersions);
+    List<Upgrade> plan = upgradeManager.selectUpgrades(modelVersions, false);
 
     assertThat(plan, is(empty()));
 
@@ -205,7 +205,7 @@ public class UpgradeManagerTest
         + "has invalid version: 1.1 is not after 1.1" + lineSeparator()
         + "Upgrade step org.sonatype.nexus.upgrade.bad.UpgradeFoo_1_2 "
         + "has invalid version: 1.1 is not after 1.2");
-    upgradeManager.selectUpgrades(ImmutableMap.of());
+    upgradeManager.selectUpgrades(ImmutableMap.of(), false);
   }
 
   @Test
@@ -226,7 +226,7 @@ public class UpgradeManagerTest
     UpgradeManager upgradeManager = createUpgradeManager(checkpoints, upgrades);
 
     thrown.expect(CyclicDependencyException.class);
-    upgradeManager.selectUpgrades(ImmutableMap.of());
+    upgradeManager.selectUpgrades(ImmutableMap.of(), false);
   }
 
   @Test
@@ -244,7 +244,7 @@ public class UpgradeManagerTest
     UpgradeManager upgradeManager = createUpgradeManager(checkpoints, upgrades);
 
     thrown.expect(UnresolvedDependencyException.class);
-    upgradeManager.selectUpgrades(ImmutableMap.of());
+    upgradeManager.selectUpgrades(ImmutableMap.of(), false);
   }
 
   @Test
@@ -261,7 +261,7 @@ public class UpgradeManagerTest
 
     UpgradeManager upgradeManager = createUpgradeManagerWithWarnings(checkpoints, upgrades);
 
-    List<Upgrade> plan = upgradeManager.selectUpgrades(ImmutableMap.of());
+    List<Upgrade> plan = upgradeManager.selectUpgrades(ImmutableMap.of(), false);
 
     assertThat(plan, contains(
         instanceOf(org.sonatype.nexus.upgrade.gap.UpgradeFoo_1_1.class),
@@ -432,7 +432,7 @@ public class UpgradeManagerTest
 
     UpgradeManager upgradeManager = createUpgradeManager(checkpoints, upgrades);
 
-    List<Upgrade> plan = upgradeManager.selectUpgrades(ImmutableMap.of());
+    List<Upgrade> plan = upgradeManager.selectUpgrades(ImmutableMap.of(), false);
 
     assertThat(plan, contains(
         instanceOf(org.sonatype.nexus.upgrade.example.UpgradePrivateModel_1_1.class)
@@ -459,7 +459,7 @@ public class UpgradeManagerTest
         + "Upgrade step org.sonatype.nexus.upgrade.bad.UpgradePrivateModel_1_2 "
         + "does not trigger a checkpoint");
 
-    upgradeManager.selectUpgrades(ImmutableMap.of());
+    upgradeManager.selectUpgrades(ImmutableMap.of(), false);
   }
 
   @Test
@@ -480,7 +480,7 @@ public class UpgradeManagerTest
         + "Upgrade step org.sonatype.nexus.upgrade.bad.UpgradePrivateModel_1_3 "
         + "does not trigger a checkpoint");
 
-    upgradeManager.selectUpgrades(ImmutableMap.of());
+    upgradeManager.selectUpgrades(ImmutableMap.of(), false);
   }
 
   private static UpgradeManager createUpgradeManager(final List<Checkpoint> checkpoints,

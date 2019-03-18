@@ -253,6 +253,7 @@ Ext.define('NX.coreui.controller.CleanupPolicies', {
     componentStore.addListener('load', me.loadPreviewCleanupStore, this);
 
     //make sure to empty the store so we don't see stale data
+    componentStore.clearFilter();
     componentStore.removeAll();
 
     form = me.getSettingsForm();

@@ -41,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.Thread.currentThread;
 import static java.util.Locale.ENGLISH;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.AUTO_BLOCKED_UNAVAILABLE;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.AVAILABLE;
@@ -69,7 +70,7 @@ public class BlockingHttpClient
 
   private DateTime blockedUntil;
 
-  private Thread checkThread;
+  private Thread checkStatusThread;
 
   private final boolean autoBlock;
 
@@ -142,8 +143,7 @@ public class BlockingHttpClient
   private synchronized void updateStatusToAvailable() {
     if (autoBlock && blockedUntil != null) {
       blockedUntil = null;
-      checkThread.interrupt();
-      checkThread = null;
+      interruptCheckStatusThread();
       autoBlockSequence.reset();
     }
     updateStatus(AVAILABLE);
@@ -154,20 +154,23 @@ public class BlockingHttpClient
       // avoid some other thread already increased the sequence
       if (blockedUntil == null || blockedUntil.isBeforeNow()) {
         blockedUntil = DateTime.now().plus(autoBlockSequence.next());
-        if (checkThread != null) {
-          checkThread.interrupt();
-        }
+        interruptCheckStatusThread();
         String uri = target.toURI();
         // TODO maybe find different means to schedule status checking
-        checkThread = new Thread(new CheckStatus(uri, blockedUntil), "Check Status " + uri);
-        checkThread.setDaemon(true);
-        checkThread.start();
+        scheduleCheckStatus(uri, blockedUntil);
       }
       updateStatus(AUTO_BLOCKED_UNAVAILABLE, reason, target.toURI(), blockedUntil.isAfter(status.getBlockedUntil()));
     }
     else {
       updateStatus(UNAVAILABLE, reason, target.toURI(), false);
     }
+  }
+
+  @VisibleForTesting
+  void scheduleCheckStatus(final String uri, final DateTime until) {
+    checkStatusThread = new Thread(new CheckStatus(uri, until), "Check Status " + uri);
+    checkStatusThread.setDaemon(true);
+    checkStatusThread.start();
   }
 
   private void updateStatus(final RemoteConnectionStatusType type,
@@ -213,16 +216,23 @@ public class BlockingHttpClient
 
   @Override
   public void close() throws IOException {
-    if (checkThread != null) {
-      checkThread.interrupt();
-    }
+    interruptCheckStatusThread();
     super.close();
+  }
+
+  private void interruptCheckStatusThread() {
+    if (checkStatusThread != null) {
+      // avoid self-interrupt (status may change during thread's HEAD request)
+      if (checkStatusThread != currentThread()) {
+        checkStatusThread.interrupt();
+      }
+      checkStatusThread = null;
+    }
   }
 
   private class CheckStatus
       implements Runnable
   {
-
     private final String uri;
 
     private final DateTime fireAt;
@@ -252,7 +262,6 @@ public class BlockingHttpClient
         }
       }
     }
-
   }
 
 }

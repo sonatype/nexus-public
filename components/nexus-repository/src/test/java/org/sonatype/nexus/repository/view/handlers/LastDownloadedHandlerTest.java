@@ -179,7 +179,9 @@ public class LastDownloadedHandlerTest
 
   @Test
   public void handleNullOnSecondFindAsset() throws Exception {
-    underTest.updateLastDownloadedTime(tx, null);
+    when(tx.findAsset(any())).thenReturn(null);
+
+    verifyNoExceptionThrownAndSaveNotCalled();
   }
   
   private void assertDownloadedTimeNotUpdatedFor(String... methods) throws Exception {

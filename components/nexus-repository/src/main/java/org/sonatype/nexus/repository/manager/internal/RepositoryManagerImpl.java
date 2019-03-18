@@ -216,6 +216,8 @@ public class RepositoryManagerImpl
   protected void doStart() throws Exception {
     blobStoreManager.start();
 
+    groupMemberMappingCache.init(this);
+
     List<Configuration> configurations = store.list();
 
     // attempt to provision default repositories if allowed
@@ -240,8 +242,6 @@ public class RepositoryManagerImpl
     restoreRepositories(configurations);
 
     startRepositories();
-
-    groupMemberMappingCache.init(this);
   }
 
   private void provisionDefaultRepositories() {

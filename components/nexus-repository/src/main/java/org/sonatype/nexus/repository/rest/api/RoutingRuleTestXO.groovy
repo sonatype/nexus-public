@@ -12,40 +12,29 @@
  */
 package org.sonatype.nexus.repository.rest.api
 
-import javax.validation.constraints.Pattern
-
 import org.sonatype.nexus.repository.routing.RoutingMode
-import org.sonatype.nexus.validation.constraint.NamePatternConstants
-import org.sonatype.nexus.validation.group.Create
 
 import groovy.transform.CompileStatic
-import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
 import groovy.transform.builder.Builder
 import org.hibernate.validator.constraints.NotBlank
 
 /**
- * Routing Rule transfer object for REST APIs.
+ * Routing Rule Test transfer object for REST APIs.
  *
  * @since 3.next
  */
 @CompileStatic
 @Builder
 @ToString(includePackage = false, includeNames = true)
-@EqualsAndHashCode(includes = ['name'])
-class RoutingRuleXO
+class RoutingRuleTestXO
 {
-  String id
-
-  @Pattern(regexp = NamePatternConstants.REGEX, message = NamePatternConstants.MESSAGE)
-  @NotBlank(groups = Create)
-  String name
-
-  String description
-
-  @NotBlank(groups = Create)
+  @NotBlank
   RoutingMode mode
 
   @NotBlank
   List<String> matchers
+
+  @NotBlank
+  String path
 }

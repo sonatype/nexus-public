@@ -64,6 +64,8 @@ public class ModelVersionStore
 
   private ClusteredModelVersions clusteredModelVersions;
 
+  private boolean newInstance;
+
   @Inject
   public ModelVersionStore(final UpgradeManager upgradeManager,
                            @Named(DatabaseInstanceNames.CONFIG) final Provider<DatabaseInstance> databaseInstance,
@@ -78,13 +80,23 @@ public class ModelVersionStore
 
   @Override
   protected void doStart() throws Exception {
-    if (localModelVersions.getFile().exists()) {
+    if (localModelVersions.exists()) {
       localModelVersions.load();
     }
     try (ODatabaseDocumentTx db = databaseInstance.get().connect()) {
-      entityAdapter.register(db);
+      // if we're first to register the 'model_versions' type then that implies this is a new instance;
+      // however we also need to check if the 'repository' type is registered to account for the first
+      // few NXRM 3.x releases that didn't ship with upgrade, but did have 'repository' - at this point
+      // in startup (before SCHEMAS) if neither type is registered then we consider it a new instance
+      entityAdapter.register(db, () -> newInstance = !db.getMetadata().getSchema().existsClass("repository"));
+
       clusteredModelVersions = entityAdapter.get(db); // NOSONAR
     }
+  }
+
+  @Guarded(by = STARTED)
+  public boolean isNewInstance() {
+    return newInstance;
   }
 
   @Guarded(by = STARTED)

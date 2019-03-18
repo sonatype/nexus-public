@@ -126,30 +126,34 @@ public class RestoreMetadataTask
       log.info("{}Actions will be logged, but no changes will be made.", logPrefix);
     }
     for (BlobId blobId : (Iterable<BlobId>)store.getBlobIdStream()::iterator) {
-      Optional<Context> context = buildContext(blobStoreName, store, blobId);
-      if (context.isPresent()) {
-        Context c =  context.get();
-        if (restore && c.restoreBlobStrategy != null && !c.blobAttributes.isDeleted()) {
-          c.restoreBlobStrategy.restore(c.properties, c.blob, c.blobStoreName, dryRun);
+      try {
+        Optional<Context> context = buildContext(blobStoreName, store, blobId);
+        if (context.isPresent()) {
+          Context c =  context.get();
+          if (restore && c.restoreBlobStrategy != null && !c.blobAttributes.isDeleted()) {
+            c.restoreBlobStrategy.restore(c.properties, c.blob, c.blobStoreName, dryRun);
+          }
+          if (undelete &&
+              store.undelete(blobStoreUsageChecker, c.blobId, c.blobAttributes, dryRun))
+          {
+            undeleted++;
+          }
+
+          if (updateAssets) {
+            touchedRepositories.add(c.repository);
+          }
         }
-        if (undelete &&
-            store.undelete(blobStoreUsageChecker, c.blobId, c.blobAttributes, dryRun))
-        {
-          undeleted++;
+
+        processed++;
+
+        progressLogger.info("{}Elapsed time: {}, processed: {}, un-deleted: {}", logPrefix, progressLogger.getElapsed(),
+                            processed, undeleted);
+
+        if (isCanceled()) {
+          break;
         }
-
-        if (updateAssets) {
-          touchedRepositories.add(c.repository);
-        }
-      }
-
-      processed++;
-
-      progressLogger.info("{}Elapsed time: {}, processed: {}, un-deleted: {}", logPrefix, progressLogger.getElapsed(),
-                          processed, undeleted);
-
-      if (isCanceled()) {
-        break;
+      } catch (Exception e) {
+        log.error("Error restoring blob {}", blobId, e);
       }
     }
 

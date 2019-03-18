@@ -463,4 +463,12 @@ class RepositoryManagerImplTest
 
     assertThat(stream.count()).isEqualTo(0)
   }
+
+  @Test
+  void 'member to group cache functions with no repositories'() {
+    repositoryManager = buildRepositoryManagerImpl(false, true)
+
+    //this would throw an NPE previously
+    repositoryManager.findContainingGroups('test')
+  }
 }

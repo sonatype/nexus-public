@@ -10853,6 +10853,59 @@ fieldset.nx-coreui-routing-rules-settings-form-matchers .nx-matcher-remove-butto
     margin-left: 10px;
 }
 
+.nx-routing-rules-single-preview-field-wrapper .nx-routing-rules-test-path-container > .x-form-item-body {
+    /**
+ * @class NX.coreui.view.routing.RoutingRulesSinglePreview
+ */
+    border: solid 1px #ddd;
+}
+
+.nx-routing-rules-single-preview-field-wrapper .nx-routing-rules-test-path-container.nx-textfield-focused > .x-form-item-body {
+    border-color: #85bee9;
+}
+
+.nx-routing-rules-single-preview-field-wrapper .nx-routing-rules-test-path-container .nx-routing-rules-path-prefix {
+    color: #777;
+    font-size: 1.8em;
+    padding: 4px 0 0 5px;
+    display: inline-block;
+}
+
+.nx-routing-rules-single-preview-field-wrapper .nx-routing-rules-test-path-container .x-form-trigger-wrap {
+    border: none;
+}
+
+.nx-routing-rules-single-preview-field-wrapper .nx-routing-rules-test-path-container input[name=path] {
+    padding-left: 2px;
+}
+
+.nx-routing-rules-single-preview-field-wrapper .nx-routing-rules-test-result {
+    align-items: center;
+    color: #1c8145;
+    display: inline-flex;
+    line-height: 2em;
+    justify-content: flex-start;
+}
+
+.nx-routing-rules-single-preview-field-wrapper .nx-routing-rules-test-result span.x-fa {
+    align-items: center;
+    display: inline-flex;
+    font-size: 1.5em;
+    padding-right: 5px;
+}
+
+.nx-routing-rules-single-preview-field-wrapper.blocked .nx-routing-rules-test-result {
+    color: #c70000;
+}
+
+.nx-routing-rules-single-preview-field-wrapper.blocked .nx-routing-rules-test-path-container > .x-form-item-body {
+    border-color: #c70000;
+}
+
+.nx-routing-rules-single-preview-field-wrapper.allowed .nx-routing-rules-test-path-container > .x-form-item-body {
+    border-color: #1c8145;
+}
+
 .nx-coreui-searchfeature .criteria {
     /**
  * @class NX.coreui.view.search.SearchFeature

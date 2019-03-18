@@ -20,6 +20,10 @@
 Ext.define('NX.coreui.view.routing.RoutingRulesEdit', {
   extend: 'NX.view.SettingsPanel',
   alias: 'widget.nx-coreui-routing-rules-edit',
+  requires: [
+    'NX.I18n',
+    'NX.coreui.view.routing.RoutingRulesSinglePreview'
+  ],
 
   initComponent: function() {
     var me = this;
@@ -42,6 +46,7 @@ Ext.define('NX.coreui.view.routing.RoutingRulesEdit', {
     };
 
     me.callParent();
+    this.items.get(0).add({xtype: 'nx-coreui-routing-rules-single-preview'});
   },
 
   loadRecord: function(record) {

@@ -26,6 +26,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.orient.DatabaseRestorer;
 import org.sonatype.nexus.orient.restore.RestoreFile;
 
@@ -50,9 +51,12 @@ public class DatabaseRestorerImpl
 
   private final File restoreFromLocation;
 
+  private final NodeAccess nodeAccess;
+
   @Inject
-  public DatabaseRestorerImpl(final ApplicationDirectories applicationDirectories) {
+  public DatabaseRestorerImpl(final ApplicationDirectories applicationDirectories, final NodeAccess nodeAccess) {
     this.restoreFromLocation = applicationDirectories.getWorkDirectory(RESTORE_FROM_LOCATION);
+    this.nodeAccess = checkNotNull(nodeAccess);
   }
 
   @Override
@@ -77,6 +81,10 @@ public class DatabaseRestorerImpl
     checkNotNull(databaseName);
 
     log.debug("checking if database {} should be restored", databaseName);
+    if (!nodeAccess.isOldestNode()) {
+      log.debug("skipping restore of database {} because we're joining an existing cluster", databaseName);
+      return false;
+    }
 
     Path path = getRestorePath(databaseName);
 

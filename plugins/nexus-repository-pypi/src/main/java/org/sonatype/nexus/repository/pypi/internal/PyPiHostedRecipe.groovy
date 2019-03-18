@@ -43,7 +43,10 @@ class PyPiHostedRecipe
   Provider<PyPiHostedFacet> hostedFacet
 
   @Inject
-  Provider<PyPiHostedComponentMaintenance> componentMaintenanceFacet
+  Provider<PyPiComponentMaintenance> componentMaintenanceFacet
+
+  @Inject
+  Provider<PyPiIndexFacet> indexFacet
 
   @Inject
   HostedHandlers hostedHandlers
@@ -60,6 +63,7 @@ class PyPiHostedRecipe
     repository.attach(storageFacet.get())
     repository.attach(pyPiFacet.get())
     repository.attach(componentMaintenanceFacet.get())
+    repository.attach(indexFacet.get())
     repository.attach(hostedFacet.get())
     repository.attach(searchFacet.get())
     repository.attach(attributesFacet.get())

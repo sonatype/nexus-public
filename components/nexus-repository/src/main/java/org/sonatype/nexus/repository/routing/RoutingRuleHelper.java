@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.routing;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -48,24 +49,24 @@ public class RoutingRuleHelper
    */
   public boolean isAllowed(final Repository repository, final String path) {
     RoutingRule routingRule = getRoutingRule(repository);
-    return isAllowed(routingRule, path);
-  }
 
-  /**
-   * Determine if the path is allowed by the RoutingRule.
-   *
-   * @param routingRule the routing rule to test the path against
-   * @param path the path of the component (must include leading slash)
-   * @return true if the request is allowed, false if it should be blocked
-   */
-  public boolean isAllowed(final RoutingRule routingRule, final String path) {
     if (routingRule == null) {
       return true;
     }
 
-    boolean matches = routingRule.matchers().stream().anyMatch(rule -> path.matches(rule));
-    RoutingMode mode = routingRule.mode();
+    return isAllowed(routingRule.mode(), routingRule.matchers(), path);
+  }
 
+  /**
+   * Determine if the path is allowed by the mode and matchers.
+   *
+   * @param mode the routing mode to test the path against
+   * @param matchers the list of matchers to test the path against
+   * @param path the path of the component (must include leading slash)
+   * @return true if the request is allowed, false if it should be blocked
+   */
+  public boolean isAllowed(final RoutingMode mode, List<String> matchers, final String path) {
+    boolean matches = matchers.stream().anyMatch(path::matches);
     return (!matches && mode == RoutingMode.BLOCK) || (matches && mode == RoutingMode.ALLOW);
   }
 

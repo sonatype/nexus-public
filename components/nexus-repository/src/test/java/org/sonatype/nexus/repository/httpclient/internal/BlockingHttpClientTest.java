@@ -26,6 +26,7 @@ import org.apache.http.HttpHost;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.protocol.HttpContext;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,6 +40,7 @@ import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
+import static org.joda.time.DateTime.now;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -109,6 +111,30 @@ public class BlockingHttpClientTest
     ArgumentCaptor<RemoteConnectionStatus> newStatusCaptor = ArgumentCaptor.forClass(RemoteConnectionStatus.class);
     verify(statusObserver).onStatusChanged(any(), newStatusCaptor.capture());
     assertThat(newStatusCaptor.getValue().getType(), is(equalTo(BLOCKED)));
+  }
+
+  @Test
+  public void autoblockWontLeaveStatusThreadInterrupted() throws Exception {
+    when(httpClient.execute(any(HttpHost.class), any(), any(HttpContext.class))).thenReturn(httpResponse);
+    when(httpResponse.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(SC_BAD_GATEWAY);
+
+    Config config = new Config();
+    config.autoBlock = true;
+
+    boolean[] statusThreadLeftInterrupted = new boolean[1];
+
+    BlockingHttpClient client = new BlockingHttpClient(httpClient, config,
+        (oldStatus, newStatus) -> statusThreadLeftInterrupted[0] = Thread.currentThread().isInterrupted(),
+        true, autoBlockConfiguration);
+
+    client.scheduleCheckStatus(httpHost.toURI(), now().plusMillis(100));
+
+    Thread.sleep(500);
+
+    assertThat(statusThreadLeftInterrupted[0], is(false));
+
+    client.close();
   }
 
   @Test

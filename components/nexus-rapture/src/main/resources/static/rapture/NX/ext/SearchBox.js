@@ -97,7 +97,12 @@ Ext.define('NX.ext.SearchBox', {
   onEnter: function () {
     var me = this;
 
-    me.search(me.getValue());
+    //me.lastValue is used to check for changes in the delayed checkchanges task, so we fake it out here
+    //otherwise, the onValueChange will get triggered regardless when timeout occurs
+    //(causing undesired page transition if page is changed prior to this delayed check)
+    me.lastValue = me.getValue();
+    me.search(me.lastValue);
+    me.resetOriginalValue();
   },
 
   /**

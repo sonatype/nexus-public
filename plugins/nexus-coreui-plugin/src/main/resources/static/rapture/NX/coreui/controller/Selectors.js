@@ -212,6 +212,7 @@ Ext.define('NX.coreui.controller.Selectors', {
 
     var assetStore = me.getPreviewAssetStore();
     //make sure to empty the store so we don't see stale data
+    assetStore.clearFilter();
     assetStore.removeAll();
 
     Ext.create('NX.coreui.view.selector.SelectorPreviewWindow', {

@@ -124,9 +124,18 @@ public class DefaultComponentMaintenanceImpl
       UnitOfWork.end();
     }
 
-    after();
+    tryAfter();
 
     return count;
+  }
+
+  private void tryAfter() {
+    try {
+      after();
+    }
+    catch (Exception e) {
+      log.debug("Unable to run post-cleanup tasks. This could result in missing or incorrect metadata", e);
+    }
   }
 
   @TransactionalDeleteBlob

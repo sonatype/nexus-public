@@ -37,7 +37,7 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_NAME;
  * @since 3.1
  */
 @Named
-public class PyPiHostedComponentMaintenance
+public class PyPiComponentMaintenance
     extends DefaultComponentMaintenanceImpl
 {
   /**
@@ -91,12 +91,12 @@ public class PyPiHostedComponentMaintenance
   }
 
   private void deleteRootIndex() {
-    PyPiHostedFacet facet = getRepository().facet(PyPiHostedFacet.class);
+    PyPiIndexFacet facet = getRepository().facet(PyPiIndexFacet.class);
     facet.deleteRootIndex();
   }
 
   private void deleteCachedIndex(final String assetName) {
-    PyPiHostedFacet facet = getRepository().facet(PyPiHostedFacet.class);
+    PyPiIndexFacet facet = getRepository().facet(PyPiIndexFacet.class);
     facet.deleteIndex(assetName);
   }
 }

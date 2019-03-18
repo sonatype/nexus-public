@@ -59,13 +59,6 @@ public interface NodeAccess
   Set<String> getMemberIds();
 
   /**
-   * Is this a newly created node?
-   *
-   * @since 3.3
-   */
-  boolean isFreshNode();
-
-  /**
    * Is this the oldest node in the cluster?
    *
    * @since 3.3

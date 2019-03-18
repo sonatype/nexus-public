@@ -325,6 +325,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_ProxyFacet_Title: 'Proxy',
     Repository_Facet_StorageFacet_Title: 'Storage',
     Repository_Facet_StorageFacetHosted_Title: 'Hosted',
+    Repository_Facet_RoutingRuleFacet_Title: 'Routing Rule',
+    Repository_Facet_RoutingRuleFacet_HelpText: 'Choose a rule to restrict some requests from being served by this repository',
     Repository_Facet_ProxyFacet_Autoblock_FieldLabel: 'Auto blocking enabled',
     Repository_Facet_ProxyFacet_Autoblock_HelpText: 'Auto-block outbound connections on the repository if remote peer is detected as unreachable/unresponsive',
     Repository_Facet_ProxyFacet_Blocked_FieldLabel: 'Blocked',
@@ -1377,7 +1379,14 @@ Ext.define('NX.coreui.app.PluginStrings', {
     RoutingRule_Create_Message: 'Routing Rule created: {0}',
     RoutingRule_Update_Message: 'Routing Rule updated: {0}',
     RoutingRule_Delete_Message: 'Routing Rule deleted: {0}',
-    RoutingRule_Create_Error: 'You do not have permission to create Routing Rules'
+    RoutingRules_SinglePreview_Title: 'Test This Routing Rule',
+    RoutingRules_SinglePreview_Path_Label: 'Request Path',
+    RoutingRules_SinglePreview_Path_HelpText: 'Requests always start with a leading slash',
+    RoutingRule_Create_Error: 'You do not have permission to create Routing Rules',
+    RoutingRules_SinglePreview_Test_Button: 'Test',
+    RoutingRules_SinglePreview_Test_Button_Tooltip: 'Test if the specified path will be allowed by the routing rule',
+    RoutingRules_SinglePreview_Allowed_Html: '<span class="x-fa fa-check-circle"></span>This request would be allowed',
+    RoutingRules_SinglePreview_Blocked_Html: '<span class="x-fa fa-ban"></span>This request would be blocked'
   },
 
   /**

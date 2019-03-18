@@ -45,6 +45,7 @@ Ext.define('NX.coreui.controller.RoutingRules', {
   refs: [
     {ref: 'feature', selector: 'nx-coreui-routing-rules-feature'},
     {ref: 'list', selector: 'nx-coreui-routing-rules-list'},
+    {ref: 'routingRulesAdd', selector: 'nx-coreui-routing-rules-feature nx-coreui-routing-rules-add'},
     {ref: 'routingRulesEdit', selector: 'nx-coreui-routing-rules-feature nx-coreui-routing-rules-edit'}
   ],
   icons: {
@@ -102,6 +103,24 @@ Ext.define('NX.coreui.controller.RoutingRules', {
         'nx-coreui-routing-rules-edit nx-coreui-routing-rules-settings-form button[action=save]': {
           afterrender: this.bindSaveButton,
           click: this.updateRoutingRule
+        },
+        'nx-coreui-routing-rules-add nx-coreui-routing-rules-single-preview button[action=test]': {
+          click: this.testRoutingRule.bind(this, this.getRoutingRulesAdd)
+        },
+        'nx-coreui-routing-rules-edit nx-coreui-routing-rules-single-preview button[action=test]': {
+          click: this.testRoutingRule.bind(this, this.getRoutingRulesEdit)
+        },
+        'nx-coreui-routing-rules-add nx-coreui-routing-rules-settings-form textfield[name^=matchers]': {
+          change: this.onMatchersChange.bind(this, this.getRoutingRulesAdd)
+        },
+        'nx-coreui-routing-rules-add nx-coreui-routing-rules-settings-form panel[cls=nx-repeated-row]': {
+          removed: this.onMatchersChange.bind(this, this.getRoutingRulesAdd)
+        },
+        'nx-coreui-routing-rules-edit nx-coreui-routing-rules-settings-form textfield[name^=matchers]': {
+          change: this.onMatchersChange.bind(this, this.getRoutingRulesEdit)
+        },
+        'nx-coreui-routing-rules-edit nx-coreui-routing-rules-settings-form panel[cls=nx-repeated-row]': {
+          removed: this.onMatchersChange.bind(this, this.getRoutingRulesEdit)
         }
       }
     });
@@ -286,5 +305,37 @@ Ext.define('NX.coreui.controller.RoutingRules', {
       }.bind(this),
       failure: this.onSubmitFailure.bind(this, this.getRoutingRulesEdit().down('form'))
     });
+  },
+
+  testRoutingRule: function(viewComponentGetter) {
+    var viewComponent = viewComponentGetter.apply(this),
+        settingsFormComponent = viewComponent.down('nx-coreui-routing-rules-settings-form'),
+        settingsForm = settingsFormComponent.getForm(),
+        singlePreview = viewComponent.down('nx-coreui-routing-rules-single-preview'),
+        testForm = singlePreview.getForm(),
+        settingValues = Ext.decode(this.getEncodedFormValues(settingsForm));
+
+    Ext.Ajax.request({
+      url: this.apiUrl + '/test',
+      method: 'POST',
+      headers: {
+        'Content-Type' : 'application/json'
+      },
+      jsonData: Ext.encode({
+        mode: settingValues.mode,
+        matchers: settingValues.matchers,
+        path: '/' + testForm.getValues().path
+      }),
+      success: function(response) {
+        singlePreview.setTestResult(JSON.parse(response.responseText));
+      }.bind(this),
+      failure: this.onSubmitFailure.bind(this, settingsForm)
+    });
+  },
+
+  onMatchersChange: function(viewComponentGetter) {
+    var viewComponent = viewComponentGetter.apply(this),
+        singlePreview = viewComponent.down('nx-coreui-routing-rules-single-preview');
+    singlePreview.hideTestResult();
   }
 });
