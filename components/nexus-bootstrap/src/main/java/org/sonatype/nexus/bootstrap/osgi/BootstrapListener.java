@@ -208,7 +208,17 @@ public class BootstrapListener
   }
 
   boolean isNullJavaPrefLicense() {
-    return userRoot().node("/com/sonatype/nexus/professional").get("license", null) == null;
+    Thread currentThread = Thread.currentThread();
+    ClassLoader tccl = currentThread.getContextClassLoader();
+    // Java prefs spawns a Timer-Task that inherits the current TCCL;
+    // temporarily clear it so we can be GC'd if we bounce the KERNEL
+    currentThread.setContextClassLoader(null);
+    try {
+      return userRoot().node("/com/sonatype/nexus/professional").get("license", null) == null;
+    }
+    finally {
+      currentThread.setContextClassLoader(tccl);
+    }
   }
 
   private static void installNexusEdition(final BundleContext ctx, final Properties properties)

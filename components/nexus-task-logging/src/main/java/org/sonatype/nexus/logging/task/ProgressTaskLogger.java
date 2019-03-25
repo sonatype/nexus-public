@@ -97,6 +97,13 @@ public class ProgressTaskLogger
     logProgress();
   }
 
+  /**
+   * @since 3.next
+   */
+  public static void shutdown() {
+    executorService.shutdown();
+  }
+
   @VisibleForTesting
   void logProgress() {
     if (lastProgressEvent != null) {

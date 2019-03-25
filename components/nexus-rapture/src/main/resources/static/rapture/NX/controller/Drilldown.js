@@ -797,8 +797,8 @@ Ext.define('NX.controller.Drilldown', {
   /**
    * @public
    */
-  showInfo: function (message) {
-    this.getDrilldownDetails().showInfo(message);
+  showInfo: function (message, tooltipText) {
+    this.getDrilldownDetails().showInfo(message, tooltipText);
   },
 
   /**

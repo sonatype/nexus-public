@@ -36,20 +36,16 @@ public class RoutingRuleHandler extends ComponentSupport implements Handler
 {
   static final String PATH_IS_BLOCKED = "Routing rules block the requested item from this repository";
 
-  private final RoutingRulesConfiguration configuration;
-
   private final RoutingRuleHelper routingRuleHelper;
 
   @Inject
-  public RoutingRuleHandler(final RoutingRulesConfiguration configuration, final RoutingRuleHelper routingRuleHelper) {
-    this.configuration = checkNotNull(configuration);
+  public RoutingRuleHandler(final RoutingRuleHelper routingRuleHelper) {
     this.routingRuleHelper = checkNotNull(routingRuleHelper);
   }
 
   @Override
   public Response handle(final Context context) throws Exception {
-    if (!configuration.isEnabled()
-        || routingRuleHelper.isAllowed(context.getRepository(), path(context.getRequest()))) {
+    if (routingRuleHelper.isAllowed(context.getRepository(), path(context.getRequest()))) {
       return context.proceed();
     }
     return HttpResponses.forbidden(PATH_IS_BLOCKED);

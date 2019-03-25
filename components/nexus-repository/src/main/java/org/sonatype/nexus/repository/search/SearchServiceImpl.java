@@ -25,6 +25,7 @@ import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.StreamSupport;
 
@@ -56,6 +57,8 @@ import org.elasticsearch.action.admin.indices.validate.query.ValidateQueryRespon
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.search.ClearScrollRequest;
+import org.elasticsearch.action.search.ClearScrollResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequestBuilder;
@@ -817,6 +820,22 @@ public class SearchServiceImpl
     @Override
     public void remove() {
       throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void forEachRemaining(final Consumer<? super SearchHit> action) {
+      Iterator.super.forEachRemaining(action);
+      closeScrollId();
+    }
+
+    private void closeScrollId() {
+      log.debug("Clearing scroll id {}", response.getScrollId());
+      ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
+      clearScrollRequest.addScrollId(response.getScrollId());
+      ClearScrollResponse clearScrollResponse = client.get().clearScroll(clearScrollRequest).actionGet();
+      if (!clearScrollResponse.isSucceeded()) {
+        log.info("Unable to close scroll id {}", response.getScrollId());
+      }
     }
   }
 }

@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.view.handlers;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.repository.date.DateTimeUtils;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
@@ -21,7 +22,6 @@ import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
 
 import com.google.common.net.HttpHeaders;
-import org.apache.http.client.utils.DateUtils;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -66,7 +66,7 @@ public class ContentHeadersHandlerTest
     when(context.proceed()).thenReturn(HttpResponses.ok(content));
     final Response r = subject.handle(context);
     assertThat(r.getStatus().isSuccessful(), is(true));
-    assertThat(r.getHeaders().get(HttpHeaders.LAST_MODIFIED), equalTo(DateUtils.formatDate(now.toDate())));
+    assertThat(r.getHeaders().get(HttpHeaders.LAST_MODIFIED), equalTo(DateTimeUtils.formatDateTime(now)));
     assertThat(r.getHeaders().get(HttpHeaders.ETAG), equalTo("\"etag\""));
   }
 

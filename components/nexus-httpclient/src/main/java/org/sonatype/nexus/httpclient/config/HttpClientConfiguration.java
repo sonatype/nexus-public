@@ -17,6 +17,8 @@ import javax.validation.Valid;
 
 import org.sonatype.nexus.common.entity.AbstractEntity;
 
+import org.apache.http.client.RedirectStrategy;
+
 /**
  * HTTP-client configuration.
  *
@@ -33,6 +35,10 @@ public class HttpClientConfiguration
   @Valid
   @Nullable
   private ProxyConfiguration proxy;
+
+  @Valid
+  @Nullable
+  private RedirectStrategy redirectStrategy;
 
   /**
    * @see AuthenticationConfigurationDeserializer
@@ -68,6 +74,15 @@ public class HttpClientConfiguration
     this.authentication = authentication;
   }
 
+  @Nullable
+  public RedirectStrategy getRedirectStrategy() {
+    return redirectStrategy;
+  }
+
+  public void setRedirectStrategy(@Nullable final RedirectStrategy redirectStrategy) {
+    this.redirectStrategy = redirectStrategy;
+  }
+
   public HttpClientConfiguration copy() {
     try {
       HttpClientConfiguration copy = (HttpClientConfiguration) clone();
@@ -79,6 +94,10 @@ public class HttpClientConfiguration
       }
       if (authentication != null) {
         copy.authentication = authentication.copy();
+      }
+      if (redirectStrategy != null) {
+        // no real cloning/copying needed, as we are allowed to use a singleton instance
+        copy.redirectStrategy = redirectStrategy;
       }
       return copy;
     }

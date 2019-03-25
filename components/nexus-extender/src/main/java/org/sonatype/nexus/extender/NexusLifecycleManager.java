@@ -31,11 +31,13 @@ import com.google.inject.Key;
 import org.eclipse.sisu.BeanEntry;
 import org.eclipse.sisu.Mediator;
 import org.eclipse.sisu.inject.BeanLocator;
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.reverse;
 import static java.lang.Math.max;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.KERNEL;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.OFF;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 
@@ -54,6 +56,8 @@ public class NexusLifecycleManager
 
   private final BeanLocator locator;
 
+  private final Bundle systemBundle;
+
   private final Iterable<? extends BeanEntry<Named, Lifecycle>> lifecycles;
 
   private final Multimap<Phase, Lifecycle> components = HashMultimap.create();
@@ -63,8 +67,9 @@ public class NexusLifecycleManager
   private volatile Phase currentPhase = OFF;
 
   @Inject
-  public NexusLifecycleManager(final BeanLocator locator) {
+  public NexusLifecycleManager(final BeanLocator locator, @Named("system") final Bundle systemBundle) {
     this.locator = checkNotNull(locator);
+    this.systemBundle = checkNotNull(systemBundle);
     this.lifecycles = locator.locate(Key.get(Lifecycle.class, Named.class));
 
     locator.watch(Key.get(BundleContext.class), new BundleContextMediator(), this);
@@ -78,7 +83,7 @@ public class NexusLifecycleManager
   @Override
   public void to(final Phase targetPhase) throws Exception {
     if (targetPhase == OFF) {
-      registerShutdown();
+      declareShutdown();
     }
     else if (isShuttingDown()) {
       return; // cannot go back once shutdown has begun
@@ -118,6 +123,10 @@ public class NexusLifecycleManager
         currentPhase = prevPhase;
       }
     }
+
+    if (currentPhase == OFF) {
+      systemBundle.stop();
+    }
   }
 
   @Override
@@ -125,6 +134,9 @@ public class NexusLifecycleManager
     Phase targetPhase = currentPhase;
     // re-run the given phase by moving to just before it before moving back
     if (bouncePhase.ordinal() <= targetPhase.ordinal()) {
+      if (bouncePhase == KERNEL) {
+        System.setProperty("karaf.restart", "true");
+      }
       to(Phase.values()[max(0, bouncePhase.ordinal() - 1)]);
     }
     else {

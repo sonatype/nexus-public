@@ -55,23 +55,12 @@ public class RoutingRuleHandlerTest
 
   @Before
   public void setup() throws Exception {
-    RoutingRulesConfiguration configuration = new RoutingRulesConfiguration(true);
-    underTest = new RoutingRuleHandler(configuration, routingRuleHelper);
+    underTest = new RoutingRuleHandler(routingRuleHelper);
 
     when(request.getPath()).thenReturn(SOME_PATH);
     when(context.getRequest()).thenReturn(request);
     when(request.getParameters()).thenReturn(new Parameters());
     when(context.proceed()).thenReturn(contextResponse);
-  }
-
-  @Test
-  public void testHandle_disabled() throws Exception {
-    RoutingRulesConfiguration configuration = new RoutingRulesConfiguration(false);
-    underTest = new RoutingRuleHandler(configuration, routingRuleHelper);
-
-    Response response = underTest.handle(context);
-    assertThat(response, is(contextResponse));
-    verify(context).proceed();
   }
 
   @Test

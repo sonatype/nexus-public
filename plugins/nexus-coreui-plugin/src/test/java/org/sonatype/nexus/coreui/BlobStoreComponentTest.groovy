@@ -100,14 +100,14 @@ class BlobStoreComponentTest
 
   def 'Default work directory returns the blobs directory'() {
     given: 'A blob directory'
-      def blobDirectory = 'path/to/blobs'
+      def blobDirectory = new File('path/to/blobs')
 
     when: 'The blob directory is requested'
       def defaultWorkDirectory = blobStoreComponent.defaultWorkDirectory()
 
     then: 'The blob directory is returned with the system specific separator'
-      1 * applicationDirectories.getWorkDirectory('blobs') >> new File(blobDirectory)
-      defaultWorkDirectory.path == blobDirectory
+      1 * applicationDirectories.getWorkDirectory('blobs') >> blobDirectory
+      new File(defaultWorkDirectory.path) == blobDirectory
       defaultWorkDirectory.fileSeparator == File.separator
   }
 

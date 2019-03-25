@@ -50,6 +50,26 @@ Ext.define('NX.coreui.view.routing.RoutingRulesList', {
         stateId: 'description',
         flex: 1,
         renderer: Ext.htmlEncode
+      },
+      {
+        header: NX.I18n.get('RoutingRules_UsedBy_Label'),
+        dataIndex: 'assignedRepositoryNames',
+        stateId: 'assignedRepositoryNames',
+        tdCls: 'usedByTdCls',
+        flex: 1,
+        renderer: function(value) {
+          var numRepositories = value.length;
+          return Ext.util.Format.plural(
+              numRepositories,
+              NX.I18n.get('RoutingRule_UsedBy_Repository_Singular'),
+              NX.I18n.get('RoutingRule_UsedBy_Repository_Plural')
+          );
+        },
+        sorter: function(model1, model2) {
+          var numRepos1 = model1.get('assignedRepositoryNames') ? model1.get('assignedRepositoryNames').length : 0,
+              numRepos2 = model2.get('assignedRepositoryNames') ? model2.get('assignedRepositoryNames').length : 0;
+          return numRepos1 - numRepos2;
+        }
       }
     ];
 
@@ -79,6 +99,33 @@ Ext.define('NX.coreui.view.routing.RoutingRulesList', {
       }
     ];
 
+    me.listeners = {
+      render: me.createTooltip
+    };
+
     me.callParent();
+  },
+
+  createTooltip: function(grid) {
+    var view = grid.getView();
+
+    grid.tip = Ext.create('Ext.tip.ToolTip', {
+      target: view.getId(),
+      delegate: view.itemSelector + ' .usedByTdCls',
+      trackMouse: true,
+      listeners: {
+        beforeshow: function(tip) {
+          var tipGridView = tip.target.component,
+              record = tipGridView.getRecord(tip.triggerElement),
+              repositoryNames = record.get('assignedRepositoryNames').join(', ');
+
+          if (!repositoryNames) {
+            return false;
+          }
+
+          tip.update(Ext.htmlEncode(repositoryNames));
+        }
+      }
+    });
   }
 });

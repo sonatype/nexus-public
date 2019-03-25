@@ -30,6 +30,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
 import org.mockito.Mock;
+import org.osgi.framework.Bundle;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.stream.Collectors.toList;
@@ -58,6 +59,9 @@ public class NexusLifecycleManagerTest
 {
   @Mock
   private BeanLocator locator;
+
+  @Mock
+  private Bundle systemBundle;
 
   @Mock
   private OffPhase offPhase;
@@ -132,7 +136,7 @@ public class NexusLifecycleManagerTest
 
     when(locator.<Named, Lifecycle> locate(Key.get(Lifecycle.class, Named.class))).thenReturn(entries);
 
-    underTest = new NexusLifecycleManager(locator);
+    underTest = new NexusLifecycleManager(locator, systemBundle);
   }
 
   public InOrder verifyPhases() {
@@ -147,7 +151,8 @@ public class NexusLifecycleManagerTest
         securityPhase,
         servicesPhase,
         capabilitiesPhase,
-        tasksPhase
+        tasksPhase,
+        systemBundle
     );
   }
 
@@ -236,6 +241,7 @@ public class NexusLifecycleManagerTest
     underTest.to(OFF);
     assertThat(underTest.getCurrentPhase(), is(OFF));
     inOrder.verify(kernelPhase).stop();
+    inOrder.verify(systemBundle).stop();
 
     inOrder.verifyNoMoreInteractions();
   }
@@ -324,6 +330,7 @@ public class NexusLifecycleManagerTest
     inOrder.verify(restorePhase).stop();
     inOrder.verify(storagePhase).stop();
     inOrder.verify(kernelPhase).stop();
+    inOrder.verify(systemBundle).stop();
 
     inOrder.verifyNoMoreInteractions();
   }

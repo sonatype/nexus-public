@@ -21,6 +21,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.ComponentMaintenance;
+import org.sonatype.nexus.repository.storage.DefaultComponentMaintenanceImpl.DeletionProgress;
 
 /**
  * Provides a delete mechanism for cleanup
@@ -35,14 +36,14 @@ public class DeleteCleanupMethod
   private final int batchSize;
 
   @Inject
-  public DeleteCleanupMethod(@Named("${nexus.cleanup.batchSize:-500}") final int batchSize) {
+  public DeleteCleanupMethod(@Named("${nexus.cleanup.batchSize:-100}") final int batchSize) {
     this.batchSize = batchSize;
   }
   
   @Override
-  public Long run(final Repository repository,
-                  final Iterable<EntityId> components,
-                  final BooleanSupplier cancelledCheck)
+  public DeletionProgress run(final Repository repository,
+                              final Iterable<EntityId> components,
+                              final BooleanSupplier cancelledCheck)
   {
     return repository.facet(ComponentMaintenance.class).deleteComponents(components, cancelledCheck, batchSize);
   }

@@ -25,7 +25,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.storage.Component;
+import org.sonatype.nexus.repository.storage.DefaultComponentMaintenanceImpl.DeletionProgress;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.types.GroupType;
@@ -38,12 +38,14 @@ import org.mockito.Mock;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_DOWNLOADED_KEY;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_BLOB_UPDATED_KEY;
+import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_DOWNLOADED_KEY;
 
 public class CleanupServiceImplTest
     extends TestSupport
@@ -51,6 +53,8 @@ public class CleanupServiceImplTest
   private static final String POLICY_1_NAME = "policy1";
 
   private static final String POLICY_2_NAME = "policy2";
+
+  private static final int RETRY_LIMIT = 3;
 
   @Mock
   private RepositoryManager repositoryManager;
@@ -85,12 +89,15 @@ public class CleanupServiceImplTest
   @Mock
   private BooleanSupplier cancelledCheck;
 
+  @Mock
+  private DeletionProgress deletionProgress;
+
   private CleanupServiceImpl underTest;
 
   @Before
   public void setup() throws Exception {
     underTest = new CleanupServiceImpl(repositoryManager, browseService, cleanupPolicyStorage, cleanupMethod,
-        new GroupType());
+        new GroupType(), RETRY_LIMIT);
     
     setupRepository(repository1, POLICY_1_NAME);
     setupRepository(repository2, POLICY_2_NAME);
@@ -109,6 +116,9 @@ public class CleanupServiceImplTest
     when(browseService.browse(cleanupPolicy2, repository2)).thenReturn(ImmutableList.of(component3));
 
     when(cancelledCheck.getAsBoolean()).thenReturn(false);
+
+    when(deletionProgress.isFailed()).thenReturn(false);
+    when(cleanupMethod.run(any(), any(), any())).thenReturn(deletionProgress);
   }
 
   @Test
@@ -150,7 +160,7 @@ public class CleanupServiceImplTest
   public void ignoreRepositoryWhenCancelled() throws Exception {
     doAnswer(i -> {
       when(cancelledCheck.getAsBoolean()).thenReturn(true);
-      return 0L;
+      return deletionProgress;
     }).when(cleanupMethod).run(repository1, ImmutableList.of(component1, component2), cancelledCheck);
     
     underTest.cleanup(cancelledCheck);
@@ -181,16 +191,38 @@ public class CleanupServiceImplTest
     verify(cleanupMethod, never()).run(repository2, ImmutableList.of(component3), cancelledCheck);
   }
 
+  @Test
+  public void retryDeletionIfFailure() {
+    when(deletionProgress.isFailed()).thenReturn(true).thenReturn(false);
+    when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository1));
+    when(cleanupMethod.run(any(), any(), any())).thenReturn(deletionProgress);
+
+    underTest.cleanup(cancelledCheck);
+
+    verify(cleanupMethod, times(2)).run(any(), any(), any());
+  }
+
+  @Test
+  public void retryAttemptsExceeded() {
+    when(deletionProgress.isFailed()).thenReturn(true);
+    when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository1));
+    when(cleanupMethod.run(any(), any(), any())).thenReturn(deletionProgress);
+
+    underTest.cleanup(cancelledCheck);
+
+    verify(cleanupMethod, times(3)).run(any(), any(), any());
+  }
+
   private void setupRepository(final Repository repository, final String policyName) {
     Configuration repositoryConfig = new Configuration();
     when(repository.getConfiguration()).thenReturn(repositoryConfig);
-    
+
     ImmutableMap<String, Map<String, Object>> attributes = ImmutableMap
         .of("cleanup", ImmutableMap.of("policyName", policyName));
     repositoryConfig.setAttributes(attributes);
 
     when(repository.getType()).thenReturn(type);
-    
+
     when(repository.facet(StorageFacet.class)).thenReturn(storageFacet);
   }
 }

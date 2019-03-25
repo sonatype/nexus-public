@@ -29,25 +29,9 @@ public class OrientModule
 {
   @Override
   protected void configure() {
-    preloadOrientEngine();
-
     // configure default implementations
     bind(DatabaseServer.class).to(DatabaseServerImpl.class);
     bind(DatabaseManager.class).to(DatabaseManagerImpl.class);
     bind(RecordIdObfuscator.class).to(EncryptedRecordIdObfuscator.class);
-  }
-
-  /**
-   * Pre-loads OrientDB using empty (system) TCCL so javax.script engines can be found.
-   */
-  private static void preloadOrientEngine() {
-    ClassLoader tccl = Thread.currentThread().getContextClassLoader();
-    try {
-      Thread.currentThread().setContextClassLoader(null);
-      com.orientechnologies.orient.core.Orient.instance();
-    }
-    finally {
-      Thread.currentThread().setContextClassLoader(tccl);
-    }
   }
 }

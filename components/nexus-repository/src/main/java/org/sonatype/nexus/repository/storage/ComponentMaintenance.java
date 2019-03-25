@@ -12,12 +12,12 @@
  */
 package org.sonatype.nexus.repository.storage;
 
-import java.util.function.BooleanSupplier;
-
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Facet;
+import org.sonatype.nexus.repository.storage.DefaultComponentMaintenanceImpl.DeletionProgress;
 
 /**
  * Exposes manual component maintenance operations.
@@ -68,11 +68,11 @@ public interface ComponentMaintenance
    * @param components list of components to delete
    * @param cancelledCheck check for cancellation
    * @param batchSize number of components to commit at a time
-   * @return number of components deleted
+   * @return {@link DeletionProgress} for the current deletion attempt
    *
-   * @since 3.14
+   * @since 3.next
    */
-  long deleteComponents(Iterable<EntityId> components, BooleanSupplier cancelledCheck, int batchSize);
+  DeletionProgress deleteComponents(Iterable<EntityId> components, BooleanSupplier cancelledCheck, int batchSize);
 
   /**
    * Runs at the end of deleteComponents.

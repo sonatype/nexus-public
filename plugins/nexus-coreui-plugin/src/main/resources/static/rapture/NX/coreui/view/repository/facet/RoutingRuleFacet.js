@@ -28,34 +28,46 @@ Ext.define('NX.coreui.view.repository.facet.RoutingRuleFacet', {
 
   controller: 'routingRuleViewController',
 
-  initComponent: function() {
-    this.items = [
-      {
-        xtype: 'fieldset',
-        cls: 'nx-form-section',
-        title: NX.I18n.get('Repository_Facet_RoutingRuleFacet_Title'),
-
-        items: [
-          {
-            xtype: 'combo',
-            reference: 'routingRuleCombo',
-            name: 'attributes.routingRules.routingRuleId',
-            displayField: 'name',
-            valueField: 'id',
-            helpText: NX.I18n.get('Repository_Facet_RoutingRuleFacet_HelpText'),
-            store: 'RoutingRule',
-            queryMode: 'local',
-            typeAhead: true
-          }
-        ]
+  viewModel: {
+    stores: {
+      RoutingRules: {
+        source: 'RoutingRule'
       }
-    ];
+    }
+  },
 
-    if (!NX.State.getValue("routingRules", false)) { // nexus.routing.rules.enabled
-      this.items[0].items[0].store = {
-        data:[]
+  items: [
+    {
+      xtype: 'fieldset',
+      cls: 'nx-form-section',
+      bind: {
+        title: '{title}'
+      },
+
+      items: [
+        {
+          xtype: 'combo',
+          reference: 'routingRuleCombo',
+          name: 'attributes.routingRules.routingRuleId',
+          displayField: 'name',
+          valueField: 'id',
+          bind: {
+            store: '{RoutingRules}'
+          },
+          queryMode: 'local',
+          typeAhead: true
+        }
+      ]
+    }
+  ],
+
+  constructor: function() {
+    if (!NX.State.getValue('routingRules', false)) { // nexus.routing.rules.enabled
+      this.config.viewModel.stores.RoutingRules = {
+        data: []
       };
     }
+
     this.callParent();
   }
 });

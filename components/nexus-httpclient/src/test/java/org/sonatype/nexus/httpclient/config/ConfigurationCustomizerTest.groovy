@@ -18,11 +18,13 @@ import org.sonatype.nexus.httpclient.internal.NexusHttpRoutePlanner
 
 import org.apache.http.HttpHost
 import org.apache.http.HttpRequest
+import org.apache.http.client.RedirectStrategy
 import org.apache.http.client.config.CookieSpecs
 import org.apache.http.conn.routing.HttpRoute
 import org.apache.http.impl.client.BasicCookieStore
 import org.apache.http.protocol.HttpContext
 import org.junit.Test
+import org.mockito.Mock
 
 import static org.hamcrest.MatcherAssert.assertThat
 import static org.hamcrest.Matchers.equalTo
@@ -39,6 +41,9 @@ import static org.sonatype.nexus.httpclient.HttpSchemes.HTTPS
 class ConfigurationCustomizerTest
     extends TestSupport
 {
+  @Mock
+  RedirectStrategy redirectStrategy
+
   HttpClientConfiguration httpClientConfiguration = mock(HttpClientConfiguration)
 
   ConfigurationCustomizer configurationCustomizer = new ConfigurationCustomizer(httpClientConfiguration)
@@ -72,6 +77,15 @@ class ConfigurationCustomizerTest
     assertThat(plan.request.circularRedirectsAllowed, equalTo(false))
     assertThat(plan.request.maxRedirects, equalTo(50))
     assertThat(plan.request.cookieSpec, nullValue())
+  }
+
+  @Test
+  void 'plan is updated with redirect strategy'() {
+    when(httpClientConfiguration.getRedirectStrategy()).thenReturn(redirectStrategy)
+    HttpClientPlan plan = new HttpClientPlan()
+    configurationCustomizer.customize(plan)
+
+    assertThat(plan.client.redirectStrategy, equalTo(redirectStrategy))
   }
 
   @Test

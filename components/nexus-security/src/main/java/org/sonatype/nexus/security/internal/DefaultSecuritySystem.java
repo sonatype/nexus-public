@@ -62,7 +62,6 @@ import org.apache.shiro.util.LifecycleUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SECURITY;
-import static org.sonatype.nexus.common.app.ManagedLifecycleManager.isShuttingDown;
 
 /**
  * This implementation wraps a Shiro SecurityManager, and adds user management.
@@ -121,10 +120,7 @@ public class DefaultSecuritySystem
   protected void doStop() throws Exception {
     realmManager.stop();
 
-    // underlying manager cannot be restarted, so avoid shutting it down when bouncing the service
-    if (isShuttingDown()) {
-      LifecycleUtils.destroy(realmSecurityManager);
-    }
+    LifecycleUtils.destroy(realmSecurityManager);
   }
 
   @Override

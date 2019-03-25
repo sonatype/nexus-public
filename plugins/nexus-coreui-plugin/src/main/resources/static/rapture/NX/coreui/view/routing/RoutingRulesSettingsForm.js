@@ -70,10 +70,10 @@ Ext.define('NX.coreui.view.routing.RoutingRulesSettingsForm', {
                   editable: false,
                   width: '80px',
                   store: [
-                    ['ALLOW', NX.I18n.get('RoutingRules_Mode_Allow_Text')],
-                    ['BLOCK', NX.I18n.get('RoutingRules_Mode_Block_Text')]
+                    ['BLOCK', NX.I18n.get('RoutingRules_Mode_Block_Text')],
+                    ['ALLOW', NX.I18n.get('RoutingRules_Mode_Allow_Text')]
                   ],
-                  value: 'ALLOW'
+                  value: 'BLOCK'
                 },
                 {
                   xtype: 'label',

@@ -12,11 +12,16 @@
  */
 package org.sonatype.nexus.common.property;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Helper to retrieve a system property typed value.
  */
 public class SystemPropertiesHelper
 {
+  private static final Logger log = LoggerFactory.getLogger(SystemPropertiesHelper.class);
+
   private SystemPropertiesHelper() {
     // empty
   }
@@ -32,6 +37,7 @@ public class SystemPropertiesHelper
       return Integer.valueOf(value);
     }
     catch (NumberFormatException e) {
+      log.warn("Invalid integer '{}' for property '{}'. Defaulting to '{}'", value, key, defaultValue);
       return defaultValue;
     }
   }
@@ -47,6 +53,7 @@ public class SystemPropertiesHelper
       return Long.valueOf(value);
     }
     catch (NumberFormatException e) {
+      log.warn("Invalid long '{}' for property '{}'. Defaulting to '{}'", value, key, defaultValue);
       return defaultValue;
     }
   }

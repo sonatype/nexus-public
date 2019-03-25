@@ -45,7 +45,7 @@ Ext.define('NX.coreui.view.routing.RoutingRulesFeature', {
 
       nxActions: [
         {
-          xtype: 'button',
+          xtype: 'nx-button',
           text: NX.I18n.get('RoutingRules_Delete_Button'),
           glyph: 'xf1f8@FontAwesome' /* fa-trash */,
           action: 'delete',

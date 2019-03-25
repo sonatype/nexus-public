@@ -64,7 +64,7 @@ public abstract class ManagedLifecycleManager
    *
    * @since 3.next
    */
-  protected void registerShutdown() {
+  protected void declareShutdown() {
     log.info("Shutting down");
     shuttingDown = true;
   }

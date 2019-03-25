@@ -59,21 +59,19 @@ public class MavenHostedComponentMaintenanceFacet
   }
 
   @Override
-  protected long doBatchDelete(final List<EntityId> entityIds, final BooleanSupplier cancelledCheck) {
-    long count = 0L;
-
+  protected DeletionProgress doBatchDelete(final List<EntityId> entityIds, final BooleanSupplier cancelledCheck) {
     try {
       List<String[]> gavs = collectGavs(entityIds);
 
-      count += deleteComponentBatch(entityIds, cancelledCheck);
+      DeletionProgress batchProgress = deleteComponentBatch(entityIds, cancelledCheck);
 
       getRepository().facet(MavenHostedFacet.class).deleteMetadata(gavs);
+      return batchProgress;
     }
     catch (Exception ex) {
       log.debug("Error encountered attempting to delete components for repository {}.", getRepository().getName(), ex);
     }
-
-    return count;
+    return new DeletionProgress();
   }
 
   @Transactional

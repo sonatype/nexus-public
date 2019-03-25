@@ -138,15 +138,6 @@ Ext.define('NX.coreui.controller.RoutingRules', {
   },
 
   /**
-   * @override
-   * @protected
-   * Enable 'Delete' button when user has necessary permission and routingRules feature flag is enabled
-   */
-  bindDeleteButton: function(button) {
-    this.bindButton(button, ':delete');
-  },
-
-  /**
    * Enable 'Save' button when user has necessary permission and routingRules feature flag is enabled
    */
   bindSaveButton: function(button) {
@@ -172,6 +163,53 @@ Ext.define('NX.coreui.controller.RoutingRules', {
 
   /**
    * @override
+   * @protected
+   * Enable 'Delete' button when user has necessary permission, routingRules feature flag is enabled
+   * and the routingRule is not currently assigned to any repositories
+   */
+  bindDeleteButton: function(button) {
+    button.mon(
+        NX.Conditions.and(
+            NX.Conditions.isPermitted(this.permission + ':delete'),
+            NX.Conditions.watchState('routingRules'),
+            NX.Conditions.watchEvents([
+                  {observable: this.getStore('RoutingRule'), events: ['load']},
+                  {observable: Ext.History, events: ['change']}
+                ], this.deleteButtonWatchEventsHandler.bind(this)
+            )
+        ),
+        {
+          satisfied: function() {
+            button.enable();
+          }.bind(this),
+          unsatisfied: function() {
+            if (this.deleteButtonTooltipText) {
+              button.disableWithTooltip(this.deleteButtonTooltipText);
+            } else {
+              button.disable();
+            }
+          }.bind(this)
+        }
+    );
+  },
+
+  deleteButtonWatchEventsHandler: function() {
+    var store = this.getStore('RoutingRule'),
+        routingRuleName = this.getModelIdFromBookmark(),
+        model = routingRuleName ? store.findRecord('name', routingRuleName, 0, false, true, true) : undefined,
+        numAssignedRepos = model && model.get('assignedRepositoryNames').length || 0;
+
+    if (numAssignedRepos > 0) {
+      this.deleteButtonTooltipText = NX.I18n.get('RoutingRules_Delete_Button_Assigned_Tooltip');
+      return false;
+    }
+
+    this.deleteButtonTooltipText = '';
+    return true;
+  },
+
+  /**
+   * @override
    */
   getDescription: function(model) {
     return model.get('name');
@@ -181,9 +219,44 @@ Ext.define('NX.coreui.controller.RoutingRules', {
    * @override
    */
   onSelection: function(list, model) {
+    var assignedRepositoryNames;
+
+    this.clearInfo();
+
     if (model) {
       this.getRoutingRulesEdit().loadRecord(model);
+
+      assignedRepositoryNames = model.get('assignedRepositoryNames');
+      if (assignedRepositoryNames.length > 0) {
+        this.setInfoMessage(assignedRepositoryNames);
+      }
     }
+  },
+
+  setInfoMessage: function(assignedRepositoryNames) {
+    var MAX_NUM_REPOSITORIES = 10,
+        totalNumRepositories = assignedRepositoryNames.length,
+        numRepositoriesMessage = Ext.util.Format.plural(
+            totalNumRepositories,
+            NX.I18n.get('RoutingRule_UsedBy_Repository_Singular'),
+            NX.I18n.get('RoutingRule_UsedBy_Repository_Plural')
+        ),
+        repositoryLinks = assignedRepositoryNames.slice(0, MAX_NUM_REPOSITORIES).map(function(repoName) {
+          return '<a href="#admin/repository/repositories:' + window.encodeURIComponent(repoName) + '">' +
+              Ext.htmlEncode(repoName) +
+              '</a>';
+        }),
+        ellipsis = totalNumRepositories > MAX_NUM_REPOSITORIES ? ', ...' : '',
+        repositoryLinksMessage = repositoryLinks.join(', ') + ellipsis,
+        tooltipText = NX.I18n.format(
+            'RoutingRule_UsedBy_Info_Tooltip',
+            Ext.htmlEncode(assignedRepositoryNames.join(', '))
+        );
+
+    this.showInfo(
+        NX.I18n.format('RoutingRule_UsedBy_Info_Message', numRepositoriesMessage, repositoryLinksMessage),
+        tooltipText
+    );
   },
 
   /**
@@ -262,15 +335,14 @@ Ext.define('NX.coreui.controller.RoutingRules', {
     }.bind(this);
   },
 
-  onSubmitFailure: function(form, response, opts) {
+  onSubmitFailure: function(form, response) {
     var status = response.status;
 
     if (400 === status) {
       this.handleValidationError(form, response.responseText);
     }
     else {
-      NX.Messages.error('An unknown error occurred: ' + status + ' - ' + response.statusText);
-      console.error('Submit failure!!!', response, opts);
+      NX.Messages.error(NX.I18n.format('RoutingRules_Unknown_Api_Error_Message', status, response.statusText));
     }
   },
 
@@ -303,7 +375,15 @@ Ext.define('NX.coreui.controller.RoutingRules', {
           type: 'success'
         });
       }.bind(this),
-      failure: this.onSubmitFailure.bind(this, this.getRoutingRulesEdit().down('form'))
+      failure: function(response) {
+        var status = response.status;
+        if (400 === status) {
+          NX.Messages.error('RoutingRules_Delete_400_Error_Message');
+        }
+        else {
+          NX.Messages.error(NX.I18n.format('RoutingRules_Unknown_Api_Error_Message', status, response.statusText));
+        }
+      }.bind(this)
     });
   },
 

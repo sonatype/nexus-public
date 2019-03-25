@@ -23,7 +23,7 @@ Ext.define('NX.coreui.model.RoutingRule', {
   fields: [
     {name: 'name', type: 'string', sortType: 'asUCText'},
     {name: 'description', type: 'string', sortType: 'asUCText'},
-    {name: 'mode', type: 'string', sortType: 'asUCText', defaultValue: 'allow'},
+    {name: 'mode', type: 'string', sortType: 'asUCText'},
     {name: 'matchers', type: 'auto', sortType: 'asUCText'}
   ]
 });

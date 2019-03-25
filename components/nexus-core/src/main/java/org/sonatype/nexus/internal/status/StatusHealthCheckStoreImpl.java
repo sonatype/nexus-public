@@ -28,7 +28,6 @@ import org.sonatype.nexus.common.status.StatusHealthCheckStore;
 import org.sonatype.nexus.internal.status.StatusHealthCheckEntityAdapter.NodeHealthCheck;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
-import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
@@ -53,20 +52,16 @@ public class StatusHealthCheckStoreImpl
 
   private final StatusHealthCheckEntityAdapter entityAdapter;
 
-  private final DatabaseFreezeService databaseFreezeService;
-
   private final NodeAccess nodeAccess;
 
   @Inject
   public StatusHealthCheckStoreImpl(
       @Named(DatabaseInstanceNames.COMPONENT) final Provider<DatabaseInstance> databaseInstance,
       final StatusHealthCheckEntityAdapter entityAdapter,
-      final DatabaseFreezeService databaseFreezeService,
       final NodeAccess nodeAccess)
   {
     this.databaseInstance = checkNotNull(databaseInstance);
     this.entityAdapter = checkNotNull(entityAdapter);
-    this.databaseFreezeService = checkNotNull(databaseFreezeService);
     this.nodeAccess = checkNotNull(nodeAccess);
   }
 
@@ -80,29 +75,41 @@ public class StatusHealthCheckStoreImpl
   @Override
   @Guarded(by = STARTED)
   public void markHealthCheckTime() throws StatusHealthCheckException {
-    // only attempt write if database is not frozen; frozen state should not produce an exception for this call
-    if (!databaseFreezeService.isFrozen()) {
-      String nodeId = nodeAccess.getId();
 
-      try {
-        inTxRetry(databaseInstance).run(db -> {
-          NodeHealthCheck nhc = entityAdapter.read(db, nodeId);
+    String nodeId = nodeAccess.getId();
 
-          if (nhc == null) {
-            nhc = entityAdapter.newEntity();
-            nhc.nodeId = nodeId;
-            nhc.lastHealthCheck = new Date();
-            entityAdapter.addEntity(db, nhc);
-          }
-          else {
-            nhc.lastHealthCheck = new Date();
-            entityAdapter.editEntity(db, nhc);
-          }
-        });
-      }
-      catch (Exception e) {
-        throw new StatusHealthCheckException("Unable to update health check time for node: " + nodeId, e);
-      }
+    try {
+      inTxRetry(databaseInstance).run(db -> {
+        NodeHealthCheck nhc = entityAdapter.read(db, nodeId);
+
+        if (nhc == null) {
+          nhc = entityAdapter.newEntity();
+          nhc.nodeId = nodeId;
+          nhc.lastHealthCheck = new Date();
+          entityAdapter.addEntity(db, nhc);
+        }
+        else {
+          nhc.lastHealthCheck = new Date();
+          entityAdapter.editEntity(db, nhc);
+        }
+      });
+    }
+    catch (Exception e) {
+      throw new StatusHealthCheckException("Unable to update health check time for node: " + nodeId, e);
+    }
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public void checkReadHealth() throws StatusHealthCheckException {
+
+    String nodeId = nodeAccess.getId();
+
+    try {
+      inTxRetry(databaseInstance).run(db -> entityAdapter.read(db, nodeId));
+    }
+    catch (Exception e) {
+      throw new StatusHealthCheckException("Unable to read health check time for node: " + nodeId, e);
     }
   }
 }

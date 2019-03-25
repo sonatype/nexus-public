@@ -18,6 +18,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.ComponentMaintenance;
+import org.sonatype.nexus.repository.storage.DefaultComponentMaintenanceImpl.DeletionProgress;
 
 import com.google.common.collect.ImmutableList;
 import org.junit.Before;
@@ -59,11 +60,14 @@ public class DeleteCleanupMethodTest
   
   @Test
   public void deleteComponent() throws Exception {
-    when(componentMaintenance.deleteComponents(any(), any(), anyInt())).thenReturn(2L);
-    
-    Long deletedCount = underTest.run(repository, ImmutableList.of(component1, component2), cancelledCheck);
+    DeletionProgress deletionProgress = new DeletionProgress();
+    deletionProgress.addCount(2L);
 
-    assertThat(deletedCount).isEqualTo(2L);
+    when(componentMaintenance.deleteComponents(any(), any(), anyInt())).thenReturn(deletionProgress);
+
+    DeletionProgress response = underTest.run(repository, ImmutableList.of(component1, component2), cancelledCheck);
+
+    assertThat(response.getCount()).isEqualTo(2L);
 
     verify(componentMaintenance).deleteComponents(ImmutableList.of(component1, component2), cancelledCheck, BATCH_SIZE);
   }

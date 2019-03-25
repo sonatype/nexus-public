@@ -12,7 +12,9 @@
  */
 package org.sonatype.nexus.repository.routing;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -21,6 +23,9 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * @since 3.next
@@ -35,9 +40,19 @@ public class RoutingRuleHelper
 
   private final RoutingRuleStore routingRuleStore;
 
+  private final RoutingRulesConfiguration configuration;
+
+  private final RepositoryManager repositoryManager;
+
   @Inject
-  public RoutingRuleHelper(final RoutingRuleStore routingRuleStore) {
-    this.routingRuleStore = routingRuleStore;
+  public RoutingRuleHelper(
+      final RoutingRuleStore routingRuleStore,
+      final RepositoryManager repositoryManager,
+      final RoutingRulesConfiguration configuration)
+  {
+    this.routingRuleStore = checkNotNull(routingRuleStore);
+    this.repositoryManager = checkNotNull(repositoryManager);
+    this.configuration = checkNotNull(configuration);
   }
 
   /**
@@ -48,26 +63,46 @@ public class RoutingRuleHelper
    * @return true if the request is allowed, false if it should be blocked
    */
   public boolean isAllowed(final Repository repository, final String path) {
-    RoutingRule routingRule = getRoutingRule(repository);
+    if (configuration.isEnabled()) {
+      RoutingRule routingRule = getRoutingRule(repository);
 
-    if (routingRule == null) {
-      return true;
+      if (routingRule == null) {
+        return true;
+      }
+
+      return isAllowed(routingRule.mode(), routingRule.matchers(), path);
     }
-
-    return isAllowed(routingRule.mode(), routingRule.matchers(), path);
+    return true;
   }
 
   /**
-   * Determine if the path is allowed by the mode and matchers.
+   * Determine if the path is allowed by the RoutingRule, does not consider whether the configuration is enabled.
    *
    * @param mode the routing mode to test the path against
    * @param matchers the list of matchers to test the path against
    * @param path the path of the component (must include leading slash)
    * @return true if the request is allowed, false if it should be blocked
    */
-  public boolean isAllowed(final RoutingMode mode, List<String> matchers, final String path) {
+  public boolean isAllowed(final RoutingMode mode, final List<String> matchers, final String path) {
     boolean matches = matchers.stream().anyMatch(path::matches);
     return (!matches && mode == RoutingMode.BLOCK) || (matches && mode == RoutingMode.ALLOW);
+  }
+
+  /**
+   * Iterates through all repositories to find which routing rules are assigned
+   *
+   * @return A map of routing rule ids to a list of repository names that are using them
+   */
+  public Map<String, List<String>> calculateAssignedRepositories() {
+    Map<String, List<String>> assignedRepositories = new HashMap<>();
+    for (Repository repository : repositoryManager.browse()) {
+      String routingRuleId = getRoutingRuleId(repository);
+      if (null != routingRuleId) {
+        List<String> repositoryNames = assignedRepositories.computeIfAbsent(routingRuleId, k -> new ArrayList<>());
+        repositoryNames.add(repository.getName());
+      }
+    }
+    return assignedRepositories;
   }
 
   private RoutingRule getRoutingRule(final Repository repository) {

@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.pax.logging;
 
+import org.sonatype.nexus.logging.task.ProgressTaskLogger;
+
 import org.osgi.framework.BundleContext;
 import org.slf4j.LoggerFactory;
 
@@ -27,5 +29,11 @@ public class NexusLogActivator
   public void start(final BundleContext bundleContext) throws Exception {
     super.start(bundleContext);
     LoggerFactory.getLogger(NexusLogActivator.class).info("start");
+  }
+
+  @Override
+  public void stop(final BundleContext bundleContext) {
+    ProgressTaskLogger.shutdown();
+    super.stop(bundleContext);
   }
 }

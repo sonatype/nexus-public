@@ -12,9 +12,8 @@
  */
 package org.sonatype.nexus.internal.status;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.node.NodeAccess;
-import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
+import org.sonatype.nexus.common.status.StatusHealthCheckException;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 
 import com.google.common.collect.Iterators;
@@ -25,23 +24,22 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class StatusHealthCheckStoreImplTest
-    extends TestSupport
 {
   @Rule
   public DatabaseInstanceRule db = DatabaseInstanceRule.inMemory("test");
 
-  @Mock
-  private DatabaseFreezeService databaseFreezeService;
+  @Rule
+  public ExpectedException thrown = ExpectedException.none();
 
   @Mock
   private NodeAccess nodeAccess;
@@ -52,10 +50,11 @@ public class StatusHealthCheckStoreImplTest
 
   @Before
   public void before() {
+    MockitoAnnotations.initMocks(this);
     when(nodeAccess.getId()).thenReturn("node1");
 
     entityAdapter = new StatusHealthCheckEntityAdapter();
-    store = new StatusHealthCheckStoreImpl(db.getInstanceProvider(), entityAdapter, databaseFreezeService, nodeAccess);
+    store = new StatusHealthCheckStoreImpl(db.getInstanceProvider(), entityAdapter, nodeAccess);
     store.doStart();
   }
 
@@ -94,12 +93,17 @@ public class StatusHealthCheckStoreImplTest
   }
 
   @Test
-  public void testDbFreezeDoesNotCauseException() throws Exception {
-    when(databaseFreezeService.isFrozen()).thenReturn(true);
+  public void testCheckReadHealth() throws Exception {
+    // no record exists yet. this is ok
+    store.checkReadHealth();
+
+    // add record to the database
     store.markHealthCheckTime();
-    verify(databaseFreezeService, times(1)).isFrozen();
-    try (ODatabaseDocumentTx instance = db.getInstance().connect()) {
-      assertThat("should not be able to write during freeze", instance.countClass(entityAdapter.getTypeName()) == 0);
-    }
+    store.checkReadHealth();
+
+    // stop database
+    db.getServer().stopAbnormally();
+    thrown.expect(StatusHealthCheckException.class);
+    store.checkReadHealth();
   }
 }

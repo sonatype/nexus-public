@@ -24,8 +24,9 @@ import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.Response;
 
 import com.google.common.net.HttpHeaders;
-import org.apache.http.client.utils.DateUtils;
 import org.joda.time.DateTime;
+
+import static org.sonatype.nexus.repository.date.DateTimeUtils.formatDateTime;
 
 /**
  * A format-neutral content handler for decorating response using {@link Content#getAttributes()} provided attributes.
@@ -48,7 +49,7 @@ public class ContentHeadersHandler
       final Content content = (Content) payload;
       final DateTime lastModified = content.getAttributes().get(Content.CONTENT_LAST_MODIFIED, DateTime.class);
       if (lastModified != null) {
-        response.getHeaders().set(HttpHeaders.LAST_MODIFIED, DateUtils.formatDate(lastModified.toDate()));
+        response.getHeaders().set(HttpHeaders.LAST_MODIFIED, formatDateTime(lastModified));
       }
       final String etag = content.getAttributes().get(Content.CONTENT_ETAG, String.class);
       if (etag != null) {

@@ -24,4 +24,13 @@ public interface StatusHealthCheckStore
    * persisted per node.
    */
   void markHealthCheckTime() throws StatusHealthCheckException;
+
+  /**
+   * Checks that db is readable.
+   *
+   * @throws StatusHealthCheckException if the db read check fails
+   *
+   * @since 3.next
+   */
+  void checkReadHealth() throws StatusHealthCheckException;
 }

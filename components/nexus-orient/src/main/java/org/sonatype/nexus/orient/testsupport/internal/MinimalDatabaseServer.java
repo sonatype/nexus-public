@@ -54,4 +54,11 @@ public class MinimalDatabaseServer
   public List<String> databases() {
     return Collections.emptyList();
   }
+
+  /**
+   * Stop underlying server outside of normal lifecycle in order to test failure situations.
+   */
+  public void stopAbnormally() {
+    Orient.instance().shutdown();
+  }
 }

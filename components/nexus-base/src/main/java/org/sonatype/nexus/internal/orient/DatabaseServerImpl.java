@@ -169,7 +169,7 @@ public class DatabaseServerImpl
     Orient.instance().startup();
 
     // instance startup
-    OServer server = new OServer();
+    OServer server = new OServer(false);
     configureOrientMinimumLogLevel();
     server.setExtensionClassLoader(uberClassLoader);
     OServerConfiguration config = createConfiguration();
@@ -340,12 +340,15 @@ public class DatabaseServerImpl
 
   @Override
   protected void doStop() throws Exception {
-    // instance shutdown
-    orientServer.shutdown();
-    orientServer = null;
-
-    // global shutdown
-    Orient.instance().shutdown();
+    try {
+      // instance shutdown
+      orientServer.shutdown();
+      orientServer = null;
+    }
+    finally {
+      // global shutdown
+      Orient.instance().shutdown();
+    }
 
     log.info("Shutdown");
   }

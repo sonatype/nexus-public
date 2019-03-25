@@ -22,32 +22,40 @@ Ext.define('NX.coreui.view.repository.facet.RoutingRuleFacetViewController', {
   alias: 'controller.routingRuleViewController',
   requires: [
     'NX.State',
-    'NX.coreui.model.RoutingRule'
+    'NX.I18n'
   ],
 
   control: {
     '#': {
-      beforeRender: 'onBeforeRender'
+      beforeRender: 'onBeforeRender',
+      afterRender: 'onAfterRender'
     }
   },
 
   onBeforeRender: function() {
+    this.lookupReference('routingRuleCombo').setHelpText(NX.I18n.get('Repository_Facet_RoutingRuleFacet_HelpText'));
+    this.getViewModel().set('title', NX.I18n.get('Repository_Facet_RoutingRuleFacet_Title'));
+
+    this.getView().setVisible(NX.State.getValue('routingRules', false)); // nexus.routing.rules.enabled
+  },
+
+  onAfterRender: function() {
+    if (!NX.State.getValue('routingRules', false)) { // nexus.routing.rules.enabled
+      return;
+    }
+
     var combo = this.lookupReference('routingRuleCombo'),
-        fieldContainer = this.getView(),
-        featureFlag = NX.State.getValue('routingRules', false); // nexus.routing.rules.enabled
+        chainedStore = this.getStore('RoutingRules'),
+        sourceStore = chainedStore.getSource(),
+        model = chainedStore.getModel();
 
-    fieldContainer.setVisible(featureFlag);
-
-    combo.getStore().load(function() {
-      var value = combo.getValue(),
-          record = combo.getStore().find('id', value);
-
-      combo.getStore().insert(0, combo.getStore().getModel().create({
+    sourceStore.load(function() {
+      chainedStore.insert(0, model.create({
         id: '',
         name: 'None'
       }));
 
-      if (record === -1) {
+      if (chainedStore.find('id', combo.getValue()) === -1) {
         combo.setValue('');
       }
     });

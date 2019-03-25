@@ -34,6 +34,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static com.google.common.collect.Maps.newHashMap;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -103,7 +104,7 @@ public class HttpClientFacetImplTest
     autoBlockConfiguration.put(DEFAULT, defaultAutoBlockConfiguration);
     autoBlockConfiguration.put(NPM, npmAutoBlockConfiguration);
     
-    underTest = new HttpClientFacetImpl(httpClientManager, autoBlockConfiguration, config);
+    underTest = new HttpClientFacetImpl(httpClientManager, autoBlockConfiguration, newHashMap(), config);
     underTest.attach(repository);
     underTest.installDependencies(eventManager);
     when(configurationFacet.readSection(configuration, CONFIG_KEY, Config.class)).thenReturn(config);

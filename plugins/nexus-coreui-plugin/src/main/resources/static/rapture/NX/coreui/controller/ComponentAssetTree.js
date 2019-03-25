@@ -246,11 +246,9 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
   onRepositorySelection: function(model) {
     var me = this, componentAssetTreeStore = me.getStore('ComponentAssetTree');
 
-    if (!me.selectedRepository || me.selectedRepository.id !== model.id) {
-      //reset the filter
-      componentAssetTreeStore.proxy.setExtraParam('filter');
-      componentAssetTreeStore.proxy.setExtraParam('repositoryName', model.get('name'));
-    }
+    //reset the filter
+    componentAssetTreeStore.proxy.setExtraParam('filter');
+    componentAssetTreeStore.proxy.setExtraParam('repositoryName', model.get('name'));
 
     // Update HTML View link
     me.updateHtmlLink(model);

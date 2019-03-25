@@ -22,7 +22,9 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.log.ExceptionSummarizer;
 import org.sonatype.nexus.common.status.StatusHealthCheckStore;
+import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
 import org.sonatype.nexus.rest.Resource;
 
 import com.codahale.metrics.annotation.Timed;
@@ -32,6 +34,9 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.SERVICE_UNAVAILABLE;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
+import static org.sonatype.nexus.common.log.ExceptionSummarizer.sameType;
+import static org.sonatype.nexus.common.log.ExceptionSummarizer.summarize;
+import static org.sonatype.nexus.common.log.ExceptionSummarizer.warn;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 
 /**
@@ -50,21 +55,45 @@ public class StatusResource
 
   private final StatusHealthCheckStore statusHealthCheckStore;
 
+  private final DatabaseFreezeService databaseFreezeService;
+
+  private final ExceptionSummarizer exceptionSummarizer = summarize(sameType(), warn(log));
+
   @Inject
-  public StatusResource(final StatusHealthCheckStore statusHealthCheckStore) {
+  public StatusResource(final StatusHealthCheckStore statusHealthCheckStore, final DatabaseFreezeService databaseFreezeService) {
     this.statusHealthCheckStore = checkNotNull(statusHealthCheckStore);
+    this.databaseFreezeService = checkNotNull(databaseFreezeService);
   }
 
   @GET
   @Timed
   public Response isAvailable() {
     try {
-      // successful write transaction represents node health, so just update via the store to verify health
+      statusHealthCheckStore.checkReadHealth();
+      return ok().build();
+    }
+    catch (Exception e) {
+      exceptionSummarizer.log("Status health check failed, responding server is unavailable", e);
+      return status(SERVICE_UNAVAILABLE).build();
+    }
+  }
+
+  @GET
+  @Path("/writable")
+  @Timed
+  public Response isWritable() {
+    try {
+
+      if (databaseFreezeService.isFrozen()) {
+        log.info("Status health check failed because database is frozen");
+        return status(SERVICE_UNAVAILABLE).build();
+      }
+
       statusHealthCheckStore.markHealthCheckTime();
       return ok().build();
     }
     catch (Exception e) {
-      log.error("Status health check failed, responding server is unavailable", e);
+      exceptionSummarizer.log("Status health check failed, responding server is unavailable", e);
       return status(SERVICE_UNAVAILABLE).build();
     }
   }

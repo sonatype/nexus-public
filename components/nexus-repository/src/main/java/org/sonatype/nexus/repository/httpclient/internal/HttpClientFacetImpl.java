@@ -41,6 +41,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.Subscribe;
 import org.apache.http.Header;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.RedirectStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicHeader;
 
@@ -72,6 +73,8 @@ public class HttpClientFacetImpl
 
   private final Map<String, AutoBlockConfiguration> autoBlockConfiguration;
 
+  private final Map<String, RedirectStrategy> redirectStrategy;
+
   @VisibleForTesting
   static class Config
   {
@@ -97,16 +100,20 @@ public class HttpClientFacetImpl
 
   @Inject
   public HttpClientFacetImpl(final HttpClientManager httpClientManager,
-                             final Map<String, AutoBlockConfiguration> autoBlockConfiguration) {
+                             final Map<String, AutoBlockConfiguration> autoBlockConfiguration,
+                             final Map<String, RedirectStrategy> redirectStrategy)
+  {
     this.httpClientManager = checkNotNull(httpClientManager);
     this.autoBlockConfiguration = checkNotNull(autoBlockConfiguration);
+    this.redirectStrategy = checkNotNull(redirectStrategy);
   }
 
   @VisibleForTesting
   HttpClientFacetImpl(final HttpClientManager httpClientManager,
                       final Map<String, AutoBlockConfiguration> autoBlockConfiguration,
+                      final Map<String, RedirectStrategy> redirectStrategy,
                       final Config config) {
-    this(httpClientManager, autoBlockConfiguration);
+    this(httpClientManager, autoBlockConfiguration, redirectStrategy);
     this.config = checkNotNull(config);
     checkNotNull(autoBlockConfiguration.get(DEFAULT));
   }
@@ -236,6 +243,7 @@ public class HttpClientFacetImpl
     HttpClientConfiguration delegateConfig = new HttpClientConfiguration();
     delegateConfig.setConnection(config.connection);
     delegateConfig.setAuthentication(config.authentication);
+    delegateConfig.setRedirectStrategy(getRedirectStrategy());
     CloseableHttpClient delegate = httpClientManager.create(new ConfigurationCustomizer(delegateConfig));
 
     boolean online = getRepository().getConfiguration().isOnline();
@@ -252,6 +260,10 @@ public class HttpClientFacetImpl
     }
     
     return config;
+  }
+
+  private RedirectStrategy getRedirectStrategy() {
+    return this.redirectStrategy.get(getRepository().getFormat().getValue());
   }
 
   private void closeHttpClient() throws IOException {

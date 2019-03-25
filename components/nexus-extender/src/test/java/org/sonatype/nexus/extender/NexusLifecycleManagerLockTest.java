@@ -34,6 +34,7 @@ import org.eclipse.sisu.inject.InjectorBindings;
 import org.eclipse.sisu.inject.MutableBeanLocator;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
 import static com.google.inject.name.Names.named;
@@ -50,11 +51,15 @@ public class NexusLifecycleManagerLockTest
   @Mock
   private BundleContext bundleContext;
 
+  @Mock
+  private Bundle systemBundle;
+
   @Test(timeout = 60_000) // if this test deadlocks then it will eventually timeout and fail
   public void addingComponentBundlesInParallelDuringLifecycleActivation() throws Exception {
 
     Injector injector = Guice.createInjector(binder -> {
       binder.bind(ManagedLifecycleManager.class).to(NexusLifecycleManager.class);
+      binder.bind(Bundle.class).annotatedWith(named("system")).toInstance(systemBundle);
       binder.bind(Lifecycle.class).annotatedWith(named("trigger")).to(Trigger.class);
       binder.bind(CountDownLatch.class).toInstance(new CountDownLatch(1));
     });

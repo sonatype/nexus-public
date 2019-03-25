@@ -29,13 +29,27 @@ import io.swagger.annotations.ApiResponses;
 public interface StatusResourceDoc
 {
   /**
-   * @return 200 if the server is available, 503 otherwise
+   * @return 200 if the server is available to serve read requests, 503 otherwise
    */
   @GET
-  @ApiOperation("Health check endpoint for server")
+  @ApiOperation("Health check endpoint that validates server can respond to read requests")
   @ApiResponses({
       @ApiResponse(code = 200, message = "Available to service requests"),
       @ApiResponse(code = 503, message = "Unavailable to service requests")
   })
   Response isAvailable();
+
+  /**
+   * @return 200 if the server is available to serve read and write requests, 503 otherwise
+   *
+   * @since 3.next
+   */
+  @GET
+  @ApiOperation("Health check endpoint that validates server can respond to read and write requests")
+  @ApiResponses({
+      @ApiResponse(code = 200, message = "Available to service requests"),
+      @ApiResponse(code = 503, message = "Unavailable to service requests")
+  })
+  Response isWritable();
+
 }

@@ -90,6 +90,7 @@ public class NpmRepairPackageRootComponent
     log.info("Beginning processing all npm packages for repair");
 
     stream(repositoryManager.browse().spliterator(), false)
+        .filter(this::shouldRepairRepository)
         .forEach(this::doRepairRepository);
   }
 

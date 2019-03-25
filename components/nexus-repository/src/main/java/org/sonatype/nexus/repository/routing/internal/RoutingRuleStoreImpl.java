@@ -54,6 +54,8 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
 @Singleton
 public class RoutingRuleStoreImpl extends StateGuardLifecycleSupport implements RoutingRuleStore
 {
+  private static final String NONE = "none";
+
   private final Provider<DatabaseInstance> databaseInstance;
 
   private final RoutingRuleEntityAdapter entityAdapter;
@@ -136,6 +138,9 @@ public class RoutingRuleStoreImpl extends StateGuardLifecycleSupport implements 
     else if (!rule.name().matches(NamePatternConstants.REGEX)) {
       exception.withError("name",
           "Only letters, digits, underscores(_), hyphens(-), and dots(.) are allowed and may not start with underscore or dot.");
+    }
+    else if (rule.name().equalsIgnoreCase(NONE)) {
+      exception.withError("name", "Rule must not be named None");
     }
 
     if (rule.description() == null) {

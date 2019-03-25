@@ -16,6 +16,7 @@ import java.util.function.BooleanSupplier;
 
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.storage.DefaultComponentMaintenanceImpl.DeletionProgress;
 
 /**
  * Cleans up components.
@@ -32,7 +33,7 @@ public interface CleanupMethod
    * @param cancelledCheck - allows the cleanup to be stopped by the caller before finishing iterating the components
    * @return the number of components cleaned up
    */
-  Long run(Repository repository,
-           Iterable<EntityId> components,
-           BooleanSupplier cancelledCheck);
+  DeletionProgress run(Repository repository,
+                       Iterable<EntityId> components,
+                       BooleanSupplier cancelledCheck);
 }

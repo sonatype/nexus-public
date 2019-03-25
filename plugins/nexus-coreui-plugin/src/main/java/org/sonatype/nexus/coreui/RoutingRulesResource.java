@@ -12,7 +12,9 @@
  */
 package org.sonatype.nexus.coreui;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -84,10 +86,19 @@ public class RoutingRulesResource
   @GET
   @RequiresPermissions("nexus:repository-admin:*:*:read")
   public List<RoutingRuleXO> getRoutingRules() {
-    return routingRuleStore.list()
+    List<RoutingRuleXO> rules = routingRuleStore.list()
             .stream()
             .map(RoutingRulesResource::toXO)
             .collect(Collectors.toList());
+
+    Map<String, List<String>> assignedRepositories = routingRuleHelper.calculateAssignedRepositories();
+    for (RoutingRuleXO rule : rules) {
+      List<String> repositoryNames = assignedRepositories.getOrDefault(rule.getId(), Collections.emptyList());
+      repositoryNames.sort(String.CASE_INSENSITIVE_ORDER);
+      rule.setAssignedRepositoryNames(repositoryNames);
+    }
+
+    return rules;
   }
 
   @PUT
@@ -113,6 +124,13 @@ public class RoutingRulesResource
     if (null == routingRule) {
       throw new WebApplicationException(Status.NOT_FOUND);
     }
+
+    Map<String, List<String>> assignedRepositories = routingRuleHelper.calculateAssignedRepositories();
+    List<String> repositoryNames = assignedRepositories.getOrDefault(id(routingRule).getValue(), Collections.emptyList());
+    if (repositoryNames.size() > 0) {
+      throw new WebApplicationException("Routing rule is still in use by " + repositoryNames.size() + " repositories.", Status.BAD_REQUEST);
+    }
+
     routingRuleStore.delete(routingRule);
   }
 

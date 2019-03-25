@@ -21,7 +21,7 @@ import javax.inject.Provider;
 
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
-import org.sonatype.nexus.orient.quorum.DatabaseMaintenanceService;
+import org.sonatype.nexus.orient.DatabaseMaintenanceService;
 import org.sonatype.nexus.scheduling.TaskSupport;
 
 import com.google.common.collect.ImmutableList;

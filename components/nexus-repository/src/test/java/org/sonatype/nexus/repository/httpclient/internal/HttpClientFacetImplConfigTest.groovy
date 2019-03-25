@@ -87,7 +87,7 @@ class HttpClientFacetImplConfigTest
 
   @Test
   void 'fire event on remote connection status changed'() {
-    def underTest = new HttpClientFacetImpl(mock(HttpClientManager.class), [:])
+    def underTest = new HttpClientFacetImpl(mock(HttpClientManager.class), [:], [:])
     underTest.attach(mock(Repository.class))
     underTest.installDependencies(eventManager)
     underTest.onStatusChanged(new RemoteConnectionStatus(AVAILABLE), new RemoteConnectionStatus(BLOCKED))

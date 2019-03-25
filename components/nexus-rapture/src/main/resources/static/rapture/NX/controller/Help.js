@@ -38,7 +38,7 @@ Ext.define('NX.controller.Help', {
      * @property {String}
      * @readonly
      */
-    baseUrl: 'http://links.sonatype.com/products/nexus',
+    baseUrl: 'https://links.sonatype.com/products/nexus',
 
     getDocsUrl: function() {
       return NX.controller.Help.baseUrl + '/docs/' + NX.State.getVersionMajorMinor();

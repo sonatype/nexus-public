@@ -67,7 +67,7 @@ Ext.define('NX.coreui.controller.SupportRequest', {
    * Open sonatype support in a new browser window/tab.
    */
   makeRequest: function () {
-    NX.Windows.open('http://links.sonatype.com/products/nexus/pro/support-request');
+    NX.Windows.open('https://links.sonatype.com/products/nexus/pro/support-request');
   }
 
 });

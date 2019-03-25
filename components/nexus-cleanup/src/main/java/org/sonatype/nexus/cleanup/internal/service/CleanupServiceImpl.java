@@ -30,6 +30,7 @@ import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.storage.DefaultComponentMaintenanceImpl.DeletionProgress;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.transaction.UnitOfWork;
@@ -61,18 +62,22 @@ public class CleanupServiceImpl
 
   private final GroupType groupType;
 
+  private int cleanupRetryLimit;
+
   @Inject
   public CleanupServiceImpl(final RepositoryManager repositoryManager,
                             final CleanupComponentBrowse browseService,
                             final CleanupPolicyStorage cleanupPolicyStorage,
                             final CleanupMethod cleanupMethod,
-                            final GroupType groupType)
+                            final GroupType groupType,
+                            @Named("${nexus.cleanup.retries:-3}") final int cleanupRetryLimit)
   {
     this.repositoryManager = checkNotNull(repositoryManager);
     this.browseService = checkNotNull(browseService);
     this.cleanupPolicyStorage = checkNotNull(cleanupPolicyStorage);
     this.cleanupMethod = checkNotNull(cleanupMethod);
     this.groupType = checkNotNull(groupType);
+    this.cleanupRetryLimit = cleanupRetryLimit;
   }
 
   @Override
@@ -107,9 +112,20 @@ public class CleanupServiceImpl
   {
     log.info("Deleting components in repository {} using policy {}", repository.getName(), policy.getName());
 
+    DeletionProgress deletionProgress = new DeletionProgress(cleanupRetryLimit);
+
     if (!policy.getCriteria().isEmpty()) {
-      Iterable<EntityId> componentsToDelete = browseService.browse(policy, repository);
-      return cleanupMethod.run(repository, componentsToDelete, cancelledCheck);
+      do {
+        Iterable<EntityId> componentsToDelete = browseService.browse(policy, repository);
+        DeletionProgress currentProgress = cleanupMethod.run(repository, componentsToDelete, cancelledCheck);
+
+        deletionProgress.update(currentProgress);
+      } while (!deletionProgress.isFinished());
+
+      if (deletionProgress.isFailed()) {
+        log.warn("Deletion attempts exceeded for repository {}", repository.getName());
+      }
+      return deletionProgress.getCount();
     }
     else {
       log.info("Policy {} has no criteria and will therefore be ignored (i.e. no components will be deleted)",
