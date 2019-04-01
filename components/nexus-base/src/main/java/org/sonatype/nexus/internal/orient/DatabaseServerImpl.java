@@ -19,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -42,7 +43,6 @@ import org.sonatype.nexus.orient.DatabaseServer;
 import org.sonatype.nexus.orient.OrientConfigCustomizer;
 import org.sonatype.nexus.orient.entity.EntityHook;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.eventbus.Subscribe;
@@ -67,7 +67,10 @@ import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtoco
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
+import static java.util.function.Function.identity;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
+import static org.sonatype.nexus.orient.DatabaseInstanceNames.DATABASE_NAMES;
 
 /**
  * Default {@link DatabaseServer} implementation.
@@ -89,6 +92,8 @@ public class DatabaseServerImpl
 
   private final ApplicationDirectories applicationDirectories;
 
+  private final File databasesDir;
+
   private final List<OServerHandlerConfiguration> injectedHandlers;
 
   private final List<OrientConfigCustomizer> configCustomizers;
@@ -100,8 +105,6 @@ public class DatabaseServerImpl
   private final boolean binaryListenerEnabled;
 
   private final boolean httpListenerEnabled;
-
-  private final boolean disableUnusedDbsOnStartup;
 
   private boolean dynamicPlugins;
 
@@ -121,7 +124,6 @@ public class DatabaseServerImpl
                             @Named("${nexus.orient.dynamicPlugins:-false}") final boolean dynamicPlugins,
                             @Named("${nexus.orient.binaryListener.portRange:-2424-2430}") final String binaryPortRange,
                             @Named("${nexus.orient.httpListener.portRange:-2480-2490}") final String httpPortRange,
-                            @Named("${nexus.orient.disableUnusedDbsOnStartup:-true}") final boolean disableUnusedDbsOnStartup,
                             final NodeAccess nodeAccess,
                             final EntityHook entityHook)
   {
@@ -134,7 +136,6 @@ public class DatabaseServerImpl
     this.binaryPortRange = binaryPortRange;
     this.httpPortRange = httpPortRange;
     this.entityHook = checkNotNull(entityHook);
-    this.disableUnusedDbsOnStartup = disableUnusedDbsOnStartup;
 
     if (nodeAccess.isClustered()) {
       this.binaryListenerEnabled = true; // clustered mode requires binary listener
@@ -142,6 +143,8 @@ public class DatabaseServerImpl
     else {
       this.binaryListenerEnabled = binaryListenerEnabled;
     }
+
+    databasesDir = applicationDirectories.getWorkDirectory("db");
 
     log.info("OrientDB version: {}", OConstants.getVersion());
   }
@@ -160,16 +163,19 @@ public class DatabaseServerImpl
 
   @Override
   protected void doStart() throws Exception {
-    if (disableUnusedDbsOnStartup) {
-      // rename db file for any databases we no longer use, so they won't be errantly loaded
-      disableUnusedDatabases();
-    }
 
     // global startup
     Orient.instance().startup();
 
     // instance startup
-    OServer server = new OServer(false);
+    OServer server = new OServer(false)
+    {
+      @Override
+      public Map<String, String> getAvailableStorageNames() {
+        return getExistingDatabaseUrls();
+      }
+    };
+
     configureOrientMinimumLogLevel();
     server.setExtensionClassLoader(uberClassLoader);
     OServerConfiguration config = createConfiguration();
@@ -199,28 +205,22 @@ public class DatabaseServerImpl
     this.orientServer = server;
   }
 
-  @VisibleForTesting
-  void disableUnusedDatabases() {
-    File dbDir = applicationDirectories.getWorkDirectory("db");
-
-    renameDatabaseOcfFile(new File(dbDir, "audit"));
-    renameDatabaseOcfFile(new File(dbDir, "analytics"));
+  private Map<String, String> getExistingDatabaseUrls() {
+    return DATABASE_NAMES.stream()
+        .filter(this::databaseExists)
+        .collect(toImmutableMap(identity(), this::resolveDatabaseUrl));
   }
 
-  private void renameDatabaseOcfFile(File databaseDirectory) {
-    File dbOcfFileSource = new File(databaseDirectory, "database.ocf");
+  private boolean databaseExists(String name) {
+    return new File(resolveDatabaseDir(name), "database.ocf").exists();
+  }
 
-    if (dbOcfFileSource.exists()) {
-      if (dbOcfFileSource.renameTo(new File(databaseDirectory, "database.ocf.bak"))) {
-        log.info("Renamed unused {}/database.ocf file to database.ocf.bak for '{}' database.",
-            databaseDirectory.toString(), databaseDirectory.getName());
-      }
-      else {
-        log.error(
-            "Unable to properly rename {}/database.ocf for '{}' database.  You should manually do this to avoid needless replication.",
-            databaseDirectory.toString(), databaseDirectory.getName());
-      }
-    }
+  private String resolveDatabaseUrl(String name) {
+    return "plocal:" + resolveDatabaseDir(name).getAbsolutePath();
+  }
+
+  private File resolveDatabaseDir(String name) {
+    return new File(databasesDir, name);
   }
 
   private OServerConfiguration createConfiguration() {
@@ -236,11 +236,10 @@ public class DatabaseServerImpl
     // FIXME: Unsure what this is used for, its apparently assigned to xml location, but forcing it here
     config.location = "DYNAMIC-CONFIGURATION";
 
-    File databaseDir = applicationDirectories.getWorkDirectory("db");
     File securityFile = new File(configDir, "orientdb-security.json");
 
     config.properties = new OServerEntryConfiguration[]{
-        new OServerEntryConfiguration("server.database.path", databaseDir.getPath()),
+        new OServerEntryConfiguration("server.database.path", databasesDir.getPath()),
         new OServerEntryConfiguration("server.security.file", securityFile.getPath()),
         new OServerEntryConfiguration("plugin.dynamic", String.valueOf(dynamicPlugins))
     };
@@ -356,7 +355,7 @@ public class DatabaseServerImpl
   @Override
   @Guarded(by = STARTED)
   public List<String> databases() {
-    return ImmutableList.copyOf(orientServer.getAvailableStorageNames().keySet());
+    return ImmutableList.copyOf(getExistingDatabaseUrls().keySet());
   }
 
   @Guarded(by = STARTED)

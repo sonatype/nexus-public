@@ -10,21 +10,31 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.npm.internal;
+package org.sonatype.nexus.coreui
 
-import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.common.entity.EntityMetadata;
-import org.sonatype.nexus.repository.storage.AssetEvent;
-import org.sonatype.nexus.repository.storage.AssetUpdatedEvent;
+import org.sonatype.nexus.repository.routing.RoutingMode
 
-public class NpmPackageRootUpdatedEvent
-    extends AssetUpdatedEvent
-    implements AssetEvent
+import groovy.transform.CompileStatic
+import groovy.transform.ToString
+import groovy.transform.builder.Builder
+import org.hibernate.validator.constraints.NotBlank
+
+/**
+ * Routing Rule Test transfer object for internal REST API.
+ *
+ * @since 3.next
+ */
+@CompileStatic
+@Builder
+@ToString(includePackage = false, includeNames = true)
+class RoutingRuleTestXO
 {
-  public NpmPackageRootUpdatedEvent(final EntityMetadata metadata,
-                                    final String repositoryName,
-                                    final EntityId componentId)
-  {
-    super(metadata, repositoryName, componentId);
-  }
+  @NotBlank
+  RoutingMode mode
+
+  @NotBlank
+  List<String> matchers
+
+  @NotBlank
+  String path
 }

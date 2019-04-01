@@ -10,31 +10,44 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.rest.api
+package org.sonatype.nexus.coreui
+
+import javax.validation.constraints.Pattern
 
 import org.sonatype.nexus.repository.routing.RoutingMode
+import org.sonatype.nexus.validation.constraint.NamePatternConstants
+import org.sonatype.nexus.validation.group.Create
 
 import groovy.transform.CompileStatic
+import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
 import groovy.transform.builder.Builder
 import org.hibernate.validator.constraints.NotBlank
 
 /**
- * Routing Rule Test transfer object for REST APIs.
+ * Routing Rule transfer object for internal REST API.
  *
  * @since 3.next
  */
 @CompileStatic
 @Builder
 @ToString(includePackage = false, includeNames = true)
-class RoutingRuleTestXO
+@EqualsAndHashCode(includes = ['name'])
+class RoutingRuleXO
 {
-  @NotBlank
+  String id
+
+  @Pattern(regexp = NamePatternConstants.REGEX, message = NamePatternConstants.MESSAGE)
+  @NotBlank(groups = Create)
+  String name
+
+  String description
+
+  @NotBlank(groups = Create)
   RoutingMode mode
 
   @NotBlank
   List<String> matchers
 
-  @NotBlank
-  String path
+  List<String> assignedRepositoryNames
 }

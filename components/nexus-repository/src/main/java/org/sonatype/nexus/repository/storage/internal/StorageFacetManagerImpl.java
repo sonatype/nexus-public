@@ -32,7 +32,9 @@ import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.BucketDeleter;
 import org.sonatype.nexus.repository.storage.BucketEntityAdapter;
 import org.sonatype.nexus.repository.storage.ComponentDatabase;
+import org.sonatype.nexus.repository.storage.MissingBlobException;
 import org.sonatype.nexus.repository.storage.StorageFacetManager;
+import org.sonatype.nexus.transaction.RetryController;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
@@ -60,11 +62,15 @@ public class StorageFacetManagerImpl
   @Inject
   public StorageFacetManagerImpl(@Named(ComponentDatabase.NAME) final Provider<DatabaseInstance> databaseInstanceProvider,
                                  final BucketEntityAdapter bucketEntityAdapter,
-                                 final BucketDeleter bucketDeleter)
+                                 final BucketDeleter bucketDeleter,
+                                 final RetryController retryController)
   {
     this.databaseInstanceProvider = checkNotNull(databaseInstanceProvider);
     this.bucketEntityAdapter = checkNotNull(bucketEntityAdapter);
     this.bucketDeleter = checkNotNull(bucketDeleter);
+
+    // extend retry delay when blobs are missing to account for slow blob-stores
+    retryController.addAsMajorException(MissingBlobException.class);
   }
 
   @Override

@@ -21,6 +21,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.routing.internal.RoutingRuleHelperImpl;
 
 import com.google.common.collect.ImmutableList;
 import org.junit.Before;
@@ -33,10 +34,10 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class RoutingRuleHelperTest
+public class RoutingRuleHelperImplTest
     extends TestSupport
 {
-  private RoutingRuleHelper underTest;
+  private RoutingRuleHelperImpl underTest;
 
   @Mock
   private RoutingRuleStore routingRuleStore;
@@ -58,7 +59,7 @@ public class RoutingRuleHelperTest
         Arrays.asList(".*foobar.*", "^/org/apache/.*")));
     when(repository.getName()).thenReturn("test-repo");
     when(config.isEnabled()).thenReturn(true);
-    underTest = new RoutingRuleHelper(routingRuleStore, repositoryManager, config);
+    underTest = new RoutingRuleHelperImpl(routingRuleStore, repositoryManager, config);
   }
 
   @Test

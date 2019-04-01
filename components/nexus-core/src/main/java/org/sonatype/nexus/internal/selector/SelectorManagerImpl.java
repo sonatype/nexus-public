@@ -216,7 +216,7 @@ public class SelectorManagerImpl
         return authorizationManager.getPrivilege(id);
       }
       catch (NoSuchPrivilegeException e) {
-        log.warn("Unable to find privilege for id={}, continuing to check privileges", id, e);
+        log.debug("Unable to find privilege for id={}, continuing to check privileges", id, e);
         return null;
       }
     }).filter(Objects::nonNull).filter(repositoryFormatOrNameMatcher(repositoryNames, formats)).map(this::getContentSelector).collect(toList());
@@ -264,7 +264,7 @@ public class SelectorManagerImpl
       role.getRoles().forEach(nestedRoleId -> getRoles(nestedRoleId, authorizationManager, roles));
     }
     catch (NoSuchRoleException e) {
-      log.warn("Unable to find role for roleId={}, continue searching for roles", roleId, e);
+      log.debug("Unable to find role for roleId={}, continue searching for roles", roleId, e);
     }
   }
 

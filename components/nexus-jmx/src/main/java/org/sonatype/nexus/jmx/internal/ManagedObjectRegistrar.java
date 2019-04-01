@@ -24,7 +24,6 @@ import javax.management.ObjectName;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.jmx.MBean;
 import org.sonatype.nexus.jmx.ObjectNameEntry;
-import org.sonatype.nexus.jmx.SuppliedMBeanAttribute;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
 import org.sonatype.nexus.jmx.reflect.ReflectionMBeanBuilder;
 
@@ -212,33 +211,6 @@ public class ManagedObjectRegistrar
 
     // discover managed members
     builder.discover();
-
-    // expose additional information we have about the bean
-    builder.attribute(new SuppliedMBeanAttribute.Builder()
-            .name("sisu.key")
-            .description("Sisu bean-key")
-            .value(entry.getKey().toString())
-            .build()
-    );
-    builder.attribute(new SuppliedMBeanAttribute.Builder()
-            .name("sisu.rank")
-            .description("Sisu bean-rank")
-            .value(entry.getRank())
-            .build()
-    );
-    builder.attribute(new SuppliedMBeanAttribute.Builder()
-            .name("sisu.source")
-            .description("Sisu bean-source")
-            .value(entry.getSource().toString())
-            .build()
-    );
-    builder.attribute(new SuppliedMBeanAttribute.Builder()
-            .name("sisu.description")
-            .description("Sisu bean-description")
-            .type(String.class)
-            .value(entry.getDescription())
-            .build()
-    );
 
     return builder.build();
   }

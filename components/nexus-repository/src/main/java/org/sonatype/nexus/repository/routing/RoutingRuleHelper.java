@@ -12,48 +12,19 @@
  */
 package org.sonatype.nexus.repository.routing;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.manager.RepositoryManager;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * @since 3.next
  */
-@Named
-@Singleton
-public class RoutingRuleHelper
+public interface RoutingRuleHelper
 {
-  private static final String CONFIG_RULE_KEY = "routingRuleId";
+  String CONFIG_RULE_KEY = "routingRuleId";
 
-  private static final String CONFIG_MAP_KEY = "routingRules";
-
-  private final RoutingRuleStore routingRuleStore;
-
-  private final RoutingRulesConfiguration configuration;
-
-  private final RepositoryManager repositoryManager;
-
-  @Inject
-  public RoutingRuleHelper(
-      final RoutingRuleStore routingRuleStore,
-      final RepositoryManager repositoryManager,
-      final RoutingRulesConfiguration configuration)
-  {
-    this.routingRuleStore = checkNotNull(routingRuleStore);
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.configuration = checkNotNull(configuration);
-  }
+  String CONFIG_MAP_KEY = "routingRules";
 
   /**
    * Determine if the path is allowed if the repository has a routing rule configured.
@@ -62,18 +33,7 @@ public class RoutingRuleHelper
    * @param path the path of the component (must include leading slash)
    * @return true if the request is allowed, false if it should be blocked
    */
-  public boolean isAllowed(final Repository repository, final String path) {
-    if (configuration.isEnabled()) {
-      RoutingRule routingRule = getRoutingRule(repository);
-
-      if (routingRule == null) {
-        return true;
-      }
-
-      return isAllowed(routingRule.mode(), routingRule.matchers(), path);
-    }
-    return true;
-  }
+  boolean isAllowed(final Repository repository, final String path);
 
   /**
    * Determine if the path is allowed by the RoutingRule, does not consider whether the configuration is enabled.
@@ -83,40 +43,12 @@ public class RoutingRuleHelper
    * @param path the path of the component (must include leading slash)
    * @return true if the request is allowed, false if it should be blocked
    */
-  public boolean isAllowed(final RoutingMode mode, final List<String> matchers, final String path) {
-    boolean matches = matchers.stream().anyMatch(path::matches);
-    return (!matches && mode == RoutingMode.BLOCK) || (matches && mode == RoutingMode.ALLOW);
-  }
+  boolean isAllowed(final RoutingMode mode, final List<String> matchers, final String path);
 
   /**
    * Iterates through all repositories to find which routing rules are assigned
    *
    * @return A map of routing rule ids to a list of repository names that are using them
    */
-  public Map<String, List<String>> calculateAssignedRepositories() {
-    Map<String, List<String>> assignedRepositories = new HashMap<>();
-    for (Repository repository : repositoryManager.browse()) {
-      String routingRuleId = getRoutingRuleId(repository);
-      if (null != routingRuleId) {
-        List<String> repositoryNames = assignedRepositories.computeIfAbsent(routingRuleId, k -> new ArrayList<>());
-        repositoryNames.add(repository.getName());
-      }
-    }
-    return assignedRepositories;
-  }
-
-  private RoutingRule getRoutingRule(final Repository repository) {
-    String routingRuleId = getRoutingRuleId(repository);
-    if (routingRuleId != null) {
-      return routingRuleStore.getById(routingRuleId);
-    }
-    return null;
-  }
-
-  private static String getRoutingRuleId(final Repository repository) {
-    Map<String, Object> routingConfiguration = repository.getConfiguration().getAttributes()
-        .getOrDefault(CONFIG_MAP_KEY, Collections.emptyMap());
-
-    return (String) routingConfiguration.get(CONFIG_RULE_KEY);
-  }
+  Map<String, List<String>> calculateAssignedRepositories();
 }

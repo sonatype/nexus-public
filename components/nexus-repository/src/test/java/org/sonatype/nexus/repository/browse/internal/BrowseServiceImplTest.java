@@ -57,6 +57,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -321,7 +322,8 @@ public class BrowseServiceImplTest
 
   @Test
   public void testGetAssetById() {
-    String expectedSql = "SELECT * FROM asset WHERE contentAuth(@this, :browsedRepository) == true AND @RID == :rid";
+    String expectedSql =
+        format("SELECT FROM %s WHERE contentAuth(@this, :browsedRepository) == true", assetOneORID);
 
     when(storageTx.browse(eq(expectedSql), paramsCaptor.capture())).thenReturn(Collections.singletonList(assetOneDoc));
 
@@ -332,7 +334,6 @@ public class BrowseServiceImplTest
     Map<String, Object> params = paramsCaptor.getValue();
 
     assertThat(params.get("browsedRepository"), is("releases"));
-    assertThat(params.get("rid"), is("assetOne"));
   }
 
   @Test
@@ -394,7 +395,8 @@ public class BrowseServiceImplTest
 
   @Test
   public void testGetAssetById_NoResultsIsNull() {
-    String expectedSql = "SELECT * FROM asset WHERE contentAuth(@this, :browsedRepository) == true AND @RID == :rid";
+    String expectedSql =
+        format("SELECT FROM %s WHERE contentAuth(@this, :browsedRepository) == true", assetOneORID);
 
     when(storageTx.browse(eq(expectedSql), paramsCaptor.capture())).thenReturn(Collections.emptyList());
 
@@ -403,12 +405,12 @@ public class BrowseServiceImplTest
     Map<String, Object> params = paramsCaptor.getValue();
 
     assertThat(params.get("browsedRepository"), is("releases"));
-    assertThat(params.get("rid"), is("assetOne"));
   }
 
   @Test
   public void testGetComponentById() {
-    String expectedSql = "SELECT * FROM component WHERE contentAuth(@this, :browsedRepository) == true AND @RID == :rid";
+    String expectedSql =
+        format("SELECT FROM %s WHERE contentAuth(@this, :browsedRepository) == true", componentOneORID);
 
     when(storageTx.browse(eq(expectedSql), paramsCaptor.capture()))
         .thenReturn(Collections.singletonList(componentOneDoc));
@@ -420,12 +422,12 @@ public class BrowseServiceImplTest
     Map<String, Object> params = paramsCaptor.getValue();
 
     assertThat(params.get("browsedRepository"), is("releases"));
-    assertThat(params.get("rid"), is("componentOne"));
   }
 
   @Test
   public void testGetComponentById_NoResultsIsNull() {
-    String expectedSql = "SELECT * FROM component WHERE contentAuth(@this, :browsedRepository) == true AND @RID == :rid";
+    String expectedSql =
+        format("SELECT FROM %s WHERE contentAuth(@this, :browsedRepository) == true", componentOneORID);
 
     when(storageTx.browse(eq(expectedSql), paramsCaptor.capture())).thenReturn(Collections.emptyList());
 
@@ -434,7 +436,6 @@ public class BrowseServiceImplTest
     Map<String, Object> params = paramsCaptor.getValue();
 
     assertThat(params.get("browsedRepository"), is("releases"));
-    assertThat(params.get("rid"), is("componentOne"));
   }
 
   @Test

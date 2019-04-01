@@ -266,7 +266,7 @@ public class BrowseServiceImpl
     checkNotNull(repository);
     checkNotNull(assetId);
 
-    return getById(assetId, repository, "asset", assetEntityAdapter);
+    return getById(assetId, repository, assetEntityAdapter);
   }
 
   @Override
@@ -274,7 +274,7 @@ public class BrowseServiceImpl
     checkNotNull(repository);
     checkNotNull(componentId);
 
-    return getById(componentId, repository, "component", componentEntityAdapter);
+    return getById(componentId, repository, componentEntityAdapter);
   }
 
   @Override
@@ -289,14 +289,11 @@ public class BrowseServiceImpl
 
   private <T extends MetadataNode<?>> T getById(final ORID orid,
                                                 final Repository repository,
-                                                final String tableName,
                                                 final MetadataNodeEntityAdapter<T> adapter)
   {
-    String sql = format("SELECT * FROM %s WHERE contentAuth(@this, :browsedRepository) == true AND @RID == :rid",
-        tableName);
+    String sql = format("SELECT FROM %s WHERE contentAuth(@this, :browsedRepository) == true", orid);
 
-    Map<String, Object> params = ImmutableMap
-        .of("browsedRepository", repository.getName(), "rid", orid.toString());
+    Map<String, Object> params = ImmutableMap.of("browsedRepository", repository.getName());
 
     try (StorageTx storageTx = repository.facet(StorageFacet.class).txSupplier().get()) {
       storageTx.begin();

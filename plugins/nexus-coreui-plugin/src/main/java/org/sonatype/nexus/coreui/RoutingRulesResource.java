@@ -32,8 +32,6 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response.Status;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.repository.rest.api.RoutingRuleTestXO;
-import org.sonatype.nexus.repository.rest.api.RoutingRuleXO;
 import org.sonatype.nexus.repository.routing.RoutingMode;
 import org.sonatype.nexus.repository.routing.RoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingRuleHelper;

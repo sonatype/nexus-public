@@ -28,6 +28,10 @@ public class WebApplicationMessageException
     extends WebApplicationException
 {
   public WebApplicationMessageException(final Status status, final String message) {
-    super(Response.status(checkNotNull(status)).entity(checkNotNull(message)).type(TEXT_PLAIN).build());
+    this(status, message, TEXT_PLAIN);
+  }
+
+  public WebApplicationMessageException(final Status status, final Object message, final String mediaType) {
+    super(Response.status(checkNotNull(status)).entity(checkNotNull(message)).type(mediaType).build());
   }
 }

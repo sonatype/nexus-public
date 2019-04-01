@@ -14,8 +14,10 @@ package org.sonatype.nexus.internal.orient;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.util.Collections;
+import java.util.List;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
@@ -29,8 +31,11 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mock;
 
-import static org.hamcrest.CoreMatchers.is;
+import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
 
 public class DatabaseServerImplTest
@@ -54,60 +59,73 @@ public class DatabaseServerImplTest
   public void setup() {
     when(applicationDirectories.getWorkDirectory("db")).thenReturn(tempDir.getRoot());
 
-    underTest = new DatabaseServerImpl(applicationDirectories, Collections.emptyList(), Collections.emptyList(),
-        ClassLoader.getSystemClassLoader(), false, false, false, "2424-2430", "2480-2490", true, nodeAccess,
+    underTest = new DatabaseServerImpl(
+        applicationDirectories,
+        Collections.emptyList(),
+        Collections.emptyList(),
+        ClassLoader.getSystemClassLoader(),
+        false, false, false,
+        "2424-2430", "2480-2490",
+        nodeAccess,
         new EntityHook(eventManager));
   }
 
   @Test
-  public void testDisableUnusedDatabases_auditDatabase() throws IOException {
-    validateDatabaseUnmounted(tempDir.newFolder("audit"));
+  public void testOnlyOurDatabasesAreReported() {
+    List<String> candidates = asList(
+        "audit",
+        "analytics",
+        "component",
+        "component.orig",
+        "component.bak",
+        "config",
+        "security",
+        "accesslog",
+        "OSystem");
+
+    candidates.forEach(this::createDatabase);
+
+    assertThat(underTest.databases(), containsInAnyOrder("component", "config", "security", "accesslog"));
   }
 
   @Test
-  public void testDisableUnusedDatabases_analyticsDatabase() throws IOException {
-    validateDatabaseUnmounted(tempDir.newFolder("analytics"));
+  public void testNoDatabasesAreReportedForNewInstance() {
+
+    // mimic new instance, don't create any databases
+
+    assertThat(underTest.databases(), is(empty()));
   }
 
   @Test
-  public void testDisableUnusedDatabases_ignoredDatabases() throws IOException {
-    validateDatabaseIgnored(tempDir.newFolder("component"));
-    validateDatabaseIgnored(tempDir.newFolder("config"));
-    validateDatabaseIgnored(tempDir.newFolder("security"));
-    validateDatabaseIgnored(tempDir.newFolder("accesslog"));
-    validateDatabaseIgnored(tempDir.newFolder("OSystem"));
+  public void testDatabasesAreReportedAsTheyAppear() {
+
+    assertThat(underTest.databases(), is(empty()));
+
+    createDatabase("config");
+
+    assertThat(underTest.databases(), containsInAnyOrder("config"));
+
+    createDatabase("component");
+
+    assertThat(underTest.databases(), containsInAnyOrder("component", "config"));
+
+    createDatabase("accesslog");
+
+    assertThat(underTest.databases(), containsInAnyOrder("component", "config", "accesslog"));
+
+    createDatabase("security");
+
+    assertThat(underTest.databases(), containsInAnyOrder("component", "config", "security", "accesslog"));
   }
 
-  @Test
-  public void testDisableUnusedDatabases_noDatabases() {
-    underTest.disableUnusedDatabases();
-  }
-
-  @Test
-  public void testDisableUnusedDatabases_invalidDatabaseDir() throws IOException {
-    when(applicationDirectories.getWorkDirectory("db")).thenReturn(tempDir.newFile());
-    underTest.disableUnusedDatabases();
-  }
-
-  private void validateDatabaseUnmounted(File dbDir) throws IOException {
-    File ocfSourceFile = new File(dbDir, "database.ocf");
-    Files.createFile(ocfSourceFile.toPath());
-    assertThat(ocfSourceFile.exists(), is(true));
-
-    underTest.disableUnusedDatabases();
-
-    assertThat(ocfSourceFile.exists(), is(false));
-    assertThat(new File(dbDir, "database.ocf.bak").exists(), is(true));
-  }
-
-  private void validateDatabaseIgnored(File dbDir) throws IOException {
-    File ocfSourceFile = new File(dbDir, "database.ocf");
-    Files.createFile(ocfSourceFile.toPath());
-    assertThat(ocfSourceFile.exists(), is(true));
-
-    underTest.disableUnusedDatabases();
-
-    assertThat(ocfSourceFile.exists(), is(true));
-    assertThat(new File(dbDir, "database.ocf.bak").exists(), is(false));
+  private void createDatabase(final String name) {
+    try {
+      File ocfSourceFile = new File(tempDir.newFolder(name), "database.ocf");
+      Files.createFile(ocfSourceFile.toPath());
+      assertThat(ocfSourceFile.exists(), is(true));
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 }

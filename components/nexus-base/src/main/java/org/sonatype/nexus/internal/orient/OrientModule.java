@@ -16,6 +16,7 @@ import org.sonatype.nexus.orient.DatabaseManager;
 import org.sonatype.nexus.orient.DatabaseServer;
 import org.sonatype.nexus.orient.EncryptedRecordIdObfuscator;
 import org.sonatype.nexus.orient.RecordIdObfuscator;
+import org.sonatype.nexus.transaction.RetryController;
 
 import com.google.inject.AbstractModule;
 
@@ -33,5 +34,6 @@ public class OrientModule
     bind(DatabaseServer.class).to(DatabaseServerImpl.class);
     bind(DatabaseManager.class).to(DatabaseManagerImpl.class);
     bind(RecordIdObfuscator.class).to(EncryptedRecordIdObfuscator.class);
+    bind(RetryController.class).toInstance(RetryController.INSTANCE);
   }
 }

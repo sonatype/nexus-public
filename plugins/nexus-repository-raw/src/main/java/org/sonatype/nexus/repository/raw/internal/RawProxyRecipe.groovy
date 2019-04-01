@@ -29,6 +29,7 @@ import org.sonatype.nexus.repository.http.PartialFetchHandler
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet
 import org.sonatype.nexus.repository.proxy.ProxyHandler
 import org.sonatype.nexus.repository.purge.PurgeUnusedFacet
+import org.sonatype.nexus.repository.routing.RoutingRuleHandler
 import org.sonatype.nexus.repository.search.SearchFacet
 import org.sonatype.nexus.repository.security.SecurityHandler
 import org.sonatype.nexus.repository.storage.SingleAssetComponentMaintenance
@@ -128,6 +129,9 @@ class RawProxyRecipe
   HandlerContributor handlerContributor
 
   @Inject
+  RoutingRuleHandler routingRuleHandler
+
+  @Inject
   public RawProxyRecipe(final @Named(ProxyType.NAME) Type type,
                         final @Named(RawFormat.NAME) Format format)
   {
@@ -159,6 +163,7 @@ class RawProxyRecipe
         .matcher(new TokenMatcher('/{name:.+}'))
         .handler(timingHandler)
         .handler(securityHandler)
+        .handler(routingRuleHandler)
         .handler(exceptionHandler)
         .handler(handlerContributor)
         .handler(negativeCacheHandler)

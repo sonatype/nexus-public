@@ -25,7 +25,6 @@ import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.entity.EntityLog.UnknownDeltaException;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
-import org.sonatype.nexus.scheduling.TaskScheduler;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import org.junit.Before;
@@ -60,7 +59,7 @@ public class IndexSyncServiceTest
   IndexRequestProcessor indexRequestProcessor;
 
   @Mock
-  public TaskScheduler taskScheduler;
+  public IndexRebuildManager indexRebuildManager;
 
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -79,7 +78,7 @@ public class IndexSyncServiceTest
     when(directories.getWorkDirectory("elasticsearch")).thenReturn(elasticsearchDir);
     underTest = new IndexSyncService(componentDatabase, componentEntityAdapter,
                                       assetEntityAdapter, directories, nodeAccess,
-                                      indexRequestProcessor, taskScheduler);
+                                      indexRequestProcessor, indexRebuildManager);
     nexusLsn = new File(elasticsearchDir, "nexus.lsn");
   }
 

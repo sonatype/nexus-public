@@ -79,4 +79,9 @@ public class ApplicationLicenseImpl
   public String getFingerprint() {
     return null;
   }
+
+  @Override
+  public void refresh() {
+    // no-op
+  }
 }

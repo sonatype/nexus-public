@@ -61,6 +61,13 @@ public interface ApplicationLicense
   String getFingerprint();
 
   /**
+   * Refreshes the cached license details with the latest from the license manager.
+   *
+   * @since 3.next
+   */
+  void refresh();
+
+  /**
    * Keys for Attribute values associated with this license.
    */
   enum Attributes {

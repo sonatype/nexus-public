@@ -39,11 +39,8 @@ import org.sonatype.nexus.orient.entity.AttachedEntityId;
 import org.sonatype.nexus.orient.entity.EntityAdapter;
 import org.sonatype.nexus.orient.entity.EntityLog;
 import org.sonatype.nexus.orient.entity.EntityLog.UnknownDeltaException;
-import org.sonatype.nexus.repository.RepositoryTaskSupport;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
-import org.sonatype.nexus.scheduling.TaskConfiguration;
-import org.sonatype.nexus.scheduling.TaskScheduler;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.ByteStreams;
@@ -53,9 +50,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.orient.DatabaseInstanceNames.COMPONENT;
-import static org.sonatype.nexus.repository.RepositoryTaskSupport.ALL_REPOSITORIES;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_COMPONENT;
 import static org.sonatype.nexus.repository.storage.BucketEntityAdapter.P_REPOSITORY_NAME;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_BUCKET;
@@ -67,7 +63,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
  */
 @Named
 @Singleton
-@ManagedLifecycle(phase = TASKS)
+@ManagedLifecycle(phase = SERVICES)
 public class IndexSyncService
     extends LifecycleSupport
 {
@@ -81,7 +77,7 @@ public class IndexSyncService
 
   private final IndexRequestProcessor indexRequestProcessor;
 
-  private final TaskScheduler taskScheduler;
+  private final IndexRebuildManager indexRebuildManager;
 
   private final EntityLog entityLog;
 
@@ -94,13 +90,13 @@ public class IndexSyncService
                           final ApplicationDirectories directories,
                           final NodeAccess nodeAccess,
                           final IndexRequestProcessor indexRequestProcessor,
-                          final TaskScheduler taskScheduler)
+                          final IndexRebuildManager indexRebuildManager)
   {
     this.componentDatabase = checkNotNull(componentDatabase);
     this.componentEntityAdapter = checkNotNull(componentEntityAdapter);
     this.nodeAccess = checkNotNull(nodeAccess);
     this.indexRequestProcessor = checkNotNull(indexRequestProcessor);
-    this.taskScheduler = checkNotNull(taskScheduler);
+    this.indexRebuildManager = checkNotNull(indexRebuildManager);
 
     this.entityLog = new EntityLog(componentDatabase, componentEntityAdapter, assetEntityAdapter);
     this.checkpointFile = new File(directories.getWorkDirectory("elasticsearch"), "nexus.lsn");
@@ -119,12 +115,12 @@ public class IndexSyncService
     }
     catch (UnknownDeltaException e) {
       logReason("Rebuilding search indexes because database has diverged", e);
-      rebuildIndex();
+      indexRebuildManager.rebuildAllIndexes();
     }
     catch (FileNotFoundException e) {
       if (!nodeAccess.isOldestNode()) {
         logReason("Rebuilding search indexes to match joining cluster", e);
-        rebuildIndex();
+        indexRebuildManager.rebuildAllIndexes();
       }
     }
     catch (Exception e) {
@@ -191,20 +187,6 @@ public class IndexSyncService
   @Nullable
   private EntityId componentId(@Nullable final ORID rid) {
     return rid != null ? new AttachedEntityId(componentEntityAdapter, rid) : null;
-  }
-
-  /**
-   * Schedule one-off background task to rebuild the indexes of all repositories.
-   */
-  private void rebuildIndex() {
-    TaskConfiguration taskConfig = taskScheduler.createTaskConfigurationInstance(RebuildIndexTaskDescriptor.TYPE_ID);
-    taskConfig.setString(RepositoryTaskSupport.REPOSITORY_NAME_FIELD_ID, ALL_REPOSITORIES);
-    try {
-      taskScheduler.submit(taskConfig);
-    }
-    catch (RuntimeException e) {
-      log.warn("Problem scheduling rebuild of repository indexes", e);
-    }
   }
 
   @VisibleForTesting

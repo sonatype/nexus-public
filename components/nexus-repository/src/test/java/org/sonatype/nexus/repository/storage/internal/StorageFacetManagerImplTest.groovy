@@ -21,6 +21,7 @@ import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.storage.Bucket
 import org.sonatype.nexus.repository.storage.BucketDeleter
 import org.sonatype.nexus.repository.storage.BucketEntityAdapter
+import org.sonatype.nexus.transaction.RetryController
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx
 import org.junit.Before
@@ -61,6 +62,9 @@ class StorageFacetManagerImplTest
   private BucketDeleter bucketDeleter
 
   @Mock
+  private RetryController retryController
+
+  @Mock
   private Repository repository
 
   @Mock
@@ -77,7 +81,8 @@ class StorageFacetManagerImplTest
     underTest = new StorageFacetManagerImpl(
         { databaseInstance },
         bucketEntityAdapter,
-        bucketDeleter
+        bucketDeleter,
+        retryController
     )
   }
 

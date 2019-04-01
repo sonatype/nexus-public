@@ -62,12 +62,14 @@ class NpmGroupPackageHandler
   {
     NpmGroupFacet groupFacet = getGroupFacet(context)
 
+    // Dispatch requests to members to trigger update events and group cache invalidation when a member has changed
+    Map responses = getResponses(context, dispatched, groupFacet)
+
     NpmContent content = groupFacet.getFromCache(context)
 
     // first check cached content against itself only
     if (isNull(content)) {
 
-      Map responses = getResponses(context, dispatched, groupFacet)
       if (isNull(responses) || responses.isEmpty()) {
         return notFound("Not found")
       }
@@ -77,7 +79,7 @@ class NpmGroupPackageHandler
 
     // only add missing blob handler if we actually had content, no need otherwise
     content.missingBlobInputStreamSupplier {
-      missingBlobException -> handleMissingBlob(context, dispatched, groupFacet, missingBlobException)
+      missingBlobException -> handleMissingBlob(context, responses, groupFacet, missingBlobException)
     }
 
     return ok(content)
@@ -108,12 +110,10 @@ class NpmGroupPackageHandler
   }
 
   private InputStream handleMissingBlob(final Context context,
-                                        final DispatchedRepositories dispatched,
+                                        final Map responses,
                                         final NpmGroupFacet groupFacet,
                                         final MissingAssetBlobException e)
   {
-    Map responses = getResponses(context, dispatched, groupFacet)
-
     // why check the response? It might occur that the members don't have cache on their own and that their remote
     // doesn't have any responses (404) for the request. For this to occur allot must be wrong on its own already.
     if (responses.isEmpty()) {
