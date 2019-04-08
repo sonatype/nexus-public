@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.routing;
 import java.util.List;
 import java.util.Map;
 
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 
 /**
@@ -22,10 +23,6 @@ import org.sonatype.nexus.repository.Repository;
  */
 public interface RoutingRuleHelper
 {
-  String CONFIG_RULE_KEY = "routingRuleId";
-
-  String CONFIG_MAP_KEY = "routingRules";
-
   /**
    * Determine if the path is allowed if the repository has a routing rule configured.
    *
@@ -50,5 +47,5 @@ public interface RoutingRuleHelper
    *
    * @return A map of routing rule ids to a list of repository names that are using them
    */
-  Map<String, List<String>> calculateAssignedRepositories();
+  Map<EntityId, List<String>> calculateAssignedRepositories();
 }

@@ -10,36 +10,27 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.orient;
+package org.sonatype.nexus.blobstore;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
+import java.io.IOException;
 
-import org.sonatype.nexus.scheduling.TaskConfiguration;
-import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
+import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 
 /**
- * Descriptor for cluster information logging
+ * Manages a storage location.
  *
  * @since 3.next
  */
-@Named
-@Singleton
-public class ClusterLogTaskDescriptor
-    extends TaskDescriptorSupport
+public interface StorageLocationManager
 {
-  public static final String TYPE_ID = "cluster.periodicLogging";
+  /**
+   * Prepares the storage location at start up.  Should initialize the storage location if needed, or validate it if
+   * already created.
+   */
+  void prepareStorageLocation(BlobStoreConfiguration blobStoreConfiguration) throws IOException;
 
-  public ClusterLogTaskDescriptor() {
-    super(TYPE_ID,
-        ClusterLogTask.class,
-        "Admin - Log database table record counts",
-        true,
-        true);
-  }
-
-  @Override
-  public void initializeConfiguration(final TaskConfiguration configuration) {
-    configuration.setBoolean(MULTINODE_KEY, true);
-  }
+  /**
+   * Deletes the storage location when the blob store is removed.
+   */
+  void deleteStorageLocation(BlobStoreConfiguration blobStoreConfiguration) throws IOException;
 }

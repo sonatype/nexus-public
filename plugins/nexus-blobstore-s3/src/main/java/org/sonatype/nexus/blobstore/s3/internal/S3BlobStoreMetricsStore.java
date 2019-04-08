@@ -29,7 +29,6 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.google.common.collect.ImmutableMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 /**
  * A S3 specific {@link BlobStoreMetricsStoreSupport} implementation that retains blobstore metrics in memory,
@@ -71,15 +70,6 @@ public class S3BlobStoreMetricsStore
   }
 
   @Override
-  protected void doStop() throws Exception {
-    super.doStop();
-
-    bucket = null;
-    s3 = null;
-    bucketPrefix = null;
-  }
-
-  @Override
   protected Stream<S3PropertiesFile> backingFiles() {
     if (s3 == null) {
       return Stream.empty();
@@ -95,19 +85,16 @@ public class S3BlobStoreMetricsStore
   }
 
   public void setBucket(final String bucket) {
-    checkState(this.bucket == null, "Do not initialize twice");
     checkNotNull(bucket);
     this.bucket = bucket;
   }
 
   public void setS3(final AmazonS3 s3) {
-    checkState(this.s3 == null, "Do not initialize twice");
     checkNotNull(s3);
     this.s3 = s3;
   }
 
   public void setBucketPrefix(String bucketPrefix) {
-    checkState(this.bucketPrefix == null, "Do not initialize twice");
     checkNotNull(bucketPrefix);
     this.bucketPrefix = bucketPrefix;
   }
@@ -116,6 +103,7 @@ public class S3BlobStoreMetricsStore
   public void remove() {
     backingFiles().forEach(metricsFile -> {
       try {
+        log.debug("Removing {}", metricsFile);
         metricsFile.remove();
       }
       catch (IOException e) {

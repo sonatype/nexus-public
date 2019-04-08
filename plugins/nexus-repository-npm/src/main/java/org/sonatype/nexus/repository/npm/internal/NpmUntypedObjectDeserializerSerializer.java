@@ -59,7 +59,7 @@ public class NpmUntypedObjectDeserializerSerializer
     String fieldName = parser.getCurrentName();
 
     for (NpmFieldMatcher matcher : matchers) {
-      if (matcher.matches(parser)) {
+      if (matcher.matches(parser) && matcher.allowDeserializationOnMatched()) {
         // first matcher wins
         return matcher.getDeserializer().deserialize(fieldName, defaultValueDeserialize(parser, context), parser, context, generator);
       }

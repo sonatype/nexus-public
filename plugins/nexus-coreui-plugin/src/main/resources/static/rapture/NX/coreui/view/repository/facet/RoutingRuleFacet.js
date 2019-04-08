@@ -48,14 +48,15 @@ Ext.define('NX.coreui.view.repository.facet.RoutingRuleFacet', {
         {
           xtype: 'combo',
           reference: 'routingRuleCombo',
-          name: 'attributes.routingRules.routingRuleId',
+          name: 'routingRuleId',
           displayField: 'name',
           valueField: 'id',
           bind: {
             store: '{RoutingRules}'
           },
           queryMode: 'local',
-          typeAhead: true
+          typeAhead: true,
+          forceSelection: true
         }
       ]
     }

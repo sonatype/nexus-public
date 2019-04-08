@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.npm.internal;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 import javax.annotation.Nullable;
 
@@ -27,6 +28,7 @@ import com.fasterxml.jackson.databind.deser.std.MapDeserializer;
 
 import static java.util.Collections.emptyList;
 import static java.util.Objects.nonNull;
+import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.META_ID;
 import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.META_REV;
 
@@ -76,6 +78,20 @@ public class NpmStreamingObjectMapper
     maybeWritePackageAndRevID(generator);
   }
 
+  @Override
+  protected void afterDeserialize(final JsonGenerator generator) throws IOException {
+    super.afterDeserialize(generator);
+    appendFieldsIfNeverMatched(generator);
+  }
+
+  private void appendFieldsIfNeverMatched(final JsonGenerator generator) throws IOException {
+    for (NpmFieldMatcher matcher : unmatched()) {
+      NpmFieldDeserializer deserializer = matcher.getDeserializer();
+      generator.writeFieldName(matcher.getFieldName());
+      generator.writeObject(deserializer.deserializeValue(null));
+    }
+  }
+
   private void maybeWritePackageAndRevID(final JsonGenerator generator) throws IOException {
     if (nonNull(packageId)) {
       generator.writeFieldName(META_ID);
@@ -86,5 +102,16 @@ public class NpmStreamingObjectMapper
       generator.writeFieldName(META_REV);
       generator.writeObject(packageRev);
     }
+  }
+
+  private List<NpmFieldUnmatcher> unmatched() {
+    return matchers.stream().map(this::npmFieldUnmatchedFilter)
+        .filter(Objects::nonNull)
+        .filter(NpmFieldUnmatcher::wasNeverMatched)
+        .collect(toList());
+  }
+
+  private NpmFieldUnmatcher npmFieldUnmatchedFilter(final NpmFieldMatcher fieldMatcher) {
+    return fieldMatcher instanceof NpmFieldUnmatcher ? (NpmFieldUnmatcher) fieldMatcher : null;
   }
 }

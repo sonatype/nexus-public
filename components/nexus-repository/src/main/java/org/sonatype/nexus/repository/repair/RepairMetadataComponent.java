@@ -46,9 +46,9 @@ public abstract class RepairMetadataComponent
 {
   private static final String BEGINNING_ID = "#-1:-1";
 
-  private static final String ASSETS_WHERE = "@RID > :rid";
+  private static final String ASSETS_WHERE = "@rid > :rid";
 
-  private static final String ASSETS_SUFFIX = "ORDER BY @RID LIMIT :limit";
+  private static final String ASSETS_SUFFIX = "ORDER BY @rid LIMIT :limit";
 
   private static final int BATCH_SIZE = 100;
 

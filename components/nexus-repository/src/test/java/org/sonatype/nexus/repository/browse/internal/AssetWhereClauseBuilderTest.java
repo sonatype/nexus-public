@@ -37,7 +37,7 @@ public class AssetWhereClauseBuilderTest
 
   @Test
   public void contentAndLastId() {
-    assertThat(whereClause("content", true, true), is(equalTo("content AND name LIKE :nameFilter AND @RID > :rid")));
+    assertThat(whereClause("content", true, true), is(equalTo("content AND name LIKE :nameFilter AND @rid > :rid")));
   }
 
   @Test
@@ -52,6 +52,6 @@ public class AssetWhereClauseBuilderTest
 
   @Test
   public void noContentFilterAndLastId() {
-    assertThat(whereClause(null, true, true), is(equalTo("name LIKE :nameFilter AND @RID > :rid")));
+    assertThat(whereClause(null, true, true), is(equalTo("name LIKE :nameFilter AND @rid > :rid")));
   }
 }

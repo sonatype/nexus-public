@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.rest.internal.resources;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -32,6 +31,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response.Status;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.rest.api.RoutingRuleXO;
 import org.sonatype.nexus.repository.rest.internal.resources.doc.RoutingRulesApiResourceDoc;
 import org.sonatype.nexus.repository.routing.RoutingRule;
@@ -43,6 +43,7 @@ import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.emptyList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.common.entity.EntityHelper.id;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
@@ -121,10 +122,10 @@ public class RoutingRulesApiResource
   @RequiresPermissions("nexus:repository-admin:*:*:delete")
   public void deleteRoutingRule(@PathParam("name") final String name) {
     RoutingRule routingRule = getRuleFromStore(name);
-    String routingRuleId = id(routingRule).getValue();
-    Map<String, List<String>> assignedRepositories = routingRuleHelper.calculateAssignedRepositories();
+    EntityId routingRuleId = id(routingRule);
+    Map<EntityId, List<String>> assignedRepositories = routingRuleHelper.calculateAssignedRepositories();
 
-    List<String> repositoryNames = assignedRepositories.getOrDefault(routingRuleId, Collections.emptyList());
+    List<String> repositoryNames = assignedRepositories.computeIfAbsent(routingRuleId, id -> emptyList());
     if (!repositoryNames.isEmpty()) {
       throw new WebApplicationMessageException(
           Status.BAD_REQUEST,

@@ -41,6 +41,7 @@ Ext.define('NX.coreui.view.repository.facet.RoutingRuleFacetViewController', {
 
   onAfterRender: function() {
     if (!NX.State.getValue('routingRules', false)) { // nexus.routing.rules.enabled
+      this.getView().disable();
       return;
     }
 

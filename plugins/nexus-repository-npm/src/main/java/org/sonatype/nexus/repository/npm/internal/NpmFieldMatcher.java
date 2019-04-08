@@ -48,6 +48,15 @@ public class NpmFieldMatcher
   }
 
   /**
+   * Indicate whether the field matcher is allowed to be deserialized if it matched.
+   *
+   * @return true by default, implementers can override default behaviour.
+   */
+  public boolean allowDeserializationOnMatched() {
+    return true;
+  }
+
+  /**
    * Test if the {@link #fieldName} and {@link #pattern} matches the current path on the {@link JsonParser}
    *
    * @param parser {@link JsonParser}
@@ -77,5 +86,9 @@ public class NpmFieldMatcher
 
   public NpmFieldDeserializer getDeserializer() {
     return deserializer;
+  }
+
+  public String getFieldName() {
+    return fieldName;
   }
 }

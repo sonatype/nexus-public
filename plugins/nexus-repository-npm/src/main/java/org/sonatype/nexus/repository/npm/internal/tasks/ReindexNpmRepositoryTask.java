@@ -59,9 +59,9 @@ public class ReindexNpmRepositoryTask
 {
   public static final String NPM_V1_SEARCH_UNSUPPORTED = "npm_v1_search_unsupported";
 
-  private static final String ASSETS_WHERE = "@RID > :rid";
+  private static final String ASSETS_WHERE = "@rid > :rid";
 
-  private static final String ASSETS_SUFFIX = "ORDER BY @RID LIMIT :limit";
+  private static final String ASSETS_SUFFIX = "ORDER BY @rid LIMIT :limit";
 
   private static final int BATCH_SIZE = 100;
 

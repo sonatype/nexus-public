@@ -50,13 +50,17 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class ConfigurationEntityAdapter
     extends IterableEntityAdapter<Configuration>
 {
+  public static final String DB_NAME = "repository";
+
   private static final String DB_CLASS = new OClassNameBuilder()
-      .type("repository")
+      .type(DB_NAME)
       .build();
 
   private static final String P_REPOSITORY_NAME = "repository_name";
 
   private static final String P_RECIPE_NAME = "recipe_name";
+
+  public static final String P_ROUTING_RULE_ID = "routingRuleId";
 
   private static final String P_ONLINE = "online";
 
@@ -84,6 +88,7 @@ public class ConfigurationEntityAdapter
     type.createProperty(P_RECIPE_NAME, OType.STRING)
         .setMandatory(true)
         .setNotNull(true);
+    type.createProperty(P_ROUTING_RULE_ID, OType.LINK);
     type.createProperty(P_ONLINE, OType.BOOLEAN)
         .setMandatory(true)
         .setNotNull(true);

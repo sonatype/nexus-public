@@ -41,7 +41,7 @@ public class SuffixSqlBuilder
     String sortProperty = queryOptions.getSortProperty();
     String sortDirection = queryOptions.getSortDirection();
     if (sortProperty != null && sortDirection != null && "id".equals(sortProperty)) {
-      return " ORDER BY @RID " + sortDirection;
+      return " ORDER BY @rid " + sortDirection;
     }
     return "";
   }

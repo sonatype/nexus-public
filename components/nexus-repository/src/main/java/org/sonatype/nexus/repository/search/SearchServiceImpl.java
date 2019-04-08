@@ -25,6 +25,7 @@ import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.StreamSupport;
@@ -133,6 +134,8 @@ public class SearchServiceImpl
   private final boolean periodicFlush;
 
   private BulkProcessor bulkProcessor;
+
+  private final AtomicLong updateCount = new AtomicLong();
 
   /**
    * @param client source for a {@link Client}
@@ -250,6 +253,11 @@ public class SearchServiceImpl
   }
 
   @Override
+  public long getUpdateCount() {
+    return updateCount.get();
+  }
+
+  @Override
   public void createIndex(final Repository repository) {
     checkNotNull(repository);
     final String safeIndexName = SHA1.function().hashUnencodedChars(repository.getName()).toString();
@@ -336,6 +344,7 @@ public class SearchServiceImpl
     if (indexName == null) {
       return;
     }
+    updateCount.getAndIncrement();
     log.debug("Adding to index document {} from {}: {}", identifier, repository, json);
     client.get().prepareIndex(indexName, TYPE, identifier).setSource(json).execute(
         new ActionListener<IndexResponse>() {
@@ -368,6 +377,7 @@ public class SearchServiceImpl
       String identifier = identifierProducer.apply(component);
       String json = jsonDocumentProducer.apply(component);
       if (json != null) {
+        updateCount.getAndIncrement();
         log.debug("Bulk adding to index document {} from {}: {}", identifier, repository, json);
         bulkProcessor.add(
             client.get()

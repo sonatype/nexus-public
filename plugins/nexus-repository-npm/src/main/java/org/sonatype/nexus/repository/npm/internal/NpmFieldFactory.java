@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.npm.internal;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 import org.sonatype.nexus.repository.Repository;
 
@@ -58,6 +59,28 @@ public class NpmFieldFactory
 
   private static NpmFieldMatcher removeFieldMatcher(final String fieldName, final String pathRegex) {
     return new NpmFieldMatcher(fieldName, pathRegex, NULL_DESERIALIZER);
+  }
+
+  public static NpmFieldUnmatcher missingFieldMatcher(final String fieldName,
+                                                      final String pathRegex,
+                                                      final Supplier<Object> supplier)
+  {
+    return new NpmFieldUnmatcher(fieldName, pathRegex, missingFieldDeserializer(supplier));
+  }
+
+  public static NpmFieldDeserializer missingFieldDeserializer(final Supplier<Object> supplier) {
+    NpmFieldDeserializer deserializer = new NpmFieldDeserializer()
+    {
+      @Override
+      public Object deserializeValue(final Object defaultValue) {
+        return supplier.get();
+      }
+    };
+    return deserializer;
+  }
+
+  public static NpmFieldUnmatcher missingRevFieldMatcher(final Supplier<Object> supplier) {
+    return missingFieldMatcher(META_REV, "/" + META_REV, supplier);
   }
 
   public static NpmFieldMatcher rewriteTarballUrlMatcher(final Repository repository, final String packageId) {

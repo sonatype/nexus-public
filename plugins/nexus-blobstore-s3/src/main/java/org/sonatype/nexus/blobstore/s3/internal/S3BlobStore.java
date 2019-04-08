@@ -15,11 +15,8 @@ package org.sonatype.nexus.blobstore.s3.internal;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.locks.Lock;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -46,18 +43,11 @@ import com.amazonaws.SdkBaseException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.iterable.S3Objects;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.amazonaws.services.s3.model.BucketLifecycleConfiguration;
-import com.amazonaws.services.s3.model.BucketLifecycleConfiguration.Rule;
 import com.amazonaws.services.s3.model.ObjectTagging;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.services.s3.model.SetObjectTaggingRequest;
 import com.amazonaws.services.s3.model.Tag;
-import com.amazonaws.services.s3.model.lifecycle.LifecycleFilter;
-import com.amazonaws.services.s3.model.lifecycle.LifecycleFilterPredicate;
-import com.amazonaws.services.s3.model.lifecycle.LifecycleTagPredicate;
-import com.google.common.base.Predicates;
-import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
@@ -131,13 +121,15 @@ public class S3BlobStore
 
   public static final String DIRECT_PATH_PREFIX = CONTENT_PREFIX + "/" + DIRECT_PATH_ROOT;
 
-  static final Tag DELETED_TAG = new Tag("deleted", "true");
+  public static final Tag DELETED_TAG = new Tag("deleted", "true");
 
   static final String LIFECYCLE_EXPIRATION_RULE_ID = "Expire soft-deleted blobstore objects";
 
   private static final String FILE_V1 = "file/1";
 
   private final AmazonS3Factory amazonS3Factory;
+
+  private final BucketManager bucketManager;
 
   private S3Uploader uploader;
 
@@ -155,13 +147,15 @@ public class S3BlobStore
                      @Named("multipart-uploader") final S3Uploader uploader,
                      final S3Copier copier,
                      final S3BlobStoreMetricsStore storeMetrics,
-                     final DryRunPrefix dryRunPrefix)
+                     final DryRunPrefix dryRunPrefix,
+                     final BucketManager bucketManager)
   {
     super(blobIdLocationResolver, dryRunPrefix);
     this.amazonS3Factory = checkNotNull(amazonS3Factory);
     this.uploader = checkNotNull(uploader);
     this.copier = checkNotNull(copier);
     this.storeMetrics = checkNotNull(storeMetrics);
+    this.bucketManager = checkNotNull(bucketManager);
   }
 
   @Override
@@ -324,7 +318,7 @@ public class S3BlobStore
           }
 
           if (blobAttributes.isDeleted() && !includeDeleted) {
-            log.warn("Attempt to access soft-deleted blob {} ({}), reason: {}", blobId, blobAttributes, blobAttributes.getDeletedReason());
+            log.warn("Attempt to access soft-deleted blob {} attributes: {}", blobId, blobAttributes);
             return null;
           }
 
@@ -456,68 +450,13 @@ public class S3BlobStore
   protected void doInit(final BlobStoreConfiguration configuration) {
     try {
       this.s3 = amazonS3Factory.create(configuration);
-      if (!s3.doesBucketExist(getConfiguredBucket())) {
-        s3.createBucket(getConfiguredBucket());
-
-        if (getConfiguredExpirationInDays() >= 0) {
-          addBucketLifecycleConfiguration(null);
-        }
-      } else {
-        if (getConfiguredExpirationInDays() >= 0) {
-          // bucket exists, we should test that the correct lifecycle config is present
-          BucketLifecycleConfiguration lifecycleConfiguration = s3.getBucketLifecycleConfiguration(getConfiguredBucket());
-          if (!isExpirationLifecycleConfigurationPresent(lifecycleConfiguration)) {
-            addBucketLifecycleConfiguration(lifecycleConfiguration);
-          }
-        }
-      }
-
-      setConfiguredBucket(getConfiguredBucket());
+      bucketManager.setS3(s3);
+      bucketManager.prepareStorageLocation(blobStoreConfiguration);
+      S3BlobStoreConfigurationHelper.setConfiguredBucket(blobStoreConfiguration, getConfiguredBucket());
     }
     catch (Exception e) {
       throw new BlobStoreException("Unable to initialize blob store bucket: " + getConfiguredBucket(), e, null);
     }
-  }
-
-  private boolean isExpirationLifecycleConfigurationPresent(BucketLifecycleConfiguration lifecycleConfiguration) {
-    return lifecycleConfiguration != null &&
-        lifecycleConfiguration.getRules() != null &&
-        lifecycleConfiguration.getRules().stream()
-        .filter(r -> r.getExpirationInDays() == getConfiguredExpirationInDays())
-        .anyMatch(r -> {
-          LifecycleFilterPredicate predicate = r.getFilter().getPredicate();
-          if (predicate instanceof LifecycleTagPredicate) {
-            LifecycleTagPredicate tagPredicate = (LifecycleTagPredicate) predicate;
-            return DELETED_TAG.equals(tagPredicate.getTag());
-          }
-          return false;
-        });
-  }
-
-  private BucketLifecycleConfiguration makeLifecycleConfiguration(BucketLifecycleConfiguration existing, int expirationInDays) {
-    BucketLifecycleConfiguration.Rule rule = new BucketLifecycleConfiguration.Rule()
-        .withId(LIFECYCLE_EXPIRATION_RULE_ID)
-        .withFilter(new LifecycleFilter(
-            new LifecycleTagPredicate(DELETED_TAG)))
-        .withExpirationInDays(expirationInDays)
-        .withStatus(BucketLifecycleConfiguration.ENABLED);
-
-    if (existing != null) {
-      List<Rule> rules = existing.getRules().stream()
-          .filter(r -> !LIFECYCLE_EXPIRATION_RULE_ID.equals(r.getId()))
-          .collect(Collectors.toList());
-      rules.add(rule);
-      existing.setRules(rules);
-      return existing;
-    } else {
-      return new BucketLifecycleConfiguration().withRules(rule);
-    }
-  }
-
-  private void addBucketLifecycleConfiguration(BucketLifecycleConfiguration lifecycleConfiguration) {
-    s3.setBucketLifecycleConfiguration(
-        getConfiguredBucket(),
-        makeLifecycleConfiguration(lifecycleConfiguration, getConfiguredExpirationInDays()));
   }
 
   private boolean delete(final String path) throws IOException {
@@ -530,25 +469,12 @@ public class S3BlobStore
     s3.deleteObject(getConfiguredBucket(), path);
   }
 
-  private void setConfiguredBucket(final String bucket) {
-    blobStoreConfiguration.attributes(CONFIG_KEY).set(BUCKET_KEY, bucket);
-  }
-
   private String getConfiguredBucket() {
-    return blobStoreConfiguration.attributes(CONFIG_KEY).require(BUCKET_KEY).toString();
-  }
-
-  private int getConfiguredExpirationInDays() {
-    return Integer.parseInt(
-        blobStoreConfiguration.attributes(CONFIG_KEY).get(EXPIRATION_KEY, DEFAULT_EXPIRATION_IN_DAYS).toString()
-    );
+    return S3BlobStoreConfigurationHelper.getConfiguredBucket(blobStoreConfiguration);
   }
 
   private String getBucketPrefix() {
-    return Optional.ofNullable(blobStoreConfiguration.attributes(CONFIG_KEY).get(BUCKET_PREFIX_KEY, String.class))
-        .filter(Predicates.not(Strings::isNullOrEmpty))
-        .map(s -> s.replaceFirst("/$", "") + "/")
-        .orElse("");
+    return S3BlobStoreConfigurationHelper.getBucketPrefix(blobStoreConfiguration);
   }
 
   /**
@@ -575,7 +501,7 @@ public class S3BlobStore
         S3PropertiesFile metadata = new S3PropertiesFile(s3, getConfiguredBucket(), metadataFilePath());
         metadata.remove();
         storeMetrics.remove();
-        s3.deleteBucket(getConfiguredBucket());
+        bucketManager.deleteStorageLocation(getBlobStoreConfiguration());
       }
       else {
         log.warn("Unable to delete non-empty blob store content directory in bucket {}", getConfiguredBucket());

@@ -28,6 +28,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -65,6 +66,7 @@ public class NpmUntypedObjectDeserializerSerializerTest
     when(parser.getCurrentName()).thenReturn(FIELD_NAME);
     when(context.handleUnexpectedToken(eq(Object.class), eq(parser))).thenReturn(FIELD_VALUE);
     when(fieldMatcher.getDeserializer()).thenReturn(fieldDeserializer);
+    when(fieldMatcher.allowDeserializationOnMatched()).thenReturn(true);
   }
 
   @Test
@@ -87,6 +89,23 @@ public class NpmUntypedObjectDeserializerSerializerTest
 
     verify(fieldMatcher).matches(parser);
     verify(fieldMatcher).getDeserializer();
+    verify(fieldMatcher).allowDeserializationOnMatched();
     verify(fieldDeserializer).deserialize(eq(FIELD_NAME), eq(FIELD_VALUE), eq(parser), eq(context), eq(generator));
+  }
+
+  @Test
+  public void deserialize_With_Matchers_Prevented_If_Not_Allowed() throws IOException {
+    when(parser.getCurrentName()).thenReturn(FIELD_NAME);
+    when(fieldMatcher.matches(parser)).thenReturn(true);
+    when(fieldMatcher.allowDeserializationOnMatched()).thenReturn(false);
+
+    fieldMatchers.add(fieldMatcher);
+
+    underTest.deserialize(parser, context);
+
+    verify(fieldMatcher).matches(parser);
+    verify(fieldMatcher).allowDeserializationOnMatched();
+    verify(fieldMatcher, never()).getDeserializer();
+    verify(fieldDeserializer, never()).deserialize(eq(FIELD_NAME), eq(FIELD_VALUE), eq(parser), eq(context), eq(generator));
   }
 }

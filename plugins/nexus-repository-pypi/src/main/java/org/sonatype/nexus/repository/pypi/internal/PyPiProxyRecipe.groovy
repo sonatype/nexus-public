@@ -145,7 +145,6 @@ class PyPiProxyRecipe
         .handler(timingHandler)
         .handler(assetKindHandler.rcurry(AssetKind.SEARCH))
         .handler(securityHandler)
-        .handler(routingHandler)
         .handler(exceptionHandler)
         .handler(negativeCacheHandler)
         .handler(conditionalRequestHandler)

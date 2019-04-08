@@ -43,6 +43,7 @@ import com.google.common.reflect.TypeToken;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
@@ -273,7 +274,8 @@ public abstract class EntityAdapter<T extends Entity>
   /**
    * Read entity from document.
    */
-  public T readEntity(final ODocument document) {
+  public T readEntity(final OIdentifiable identifiable) {
+    ODocument document = identifiable.getRecord(); // no-op if it's already a document
     checkNotNull(document);
 
     T entity = newEntity();

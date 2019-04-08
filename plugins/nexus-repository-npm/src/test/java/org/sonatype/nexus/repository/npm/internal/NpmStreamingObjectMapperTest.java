@@ -26,8 +26,10 @@ import org.junit.Test;
 
 import static java.lang.String.format;
 import static java.lang.System.currentTimeMillis;
+import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static java.util.UUID.randomUUID;
 import static org.apache.commons.io.IOUtils.toInputStream;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
@@ -36,7 +38,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.fail;
 import static org.sonatype.nexus.repository.npm.internal.NpmFieldFactory.REMOVE_DEFAULT_FIELDS_MATCHERS;
+import static org.sonatype.nexus.repository.npm.internal.NpmFieldFactory.missingFieldMatcher;
 import static org.sonatype.nexus.repository.npm.internal.NpmFieldFactory.rewriteTarballUrlMatcher;
+import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.META_REV;
 
 public class NpmStreamingObjectMapperTest
     extends TestSupport
@@ -215,6 +219,38 @@ public class NpmStreamingObjectMapperTest
     streamed = outputStream.toString();
     assertThat(streamed, not(containsString(ID_FIELD_NAME)));
     assertThat(streamed, not(containsString(REV_FIELD_NAME)));
+  }
+
+  @Test
+  public void verify_Appending_Of_Fields_If_Never_Matched() throws IOException {
+    try (InputStream packageRoot = getResource("streaming-payload-manipulate-while-streaming-out.json");
+         InputStream packageRoot2 = getResource("streaming-payload-manipulate-while-streaming-out.json")) {
+
+      String original = IOUtils.toString(packageRoot);
+
+      assertThat(original, containsString(PACKAGE_ID_JSON));
+      assertThat(original, containsString(PACKAGE_REV));
+
+      String randomUUID = randomUUID().toString();
+      String randomUUIDName = "randomUid";
+      String randomUUIDFieldName = "\"" + randomUUIDName + "\"";
+
+      ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+      new NpmStreamingObjectMapper(
+          asList(
+              missingFieldMatcher(randomUUIDName, "/" + randomUUIDName, () -> randomUUID),
+              missingFieldMatcher(META_REV, "/" + META_REV, () -> randomUUID)))
+          .readAndWrite(packageRoot2, outputStream);
+
+      String streamed = outputStream.toString();
+
+      // proof we added a field if never matched
+      assertThat(streamed, containsString(randomUUIDFieldName + ":\"" + randomUUID + "\""));
+
+      // proof that an existing field stays the same and doesn't get overwritten by a missing field matcher
+      assertThat(streamed, containsString(PACKAGE_REV_JSON));
+    }
   }
 
   private InputStream getResource(final String fileName) {

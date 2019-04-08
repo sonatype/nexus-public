@@ -188,6 +188,58 @@ public class RetryControllerTest
     verifyBackoff(7, TEST_CAUSE, 0, 2550);
   }
 
+  @Test
+  public void testExcessiveRetriesStats() throws Exception {
+    assertThat(underTest.excessiveRetriesInLastHour(), is(0L));
+
+    underTest.allowRetry(0, MINOR_CAUSE);
+    assertThat(underTest.excessiveRetriesInLastHour(), is(0L));
+    underTest.allowRetry(1, MINOR_CAUSE);
+    assertThat(underTest.excessiveRetriesInLastHour(), is(0L));
+    underTest.allowRetry(2, MINOR_CAUSE);
+    assertThat(underTest.excessiveRetriesInLastHour(), is(0L));
+    underTest.allowRetry(3, MINOR_CAUSE);
+    assertThat(underTest.excessiveRetriesInLastHour(), is(0L));
+    underTest.allowRetry(4, MINOR_CAUSE);
+    assertThat(underTest.excessiveRetriesInLastHour(), is(1L));
+    underTest.allowRetry(5, MINOR_CAUSE);
+    assertThat(underTest.excessiveRetriesInLastHour(), is(1L));
+    underTest.allowRetry(6, MINOR_CAUSE);
+    assertThat(underTest.excessiveRetriesInLastHour(), is(1L));
+    underTest.allowRetry(7, MINOR_CAUSE);
+    assertThat(underTest.excessiveRetriesInLastHour(), is(1L));
+
+    underTest.allowRetry(0, MINOR_CAUSE);
+    underTest.allowRetry(1, MINOR_CAUSE);
+    underTest.allowRetry(2, MINOR_CAUSE);
+    underTest.allowRetry(3, MINOR_CAUSE);
+    assertThat(underTest.excessiveRetriesInLastHour(), is(1L));
+    underTest.allowRetry(4, MINOR_CAUSE);
+    assertThat(underTest.excessiveRetriesInLastHour(), is(2L));
+
+    underTest.allowRetry(0, MINOR_CAUSE);
+    underTest.allowRetry(1, MINOR_CAUSE);
+    underTest.allowRetry(2, MINOR_CAUSE);
+    underTest.allowRetry(3, MINOR_CAUSE);
+    assertThat(underTest.excessiveRetriesInLastHour(), is(2L));
+    underTest.allowRetry(4, MINOR_CAUSE);
+    assertThat(underTest.excessiveRetriesInLastHour(), is(3L));
+
+    underTest.allowRetry(0, MINOR_CAUSE);
+    underTest.allowRetry(1, MINOR_CAUSE);
+    underTest.allowRetry(2, MINOR_CAUSE);
+    underTest.allowRetry(3, MINOR_CAUSE);
+    assertThat(underTest.excessiveRetriesInLastHour(), is(3L));
+    underTest.allowRetry(4, MINOR_CAUSE);
+    assertThat(underTest.excessiveRetriesInLastHour(), is(4L));
+    underTest.allowRetry(5, MINOR_CAUSE);
+    assertThat(underTest.excessiveRetriesInLastHour(), is(4L));
+    underTest.allowRetry(6, MINOR_CAUSE);
+    assertThat(underTest.excessiveRetriesInLastHour(), is(4L));
+    underTest.allowRetry(7, MINOR_CAUSE);
+    assertThat(underTest.excessiveRetriesInLastHour(), is(4L));
+  }
+
   private void verifyBackoff(final int retriesSoFar,
                              final Exception cause,
                              final long minBackoff,

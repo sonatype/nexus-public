@@ -23,7 +23,8 @@ Ext.define('NX.coreui.controller.HealthCheckInfo', {
     'NX.Conditions',
     'NX.util.Url',
     'NX.I18n',
-    'NX.coreui.util.HealthCheckUtil'
+    'NX.coreui.util.HealthCheckUtil',
+    'NX.State'
   ],
 
   /**
@@ -61,7 +62,10 @@ Ext.define('NX.coreui.controller.HealthCheckInfo', {
     var me = this,
         components = [];
 
-    if (me.healthCheckAllowed) {
+    if (!NX.State.getUser()) {
+      me.renderHealthCheckFields(panel, model);
+    }
+    else if (me.healthCheckAllowed) {
       if (model && model.get('healthCheckLoading') === undefined) {
         model.beginEdit();
         model.set('healthCheckLoading', true);
@@ -277,7 +281,11 @@ Ext.define('NX.coreui.controller.HealthCheckInfo', {
   renderPreconditions: function(model, metadata) {
     var util = NX.coreui.util.HealthCheckUtil;
 
-    if (model.get('healthCheckLoading')) {
+    if (!NX.State.getUser()) {
+      metadata.attr = 'data-qtip="' + NX.I18n.get('HealthCheckInfo_LoggedInOnly_Tooltip') + '"';
+      return util.iconSpan('fa-lock', 'opacity: 0.33;');
+    }
+    else if (model.get('healthCheckLoading')) {
       return NX.I18n.get('HealthCheckInfo_Loading_Text');
     }
     else if (model.get('healthCheckDisabled')) {

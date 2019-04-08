@@ -25,13 +25,10 @@ import org.sonatype.nexus.common.log.DryRunPrefix
 import com.amazonaws.SdkClientException
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model.AmazonS3Exception
-import com.amazonaws.services.s3.model.BucketLifecycleConfiguration
-import com.amazonaws.services.s3.model.BucketLifecycleConfiguration.Transition
 import com.amazonaws.services.s3.model.ObjectListing
 import com.amazonaws.services.s3.model.S3Object
 import com.amazonaws.services.s3.model.S3ObjectInputStream
 import com.amazonaws.services.s3.model.S3ObjectSummary
-import com.amazonaws.services.s3.model.StorageClass
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -56,10 +53,12 @@ class S3BlobStoreTest
 
   DryRunPrefix dryRunPrefix = Mock()
 
+  BucketManager bucketManager = Mock()
+
   AmazonS3 s3 = Mock()
 
   S3BlobStore blobStore = new S3BlobStore(amazonS3Factory, locationResolver, uploader, copier, storeMetrics,
-      dryRunPrefix)
+      dryRunPrefix, bucketManager)
 
   def config = new BlobStoreConfiguration()
 
@@ -122,9 +121,7 @@ class S3BlobStoreTest
       def blobId = new BlobId('test')
       def attributesS3Object = mockS3Object(attributesContents)
       def contentS3Object = mockS3Object('hello world')
-      1 * s3.doesBucketExist('mybucket') >> true
-      1 * s3.getBucketLifecycleConfiguration('mybucket') >>
-          blobStore.makeLifecycleConfiguration(null, S3BlobStore.DEFAULT_EXPIRATION_IN_DAYS)
+      1 * bucketManager.prepareStorageLocation(cfg)
       1 * s3.doesObjectExist('mybucket', pathPrefix + 'metadata.properties') >> false
       1 * s3.doesObjectExist('mybucket', pathPrefix + propertiesLocation(blobId)) >> true
       1 * s3.getObject('mybucket', pathPrefix + propertiesLocation(blobId)) >> attributesS3Object
@@ -143,17 +140,6 @@ class S3BlobStoreTest
       null     | _
       ""       | _
       "prefix" | _
-  }
-
-  def 'set lifecycle on pre-existing bucket if not present'() {
-    given: 'bucket already exists, but has null lifecycle configuration'
-      s3.doesBucketExist('mybucket') >> true
-
-    when: 'init fires'
-      blobStore.init(config)
-
-    then: 'lifecycle configuration is added'
-      1 * s3.setBucketLifecycleConfiguration('mybucket', !null)
   }
 
   @Unroll
@@ -241,48 +227,8 @@ class S3BlobStoreTest
       }
   }
 
-  def 'isExpirationLifecycleConfigurationPresent returns false on empty config'() {
-    given: 'empty lifecycleConfiguration'
-      def bucketConfig = new BucketLifecycleConfiguration()
-
-    when: 'isExpirationLifecycleConfigurationPresent called'
-      def result = blobStore.isExpirationLifecycleConfigurationPresent(bucketConfig)
-
-    then: 'false'
-      !result
-  }
-
-  /**
-   * Make sure if admins have set other lifecycle rules we don't clobber them.
-   */
-  def 'adding lifecycle leaves other rules alone'() {
-    given: 'empty lifecycleConfiguration'
-      def bucketConfig = new BucketLifecycleConfiguration()
-      def rule = new BucketLifecycleConfiguration.Rule()
-          .withId('some other rule')
-          .withTransitions([
-              new Transition().withStorageClass(StorageClass.Glacier).withDays(365)
-          ])
-          .withStatus(BucketLifecycleConfiguration.ENABLED.toString())
-      bucketConfig.setRules([ rule ])
-
-      s3.doesBucketExist('mybucket') >> true
-      s3.getBucketLifecycleConfiguration('mybucket') >> bucketConfig
-
-    when: 'init called'
-      blobStore.init(config)
-
-    then: 'glacier rule still present'
-      1 * s3.setBucketLifecycleConfiguration(_, _) >> { bucketName, capturedConfig ->
-        assert capturedConfig.getRules().size() == 2
-        assert capturedConfig.getRules().stream().anyMatch { it.id == 'some other rule' }
-        assert capturedConfig.getRules().stream().anyMatch { it.id == S3BlobStore.LIFECYCLE_EXPIRATION_RULE_ID }
-      }
-  }
-
   def 'start will accept a metadata.properties originally created with file blobstore'() {
     given: 'metadata.properties comes from a file blobstore'
-      1 * s3.doesBucketExist('mybucket') >> true
       1 * s3.doesObjectExist('mybucket', 'myPrefix/metadata.properties') >> true
       1 * s3.getObject('mybucket', 'myPrefix/metadata.properties') >> mockS3Object('type=file/1')
 
@@ -296,7 +242,6 @@ class S3BlobStoreTest
 
   def 'start rejects a metadata.properties containing something other than file or s3 type'() {
     given: 'metadata.properties comes from some unknown blobstore'
-      1 * s3.doesBucketExist('mybucket') >> true
       1 * s3.doesObjectExist('mybucket', 'myPrefix/metadata.properties') >> true
       1 * s3.getObject('mybucket', 'myPrefix/metadata.properties') >> mockS3Object('type=other/12')
 
@@ -323,7 +268,7 @@ class S3BlobStoreTest
       1 * s3.listObjects('mybucket', 'myPrefix/content/') >> new ObjectListing()
       1 * storeMetrics.remove()
       1 * s3.deleteObject('mybucket', 'myPrefix/metadata.properties')
-      1 * s3.deleteBucket('mybucket') >> { args -> throw s3Exception }
+      1 * bucketManager.deleteStorageLocation(config) >> { args -> throw s3Exception }
   }
 
   def 'remove non-empty bucket generates warning only'() {
@@ -341,7 +286,7 @@ class S3BlobStoreTest
       1 * s3.listObjects('mybucket', 'myPrefix/content/') >> new ObjectListing()
       1 * storeMetrics.remove()
       1 * s3.deleteObject('mybucket', 'myPrefix/metadata.properties')
-      1 * s3.deleteBucket('mybucket') >> { args -> throw s3Exception }
+      1 * bucketManager.deleteStorageLocation(config) >> { args -> throw s3Exception }
   }
 
   @Unroll

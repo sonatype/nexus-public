@@ -17,11 +17,14 @@ import java.io.IOException;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.json.CurrentPathJsonParser;
 
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
@@ -49,6 +52,12 @@ public class NpmFieldMatcherTest
   @Test(expected = NullPointerException.class)
   public void require_FieldName() {
     underTest = new NpmFieldMatcher(null, "", fieldDeserializer);
+  }
+
+  @Test
+  public void expect_fieldName_Set() {
+    underTest = new NpmFieldMatcher(FIELD_NAME, "", fieldDeserializer);
+    assertThat(underTest.getFieldName(), equalTo(FIELD_NAME));
   }
 
   @Test(expected = NullPointerException.class)
@@ -101,5 +110,10 @@ public class NpmFieldMatcherTest
     underTest = new NpmFieldMatcher(FIELD_NAME, "/b(.*)b", fieldDeserializer);
 
     assertFalse(underTest.matches(parser));
+  }
+
+  @Test
+  public void should_AllowDeserializationOnMatched_By_Default() {
+    assertTrue(new NpmFieldMatcher(FIELD_NAME, "/b(.*)b", fieldDeserializer).allowDeserializationOnMatched());
   }
 }

@@ -133,7 +133,6 @@ class NpmProxyRecipe
     builder.route(searchV1Matcher()
         .handler(timingHandler)
         .handler(securityHandler)
-        .handler(routingHandler)
         .handler(NpmHandlers.npmErrorHandler)
         .handler(negativeCacheHandler)
         .handler(partialFetchHandler)

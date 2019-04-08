@@ -13,14 +13,16 @@
 package org.sonatype.nexus.repository.routing;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.entity.DetachedEntityId;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.routing.internal.RoutingRuleCache;
 import org.sonatype.nexus.repository.routing.internal.RoutingRuleHelperImpl;
 
 import com.google.common.collect.ImmutableList;
@@ -28,6 +30,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -38,6 +42,8 @@ public class RoutingRuleHelperImplTest
     extends TestSupport
 {
   private RoutingRuleHelperImpl underTest;
+
+  private RoutingRuleCache cache;
 
   @Mock
   private RoutingRuleStore routingRuleStore;
@@ -59,7 +65,8 @@ public class RoutingRuleHelperImplTest
         Arrays.asList(".*foobar.*", "^/org/apache/.*")));
     when(repository.getName()).thenReturn("test-repo");
     when(config.isEnabled()).thenReturn(true);
-    underTest = new RoutingRuleHelperImpl(routingRuleStore, repositoryManager, config);
+    cache = new RoutingRuleCache(routingRuleStore);
+    underTest = new RoutingRuleHelperImpl(cache, repositoryManager, config);
   }
 
   @Test
@@ -92,8 +99,8 @@ public class RoutingRuleHelperImplTest
 
     when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository));
 
-    assertTrue(underTest.isAllowed(repository, "/com/sonatype/internal/secrets"));
-    assertEquals(0, underTest.calculateAssignedRepositories().size());
+    assertThat(underTest.isAllowed(repository, "/com/sonatype/internal/secrets"), is(true));
+    assertThat(underTest.calculateAssignedRepositories().size(), is(0));
   }
 
   @Test
@@ -101,7 +108,7 @@ public class RoutingRuleHelperImplTest
     Repository repository = mock(Repository.class);
     Configuration configuration = mock(Configuration.class);
     when(repository.getConfiguration()).thenReturn(configuration);
-    when(configuration.getAttributes()).thenReturn(Collections.emptyMap());
+    when(configuration.getRoutingRuleId()).thenReturn(null);
     when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository));
 
     assertTrue(underTest.isAllowed(repository, "/some/path"));
@@ -113,9 +120,9 @@ public class RoutingRuleHelperImplTest
     when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository));
     configureRepositoryMock("singleRule");
 
-    Map<String, List<String>> assignedRepositoryMap = underTest.calculateAssignedRepositories();
+    Map<EntityId, List<String>> assignedRepositoryMap = underTest.calculateAssignedRepositories();
     assertEquals(1, assignedRepositoryMap.size());
-    List<String> assignedRepositories = assignedRepositoryMap.get("singleRule");
+    List<String> assignedRepositories = assignedRepositoryMap.get(new DetachedEntityId("singleRule"));
     assertEquals(ImmutableList.of(repository.getName()), assignedRepositories);
   }
 
@@ -132,10 +139,10 @@ public class RoutingRuleHelperImplTest
     configureRepositoryMock(repository2,"rule-2");
     configureRepositoryMock(repository3,"rule-2");
 
-    Map<String, List<String>> assignedRepositoryMap = underTest.calculateAssignedRepositories();
+    Map<EntityId, List<String>> assignedRepositoryMap = underTest.calculateAssignedRepositories();
     assertEquals(2, assignedRepositoryMap.size());
-    assertEquals(ImmutableList.of(repository.getName()), assignedRepositoryMap.get("rule-1"));
-    assertEquals(ImmutableList.of(repository2.getName(), repository3.getName()), assignedRepositoryMap.get("rule-2"));
+    assertEquals(ImmutableList.of(repository.getName()), assignedRepositoryMap.get(new DetachedEntityId("rule-1")));
+    assertEquals(ImmutableList.of(repository2.getName(), repository3.getName()), assignedRepositoryMap.get(new DetachedEntityId("rule-2")));
   }
 
   private void assertBlocked(final String ruleId, final String path) throws Exception {
@@ -156,8 +163,8 @@ public class RoutingRuleHelperImplTest
     Configuration configuration = mock(Configuration.class);
     when(repo.getConfiguration()).thenReturn(configuration);
 
-    Map<String, Map<String, Object>> attributes =
-        Collections.singletonMap("routingRules", Collections.singletonMap("routingRuleId", repositoryRuleId));
-    when(configuration.getAttributes()).thenReturn(attributes);
+    if (repositoryRuleId != null) {
+      when(configuration.getRoutingRuleId()).thenReturn(new DetachedEntityId(repositoryRuleId));
+    }
   }
 }

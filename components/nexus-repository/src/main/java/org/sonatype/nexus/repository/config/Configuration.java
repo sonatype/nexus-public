@@ -25,6 +25,7 @@ import org.sonatype.nexus.common.collect.DetachingMap;
 import org.sonatype.nexus.common.collect.DetachingSet;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.AbstractEntity;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.io.SanitizingJsonOutputStream;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -66,6 +67,8 @@ public class Configuration
 
   private boolean online;
 
+  private EntityId routingRuleId;
+
   private Map<String, Map<String, Object>> attributes;
 
   public String getRepositoryName() {
@@ -96,6 +99,14 @@ public class Configuration
    */
   public void setOnline(final boolean online) {
     this.online = online;
+  }
+
+  public EntityId getRoutingRuleId() {
+    return routingRuleId;
+  }
+
+  public void setRoutingRuleId(final EntityId routingRuleId) {
+    this.routingRuleId = routingRuleId;
   }
 
   @Nullable

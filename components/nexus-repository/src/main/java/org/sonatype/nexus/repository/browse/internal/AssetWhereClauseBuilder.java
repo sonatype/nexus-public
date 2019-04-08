@@ -45,7 +45,7 @@ public class AssetWhereClauseBuilder
       clauses.add(P_NAME + " LIKE :nameFilter");
     }
     if (includeLastId) {
-      clauses.add("@RID > :rid");
+      clauses.add("@rid > :rid");
     }
     if (!clauses.isEmpty()) {
       return Joiner.on(" AND ").join(clauses);

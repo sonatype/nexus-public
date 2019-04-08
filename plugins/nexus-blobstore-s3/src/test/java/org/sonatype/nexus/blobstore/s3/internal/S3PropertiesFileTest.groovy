@@ -59,5 +59,17 @@ public class S3PropertiesFileTest
         assert metadata.contentLength == text.length()
       }
   }
+
+  def "The toString is formatted properly"() {
+    given:
+      S3PropertiesFile propertiesFile = new S3PropertiesFile(s3, 'mybucket', 'mykey/with/nesting/')
+
+    when:
+      propertiesFile.setProperty('testProperty', 'newValue')
+      propertiesFile.setProperty('otherKey', 'otherValue')
+
+    then:
+      assert propertiesFile.toString() == "s3://mybucket/mykey/with/nesting/ {testProperty=newValue, otherKey=otherValue}"
+  }
 }
 

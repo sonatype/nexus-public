@@ -13,8 +13,8 @@
 package org.sonatype.nexus.transaction;
 
 import java.io.IOException;
-import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Time;
@@ -27,6 +27,7 @@ import static com.google.common.collect.Sets.difference;
 import static com.google.common.collect.Sets.union;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.stream.Collectors.joining;
 import static org.sonatype.goodies.common.Time.millis;
 import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getInteger;
@@ -53,7 +54,7 @@ public class RetryController
 
   public static final RetryController INSTANCE = new RetryController();
 
-  private final Random random = new Random();
+  private final RollingStats excessiveRetriesHourlyStats = new RollingStats(60, MINUTES);
 
   private int retryLimit = getInteger("nexus.tx.retry.limit", DEFAULT_RETRY_LIMIT);
 
@@ -69,6 +70,15 @@ public class RetryController
       getString("nexus.tx.retry.majorExceptionFilter", IOException.class.getName()));
 
   /**
+   * Point at which we declare the transaction as having excessive retries.
+   */
+  private int excessiveRetriesThreshold;
+
+  public RetryController() {
+    updateExcessiveRetriesThreshold();
+  }
+
+  /**
    * Gets maximum number of retries allowed.
    */
   public int getRetryLimit() {
@@ -80,6 +90,7 @@ public class RetryController
    */
   public void setRetryLimit(final int retryLimit) {
     this.retryLimit = retryLimit;
+    updateExcessiveRetriesThreshold();
   }
 
   /**
@@ -178,7 +189,8 @@ public class RetryController
    * @param cause the exception that caused the retry
    */
   public boolean allowRetry(final int retriesSoFar, final Exception cause) {
-    if (retriesSoFar >= retryLimit) {
+    int nextRetry = retriesSoFar + 1;
+    if (nextRetry > retryLimit) {
       if (log.isTraceEnabled()) {
         log.warn("Exceeded retry limit: {}/{}", retriesSoFar, retryLimit, cause);
       }
@@ -189,7 +201,15 @@ public class RetryController
       return false;
     }
 
-    int nextRetry = retriesSoFar + 1;
+    /**
+     * Once we reach this threshold declare the transaction as having excessive retries.
+     *
+     * Note: this is only done once as we cross the threshold, not for every retry.
+     */
+    if (nextRetry == excessiveRetriesThreshold) {
+      excessiveRetriesHourlyStats.mark();
+    }
+
     long delay = randomDelay(nextRetry, cause);
 
     if (log.isTraceEnabled()) {
@@ -201,6 +221,20 @@ public class RetryController
 
     backoff(delay);
     return true;
+  }
+
+  /**
+   * Return the number of transactions with excessive retries in the last hour.
+   */
+  public long excessiveRetriesInLastHour() {
+    return excessiveRetriesHourlyStats.sum();
+  }
+
+  /**
+   * Updates the excessive retries threshold to be just above the mid-point of the retry limit.
+   */
+  private void updateExcessiveRetriesThreshold() {
+    excessiveRetriesThreshold = (retryLimit >> 1) + 1;
   }
 
   /**
@@ -223,7 +257,7 @@ public class RetryController
    */
   private long randomDelay(final int nextRetry, final Exception cause) {
     int slots = min(max(1 << nextRetry, minSlots), maxSlots);
-    int randomSlot = random.nextInt(slots);
+    int randomSlot = ThreadLocalRandom.current().nextInt(slots);
     if (isMajorException(cause)) {
       // avoid zero wait if it's a major exception
       return majorDelayMillis * (randomSlot + 1);

@@ -46,6 +46,6 @@ public class SuffixSqlBuilderTest
   @Test
   public void testId() {
     assertThat(buildSuffix(new QueryOptions("filter", "id", "asc", 99, 10))
-        , is(equalTo(" ORDER BY @RID asc SKIP 99 LIMIT 10")));
+        , is(equalTo(" ORDER BY @rid asc SKIP 99 LIMIT 10")));
   }
 }

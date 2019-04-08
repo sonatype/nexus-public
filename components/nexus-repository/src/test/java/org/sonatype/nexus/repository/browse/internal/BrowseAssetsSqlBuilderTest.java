@@ -36,7 +36,7 @@ public class BrowseAssetsSqlBuilderTest
 
   static final String FILTER_WHERE = "name LIKE :nameFilter";
 
-  static final String LAST_ID_WHERE = "@RID > :rid";
+  static final String LAST_ID_WHERE = "@rid > :rid";
 
   @Mock
   QueryOptions queryOptions;

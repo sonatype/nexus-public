@@ -27,6 +27,7 @@ import org.sonatype.nexus.common.log.LastShutdownTimeService;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.StateGuardModule;
 import org.sonatype.nexus.orient.DatabaseInstance;
+import org.sonatype.nexus.orient.DatabaseStatusDelayedExecutor;
 import org.sonatype.nexus.quartz.internal.orient.JobStoreImpl;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
@@ -46,7 +47,10 @@ import org.eclipse.sisu.wire.WireModule;
 import org.quartz.spi.JobFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.notNull;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -84,6 +88,8 @@ public class TaskSchedulerHelper
 
   private final DatabaseInstance databaseInstance;
 
+  private DatabaseStatusDelayedExecutor statusDelayedExecutor;
+
   public TaskSchedulerHelper(final DatabaseInstance databaseInstance) {
     this.databaseInstance = checkNotNull(databaseInstance);
   }
@@ -94,6 +100,7 @@ public class TaskSchedulerHelper
     baseUrlManager = mock(BaseUrlManager.class);
     nodeAccess = mock(NodeAccess.class);
     lastShutdownTimeService = mock(LastShutdownTimeService.class);
+    statusDelayedExecutor = mock(DatabaseStatusDelayedExecutor.class);
 
     Module module = binder -> {
       Properties properties = new Properties();
@@ -117,6 +124,13 @@ public class TaskSchedulerHelper
       binder.bind(DatabaseInstance.class)
           .annotatedWith(Names.named("config"))
           .toInstance(databaseInstance);
+
+      doAnswer(i  -> {
+        ((Runnable) i.getArguments()[0]).run();
+        return null;
+      }).when(statusDelayedExecutor).execute(notNull(Runnable.class));
+      binder.bind(DatabaseStatusDelayedExecutor.class)
+          .toInstance(statusDelayedExecutor);
 
       when(nodeAccess.getId()).thenReturn("test-12345");
       when(nodeAccess.getMemberIds()).thenReturn(ImmutableSet.of("test-12345"));

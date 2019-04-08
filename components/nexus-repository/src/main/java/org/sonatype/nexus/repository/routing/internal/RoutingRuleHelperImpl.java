@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.routing.internal;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.StreamSupport;
@@ -21,12 +20,12 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.routing.RoutingMode;
 import org.sonatype.nexus.repository.routing.RoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingRuleHelper;
-import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 import org.sonatype.nexus.repository.routing.RoutingRulesConfiguration;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -42,8 +41,7 @@ import static java.util.stream.Collectors.toList;
 public class RoutingRuleHelperImpl
     implements RoutingRuleHelper
 {
-
-  private final RoutingRuleStore routingRuleStore;
+  private final RoutingRuleCache routingRuleCache;
 
   private final RepositoryManager repositoryManager;
 
@@ -51,21 +49,22 @@ public class RoutingRuleHelperImpl
 
   @Inject
   public RoutingRuleHelperImpl(
-      final RoutingRuleStore routingRuleStore,
+      final RoutingRuleCache routingRuleCache,
       final RepositoryManager repositoryManager,
       final RoutingRulesConfiguration configuration)
   {
-    this.routingRuleStore = checkNotNull(routingRuleStore);
+    this.routingRuleCache = checkNotNull(routingRuleCache);
     this.repositoryManager = checkNotNull(repositoryManager);
     this.configuration = checkNotNull(configuration);
   }
 
+  @Override
   public boolean isAllowed(final Repository repository, final String path) {
     if (!configuration.isEnabled()) {
       return true;
     }
 
-    RoutingRule routingRule = getRoutingRule(repository);
+    RoutingRule routingRule = routingRuleCache.getRoutingRule(repository);
 
     if (routingRule == null) {
       return true;
@@ -74,32 +73,19 @@ public class RoutingRuleHelperImpl
     return isAllowed(routingRule.mode(), routingRule.matchers(), path);
   }
 
-  public boolean isAllowed(final RoutingMode mode, List<String> matchers, final String path) {
+  @Override
+  public boolean isAllowed(final RoutingMode mode, final List<String> matchers, final String path) {
     boolean matches = matchers.stream().anyMatch(path::matches);
     return (!matches && mode == RoutingMode.BLOCK) || (matches && mode == RoutingMode.ALLOW);
   }
 
-  public Map<String, List<String>> calculateAssignedRepositories() {
+  @Override
+  public Map<EntityId, List<String>> calculateAssignedRepositories() {
     return StreamSupport.stream(repositoryManager.browse().spliterator(), false)
-        .filter(repository -> getRoutingRuleId(repository) != null)
+        .filter(repository -> routingRuleCache.getRoutingRuleId(repository) != null)
         .collect(groupingBy(
-            RoutingRuleHelperImpl::getRoutingRuleId,
+            routingRuleCache::getRoutingRuleId,
             mapping(Repository::getName, toList())
         ));
-  }
-
-  private RoutingRule getRoutingRule(final Repository repository) {
-    String routingRuleId = getRoutingRuleId(repository);
-    if (routingRuleId != null) {
-      return routingRuleStore.getById(routingRuleId);
-    }
-    return null;
-  }
-
-  private static String getRoutingRuleId(final Repository repository) {
-    Map<String, Object> routingConfiguration = repository.getConfiguration().getAttributes()
-        .getOrDefault(CONFIG_MAP_KEY, Collections.emptyMap());
-
-    return (String) routingConfiguration.get(CONFIG_RULE_KEY);
   }
 }

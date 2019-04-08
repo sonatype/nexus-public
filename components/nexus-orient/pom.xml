@@ -138,6 +138,10 @@
       <artifactId>awaitility</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-thread</artifactId>
+    </dependency>
   </dependencies>
 
 </project>

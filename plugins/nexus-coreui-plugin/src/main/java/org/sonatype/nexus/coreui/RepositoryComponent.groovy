@@ -13,7 +13,6 @@
 package org.sonatype.nexus.coreui
 
 import java.util.stream.Collectors
-import java.util.stream.StreamSupport
 
 import javax.annotation.Nullable
 import javax.inject.Inject
@@ -25,6 +24,7 @@ import javax.validation.groups.Default
 
 import org.sonatype.nexus.common.app.BaseUrlHolder
 import org.sonatype.nexus.common.app.GlobalComponentLookupHelper
+import org.sonatype.nexus.common.entity.DetachedEntityId
 import org.sonatype.nexus.coreui.internal.search.BrowseableFormatXO
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
@@ -61,6 +61,7 @@ import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import com.softwarementors.extjs.djn.config.annotations.DirectPollMethod
 import groovy.transform.PackageScope
+import org.apache.commons.lang3.StringUtils
 import org.apache.shiro.authz.annotation.RequiresAuthentication
 import org.hibernate.validator.constraints.NotEmpty
 
@@ -211,6 +212,8 @@ class RepositoryComponent
         repositoryName: repositoryXO.name,
         recipeName: repositoryXO.recipe,
         online: repositoryXO.online,
+        routingRuleId: StringUtils.isNotBlank(repositoryXO.routingRuleId) ? new DetachedEntityId(
+            repositoryXO.routingRuleId) : null,
         attributes: repositoryXO.attributes
     )))
   }
@@ -232,6 +235,8 @@ class RepositoryComponent
 
     Configuration updatedConfiguration = repository.configuration.copy().with {
       online = repositoryXO.online
+      routingRuleId = StringUtils.isNotBlank(repositoryXO.routingRuleId) ? new DetachedEntityId(
+          repositoryXO.routingRuleId) : null
       attributes = repositoryXO.attributes
       return it
     }
@@ -284,6 +289,8 @@ class RepositoryComponent
         online: input.configuration.online,
         recipe: input.configuration.recipeName,
         status: buildStatus(input),
+        routingRuleId: StringUtils.
+            isNotBlank(input.configuration?.routingRuleId?.value) ? input.configuration.routingRuleId.value : '',
         attributes: filterAttributes(input.configuration.copy().attributes),
         url: "${BaseUrlHolder.get()}/repository/${input.name}/" // trailing slash is important
     )

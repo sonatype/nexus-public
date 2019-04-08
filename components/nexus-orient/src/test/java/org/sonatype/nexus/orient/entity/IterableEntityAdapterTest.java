@@ -46,6 +46,8 @@ public class IterableEntityAdapterTest
 
   @Before
   public void setUp() {
+    when(goodRecord.getRecord()).thenReturn(goodRecord);
+    when(badRecord.getRecord()).thenReturn(badRecord);
     when(underTest.readEntity(goodRecord)).thenReturn(goodEntity);
     when(underTest.readEntity(badRecord)).thenThrow(new NoClassDefFoundError());
   }
