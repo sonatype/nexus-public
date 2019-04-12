@@ -30,7 +30,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * {@link UntypedObjectDeserializer} that is NPM specific by instantly writing out to the provided generator,
  * rather then maintaining references in a map until all values have been deserialized.
  *
- * @since 3.next
+ * @since 3.16
  */
 public class NpmUntypedObjectDeserializerSerializer
     extends UntypedObjectDeserializerSerializer
@@ -59,7 +59,7 @@ public class NpmUntypedObjectDeserializerSerializer
     String fieldName = parser.getCurrentName();
 
     for (NpmFieldMatcher matcher : matchers) {
-      if (matcher.matches(parser) && matcher.allowDeserializationOnMatched()) {
+      if (matcher.matches(parser)) {
         // first matcher wins
         return matcher.getDeserializer().deserialize(fieldName, defaultValueDeserialize(parser, context), parser, context, generator);
       }

@@ -37,7 +37,7 @@ import static org.sonatype.nexus.formfields.FormField.MANDATORY;
 /**
  * {@link StorageSettingsCapabilityDescriptor} descriptor.
  *
- * @since 3.next
+ * @since 3.16
  */
 @Named(StorageSettingsCapabilityDescriptor.TYPE_ID)
 @Singleton

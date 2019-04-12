@@ -18,7 +18,7 @@ import java.util.Map;
 import org.sonatype.nexus.repository.storage.TempBlob;
 
 /**
- * @since 3.next
+ * @since 3.16
  */
 public class BlobStoreMultipartForm implements AutoCloseable
 {

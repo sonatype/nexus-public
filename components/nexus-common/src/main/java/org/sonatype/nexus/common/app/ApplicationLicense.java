@@ -63,7 +63,7 @@ public interface ApplicationLicense
   /**
    * Refreshes the cached license details with the latest from the license manager.
    *
-   * @since 3.next
+   * @since 3.16
    */
   void refresh();
 

@@ -29,7 +29,7 @@ import static java.util.Objects.nonNull;
  * Class that will deserialize through a {@link JsonParser} as a normal {@link UntypedObjectDeserializer} would
  * but instantly serializes out the values that were deserialized to a given {@link JsonGenerator}.
  *
- * @since 3.next
+ * @since 3.16
  */
 public class UntypedObjectDeserializerSerializer
     extends UntypedObjectDeserializer

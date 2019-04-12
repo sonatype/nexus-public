@@ -30,7 +30,7 @@ import static org.sonatype.nexus.repository.storage.capability.StorageSettingsCa
 /**
  * Storage settings capability.
  *
- * @since 3.next
+ * @since 3.16
  */
 @Named(StorageSettingsCapabilityDescriptor.TYPE_ID)
 public class StorageSettingsCapability

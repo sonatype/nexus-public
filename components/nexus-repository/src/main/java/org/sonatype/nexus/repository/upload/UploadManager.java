@@ -41,7 +41,7 @@ public interface UploadManager
    * Adds a component to the repository at the appropriate location. Will fail if the repository format does not have an
    * available handler.
    *
-   * @since 3.next
+   * @since 3.16
    *
    * @param repository the {@link Repository} to add the component to
    * @param request the http request containing the multipart upload

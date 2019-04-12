@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.Facet;
 /**
  * Persistence for PyPI indexes.
  *
- * @since 3.next
+ * @since 3.16
  */
 @Facet.Exposed
 public interface PyPiIndexFacet

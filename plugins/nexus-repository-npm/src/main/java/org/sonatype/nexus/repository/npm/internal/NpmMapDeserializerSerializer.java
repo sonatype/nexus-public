@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.deser.std.MapDeserializer;
  * NPM Specialized {@link MapDeserializerSerializer} that uses a {@link NpmUntypedObjectDeserializerSerializer} for
  * it object deserialization and serializing out.
  *
- * @since 3.next
+ * @since 3.16
  */
 public class NpmMapDeserializerSerializer
     extends MapDeserializerSerializer

@@ -47,7 +47,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
  * It doesn't retry if the database goes read-only after a task has been started.
  * If the database doesn't become writable within the time limit, then the task is run anyway.
  *
- * @since 3.next
+ * @since 3.16
  */
 @Named
 @Singleton

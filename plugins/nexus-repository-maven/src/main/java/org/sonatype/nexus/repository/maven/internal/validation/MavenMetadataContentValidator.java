@@ -30,7 +30,7 @@ import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.Metad
 /**
  * Validates that maven-metadata.xml is parsable and has the correct path.
  * 
- * @since 3.next
+ * @since 3.16
  */
 @Singleton
 public class MavenMetadataContentValidator

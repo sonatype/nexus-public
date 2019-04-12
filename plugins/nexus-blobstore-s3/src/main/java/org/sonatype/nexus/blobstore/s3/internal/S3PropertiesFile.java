@@ -26,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.String.format;
 
 /**
  * Persistent properties file stored in AWS S3.
@@ -81,7 +80,10 @@ public class S3PropertiesFile
   }
 
   public String toString() {
-    return format("s3://%s/%s %s", bucket, key, super.toString());
+    return getClass().getSimpleName() + "{" +
+        "bucket=" + bucket +
+        ", key=" + key +
+        '}';
   }
 
   @Override

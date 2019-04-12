@@ -20,7 +20,7 @@ import javax.annotation.Nullable;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageId;
 
 /**
- * Since 3.next
+ * Since 3.16
  */
 public class NpmCoordinateUtil
 {

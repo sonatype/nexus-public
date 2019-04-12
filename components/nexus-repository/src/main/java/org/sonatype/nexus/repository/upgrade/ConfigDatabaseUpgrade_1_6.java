@@ -36,7 +36,7 @@ import static org.sonatype.nexus.orient.DatabaseInstanceNames.CONFIG;
 /**
  * Deletes broken Component Selectors
  *
- * @since 3.next
+ * @since 3.16
  */
 @Named
 @Singleton

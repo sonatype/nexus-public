@@ -62,7 +62,7 @@ public class UploadService
   /**
    * Perform an upload of assets
    *
-   * @since 3.next
+   * @since 3.16
    *
    * @param repositoryName the repository to upload to
    * @param request a multipart form request

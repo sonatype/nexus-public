@@ -46,8 +46,6 @@ class RepositoryXO
   @NotNull
   Boolean online
 
-  String routingRuleId
-
   @NotEmpty
   Map<String, Map<String, Object>> attributes
 

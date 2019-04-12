@@ -15,14 +15,9 @@ package org.sonatype.nexus.repository.routing.internal;
 import java.util.List;
 
 import javax.annotation.Nullable;
-import javax.inject.Named;
-import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.entity.EntityEvent;
-import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
-import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 import org.sonatype.nexus.orient.entity.action.ReadEntityByPropertyAction;
 import org.sonatype.nexus.repository.routing.RoutingMode;
@@ -35,10 +30,8 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
- * @since 3.next
+ * @since 3.16
  */
-@Named
-@Singleton
 public class RoutingRuleEntityAdapter
     extends IterableEntityAdapter<RoutingRule>
 {
@@ -105,26 +98,5 @@ public class RoutingRuleEntityAdapter
   @Nullable
   public RoutingRule read(final ODatabaseDocumentTx db, final String name) {
     return read.execute(db, name);
-  }
-
-  @Override
-  public boolean sendEvents() {
-    return true;
-  }
-
-  @Nullable
-  @Override
-  public EntityEvent newEvent(final ODocument document, final EventKind eventKind) {
-    final EntityMetadata metadata = new AttachedEntityMetadata(this, document);
-
-    log.trace("newEvent: eventKind: {}, metadata: {}", eventKind, metadata);
-    switch (eventKind) {
-      case UPDATE:
-        return new RoutingRuleUpdatedEvent(metadata);
-      case DELETE:
-        return new RoutingRuleDeletedEvent(metadata);
-      default:
-        return super.newEvent(document, eventKind);
-    }
   }
 }

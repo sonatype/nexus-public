@@ -22,7 +22,7 @@ import static org.joda.time.format.DateTimeFormat.forPattern;
 /**
  * Utils for the nexus repository allowing simplified access to Date and Time methods for easy reuse.
  *
- * @since 3.next
+ * @since 3.16
  */
 public class DateTimeUtils
 {

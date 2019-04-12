@@ -36,7 +36,7 @@ import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreConfigurationH
 /**
  * Creates and deletes buckets for the {@link S3BlobStore}.
  *
- * @since 3.next
+ * @since 3.16
  */
 @Named
 public class BucketManager

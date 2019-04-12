@@ -162,12 +162,4 @@ public interface SearchService
   boolean isCalmPeriod();
 
   void waitForCalm();
-
-  /**
-   * Used by ITs to check the frequency of search updates.
-   *
-   * @since 3.next
-   */
-  @VisibleForTesting
-  long getUpdateCount();
 }

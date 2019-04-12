@@ -35,7 +35,7 @@ import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.AUD
 /**
  * Adds audit log files to support bundle.
  *
- * @since 3.next
+ * @since 3.16
  */
 @Named
 @Singleton

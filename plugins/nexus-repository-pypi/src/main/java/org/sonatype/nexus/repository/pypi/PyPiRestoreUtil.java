@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Simple util class to provide limited exposure to specific utility
  * methods within the internal package.
  *
- * @since 3.next
+ * @since 3.16
  */
 public class PyPiRestoreUtil
 {

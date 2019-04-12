@@ -41,14 +41,14 @@ public interface DownloadService
     }
 
     /**
-     * @since 3.next
+     * @since 3.16
      */
     public long getLength() {
       return length;
     }
 
     /**
-     * @since 3.next
+     * @since 3.16
      */
     public InputStream getBytes() {
       return bytes;

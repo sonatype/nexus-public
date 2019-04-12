@@ -15,7 +15,7 @@
 /**
  * Routing Rule model.
  *
- * @since 3.next
+ * @since 3.16
  */
 Ext.define('NX.coreui.model.RoutingRule', {
   extend: 'Ext.data.Model',

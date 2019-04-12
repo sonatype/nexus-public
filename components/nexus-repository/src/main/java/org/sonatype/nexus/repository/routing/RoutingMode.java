@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.routing;
 
 /**
- * @since 3.next
+ * @since 3.16
  */
 public enum RoutingMode
 {

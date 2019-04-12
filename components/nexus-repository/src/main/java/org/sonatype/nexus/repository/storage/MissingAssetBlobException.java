@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.storage;
 /**
  * Thrown when attempting to access blob content ,for an existing asset, which is now missing from the blobstore.
  *
- * @since 3.next
+ * @since 3.16
  */
 public class MissingAssetBlobException
     extends MissingBlobException

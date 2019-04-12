@@ -15,7 +15,7 @@
 /**
  * Routing Rules "Settings" panel.
  *
- * @since 3.next
+ * @since 3.16
  */
 Ext.define('NX.coreui.view.routing.RoutingRulesEdit', {
   extend: 'NX.view.SettingsPanel',

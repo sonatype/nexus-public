@@ -27,7 +27,7 @@ import org.hibernate.validator.constraints.NotBlank
 /**
  * Routing Rule transfer object for internal REST API.
  *
- * @since 3.next
+ * @since 3.16
  */
 @CompileStatic
 @Builder

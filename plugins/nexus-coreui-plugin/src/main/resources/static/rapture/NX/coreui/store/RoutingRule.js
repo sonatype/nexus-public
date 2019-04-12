@@ -15,7 +15,7 @@
 /**
  * Routing Rule store.
  *
- * @since 3.next
+ * @since 3.16
  */
 Ext.define('NX.coreui.store.RoutingRule', {
   extend: 'Ext.data.Store',

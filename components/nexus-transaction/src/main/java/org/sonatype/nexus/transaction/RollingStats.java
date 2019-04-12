@@ -24,7 +24,7 @@ import static java.util.stream.LongStream.rangeClosed;
 /**
  * Maintains a rolling window of counts for the given time period.
  *
- * @since 3.next
+ * @since 3.16
  */
 class RollingStats
 {

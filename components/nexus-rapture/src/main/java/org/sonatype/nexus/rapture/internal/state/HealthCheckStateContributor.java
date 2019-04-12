@@ -31,7 +31,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * State contributor that indicates if any of the system Health checks are currently failing
  *
- * @since 3.next
+ * @since 3.16
  */
 @Named
 @Singleton

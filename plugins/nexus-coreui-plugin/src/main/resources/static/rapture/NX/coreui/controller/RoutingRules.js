@@ -15,7 +15,7 @@
 /**
  * Routing Rules controller.
  *
- * @since 3.next
+ * @since 3.16
  */
 Ext.define('NX.coreui.controller.RoutingRules', {
   extend: 'NX.controller.Drilldown',
@@ -378,7 +378,7 @@ Ext.define('NX.coreui.controller.RoutingRules', {
       failure: function(response) {
         var status = response.status;
         if (400 === status) {
-          NX.Messages.error(NX.I18n.get('RoutingRules_Delete_400_Error_Message'));
+          NX.Messages.error('RoutingRules_Delete_400_Error_Message');
         }
         else {
           NX.Messages.error(NX.I18n.format('RoutingRules_Unknown_Api_Error_Message', status, response.statusText));

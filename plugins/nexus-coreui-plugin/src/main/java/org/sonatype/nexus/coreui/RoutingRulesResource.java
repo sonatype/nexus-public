@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.coreui;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -31,7 +32,6 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response.Status;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.routing.RoutingMode;
 import org.sonatype.nexus.repository.routing.RoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingRuleHelper;
@@ -40,12 +40,11 @@ import org.sonatype.nexus.rest.Resource;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
-import static java.util.Collections.emptyList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.common.entity.EntityHelper.id;
 
 /**
- * @since 3.next
+ * @since 3.16
  */
 @Named
 @Singleton
@@ -90,9 +89,9 @@ public class RoutingRulesResource
             .map(RoutingRulesResource::toXO)
             .collect(Collectors.toList());
 
-    Map<EntityId, List<String>> assignedRepositories = routingRuleHelper.calculateAssignedRepositories();
+    Map<String, List<String>> assignedRepositories = routingRuleHelper.calculateAssignedRepositories();
     for (RoutingRuleXO rule : rules) {
-      List<String> repositoryNames = assignedRepositories.computeIfAbsent(id(rule.getId()), id -> emptyList());
+      List<String> repositoryNames = assignedRepositories.getOrDefault(rule.getId(), Collections.emptyList());
       repositoryNames.sort(String.CASE_INSENSITIVE_ORDER);
       rule.setAssignedRepositoryNames(repositoryNames);
     }
@@ -124,8 +123,8 @@ public class RoutingRulesResource
       throw new WebApplicationException(Status.NOT_FOUND);
     }
 
-    Map<EntityId, List<String>> assignedRepositories = routingRuleHelper.calculateAssignedRepositories();
-    List<String> repositoryNames = assignedRepositories.getOrDefault(id(routingRule), emptyList());
+    Map<String, List<String>> assignedRepositories = routingRuleHelper.calculateAssignedRepositories();
+    List<String> repositoryNames = assignedRepositories.getOrDefault(id(routingRule).getValue(), Collections.emptyList());
     if (repositoryNames.size() > 0) {
       throw new WebApplicationException("Routing rule is still in use by " + repositoryNames.size() + " repositories.", Status.BAD_REQUEST);
     }

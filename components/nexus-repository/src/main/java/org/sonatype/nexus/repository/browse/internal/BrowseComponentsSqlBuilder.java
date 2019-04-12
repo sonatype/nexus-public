@@ -94,7 +94,7 @@ public class BrowseComponentsSqlBuilder
           ComponentEntityAdapter.P_VERSION + " LIKE :versionFilter");
     }
     if (queryOptions.getLastId() != null) {
-      whereClauses.add("@rid > :rid");
+      whereClauses.add("@RID > :rid");
     }
     return whereClauses.stream().map(clause -> "(" + clause + ")").collect(Collectors.joining(" AND "));
   }

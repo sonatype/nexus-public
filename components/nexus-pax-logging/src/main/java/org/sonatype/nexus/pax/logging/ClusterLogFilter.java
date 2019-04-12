@@ -31,7 +31,7 @@ import static org.sonatype.nexus.pax.logging.NexusLogFilter.MDC_MARKER_ID;
  * ourselves
  *
  * @see org.ops4j.pax.logging.slf4j.Slf4jLogger#info(Marker, String)
- * @since 3.next
+ * @since 3.16
  */
 public class ClusterLogFilter
     extends Filter<ILoggingEvent>

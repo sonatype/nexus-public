@@ -91,7 +91,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Common scaffolding for partial {@link ParserVisitor} implementations.
  *
- * @since 3.next
+ * @since 3.16
  */
 abstract class ParserVisitorSupport
     extends ParserVisitor

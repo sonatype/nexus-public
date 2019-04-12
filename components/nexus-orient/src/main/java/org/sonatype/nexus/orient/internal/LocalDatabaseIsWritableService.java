@@ -24,7 +24,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Default {@link DatabaseIsWritableService} implementation.
  *
- * @since 3.next
+ * @since 3.16
  */
 @Named("local")
 public class LocalDatabaseIsWritableService

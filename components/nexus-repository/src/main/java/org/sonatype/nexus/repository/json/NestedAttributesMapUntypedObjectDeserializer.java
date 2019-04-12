@@ -26,7 +26,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Implementation of {@link UntypedObjectDeserializer} with using a {@link NestedAttributesMap} as a root map to
  * get existing deserialized references from.
  *
- * @since 3.next
+ * @since 3.16
  */
 public class NestedAttributesMapUntypedObjectDeserializer
     extends UntypedObjectDeserializer

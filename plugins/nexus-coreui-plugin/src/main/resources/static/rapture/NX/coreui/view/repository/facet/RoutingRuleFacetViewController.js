@@ -15,7 +15,7 @@
 /**
  * Configuration for the repository routing rule.
  *
- * @since 3.next
+ * @since 3.16
  */
 Ext.define('NX.coreui.view.repository.facet.RoutingRuleFacetViewController', {
   extend: 'Ext.app.ViewController',
@@ -41,7 +41,6 @@ Ext.define('NX.coreui.view.repository.facet.RoutingRuleFacetViewController', {
 
   onAfterRender: function() {
     if (!NX.State.getValue('routingRules', false)) { // nexus.routing.rules.enabled
-      this.getView().disable();
       return;
     }
 

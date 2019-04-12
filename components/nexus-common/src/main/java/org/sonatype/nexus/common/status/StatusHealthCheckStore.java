@@ -30,7 +30,7 @@ public interface StatusHealthCheckStore
    *
    * @throws StatusHealthCheckException if the db read check fails
    *
-   * @since 3.next
+   * @since 3.16
    */
   void checkReadHealth() throws StatusHealthCheckException;
 }

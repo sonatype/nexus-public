@@ -32,7 +32,7 @@ import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.overla
  * the most dominant values over recessive ones (dominant being the last value being deserialized). One exception to
  * that is the NPM versions field, which retains all versions rather then only using the dominant value.
  *
- * @since 3.next
+ * @since 3.16
  */
 public class NpmNestedAttributesMapUntypedObjectDeserializer
     extends NestedAttributesMapUntypedObjectDeserializer

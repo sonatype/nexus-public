@@ -67,7 +67,7 @@ public interface SupportZipGenerator
 
     /**
      * Include audit log files.
-     * @since 3.next
+     * @since 3.16
      */
     private boolean auditLog;
 

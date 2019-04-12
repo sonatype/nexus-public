@@ -34,7 +34,7 @@ import static org.sonatype.nexus.scheduling.TaskDescriptorSupport.MULTINODE_KEY;
 /**
  * Manages automatic rebuilding of repository indexes.
  *
- * @since 3.next
+ * @since 3.16
  */
 @Named
 @Singleton

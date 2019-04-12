@@ -17,7 +17,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * @since 3.next
+ * @since 3.16
  */
 public interface RoutingRuleStore
 {

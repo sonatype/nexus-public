@@ -21,7 +21,7 @@ import org.sonatype.nexus.rapture.UiPluginDescriptorSupport;
 /**
  * Rapture {@link org.sonatype.nexus.rapture.UiPluginDescriptor} for {@code nexus-repository-npm}
  *
- * @since 3.next
+ * @since 3.16
  */
 @Named
 @Singleton

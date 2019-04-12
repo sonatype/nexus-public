@@ -38,7 +38,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
  * Refreshes and caches the state of system {@link com.codahale.metrics.health.HealthCheck}s at the configured time
  * interval.
  *
- * @since 3.next
+ * @since 3.16
  */
 @Named
 @Singleton

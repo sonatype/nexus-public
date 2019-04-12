@@ -29,7 +29,7 @@ import org.sonatype.nexus.common.text.Strings2;
 import org.apache.shiro.authz.UnauthorizedException;
 
 /**
- * @since 3.next
+ * @since 3.16
  */
 @Named
 @Singleton

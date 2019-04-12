@@ -40,7 +40,7 @@ import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_TRAI
  * Decorating {@link ObjectMapper} to allow reading from an {@link InputStream} and writing to
  * an {@link OutputStream} through {@link ObjectMapper}.
  *
- * @since 3.next
+ * @since 3.16
  */
 public class StreamingObjectMapper
 {

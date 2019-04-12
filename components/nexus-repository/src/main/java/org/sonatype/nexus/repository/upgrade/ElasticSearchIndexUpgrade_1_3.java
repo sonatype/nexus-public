@@ -24,7 +24,7 @@ import org.sonatype.nexus.repository.search.ElasticSearchIndexCheckpoint;
  * Updates the $data-dir/elasticsearch/nexus.lsn file with a reindex marker string to
  * trigger the IndexSyncService service to update all indexes.
  *
- * @since 3.next
+ * @since 3.16
  */
 @Named
 @Singleton

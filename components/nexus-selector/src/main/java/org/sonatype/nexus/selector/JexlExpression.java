@@ -19,7 +19,7 @@ import org.apache.commons.jexl3.parser.ASTJexlScript;
 /**
  * JEXL expression script that provides access to the underlying syntax tree.
  *
- * @since 3.next
+ * @since 3.16
  */
 class JexlExpression
     extends Script

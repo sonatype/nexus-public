@@ -87,7 +87,7 @@ public class DatabaseInstanceImpl
   }
 
   /**
-   * @since 3.next
+   * @since 3.16
    */
   void releasePool() {
     pool = null;

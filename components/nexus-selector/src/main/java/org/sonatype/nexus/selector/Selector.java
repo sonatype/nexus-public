@@ -33,7 +33,7 @@ public interface Selector
    *
    * @throws UnsupportedOperationException if this selector cannot be represented as SQL
    *
-   * @since 3.next
+   * @since 3.16
    */
   void toSql(SelectorSqlBuilder sqlBuilder);
 }

@@ -19,7 +19,7 @@ import org.sonatype.nexus.common.entity.AbstractEntity;
 /**
  * A RoutingRule which can be applied to a repository to block or allow requests depending on the RoutingMode
  *
- * @since 3.next
+ * @since 3.16
  */
 public class RoutingRule extends AbstractEntity
 {

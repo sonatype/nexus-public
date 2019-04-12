@@ -15,7 +15,7 @@
 /**
  * Configuration for the repository routing rule.
  *
- * @since 3.next
+ * @since 3.16
  */
 Ext.define('NX.coreui.view.repository.facet.RoutingRuleFacet', {
   extend: 'Ext.form.FieldContainer',
@@ -48,15 +48,14 @@ Ext.define('NX.coreui.view.repository.facet.RoutingRuleFacet', {
         {
           xtype: 'combo',
           reference: 'routingRuleCombo',
-          name: 'routingRuleId',
+          name: 'attributes.routingRules.routingRuleId',
           displayField: 'name',
           valueField: 'id',
           bind: {
             store: '{RoutingRules}'
           },
           queryMode: 'local',
-          typeAhead: true,
-          forceSelection: true
+          typeAhead: true
         }
       ]
     }

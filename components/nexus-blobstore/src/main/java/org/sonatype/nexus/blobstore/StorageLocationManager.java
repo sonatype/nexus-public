@@ -19,7 +19,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 /**
  * Manages a storage location.
  *
- * @since 3.next
+ * @since 3.16
  */
 public interface StorageLocationManager
 {

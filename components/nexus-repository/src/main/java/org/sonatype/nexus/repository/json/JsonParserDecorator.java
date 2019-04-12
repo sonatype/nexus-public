@@ -39,7 +39,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Helper class to be able to decorate an existing {@link JsonParser} with new functionality and state. This decorator
  * prevents other decorators from having to implement all methods.
  *
- * @since 3.next
+ * @since 3.16
  */
 public class JsonParserDecorator
     extends JsonParser

@@ -25,7 +25,7 @@ import static java.util.regex.Pattern.compile;
 /**
  * A NPM Json Field Matcher
  *
- * @since 3.next
+ * @since 3.16
  */
 public class NpmFieldMatcher
 {
@@ -45,15 +45,6 @@ public class NpmFieldMatcher
     this.fieldName = checkNotNull(fieldName);
     this.pattern = compile(checkNotNull(pathRegex));
     this.deserializer = checkNotNull(deserializer);
-  }
-
-  /**
-   * Indicate whether the field matcher is allowed to be deserialized if it matched.
-   *
-   * @return true by default, implementers can override default behaviour.
-   */
-  public boolean allowDeserializationOnMatched() {
-    return true;
   }
 
   /**
@@ -86,9 +77,5 @@ public class NpmFieldMatcher
 
   public NpmFieldDeserializer getDeserializer() {
     return deserializer;
-  }
-
-  public String getFieldName() {
-    return fieldName;
   }
 }

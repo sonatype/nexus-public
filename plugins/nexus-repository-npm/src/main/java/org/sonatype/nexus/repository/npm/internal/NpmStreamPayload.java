@@ -32,7 +32,7 @@ import static org.sonatype.nexus.repository.view.ContentTypes.APPLICATION_JSON;
  * NPM Specific {@link StreamPayload} that implements its own {@link #copy(InputStream, OutputStream)} method
  * to allow for streaming out the {@link #openInputStream()} directly to a given {@link OutputStream}.
  *
- * @since 3.next
+ * @since 3.16
  */
 public class NpmStreamPayload
     extends StreamPayload

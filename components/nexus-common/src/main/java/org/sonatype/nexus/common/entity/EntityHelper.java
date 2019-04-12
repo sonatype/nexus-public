@@ -66,15 +66,6 @@ public class EntityHelper
   }
 
   /**
-   * @param id
-   * @return a DetachedEntityId
-   */
-  @Nonnull
-  public static EntityId id(final String id) {
-    return new DetachedEntityId(id);
-  }
-
-  /**
    * Returns version of entity.
    */
   @Nonnull

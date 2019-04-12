@@ -28,7 +28,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * A handler which validates that the request is allowed by the RoutingRule assigned to the repository.
  *
- * @since 3.next
+ * @since 3.16
  */
 @Named
 @Singleton

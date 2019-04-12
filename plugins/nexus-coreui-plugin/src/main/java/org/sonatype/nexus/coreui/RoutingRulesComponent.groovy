@@ -21,7 +21,7 @@ import org.sonatype.nexus.rapture.StateContributor
 import org.sonatype.nexus.repository.routing.RoutingRulesConfiguration
 
 /**
- * @since 3.next
+ * @since 3.16
  */
 @Named
 @Singleton
