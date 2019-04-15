@@ -34,22 +34,22 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Named
 @Singleton
-@Upgrades(model = DatabaseInstanceNames.COMPONENT, from = "1.13", to = "1.14")
-public class ComponentDatabaseUpgrade_1_14 // NOSONAR
+@Upgrades(model = DatabaseInstanceNames.CONFIG, from = "1.6", to = "1.7")
+public class ConfigDatabaseUpgrade_1_7 // NOSONAR
     extends DatabaseUpgradeSupport
 {
   private static final String P_ROUTING_RULE_ID = "routingRuleId";
 
-  private Provider<DatabaseInstance> componentDatabaseInstance;
+  private Provider<DatabaseInstance> configDatabaseInstance;
 
   @Inject
-  public ComponentDatabaseUpgrade_1_14(@Named(DatabaseInstanceNames.COMPONENT) final Provider<DatabaseInstance> componentDatabaseInstance) {
-    this.componentDatabaseInstance = checkNotNull(componentDatabaseInstance);
+  public ConfigDatabaseUpgrade_1_7(@Named(DatabaseInstanceNames.CONFIG) final Provider<DatabaseInstance> configDatabaseInstance) {
+    this.configDatabaseInstance = checkNotNull(configDatabaseInstance);
   }
 
   @Override
   public void apply() throws Exception {
-    withDatabaseAndClass(componentDatabaseInstance, ConfigurationEntityAdapter.DB_NAME, (db, table) -> {
+    withDatabaseAndClass(configDatabaseInstance, ConfigurationEntityAdapter.DB_NAME, (db, table) -> {
       if (!table.existsProperty(P_ROUTING_RULE_ID)) {
         table.createProperty(P_ROUTING_RULE_ID, OType.LINK);
       }

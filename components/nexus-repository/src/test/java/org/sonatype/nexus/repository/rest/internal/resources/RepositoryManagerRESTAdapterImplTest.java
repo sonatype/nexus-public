@@ -154,7 +154,7 @@ public class RepositoryManagerRESTAdapterImplTest
 
   @Test
   public void getRepositories() {
-    when(repositoryPermissionChecker.userCanBrowseRepositories(repository, repository2, repository3))
+    when(repositoryPermissionChecker.userCanBrowseRepositories(Arrays.asList(repository, repository2, repository3)))
         .thenReturn(Arrays.asList(repository, repository2));
 
     assertThat(underTest.getRepositories(), is(Arrays.asList(repository, repository2)));

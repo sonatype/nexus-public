@@ -38,7 +38,7 @@ import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 /**
  * REST implementation to manage the Nexus application lifecycle. (also exposed as JMX)
  *
- * @since 3.next
+ * @since 3.16
  */
 @Path(ManagedLifecycleResource.RESOURCE_URI)
 @Named

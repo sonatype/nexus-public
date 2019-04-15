@@ -44,7 +44,7 @@ import static java.util.Objects.nonNull;
 /**
  * Decorating {@link ObjectMapper} to allowing merging of {@link InputStream}s.
  *
- * @since 3.next
+ * @since 3.16
  */
 public class MergeObjectMapper
 {

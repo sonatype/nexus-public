@@ -73,6 +73,25 @@ public class SecurityHelper
   }
 
   /**
+   * Ensure subject has any of the given permissions.
+   *
+   * @throws AuthorizationException
+   */
+  public void ensureAnyPermitted(final Subject subject, final Permission... permissions) {
+    checkNotNull(subject);
+    checkNotNull(permissions);
+    checkArgument(permissions.length != 0);
+
+    if (log.isTraceEnabled()) {
+      log.trace("Ensuring subject '{}' has any of the following permissions: {}", subject.getPrincipal(), Arrays.toString(permissions));
+    }
+
+    if (!anyPermitted(subject, permissions)) {
+      throw new AuthorizationException("User is not permitted.");
+    }
+  }
+
+  /**
    * Ensure current subject has given permissions.
    *
    * @throws AuthorizationException

@@ -27,14 +27,16 @@ import org.sonatype.nexus.repository.routing.RoutingMode;
 import org.sonatype.nexus.repository.routing.RoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingRuleHelper;
 import org.sonatype.nexus.repository.routing.RoutingRulesConfiguration;
+import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toList;
+import static org.sonatype.nexus.security.BreadActions.READ;
 
 /**
- * @since 3.next
+ * @since 3.16
  */
 @Named
 @Singleton
@@ -47,15 +49,19 @@ public class RoutingRuleHelperImpl
 
   private final RoutingRulesConfiguration configuration;
 
+  private final RepositoryPermissionChecker repositoryPermissionChecker;
+
   @Inject
   public RoutingRuleHelperImpl(
       final RoutingRuleCache routingRuleCache,
       final RepositoryManager repositoryManager,
-      final RoutingRulesConfiguration configuration)
+      final RoutingRulesConfiguration configuration,
+      final RepositoryPermissionChecker repositoryPermissionChecker)
   {
     this.routingRuleCache = checkNotNull(routingRuleCache);
     this.repositoryManager = checkNotNull(repositoryManager);
     this.configuration = checkNotNull(configuration);
+    this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
   }
 
   @Override
@@ -87,5 +93,10 @@ public class RoutingRuleHelperImpl
             routingRuleCache::getRoutingRuleId,
             mapping(Repository::getName, toList())
         ));
+  }
+
+  @Override
+  public void ensureUserHasPermissionToRead() {
+    repositoryPermissionChecker.ensureUserHasAdminAccessToAny(READ, repositoryManager.browse());
   }
 }

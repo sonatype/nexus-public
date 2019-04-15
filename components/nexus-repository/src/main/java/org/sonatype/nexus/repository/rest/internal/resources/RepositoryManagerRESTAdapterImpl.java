@@ -23,8 +23,6 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 
-import com.google.common.collect.Iterables;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.repository.http.HttpStatus.FORBIDDEN;
@@ -71,7 +69,6 @@ public class RepositoryManagerRESTAdapterImpl
 
   @Override
   public List<Repository> getRepositories() {
-    return repositoryPermissionChecker
-        .userCanBrowseRepositories(Iterables.toArray(repositoryManager.browse(), Repository.class));
+    return repositoryPermissionChecker.userCanBrowseRepositories(repositoryManager.browse());
   }
 }

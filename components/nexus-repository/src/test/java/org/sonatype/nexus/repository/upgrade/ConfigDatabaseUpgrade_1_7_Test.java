@@ -19,7 +19,6 @@ import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -32,7 +31,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
-public class ComponentDatabaseUpgrade_1_14_Test
+public class ConfigDatabaseUpgrade_1_7_Test
     extends TestSupport
 {
   static final String DB_CLASS = new OClassNameBuilder()
@@ -44,14 +43,14 @@ public class ComponentDatabaseUpgrade_1_14_Test
   private static final String P_ROUTING_RULE_ID = "routingRuleId";
 
   @Rule
-  public DatabaseInstanceRule componentDatabase = DatabaseInstanceRule.inMemory("test_component");
+  public DatabaseInstanceRule configDatabase = DatabaseInstanceRule.inMemory("test_config");
 
-  private ComponentDatabaseUpgrade_1_14 underTest;
+  private ConfigDatabaseUpgrade_1_7 underTest;
 
   @Before
   public void setUp() {
-    underTest = new ComponentDatabaseUpgrade_1_14(componentDatabase.getInstanceProvider());
-    try (ODatabaseDocumentTx db = componentDatabase.getInstance().connect()) {
+    underTest = new ConfigDatabaseUpgrade_1_7(configDatabase.getInstanceProvider());
+    try (ODatabaseDocumentTx db = configDatabase.getInstance().connect()) {
       OSchema schema = db.getMetadata().getSchema();
       OClass dbClass = schema.createClass(DB_CLASS);
       dbClass.createProperty(P_REPOSITORY_NAME, OType.STRING);
@@ -63,14 +62,14 @@ public class ComponentDatabaseUpgrade_1_14_Test
 
   @Test
   public void upgradeAddsRoutingRuleLinkField() throws Exception {
-    try (ODatabaseDocumentTx db = componentDatabase.getInstance().connect()) {
+    try (ODatabaseDocumentTx db = configDatabase.getInstance().connect()) {
       OClass table = db.getMetadata().getSchema().getClass(DB_CLASS);
       assertThat(table.getProperty(P_ROUTING_RULE_ID), is(nullValue()));
     }
 
     underTest.apply();
 
-    try (ODatabaseDocumentTx db = componentDatabase.getInstance().connect()) {
+    try (ODatabaseDocumentTx db = configDatabase.getInstance().connect()) {
       OClass table = db.getMetadata().getSchema().getClass(DB_CLASS);
       assertThat(table.getProperty(P_ROUTING_RULE_ID), is(notNullValue()));
 

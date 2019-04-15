@@ -25,7 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 /**
  * Simple DTO for writing audit data to log file in JSON format
  *
- * @since 3.next
+ * @since 3.16
  */
 @JsonInclude(Include.NON_NULL)
 public class AuditDTO

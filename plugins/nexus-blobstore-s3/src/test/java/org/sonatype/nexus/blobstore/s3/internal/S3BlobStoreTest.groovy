@@ -190,6 +190,34 @@ class S3BlobStoreTest
       0 * s3.setObjectTagging(!null)
   }
 
+  @Unroll
+  def 'delete is hard when expiry days is 0 (expiry days = #expiryDays)'() {
+    given: 'blob store setup'
+      def blobId = new BlobId('some-blob')
+      def cfg = new BlobStoreConfiguration()
+      cfg.attributes = [s3: [bucket: 'mybucket', prefix: '']]
+      def attributesS3Object = mockS3Object(attributesContents)
+      1 * s3.doesObjectExist('mybucket', propertiesLocation(blobId)) >> true
+      1 * s3.getObject('mybucket', propertiesLocation(blobId)) >> attributesS3Object
+
+    when: 'blob is deleted with given lifecycle expiry days'
+      cfg.attributes('s3').set('expiration', expiryDays)
+      blobStore.init(cfg)
+      blobStore.doStart()
+      blobStore.delete(blobId, 'just a test')
+
+    then: 'blob is tagged or deleted correctly'
+      deletions * s3.deleteObject('mybucket', _)
+      tags * s3.setObjectTagging(_)
+
+    where:
+      expiryDays || deletions | tags
+      -1         || 0         | 2
+      0          || 2         | 0
+      1          || 0         | 2
+      2          || 0         | 2
+  }
+
   def 'undelete successful'() {
     given: 'blob store setup'
       Properties properties = ['@BlobStore.blob-name': 'my-blob']

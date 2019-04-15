@@ -44,7 +44,7 @@ public interface SelectorManager
   /**
    * Return all content selectors of the given type.
    *
-   * @since 3.next
+   * @since 3.16
    */
   List<SelectorConfiguration> browse(String selectorType);
 
@@ -89,7 +89,7 @@ public interface SelectorManager
    *
    * @throws SelectorEvaluationException if the given selector cannot be converted
    *
-   * @since 3.next
+   * @since 3.16
    */
   void toSql(SelectorConfiguration selectorConfiguration, SelectorSqlBuilder sqlBuilder)
       throws SelectorEvaluationException;

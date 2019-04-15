@@ -36,7 +36,7 @@ import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreConfigurationH
 /**
  * Creates and deletes buckets for the {@link S3BlobStore}.
  *
- * @since 3.next
+ * @since 3.16
  */
 @Named
 public class BucketManager
@@ -58,18 +58,13 @@ public class BucketManager
 
     if (!s3.doesBucketExistV2(bucket)) {
       s3.createBucket(bucket);
-
-      if (expirationInDays >= 0) {
-        addBucketLifecycleConfiguration(s3, bucket, null, expirationInDays);
-      }
+      setBucketLifecycleConfiguration(s3, bucket, null, expirationInDays);
     }
     else {
-      if (expirationInDays >= 0) {
-        // bucket exists, we should test that the correct lifecycle config is present
-        BucketLifecycleConfiguration lifecycleConfiguration = s3.getBucketLifecycleConfiguration(bucket);
-        if (!isExpirationLifecycleConfigurationPresent(lifecycleConfiguration, expirationInDays)) {
-          addBucketLifecycleConfiguration(s3, bucket, lifecycleConfiguration, expirationInDays);
-        }
+      // bucket exists, we should test that the correct lifecycle config is present
+      BucketLifecycleConfiguration lifecycleConfiguration = s3.getBucketLifecycleConfiguration(bucket);
+      if (!isExpirationLifecycleConfigurationPresent(lifecycleConfiguration, expirationInDays)) {
+        setBucketLifecycleConfiguration(s3, bucket, lifecycleConfiguration, expirationInDays);
       }
     }
   }
@@ -115,21 +110,33 @@ public class BucketManager
       List<Rule> rules = existing.getRules().stream()
           .filter(r -> !LIFECYCLE_EXPIRATION_RULE_ID.equals(r.getId()))
           .collect(toList());
-      rules.add(rule);
+      if (expirationInDays > 0) {
+        rules.add(rule);
+      }
       existing.setRules(rules);
       return existing;
     }
     else {
-      return new BucketLifecycleConfiguration().withRules(rule);
+      if (expirationInDays > 0) {
+        return new BucketLifecycleConfiguration().withRules(rule);
+      }
+      else {
+        return null;
+      }
     }
   }
 
-  private void addBucketLifecycleConfiguration(final AmazonS3 s3,
+  private void setBucketLifecycleConfiguration(final AmazonS3 s3,
                                                final String bucket,
                                                final BucketLifecycleConfiguration lifecycleConfiguration,
                                                final int expirationInDays) {
-    s3.setBucketLifecycleConfiguration(
-        bucket,
-        makeLifecycleConfiguration(lifecycleConfiguration, expirationInDays));
+    BucketLifecycleConfiguration newLifecycleConfiguration =
+        makeLifecycleConfiguration(lifecycleConfiguration, expirationInDays);
+    if (newLifecycleConfiguration != null) {
+      s3.setBucketLifecycleConfiguration(bucket, newLifecycleConfiguration);
+    }
+    else {
+      s3.deleteBucketLifecycleConfiguration(bucket);
+    }
   }
 }

@@ -33,7 +33,7 @@ import static org.sonatype.nexus.selector.LeadingSlashScriptTransformer.trimLead
 /**
  * JEXL engine that provides access to the underlying syntax tree of expressions.
  *
- * @since 3.next
+ * @since 3.16
  */
 class JexlEngine
     extends Engine

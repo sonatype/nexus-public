@@ -42,7 +42,7 @@ public interface StatusResourceDoc
   /**
    * @return 200 if the server is available to serve read and write requests, 503 otherwise
    *
-   * @since 3.next
+   * @since 3.16
    */
   @GET
   @ApiOperation("Health check endpoint that validates server can respond to read and write requests")

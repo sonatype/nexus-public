@@ -24,7 +24,7 @@ import static java.util.Objects.nonNull;
 /**
  * A NPM specialized deserializer for an individual field.
  *
- * @since 3.next
+ * @since 3.16
  */
 public class NpmFieldDeserializer
 {

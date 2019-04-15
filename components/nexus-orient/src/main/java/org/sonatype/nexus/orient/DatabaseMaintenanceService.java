@@ -56,49 +56,49 @@ public interface DatabaseMaintenanceService
   /**
    * Get the current role of the named database.
    *
-   * @since 3.next
+   * @since 3.16
    */
   String getDatabaseRole(String databaseName);
 
   /**
    * Reset the named database to the given role.
    *
-   * @since 3.next
+   * @since 3.16
    */
   void setDatabaseRole(String databaseName, String role);
 
   /**
    * Get the current status of the named database.
    *
-   * @since 3.next
+   * @since 3.16
    */
   String getDatabaseStatus(String databaseName);
 
   /**
    * Reset the named database to the given status.
    *
-   * @since 3.next
+   * @since 3.16
    */
   void setDatabaseStatus(String databaseName, String status);
 
   /**
    * Checks the named database; returns short summary in map form.
    *
-   * @since 3.next
+   * @since 3.16
    */
   Map<String, Object> checkDatabase(String databaseName);
 
   /**
    * Attempts to repair the named database; returns short summary in map form.
    *
-   * @since 3.next
+   * @since 3.16
    */
   Map<String, Object> repairDatabase(String databaseName);
 
   /**
    * Requests reinstallation of the named database with content from the cluster; returns short summary in map form.
    *
-   * @since 3.next
+   * @since 3.16
    */
   Map<String, Object> reinstallDatabase(String databaseName);
 }

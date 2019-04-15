@@ -27,7 +27,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Command to bounce the Nexus application lifecycle.
  *
- * @since 3.next
+ * @since 3.16
  */
 @Named
 @Command(name = "lifecycleBounce", scope = "nexus", description = "Re-runs all phases from the given phase to the current phase")

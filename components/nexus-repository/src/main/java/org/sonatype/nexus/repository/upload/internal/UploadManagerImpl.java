@@ -79,7 +79,7 @@ public class UploadManagerImpl
   }
 
   /**
-   * @since 3.next
+   * @since 3.16
    */
   @Override
   public UploadResponse handle(final Repository repository, final HttpServletRequest request) throws IOException {

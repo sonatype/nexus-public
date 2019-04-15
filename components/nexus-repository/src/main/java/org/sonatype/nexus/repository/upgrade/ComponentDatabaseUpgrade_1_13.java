@@ -32,7 +32,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Remove AssetDownloadCount table
  *
- * @since 3.next
+ * @since 3.16
  */
 @Named
 @Singleton

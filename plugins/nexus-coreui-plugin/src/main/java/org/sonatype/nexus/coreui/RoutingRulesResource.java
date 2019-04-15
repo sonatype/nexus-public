@@ -27,6 +27,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response.Status;
 
@@ -38,6 +39,7 @@ import org.sonatype.nexus.repository.routing.RoutingRuleHelper;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 import org.sonatype.nexus.rest.Resource;
 
+import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import static java.util.Collections.emptyList;
@@ -45,7 +47,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.common.entity.EntityHelper.id;
 
 /**
- * @since 3.next
+ * @since 3.16
  */
 @Named
 @Singleton
@@ -65,7 +67,8 @@ public class RoutingRulesResource
   private RoutingRuleHelper routingRuleHelper;
 
   @POST
-  @RequiresPermissions("nexus:repository-admin:*:*:add")
+  @RequiresAuthentication
+  @RequiresPermissions("nexus:*")
   public void createRoutingRule(RoutingRuleXO routingRuleXO)
   {
     routingRuleStore.create(fromXO(routingRuleXO));
@@ -73,7 +76,8 @@ public class RoutingRulesResource
 
   @POST
   @Path("/test")
-  @RequiresPermissions("nexus:repository-admin:*:*:read")
+  @RequiresAuthentication
+  @RequiresPermissions("nexus:*")
   public boolean isAllowed(RoutingRuleTestXO routingRuleTestXO)
   {
     String path = routingRuleTestXO.getPath();
@@ -83,26 +87,36 @@ public class RoutingRulesResource
   }
 
   @GET
-  @RequiresPermissions("nexus:repository-admin:*:*:read")
-  public List<RoutingRuleXO> getRoutingRules() {
+  public List<RoutingRuleXO> getRoutingRules(@QueryParam("includeRepositoryNames") boolean includeRepositoryNames) {
+    routingRuleHelper.ensureUserHasPermissionToRead();
+
     List<RoutingRuleXO> rules = routingRuleStore.list()
             .stream()
             .map(RoutingRulesResource::toXO)
             .collect(Collectors.toList());
 
+    if (includeRepositoryNames) {
+      setAssignedRepositories(rules);
+    }
+
+    return rules;
+  }
+
+  @RequiresAuthentication
+  @RequiresPermissions("nexus:*")
+  private void setAssignedRepositories(final List<RoutingRuleXO> rules) {
     Map<EntityId, List<String>> assignedRepositories = routingRuleHelper.calculateAssignedRepositories();
     for (RoutingRuleXO rule : rules) {
       List<String> repositoryNames = assignedRepositories.computeIfAbsent(id(rule.getId()), id -> emptyList());
       repositoryNames.sort(String.CASE_INSENSITIVE_ORDER);
       rule.setAssignedRepositoryNames(repositoryNames);
     }
-
-    return rules;
   }
 
   @PUT
   @Path("/{name}")
-  @RequiresPermissions("nexus:repository-admin:*:*:edit")
+  @RequiresAuthentication
+  @RequiresPermissions("nexus:*")
   public void updateRoutingRule(@PathParam("name") final String name, RoutingRuleXO routingRuleXO) {
     RoutingRule routingRule = routingRuleStore.getByName(name);
     if (null == routingRule) {
@@ -117,7 +131,8 @@ public class RoutingRulesResource
 
   @DELETE
   @Path("/{name}")
-  @RequiresPermissions("nexus:repository-admin:*:*:delete")
+  @RequiresAuthentication
+  @RequiresPermissions("nexus:*")
   public void deleteRoutingRule(@PathParam("name") final String name) {
     RoutingRule routingRule = routingRuleStore.getByName(name);
     if (null == routingRule) {

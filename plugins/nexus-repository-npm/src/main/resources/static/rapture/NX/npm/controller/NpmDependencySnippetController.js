@@ -13,7 +13,7 @@
 /*global Ext, NX*/
 
 /**
- * @since 3.next
+ * @since 3.16
  */
 Ext.define('NX.npm.controller.NpmDependencySnippetController', {
   extend: 'NX.app.Controller',

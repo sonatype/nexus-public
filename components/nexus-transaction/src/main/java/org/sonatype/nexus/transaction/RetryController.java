@@ -37,7 +37,7 @@ import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getTime;
 /**
  * Default controller of {@link Transaction} retries.
  *
- * @since 3.next
+ * @since 3.16
  */
 public class RetryController
     extends ComponentSupport

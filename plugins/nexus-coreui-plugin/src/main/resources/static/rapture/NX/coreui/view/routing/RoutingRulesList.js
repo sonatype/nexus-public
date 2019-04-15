@@ -15,7 +15,7 @@
 /**
  * Routing Rules grid.
  *
- * @since 3.next
+ * @since 3.16
  */
 Ext.define('NX.coreui.view.routing.RoutingRulesList', {
   extend: 'NX.view.drilldown.Master',

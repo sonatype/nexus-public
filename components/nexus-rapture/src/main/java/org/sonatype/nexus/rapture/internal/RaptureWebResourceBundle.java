@@ -33,6 +33,7 @@ import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
 import org.sonatype.nexus.rapture.UiPluginDescriptor;
 import org.sonatype.nexus.rapture.internal.state.StateComponent;
+import org.sonatype.nexus.rapture.ReactFrontendConfiguration;
 import org.sonatype.nexus.servlet.ServletHelper;
 import org.sonatype.nexus.webresources.GeneratedWebResource;
 import org.sonatype.nexus.webresources.WebResource;
@@ -76,18 +77,22 @@ public class RaptureWebResourceBundle
 
   private final Gson gson;
 
+  private final ReactFrontendConfiguration reactFrontendConfiguration;
+
   @Inject
   public RaptureWebResourceBundle(final ApplicationVersion applicationVersion,
                                   final Provider<HttpServletRequest> servletRequestProvider,
                                   final Provider<StateComponent> stateComponentProvider,
                                   final TemplateHelper templateHelper,
-                                  final List<UiPluginDescriptor> pluginDescriptors)
+                                  final List<UiPluginDescriptor> pluginDescriptors,
+                                  final ReactFrontendConfiguration reactFrontendConfiguration)
   {
     this.applicationVersion = checkNotNull(applicationVersion);
     this.servletRequestProvider = checkNotNull(servletRequestProvider);
     this.stateComponentProvider = checkNotNull(stateComponentProvider);
     this.templateHelper = checkNotNull(templateHelper);
     this.pluginDescriptors = checkNotNull(pluginDescriptors);
+    this.reactFrontendConfiguration = checkNotNull(reactFrontendConfiguration);
 
     log.info("UI plugin descriptors:");
     for (UiPluginDescriptor descriptor : pluginDescriptors) {
@@ -335,6 +340,10 @@ public class RaptureWebResourceBundle
     scripts.add(uri(mode("extdirect-{mode}.js")));
     scripts.add(uri("bootstrap.js"));
     scripts.add(uri("d3.v4.min.js"));
+
+    if (reactFrontendConfiguration.isEnabled()) {
+      scripts.add(uri("frontend-bundle.js"));
+    }
 
     // add all "prod" plugin scripts if debug is not enabled
     if (!isDebug()) {

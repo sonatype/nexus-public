@@ -64,6 +64,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.stream.StreamSupport.stream;
 import static org.sonatype.nexus.blobstore.DirectPathLocationStrategy.DIRECT_PATH_ROOT;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreConfigurationHelper.getConfiguredExpirationInDays;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.FAILED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.NEW;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
@@ -110,6 +111,8 @@ public class S3BlobStore
       "^([a-z]|(\\d(?!\\d{0,2}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})))([a-z\\d]|(\\.(?!(\\.|-)))|(-(?!\\.))){1,61}[a-z\\d]$";
 
   public static final int DEFAULT_EXPIRATION_IN_DAYS = 3;
+
+  public static final int NO_AUTOMATIC_EXPIRY_HARD_DELETE = 0;
 
   public static final String METADATA_FILENAME = "metadata.properties";
 
@@ -339,7 +342,20 @@ public class S3BlobStore
   }
 
   @Override
-  protected boolean doDelete(final BlobId blobId, String reason) {
+  protected boolean doDelete(final BlobId blobId, final String reason) {
+    if (deleteByExpire()) {
+      return expire(blobId, reason);
+    }
+    else {
+      return doDeleteHard(blobId);
+    }
+  }
+
+  private boolean deleteByExpire() {
+    return getConfiguredExpirationInDays(blobStoreConfiguration) != NO_AUTOMATIC_EXPIRY_HARD_DELETE;
+  }
+
+  private boolean expire(final BlobId blobId, final String reason) {
     final S3Blob blob = liveBlobs.getUnchecked(blobId);
 
     Lock lock = blob.lock();

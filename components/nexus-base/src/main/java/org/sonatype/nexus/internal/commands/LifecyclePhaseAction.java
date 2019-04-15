@@ -27,7 +27,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Command to manage the Nexus application lifecycle.
  *
- * @since 3.next
+ * @since 3.16
  */
 @Named
 @Command(name = "lifecyclePhase", scope = "nexus", description = "Move the Nexus application lifecycle to the given phase")

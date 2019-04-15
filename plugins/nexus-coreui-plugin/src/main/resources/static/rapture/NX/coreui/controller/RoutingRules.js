@@ -15,7 +15,7 @@
 /**
  * Routing Rules controller.
  *
- * @since 3.next
+ * @since 3.16
  */
 Ext.define('NX.coreui.controller.RoutingRules', {
   extend: 'NX.controller.Drilldown',
@@ -55,7 +55,7 @@ Ext.define('NX.coreui.controller.RoutingRules', {
     }
   },
 
-  permission: 'nexus:repository-admin:*:*',
+  permission: 'nexus:*',
 
   /**
    * @override
@@ -72,7 +72,7 @@ Ext.define('NX.coreui.controller.RoutingRules', {
         variants: ['x16', 'x32']
       },
       visible: function() {
-        return NX.Permissions.check('nexus:repository-admin:*:*:read') && NX.State.getValue('routingRules');
+        return NX.Permissions.check('nexus:*') && NX.State.getValue('routingRules');
       },
       weight: 500
     };
@@ -101,7 +101,7 @@ Ext.define('NX.coreui.controller.RoutingRules', {
           click: this.createRoutingRule
         },
         'nx-coreui-routing-rules-edit nx-coreui-routing-rules-settings-form button[action=save]': {
-          afterrender: this.bindSaveButton,
+          afterrender: this.bindButton,
           click: this.updateRoutingRule
         },
         'nx-coreui-routing-rules-add nx-coreui-routing-rules-single-preview button[action=test]': {
@@ -134,20 +134,13 @@ Ext.define('NX.coreui.controller.RoutingRules', {
    * Enable 'New' button when user has necessary permission and routingRules feature flag is enabled
    */
   bindNewButton: function(button) {
-    this.bindButton(button, ':add');
+    this.bindButton(button);
   },
 
-  /**
-   * Enable 'Save' button when user has necessary permission and routingRules feature flag is enabled
-   */
-  bindSaveButton: function(button) {
-    this.bindButton(button, ':edit');
-  },
-
-  bindButton: function(button, action) {
+  bindButton: function(button) {
     button.mon(
         NX.Conditions.and(
-            NX.Conditions.isPermitted(this.permission + action),
+            NX.Conditions.isPermitted(this.permission),
             NX.Conditions.watchState('routingRules')
         ),
         {

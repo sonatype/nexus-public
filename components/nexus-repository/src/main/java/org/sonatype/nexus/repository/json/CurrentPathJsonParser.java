@@ -22,7 +22,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 /**
  * Decorator class of a {@link JsonParser} allowing for maintaining and tracking the current path.
  *
- * @since 3.next
+ * @since 3.16
  */
 public class CurrentPathJsonParser
     extends JsonParserDecorator

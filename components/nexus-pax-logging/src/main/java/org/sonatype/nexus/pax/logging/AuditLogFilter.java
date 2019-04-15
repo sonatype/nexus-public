@@ -25,7 +25,7 @@ import static org.sonatype.nexus.pax.logging.NexusLogFilter.MDC_MARKER_ID;
 /**
  * Logback {@link Filter} for audit logs. Ensures that the audit logs get the appropriate entries.
  *
- * @since 3.next
+ * @since 3.16
  */
 public class AuditLogFilter
     extends Filter<ILoggingEvent>

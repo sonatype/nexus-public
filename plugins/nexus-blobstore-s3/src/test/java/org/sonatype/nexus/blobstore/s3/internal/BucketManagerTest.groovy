@@ -20,7 +20,11 @@ import com.amazonaws.services.s3.model.BucketLifecycleConfiguration.Transition
 import com.amazonaws.services.s3.model.ObjectListing
 import com.amazonaws.services.s3.model.StorageClass
 import com.amazonaws.services.s3.model.S3ObjectSummary
+import com.amazonaws.services.s3.model.lifecycle.LifecycleFilter
+import com.amazonaws.services.s3.model.lifecycle.LifecycleTagPredicate
 import spock.lang.Specification
+
+import static org.sonatype.nexus.blobstore.s3.internal.BucketManager.LIFECYCLE_EXPIRATION_RULE_ID
 
 /**
  * {@link BucketManager} tests.
@@ -63,7 +67,7 @@ class BucketManagerTest
    * Make sure if admins have set other lifecycle rules we don't clobber them.
    */
   def 'adding lifecycle leaves other rules alone'() {
-    given: 'empty lifecycleConfiguration'
+    given: 'lifecycleConfiguration with another rule'
       def bucketConfig = new BucketLifecycleConfiguration()
       def rule = new BucketLifecycleConfiguration.Rule()
           .withId('some other rule')
@@ -79,14 +83,48 @@ class BucketManagerTest
       cfg.attributes = [s3: [bucket: 'mybucket', prefix: 'myprefix', expiration: '3']]
       bucketManager.s3 = s3
 
-    when: 'create called'
+    when: 'prepareStorageLocation called'
       bucketManager.prepareStorageLocation(cfg)
 
     then: 'glacier rule still present'
       1 * s3.setBucketLifecycleConfiguration(_, _) >> { bucketName, capturedConfig ->
-        assert capturedConfig.getRules().size() == 2
-        assert capturedConfig.getRules().stream().anyMatch { it.id == 'some other rule' }
-        assert capturedConfig.getRules().stream().anyMatch { it.id == BucketManager.LIFECYCLE_EXPIRATION_RULE_ID }
+        assert capturedConfig.rules.size() == 2
+        assert capturedConfig.rules.any { it.id == 'some other rule' }
+        assert capturedConfig.rules.any { it.id == LIFECYCLE_EXPIRATION_RULE_ID }
+      }
+  }
+
+  def 'lifecycle rule updated when expiry date changes'() {
+    given: 'lifecycleConfiguration with inital expiry days'
+      def bucketConfig = new BucketLifecycleConfiguration()
+      def rule1 = new BucketLifecycleConfiguration.Rule()
+          .withId('some other rule')
+          .withTransitions([
+              new Transition().withStorageClass(StorageClass.Glacier).withDays(365)
+          ])
+          .withStatus(BucketLifecycleConfiguration.ENABLED.toString())
+      def rule2 = new BucketLifecycleConfiguration.Rule()
+          .withId(LIFECYCLE_EXPIRATION_RULE_ID)
+          .withFilter(new LifecycleFilter(
+              new LifecycleTagPredicate(S3BlobStore.DELETED_TAG)))
+          .withExpirationInDays(2)
+          .withStatus(BucketLifecycleConfiguration.ENABLED)
+      bucketConfig.setRules([ rule1, rule2 ])
+
+      s3.doesBucketExistV2('mybucket') >> true
+      s3.getBucketLifecycleConfiguration('mybucket') >> bucketConfig
+      def cfg = new BlobStoreConfiguration()
+      cfg.attributes = [s3: [bucket: 'mybucket', prefix: 'myprefix', expiration: '3']]
+      bucketManager.s3 = s3
+
+    when: 'prepareStorageLocation called'
+      bucketManager.prepareStorageLocation(cfg)
+
+    then: 'the expiry date on the expiration rule is updated'
+      1 * s3.setBucketLifecycleConfiguration(_, _) >> { bucketName, capturedConfig ->
+        assert capturedConfig.rules.size() == 2
+        assert capturedConfig.rules.any { it.id == 'some other rule' }
+        assert capturedConfig.rules.any { it.id == LIFECYCLE_EXPIRATION_RULE_ID && it.expirationInDays == 3 }
       }
   }
 

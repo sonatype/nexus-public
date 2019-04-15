@@ -40,6 +40,7 @@ import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 
+import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -49,7 +50,7 @@ import static org.sonatype.nexus.common.entity.EntityHelper.id;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 
 /**
- * @since 3.next
+ * @since 3.16
  */
 @Named
 @Singleton
@@ -73,7 +74,8 @@ public class RoutingRulesApiResource
   }
 
   @POST
-  @RequiresPermissions("nexus:repository-admin:*:*:add")
+  @RequiresAuthentication
+  @RequiresPermissions("nexus:*")
   public void createRoutingRule(@NotNull final RoutingRuleXO routingRuleXO)
   {
     RoutingRule routingRule = new RoutingRule(routingRuleXO.getName(),
@@ -85,8 +87,8 @@ public class RoutingRulesApiResource
   }
 
   @GET
-  @RequiresPermissions("nexus:repository-admin:*:*:read")
   public List<RoutingRuleXO> getRoutingRules() {
+    routingRuleHelper.ensureUserHasPermissionToRead();
     return routingRuleStore.list()
             .stream()
             .map(RoutingRuleXO::fromRoutingRule)
@@ -95,15 +97,16 @@ public class RoutingRulesApiResource
 
   @GET
   @Path("/{name}")
-  @RequiresPermissions("nexus:repository-admin:*:*:read")
   public RoutingRuleXO getRoutingRule(@PathParam("name") final String name) {
+    routingRuleHelper.ensureUserHasPermissionToRead();
     RoutingRule routingRule = getRuleFromStore(name);
     return RoutingRuleXO.fromRoutingRule(routingRule);
   }
 
   @PUT
   @Path("/{name}")
-  @RequiresPermissions("nexus:repository-admin:*:*:edit")
+  @RequiresAuthentication
+  @RequiresPermissions("nexus:*")
   public void updateRoutingRule(@PathParam("name") final String name,
                                 @NotNull final RoutingRuleXO routingRuleXO)
   {
@@ -119,7 +122,8 @@ public class RoutingRulesApiResource
 
   @DELETE
   @Path("/{name}")
-  @RequiresPermissions("nexus:repository-admin:*:*:delete")
+  @RequiresAuthentication
+  @RequiresPermissions("nexus:*")
   public void deleteRoutingRule(@PathParam("name") final String name) {
     RoutingRule routingRule = getRuleFromStore(name);
     EntityId routingRuleId = id(routingRule);

@@ -26,7 +26,7 @@ import static org.sonatype.nexus.repository.storage.capability.StorageSettingsCa
 /**
  * Responsible for altering the runtime behaviour of assets
  *
- * @since 3.next
+ * @since 3.16
  */
 @Named
 @Singleton

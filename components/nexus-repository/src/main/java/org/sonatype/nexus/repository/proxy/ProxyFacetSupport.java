@@ -241,7 +241,7 @@ public abstract class ProxyFacetSupport
   /**
    * Is the current thread actively downloading (ie. fetch + store) from the upstream proxy?
    *
-   * @since 3.next
+   * @since 3.16
    */
   public static boolean isDownloading() {
     return TRUE.equals(downloading.get());

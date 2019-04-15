@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.16.0-SNAPSHOT</version>
+    <version>3.17.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-commons</artifactId>
@@ -57,7 +57,7 @@
       <dependency>
         <groupId>commons-fileupload</groupId>
         <artifactId>commons-fileupload</artifactId>
-        <version>1.3.2.SONATYPE</version>
+        <version>1.4</version>
       </dependency>
 
       <dependency>

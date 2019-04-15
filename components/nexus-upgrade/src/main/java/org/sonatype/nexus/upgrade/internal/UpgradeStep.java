@@ -66,7 +66,7 @@ public class UpgradeStep
   }
 
   /**
-   * @since 3.next
+   * @since 3.16
    */
   public Upgrade getUpgrade() {
     return upgrade;

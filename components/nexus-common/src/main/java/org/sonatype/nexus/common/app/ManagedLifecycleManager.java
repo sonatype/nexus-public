@@ -40,14 +40,14 @@ public abstract class ManagedLifecycleManager
    * re-running all the phases in between. If the bounce phase is after the current phase then it simply moves the
    * lifecycle forwards like {@link #to(Phase)}.
    *
-   * @since 3.next
+   * @since 3.16
    */
   public abstract void bounce(final Phase bouncePhase) throws Exception;
 
   /**
    * Are we in the process of shutting down? (ie. moving to the {@code OFF} phase)
    *
-   * @since 3.next
+   * @since 3.16
    */
   public static boolean isShuttingDown() {
     return shuttingDown;
@@ -62,7 +62,7 @@ public abstract class ManagedLifecycleManager
   /**
    * Flag that we are in the process of shutting down.
    *
-   * @since 3.next
+   * @since 3.16
    */
   protected void declareShutdown() {
     log.info("Shutting down");

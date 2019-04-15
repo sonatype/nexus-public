@@ -104,7 +104,7 @@ public class MutableSecurityContributor
   }
 
   /**
-   * @since 3.next
+   * @since 3.16
    */
   protected void maybeAddPrivilege(final SecurityConfiguration model, final CPrivilege privilege) {
     if (model.getPrivilege(privilege.getId()) == null) {

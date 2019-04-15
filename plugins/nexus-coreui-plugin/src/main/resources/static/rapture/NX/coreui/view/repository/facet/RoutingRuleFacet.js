@@ -15,14 +15,14 @@
 /**
  * Configuration for the repository routing rule.
  *
- * @since 3.next
+ * @since 3.16
  */
 Ext.define('NX.coreui.view.repository.facet.RoutingRuleFacet', {
   extend: 'Ext.form.FieldContainer',
   alias: 'widget.nx-coreui-repository-routing-rule-facet',
   requires: [
     'NX.I18n',
-    'NX.coreui.store.RoutingRule',
+    'NX.coreui.model.RoutingRule',
     'NX.coreui.view.repository.facet.RoutingRuleFacetViewController'
   ],
 
@@ -31,7 +31,15 @@ Ext.define('NX.coreui.view.repository.facet.RoutingRuleFacet', {
   viewModel: {
     stores: {
       RoutingRules: {
-        source: 'RoutingRule'
+        source: {
+          extend: 'Ext.data.Store',
+          model: 'NX.coreui.model.RoutingRule',
+          proxy: {
+            type: 'rest',
+            url: 'service/rest/internal/ui/routing-rules'
+          },
+          sorters: {property: 'name', direction: 'ASC'}
+        }
       }
     }
   },

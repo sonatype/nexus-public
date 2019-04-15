@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
- * @since 3.next
+ * @since 3.16
  */
 @Named
 @Singleton

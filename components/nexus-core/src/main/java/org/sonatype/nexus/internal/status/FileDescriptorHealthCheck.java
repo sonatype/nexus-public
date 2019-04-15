@@ -23,7 +23,7 @@ import static java.lang.String.format;
 /**
  * Health check that indicates if the file descriptor limit is below the recommended threshold
  *
- * @since 3.next
+ * @since 3.16
  */
 @Named("File Descriptors")
 @Singleton

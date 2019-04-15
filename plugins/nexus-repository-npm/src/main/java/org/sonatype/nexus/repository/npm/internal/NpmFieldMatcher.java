@@ -25,7 +25,7 @@ import static java.util.regex.Pattern.compile;
 /**
  * A NPM Json Field Matcher
  *
- * @since 3.next
+ * @since 3.16
  */
 public class NpmFieldMatcher
 {

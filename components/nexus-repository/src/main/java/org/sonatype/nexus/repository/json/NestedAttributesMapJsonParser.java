@@ -27,7 +27,7 @@ import static java.util.Objects.isNull;
  * {@link JsonParser} that holds state for communicating with a {@link NestedAttributesMap}. This mostly will be
  * valuable for parsing and merging multiple json objects into a give {@link NestedAttributesMap}
  *
- * @since 3.next
+ * @since 3.16
  */
 public class NestedAttributesMapJsonParser
     extends CurrentPathJsonParser

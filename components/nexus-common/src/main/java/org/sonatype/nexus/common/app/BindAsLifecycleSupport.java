@@ -28,7 +28,7 @@ import static com.google.inject.name.Names.named;
  * Provider implementations are not automatically exposed under additional interfaces.
  * This small module is a workaround to expose this provider as a (managed) lifecycle.
  *
- * @since 3.next
+ * @since 3.16
  */
 public class BindAsLifecycleSupport<T extends Lifecycle & Provider<?>>
     extends AbstractModule

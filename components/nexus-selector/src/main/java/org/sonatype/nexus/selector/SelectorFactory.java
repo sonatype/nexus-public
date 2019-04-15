@@ -32,7 +32,7 @@ import static org.sonatype.nexus.selector.JexlEngine.expandExceptionDetail;
 /**
  * Factory for validating and creating selectors.
  *
- * @since 3.next
+ * @since 3.16
  */
 @Named
 @Singleton

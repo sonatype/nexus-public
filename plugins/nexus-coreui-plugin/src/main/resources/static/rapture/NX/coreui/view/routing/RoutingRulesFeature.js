@@ -15,7 +15,7 @@
 /**
  * Routing Rules feature panel.
  *
- * @since 3.next
+ * @since 3.16
  */
 Ext.define('NX.coreui.view.routing.RoutingRulesFeature', {
   extend: 'NX.view.drilldown.Drilldown',

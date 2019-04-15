@@ -29,7 +29,7 @@ import io.swagger.annotations.ApiResponses;
 /**
  * Swagger documentation for {@link org.sonatype.nexus.repository.rest.internal.resources.RoutingRulesApiResource}
  *
- * @since 3.next
+ * @since 3.16
  */
 @Api(value = "routing-rules", hidden = true)
 public interface RoutingRulesApiResourceDoc

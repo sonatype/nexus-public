@@ -25,7 +25,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * NestedAttributesMap}, this allows jackson {@link ObjectMapper}'s that deserialize into maps to always use
  * the shared map.
  *
- * @since 3.next
+ * @since 3.16
  */
 public class NestedAttributesMapStdValueInstantiator
     extends StdValueInstantiator

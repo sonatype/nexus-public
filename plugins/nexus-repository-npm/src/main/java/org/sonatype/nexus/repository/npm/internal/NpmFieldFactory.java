@@ -29,7 +29,7 @@ import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.rewrit
 /**
  * Simple factory class for providing handlers that are common for manipulating NPM JSON Fields.
  *
- * @since 3.next
+ * @since 3.16
  */
 public class NpmFieldFactory
 {

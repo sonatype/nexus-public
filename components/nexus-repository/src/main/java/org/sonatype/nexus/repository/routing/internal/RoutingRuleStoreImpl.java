@@ -47,7 +47,7 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;
 
 /**
- * @since 3.next
+ * @since 3.16
  */
 @Named
 @ManagedLifecycle(phase = SCHEMAS)

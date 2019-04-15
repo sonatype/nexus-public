@@ -70,7 +70,7 @@ public interface ComponentMaintenance
    * @param batchSize number of components to commit at a time
    * @return {@link DeletionProgress} for the current deletion attempt
    *
-   * @since 3.next
+   * @since 3.16
    */
   DeletionProgress deleteComponents(Iterable<EntityId> components, BooleanSupplier cancelledCheck, int batchSize);
 

@@ -22,7 +22,7 @@ import static org.apache.commons.lang.StringUtils.isAlphanumeric;
 /**
  * Builder of SQL 'where' clauses for content selectors.
  *
- * @since 3.next
+ * @since 3.16
  */
 public class SelectorSqlBuilder
 {

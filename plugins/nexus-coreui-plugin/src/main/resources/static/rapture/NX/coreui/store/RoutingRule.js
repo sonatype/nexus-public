@@ -15,7 +15,7 @@
 /**
  * Routing Rule store.
  *
- * @since 3.next
+ * @since 3.16
  */
 Ext.define('NX.coreui.store.RoutingRule', {
   extend: 'Ext.data.Store',
@@ -23,7 +23,7 @@ Ext.define('NX.coreui.store.RoutingRule', {
 
   proxy: {
     type: 'rest',
-    url: 'service/rest/internal/ui/routing-rules'
+    url: 'service/rest/internal/ui/routing-rules?includeRepositoryNames=true'
   },
 
   sorters: {property: 'name', direction: 'ASC'}

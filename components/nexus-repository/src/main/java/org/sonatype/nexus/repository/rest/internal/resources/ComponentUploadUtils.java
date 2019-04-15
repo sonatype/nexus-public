@@ -40,7 +40,7 @@ public class ComponentUploadUtils
   /**
    * Converts multipart form into ComponentUpload.
    *
-   * @since 3.next
+   * @since 3.16
    *
    * @param format the repository format
    * @param multipartInput the multipart form

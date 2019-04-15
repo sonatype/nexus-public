@@ -19,7 +19,7 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 
 /**
- * @since 3.next
+ * @since 3.16
  */
 public interface RoutingRuleHelper
 {
@@ -48,4 +48,9 @@ public interface RoutingRuleHelper
    * @return A map of routing rule ids to a list of repository names that are using them
    */
   Map<EntityId, List<String>> calculateAssignedRepositories();
+
+  /**
+   * Ensures that the user has the necessary permissions to Read routing rules
+   */
+  void ensureUserHasPermissionToRead();
 }

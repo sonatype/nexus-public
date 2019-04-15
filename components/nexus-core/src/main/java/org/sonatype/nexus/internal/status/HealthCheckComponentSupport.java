@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 /**
  * Adds component support to all health checks
  *
- * @since 3.next
+ * @since 3.16
  */
 public abstract class HealthCheckComponentSupport
     extends HealthCheck

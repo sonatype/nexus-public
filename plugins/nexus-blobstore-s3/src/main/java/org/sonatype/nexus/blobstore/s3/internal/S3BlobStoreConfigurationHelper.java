@@ -28,7 +28,7 @@ import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.EXPIRATION_KE
 /**
  * Helper for retrieving S3 specific settings from a {@link BlobStoreConfiguration}.
  *
- * @since 3.next
+ * @since 3.16
  */
 public class S3BlobStoreConfigurationHelper
 {

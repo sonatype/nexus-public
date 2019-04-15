@@ -35,7 +35,7 @@ import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.META_R
 /**
  * {@link ObjectMapper} implementation for NPM streaming in and out of JSON.
  *
- * @since 3.next
+ * @since 3.16
  */
 public class NpmStreamingObjectMapper
     extends StreamingObjectMapper

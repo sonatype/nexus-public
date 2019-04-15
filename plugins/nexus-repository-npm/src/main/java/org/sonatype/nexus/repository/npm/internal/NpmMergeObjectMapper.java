@@ -41,7 +41,7 @@ import static org.sonatype.nexus.repository.npm.internal.NpmVersionComparator.ve
 /**
  * {@link ObjectMapper} implementation for NPM Merging (the NXRM way) from {@link InputStream}s
  *
- * @since 3.next
+ * @since 3.16
  */
 public class NpmMergeObjectMapper
     extends MergeObjectMapper

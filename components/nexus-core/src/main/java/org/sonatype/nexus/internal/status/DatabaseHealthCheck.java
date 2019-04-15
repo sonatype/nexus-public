@@ -24,7 +24,7 @@ import static java.lang.String.format;
 /**
  * Health check that indicates if the database is currently frozen
  *
- * @since 3.next
+ * @since 3.16
  */
 @Named("Database Frozen")
 @Singleton

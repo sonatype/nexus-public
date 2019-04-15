@@ -27,7 +27,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Inform on the health of transactions; reports if any have an excessive number of retries.
  *
- * @since 3.next
+ * @since 3.16
  */
 @Named("Transactions")
 @Singleton

@@ -24,6 +24,7 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.routing.internal.RoutingRuleCache;
 import org.sonatype.nexus.repository.routing.internal.RoutingRuleHelperImpl;
+import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 
 import com.google.common.collect.ImmutableList;
 import org.junit.Before;
@@ -57,6 +58,9 @@ public class RoutingRuleHelperImplTest
   @Mock
   RoutingRulesConfiguration config;
 
+  @Mock
+  RepositoryPermissionChecker repositoryPermissionChecker;
+
   @Before
   public void setup() {
     when(routingRuleStore.getById("block")).thenReturn(new RoutingRule("block", "some description", RoutingMode.BLOCK,
@@ -66,7 +70,7 @@ public class RoutingRuleHelperImplTest
     when(repository.getName()).thenReturn("test-repo");
     when(config.isEnabled()).thenReturn(true);
     cache = new RoutingRuleCache(routingRuleStore);
-    underTest = new RoutingRuleHelperImpl(cache, repositoryManager, config);
+    underTest = new RoutingRuleHelperImpl(cache, repositoryManager, config, repositoryPermissionChecker);
   }
 
   @Test

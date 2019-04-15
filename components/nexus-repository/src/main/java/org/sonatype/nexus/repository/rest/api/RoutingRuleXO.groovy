@@ -27,7 +27,7 @@ import io.swagger.annotations.ApiModelProperty
 /**
  * Routing Rule transfer object for public REST API.
  *
- * @since 3.next
+ * @since 3.16
  */
 @CompileStatic
 @Builder

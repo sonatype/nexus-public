@@ -15,7 +15,7 @@
 /**
  * Support ZIP created window for HA-C nodes.
  *
- * @since 3.next
+ * @since 3.16
  */
 Ext.define('NX.coreui.view.support.SupportZipHaCreated', {
   extend: 'NX.view.ModalDialog',

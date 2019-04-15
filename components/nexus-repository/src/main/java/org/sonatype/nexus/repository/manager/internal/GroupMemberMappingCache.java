@@ -38,7 +38,7 @@ import com.google.common.eventbus.Subscribe;
 /**
  * Maintain mapping of which groups a member repository is contained in
  *
- * @since 3.next
+ * @since 3.16
  */
 @Singleton
 @Named

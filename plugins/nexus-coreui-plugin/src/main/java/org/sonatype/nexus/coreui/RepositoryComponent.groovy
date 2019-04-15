@@ -56,7 +56,6 @@ import org.sonatype.nexus.validation.group.Update
 
 import com.codahale.metrics.annotation.ExceptionMetered
 import com.codahale.metrics.annotation.Timed
-import com.google.common.collect.Iterables
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import com.softwarementors.extjs.djn.config.annotations.DirectPollMethod
@@ -133,7 +132,7 @@ class RepositoryComponent
   @ExceptionMetered
   List<BrowseableFormatXO> getBrowseableFormats() {
     Collection<Repository> browseableRepositories = repositoryPermissionChecker.
-        userCanBrowseRepositories(Iterables.toArray(repositoryManager.browse(), Repository))
+        userCanBrowseRepositories(repositoryManager.browse())
 
 
     Set<String> repoIds = browseableRepositories.stream().map { repository ->
@@ -376,15 +375,13 @@ class RepositoryComponent
       })
     }
 
-    repositories = repositoryPermissionChecker.userCanBrowseRepositories(Iterables.toArray(repositories, Repository.class))
+    repositories = repositoryPermissionChecker.userCanBrowseRepositories(repositories)
 
     return repositories
   }
 
   Iterable<Repository> browse() {
-    return repositoryManager.browse().findResults { Repository repository ->
-      securityHelper.allPermitted(adminPermission(repository, BreadActions.READ)) ? repository : null
-    }
+    return repositoryPermissionChecker.userHasRepositoryAdminPermission(repositoryManager.browse(), BreadActions.READ)
   }
 
   RepositoryAdminPermission adminPermission(final Repository repository, final String action) {

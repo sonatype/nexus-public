@@ -23,7 +23,7 @@ import static java.util.Collections.singletonList;
 /**
  * NPM focused {@link Content} allowing for setting {@link NpmStreamPayload} fields after creation.
  *
- * @since 3.next
+ * @since 3.16
  */
 public class NpmContent
     extends Content

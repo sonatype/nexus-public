@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-parent</artifactId>
-    <version>3.16.0-SNAPSHOT</version>
+    <version>3.17.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.sonatype.nexus.bundles</groupId>
@@ -41,7 +41,7 @@
         <groupId>org.sonatype.nexus.buildsupport</groupId>
         <artifactId>nexus-buildsupport-all</artifactId>
         <type>pom</type>
-        <version>3.16.0-SNAPSHOT</version>
+        <version>3.17.0-SNAPSHOT</version>
         <scope>import</scope>
       </dependency>
 
@@ -50,7 +50,7 @@
       <dependency>
         <groupId>org.sonatype.nexus.bundles</groupId>
         <artifactId>org.sonatype.nexus.bundles.elasticsearch</artifactId>
-        <version>3.16.0-SNAPSHOT</version>
+        <version>3.17.0-SNAPSHOT</version>
       </dependency>
 
     </dependencies>

@@ -22,7 +22,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static org.eclipse.aether.util.StringUtils.isEmpty;
 
 /**
- * @since 3.next
+ * @since 3.16
  */
 @Singleton
 public class PyPiRestoreBlobDataFactory

@@ -36,6 +36,8 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters
 import org.sonatype.nexus.repository.manager.RepositoryManager
+import org.sonatype.nexus.repository.security.RepositoryPermissionChecker
+import org.sonatype.nexus.security.privilege.ApplicationPermission
 import org.sonatype.nexus.validation.Validate
 import org.sonatype.nexus.validation.group.Create
 import org.sonatype.nexus.validation.group.Update
@@ -46,6 +48,8 @@ import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import org.apache.shiro.authz.annotation.RequiresPermissions
 import org.hibernate.validator.constraints.NotEmpty
+
+import static org.sonatype.nexus.security.BreadActions.READ
 
 /**
  * BlobStore {@link org.sonatype.nexus.extdirect.DirectComponent}.
@@ -76,6 +80,9 @@ class BlobStoreComponent
   RepositoryManager repositoryManager
 
   @Inject
+  RepositoryPermissionChecker repositoryPermissionChecker
+
+  @Inject
   Provider<BlobStoreGroupService> blobStoreGroupService
 
   @Inject
@@ -84,8 +91,9 @@ class BlobStoreComponent
   @DirectMethod
   @Timed
   @ExceptionMetered
-  @RequiresPermissions('nexus:blobstores:read')
   List<BlobStoreXO> read() {
+    repositoryPermissionChecker.ensureUserHasPermissionOrAdminAccessToAny(new ApplicationPermission('blobstores', READ),
+        READ, repositoryManager.browse());
     def blobStores = blobStoreManager.browse()
     def blobStoreGroups = blobStores.findAll { it.blobStoreConfiguration.type == BlobStoreGroup.TYPE }.
         collect { it as BlobStoreGroup }
