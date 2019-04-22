@@ -13,6 +13,7 @@
 package org.sonatype.nexus.quartz.internal;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -57,6 +58,7 @@ import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskInfo.EndState;
 import org.sonatype.nexus.scheduling.TaskRemovedException;
+import org.sonatype.nexus.scheduling.schedule.Manual;
 import org.sonatype.nexus.scheduling.schedule.Now;
 import org.sonatype.nexus.scheduling.schedule.Schedule;
 import org.sonatype.nexus.scheduling.schedule.ScheduleFactory;
@@ -74,6 +76,7 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.SchedulerMetaData;
 import org.quartz.Trigger;
+import org.quartz.TriggerKey;
 import org.quartz.UnableToInterruptJobException;
 import org.quartz.core.QuartzScheduler;
 import org.quartz.impl.DefaultThreadExecutor;
@@ -115,6 +118,8 @@ public class QuartzSchedulerSPI
     extends StateGuardLifecycleSupport
     implements SchedulerSPI, EventAware
 {
+  public static final String MISSING_TRIGGER_RECOVERY = ".missingTriggerRecovery";
+
   private static final String SCHEDULER_NAME = "nexus";
 
   private static final String GROUP_NAME = "nexus";
@@ -396,6 +401,26 @@ public class QuartzSchedulerSPI
   //
 
   /**
+   * Schedules a manually executable trigger for a job missing a trigger and adds marker for health check reporting
+   */
+  private Trigger scheduleJobWithManualTrigger(final JobKey jobKey,
+                                               final JobDetail jobDetail,
+                                               final TriggerKey triggerKey) throws SchedulerException
+  {
+    log.error("Missing trigger for key: {}", jobKey);
+    Trigger trigger = triggerConverter.convert(new Manual())
+        .usingJobData(jobDetail.getJobDataMap())
+        .usingJobData(MISSING_TRIGGER_RECOVERY, jobKey.getName())
+        .withIdentity(triggerKey)
+        .withDescription(jobDetail.getDescription())
+        .forJob(jobDetail)
+        .build();
+    log.info("Rescheduling job '{}' with manual trigger", jobDetail.getDescription());
+    scheduler.scheduleJob(trigger);
+    return trigger;
+  }
+
+  /**
    * Attach {@link QuartzTaskJobListener} to job.
    */
   private QuartzTaskJobListener attachJobListener(final JobDetail jobDetail,
@@ -576,6 +601,27 @@ public class QuartzSchedulerSPI
 
   @Override
   @Guarded(by = STARTED)
+  public List<String> getMissingTriggerDescriptions() {
+    try {
+      try (TcclBlock tccl = TcclBlock.begin(this)) {
+        Set<JobKey> jobKeys = scheduler.getJobKeys(jobGroupEquals(GROUP_NAME));
+        List<String> missingJobDescriptions = new ArrayList<>();
+        for (JobKey jobKey : jobKeys) {
+          Trigger trigger = scheduler.getTrigger(triggerKey(jobKey.getName(), jobKey.getGroup()));
+          if (trigger.getJobDataMap().containsKey(MISSING_TRIGGER_RECOVERY)) {
+            missingJobDescriptions.add(trigger.getDescription());
+          }
+        }
+        return missingJobDescriptions;
+      }
+    }
+    catch (SchedulerException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  @Guarded(by = STARTED)
   public TaskInfo scheduleTask(final TaskConfiguration config,
                                final Schedule schedule)
   {
@@ -729,7 +775,7 @@ public class QuartzSchedulerSPI
         }
         else {
           // TODO: Sort out if this is normal or edge-case indicative of a bug or not
-          log.warn("Job missing listener; omitting from results: {}", jobKey);
+          log.debug("Job missing listener; omitting from results: {}", jobKey);
         }
       }
 
@@ -748,10 +794,10 @@ public class QuartzSchedulerSPI
           continue;
         }
 
-        Trigger trigger = scheduler.getTrigger(triggerKey(jobKey.getName(), jobKey.getGroup()));
+        TriggerKey triggerKey = triggerKey(jobKey.getName(), jobKey.getGroup());
+        Trigger trigger = scheduler.getTrigger(triggerKey);
         if (trigger == null) {
-          log.error("Missing trigger for key: {}", jobKey);
-          continue;
+          trigger = scheduleJobWithManualTrigger(jobKey, jobDetail, triggerKey);
         }
 
         nexusJobs.put(trigger, jobDetail);

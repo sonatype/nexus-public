@@ -215,22 +215,6 @@ class ComponentComponent
   @DirectMethod
   @Timed
   @ExceptionMetered
-  PagedResponse<AssetXO> readAssets(final StoreLoadParameters parameters) {
-    String repositoryName = parameters.getFilter('repositoryName')
-    Repository repository = repositoryManager.get(repositoryName)
-    if (!repository.configuration.online) {
-      return null
-    }
-    def result = browseService.browseAssets(repository, toQueryOptions(parameters))
-
-    return new PagedResponse<AssetXO>(
-        result.total,
-        createAssetXOs(result.results, null, repository))
-  }
-
-  @DirectMethod
-  @Timed
-  @ExceptionMetered
   @RequiresAuthentication
   @Validate
   boolean canDeleteComponent(@NotEmpty final String componentModelString)

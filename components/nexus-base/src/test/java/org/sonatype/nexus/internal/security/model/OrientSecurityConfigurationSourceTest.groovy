@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.internal.security.model
 
+import org.sonatype.nexus.common.app.ApplicationDirectories
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule
 import org.sonatype.nexus.security.config.CPrivilege
 import org.sonatype.nexus.security.config.CRole
@@ -22,8 +23,10 @@ import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException
 import org.sonatype.nexus.security.role.NoSuchRoleException
 import org.sonatype.nexus.security.user.NoSuchRoleMappingException
 import org.sonatype.nexus.security.user.UserNotFoundException
-
+import org.apache.shiro.authc.credential.PasswordService
 import org.junit.Rule
+import org.junit.rules.TemporaryFolder
+import org.mockito.Mock
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -36,12 +39,21 @@ class OrientSecurityConfigurationSourceTest
   @Rule
   public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory('security')
 
+  PasswordService passwordService = Mock()
+
+  ApplicationDirectories directories = Mock()
+
+  @Rule
+  TemporaryFolder tempFolder
+
   OrientSecurityConfigurationSource source
 
   def setup() {
+    directories.getWorkDirectory() >> tempFolder.getRoot()
+    passwordService.encryptPassword(_) >> "encrypted"
     source = new OrientSecurityConfigurationSource(
         database.instanceProvider,
-        new StaticSecurityConfigurationSource(),
+        new StaticSecurityConfigurationSource(directories, passwordService, false),
         new CUserEntityAdapter(),
         new CRoleEntityAdapter(),
         new CPrivilegeEntityAdapter(),

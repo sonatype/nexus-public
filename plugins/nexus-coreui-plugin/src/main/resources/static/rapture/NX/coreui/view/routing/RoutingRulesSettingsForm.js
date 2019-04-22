@@ -50,13 +50,15 @@ Ext.define('NX.coreui.view.routing.RoutingRulesSettingsForm', {
             {
               name: 'name',
               itemId: 'name',
-              fieldLabel: NX.I18n.get('RoutingRules_Name_Label')
+              fieldLabel: NX.I18n.get('RoutingRules_Name_Label'),
+              readOnly: me.readOnly
             },
             {
               name: 'description',
               itemId: 'description',
               fieldLabel: NX.I18n.get('RoutingRules_Description_Label'),
-              allowBlank: true
+              allowBlank: true,
+              readOnly: me.readOnly
             },
             {
               xtype: 'fieldcontainer',
@@ -73,7 +75,8 @@ Ext.define('NX.coreui.view.routing.RoutingRulesSettingsForm', {
                     ['BLOCK', NX.I18n.get('RoutingRules_Mode_Block_Text')],
                     ['ALLOW', NX.I18n.get('RoutingRules_Mode_Allow_Text')]
                   ],
-                  value: 'BLOCK'
+                  value: 'BLOCK',
+                  readOnly: me.readOnly
                 },
                 {
                   xtype: 'label',
@@ -104,7 +107,8 @@ Ext.define('NX.coreui.view.routing.RoutingRulesSettingsForm', {
               glyph: 'xf055@FontAwesome' /* fa-plus-circle */,
               text: NX.I18n.get('RoutingRules_Matchers_Add_Button'),
               tooltip: NX.I18n.get('RoutingRules_Matchers_Add_Button'),
-              handler: me.onAddMatcherClick.bind(this)
+              handler: me.onAddMatcherClick.bind(this),
+              hidden: me.readOnly
             }
           ]
         }
@@ -112,6 +116,20 @@ Ext.define('NX.coreui.view.routing.RoutingRulesSettingsForm', {
     ];
 
     me.callParent();
+  },
+
+  loadRecord: function(record) {
+    var me = this,
+        matcherStrings = record.get('matchers');
+
+    me.resetMatchersSection();
+    me.callParent(arguments);
+
+    matcherStrings.forEach(function(matcherString) {
+      me.addMatcherRow(matcherString);
+    });
+
+    me.currentRecord = record;
   },
 
   /**
@@ -138,15 +156,17 @@ Ext.define('NX.coreui.view.routing.RoutingRulesSettingsForm', {
               xtype: 'textfield',
               allowBlank: false,
               name: 'matchers[' + index + ']',
-              width: 'calc(100% - 36px)',
-              value: value
+              width: this.readOnly ? '100%' : 'calc(100% - 36px)',
+              value: value,
+              readOnly: this.readOnly
             },
             {
               xtype: 'button',
               cls: 'nx-matcher-remove-button',
               glyph: 'xf1f8@FontAwesome' /* fa-trash */,
               tooltip: NX.I18n.get('RoutingRules_Matchers_Remove_Button'),
-              handler: this.onRemoveMatcherClick.bind(this)
+              handler: this.onRemoveMatcherClick.bind(this),
+              hidden: this.readOnly
             }
           ]
         };

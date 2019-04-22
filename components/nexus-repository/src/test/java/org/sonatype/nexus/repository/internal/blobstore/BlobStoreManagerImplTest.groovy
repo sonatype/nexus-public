@@ -33,6 +33,7 @@ import org.mockito.ArgumentCaptor
 import org.mockito.Mock
 
 import static org.hamcrest.MatcherAssert.assertThat
+import static org.hamcrest.Matchers.notNullValue
 import static org.junit.Assert.fail
 import static org.mockito.ArgumentCaptor.forClass
 import static org.mockito.Matchers.any
@@ -294,9 +295,10 @@ class BlobStoreManagerImplTest
     when(blobStore.init(any(BlobStoreConfiguration.class))).thenThrow(new IllegalStateException())
     when(provider.get()).thenReturn(blobStore)
     when(store.list()).thenReturn(Lists.newArrayList(createConfig('test')))
+
     underTest.doStart()
-    // if blob store fails inside init, then it never gets tracked
-    assert !underTest.browse()
+    assertThat('blob store manager should still track blob stores that failed on startup', underTest.get('test'),
+        notNullValue())
   }
 
   @Test

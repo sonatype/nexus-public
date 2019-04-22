@@ -38,6 +38,7 @@ Ext.define('NX.coreui.controller.RoutingRules', {
   views: [
     'routing.RoutingRulesAdd',
     'routing.RoutingRulesEdit',
+    'routing.RoutingRulesPreview',
     'routing.RoutingRulesFeature',
     'routing.RoutingRulesList',
     'routing.RoutingRulesSettingsForm'
@@ -46,7 +47,8 @@ Ext.define('NX.coreui.controller.RoutingRules', {
     {ref: 'feature', selector: 'nx-coreui-routing-rules-feature'},
     {ref: 'list', selector: 'nx-coreui-routing-rules-list'},
     {ref: 'routingRulesAdd', selector: 'nx-coreui-routing-rules-feature nx-coreui-routing-rules-add'},
-    {ref: 'routingRulesEdit', selector: 'nx-coreui-routing-rules-feature nx-coreui-routing-rules-edit'}
+    {ref: 'routingRulesEdit', selector: 'nx-coreui-routing-rules-feature nx-coreui-routing-rules-edit'},
+    {ref: 'routingRulesPreview', selector: 'nx-coreui-routing-rules-feature nx-coreui-routing-rules-preview'}
   ],
   icons: {
     'routing-rules-default': {
@@ -97,6 +99,9 @@ Ext.define('NX.coreui.controller.RoutingRules', {
         'nx-coreui-routing-rules-list button[action=new]': {
           click: this.showAddWindow
         },
+        'nx-coreui-routing-rules-list button[action=test]': {
+          click: this.showPreviewWindow
+        },
         'nx-coreui-routing-rules-add nx-coreui-routing-rules-settings-form button[action=create]': {
           click: this.createRoutingRule
         },
@@ -121,6 +126,16 @@ Ext.define('NX.coreui.controller.RoutingRules', {
         },
         'nx-coreui-routing-rules-edit nx-coreui-routing-rules-settings-form panel[cls=nx-repeated-row]': {
           removed: this.onMatchersChange.bind(this, this.getRoutingRulesEdit)
+        },
+        'nx-coreui-routing-rules-preview textfield[name=path]': {
+          change: this.onPathChanged.bind(this, this.getRoutingRulesPreview)
+        },
+        'nx-coreui-routing-rules-preview button[action=preview]': {
+          click: this.onPreviewClicked.bind(this, this.getRoutingRulesPreview)
+        },
+        'nx-coreui-routing-rules-preview grid': {
+          select: this.onPreviewSelected.bind(this, this.getRoutingRulesPreview),
+          deselect: this.onPreviewDeselected.bind(this, this.getRoutingRulesPreview)
         }
       }
     });
@@ -261,6 +276,14 @@ Ext.define('NX.coreui.controller.RoutingRules', {
     this.loadCreateWizard(1, Ext.create('widget.nx-coreui-routing-rules-add'));
   },
 
+  /**
+   * @private
+   */
+  showPreviewWindow: function() {
+    this.setItemName(1, NX.I18n.get('RoutingRules_GlobalRoutingPreview_Title'));
+    this.loadCreateWizard(1, Ext.create('widget.nx-coreui-routing-rules-preview'));
+  },
+
   createRoutingRule: function(button) {
     var form = button.up('form').getForm();
 
@@ -280,7 +303,7 @@ Ext.define('NX.coreui.controller.RoutingRules', {
 
   updateRoutingRule: function(button) {
     var form = button.up('form').getForm(),
-        routingRuleModel = this.getSelectedModel();
+        routingRuleModel = form.getRecord();
 
     if (form.isValid()) {
       Ext.Ajax.request({
@@ -410,5 +433,48 @@ Ext.define('NX.coreui.controller.RoutingRules', {
     var viewComponent = viewComponentGetter.apply(this),
         singlePreview = viewComponent.down('nx-coreui-routing-rules-single-preview');
     singlePreview.hideTestResult();
+  },
+
+  onPathChanged: function(viewComponentGetter) {
+    var viewComponent = viewComponentGetter.apply(this),
+        grid = viewComponent.down('grid'),
+        store = grid.getStore();
+
+    grid.fireEvent('deselect', viewComponent);
+    store.removeAll();
+  },
+
+  onPreviewClicked: function(viewComponentGetter) {
+    var viewComponent = viewComponentGetter.apply(this),
+        form = viewComponent.down('form'),
+        store = viewComponent.down('grid').getStore();
+
+    if (form.isValid()) {
+      var params = form.getValues();
+      store.proxy.setExtraParam('path', params.path);
+      store.load();
+    }
+  },
+
+  onPreviewSelected: function(viewComponentGetter, event, node) {
+    var me = this,
+        viewComponent = viewComponentGetter.apply(me),
+        ruleForm = viewComponent.down('nx-coreui-routing-rules-settings-form'),
+        ruleName = node.get('rule');
+
+    if (ruleName) {
+      ruleForm.loadRecord(me.getStore('RoutingRule').findRecord('name', ruleName));
+      ruleForm.setHidden(false);
+      viewComponent.updateLayout();
+    }
+  },
+
+  onPreviewDeselected: function(viewComponentGetter) {
+    var viewComponent = viewComponentGetter.apply(this),
+        ruleForm = viewComponent.down('nx-coreui-routing-rules-settings-form');
+
+    ruleForm.setHidden(true);
+    viewComponent.updateLayout();
   }
+
 });

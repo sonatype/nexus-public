@@ -24,12 +24,16 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.entity.EntityEvent;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
+import org.sonatype.nexus.orient.entity.AttachedEntityId;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.routing.RoutingRulesConfiguration;
+import org.sonatype.nexus.repository.routing.internal.RoutingRuleEntityAdapter;
 import org.sonatype.nexus.security.PasswordHelper;
 
 import com.orientechnologies.orient.core.collate.OCaseInsensitiveCollate;
@@ -73,10 +77,19 @@ public class ConfigurationEntityAdapter
 
   private final PasswordHelper passwordHelper;
 
+  private final RoutingRulesConfiguration routingRulesConfiguration;
+
+  private final RoutingRuleEntityAdapter routingRuleEntityAdapter;
+
   @Inject
-  public ConfigurationEntityAdapter(final PasswordHelper passwordHelper) {
+  public ConfigurationEntityAdapter(final PasswordHelper passwordHelper,
+                                    final RoutingRulesConfiguration routingRulesConfiguration,
+                                    final RoutingRuleEntityAdapter routingRuleEntityAdapter)
+  {
     super(DB_CLASS);
     this.passwordHelper = checkNotNull(passwordHelper);
+    this.routingRulesConfiguration = checkNotNull(routingRulesConfiguration);
+    this.routingRuleEntityAdapter = checkNotNull(routingRuleEntityAdapter);
   }
 
   @Override
@@ -107,6 +120,12 @@ public class ConfigurationEntityAdapter
     String repositoryName = document.field(P_REPOSITORY_NAME, OType.STRING);
     Boolean online = document.field(P_ONLINE, OType.BOOLEAN);
     Map<String, Map<String, Object>> attributes = document.field(P_ATTRIBUTES, OType.EMBEDDEDMAP);
+    if (routingRulesConfiguration.isEnabled()) {
+      ODocument routingRule = document.field(P_ROUTING_RULE_ID, OType.LINK);
+      EntityId routingRuleId =
+          routingRule == null ? null : new AttachedEntityId(routingRuleEntityAdapter, routingRule.getIdentity());
+      entity.setRoutingRuleId(routingRuleId);
+    }
 
     entity.setRecipeName(recipeName);
     entity.setRepositoryName(repositoryName);
@@ -129,6 +148,13 @@ public class ConfigurationEntityAdapter
     document.field(P_REPOSITORY_NAME, entity.getRepositoryName());
     document.field(P_ONLINE, entity.isOnline());
     document.field(P_ATTRIBUTES, encrypt(attributes));
+
+    if (routingRulesConfiguration.isEnabled()) {
+      document.field(P_ROUTING_RULE_ID, entity.getRoutingRuleId() != null ?
+          getRecordIdObfuscator()
+              .decode(routingRuleEntityAdapter.getSchemaType(), entity.getRoutingRuleId().getValue()) :
+          null);
+    }
   }
 
   /**

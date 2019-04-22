@@ -13,9 +13,14 @@ fieldset.nx-form-section {
 
   .x-fieldset-body {
     padding-left: 10px;
+    padding-right: 10px;
   }
 
   &.nx-no-title {
     padding-top: 0;
   }
+}
+
+.x-panel-nx-subsection-with-background-framed fieldset.nx-form-section {
+  padding-bottom: 0;
 }

@@ -128,6 +128,31 @@ class BucketManagerTest
       }
   }
 
+  def 'lifecycle configuration removed if all rules removed'() {
+    given: 'lifecycleConfiguration with inital expiry days'
+      def bucketConfig = new BucketLifecycleConfiguration()
+      def rule1 = new BucketLifecycleConfiguration.Rule()
+          .withId(LIFECYCLE_EXPIRATION_RULE_ID)
+          .withFilter(new LifecycleFilter(
+              new LifecycleTagPredicate(S3BlobStore.DELETED_TAG)))
+          .withExpirationInDays(3)
+          .withStatus(BucketLifecycleConfiguration.ENABLED)
+      bucketConfig.setRules([ rule1 ])
+
+      s3.doesBucketExistV2('mybucket') >> true
+      s3.getBucketLifecycleConfiguration('mybucket') >> bucketConfig
+      def cfg = new BlobStoreConfiguration(name: 'mybucket')
+      cfg.attributes = [s3: [bucket: 'mybucket', expiration: '0']]
+      bucketManager.s3 = s3
+
+    when: 'prepareStorageLocation called'
+      bucketManager.prepareStorageLocation(cfg)
+
+    then: 'there are no more rules so the lifecycle configuration is removed'
+      1 * s3.deleteBucketLifecycleConfiguration('mybucket')
+      0 * s3.setBucketLifecycleConfiguration(_, _)
+  }
+
   def 'deleteStorageLocation removes bucket if empty'() {
     given: 'empty bucket'
       ObjectListing objectListing = Mock()

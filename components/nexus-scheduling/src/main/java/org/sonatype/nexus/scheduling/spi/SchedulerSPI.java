@@ -67,6 +67,13 @@ public interface SchedulerSPI
   List<TaskInfo> listsTasks();
 
   /**
+   * Returns description of triggers that were recovered after an error caused them to be lost
+   *
+   * @since 3.next
+   */
+  List<String> getMissingTriggerDescriptions();
+
+  /**
    * Schedule a task with the given scheduler.
    *
    * If a task already exists with the same task identifier, the task will be updated.

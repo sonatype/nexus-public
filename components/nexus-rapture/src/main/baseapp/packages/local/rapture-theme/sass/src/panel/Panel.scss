@@ -106,6 +106,19 @@
   padding: 9px 9px 10px 9px;
 }
 
+@include extjs-panel-ui(
+  $ui: 'nx-subsection-with-background-framed',
+
+  $ui-header-border-width: null,
+  $ui-header-color: $color-night-rider,
+  $ui-header-font-size: $font-size-h5,
+  $ui-header-font-weight: $font-weight-bold,
+  $ui-header-background-color: $color-light-smoke,
+  $ui-header-line-height: 17px,
+  $ui-body-background-color: $color-light-smoke,
+  $ui-body-border-width: null
+);
+
 /**
  * cls: 'nx-hr'
  */

@@ -16,6 +16,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 import org.sonatype.goodies.testsupport.TestSupport
+import org.sonatype.nexus.common.app.ApplicationDirectories
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule
 import org.sonatype.nexus.security.config.CPrivilege
 import org.sonatype.nexus.security.config.CRole
@@ -25,15 +26,19 @@ import org.sonatype.nexus.security.config.SecurityConfigurationCleaner
 import org.sonatype.nexus.security.config.StaticSecurityConfigurationSource
 import org.sonatype.nexus.security.internal.SecurityConfigurationCleanerImpl
 
+import org.apache.shiro.authc.credential.PasswordService
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
+import org.mockito.Mock
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import static org.hamcrest.MatcherAssert.assertThat
 import static org.hamcrest.Matchers.hasSize
+import static org.mockito.Mockito.*
 
 /**
  * Parallel security cleanup UTs.
@@ -41,7 +46,6 @@ import static org.hamcrest.Matchers.hasSize
 class ConcurrentCleanupTest
 extends TestSupport
 {
-
   private static final Logger log = LoggerFactory.getLogger(ConcurrentCleanupTest)
 
   private static final int NUMBER_OF_THREADS = 9
@@ -53,17 +57,28 @@ extends TestSupport
   @Rule
   public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory('security')
 
+  @Rule
+  public TemporaryFolder tempFolder = new TemporaryFolder();
+
   private OrientSecurityConfigurationSource source
 
   private SecurityConfiguration configuration
 
   private SecurityConfigurationCleaner cleaner
 
+  @Mock
+  PasswordService passwordService
+
+  @Mock
+  ApplicationDirectories directories
+
   @Before
   public void prepare() throws Exception {
+    when(directories.getWorkDirectory()).thenReturn(tempFolder.getRoot())
+    when(passwordService.encryptPassword(any())).thenReturn("encrypted")
     source = new OrientSecurityConfigurationSource(
         database.instanceProvider,
-        new StaticSecurityConfigurationSource(),
+        new StaticSecurityConfigurationSource(directories, passwordService, true),
         new CUserEntityAdapter(),
         new CRoleEntityAdapter(),
         new CPrivilegeEntityAdapter(),

@@ -92,6 +92,8 @@ public class BrowseServiceImpl
 
   private final ContentPermissionChecker contentPermissionChecker;
 
+  private final BrowseAssetIterableFactory browseAssetIterableFactory;
+
   private final BrowseAssetsSqlBuilder browseAssetsSqlBuilder;
 
   private final BrowseComponentsSqlBuilder browseComponentsSqlBuilder;
@@ -106,6 +108,7 @@ public class BrowseServiceImpl
                            final VariableResolverAdapterManager variableResolverAdapterManager,
                            final ContentPermissionChecker contentPermissionChecker,
                            final AssetEntityAdapter assetEntityAdapter,
+                           final BrowseAssetIterableFactory browseAssetIterableFactory,
                            final BrowseAssetsSqlBuilder browseAssetsSqlBuilder,
                            final BrowseComponentsSqlBuilder browseComponentsSqlBuilder,
                            final BucketStore bucketStore,
@@ -116,6 +119,7 @@ public class BrowseServiceImpl
     this.variableResolverAdapterManager = checkNotNull(variableResolverAdapterManager);
     this.contentPermissionChecker = checkNotNull(contentPermissionChecker);
     this.assetEntityAdapter = checkNotNull(assetEntityAdapter);
+    this.browseAssetIterableFactory = checkNotNull(browseAssetIterableFactory);
     this.browseAssetsSqlBuilder = checkNotNull(browseAssetsSqlBuilder);
     this.browseComponentsSqlBuilder = checkNotNull(browseComponentsSqlBuilder);
     this.bucketStore = checkNotNull(bucketStore);
@@ -208,9 +212,8 @@ public class BrowseServiceImpl
       List<Asset> assets = Collections.emptyList();
       // ensure there are assets before incurring contentAuth overhead
       if (hasAssets(storageTx, repository, bucketIds, queryOptions)) {
-        assets = getAssets(storageTx.browse(
-            browseAssetsSqlBuilder.buildBrowseSql(bucketIds, queryOptions),
-            browseAssetsSqlBuilder.buildSqlParams(repository.getName(), queryOptions)));
+        assets = getAssets(browseAssetIterableFactory.create(
+            storageTx.getDb(), queryOptions.getLastId(), repository.getName(), bucketIds, queryOptions.getLimit()));
       }
       return new BrowseResult<>(queryOptions, assets);
     }

@@ -1,4 +1,216 @@
 
+.x-window-header-nx-message-success-collapsed-bottom-tc {
+    height: 4px;
+}
+
+.x-window-header-nx-message-success-collapsed-bottom-bc {
+    height: 4px;
+}
+
+.x-window-header-nx-message-success-collapsed-bottom-tl,
+.x-window-header-nx-message-success-collapsed-bottom-bl,
+.x-window-header-nx-message-success-collapsed-bottom-tr,
+.x-window-header-nx-message-success-collapsed-bottom-br,
+.x-window-header-nx-message-success-collapsed-bottom-tc,
+.x-window-header-nx-message-success-collapsed-bottom-bc,
+.x-window-header-nx-message-success-collapsed-bottom-ml,
+.x-window-header-nx-message-success-collapsed-bottom-mr {
+    background-image: url(images/window-header/window-header-nx-message-success-collapsed-bottom-corners.gif);
+}
+
+.x-window-header-nx-message-success-collapsed-bottom-ml,
+.x-window-header-nx-message-success-collapsed-bottom-mr {
+    background-image: url(images/window-header/window-header-nx-message-success-collapsed-bottom-sides.gif);
+    background-repeat: repeat-y;
+}
+
+.x-window-header-nx-message-success-collapsed-bottom-mc {
+    padding: 6px 6px 6px 6px;
+}
+
+.x-window-header-nx-message-success-collapsed-left {
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    -ms-border-radius: 4px;
+    -o-border-radius: 4px;
+    border-radius: 4px;
+    padding: 10px 10px 10px 10px;
+    border-width: 0;
+    border-style: solid;
+    background-color: #0b9743;
+}
+
+.x-window-header-nx-message-success-collapsed-left-mc {
+    background-color: #0b9743;
+}
+
+.x-nbr .x-window-header-nx-message-success-collapsed-left {
+    padding: 0 !important;
+    border-width: 0 !important;
+    -webkit-border-radius: 0px;
+    -moz-border-radius: 0px;
+    -ms-border-radius: 0px;
+    -o-border-radius: 0px;
+    border-radius: 0px;
+    background-color: transparent !important;
+    box-shadow: none !important;
+}
+
+.x-window-header-nx-message-success-collapsed-left-frameInfo {
+    font-family: dh-4-4-4-4-0-0-0-0-10-10-10-10;
+}
+
+.x-window-header-nx-message-success-collapsed-left-tl {
+    background-position: 0 -8px;
+}
+
+.x-window-header-nx-message-success-collapsed-left-tr {
+    background-position: right -12px;
+}
+
+.x-window-header-nx-message-success-collapsed-left-bl {
+    background-position: 0 -16px;
+}
+
+.x-window-header-nx-message-success-collapsed-left-br {
+    background-position: right -20px;
+}
+
+.x-window-header-nx-message-success-collapsed-left-ml {
+    background-position: 0 top;
+}
+
+.x-window-header-nx-message-success-collapsed-left-mr {
+    background-position: right top;
+}
+
+.x-window-header-nx-message-success-collapsed-left-tc {
+    background-position: 0 0;
+}
+
+.x-window-header-nx-message-success-collapsed-left-bc {
+    background-position: 0 -4px;
+}
+
+.x-window-header-nx-message-success-collapsed-left-tr,
+.x-window-header-nx-message-success-collapsed-left-br,
+.x-window-header-nx-message-success-collapsed-left-mr {
+    padding-right: 4px;
+}
+
+.x-window-header-nx-message-success-collapsed-left-tl,
+.x-window-header-nx-message-success-collapsed-left-bl,
+.x-window-header-nx-message-success-collapsed-left-ml {
+    padding-left: 4px;
+}
+
+.x-window-header-nx-message-success-collapsed-left-tc {
+    height: 4px;
+}
+
+.x-window-header-nx-message-success-collapsed-left-bc {
+    height: 4px;
+}
+
+.x-window-header-nx-message-success-collapsed-left-tl,
+.x-window-header-nx-message-success-collapsed-left-bl,
+.x-window-header-nx-message-success-collapsed-left-tr,
+.x-window-header-nx-message-success-collapsed-left-br,
+.x-window-header-nx-message-success-collapsed-left-tc,
+.x-window-header-nx-message-success-collapsed-left-bc,
+.x-window-header-nx-message-success-collapsed-left-ml,
+.x-window-header-nx-message-success-collapsed-left-mr {
+    background-image: url(images/window-header/window-header-nx-message-success-collapsed-left-corners.gif);
+}
+
+.x-window-header-nx-message-success-collapsed-left-ml,
+.x-window-header-nx-message-success-collapsed-left-mr {
+    background-image: url(images/window-header/window-header-nx-message-success-collapsed-left-sides.gif);
+    background-repeat: repeat-y;
+}
+
+.x-window-header-nx-message-success-collapsed-left-mc {
+    padding: 6px 6px 6px 6px;
+}
+
+.x-window-header-nx-message-success .x-window-header-icon {
+    width: 16px;
+    height: 16px;
+    color: #333;
+    font-size: 16px;
+    line-height: 16px;
+    background-position: center center;
+}
+
+.x-window-header-nx-message-success .x-window-header-glyph {
+    color: #333;
+    font-size: 16px;
+    line-height: 16px;
+    opacity: 0.5;
+}
+
+.x-ie8 .x-window-header-nx-message-success .x-window-header-glyph {
+    color: #1f653b;
+}
+
+.x-window-header-nx-message-success-horizontal .x-tool-after-title {
+    margin: 0 0 0 6px;
+}
+
+.x-window-header-nx-message-success-horizontal .x-tool-before-title {
+    margin: 0 6px 0 0;
+}
+
+.x-window-header-nx-message-success-vertical .x-tool-after-title {
+    margin: 6px 0 0 0;
+}
+
+.x-window-header-nx-message-success-vertical .x-tool-before-title {
+    margin: 0 0 6px 0;
+}
+
+.x-keyboard-mode .x-window-header-nx-message-success .x-tool-focus {
+    outline: 1px solid #fff;
+    outline-offset: 2px;
+}
+
+.x-ie .x-keyboard-mode .x-window-header-nx-message-success .x-tool-focus,
+.x-ie10p .x-keyboard-mode .x-window-header-nx-message-success .x-tool-focus,
+.x-edge .x-keyboard-mode .x-window-header-nx-message-success .x-tool-focus {
+    outline: none;
+}
+
+.x-ie .x-keyboard-mode .x-window-header-nx-message-success .x-tool-focus:after,
+.x-ie10p .x-keyboard-mode .x-window-header-nx-message-success .x-tool-focus:after,
+.x-edge .x-keyboard-mode .x-window-header-nx-message-success .x-tool-focus:after {
+    position: absolute;
+    content: ' ';
+    top: -3px;
+    right: -3px;
+    bottom: -3px;
+    left: -3px;
+    border: 1px solid #fff;
+    pointer-events: none;
+}
+
+.x-window-header-nx-message-success {
+    border-width: 0 !important;
+}
+
+.x-nbr .x-window-nx-message-success-collapsed .x-window-header {
+    border-width: 0 !important;
+}
+
+.x-window-nx-message-success-outer-border-l {
+    border-left-color: #606060 !important;
+    border-left-width: 2px !important;
+}
+
+.x-window-nx-message-success-outer-border-b {
+    border-bottom-color: #606060 !important;
+    border-bottom-width: 2px !important;
+}
+
 .x-window-nx-message-success-outer-border-bl {
     border-bottom-color: #606060 !important;
     border-bottom-width: 2px !important;
@@ -187,10 +399,15 @@ fieldset.nx-form-section > .x-fieldset-header > .x-fieldset-header-text {
 
 fieldset.nx-form-section .x-fieldset-body {
     padding-left: 10px;
+    padding-right: 10px;
 }
 
 fieldset.nx-form-section.nx-no-title {
     padding-top: 0;
+}
+
+.x-panel-nx-subsection-with-background-framed fieldset.nx-form-section {
+    padding-bottom: 0;
 }
 
 .nx-monospace-field textarea,
@@ -539,6 +756,21 @@ fieldset.nx-form-section.nx-no-title {
 
 .x-grid-item .x-grid-row .x-grid-item-focused .x-grid-cell-inner:before {
     border: none;
+}
+
+.x-panel-nx-subsection-framed .grid-with-border .x-grid-header-ct {
+    border-left: 1px solid #ddd !important;
+    border-right: 1px solid #ddd !important;
+}
+
+.x-panel-nx-subsection-framed .grid-with-border .x-grid-view {
+    border-left: 1px solid #ddd !important;
+    border-right: 1px solid #ddd !important;
+    border-bottom: 1px solid #ddd !important;
+}
+
+.x-panel-nx-subsection-framed .grid-with-border .x-grid-item:last-child {
+    border-bottom-width: 0;
 }
 
 .nx-middle-align {
@@ -7928,6 +8160,14 @@ fieldset.nx-form-section.nx-no-title {
     margin: 6px 0 6px 8px;
 }
 
+.x-panel-nx-subsection-framed .x-toolbar-default-docked-top {
+    padding: 0;
+}
+
+.x-panel-nx-subsection-framed .x-toolbar-default-docked-top .x-toolbar-item {
+    margin: 0;
+}
+
 .nx-feature-header {
     border-width: 10px 8px 10px 10px !important;
     border-color: #fff !important;
@@ -10836,6 +11076,7 @@ fieldset.nx-coreui-routing-rules-settings-form-matchers {
 
 fieldset.nx-coreui-routing-rules-settings-form-matchers .x-fieldset-body {
     padding-left: 0;
+    padding-right: 0;
 }
 
 fieldset.nx-coreui-routing-rules-settings-form-matchers .nx-matchers-label {

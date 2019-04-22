@@ -37,6 +37,14 @@
   }
 }
 
+// Global routing preview test result grid toolbar
+.x-panel-nx-subsection-framed .x-toolbar-default-docked-top {
+  padding: 0;
+  .x-toolbar-item {
+    margin: 0;
+  }
+}
+
 .nx-feature-header {
   border-width: 10px 8px 10px 10px !important;
   border-color: $color-white !important;

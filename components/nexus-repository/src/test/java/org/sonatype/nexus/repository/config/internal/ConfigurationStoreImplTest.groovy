@@ -13,9 +13,16 @@
 package org.sonatype.nexus.repository.config.internal
 
 import org.sonatype.goodies.testsupport.TestSupport
+import org.sonatype.nexus.common.entity.EntityHelper
 import org.sonatype.nexus.orient.HexRecordIdObfuscator
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule
 import org.sonatype.nexus.repository.config.Configuration
+import org.sonatype.nexus.repository.routing.RoutingMode
+import org.sonatype.nexus.repository.routing.RoutingRule
+import org.sonatype.nexus.repository.routing.RoutingRuleStore
+import org.sonatype.nexus.repository.routing.RoutingRulesConfiguration
+import org.sonatype.nexus.repository.routing.internal.RoutingRuleEntityAdapter
+import org.sonatype.nexus.repository.routing.internal.RoutingRuleStoreImpl
 import org.sonatype.nexus.security.PasswordHelper
 
 import com.orientechnologies.orient.core.exception.OValidationException
@@ -42,10 +49,17 @@ class ConfigurationStoreImplTest
 
   private ConfigurationStoreImpl underTest
 
+  private RoutingRuleStore routingRuleStore
+
+  private RoutingRulesConfiguration routingRulesConfiguration = new RoutingRulesConfiguration(true)
+
+  private RoutingRuleEntityAdapter routingRuleEntityAdapter = new RoutingRuleEntityAdapter()
+
   @Before
   void setUp() {
-    def entityAdapter = new ConfigurationEntityAdapter(passwordHelper)
+    def entityAdapter = new ConfigurationEntityAdapter(passwordHelper, routingRulesConfiguration, routingRuleEntityAdapter)
     entityAdapter.enableObfuscation(new HexRecordIdObfuscator())
+    routingRuleEntityAdapter.enableObfuscation(new HexRecordIdObfuscator())
 
     underTest = new ConfigurationStoreImpl(
         database.instanceProvider,
@@ -147,5 +161,27 @@ class ConfigurationStoreImplTest
     underTest.list().each { entity ->
       log entity
     }
+  }
+
+  @Test
+  void 'save routing rule id'() {
+    routingRuleStore = new RoutingRuleStoreImpl(database.instanceProvider, routingRuleEntityAdapter,
+        routingRulesConfiguration)
+    routingRuleStore.start()
+
+    RoutingRule routingRule = routingRuleStore.create(new RoutingRule(
+        name: 'test',
+        description: '',
+        mode: RoutingMode.ALLOW,
+        matchers: ['.*']
+    ))
+
+    underTest.create(new Configuration(
+        repositoryName: 'test',
+        recipeName: 'test',
+        routingRuleId: EntityHelper.id(routingRule)
+    ))
+
+    assert underTest.list().first().routingRuleId == EntityHelper.id(routingRule)
   }
 }

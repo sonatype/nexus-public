@@ -60,7 +60,6 @@ import org.mockito.Mock;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertNull;
@@ -138,6 +137,9 @@ public class BrowseServiceImplTest
   @Mock
   RepositoryManager repositoryManager;
 
+  @Mock
+  BrowseAssetIterableFactory browseAssetIterableFactory;
+
   BrowseAssetsSqlBuilder browseAssetsSqlBuilder;
 
   BrowseComponentsSqlBuilder browseComponentsSqlBuilder;
@@ -165,7 +167,7 @@ public class BrowseServiceImplTest
     browseComponentsSqlBuilder = new BrowseComponentsSqlBuilder(componentEntityAdapter);
 
     underTest = spy(new BrowseServiceImpl(new GroupType(), componentEntityAdapter, variableResolverAdapterManager,
-        contentPermissionChecker, assetEntityAdapter, browseAssetsSqlBuilder,
+        contentPermissionChecker, assetEntityAdapter, browseAssetIterableFactory, browseAssetsSqlBuilder,
         browseComponentsSqlBuilder, bucketStore, repositoryManager));
   }
 
@@ -196,31 +198,22 @@ public class BrowseServiceImplTest
     assertThat(repoToContainedGroups.get("group").get(0), is("group"));
   }
 
-  @Captor
-  ArgumentCaptor<Map<String, Object>> sqlParamsCaptor;
-
   @Test
   public void testBrowseAssets() {
     List<Repository> expectedRepositories = asList(mavenReleases);
     String expectedQuery1 = "SELECT FROM INDEXVALUES:asset_name_ci_idx WHERE (bucket = b4)  SKIP 0 LIMIT 1";
-    String expectedQuery2 = "SELECT FROM INDEXVALUES:asset_name_ci_idx WHERE (bucket = b4) AND contentAuth(@this, :browsedRepository) == true  SKIP 0 LIMIT 0";
     List<String> bucketIds = Collections.singletonList("b4");
     Iterable<ODocument> resultDocs = asList(mock(ODocument.class), mock(ODocument.class));
 
     doReturn(bucketIds).when(underTest).getBucketIds(any(), eq(expectedRepositories));
     doReturn(results).when(underTest).getAssets(resultDocs);
     when(storageTx.browse(eq(expectedQuery1), any())).thenReturn(resultDocs);
-    when(storageTx.browse(eq(expectedQuery2), sqlParamsCaptor.capture())).thenReturn(resultDocs);
+    when(queryOptions.getLimit()).thenReturn(10);
+    when(browseAssetIterableFactory.create(any(), any(), any(), any(), eq(10))).thenReturn(resultDocs);
 
     BrowseResult<Asset> browseResult = underTest.browseAssets(mavenReleases, queryOptions);
     assertThat(browseResult.getTotal(), is(2L));
     assertThat(browseResult.getResults(), is(results));
-
-    sqlParamsCaptor.getAllValues().stream().forEach(params -> {
-      String repoNames = params.get("browsedRepository").toString();
-      List<String> splitNames = Arrays.asList(repoNames.split(","));
-      assertThat(splitNames, contains("releases"));
-    });
   }
 
   @Test

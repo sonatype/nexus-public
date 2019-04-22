@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -40,11 +39,12 @@ import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.api.DefaultComponentXO;
+import org.sonatype.nexus.repository.security.RepositoryAdminPermission;
+import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
-import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.validation.Validate;
 import org.sonatype.nexus.validation.group.Create;
 import org.sonatype.nexus.validation.group.Update;
@@ -67,11 +67,12 @@ import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Stream.concat;
-import static java.util.stream.StreamSupport.stream;
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicy.NONE_POLICY;
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicyXO.fromCleanupPolicy;
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicyXO.mergeIntoCleanupPolicy;
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicyXO.toCleanupPolicy;
+import static org.sonatype.nexus.security.BreadActions.ADD;
+import static org.sonatype.nexus.security.BreadActions.READ;
 
 /**
  * Cleanup policies {@link DirectComponent}.
@@ -110,16 +111,21 @@ public class CleanupPolicyComponent
 
   private final CleanupPolicyConfiguration defaultCleanupPolicyConfiguration;
 
+  private final RepositoryPermissionChecker repositoryPermissionChecker;
+
   @Inject
   public CleanupPolicyComponent(final CleanupPolicyStorage cleanupPolicyStorage,
                                 final CleanupComponentBrowse cleanupComponentBrowse,
                                 final RepositoryManager repositoryManager,
-                                final Map<String, CleanupPolicyConfiguration> cleanupPolicyConfiguration) {
+                                final Map<String, CleanupPolicyConfiguration> cleanupPolicyConfiguration,
+                                final RepositoryPermissionChecker repositoryPermissionChecker)
+  {
     this.cleanupPolicyStorage = checkNotNull(cleanupPolicyStorage);
     this.cleanupComponentBrowse = checkNotNull(cleanupComponentBrowse);
     this.repositoryManager = checkNotNull(repositoryManager);
     this.cleanupPolicyConfiguration = checkNotNull(cleanupPolicyConfiguration);
     this.defaultCleanupPolicyConfiguration = checkNotNull(cleanupPolicyConfiguration.get("default"));
+    this.repositoryPermissionChecker = repositoryPermissionChecker;
   }
 
   /**
@@ -131,9 +137,12 @@ public class CleanupPolicyComponent
   @DirectMethod
   @Timed
   @ExceptionMetered
-  @RequiresPermissions("nexus:repository-admin")
   public List<CleanupPolicyXO> readByFormat(final StoreLoadParameters parameters) {
     return ofNullable(parameters.getFilter("format"))
+        .map(format -> {
+          ensureUserHasPermissionToCleanupPolicyByFormat(format);
+          return format;
+        })
         .map(this::getAllByFormat)
         .map(this::prependNonePolicy)
         .orElse(NONE_POLICY_LIST);
@@ -324,5 +333,10 @@ public class CleanupPolicyComponent
 
   private long repositoryCount(final String cleanupPolicyName) {
     return repositoryManager.browseForCleanupPolicy(cleanupPolicyName).count();
+  }
+
+  private void ensureUserHasPermissionToCleanupPolicyByFormat(final String format) {
+    RepositoryAdminPermission permission = new RepositoryAdminPermission(format, "*", singletonList(ADD));
+    repositoryPermissionChecker.ensureUserHasPermissionOrAdminAccessToAny(permission, READ, repositoryManager.browse());
   }
 }

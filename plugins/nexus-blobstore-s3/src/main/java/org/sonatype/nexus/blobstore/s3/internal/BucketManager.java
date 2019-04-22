@@ -106,6 +106,7 @@ public class BucketManager
         .withExpirationInDays(expirationInDays)
         .withStatus(BucketLifecycleConfiguration.ENABLED);
 
+    BucketLifecycleConfiguration newConfiguration = null;
     if (existing != null) {
       List<Rule> rules = existing.getRules().stream()
           .filter(r -> !LIFECYCLE_EXPIRATION_RULE_ID.equals(r.getId()))
@@ -113,17 +114,17 @@ public class BucketManager
       if (expirationInDays > 0) {
         rules.add(rule);
       }
-      existing.setRules(rules);
-      return existing;
+      if (!rules.isEmpty()) {
+        existing.setRules(rules);
+        newConfiguration = existing;
+      }
     }
     else {
       if (expirationInDays > 0) {
-        return new BucketLifecycleConfiguration().withRules(rule);
-      }
-      else {
-        return null;
+        newConfiguration = new BucketLifecycleConfiguration().withRules(rule);
       }
     }
+    return newConfiguration;
   }
 
   private void setBucketLifecycleConfiguration(final AmazonS3 s3,

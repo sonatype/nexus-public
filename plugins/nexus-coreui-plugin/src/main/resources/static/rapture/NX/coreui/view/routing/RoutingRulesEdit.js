@@ -49,26 +49,10 @@ Ext.define('NX.coreui.view.routing.RoutingRulesEdit', {
     this.items.get(0).add({xtype: 'nx-coreui-routing-rules-single-preview'});
   },
 
-  loadRecord: function(record) {
-    var matcherStrings = record.get('matchers'),
-        form = this.down('nx-coreui-routing-rules-settings-form');
-
-    form.resetMatchersSection();
-
-    this.callParent(arguments);
-
-    matcherStrings.forEach(function(matcherString) {
-      form.addMatcherRow(matcherString);
-    });
-
-    this.currentRecord = record;
-  },
-
   onDiscardClick: function() {
     var form = this.down('nx-coreui-routing-rules-settings-form');
 
-    this.loadRecord(this.currentRecord);
-
+    form.loadRecord(form.currentRecord);
     form.fireEvent('dirtychange', form.getForm());
   }
 });

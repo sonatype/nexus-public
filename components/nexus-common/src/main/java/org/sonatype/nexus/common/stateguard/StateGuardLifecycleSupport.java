@@ -62,7 +62,7 @@ public class StateGuardLifecycleSupport
   }
 
   @Override
-  @Transitions(from = {NEW, STOPPED}, to = STARTED)
+  @Transitions(from = {NEW, STOPPED, FAILED}, to = STARTED)
   public void start() throws Exception {
     doStart();
   }

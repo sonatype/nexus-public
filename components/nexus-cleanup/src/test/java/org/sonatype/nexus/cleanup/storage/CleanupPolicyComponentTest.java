@@ -21,6 +21,7 @@ import org.sonatype.nexus.extdirect.model.StoreLoadParameters.Sort;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
+import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.DefaultComponent;
 import org.sonatype.nexus.repository.storage.StorageFacet;
@@ -71,6 +72,9 @@ public class CleanupPolicyComponentTest
   @Mock
   private StorageTx tx;
 
+  @Mock
+  private RepositoryPermissionChecker repositoryPermissionChecker;
+
   private CleanupPolicyPreviewXO policyPreviewXO;
 
   private StoreLoadParameters storeLoadParameters;
@@ -113,7 +117,8 @@ public class CleanupPolicyComponentTest
     when(repository.facet(StorageFacet.class)).thenReturn(storageFacet);
 
     underTest = new CleanupPolicyComponent(cleanupPolicyStorage, cleanupComponentBrowse, repositoryManager,
-        ImmutableMap.of(FORMAT, configuration, DEFAULT, defaultCleanupPolicyConfiguration));
+        ImmutableMap.of(FORMAT, configuration, DEFAULT, defaultCleanupPolicyConfiguration),
+        repositoryPermissionChecker);
 
     when(configuration.getConfiguration()).thenReturn(ImmutableMap.of(LAST_BLOB_UPDATED_KEY, true));
   }

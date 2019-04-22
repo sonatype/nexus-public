@@ -16,6 +16,8 @@ import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.orient.HexRecordIdObfuscator
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule
 import org.sonatype.nexus.repository.config.Configuration
+import org.sonatype.nexus.repository.routing.RoutingRulesConfiguration
+import org.sonatype.nexus.repository.routing.internal.RoutingRuleEntityAdapter
 import org.sonatype.nexus.security.PasswordHelper
 
 import com.google.common.collect.Iterables
@@ -26,6 +28,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 
+import static org.mockito.Mockito.mock
 import static org.mockito.Mockito.when
 
 /**
@@ -40,14 +43,20 @@ class ConfigurationEntityAdapterTest
   @Mock
   private PasswordHelper passwordHelper
 
+  @Mock
+  private RoutingRulesConfiguration routingRulesConfiguration
+
+  @Mock private RoutingRuleEntityAdapter routingRuleEntityAdapter
+
   private ConfigurationEntityAdapter underTest
 
   @Before
   void setUp() {
     when(passwordHelper.encrypt('s1mpl3')).thenReturn('******')
     when(passwordHelper.tryDecrypt('******')).thenReturn('s1mpl3')
+    when(routingRulesConfiguration.isEnabled()).thenReturn(true)
 
-    underTest = new ConfigurationEntityAdapter(passwordHelper)
+    underTest = new ConfigurationEntityAdapter(passwordHelper, routingRulesConfiguration, routingRuleEntityAdapter)
     underTest.enableObfuscation(new HexRecordIdObfuscator())
   }
 

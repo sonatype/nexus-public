@@ -120,12 +120,17 @@ public class BlobStoreManagerImpl
     log.debug("Restoring {} BlobStores", configurations.size());
     for (BlobStoreConfiguration configuration : configurations) {
       log.debug("Restoring BlobStore: {}", configuration);
+      BlobStore blobStore = null;
+
       try {
-        BlobStore blobStore = newBlobStore(configuration);
-        track(configuration.getName(), blobStore);
+        blobStore = blobStorePrototypes.get(configuration.getType()).get();
+        blobStore.init(configuration);
       }
       catch (Exception e) {
         log.error("Unable to restore BlobStore {}", configuration, e);
+      }
+      finally {
+        track(configuration.getName(), blobStore);
       }
 
       // TODO - event publishing
@@ -182,7 +187,8 @@ public class BlobStoreManagerImpl
     BlobStoreDescriptor blobStoreDescriptor = blobStoreDescriptors.get(configuration.getType());
     blobStoreDescriptor.validateConfig(configuration);
 
-    BlobStore blobStore = newBlobStore(configuration);
+    BlobStore blobStore = blobStorePrototypes.get(configuration.getType()).get();
+    blobStore.init(configuration);
 
     if (!EventHelper.isReplicating()) {
       try {
@@ -224,7 +230,10 @@ public class BlobStoreManagerImpl
 
     BlobStoreConfiguration currentConfig = blobStore.getBlobStoreConfiguration();
 
-    blobStore.stop();
+    if (blobStore.isStarted()) {
+      blobStore.stop();
+    }
+
     try {
       blobStore.init(configuration);
       blobStore.start();
@@ -286,12 +295,6 @@ public class BlobStoreManagerImpl
   @Override
   public boolean exists(final String name) {
     return stores.keySet().stream().anyMatch(key -> key.equalsIgnoreCase(name));
-  }
-
-  private BlobStore newBlobStore(final BlobStoreConfiguration blobStoreConfiguration) throws Exception {
-    BlobStore blobStore = blobStorePrototypes.get(blobStoreConfiguration.getType()).get();
-    blobStore.init(blobStoreConfiguration);
-    return blobStore;
   }
 
   @VisibleForTesting

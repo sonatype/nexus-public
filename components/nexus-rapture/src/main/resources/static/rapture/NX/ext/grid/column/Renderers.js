@@ -29,6 +29,26 @@ Ext.define('NX.ext.grid.column.Renderers', {
   optionalData: function(value) {
     return value ?
         Ext.htmlEncode(value) :
-        '<span class="x-fa fa-ban" style="opacity: 0.33;" aria-label="' + NX.I18n.get('Column_No_Data') + '"/>';
+        '<span class="x-fa fa-ban" style="opacity: 0.33;" aria-label="' + Ext.util.Format.htmlEncode(NX.I18n.get('Column_No_Data')) + '"/>';
+  },
+
+  /**
+   * Renderer which will display either 'Allowed' or 'Blocked' with a corresponding glyph depending on the value
+   * and will dim the text if the rule is not defined in the record.
+   */
+  allowedBlocked: function(value, column, record) {
+    var maybeDim = (record.get('rule') ? '' : ' opacity: 0.33;') + '"/> ';
+    return value ?
+        '<span class="x-fa fa-check-circle" style="color: #1C8145;' + maybeDim + Ext.util.Format.htmlEncode(NX.I18n.get('RoutingRules_GlobalRoutingPreview_Grid_Allowed')) :
+        '<span class="x-fa fa-ban" style="color: #C70000;' + maybeDim + Ext.util.Format.htmlEncode(NX.I18n.get('RoutingRules_GlobalRoutingPreview_Grid_Blocked'));
+  },
+
+  /**
+   * Renderer which will display either the rule defined or a dimmed 'None' with a no-data glyph.
+   */
+  optionalRule: function(value) {
+    return value ?
+        Ext.htmlEncode(value) :
+        '<span class="x-fa fa-ban" style="opacity: 0.33;" /> ' + Ext.util.Format.htmlEncode(NX.I18n.get('RoutingRules_GlobalRoutingPreview_Grid_None'));
   }
 });

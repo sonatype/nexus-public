@@ -10,44 +10,21 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext, NX*/
+package org.sonatype.nexus.pax.logging;
+
+import ch.qos.logback.access.pattern.AccessConverter;
+import ch.qos.logback.access.spi.IAccessEvent;
 
 /**
- * Asset store.
+ * Converter to include a thread ID
  *
- * @since 3.0
+ * @since 3.next
  */
-Ext.define('NX.coreui.store.Asset', {
-  extend: 'Ext.data.Store',
-  model: 'NX.coreui.model.Asset',
-
-  proxy: {
-    type: 'direct',
-
-    api: {
-      read: 'NX.direct.coreui_Component.readAssets'
-    },
-
-    reader: {
-      type: 'json',
-      rootProperty: 'data',
-      successProperty: 'success'
-    }
-  },
-
-  buffered: true,
-  pageSize: 300,
-  
-  remoteFilter: true,
-  remoteSort: true,
-
-  sorters: { property: 'name', direction: 'ASC' },
-
-  onSorterEndUpdate: function() {
-    if (!this.getFilters().length) {
-      return;
-    }
-    this.callParent(arguments);
+public class NexusThreadConverter
+    extends AccessConverter
+{
+  public String convert(IAccessEvent accessEvent) {
+    return Thread.currentThread().getName();
   }
+}
 
-});

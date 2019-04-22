@@ -48,3 +48,18 @@
     }
   }
 }
+
+.x-panel-nx-subsection-framed .grid-with-border {
+  .x-grid-header-ct {
+    border-left: 1px solid $color-gainsboro !important;
+    border-right: 1px solid $color-gainsboro !important;
+  }
+  .x-grid-view {
+    border-left: 1px solid $color-gainsboro !important;
+    border-right: 1px solid $color-gainsboro !important;
+    border-bottom: 1px solid $color-gainsboro !important;
+  }
+  .x-grid-item:last-child {
+    border-bottom-width: 0;
+  }
+}

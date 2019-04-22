@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.httpclient.internal;
 
 import java.io.IOException;
+import java.util.Base64;
 import java.util.Map;
 
 import javax.annotation.Nullable;
@@ -48,7 +49,6 @@ import org.apache.http.message.BasicHeader;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
-import static org.apache.commons.codec.binary.Base64.*;
 import static org.apache.http.HttpHeaders.AUTHORIZATION;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.AUTO_BLOCKED_UNAVAILABLE;
@@ -156,7 +156,7 @@ public class HttpClientFacetImpl
 
       String auth = format("%1$s:%2$s", userAuth.getUsername(), userAuth.getPassword());
 
-      byte[] encodedAuth = encodeBase64(auth.getBytes(ISO_8859_1));
+      byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(ISO_8859_1));
 
       String authHeader = "Basic " + new String(encodedAuth, ISO_8859_1);
 
