@@ -250,8 +250,10 @@ define('Sonatype/repoServer/SearchPanel', function() {
          * @param s A string safe to display in the UI
          */
         setWarningLabel : function(s) {
+          var warningHtml = '<span class="x-toolbar-warning">' + NX.htmlRenderer(s) + '</span>';
+
           this.clearWarningLabel();
-          this.warningLabel = this.searchToolbar.addText('<span class="x-toolbar-warning">' + s + '</span>');
+          this.warningLabel = this.searchToolbar.addText(warningHtml);
           this.searchToolbar.doLayout();
         },
         // clear the warning in the toolbar
