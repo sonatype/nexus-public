@@ -14,19 +14,17 @@ package org.sonatype.nexus.blobstore.s3.internal
 
 import javax.validation.ValidationException
 
-import org.sonatype.nexus.blobstore.BlobStoreUtil
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
-import org.sonatype.nexus.blobstore.api.BlobStoreMetrics
-import org.sonatype.nexus.blobstore.group.BlobStoreGroup
-import org.sonatype.nexus.blobstore.group.BlobStoreGroupService
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService
-
 
 
 import spock.lang.Specification
 import spock.lang.Unroll
+
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.BUCKET_PREFIX_KEY
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.CONFIG_KEY
 
 /**
  * {@link S3BlobStoreDescriptor} tests.
@@ -157,6 +155,30 @@ class S3BlobStoreDescriptorTest
 
     then: 'validate succeeds'
       noExceptionThrown()
+  }
+
+  @Unroll
+  def 'It will transform #prefix into #expected by trimming and collapsing duplicate slashes'() {
+    given: 'an S3 blob store config with prefix'
+      def config = new BlobStoreConfiguration()
+      config.attributes(CONFIG_KEY).set(BUCKET_PREFIX_KEY, prefix)
+    when: 'the config is sanitized'
+      s3BlobStoreDescriptor.sanitizeConfig(config)
+    then: 'the prefix will be as expected'
+      config.attributes(CONFIG_KEY).get(BUCKET_PREFIX_KEY, String) == expected
+
+    where:
+      prefix           | expected
+      null             | ''
+      ''               | ''
+      ' '              | ' '
+      '/test'          | 'test'
+      '/test/'         | 'test'
+      '///test///'     | 'test'
+      '///te/st///'    | 'te/st'
+      'te////st'       | 'te/st'
+      '///te////st///' | 'te/st'
+      '//////'         | ''
   }
 
   private BlobStore mockBlobStore(final String name,

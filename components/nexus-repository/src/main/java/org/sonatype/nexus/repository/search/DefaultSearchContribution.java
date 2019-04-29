@@ -30,16 +30,10 @@ public class DefaultSearchContribution
 {
   public static final String NAME = "default";
 
-  private static final String UNESCAPED_SLASHES = "([^\\\\\\\\])(/)";
-
   @Override
   public void contribute(final BoolQueryBuilder query, final String type, final String value) {
     if (value != null) {
-      // Replace unescaped slashes "a/b" with escaped slashes "\/"
-      String escaped = value.replaceAll(UNESCAPED_SLASHES, "$1\\\\/");
-      if (escaped.startsWith("/")) {
-        escaped = "\\" + escaped;
-      }
+      String escaped = escape(value);
       query.must(QueryBuilders.queryStringQuery(escaped).field(type).lowercaseExpandedTerms(false));
     }
   }

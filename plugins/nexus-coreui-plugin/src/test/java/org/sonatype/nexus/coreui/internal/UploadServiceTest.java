@@ -87,6 +87,6 @@ public class UploadServiceTest
     String result = component
         .createSearchTerm(Arrays.asList("foo-x.z/bar/bar", "foo-x.z/bar/foo", "foo-x.z/bar/foo/bar"));
 
-    assertThat(result, is("foo\\-x\\.z\\/bar"));
+    assertThat(result, is("foo-x.z/bar"));
   }
 }

@@ -32,6 +32,7 @@ import javax.ws.rs.core.Response.Status;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.rest.api.RoutingRuleXO;
 import org.sonatype.nexus.repository.rest.internal.resources.doc.RoutingRulesApiResourceDoc;
 import org.sonatype.nexus.repository.routing.RoutingRule;
@@ -127,13 +128,13 @@ public class RoutingRulesApiResource
   public void deleteRoutingRule(@PathParam("name") final String name) {
     RoutingRule routingRule = getRuleFromStore(name);
     EntityId routingRuleId = id(routingRule);
-    Map<EntityId, List<String>> assignedRepositories = routingRuleHelper.calculateAssignedRepositories();
+    Map<EntityId, List<Repository>> assignedRepositories = routingRuleHelper.calculateAssignedRepositories();
 
-    List<String> repositoryNames = assignedRepositories.computeIfAbsent(routingRuleId, id -> emptyList());
-    if (!repositoryNames.isEmpty()) {
+    List<Repository> repositories = assignedRepositories.computeIfAbsent(routingRuleId, id -> emptyList());
+    if (!repositories.isEmpty()) {
       throw new WebApplicationMessageException(
           Status.BAD_REQUEST,
-          "\"Routing rule is still in use by " + repositoryNames.size() + " repositories.\"",
+          "\"Routing rule is still in use by " + repositories.size() + " repositories.\"",
           APPLICATION_JSON);
     }
 

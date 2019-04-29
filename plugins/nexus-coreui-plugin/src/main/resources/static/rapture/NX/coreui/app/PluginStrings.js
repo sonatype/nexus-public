@@ -1407,11 +1407,18 @@ Ext.define('NX.coreui.app.PluginStrings', {
     RoutingRules_SinglePreview_Allowed_Html: '<span class="x-fa fa-check-circle"></span>This request would be allowed',
     RoutingRules_SinglePreview_Blocked_Html: '<span class="x-fa fa-ban"></span>This request would be blocked',
     RoutingRule_Create_Error: 'You do not have permission to create Routing Rules',
+    RoutingRule_Assign_Repositories: '<a href="#admin/repository/repositories">assign it to a repository</a>',
     RoutingRule_UsedBy_Repository_Singular: 'repository',
     RoutingRule_UsedBy_Repository_Plural: 'repositories',
     RoutingRule_UsedBy_Info_Message: 'This rule is in use by {0} ({1})',
+    RoutingRule_UsedBy_Info_Message_Permitted: 'This rule is in use by {0}. Quick links to permitted repositories ({1})',
     RoutingRule_UsedBy_Info_Tooltip: 'Repositories using this rule: {0}',
-    RoutingRules_Unknown_Api_Error_Message: 'An unknown error occurred. Reply from server: {0} - {1}'
+    RoutingRules_UsedBy_EmptyTip: 'To use this rule, {0}.',
+    RoutingRule_UsedBy_Info_Tooltip_Permitted: 'Permitted repositories using this rule: {0}',
+    RoutingRules_Unknown_Api_Error_Message: 'An unknown error occurred. Reply from server: {0} - {1}',
+    RoutingRules_PreviewContext_AllRepositories: 'All Repositories',
+    RoutingRules_PreviewContext_AllGroups: 'All Group Repositories',
+    RoutingRules_PreviewContext_AllProxies: 'All Proxy Repositories'
   },
 
   /**

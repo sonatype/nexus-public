@@ -1,0 +1,24 @@
+.nx-routing-rules-test-path-container {
+  & > .x-form-item-body {
+    border: solid 1px $color-gainsboro;
+  }
+
+  &.nx-textfield-focused > .x-form-item-body {
+    border-color: $color-light-blue;
+  }
+
+  .nx-routing-rules-path-prefix {
+    color: $color-dark-gray;
+    font-size: 1.8em;
+    padding: 4px 0 0 5px;
+    display: inline-block;
+  }
+
+  .x-form-trigger-wrap {
+    border: none;
+  }
+
+  input[name=path] {
+    padding-left: 2px;
+  }
+}

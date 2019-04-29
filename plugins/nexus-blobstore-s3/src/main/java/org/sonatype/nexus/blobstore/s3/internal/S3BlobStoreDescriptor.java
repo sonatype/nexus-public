@@ -14,6 +14,7 @@ package org.sonatype.nexus.blobstore.s3.internal;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -33,6 +34,9 @@ import org.sonatype.nexus.formfields.NumberTextFormField;
 import org.sonatype.nexus.formfields.PasswordFormField;
 import org.sonatype.nexus.formfields.StringTextFormField;
 
+import org.apache.commons.lang.StringUtils;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ACCESS_KEY_ID_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ASSUME_ROLE_KEY;
@@ -47,7 +51,6 @@ import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SECRET_ACCESS
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SESSION_TOKEN_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SIGNERTYPE_KEY;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * A {@link BlobStoreDescriptor} for {@link S3BlobStore}.
@@ -245,6 +248,20 @@ public class S3BlobStoreDescriptor
     for (BlobStore existingBlobStore : blobStoreManager.browse()) {
       validateOverlappingBucketWithConfiguration(config, existingBlobStore.getBlobStoreConfiguration());
     }
+  }
+
+  @Override
+  public void sanitizeConfig(final BlobStoreConfiguration config) {
+    String bucketPrefix = config.attributes(CONFIG_KEY).get(BUCKET_PREFIX_KEY, String.class, "");
+    config.attributes(CONFIG_KEY).set(BUCKET_PREFIX_KEY, trimAndCollapseSlashes(bucketPrefix));
+  }
+
+  private String trimAndCollapseSlashes(final String prefix) {
+    return Optional.ofNullable(prefix)
+          .filter(StringUtils::isNotBlank)
+          .map(s -> StringUtils.strip(s, "/"))
+          .map(s -> s.replaceAll("/+", "/"))
+          .orElse(prefix);
   }
 
   private void validateOverlappingBucketWithConfiguration(final BlobStoreConfiguration newConfig, // NOSONAR

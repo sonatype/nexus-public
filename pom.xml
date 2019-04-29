@@ -121,7 +121,7 @@
     <staging.progressTimeout>60</staging.progressTimeout>
 
     <it.includes>**/*IT.*</it.includes>
-    <it.excludedGroups>org.sonatype.goodies.testsupport.group.Perf,org.sonatype.goodies.testsupport.group.External</it.excludedGroups>
+    <it.excludedGroups>org.sonatype.goodies.testsupport.group.Perf,org.sonatype.goodies.testsupport.group.External,org.sonatype.goodies.testsupport.group.Unstable</it.excludedGroups>
   </properties>
 
   <modules>
@@ -1230,7 +1230,30 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-failsafe-plugin</artifactId>
             <configuration combine.children="override">
-              <excludedGroups>org.sonatype.goodies.testsupport.group.External</excludedGroups>
+              <excludedGroups>org.sonatype.goodies.testsupport.group.External,org.sonatype.goodies.testsupport.group.Unstable</excludedGroups>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <!--
+    When this profile is used it is intended to run tests that are flaky / unstable
+    Any ITs that fail often should be annotated with 
+    <code>@Category(org.sonatype.goodies.testsupport.group.Unstable)</code> until they can be worked on and improved.
+    This makes it clear which tests are likely to fail regardless of your changes and also makes it easier to rerun
+    only those tests which sometimes fail.
+    -->
+    <profile>
+      <id>unstable-tests</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration combine.children="override">
+              <groups>org.sonatype.goodies.testsupport.group.Unstable</groups>
+              <excludedGroups>org.sonatype.goodies.testsupport.group.Perf,org.sonatype.goodies.testsupport.group.External</excludedGroups>
             </configuration>
           </plugin>
         </plugins>

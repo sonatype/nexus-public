@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.search;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 
 /**
@@ -26,6 +28,20 @@ public class SearchContributionSupport
   @Override
   public void contribute(final BoolQueryBuilder query, final String type, final String value) {
     // do nothing
+  }
+
+  public String escape(String value) {
+    if (null == value) {
+      return null;
+    }
+
+    String escaped = QueryParser.escape(value);
+
+    boolean shouldLeaveDoubleQuotesEscaped = StringUtils.countMatches(value, "\"") % 2 != 0;
+    String escapedCharactersRegex = shouldLeaveDoubleQuotesEscaped ? "\\\\([?*])" : "\\\\([?*\"])";
+
+    // unescape supported special characters
+    return escaped.replaceAll(escapedCharactersRegex, "$1");
   }
 
 }

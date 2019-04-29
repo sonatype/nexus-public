@@ -185,6 +185,7 @@ public class BlobStoreManagerImpl
     log.debug("Creating BlobStore: {} with attributes: {}", configuration.getName(),
         configuration.getAttributes());
     BlobStoreDescriptor blobStoreDescriptor = blobStoreDescriptors.get(configuration.getType());
+    blobStoreDescriptor.sanitizeConfig(configuration);
     blobStoreDescriptor.validateConfig(configuration);
 
     BlobStore blobStore = blobStorePrototypes.get(configuration.getType()).get();

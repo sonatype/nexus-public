@@ -33,6 +33,15 @@ public interface RoutingRuleHelper
   boolean isAllowed(final Repository repository, final String path);
 
   /**
+   * Determine if the path is allowed for a routing rule.
+   *
+   * @param routingRule used to allow or block the request
+   * @param path the path of the request
+   * @return true if the request is allowed, false if it should be blocked
+   */
+  boolean isAllowed(final RoutingRule routingRule, final String path);
+
+  /**
    * Determine if the path is allowed by the RoutingRule, does not consider whether the configuration is enabled.
    *
    * @param mode the routing mode to test the path against
@@ -45,9 +54,9 @@ public interface RoutingRuleHelper
   /**
    * Iterates through all repositories to find which routing rules are assigned
    *
-   * @return A map of routing rule ids to a list of repository names that are using them
+   * @return A map of routing rule ids to a list of repositories that are using them
    */
-  Map<EntityId, List<String>> calculateAssignedRepositories();
+  Map<EntityId, List<Repository>> calculateAssignedRepositories();
 
   /**
    * Ensures that the user has the necessary permissions to Read routing rules

@@ -49,5 +49,7 @@ class RoutingRuleXO
   @NotBlank
   List<String> matchers
 
+  int assignedRepositoryCount
+
   List<String> assignedRepositoryNames
 }

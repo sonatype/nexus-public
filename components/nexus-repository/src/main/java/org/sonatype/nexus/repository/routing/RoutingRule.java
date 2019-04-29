@@ -13,8 +13,12 @@
 package org.sonatype.nexus.repository.routing;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.sonatype.nexus.common.entity.AbstractEntity;
+
+import static org.sonatype.nexus.common.entity.EntityHelper.hasMetadata;
+import static org.sonatype.nexus.common.entity.EntityHelper.id;
 
 /**
  * A RoutingRule which can be applied to a repository to block or allow requests depending on the RoutingMode
@@ -86,5 +90,30 @@ public class RoutingRule extends AbstractEntity
   public RoutingRule matchers(final List<String> matchers) {
     this.matchers = matchers;
     return this;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    AbstractEntity that = (AbstractEntity) o;
+    if (hasMetadata(this) && hasMetadata(that)) {
+      return Objects.equals(id(this), id(that));
+    }
+
+    return super.equals(o);
+  }
+
+  @Override
+  public int hashCode() {
+    if (hasMetadata(this)) {
+      return Objects.hash(id(this));
+    }
+    return super.hashCode();
   }
 }

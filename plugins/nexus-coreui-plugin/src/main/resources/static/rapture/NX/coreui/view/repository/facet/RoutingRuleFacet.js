@@ -71,7 +71,7 @@ Ext.define('NX.coreui.view.repository.facet.RoutingRuleFacet', {
   ],
 
   constructor: function() {
-    if (!NX.State.getValue('routingRules', false)) { // nexus.routing.rules.enabled
+    if (!NX.State.getValue('routingRules', true)) { // nexus.routing.rules.enabled
       this.config.viewModel.stores.RoutingRules = {
         data: []
       };

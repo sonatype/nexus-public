@@ -37,10 +37,18 @@ Ext.define('NX.ext.grid.column.Renderers', {
    * and will dim the text if the rule is not defined in the record.
    */
   allowedBlocked: function(value, column, record) {
-    var maybeDim = (record.get('rule') ? '' : ' opacity: 0.33;') + '"/> ';
-    return value ?
-        '<span class="x-fa fa-check-circle" style="color: #1C8145;' + maybeDim + Ext.util.Format.htmlEncode(NX.I18n.get('RoutingRules_GlobalRoutingPreview_Grid_Allowed')) :
-        '<span class="x-fa fa-ban" style="color: #C70000;' + maybeDim + Ext.util.Format.htmlEncode(NX.I18n.get('RoutingRules_GlobalRoutingPreview_Grid_Blocked'));
+    var maybeDim = (record.get('rule') ? '' : ' opacity: 0.33;') + '"/> ',
+        children = record.get('children');
+    if (children && children.length > 0) {
+      return;
+    }
+
+    if (value) {
+      return '<span class="x-fa fa-check-circle" style="color: #1C8145;' + maybeDim + Ext.util.Format.htmlEncode(NX.I18n.get('RoutingRules_GlobalRoutingPreview_Grid_Allowed'));
+    }
+    else {
+      return '<span class="x-fa fa-ban" style="color: #C70000;' + maybeDim + Ext.util.Format.htmlEncode(NX.I18n.get('RoutingRules_GlobalRoutingPreview_Grid_Blocked'));
+    }
   },
 
   /**

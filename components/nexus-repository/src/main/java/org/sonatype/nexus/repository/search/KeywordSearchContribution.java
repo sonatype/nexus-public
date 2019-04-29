@@ -45,40 +45,26 @@ public class KeywordSearchContribution
     }
 
     Matcher gavSearchMatcher = dependencyPattern.matcher(value.trim());
-    final boolean hasGavSearch = gavSearchMatcher.matches();
-    final boolean hasKeywordSearch;
 
-    QueryStringQueryBuilder keywordQuery = QueryBuilders.queryStringQuery(value)
-        .field("name.case_insensitive")
-        .field("group.case_insensitive")
-        .field("_all");
-
-    final BoolQueryBuilder gavQuery = QueryBuilders.boolQuery();
-
-    if (hasGavSearch) {
+    if (gavSearchMatcher.matches()) {
       String group = gavSearchMatcher.group("group");
       String name = gavSearchMatcher.group("name");
       String version = gavSearchMatcher.group("version");
       String extension = gavSearchMatcher.group("extension");
       String classifier = gavSearchMatcher.group("classifier");
+      final BoolQueryBuilder gavQuery = QueryBuilders.boolQuery();
 
       buildGavQuery(gavQuery, group, name, version, extension, classifier);
 
-      hasKeywordSearch = version == null;
-      keywordQuery.lenient(true);
-    }
-    else {
-      hasKeywordSearch = true;
-    }
-
-    if (hasKeywordSearch && !hasGavSearch) {
-      query.must(keywordQuery);
-    }
-    else if (!hasKeywordSearch && hasGavSearch) {
       query.must(gavQuery);
     }
-    else { // hasKeywordSearch && hasGavSearch
-      query.must(QueryBuilders.boolQuery().should(keywordQuery).should(gavQuery));
+    else {
+      String escaped = escape(value);
+      QueryStringQueryBuilder keywordQuery = QueryBuilders.queryStringQuery(escaped)
+          .field("name.case_insensitive")
+          .field("group.case_insensitive")
+          .field("_all");
+      query.must(keywordQuery);
     }
   }
 

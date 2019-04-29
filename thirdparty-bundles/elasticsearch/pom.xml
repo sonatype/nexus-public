@@ -93,10 +93,10 @@
               http://www.apache.org/licenses/LICENSE-2.0
             </Bundle-License>
             <Export-Package>
-              org.elasticsearch.*
+              org.elasticsearch.*,
+              org.apache.lucene.*;-split-package:=merge-first,
             </Export-Package>
             <Private-Package>
-              org.apache.lucene.*;-split-package:=merge-first,
               org.joda.time.*;-split-package:=merge-first,
               com.carrotsearch.hppc.*,
               com.spatial4j.core.*,

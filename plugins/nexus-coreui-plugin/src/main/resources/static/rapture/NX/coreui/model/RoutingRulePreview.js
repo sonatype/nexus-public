@@ -18,7 +18,7 @@
  * @since 3.next
  */
 Ext.define('NX.coreui.model.RoutingRulePreview', {
-  extend: 'Ext.data.Model',
+  extend: 'Ext.data.TreeModel',
   fields: [
     {name: 'repository', type: 'string', convert: Ext.util.Format.htmlEncode},
     {name: 'rule', type: 'string', convert: Ext.util.Format.htmlEncode},

@@ -62,6 +62,7 @@ import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.scheduling.TaskInterruptedException;
 
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
@@ -133,7 +134,9 @@ public class FileBlobStore
 
   private final FileOperations fileOperations;
 
-  private final Path basedir;
+  private final ApplicationDirectories applicationDirectories;
+
+  private Path basedir;
 
   private FileBlobStoreMetricsStore metricsStore;
 
@@ -150,14 +153,14 @@ public class FileBlobStore
   @Inject
   public FileBlobStore(final BlobIdLocationResolver blobIdLocationResolver,
                        final FileOperations fileOperations,
-                       final ApplicationDirectories directories,
+                       final ApplicationDirectories applicationDirectories,
                        final FileBlobStoreMetricsStore metricsStore,
                        final NodeAccess nodeAccess,
                        final DryRunPrefix dryRunPrefix)
   {
     super(blobIdLocationResolver, dryRunPrefix);
     this.fileOperations = checkNotNull(fileOperations);
-    this.basedir = directories.getWorkDirectory(BASEDIR).toPath();
+    this.applicationDirectories = checkNotNull(applicationDirectories);
     this.metricsStore = checkNotNull(metricsStore);
     this.nodeAccess = checkNotNull(nodeAccess);
     this.supportsHardLinkCopy = true;
@@ -371,6 +374,7 @@ public class FileBlobStore
 
   @Override
   @Guarded(by = STARTED)
+  @Timed
   public Blob copy(final BlobId blobId, final Map<String, String> headers) {
     Blob sourceBlob = checkNotNull(get(blobId));
     Path sourcePath = contentPath(sourceBlob.getId());
@@ -407,6 +411,7 @@ public class FileBlobStore
   @Nullable
   @Override
   @Guarded(by = STARTED)
+  @Timed
   public Blob get(final BlobId blobId, final boolean includeDeleted) {
     checkNotNull(blobId);
 
@@ -596,6 +601,13 @@ public class FileBlobStore
   @Override
   protected void doInit(final BlobStoreConfiguration configuration) {
     try {
+      this.basedir = applicationDirectories.getWorkDirectory(BASEDIR).toPath();
+    }
+    catch (Exception e) {
+      log.error("Unable to access file blob store base directory: " + BASEDIR, e);
+    }
+
+    try {
       Path blobDir = getAbsoluteBlobDir();
       Path content = blobDir.resolve("content");
       DirectoryHelper.mkdir(content);
@@ -736,7 +748,7 @@ public class FileBlobStore
   @VisibleForTesting
   Path getRelativeBlobDir() throws IOException {
     Path configurationPath = getConfiguredBlobStorePath();
-    if (configurationPath.isAbsolute()) {
+    if (configurationPath.isAbsolute() && basedir != null) {
       Path normalizedBase = basedir.toRealPath().normalize();
       Path normalizedPath = configurationPath.toRealPath().normalize();
       if (normalizedPath.startsWith(normalizedBase)) {

@@ -18,14 +18,14 @@
  * @since 3.next
  */
 Ext.define('NX.coreui.store.RoutingRulePreview', {
-  extend: 'Ext.data.Store',
+  extend: 'Ext.data.TreeStore',
   model: 'NX.coreui.model.RoutingRulePreview',
   autoLoad: false,
-  paramOrder: ['path'],
-  folderSort: true,
+  filterer: 'bottomup',
   proxy: {
     type: 'rest',
     url: 'service/rest/internal/ui/routing-rules/preview',
+    appendId: false,
     reader: {
       type: 'json',
       model: 'NX.coreui.model.RoutingRulePreview'

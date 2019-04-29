@@ -16,9 +16,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
@@ -29,6 +32,9 @@ import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -47,6 +53,10 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
 {
   public static final String BLOB_ATTRIBUTE_SUFFIX = ".properties";
 
+  private final Map<String, Timer> timers = new ConcurrentHashMap<>();
+
+  private MetricRegistry metricRegistry;
+
   protected final BlobIdLocationResolver blobIdLocationResolver;
 
   protected final DryRunPrefix dryRunPrefix;
@@ -63,6 +73,11 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
   {
     this.blobIdLocationResolver = checkNotNull(blobIdLocationResolver);
     this.dryRunPrefix = checkNotNull(dryRunPrefix);
+  }
+
+  @Inject
+  public void setMetricRegistry(final MetricRegistry metricRegistry) {
+    this.metricRegistry = metricRegistry;
   }
 
   protected BlobId getBlobId(final Map<String, String> headers, @Nullable final BlobId blobId) {
@@ -89,7 +104,13 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
     checkArgument(headers.containsKey(BLOB_NAME_HEADER), "Missing header: %s", BLOB_NAME_HEADER);
     checkArgument(headers.containsKey(CREATED_BY_HEADER), "Missing header: %s", CREATED_BY_HEADER);
 
-    return doCreate(blobData, headers, blobId);
+    long start = System.nanoTime();
+    try {
+      return doCreate(blobData, headers, blobId);
+    }
+    finally {
+      updateTimer("create", System.nanoTime() - start);
+    }
   }
 
   protected abstract Blob doCreate(InputStream blobData, Map<String, String> headers, @Nullable BlobId blobId);
@@ -99,7 +120,13 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
   public boolean delete(final BlobId blobId, final String reason) {
     checkNotNull(blobId);
 
-    return doDelete(blobId, reason);
+    long start = System.nanoTime();
+    try {
+      return doDelete(blobId, reason);
+    }
+    finally {
+      updateTimer("delete", System.nanoTime() - start);
+    }
   }
 
   protected abstract boolean doDelete(BlobId blobId, String reason);
@@ -152,7 +179,14 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
   @Guarded(by = STARTED)
   public boolean deleteHard(final BlobId blobId) {
     checkNotNull(blobId);
-    return doDeleteHard(blobId);
+
+    long start = System.nanoTime();
+    try {
+      return doDeleteHard(blobId);
+    }
+    finally {
+      updateTimer("deleteHard", System.nanoTime() - start);
+    }
   }
 
   protected abstract boolean doDeleteHard(final BlobId blobId);
@@ -166,7 +200,13 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
   @Override
   @Guarded(by = STARTED)
   public synchronized void compact(@Nullable final BlobStoreUsageChecker inUseChecker) {
-    doCompact(inUseChecker);
+    long start = System.nanoTime();
+    try {
+      doCompact(inUseChecker);
+    }
+    finally {
+      updateTimer("compact", System.nanoTime() - start);
+    }
   }
 
   protected void doCompact(@Nullable final BlobStoreUsageChecker inUseChecker) {
@@ -202,4 +242,11 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
     }
   }
 
+  private void updateTimer(final String name, final long value) {
+    if (metricRegistry != null) {
+      Timer timer = timers.computeIfAbsent(name, key ->
+          metricRegistry.timer(getClass().getName().replaceAll("\\$.*", "") + '.' + name + ".timer"));
+      timer.update(value, TimeUnit.NANOSECONDS);
+    }
+  }
 }

@@ -124,10 +124,10 @@ public class RoutingRuleHelperImplTest
     when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository));
     configureRepositoryMock("singleRule");
 
-    Map<EntityId, List<String>> assignedRepositoryMap = underTest.calculateAssignedRepositories();
+    Map<EntityId, List<Repository>> assignedRepositoryMap = underTest.calculateAssignedRepositories();
     assertEquals(1, assignedRepositoryMap.size());
-    List<String> assignedRepositories = assignedRepositoryMap.get(new DetachedEntityId("singleRule"));
-    assertEquals(ImmutableList.of(repository.getName()), assignedRepositories);
+    List<Repository> assignedRepositories = assignedRepositoryMap.get(new DetachedEntityId("singleRule"));
+    assertEquals(ImmutableList.of(repository), assignedRepositories);
   }
 
   @Test
@@ -143,10 +143,10 @@ public class RoutingRuleHelperImplTest
     configureRepositoryMock(repository2,"rule-2");
     configureRepositoryMock(repository3,"rule-2");
 
-    Map<EntityId, List<String>> assignedRepositoryMap = underTest.calculateAssignedRepositories();
+    Map<EntityId, List<Repository>> assignedRepositoryMap = underTest.calculateAssignedRepositories();
     assertEquals(2, assignedRepositoryMap.size());
-    assertEquals(ImmutableList.of(repository.getName()), assignedRepositoryMap.get(new DetachedEntityId("rule-1")));
-    assertEquals(ImmutableList.of(repository2.getName(), repository3.getName()), assignedRepositoryMap.get(new DetachedEntityId("rule-2")));
+    assertEquals(ImmutableList.of(repository), assignedRepositoryMap.get(new DetachedEntityId("rule-1")));
+    assertEquals(ImmutableList.of(repository2, repository3), assignedRepositoryMap.get(new DetachedEntityId("rule-2")));
   }
 
   private void assertBlocked(final String ruleId, final String path) throws Exception {

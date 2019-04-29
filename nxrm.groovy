@@ -93,9 +93,9 @@ testProjects = [':nexus-insight-testsupport', ':nexus-docker-testsupport', ':nex
    //sources="custom Maven sources arguments here"
  */
 configDefaults = [
-    javaMaxMem   : "2g",
-    directMaxMem : "2g",
-    vmOptions    : "",
+    javaMaxMem   : '2g',
+    directMaxMem : '2g',
+    vmOptions    : '',
     port         : 8081,
     sslPort      : 8443,
     karafSshPort : 8022,
@@ -107,7 +107,8 @@ configDefaults = [
     deploy       : true,   // Deployment is performed by default
     backup       : false,   // Backup sonatype-work disabled by default
     restore      : false,   // Restore backup of sonatype-work disabled by default
-    builder      : "-T 1C", // default one thread per core
+    builder      : '-T 1C', // default one thread per core
+    randomPassword: false
 ]
 
 buildOptions = [
@@ -215,6 +216,7 @@ ConfigObject processRcConfigFile() {
   config.deploy = assign('deploy', 'no-deploy', config.deploy)
   config.backup = assign('backup', 'no-backup', config.backup)
   config.restore = assign('restore', 'no-restore', config.restore)
+  config.randomPassword = assign('random-password', 'no-random-password', config.randomPassword)
 
   debug("config read from RC and merged with defaults: ${config}")
 
@@ -360,8 +362,14 @@ def processCliOptions(args) {
     _ longOpt: 'no-takari', 'Disable Takari (if enabled by config)'
     _ longOpt: 'restore', "Enable restore of backup from ${SONATYPE_WORK_BACKUP} to target/sonatype-work (disabled by default)"
     _ longOpt: 'no-restore', "Disable restore of backup (if enabled by config)"
+    _ longOpt: 'random-password', "Enable generation of random password for admin user on initial start"
+    _ longOpt: 'no-random-password', "Disable generation of random password (default)"
+
     // general options
     d longOpt: 'dry-run', 'Dry run, don\'t actually execute anything'
+    _ longOpt: 'no-docker', 'Disable the docker build'
+    _ longOpt: 'single-threaded', "Don't build in parallel"
+
   }
 
   cliOptions = cli.parse(args)
@@ -628,6 +636,9 @@ def processBuilder() {
       sleep(3000)
     }
   }
+  else if (cliOptions['single-threaded']) {
+    rcConfig.builder = ''
+  }
 }
 
 def processMavenCommand() {
@@ -667,6 +678,10 @@ def processMavenCommand() {
     buildOptions.buildModeDesc = "Full (Incremental mode, but no code changes detected)"
     buildOptions.mavenCommand = "${buildOptions.mavenGoalsAndPhases} ${rcConfig.builder} ${buildOptions.tests} " +
         "${buildOptions.sources} ${buildOptions.assemblies}"
+  }
+
+  if (cliOptions['no-docker']) {
+    buildOptions.mavenCommand += ' -Dno-docker'
   }
 
   buildOptions.mavenCommand += ' ' + positionalOptions.join(' ')
@@ -1038,6 +1053,8 @@ def runNxrm() {
 
     def processBuilder = new ProcessBuilder(nxrmCommand)
         .inheritIO()
+
+    processBuilder.environment().put('NEXUS_SECURITY_RANDOMPASSWORD', Boolean.toString(rcConfig.randomPassword))
     processBuilder.environment().put('JAVA_MAX_MEM', rcConfig.javaMaxMem)
     processBuilder.environment().put('DIRECT_MAX_MEM', rcConfig.directMaxMem)
     processBuilder.environment().put('JAVA_DEBUG_PORT', Integer.toString(rcConfig.javaDebugPort))

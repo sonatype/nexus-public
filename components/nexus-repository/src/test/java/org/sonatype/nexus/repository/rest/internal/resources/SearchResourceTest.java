@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.rest.internal.resources;
 
 import java.net.URI;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,7 +28,6 @@ import org.sonatype.nexus.repository.rest.SearchResourceExtension;
 import org.sonatype.nexus.repository.rest.api.AssetXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
-import org.sonatype.nexus.repository.search.SearchFilter;
 import org.sonatype.nexus.repository.search.SearchService;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.rest.Page;
@@ -57,7 +55,6 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 import static org.elasticsearch.index.query.QueryBuilders.queryStringQuery;
-import static org.elasticsearch.index.query.QueryBuilders.termQuery;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -66,7 +63,6 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.collection.IsMapContaining.hasKey;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -444,7 +440,7 @@ public class SearchResourceTest
 
     //the expected query
     QueryBuilder expected = boolQuery()
-        .must(queryStringQuery("fifth-sha1").field("assets.attributes.checksum.sha1").lowercaseExpandedTerms(false))
+        .must(queryStringQuery("fifth\\-sha1").field("assets.attributes.checksum.sha1").lowercaseExpandedTerms(false))
         .must(queryStringQuery("npm").field("format").lowercaseExpandedTerms(false));
     assertThat(queryBuilderArgumentCaptor.getValue().toString(), is(expected.toString()));
   }

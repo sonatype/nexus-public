@@ -10,26 +10,28 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.routing;
+package org.sonatype.nexus.internal.security.upgrade;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.upgrade.Upgrades;
+import org.sonatype.nexus.orient.DatabaseInstanceNames;
+import org.sonatype.nexus.orient.DatabaseUpgradeSupport;
+
 /**
- * @since 3.16
+ * Empty upgrade step filling in for what is now a private model upgrade.
+ *
+ * @since 3.next
  */
+@Named
 @Singleton
-public class RoutingRulesConfiguration
+@Upgrades(model = DatabaseInstanceNames.SECURITY, from = "1.0", to = "1.1")
+public class SecurityDatabaseUpgrade_1_1 // NOSONAR
+    extends DatabaseUpgradeSupport
 {
-  private final boolean enabled;
-
-  @Inject
-  public RoutingRulesConfiguration(@Named("${nexus.routing.rules.enabled:-true}") final boolean enabled) {
-    this.enabled = enabled;
-  }
-
-  public boolean isEnabled() {
-    return enabled;
+  @Override
+  public void apply() throws Exception {
+    // left intentionally blank
   }
 }

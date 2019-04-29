@@ -41,13 +41,50 @@ Ext.define('NX.coreui.view.routing.RoutingRulesPreview', {
         frame: true,
         items: [
           {
-            xtype: 'textfield',
-            name: 'path',
-            allowBlank: false,
+            xtype: 'combo',
+            name: 'filter',
+
+            editable: false,
+            forceSelection: true,
+            value: 'all',
+            valueField: 'value',
+            store: {
+              data: [
+                {
+                  text: NX.I18n.get('RoutingRules_PreviewContext_AllRepositories'),
+                  value: 'all'
+                },
+                {
+                  text: NX.I18n.get('RoutingRules_PreviewContext_AllGroups'),
+                  value: 'groups'
+                },
+                {
+                  text: NX.I18n.get('RoutingRules_PreviewContext_AllProxies'),
+                  value: 'proxies'
+                }
+              ]
+            }
+          },
+          {
+            xtype: 'fieldcontainer',
+            cls: 'nx-routing-rules-test-path-container',
+            itemId: 'pathContainer',
             fieldLabel: NX.I18n.get('RoutingRules_GlobalRoutingPreview_Path_FieldLabel'),
             helpText: NX.I18n.get('RoutingRules_GlobalRoutingPreview_Path_HelpText'),
-            emptyText: NX.I18n.get('RoutingRules_GlobalRoutingPreview_Path_EmptyText'),
-            width: '50%'
+            layout: 'hbox',
+            items: [
+              {
+                xtype: 'label',
+                cls: 'nx-routing-rules-path-prefix',
+                text: '/'
+              },
+              {
+                xtype: 'textfield',
+                name: 'path',
+                emptyText: NX.I18n.get('RoutingRules_GlobalRoutingPreview_Path_EmptyText'),
+                flex: 1
+              }
+            ]
           }
         ],
         buttons: [
@@ -67,7 +104,8 @@ Ext.define('NX.coreui.view.routing.RoutingRulesPreview', {
         frame: true,
         items: [
           {
-            xtype: 'grid',
+            xtype: 'treepanel',
+            rootVisible: false,
             ui: 'nx-subsection',
             cls: 'grid-with-border',
             title: NX.I18n.get('RoutingRules_GlobalRoutingPreview_Grid_TestResult'),
@@ -76,6 +114,7 @@ Ext.define('NX.coreui.view.routing.RoutingRulesPreview', {
             flex: 1,
             columns: [
               {
+                xtype: 'treecolumn',
                 text: NX.I18n.get('RoutingRules_GlobalRoutingPreview_Grid_Column_Repository'),
                 dataIndex: 'repository',
                 flex: 2,

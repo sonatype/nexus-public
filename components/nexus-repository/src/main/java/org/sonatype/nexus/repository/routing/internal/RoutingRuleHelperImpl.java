@@ -31,7 +31,6 @@ import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.security.BreadActions.READ;
 
@@ -76,6 +75,10 @@ public class RoutingRuleHelperImpl
       return true;
     }
 
+    return isAllowed(routingRule, path);
+  }
+
+  public boolean isAllowed(final RoutingRule routingRule, final String path) {
     return isAllowed(routingRule.mode(), routingRule.matchers(), path);
   }
 
@@ -86,13 +89,10 @@ public class RoutingRuleHelperImpl
   }
 
   @Override
-  public Map<EntityId, List<String>> calculateAssignedRepositories() {
+  public Map<EntityId, List<Repository>> calculateAssignedRepositories() {
     return StreamSupport.stream(repositoryManager.browse().spliterator(), false)
         .filter(repository -> routingRuleCache.getRoutingRuleId(repository) != null)
-        .collect(groupingBy(
-            routingRuleCache::getRoutingRuleId,
-            mapping(Repository::getName, toList())
-        ));
+        .collect(groupingBy(routingRuleCache::getRoutingRuleId, toList()));
   }
 
   @Override

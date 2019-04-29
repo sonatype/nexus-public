@@ -11062,6 +11062,29 @@ fieldset.nx-form-section.nx-no-title {
     background-color: #fff !important;
 }
 
+.nx-routing-rules-test-path-container > .x-form-item-body {
+    border: solid 1px #ddd;
+}
+
+.nx-routing-rules-test-path-container.nx-textfield-focused > .x-form-item-body {
+    border-color: #85bee9;
+}
+
+.nx-routing-rules-test-path-container .nx-routing-rules-path-prefix {
+    color: #777;
+    font-size: 1.8em;
+    padding: 4px 0 0 5px;
+    display: inline-block;
+}
+
+.nx-routing-rules-test-path-container .x-form-trigger-wrap {
+    border: none;
+}
+
+.nx-routing-rules-test-path-container input[name=path] {
+    padding-left: 2px;
+}
+
 .nx-mode-common-text {
     /**
  * @class NX.coreui.view.routing.RoutingRulesSettingsForm
@@ -11094,33 +11117,10 @@ fieldset.nx-coreui-routing-rules-settings-form-matchers .nx-matcher-remove-butto
     margin-left: 10px;
 }
 
-.nx-routing-rules-single-preview-field-wrapper .nx-routing-rules-test-path-container > .x-form-item-body {
+.nx-routing-rules-single-preview-field-wrapper .nx-routing-rules-test-result {
     /**
  * @class NX.coreui.view.routing.RoutingRulesSinglePreview
  */
-    border: solid 1px #ddd;
-}
-
-.nx-routing-rules-single-preview-field-wrapper .nx-routing-rules-test-path-container.nx-textfield-focused > .x-form-item-body {
-    border-color: #85bee9;
-}
-
-.nx-routing-rules-single-preview-field-wrapper .nx-routing-rules-test-path-container .nx-routing-rules-path-prefix {
-    color: #777;
-    font-size: 1.8em;
-    padding: 4px 0 0 5px;
-    display: inline-block;
-}
-
-.nx-routing-rules-single-preview-field-wrapper .nx-routing-rules-test-path-container .x-form-trigger-wrap {
-    border: none;
-}
-
-.nx-routing-rules-single-preview-field-wrapper .nx-routing-rules-test-path-container input[name=path] {
-    padding-left: 2px;
-}
-
-.nx-routing-rules-single-preview-field-wrapper .nx-routing-rules-test-result {
     align-items: center;
     color: #1c8145;
     display: inline-flex;

@@ -35,4 +35,10 @@ class RoutingRulePreviewXO
   String rule
 
   Boolean allowed
+
+  Boolean expanded
+
+  Boolean expandable
+
+  List<RoutingRulePreviewXO> children
 }

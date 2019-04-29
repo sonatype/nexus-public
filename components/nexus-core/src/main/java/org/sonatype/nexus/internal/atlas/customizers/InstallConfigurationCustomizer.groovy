@@ -170,6 +170,12 @@ class InstallConfigurationCustomizer
        <xsl:template match="hz:password/text()">
         <xsl:text>removed</xsl:text>
        </xsl:template>
+       <xsl:template match="hz:property[@name='access-key']/text()">
+        <xsl:text>removed</xsl:text>
+       </xsl:template>
+       <xsl:template match="hz:property[@name='secret-key']/text()">
+        <xsl:text>removed</xsl:text>
+       </xsl:template>
       </xsl:stylesheet>'''.stripMargin()
 
     SanitizedHazelcastFileSource(final Type type, final String path, final File file, final Priority priority) {

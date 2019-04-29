@@ -185,7 +185,7 @@ Ext.define('NX.app.PluginStrings', {
 
     // SearchBoxTip
     SearchBoxTip_ExactMatch: 'Use <b>""</b> for exact match - "example"',
-    SearchBoxTip_Wildcard: 'Use <b>*</b> for wildcard - exampl*',
+    SearchBoxTip_Wildcard: 'Use <b>*</b> or <b>?</b> for wildcards - ex?mpl*',
     SearchBoxTip_LearnMore: 'Learn more...',
 
     // DependencySnippet Panel

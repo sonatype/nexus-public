@@ -92,7 +92,7 @@ public class UploadService
       prefix = longestPrefix(prefix, path);
     }
 
-    return elasticEscape(prefix);
+    return prefix;
   }
 
   private String removeLastSegment(final String path) {
@@ -101,10 +101,6 @@ public class UploadService
       return path.substring(0, index);
     }
     return path;
-  }
-
-  private String elasticEscape(final String query) {
-    return query.replace("/", "\\/").replace(".", "\\.").replace("-", "\\-");
   }
 
   private String longestPrefix(final String prefix, final String path) {

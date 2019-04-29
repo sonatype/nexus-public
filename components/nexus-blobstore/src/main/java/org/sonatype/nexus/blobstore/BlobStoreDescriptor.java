@@ -56,6 +56,14 @@ public interface BlobStoreDescriptor
   }
 
   /**
+   * Modifies the config to ensure the input is valid
+   *
+   * @since 3.next
+   */
+  default void sanitizeConfig(BlobStoreConfiguration config) {
+  }
+
+  /**
    * @return true if the blob store type is enabled.
    *
    * @since 3.14

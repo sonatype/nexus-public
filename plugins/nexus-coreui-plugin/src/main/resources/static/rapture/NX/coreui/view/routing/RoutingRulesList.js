@@ -53,21 +53,24 @@ Ext.define('NX.coreui.view.routing.RoutingRulesList', {
       },
       {
         header: NX.I18n.get('RoutingRules_UsedBy_Label'),
-        dataIndex: 'assignedRepositoryNames',
-        stateId: 'assignedRepositoryNames',
+        dataIndex: 'assignedRepositoryCount',
+        stateId: 'assignedRepositoryCount',
         tdCls: 'usedByTdCls',
         flex: 1,
         renderer: function(value) {
-          var numRepositories = value.length;
-          return Ext.util.Format.plural(
-              numRepositories,
-              NX.I18n.get('RoutingRule_UsedBy_Repository_Singular'),
-              NX.I18n.get('RoutingRule_UsedBy_Repository_Plural')
-          );
+          var text = Ext.util.Format.plural(
+                  value,
+                  NX.I18n.get('RoutingRule_UsedBy_Repository_Singular'),
+                  NX.I18n.get('RoutingRule_UsedBy_Repository_Plural')
+              );
+          if (value === 0) {
+            text += ', ' + NX.I18n.get('RoutingRule_Assign_Repositories');
+          }
+          return text;
         },
         sorter: function(model1, model2) {
-          var numRepos1 = model1.get('assignedRepositoryNames') ? model1.get('assignedRepositoryNames').length : 0,
-              numRepos2 = model2.get('assignedRepositoryNames') ? model2.get('assignedRepositoryNames').length : 0;
+          var numRepos1 = model1.get('assignedRepositoryCount') || 0,
+              numRepos2 = model2.get('assignedRepositoryCount') || 0;
           return numRepos1 - numRepos2;
         }
       }
@@ -123,13 +126,18 @@ Ext.define('NX.coreui.view.routing.RoutingRulesList', {
         beforeshow: function(tip) {
           var tipGridView = tip.target.component,
               record = tipGridView.getRecord(tip.triggerElement),
-              repositoryNames = record.get('assignedRepositoryNames').join(', ');
+              repositoryCount = record.get('assignedRepositoryCount'),
+              repositoryNames = record.get('assignedRepositoryNames');
 
-          if (!repositoryNames) {
+          if (!repositoryCount) {
             return false;
           }
 
-          tip.update(Ext.htmlEncode(repositoryNames));
+          tip.update(
+              NX.I18n.format(repositoryCount !== repositoryNames.length ?
+                  'RoutingRule_UsedBy_Info_Tooltip' :
+                  'RoutingRule_UsedBy_Info_Tooltip_Permitted',
+                  Ext.htmlEncode(repositoryNames.join(', '))));
         }
       }
     });

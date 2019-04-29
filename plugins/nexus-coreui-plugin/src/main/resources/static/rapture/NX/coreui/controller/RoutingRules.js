@@ -127,13 +127,16 @@ Ext.define('NX.coreui.controller.RoutingRules', {
         'nx-coreui-routing-rules-edit nx-coreui-routing-rules-settings-form panel[cls=nx-repeated-row]': {
           removed: this.onMatchersChange.bind(this, this.getRoutingRulesEdit)
         },
+        'nx-coreui-routing-rules-preview [name=filter]': {
+          change: this.onPreviewContextChanged.bind(this, this.getRoutingRulesPreview)
+        },
         'nx-coreui-routing-rules-preview textfield[name=path]': {
-          change: this.onPathChanged.bind(this, this.getRoutingRulesPreview)
+          change: this.onPreviewContextChanged.bind(this, this.getRoutingRulesPreview)
         },
         'nx-coreui-routing-rules-preview button[action=preview]': {
           click: this.onPreviewClicked.bind(this, this.getRoutingRulesPreview)
         },
-        'nx-coreui-routing-rules-preview grid': {
+        'nx-coreui-routing-rules-preview treepanel': {
           select: this.onPreviewSelected.bind(this, this.getRoutingRulesPreview),
           deselect: this.onPreviewDeselected.bind(this, this.getRoutingRulesPreview)
         }
@@ -227,23 +230,24 @@ Ext.define('NX.coreui.controller.RoutingRules', {
    * @override
    */
   onSelection: function(list, model) {
-    var assignedRepositoryNames;
-
     this.clearInfo();
 
     if (model) {
       this.getRoutingRulesEdit().loadRecord(model);
 
-      assignedRepositoryNames = model.get('assignedRepositoryNames');
-      if (assignedRepositoryNames.length > 0) {
-        this.setInfoMessage(assignedRepositoryNames);
+      if (model.get('assignedRepositoryCount') > 0) {
+        this.setInfoMessage(model);
+      }
+      else {
+        this.showInfo(NX.I18n.format('RoutingRules_UsedBy_EmptyTip', NX.I18n.get('RoutingRule_Assign_Repositories')));
       }
     }
   },
 
-  setInfoMessage: function(assignedRepositoryNames) {
+  setInfoMessage: function(model) {
     var MAX_NUM_REPOSITORIES = 10,
-        totalNumRepositories = assignedRepositoryNames.length,
+        assignedRepositoryNames = model.get('assignedRepositoryNames'),
+        totalNumRepositories = model.get('assignedRepositoryCount'),
         numRepositoriesMessage = Ext.util.Format.plural(
             totalNumRepositories,
             NX.I18n.get('RoutingRule_UsedBy_Repository_Singular'),
@@ -255,14 +259,17 @@ Ext.define('NX.coreui.controller.RoutingRules', {
               '</a>';
         }),
         ellipsis = totalNumRepositories > MAX_NUM_REPOSITORIES ? ', ...' : '',
+        onlyShowPermitted = totalNumRepositories !== assignedRepositoryNames.length,
         repositoryLinksMessage = repositoryLinks.join(', ') + ellipsis,
-        tooltipText = NX.I18n.format(
+        tooltipText = NX.I18n.format(onlyShowPermitted ?
+            'RoutingRule_UsedBy_Info_Tooltip_Permitted' :
             'RoutingRule_UsedBy_Info_Tooltip',
-            Ext.htmlEncode(assignedRepositoryNames.join(', '))
-        );
+            Ext.htmlEncode(assignedRepositoryNames.join(', ')));
 
     this.showInfo(
-        NX.I18n.format('RoutingRule_UsedBy_Info_Message', numRepositoriesMessage, repositoryLinksMessage),
+        NX.I18n.format(onlyShowPermitted ?
+            'RoutingRule_UsedBy_Info_Message_Permitted' :
+            'RoutingRule_UsedBy_Info_Message', numRepositoriesMessage, repositoryLinksMessage),
         tooltipText
     );
   },
@@ -435,25 +442,28 @@ Ext.define('NX.coreui.controller.RoutingRules', {
     singlePreview.hideTestResult();
   },
 
-  onPathChanged: function(viewComponentGetter) {
+  onPreviewContextChanged: function(viewComponentGetter) {
     var viewComponent = viewComponentGetter.apply(this),
-        grid = viewComponent.down('grid'),
+        grid = viewComponent.down('treepanel'),
         store = grid.getStore();
 
     grid.fireEvent('deselect', viewComponent);
-    store.removeAll();
+    store.loadData([]);
   },
 
   onPreviewClicked: function(viewComponentGetter) {
     var viewComponent = viewComponentGetter.apply(this),
         form = viewComponent.down('form'),
-        store = viewComponent.down('grid').getStore();
+        store = viewComponent.down('treepanel').getStore();
 
-    if (form.isValid()) {
-      var params = form.getValues();
-      store.proxy.setExtraParam('path', params.path);
-      store.load();
-    }
+    var params = form.getValues();
+    store.getProxy().setExtraParams({
+      path: '/' + params.path,
+      filter: params.filter
+    });
+    // The store load doesn't seem to cause the tree to display properly without calling removeAll
+    store.removeAll();
+    store.load();
   },
 
   onPreviewSelected: function(viewComponentGetter, event, node) {

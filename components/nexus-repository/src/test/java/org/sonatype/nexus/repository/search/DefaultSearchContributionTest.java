@@ -45,14 +45,4 @@ public class DefaultSearchContributionTest
     assertThat(query.toString(), Matchers.containsString("\"query\" : \"a\\\\/b\\\\/\""));
   }
 
-  @Test
-  public void defaultSearchContributionIgnoresEscapedSlashes() {
-    BoolQueryBuilder query = QueryBuilders.boolQuery();
-    String field = "name";
-    String value = "a\\/b";
-
-    defaultSearchContribution.contribute(query, field, value);
-
-    assertThat(query.toString(), Matchers.containsString("\"query\" : \"a\\\\/b\""));
-  }
 }
