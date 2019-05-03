@@ -74,7 +74,7 @@ public abstract class BearerTokenRealm
     final PrincipalCollection principals = keyStore.getPrincipals(format, (char[]) token.getCredentials());
     if (null != principals) {
       try {
-        if (anonymousAndSupported(principals) || UserStatus.active.equals(principalsHelper.getUserStatus(principals))) {
+        if (anonymousAndSupported(principals) || principalsHelper.getUserStatus(principals).isActive()) {
           ((NexusApiKeyAuthenticationToken) token).setPrincipal(principals.getPrimaryPrincipal());
           return new SimpleAuthenticationInfo(principals, token.getCredentials());
         }

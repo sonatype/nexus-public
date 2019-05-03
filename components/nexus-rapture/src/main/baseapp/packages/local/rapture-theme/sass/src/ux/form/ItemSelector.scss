@@ -6,6 +6,12 @@
   .x-form-item-label {
     opacity: 1;
   }
+  .x-toolbar.x-item-disabled {
+    visibility: hidden;
+  }
+  .nx-filterbox {
+    display: none;
+  }
 }
 
 .x-form-itemselector-body .x-form-item {

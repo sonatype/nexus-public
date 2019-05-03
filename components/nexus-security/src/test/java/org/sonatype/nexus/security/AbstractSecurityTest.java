@@ -20,6 +20,7 @@ import javax.cache.CacheManager;
 import javax.inject.Inject;
 import javax.servlet.ServletContext;
 
+import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.goodies.testsupport.TestUtil;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.event.EventManager;
@@ -49,6 +50,7 @@ import org.junit.Before;
 import static org.mockito.Mockito.mock;
 
 public abstract class AbstractSecurityTest
+  extends TestSupport
 {
   protected final TestUtil util = new TestUtil(this);
 
@@ -88,11 +90,15 @@ public abstract class AbstractSecurityTest
         bind(ApplicationDirectories.class).toInstance(mock(ApplicationDirectories.class));
         bind(NodeAccess.class).toInstance(mock(NodeAccess.class));
         bind(AnonymousManager.class).toInstance(mock(AnonymousManager.class));
-        bind(EventManager.class).toInstance(new SimpleEventManager());
+        bind(EventManager.class).toInstance(getEventManager());
 
         requestInjection(AbstractSecurityTest.this);
       }
     });
+  }
+
+  protected EventManager getEventManager() {
+    return new SimpleEventManager();
   }
 
   protected <T> T lookup(Class<T> role) {

@@ -10,6 +10,8 @@
     "array",
     "second"
   ],
+  "readme": null,
+  "multi-null-field": "not so null in second",
   "multi-depth": {
     "first": {
       "title": "This is the first depth",

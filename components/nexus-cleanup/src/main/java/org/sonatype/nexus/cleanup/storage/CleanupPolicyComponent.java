@@ -15,9 +15,9 @@ package org.sonatype.nexus.cleanup.storage;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
-import java.util.function.BiFunction;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.BiFunction;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -27,8 +27,8 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.groups.Default;
 
-import org.sonatype.nexus.cleanup.service.CleanupComponentBrowse;
 import org.sonatype.nexus.cleanup.config.CleanupPolicyConfiguration;
+import org.sonatype.nexus.cleanup.service.CleanupComponentBrowse;
 import org.sonatype.nexus.extdirect.DirectComponent;
 import org.sonatype.nexus.extdirect.DirectComponentSupport;
 import org.sonatype.nexus.extdirect.model.PagedResponse;
@@ -51,16 +51,16 @@ import org.sonatype.nexus.validation.group.Update;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
-import com.google.common.collect.ImmutableMap;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableMap;
 import com.softwarementors.extjs.djn.config.annotations.DirectAction;
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.hibernate.validator.constraints.NotEmpty;
 
-import static java.lang.Integer.MAX_VALUE;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.Integer.MAX_VALUE;
 import static java.util.Collections.singletonList;
 import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
@@ -337,6 +337,10 @@ public class CleanupPolicyComponent
 
   private void ensureUserHasPermissionToCleanupPolicyByFormat(final String format) {
     RepositoryAdminPermission permission = new RepositoryAdminPermission(format, "*", singletonList(ADD));
-    repositoryPermissionChecker.ensureUserHasPermissionOrAdminAccessToAny(permission, READ, repositoryManager.browse());
+    repositoryPermissionChecker.ensureUserHasAnyPermissionOrAdminAccess(
+        singletonList(permission),
+        READ,
+        repositoryManager.browse()
+    );
   }
 }

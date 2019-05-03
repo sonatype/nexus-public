@@ -26,6 +26,9 @@ Ext.define('NX.view.drilldown.Master', {
 
   maskElement: 'body',
 
+  cls: 'nx-drilldown-master',
+  rowLines: false,
+
   /**
    * @private
    */

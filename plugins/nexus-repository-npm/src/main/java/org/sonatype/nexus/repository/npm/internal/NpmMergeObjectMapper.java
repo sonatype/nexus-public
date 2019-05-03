@@ -23,6 +23,7 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.json.MergeObjectMapper;
 import org.sonatype.nexus.repository.json.NestedAttributesMapJsonParser;
 import org.sonatype.nexus.repository.json.NestedAttributesMapStdValueInstantiator;
+import org.sonatype.nexus.repository.json.SourceMapDeserializer;
 
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -106,9 +107,9 @@ public class NpmMergeObjectMapper
   {
     StdValueInstantiator instantiator = (StdValueInstantiator) rootDeserializer.getValueInstantiator();
 
-    new MapDeserializer(rootDeserializer.getValueType(),
-        new NestedAttributesMapStdValueInstantiator(instantiator, parser.getRoot()), null,
-        new NpmNestedAttributesMapUntypedObjectDeserializer(parser), null)
+    SourceMapDeserializer.of(rootDeserializer.getValueType(),
+        new NestedAttributesMapStdValueInstantiator(instantiator, parser.getRoot()),
+        new NpmNestedAttributesMapUntypedObjectDeserializer(parser))
         .deserialize(parser, context);
   }
 

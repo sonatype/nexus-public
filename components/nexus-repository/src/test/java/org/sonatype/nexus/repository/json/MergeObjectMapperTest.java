@@ -77,7 +77,7 @@ public class MergeObjectMapperTest
   }
 
   private void verifyReadFirstJson(final NestedAttributesMap result) {
-    assertThat(result.size(), equalTo(7));
+    assertThat(result.size(), equalTo(9));
     assertThat(result.get("name"), equalTo("first"));
 
     List maintainers = (List) result.get("maintainers");
@@ -89,6 +89,9 @@ public class MergeObjectMapperTest
     List keywords = (List) result.get("keywords");
     assertThat(keywords.get(0), equalTo("array"));
     assertThat(keywords.get(1), equalTo("first"));
+
+    assertThat(result.get("readme"), is(nullValue()));
+    assertThat(result.get("multi-null-field"), is(nullValue()));
 
     NestedAttributesMap mulitDepth = result.child("multi-depth");
     NestedAttributesMap first = mulitDepth.child("first");
@@ -194,7 +197,7 @@ public class MergeObjectMapperTest
   }
 
   private void verifyMergingMultipleContentsWithMultiDepthJsonResult(final NestedAttributesMap result) {
-    assertThat(result.size(), equalTo(7));
+    assertThat(result.size(), equalTo(9));
     assertThat(result.get("name"), equalTo("third"));
 
     List maintainers = (List) result.get("maintainers");
@@ -204,6 +207,9 @@ public class MergeObjectMapperTest
     List keywords = (List) result.get("keywords");
     assertThat(keywords.get(0), equalTo("array"));
     assertThat(keywords.get(1), equalTo("third"));
+
+    assertThat(result.get("readme"), is(nullValue()));
+    assertThat(result.get("multi-null-field"), equalTo("not so null in third"));
 
     NestedAttributesMap mulitDepth = result.child("multi-depth");
     NestedAttributesMap first = mulitDepth.child("first");

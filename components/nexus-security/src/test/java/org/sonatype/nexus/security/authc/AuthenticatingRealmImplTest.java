@@ -123,6 +123,16 @@ public class AuthenticatingRealmImplTest
   }
 
   @Test
+  public void testGetAuthenticationInfo_userStatusChangePassword() throws Exception {
+    buildTestAuthenticationConfig(CUser.STATUS_CHANGE_PASSWORD);
+
+    UsernamePasswordToken upToken = new UsernamePasswordToken("username", "password");
+    AuthenticationInfo ai = realm.getAuthenticationInfo(upToken);
+    String password = new String((char[]) ai.getCredentials());
+    assertThat(this.passwordService.passwordsMatch("password", password), is(true));
+  }
+
+  @Test
   public void testDetectLegacyUser() throws Exception {
     String password = "password";
     String username = "username";

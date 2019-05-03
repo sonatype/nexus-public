@@ -312,7 +312,9 @@ public class RealmManagerImpl
    */
   @Subscribe
   public void onEvent(final UserPasswordChanged event) {
-    clearAuthcRealmCacheForUserId(event.getUserId());
+    if (event.isClearCache()) {
+      clearAuthcRealmCacheForUserId(event.getUserId());
+    }
   }
 
   /**

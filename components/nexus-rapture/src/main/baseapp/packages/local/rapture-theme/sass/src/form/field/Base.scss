@@ -9,14 +9,22 @@
  */
 
 @mixin nx-form-field-readonly {
-  color: $color-dark-gray;
-  background-color: $color-smoke;
+  color: $color-charcoal;
   opacity: 1;  
 }
 
 .x-form-field[readonly].x-form-field:not([role="combobox"]),
 .x-form-readonly input[role="combobox"] {
   @include nx-form-field-readonly;
+}
+
+.x-form-readonly {
+  .x-form-trigger-wrap-default {
+    border: none;
+  }
+  .nx-boxlabel {
+    display: none;
+  }
 }
 
 /**

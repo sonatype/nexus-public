@@ -40,7 +40,9 @@ Ext.define('NX.ext.grid.plugin.FilterBox', {
           '->',
           {
             xtype: 'nx-searchbox',
+            cls: ['nx-searchbox', 'nx-filterbox'],
             emptyText: NX.I18n.get('Grid_Plugin_FilterBox_Empty'),
+            iconClass: 'fa-filter',
             searchDelay: 200,
             width: 200,
             listeners: {

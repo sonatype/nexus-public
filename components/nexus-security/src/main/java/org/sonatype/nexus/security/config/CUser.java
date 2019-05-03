@@ -28,6 +28,8 @@ public class CUser
 
   public static final String STATUS_ACTIVE = "active";
 
+  public static final String STATUS_CHANGE_PASSWORD = "changepassword";
+
   private String id;
 
   private String firstName;
@@ -96,6 +98,10 @@ public class CUser
 
   public void setVersion(final String version) {
     this.version = version;
+  }
+
+  public boolean isActive() {
+    return STATUS_ACTIVE.equals(status) || STATUS_CHANGE_PASSWORD.equals(status);
   }
 
   @Override

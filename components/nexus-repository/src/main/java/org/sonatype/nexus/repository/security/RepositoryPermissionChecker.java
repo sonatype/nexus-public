@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -29,7 +30,6 @@ import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorManager;
 
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Streams;
 import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.authz.Permission;
 import org.apache.shiro.subject.Subject;
@@ -102,52 +102,29 @@ public class RepositoryPermissionChecker
   }
 
   /**
-   * Ensures the user has the supplied permission, or any a RepositoryAdminPermission with the action to any of the
-   * repositories. Throws an AuthorizationException if the user does not have the required permission.
+   * Ensures the user has any of the supplied permissions, or a RepositoryAdminPermission with the action to any
+   * of the repositories. Throws an AuthorizationException if the user does not have the required permission.
    *
    * @since 3.next
-   * @param permission an overriding permission to check first
+   * @param permissions the permissions to check first
    * @param action the action to use in the admin permission
    * @param repositories the repositories to check the action against
    * @throws AuthorizationException if the user doesn't have permission
    */
-  public void ensureUserHasPermissionOrAdminAccessToAny(
-      final Permission permission,
+  public void ensureUserHasAnyPermissionOrAdminAccess(
+      final Iterable<Permission> permissions,
       final String action,
       final Iterable<Repository> repositories)
   {
     Subject subject = securityHelper.subject();
-    if (securityHelper.anyPermitted(subject, permission)) {
+    if (securityHelper.anyPermitted(subject, permissions)) {
       return;
     }
 
-    ensureUserHasAdminAccessToAny(subject, action, repositories);
-  }
-
-  /**
-   * Ensures the user has a RepositoryAdminPermission with the action to ANY of the
-   * repositories. Throws an AuthorizationException if the user does not have the required permission.
-   *
-   * @since 3.next
-   * @param action the action to use in the admin permission
-   * @param repositories the repositories to check the action against
-   * @throws AuthorizationException if the user doesn't have permission
-   */
-  public void ensureUserHasAdminAccessToAny(
-      final String action,
-      final Iterable<Repository> repositories)
-  {
-    ensureUserHasAdminAccessToAny(securityHelper.subject(), action, repositories);
-  }
-
-  private void ensureUserHasAdminAccessToAny(
-      final Subject subject,
-      final String action,
-      final Iterable<Repository> repositories)
-  {
-    Permission[] permissions =
-        Streams.stream(repositories).map(r -> new RepositoryAdminPermission(r, action)).toArray(c -> new Permission[c]);
-    securityHelper.ensureAnyPermitted(subject, permissions);
+    Permission[] actionPermissions = StreamSupport.stream(repositories.spliterator(), false)
+        .map(r -> new RepositoryAdminPermission(r, action))
+        .toArray(Permission[]::new);
+    securityHelper.ensureAnyPermitted(subject, actionPermissions);
   }
 
   /**

@@ -111,9 +111,9 @@ public class MergeObjectMapper
   {
     StdValueInstantiator instantiator = (StdValueInstantiator) rootDeserializer.getValueInstantiator();
 
-    new MapDeserializer(rootDeserializer.getValueType(),
-        new NestedAttributesMapStdValueInstantiator(instantiator, parser.getRoot()), null,
-        new NestedAttributesMapUntypedObjectDeserializer(parser), null)
+    SourceMapDeserializer.of(rootDeserializer.getValueType(),
+        new NestedAttributesMapStdValueInstantiator(instantiator, parser.getRoot()),
+        new NestedAttributesMapUntypedObjectDeserializer(parser))
         .deserialize(parser, context);
   }
 

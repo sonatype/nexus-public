@@ -39,12 +39,17 @@ Ext.define('NX.view.header.QuickSearch', {
     Ext.apply(this, {
       itemId: 'quicksearch',
       cls: 'nx-quicksearch',
-      width: 200,
+      iconClass: 'fa-search',
+      width: 220,
       emptyText: NX.I18n.get('Header_QuickSearch_Empty'),
       ariaRole: 'search',
       ariaLabel: NX.I18n.get('Header_QuickSearch_Tooltip')
     });
 
     this.callParent();
+  },
+
+  triggerSearch: function() {
+    this.fireEvent('search', this, this.getValue());
   }
 });

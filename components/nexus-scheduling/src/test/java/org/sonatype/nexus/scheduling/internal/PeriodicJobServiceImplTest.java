@@ -12,14 +12,22 @@
  */
 package org.sonatype.nexus.scheduling.internal;
 
-import org.sonatype.goodies.testsupport.TestSupport;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.scheduling.PeriodicJobService.PeriodicJob;
+
+import com.jayway.awaitility.Awaitility;
 import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
+/**
+ * Tests for {@link PeriodicJobServiceImpl}
+ */
 public class PeriodicJobServiceImplTest
     extends TestSupport
 {
@@ -38,6 +46,21 @@ public class PeriodicJobServiceImplTest
     catch (IllegalStateException | NullPointerException e) {
       return false;
     }
+  }
+
+  @Test
+  public void numberIncrementingTask() throws Exception {
+    service.startUsing();
+
+    final AtomicInteger counter = new AtomicInteger();
+
+    PeriodicJob schedule = service.schedule(counter::incrementAndGet, 1);
+
+    Awaitility.await().atMost(2, TimeUnit.SECONDS).until(() -> counter.get() > 0);
+
+    schedule.cancel();
+
+    service.stopUsing();
   }
 
   @Test

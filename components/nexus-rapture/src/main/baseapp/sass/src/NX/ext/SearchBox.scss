@@ -1,0 +1,53 @@
+/**
+ * @class NX.ext.SearchBox
+ */
+
+.nx-searchbox {
+  .nx-searchbox-icon {
+    display: inline-block;
+  }
+
+  .has-icon {
+    width: 100%;
+
+    input {
+      display: inline-block;
+      width: calc(100% - 16px);
+    }
+  }
+
+  input {
+    color: $color-black;
+
+    &::-webkit-input-placeholder { /* Chrome/Opera/Safari */
+      color: $color-dark-gray;
+    }
+    &::-moz-placeholder { /* Firefox 19+ */
+      color: $color-dark-gray;
+    }
+    &:-ms-input-placeholder { /* IE 10+ */
+      color: $color-dark-gray;
+    }
+  }
+
+  .x-form-trigger-wrap {
+    border-color: $color-gainsboro;
+    border-radius: 3px;
+    height: 24px;
+    overflow: hidden;
+  }
+
+  .x-form-trigger {
+    background-image: none;
+  }
+
+  &:hover .nx-form-fa-times-circle-trigger,
+  .x-form-trigger-wrap-focus .nx-form-fa-times-circle-trigger {
+    background-image: url(images/form/fa-times-circle-trigger.png);
+  }
+
+  &:hover .nx-form-fa-minus-circle-trigger,
+  .x-form-trigger-wrap-focus .nx-form-fa-minus-circle-trigger {
+    background-image: url(images/form/fa-minus-circle-trigger.png);
+  }
+}

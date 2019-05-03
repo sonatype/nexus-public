@@ -17,5 +17,15 @@ package org.sonatype.nexus.security.user;
  */
 public enum UserStatus
 {
-  active, locked, disabled
+  active(true), locked(false), disabled(false), changepassword(true);
+
+  private boolean isActive;
+
+  UserStatus(boolean isActive) {
+    this.isActive = isActive;
+  }
+
+  public boolean isActive() {
+    return isActive;
+  }
 }

@@ -75,7 +75,7 @@ class StaticSecurityConfigurationSource
               password: password,
               firstName: 'Administrator',
               lastName: 'User',
-              status: 'active',
+              status: CUser.STATUS_CHANGE_PASSWORD,
               email: 'admin@example.org'
           ),
           new CUser(
@@ -84,7 +84,7 @@ class StaticSecurityConfigurationSource
               password: '$shiro1$SHA-512$1024$CPJm1XWdYNg5eCAYp4L4HA==$HIGwnJhC07ZpgeVblZcFRD1F6KH+xPG8t7mIcEMbfycC+n5Ljudyoj9dzdinrLmChTrmKMCw2/z29F7HeLbTbQ==',
               firstName: 'Anonymous',
               lastName: 'User',
-              status: 'active',
+              status: CUser.STATUS_ACTIVE,
               email: 'anonymous@example.org'
           )
       ],

@@ -18,6 +18,7 @@ import java.util.Objects;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.repository.json.SourceMapDeserializer;
 import org.sonatype.nexus.repository.json.StreamingObjectMapper;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -69,7 +70,9 @@ public class NpmStreamingObjectMapper
                                          final MapDeserializer deserializer,
                                          final JsonGenerator generator) throws IOException
   {
-    new NpmMapDeserializerSerializer(deserializer, generator, matchers).deserialize(parser, context);
+    SourceMapDeserializer
+        .of(new NpmMapDeserializerSerializer(deserializer, generator, matchers))
+        .deserialize(parser, context);
   }
 
   @Override

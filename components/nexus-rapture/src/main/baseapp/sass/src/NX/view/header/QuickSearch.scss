@@ -12,6 +12,11 @@
   background-color: $color-charcoal;
   border-color: $color-night-rider;
 
+  .nx-searchbox-icon {
+    color: $color-white;
+    padding: 0 0 2px 2px;
+  }
+
   input.x-form-field,
   .x-trigger-cell,
   .x-form-trigger,

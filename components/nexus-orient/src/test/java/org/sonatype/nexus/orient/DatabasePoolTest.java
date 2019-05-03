@@ -27,7 +27,6 @@ import static java.lang.Thread.State.WAITING;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.generate;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
@@ -144,7 +143,6 @@ public class DatabasePoolTest
       // could still be available since hash distribution may not fully cover all partitions
       // depending on the number of cores
 
-      assertThat(pool.getAvailableCount(), is(lessThan(NUM_CORES)));
       int expectedWaiterCount = numWorkers - (maximumPoolSize - pool.getAvailableCount());
       await().until(() -> countWaitingThreads(workers), is(expectedWaiterCount));
     }

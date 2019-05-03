@@ -49,6 +49,8 @@ import org.apache.shiro.authc.credential.PasswordService;
 import org.eclipse.sisu.Description;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.security.config.CUser.STATUS_ACTIVE;
+import static org.sonatype.nexus.security.config.CUser.STATUS_CHANGE_PASSWORD;
 
 /**
  * Default {@link UserManager}.
@@ -193,6 +195,9 @@ public class UserManagerImpl
   @Override
   public void changePassword(final String userId, final String newPassword) throws UserNotFoundException {
     final CUser secUser = configuration.readUser(userId);
+    if (STATUS_CHANGE_PASSWORD.equals(secUser.getStatus())) {
+      secUser.setStatus(STATUS_ACTIVE);
+    }
     secUser.setPassword(hashPassword(newPassword));
     configuration.updateUser(secUser);
 

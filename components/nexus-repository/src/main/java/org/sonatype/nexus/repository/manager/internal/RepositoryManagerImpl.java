@@ -454,6 +454,11 @@ public class RepositoryManagerImpl
         .filter(repository -> repositoryHasCleanupPolicy(repository, cleanupPolicyName));
   }
 
+  @Override
+  public Collection<Recipe> getAllSupportedRecipes() {
+    return recipes.values();
+  }
+
   @Subscribe
   public void on(final ConfigurationCreatedEvent event) {
     handleReplication(event, e -> create(e.getConfiguration()));

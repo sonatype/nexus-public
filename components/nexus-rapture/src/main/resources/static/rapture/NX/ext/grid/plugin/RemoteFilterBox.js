@@ -40,6 +40,8 @@ Ext.define('NX.ext.grid.plugin.RemoteFilterBox', {
           '->',
           {
             xtype: 'nx-searchbox',
+            cls: ['nx-searchbox', 'nx-filterbox'],
+            iconClass: 'fa-filter',
             emptyText: NX.I18n.get('Grid_Plugin_FilterBox_Empty'),
             searchDelay: 200,
             width: 200,

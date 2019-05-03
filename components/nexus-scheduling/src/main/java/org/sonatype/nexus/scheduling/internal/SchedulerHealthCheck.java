@@ -46,12 +46,12 @@ public class SchedulerHealthCheck
 
   @Override
   protected Result check() {
-    List<String> missingTaskDescrptions = scheduler.get().getMissingTriggerDescriptions();
-    return missingTaskDescrptions.isEmpty() ? Result.healthy() : Result.unhealthy(reason(missingTaskDescrptions));
+    List<String> missingTaskDescriptions = scheduler.get().getMissingTriggerDescriptions();
+    return missingTaskDescriptions.isEmpty() ? Result.healthy() : Result.unhealthy(reason(missingTaskDescriptions));
   }
 
-  private String reason(final List<String> missingTaskDescrptions) {
-    String taskDescriptions = String.join(", ", missingTaskDescrptions);
-    return format("%s tasks require frequency updates: %s", missingTaskDescrptions.size(), taskDescriptions);
+  private String reason(final List<String> missingTaskDescriptions) {
+    String taskDescriptions = String.join(", ", missingTaskDescriptions);
+    return format("%s tasks require frequency updates: %s", missingTaskDescriptions.size(), taskDescriptions);
   }
 }

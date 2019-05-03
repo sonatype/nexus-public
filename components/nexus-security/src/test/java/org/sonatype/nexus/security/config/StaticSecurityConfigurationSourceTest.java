@@ -73,6 +73,13 @@ public class StaticSecurityConfigurationSourceTest
     verify(passwordService).encryptPassword(password);
   }
 
+  @Test
+  public void testGetConfiguration_adminUserStatusCheck() {
+    SecurityConfiguration configuration = underTest.getConfiguration();
+    CUser user = configuration.getUser("admin");
+    assertThat(user.getStatus(), is(CUser.STATUS_CHANGE_PASSWORD));
+  }
+
   /*
    * this test ensures that we don't inadvertently overwrite the serialized password from the first run
    */

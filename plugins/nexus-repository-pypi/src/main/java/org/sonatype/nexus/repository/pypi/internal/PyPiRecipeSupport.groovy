@@ -139,14 +139,11 @@ abstract class PyPiRecipeSupport
 
   /**
    * Matcher for packages mapping.
-   * The regex has been added to prevent matching on paths starting with /simple/
-   * although it currently doesnt matter, should the ordering of the routes change, this will protect the routing.
    */
   static Builder packagesMatcher() {
     new Builder().matcher(
         LogicMatchers.and(
             new ActionMatcher(GET, HEAD),
-            new RegexMatcher('^(?!/simple/).*'),
             new TokenMatcher('/{path:.+}')
         ))
   }

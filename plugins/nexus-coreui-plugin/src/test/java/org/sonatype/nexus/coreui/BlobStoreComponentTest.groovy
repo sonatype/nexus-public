@@ -168,7 +168,8 @@ class BlobStoreComponentTest
     setup:
       def blobStore = Mock(BlobStore) {
         getBlobStoreConfiguration() >> new BlobStoreConfiguration(name: "test",
-            attributes: [file: [path: 'path'], blobStoreQuotaConfig: [quotaType: 'spaceUsedQuota', quotaLimitBytes: (Long) (10 * pow(10,6))]])
+            attributes: [file: [path: 'path'], blobStoreQuotaConfig: [quotaType: 'spaceUsedQuota', quotaLimitBytes:
+                quotaLimitBytes]])
         getMetrics() >> Mock(BlobStoreMetrics) {
           getBlobCount() >> 1L
           getTotalSize() >> 500L
@@ -183,7 +184,12 @@ class BlobStoreComponentTest
     then: 'proper object created'
       blobStoreXO.isQuotaEnabled == 'true'
       blobStoreXO.quotaType == 'spaceUsedQuota'
-      blobStoreXO.quotaLimit == 10L
+      blobStoreXO.quotaLimit == expectedQuotaLimit
+
+    where:
+      quotaLimitBytes            | expectedQuotaLimit
+      ((Long) (10 * pow(10, 6))) | 10L
+      ((Integer) (1))            | 0L
   }
 
   def 'given a blob store XO with a quota, create a proper blob store config'() {

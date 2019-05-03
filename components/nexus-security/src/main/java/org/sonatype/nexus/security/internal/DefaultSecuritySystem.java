@@ -231,7 +231,7 @@ public class DefaultSecuritySystem
 
     final User oldUser = userManager.getUser(user.getUserId());
     userManager.updateUser(user);
-    if (oldUser.getStatus() == UserStatus.active && user.getStatus() != oldUser.getStatus()) {
+    if (oldUser.getStatus().isActive() && user.getStatus() != oldUser.getStatus()) {
       // clear the realm authc caches as user got disabled
       eventManager.post(new UserPrincipalsExpired(user.getUserId(), user.getSource()));
     }
@@ -522,6 +522,11 @@ public class DefaultSecuritySystem
 
   @Override
   public void changePassword(String userId, String newPassword) throws UserNotFoundException {
+    changePassword(userId, newPassword, true);
+  }
+
+  @Override
+  public void changePassword(String userId, String newPassword, boolean clearCache) throws UserNotFoundException {
     User user = getUser(userId);
 
     try {
@@ -535,7 +540,7 @@ public class DefaultSecuritySystem
     }
 
     // Post event containing the userId for which the password has been changed
-    eventManager.post(new UserPasswordChanged(userId));
+    eventManager.post(new UserPasswordChanged(userId, clearCache));
   }
 
   private Collection<UserManager> getUserManagers() {

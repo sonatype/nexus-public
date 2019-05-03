@@ -49,8 +49,8 @@ import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import org.apache.shiro.authz.annotation.RequiresPermissions
 import org.hibernate.validator.constraints.NotEmpty
 
+import static java.util.Collections.singletonList
 import static org.sonatype.nexus.security.BreadActions.READ
-
 /**
  * BlobStore {@link org.sonatype.nexus.extdirect.DirectComponent}.
  *
@@ -92,8 +92,11 @@ class BlobStoreComponent
   @Timed
   @ExceptionMetered
   List<BlobStoreXO> read() {
-    repositoryPermissionChecker.ensureUserHasPermissionOrAdminAccessToAny(new ApplicationPermission('blobstores', READ),
-        READ, repositoryManager.browse());
+    repositoryPermissionChecker.ensureUserHasAnyPermissionOrAdminAccess(
+        singletonList(new ApplicationPermission('blobstores', READ)),
+        READ,
+        repositoryManager.browse()
+    )
     def blobStores = blobStoreManager.browse()
     def blobStoreGroups = blobStores.findAll { it.blobStoreConfiguration.type == BlobStoreGroup.TYPE }.
         collect { it as BlobStoreGroup }
@@ -226,7 +229,7 @@ class BlobStoreComponent
         promotable: blobStoreManager.isPromotable(blobStore.blobStoreConfiguration.name),
         isQuotaEnabled: !quotaAttributes.isEmpty(),
         quotaType: quotaAttributes.get(BlobStoreQuotaSupport.TYPE_KEY),
-        quotaLimit: quotaAttributes.get(BlobStoreQuotaSupport.LIMIT_KEY, Long.class)?.div(MILLION)?.toLong(),
+        quotaLimit: quotaAttributes.get(BlobStoreQuotaSupport.LIMIT_KEY, Number.class)?.div(MILLION)?.toLong(),
         groupName: blobStoreGroups.find { it.members.contains(blobStore) }?.blobStoreConfiguration?.name
     )
     if (blobStore.isStarted()) {

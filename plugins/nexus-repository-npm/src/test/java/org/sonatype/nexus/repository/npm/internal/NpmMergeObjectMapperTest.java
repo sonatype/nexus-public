@@ -67,7 +67,7 @@ public class NpmMergeObjectMapperTest
     try (InputStream inputStream = getClass().getResourceAsStream("merge-multi-depth-first.json")) {
       NestedAttributesMap result = underTest.read(inputStream);
 
-      assertThat(result.size(), equalTo(8)); // checks it has all is read + the dist_tags
+      assertThat(result.size(), equalTo(10)); // checks it has all is read + the dist_tags
       assertThat(result.get("name"), equalTo("first"));
 
       List maintainers = (List) result.get("maintainers");
@@ -79,6 +79,9 @@ public class NpmMergeObjectMapperTest
       List keywords = (List) result.get("keywords");
       assertThat(keywords.get(0), equalTo("array"));
       assertThat(keywords.get(1), equalTo("first"));
+
+      assertThat(result.get("readme"), is(nullValue()));
+      assertThat(result.get("multi-null-field"), is(nullValue()));
 
       NestedAttributesMap mulitDepth = result.child("multi-depth");
       NestedAttributesMap first = mulitDepth.child("first");
@@ -255,7 +258,7 @@ public class NpmMergeObjectMapperTest
   }
 
   private void verifyMergingMultipleContentsWithMultiDepthJsonResult(final NestedAttributesMap result) {
-    assertThat(result.size(), equalTo(8)); // checks it has all the merged tags + the dist_tags
+    assertThat(result.size(), equalTo(10)); // checks it has all the merged tags + the dist_tags
     assertThat(result.get("name"), equalTo("third"));
 
     List maintainers = (List) result.get("maintainers");
@@ -265,6 +268,9 @@ public class NpmMergeObjectMapperTest
     List keywords = (List) result.get("keywords");
     assertThat(keywords.get(0), equalTo("array"));
     assertThat(keywords.get(1), equalTo("third"));
+
+    assertThat(result.get("readme"), is(nullValue()));
+    assertThat(result.get("multi-null-field"), equalTo("not so null in third"));
 
     NestedAttributesMap mulitDepth = result.child("multi-depth");
     NestedAttributesMap first = mulitDepth.child("first");

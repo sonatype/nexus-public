@@ -90,7 +90,7 @@ public class AuthenticatingRealmImpl
       throw new AccountException("User '" + upToken.getUsername() + "' has no password, cannot authenticate.");
     }
 
-    if (CUser.STATUS_ACTIVE.equals(user.getStatus())) {
+    if (user.isActive()) {
       // Check for legacy user that has unsalted password hash
       // Update if unsalted password hash and valid credentials were specified
       if (hasLegacyPassword(user) && isValidCredentials(upToken, user)) {

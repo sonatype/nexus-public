@@ -27,11 +27,17 @@ import org.sonatype.nexus.repository.routing.RoutingMode;
 import org.sonatype.nexus.repository.routing.RoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingRuleHelper;
 import org.sonatype.nexus.repository.routing.RoutingRulesConfiguration;
+import org.sonatype.nexus.repository.security.RepositoryAdminPermission;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
+import org.sonatype.nexus.repository.types.ProxyType;
+
+import org.apache.shiro.authz.Permission;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
+import static org.sonatype.nexus.security.BreadActions.ADD;
 import static org.sonatype.nexus.security.BreadActions.READ;
 
 /**
@@ -49,6 +55,8 @@ public class RoutingRuleHelperImpl
   private final RoutingRulesConfiguration configuration;
 
   private final RepositoryPermissionChecker repositoryPermissionChecker;
+
+  private volatile Iterable<Permission> repositoryAddPermissions;
 
   @Inject
   public RoutingRuleHelperImpl(
@@ -97,6 +105,20 @@ public class RoutingRuleHelperImpl
 
   @Override
   public void ensureUserHasPermissionToRead() {
-    repositoryPermissionChecker.ensureUserHasAdminAccessToAny(READ, repositoryManager.browse());
+    repositoryPermissionChecker.ensureUserHasAnyPermissionOrAdminAccess(
+        getRepositoryAddPermissions(),
+        READ,
+        repositoryManager.browse()
+    );
+  }
+
+  private Iterable<Permission> getRepositoryAddPermissions() {
+    if (null == repositoryAddPermissions) {
+      repositoryAddPermissions = repositoryManager.getAllSupportedRecipes().stream()
+          .filter(r -> r.getType().getValue().equals(ProxyType.NAME))
+          .map(r -> new RepositoryAdminPermission(r.getFormat().getValue(), "*", singletonList(ADD)))
+          .collect(toList());
+    }
+    return repositoryAddPermissions;
   }
 }

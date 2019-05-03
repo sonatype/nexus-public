@@ -13,6 +13,7 @@
 package org.sonatype.nexus.security;
 
 import java.util.Arrays;
+import java.util.stream.StreamSupport;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -126,6 +127,16 @@ public class SecurityHelper
           subject.getPrincipal(), Arrays.toString(permissions));
     }
     return false;
+  }
+
+  /**
+   * Check if subject has ANY of the given permissions.
+   */
+  public boolean anyPermitted(final Subject subject, final Iterable<Permission> permissions) {
+    return anyPermitted(
+        subject,
+        StreamSupport.stream(permissions.spliterator(), false).toArray(Permission[]::new)
+    );
   }
 
   /**

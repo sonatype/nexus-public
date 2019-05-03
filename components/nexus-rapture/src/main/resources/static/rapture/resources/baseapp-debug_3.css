@@ -314,14 +314,20 @@
 
 .x-form-field[readonly]:not([role="combobox"]),
 .x-form-readonly input[role="combobox"] {
-    color: #777;
-    background-color: #ebebeb;
+    color: #444;
     opacity: 1;
 }
 
+.x-form-readonly .x-form-trigger-wrap-default {
+    border: none;
+}
+
+.x-form-readonly .nx-boxlabel {
+    display: none;
+}
+
 .nx-combo-disabled input {
-    color: #777;
-    background-color: #ebebeb;
+    color: #444;
     opacity: 1;
 }
 
@@ -771,6 +777,10 @@ fieldset.nx-form-section.nx-no-title {
 
 .x-panel-nx-subsection-framed .grid-with-border .x-grid-item:last-child {
     border-bottom-width: 0;
+}
+
+.nx-drilldown-master .x-grid-item {
+    padding: 2px 0;
 }
 
 .nx-middle-align {
@@ -2519,6 +2529,14 @@ fieldset.nx-form-section.nx-no-title {
 * @class Ext.ux.form.ItemSelector
 */
     opacity: 1;
+}
+
+.nx-itemselector-disabled .x-toolbar.x-item-disabled {
+    visibility: hidden;
+}
+
+.nx-itemselector-disabled .nx-filterbox {
+    display: none;
 }
 
 .x-form-itemselector-body .x-form-item {
@@ -5772,8 +5790,75 @@ fieldset.nx-form-section.nx-no-title {
     padding: 5px !important;
 }
 
+.nx-searchbox .nx-searchbox-icon {
+    /**
+ * @class NX.ext.SearchBox
+ */
+    display: inline-block;
+}
+
+.nx-searchbox .has-icon {
+    width: 100%;
+}
+
+.nx-searchbox .has-icon input {
+    display: inline-block;
+    width: calc(100% - 16px);
+}
+
+.nx-searchbox input {
+    color: #000;
+}
+
+.nx-searchbox input::-webkit-input-placeholder {
+    
+    
+    color: #777;
+}
+
+.nx-searchbox input::-moz-placeholder {
+    
+    
+    color: #777;
+}
+
+.nx-searchbox input:-ms-input-placeholder {
+    
+    
+    color: #777;
+}
+
+.nx-searchbox .x-form-trigger-wrap {
+    border-color: #ddd;
+    border-radius: 3px;
+    height: 24px;
+    overflow: hidden;
+}
+
+.nx-searchbox .x-form-trigger {
+    background-image: none;
+}
+
+.nx-searchbox:hover .nx-form-fa-times-circle-trigger,
+.nx-searchbox .x-form-trigger-wrap-focus .nx-form-fa-times-circle-trigger {
+    background-image: url(images/form/fa-times-circle-trigger.png);
+}
+
+.nx-searchbox:hover .nx-form-fa-minus-circle-trigger,
+.nx-searchbox .x-form-trigger-wrap-focus .nx-form-fa-minus-circle-trigger {
+    background-image: url(images/form/fa-minus-circle-trigger.png);
+}
+
 [id^=nx-coreui-logging-feature] [id^=roweditor] .x-form-item:first-child .x-form-display-field {
     text-overflow: clip;
+}
+
+.nx-filterbox .nx-searchbox-icon {
+    /**
+ * @class NX.ext.grid.plugin.FilterBox
+ */
+    color: grey;
+    padding-left: 3px;
 }
 
 .nx-search-tip {
@@ -6465,6 +6550,11 @@ fieldset.nx-form-section.nx-no-title {
     padding-right: 0px;
     background-color: #444;
     border-color: #333;
+}
+
+.nx-quicksearch .x-form-trigger-wrap .nx-searchbox-icon {
+    color: #fff;
+    padding: 0 0 2px 2px;
 }
 
 .nx-quicksearch .x-form-trigger-wrap input.x-form-field,

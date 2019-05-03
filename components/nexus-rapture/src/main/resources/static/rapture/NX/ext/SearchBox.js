@@ -24,6 +24,8 @@ Ext.define('NX.ext.SearchBox', {
     'Ext.util.KeyNav'
   ],
 
+  cls: 'nx-searchbox',
+
   emptyText: 'search',
   submitValue: false,
 
@@ -54,14 +56,35 @@ Ext.define('NX.ext.SearchBox', {
    * @override
    */
   initComponent: function () {
-    var me = this;
+    var config = {
+      checkChangeBuffer: this.searchDelay,
+      ariaLabel: this.emptyText
+    },
+    fieldSubTpl = '<span class="nx-searchbox-icon x-fa ' + this.iconClass + '"></span>';
 
-    Ext.apply(me, {
-      checkChangeBuffer: me.searchDelay,
-      ariaLabel: me.emptyText
-    });
+    if (this.iconClass) {
+      config.inputWrapCls = 'has-icon';
 
-    me.callParent(arguments);
+      if (this.fieldSubTpl instanceof Ext.XTemplate) {
+        config.fieldSubTpl = [fieldSubTpl].concat(this.fieldSubTpl.html);
+        this.fieldSubTpl.destroy();
+      } else {
+        config.fieldSubTpl = [fieldSubTpl].concat(this.fieldSubTpl);
+      }
+
+      config.listeners = {
+        afterrender: function() {
+          var icon = this.getEl().down('span.nx-searchbox-icon');
+          if (icon) {
+            icon.on('click', this.focus.bind(this));
+          }
+        }.bind(this)
+      };
+    }
+
+    Ext.apply(this, config);
+
+    this.callParent(arguments);
   },
 
   /**
@@ -153,6 +176,16 @@ Ext.define('NX.ext.SearchBox', {
       me.setValue(undefined);
     }
     me.fireEvent('searchcleared', me);
+  },
+
+  onEnable: function() {
+    this.show();
+    this.callParent();
+  },
+
+  onDisable: function() {
+    this.hide();
+    this.callParent();
   }
 
 });

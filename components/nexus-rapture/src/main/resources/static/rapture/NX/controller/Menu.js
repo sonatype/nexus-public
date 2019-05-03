@@ -776,11 +776,11 @@ Ext.define('NX.controller.Menu', {
    */
   warnBeforeSearch: function() {
     var me = this,
-      button = me.getHeaderPanel().down('nx-header-quicksearch');
+      quickSearch = me.getHeaderPanel().down('nx-header-quicksearch');
 
     return me.warnBeforeNavigate(
       function() {
-        button.fireEvent('search', button, button.getValue());
+        quickSearch.triggerSearch();
       }
     );
   },

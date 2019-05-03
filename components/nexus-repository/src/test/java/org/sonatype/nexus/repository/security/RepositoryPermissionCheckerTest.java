@@ -49,7 +49,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.security.BreadActions.BROWSE;
-import static org.sonatype.nexus.security.BreadActions.EDIT;
+import static org.sonatype.nexus.security.BreadActions.DELETE;
 import static org.sonatype.nexus.security.BreadActions.READ;
 
 public class RepositoryPermissionCheckerTest
@@ -152,27 +152,25 @@ public class RepositoryPermissionCheckerTest
   }
 
   @Test
-  public void testEnsureUserHasPermissionOrAdminAccessToAny() {
+  public void testEnsureUserHasAnyPermissionOrAdminAccess() {
     Permission[] repositoryPermissions =
         createAdminPermissions(READ, RepositoryAdminPermission::new, repository, repository1, repository2);
     ApplicationPermission appPerm = new ApplicationPermission("blobstores", READ);
-    when(securityHelper.anyPermitted(subject, appPerm)).thenReturn(true);
-    underTest.ensureUserHasPermissionOrAdminAccessToAny(appPerm, READ, Arrays.asList(repository, repository1, repository2));
-    verify(securityHelper, never()).ensureAnyPermitted(any());
+    Iterable<Permission> appPermissions = singletonList(appPerm);
+    Iterable<Repository> repositories = Arrays.asList(repository, repository1, repository2);
 
-    when(securityHelper.anyPermitted(subject, appPerm)).thenReturn(false);
-    underTest.ensureUserHasPermissionOrAdminAccessToAny(appPerm, READ, Arrays.asList(repository, repository1, repository2));
+    when(securityHelper.anyPermitted(same(subject), eq(appPermissions))).thenReturn(true);
+    underTest.ensureUserHasAnyPermissionOrAdminAccess(appPermissions, READ, repositories);
+    verify(securityHelper, never()).ensureAnyPermitted(subject, repositoryPermissions);
 
-    verify(securityHelper).ensureAnyPermitted(subject, repositoryPermissions);
-  }
+    Iterable<Permission> multipleAppPermissions = Arrays
+        .asList(appPerm, new ApplicationPermission("blobstores", DELETE));
+    when(securityHelper.anyPermitted(same(subject), eq(multipleAppPermissions))).thenReturn(true);
+    underTest.ensureUserHasAnyPermissionOrAdminAccess(multipleAppPermissions, READ, repositories);
+    verify(securityHelper, never()).ensureAnyPermitted(subject, repositoryPermissions);
 
-  @Test
-  public void testEnsureUserHasAdminAccessToAny() {
-    Permission[] repositoryPermissions =
-        createAdminPermissions(EDIT, RepositoryAdminPermission::new, repository, repository1);
-
-    underTest.ensureUserHasAdminAccessToAny(EDIT, Arrays.asList(repository, repository1));
-
+    when(securityHelper.anyPermitted(same(subject), eq(appPermissions))).thenReturn(false);
+    underTest.ensureUserHasAnyPermissionOrAdminAccess(appPermissions, READ, repositories);
     verify(securityHelper).ensureAnyPermitted(subject, repositoryPermissions);
   }
 

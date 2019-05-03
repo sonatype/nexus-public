@@ -195,12 +195,23 @@ public interface SecuritySystem
 
   /**
    * Updates a users password. NOTE: This method does not require the old password to be known, it is meant for
-   * administrators a users password.
+   * administrators to change a users password.
    *
    * @param userId      The id of the user.
    * @param newPassword The user's new password.
    */
   void changePassword(String userId, String newPassword) throws UserNotFoundException;
+
+  /**
+   * Updates a users password. NOTE: This method does not require the old password to be known, it is meant for
+   * administrators to change a users password.
+   *
+   * @param userId      The id of the user.
+   * @param newPassword The user's new password.
+   * @param clearCache  true if the user should be cleared from the authentication cache, false otherwise
+   * @throws UserNotFoundException
+   */
+  void changePassword(String userId, String newPassword, boolean clearCache) throws UserNotFoundException;
 
   // *********************
   // * Authorization Management
