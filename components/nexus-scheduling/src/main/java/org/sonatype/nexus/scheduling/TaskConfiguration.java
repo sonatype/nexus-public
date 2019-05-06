@@ -15,7 +15,8 @@ package org.sonatype.nexus.scheduling;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.function.Function;
 
 import javax.annotation.Nullable;
 
@@ -24,11 +25,10 @@ import org.sonatype.nexus.logging.task.TaskLogInfo;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import org.joda.time.DateTime;
+import org.joda.time.base.AbstractInstant;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-
-// FIXME: Revisit this overly complex configuration container class
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * The task configuration backed by plain map.
@@ -46,8 +46,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * value, you can use some sentinel value to mark "undefined" state. Still, the best is to not set the mapping at all,
  * as that also might be interpret as "unset".
  *
- * Many of the methods does this: set the key-value is value is non-null, otherwise REMOVE it.
- * Also, many getter method accept "default value", that are returned in case mapping of key is not present in the map.
+ * Many of the methods do this: set the key-value if value is non-null, otherwise REMOVE it.
+ * Many getters accept a "default value" that is returned when the key is not present in the map.
  *
  * This class is not thread safe.
  *
@@ -56,29 +56,27 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class TaskConfiguration
     implements TaskLogInfo
 {
-  // TODO: keys which start with "." are considered "private" for some strange reason
+  static final String ID_KEY = ".id";
 
-  private static final String ID_KEY = ".id";
+  static final String NAME_KEY = ".name";
 
-  private static final String NAME_KEY = ".name";
+  static final String TYPE_ID_KEY = ".typeId";
 
-  private static final String TYPE_ID_KEY = ".typeId";
+  static final String TYPE_NAME_KEY = ".typeName";
 
-  private static final String TYPE_NAME_KEY = ".typeName";
+  static final String ENABLED_KEY = ".enabled";
 
-  private static final String ENABLED_KEY = ".enabled";
+  static final String VISIBLE_KEY = ".visible";
 
-  private static final String VISIBLE_KEY = ".visible";
+  static final String ALERT_EMAIL_KEY = ".alertEmail";
 
-  private static final String ALERT_EMAIL_KEY = ".alertEmail";
+  static final String CREATED_KEY = ".created";
 
-  private static final String CREATED_KEY = ".created";
+  static final String UPDATED_KEY = ".updated";
 
-  private static final String UPDATED_KEY = ".updated";
+  static final String MESSAGE_KEY = ".message";
 
-  private static final String MESSAGE_KEY = ".message";
-
-  private static final String REQUEST_RECOVERY = ".recoverable";
+  static final String RECOVERABLE_KEY = ".recoverable";
 
   private final Map<String, String> configuration;
 
@@ -93,13 +91,8 @@ public class TaskConfiguration
   }
 
   public void validate() {
-    // FIXME: These are state-checks not argument checks!
-    checkArgument(!Strings.isNullOrEmpty(getId()), "Incomplete task configuration: id");
-    checkArgument(!Strings.isNullOrEmpty(getTypeId()), "Incomplete task configuration: typeId");
-    for (Entry<?, ?> entry : configuration.entrySet()) {
-      checkArgument(entry.getKey() instanceof String && entry.getValue() instanceof String,
-          "Invalid entry in map: %s", configuration);
-    }
+    checkState(!Strings.isNullOrEmpty(getId()), "Incomplete task configuration: id");
+    checkState(!Strings.isNullOrEmpty(getTypeId()), "Incomplete task configuration: typeId");
   }
 
   public String getTaskLogName() {
@@ -129,16 +122,13 @@ public class TaskConfiguration
   // Core properties
   //
 
-  // FIXME: Some of this screams out for a builer pattern, as we expect things like id to be non-null
-  // FIXME: and this correctness is only enforced via validate helper
-
   public String getId() {
     return getString(ID_KEY);
   }
 
   public void setId(final String id) {
     checkNotNull(id);
-    configuration.put(ID_KEY, id);
+    setString(ID_KEY, id);
   }
 
   public String getName() {
@@ -147,7 +137,7 @@ public class TaskConfiguration
 
   public void setName(final String name) {
     checkNotNull(name);
-    configuration.put(NAME_KEY, name);
+    setString(NAME_KEY, name);
   }
 
   public String getTypeId() {
@@ -156,7 +146,7 @@ public class TaskConfiguration
 
   public void setTypeId(final String typeId) {
     checkNotNull(typeId);
-    configuration.put(TYPE_ID_KEY, typeId);
+    setString(TYPE_ID_KEY, typeId);
   }
 
   public String getTypeName() {
@@ -165,7 +155,7 @@ public class TaskConfiguration
 
   public void setTypeName(final String typeName) {
     checkNotNull(typeName);
-    configuration.put(TYPE_NAME_KEY, typeName);
+    setString(TYPE_NAME_KEY, typeName);
   }
 
   public boolean isEnabled() {
@@ -173,7 +163,7 @@ public class TaskConfiguration
   }
 
   public void setEnabled(final boolean enabled) {
-    configuration.put(ENABLED_KEY, Boolean.toString(enabled));
+    setBoolean(ENABLED_KEY, enabled);
   }
 
   public boolean isVisible() {
@@ -182,7 +172,7 @@ public class TaskConfiguration
 
 
   public void setVisible(final boolean visible) {
-    configuration.put(VISIBLE_KEY, Boolean.toString(visible));
+    setBoolean(VISIBLE_KEY, visible);
   }
 
   @Nullable
@@ -191,12 +181,7 @@ public class TaskConfiguration
   }
 
   public void setAlertEmail(final String email) {
-    if (Strings.isNullOrEmpty(email)) {
-      configuration.remove(ALERT_EMAIL_KEY);
-    }
-    else {
-      configuration.put(ALERT_EMAIL_KEY, email);
-    }
+    setString(ALERT_EMAIL_KEY, email);
   }
 
   @Nullable
@@ -225,46 +210,31 @@ public class TaskConfiguration
   }
 
   public void setMessage(final String message) {
-    if (Strings.isNullOrEmpty(message)) {
-      configuration.remove(MESSAGE_KEY);
-    }
-    else {
-      configuration.put(MESSAGE_KEY, message);
-    }
+    setString(MESSAGE_KEY, message);
   }
 
   public boolean isRecoverable() {
-    return getBoolean(REQUEST_RECOVERY, false);
+    return getBoolean(RECOVERABLE_KEY, false);
   }
 
   public void setRecoverable(final boolean requestRecovery) {
-    configuration.put(REQUEST_RECOVERY, Boolean.toString(requestRecovery));
+    setBoolean(RECOVERABLE_KEY, requestRecovery);
   }
 
   //
   // Typed configuration helpers
   //
 
-  // FIXME: Consider changing set null to remove sematics, this could lead to confusing results
-
   public Date getDate(final String key, final Date defaultValue) {
-    if (configuration.containsKey(key)) {
-      // TODO: will NPE if value is null
-      return new DateTime(getString(key)).toDate();
-    }
-    else {
-      return defaultValue;
-    }
+    return Optional.ofNullable(key)
+        .map(this::getString)
+        .map(DateTime::new)
+        .map(AbstractInstant::toDate)
+        .orElse(defaultValue);
   }
 
   public void setDate(final String key, final Date date) {
-    checkNotNull(key);
-    if (date == null) {
-      configuration.remove(key);
-    }
-    else {
-      configuration.put(key, new DateTime(date).toString());
-    }
+    setString(key, date, d -> new DateTime(d).toString());
   }
 
   public boolean getBoolean(final String key, final boolean defaultValue) {
@@ -272,8 +242,7 @@ public class TaskConfiguration
   }
 
   public void setBoolean(final String key, final boolean value) {
-    checkNotNull(key);
-    configuration.put(key, String.valueOf(value));
+    setString(key, value, String::valueOf);
   }
 
   public int getInteger(final String key, final int defaultValue) {
@@ -281,8 +250,7 @@ public class TaskConfiguration
   }
 
   public void setInteger(final String key, final int value) {
-    checkNotNull(key);
-    configuration.put(key, String.valueOf(value));
+    setString(key, value, String::valueOf);
   }
 
   public long getLong(final String key, final long defaultValue) {
@@ -290,8 +258,7 @@ public class TaskConfiguration
   }
 
   public void setLong(final String key, final long value) {
-    checkNotNull(key);
-    configuration.put(key, String.valueOf(value));
+    setString(key, value, String::valueOf);
   }
 
   @Nullable
@@ -301,21 +268,20 @@ public class TaskConfiguration
 
   public String getString(final String key, final String defaultValue) {
     checkNotNull(key);
-    if (configuration.containsKey(key)) {
-      return configuration.get(key);
-    }
-    else {
-      return defaultValue;
-    }
+    return configuration.getOrDefault(key, defaultValue);
   }
 
   public void setString(final String key, final String value) {
+    setString(key, value, Function.identity());
+  }
+
+  <T> void setString(final String key, final T value, Function<T, String> f) {
     checkNotNull(key);
-    if (value == null) {
+    if (value == null || Strings.isNullOrEmpty(f.apply(value))) {
       configuration.remove(key);
     }
     else {
-      configuration.put(key, value);
+      configuration.put(key, f.apply(value));
     }
   }
 
