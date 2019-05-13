@@ -45,6 +45,9 @@ import org.sonatype.nexus.yum.internal.YumRepositoryImpl;
 import org.sonatype.scheduling.ScheduledTask;
 import org.sonatype.scheduling.schedules.RunNowSchedule;
 import org.sonatype.sisu.goodies.eventbus.EventBus;
+import org.sonatype.nexus.proxy.ResourceStoreRequest;
+import org.sonatype.nexus.proxy.attributes.inspectors.DigestCalculatingInspector;
+import org.sonatype.nexus.proxy.item.StorageItem;
 
 import com.google.common.base.Throwables;
 import org.apache.commons.lang.StringUtils;
@@ -106,13 +109,16 @@ public class GenerateMetadataTask
 
   private final CommandLineExecutor commandLineExecutor;
 
+  private final DigestCalculatingInspector digestCalculatingInspector;
+
   @Inject
   public GenerateMetadataTask(final EventBus eventBus,
                               final RepositoryRegistry repositoryRegistry,
                               final YumRegistry yumRegistry,
                               final RpmScanner scanner,
                               final Manager routingManager,
-                              final CommandLineExecutor commandLineExecutor)
+                              final CommandLineExecutor commandLineExecutor,
+                              final DigestCalculatingInspector digestCalculatingInspector)
   {
     super(eventBus, null);
 
@@ -121,6 +127,7 @@ public class GenerateMetadataTask
     this.repositoryRegistry = checkNotNull(repositoryRegistry);
     this.routingManager = checkNotNull(routingManager);
     this.commandLineExecutor = checkNotNull(commandLineExecutor);
+    this.digestCalculatingInspector = digestCalculatingInspector;
 
     getParameters().put(PARAM_SINGLE_RPM_PER_DIR, Boolean.toString(true));
   }
@@ -160,6 +167,13 @@ public class GenerateMetadataTask
 
         File rpmListFile = createRpmListFile();
         commandLineExecutor.exec(buildCreateRepositoryCommand(rpmListFile));
+
+        StorageItem item = repository.retrieveItem(new ResourceStoreRequest("/" + PATH_OF_REPOMD_XML));
+
+        if (item != null) {
+          digestCalculatingInspector.processStorageItem(item);
+          repository.getAttributesHandler().storeAttributes(item);
+        }
       }
       catch (IOException e) {
         LOG.warn("Yum metadata generation failed", e);
