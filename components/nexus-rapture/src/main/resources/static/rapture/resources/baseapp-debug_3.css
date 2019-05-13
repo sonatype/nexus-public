@@ -416,6 +416,10 @@ fieldset.nx-form-section.nx-no-title {
     padding-bottom: 0;
 }
 
+fieldset.x-fieldset {
+    overflow: visible;
+}
+
 .nx-monospace-field textarea,
 .nx-monospace-field input {
     /**
@@ -11165,6 +11169,10 @@ fieldset.nx-form-section.nx-no-title {
     font-size: 1.8em;
     padding: 4px 0 0 5px;
     display: inline-block;
+}
+
+.nx-routing-rules-test-path-container .nx-routing-rules-path-field {
+    width: calc(100% - 14px);
 }
 
 .nx-routing-rules-test-path-container .x-form-trigger-wrap {

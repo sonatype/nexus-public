@@ -259,7 +259,7 @@ public class S3BlobStoreDescriptor
   private String trimAndCollapseSlashes(final String prefix) {
     return Optional.ofNullable(prefix)
           .filter(StringUtils::isNotBlank)
-          .map(s -> StringUtils.strip(s, "/"))
+          .map(s -> StringUtils.strip(s, "/ "))
           .map(s -> s.replaceAll("/+", "/"))
           .orElse(prefix);
   }

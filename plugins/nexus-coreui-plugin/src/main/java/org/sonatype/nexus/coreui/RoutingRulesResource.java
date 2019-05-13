@@ -81,6 +81,8 @@ public class RoutingRulesResource
 
   private static final String PROXIES = "proxies";
 
+  private static final boolean ALLOWED = true;
+  
   private final RoutingRuleStore routingRuleStore;
 
   private final RoutingRuleHelper routingRuleHelper;
@@ -226,13 +228,19 @@ public class RoutingRulesResource
   {
     Optional<RoutingRule> maybeRule = getRoutingRule(repository);
 
+    boolean allowed = maybeRule.map(routingRulePathMapping::get).orElse(ALLOWED);
+    String ruleName = maybeRule.map(RoutingRule::name).orElse(null);
+
     List<RoutingRulePreviewXO> children = childRepositories == null ? null : childRepositories.stream()
-        .map(childRepository -> toPreviewXO(childRepository, null, routingRulePathMapping)).collect(toList());
+        .map(childRepository -> toPreviewXO(childRepository, null, routingRulePathMapping))
+        .collect(toList());
 
     return RoutingRulePreviewXO.builder()
         .repository(repository.getName())
-        .allowed(maybeRule.map(routingRulePathMapping::get).orElse(true))
-        .rule(maybeRule.map(RoutingRule::name).orElse(null))
+        .type(repository.getType().getValue())
+        .format(repository.getFormat().getValue())
+        .allowed(allowed)
+        .rule(ruleName)
         .children(children)
         .expanded(children != null && !children.isEmpty())
         .expandable(children != null && !children.isEmpty())

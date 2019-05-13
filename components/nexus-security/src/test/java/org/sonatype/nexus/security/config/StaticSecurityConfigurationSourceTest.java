@@ -80,6 +80,14 @@ public class StaticSecurityConfigurationSourceTest
     assertThat(user.getStatus(), is(CUser.STATUS_CHANGE_PASSWORD));
   }
 
+  @Test
+  public void testGetConfiguration_adminUserStatusCheckNonRandom() {
+    underTest = new StaticSecurityConfigurationSource(applicationDirectories, passwordService, false);
+    SecurityConfiguration configuration = underTest.getConfiguration();
+    CUser user = configuration.getUser("admin");
+    assertThat(user.getStatus(), is(CUser.STATUS_ACTIVE));
+  }
+
   /*
    * this test ensures that we don't inadvertently overwrite the serialized password from the first run
    */

@@ -23,6 +23,7 @@ import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
+import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.repository.storage.Asset;
@@ -31,11 +32,11 @@ import org.sonatype.nexus.repository.storage.BrowseNode;
 import org.sonatype.nexus.repository.storage.BrowseNodeStore;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentMaintenance;
-import org.sonatype.nexus.repository.storage.ComponentStore;
 import org.sonatype.nexus.repository.storage.DefaultComponent;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.security.BreadActions;
+import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.selector.VariableSource;
 
 import com.google.common.base.Suppliers;
@@ -46,6 +47,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -62,9 +64,6 @@ public class DeleteFolderServiceImplTest
 
   @Mock
   AssetStore assetStore;
-
-  @Mock
-  ComponentStore componentStore;
 
   @Mock
   Repository repository;
@@ -90,6 +89,9 @@ public class DeleteFolderServiceImplTest
   @Mock
   VariableSource variableSource;
 
+  @Mock
+  private SecurityHelper securityHelper;
+
   Collection<BrowseNode> browseNodes = new ArrayList<>();
 
   DeleteFolderServiceImpl service;
@@ -105,9 +107,11 @@ public class DeleteFolderServiceImplTest
     when(variableResolverAdapter.fromAsset(any(Asset.class))).thenReturn(variableSource);
     when(repository.facet(StorageFacet.class)).thenReturn(storageFacet);
     when(storageFacet.txSupplier()).thenReturn(Suppliers.ofInstance(storageTx));
+    when(securityHelper.isPermitted(new RepositoryViewPermission(repository, BreadActions.DELETE)))
+        .thenReturn(new boolean[]{false});
 
-    service = new DeleteFolderServiceImpl(browseNodeStore, configuration, assetStore, componentStore,
-        contentPermissionChecker, variableResolverAdapterManager);
+    service = new DeleteFolderServiceImpl(browseNodeStore, configuration, assetStore, contentPermissionChecker,
+        variableResolverAdapterManager, securityHelper);
   }
 
   @Test
@@ -119,7 +123,6 @@ public class DeleteFolderServiceImplTest
     service.deleteFolder(repository, "com/sonatype", DateTime.now(), () -> false);
 
     verify(componentMaintenance).deleteAsset(new DetachedEntityId("assetId"));
-    verify(componentMaintenance).deleteComponent(new DetachedEntityId("componentId"));
   }
 
   @Test
@@ -145,13 +148,33 @@ public class DeleteFolderServiceImplTest
 
   @Test
   public void deleteFolderShouldDeleteDanglingComponentNodes() {
-    mockComponentBrowseNode("componentId");
-    when(contentPermissionChecker.isPermitted(repository.getName(), "maven2", BreadActions.DELETE, variableSource))
-        .thenReturn(true);
+    mockComponentBrowseNode("componentId", DateTime.now().minusHours(1));
+    when(securityHelper.isPermitted(new RepositoryViewPermission(repository, BreadActions.DELETE)))
+        .thenReturn(new boolean[]{true});
 
     service.deleteFolder(repository, "com/sonatype", DateTime.now(), () -> false);
 
     verify(componentMaintenance).deleteComponent(new DetachedEntityId("componentId"));
+  }
+
+  @Test
+  public void deleteFolderShouldSkipComponentCreatedAfterTheGivenTimestamp() {
+    mockComponentBrowseNode("componentId", DateTime.now().plusHours(1));
+    when(securityHelper.isPermitted(new RepositoryViewPermission(repository, BreadActions.DELETE)))
+        .thenReturn(new boolean[]{true});
+
+    service.deleteFolder(repository, "com/sonatype", DateTime.now(), () -> false);
+
+    verifyNoMoreInteractions(componentMaintenance);
+  }
+
+  @Test
+  public void deleteFolderShouldSkipComponentThatUserHasNoPrivilegeToDelete() {
+    mockComponentBrowseNode("componentId", DateTime.now().minusHours(1));
+
+    service.deleteFolder(repository, "com/sonatype", DateTime.now(), () -> false);
+
+    verifyNoMoreInteractions(componentMaintenance);
   }
 
   private BrowseNode mockAssetBrowseNode(final String assetId, final DateTime blobCreated) {
@@ -171,15 +194,15 @@ public class DeleteFolderServiceImplTest
     return browseNode;
   }
 
-  private BrowseNode mockComponentBrowseNode(final String componentId) {
+  private BrowseNode mockComponentBrowseNode(final String componentId, final DateTime lastUpdated) {
     DetachedEntityId entityId = new DetachedEntityId(componentId);
     BrowseNode browseNode = new BrowseNode();
     browseNode.setLeaf(true);
     browseNode.setComponentId(entityId);
 
-    Component component = new DefaultComponent();
-    when(componentStore.read(entityId)).thenReturn(component);
-    when(storageTx.browseAssets(component)).thenReturn(Collections.emptyList());
+    Component component = mock(Component.class);
+    when(component.lastUpdated()).thenReturn(lastUpdated);
+    when(storageTx.findComponent(entityId)).thenReturn(component);
 
     browseNodes.add(browseNode);
 
@@ -200,7 +223,6 @@ public class DeleteFolderServiceImplTest
     browseNode.setComponentId(componentEntityId);
 
     when(assetStore.getById(assetEntityId)).thenReturn(asset);
-    when(componentStore.read(componentEntityId)).thenReturn(component);
     when(storageTx.browseAssets(component)).thenReturn(Collections.singletonList(asset));
     browseNodes.add(browseNode);
 

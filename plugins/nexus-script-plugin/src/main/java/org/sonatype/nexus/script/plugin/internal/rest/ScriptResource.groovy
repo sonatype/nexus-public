@@ -158,7 +158,8 @@ class ScriptResource
       result = scriptService.eval(script.type, script.content,
           [
               log : LoggerFactory.getLogger(this.getClass()),
-              args: args?.trim()
+              args: args?.trim(),
+              scriptName: script.name
           ]
       )
     }

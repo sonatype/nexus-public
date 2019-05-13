@@ -179,6 +179,13 @@
       <type>xml</type>
     </dependency>
 
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-onboarding-plugin</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+    </dependency>
+
     <!-- make sure commons-compress and xz are installed at the same time -->
     <dependency>
       <groupId>org.apache.commons</groupId>

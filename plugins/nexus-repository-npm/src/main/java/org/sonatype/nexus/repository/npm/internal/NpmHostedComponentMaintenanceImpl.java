@@ -21,10 +21,9 @@ import java.util.Set;
 
 import javax.inject.Named;
 
-import org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind;
-
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentMaintenance;
@@ -60,6 +59,7 @@ public class NpmHostedComponentMaintenanceImpl
   /**
    * Deletes depending on what it is.
    */
+  @Override
   @TransactionalDeleteBlob
   protected Set<String> deleteAssetTx(final EntityId assetId, final boolean deleteBlob) {
     StorageTx tx = UnitOfWork.currentTx();
@@ -82,6 +82,15 @@ public class NpmHostedComponentMaintenanceImpl
         NpmPackageId packageId = NpmPackageId.parse(asset.name().substring(0, asset.name().indexOf("/-/")));
         String tarballName = NpmMetadataUtils.extractTarballName(asset.name());
         deletedAssets.addAll(deleteTarball(packageId, tarballName, deleteBlob));
+
+        EntityId componentId = asset.componentId();
+        if (componentId != null) {
+          StorageTx tx = UnitOfWork.currentTx();
+          Component component = tx.findComponent(componentId);
+          if (component != null && !tx.browseAssets(component).iterator().hasNext()) {
+            deletedAssets.addAll(deleteComponentTx(componentId, deleteBlob).getAssets());
+          }
+        }
       }
     }
     catch (IOException e) {

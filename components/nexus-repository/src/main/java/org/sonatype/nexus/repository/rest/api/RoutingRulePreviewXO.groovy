@@ -32,6 +32,10 @@ class RoutingRulePreviewXO
   @NotBlank
   String repository
 
+  String type
+
+  String format
+
   String rule
 
   Boolean allowed

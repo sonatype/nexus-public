@@ -54,11 +54,11 @@ Ext.define('NX.coreui.view.routing.RoutingRulesSinglePreview', {
               },
               {
                 xtype: 'textfield',
+                cls: 'nx-routing-rules-path-field',
                 name: 'path',
                 itemId: 'path',
                 allowBlank: true,
                 maxWidth: 786,
-                width: 'calc(100% - 14px)',
                 listeners: {
                   blur: this.onPathBlur.bind(this),
                   focus: this.onPathFocus.bind(this),

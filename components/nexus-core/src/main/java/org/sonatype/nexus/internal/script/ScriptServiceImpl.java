@@ -30,6 +30,7 @@ import javax.script.SimpleScriptContext;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.GlobalComponentLookupHelper;
 import org.sonatype.nexus.common.script.ScriptApi;
+import org.sonatype.nexus.common.script.ScriptCleanupHandler;
 import org.sonatype.nexus.common.script.ScriptService;
 
 import org.eclipse.sisu.inject.BeanLocator;
@@ -48,6 +49,8 @@ public class ScriptServiceImpl
     extends ComponentSupport
     implements ScriptService
 {
+  public static final String SCRIPT_CLEANUP_HANDLER = "scriptCleanupHandler";
+
   private final ScriptEngineManager engineManager;
 
   private final BeanLocator beanLocator;
@@ -56,16 +59,20 @@ public class ScriptServiceImpl
   
   private final List<ScriptApi> scriptApis;
 
+  private final ScriptCleanupHandler scriptCleanupHandler;
+
   @Inject
   public ScriptServiceImpl(final ScriptEngineManager engineManager,
                            final BeanLocator beanLocator,
                            final GlobalComponentLookupHelper lookupHelper,
-                           final List<ScriptApi> scriptApis)
+                           final List<ScriptApi> scriptApis,
+                           final ScriptCleanupHandler scriptCleanupHandler)
   {
     this.engineManager = checkNotNull(engineManager);
     this.beanLocator = checkNotNull(beanLocator);
     this.lookupHelper = checkNotNull(lookupHelper);
     this.scriptApis = checkNotNull(scriptApis);
+    this.scriptCleanupHandler = checkNotNull(scriptCleanupHandler);
   }
 
   @Override
@@ -121,6 +128,7 @@ public class ScriptServiceImpl
 
     bindings.put("beanLocator", beanLocator);
     bindings.put("container", lookupHelper);
+    bindings.put(SCRIPT_CLEANUP_HANDLER, scriptCleanupHandler);
     for (ScriptApi scriptApi : scriptApis) {
       bindings.put(scriptApi.getName(), scriptApi);
     }

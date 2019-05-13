@@ -48,6 +48,10 @@ Ext.define('NX.coreui.view.routing.RoutingRulesPreview', {
             forceSelection: true,
             value: 'all',
             valueField: 'value',
+
+            fieldLabel: NX.I18n.get('RoutingRules_PreviewContext_FieldLabel'),
+            helpText: NX.I18n.get('RoutingRules_PreviewContext_HelpText'),
+
             store: {
               data: [
                 {
@@ -80,9 +84,11 @@ Ext.define('NX.coreui.view.routing.RoutingRulesPreview', {
               },
               {
                 xtype: 'textfield',
+                cls: 'nx-routing-rules-path-field',
                 name: 'path',
                 emptyText: NX.I18n.get('RoutingRules_GlobalRoutingPreview_Path_EmptyText'),
-                flex: 1
+                allowBlank: true,
+                maxWidth: 786
               }
             ]
           }
@@ -121,13 +127,23 @@ Ext.define('NX.coreui.view.routing.RoutingRulesPreview', {
                 renderer: Ext.htmlEncode
               },
               {
+                text: NX.I18n.get('Repository_RepositoryList_Type_Header'),
+                dataIndex: 'type',
+                flex: 1
+              },
+              {
+                text: NX.I18n.get('Repository_RepositoryList_Format_Header'),
+                dataIndex: 'format',
+                flex: 1
+              },
+              {
                 text: NX.I18n.get('RoutingRules_GlobalRoutingPreview_Grid_Column_RoutingRule'),
                 dataIndex: 'rule',
                 flex: 2,
                 renderer: NX.ext.grid.column.Renderers.optionalRule
               },
               {
-                text: NX.I18n.get('RoutingRules_GlobalRoutingPreview_Grid_Column_AllowedBlocked'),
+                text: NX.I18n.get('RoutingRules_GlobalRoutingPreview_Grid_Column_Status'),
                 dataIndex: 'allowed',
                 flex: 1,
                 renderer: NX.ext.grid.column.Renderers.allowedBlocked

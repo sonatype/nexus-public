@@ -21,7 +21,12 @@ Ext.define('NX.coreui.model.RoutingRulePreview', {
   extend: 'Ext.data.TreeModel',
   fields: [
     {name: 'repository', type: 'string', convert: Ext.util.Format.htmlEncode},
+    {name: 'type', type: 'string', convert: Ext.util.Format.htmlEncode},
+    {name: 'format', type: 'string', convert: Ext.util.Format.htmlEncode},
     {name: 'rule', type: 'string', convert: Ext.util.Format.htmlEncode},
-    {name: 'allowed', type: 'boolean'}
+    {name: 'allowed', type: 'boolean'},
+    {name: 'iconCls', type: 'string', calculate: function(data) {
+      return 'nx-icon-repository-' + data.type + '-x16';
+    }}
   ]
 });

@@ -218,7 +218,11 @@ Ext.define('NX.wizard.Controller', {
     this.logDebug('Refreshing');
     //</if>
 
-    this.getActiveStep().refresh();
+    var step = this.getActiveStep();
+
+    if (step){
+      step.refresh();
+    }
   },
 
   //

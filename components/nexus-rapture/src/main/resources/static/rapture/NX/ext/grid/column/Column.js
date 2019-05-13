@@ -26,10 +26,10 @@ Ext.define('NX.ext.grid.column.Column', {
    * @override
    */
   toggleSortState: function() {
-    var store = this.up('grid').getStore();
-    if (this.up('grid').allowClearSort && this.isSortable() && this.sortState === 'DESC') {
-      store.sorters.clear();
-      store.load();
+    var view = this.up('grid');
+    if (view && view.allowClearSort && this.isSortable() && this.sortState === 'DESC') {
+      view.getStore().sorters.clear();
+      view.getStore().load();
     }
     else {
       this.callParent();

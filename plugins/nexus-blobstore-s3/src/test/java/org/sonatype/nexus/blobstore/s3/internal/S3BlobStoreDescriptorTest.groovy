@@ -174,6 +174,8 @@ class S3BlobStoreDescriptorTest
       ' '              | ' '
       '/test'          | 'test'
       '/test/'         | 'test'
+      ' /test/ '       | 'test'
+      '/ test /'       | 'test'
       '///test///'     | 'test'
       '///te/st///'    | 'te/st'
       'te////st'       | 'te/st'

@@ -24,3 +24,8 @@ fieldset.nx-form-section {
 .x-panel-nx-subsection-with-background-framed fieldset.nx-form-section {
   padding-bottom: 0;
 }
+
+fieldset.x-fieldset {
+  // See https://www.sencha.com/forum/showthread.php?423768-ExtJS-6-5-0-Fieldset-legend-are-not-visible-in-Safari-11
+  overflow: visible;
+}

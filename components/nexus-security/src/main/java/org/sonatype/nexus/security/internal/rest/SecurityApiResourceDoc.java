@@ -12,32 +12,24 @@
  */
 package org.sonatype.nexus.security.internal.rest;
 
+import java.util.List;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
 /**
- * Swagger documentation for {@link ChangePasswordResource}
+ * Swagger documentation for {@link SecurityApiResource}
  *
  * @since 3.next
  */
-@Api(value = "Users")
-public interface ChangePasswordResourceDoc
+@Api(value = "Security Management", hidden = true)
+public interface SecurityApiResourceDoc
 {
-  String USERNAME_DESCRIPTION = "The username you would like to change the password for.";
-  String PASSWORD_DESCRIPTION = "The new password to use.";
-  String INVALID_PERMISSIONS = "Not privileged to perform operation.";
-  String USER_NOT_FOUND = "User not found in the system";
-  String PASSWORD_REQUIRED = "Password was not supplied in the body of the request";
-
-  @ApiOperation("Change a user's password")
+  @ApiOperation("Retrieve a list of the available user sources.")
   @ApiResponses(value = {
-      @ApiResponse(code = 400, message = PASSWORD_REQUIRED),
-      @ApiResponse(code = 403, message = INVALID_PERMISSIONS),
-      @ApiResponse(code = 404, message = USER_NOT_FOUND)
+      @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS)
   })
-  void changePassword(@ApiParam(value = USERNAME_DESCRIPTION) final String username,
-                          @ApiParam(value = PASSWORD_DESCRIPTION) final String password);
+  List<ApiUserSource> getUserSources();
 }

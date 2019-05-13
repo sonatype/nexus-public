@@ -75,7 +75,7 @@ class StaticSecurityConfigurationSource
               password: password,
               firstName: 'Administrator',
               lastName: 'User',
-              status: CUser.STATUS_CHANGE_PASSWORD,
+              status: randomPassword ? CUser.STATUS_CHANGE_PASSWORD : CUser.STATUS_ACTIVE,
               email: 'admin@example.org'
           ),
           new CUser(
