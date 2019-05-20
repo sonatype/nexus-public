@@ -289,7 +289,7 @@ class S3BlobStoreTest
       s3Exception.errorCode = "UnknownError"
 
     when: 'blobstore is removed'
-      def deleted = blobStore.remove()
+      blobStore.remove()
 
     then: 'exception is thrown'
       thrown(BlobStoreException)
@@ -307,7 +307,7 @@ class S3BlobStoreTest
       s3Exception.errorCode = "BucketNotEmpty"
 
     when: 'blobstore is removed'
-      def deleted = blobStore.remove()
+      blobStore.remove()
 
     then: 'exception is not thrown'
       notThrown(BlobStoreException)
@@ -315,6 +315,24 @@ class S3BlobStoreTest
       1 * storeMetrics.remove()
       1 * s3.deleteObject('mybucket', 'myPrefix/metadata.properties')
       1 * bucketManager.deleteStorageLocation(config) >> { args -> throw s3Exception }
+  }
+
+  def 'removing non-empty blob store removes lifecycle policy'() {
+    given: 'blob store setup'
+      blobStore.init(config)
+      blobStore.doStart()
+
+    when: 'blobstore is removed'
+      blobStore.remove()
+
+    then: 'only the lifecycle policy is removed'
+      1 * s3.listObjects('mybucket', 'myPrefix/content/') >> Mock(ObjectListing) {
+        getObjectSummaries() >> [Mock(S3ObjectSummary)]
+      }
+      0 * storeMetrics.remove()
+      0 * s3.deleteObject('mybucket', 'myPrefix/metadata.properties')
+      0 * bucketManager.deleteStorageLocation(config)
+      1 * s3.deleteBucketLifecycleConfiguration('mybucket')
   }
 
   @Unroll

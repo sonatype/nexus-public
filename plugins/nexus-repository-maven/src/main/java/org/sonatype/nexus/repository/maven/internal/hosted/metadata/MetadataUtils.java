@@ -71,6 +71,13 @@ public final class MetadataUtils
   }
 
   /**
+   * True if content is available for a given path, false otherwise
+   */
+  public static boolean exists(final Repository repository, final MavenPath mavenPath) throws IOException {
+    return repository.facet(MavenFacet.class).get(mavenPath) != null;
+  }
+
+  /**
    * Reads content stored at given path as {@link Metadata}. Returns null if the content does not exist.
    */
   @Nullable

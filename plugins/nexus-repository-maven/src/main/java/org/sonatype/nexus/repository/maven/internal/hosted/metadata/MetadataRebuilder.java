@@ -30,6 +30,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.goodies.common.MultipleFailures;
 import org.sonatype.nexus.orient.entity.AttachedEntityHelper;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenFacet;
@@ -65,6 +66,7 @@ import org.codehaus.plexus.util.xml.Xpp3Dom;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
@@ -188,7 +190,7 @@ public class MetadataRebuilder
       // Check explicitly for whether or not we have Group level metadata that might need rebuilding, since this
       // is potentially the most expensive possible path to take.
       MavenPath groupPath = metadataPath(groupId, null, null);
-      if (MetadataUtils.read(repository, groupPath) != null) {
+      if (MetadataUtils.exists(repository, groupPath)) {
         paths.add(groupPath);
       }
       return paths;
@@ -233,7 +235,7 @@ public class MetadataRebuilder
       // Check explicitly for whether or not we have Group level metadata that might need rebuilding, since this
       // is potentially the most expensive possible path to take.
       MavenPath groupPath = metadataPath(groupId, null, null);
-      if (MetadataUtils.read(repository, groupPath) != null) {
+      if (MetadataUtils.exists(repository, groupPath)) {
         MetadataUtils.delete(repository, groupPath);
         deletedPaths.addAll(MavenFacetUtils.getPathWithHashes(groupPath));
         // we have metadata for plugins at the Group level so we should build that as well
@@ -321,7 +323,7 @@ public class MetadataRebuilder
       sqlParams.put("bucket", findBucketORID(repository));
       final StringBuilder builder = new StringBuilder();
       builder.append(
-          String.format(
+          format(
               "SELECT " +
                   "%s as groupId, " +
                   "%s as artifactId, " +
@@ -377,47 +379,81 @@ public class MetadataRebuilder
 
     /**
      * Method rebuilding metadata that performs the group level processing. It uses memory conservative "async" SQL
-     * approach, and calls {@link #rebuildMetadataInner(String, String, Set)} method as results are arriving.
+     * approach, and calls {@link #rebuildMetadataInner(String, String, Set, MultipleFailures)} method as results are
+     * arriving.
      */
     public boolean rebuildMetadata()
     {
+      final MultipleFailures failures = new MultipleFailures();
       boolean metadataRebuilt = false;
 
       checkCancellation();
       String currentGroupId = null;
-      for (ODocument doc : browseGAVs()) {
-        checkCancellation();
-        final String groupId = doc.field("groupId", OType.STRING);
-        final String artifactId = doc.field("artifactId", OType.STRING);
-        final Set<String> baseVersions = doc.field("baseVersions", OType.EMBEDDEDSET);
 
-        final boolean groupChange = !Objects.equals(currentGroupId, groupId);
-        if (groupChange) {
-          if (currentGroupId != null) {
-            rebuildMetadataExitGroup(currentGroupId);
+      try {
+        for (ODocument doc : browseGAVs()) {
+          checkCancellation();
+          final String groupId = doc.field("groupId", OType.STRING);
+          final String artifactId = doc.field("artifactId", OType.STRING);
+          final Set<String> baseVersions = doc.field("baseVersions", OType.EMBEDDEDSET);
+
+          final boolean groupChange = !Objects.equals(currentGroupId, groupId);
+          if (groupChange) {
+            if (currentGroupId != null) {
+              rebuildMetadataExitGroup(currentGroupId, failures);
+            }
+            currentGroupId = groupId;
+            metadataBuilder.onEnterGroupId(groupId);
           }
-          currentGroupId = groupId;
-          metadataBuilder.onEnterGroupId(groupId);
+          rebuildMetadataInner(groupId, artifactId, baseVersions, failures);
+          metadataRebuilt = true;
         }
-        rebuildMetadataInner(groupId, artifactId, baseVersions);
-        metadataRebuilt = true;
+
+        if (currentGroupId != null) {
+          rebuildMetadataExitGroup(currentGroupId, failures);
+          metadataRebuilt = true;
+        }
       }
-      if (currentGroupId != null) {
-        rebuildMetadataExitGroup(currentGroupId);
-        metadataRebuilt = true;
+      finally {
+        maybeLogFailures(failures);
       }
 
       return metadataRebuilt;
     }
 
     /**
+     * Logs any failures recorded during metadata
+     */
+    private void maybeLogFailures(final MultipleFailures failures) {
+      if (failures.isEmpty()) {
+        return;
+      }
+
+      log.warn("Errors encountered during metadata rebuild:");
+      failures.getFailures().forEach(failure -> log.warn(failure.getMessage(), failure));
+    }
+
+    /**
      * Process exits from group level, executed in isolation.
      */
-    private void rebuildMetadataExitGroup(final String currentGroupId) {
-      metadataUpdater.processMetadata(
-          MetadataUtils.metadataPath(currentGroupId, null, null),
-          metadataBuilder.onExitGroupId()
-      );
+    private void rebuildMetadataExitGroup(final String currentGroupId, final MultipleFailures failures) {
+      processMetadata(metadataPath(currentGroupId, null, null), metadataBuilder.onExitGroupId(), failures);
+    }
+
+    /**
+     * Helper method that will capture exceptions that occur from the {@link MetadataUpdater} in a
+     * {@link MultipleFailures} store
+     */
+    private void processMetadata(final MavenPath metadataPath,
+                                 final Maven2Metadata metadata,
+                                 final MultipleFailures failures)
+    {
+      try {
+        metadataUpdater.processMetadata(metadataPath, metadata);
+      }
+      catch (Exception e) {
+        failures.add(new MetadataException("Error processing metadata for path: " + metadataPath.getPath(), e));
+      }
     }
 
     /**
@@ -427,7 +463,8 @@ public class MetadataRebuilder
      */
     private void rebuildMetadataInner(final String groupId,
                                       final String artifactId,
-                                      final Set<String> baseVersions)
+                                      final Set<String> baseVersions,
+                                      final MultipleFailures failures)
     {
       final StorageTx tx = UnitOfWork.currentTx();
 
@@ -482,19 +519,13 @@ public class MetadataRebuilder
             }
           }
 
-          metadataUpdater.processMetadata(
-              MetadataUtils.metadataPath(groupId, artifactId, baseVersion),
-              metadataBuilder.onExitBaseVersion()
-          );
+          processMetadata(metadataPath(groupId, artifactId, baseVersion), metadataBuilder.onExitBaseVersion(), failures);
 
           return null;
         });
       }
 
-      metadataUpdater.processMetadata(
-          MetadataUtils.metadataPath(groupId, artifactId, null),
-          metadataBuilder.onExitArtifactId()
-      );
+      processMetadata(metadataPath(groupId, artifactId, null), metadataBuilder.onExitArtifactId(), failures);
     }
 
     /**
