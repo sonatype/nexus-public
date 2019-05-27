@@ -89,7 +89,7 @@
     These values must always be constants; 'nexus.version' will get update automatically by set-version.
     -->
     <nexus.version>3.17.0-SNAPSHOT</nexus.version>
-    <nexus2.version>2.14.10-01</nexus2.version>
+    <nexus2.version>2.14.13-01</nexus2.version>
 
     <!-- logging configuration used in logback config files to control test logging -->
     <test.log.level>INFO</test.log.level>
