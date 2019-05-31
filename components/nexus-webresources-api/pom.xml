@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-components</artifactId>
-    <version>3.16.1-02</version>
+    <version>3.16.2-01</version>
   </parent>
 
   <artifactId>nexus-webresources-api</artifactId>
