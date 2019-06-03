@@ -59,6 +59,10 @@ public class Configuration
 
   private static final ObjectReader ATTRIBUTES_JSON_READER = new ObjectMapper().readerFor(ATTRIBUTES_TYPE_REF);
 
+  public static void addSensitiveFieldName(final String sensitiveFieldName) {
+    SENSITIVE_FIELD_NAMES.add(sensitiveFieldName);
+  }
+
   private Logger log = LoggerFactory.getLogger(Configuration.class);
 
   private String repositoryName;

@@ -177,6 +177,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchRubygems_Homepage_FieldLabel: 'Homepage',
     SearchYum_Architecture_FieldLabel: 'Architecture',
     SearchYum_Name_FieldLabel: 'Package Name',
+    SearchGolang_Group: 'Go Repositories',
+    SearchGolang_License_FieldLabel: 'License',
     Search_More_Text: 'More criteria',
     Search_SearchResultList_Format_Header: 'Format',
     Search_SearchResultList_Group_Header: 'Group',
@@ -210,6 +212,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchGitLfs_Text: 'Git LFS',
     SearchGitLfs_Description: 'Search for components in Git LFS repositories',
 
+    // Browse -> Search -> Go
+    SearchGolang_Text: 'Go',
+    SearchGolang_Description: 'Search for components in Go repositories',
+
     // Browse -> Search -> npm
     SearchNpm_Text: 'npm',
     SearchNpm_Description: 'Search for components in npm repositories',
@@ -237,6 +243,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
     // Browse -> Search -> Yum
     SearchYum_Text: 'Yum',
     SearchYum_Description: 'Search for components in Yum repositories',
+
+    // Browse -> Search -> Apt
+    SearchApt_Text: 'Apt',
+    SearchApt_Description: 'Search for components in Apt repositories',
 
     // Browse -> Browse
     FeatureGroups_Browse_Text: 'Browse',
@@ -317,6 +327,14 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_YumHostedFacet_DeployPolicy_EmptyText: 'Select a policy',
     Repository_Facet_YumHostedFacet_DeployPolicy_StrictItem: 'Strict',
     Repository_Facet_YumHostedFacet_DeployPolicy_PermissiveItem: 'Permissive',
+    Repository_Facet_AptFacet_Title: 'APT Settings',
+    Repository_Facet_AptFacet_Distribution_FieldLabel: 'Distribution',
+    Repository_Facet_AptFacet_Distribution_HelpText: 'Distribution to fetch e.g. bionic',
+    Repository_Facet_AptFacet_Flat_FieldLabel: 'Flat',
+    Repository_Facet_AptFacet_Flat_HelpText: 'Is this repository flat?',
+    Repository_Facet_AptSigningFacet_Keypair_FieldLabel: 'Signing Key',
+    Repository_Facet_AptSigningFacet_Keypair_HelpText: 'PGP signing key pair (armored private key e.g. gpg --export-secret-key --armor <Name or ID>)',
+    Repository_Facet_AptSigningFacet_Passphrase_FieldLabel: 'Passphrase',
     Repository_Facet_GroupFacet_Title: 'Group',
     Repository_Facet_HttpClientFacet_Title: 'HTTP',
     Repository_Facet_Maven2Facet_Title: 'Maven 2',
@@ -409,6 +427,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_CleanupPolicyFacet_Policy_HelpText: 'Select a cleanup policy',
     Repository_Facet_CleanupPolicyFacet_Policy_EmptyText: 'None',
     Repository_Formats_All: '(All Formats)',
+    Repository_Facet_GolangFacet_Title: 'Go Settings',
 
     HealthCheckRepositoryColumn_Header: 'Health check',
     HealthCheckRepositoryColumn_Analyzing: 'Analyzing&hellip;',

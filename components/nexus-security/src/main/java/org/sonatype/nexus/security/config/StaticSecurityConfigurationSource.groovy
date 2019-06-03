@@ -16,7 +16,6 @@ import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
 
-import org.sonatype.nexus.common.app.ApplicationDirectories
 import org.sonatype.nexus.security.Roles
 
 import org.apache.shiro.authc.credential.PasswordService
@@ -33,24 +32,22 @@ import org.apache.shiro.authc.credential.PasswordService
 class StaticSecurityConfigurationSource
     implements SecurityConfigurationSource
 {
-  static final String ADMIN_PASSWORD_FILE = 'admin.password'
-
-  private final SecurityConfiguration configuration;
-
-  private final ApplicationDirectories applicationDirectories
+  private final SecurityConfiguration configuration
 
   private final PasswordService passwordService
+
+  private final AdminPasswordFileManager adminPasswordFileManager
 
   private final boolean randomPassword
 
   @Inject
   StaticSecurityConfigurationSource(
-      final ApplicationDirectories applicationDirectories,
       final PasswordService passwordService,
+      final AdminPasswordFileManager adminPasswordFileManager,
       @Named('${nexus.security.randompassword:-true}') final boolean randomPassword)
   {
-    this.applicationDirectories = applicationDirectories
     this.passwordService = passwordService
+    this.adminPasswordFileManager = adminPasswordFileManager
 
     String enabled = System.getenv("NEXUS_SECURITY_RANDOMPASSWORD")
     this.randomPassword = randomPassword && (enabled != null ? Boolean.valueOf(enabled) : true)
@@ -108,19 +105,22 @@ class StaticSecurityConfigurationSource
   }
 
   private String getPassword() {
-    File adminPassword = new File(applicationDirectories.getWorkDirectory(), ADMIN_PASSWORD_FILE)
-    if (adminPassword.exists()) {
-      return adminPassword.text
+    String password = adminPasswordFileManager.readFile()
+
+    if (password) {
+      return password
     }
-    else if (!randomPassword || !adminPassword.createNewFile()) {
+    else if (!randomPassword) {
       return 'admin123'
     }
-    adminPassword.setReadable(false)
-    adminPassword.setReadable(true, true)
 
-    applicationDirectories.getWorkDirectory().mkdirs()
-    String password = UUID.randomUUID()
-    adminPassword.withWriter('utf-8') { writer -> writer.write password}
+    password = UUID.randomUUID()
+
+    //failure writing file to disk, revert to using default
+    if (!adminPasswordFileManager.writeFile(password)) {
+      password = 'admin123'
+    }
+
     return password
   }
 }

@@ -31,15 +31,26 @@ Ext.define('NX.coreui.view.repository.facet.RoutingRuleFacet', {
   viewModel: {
     stores: {
       RoutingRules: {
-        source: {
-          extend: 'Ext.data.Store',
-          model: 'NX.coreui.model.RoutingRule',
-          proxy: {
-            type: 'rest',
-            url: 'service/rest/internal/ui/routing-rules'
-          },
-          sorters: {property: 'name', direction: 'ASC'}
-        }
+        extend: 'Ext.data.Store',
+        model: 'NX.coreui.model.RoutingRule',
+        proxy: {
+          type: 'rest',
+          url: 'service/rest/internal/ui/routing-rules'
+        },
+        sorters:[{
+          sorterFn: function(record1, record2) {
+            var name1 = record1.get('name'),
+                name2 = record2.get('name');
+
+            if ('None' === name1) {
+              return -1;
+            } else if ('None' === name2) {
+              return 1;
+            }
+
+            return name1.localeCompare(name2);
+          }
+        }]
       }
     }
   },

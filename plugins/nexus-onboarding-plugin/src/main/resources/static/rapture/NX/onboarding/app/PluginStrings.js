@@ -40,6 +40,10 @@ Ext.define('NX.onboarding.app.PluginStrings', {
     },
     'NX.onboarding.view.ChangeAdminPasswordScreen': {
       Title: 'Please choose a password for the admin user'
+    },
+    'NX.onboarding.view.ConfigureAnonymousAccessScreen': {
+      Title: 'Configure Anonymous Access',
+      Description: '<p>Configure whether anonymous access is enabled for the server.</p>'
     }
   }
 }, function(obj) {

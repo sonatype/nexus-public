@@ -34,8 +34,10 @@
     <module>nexus-blobstore-tasks</module>
     <module>nexus-coreui-plugin</module>
     <module>nexus-repository-httpbridge</module>
+    <module>nexus-repository-golang</module>
     <module>nexus-repository-maven</module>
     <module>nexus-repository-npm</module>
+    <module>nexus-repository-apt</module>
     <module>nexus-repository-pypi</module>
     <module>nexus-repository-raw</module>
     <module>nexus-restore-maven</module>
@@ -134,6 +136,38 @@
         <type>xml</type>
       </dependency>
 
+      <!-- repository-go -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-repository-go</artifactId>
+        <version>3.17.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-repository-go</artifactId>
+        <version>3.17.0-SNAPSHOT</version>
+        <classifier>features</classifier>
+        <type>xml</type>
+      </dependency>
+
+      <!-- repository-golang -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-repository-golang</artifactId>
+        <version>3.17.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-repository-golang</artifactId>
+        <version>3.17.0-SNAPSHOT</version>
+        <classifier>features</classifier>
+        <type>xml</type>
+      </dependency>
+
       <!-- repository-maven -->
 
       <dependency>
@@ -189,6 +223,22 @@
       <dependency>
         <groupId>org.sonatype.nexus.plugins</groupId>
         <artifactId>nexus-restore-npm</artifactId>
+        <version>3.17.0-SNAPSHOT</version>
+        <classifier>features</classifier>
+        <type>xml</type>
+      </dependency>
+
+      <!-- repository-apt -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-repository-apt</artifactId>
+        <version>3.17.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-repository-apt</artifactId>
         <version>3.17.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>

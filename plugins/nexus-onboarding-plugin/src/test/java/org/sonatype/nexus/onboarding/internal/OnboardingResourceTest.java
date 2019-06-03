@@ -15,8 +15,10 @@ package org.sonatype.nexus.onboarding.internal;
 import javax.validation.ConstraintViolationException;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.onboarding.OnboardingManager;
 import org.sonatype.nexus.security.SecuritySystem;
+import org.sonatype.nexus.security.config.AdminPasswordFileManager;
 import org.sonatype.nexus.validation.ValidationModule;
 
 import com.google.inject.AbstractModule;
@@ -40,6 +42,12 @@ public class OnboardingResourceTest
   @Mock
   private SecuritySystem securitySystem;
 
+  @Mock
+  private ApplicationDirectories applicationDirectories;
+
+  @Mock
+  private AdminPasswordFileManager adminPasswordFileManager;
+
   private OnboardingResource underTest;
 
   @Before
@@ -50,6 +58,8 @@ public class OnboardingResourceTest
       protected void configure() {
         bind(OnboardingManager.class).toInstance(onboardingManager);
         bind(SecuritySystem.class).toInstance(securitySystem);
+        bind(ApplicationDirectories.class).toInstance(applicationDirectories);
+        bind(AdminPasswordFileManager.class).toInstance(adminPasswordFileManager);
       }
     }).getInstance(OnboardingResource.class);
   }

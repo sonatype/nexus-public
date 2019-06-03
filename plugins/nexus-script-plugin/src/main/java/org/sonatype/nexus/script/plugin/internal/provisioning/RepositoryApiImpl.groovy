@@ -145,6 +145,33 @@ class RepositoryApiImpl
   }
 
   @Nonnull
+  Repository createAptProxy(final String name,
+                            final String remoteUrl,
+                            final String blobStoreName,
+                            final String distribution,
+                            final boolean strictContentTypeValidation = true)
+  {
+    def configuration = createProxy(name, 'apt-proxy', remoteUrl, blobStoreName, strictContentTypeValidation)
+    configuration.attributes.apt = ['distribution': distribution] as Map
+    createRepository(configuration)
+  }
+
+  @Nonnull
+  Repository createAptHosted(final String name,
+                             final String distribution,
+                             final String pgpPrivateKey,
+                             final String pgpPassPhrase = '',
+                             final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
+                             final WritePolicy writePolicy = WritePolicy.ALLOW,
+                             final boolean strictContentTypeValidation = true)
+  {
+    def configuration = createHosted(name, 'apt-hosted', blobStoreName, writePolicy, strictContentTypeValidation)
+    configuration.attributes.apt = ['distribution': distribution] as Map
+    configuration.attributes.aptSigning = ['keypair': pgpPrivateKey, 'passphrase': pgpPassPhrase] as Map
+    createRepository(configuration)
+  }
+
+  @Nonnull
   Repository createMavenHosted(final String name,
                                final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
                                final boolean strictContentTypeValidation = true,
@@ -416,6 +443,29 @@ class RepositoryApiImpl
                             final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME)
   {
     createRepository(createGroup(name, 'yum-group', blobStoreName, members as String[]))
+  }
+
+  @Nonnull
+  Repository createGolangHosted(final String name, final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
+                                final boolean strictContentTypeValidation = true,
+                                final WritePolicy writePolicy = WritePolicy.ALLOW)
+  {
+    createRepository(createHosted(name, 'go-hosted', blobStoreName, writePolicy, strictContentTypeValidation))
+  }
+
+  @Nonnull
+  Repository createGolangProxy(final String name, final String remoteUrl,
+                               final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
+                               final boolean strictContentTypeValidation = true)
+  {
+    createRepository(createProxy(name, 'go-proxy', remoteUrl, blobStoreName, strictContentTypeValidation))
+  }
+
+  @Nonnull
+  Repository createGolangGroup(final String name, final List<String> members,
+                               final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME)
+  {
+    createRepository(createGroup(name, 'go-group', blobStoreName, members as String[]))
   }
 
   @Nonnull

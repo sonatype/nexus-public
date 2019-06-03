@@ -46,17 +46,16 @@ Ext.define('NX.coreui.view.repository.facet.RoutingRuleFacetViewController', {
     }
 
     var combo = this.lookupReference('routingRuleCombo'),
-        chainedStore = this.getStore('RoutingRules'),
-        sourceStore = chainedStore.getSource(),
-        model = chainedStore.getModel();
+        store = this.getStore('RoutingRules'),
+        model = store.getModel();
 
-    sourceStore.load(function() {
-      chainedStore.insert(0, model.create({
+    store.load(function() {
+      store.insert(0, model.create({
         id: '',
         name: 'None'
       }));
 
-      if (chainedStore.find('id', combo.getValue()) === -1) {
+      if (store.find('id', combo.getValue()) === -1) {
         combo.setValue('');
       }
     });

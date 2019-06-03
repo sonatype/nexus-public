@@ -29,6 +29,7 @@ import org.sonatype.nexus.onboarding.OnboardingItem;
 import org.sonatype.nexus.onboarding.OnboardingManager;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.security.SecuritySystem;
+import org.sonatype.nexus.security.config.AdminPasswordFileManager;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.validation.Validate;
 
@@ -56,11 +57,16 @@ public class OnboardingResource
 
   private final SecuritySystem securitySystem;
 
+  private final AdminPasswordFileManager adminPasswordFileManager;
+
   @Inject
-  public OnboardingResource(final OnboardingManager onboardingManager, final SecuritySystem securitySystem)
+  public OnboardingResource(final OnboardingManager onboardingManager,
+                            final SecuritySystem securitySystem,
+                            final AdminPasswordFileManager adminPasswordFileManager)
   {
     this.onboardingManager = checkNotNull(onboardingManager);
-    this.securitySystem = securitySystem;
+    this.securitySystem = checkNotNull(securitySystem);
+    this.adminPasswordFileManager = checkNotNull(adminPasswordFileManager);
   }
 
   @GET
@@ -84,6 +90,7 @@ public class OnboardingResource
   public void changeAdminPassword(@NotEmpty(message = PASSWORD_REQUIRED) final String password) {
     try {
       securitySystem.changePassword("admin", password, false);
+      adminPasswordFileManager.removeFile();
     }
     catch (UserNotFoundException e) {
       log.error("Unable to locate 'admin' user to change password", e);

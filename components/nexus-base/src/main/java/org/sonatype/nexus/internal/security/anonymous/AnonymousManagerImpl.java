@@ -70,6 +70,11 @@ public class AnonymousManagerImpl
     log.debug("Defaults: {}", defaults);
   }
 
+  @Override
+  public boolean isConfigured() {
+    return store.load() != null;
+  }
+
   //
   // Configuration
   //

@@ -12,65 +12,67 @@
  */
 package org.sonatype.nexus.security.config;
 
-import java.io.File;
 import java.io.IOException;
 
-import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.security.AbstractSecurityTest;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.shiro.authc.credential.PasswordService;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class StaticSecurityConfigurationSourceTest
     extends AbstractSecurityTest
 {
-  @Rule
-  public TemporaryFolder tmp = new TemporaryFolder();
-
   private PasswordService passwordService = mock(PasswordService.class);
 
-  private ApplicationDirectories applicationDirectories = mock(ApplicationDirectories.class);
+  private AdminPasswordFileManager adminPasswordFileManager = mock(AdminPasswordFileManager.class);
 
   private StaticSecurityConfigurationSource underTest;
 
   @Before
-  public void setup() {
-    underTest = new StaticSecurityConfigurationSource(applicationDirectories, passwordService, true);
-    when(applicationDirectories.getWorkDirectory()).thenReturn(tmp.getRoot());
+  public void setup() throws Exception {
+    underTest = new StaticSecurityConfigurationSource(passwordService, adminPasswordFileManager, true);
     when(passwordService.encryptPassword(any())).thenReturn("encrypted");
+    when(adminPasswordFileManager.readFile()).thenReturn(null);
   }
 
   @Test
   public void testGetConfiguration_argNonRandom() throws IOException {
-    underTest = new StaticSecurityConfigurationSource(applicationDirectories, passwordService, false);
+    underTest = new StaticSecurityConfigurationSource(passwordService, adminPasswordFileManager, false);
 
     SecurityConfiguration configuration = underTest.getConfiguration();
     CUser user = configuration.getUser("admin");
     assertThat(user.getPassword(), is("encrypted"));
     verify(passwordService).encryptPassword("admin123");
-
-    assertFalse(new File(tmp.getRoot(), "admin.password").exists());
+    verify(adminPasswordFileManager, never()).writeFile(any());
   }
 
   @Test
   public void testGetConfiguration_randomGeneration() throws IOException {
+    when(adminPasswordFileManager.readFile()).thenReturn(null);
     SecurityConfiguration configuration = underTest.getConfiguration();
     CUser user = configuration.getUser("admin");
     assertThat(user.getPassword(), is("encrypted"));
-    String password = getFilePassword();
-    verify(passwordService).encryptPassword(password);
+    verify(passwordService).encryptPassword(any());
+    verify(adminPasswordFileManager).writeFile(any());
+  }
+
+  @Test
+  public void testGetConfiguration_randomGenerationWriteFails() throws IOException {
+    when(adminPasswordFileManager.readFile()).thenReturn(null);
+    when(adminPasswordFileManager.writeFile(any())).thenReturn(false);
+    SecurityConfiguration configuration = underTest.getConfiguration();
+    CUser user = configuration.getUser("admin");
+    assertThat(user.getPassword(), is("encrypted"));
+    verify(passwordService).encryptPassword("admin123");
   }
 
   @Test
@@ -82,7 +84,7 @@ public class StaticSecurityConfigurationSourceTest
 
   @Test
   public void testGetConfiguration_adminUserStatusCheckNonRandom() {
-    underTest = new StaticSecurityConfigurationSource(applicationDirectories, passwordService, false);
+    underTest = new StaticSecurityConfigurationSource(passwordService, adminPasswordFileManager, false);
     SecurityConfiguration configuration = underTest.getConfiguration();
     CUser user = configuration.getUser("admin");
     assertThat(user.getStatus(), is(CUser.STATUS_ACTIVE));
@@ -93,15 +95,11 @@ public class StaticSecurityConfigurationSourceTest
    */
   @Test
   public void testGetConfiguration_reloads() throws IOException {
+    when(adminPasswordFileManager.readFile()).thenReturn(null).thenReturn("password");
     underTest.getConfiguration();
-    String password = getFilePassword();
-
     underTest.getConfiguration();
 
-    assertThat(getFilePassword(), is(password));
-  }
-
-  private String getFilePassword() throws IOException {
-    return FileUtils.readFileToString(new File(tmp.getRoot(), "admin.password"));
+    //should only write once
+    verify(adminPasswordFileManager).writeFile(any());
   }
 }

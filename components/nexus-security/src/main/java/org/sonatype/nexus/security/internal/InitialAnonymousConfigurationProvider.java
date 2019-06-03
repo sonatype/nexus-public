@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.security.internal;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -30,10 +31,19 @@ import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
 public class InitialAnonymousConfigurationProvider
   implements Provider<AnonymousConfiguration>
 {
+  private final boolean enabled;
+
+  @Inject
+  public InitialAnonymousConfigurationProvider(
+      @Named("${nexus.security.default.anonymous:-true}") final boolean enabled)
+  {
+    this.enabled = enabled;
+  }
+
   @Override
   public AnonymousConfiguration get() {
     AnonymousConfiguration model = new AnonymousConfiguration();
-    model.setEnabled(true);
+    model.setEnabled(enabled);
     model.setUserId(AnonymousConfiguration.DEFAULT_USER_ID);
     model.setRealmName(AnonymousConfiguration.DEFAULT_REALM_NAME);
     return model;

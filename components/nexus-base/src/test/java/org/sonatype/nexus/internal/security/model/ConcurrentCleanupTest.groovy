@@ -16,8 +16,8 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 import org.sonatype.goodies.testsupport.TestSupport
-import org.sonatype.nexus.common.app.ApplicationDirectories
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule
+import org.sonatype.nexus.security.config.AdminPasswordFileManager
 import org.sonatype.nexus.security.config.CPrivilege
 import org.sonatype.nexus.security.config.CRole
 import org.sonatype.nexus.security.config.CUserRoleMapping
@@ -31,7 +31,6 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TemporaryFolder
 import org.mockito.Mock
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -57,9 +56,6 @@ extends TestSupport
   @Rule
   public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory('security')
 
-  @Rule
-  public TemporaryFolder tempFolder = new TemporaryFolder();
-
   private OrientSecurityConfigurationSource source
 
   private SecurityConfiguration configuration
@@ -70,15 +66,15 @@ extends TestSupport
   PasswordService passwordService
 
   @Mock
-  ApplicationDirectories directories
+  AdminPasswordFileManager adminPasswordFileManager
 
   @Before
   public void prepare() throws Exception {
-    when(directories.getWorkDirectory()).thenReturn(tempFolder.getRoot())
     when(passwordService.encryptPassword(any())).thenReturn("encrypted")
+    when(adminPasswordFileManager.readFile()).thenReturn("password")
     source = new OrientSecurityConfigurationSource(
         database.instanceProvider,
-        new StaticSecurityConfigurationSource(directories, passwordService, true),
+        new StaticSecurityConfigurationSource(passwordService, adminPasswordFileManager, true),
         new CUserEntityAdapter(),
         new CRoleEntityAdapter(),
         new CPrivilegeEntityAdapter(),

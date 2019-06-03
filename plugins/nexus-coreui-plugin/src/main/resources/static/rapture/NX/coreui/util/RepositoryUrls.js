@@ -35,6 +35,11 @@ Ext.define('NX.coreui.util.RepositoryUrls', {
    */
   repositoryUrlStrategies: {
     maven2: function (assetModel) {
+        var repositoryName = assetModel.get('repositoryName'),
+            assetName = assetModel.get('name');
+        return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
+    },
+    apt: function (assetModel) {
       var repositoryName = assetModel.get('repositoryName'),
           assetName = assetModel.get('name');
       return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
@@ -80,6 +85,11 @@ Ext.define('NX.coreui.util.RepositoryUrls', {
       return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
     },
     gitlfs: function (assetModel) {
+      var repositoryName = assetModel.get('repositoryName'),
+          assetName = assetModel.get('name');
+      return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
+    },
+    go: function (assetModel) {
       var repositoryName = assetModel.get('repositoryName'),
           assetName = assetModel.get('name');
       return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);

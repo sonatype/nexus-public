@@ -599,6 +599,7 @@
               <exclude>**/Abstract*</exclude>
               <exclude>**/*$*</exclude>
             </excludes>
+            <excludedGroups>${it.excludedGroups}</excludedGroups>
           </configuration>
         </plugin>
 
@@ -943,6 +944,7 @@
               -->
               <exclude>**/nexus-extdirect/**/com/softwarementors/**</exclude>
               <exclude>**/nexus-ssl/**/org/sonatype/nexus/ssl/keystore/internal/geronimo/**</exclude>
+              <exclude>**/nexus-repository-apt/**/org/sonatype/nexus/repository/apt/internal/org/apache/commons/compress/archivers/ar/ArArchiveInputStream.java</exclude>
 
               <!--
               Exclude npm dependencies
@@ -1252,6 +1254,14 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration combine.children="override">
+              <groups>org.sonatype.goodies.testsupport.group.Unstable</groups>
+              <excludedGroups>org.sonatype.goodies.testsupport.group.Perf,org.sonatype.goodies.testsupport.group.External</excludedGroups>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
             <configuration combine.children="override">
               <groups>org.sonatype.goodies.testsupport.group.Unstable</groups>
               <excludedGroups>org.sonatype.goodies.testsupport.group.Perf,org.sonatype.goodies.testsupport.group.External</excludedGroups>

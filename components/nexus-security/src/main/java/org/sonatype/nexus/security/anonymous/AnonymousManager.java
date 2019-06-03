@@ -40,4 +40,11 @@ public interface AnonymousManager
    * Build anonymous subject.
    */
   Subject buildSubject();
+
+  /**
+   * Check whether the system has been configured
+   *
+   * @since 3.next
+   */
+  boolean isConfigured();
 }

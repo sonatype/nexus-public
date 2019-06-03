@@ -40,7 +40,7 @@ class PasswordSanitizedJsonSource
     extends GeneratedContentSourceSupport
 {
   private static final List<String> FIELDS = Arrays.asList(
-      "applicationPassword", "password", "systemPassword", "secret", "secretAccessKey", "sessionToken");
+      "applicationPassword", "password", "systemPassword", "secret", "secretAccessKey", "sessionToken", "aptSigning");
 
   private static final Set<String> EXCLUDED_CLASSES = Collections.unmodifiableSet(
       new HashSet<>(Arrays.asList("api_key", "usertoken_record")));

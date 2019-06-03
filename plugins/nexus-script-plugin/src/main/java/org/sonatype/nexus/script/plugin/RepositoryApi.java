@@ -35,6 +35,39 @@ public interface RepositoryApi
   }
 
   /**
+   * Create an Apt proxy repository.
+   * @param name The name of the new Repository
+   * @param remoteUrl The url of the external proxy for this Repository
+   * @param blobStoreName The BlobStore the Repository should use
+   * @param distribution The name of the required distribution
+   * @param strictContentTypeValidation Whether or not the Repository should enforce strict content types
+   * @return the newly created Repository
+   */
+  Repository createAptProxy(final String name,
+                            final String remoteUrl,
+                            final String blobStoreName,
+                            final String distribution,
+                            final boolean strictContentTypeValidation);
+
+  /**
+   * Create an Apt hosted repository.
+   * @param name The name of the new Repository
+   * @param distribution The name of the required distribution
+   * @param pgpPrivateKey GPG private key
+   * @param blobStoreName The BlobStore the Repository should use
+   * @param writePolicy The {@link WritePolicy} for the Repository
+   * @param strictContentTypeValidation Whether or not the Repository should enforce strict content types
+   * @return the newly created Repository
+   */
+  Repository createAptHosted(final String name,
+                             final String distribution,
+                             final String pgpPrivateKey,
+                             final String pgpPassPhrase,
+                             final String blobStoreName,
+                             final WritePolicy writePolicy,
+                             final boolean strictContentTypeValidation);
+
+  /**
    * Create a Maven hosted repository.
    * @param name The name of the new Repository
    * @param blobStoreName The BlobStore the Repository should use
@@ -422,6 +455,43 @@ public interface RepositoryApi
                             final String remoteUrl,
                             final String blobStoreName,
                             final boolean strictContentTypeValidation);
+
+  /**
+   * Create a Go hosted repository.
+   * @param name The name of the new Repository
+   * @param blobStoreName The BlobStore the Repository should use
+   * @param strictContentTypeValidation Whether or not the Repository should enforce strict content types
+   * @param writePolicy The {@link WritePolicy} for the Repository
+   * @return the newly created Repository
+   */
+  Repository createGolangHosted(final String name,
+                                final String blobStoreName,
+                                final boolean strictContentTypeValidation,
+                                final WritePolicy writePolicy);
+
+  /**
+   * Create a Go proxy repository.
+   * @param name The name of the new Repository
+   * @param remoteUrl The url of the external proxy for this Repository
+   * @param blobStoreName The BlobStore the Repository should use
+   * @param strictContentTypeValidation Whether or not the Repository should enforce strict content types
+   * @return the newly created Repository
+   */
+  Repository createGolangProxy(final String name,
+                               final String remoteUrl,
+                               final String blobStoreName,
+                               final boolean strictContentTypeValidation);
+
+  /**
+   * Create a Go group repository.
+   * @param name The name of the new Repository
+   * @param blobStoreName The BlobStore the Repository should use
+   * @param members The names of the Repositories in the group
+   * @return the newly created Repository
+   */
+  Repository createGolangGroup(final String name,
+                               final List<String> members,
+                               final String blobStoreName);
 
   /**
    * Create a GitLFS hosted repository.

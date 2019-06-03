@@ -23,6 +23,7 @@ Ext.define('NX.coreui.controller.Repositories', {
     'NX.Dialogs',
     'NX.Messages',
     'NX.Permissions',
+    'NX.State',
     'NX.I18n'
   ],
 
@@ -310,15 +311,25 @@ Ext.define('NX.coreui.controller.Repositories', {
    * Start polling for repository statuses.
    */
   startStatusPolling: function () {
-    var me = this;
+    var me = this,
+        uiSettings = NX.State.getValue('uiSettings'),
+        statusInterval = 5;
 
     if (me.statusProvider) {
       me.statusProvider.disconnect();
     }
+
+    if (uiSettings) {
+      statusInterval = uiSettings.statusIntervalAnonymous || statusInterval;
+      if (NX.State.getUser()) {
+        statusInterval = uiSettings.statusIntervalAuthenticated || statusInterval;
+      }
+    }
+
     me.statusProvider = Ext.direct.Manager.addProvider({
       type: 'polling',
       url: NX.direct.api.POLLING_URLS.coreui_Repository_readStatus,
-      interval: 5000,
+      interval: statusInterval * 1000,
       baseParams: {},
       listeners: {
         data: function (provider, event) {

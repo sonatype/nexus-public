@@ -109,7 +109,8 @@ Ext.define('NX.coreui.view.routing.RoutingRulesList', {
     ];
 
     me.listeners = {
-      render: me.createTooltip
+      render: me.createTooltip,
+      beforedestroy: me.destroyTooltip
     };
 
     me.callParent();
@@ -141,5 +142,11 @@ Ext.define('NX.coreui.view.routing.RoutingRulesList', {
         }
       }
     });
+  },
+
+  destroyTooltip: function(grid) {
+    if (grid.tip) {
+      grid.tip.destroy();
+    }
   }
 });

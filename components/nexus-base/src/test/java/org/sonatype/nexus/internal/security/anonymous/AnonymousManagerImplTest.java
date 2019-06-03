@@ -27,6 +27,8 @@ import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -114,5 +116,16 @@ public class AnonymousManagerImplTest
     verify(store).load();
     verify(store, never()).save(storeConfigCopy);
     verify(eventManager).post(any(AnonymousConfigurationChangedEvent.class));
+  }
+
+  @Test
+  public void testIsConfigured() {
+    when(store.load()).thenReturn(defaultConfig, storeConfig);
+    assertTrue(manager.isConfigured());
+  }
+
+  @Test
+  public void testIsConfigured_unconfigured() {
+    assertFalse(manager.isConfigured());
   }
 }

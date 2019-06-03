@@ -19,6 +19,8 @@
     <feature>nexus-blobstore-tasks</feature>
     <feature>nexus-ssl-plugin</feature>
     <feature>nexus-coreui-plugin</feature>
+    <feature>nexus-repository-apt</feature>
+    <feature>nexus-repository-golang</feature>
     <feature>nexus-repository-httpbridge</feature>
     <feature>nexus-repository-maven</feature>
     <feature>nexus-repository-npm</feature>
