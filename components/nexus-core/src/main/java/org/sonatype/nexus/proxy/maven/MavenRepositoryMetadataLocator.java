@@ -20,6 +20,7 @@ import java.io.Reader;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.maven.MavenXpp3Reader;
 import org.sonatype.nexus.proxy.IllegalOperationException;
 import org.sonatype.nexus.proxy.ItemNotFoundException;
 import org.sonatype.nexus.proxy.RequestContext;
@@ -38,7 +39,6 @@ import org.sonatype.nexus.proxy.storage.UnsupportedStorageOperationException;
 import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.apache.maven.artifact.repository.metadata.Plugin;
 import org.apache.maven.model.Model;
-import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.codehaus.plexus.util.ReaderFactory;
 import org.codehaus.plexus.util.StringUtils;
 import org.codehaus.plexus.util.xml.pull.MXParser;
