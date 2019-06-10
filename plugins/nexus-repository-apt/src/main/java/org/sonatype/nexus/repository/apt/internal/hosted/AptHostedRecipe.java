@@ -20,6 +20,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
+import org.sonatype.nexus.repository.apt.AptRestoreFacet;
 import org.sonatype.nexus.repository.apt.internal.AptFacetImpl;
 import org.sonatype.nexus.repository.apt.internal.AptFormat;
 import org.sonatype.nexus.repository.apt.internal.AptRecipeSupport;
@@ -68,6 +69,9 @@ public class AptHostedRecipe
 
   @Inject
   Provider<AptFacetImpl> aptFacet;
+
+  @Inject
+  Provider<AptRestoreFacet> aptRestoreFacet;
 
   @Inject
   Provider<AptHostedFacet> aptHostedFacet;
@@ -124,16 +128,17 @@ public class AptHostedRecipe
   LastDownloadedHandler lastDownloadedHandler;
 
   @Inject
-  public AptHostedRecipe(@Named(HostedType.NAME) Type type, @Named(AptFormat.NAME) Format format) {
+  public AptHostedRecipe(@Named(HostedType.NAME) final Type type, @Named(AptFormat.NAME) final Format format) {
     super(type, format);
   }
 
   @Override
-  public void apply(Repository repository) throws Exception {
+  public void apply(final Repository repository) throws Exception {
     repository.attach(securityFacet.get());
     repository.attach(configure(viewFacet.get()));
     repository.attach(storageFacet.get());
     repository.attach(aptFacet.get());
+    repository.attach(aptRestoreFacet.get());
     repository.attach(aptHostedFacet.get());
     repository.attach(aptSigningFacet.get());
     repository.attach(snapshotFacet.get());

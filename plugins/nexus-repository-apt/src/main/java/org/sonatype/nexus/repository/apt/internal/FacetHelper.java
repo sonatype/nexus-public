@@ -46,7 +46,7 @@ public class FacetHelper
 
   private static final String ASSET_PATH = "pool/%s/%s/%s";
 
-  public static List<ContentSpecifier> getReleaseIndexSpecifiers(AptFacet facet) {
+  public static List<ContentSpecifier> getReleaseIndexSpecifiers(final AptFacet facet) {
     if (facet.isFlat()) {
       return Arrays.asList(
           new ContentSpecifier(RELEASE, SnapshotItem.Role.RELEASE_INDEX),
@@ -63,7 +63,7 @@ public class FacetHelper
     }
   }
 
-  public static List<ContentSpecifier> getReleasePackageIndexes(AptFacet facet, String component, String arch) {
+  public static List<ContentSpecifier> getReleasePackageIndexes(final AptFacet facet, final String component, final String arch) {
     if (facet.isFlat()) {
       return Arrays.asList(
           new ContentSpecifier(PACKAGES, SnapshotItem.Role.PACKAGE_INDEX_RAW),
@@ -92,7 +92,7 @@ public class FacetHelper
     return content;
   }
 
-  public static String buildAssetName(String packageName, String version, String architecture) {
+  public static String buildAssetName(final String packageName, final String version, final String architecture) {
     return packageName + "_" + version + "_" + architecture + ".deb";
   }
 

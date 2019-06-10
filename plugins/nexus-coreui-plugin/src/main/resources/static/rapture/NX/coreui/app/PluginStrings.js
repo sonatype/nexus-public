@@ -1310,7 +1310,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Licensing_LicensingDetails_ExpirationDate_FieldLabel: 'Expiration date',
     Licensing_LicensingDetails_Type_FieldLabel: 'License type',
     Licensing_LicensingDetails_LicensedUsers_FieldLabel: 'Number of licensed users',
-    Licensing_LicensingDetails_Connections_FieldLabel: 'Number of unique IP addresses that have connected in the last 7 days',
     Licensing_LicensingDetails_Fingerprint_FieldLabel: 'Fingerprint',
     Licensing_LicensingDetails_InstallLicense_Title: 'Install license',
     Licensing_LicensingDetails_InstallLicense_Html: '<p>Installing a new license requires restarting the server to take effect</p>',
@@ -1322,16 +1321,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Licensing_LicenseAgreement_Download_Button: 'Download a copy of the agreement.',
     Licensing_Install_Success: 'License installed. Restart is only required if you are enabling new PRO features.',
     Licensing_Authentication_Validation: '{0} a license requires validation of your credentials.',
-
-    // Admin -> System -> Licensing -> Recent Connections
-    LicenseUsers_Title: 'Recent Connections',
-    LicenseUsers_Description: 'Reports active users in the last 7 days',
-    Licensing_LicenseUserList_Download_Button: 'Download',
-    Licensing_LicenseUserList_IP_Header: 'IP',
-    Licensing_LicenseUserList_Date_Header: 'Date',
-    Licensing_LicenseUserList_User_Header: 'User',
-    Licensing_LicenseUserList_Agent_Header: 'User agent',
-    Licensing_LicenseUserList_EmptyText: 'No active users in the last 7 days.',
 
     //Nexus Lifecycle -> Server
     Clm_ClmSettings_Permission_Error: 'You do not have permission to configure IQ Server',

@@ -56,6 +56,12 @@ public class AdminPasswordFileManagerImplTest
   }
 
   @Test
+  public void testGetPath() {
+    File passwordFile = new File(applicationDirectories.getWorkDirectory(), "admin.password");
+    assertThat(passwordFile.getAbsolutePath(), is(underTest.getPath()));
+  }
+
+  @Test
   public void testWriteFile() throws Exception {
     underTest.writeFile("testpass");
     String storedPassword = new String(

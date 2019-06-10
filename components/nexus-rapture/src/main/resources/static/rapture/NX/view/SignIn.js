@@ -78,6 +78,32 @@ Ext.define('NX.view.SignIn', {
     });
 
     me.callParent();
+  },
+
+  addMessage: function(message) {
+    var me = this,
+        htmlMessage = '<div id="signin-message">' + message + '</div><br>',
+        messageCmp = me.down('#signinMessage');
+
+    if (messageCmp) {
+      messageCmp.html(htmlMessage);
+    }
+    else {
+      me.down('form').insert(0, {
+        xtype: 'component',
+        itemId: 'signinMessage',
+        html: htmlMessage
+      });
+    }
+  },
+
+  clearMessage: function() {
+    var me = this,
+        messageCmp = me.down('#signinMessage');
+
+    if (messageCmp) {
+      me.down('form').remove(messageCmp);
+    }
   }
 
 });

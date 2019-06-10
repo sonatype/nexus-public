@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.function.Supplier;
 
+import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
 import org.sonatype.nexus.repository.apt.internal.debian.ControlFileParser;
 
@@ -68,5 +69,15 @@ public class AptPackageParser
       }
       return control;
     }
+  }
+
+  public static ControlFile getDebControlFile(final Blob blob)
+      throws IOException
+  {
+    final ControlFile controlFile = AptPackageParser.parsePackage(() -> blob.getInputStream());
+    if (controlFile == null) {
+      throw new IOException("Invalid debian package: no control file");
+    }
+    return controlFile;
   }
 }

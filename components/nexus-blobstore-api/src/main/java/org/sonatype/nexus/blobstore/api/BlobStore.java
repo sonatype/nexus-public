@@ -262,4 +262,12 @@ public interface BlobStore
    * @since 3.15
    */
   boolean isStarted();
+
+  /**
+   * Returns true if the blobstore has no blobs within it.
+   *
+   * @return {@code true} if the blobstore has no blobs within it.
+   * @since 3.next
+   */
+  boolean isEmpty();
 }

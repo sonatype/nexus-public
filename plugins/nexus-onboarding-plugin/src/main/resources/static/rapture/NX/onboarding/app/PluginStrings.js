@@ -25,7 +25,8 @@ Ext.define('NX.onboarding.app.PluginStrings', {
 
   keys: {
     Onboarding_Text: 'Onboarding',
-    Onboarding_Description: 'Configuration changes requiring attention'
+    Onboarding_Description: 'Configuration changes requiring attention',
+    Onboarding_Authenticate: 'Your <b>admin</b> user password is located in <br><b>{0}</b> on the server.'
   },
 
   bundles: {

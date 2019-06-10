@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.apt.internal.hosted;
 
 import java.io.IOException;
-import java.util.Collections;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -41,7 +40,7 @@ public class AptHostedHandler
     implements Handler
 {
   @Override
-  public Response handle(Context context) throws Exception {
+  public Response handle(final Context context) throws Exception {
     String path = assetPath(context);
     String method = context.getRequest().getAction();
 
@@ -65,7 +64,7 @@ public class AptHostedHandler
                           final AptHostedFacet hostedFacet) throws IOException
   {
     if ("rebuild-indexes".equals(path)) {
-      hostedFacet.rebuildIndexes(Collections.emptyList());
+      hostedFacet.rebuildIndexes();
       return HttpResponses.ok();
     }
     else if ("".equals(path)) {
@@ -77,7 +76,7 @@ public class AptHostedHandler
     }
   }
 
-  private Response doGet(String path, AptFacet aptFacet) throws IOException {
+  private Response doGet(final String path, final AptFacet aptFacet) throws IOException {
     Content content = aptFacet.get(path);
     if (content == null) {
       return HttpResponses.notFound(path);
@@ -85,7 +84,7 @@ public class AptHostedHandler
     return HttpResponses.ok(content);
   }
 
-  private String assetPath(Context context) {
+  private String assetPath(final Context context) {
     return context.getAttributes().require(AptSnapshotHandler.State.class).assetPath;
   }
 }

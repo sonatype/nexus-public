@@ -50,6 +50,9 @@ Ext.define('NX.onboarding.controller.Onboarding', {
       component: {
         'nx-onboarding-wizard': {
           closed: me.reset
+        },
+        'nx-signin': {
+          beforeshow: me.beforeShowSignin
         }
       },
       controller: {
@@ -65,8 +68,21 @@ Ext.define('NX.onboarding.controller.Onboarding', {
     });
   },
 
+  beforeShowSignin: function(signin) {
+    var doOnboarding = NX.State.getValue('onboarding.required'),
+        passwordFile = NX.State.getValue("admin.password.file"),
+        msg = NX.I18n.format('Onboarding_Authenticate', Ext.htmlEncode(passwordFile));
+
+    if (doOnboarding && passwordFile) {
+      signin.addMessage(msg);
+    }
+    else {
+      signin.clearMessage();
+    }
+  },
+
   stateChanged: function() {
-    if (NX.State.getValue('onboarding.required', false)) {
+    if (NX.State.getValue('onboarding.required') && NX.State.getUser()) {
       this.loadItems();
     }
   },

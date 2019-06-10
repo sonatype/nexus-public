@@ -21,6 +21,8 @@ public interface AdminPasswordFileManager
 {
   boolean exists();
 
+  String getPath();
+
   boolean writeFile(String password) throws IOException;
 
   String readFile() throws IOException;

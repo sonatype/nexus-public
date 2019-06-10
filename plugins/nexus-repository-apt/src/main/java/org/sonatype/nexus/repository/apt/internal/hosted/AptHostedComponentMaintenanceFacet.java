@@ -46,7 +46,7 @@ public class AptHostedComponentMaintenanceFacet
 {
   @Transactional(retryOn = ONeedRetryException.class)
   @Override
-  protected Set<String> deleteAssetTx(EntityId assetId, boolean deleteBlobs) {
+  protected Set<String> deleteAssetTx(final EntityId assetId, final boolean deleteBlobs) {
     StorageTx tx = UnitOfWork.currentTx();
     Bucket bucket = tx.findBucket(getRepository());
     Asset asset = tx.findAsset(assetId, bucket);

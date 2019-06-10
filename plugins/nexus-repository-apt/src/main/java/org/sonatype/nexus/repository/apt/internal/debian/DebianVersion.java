@@ -73,7 +73,7 @@ public class DebianVersion
   }
 
   @Override
-  public int compareTo(DebianVersion o) {
+  public int compareTo(final DebianVersion o) {
     if (this.epoch < o.epoch) {
       return -1;
     }
@@ -109,7 +109,7 @@ public class DebianVersion
     return Objects.hash(epoch, debianRevision, upstreamVersion);
   }
 
-  private int parseEpoch(final String version, int colonIndex) {
+  private int parseEpoch(final String version, final int colonIndex) {
     return colonIndex > 0 ? Integer.parseInt(version.substring(0, colonIndex)) : 0;
   }
 
@@ -119,11 +119,11 @@ public class DebianVersion
     return version.substring(beginIndex, endIndex);
   }
 
-  private String parseDebianRevision(String version, int hyphenIndex) {
+  private String parseDebianRevision(final String version, final int hyphenIndex) {
     return hyphenIndex > 0 ? version.substring(hyphenIndex + 1) : "";
   }
 
-  private static int compareDebianVersion(String a, String b) {
+  private static int compareDebianVersion(final String a, final String b) {
     Matcher ma = VERSION_PART.matcher(a);
     Matcher mb = VERSION_PART.matcher(b);
 
@@ -164,7 +164,7 @@ public class DebianVersion
     return 0;
   }
 
-  private static int compareNonNumeric(String a, String b) {
+  private static int compareNonNumeric(final String a, final String b) {
     int len = Math.max(a.length(), b.length());
     for (int i = 0; i < len; i++) {
       int ac;
@@ -199,7 +199,7 @@ public class DebianVersion
     return 0;
   }
 
-  private static int compareNumeric(String a, String b) {
+  private static int compareNumeric(final String a, final String b) {
     if (a.isEmpty() && !b.isEmpty()) {
       return -1;
     }
@@ -213,7 +213,7 @@ public class DebianVersion
     return Long.compare(Long.parseLong(a), Long.parseLong(b));
   }
 
-  private static int priorityClass(int c) {
+  private static int priorityClass(final int c) {
     return c == '~' ? -2 : c == -1 ? -1 : Character.isLetter(c) ? 0 : 1;
   }
 }

@@ -44,7 +44,7 @@ class CompressingTempFileStore
 {
   private final Map<String, FileHolder> holdersByKey = new HashMap<>();
 
-  public Writer openOutput(String key) {
+  public Writer openOutput(final String key) {
     try {
       if (holdersByKey.containsKey(key)) {
         throw new IllegalStateException("Output already opened");
@@ -91,7 +91,7 @@ class CompressingTempFileStore
   {
     private final FileHolder holder;
 
-    private FileMetadata(FileHolder holder) {
+    private FileMetadata(final FileHolder holder) {
       this.holder = holder;
     }
 

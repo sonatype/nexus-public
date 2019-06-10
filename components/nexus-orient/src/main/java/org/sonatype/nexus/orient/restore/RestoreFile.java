@@ -32,8 +32,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * </pre>
  * Examples:
  * <pre>
- *   accesslog-2017-07-06-11-16-49-3.4.1.bak
- *   accesslog-2017-07-06-11-16-49.bak
+ *   component-2017-07-06-11-16-49-3.4.1.bak
+ *   component-2017-07-06-11-16-49.bak
  * </pre>
  *
  * The nxrm_version will not be present for files generated pre-3.4.1.

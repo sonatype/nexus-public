@@ -89,11 +89,6 @@ Ext.define('NX.coreui.view.licensing.LicensingDetails', {
               xtype: 'displayfield'
             },
             {
-              name: 'connections',
-              fieldLabel: NX.I18n.get('Licensing_LicensingDetails_Connections_FieldLabel'),
-              xtype: 'displayfield'
-            },
-            {
               name: 'fingerprint',
               fieldLabel: NX.I18n.get('Licensing_LicensingDetails_Fingerprint_FieldLabel'),
               xtype: 'displayfield'

@@ -14,9 +14,9 @@ package org.sonatype.nexus.repository.apt.internal.hosted;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -58,6 +58,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.utils.DateUtils;
 
+import static java.util.Collections.singletonList;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
@@ -90,7 +91,7 @@ public class AptHostedFacet
       "WHERE bucket=:bucket " +
       "AND attributes.apt.asset_kind=:asset_kind";
 
-  public Asset ingestAsset(Payload body) throws IOException {
+  public Asset ingestAsset(final Payload body) throws IOException {
     StorageFacet storageFacet = facet(StorageFacet.class);
     try (TempBlob tempBlob = storageFacet.createTempBlob(body, FacetHelper.hashAlgorithms)) {
       ControlFile control = AptPackageParser.parsePackage(tempBlob);
@@ -102,7 +103,7 @@ public class AptHostedFacet
   }
 
   @TransactionalStoreBlob
-  protected Asset ingestAsset(ControlFile control, TempBlob body, long size, String contentType) throws IOException {
+  protected Asset ingestAsset(final ControlFile control, final TempBlob body, final long size, final String contentType) throws IOException {
     AptFacet aptFacet = getRepository().facet(AptFacet.class);
     StorageTx tx = UnitOfWork.currentTx();
     Bucket bucket = tx.findBucket(getRepository());
@@ -129,20 +130,17 @@ public class AptHostedFacet
     asset.formatAttributes().set(P_ASSET_KIND, "DEB");
     tx.saveAsset(asset);
 
-    List<AssetChange> changes = new ArrayList<>();
-    changes.add(new AssetChange(AssetAction.ADDED, asset));
-
-    rebuildIndexesInTransaction(tx, changes);
+    rebuildIndexes(singletonList(new AssetChange(AssetAction.ADDED, asset)));
     return asset;
   }
 
-  void rebuildIndexes(List<AssetChange> changes) throws IOException {
-    StorageTx tx = UnitOfWork.currentTx();
-    rebuildIndexesInTransaction(tx, changes);
+  public void rebuildIndexes() throws IOException {
+    rebuildIndexes(Collections.emptyList());
   }
 
   @TransactionalStoreMetadata
-  private void rebuildIndexesInTransaction(StorageTx tx, List<AssetChange> changes) throws IOException {
+  public void rebuildIndexes(final List<AssetChange> changes) throws IOException {
+    StorageTx tx = UnitOfWork.currentTx();
     AptFacet aptFacet = getRepository().facet(AptFacet.class);
     AptSigningFacet signingFacet = getRepository().facet(AptSigningFacet.class);
     Bucket bucket = tx.findBucket(getRepository());
@@ -182,7 +180,7 @@ public class AptHostedFacet
     aptFacet.put(releaseIndexName(RELEASE_GPG), new BytesPayload(releaseGpg, AptMimeTypes.SIGNATURE));
   }
 
-  private String buildReleaseFile(String distribution, Collection<String> architectures, String md5, String sha256) {
+  private String buildReleaseFile(final String distribution, final Collection<String> architectures, final String md5, final String sha256) {
     Paragraph p = new Paragraph(Arrays.asList(
         new ControlFile.ControlField("Suite", distribution),
         new ControlFile.ControlField("Codename", distribution), new ControlFile.ControlField("Components", "main"),
@@ -192,7 +190,7 @@ public class AptHostedFacet
     return p.toString();
   }
 
-  private CompressingTempFileStore buildPackageIndexes(StorageTx tx, Bucket bucket, List<AssetChange> changes)
+  private CompressingTempFileStore buildPackageIndexes(final StorageTx tx, final Bucket bucket, final List<AssetChange> changes)
       throws IOException
   {
     CompressingTempFileStore result = new CompressingTempFileStore();
@@ -244,7 +242,7 @@ public class AptHostedFacet
     return result;
   }
 
-  private String buildIndexSection(ControlFile cf, long size, Map<HashAlgorithm, HashCode> hashes, String assetPath) {
+  private String buildIndexSection(final ControlFile cf, final long size, final Map<HashAlgorithm, HashCode> hashes, final String assetPath) {
     Paragraph modified = cf.getParagraphs().get(0)
         .withFields(Arrays.asList(
             new ControlFile.ControlField("Filename", assetPath),
@@ -255,23 +253,23 @@ public class AptHostedFacet
     return modified.toString();
   }
 
-  private String releaseIndexName(String name) {
+  private String releaseIndexName(final String name) {
     AptFacet aptFacet = getRepository().facet(AptFacet.class);
     String dist = aptFacet.getDistribution();
     return "dists/" + dist + "/" + name;
   }
 
-  private String packageIndexName(String arch, String ext) {
+  private String packageIndexName(final String arch, final String ext) {
     AptFacet aptFacet = getRepository().facet(AptFacet.class);
     String dist = aptFacet.getDistribution();
     return "dists/" + dist + "/main/binary-" + arch + "/Packages" + ext;
   }
 
-  private String packageRelativeIndexName(String arch, String ext) {
+  private String packageRelativeIndexName(final String arch, final String ext) {
     return "main/binary-" + arch + "/Packages" + ext;
   }
 
-  private void addSignatureItem(StringBuilder builder, HashAlgorithm algo, Content content, String filename) {
+  private void addSignatureItem(final StringBuilder builder, final HashAlgorithm algo, final Content content, final String filename) {
     Map<HashAlgorithm, HashCode> hashMap = content.getAttributes().get(Content.CONTENT_HASH_CODES_MAP,
         Content.T_CONTENT_HASH_CODES_MAP);
     builder.append("\n ");
@@ -293,7 +291,7 @@ public class AptHostedFacet
 
     public final Asset asset;
 
-    AssetChange(AssetAction action, Asset asset) {
+    public AssetChange(final AssetAction action, final Asset asset) {
       super();
       this.action = action;
       this.asset = asset;

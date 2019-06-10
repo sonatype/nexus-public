@@ -28,7 +28,7 @@ public class AptSecurityFacet
 {
   @Inject
   public AptSecurityFacet(
-                          AptFormatSecurityContributor securityResource,
+                          final AptFormatSecurityContributor securityResource,
                           @Named("simple") final VariableResolverAdapter variableResolverAdapter,
                           final ContentPermissionChecker contentPermissionChecker) {
     super(securityResource, variableResolverAdapter, contentPermissionChecker);

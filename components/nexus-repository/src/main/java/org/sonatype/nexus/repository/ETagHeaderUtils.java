@@ -10,31 +10,37 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext, NX*/
+package org.sonatype.nexus.repository;
 
-/**
- * License User store.
- *
- * @since 3.0
- */
-Ext.define('NX.coreui.store.LicenseUser', {
-  extend: 'Ext.data.Store',
-  model: 'NX.coreui.model.LicenseUser',
+import static org.apache.commons.lang.StringUtils.isEmpty;
 
-  proxy: {
-    type: 'direct',
-    paramsAsHash: false,
+public class ETagHeaderUtils
+{
+  public static final String WEAK_DESIGNATOR = "W/";
 
-    api: {
-      read: 'NX.direct.licensing_Licensing.readLicenseUsers'
-    },
+  private ETagHeaderUtils() {
+  }
 
-    reader: {
-      type: 'json',
-      rootProperty: 'data',
-      successProperty: 'success'
+  /**
+   * Adds quotes to etag header per spec.
+   * https://tools.ietf.org/html/rfc7232#section-2.3
+   */
+  public static String quote(final String etag) {
+    if (etag.startsWith(WEAK_DESIGNATOR)) {
+      return etag;
+    } else {
+      return "\"" + etag + "\"";
     }
-  },
+  }
 
-  sorters: { property: 'timestamp', direction: 'DESC' }
-});
+  /**
+   * Removes quotes from etag header.
+   */
+  public static String extract(final String etag) {
+    if (!isEmpty(etag) && etag.startsWith("\"") && etag.endsWith("\"")) {
+      return etag.substring(1, etag.length() - 1);
+    } else {
+      return etag;
+    }
+  }
+}

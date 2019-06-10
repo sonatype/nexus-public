@@ -24,7 +24,7 @@ public class AptWritePolicySelector
 {
 
   @Override
-  public WritePolicy select(Asset asset, WritePolicy configured) {
+  public WritePolicy select(final Asset asset, final WritePolicy configured) {
     if (WritePolicy.ALLOW_ONCE == configured) {
       String name = asset.name();
       if (name.endsWith(".deb")) {

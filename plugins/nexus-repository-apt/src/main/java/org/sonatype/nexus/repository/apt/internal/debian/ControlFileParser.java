@@ -45,7 +45,7 @@ public class ControlFileParser
 
   private String fieldName;
 
-  public ControlFile parseControlFile(InputStream stream) throws IOException {
+  public ControlFile parseControlFile(final InputStream stream) throws IOException {
     paragraphs.clear();
     fields.clear();
     valueBuilder.setLength(0);
@@ -97,7 +97,7 @@ public class ControlFileParser
     inField = false;
   }
 
-  private void beginField(String line) throws IOException {
+  private void beginField(final String line) throws IOException {
     Matcher m = FIELD_PATTERN.matcher(line);
     if (!m.matches()) {
       throw new IOException("Invalid line: " + line);

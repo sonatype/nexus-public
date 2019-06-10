@@ -31,7 +31,7 @@ public class AptProxySnapshotFacet
     implements AptSnapshotFacet
 {
   @Override
-  protected List<SnapshotItem> fetchSnapshotItems(List<ContentSpecifier> specs) throws IOException {
+  protected List<SnapshotItem> fetchSnapshotItems(final List<ContentSpecifier> specs) throws IOException {
     AptProxyFacet proxyFacet = getRepository().facet(AptProxyFacet.class);
     return proxyFacet.getSnapshotItems(specs);
   }

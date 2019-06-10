@@ -183,7 +183,7 @@ public class BlobStoreGroupDescriptor
         for (String existingMemberName : memberNames(currentConfiguration)) {
           if (!memberNames.contains(existingMemberName)) {
             BlobStore existingMember = blobStoreManager.get(existingMemberName);
-            if (existingMember.isWritable() || existingMember.getMetrics().getBlobCount() > 0L) {
+            if (existingMember.isWritable() || !existingMember.isEmpty()) {
               throw new ValidationException(
                   format("Blob Store '%s' cannot be removed from Blob Store Group '%s', " +
                       "use 'Admin - Remove a member from a blob store group' task instead",

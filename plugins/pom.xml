@@ -40,6 +40,7 @@
     <module>nexus-repository-apt</module>
     <module>nexus-repository-pypi</module>
     <module>nexus-repository-raw</module>
+    <module>nexus-restore-apt</module>
     <module>nexus-restore-maven</module>
     <module>nexus-restore-npm</module>
     <module>nexus-restore-pypi</module>
@@ -234,6 +235,20 @@
         <groupId>org.sonatype.nexus.plugins</groupId>
         <artifactId>nexus-repository-apt</artifactId>
         <version>3.17.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-restore-apt</artifactId>
+        <version>3.17.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-restore-apt</artifactId>
+        <version>3.17.0-SNAPSHOT</version>
+        <classifier>features</classifier>
+        <type>xml</type>
       </dependency>
 
       <dependency>

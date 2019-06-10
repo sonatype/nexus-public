@@ -23,7 +23,7 @@ public class Release
 {
   private final ControlFile index;
 
-  public Release(ControlFile index) {
+  public Release(final ControlFile index) {
     super();
     this.index = index;
   }
@@ -60,7 +60,7 @@ public class Release
     return getValue("Description");
   }
 
-  private Optional<String> getValue(String name) {
+  private Optional<String> getValue(final String name) {
     return index.getField(name).map(e -> e.value);
   }
 }

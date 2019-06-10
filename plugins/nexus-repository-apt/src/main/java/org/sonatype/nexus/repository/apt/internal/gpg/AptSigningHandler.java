@@ -35,7 +35,7 @@ public class AptSigningHandler
     implements Handler
 {
   @Override
-  public Response handle(Context context) throws Exception {
+  public Response handle(final Context context) throws Exception {
     String path = assetPath(context);
     String method = context.getRequest().getAction();
     AptSigningFacet facet = context.getRepository().facet(AptSigningFacet.class);
@@ -47,7 +47,7 @@ public class AptSigningHandler
     return context.proceed();
   }
 
-  private String assetPath(Context context) {
+  private String assetPath(final Context context) {
     return context.getAttributes().require(AptSnapshotHandler.State.class).assetPath;
   }
 }

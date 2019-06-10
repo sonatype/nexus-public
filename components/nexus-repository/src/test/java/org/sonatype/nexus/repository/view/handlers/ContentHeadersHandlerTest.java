@@ -71,6 +71,18 @@ public class ContentHeadersHandlerTest
   }
 
   @Test
+  public void okResponseWithWeakEtag() throws Exception {
+    final Content content = new Content(new StringPayload(payloadString, "text/plain"));
+    content.getAttributes().set(Content.CONTENT_LAST_MODIFIED, now);
+    content.getAttributes().set(Content.CONTENT_ETAG, "W/\"etag\"");
+    when(context.proceed()).thenReturn(HttpResponses.ok(content));
+    final Response r = subject.handle(context);
+    assertThat(r.getStatus().isSuccessful(), is(true));
+    assertThat(r.getHeaders().get(HttpHeaders.LAST_MODIFIED), equalTo(DateTimeUtils.formatDateTime(now)));
+    assertThat(r.getHeaders().get(HttpHeaders.ETAG), equalTo("W/\"etag\""));
+  }
+
+  @Test
   public void okResponseNoExtraData() throws Exception {
     when(context.proceed()).thenReturn(
         HttpResponses.ok(new Content(new StringPayload(payloadString, "text/plain"))));

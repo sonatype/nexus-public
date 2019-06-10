@@ -10,19 +10,28 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext, NX*/
+package org.sonatype.nexus.repository.apt;
+
+import java.io.IOException;
+
+import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.repository.Facet;
+import org.sonatype.nexus.repository.Type;
+import org.sonatype.nexus.repository.storage.AssetBlob;
+import org.sonatype.nexus.repository.storage.Query;
+import org.sonatype.nexus.repository.view.Content;
 
 /**
- * License User model.
- *
- * @since 3.0
+ * @since 3.next
  */
-Ext.define('NX.coreui.model.LicenseUser', {
-  extend: 'Ext.data.Model',
-  fields: [
-    {name: 'ip', type: 'string', sortType: 'asUCText'},
-    {name: 'userId', type: 'string', sortType: 'asUCText', convert: Ext.htmlEncode },
-    {name: 'userAgent', type: 'string', sortType: 'asUCText', convert: Ext.htmlEncode },
-    {name: 'timestamp', type: 'date', dateFormat: 'c' }
-  ]
-});
+@Facet.Exposed
+public interface AptRestoreFacet extends Facet
+{
+  Content restore(final AssetBlob assetBlob, final String path) throws IOException;
+
+  boolean assetExists(final String path);
+
+  Query getComponentQuery(final Blob blob) throws IOException;
+
+  boolean componentRequired(final String name);
+}

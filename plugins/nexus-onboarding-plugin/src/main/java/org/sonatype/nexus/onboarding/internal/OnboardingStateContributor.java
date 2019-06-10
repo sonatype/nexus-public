@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.onboarding.internal;
 
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.annotation.Nullable;
@@ -23,9 +23,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.onboarding.OnboardingConfiguration;
 import org.sonatype.nexus.onboarding.OnboardingManager;
 import org.sonatype.nexus.rapture.StateContributor;
-import org.sonatype.nexus.security.SecurityHelper;
-
-import org.apache.shiro.subject.Subject;
+import org.sonatype.nexus.security.config.AdminPasswordFileManager;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -41,18 +39,18 @@ public class OnboardingStateContributor
 
   private final OnboardingManager onboardingManager;
 
-  private final SecurityHelper securityHelper;
+  private final AdminPasswordFileManager adminPasswordFileManager;
 
   private boolean needsOnboarding = true;
 
   @Inject
   public OnboardingStateContributor(final OnboardingConfiguration onboardingConfiguration,
                                     final OnboardingManager onboardingManager,
-                                    final SecurityHelper securityHelper)
+                                    final AdminPasswordFileManager adminPasswordFileManager)
   {
     this.onboardingConfiguration = checkNotNull(onboardingConfiguration);
     this.onboardingManager = checkNotNull(onboardingManager);
-    this.securityHelper = checkNotNull(securityHelper);
+    this.adminPasswordFileManager = checkNotNull(adminPasswordFileManager);
   }
 
   @Nullable
@@ -61,18 +59,16 @@ public class OnboardingStateContributor
     //cache the onboarding flag, once it's false there is no longer a need to check anymore
     needsOnboarding = needsOnboarding && onboardingConfiguration.isEnabled() && onboardingManager.needsOnboarding();
 
-    if (needsOnboarding && isAdmin(securityHelper.subject())) {
-      return Collections.singletonMap("onboarding.required", true);
+    HashMap<String, Object> properties = new HashMap<>();
+
+    if (needsOnboarding) {
+      properties.put("onboarding.required", true);
     }
 
-    return null;
-  }
-
-  private boolean isAdmin(Subject subject) {
-    if (subject == null || subject.getPrincipal() == null) {
-      return false;
+    if (adminPasswordFileManager.exists()) {
+      properties.put("admin.password.file", adminPasswordFileManager.getPath());
     }
 
-    return subject.isPermitted("nexus:*");
+    return properties.isEmpty() ? null : properties;
   }
 }

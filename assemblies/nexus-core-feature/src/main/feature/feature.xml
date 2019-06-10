@@ -28,6 +28,7 @@
     <feature>nexus-repository-raw</feature>
     <feature>nexus-restore-maven</feature>
     <feature>nexus-blobstore-s3</feature>
+    <feature>nexus-restore-apt</feature>
     <feature>nexus-restore-npm</feature>
     <feature>nexus-restore-pypi</feature>
     <feature>nexus-restore-raw</feature>

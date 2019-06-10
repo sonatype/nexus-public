@@ -38,13 +38,8 @@ public class DatabaseInstanceNames
    */
   public static final String SECURITY = "security";
 
-  /**
-   * Name of the database storing access log data for licensing.
-   */
-  public static final String ACCESSLOG = "accesslog";
-
   public static final Set<String> DATABASE_NAMES = ImmutableSet.of(
-      ACCESSLOG, CONFIG, COMPONENT, SECURITY);
+      CONFIG, COMPONENT, SECURITY);
 
   private DatabaseInstanceNames() {
     // no construction

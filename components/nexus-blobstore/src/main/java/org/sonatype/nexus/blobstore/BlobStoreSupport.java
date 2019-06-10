@@ -249,4 +249,9 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
       timer.update(value, TimeUnit.NANOSECONDS);
     }
   }
+
+  @Override
+  public boolean isEmpty() {
+    return !getBlobIdStream().findAny().isPresent();
+  }
 }

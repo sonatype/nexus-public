@@ -32,29 +32,29 @@ public class ControlFile
   {
     private List<Paragraph> paragraphs;
 
-    private Builder(List<Paragraph> paragraphs) {
+    private Builder(final List<Paragraph> paragraphs) {
       super();
       this.paragraphs = paragraphs;
     }
 
-    public Builder removeParagraphs(Predicate<Paragraph> p) {
+    public Builder removeParagraphs(final Predicate<Paragraph> p) {
       paragraphs = paragraphs.stream().filter(p).collect(Collectors.toList());
       return this;
     }
 
-    public Builder addParagraph(Paragraph p) {
+    public Builder addParagraph(final Paragraph p) {
       paragraphs.add(p);
       return this;
     }
 
-    public Builder replaceParagraph(Predicate<Paragraph> predicate, Paragraph p) {
+    public Builder replaceParagraph(final Predicate<Paragraph> predicate, final Paragraph p) {
       paragraphs = Stream
           .concat(paragraphs.stream().filter(predicate), Stream.of(p))
           .collect(Collectors.toList());
       return this;
     }
 
-    public Builder transformParagraphs(Predicate<Paragraph> predicate, Function<Paragraph, Paragraph> transform) {
+    public Builder transformParagraphs(final Predicate<Paragraph> predicate, final Function<Paragraph, Paragraph> transform) {
       paragraphs = paragraphs.stream()
           .filter(predicate)
           .map(transform)
@@ -73,7 +73,7 @@ public class ControlFile
 
   private final List<Paragraph> paragraphs;
 
-  public ControlFile(List<Paragraph> paragraphs) {
+  public ControlFile(final List<Paragraph> paragraphs) {
     super();
     this.paragraphs = new ArrayList<>(paragraphs);
   }
@@ -86,7 +86,7 @@ public class ControlFile
     return paragraphs;
   }
 
-  public Optional<ControlField> getField(String name) {
+  public Optional<ControlField> getField(final String name) {
     if (paragraphs.isEmpty()) {
       return Optional.empty();
     }
@@ -106,12 +106,12 @@ public class ControlFile
   {
     private final List<ControlField> fields;
 
-    public Paragraph(List<ControlField> fields) {
+    public Paragraph(final List<ControlField> fields) {
       super();
       this.fields = new ArrayList<>(fields);
     }
 
-    public Optional<ControlField> getField(String name) {
+    public Optional<ControlField> getField(final String name) {
       for (ControlField f : fields) {
         if (f.key.equals(name)) {
           return Optional.of(f);
@@ -125,7 +125,7 @@ public class ControlFile
       return Collections.unmodifiableList(fields);
     }
 
-    public Paragraph withFields(List<ControlField> updateFields) {
+    public Paragraph withFields(final List<ControlField> updateFields) {
       Map<String, ControlField> index = updateFields.stream().collect(Collectors.toMap(f -> f.key, f -> f));
       return new Paragraph(Stream
           .concat(fields.stream().filter(f -> !index.containsKey(f.key)), updateFields.stream())
@@ -146,7 +146,7 @@ public class ControlFile
 
     public final String value;
 
-    public ControlField(String key, String value) {
+    public ControlField(final String key, final String value) {
       super();
       this.key = key;
       this.value = value;

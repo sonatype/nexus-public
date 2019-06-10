@@ -25,7 +25,7 @@ public class PackageInfo
 
   private final ControlFile controlFile;
 
-  public PackageInfo(ControlFile controlFile) {
+  public PackageInfo(final ControlFile controlFile) {
     this.controlFile = controlFile;
   }
 
@@ -41,7 +41,7 @@ public class PackageInfo
     return getField(ARCHITECTURE_FIELD);
   }
 
-  private String getField(String fieldName) {
+  private String getField(final String fieldName) {
     return controlFile.getField(fieldName).map(f -> f.value).get();
   }
 }

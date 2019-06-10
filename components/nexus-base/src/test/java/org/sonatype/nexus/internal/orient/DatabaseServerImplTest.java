@@ -85,7 +85,7 @@ public class DatabaseServerImplTest
 
     candidates.forEach(this::createDatabase);
 
-    assertThat(underTest.databases(), containsInAnyOrder("component", "config", "security", "accesslog"));
+    assertThat(underTest.databases(), containsInAnyOrder("component", "config", "security"));
   }
 
   @Test
@@ -109,13 +109,9 @@ public class DatabaseServerImplTest
 
     assertThat(underTest.databases(), containsInAnyOrder("component", "config"));
 
-    createDatabase("accesslog");
-
-    assertThat(underTest.databases(), containsInAnyOrder("component", "config", "accesslog"));
-
     createDatabase("security");
 
-    assertThat(underTest.databases(), containsInAnyOrder("component", "config", "security", "accesslog"));
+    assertThat(underTest.databases(), containsInAnyOrder("component", "config", "security"));
   }
 
   private void createDatabase(final String name) {

@@ -24,12 +24,12 @@ public class AllSnapshotComponentSelector
 {
 
   @Override
-  public List<String> getArchitectures(Release release) {
+  public List<String> getArchitectures(final Release release) {
     return release.getArchitectures();
   }
 
   @Override
-  public List<String> getComponents(Release release) {
+  public List<String> getComponents(final Release release) {
     return release.getComponents();
   }
 

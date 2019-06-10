@@ -78,6 +78,11 @@ public class AdminPasswordFileManagerImpl
   }
 
   @Override
+  public String getPath() {
+    return adminPasswordFile.getAbsolutePath();
+  }
+
+  @Override
   public String readFile() throws IOException {
     if (adminPasswordFile.exists()) {
       return new String(Files.readAllBytes(adminPasswordFile.toPath()), StandardCharsets.UTF_8);

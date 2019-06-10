@@ -17,6 +17,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.repository.ETagHeaderUtils;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
@@ -53,7 +54,7 @@ public class ContentHeadersHandler
       }
       final String etag = content.getAttributes().get(Content.CONTENT_ETAG, String.class);
       if (etag != null) {
-        response.getHeaders().set(HttpHeaders.ETAG, "\"" + etag + "\"");
+        response.getHeaders().set(HttpHeaders.ETAG, ETagHeaderUtils.quote(etag));
       }
     }
     return response;

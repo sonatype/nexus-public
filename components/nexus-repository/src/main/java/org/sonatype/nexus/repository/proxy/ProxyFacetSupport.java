@@ -27,6 +27,7 @@ import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.common.io.Cooperation;
 import org.sonatype.nexus.common.io.CooperationFactory;
 import org.sonatype.nexus.repository.BadRequestException;
+import org.sonatype.nexus.repository.ETagHeaderUtils;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.cache.CacheController;
@@ -45,7 +46,6 @@ import org.sonatype.nexus.repository.view.payloads.HttpEntityPayload;
 import org.sonatype.nexus.validation.constraint.Url;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Strings;
 import com.google.common.io.Closeables;
 import com.google.common.net.HttpHeaders;
 import org.apache.http.Header;
@@ -73,6 +73,7 @@ public abstract class ProxyFacetSupport
     extends FacetSupport
     implements ProxyFacet
 {
+
   @VisibleForTesting
   static final String CONFIG_KEY = "proxy";
 
@@ -416,7 +417,7 @@ public abstract class ProxyFacetSupport
       }
       final String etag = stale.getAttributes().get(Content.CONTENT_ETAG, String.class);
       if (etag != null) {
-        request.addHeader(HttpHeaders.IF_NONE_MATCH, "\"" + etag + "\"");
+        request.addHeader(HttpHeaders.IF_NONE_MATCH, ETagHeaderUtils.quote(etag));
       }
     }
     log.debug("Fetching: {}", request);
@@ -435,7 +436,9 @@ public abstract class ProxyFacetSupport
 
       final Content result = createContent(context, response);
       result.getAttributes().set(Content.CONTENT_LAST_MODIFIED, extractLastModified(request, response));
-      result.getAttributes().set(Content.CONTENT_ETAG, extractETag(response));
+      final Header etagHeader = response.getLastHeader(HttpHeaders.ETAG);
+      result.getAttributes().set(Content.CONTENT_ETAG, etagHeader == null ? null : ETagHeaderUtils.extract(etagHeader.getValue()));
+
       result.getAttributes().set(CacheInfo.class, cacheInfo);
       return result;
     }
@@ -504,26 +507,6 @@ public abstract class ProxyFacetSupport
       catch (Exception ex) {
         log.warn("Could not parse date '{}' received from {}; using system current time as item creation time",
             lastModifiedHeader, request.getURI());
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Extract ETag from response if possible, or {@code null}.
-   */
-  @Nullable
-  private String extractETag(final HttpResponse response) {
-    final Header etagHeader = response.getLastHeader(HttpHeaders.ETAG);
-    if (etagHeader != null) {
-      final String etag = etagHeader.getValue();
-      if (!Strings.isNullOrEmpty(etag)) {
-        if (etag.startsWith("\"") && etag.endsWith("\"")) {
-          return etag.substring(1, etag.length() - 1);
-        }
-        else {
-          return etag;
-        }
       }
     }
     return null;

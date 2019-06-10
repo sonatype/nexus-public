@@ -102,7 +102,7 @@ public class AptSigningFacet
     return new Content(new BytesPayload(buffer.toByteArray(), AptMimeTypes.PUBLICKEY));
   }
 
-  public byte[] signInline(String input) throws IOException {
+  public byte[] signInline(final String input) throws IOException {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     try {
       PGPSecretKey signKey = readSecretKey();
@@ -143,7 +143,7 @@ public class AptSigningFacet
     return buffer.toByteArray();
   }
 
-  public byte[] signExternal(String input) throws IOException {
+  public byte[] signExternal(final String input) throws IOException {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     try {
       PGPSecretKey signKey = readSecretKey();

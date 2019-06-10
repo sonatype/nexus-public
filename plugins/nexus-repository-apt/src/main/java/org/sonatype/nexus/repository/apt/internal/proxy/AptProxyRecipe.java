@@ -20,6 +20,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
+import org.sonatype.nexus.repository.apt.AptRestoreFacet;
 import org.sonatype.nexus.repository.apt.internal.AptFacetImpl;
 import org.sonatype.nexus.repository.apt.internal.AptFormat;
 import org.sonatype.nexus.repository.apt.internal.AptRecipeSupport;
@@ -32,6 +33,7 @@ import org.sonatype.nexus.repository.http.PartialFetchHandler;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.proxy.ProxyHandler;
 import org.sonatype.nexus.repository.purge.PurgeUnusedFacet;
+import org.sonatype.nexus.repository.routing.RoutingRuleHandler;
 import org.sonatype.nexus.repository.search.SearchFacet;
 import org.sonatype.nexus.repository.security.SecurityHandler;
 import org.sonatype.nexus.repository.storage.SingleAssetComponentMaintenance;
@@ -86,6 +88,9 @@ public class AptProxyRecipe
   Provider<AptFacetImpl> aptFacet;
 
   @Inject
+  Provider<AptRestoreFacet> aptRestoreFacet;
+
+  @Inject
   Provider<StorageFacet> storageFacet;
 
   @Inject
@@ -134,12 +139,15 @@ public class AptProxyRecipe
   LastDownloadedHandler lastDownloadedHandler;
 
   @Inject
-  public AptProxyRecipe(@Named(ProxyType.NAME) Type type, @Named(AptFormat.NAME) Format format) {
+  RoutingRuleHandler routingRuleHandler;
+
+  @Inject
+  public AptProxyRecipe(@Named(ProxyType.NAME) final Type type, @Named(AptFormat.NAME) final Format format) {
     super(type, format);
   }
 
   @Override
-  public void apply(Repository repository) throws Exception {
+  public void apply(final Repository repository) throws Exception {
     repository.attach(securityFacet.get());
     repository.attach(configure(viewFacet.get()));
     repository.attach(httpClientFacet.get());
@@ -147,6 +155,7 @@ public class AptProxyRecipe
     repository.attach(proxyFacet.get());
     repository.attach(proxySnapshotFacet.get());
     repository.attach(aptFacet.get());
+    repository.attach(aptRestoreFacet.get());
     repository.attach(storageFacet.get());
     repository.attach(attributesFacet.get());
     repository.attach(componentMaintenance.get());
@@ -160,6 +169,7 @@ public class AptProxyRecipe
     builder.route(new Route.Builder().matcher(new AlwaysMatcher())
         .handler(timingHandler)
         .handler(securityHandler)
+        .handler(routingRuleHandler)
         .handler(exceptionHandler)
         .handler(negativeCacheHandler)
         .handler(conditionalRequestHandler)

@@ -26,12 +26,12 @@ import org.sonatype.nexus.repository.view.Content;
 public interface AptSnapshotFacet
     extends Facet
 {
-  boolean isSnapshotableFile(String path);
+  boolean isSnapshotableFile(final String path);
 
-  void createSnapshot(String id, SnapshotComponentSelector spec) throws IOException;
+  void createSnapshot(final String id, final SnapshotComponentSelector spec) throws IOException;
 
   @Nullable
-  Content getSnapshotFile(String id, String path) throws IOException;
+  Content getSnapshotFile(final String id, final String path) throws IOException;
 
-  void deleteSnapshot(String id) throws IOException;
+  void deleteSnapshot(final String id) throws IOException;
 }

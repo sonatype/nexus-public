@@ -37,7 +37,7 @@ public class SnapshotItem
 
     private final String mimeType;
 
-    Role(String mimeType) {
+    Role(final String mimeType) {
       this.mimeType = mimeType;
     }
 
@@ -52,7 +52,7 @@ public class SnapshotItem
 
     public final Role role;
 
-    public ContentSpecifier(String path, Role role) {
+    public ContentSpecifier(final String path, final Role role) {
       super();
       this.path = path;
       this.role = role;
@@ -63,7 +63,7 @@ public class SnapshotItem
 
   public final Content content;
 
-  public SnapshotItem(ContentSpecifier specifier, Content content) {
+  public SnapshotItem(final ContentSpecifier specifier, final Content content) {
     super();
     this.specifier = specifier;
     this.content = content;

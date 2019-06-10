@@ -49,14 +49,14 @@ public class AptSnapshotHandler
   {
     public final String assetPath;
 
-    public State(String assetPath) {
+    public State(final String assetPath) {
       super();
       this.assetPath = assetPath;
     }
   }
 
   @Override
-  public Response handle(Context context) throws Exception {
+  public Response handle(final Context context) throws Exception {
     String path = context.getRequest().getPath();
     Matcher matcher = SNAPSHOT_PATH_PATTERN.matcher(path);
     if (!matcher.matches()) {
@@ -75,7 +75,7 @@ public class AptSnapshotHandler
     }
   }
 
-  private Response handleSnapshotAdminRequest(Context context, String id) throws Exception {
+  private Response handleSnapshotAdminRequest(final Context context, final String id) throws Exception {
     String method = context.getRequest().getAction();
     Repository repository = context.getRepository();
     AptSnapshotFacet snapshotFacet = repository.facet(AptSnapshotFacet.class);
@@ -112,7 +112,7 @@ public class AptSnapshotHandler
     return HttpResponses.noContent();
   }
 
-  private Response handleSnapshotFetchRequest(Context context, String id, String path) throws Exception {
+  private Response handleSnapshotFetchRequest(final Context context, final String id, final String path) throws Exception {
     Repository repository = context.getRepository();
     AptSnapshotFacet snapshotFacet = repository.facet(AptSnapshotFacet.class);
     if (snapshotFacet.isSnapshotableFile(path)) {

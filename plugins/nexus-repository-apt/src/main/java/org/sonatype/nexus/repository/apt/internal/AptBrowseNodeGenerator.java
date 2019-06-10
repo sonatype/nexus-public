@@ -37,7 +37,7 @@ public class AptBrowseNodeGenerator
 {
 
   @Override
-  public List<String> computeAssetPath(Asset asset, Component component) {
+  public List<String> computeAssetPath(final Asset asset, final Component component) {
     List<String> path;
     if (component != null) {
       path = computeComponentPath(asset, component);
@@ -57,7 +57,7 @@ public class AptBrowseNodeGenerator
   }
 
   @Override
-  public List<String> computeComponentPath(Asset asset, Component component) {
+  public List<String> computeComponentPath(final Asset asset, final Component component) {
     List<String> path = new ArrayList<>();
     path.add("packages");
     path.add(component.name().substring(0, 1).toLowerCase());

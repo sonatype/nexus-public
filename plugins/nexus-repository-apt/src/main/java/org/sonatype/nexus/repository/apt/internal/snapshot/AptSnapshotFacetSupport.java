@@ -56,18 +56,18 @@ public abstract class AptSnapshotFacetSupport
     implements AptSnapshotFacet
 {
   @Override
-  public boolean isSnapshotableFile(String path) {
+  public boolean isSnapshotableFile(final String path) {
     return !path.endsWith(".deb") && !path.endsWith(".DEB");
   }
 
   @Override
-  public void createSnapshot(String id, SnapshotComponentSelector selector) throws IOException {
+  public void createSnapshot(final String id, final SnapshotComponentSelector selector) throws IOException {
     Iterable<SnapshotItem> snapshots = collectSnapshotItems(selector);
     createSnapshot(id, snapshots);
   }
 
   @Transactional(retryOn = {ONeedRetryException.class})
-  protected void createSnapshot(String id, Iterable<SnapshotItem> snapshots) throws IOException {
+  protected void createSnapshot(final String id, final Iterable<SnapshotItem> snapshots) throws IOException {
     StorageTx tx = UnitOfWork.currentTx();
     StorageFacet storageFacet = facet(StorageFacet.class);
     Bucket bucket = tx.findBucket(getRepository());
@@ -90,7 +90,7 @@ public abstract class AptSnapshotFacetSupport
   @Transactional(retryOn = {ONeedRetryException.class})
   @Override
   @Nullable
-  public Content getSnapshotFile(String id, String path) throws IOException {
+  public Content getSnapshotFile(final String id, final String path) throws IOException {
     StorageTx tx = UnitOfWork.currentTx();
     Bucket bucket = tx.findBucket(getRepository());
     final Asset asset = tx.findAssetWithProperty(P_NAME, createAssetPath(id, path), bucket);
@@ -104,7 +104,7 @@ public abstract class AptSnapshotFacetSupport
 
   @Transactional(retryOn = {ONeedRetryException.class})
   @Override
-  public void deleteSnapshot(String id) throws IOException {
+  public void deleteSnapshot(final String id) throws IOException {
     String path = createAssetPath(id, "");
 
     StorageTx tx = UnitOfWork.currentTx();
@@ -117,7 +117,7 @@ public abstract class AptSnapshotFacetSupport
         .forEachRemaining(tx::deleteAsset);
   }
 
-  protected Iterable<SnapshotItem> collectSnapshotItems(SnapshotComponentSelector selector) throws IOException {
+  protected Iterable<SnapshotItem> collectSnapshotItems(final SnapshotComponentSelector selector) throws IOException {
     AptFacet aptFacet = getRepository().facet(AptFacet.class);
 
     List<SnapshotItem> result = new ArrayList<>();
@@ -195,10 +195,10 @@ public abstract class AptSnapshotFacetSupport
     return result;
   }
 
-  private String createAssetPath(String id, String path) {
+  private String createAssetPath(final String id, final String path) {
     return "snapshots/" + id + "/" + path;
   }
 
-  protected abstract List<SnapshotItem> fetchSnapshotItems(List<SnapshotItem.ContentSpecifier> specs)
+  protected abstract List<SnapshotItem> fetchSnapshotItems(final List<SnapshotItem.ContentSpecifier> specs)
       throws IOException;
 }

@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.apt.internal;
 
 import java.io.IOException;
-import java.util.Optional;
 
 import javax.annotation.Nullable;
 import javax.inject.Named;
@@ -114,7 +113,7 @@ public class AptFacetImpl
   @Override
   @Nullable
   @TransactionalTouchBlob
-  public Content get(String path) throws IOException {
+  public Content get(final String path) throws IOException {
     final StorageTx tx = UnitOfWork.currentTx();
     final Asset asset = tx.findAssetWithProperty(P_NAME, path, tx.findBucket(getRepository()));
     if (asset == null) {
@@ -126,17 +125,20 @@ public class AptFacetImpl
 
   @Override
   @TransactionalStoreBlob
-  public Content put(String path, Payload content) throws IOException {
+  public Content put(final String path, final Payload content) throws IOException {
     return put(path, content, null);
   }
 
   @Override
   @TransactionalStoreBlob
-  public Content put(String path, Payload content, PackageInfo info) throws IOException {
+  public Content put(final String path, final Payload content, final PackageInfo info) throws IOException {
     StorageFacet storageFacet = facet(StorageFacet.class);
     try (final TempBlob tempBlob = storageFacet.createTempBlob(content, FacetHelper.hashAlgorithms)) {
       StorageTx tx = UnitOfWork.currentTx();
-      Asset asset = findOrCreateAsset(tx, path, Optional.ofNullable(info), tempBlob);
+      Asset asset = isDebPackageContentType(path)
+          ? findOrCreateDebAsset(tx, path,
+          info != null ? info : new PackageInfo(AptPackageParser.getDebControlFile(tempBlob.getBlob())))
+          : findOrCreateMetadataAsset(tx, path);
 
       AttributesMap contentAttributes = null;
       if (content instanceof Content) {
@@ -156,29 +158,32 @@ public class AptFacetImpl
     }
   }
 
-  private Asset findOrCreateAsset(StorageTx tx, String path, Optional<PackageInfo> info, TempBlob tempBlob)
-      throws IOException
+  @Override
+  public Asset findOrCreateDebAsset(final StorageTx tx, final String path, final PackageInfo packageInfo)
   {
     Bucket bucket = tx.findBucket(getRepository());
     Asset asset = tx.findAssetWithProperty(P_NAME, path, bucket);
     if (asset == null) {
-      if (isDebPackageContentType(path)) {
-        Component component = findOrCreateComponent(
-            tx,
-            bucket,
-            info.orElse(new PackageInfo(AptPackageParser.parsePackage(tempBlob))));
-        asset = tx.createAsset(bucket, component);
-      }
-      else {
-        asset = tx.createAsset(bucket, getRepository().getFormat());
-      }
-      asset = asset.name(path);
+      Component component = findOrCreateComponent(
+          tx,
+          bucket,
+          packageInfo);
+      asset = tx.createAsset(bucket, component).name(path);
     }
 
-    return  asset;
+    return asset;
   }
 
-  private Component findOrCreateComponent(StorageTx tx, Bucket bucket, PackageInfo info) {
+  @Override
+  public Asset findOrCreateMetadataAsset(final StorageTx tx, final String path) {
+    Bucket bucket = tx.findBucket(getRepository());
+    Asset asset = tx.findAssetWithProperty(P_NAME, path, bucket);
+    return asset != null
+        ? asset
+        : tx.createAsset(bucket, getRepository().getFormat()).name(path);
+  }
+
+  private Component findOrCreateComponent(final StorageTx tx, final Bucket bucket, final PackageInfo info) {
     String name = info.getPackageName();
     String version = info.getVersion();
     String architecture = info.getArchitecture();
@@ -206,7 +211,7 @@ public class AptFacetImpl
 
   @Override
   @TransactionalDeleteBlob
-  public boolean delete(String path) throws IOException {
+  public boolean delete(final String path) throws IOException {
     StorageTx tx = UnitOfWork.currentTx();
     Bucket bucket = tx.findBucket(getRepository());
     Asset asset = tx.findAssetWithProperty(P_NAME, path, bucket);

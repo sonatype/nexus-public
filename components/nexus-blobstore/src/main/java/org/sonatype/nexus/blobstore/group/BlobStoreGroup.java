@@ -300,6 +300,11 @@ public class BlobStoreGroup
   }
 
   @Override
+  public boolean isEmpty() {
+    return members.get().stream().map(BlobStore::isEmpty).reduce(true, Boolean::logicalAnd);
+  }
+
+  @Override
   public boolean exists(final BlobId blobId) {
     return members.get().stream()
         .anyMatch((BlobStore member) -> member.exists(blobId));

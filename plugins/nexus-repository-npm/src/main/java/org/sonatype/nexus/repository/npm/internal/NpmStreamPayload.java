@@ -17,9 +17,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Objects;
 
 import org.sonatype.nexus.repository.storage.MissingAssetBlobException;
 import org.sonatype.nexus.repository.view.payloads.StreamPayload;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.fasterxml.jackson.core.JsonGenerator.Feature.AUTO_CLOSE_TARGET;
 import static com.fasterxml.jackson.databind.SerializationFeature.FLUSH_AFTER_WRITE_VALUE;
@@ -37,6 +41,8 @@ import static org.sonatype.nexus.repository.view.ContentTypes.APPLICATION_JSON;
 public class NpmStreamPayload
     extends StreamPayload
 {
+  private static final Logger log = LoggerFactory.getLogger(NpmStreamPayload.class);
+
   private String revId;
 
   private String packageId;
@@ -78,8 +84,16 @@ public class NpmStreamPayload
       return super.openInputStream();
     }
     catch (MissingAssetBlobException e) { // NOSONAR
-      return nonNull(missingBlobInputStreamSupplier) ?
-          missingBlobInputStreamSupplier.apply(e) : errorInputStream("Missing blob and no handler set to recover.");
+      if (nonNull(missingBlobInputStreamSupplier)) {
+        return missingBlobInputStreamSupplier.apply(e);
+      }
+
+      // NEXUS-20040 - add logging detailing the missing handler and missing blob.
+      log.warn("Missing blob for asset {} and no handler set to recover, for package '{}' and rev '{}'",
+          e.getAsset(), Objects.toString(packageId, "unknown"), Objects.toString(revId, "unknown"),
+          log.isDebugEnabled() ? e : null);
+
+      return errorInputStream("Missing blob and no handler set to recover.");
     }
   }
 

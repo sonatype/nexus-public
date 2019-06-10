@@ -68,17 +68,17 @@ import static org.sonatype.nexus.repository.apt.internal.debian.Utils.isDebPacka
 public class AptProxyFacet
     extends ProxyFacetSupport
 {
-  public List<SnapshotItem> getSnapshotItems(List<SnapshotItem.ContentSpecifier> specs) throws IOException {
+  public List<SnapshotItem> getSnapshotItems(final List<SnapshotItem.ContentSpecifier> specs) throws IOException {
     return fetchLatest(specs);
   }
 
   @Override
-  protected Content getCachedContent(Context context) throws IOException {
+  protected Content getCachedContent(final Context context) throws IOException {
     return getAptFacet().get(assetPath(context));
   }
 
   @Override
-  protected Content store(Context context, Content content) throws IOException {
+  protected Content store(final Context context, final Content content) throws IOException {
     if (assetPath(context).endsWith(RELEASE)) {
       // Whenever we fetch a new release file, make sure we get the signature
       // and package files that go along with it.
@@ -89,28 +89,28 @@ public class AptProxyFacet
 
   @Transactional(retryOn = {ONeedRetryException.class})
   @Override
-  protected void indicateVerified(Context context, Content content, CacheInfo cacheInfo) throws IOException {
+  protected void indicateVerified(final Context context, final Content content, final CacheInfo cacheInfo) throws IOException {
     doIndicateVerified(content, cacheInfo, assetPath(context));
   }
 
   @Override
-  protected String getUrl(Context context) {
+  protected String getUrl(final Context context) {
     return assetPath(context);
   }
 
   @Override
-  protected CacheController getCacheController(Context context) {
+  protected CacheController getCacheController(final Context context) {
     if (isDebPackageContentType(assetPath(context))) {
       return cacheControllerHolder.getContentCacheController();
     }
     return cacheControllerHolder.getMetadataCacheController();
   }
 
-  private String assetPath(Context context) {
+  private String assetPath(final Context context) {
     return context.getAttributes().require(AptSnapshotHandler.State.class).assetPath;
   }
 
-  private List<SnapshotItem> fetchLatest(List<ContentSpecifier> specs) throws IOException {
+  private List<SnapshotItem> fetchLatest(final List<ContentSpecifier> specs) throws IOException {
     List<SnapshotItem> list = new ArrayList<>();
     for (ContentSpecifier spec : specs) {
       Optional<SnapshotItem> item = fetchLatest(spec);
@@ -121,7 +121,7 @@ public class AptProxyFacet
     return list;
   }
 
-  private Optional<SnapshotItem> fetchLatest(ContentSpecifier spec) throws IOException {
+  private Optional<SnapshotItem> fetchLatest(final ContentSpecifier spec) throws IOException {
     AptFacet aptFacet = getRepository().facet(AptFacet.class);
     ProxyFacet proxyFacet = facet(ProxyFacet.class);
     HttpClientFacet httpClientFacet = facet(HttpClientFacet.class);
@@ -162,7 +162,7 @@ public class AptProxyFacet
     return Optional.empty();
   }
 
-  private HttpGet buildFetchRequest(Content oldVersion, URI fetchUri) {
+  private HttpGet buildFetchRequest(final Content oldVersion, final URI fetchUri) {
     HttpGet getRequest = new HttpGet(fetchUri);
     if (oldVersion != null) {
       DateTime lastModified = oldVersion.getAttributes().get(Content.CONTENT_LAST_MODIFIED, DateTime.class);
@@ -177,7 +177,7 @@ public class AptProxyFacet
     return getRequest;
   }
 
-  private DateTime getDateHeader(HttpResponse response, String name) {
+  private DateTime getDateHeader(final HttpResponse response, final String name) {
     Header h = response.getLastHeader(name);
     if (h != null) {
       try {
@@ -190,7 +190,7 @@ public class AptProxyFacet
     return null;
   }
 
-  private String getQuotedStringHeader(HttpResponse response, String name) {
+  private String getQuotedStringHeader(final HttpResponse response, final String name) {
     Header h = response.getLastHeader(name);
     if (h != null) {
       String value = h.getValue();
@@ -207,7 +207,7 @@ public class AptProxyFacet
   }
 
   @Transactional(retryOn = {ONeedRetryException.class})
-  protected void doIndicateVerified(Content content, CacheInfo cacheInfo, String assetPath) {
+  protected void doIndicateVerified(final Content content, final CacheInfo cacheInfo, final String assetPath) {
     StorageTx tx = UnitOfWork.currentTx();
     Bucket bucket = tx.findBucket(getRepository());
 
@@ -222,7 +222,7 @@ public class AptProxyFacet
     tx.saveAsset(asset);
   }
 
-  private void throwProxyExceptionForStatus(HttpResponse httpResponse) {
+  private void throwProxyExceptionForStatus(final HttpResponse httpResponse) {
     final StatusLine status = httpResponse.getStatusLine();
     if (HttpStatus.SC_UNAUTHORIZED == status.getStatusCode()
         || HttpStatus.SC_PAYMENT_REQUIRED == status.getStatusCode()

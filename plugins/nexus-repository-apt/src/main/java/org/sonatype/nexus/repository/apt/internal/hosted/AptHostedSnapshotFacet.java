@@ -32,7 +32,7 @@ public class AptHostedSnapshotFacet
     extends AptSnapshotFacetSupport
 {
   @Override
-  protected List<SnapshotItem> fetchSnapshotItems(List<ContentSpecifier> specs) throws IOException {
+  protected List<SnapshotItem> fetchSnapshotItems(final List<ContentSpecifier> specs) throws IOException {
       List<SnapshotItem> list = new ArrayList<>();
       for (ContentSpecifier spec : specs) {
         SnapshotItem item = getItem(spec);
@@ -43,7 +43,7 @@ public class AptHostedSnapshotFacet
       return list;
   }
 
-  private SnapshotItem getItem(ContentSpecifier spec) throws IOException {
+  private SnapshotItem getItem(final ContentSpecifier spec) throws IOException {
       AptFacet apt = getRepository().facet(AptFacet.class);
       Content content = apt.get(spec.path);
       if (content == null) {

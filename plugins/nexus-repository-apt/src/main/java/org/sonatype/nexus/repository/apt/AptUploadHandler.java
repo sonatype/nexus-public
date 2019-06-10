@@ -63,7 +63,7 @@ public class AptUploadHandler
   }
 
   @Override
-  public UploadResponse handle(Repository repository, ComponentUpload upload) throws IOException {
+  public UploadResponse handle(final Repository repository, final ComponentUpload upload) throws IOException {
     AptHostedFacet hostedFacet = repository.facet(AptHostedFacet.class);
     StorageFacet storageFacet = repository.facet(StorageFacet.class);
 

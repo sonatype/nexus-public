@@ -20,7 +20,7 @@ public class Utils
   private Utils(){
   }
 
-  public static boolean isDebPackageContentType(String path) {
+  public static boolean isDebPackageContentType(final String path) {
     return path.endsWith(".deb") || path.endsWith(".udeb");
   }
 }

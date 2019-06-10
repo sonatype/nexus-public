@@ -15,6 +15,7 @@ package org.sonatype.nexus.blobstore.group.internal
 import javax.validation.ValidationException
 
 import org.sonatype.nexus.blobstore.BlobStoreUtil
+import org.sonatype.nexus.blobstore.api.BlobId
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
@@ -127,9 +128,8 @@ class BlobStoreGroupDescriptorTest
   def 'members cant be removed directly unless read only and empty'() {
     given: 'an existing blob store group with two members'
       blobStores.store1 = mockBlobStore('store1', FILE)
-      def nonEmptyMetrics = Mock(BlobStoreMetrics)
-      nonEmptyMetrics.getBlobCount() >> 1L
-      blobStores.nonEmptyStore = mockBlobStore('nonEmptyStore', FILE, [:], true, nonEmptyMetrics)
+      blobStores.nonEmptyStore = mockBlobStore('nonEmptyStore', FILE, [:], true)
+      blobStores.nonEmptyStore.getBlobIdStream() >> [Mock(BlobId)].stream()
       blobStores.group1 = mockBlobStoreGroup('group1', [blobStores.store1, blobStores.nonEmptyStore])
 
     when: 'the member is removed'

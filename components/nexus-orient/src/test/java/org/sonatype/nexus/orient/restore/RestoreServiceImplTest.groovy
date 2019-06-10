@@ -67,7 +67,6 @@ class RestoreServiceImplTest
       restorer.getPendingRestore(names.next()) >> mockRestoreFile(_, '2017-07-06-11-16-49', null)
       restorer.getPendingRestore(names.next()) >> mockRestoreFile(_, '2017-07-06-11-16-50', null)
       restorer.getPendingRestore(names.next()) >> mockRestoreFile(_, '2017-07-06-11-16-51', null)
-      restorer.getPendingRestore(names.next()) >> mockRestoreFile(_, '2017-07-06-11-16-52', null)
 
     when: 'start is executed'
       restoreService.start()
