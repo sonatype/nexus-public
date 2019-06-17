@@ -22,8 +22,6 @@
     <bundle>wrap:${mvn:paranamer}$overwrite=merge&amp;Fragment-Host=org.hibernate.validator</bundle>
     <bundle>wrap:${mvn:httpcore}$Bundle-SymbolicName=httpcore</bundle>
     <bundle>wrap:${mvn:httpclient}$Bundle-SymbolicName=httpclient&amp;Fragment-Host=httpcore</bundle>
-    <bundle>wrap:${mvn:jaxb-core}$Bundle-SymbolicName=jaxb-core</bundle>
-    <bundle>wrap:${mvn:jaxb-impl}$Bundle-SymbolicName=jaxb-impl&amp;Fragment-Host=jaxb-core</bundle>
     <bundle>wrap:${mvn:resteasy-jaxrs}$Bundle-SymbolicName=resteasy-jaxrs&amp;Fragment-Host=org.sonatype.nexus.siesta</bundle>
     <bundle>wrap:${mvn:resteasy-atom-provider}$Bundle-SymbolicName=resteasy-atom-provider&amp;Fragment-Host=org.sonatype.nexus.siesta</bundle>
     <bundle>wrap:${mvn:resteasy-jackson2-provider}$Bundle-SymbolicName=resteasy-jackson2-provider&amp;Fragment-Host=org.sonatype.nexus.siesta</bundle>

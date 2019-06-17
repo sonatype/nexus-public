@@ -42,7 +42,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * An in-memory cache of the RoutingRule assigned to a Repository. Uses events to know when to invalidate the
  * cache.
  *
- * @since 3.next
+ * @since 3.17
  */
 @Named
 @Singleton

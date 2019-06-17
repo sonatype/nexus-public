@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 
+import org.joda.time.DateTime;
+
 /**
  * @since 3.4
  */
@@ -33,6 +35,16 @@ public interface BlobAttributes
 
   String getDeletedReason();
 
+  /**
+   * @since 3.17
+   */
+  DateTime getDeletedDateTime();
+
+  /**
+   * @since 3.17
+   */
+  void setDeletedDateTime(DateTime deletedDateTime);
+
   Properties getProperties();
 
   /**
@@ -48,4 +60,5 @@ public interface BlobAttributes
    * @since 3.12
    */
   void store() throws IOException;
+
 }

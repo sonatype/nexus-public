@@ -69,7 +69,7 @@ public interface SchedulerSPI
   /**
    * Returns description of triggers that were recovered after an error caused them to be lost
    *
-   * @since 3.next
+   * @since 3.17
    */
   List<String> getMissingTriggerDescriptions();
 

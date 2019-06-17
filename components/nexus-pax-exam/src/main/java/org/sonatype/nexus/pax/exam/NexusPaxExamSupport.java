@@ -511,7 +511,7 @@ public abstract class NexusPaxExamSupport
       // filter out the individual nexus-features values
       if (o instanceof KarafDistributionConfigurationFileExtendOption) {
         if ("nexus-features".equals(((KarafDistributionConfigurationFileExtendOption) o).getKey())) {
-          nexusFeatures.add(((KarafDistributionConfigurationFileExtendOption) o).getValue());
+          nexusFeatures.add((String) ((KarafDistributionConfigurationFileExtendOption) o).getValue());
           continue;
         }
       }

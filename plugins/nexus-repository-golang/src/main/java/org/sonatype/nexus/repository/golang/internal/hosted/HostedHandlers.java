@@ -33,7 +33,7 @@ import static org.sonatype.nexus.repository.http.HttpResponses.notFound;
 import static org.sonatype.nexus.repository.http.HttpResponses.ok;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 @Named
 @Singleton

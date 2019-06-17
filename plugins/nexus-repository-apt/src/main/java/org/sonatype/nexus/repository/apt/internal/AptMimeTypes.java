@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.apt.internal;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 public class AptMimeTypes
 {

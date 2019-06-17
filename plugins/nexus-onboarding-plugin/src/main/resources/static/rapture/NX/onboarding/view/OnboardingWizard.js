@@ -13,7 +13,7 @@
 /*global Ext, NX*/
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 Ext.define('NX.onboarding.view.OnboardingWizard', {
   extend: 'NX.wizard.Panel',

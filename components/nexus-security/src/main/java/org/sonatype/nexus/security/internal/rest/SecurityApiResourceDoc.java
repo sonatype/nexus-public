@@ -22,9 +22,9 @@ import io.swagger.annotations.ApiResponses;
 /**
  * Swagger documentation for {@link SecurityApiResource}
  *
- * @since 3.next
+ * @since 3.17
  */
-@Api(value = "Security Management", hidden = true)
+@Api(value = "Security Management")
 public interface SecurityApiResourceDoc
 {
   @ApiOperation("Retrieve a list of the available user sources.")

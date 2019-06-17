@@ -24,7 +24,7 @@ import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 @Facet.Exposed
 public interface AptFacet

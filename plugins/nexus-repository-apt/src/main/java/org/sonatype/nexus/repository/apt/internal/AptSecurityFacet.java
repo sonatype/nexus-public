@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.security.SecurityFacetSupport;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 @Named
 public class AptSecurityFacet

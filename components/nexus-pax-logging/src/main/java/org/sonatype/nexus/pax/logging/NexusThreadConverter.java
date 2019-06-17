@@ -18,7 +18,7 @@ import ch.qos.logback.access.spi.IAccessEvent;
 /**
  * Converter to include a thread ID
  *
- * @since 3.next
+ * @since 3.17
  */
 public class NexusThreadConverter
     extends AccessConverter

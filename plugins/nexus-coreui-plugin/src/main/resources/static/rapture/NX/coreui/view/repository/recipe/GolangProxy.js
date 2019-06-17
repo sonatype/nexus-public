@@ -15,13 +15,14 @@
 /**
  * Repository "Settings" form for a Go Proxy repository
  *
- * @since 3.next
+ * @since 3.17
  */
 Ext.define('NX.golang.view.repository.recipe.GolangProxy', {
     extend: 'NX.coreui.view.repository.RepositorySettingsForm',
     alias: 'widget.nx-coreui-repository-go-proxy',
     requires: [
         'NX.coreui.view.repository.facet.ProxyFacet',
+        'NX.coreui.view.repository.facet.RoutingRuleFacet',
         'NX.coreui.view.repository.facet.StorageFacet',
         'NX.coreui.view.repository.facet.HttpClientFacet',
         'NX.coreui.view.repository.facet.NegativeCacheFacet',
@@ -36,6 +37,7 @@ Ext.define('NX.golang.view.repository.recipe.GolangProxy', {
 
         me.items = [
         {xtype: 'nx-coreui-repository-proxy-facet'},
+        {xtype: 'nx-coreui-repository-routing-rule-facet'},
         {xtype: 'nx-coreui-repository-storage-facet'},
         {xtype: 'nx-coreui-repository-negativecache-facet'},
         {xtype: 'nx-coreui-repository-cleanup-policy-facet'},

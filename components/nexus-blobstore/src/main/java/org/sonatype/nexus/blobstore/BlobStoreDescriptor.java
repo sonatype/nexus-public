@@ -14,6 +14,8 @@ package org.sonatype.nexus.blobstore;
 
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.formfields.FormField;
 
@@ -39,6 +41,16 @@ public interface BlobStoreDescriptor
   List<FormField> getFormFields();
 
   /**
+   * Name of a custom form for configuring the blob store.
+   *
+   * @return custom form name
+   */
+  @Nullable
+  default String customFormName() {
+    return null;
+  }
+
+  /**
    * @return true if the blob store can be modified after creating.
    *
    * @since 3.14
@@ -58,7 +70,7 @@ public interface BlobStoreDescriptor
   /**
    * Modifies the config to ensure the input is valid
    *
-   * @since 3.next
+   * @since 3.17
    */
   default void sanitizeConfig(BlobStoreConfiguration config) {
   }

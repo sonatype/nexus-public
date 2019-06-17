@@ -13,7 +13,7 @@
 /*global Ext, NX*/
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 Ext.define('NX.onboarding.view.ConfigureAnonymousAccessScreen', {
   extend: 'NX.wizard.Screen',
@@ -47,7 +47,7 @@ Ext.define('NX.onboarding.view.ConfigureAnonymousAccessScreen', {
             name: 'enabled',
             itemId: 'anonymousEnabled',
             value: false,
-            boxLabel: NX.I18n.get('Security_AnonymousSettings_Allow_BoxLabel')
+            boxLabel: NX.I18n.render(me, 'Label')
           }
         ]
       }]

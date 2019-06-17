@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.17.0-SNAPSHOT</version>
+    <version>3.18.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-osgi</artifactId>
@@ -28,7 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <karaf.version>4.0.9</karaf.version>
+    <karaf.version>4.2.6</karaf.version>
   </properties>
 
   <dependencyManagement>
@@ -48,7 +48,19 @@
       <dependency>
         <groupId>org.apache.felix</groupId>
         <artifactId>org.apache.felix.framework</artifactId>
-        <version>5.6.2</version>
+        <version>5.6.12</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>org.apache.felix.metatype</artifactId>
+        <version>1.2.2</version>
+        <exclusions>
+          <exclusion>
+            <groupId>net.sf.kxml</groupId>
+            <artifactId>kxml2</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>
@@ -81,7 +93,7 @@
       <dependency>
         <groupId>org.eclipse.equinox</groupId>
         <artifactId>org.eclipse.equinox.region</artifactId>
-        <version>1.1.0.v20120522-1841</version>
+        <version>1.2.101.v20150831-1342</version>
       </dependency>
 
       <dependency>

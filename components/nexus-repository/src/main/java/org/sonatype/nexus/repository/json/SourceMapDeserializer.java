@@ -25,7 +25,7 @@ import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
 /**
  * Implementation of {@link MapDeserializer} that opens up the "from source" {@link MapDeserializer} constructor.
  *
- * @since 3.next
+ * @since 3.17
  */
 public class SourceMapDeserializer
     extends MapDeserializer

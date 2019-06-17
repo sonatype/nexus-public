@@ -18,11 +18,15 @@ import org.sonatype.nexus.common.log.LogConfigurationCustomizer
 import org.sonatype.nexus.common.log.LoggerLevel
 
 import ch.qos.logback.classic.Level
+import ch.qos.logback.core.Appender
+import ch.qos.logback.core.FileAppender
 import org.eclipse.sisu.inject.BeanLocator
 import org.junit.Before
 import org.junit.Test
 
 import static org.mockito.Mockito.mock
+import static org.mockito.Mockito.when
+import static org.sonatype.nexus.internal.log.LogbackLogManager.getLogFor
 
 /**
  * Tests for {@link LogbackLogManager}.
@@ -106,5 +110,23 @@ public class LogbackLogManagerTest
 
     // verify customization was applied
     assert context.getLogger(fooLoggerName).level == Level.ERROR
+  }
+
+  @Test
+  void 'ensure that log file filtering works'() {
+    Appender notFile = mock(Appender.class)
+    when(notFile.getName()).thenReturn('nexus.log')
+
+    FileAppender nexusLog = mock(FileAppender.class)
+    when(nexusLog.getName()).thenReturn('nexus.log')
+    when(nexusLog.getFile()).thenReturn('/var/log/nexus.log')
+
+    FileAppender clusterLog = mock(FileAppender.class)
+    when(clusterLog.getName()).thenReturn('clustered.log')
+    when(clusterLog.getFile()).thenReturn('/var/log/clustered.log')
+
+    assert getLogFor('nexus.log', [notFile, nexusLog, clusterLog]).get() == 'nexus.log'
+    assert getLogFor('clustered.log', [notFile, nexusLog, clusterLog]).get() == 'clustered.log'
+    assert !getLogFor('not_a_log.log', [notFile, nexusLog, clusterLog]).isPresent()
   }
 }

@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.17.0-SNAPSHOT</version>
+    <version>3.18.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-all</artifactId>
@@ -35,7 +35,7 @@
         <groupId>org.sonatype.nexus.buildsupport</groupId>
         <artifactId>nexus-buildsupport-commons</artifactId>
         <type>pom</type>
-        <version>3.17.0-SNAPSHOT</version>
+        <version>3.18.0-SNAPSHOT</version>
         <scope>import</scope>
       </dependency>
 
@@ -43,7 +43,7 @@
         <groupId>org.sonatype.nexus.buildsupport</groupId>
         <artifactId>nexus-buildsupport-db</artifactId>
         <type>pom</type>
-        <version>3.17.0-SNAPSHOT</version>
+        <version>3.18.0-SNAPSHOT</version>
         <scope>import</scope>
       </dependency>
 
@@ -51,7 +51,7 @@
         <groupId>org.sonatype.nexus.buildsupport</groupId>
         <artifactId>nexus-buildsupport-goodies</artifactId>
         <type>pom</type>
-        <version>3.17.0-SNAPSHOT</version>
+        <version>3.18.0-SNAPSHOT</version>
         <scope>import</scope>
       </dependency>
 
@@ -59,7 +59,7 @@
         <groupId>org.sonatype.nexus.buildsupport</groupId>
         <artifactId>nexus-buildsupport-groovy</artifactId>
         <type>pom</type>
-        <version>3.17.0-SNAPSHOT</version>
+        <version>3.18.0-SNAPSHOT</version>
         <scope>import</scope>
       </dependency>
 
@@ -67,7 +67,7 @@
         <groupId>org.sonatype.nexus.buildsupport</groupId>
         <artifactId>nexus-buildsupport-guice</artifactId>
         <type>pom</type>
-        <version>3.17.0-SNAPSHOT</version>
+        <version>3.18.0-SNAPSHOT</version>
         <scope>import</scope>
       </dependency>
 
@@ -75,7 +75,7 @@
         <groupId>org.sonatype.nexus.buildsupport</groupId>
         <artifactId>nexus-buildsupport-httpclient</artifactId>
         <type>pom</type>
-        <version>3.17.0-SNAPSHOT</version>
+        <version>3.18.0-SNAPSHOT</version>
         <scope>import</scope>
       </dependency>
 
@@ -83,7 +83,7 @@
         <groupId>org.sonatype.nexus.buildsupport</groupId>
         <artifactId>nexus-buildsupport-internal</artifactId>
         <type>pom</type>
-        <version>3.17.0-SNAPSHOT</version>
+        <version>3.18.0-SNAPSHOT</version>
         <scope>import</scope>
       </dependency>
 
@@ -91,7 +91,7 @@
         <groupId>org.sonatype.nexus.buildsupport</groupId>
         <artifactId>nexus-buildsupport-jetty</artifactId>
         <type>pom</type>
-        <version>3.17.0-SNAPSHOT</version>
+        <version>3.18.0-SNAPSHOT</version>
         <scope>import</scope>
       </dependency>
 
@@ -99,7 +99,7 @@
         <groupId>org.sonatype.nexus.buildsupport</groupId>
         <artifactId>nexus-buildsupport-jruby</artifactId>
         <type>pom</type>
-        <version>3.17.0-SNAPSHOT</version>
+        <version>3.18.0-SNAPSHOT</version>
         <scope>import</scope>
       </dependency>
 
@@ -107,7 +107,7 @@
         <groupId>org.sonatype.nexus.buildsupport</groupId>
         <artifactId>nexus-buildsupport-logging</artifactId>
         <type>pom</type>
-        <version>3.17.0-SNAPSHOT</version>
+        <version>3.18.0-SNAPSHOT</version>
         <scope>import</scope>
       </dependency>
 
@@ -115,7 +115,7 @@
         <groupId>org.sonatype.nexus.buildsupport</groupId>
         <artifactId>nexus-buildsupport-maven</artifactId>
         <type>pom</type>
-        <version>3.17.0-SNAPSHOT</version>
+        <version>3.18.0-SNAPSHOT</version>
         <scope>import</scope>
       </dependency>
 
@@ -123,7 +123,7 @@
         <groupId>org.sonatype.nexus.buildsupport</groupId>
         <artifactId>nexus-buildsupport-metrics</artifactId>
         <type>pom</type>
-        <version>3.17.0-SNAPSHOT</version>
+        <version>3.18.0-SNAPSHOT</version>
         <scope>import</scope>
       </dependency>
 
@@ -131,7 +131,7 @@
         <groupId>org.sonatype.nexus.buildsupport</groupId>
         <artifactId>nexus-buildsupport-osgi</artifactId>
         <type>pom</type>
-        <version>3.17.0-SNAPSHOT</version>
+        <version>3.18.0-SNAPSHOT</version>
         <scope>import</scope>
       </dependency>
 
@@ -139,7 +139,7 @@
         <groupId>org.sonatype.nexus.buildsupport</groupId>
         <artifactId>nexus-buildsupport-other</artifactId>
         <type>pom</type>
-        <version>3.17.0-SNAPSHOT</version>
+        <version>3.18.0-SNAPSHOT</version>
         <scope>import</scope>
       </dependency>
 
@@ -147,7 +147,7 @@
         <groupId>org.sonatype.nexus.buildsupport</groupId>
         <artifactId>nexus-buildsupport-rest</artifactId>
         <type>pom</type>
-        <version>3.17.0-SNAPSHOT</version>
+        <version>3.18.0-SNAPSHOT</version>
         <scope>import</scope>
       </dependency>
 
@@ -155,7 +155,7 @@
         <groupId>org.sonatype.nexus.buildsupport</groupId>
         <artifactId>nexus-buildsupport-security</artifactId>
         <type>pom</type>
-        <version>3.17.0-SNAPSHOT</version>
+        <version>3.18.0-SNAPSHOT</version>
         <scope>import</scope>
       </dependency>
 
@@ -163,7 +163,7 @@
         <groupId>org.sonatype.nexus.buildsupport</groupId>
         <artifactId>nexus-buildsupport-testing</artifactId>
         <type>pom</type>
-        <version>3.17.0-SNAPSHOT</version>
+        <version>3.18.0-SNAPSHOT</version>
         <scope>import</scope>
       </dependency>
 
@@ -171,7 +171,7 @@
         <groupId>org.sonatype.nexus.buildsupport</groupId>
         <artifactId>nexus-buildsupport-ui</artifactId>
         <type>pom</type>
-        <version>3.17.0-SNAPSHOT</version>
+        <version>3.18.0-SNAPSHOT</version>
         <scope>import</scope>
       </dependency>
     </dependencies>

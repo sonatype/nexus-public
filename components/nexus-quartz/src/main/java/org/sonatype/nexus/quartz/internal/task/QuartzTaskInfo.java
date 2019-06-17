@@ -246,7 +246,7 @@ public class QuartzTaskInfo
   public TaskInfo runNow(final String triggerSource) throws TaskRemovedException {
 
     synchronized (this) {
-      checkState(State.RUNNING != state, "Task already running");
+      checkState(State.RUNNING != state, "Task %s already running", taskState.getConfiguration().getTaskLogName());
 
       if (!getConfiguration().isEnabled()) {
         log.warn("Task {} is disabled and will not be run", taskState.getConfiguration().getTaskLogName());

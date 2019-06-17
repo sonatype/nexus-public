@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.apt.internal.debian.ControlFile;
 import org.sonatype.nexus.repository.apt.internal.debian.Release;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 public class FilteredSnapshotComponentSelector
     implements SnapshotComponentSelector

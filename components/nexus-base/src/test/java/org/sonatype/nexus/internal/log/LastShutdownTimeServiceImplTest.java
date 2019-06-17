@@ -35,6 +35,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.common.log.LogManager.DEFAULT_LOGGER;
 
 public class LastShutdownTimeServiceImplTest
     extends TestSupport
@@ -68,13 +69,14 @@ public class LastShutdownTimeServiceImplTest
 
     pattern = Pattern.compile("(?<time>\\d{4}-\\d{2}-\\d{2})");
 
-    when(logManager.getLogFile("nexus.log")).thenReturn(nexusFile);
+    when(logManager.getLogFileForLogger(DEFAULT_LOGGER)).thenReturn(Optional.of(nexusFile));
 
     dateFormat = new SimpleDateFormat("yyyy-MM-dd");
   }
 
   @Test
   public void missingNexusYieldsEmpty() {
+    when(logManager.getLogFor(DEFAULT_LOGGER)).thenReturn(Optional.of("nexus.log"));
     when(logManager.getLogFile("nexus.log")).thenReturn(null);
     lastShutdownTimeService = new LastShutdownTimeServiceImpl(logManager, true);
     assert !lastShutdownTimeService.estimateLastShutdownTime().isPresent();
@@ -85,6 +87,7 @@ public class LastShutdownTimeServiceImplTest
     File emptyFile = mock(File.class);
     when(emptyFile.length()).thenReturn(0L);
 
+    when(logManager.getLogFor(DEFAULT_LOGGER)).thenReturn(Optional.of("nexus.log"));
     when(logManager.getLogFile("nexus.log")).thenReturn(emptyFile);
     lastShutdownTimeService = new LastShutdownTimeServiceImpl(logManager, true);
     assert !lastShutdownTimeService.estimateLastShutdownTime().isPresent();

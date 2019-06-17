@@ -27,7 +27,7 @@ import com.google.common.base.Splitter;
 import static com.google.common.collect.Lists.newArrayList;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 @Singleton
 @Named(AptFormat.NAME)

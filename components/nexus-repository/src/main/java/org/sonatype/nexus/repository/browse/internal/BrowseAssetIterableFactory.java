@@ -31,7 +31,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * A factory for creating an {@code asset} browsing {@link Iterable<ODocument>} using the injected
  * {@link ContentAuthHelper} and {@code pageSize}.
  *
- * @since 3.next
+ * @since 3.17
  */
 @Named
 @Singleton

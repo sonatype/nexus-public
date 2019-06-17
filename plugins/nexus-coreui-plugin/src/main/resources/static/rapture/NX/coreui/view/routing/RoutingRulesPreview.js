@@ -15,7 +15,7 @@
 /**
  * Global Routing Rule Preview window.
  *
- * @since 3.next
+ * @since 3.17
  */
 Ext.define('NX.coreui.view.routing.RoutingRulesPreview', {
   extend: 'Ext.panel.Panel',

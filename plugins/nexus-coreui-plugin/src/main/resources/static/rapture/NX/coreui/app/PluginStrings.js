@@ -508,6 +508,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Selector_SelectorList_EmptyText: 'No selectors defined',
     Selector_SelectorList_Filter_EmptyText: 'No selectors matched "$filter"',
     Selector_SelectorFeature_Delete_Button: 'Delete selector',
+    Selector_SelectorFeature_Delete_Disabled_Message: 'This selector cannot be deleted because it is in use by {0}',
     Selectors_Delete_Message: 'Selector deleted: {0}',
     Selector_SelectorFeature_Settings_Title: 'Settings',
     Selector_SelectorSettingsForm_Name_FieldLabel: 'Name',

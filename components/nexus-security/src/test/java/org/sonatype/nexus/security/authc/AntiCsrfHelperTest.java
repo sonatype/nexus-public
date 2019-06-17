@@ -45,7 +45,7 @@ public class AntiCsrfHelperTest
 
   @Before
   public void setup() {
-    underTest = new AntiCsrfHelper(true);
+    underTest = new AntiCsrfHelper(true, "");
   }
 
   /*
@@ -53,7 +53,7 @@ public class AntiCsrfHelperTest
    */
   @Test
   public void testRequireValidToken_Disabled() {
-    underTest = new AntiCsrfHelper(false);
+    underTest = new AntiCsrfHelper(false, "");
     underTest.requireValidToken(httpServletRequest, "a-token");
     verifyZeroInteractions(httpServletRequest);
   }
@@ -105,7 +105,7 @@ public class AntiCsrfHelperTest
    */
   @Test
   public void testIsAccessAllowed_Disabled() {
-    underTest = new AntiCsrfHelper(false);
+    underTest = new AntiCsrfHelper(false, "");
     assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
     verifyZeroInteractions(httpServletRequest);
   }
@@ -150,7 +150,52 @@ public class AntiCsrfHelperTest
     when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
     when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT)).thenReturn(CLIENT_UA);
     assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
+  }
 
+  /*
+   * PowerShell inexplicably includes a UserAgent pretending to be a browser, this ensures our whitelist allows it.
+   */
+  @Test
+  public void testIsAccessAllowed_PowerShell() {
+    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
+    assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
+
+    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
+    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT))
+        .thenReturn("Mozilla/5.0 (Windows NT; Windows NT 10.0; en-CA) WindowsPowerShell/5.1.17134.590");
+    assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
+  }
+
+  /*
+   * PowerShell inexplicably includes a UserAgent pretending to be a browser, this ensures our whitelist allows it.
+   */
+  @Test
+  public void testIsAccessAllowed_whitelist() {
+    underTest = new AntiCsrfHelper(true, "foo");
+    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
+    assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
+
+    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
+
+    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT))
+        .thenReturn("Mozilla/5.0 (Windows NT; Windows NT 10.0; en-CA) WindowsPowerShell/5.1.17134.590");
+    assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
+    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT))
+        .thenReturn("Mozilla/5.0 (Windows NT; Windows NT 10.0; en-CA) foo/5.1.17134.590");
+    assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
+
+    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT))
+        .thenReturn("Mozilla/5.0 (Windows NT; Windows NT 10.0; en-CA) bar/5.1.17134.590");
+    assertThat(underTest.isAccessAllowed(httpServletRequest), is(false));
+
+    underTest = new AntiCsrfHelper(true, "foo,bar");
+    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT))
+        .thenReturn("Mozilla/5.0 (Windows NT; Windows NT 10.0; en-CA) foo/5.1.17134.590");
+    assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
+
+    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT))
+        .thenReturn("Mozilla/5.0 (Windows NT; Windows NT 10.0; en-CA) bar/5.1.17134.590");
+    assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
   }
 
   /*

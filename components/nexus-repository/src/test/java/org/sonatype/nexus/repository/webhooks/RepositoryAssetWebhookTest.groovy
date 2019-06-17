@@ -61,7 +61,7 @@ class RepositoryAssetWebhookTest
   private AssetDeletedEvent assetDeletedEvent
 
   @Before
-  public void before() {
+  void before() {
     repositoryAssetWebhook = new RepositoryAssetWebhook(
         eventManager: eventManager,
         initiatorProvider: initiatorProvider,
@@ -91,37 +91,37 @@ class RepositoryAssetWebhookTest
   }
 
   @Test
-  public void 'has the correct event id'() {
+  void 'has the correct event id'() {
     assert repositoryAssetWebhook.id == "rm:repository:asset"
   }
 
   @Test
-  public void 'queues local asset created events'() {
+  void 'queues local asset created events'() {
     testLocalAssetEvent(assetCreatedEvent, 'CREATED')
   }
 
   @Test
-  public void 'queues local asset updated events'() {
+  void 'queues local asset updated events'() {
     testLocalAssetEvent(assetUpdatedEvent, 'UPDATED')
   }
 
   @Test
-  public void 'queues local asset deleted events'() {
+  void 'queues local asset deleted events'() {
     testLocalAssetEvent(assetDeletedEvent, 'DELETED')
   }
 
   @Test
-  public void 'ignores non local asset created events'() {
+  void 'ignores non local asset created events'() {
     testNonLocalAssetEvent(assetCreatedEvent)
   }
 
   @Test
-  public void 'ignores non local asset updated events'() {
+  void 'ignores non local asset updated events'() {
     testNonLocalAssetEvent(assetUpdatedEvent)
   }
 
   @Test
-  public void 'ignores non local asset deleted events'() {
+  void 'ignores non local asset deleted events'() {
     testNonLocalAssetEvent(assetDeletedEvent)
   }
 
@@ -142,6 +142,7 @@ class RepositoryAssetWebhookTest
     assert assetPayload.asset.name == 'name'
     assert assetPayload.asset.format == 'format'
     assert assetPayload.asset.id == 'id'
+    assert assetPayload.asset.assetId == 'cmVwb05hbWU6aWQ'
   }
 
   private void testNonLocalAssetEvent(AssetEvent assetEvent) {

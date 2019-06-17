@@ -31,6 +31,8 @@ class BlobStoreTypeXO
 
   List<FormFieldXO> formFields
 
+  String customFormName
+
   boolean isModifiable
 
   boolean isEnabled

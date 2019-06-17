@@ -1,8 +1,10 @@
 #!/bin/sh
-# handle specific scripts; the SCRIPT_NAME is exactly the name of the Karaf
-# script; for example karaf, start, stop, admin, client, ...
+
 #
-# if [ "$KARAF_SCRIPT" = "SCRIPT_NAME" ]; then
+# handle specific scripts; the SCRIPT_NAME is exactly the name of the Karaf
+# script: client, instance, shell, start, status, stop, karaf
+#
+# if [ "${KARAF_SCRIPT}" == "SCRIPT_NAME" ]; then
 #   Actions go here...
 # fi
 
@@ -17,15 +19,17 @@
 # The following section shows the possible configuration options for the default 
 # karaf scripts
 #
-# JAVA_HOME # Location of Java installation
-# JAVA_MIN_MEM # Minimum Java heap memory for the JVM
-# JAVA_MAX_MEM # Maximum Java heap memory for the JVM
-# DIRECT_MAX_MEM # Maximum direct buffer memory for the JVM
-# EXTRA_JAVA_OPTS # Additional JVM options
-# KARAF_HOME # Karaf home folder
-# KARAF_DATA # Karaf data folder
-# KARAF_BASE # Karaf base folder
-# KARAF_ETC  # Karaf etc  folder
-# KARAF_OPTS # Additional available Karaf options
-# KARAF_DEBUG # Enable debug mode
-# KARAF_REDIRECT # Enable/set the std/err redirection when using bin/start
+# export JAVA_HOME # Location of Java installation
+# export JAVA_MIN_MEM # Minimum Java heap memory for the JVM
+# export JAVA_MAX_MEM # Maximum Java heap memory for the JVM
+# export DIRECT_MAX_MEM # Maximum direct buffer memory for the JVM
+# export EXTRA_JAVA_OPTS # Additional JVM options
+# export KARAF_HOME # Karaf home folder
+# export KARAF_DATA # Karaf data folder
+# export KARAF_BASE # Karaf base folder
+# export KARAF_ETC  # Karaf etc  folder
+# export KARAF_SYSTEM_OPTS # First citizen Karaf options
+# export KARAF_OPTS # Additional available Karaf options
+# export KARAF_DEBUG # Enable debug mode
+# export KARAF_REDIRECT # Enable/set the std/err redirection when using bin/start
+# export KARAF_NOROOT # Prevent execution as root if set to true

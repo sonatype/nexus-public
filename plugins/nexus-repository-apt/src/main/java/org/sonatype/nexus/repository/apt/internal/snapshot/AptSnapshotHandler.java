@@ -35,7 +35,7 @@ import static org.sonatype.nexus.repository.http.HttpMethods.MKCOL;
 import static org.sonatype.nexus.repository.http.HttpMethods.PUT;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 @Named
 @Singleton

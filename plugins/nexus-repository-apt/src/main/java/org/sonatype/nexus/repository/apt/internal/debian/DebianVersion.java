@@ -22,7 +22,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * More info about debian version could be found by ref:
  *
  * @see <a href="https://www.debian.org/doc/debian-policy/ch-controlfields.html#id6">https://www.debian.org/doc/</a>
- * @since 3.next
+ * @since 3.17
  */
 public class DebianVersion
     implements Comparable<DebianVersion>

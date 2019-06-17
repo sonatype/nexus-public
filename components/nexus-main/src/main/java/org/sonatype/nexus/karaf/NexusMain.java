@@ -43,6 +43,9 @@ public class NexusMain
     System.setProperty("java.util.logging.manager", "org.sonatype.nexus.karaf.NonResettableLogManager");
     while (true) {
       boolean restart = false;
+      boolean restartJvm = false;
+      // karaf.restart.jvm take priority over karaf.restart
+      System.setProperty("karaf.restart.jvm", "false");
       System.setProperty("karaf.restart", "false");
       final NexusMain main = new NexusMain(args);
       try {
@@ -60,6 +63,7 @@ public class NexusMain
         main.awaitShutdown();
         boolean stopped = main.destroy();
         restart = Boolean.getBoolean("karaf.restart");
+        restartJvm = Boolean.getBoolean("karaf.restart.jvm");
         main.updateInstancePidAfterShutdown();
         if (!stopped) {
           if (restart) {
@@ -77,7 +81,10 @@ public class NexusMain
         ex.printStackTrace();
       }
       finally {
-        if (!restart) {
+        if (restartJvm && restart) {
+          System.exit(10);
+        }
+        else if (!restart) {
           System.exit(main.getExitCode());
         }
         else {

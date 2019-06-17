@@ -37,6 +37,7 @@ import org.sonatype.nexus.repository.storage.StorageTx;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -248,6 +249,16 @@ public class OrphanedBlobFinderTest
 
     @Override
     public String getDeletedReason() {
+      throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public void setDeletedDateTime(final DateTime deletedDateTime) {
+      throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public DateTime getDeletedDateTime() {
       throw new UnsupportedOperationException("Not implemented");
     }
 

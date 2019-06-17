@@ -22,7 +22,7 @@ import org.sonatype.nexus.orient.DatabaseUpgradeSupport;
 /**
  * Empty upgrade step filling in for what is now a private model upgrade.
  *
- * @since 3.next
+ * @since 3.17
  */
 @Named
 @Singleton

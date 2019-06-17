@@ -44,7 +44,7 @@ import static java.util.stream.Collectors.toList;
  * that will be returned during each iteration before filtering by {@code bucketId} and content
  * authorization.
  *
- * @since 3.next
+ * @since 3.17
  */
 public class BrowseAssetIterator
     extends ComponentSupport

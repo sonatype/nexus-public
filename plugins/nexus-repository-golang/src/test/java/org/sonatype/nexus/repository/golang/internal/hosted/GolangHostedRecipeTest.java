@@ -13,11 +13,10 @@
 package org.sonatype.nexus.repository.golang.internal.hosted;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.golang.GolangFormat;
 import org.sonatype.nexus.repository.types.HostedType;
-import org.sonatype.nexus.repository.view.Context;
-import org.sonatype.nexus.repository.view.Request;
+import org.sonatype.nexus.repository.types.HostedType;
+import org.sonatype.nexus.repository.view.handlers.HighAvailabilitySupportChecker;
 
 import org.junit.After;
 import org.junit.Before;
@@ -27,28 +26,22 @@ import org.mockito.Mock;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class GolangHostedRecipeTest
     extends TestSupport
 {
   @Mock
-  private Request request;
+  private HighAvailabilitySupportChecker highAvailabilitySupportChecker;
 
-  @Mock
-  private Context context;
-
-  private AttributesMap attributesMap;
+  private String GO_NAME = "go";
 
   private GolangHostedRecipe underTest;
 
   @Before
   public void setUp() throws Exception {
-    underTest = new GolangHostedRecipe(new HostedType(), new GolangFormat());
-
-    attributesMap = new AttributesMap();
-    when(context.getRequest()).thenReturn(request);
-    when(context.getAttributes()).thenReturn(attributesMap);
+    underTest = new GolangHostedRecipe(highAvailabilitySupportChecker, new HostedType(), new GolangFormat());
   }
 
   @After
@@ -58,12 +51,32 @@ public class GolangHostedRecipeTest
 
   @Test
   public void disabledByDefault() {
+    when(highAvailabilitySupportChecker.isSupported(GO_NAME)).thenReturn(true);
     assertThat(underTest.isFeatureEnabled(), is(equalTo(false)));
+    verify(highAvailabilitySupportChecker).isSupported(GO_NAME);
   }
 
   @Test
   public void enableGolang() {
     System.setProperty("nexus.golang.hosted", "true");
+    when(highAvailabilitySupportChecker.isSupported(GO_NAME)).thenReturn(true);
     assertThat(underTest.isFeatureEnabled(), is(equalTo(true)));
+    verify(highAvailabilitySupportChecker).isSupported(GO_NAME);
+  }
+
+  @Test
+  public void disabledIfNexusIsClusteredAndGoHostedDisabled() {
+    System.setProperty("nexus.golang.hosted", "false");
+    when(highAvailabilitySupportChecker.isSupported(GO_NAME)).thenReturn(false);
+    assertThat(underTest.isFeatureEnabled(), is(equalTo(false)));
+    verify(highAvailabilitySupportChecker).isSupported(GO_NAME);
+  }
+
+  @Test
+  public void disabledIfNexusIsClusteredAndGoHostedEnabled() {
+    System.setProperty("nexus.golang.hosted", "true");
+    when(highAvailabilitySupportChecker.isSupported(GO_NAME)).thenReturn(false);
+    assertThat(underTest.isFeatureEnabled(), is(equalTo(false)));
+    verify(highAvailabilitySupportChecker).isSupported(GO_NAME);
   }
 }

@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.Format;
 /**
  * Go repository format.
  *
- * @since 3.next
+ * @since 3.17
  */
 @Named(GolangFormat.NAME)
 @Singleton

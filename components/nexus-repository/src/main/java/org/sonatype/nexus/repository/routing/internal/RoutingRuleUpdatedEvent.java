@@ -16,7 +16,7 @@ import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.common.entity.EntityUpdatedEvent;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 public class RoutingRuleUpdatedEvent
     extends EntityUpdatedEvent

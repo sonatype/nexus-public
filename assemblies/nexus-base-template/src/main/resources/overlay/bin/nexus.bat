@@ -1,4 +1,5 @@
 @echo off
+
 if not "%ECHO%" == "" echo %ECHO%
 
 setlocal
@@ -79,11 +80,21 @@ if "%KARAF_ETC%" == "" (
     set "KARAF_ETC=%KARAF_BASE%\etc\karaf"
 )
 
+if not "%KARAF_LOG%" == "" (
+    if not exist "%KARAF_LOG%" (
+        call :warn KARAF_LOG is not valid: "%KARAF_LOG%"
+        goto END
+    )
+)
+if "%KARAF_LOG%" == "" (
+    set "KARAF_LOG=%KARAF_DATA%\log"
+)
+
 set LOCAL_CLASSPATH=%CLASSPATH%
-set JAVA_MODE=-server
 
 set CLASSPATH=%LOCAL_CLASSPATH%;%KARAF_BASE%\conf
 set DEFAULT_JAVA_DEBUG_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
+set DEFAULT_JAVA_DEBUGS_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005
 
 if "%LOCAL_CLASSPATH%" == "" goto :KARAF_CLASSPATH_EMPTY
     set CLASSPATH=%LOCAL_CLASSPATH%;%KARAF_BASE%\conf
@@ -91,6 +102,8 @@ if "%LOCAL_CLASSPATH%" == "" goto :KARAF_CLASSPATH_EMPTY
 :KARAF_CLASSPATH_EMPTY
     set CLASSPATH=%KARAF_BASE%\conf
 :KARAF_CLASSPATH_END
+
+set CLASSPATH_INITIAL=%CLASSPATH%
 
 rem Setup Karaf Home
 if exist "%KARAF_HOME%\conf\karaf-rc.cmd" call %KARAF_HOME%\conf\karaf-rc.cmd
@@ -174,8 +187,8 @@ if not "%JAVA%" == "" goto :Check_JAVA_END
     )
     if not exist "%JAVA_HOME%" (
        goto TryRegJDK
-    )
-    goto TryJDKEnd
+	)
+	goto TryJDKEnd
 :TryRegJDK
     rem try getting the JAVA_HOME from registry
     FOR /F "usebackq tokens=3*" %%A IN (`REG QUERY "HKLM\Software\JavaSoft\Java Development Kit" /v CurrentVersion`) DO (
@@ -187,7 +200,7 @@ if not "%JAVA%" == "" goto :Check_JAVA_END
     if not exist "%JAVA_HOME%" (
        call :warn Unable to retrieve JAVA_HOME from Registry
     )
-    goto TryJDKEnd
+	goto TryJDKEnd
 :TryJDKEnd
     if not exist "%JAVA_HOME%" (
         call :warn JAVA_HOME is not valid: "%JAVA_HOME%"
@@ -196,22 +209,19 @@ if not "%JAVA%" == "" goto :Check_JAVA_END
     set JAVA=%JAVA_HOME%\bin\java
 :Check_JAVA_END
 
+rem Retrieve java version
+for /f tokens^=2-5^ delims^=.-_+^" %%j in ('"%JAVA%" -fullversion 2^>^&1') do (
+    if %%j==1 (set JAVA_VERSION=%%k) else (set JAVA_VERSION=%%j)
+)
+
 if not exist "%JAVA_HOME%\bin\server\jvm.dll" (
     if not exist "%JAVA_HOME%\jre\bin\server\jvm.dll" (
         echo WARNING: Running Karaf on a Java HotSpot Client VM because server-mode is not available.
         echo Install Java Developer Kit to fix this.
         echo For more details see http://java.sun.com/products/hotspot/whitepaper.html#client
-        set JAVA_MODE=-client
     )
 )
-
-rem SONATYPE: preferred IPv4 by default
-if "%KARAF_OPTS%" == "" set KARAF_OPTS=-Djava.net.preferIPv4Stack=true
-
-rem SONATYPE: removed -Dcom.sun.management.jmxremote and unused derby properties
-set DEFAULT_JAVA_OPTS=%JAVA_MODE% -Xms%JAVA_MIN_MEM% -Xmx%JAVA_MAX_MEM% -XX:MaxDirectMemorySize=%DIRECT_MAX_MEM% -XX:+UnlockDiagnosticVMOptions -XX:+UnsyncloadClass -XX:+LogVMOutput -XX:LogFile=..\sonatype-work\nexus3\log\jvm.log -XX:-OmitStackTraceInFastThrow 
-
-rem SONATYPE: removed -XX:PermSize and -XX:MaxPermSize
+set DEFAULT_JAVA_OPTS=-Xms%JAVA_MIN_MEM% -Xmx%JAVA_MAX_MEM% -XX:MaxDirectMemorySize=%DIRECT_MAX_MEM% -XX:+UnlockDiagnosticVMOptions -XX:+LogVMOutput -XX:LogFile=%KARAF_LOG%\jvm.log -XX:-OmitStackTraceInFastThrow -Djava.net.preferIPv4Stack=true
 
 if "%JAVA_OPTS%" == "" set JAVA_OPTS=%DEFAULT_JAVA_OPTS%
 
@@ -270,9 +280,11 @@ if "%KARAF_PROFILER%" == "" goto :RUN
     if "%1" == "console" goto :EXECUTE_CONSOLE
     if "%1" == "start" goto :EXECUTE_SERVER
     if "%1" == "server" goto :EXECUTE_SERVER
+    if "%1" == "daemon" goto :EXECUTE_DAEMON
     if "%1" == "client" goto :EXECUTE_CLIENT
     if "%1" == "clean" goto :EXECUTE_CLEAN
     if "%1" == "debug" goto :EXECUTE_DEBUG
+    if "%1" == "debugs" goto :EXECUTE_DEBUGS
     goto :EXECUTE
 
 :EXECUTE_STOP
@@ -294,13 +306,19 @@ if "%KARAF_PROFILER%" == "" goto :RUN
     shift
     goto :RUN_LOOP
 
+:EXECUTE_DAEMON
+    SET OPTS=-Dkaraf.startLocalConsole=false -Dkaraf.startRemoteShell=true
+    SET KARAF_DAEMON=true
+    shift
+    goto :RUN_LOOP
+
 :EXECUTE_CLIENT
     SET OPTS=-Dkaraf.startLocalConsole=true -Dkaraf.startRemoteShell=false
     shift
     goto :RUN_LOOP
 
 :EXECUTE_CLEAN
-    rmdir /S /Q "%KARAF_DATA%"
+    pushd "%KARAF_DATA%" && (rmdir /S /Q "%KARAF_DATA%" 2>nul & popd)
     shift
     goto :RUN_LOOP
 
@@ -310,14 +328,96 @@ if "%KARAF_PROFILER%" == "" goto :RUN
     shift
     goto :RUN_LOOP
 
+:EXECUTE_DEBUGS
+    if "%JAVA_DEBUG_OPTS%" == "" set JAVA_DEBUG_OPTS=%DEFAULT_JAVA_DEBUGS_OPTS%
+    set JAVA_OPTS=%JAVA_DEBUG_OPTS% %JAVA_OPTS%
+    shift
+    goto :RUN_LOOP
+
 :EXECUTE
     SET ARGS=%1 %2 %3 %4 %5 %6 %7 %8
     rem Execute the Java Virtual Machine
     cd "%KARAF_BASE%"
-    rem SONATYPE: removed -Djavax.management.builder.initial
-    rem SONATYPE: removed -Djava.endorsed.dirs="%JAVA_HOME%\jre\lib\endorsed;%JAVA_HOME%\lib\endorsed;%KARAF_HOME%\lib\endorsed"
-    rem SONATYPE: removed -Djava.ext.dirs="%JAVA_HOME%\jre\lib\ext;%JAVA_HOME%\lib\ext;%KARAF_HOME%\lib\ext"
-    "%JAVA%" %JAVA_OPTS% %OPTS% -classpath "%CLASSPATH%" -Dkaraf.instances="%KARAF_DATA%\instances" -Dkaraf.home="%KARAF_HOME%" -Dkaraf.base="%KARAF_BASE%" -Dkaraf.etc="%KARAF_ETC%" -Djava.io.tmpdir="%KARAF_DATA%\tmp" -Dkaraf.data="%KARAF_DATA%" -Djava.util.logging.config.file="%KARAF_ETC%\java.util.logging.properties" %KARAF_OPTS% %MAIN% %ARGS%
+
+    rem When users want to update the lib version of, they just need to create
+    rem a lib.next directory and on the new restart, it will replace the current lib directory.
+    if exist "%KARAF_HOME%\lib.next" (
+        echo Updating libs...
+        RD /S /Q "%KARAF_HOME%\lib"
+        MOVE /Y "%KARAF_HOME%\lib.next" "%KARAF_HOME%\lib"
+
+        echo "Updating classpath..."
+        set CLASSPATH=%CLASSPATH_INITIAL%
+        pushd "%KARAF_HOME%\lib\boot"
+        for %%G in (*.jar) do call:APPEND_TO_CLASSPATH %%G
+        popd
+    )
+
+        rem If major version is greater than 1 (meaning Java 9 or 10), we don't use endorsed lib but module
+        rem If major version is 1 (meaning Java 1.6, 1.7, 1.8), we use endorsed lib
+        if %JAVA_VERSION% GTR 8 (
+            "%JAVA%" %JAVA_OPTS% %OPTS% ^
+                --add-reads=java.xml=java.logging ^
+                --add-exports=java.base/org.apache.karaf.specs.locator=java.xml,ALL-UNNAMED ^
+                --patch-module=java.base=lib/endorsed/org.apache.karaf.specs.locator-4.2.6.jar ^
+                --patch-module=java.xml=lib/endorsed/org.apache.karaf.specs.java.xml-4.2.6.jar ^
+                --add-opens=java.base/java.security=ALL-UNNAMED ^
+                --add-opens=java.base/java.net=ALL-UNNAMED ^
+                --add-opens=java.base/java.lang=ALL-UNNAMED ^
+                --add-opens=java.base/java.util=ALL-UNNAMED ^
+                --add-opens=java.naming/javax.naming.spi=ALL-UNNAMED ^
+                --add-opens=java.rmi/sun.rmi.transport.tcp=ALL-UNNAMED ^
+                --add-exports=java.base/sun.net.www.protocol.http=ALL-UNNAMED ^
+                --add-exports=java.base/sun.net.www.protocol.https=ALL-UNNAMED ^
+                --add-exports=java.base/sun.net.www.protocol.jar=ALL-UNNAMED ^
+                --add-exports=jdk.xml.dom/org.w3c.dom.html=ALL-UNNAMED ^
+                --add-exports=jdk.naming.rmi/com.sun.jndi.url.rmi=ALL-UNNAMED ^
+                -classpath "%CLASSPATH%" ^
+                -Dkaraf.instances="%KARAF_HOME%\instances" ^
+                -Dkaraf.home="%KARAF_HOME%" ^
+                -Dkaraf.base="%KARAF_BASE%" ^
+                -Dkaraf.etc="%KARAF_ETC%" ^
+                -Dkaraf.log="%KARAF_LOG%" ^
+                -Dkaraf.restart.jvm.supported=true ^
+                -Djava.io.tmpdir="%KARAF_DATA%\tmp" ^
+                -Dkaraf.data="%KARAF_DATA%" ^
+                -Djava.util.logging.config.file="%KARAF_BASE%\etc\java.util.logging.properties" ^
+                %KARAF_SYSTEM_OPTS% %KARAF_OPTS% %MAIN% %ARGS%
+        ) else (
+            "%JAVA%" %JAVA_OPTS% %OPTS% ^
+                -classpath "%CLASSPATH%" ^
+                -Djava.endorsed.dirs="%JAVA_HOME%\jre\lib\endorsed;%JAVA_HOME%\lib\endorsed;%KARAF_HOME%\lib\endorsed" ^
+                -Dkaraf.instances="%KARAF_HOME%\instances" ^
+                -Dkaraf.home="%KARAF_HOME%" ^
+                -Dkaraf.base="%KARAF_BASE%" ^
+                -Dkaraf.etc="%KARAF_ETC%" ^
+                -Dkaraf.log="%KARAF_LOG%" ^
+                -Dkaraf.restart.jvm.supported=true ^
+                -Djava.io.tmpdir="%KARAF_DATA%\tmp" ^
+                -Dkaraf.data="%KARAF_DATA%" ^
+                -Djava.util.logging.config.file="%KARAF_BASE%\etc\java.util.logging.properties" ^
+                %KARAF_SYSTEM_OPTS% %KARAF_OPTS% %MAIN% %ARGS%
+        )
+
+    rem If KARAF_DAEMON is defined, auto-restart is bypassed and control given
+    rem back to the operating system
+    if defined "%KARAF_DAEMON%" (
+        rem If Karaf has been started by winsw, the process can be restarted
+        rem by executing KARAF_DAEMON% restart!
+        rem   https://github.com/kohsuke/winsw#restarting-service-from-itself
+        if defined "%WINSW_EXECUTABLE%" (
+            if ERRORLEVEL 10 (
+                echo Restarting ...
+                %KARAF_DAEMON% restart!
+            )
+        )
+    ) else (
+        if ERRORLEVEL 10 (
+            echo Restarting JVM...
+            goto EXECUTE
+        )
+    )
+
 
 rem # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -328,4 +428,4 @@ endlocal
 if not "%PAUSE%" == "" pause
 
 :END_NO_PAUSE
-
+    EXIT /B %ERRORLEVEL%

@@ -26,7 +26,7 @@ import io.swagger.annotations.ApiResponses;
 /**
  * Swagger documentation for {@link UserApiResource}
  *
- * @since 3.next
+ * @since 3.17
  */
 @Api(value = "Security Management: Users")
 public interface UserApiResourceDoc
@@ -37,21 +37,19 @@ public interface UserApiResourceDoc
 
   String PASSWORD_REQUIRED = "Password was not supplied in the body of the request";
 
-  @ApiOperation(
-      value = "Retrieve a list of users. Note if the source is not 'default' the response is limited to 100 users.",
-      hidden = true)
+  @ApiOperation("Retrieve a list of users. Note if the source is not 'default' the response is limited to 100 users.")
   @ApiResponses(value = {@ApiResponse(code = 400, message = PASSWORD_REQUIRED),
       @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS)})
   Collection<ApiUser> getUsers(
       @ApiParam("An optional term to search userids for.") String userId,
       @ApiParam("An optional user source to restrict the search to.") String source);
 
-  @ApiOperation(value = "Create a new user in the default source.", hidden = true)
+  @ApiOperation("Create a new user in the default source.")
   @ApiResponses(value = {@ApiResponse(code = 400, message = PASSWORD_REQUIRED),
       @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS)})
   ApiUser createUser(@ApiParam("A representation of the user to create.") @NotNull @Valid ApiCreateUser user);
 
-  @ApiOperation(value = "Update an existing user.", hidden = true)
+  @ApiOperation("Update an existing user.")
   @ApiResponses(value = {@ApiResponse(code = 400, message = PASSWORD_REQUIRED),
       @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
       @ApiResponse(code = 404, message = NexusSecurityApiConstants.USER_OR_SOURCE_NOT_FOUND)})
@@ -59,7 +57,7 @@ public interface UserApiResourceDoc
       @ApiParam(value = USER_ID_DESCRIPTION) String userId,
       @ApiParam("A representation of the user to update.") @NotNull @Valid ApiUser user);
 
-  @ApiOperation(value = "Delete a user.", hidden = true)
+  @ApiOperation("Delete a user.")
   @ApiResponses(value = {@ApiResponse(code = 400, message = PASSWORD_REQUIRED),
       @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS),
       @ApiResponse(code = 404, message = NexusSecurityApiConstants.USER_OR_SOURCE_NOT_FOUND)})

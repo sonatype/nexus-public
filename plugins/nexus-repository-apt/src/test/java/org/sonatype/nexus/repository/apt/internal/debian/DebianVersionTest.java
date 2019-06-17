@@ -21,7 +21,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 public class DebianVersionTest
     extends TestSupport

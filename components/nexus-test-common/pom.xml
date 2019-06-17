@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-components</artifactId>
-    <version>3.17.0-SNAPSHOT</version>
+    <version>3.18.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-test-common</artifactId>

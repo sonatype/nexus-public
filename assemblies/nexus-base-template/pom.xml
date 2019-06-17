@@ -21,12 +21,12 @@
   <parent>
     <groupId>org.sonatype.nexus.assemblies</groupId>
     <artifactId>nexus-assemblies</artifactId>
-    <version>3.17.0-SNAPSHOT</version>
+    <version>3.18.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-base-template</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
-  <packaging>karaf-assembly</packaging>
+  <packaging>pom</packaging>
 
   <dependencies>
     <!--
@@ -170,11 +170,61 @@
       </plugin>
 
       <plugin>
+        <groupId>org.apache.karaf.tooling</groupId>
+        <artifactId>karaf-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>karaf-assembly</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>assembly</goal>
+            </goals>
+            <configuration>
+              <!-- disable archive generation, will use maven-assembly-plugin -->
+              <archiveTarGz>false</archiveTarGz>
+              <archiveZip>false</archiveZip>
+              <!-- disable include of target/classes, we use overlay instead -->
+              <includeBuildOutputDirectory>false</includeBuildOutputDirectory>
+              <!-- override expected osgi.ee to match compilation target -->
+              <javase>1.8</javase>
+              <!-- install startup jars 'by-reference' which avoids copying -->
+              <useReferenceUrls>true</useReferenceUrls>
+              <startupFeatures>
+                <feature>wrap</feature>
+                <feature>bundle</feature>
+                <feature>config</feature>
+                <feature>deployer</feature>
+                <feature>diagnostic</feature>
+                <feature>feature</feature>
+                <feature>jaas</feature>
+                <feature>kar</feature>
+                <feature>log</feature>
+                <feature>package</feature>
+                <feature>shell</feature>
+                <feature>service</feature>
+                <feature>system</feature>
+                <feature>nexus-startup-feature</feature>
+              </startupFeatures>
+              <bootFeatures>
+                <feature>nexus-boot-feature</feature>
+              </bootFeatures>
+              <installedFeatures>
+                <feature>management</feature>
+                <feature>ssh</feature>
+                <feature>nexus-core-feature</feature>
+                <feature>nexus-oss-edition</feature>
+              </installedFeatures>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-antrun-plugin</artifactId>
         <executions>
           <execution>
-            <id>configure-assembly</id>
+            <id>overlay-assembly</id>
             <phase>prepare-package</phase>
             <goals>
               <goal>run</goal>
@@ -184,6 +234,14 @@
                 <!-- install additional boot jars -->
                 <copy file="${org.sonatype.nexus:nexus-main:jar}"
                       tofile="${project.build.directory}/assembly/lib/boot/nexus-main.jar"/>
+                <copy file="${javax.activation:activation:jar}"
+                      todir="${project.build.directory}/assembly/lib/boot"/>
+                <copy file="${javax.xml.bind:jaxb-api:jar}"
+                      todir="${project.build.directory}/assembly/lib/boot"/>
+                <copy file="${com.sun.xml.bind:jaxb-core:jar}"
+                      todir="${project.build.directory}/assembly/lib/boot"/>
+                <copy file="${com.sun.xml.bind:jaxb-impl:jar}"
+                      todir="${project.build.directory}/assembly/lib/boot"/>
 
                 <!-- install additional framework jars -->
                 <copy file="${javax.annotation:javax.annotation-api:jar}"
@@ -203,7 +261,7 @@
                 <delete dir="${project.build.directory}/assembly/system/org/sonatype/nexus/nexus-orient-console"/>
 
                 <!-- delete some cruft which karaf includes by default -->
-                <delete>
+                <delete includeemptydirs="true">
                   <fileset dir="${project.build.directory}/assembly">
                     <include name="bin/*"/>
                     <include name="**/README"/>
@@ -216,15 +274,13 @@
                     <include name="etc/org.apache.karaf.features.repos.cfg"/>
                     <include name="etc/org.apache.karaf.command.acl.*.cfg"/>
                     <include name="etc/jmx.acl.*.cfg"/>
-                    <include name="etc/org.ops4j.pax.logging.cfg"/>
                     <include name="etc/users.properties"/>
                     <include name="etc/keys.properties"/>
+                    <include name="lib/endorsed/*java.xml.ws*"/>
+                    <include name="lib/ext/**"/>
+                    <include name="lib/jdk9plus/**"/>
                   </fileset>
                 </delete>
-
-                <!-- delete java.ext.dirs and java.endorsed.dirs -->
-                <delete dir="${project.build.directory}/assembly/lib/ext"/>
-                <delete dir="${project.build.directory}/assembly/lib/endorsed"/>
 
                 <!-- identify the specific pax-logging API bundle used by nexus-pax-logging backend -->
                 <loadresource property="pax-logging-api">
@@ -242,6 +298,10 @@
                   <fileset dir="${project.build.directory}/assembly/system/org/ops4j/pax/logging"
                            excludes="${pax-logging-api}/**"/>
                 </delete>
+
+                <!-- make sure only 'nexus-boot-feature' is listed under 'featuresBoot' -->
+                <replaceregexp file="${project.build.directory}/assembly/etc/org.apache.karaf.features.cfg" flags="s"
+                               match="featuresBoot.*?[^\\](?=\v)" replace="featuresBoot = nexus-boot-feature"/>
 
                 <!-- tweak generated karaf feature configuration -->
                 <concat destfile="${project.build.directory}/assembly/etc/org.apache.karaf.features.cfg" append="true">
@@ -333,52 +393,11 @@
       </plugin>
 
       <plugin>
-        <groupId>org.apache.karaf.tooling</groupId>
-        <artifactId>karaf-maven-plugin</artifactId>
-        <configuration>
-          <!-- disable archive generation, will use maven-assembly-plugin -->
-          <archiveTarGz>false</archiveTarGz>
-          <archiveZip>false</archiveZip>
-          <!-- disable include of target/classes, we use overlay instead -->
-          <includeBuildOutputDirectory>false</includeBuildOutputDirectory>
-          <!-- override expected osgi.ee to match compilation target -->
-          <javase>1.8</javase>
-          <!-- install startup jars 'by-reference' which avoids copying -->
-          <useReferenceUrls>true</useReferenceUrls>
-          <startupFeatures>
-            <feature>wrap</feature>
-            <feature>bundle</feature>
-            <feature>config</feature>
-            <feature>deployer</feature>
-            <feature>diagnostic</feature>
-            <feature>feature</feature>
-            <feature>jaas</feature>
-            <feature>kar</feature>
-            <feature>log</feature>
-            <feature>package</feature>
-            <feature>shell</feature>
-            <feature>service</feature>
-            <feature>system</feature>
-            <feature>nexus-startup-feature</feature>
-          </startupFeatures>
-          <bootFeatures>
-            <feature>nexus-boot-feature</feature>
-          </bootFeatures>
-          <installedFeatures>
-            <feature>management</feature>
-            <feature>ssh</feature>
-            <feature>nexus-core-feature</feature>
-            <feature>nexus-oss-edition</feature>
-          </installedFeatures>
-        </configuration>
-      </plugin>
-
-      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
         <executions>
           <execution>
-            <id>bundle</id>
+            <id>archive-assembly</id>
             <phase>package</phase>
             <goals>
               <goal>single</goal>

@@ -44,7 +44,7 @@ import static org.sonatype.nexus.repository.golang.internal.util.GolangDataAcces
 /**
  * Go {@link ProxyFacet} implementation.
  *
- * @since 3.next
+ * @since 3.17
  */
 @Named
 public class GolangProxyFacetImpl

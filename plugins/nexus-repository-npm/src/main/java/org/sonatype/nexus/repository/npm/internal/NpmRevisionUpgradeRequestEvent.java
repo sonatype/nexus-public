@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Event for requesting an upgrade on the revision field of an NPM package root.
  *
- * @since 3.next
+ * @since 3.17
  */
 public class NpmRevisionUpgradeRequestEvent
 {

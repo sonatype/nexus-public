@@ -13,13 +13,11 @@
 package org.sonatype.nexus.repository.apt.internal;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.collect.AttributesMap;
+import org.sonatype.nexus.repository.apt.internal.hosted.AptHostedRecipe;
 import org.sonatype.nexus.repository.apt.internal.proxy.AptProxyRecipe;
 import org.sonatype.nexus.repository.types.ProxyType;
-import org.sonatype.nexus.repository.view.Context;
-import org.sonatype.nexus.repository.view.Request;
+import org.sonatype.nexus.repository.view.handlers.HighAvailabilitySupportChecker;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -27,46 +25,60 @@ import org.mockito.Mock;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 public class AptRecipeTest
     extends TestSupport
 {
   @Mock
-  private Request request;
+  AptFormat format;
 
   @Mock
-  private Context context;
+  HighAvailabilitySupportChecker highAvailabilitySupportChecker;
 
-  private AttributesMap attributesMap;
+  AptHostedRecipe hostedRecipe;
 
-  private AptRecipeSupport underTest;
+  AptProxyRecipe proxyRecipe;
+
+  final String APT_NAME = "apt";
 
   @Before
   public void setUp() {
-    underTest = new AptProxyRecipe(new ProxyType(), new AptFormat());
-
-    attributesMap = new AttributesMap();
-    when(context.getRequest()).thenReturn(request);
-    when(context.getAttributes()).thenReturn(attributesMap);
-  }
-
-  @After
-  public void tearDown() {
-    System.getProperties().remove("nexus.apt.enabled");
+    hostedRecipe = new AptHostedRecipe(highAvailabilitySupportChecker, new ProxyType(), format);
+    proxyRecipe = new AptProxyRecipe(highAvailabilitySupportChecker, new ProxyType(), format);
+    when(format.getValue()).thenReturn(APT_NAME);
   }
 
   @Test
-  public void disabledByDefault() {
-    assertThat(underTest.isFeatureEnabled(), is(equalTo(false)));
+  public void enabledByDefault_AptHostedRepository() {
+    when(highAvailabilitySupportChecker.isSupported(APT_NAME)).thenReturn(true);
+    assertThat(hostedRecipe.isFeatureEnabled(), is(equalTo(true)));
+    verify(highAvailabilitySupportChecker).isSupported(APT_NAME);
   }
 
   @Test
-  public void enableApt() {
-    System.setProperty("nexus.apt.enabled", "true");
-    assertThat(underTest.isFeatureEnabled(), is(equalTo(true)));
+  public void disabledIfNexusIsClusteredAndAptNotCluster_AptHostedRepository() {
+    when(highAvailabilitySupportChecker.isSupported(APT_NAME)).thenReturn(false);
+    assertThat(hostedRecipe.isFeatureEnabled(), is(equalTo(false)));
+    verify(highAvailabilitySupportChecker).isSupported(APT_NAME);
   }
+
+  @Test
+  public void enabledByDefault_AptProxyRepository() {
+    when(highAvailabilitySupportChecker.isSupported(APT_NAME)).thenReturn(true);
+    assertThat(proxyRecipe.isFeatureEnabled(), is(equalTo(true)));
+    verify(highAvailabilitySupportChecker).isSupported(APT_NAME);
+  }
+
+  @Test
+  public void disabledIfNexusIsClusteredAndAptNotCluster_AptProxyRepository() {
+    when(highAvailabilitySupportChecker.isSupported(APT_NAME)).thenReturn(false);
+    assertThat(proxyRecipe.isFeatureEnabled(), is(equalTo(false)));
+    verify(highAvailabilitySupportChecker).isSupported(APT_NAME);
+  }
+
 }

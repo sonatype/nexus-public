@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.storage.Query;
 import org.sonatype.nexus.repository.view.Content;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 @Facet.Exposed
 public interface AptRestoreFacet extends Facet

@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.plugins</groupId>
     <artifactId>nexus-plugins</artifactId>
-    <version>3.17.0-SNAPSHOT</version>
+    <version>3.18.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-blobstore-s3</artifactId>
@@ -60,6 +60,12 @@
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-extdirect</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-rapture</artifactId>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
@@ -136,6 +142,24 @@
           </instructions>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.sonatype.nexus.buildsupport</groupId>
+        <artifactId>extjs-maven-plugin</artifactId>
+        <configuration>
+          <namespace>NX.s3blobstore</namespace>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>yuicompressor-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>plugin-css</id>
+            <phase>none</phase> <!-- no css -->
+          </execution>
+        </executions>
+      </plugin>
+
     </plugins>
   </build>
 

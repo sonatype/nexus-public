@@ -16,7 +16,7 @@ package org.sonatype.nexus.security.internal.rest;
 /**
  * Holder for constants used by the REST API
  *
- * @since 3.next
+ * @since 3.17
  */
 final class NexusSecurityApiConstants
 {

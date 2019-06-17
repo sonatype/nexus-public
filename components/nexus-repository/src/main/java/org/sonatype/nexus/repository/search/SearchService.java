@@ -166,7 +166,7 @@ public interface SearchService
   /**
    * Used by ITs to check the frequency of search updates.
    *
-   * @since 3.next
+   * @since 3.17
    */
   @VisibleForTesting
   long getUpdateCount();

@@ -15,7 +15,7 @@
 /**
  * Routing Rule Preview grid store.
  *
- * @since 3.next
+ * @since 3.17
  */
 Ext.define('NX.coreui.store.RoutingRulePreview', {
   extend: 'Ext.data.TreeStore',

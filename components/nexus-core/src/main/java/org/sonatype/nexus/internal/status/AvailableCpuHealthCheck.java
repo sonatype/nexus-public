@@ -24,7 +24,7 @@ import com.google.common.annotations.VisibleForTesting;
  * results during the lifetime of the JVM, but we will always consider it not healthy if the CPU is dynamically reduced
  * below threshold.
  *
- * @since 3.next
+ * @since 3.17
  */
 @Named("Available CPUs")
 @Singleton

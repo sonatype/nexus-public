@@ -49,7 +49,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 import static org.sonatype.nexus.repository.storage.Query.builder;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 public abstract class AptSnapshotFacetSupport
     extends FacetSupport

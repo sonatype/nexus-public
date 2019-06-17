@@ -61,7 +61,7 @@ class RepositoryComponentWebhookTest
   private ComponentDeletedEvent componentDeletedEvent
 
   @Before
-  public void before() {
+  void before() {
     repositoryComponentWebhook = new RepositoryComponentWebhook(
         eventManager: eventManager,
         initiatorProvider: initiatorProvider,
@@ -93,37 +93,37 @@ class RepositoryComponentWebhookTest
   }
 
   @Test
-  public void 'has the correct event id'() {
+  void 'has the correct event id'() {
     assert repositoryComponentWebhook.id == "rm:repository:component"
   }
 
   @Test
-  public void 'queues local component created events'() {
+  void 'queues local component created events'() {
     testLocalComponentEvent(componentCreatedEvent, 'CREATED')
   }
 
   @Test
-  public void 'queues local component updated events'() {
+  void 'queues local component updated events'() {
     testLocalComponentEvent(componentUpdatedEvent, 'UPDATED')
   }
 
   @Test
-  public void 'queues local component deleted events'() {
+  void 'queues local component deleted events'() {
     testLocalComponentEvent(componentDeletedEvent, 'DELETED')
   }
 
   @Test
-  public void 'ignores non local component created events'() {
+  void 'ignores non local component created events'() {
     testNonLocalAssetEvent(componentCreatedEvent)
   }
 
   @Test
-  public void 'ignores non local component updated events'() {
+  void 'ignores non local component updated events'() {
     testNonLocalAssetEvent(componentUpdatedEvent)
   }
 
   @Test
-  public void 'ignores non local component deleted events'() {
+  void 'ignores non local component deleted events'() {
     testNonLocalAssetEvent(componentDeletedEvent)
   }
 
@@ -146,6 +146,7 @@ class RepositoryComponentWebhookTest
     assert componentPayload.component.group == 'group'
     assert componentPayload.component.version == 'version'
     assert componentPayload.component.id == 'id'
+    assert componentPayload.component.componentId == 'cmVwb05hbWU6aWQ'
   }
 
   private void testNonLocalAssetEvent(ComponentEvent componentEvent) {

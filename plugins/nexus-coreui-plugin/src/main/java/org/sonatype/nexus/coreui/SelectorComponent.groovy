@@ -12,15 +12,21 @@
  */
 package org.sonatype.nexus.coreui
 
+import java.util.stream.Collectors
+
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
+import javax.validation.ConstraintViolation
+import javax.validation.ConstraintViolationException
 import javax.validation.Valid
 import javax.validation.constraints.NotNull
 import javax.validation.groups.Default
 
 import org.sonatype.nexus.common.entity.DetachedEntityId
 import org.sonatype.nexus.extdirect.DirectComponentSupport
+import org.sonatype.nexus.repository.security.RepositoryContentSelectorPrivilegeDescriptor
+import org.sonatype.nexus.security.SecuritySystem
 import org.sonatype.nexus.selector.SelectorConfiguration
 import org.sonatype.nexus.selector.SelectorFactory
 import org.sonatype.nexus.selector.SelectorManager
@@ -33,6 +39,7 @@ import com.codahale.metrics.annotation.ExceptionMetered
 import com.codahale.metrics.annotation.Timed
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
+import org.apache.shiro.SecurityUtils
 import org.apache.shiro.authz.annotation.RequiresPermissions
 import org.hibernate.validator.constraints.NotEmpty
 
@@ -56,6 +63,9 @@ class SelectorComponent
 
   @Inject
   SelectorFactory selectorFactory
+
+  @Inject
+  SecuritySystem securitySystem
 
   /**
    * @return a list of selectors
@@ -115,7 +125,12 @@ class SelectorComponent
   @RequiresPermissions('nexus:selectors:delete')
   @Validate
   void remove(final @NotEmpty String id) {
-    selectorManager.delete(selectorManager.read(new DetachedEntityId(id)))
+    try {
+      selectorManager.delete(selectorManager.read(new DetachedEntityId(id)))
+    } catch (IllegalStateException e) {
+      throw new ConstraintViolationException(e.getMessage(),
+          Collections.<ConstraintViolation>singleton(constraintViolationFactory.createViolation('*', e.getMessage())))
+    }
   }
 
   /**
@@ -129,13 +144,29 @@ class SelectorComponent
     return selectorManager.browse().collect { new ReferenceXO(id: it.name, name: it.name) }
   }
 
-  static SelectorXO asSelector(final SelectorConfiguration configuration) {
+  SelectorXO asSelector(final SelectorConfiguration configuration) {
+    def privileges = getPrivilegesUsingSelector(configuration)
+
     return new SelectorXO(
         id: configuration.entityMetadata.id.value,
         name: configuration.name,
         type: configuration.type,
         description: configuration.description,
-        expression: configuration.attributes['expression']
+        expression: configuration.attributes['expression'],
+        usedBy: canReadPrivileges() ? privileges : [],
+        usedByCount: privileges.size()
     )
+  }
+
+  private List<String> getPrivilegesUsingSelector(final SelectorConfiguration selectorConfiguration) {
+    securitySystem.listPrivileges().stream()
+      .filter({ privilege -> RepositoryContentSelectorPrivilegeDescriptor.TYPE == privilege.type })
+      .filter({ privilege -> selectorConfiguration.name == privilege.properties[RepositoryContentSelectorPrivilegeDescriptor.P_CONTENT_SELECTOR]})
+      .map({ privilege -> privilege.name })
+    .collect(Collectors.toList())
+  }
+
+  private static boolean canReadPrivileges() {
+    SecurityUtils.getSubject().isPermitted('nexus:privileges:read')
   }
 }

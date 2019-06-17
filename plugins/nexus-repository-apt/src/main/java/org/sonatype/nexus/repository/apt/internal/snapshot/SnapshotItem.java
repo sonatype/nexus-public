@@ -21,7 +21,7 @@ import static org.sonatype.nexus.repository.apt.internal.AptMimeTypes.TEXT;
 import static org.sonatype.nexus.repository.apt.internal.AptMimeTypes.XZ;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 public class SnapshotItem
 {

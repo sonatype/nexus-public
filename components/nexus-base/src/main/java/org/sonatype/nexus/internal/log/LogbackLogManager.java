@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -50,6 +51,7 @@ import ch.qos.logback.core.FileAppender;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Key;
+import org.apache.commons.io.FilenameUtils;
 import org.eclipse.sisu.BeanEntry;
 import org.eclipse.sisu.Mediator;
 import org.eclipse.sisu.inject.BeanLocator;
@@ -133,6 +135,28 @@ public class LogbackLogManager
   protected void doStop() throws Exception {
     // inform logback to shutdown
     loggerContext().stop();
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public Optional<String> getLogFor(final String loggerName) {
+    return getLogFor(loggerName, appenders());
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public Optional<File> getLogFileForLogger(final String loggerName) {
+    return getLogFor(loggerName).map(this::getLogFile);
+  }
+
+  @VisibleForTesting
+  static Optional<String> getLogFor(final String loggerName, final Collection<Appender<ILoggingEvent>> appenders) {
+    return appenders.stream()
+        .filter(appender -> loggerName.equals(appender.getName()))
+        .filter(named -> named instanceof FileAppender)
+        .map(fileAppender -> ((FileAppender) fileAppender).getFile())
+        .map(FilenameUtils::getName)
+        .findAny();
   }
 
   @Override

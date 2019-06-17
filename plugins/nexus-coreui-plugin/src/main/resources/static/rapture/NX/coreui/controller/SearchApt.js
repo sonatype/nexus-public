@@ -15,7 +15,7 @@
 /**
  * Apt repository search contribution.
  *
- * @since 3.next
+ * @since 3.17
  */
 Ext.define('NX.coreui.controller.SearchApt', {
   extend: 'NX.app.Controller',

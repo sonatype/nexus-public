@@ -45,4 +45,8 @@ class SelectorXO
 
   @NotBlank
   String expression
+
+  List<String> usedBy
+
+  int usedByCount
 }

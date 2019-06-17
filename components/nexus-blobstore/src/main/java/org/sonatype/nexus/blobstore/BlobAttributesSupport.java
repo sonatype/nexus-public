@@ -15,6 +15,7 @@ package org.sonatype.nexus.blobstore;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Properties;
 
 import javax.annotation.Nullable;
@@ -29,6 +30,7 @@ import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.CONTENT_S
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.CREATION_TIME_ATTRIBUTE;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.DELETED_ATTRIBUTE;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.DELETED_REASON_ATTRIBUTE;
+import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.DELETED_DATETIME_ATTRIBUTE;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.SHA1_HASH_ATTRIBUTE;
 
@@ -47,6 +49,8 @@ public abstract class BlobAttributesSupport<T extends Properties>
   private boolean deleted = false;
 
   private String deletedReason;
+
+  private DateTime deletedDateTime;
 
   protected final T propertiesFile;
 
@@ -89,6 +93,16 @@ public abstract class BlobAttributesSupport<T extends Properties>
   }
 
   @Override
+  public DateTime getDeletedDateTime() {
+    return deletedDateTime;
+  }
+
+  @Override
+  public void setDeletedDateTime(final DateTime deletedDateTime) {
+    this.deletedDateTime = deletedDateTime;
+  }
+
+  @Override
   public Properties getProperties() {
     return new Properties(propertiesFile);
   }
@@ -99,6 +113,7 @@ public abstract class BlobAttributesSupport<T extends Properties>
     metrics = blobAttributes.getMetrics();
     deleted = blobAttributes.isDeleted();
     deletedReason = blobAttributes.getDeletedReason();
+    deletedDateTime = blobAttributes.getDeletedDateTime();
   }
 
   protected void readFrom(Properties properties) {
@@ -117,6 +132,9 @@ public abstract class BlobAttributesSupport<T extends Properties>
 
     deleted = properties.containsKey(DELETED_ATTRIBUTE);
     deletedReason = properties.getProperty(DELETED_REASON_ATTRIBUTE);
+    deletedDateTime = Optional.ofNullable(properties.getProperty(DELETED_DATETIME_ATTRIBUTE))
+        .map(p -> new DateTime(Long.parseLong(p)))
+        .orElse(null);
   }
 
   protected void writeTo(final Properties properties) {
@@ -131,10 +149,14 @@ public abstract class BlobAttributesSupport<T extends Properties>
     if (deleted) {
       properties.put(DELETED_ATTRIBUTE, Boolean.toString(deleted));
       properties.put(DELETED_REASON_ATTRIBUTE, getDeletedReason());
+      if (deletedDateTime != null) {
+        properties.put(DELETED_DATETIME_ATTRIBUTE, Long.toString(deletedDateTime.getMillis()));
+      }
     }
     else {
       properties.remove(DELETED_ATTRIBUTE);
       properties.remove(DELETED_REASON_ATTRIBUTE);
+      properties.remove(DELETED_DATETIME_ATTRIBUTE);
     }
   }
 

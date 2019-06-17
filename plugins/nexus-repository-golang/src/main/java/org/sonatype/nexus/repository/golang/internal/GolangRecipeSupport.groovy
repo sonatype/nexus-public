@@ -38,7 +38,9 @@ import org.sonatype.nexus.repository.view.Matcher
 import org.sonatype.nexus.repository.view.handlers.ConditionalRequestHandler
 import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler
 import org.sonatype.nexus.repository.view.handlers.ExceptionHandler
+import org.sonatype.nexus.repository.view.handlers.FormatHighAvailabilitySupportHandler
 import org.sonatype.nexus.repository.view.handlers.HandlerContributor
+import org.sonatype.nexus.repository.view.handlers.HighAvailabilitySupportChecker
 import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler
 import org.sonatype.nexus.repository.view.handlers.TimingHandler
 import org.sonatype.nexus.repository.view.matchers.ActionMatcher
@@ -54,13 +56,16 @@ import static org.sonatype.nexus.repository.golang.AssetKind.PACKAGE
 /**
  * Support for Go recipes.
  *
- * @since 3.next
+ * @since 3.17
  */
 abstract class GolangRecipeSupport
     extends RecipeSupport
 {
   @Inject
   Provider<GolangSecurityFacet> securityFacet
+
+  @Inject
+  FormatHighAvailabilitySupportHandler highAvailabilitySupportHandler;
 
   @Inject
   Provider<ConfigurableViewFacet> viewFacet
@@ -116,8 +121,14 @@ abstract class GolangRecipeSupport
   @Inject
   LastDownloadedHandler lastDownloadedHandler
 
-  protected GolangRecipeSupport(final Type type, final Format format) {
+  private HighAvailabilitySupportChecker highAvailabilitySupportChecker;
+
+  protected GolangRecipeSupport(final HighAvailabilitySupportChecker highAvailibilitySupportChecker,
+                                final Type type,
+                                final Format format)
+  {
     super(type, format)
+    this.highAvailabilitySupportChecker = highAvailibilitySupportChecker;
   }
 
   /**
@@ -199,5 +210,10 @@ abstract class GolangRecipeSupport
 
   static TokenMatcher tokenMatcherForExtension(final String extension) {
     new TokenMatcher("/{module:.+}/@v/{version:.+}.{extension:${extension}}")
+  }
+
+  @Override
+  boolean isFeatureEnabled() {
+    return highAvailabilitySupportChecker.isSupported(getFormat().getValue());
   }
 }

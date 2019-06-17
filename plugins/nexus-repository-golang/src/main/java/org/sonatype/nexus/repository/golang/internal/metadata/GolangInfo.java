@@ -17,7 +17,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * Object for .info endpoint responses
  *
- * @since 3.next
+ * @since 3.17
  */
 public class GolangInfo
 {

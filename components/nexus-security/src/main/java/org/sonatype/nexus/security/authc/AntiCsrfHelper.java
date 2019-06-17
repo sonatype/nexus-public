@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.security.authc;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -41,12 +44,32 @@ public class AntiCsrfHelper extends ComponentSupport
 
   public static final String ANTI_CSRF_TOKEN_NAME = "NX-ANTI-CSRF-TOKEN";
 
+  private final List<String> matchers;
+
   private final boolean enabled;
 
   @Inject
-  public AntiCsrfHelper(@Named("${nexus.security.anticsrftoken.enabled:-true}") final boolean enabled)
+  public AntiCsrfHelper(
+      @Named("${nexus.security.anticsrftoken.enabled:-true}") final boolean enabled,
+      @Named("${nexus.security.anticsrftoken.whitelist}") @Nullable final String whitelist)
   {
     this.enabled = enabled;
+    this.matchers = enabled ? createUserAgentMatchers(whitelist) : Collections.emptyList();
+  }
+
+  private List<String> createUserAgentMatchers(final String whitelist) {
+    List<String> matchers = new ArrayList<>();
+    matchers.add("WindowsPowerShell");
+
+    if (!Strings2.isBlank(whitelist)) {
+      for (String substring : whitelist.split(",")) {
+        if (!Strings2.isBlank(substring)) {
+          matchers.add(substring);
+        }
+      }
+    }
+
+    return matchers;
   }
 
   /**
@@ -96,7 +119,8 @@ public class AntiCsrfHelper extends ComponentSupport
   private boolean isNotBrowserRequest(final HttpServletRequest request) {
     String userAgent = request.getHeader("User-Agent");
 
-    return userAgent == null || !userAgent.startsWith("Mozilla/");
+    return userAgent == null || !userAgent.startsWith("Mozilla/")
+        || matchers.stream().anyMatch(m -> userAgent.contains(m));
   }
 
   private Optional<String> getCookie(final HttpServletRequest request, final String cookieName) {

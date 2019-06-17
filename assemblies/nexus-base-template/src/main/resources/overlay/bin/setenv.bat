@@ -1,4 +1,5 @@
 @echo off
+
 rem
 rem handle specific scripts; the SCRIPT_NAME is exactly the name of the Karaf
 rem script; for example karaf.bat, start.bat, stop.bat, admin.bat, client.bat, ...
@@ -29,7 +30,7 @@ rem SET JAVA_MAX_MEM
 rem Maximum direct buffer memory for the JVM
 rem SET DIRECT_MAX_MEM
 rem Additional JVM options
-rem SET EXTRA_JAVA_OPTS
+rem SET EXTRA_JAVA_OPTS 
 rem Karaf home folder
 rem SET KARAF_HOME
 rem Karaf data folder
@@ -38,6 +39,8 @@ rem Karaf base folder
 rem SET KARAF_BASE
 rem Karaf etc folder
 rem SET KARAF_ETC
+rem First citizen Karaf options
+rem SET KARAF_SYSTEM_OPTS
 rem Additional available Karaf options
 rem SET KARAF_OPTS
 rem Enable debug mode

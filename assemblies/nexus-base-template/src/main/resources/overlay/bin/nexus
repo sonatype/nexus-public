@@ -1,38 +1,53 @@
 #!/bin/sh
-DIRNAME=`dirname "$0"`
-PROGNAME=`basename "$0"`
+
+realpath() {
+  # Use in priority xpg4 awk or nawk on SunOS as standard awk is outdated
+  AWK=awk
+  if ${solaris}; then
+      if [ -x /usr/xpg4/bin/awk ]; then
+          AWK=/usr/xpg4/bin/awk
+      elif [ -x /usr/bin/nawk ]; then
+          AWK=/usr/bin/nawk
+      fi
+  fi
+
+  READLINK_EXISTS=`command -v readlink &> /dev/null`
+  BINARY_NAME=`basename "${1}"`
+  if [ -z "$READLINK_EXISTS" ]; then
+    OURPWD="`pwd`"
+    cd "`dirname "${1}"`" || exit 2
+    LINK=`ls -l "${BINARY_NAME}" | ${AWK} -F"-> " '{print $2}'`
+    while [ "${LINK}" ]; do
+        echo "link: ${LINK}" >&2
+        cd "`dirname "${LINK}"`" || exit 2
+        LINK=`ls -l "${BINARY_NAME}" | ${AWK} -F"-> " '{print $2}'`
+    done
+    REALPATH="`pwd`/${BINARY_NAME}"
+    cd "${OURPWD}" || exit 2
+    echo "${REALPATH}"
+  else
+    OURPWD="`pwd`"
+    cd "`dirname "${1}"`" || exit 2
+    LINK=`readlink "${BINARY_NAME}"`
+    while [ "${LINK}" ]; do
+        echo "link: ${LINK}" >&2
+        cd "`dirname "${LINK}"`" || exit 2
+        LINK=`readlink "${BINARY_NAME}"`
+    done
+    REALPATH="`pwd`/${BINARY_NAME}"
+    cd "${OURPWD}" || exit 2
+    echo "${REALPATH}"
+  fi
+}
+
+REALNAME=`realpath "$0"`
+DIRNAME=`dirname "${REALNAME}"`
+PROGNAME=`basename "${REALNAME}"`
+LOCAL_CLASSPATH=$CLASSPATH
 
 #
-# Sourcing environment settings for karaf similar to tomcats setenv
+# Common functions
 #
-KARAF_SCRIPT="karaf"
-export KARAF_SCRIPT
-if [ -f "$DIRNAME/setenv" ]; then
-  . "$DIRNAME/setenv"
-fi
-
-#
-# Set up some easily accessible MIN/MAX params for JVM mem usage
-#
-if [ "x$JAVA_MIN_MEM" = "x" ]; then
-    JAVA_MIN_MEM=1200M
-    export JAVA_MIN_MEM
-fi
-if [ "x$JAVA_MAX_MEM" = "x" ]; then
-    JAVA_MAX_MEM=1200M
-    export JAVA_MAX_MEM
-fi
-if [ "x$DIRECT_MAX_MEM" = "x" ]; then
-    DIRECT_MAX_MEM=2G
-    export DIRECT_MAX_MEM
-fi
-
-#
-# Check the mode that initiated the script
-#
-if [ "x$1" != "x" ]; then
-    MODE=$1
-fi
 
 warn() {
     echo "${PROGNAME}: $*"
@@ -46,264 +61,291 @@ die() {
 detectOS() {
     # OS specific support (must be 'true' or 'false').
     cygwin=false;
+    mingw=false;
     darwin=false;
     aix=false;
     os400=false;
+    hpux=false;
+    solaris=false;
     case "`uname`" in
         CYGWIN*)
             cygwin=true
+            ;;
+        MINGW*)
+            mingw=true
             ;;
         Darwin*)
             darwin=true
             ;;
         AIX*)
             aix=true
+            # For AIX, set an environment variable
+            export LDR_CNTRL=MAXDATA=0xB0000000@DSA
+            echo ${LDR_CNTRL}
             ;;
         OS400*)
             os400=true
             ;;
+        HP-UX*)
+            hpux=true
+            # For HP-UX, set an environment variable
+            export PS_PREFIX="UNIX95= "
+            echo "${PS_PREFIX}"
+            ;;
+        SunOS*)
+            solaris=true
+            ;;
     esac
-    # For AIX, set an environment variable
-    if $aix; then
-         export LDR_CNTRL=MAXDATA=0xB0000000@DSA
-         echo $LDR_CNTRL
-    fi
 }
 
 unlimitFD() {
     # Use the maximum available, or set MAX_FD != -1 to use that
-    if [ "x$MAX_FD" = "x" ]; then
+    if [ "x${MAX_FD}" = "x" ]; then
         MAX_FD="maximum"
     fi
 
     # Increase the maximum file descriptors if we can
-    if [ "$os400" = "false" ] && [ "$cygwin" = "false" ]; then
-        if [ "$MAX_FD" = "maximum" -o "$MAX_FD" = "max" ]; then
+    if [ "x`command -v ulimit`" != "x" ] && [ "${os400}" = "false" ] ; then
+        if [ "${MAX_FD}" = "maximum" ] || [ "${MAX_FD}" = "max" ]; then
             MAX_FD_LIMIT=`ulimit -H -n`
             if [ $? -eq 0 ]; then
                 # use the system max
-                MAX_FD="$MAX_FD_LIMIT"
+                MAX_FD="${MAX_FD_LIMIT}"
             else
-                warn "Could not query system maximum file descriptor limit: $MAX_FD_LIMIT"
+                warn "Could not query system maximum file descriptor limit: ${MAX_FD_LIMIT}"
             fi
         fi
-        if [ "$MAX_FD" != 'unlimited' ]; then
-            ulimit -n $MAX_FD > /dev/null
+        if [ "${MAX_FD}" != 'unlimited' ]; then
+            ulimit -n "${MAX_FD}" > /dev/null
             if [ $? -ne 0 ]; then
-                warn "Could not set maximum file descriptor limit: $MAX_FD"
+                warn "Could not set maximum file descriptor limit: ${MAX_FD}"
             fi
         fi
-    fi
+     fi
 }
 
 locateHome() {
-    if [ "x$KARAF_HOME" = "x" ]; then
-      # In POSIX shells, CDPATH may cause cd to write to stdout
-      (unset CDPATH) >/dev/null 2>&1 && unset CDPATH
-      # KARAF_HOME is not provided, fall back to default
-      KARAF_HOME=`cd "$DIRNAME/.."; pwd`
+    if [ "x${KARAF_HOME}" != "x" ]; then
+        warn "Ignoring predefined value for KARAF_HOME"
+        unset KARAF_HOME
+    fi
+    if [ "x${KARAF_HOME}" = "x" ]; then
+        # In POSIX shells, CDPATH may cause cd to write to stdout
+        (unset CDPATH) >/dev/null 2>&1 && unset CDPATH
+        # KARAF_HOME is not provided, fall back to default
+        KARAF_HOME=`cd "${DIRNAME}/.." || exit 2; pwd`
     fi
 
-    if [ ! -d "$KARAF_HOME" ]; then
-        die "KARAF_HOME is not valid: $KARAF_HOME"
+    if [ ! -d "${KARAF_HOME}" ]; then
+        die "KARAF_HOME is not valid: ${KARAF_HOME}"
     fi
 }
 
 locateBase() {
-    if [ "x$KARAF_BASE" != "x" ]; then
-        if [ ! -d "$KARAF_BASE" ]; then
-            die "KARAF_BASE is not valid: $KARAF_BASE"
+    if [ "x${KARAF_BASE}" != "x" ]; then
+        if [ ! -d "${KARAF_BASE}" ]; then
+            die "KARAF_BASE is not valid: ${KARAF_BASE}"
         fi
     else
-        KARAF_BASE=$KARAF_HOME
+        KARAF_BASE=${KARAF_HOME}
     fi
 }
 
 locateData() {
-    if [ "x$KARAF_DATA" != "x" ]; then
-        if [ ! -d "$KARAF_DATA" ]; then
-            die "KARAF_DATA is not valid: $KARAF_DATA"
+    if [ "x${KARAF_DATA}" != "x" ]; then
+        if [ ! -d "${KARAF_DATA}" ]; then
+            die "KARAF_DATA is not valid: ${KARAF_DATA}"
         fi
     else
-        KARAF_DATA=$KARAF_BASE/../sonatype-work/nexus3
+        KARAF_DATA=${KARAF_BASE}/../sonatype-work/nexus3
     fi
 }
 
 locateEtc() {
-    if [ "x$KARAF_ETC" != "x" ]; then
-        if [ ! -d "$KARAF_ETC" ]; then
-            die "KARAF_ETC is not valid: $KARAF_ETC"
+    if [ "x${KARAF_ETC}" != "x" ]; then
+        if [ ! -d "${KARAF_ETC}" ]; then
+            die "KARAF_ETC is not valid: ${KARAF_ETC}"
         fi
     else
-        KARAF_ETC=$KARAF_BASE/etc/karaf
+        KARAF_ETC=${KARAF_BASE}/etc/karaf
+    fi
+}
+
+locateLog() {
+    if [ "x${KARAF_LOG}" != "x" ]; then
+        if [ ! -d "${KARAF_LOG}" ]; then
+            die "KARAF_LOG is not valid: ${KARAF_LOG}"
+        fi
+    else
+        KARAF_LOG=${KARAF_DATA}/log
     fi
 }
 
 setupNativePath() {
     # Support for loading native libraries
-    LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:$KARAF_BASE/lib:$KARAF_HOME/lib"
+    if [ "x${LD_LIBRARY_PATH}" != "x" ]; then
+        LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${KARAF_BASE}/lib:${KARAF_HOME}/lib"
+    else
+        LD_LIBRARY_PATH="${KARAF_BASE}/lib:${KARAF_HOME}/lib"
+    fi
 
     # For Cygwin, set PATH from LD_LIBRARY_PATH
-    if $cygwin; then
-        LD_LIBRARY_PATH=`cygpath --path --windows "$LD_LIBRARY_PATH"`
-        PATH="$PATH;$LD_LIBRARY_PATH"
+    if ${cygwin}; then
+        LD_LIBRARY_PATH=`cygpath --path --windows "${LD_LIBRARY_PATH}"`
+        PATH="${PATH};${LD_LIBRARY_PATH}"
         export PATH
     fi
     export LD_LIBRARY_PATH
 }
 
 pathCanonical() {
-    local dst="${1}"
+    dst="${1}"
     while [ -h "${dst}" ] ; do
         ls=`ls -ld "${dst}"`
-        link=`expr "$ls" : '.*-> \(.*\)$'`
-        if expr "$link" : '/.*' > /dev/null; then
-            dst="$link"
+        link=`expr "${ls}" : '.*-> \(.*\)$'`
+        if expr "${link}" : '/.*' > /dev/null; then
+            dst="${link}"
         else
-            dst="`dirname "${dst}"`/$link"
+            dst="`dirname "${dst}"`/${link}"
         fi
     done
-    local bas=`basename "${dst}"`
-    local dir=`dirname "${dst}"`
-    if [ "$bas" != "$dir" ]; then
-      dst="`pathCanonical "$dir"`/$bas"
+    bas=`basename "${dst}"`
+    dir=`dirname "${dst}"`
+    if [ "${bas}" != "${dir}" ]; then
+        dst="`pathCanonical "${dir}"`/${bas}"
     fi
     echo "${dst}" | sed -e 's#//#/#g' -e 's#/./#/#g' -e 's#/[^/]*/../#/#g'
 }
 
 locateJava() {
     # Setup the Java Virtual Machine
-    if $cygwin ; then
-        [ -n "$JAVA" ] && JAVA=`cygpath --unix "$JAVA"`
-        [ -n "$JAVA_HOME" ] && JAVA_HOME=`cygpath --unix "$JAVA_HOME"`
+    if ${cygwin} ; then
+        [ -n "${JAVA}" ] && JAVA=`cygpath --unix "${JAVA}"`
+        [ -n "${JAVA_HOME}" ] && JAVA_HOME=`cygpath --unix "${JAVA_HOME}"`
     fi
 
-    if [ "x$JAVA_HOME" = "x" ] && [ "$darwin" = "true" ]; then
-        JAVA_HOME="$(/usr/libexec/java_home -v 1.8)"
+    if [ "x${JAVA_HOME}" = "x" ] && [ "${darwin}" = "true" ]; then
+        JAVA_HOME="`/usr/libexec/java_home -v 1.8`"
     fi
-    if [ "x$JAVA" = "x" ] && [ -r /etc/gentoo-release ] ; then
+    if [ "x${JAVA_HOME}" = "x" ] && [ -r /etc/gentoo-release ] ; then
         JAVA_HOME=`java-config --jre-home`
     fi
-    if [ "x$JAVA" = "x" ]; then
-        if [ "x$JAVA_HOME" != "x" ]; then
-            if [ ! -d "$JAVA_HOME" ]; then
-                die "JAVA_HOME is not valid: $JAVA_HOME"
+    if [ "x${JAVA}" = "x" ]; then
+        if [ "x${JAVA_HOME}" != "x" ]; then
+            if [ ! -d "${JAVA_HOME}" ]; then
+                die "JAVA_HOME is not valid: ${JAVA_HOME}"
             fi
-            JAVA="$JAVA_HOME/bin/java"
+            JAVA="${JAVA_HOME}/bin/java"
         else
             warn "JAVA_HOME not set; results may vary"
-            JAVA=`type java`
-            JAVA=`expr "$JAVA" : '.* \(/.*\)$'`
-            if [ "x$JAVA" = "x" ]; then
+            JAVA=`command -v java`
+            if [ "x${JAVA}" = "x" ]; then
                 die "java command not found"
             fi
         fi
     fi
-    if [ "x$JAVA_HOME" = "x" ]; then
-        JAVA_HOME="$(dirname $(dirname $(pathCanonical "$JAVA")))"
+    if [ "x${JAVA_HOME}" = "x" ]; then
+        JAVA_BIN=`pathCanonical "${JAVA}"`
+        JAVA_BIN_DIR=`dirname "${JAVA_BIN}"`
+        JAVA_HOME="`dirname "${JAVA_BIN_DIR}"`"
     fi
 }
 
 detectJVM() {
-   #echo "`$JAVA -version`"
-   # This service should call `java -version`,
-   # read stdout, and look for hints
-   if $JAVA -version 2>&1 | grep "^IBM" ; then
-       JVM_VENDOR="IBM"
-   # on OS/400, java -version does not contain IBM explicitly
-   elif $os400; then
-       JVM_VENDOR="IBM"
-   else
-       JVM_VENDOR="SUN"
-   fi
-   # echo "JVM vendor is $JVM_VENDOR"
+    # This service should call `java -version`,
+    # read stdout, and look for hints
+    if "${JAVA}" -version 2>&1 | grep "^IBM" ; then
+        JVM_VENDOR="IBM"
+    # on OS/400, java -version does not contain IBM explicitly
+    elif ${os400}; then
+        JVM_VENDOR="IBM"
+    else
+        JVM_VENDOR="SUN"
+    fi
+    # echo "JVM vendor is ${JVM_VENDOR}"
 }
 
 checkJvmVersion() {
-   # echo "`$JAVA -version`"
-   VERSION=`$JAVA -version 2>&1 | egrep '"([0-9].[0-9]\..*[0-9]).*"' | awk '{print substr($3,2,length($3)-2)}' | awk '{print substr($1, 3, 3)}' | sed -e 's;\.;;g'`
-   # echo $VERSION
-   if [ "$VERSION" -lt "60" ]; then
-       echo "JVM must be greater than 1.6"
-       exit 1;
-   fi
+    # Use in priority xpg4 awk or nawk on SunOS as standard awk is outdated
+    AWK=awk
+    if ${solaris}; then
+        if [ -x /usr/xpg4/bin/awk ]; then
+            AWK=/usr/xpg4/bin/awk
+        elif [ -x /usr/bin/nawk ]; then
+            AWK=/usr/bin/nawk
+        fi
+    fi
+
+    VERSION=`"${JAVA}" -version 2>&1 | ${AWK} -F '"' '/version/ {print $2}' | sed -e 's/_.*//g; s/^1\.//g; s/\..*//g; s/-.*//g;'`
+
+    # java must be at least version 8
+    if [ "${VERSION}" -lt "8" ]; then
+        die "JVM must be greater than 1.8"
+    fi
 }
 
 setupDebugOptions() {
-    if [ "x$JAVA_OPTS" = "x" ]; then
-        JAVA_OPTS="$DEFAULT_JAVA_OPTS"
+    if [ "x${JAVA_OPTS}" = "x" ]; then
+        JAVA_OPTS="${DEFAULT_JAVA_OPTS}"
     fi
     export JAVA_OPTS
 
-    if [ "x$EXTRA_JAVA_OPTS" != "x" ]; then
-        JAVA_OPTS="$JAVA_OPTS $EXTRA_JAVA_OPTS"
+    if [ "x${EXTRA_JAVA_OPTS}" != "x" ]; then
+        JAVA_OPTS="${JAVA_OPTS} ${EXTRA_JAVA_OPTS}"
     fi
 
     # Set Debug options if enabled
-    if [ "x$KARAF_DEBUG" != "x" ]; then
-        # Ignore DEBUG in case of stop, client, or status mode
-        if [ "x$MODE" = "xstop" ]; then
-            return
-        fi
-        if [ "x$MODE" = "xclient" ]; then
-            return
-        fi
-        if [ "x$MODE" = "xstatus" ]; then
-            return
-        fi
+    if [ "x${KARAF_DEBUG}" != "x" ]; then
         # Use the defaults if JAVA_DEBUG_OPTS was not set
-        if [ "x$JAVA_DEBUG_OPTS" = "x" ]; then
-            JAVA_DEBUG_OPTS="$DEFAULT_JAVA_DEBUG_OPTS"
+        if [ "x${JAVA_DEBUG_OPTS}" = "x" ]; then
+            JAVA_DEBUG_OPTS="${DEFAULT_JAVA_DEBUG_OPTS}"
         fi
 
-        JAVA_OPTS="$JAVA_DEBUG_OPTS $JAVA_OPTS"
-        warn "Enabling Java debug options: $JAVA_DEBUG_OPTS"
+        JAVA_OPTS="${JAVA_DEBUG_OPTS} ${JAVA_OPTS}"
+        warn "Enabling Java debug options: ${JAVA_DEBUG_OPTS}"
     fi
 }
 
 setupDefaults() {
-    # SONATYPE: preferred IPv4 by default
-    if [ "x$KARAF_OPTS" = "x" ]; then
-        KARAF_OPTS="-Djava.net.preferIPv4Stack=true"
+    #
+    # Set up some easily accessible MIN/MAX params for JVM mem usage
+    #
+    if [ "x${JAVA_MIN_MEM}" = "x" ]; then
+        JAVA_MIN_MEM=1200M
+        export JAVA_MIN_MEM
+    fi
+    if [ "x${JAVA_MAX_MEM}" = "x" ]; then
+        JAVA_MAX_MEM=1200M
+        export JAVA_MAX_MEM
+    fi
+    if [ "x$DIRECT_MAX_MEM" = "x" ]; then
+        DIRECT_MAX_MEM=2G
+        export DIRECT_MAX_MEM
     fi
 
-    DEFAULT_JAVA_OPTS="-Xms$JAVA_MIN_MEM -Xmx$JAVA_MAX_MEM -XX:MaxDirectMemorySize=$DIRECT_MAX_MEM -XX:+UnlockDiagnosticVMOptions -XX:+UnsyncloadClass -XX:+LogVMOutput -XX:LogFile=../sonatype-work/nexus3/log/jvm.log -XX:-OmitStackTraceInFastThrow  "
-
-    if [ "$darwin" = "true" ] && [ "$JVM_VENDOR" = "SUN" ] && [ `ulimit -n` -gt 10240 ]; then
-        # NEXUS-14184 - Open up OSX file descriptor limit
-        DEFAULT_JAVA_OPTS="$DEFAULT_JAVA_OPTS -XX:-MaxFDLimit "
-    fi
-
+    DEFAULT_JAVA_OPTS="-Xms${JAVA_MIN_MEM} -Xmx${JAVA_MAX_MEM} -XX:MaxDirectMemorySize=${DIRECT_MAX_MEM} -XX:+UnlockDiagnosticVMOptions -XX:+LogVMOutput -XX:LogFile=${KARAF_LOG}/jvm.log -XX:-OmitStackTraceInFastThrow -Djava.net.preferIPv4Stack=true "
     #Set the JVM_VENDOR specific JVM flags
-    if [ "$JVM_VENDOR" = "SUN" ]; then
-        # SONATYPE: removed -XX:PermSize and -XX:MaxPermSize
-        # SONATYPE: removed -Dcom.sun.management.jmxremote
-        DEFAULT_JAVA_OPTS="-server $DEFAULT_JAVA_OPTS"
-    elif [ "$JVM_VENDOR" = "IBM" ]; then
-        if $os400; then
-            DEFAULT_JAVA_OPTS="$DEFAULT_JAVA_OPTS"
-        elif $aix; then
-            DEFAULT_JAVA_OPTS="-Xverify:none -Xdump:heap -Xlp $DEFAULT_JAVA_OPTS"
+    if [ "${JVM_VENDOR}" = "SUN" ]; then
+        if [ "${darwin}" = "true" ] && [ `ulimit -n` -gt 10240 ]; then
+            # NEXUS-14184 - Open up OSX file descriptor limit
+            DEFAULT_JAVA_OPTS="${DEFAULT_JAVA_OPTS} -XX:-MaxFDLimit "
+        fi
+    elif [ "${JVM_VENDOR}" = "IBM" ]; then
+        if ${os400}; then
+            DEFAULT_JAVA_OPTS="${DEFAULT_JAVA_OPTS}"
+        elif ${aix}; then
+            DEFAULT_JAVA_OPTS="-Xverify:none -Xdump:heap -Xlp ${DEFAULT_JAVA_OPTS}"
         else
-            DEFAULT_JAVA_OPTS="-Xverify:none $DEFAULT_JAVA_OPTS"
+            DEFAULT_JAVA_OPTS="-Xverify:none ${DEFAULT_JAVA_OPTS}"
         fi
     fi
-
-    # Add the jars in the lib dir
-    for file in "$KARAF_HOME"/lib/boot/*.jar
-    do
-        if [ -z "$CLASSPATH" ]; then
-            CLASSPATH="$file"
-        else
-            CLASSPATH="$CLASSPATH:$file"
-        fi
-    done
 
     DEFAULT_JAVA_DEBUG_PORT="5005"
-    if [ "x$JAVA_DEBUG_PORT" = "x" ]; then
-        JAVA_DEBUG_PORT="$DEFAULT_JAVA_DEBUG_PORT"
+    if [ "x${JAVA_DEBUG_PORT}" = "x" ]; then
+        JAVA_DEBUG_PORT="${DEFAULT_JAVA_DEBUG_PORT}"
     fi
-    DEFAULT_JAVA_DEBUG_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$JAVA_DEBUG_PORT"
+    DEFAULT_JAVA_DEBUG_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=${JAVA_DEBUG_PORT}"
+    DEFAULT_JAVA_DEBUGS_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=${JAVA_DEBUG_PORT}"
 
     ##
     ## TODO: Move to conf/profiler/yourkit.{sh|cmd}
@@ -312,7 +354,58 @@ setupDefaults() {
     #DEFAULT_JAVA_DEBUG_OPTS="-Xrunyjpagent"
 }
 
+convertPaths() {
+    if $cygwin; then
+        if [ ! -z "${KARAF_HOME}" ]; then
+            KARAF_HOME=`cygpath --path --windows "${KARAF_HOME}"`
+        fi
+        if [ ! -z "${KARAF_BASE}" ]; then
+            KARAF_BASE=`cygpath --path --windows "${KARAF_BASE}"`
+        fi
+        if [ ! -z "${KARAF_DATA}" ]; then
+            KARAF_DATA=`cygpath --path --windows "${KARAF_DATA}"`
+        fi
+        if [ ! -z "${KARAF_ETC}" ]; then
+            KARAF_ETC=`cygpath --path --windows "${KARAF_ETC}"`
+        fi
+        if [ ! -z "${CLASSPATH}" ]; then
+            CLASSPATH=`cygpath --path --windows "${CLASSPATH}"`
+        fi
+    fi
+}
+
+#
+# Sourcing environment settings for karaf similar to tomcats setenv
+#
+KARAF_SCRIPT="${PROGNAME}"
+export KARAF_SCRIPT
+if [ -f "${DIRNAME}/setenv" ]; then
+  . "${DIRNAME}/setenv"
+fi
+
+forceNoRoot() {
+    # If configured, prevent execution as root
+    if [ "${KARAF_NOROOT}" ] && [ "`id -u`" -eq 0 ]; then
+        die "Do not run as root!"
+    fi
+}
+
+setupClassPath() {
+    # Add the jars in the lib dir
+    for file in "${KARAF_HOME}"/lib/boot/*.jar
+    do
+        if [ -z "${CLASSPATH}" ]; then
+            CLASSPATH="${file}"
+        else
+            CLASSPATH="${CLASSPATH}:${file}"
+        fi
+    done
+}
+
 init() {
+    # Prevent root execution if configured
+    forceNoRoot
+
     # Determine if there is special OS handling we must perform
     detectOS
 
@@ -331,6 +424,9 @@ init() {
     # Locate the Karaf etc directory
     locateEtc
 
+    # Locate the Karaf log directory
+    locateLog
+
     # Setup the native library path
     setupNativePath
 
@@ -339,12 +435,15 @@ init() {
 
     # Determine the JVM vendor
     detectJVM
-    
+
     # Determine the JVM version >= 1.6
     checkJvmVersion
 
     # Setup default options
     setupDefaults
+
+    # Setup classpath
+    setupClassPath
 
     # Install debug options
     setupDebugOptions
@@ -354,25 +453,45 @@ init() {
 run() {
     OPTS="-Dkaraf.startLocalConsole=true -Dkaraf.startRemoteShell=true"
     MAIN=org.sonatype.nexus.karaf.NexusMain
-    while [ "$1" != "" ]; do
-        case $1 in
+    JAVA_ENDORSED_DIRS="${JAVA_HOME}/jre/lib/endorsed:${JAVA_HOME}/lib/endorsed:${KARAF_HOME}/lib/endorsed"
+    if ${cygwin}; then
+        JAVA_HOME=`cygpath --path --windows "${JAVA_HOME}"`
+        JAVA_ENDORSED_DIRS=`cygpath --path --windows "${JAVA_ENDORSED_DIRS}"`
+    fi
+    convertPaths
+    cd "${KARAF_BASE}" || exit 2
+
+    # use KARAF_EXEC if it's set to anything (even empty string) otherwise use 'exec'
+    if [ "${KARAF_EXEC+set}" != "set" ]; then
+        KARAF_EXEC=exec
+    fi
+
+    debug=false
+    debugs=false
+    nodebug=false
+    while [ "${1}" != "" ]; do
+        case "${1}" in
             'clean')
-                rm -Rf "$KARAF_DATA"
+                rm -rf "${KARAF_DATA:?}"
                 shift
                 ;;
             'debug')
-                if [ "x$JAVA_DEBUG_OPTS" = "x" ]; then
-                    JAVA_DEBUG_OPTS="$DEFAULT_JAVA_DEBUG_OPTS"
-                fi
-                JAVA_OPTS="$JAVA_DEBUG_OPTS $JAVA_OPTS"
+                debug=true
+                shift
+                ;;
+            'debugs')
+                debug=true
+                debugs=true
                 shift
                 ;;
             'status')
                 MAIN=org.apache.karaf.main.Status
+                nodebug=true
                 shift
                 ;;
             'stop')
                 MAIN=org.apache.karaf.main.Stop
+                nodebug=true
                 shift
                 ;;
             'run' | 'console')
@@ -387,8 +506,19 @@ run() {
                 OPTS="-Dkaraf.startLocalConsole=false -Dkaraf.startRemoteShell=true"
                 shift
                 ;;
+            'daemon')
+                OPTS="-Dkaraf.startLocalConsole=false -Dkaraf.startRemoteShell=true"
+                KARAF_DAEMON="true"
+                KARAF_EXEC="exec"
+                shift
+                ;;
             'client')
                 OPTS="-Dkaraf.startLocalConsole=true -Dkaraf.startRemoteShell=false"
+                nodebug=true
+                shift
+                ;;
+            'classpath')
+                echo "Classpath: ${CLASSPATH}"
                 shift
                 ;;
             *)
@@ -397,39 +527,121 @@ run() {
         esac
     done
 
-    # SONATYPE: commented
-    #JAVA_ENDORSED_DIRS="${JAVA_HOME}/jre/lib/endorsed:${JAVA_HOME}/lib/endorsed:${KARAF_HOME}/lib/endorsed"
-    #JAVA_EXT_DIRS="${JAVA_HOME}/jre/lib/ext:${JAVA_HOME}/lib/ext:${KARAF_HOME}/lib/ext"
-    if $cygwin; then
-        KARAF_HOME=`cygpath --path --windows "$KARAF_HOME"`
-        KARAF_BASE=`cygpath --path --windows "$KARAF_BASE"`
-        KARAF_DATA=`cygpath --path --windows "$KARAF_DATA"`
-        KARAF_ETC=`cygpath --path --windows "$KARAF_ETC"`
-        if [ ! -z "$CLASSPATH" ]; then
-            CLASSPATH=`cygpath --path --windows "$CLASSPATH"`
+    if ${nodebug}; then
+        debug=false
+    fi
+    if ${debug}; then
+        if [ "x${JAVA_DEBUG_OPTS}" = "x" ]; then
+            if ${debugs}; then
+                JAVA_DEBUG_OPTS="${DEFAULT_JAVA_DEBUGS_OPTS}"
+            else
+                JAVA_DEBUG_OPTS="${DEFAULT_JAVA_DEBUG_OPTS}"
+            fi
         fi
-        JAVA_HOME=`cygpath --path --windows "$JAVA_HOME"`
-        # SONATYPE: commented
-        #JAVA_ENDORSED_DIRS=`cygpath --path --windows "$JAVA_ENDORSED_DIRS"`
-        #JAVA_EXT_DIRS=`cygpath --path --windows "$JAVA_EXT_DIRS"`
+        JAVA_OPTS="${JAVA_DEBUG_OPTS} ${JAVA_OPTS}"
     fi
-    cd "$KARAF_BASE"
 
-    # SONATYPE: prepare log and tmp directories
-    mkdir -p "$KARAF_DATA/log" "$KARAF_DATA/tmp"
+    while true; do
+        # When users want to update the lib version of, they just need to create
+        # a lib.next directory and on the new restart, it will replace the current lib directory.
+        if [ -d "${KARAF_HOME:?}/lib.next" ] ; then
+            echo "Updating libs..."
+            rm -rf "${KARAF_HOME:?}/lib"
+            mv -f "${KARAF_HOME:?}/lib.next" "${KARAF_HOME}/lib"
 
-    # SONATYPE: removed -Djavax.management.builder.initial
-    # SONATYPE: removed -Djava.endorsed.dirs="${JAVA_ENDORSED_DIRS}"
-    # SONATYPE: removed -Djava.ext.dirs="${JAVA_EXT_DIRS}"
-    if [ "$NOHUP" = "true" ]; then
-        exec nohup "$JAVA" $JAVA_OPTS -Dkaraf.instances="${KARAF_DATA}/instances" -Dkaraf.home="$KARAF_HOME" -Dkaraf.base="$KARAF_BASE" -Dkaraf.data="$KARAF_DATA" -Dkaraf.etc="$KARAF_ETC" -Djava.io.tmpdir="$KARAF_DATA/tmp" -Djava.util.logging.config.file="$KARAF_ETC/java.util.logging.properties" $KARAF_OPTS $OPTS -classpath "$CLASSPATH" $MAIN "$@" > /dev/null 2>&1 &
+            echo "Updating classpath..."
+            CLASSPATH=$LOCAL_CLASSPATH
+            setupClassPath
+        fi
+
+        # Ensure the log directory exists
+        # We may need to have a place to redirect stdout/stderr
+        if [ ! -d "${KARAF_LOG}" ]; then
+            mkdir -p "${KARAF_LOG}"
+        fi
+        if [ ! -d "${KARAF_DATA}/tmp" ]; then
+            mkdir -p "${KARAF_DATA}/tmp"
+        fi
+
+            if [ "${VERSION}" -gt "8" ]; then
+                launch "${JAVA}" ${JAVA_OPTS} \
+                    --add-reads=java.xml=java.logging \
+                    --add-exports=java.base/org.apache.karaf.specs.locator=java.xml,ALL-UNNAMED \
+                    --patch-module=java.base=lib/endorsed/org.apache.karaf.specs.locator-4.2.6.jar \
+                    --patch-module=java.xml=lib/endorsed/org.apache.karaf.specs.java.xml-4.2.6.jar \
+                    --add-opens=java.base/java.security=ALL-UNNAMED \
+                    --add-opens=java.base/java.net=ALL-UNNAMED \
+                    --add-opens=java.base/java.lang=ALL-UNNAMED \
+                    --add-opens=java.base/java.util=ALL-UNNAMED \
+                    --add-opens=java.naming/javax.naming.spi=ALL-UNNAMED \
+                    --add-opens=java.rmi/sun.rmi.transport.tcp=ALL-UNNAMED \
+                    --add-exports=java.base/sun.net.www.protocol.http=ALL-UNNAMED \
+                    --add-exports=java.base/sun.net.www.protocol.https=ALL-UNNAMED \
+                    --add-exports=java.base/sun.net.www.protocol.jar=ALL-UNNAMED \
+                    --add-exports=jdk.xml.dom/org.w3c.dom.html=ALL-UNNAMED \
+                    --add-exports=jdk.naming.rmi/com.sun.jndi.url.rmi=ALL-UNNAMED \
+                    -Dkaraf.instances="${KARAF_HOME}/instances" \
+                    -Dkaraf.home="${KARAF_HOME}" \
+                    -Dkaraf.base="${KARAF_BASE}" \
+                    -Dkaraf.data="${KARAF_DATA}" \
+                    -Dkaraf.etc="${KARAF_ETC}" \
+                    -Dkaraf.log="${KARAF_LOG}" \
+                    -Dkaraf.restart.jvm.supported=true \
+                    -Djava.io.tmpdir="${KARAF_DATA}/tmp" \
+                    -Djava.util.logging.config.file="${KARAF_BASE}/etc/java.util.logging.properties" \
+                    ${KARAF_SYSTEM_OPTS} \
+                    ${KARAF_OPTS} \
+                    ${OPTS} \
+                    -classpath "${CLASSPATH}" \
+                    ${MAIN} "$@"
+            else
+                launch "${JAVA}" ${JAVA_OPTS} \
+                    -Djava.endorsed.dirs="${JAVA_ENDORSED_DIRS}" \
+                    -Dkaraf.instances="${KARAF_HOME}/instances" \
+                    -Dkaraf.home="${KARAF_HOME}" \
+                    -Dkaraf.base="${KARAF_BASE}" \
+                    -Dkaraf.data="${KARAF_DATA}" \
+                    -Dkaraf.etc="${KARAF_ETC}" \
+                    -Dkaraf.log="${KARAF_LOG}" \
+                    -Dkaraf.restart.jvm.supported=true \
+                    -Djava.io.tmpdir="${KARAF_DATA}/tmp" \
+                    -Djava.util.logging.config.file="${KARAF_BASE}/etc/java.util.logging.properties" \
+                    ${KARAF_SYSTEM_OPTS} \
+                    ${KARAF_OPTS} \
+                    ${OPTS} \
+                    -classpath "${CLASSPATH}" \
+                    ${MAIN} "$@"
+            fi
+
+        KARAF_RC=$?
+        if [ ${KARAF_DAEMON} ] ; then
+            exit ${KARAF_RC}
+        else
+            if [ "${KARAF_RC}" -eq 10 ]; then
+               echo "Restarting JVM..."
+            else
+               exit ${KARAF_RC}
+            fi
+        fi
+    done
+}
+
+launch() {
+    if [ ${NOHUP} ] ; then
+        ${KARAF_EXEC} nohup "$@" > /dev/null 2>&1 &
     else
-        exec "$JAVA" $JAVA_OPTS -Dkaraf.instances="${KARAF_DATA}/instances" -Dkaraf.home="$KARAF_HOME" -Dkaraf.base="$KARAF_BASE" -Dkaraf.data="$KARAF_DATA" -Dkaraf.etc="$KARAF_ETC" -Djava.io.tmpdir="$KARAF_DATA/tmp" -Djava.util.logging.config.file="$KARAF_ETC/java.util.logging.properties" $KARAF_OPTS $OPTS -classpath "$CLASSPATH" $MAIN "$@"
+        ${KARAF_EXEC} "$@"
     fi
+}
+
+nothing() {
+   # nothing to do here
+   a=a
 }
 
 main() {
     init
+    trap 'nothing' TSTP
     run "$@"
 }
 

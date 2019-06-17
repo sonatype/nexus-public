@@ -31,11 +31,12 @@ import org.sonatype.nexus.repository.view.ConfigurableViewFacet
 import org.sonatype.nexus.repository.view.Route
 import org.sonatype.nexus.repository.view.Router
 import org.sonatype.nexus.repository.view.ViewFacet
+import org.sonatype.nexus.repository.view.handlers.HighAvailabilitySupportChecker
 
 /**
  * Go group repository recipe.
  *
- * @since 3.next
+ * @since 3.17
  */
 @Named(GolangGroupRecipe.NAME)
 @Singleton
@@ -51,10 +52,11 @@ class GolangGroupRecipe
   GroupHandler groupHandler
 
   @Inject
-  GolangGroupRecipe(@Named(GroupType.NAME) final Type type,
+  GolangGroupRecipe(final HighAvailabilitySupportChecker highAvailabilitySupportChecker,
+                    @Named(GroupType.NAME) final Type type,
                     @Named(GolangFormat.NAME) final Format format)
   {
-    super(type, format)
+    super(highAvailabilitySupportChecker, type, format)
   }
 
   @Override

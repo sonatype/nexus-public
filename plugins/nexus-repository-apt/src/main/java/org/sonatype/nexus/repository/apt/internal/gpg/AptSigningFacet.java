@@ -50,7 +50,7 @@ import org.bouncycastle.openpgp.operator.jcajce.JcaPGPContentSignerBuilder;
 import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyDecryptorBuilder;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 @Named
 @Facet.Exposed

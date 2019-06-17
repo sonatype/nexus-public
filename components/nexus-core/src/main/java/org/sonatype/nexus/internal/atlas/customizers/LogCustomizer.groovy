@@ -15,6 +15,7 @@ package org.sonatype.nexus.internal.atlas.customizers
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
+import javax.ws.rs.NotFoundException
 
 import org.sonatype.goodies.common.ComponentSupport
 import org.sonatype.nexus.common.app.ApplicationDirectories
@@ -25,11 +26,11 @@ import org.sonatype.nexus.supportzip.SupportBundle
 import org.sonatype.nexus.supportzip.SupportBundleCustomizer
 
 import static com.google.common.base.Preconditions.checkNotNull
+import static org.sonatype.nexus.common.log.LogManager.DEFAULT_LOGGER
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority.DEFAULT
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Priority.LOW
 import static org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type.LOG
-
 /**
  * Adds log files to support bundle.
  *
@@ -55,11 +56,14 @@ class LogCustomizer
 
   @Override
   void customize(final SupportBundle supportBundle) {
-    // add source for nexus.log
-    supportBundle << new GeneratedContentSourceSupport(LOG, 'log/nexus.log', LOW) {
+    // add source for default log
+    String logName = logManager.getLogFor(DEFAULT_LOGGER)
+    .orElseThrow { new NotFoundException("Failed to determine log file name for " + DEFAULT_LOGGER) }
+
+    supportBundle << new GeneratedContentSourceSupport(LOG, 'log/'+logName, LOW) {
       @Override
       protected void generate(final File file) {
-        def log = logManager.getLogFileStream('nexus.log', 0, Long.MAX_VALUE)
+        def log = logManager.getLogFileStream(logName, 0, Long.MAX_VALUE)
         log.withStream { input ->
           file.withOutputStream { output ->
             output << input
@@ -80,8 +84,8 @@ class LogCustomizer
     }
 
     maybeIncludeFile new File(applicationDirectories.workDirectory, 'log/karaf.log'), 'log', LOW
-    maybeIncludeFile new File(applicationDirectories.workDirectory, 'log/request.log'), 'log', LOW
+    logManager.getLogFor("request.logfile").ifPresent { maybeIncludeFile new File(applicationDirectories.workDirectory, 'log/' + it), 'log', LOW }
     maybeIncludeFile new File(applicationDirectories.workDirectory, 'log/jvm.log'), 'log', LOW
-    maybeIncludeFile new File(applicationDirectories.workDirectory, 'log/nexus_cluster.log'), 'log', LOW
+    logManager.getLogFor("clusterlogfile").ifPresent { maybeIncludeFile new File(applicationDirectories.workDirectory, 'log/' + it), 'log', LOW }
   }
 }

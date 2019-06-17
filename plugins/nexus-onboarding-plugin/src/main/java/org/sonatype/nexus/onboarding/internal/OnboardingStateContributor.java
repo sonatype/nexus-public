@@ -28,7 +28,7 @@ import org.sonatype.nexus.security.config.AdminPasswordFileManager;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 @Singleton
 @Named

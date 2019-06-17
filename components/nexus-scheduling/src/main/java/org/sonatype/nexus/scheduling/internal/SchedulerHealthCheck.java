@@ -30,7 +30,7 @@ import static java.lang.String.format;
  * Scheduler health checks that reports a list of task descriptions that were recovered and had manual triggers created
  * automatically. This indicates to a user that those tasks should be reconfigured to their desired specification.
  *
- * @since 3.next
+ * @since 3.17
  */
 @Named("Scheduler")
 @Singleton

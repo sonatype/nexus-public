@@ -13,3 +13,37 @@ help = { *:help $args | more } ;
 man = { help $args } ;
 log:list = { log:get ALL } ;
 service:get = { $.context getService ($.context getServiceReference $args) };
+
+env = { shell:set $args }
+edit = { shell:nano $args }
+more = { shell:less -F $args }
+
+\#prompt = { "[1m${USER}[0m@${APPLICATION}(${SUBSHELL})> "?};
+
+__load_class = {
+  (($.reader class) classLoader) loadClass $1
+}
+
+// make sure that we catch exceptions
+// as they do occur if the session is headless / non-interactive
+jlineReader = $.reader
+if { %(jlineReader != null) } {
+
+  # On 256 colors terminal, add a right prompt
+  max_colors = ($.jline.terminal getNumericCapability max_colors)
+  if { %(max_colors >= 256) } {
+    __rprompt_formatter = (((__load_class java.text.SimpleDateFormat) getConstructor (__load_class java.lang.String)) newInstance \'$'\u001B\[90m'\'HH:mm:ss)
+    __date_class = (__load_class java.util.Date)
+// Do not use right prompt by default    
+//    \#rprompt = { $__rprompt_formatter format ($__date_class newInstance) }
+  }
+
+  setopt group
+  setopt auto-fresh-line
+  unsetopt insert-tab
+  keymap "^[OA" up-line-or-search
+  keymap "^[[A" up-line-or-search
+  keymap "^[OB" down-line-or-search
+  keymap "^[[B" down-line-or-search
+
+}

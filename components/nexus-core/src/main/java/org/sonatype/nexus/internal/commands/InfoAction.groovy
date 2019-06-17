@@ -20,7 +20,9 @@ import org.sonatype.nexus.common.app.ApplicationVersion
 
 import org.apache.karaf.shell.api.action.Action
 import org.apache.karaf.shell.api.action.Command
-import org.fusesource.jansi.Ansi
+
+import static org.apache.karaf.shell.support.ansi.SimpleAnsi.INTENSITY_BOLD
+import static org.apache.karaf.shell.support.ansi.SimpleAnsi.INTENSITY_NORMAL
 
 /**
  * Display Nexus system information.
@@ -41,7 +43,7 @@ class InfoAction
   @Override
   public Object execute() throws Exception {
     def section = { String name ->
-      println Ansi.ansi().bold().a(name).reset()
+      println INTENSITY_BOLD + name + INTENSITY_NORMAL
     }
     def entry = { String key, Object value ->
       println "  $key: $value"

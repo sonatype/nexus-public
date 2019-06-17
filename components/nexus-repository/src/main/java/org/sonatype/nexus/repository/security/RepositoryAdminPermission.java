@@ -49,7 +49,7 @@ public class RepositoryAdminPermission
   }
 
   /**
-   * @since 3.next
+   * @since 3.17
    */
   public RepositoryAdminPermission(final Repository repository, final String... actions) {
     this(repository.getFormat().getValue(), repository.getName(), Arrays.asList(actions));

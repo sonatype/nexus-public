@@ -29,5 +29,7 @@ public final class BlobAttributesConstants
 
   public static final String DELETED_REASON_ATTRIBUTE = "deletedReason";
 
+  public static final String DELETED_DATETIME_ATTRIBUTE = "deletedDateTime";
+
   private BlobAttributesConstants() {}
 }

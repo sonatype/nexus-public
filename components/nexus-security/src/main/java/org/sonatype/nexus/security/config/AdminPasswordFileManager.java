@@ -15,7 +15,7 @@ package org.sonatype.nexus.security.config;
 import java.io.IOException;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 public interface AdminPasswordFileManager
 {

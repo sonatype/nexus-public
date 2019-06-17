@@ -142,6 +142,7 @@ class BlobStoreComponent
           id: key,
           name: descriptor.name,
           formFields: descriptor.formFields.collect { FormFieldXO.create(it) },
+          customFormName: descriptor.customFormName(),
           isModifiable: descriptor.isModifiable(),
           isEnabled: descriptor.isEnabled()
       )

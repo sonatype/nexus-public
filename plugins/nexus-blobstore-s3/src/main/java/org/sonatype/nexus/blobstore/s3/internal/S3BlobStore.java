@@ -381,6 +381,7 @@ public class S3BlobStore
 
       blobAttributes.setDeleted(true);
       blobAttributes.setDeletedReason(reason);
+      blobAttributes.setDeletedDateTime(new DateTime());
       blobAttributes.store();
 
       // soft delete is implemented using an S3 lifecycle that sets expiration on objects with DELETED_TAG
