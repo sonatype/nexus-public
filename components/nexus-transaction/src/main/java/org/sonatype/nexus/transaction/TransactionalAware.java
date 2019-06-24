@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.transaction;
 
-import com.google.common.base.Supplier;
+import java.util.function.Supplier;
 
 /**
  * Something that can supply {@link Transaction}s to its {@link Transactional} methods.

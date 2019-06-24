@@ -77,6 +77,9 @@ Ext.define('NX.coreui.migration.RepositoriesStep', {
 
     me.mask(NX.I18n.render(me, 'Loading_Mask'));
 
+    // ensure datastore is loaded, for customize window
+    me.getStore('Datastore').load();
+
     // ensure blobstore is loaded, for customize window
     me.getStore('Blobstore').load();
 
@@ -136,6 +139,7 @@ Ext.define('NX.coreui.migration.RepositoriesStep', {
     Ext.Array.each(selections.getSelection(), function (record) {
       repositories.push({
         repository: record.get('repository'),
+        dataStore: record.get('dataStore'),
         blobStore: record.get('blobStore'),
         ingestMethod: record.get('ingestMethod')
       });
@@ -156,6 +160,7 @@ Ext.define('NX.coreui.migration.RepositoriesStep', {
       Ext.create('NX.coreui.migration.RepositoryCustomizeWindow', {
         recordId: record.getId(),
         repository: record.get('repository'),
+        dataStore: record.get('dataStore'),
         blobStore: record.get('blobStore'),
         ingestMethod: record.get('ingestMethod')
       });
@@ -173,6 +178,7 @@ Ext.define('NX.coreui.migration.RepositoriesStep', {
         values = window.getForm().getFieldValues(),
         record = grid.getStore().getById(values.id);
 
+    record.set('dataStore', values.dataStore);
     record.set('blobStore', values.blobStore);
     record.set('ingestMethod', values.ingestMethod);
     record.commit();

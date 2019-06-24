@@ -102,8 +102,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
     AnalyzeApplicationWindow_Analyze_Button: 'Analyze',
     AnalyzeApplicationWindow_Cancel_Button: 'Cancel',
     AnalyzeApplicationWindow_Form_Html: '<p>Application analysis performs a deep inspection of this application, ' +
-    'identifying potential risks.  More information is available ' +
-    '<a href="http://links.sonatype.com/products/insight/ac/home" target="_blank" class="x-link">here</a>.</p>',
+        'identifying potential risks.  More information is available ' +
+        '<a href="http://links.sonatype.com/products/insight/ac/home" target="_blank" class="x-link">here</a>.</p>',
     AnalyzeApplicationWindow_Loading_Mask: 'Loading',
     AnalyzeApplicationWindow_No_Assets_Error_Title: 'Component has no application assets',
     AnalyzeApplicationWindow_No_Assets_Error_Message: 'This component has no application assets or you do not have read permission for any of it\'s application assets',
@@ -124,6 +124,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Search_SaveSearchFilter_Name_FieldLabel: 'Filter name',
     Search_SaveSearchFilter_Description_FieldLabel: 'Filter description',
     Search_Results_Limit_Message: 'Only showing the first {0} of {1} results',
+    Search_Results_TimedOut_Message: 'Search exceeded timeout of {0}s, please refine your search criteria. {1}',
+    Search_Results_TimedOut_LearnMore: 'Learn More',
     SearchCriteria_Keyword_FieldLabel: 'Keyword',
     SearchCriteria_RepositoryName_FieldLabel: 'Repository Name',
     SearchCriteria_Name_FieldLabel: 'Name',
@@ -305,9 +307,9 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_DockerHostedFacet_V1_Enabled_Help: 'Allow clients to use the V1 API to interact with this Repository',
     Repository_Facet_DockerConnectorFacet_Title: 'Repository Connectors',
     Repository_Facet_DockerConnectorFacet_Help: '<em>Connectors allow Docker clients to connect directly ' +
-    'to hosted registries, but are not always required. Consult our <a href="https://links.sonatype.com/products/nexus/docker-ssl-connector/docs" target="_blank">documentation</a>' +
-    ' for which connector is appropriate for your use case. For information on scaling the repositories' +
-    ' see our <a href="https://links.sonatype.com/products/nexus/docker-scaling-repositories/docs" target="_blank">scaling documentation</a>.</em>',
+        'to hosted registries, but are not always required. Consult our <a href="https://links.sonatype.com/products/nexus/docker-ssl-connector/docs" target="_blank">documentation</a>' +
+        ' for which connector is appropriate for your use case. For information on scaling the repositories' +
+        ' see our <a href="https://links.sonatype.com/products/nexus/docker-scaling-repositories/docs" target="_blank">scaling documentation</a>.</em>',
     Repository_Facet_DockerConnectorFacet_HttpPort_FieldLabel: 'HTTP',
     Repository_Facet_DockerConnectorFacet_HttpPort_HelpText: 'Create an HTTP connector at specified port. Normally used if the server is behind a secure proxy.',
     Repository_Facet_DockerConnectorFacet_HttpsPort_FieldLabel: 'HTTPS',
@@ -407,10 +409,13 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_HttpClientFacet_EnableCookies_FieldLabel: 'Enable cookies',
     Repository_Facet_HttpClientFacet_EnableCookies_HelpText: 'Allow cookies to be stored and used',
     Repository_Facet_StorageFacet_BlobStore_FieldLabel: 'Blob store',
-    Repository_Facet_StorageFacet_BlobStore_HelpText: 'Blob store used to store asset contents',
+    Repository_Facet_StorageFacet_BlobStore_HelpText: 'Blob store used to store repository contents',
     Repository_Facet_StorageFacet_BlobStore_EmptyText: 'Select a blob store',
     Repository_Facet_StorageFacet_ContentTypeValidation_FieldLabel: 'Strict Content Type Validation',
     Repository_Facet_StorageFacet_ContentTypeValidation_HelpText: 'Validate that all content uploaded to this repository is of a MIME type appropriate for the repository format',
+    Repository_Facet_StorageFacet_DataStore_FieldLabel: 'Data store',
+    Repository_Facet_StorageFacet_DataStore_HelpText: 'Data store used to store component metadata',
+    Repository_Facet_StorageFacet_DataStore_EmptyText: 'Select a data store',
     Repository_Facet_NegativeCacheFacet_Enabled_FieldLabel: 'Not found cache enabled',
     Repository_Facet_NegativeCacheFacet_Enabled_HelpText: 'Cache responses for content not present in the proxied repository',
     Repository_Facet_NegativeCacheFacet_TTL_FieldLabel: 'Not found cache TTL',
@@ -432,28 +437,28 @@ Ext.define('NX.coreui.app.PluginStrings', {
     HealthCheckRepositoryColumn_Header: 'Health check',
     HealthCheckRepositoryColumn_Analyzing: 'Analyzing&hellip;',
     HealthCheckRepositoryColumn_Analyzing_Tooltip: '<span><h2>The Analysis is Under Way</h2>' +
-    'The contents of your repository are being analyzed. This process should only take a few minutes.<br><br>' +
-    'When the analysis is complete and this page has been refreshed, we will show you the top 5 most vulnerable ' +
-    'components in the repository, the number of downloads over the last month, and a year-over-year overview.</span>',
+        'The contents of your repository are being analyzed. This process should only take a few minutes.<br><br>' +
+        'When the analysis is complete and this page has been refreshed, we will show you the top 5 most vulnerable ' +
+        'components in the repository, the number of downloads over the last month, and a year-over-year overview.</span>',
     HealthCheckRepositoryColumn_View_Permission_Error: '<span><h2>Insufficient Permissions to View Summary Report</h2>' +
-    'To view healthcheck summary report for a repository your user account must have the necessary permissions.</span>',
+        'To view healthcheck summary report for a repository your user account must have the necessary permissions.</span>',
     HealthCheckRepositoryColumn_Analyze: 'Analyze',
     HealthCheckRepositoryColumn_Analyze_Tooltip: '<span><h2>Repository Health Check Analysis</h2>Click this button to request a Repository Health Check (RHC) ' +
-    'by IQ Server.  The process is non-invasive and non-disruptive. IQ Server ' +
-    'will return actionable quality and security information about the open source components in the repository.' +
-    '<br><br><a href="http://links.sonatype.com/products/clm/rhc/home" ' +
-    'target="_blank">How the IQ Server Repository Health Check can help you make better software faster</a></span>',
+        'by IQ Server.  The process is non-invasive and non-disruptive. IQ Server ' +
+        'will return actionable quality and security information about the open source components in the repository.' +
+        '<br><br><a href="http://links.sonatype.com/products/clm/rhc/home" ' +
+        'target="_blank">How the IQ Server Repository Health Check can help you make better software faster</a></span>',
     HealthCheckRepositoryColumn_Analyze_Dialog_Title: 'Analyze Repository',
     HealthCheckRepositoryColumn_Analyze_Dialog_Msg: 'Do you want to analyze the repository {0} and others for security vulnerabilities and license issues?',
     HealthCheckRepositoryColumn_Analyze_Dialog_Ok_Text: 'Yes, all repositories',
     HealthCheckRepositoryColumn_Analyze_Dialog_Yes_Text: 'Yes, only this repository',
     HealthCheckRepositoryColumn_Analyze_Permission_Error: '<span><h2>Insufficient Permissions to Analyze a Repository</h2>' +
-    'To analyze a repository your user account must have permissions to start analysis.</span>',
+        'To analyze a repository your user account must have permissions to start analysis.</span>',
     HealthCheckRepositoryColumn_Loading: 'Loading&hellip;',
     HealthCheckRepositoryColumn_Unavailable_Tooltip: '<span><h2>Repository Health Check Unavailable</h2>A Repository Health Check (RHC) ' +
-    'cannot be performed on this repository, because it is an unsupported type or out of service.<br><br>' +
-    '<a href="http://links.sonatype.com/products/clm/rhc/home" ' +
-    'target="_blank">How the IQ Server Repository Health Check can help you make better software faster</a></span>',
+        'cannot be performed on this repository, because it is an unsupported type or out of service.<br><br>' +
+        '<a href="http://links.sonatype.com/products/clm/rhc/home" ' +
+        'target="_blank">How the IQ Server Repository Health Check can help you make better software faster</a></span>',
 
     HealthCheckSummary_Help: '<a href="http://links.sonatype.com/products/nexus/rhc/manual-remediation-with-rhc" target="_blank">What should I do with this report?</a>',
 
@@ -493,6 +498,33 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Blobstore_BlobstoreSettingsForm_QuotaType_FieldLabel: 'Type of Quota',
     Blobstore_BlobstoreSettingsForm_QuotaLimit_FieldLabel: 'Quota Limit in MB',
 
+    // Admin -> Repository -> Data Stores
+    Datastores_Text: 'Data Stores',
+    Datastores_Description: 'Manage data stores',
+    Datastores_Delete_Mask: 'Deleting data store',
+    Datastores_Update_Mask: 'Updating data store',
+    Datastores_Create_Title: 'Create data store',
+    Datastores_Update_Success: 'Data store updated: {0}',
+    Datastores_Delete_Success: 'Data store deleted: {0}',
+    Datastore_DatastoreAdd_Create_Success: 'Data store created: ',
+    Datastore_DatastoreAdd_Create_Error: 'You do not have permission to create data stores',
+    Datastore_DatastoreSettingsForm_Update_Success: 'Data store updated: ',
+    Datastore_DatastoreSettingsForm_Update_Error: 'Update is not supported for data stores',
+    Datastore_DatastoreList_New_Button: 'Create data store',
+    Datastore_DatastoreList_Name_Header: 'Name',
+    Datastore_DatastoreList_Type_Header: 'Type',
+    Datastore_DatastoreList_Filter_EmptyText: 'No data store matched "$filter"',
+    Datastore_DatastoreList_EmptyText: 'No data stores defined',
+    Datastore_DatastoreFeature_Delete_Button: 'Delete data store',
+    Datastore_DatastoreFeature_Delete_Disabled_Message: 'This data store is in use and cannot be deleted',
+    Datastore_DatastoreFeature_Editing_Enabled_Message: 'Updating data store configuration will cause it to be temporarily unavailable for a short period. Edits to configuration may also leave it in a non-functional state. Use caution when changing values.',
+    Datastore_DatastoreFeature_Update_Title: 'Update data store?',
+    Datastore_DatastoreFeature_Update_Warning: 'Warning: The data store will be temporarily unavailable for a short period.  This function does not migrate data to a new location.',
+    Datastore_DatastoreSettings_Title: 'Settings',
+    Datastore_DatastoreAdd_Type_FieldLabel: 'Type',
+    Datastore_DatastoreAdd_Type_EmptyText: 'Select a type',
+    Datastore_DatastoreSettingsForm_Name_FieldLabel: 'Name',
+
     // Admin -> Repository -> Selectors
     Selectors_Text: 'Content Selectors',
     Selectors_Description: 'Manage content selectors',
@@ -519,19 +551,19 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Selector_SelectorSettingsForm_Expression_FieldLabel: 'Search expression',
     Selector_SelectorSettingsForm_Expression_HelpText: 'Use query to identify repositories, components or assets',
     Selector_SelectorSettingsForm_Expression_Examples: '<div style="font-size: 11px"><br/>' +
-    '<h4>Example Content Selector Expressions:</h4>' +
-    '<p>Select all "raw" format content<br/><i>format == "raw"</i></p>' +
-    '<p>Select all "maven2" content along a path that starts with "/org/sonatype/nexus"<br/><i>format == "maven2" and path =^ "/org/sonatype/nexus"</i></p>' +
-    '<br/>' +
-    '<p>See the <a href="http://links.sonatype.com/products/nexus/selectors/docs" target="_blank">Nexus documentation</a> for more details</p>' +
-    '</div>',
+        '<h4>Example Content Selector Expressions:</h4>' +
+        '<p>Select all "raw" format content<br/><i>format == "raw"</i></p>' +
+        '<p>Select all "maven2" content along a path that starts with "/org/sonatype/nexus"<br/><i>format == "maven2" and path =^ "/org/sonatype/nexus"</i></p>' +
+        '<br/>' +
+        '<p>See the <a href="http://links.sonatype.com/products/nexus/selectors/docs" target="_blank">Nexus documentation</a> for more details</p>' +
+        '</div>',
     Selector_SelectorSettingsForm_Expression_Examples_jexl: '<div style="font-size: 11px"><br/>' +
-    '<h4>Example <a href="http://links.sonatype.com/products/nexus/jexl" target="_blank">JEXL</a> queries:</h4>' +
-    '<p>Select all "raw" format content<br/><i>format == "raw"</i></p>' +
-    '<p>Select all "maven2" content along a path that starts with "/org/sonatype/nexus"<br/><i>format == "maven2" and path =^ "/org/sonatype/nexus"</i></p>' +
-    '<br/>' +
-    '<p>See the <a href="http://links.sonatype.com/products/nexus/selectors/docs" target="_blank">Nexus documentation</a> for more details</p>' +
-    '</div>',
+        '<h4>Example <a href="http://links.sonatype.com/products/nexus/jexl" target="_blank">JEXL</a> queries:</h4>' +
+        '<p>Select all "raw" format content<br/><i>format == "raw"</i></p>' +
+        '<p>Select all "maven2" content along a path that starts with "/org/sonatype/nexus"<br/><i>format == "maven2" and path =^ "/org/sonatype/nexus"</i></p>' +
+        '<br/>' +
+        '<p>See the <a href="http://links.sonatype.com/products/nexus/selectors/docs" target="_blank">Nexus documentation</a> for more details</p>' +
+        '</div>',
     Selector_SelectorSettingsForm_SelectorID_Title: 'Selector ID',
     Selector_SelectorSettingsForm_Specification_Title: 'Specification',
     Selector_SelectorSettingsForm_Preview_Button: 'Preview results',
@@ -913,7 +945,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Support_Metrics_Dispatches_Title: 'Active Web Requests',
     Support_Metrics_ResponseCode_Title: 'Web Response Codes',
     Support_Metrics_Requests_Title: 'Web Requests',
-    
+
     // Admin -> Support -> MetricHealth
     Metric_Health_Text: 'Status',
     Metric_Health_Description: 'System status checks',
@@ -921,7 +953,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Metric_Health_Message_Header: 'Message',
     Metric_Health_Error_Header: 'Error',
     Metric_Health_Load_Mask: 'Loading&hellip;',
-    Metric_Health_Refresh_Warning : 'Failed to refresh server status',
+    Metric_Health_Refresh_Warning: 'Failed to refresh server status',
 
     // Admin -> Support -> Support Request
     SupportRequest_Text: 'Support Request',
@@ -933,7 +965,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SupportZip_Title: 'Support ZIP',
     SupportZip_Description: 'Creates a ZIP file containing useful support information about your server',
     SupportZip_HelpText: '<p>No information will be sent to Sonatype when creating the support ZIP file.</p>' +
-    '<p>Support ZIP creation may take a few minutes to complete.</p>',
+        '<p>Support ZIP creation may take a few minutes to complete.</p>',
     Support_SupportZip_Contents_FieldLabel: 'Contents',
     Support_SupportZip_Report_BoxLabel: 'System information report',
     Support_SupportZip_Dump_BoxLabel: 'JVM thread-dump',
@@ -1039,13 +1071,13 @@ Ext.define('NX.coreui.app.PluginStrings', {
     CleanupPolicy_CleanupPolicyFeature_Delete_Button: 'Delete',
     CleanupPolicy_CleanupPolicySettingsForm_Update_Success: 'Cleanup Policy updated: ',
     CleanupPolicy_CleanupPolicySettingsForm_Update_Error: 'You do not have permission to update Cleanup Policies',
-    CleanupPolicy_CleanupPolicySettingsForm_CleanupPolicy_Title :'Cleanup Policy',
+    CleanupPolicy_CleanupPolicySettingsForm_CleanupPolicy_Title: 'Cleanup Policy',
     CleanupPolicy_CleanupPolicySettingsForm_Name_FieldLabel: 'Name',
     CleanupPolicy_CleanupPolicySettingsForm_Name_HelpText: 'A unique name for the cleanup policy',
     CleanupPolicy_CleanupPolicySettingsForm_Format_FieldLabel: 'Format',
     CleanupPolicy_CleanupPolicySettingsForm_Format_HelpText: 'The format that this cleanup policy can be applied to',
     CleanupPolicy_CleanupPolicySettingsForm_Notes_FieldLabel: 'Notes',
-    CleanupPolicy_CleanupPolicySettingsForm_Criteria_Title :'Criteria',
+    CleanupPolicy_CleanupPolicySettingsForm_Criteria_Title: 'Criteria',
     CleanupPolicy_CleanupPolicySettingsForm_AddCriteria_Text: 'Add criteria',
     CleanupPolicy_CleanupPolicySettingsForm_LastBlobUpdated_FieldLabel: 'Published Before',
     CleanupPolicy_CleanupPolicySettingsForm_LastBlobUpdated_HelpText: 'Restrict cleanup to components that were published to NXRM more than the given number of days ago. (Blob updated date)',
@@ -1151,9 +1183,9 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Nodes_Quorum_lost_warning: 'Not enough Nexus Repository Manager nodes in the cluster are reachable so quorum cannot be achieved; database is read only. <a href="#admin/system/nodes/clusterreset">Troubleshoot</a>',
     Nodes_OSS_Message: 'You are running a single-node instance of Nexus Repository Manager.',
     Nodes_enable_read_only_mode_dialog_description: 'Are you sure you want to reject additions of new' +
-    ' components and changes to configuration?',
+        ' components and changes to configuration?',
     Nodes_disable_read_only_mode_dialog_description: 'Are you sure you want to stop rejecting additions of new' +
-    ' components and changes to configuration?',
+        ' components and changes to configuration?',
     Nodes_force_release_warning: 'Warning: read-only mode has been enabled by system tasks. Releasing read-only mode before those tasks are complete may cause them to fail and/or cause data loss.',
     Nodes_force_release_confirmation: 'Are you sure you want to forcibly release read-only mode?',
     Nodes_NodeSettings_Title: 'Edit Node',
@@ -1241,21 +1273,21 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Task_TaskScheduleAdvanced_Cron_EmptyText: '* * * * * * *',
     Task_TaskScheduleAdvanced_Cron_HelpText: 'A cron expression that will control the running of the task.',
     Task_TaskScheduleAdvanced_Cron_AfterBodyEl: '<div style="font-size: 11px"><p>From left to right the fields and accepted values are:</p>' +
-    '<table>' +
-    '<thead><tr><th>Field Name</th><th>Allowed Values</th></tr></thead>' +
-    '<tbody>' +
-    '<tr><td>Seconds</td><td>0-59</td></tr>' +
-    '<tr><td>Minutes</td><td>0-59</td></tr>' +
-    '<tr><td>Hours</td><td>0-23</td></tr>' +
-    '<tr><td>Day of month</td><td>1-31</td></tr>' +
-    '<tr><td>Month</td><td>1-12 or JAN-DEC</td></tr>' +
-    '<tr><td>Day of week</td><td>1-7 or SUN-SAT</td></tr>' +
-    '<tr><td>Year(optional)</td><td>empty, 1970-2099</td></tr>' +
-    '</tbody>' +
-    '</table>' +
-    '<br/>' +
-    '<p>Special tokens include: * (all acceptable values), ? (no specific value), - (ranges, e.g. 10-12)</p>' +
-    '</div> '
+        '<table>' +
+        '<thead><tr><th>Field Name</th><th>Allowed Values</th></tr></thead>' +
+        '<tbody>' +
+        '<tr><td>Seconds</td><td>0-59</td></tr>' +
+        '<tr><td>Minutes</td><td>0-59</td></tr>' +
+        '<tr><td>Hours</td><td>0-23</td></tr>' +
+        '<tr><td>Day of month</td><td>1-31</td></tr>' +
+        '<tr><td>Month</td><td>1-12 or JAN-DEC</td></tr>' +
+        '<tr><td>Day of week</td><td>1-7 or SUN-SAT</td></tr>' +
+        '<tr><td>Year(optional)</td><td>empty, 1970-2099</td></tr>' +
+        '</tbody>' +
+        '</table>' +
+        '<br/>' +
+        '<p>Special tokens include: * (all acceptable values), ? (no specific value), - (ranges, e.g. 10-12)</p>' +
+        '</div> '
     ,
     Task_TaskScheduleManual_HelpText: 'Without recurrence, this service can only be run manually.',
 
@@ -1289,7 +1321,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     NuGetApiKey_Text: 'NuGet API Key',
     NuGetApiKey_Description: 'Configure credentials for NuGet repositories',
     Nuget_NuGetApiKeyDetails_Html: 'Your NuGet API Key enables pushing packages using NuGet.exe. ' +
-    '<span style="font-weight: bold;">Keep this key secret!</span>',
+        '<span style="font-weight: bold;">Keep this key secret!</span>',
     Nuget_NuGetApiKeyDetails_ApiKey_Text: 'Your NuGet API Key is:',
     Nuget_NuGetApiKeyDetails_Register_Text: 'You can register this key for a given repository with the following command:',
     Nuget_NuGetApiKeyDetails_Register_Value: 'nuget setapikey {0} -source {1}',
@@ -1332,8 +1364,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Clm_Dashboard_Description: 'Open IQ Server Dashboard',
     Clm_Dashboard_Disabled_Tooltip: 'IQ Server must be enabled first',
     ClmSettings_Html: '<p><a href="http://www.sonatype.com/nexus/product-overview/nexus-lifecycle" target="_blank">IQ Server</a> ' +
-    'can evaluate application and organization policies.</p>' +
-    '<p>To enable this feature configure the IQ Server URL, username and password.</p>',
+        'can evaluate application and organization policies.</p>' +
+        '<p>To enable this feature configure the IQ Server URL, username and password.</p>',
 
     Clm_SettingsTestResults_Title: 'Applications',
     Clm_SettingsTestResults_EmptyText: 'No applications found',
@@ -1462,7 +1494,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     'NX.coreui.migration.AgentScreen': {
       Title: 'Agent Connection',
       Description: "<p>Configure the connection to remote server's upgrade-agent.<br/>" +
-      'The remote server must have an upgrade-agent configured and enabled.</p>',
+          'The remote server must have an upgrade-agent configured and enabled.</p>',
       Endpoint_FieldLabel: 'URL',
       Endpoint_HelpText: "The base URL of the remote server",
       Token_FieldLabel: 'Access Token',
@@ -1486,27 +1518,27 @@ Ext.define('NX.coreui.app.PluginStrings', {
     'NX.coreui.migration.OverviewScreen': {
       Title: 'Overview',
       Description: '<p>This wizard will help you upgrade from Nexus Repository Manager 2.</p>' +
-      '<p>Many aspects of a server can be upgraded <strong>automatically</strong>:' +
-      '<ul>' +
-      '<li>Configuration: security (users, roles and privileges) and other applicable system settings </li>' +
-      '<li>Repositories in supported formats: maven2, nuget, npm, rubygems, site</li>' +
-      '</ul>' +
-      '</p>' +
-      '<p>Some aspects are <strong>incompatible</strong> and can not be automatically upgraded:' +
-      '<ul>' +
-      '<li>Unsupported repository formats: yum, p2, obr</li>' +
-      '<li>Scheduled tasks</li>' +
-      '<li>Capabilities</li>' +
-      '</ul>' +
-      '</p>' +
-      '<p>Upgrade is incremental. We recommend upgrading one or two repositories first to ensure that the process works, then repeat the process and upgrade the rest. Take note of the following:' +
-      '<ul>' +
-      '<li>Repository upgrade could take <strong>considerable time</strong>.</li>' +
-      '<li>Until upgrade has successfully completed, it is not recommended to make any configuration changes in Nexus Repository Manager 3, as the configuration is volatile during this time.</li>' +
-      '<li>Also during the upgrade, all of the repositories in Nexus Repository Manager 3 will be offline.</li>' +
-      '<li>Server configuration can be transferred multiple times, each time it will completely replace existing configurations.</li>' +
-      '</ul>' +
-      '</p>'
+          '<p>Many aspects of a server can be upgraded <strong>automatically</strong>:' +
+          '<ul>' +
+          '<li>Configuration: security (users, roles and privileges) and other applicable system settings </li>' +
+          '<li>Repositories in supported formats: maven2, nuget, npm, rubygems, site</li>' +
+          '</ul>' +
+          '</p>' +
+          '<p>Some aspects are <strong>incompatible</strong> and can not be automatically upgraded:' +
+          '<ul>' +
+          '<li>Unsupported repository formats: yum, p2, obr</li>' +
+          '<li>Scheduled tasks</li>' +
+          '<li>Capabilities</li>' +
+          '</ul>' +
+          '</p>' +
+          '<p>Upgrade is incremental. We recommend upgrading one or two repositories first to ensure that the process works, then repeat the process and upgrade the rest. Take note of the following:' +
+          '<ul>' +
+          '<li>Repository upgrade could take <strong>considerable time</strong>.</li>' +
+          '<li>Until upgrade has successfully completed, it is not recommended to make any configuration changes in Nexus Repository Manager 3, as the configuration is volatile during this time.</li>' +
+          '<li>Also during the upgrade, all of the repositories in Nexus Repository Manager 3 will be offline.</li>' +
+          '<li>Server configuration can be transferred multiple times, each time it will completely replace existing configurations.</li>' +
+          '</ul>' +
+          '</p>'
     },
 
     'NX.coreui.migration.PhaseFinishScreen': {
@@ -1521,14 +1553,18 @@ Ext.define('NX.coreui.app.PluginStrings', {
 
       Title: 'Repository Defaults',
       Description: '<p>Configure the default settings used for repository upgrade.<br/>' +
-      'Per-repository settings may be customized when selecting repositories to upgrade.</p>',
+          'Per-repository settings may be customized when selecting repositories to upgrade.</p>',
       IngestMethod_HelpText: 'Choose how the repository content should be transferred. The method you choose may not be supported by all repositories.'
     },
 
     'NX.coreui.migration.RepositoryCustomizeWindow': {
       Title: 'Customize {0}',
 
-      BlobStore_FieldLabel: 'Destination',
+      DataStore_FieldLabel: 'Data store',
+      DataStore_HelpText: 'Choose where the component metadata should be stored',
+      DataStore_EmptyText: 'Choose a data store',
+
+      BlobStore_FieldLabel: 'Blob store',
       BlobStore_HelpText: 'Choose where the repository content should be stored',
       BlobStore_EmptyText: 'Choose a blob store',
 
@@ -1576,13 +1612,14 @@ Ext.define('NX.coreui.app.PluginStrings', {
     'NX.coreui.migration.RepositoriesScreen': {
       Title: 'Repositories',
       Description: '<p>Select the repositories to be upgraded.<br/>' +
-      'Customize advanced configuration of the upgrade per-repository as needed.</p>',
+          'Customize advanced configuration of the upgrade per-repository as needed.</p>',
       Repository_Column: 'Repository',
       Type_Column: 'Type',
       Format_Column: 'Format',
       Supported_Column: 'Supported',
       Status_Column: 'Status',
-      Destination_Column: 'Destination',
+      Datastore_Column: 'Data store',
+      Blobstore_Column: 'Blob store',
       Method_Column: 'Method',
       Action_Tooltip: 'Customize repository options'
     },

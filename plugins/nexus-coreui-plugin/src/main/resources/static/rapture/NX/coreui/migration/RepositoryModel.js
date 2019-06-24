@@ -27,6 +27,7 @@ Ext.define('NX.coreui.migration.RepositoryModel', {
     {name: 'format', type: 'string', sortType: 'asUCText'},
     {name: 'supported', type: 'boolean'},
     {name: 'status', type: 'string'},
+    {name: 'dataStore', type: 'string'},
     {name: 'blobStore', type: 'string'},
     {name: 'ingestMethod', type: 'string'}
   ]

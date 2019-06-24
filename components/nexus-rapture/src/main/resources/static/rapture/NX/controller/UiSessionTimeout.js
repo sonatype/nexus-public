@@ -108,8 +108,8 @@ Ext.define('NX.controller.UiSessionTimeout', {
     var me = this,
         hasUser = !Ext.isEmpty(NX.State.getUser()),
         uiSettings = NX.State.getValue('uiSettings') || {},
-        sessionTimeout = hasUser ? uiSettings['sessionTimeout'] : undefined,
-        requestTimeout = hasUser ? uiSettings['requestTimeout'] : undefined;
+        sessionTimeout = uiSettings['sessionTimeout'],
+        requestTimeout = uiSettings['requestTimeout'];
 
     me.cancelTimeout();
     if ((hasUser && NX.State.isReceiving()) && sessionTimeout > 0) {

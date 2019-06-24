@@ -41,10 +41,13 @@
     <module>nexus-core</module>
     <module>nexus-crypto</module>
     <module>nexus-cache</module>
+    <module>nexus-datastore</module>
+    <module>nexus-datastore-api</module>
     <module>nexus-elasticsearch</module>
     <module>nexus-email</module>
     <module>nexus-extdirect</module>
     <module>nexus-extender</module>
+    <module>nexus-features</module>
     <module>nexus-httpclient</module>
     <module>nexus-jmx</module>
     <module>nexus-scheduling</module>

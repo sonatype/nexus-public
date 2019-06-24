@@ -14,10 +14,10 @@ package org.sonatype.nexus.transaction;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.function.Supplier;
 
 import org.sonatype.goodies.common.ComponentSupport;
 
-import com.google.common.base.Supplier;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 

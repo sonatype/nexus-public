@@ -18,6 +18,8 @@ node.local: true
 http.enabled: false
 discovery.zen.ping.multicast.enabled: false
 
+search.default_search_timeout: 5m
+
 # ======================== Elasticsearch Configuration =========================
 #
 # NOTE: Elasticsearch comes with reasonable defaults for most settings.

@@ -41,6 +41,8 @@ public class SettingsCapabilityConfiguration
 
   public static final String LONG_REQUEST_TIMEOUT = "longRequestTimeout";
 
+  public static final String SEARCH_REQUEST_TIMEOUT = "searchRequestTimeout";
+
   public static final String TITLE = "title";
 
   public SettingsCapabilityConfiguration() {
@@ -59,6 +61,7 @@ public class SettingsCapabilityConfiguration
     setSessionTimeout(parseInteger(properties.get(SESSION_TIMEOUT), DEFAULT_SESSION_TIMEOUT));
     setRequestTimeout(parseInteger(properties.get(REQUEST_TIMEOUT), DEFAULT_REQUEST_TIMEOUT));
     setLongRequestTimeout(parseInteger(properties.get(LONG_REQUEST_TIMEOUT), DEFAULT_LONG_REQUEST_TIMEOUT));
+    setSearchRequestTimeout(parseInteger(properties.get(SEARCH_REQUEST_TIMEOUT), DEFAULT_SEARCH_REQUEST_TIMEOUT));
     setTitle(parseString(properties.get(TITLE), DEFAULT_TITLE));
   }
 
@@ -70,6 +73,7 @@ public class SettingsCapabilityConfiguration
     props.put(SESSION_TIMEOUT, Integer.toString(getSessionTimeout()));
     props.put(REQUEST_TIMEOUT, Integer.toString(getRequestTimeout()));
     props.put(LONG_REQUEST_TIMEOUT, Integer.toString(getLongRequestTimeout()));
+    props.put(SEARCH_REQUEST_TIMEOUT, Integer.toString(getSearchRequestTimeout()));
     props.put(TITLE, getTitle());
     return props;
   }
@@ -110,6 +114,7 @@ public class SettingsCapabilityConfiguration
         + ", sessionTimeout=" + getSessionTimeout()
         + ", requestTimeout=" + getRequestTimeout()
         + ", longRequestTimeout=" + getLongRequestTimeout()
+        + ", searchRequestTimeout=" + getSearchRequestTimeout()
         + "}";
   }
 }

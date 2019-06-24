@@ -10,38 +10,20 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.rapture.internal.settings;
-
-import javax.inject.Named;
-import javax.inject.Singleton;
-
-import org.sonatype.goodies.common.ComponentSupport;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-
-// TODO: rename to SettingsManager?
+/*global Ext, NX*/
 
 /**
- * Rapture.
+ * Datastore model.
  *
- * @since 3.0
+ * @since 3.next
  */
-@Named
-@Singleton
-public class Rapture
-    extends ComponentSupport
-{
-  private RaptureSettings settings = new RaptureSettings();
-
-  public RaptureSettings getSettings() {
-    return settings;
-  }
-
-  public void setSettings(final RaptureSettings settings) {
-    this.settings = checkNotNull(settings);
-  }
-
-  public void resetSettings() {
-    this.settings = new RaptureSettings();
-  }
-}
+Ext.define('NX.coreui.model.Datastore', {
+  extend: 'Ext.data.Model',
+  idProperty: 'name',
+  fields: [
+    {name: 'name', type: 'string', sortType: 'asUCText'},
+    {name: 'type', type: 'string', sortType: 'asUCText'},
+    {name: 'attributes', type: 'auto' /*object*/, defaultValue: null },
+    {name: 'inUse', type: 'boolean'}
+  ]
+});

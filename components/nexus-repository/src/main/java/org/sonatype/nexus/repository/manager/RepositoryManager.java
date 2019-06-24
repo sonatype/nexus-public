@@ -49,6 +49,11 @@ public interface RepositoryManager
 
   void delete(String name) throws Exception;
 
+  /**
+   * @since 3.next
+   */
+  boolean isDataStoreUsed(String dataStoreName);
+
   boolean isBlobstoreUsed(String blobStoreName);
 
   long blobstoreUsageCount(String blobStoreName);

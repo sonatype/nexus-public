@@ -69,6 +69,7 @@ import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTOR
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.repository.storage.StorageFacetConstants.BLOB_STORE_NAME;
+import static org.sonatype.nexus.repository.storage.StorageFacetConstants.DATA_STORE_NAME;
 import static org.sonatype.nexus.repository.storage.StorageFacetConstants.STORAGE;
 
 /**
@@ -441,6 +442,16 @@ public class RepositoryManagerImpl
   public boolean isBlobstoreUsed(final String blobStoreName) {
     return blobstoreUsageStream(blobStoreName).findAny().isPresent() ||
         blobStoreManager.blobStoreUsageCount(blobStoreName) > 0;
+  }
+
+  @Override
+  public boolean isDataStoreUsed(final String dataStoreName) {
+    return stream(browse().spliterator(), false)
+        .map(Repository::getConfiguration)
+        .map(Configuration::getAttributes)
+        .map(a -> a.get(STORAGE))
+        .map(s -> s.get(DATA_STORE_NAME))
+        .anyMatch(dataStoreName::equals);
   }
 
   @Override

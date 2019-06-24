@@ -14,8 +14,8 @@ package org.sonatype.nexus.transaction;
 
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Method;
+import java.util.function.Supplier;
 
-import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.aopalliance.intercept.Joinpoint;
 

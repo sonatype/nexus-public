@@ -543,7 +543,7 @@ public class SearchServiceImpl
       return EMPTY_SEARCH_RESPONSE;
     }
 
-    return executeSearch(query, searchableIndexes, from, size, sort, null);
+    return executeSearch(query, searchableIndexes, from, size, sort, null, null);
   }
 
   @Override
@@ -560,14 +560,15 @@ public class SearchServiceImpl
       return EMPTY_SEARCH_RESPONSE;
     }
 
-    return executeSearch(query, searchableIndexes, from, size, sort, null);
+    return executeSearch(query, searchableIndexes, from, size, sort, null, null);
   }
 
   @Override
   public SearchResponse search(final QueryBuilder query,
                                @Nullable final List<SortBuilder> sort,
                                final int from,
-                               final int size)
+                               final int size,
+                               final Integer timeout)
   {
     if (!validateQuery(query)) {
       return EMPTY_SEARCH_RESPONSE;
@@ -579,7 +580,7 @@ public class SearchServiceImpl
 
     try (SubjectRegistration registration = searchSubjectHelper.register(securityHelper.subject())) {
       return executeSearch(query, searchableIndexes, from, size, sort,
-          QueryBuilders.scriptQuery(ContentAuthPluginScriptFactory.newScript(registration.getId())));
+          QueryBuilders.scriptQuery(ContentAuthPluginScriptFactory.newScript(registration.getId())), timeout);
     }
   }
 
@@ -598,7 +599,7 @@ public class SearchServiceImpl
 
     try (SubjectRegistration registration = searchSubjectHelper.register(securityHelper.subject())) {
       return executeSearch(query, aggregations, searchableIndexes,
-          QueryBuilders.scriptQuery(ContentAuthPluginScriptFactory.newScript(registration.getId())));
+          QueryBuilders.scriptQuery(ContentAuthPluginScriptFactory.newScript(registration.getId())), null);
     }
   }
 
@@ -607,7 +608,8 @@ public class SearchServiceImpl
                                        final int from,
                                        final int size,
                                        @Nullable final List<SortBuilder> sort,
-                                       @Nullable final QueryBuilder postFilter)
+                                       @Nullable final QueryBuilder postFilter,
+                                       final Integer timeout)
   {
     checkNotNull(query);
     checkNotNull(searchableIndexes);
@@ -625,6 +627,9 @@ public class SearchServiceImpl
         searchRequestBuilder.addSort(entry);
       }
     }
+    if (timeout != null) {
+      searchRequestBuilder.setTimeout(timeout.toString() + 's');
+    }
     SearchResponse searchResponse = searchRequestBuilder.execute().actionGet();
 
     if (profile) {
@@ -637,7 +642,8 @@ public class SearchServiceImpl
   private SearchResponse executeSearch(final QueryBuilder query,
                                        final List<AggregationBuilder> aggregations,
                                        final String[] searchableIndexes,
-                                       @Nullable final QueryBuilder postFilter)
+                                       @Nullable final QueryBuilder postFilter,
+                                       final Integer timeout)
   {
     checkNotNull(query);
     checkNotNull(aggregations);
@@ -657,6 +663,10 @@ public class SearchServiceImpl
 
     if (postFilter != null) {
       searchRequestBuilder.setPostFilter(postFilter);
+    }
+
+    if (timeout != null) {
+      searchRequestBuilder.setTimeout(timeout.toString() + 's');
     }
 
     SearchResponse searchResponse = searchRequestBuilder.execute().actionGet();

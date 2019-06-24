@@ -66,6 +66,24 @@ Ext.define('NX.coreui.migration.RepositoryDefaultsScreen', {
       buttons: ['back', 'next', 'cancel']
     });
 
+    if (NX.State.getValue('datastores')) {
+      me.fields.unshift(
+        {
+          xtype: 'combo',
+          name: 'dataStore',
+          fieldLabel: NX.I18n.render(me, 'DataStore_FieldLabel'),
+          helpText: NX.I18n.render(me, 'DataStore_HelpText'),
+          emptyText: NX.I18n.render(me, 'DataStore_EmptyText'),
+          editable: false,
+          store: 'ComponentDatastore',
+          queryMode: 'local',
+          displayField: 'name',
+          valueField: 'name',
+          readOnlyOnUpdate: true,
+          allowBlank: false
+        });
+    }
+
     me.callParent();
     me.down('form').settingsForm = true;
   },

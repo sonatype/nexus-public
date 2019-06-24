@@ -21,6 +21,11 @@ public class StorageFacetConstants
 {
   public static final String STORAGE = "storage";
 
+  /**
+   * @since 3.next
+   */
+  public static final String DATA_STORE_NAME = "dataStoreName";
+
   public static final String BLOB_STORE_NAME = "blobStoreName";
 
   public static final String WRITE_POLICY = "writePolicy";

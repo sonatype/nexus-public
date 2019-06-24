@@ -34,6 +34,7 @@ Ext.define('NX.coreui.controller.Repositories', {
     'Repository'
   ],
   stores: [
+    'Datastore',
     'Blobstore',
     'Repository',
     'RepositoryRecipe',
@@ -117,7 +118,8 @@ Ext.define('NX.coreui.controller.Repositories', {
       visible: function() {
         // Show feature if the current user is permitted any repository-admin permissions
         return NX.Permissions.checkExistsWithPrefix('nexus:repository-admin');
-      }
+      },
+      weight: 10
     };
 
     me.callParent();

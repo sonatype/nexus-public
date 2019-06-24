@@ -91,6 +91,13 @@ public class SettingsCapabilityDescriptor
     @DefaultMessage("Period of time to keep the connection alive for requests expected to take an extended period of time (seconds)")
     String longRequestTimeoutHelp();
 
+    @DefaultMessage("Search request timeout")
+    String searchRequestTimeoutLabel();
+
+    @DefaultMessage("Period of time to keep the connection alive for search requests (seconds); " +
+        "this value should be less than the request time in order for the correct error messages to be displayed")
+    String searchRequestTimeoutHelp();
+
     @DefaultMessage("Title")
     String titleLabel();
 
@@ -147,7 +154,14 @@ public class SettingsCapabilityDescriptor
             messages.longRequestTimeoutHelp(),
             FormField.MANDATORY
         ).withInitialValue(RaptureSettings.DEFAULT_LONG_REQUEST_TIMEOUT)
-            .withMinimumValue(RaptureSettings.DEFAULT_LONG_REQUEST_TIMEOUT)
+            .withMinimumValue(RaptureSettings.DEFAULT_LONG_REQUEST_TIMEOUT),
+        new NumberTextFormField(
+            SettingsCapabilityConfiguration.SEARCH_REQUEST_TIMEOUT,
+            messages.searchRequestTimeoutLabel(),
+            messages.searchRequestTimeoutHelp(),
+            FormField.MANDATORY
+        ).withInitialValue(RaptureSettings.DEFAULT_SEARCH_REQUEST_TIMEOUT)
+            .withMinimumValue(RaptureSettings.MIN_SEARCH_REQUEST_TIMEOUT)
     );
   }
 

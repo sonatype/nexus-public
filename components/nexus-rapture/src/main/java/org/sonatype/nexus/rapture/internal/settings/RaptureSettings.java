@@ -42,27 +42,29 @@ public class RaptureSettings
 
   public static final int DEFAULT_LONG_REQUEST_TIMEOUT = 3 * 60; // seconds
 
+  public static final int DEFAULT_SEARCH_REQUEST_TIMEOUT = 55; // seconds
+
+  public static final int MIN_SEARCH_REQUEST_TIMEOUT = 15; // seconds
+
   private boolean debugAllowed = DEFAULT_DEBUG_ALLOWED;
 
-  @NotNull
   @Min(0)
-  private Integer statusIntervalAuthenticated = DEFAULT_STATUS_INTERVAL_AUTHENTICATED;
+  private int statusIntervalAuthenticated = DEFAULT_STATUS_INTERVAL_AUTHENTICATED;
 
-  @NotNull
   @Min(0)
-  private Integer statusIntervalAnonymous = DEFAULT_STATUS_INTERVAL_ANONYMOUS;
+  private int statusIntervalAnonymous = DEFAULT_STATUS_INTERVAL_ANONYMOUS;
 
-  @NotNull
   @Min(0)
-  private Integer sessionTimeout = DEFAULT_SESSION_TIMEOUT;
+  private int sessionTimeout = DEFAULT_SESSION_TIMEOUT;
 
-  @NotNull
   @Min(MIN_REQUEST_TIMEOUT)
-  private Integer requestTimeout = DEFAULT_REQUEST_TIMEOUT;
+  private int requestTimeout = DEFAULT_REQUEST_TIMEOUT;
 
-  @NotNull
   @Min(DEFAULT_LONG_REQUEST_TIMEOUT)
-  private Integer longRequestTimeout = DEFAULT_LONG_REQUEST_TIMEOUT;
+  private int longRequestTimeout = DEFAULT_LONG_REQUEST_TIMEOUT;
+  
+  @Min(MIN_SEARCH_REQUEST_TIMEOUT)
+  private int searchRequestTimeout = DEFAULT_SEARCH_REQUEST_TIMEOUT;
 
   @NotBlank
   private String title;
@@ -111,8 +113,16 @@ public class RaptureSettings
     return longRequestTimeout;
   }
 
-  public void setLongRequestTimeout(final Integer longRequestTimeout) {
+  public void setLongRequestTimeout(final int longRequestTimeout) {
     this.longRequestTimeout = longRequestTimeout;
+  }
+
+  public int getSearchRequestTimeout() {
+    return searchRequestTimeout;
+  }
+
+  public void setSearchRequestTimeout(final int searchRequestTimeout) {
+    this.searchRequestTimeout = searchRequestTimeout;
   }
 
   public String getTitle() {

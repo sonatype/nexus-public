@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.orient.transaction;
 
+import java.util.function.Supplier;
+
 import javax.annotation.Nullable;
 import javax.inject.Provider;
 
@@ -19,8 +21,6 @@ import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.transaction.Operations;
 import org.sonatype.nexus.transaction.Transaction;
 import org.sonatype.nexus.transaction.Transactional;
-
-import com.google.common.base.Supplier;
 
 import static org.sonatype.nexus.orient.transaction.OrientTransaction.currentDb;
 

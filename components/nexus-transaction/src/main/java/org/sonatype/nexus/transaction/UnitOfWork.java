@@ -14,10 +14,10 @@ package org.sonatype.nexus.transaction;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
-import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 
@@ -87,7 +87,7 @@ public final class UnitOfWork
    * Begins a unit-of-work which only acquires a transaction when needed and then re-uses it (batch-mode).
    */
   public static void beginBatch(final Supplier<? extends Transaction> db) {
-    begin(Suppliers.compose(tx -> new BatchTransaction(tx), db));
+    begin(Suppliers.compose(tx -> new BatchTransaction(tx), db::get));
   }
 
   /**

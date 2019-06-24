@@ -55,7 +55,16 @@ Ext.define('NX.coreui.view.search.SearchFeature', {
             xtype: 'panel',
             itemId: 'info',
             ui: 'nx-info-message',
+            cls: 'info-message',
             iconCls: NX.Icons.cls('message-primary', 'x16'),
+            hidden: true
+          },
+          {
+            xtype: 'panel',
+            itemId: 'warning',
+            ui: 'nx-info-message',
+            cls: 'warning-message',
+            iconCls: NX.Icons.cls('message-danger', 'x16'),
             hidden: true
           },
           {

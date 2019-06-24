@@ -126,6 +126,7 @@ public class SearchResource
       @QueryParam(CONTINUATION_TOKEN) final String continuationToken,
       @QueryParam(SORT_FIELD) final String sort,
       @QueryParam(SORT_DIRECTION) final String direction,
+      @QueryParam("timeout") final Integer timeout,
       @Context final UriInfo uriInfo)
   {
     QueryBuilder query = searchUtils.buildQuery(uriInfo);
@@ -133,7 +134,7 @@ public class SearchResource
     int from = tokenEncoder.decode(continuationToken, query);
 
     SearchResponse response = searchService
-        .search(query, searchUtils.getSortBuilders(sort, direction, false), from, getPageSize());
+        .search(query, searchUtils.getSortBuilders(sort, direction, false), from, getPageSize(), timeout);
 
     List<ComponentXO> componentXOs = Arrays.stream(response.getHits().hits())
         .map(this::toComponent)
@@ -179,6 +180,7 @@ public class SearchResource
       @QueryParam(CONTINUATION_TOKEN) final String continuationToken,
       @QueryParam(SORT_FIELD) final String sort,
       @QueryParam(SORT_DIRECTION) final String direction,
+      @QueryParam("timeout") final Integer timeout,
       @Context final UriInfo uriInfo)
   {
     QueryBuilder query = searchUtils.buildQuery(uriInfo);
@@ -186,7 +188,7 @@ public class SearchResource
     int from = tokenEncoder.decode(continuationToken, query);
 
     SearchResponse componentResponse = searchService
-        .search(query, searchUtils.getSortBuilders(sort, direction, false), from, getPageSize());
+        .search(query, searchUtils.getSortBuilders(sort, direction, false), from, getPageSize(), timeout);
 
     List<AssetXO> assetXOs = retrieveAssets(componentResponse, uriInfo);
     return new Page<>(assetXOs, componentResponse.getHits().hits().length == getPageSize() ?
@@ -200,11 +202,12 @@ public class SearchResource
   @Path(SEARCH_AND_DOWNLOAD_URI)
   public Response searchAndDownloadAssets(@QueryParam(SORT_FIELD) final String sort,
                                           @QueryParam(SORT_DIRECTION) final String direction,
+                                          @QueryParam("timeout") Integer timeout,
                                           @Context final UriInfo uriInfo)
   {
     QueryBuilder query = searchUtils.buildQuery(uriInfo);
 
-    List<AssetXO> assetXOs = retrieveAssets(query, sort, direction, uriInfo);
+    List<AssetXO> assetXOs = retrieveAssets(query, sort, direction, timeout, uriInfo);
 
     return new AssetDownloadResponseProcessor(assetXOs, !Strings2.isEmpty(sort)).process();
   }
@@ -222,18 +225,20 @@ public class SearchResource
                                        final String sort,
                                        final String direction,
                                        final UriInfo uriInfo,
-                                       final int from)
+                                       final int from,
+                                       final Integer timeout)
   {
     return this.retrieveAssets(
-        searchService.search(query, searchUtils.getSortBuilders(sort, direction, false), from, getPageSize()), uriInfo);
+        searchService.search(query, searchUtils.getSortBuilders(sort, direction, false), from, getPageSize(), timeout), uriInfo);
   }
 
   private List<AssetXO> retrieveAssets(final QueryBuilder query,
                                        final String sort,
                                        final String direction,
+                                       final Integer timeout,
                                        final UriInfo uriInfo)
   {
-    return this.retrieveAssets(query, sort, direction, uriInfo, 0);
+    return this.retrieveAssets(query, sort, direction, uriInfo, 0, timeout);
   }
 
   @SuppressWarnings("unchecked")

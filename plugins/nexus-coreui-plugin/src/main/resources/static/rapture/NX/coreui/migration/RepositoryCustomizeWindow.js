@@ -38,6 +38,13 @@ Ext.define('NX.coreui.migration.RepositoryCustomizeWindow', {
     recordId: undefined,
 
     /**
+     * The default data store to display.
+     *
+     * @cfg {String}
+     */
+    dataStore: undefined,
+
+    /**
      * The default blob store to display.
      *
      * @cfg {String}
@@ -114,6 +121,24 @@ Ext.define('NX.coreui.migration.RepositoryCustomizeWindow', {
         ]
       }
     });
+
+    if (NX.State.getValue('datastores')) {
+      me.items.items.splice(1, 0,
+          {
+            xtype: 'combo',
+            name: 'dataStore',
+            fieldLabel: NX.I18n.render(me, 'DataStore_FieldLabel'),
+            helpText: NX.I18n.render(me, 'DataStore_HelpText'),
+            emptyText: NX.I18n.render(me, 'DataStore_EmptyText'),
+            editable: false,
+            store: 'ComponentDatastore',
+            queryMode: 'local',
+            displayField: 'name',
+            valueField: 'name',
+            readOnlyOnUpdate: true,
+            value: me.getDataStore()
+          });
+    }
 
     me.callParent();
   },

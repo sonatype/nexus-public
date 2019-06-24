@@ -20,8 +20,8 @@ import javax.validation.ValidationException
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.extdirect.model.LimitedPagedResponse
-import org.sonatype.nexus.extdirect.model.PagedResponse
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters
+import org.sonatype.nexus.rapture.UiSettingsManager
 import org.sonatype.nexus.repository.rest.SearchUtils
 import org.sonatype.nexus.repository.search.SearchFilter
 import org.sonatype.nexus.repository.search.SearchResultComponent
@@ -60,6 +60,9 @@ class SearchComponent
   @Inject
   SearchResultsGenerator searchResultsGenerator
 
+  @Inject
+  UiSettingsManager uiSettingsManager
+
   /**
    * Search based on configured filters.
    *
@@ -70,7 +73,7 @@ class SearchComponent
   @Timed
   @ExceptionMetered
   @RequiresPermissions('nexus:search:read')
-  PagedResponse<ComponentXO> read(StoreLoadParameters parameters) {
+  LimitedPagedResponse<ComponentXO> read(StoreLoadParameters parameters) {
     if (parameters.limit > searchResultsLimit) {
       parameters.limit = searchResultsLimit
     }
@@ -84,14 +87,15 @@ class SearchComponent
       return null
     }
     else {
-      log.debug("UI Search Query {}", query);
+      log.debug("UI Search Query {}", query)
     }
 
     try {
       def sort = parameters?.sort?.get(0)
 
-      SearchResponse response = searchService.search(query,
-          searchUtils.getSortBuilders(sort?.property, sort?.direction), parameters.start, parameters.limit)
+      SearchResponse response = searchService.
+          search(query, searchUtils.getSortBuilders(sort?.property, sort?.direction), parameters.start,
+              parameters.limit, uiSettingsManager.settings.requestTimeout - 5)
       List<SearchResultComponent> searchResultComponents = searchResultsGenerator.getSearchResultList(response)
 
       return new LimitedPagedResponse<ComponentXO>(
@@ -106,7 +110,8 @@ class SearchComponent
                 version: searchResultComponent.version,
                 format: searchResultComponent.format
             )
-          }
+          },
+          response.isTimedOut()
       )
     }
     catch (IllegalArgumentException e) {

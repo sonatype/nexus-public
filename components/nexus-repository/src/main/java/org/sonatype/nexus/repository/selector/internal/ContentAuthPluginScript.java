@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
@@ -30,6 +31,8 @@ import org.apache.shiro.subject.support.SubjectThreadState;
 import org.apache.shiro.util.ThreadState;
 import org.elasticsearch.script.AbstractSearchScript;
 import org.elasticsearch.search.lookup.SourceLookup;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.FORMAT;
@@ -45,6 +48,8 @@ public class ContentAuthPluginScript
     extends AbstractSearchScript
 {
   public static final String NAME = "content_auth";
+
+  private static final Logger log = LoggerFactory.getLogger(ContentAuthPluginScript.class);
 
   private final Subject subject;
 
@@ -90,6 +95,12 @@ public class ContentAuthPluginScript
     }
     finally {
       threadState.clear();
+      try {
+        TimeUnit.MILLISECONDS.sleep(1);
+      }
+      catch (InterruptedException e) {
+        log.error("Thread.sleep interruped", e);
+      }
     }
   }
 

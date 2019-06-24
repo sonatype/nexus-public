@@ -87,6 +87,36 @@ Ext.define('NX.coreui.view.repository.facet.StorageFacet', {
       }
     ];
 
+    if (NX.State.getValue('datastores')) {
+      me.items[0].items.unshift(
+          {
+            xtype: 'combo',
+            name: 'attributes.storage.dataStoreName',
+            itemId: 'dataStoreName',
+            fieldLabel: NX.I18n.get('Repository_Facet_StorageFacet_DataStore_FieldLabel'),
+            helpText: NX.I18n.get('Repository_Facet_StorageFacet_DataStore_HelpText'),
+            emptyText: NX.I18n.get('Repository_Facet_StorageFacet_DataStore_EmptyText'),
+            editable: false,
+            store: 'ComponentDatastore',
+            queryMode: 'local',
+            displayField: 'name',
+            valueField: 'name',
+            readOnlyOnUpdate: true,
+            listeners: {
+              afterrender: function (combo) {
+                if (!combo.getValue()) {
+                  var store = combo.getStore();
+                  if (store.getTotalCount() === 1) {
+                    var value = store.getAt(0).get('name');
+                    combo.originalValue = value;
+                    combo.setValue(value);
+                  }
+                }
+              }
+            }
+          });
+    }
+
     me.callParent();
   }
 });

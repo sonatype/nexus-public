@@ -21,6 +21,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.rapture.StateContributor;
+import org.sonatype.nexus.rapture.UiSettingsManager;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -39,10 +40,10 @@ public class UiSettingsStateContributor
 {
   private static final String STATE_ID = "uiSettings";
 
-  private final Rapture rapture;
+  private final UiSettingsManager rapture;
 
   @Inject
-  public UiSettingsStateContributor(final Rapture rapture) {
+  public UiSettingsStateContributor(final UiSettingsManager rapture) {
     this.rapture = checkNotNull(rapture);
   }
 

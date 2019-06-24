@@ -85,6 +85,16 @@
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-datastore</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-datastore-api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-httpclient</artifactId>
     </dependency>
 
