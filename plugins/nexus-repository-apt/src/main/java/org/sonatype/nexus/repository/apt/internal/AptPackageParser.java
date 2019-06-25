@@ -30,7 +30,7 @@ import org.apache.commons.io.input.CloseShieldInputStream;
 import org.sonatype.nexus.repository.apt.internal.org.apache.commons.compress.archivers.ar.ArArchiveInputStream;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 public class AptPackageParser
 {

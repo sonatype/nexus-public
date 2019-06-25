@@ -16,7 +16,7 @@ package org.sonatype.nexus.security.internal.rest;
 import org.sonatype.nexus.security.user.UserStatus;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 public enum ApiUserStatus
 {

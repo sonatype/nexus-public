@@ -48,7 +48,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.common.entity.EntityHelper.id;
-import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
+import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
 /**
  * @since 3.16
@@ -62,7 +62,7 @@ public class RoutingRulesApiResource
     extends ComponentSupport
     implements Resource, RoutingRulesApiResourceDoc
 {
-  public static final String RESOURCE_URI = V1_API_PREFIX + "/routing-rules";
+  public static final String RESOURCE_URI = BETA_API_PREFIX + "/routing-rules";
 
   private final RoutingRuleStore routingRuleStore;
 
@@ -74,6 +74,7 @@ public class RoutingRulesApiResource
     this.routingRuleHelper = checkNotNull(routingRuleHelper);
   }
 
+  @Override
   @POST
   @RequiresAuthentication
   @RequiresPermissions("nexus:*")
@@ -87,6 +88,7 @@ public class RoutingRulesApiResource
     routingRuleStore.create(routingRule);
   }
 
+  @Override
   @GET
   public List<RoutingRuleXO> getRoutingRules() {
     routingRuleHelper.ensureUserHasPermissionToRead();
@@ -96,6 +98,7 @@ public class RoutingRulesApiResource
             .collect(Collectors.toList());
   }
 
+  @Override
   @GET
   @Path("/{name}")
   public RoutingRuleXO getRoutingRule(@PathParam("name") final String name) {
@@ -104,6 +107,7 @@ public class RoutingRulesApiResource
     return RoutingRuleXO.fromRoutingRule(routingRule);
   }
 
+  @Override
   @PUT
   @Path("/{name}")
   @RequiresAuthentication
@@ -121,6 +125,7 @@ public class RoutingRulesApiResource
     routingRuleStore.update(routingRule);
   }
 
+  @Override
   @DELETE
   @Path("/{name}")
   @RequiresAuthentication

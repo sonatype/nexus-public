@@ -36,7 +36,7 @@ import org.bouncycastle.util.io.TeeOutputStream;
 /**
  * Stores a set of temp files, automatically compressing each into a GZIP, BZ2 and plain format.
  *
- * @since 3.next
+ * @since 3.17
  */
 class CompressingTempFileStore
     extends ComponentSupport

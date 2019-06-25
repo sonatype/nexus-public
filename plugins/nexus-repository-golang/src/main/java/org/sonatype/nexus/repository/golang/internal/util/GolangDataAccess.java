@@ -51,7 +51,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 /**
  * Shared code between Go facets.
  *
- * @since 3.next
+ * @since 3.17
  */
 @Named
 public class GolangDataAccess

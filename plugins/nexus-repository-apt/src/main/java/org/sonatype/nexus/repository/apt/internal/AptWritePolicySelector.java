@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.storage.WritePolicy;
 import org.sonatype.nexus.repository.storage.WritePolicySelector;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 public class AptWritePolicySelector
     implements WritePolicySelector

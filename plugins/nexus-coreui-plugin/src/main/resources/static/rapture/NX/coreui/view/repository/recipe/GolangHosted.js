@@ -15,7 +15,7 @@
 /**
  * Repository "Settings" form for a Go Hosted repository.
  *
- * @since 3.next
+ * @since 3.17
  */
 Ext.define('NX.golang.view.repository.recipe.GolangHosted', {
   extend: 'NX.coreui.view.repository.RepositorySettingsForm',

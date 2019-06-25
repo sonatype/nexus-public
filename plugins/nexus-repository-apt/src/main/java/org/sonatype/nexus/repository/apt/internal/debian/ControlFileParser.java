@@ -27,7 +27,7 @@ import org.sonatype.nexus.repository.apt.internal.debian.ControlFile.Paragraph;
 import com.google.common.base.Charsets;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 public class ControlFileParser
 {

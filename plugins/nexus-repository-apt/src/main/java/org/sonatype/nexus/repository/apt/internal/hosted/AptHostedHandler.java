@@ -31,7 +31,7 @@ import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
 import static org.sonatype.nexus.repository.http.HttpMethods.POST;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 @Named
 @Singleton

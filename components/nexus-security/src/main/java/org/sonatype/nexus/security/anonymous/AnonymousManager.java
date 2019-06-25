@@ -44,7 +44,7 @@ public interface AnonymousManager
   /**
    * Check whether the system has been configured
    *
-   * @since 3.next
+   * @since 3.17
    */
   boolean isConfigured();
 }

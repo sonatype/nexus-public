@@ -35,7 +35,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Go specific {@link ContentValidator} that validates for some go specific file
  * extensions and format specific files.
  *
- * @since 3.next
+ * @since 3.17
  */
 @Named(GolangFormat.NAME)
 @Singleton

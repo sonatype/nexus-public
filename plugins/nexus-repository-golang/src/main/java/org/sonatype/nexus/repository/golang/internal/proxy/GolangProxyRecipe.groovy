@@ -25,16 +25,18 @@ import org.sonatype.nexus.repository.golang.GolangFormat
 import org.sonatype.nexus.repository.golang.internal.GolangRecipeSupport
 import org.sonatype.nexus.repository.http.HttpHandlers
 import org.sonatype.nexus.repository.proxy.ProxyHandler
+import org.sonatype.nexus.repository.routing.RoutingRuleHandler
 import org.sonatype.nexus.repository.types.ProxyType
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
 import org.sonatype.nexus.repository.view.Route
 import org.sonatype.nexus.repository.view.Router
 import org.sonatype.nexus.repository.view.ViewFacet
+import org.sonatype.nexus.repository.view.handlers.HighAvailabilitySupportChecker
 
 /**
  * Go proxy repository recipe.
  *
- * @since 3.next
+ * @since 3.17
  */
 @Named(GolangProxyRecipe.NAME)
 @Singleton
@@ -44,15 +46,20 @@ class GolangProxyRecipe
   private static final String NAME = 'go-proxy'
 
   @Inject
+  RoutingRuleHandler routingRuleHandler
+
+  @Inject
   Provider<GolangProxyFacetImpl> proxyFacet
 
   @Inject
   ProxyHandler proxyHandler
 
   @Inject
-  GolangProxyRecipe(@Named(ProxyType.NAME) final Type type,
-                    @Named(GolangFormat.NAME) final Format format) {
-    super(type, format)
+  GolangProxyRecipe(final HighAvailabilitySupportChecker highAvailabilitySupportChecker,
+                    @Named(ProxyType.NAME) final Type type,
+                    @Named(GolangFormat.NAME) final Format format)
+  {
+    super(highAvailabilitySupportChecker, type, format)
   }
 
   @Override
@@ -81,6 +88,8 @@ class GolangProxyRecipe
       builder.route(new Route.Builder().matcher(matcher)
           .handler(timingHandler)
           .handler(securityHandler)
+          .handler(highAvailabilitySupportHandler)
+          .handler(routingRuleHandler)
           .handler(exceptionHandler)
           .handler(handlerContributor)
           .handler(negativeCacheHandler)

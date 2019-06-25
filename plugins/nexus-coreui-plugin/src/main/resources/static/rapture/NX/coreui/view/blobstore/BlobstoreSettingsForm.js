@@ -66,6 +66,15 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
           }
           var blobstoreTypeModel = NX.getApplication().getStore('BlobstoreType').getById(value);
           settingsFieldSet.importProperties(null, blobstoreTypeModel.get('formFields'), me.editableCondition);
+
+          me.remove('blobstore-custom-form');
+          var customFormName = blobstoreTypeModel.get('customFormName');
+          if (customFormName) {
+            me.add({
+              id: 'blobstore-custom-form',
+              xtype: customFormName
+            });
+          }
         }
       },
       {
@@ -128,6 +137,10 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
         var type = values['type'].toLowerCase();
         values.attributes = {};
         values.attributes[type] = me.down('nx-coreui-formfield-settingsfieldset').exportProperties(values);
+        var customForm = me.down('#blobstore-custom-form');
+        if (customForm) {
+          Ext.Object.merge(values.attributes[type], customForm.exportProperties(values));
+        }
         return values;
       },
       setValues: function(values) {
@@ -205,7 +218,7 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
       if (me.items != null) {
         //then grab all of the dynamically generated fields and make them non-editable
         var itemsToDisable = me.getChildItemsToDisable().filter(function(item) {
-          return item.ownerCt.xtype === 'nx-coreui-formfield-settingsfieldset';
+          return item.ownerCt.xtype === 'nx-coreui-formfield-settingsfieldset' || item.ownerCt.id === 'blobstore-custom-form';
         });
 
         me.setItemsEditable(false, itemsToDisable);

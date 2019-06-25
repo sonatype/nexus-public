@@ -40,7 +40,7 @@ class RepositoryXO
   String url
 
   /**
-   * @since 3.next
+   * @since 3.17
    */
   Map<String, Object> attributes
 

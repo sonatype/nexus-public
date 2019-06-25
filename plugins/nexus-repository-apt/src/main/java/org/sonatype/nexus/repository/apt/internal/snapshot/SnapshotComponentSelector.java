@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.apt.internal.snapshot;
 import java.util.List;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 import org.sonatype.nexus.repository.apt.internal.debian.Release;
 

@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.maven.internal.hosted.metadata;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 public class MetadataException
     extends Exception

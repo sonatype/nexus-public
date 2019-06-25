@@ -38,7 +38,7 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 @Named
 public class AptHostedComponentMaintenanceFacet

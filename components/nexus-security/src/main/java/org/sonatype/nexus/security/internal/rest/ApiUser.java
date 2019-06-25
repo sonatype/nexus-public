@@ -33,7 +33,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 /**
  * REST API representation of a user.
  *
- * @since 3.next
+ * @since 3.17
  */
 public class ApiUser
 {

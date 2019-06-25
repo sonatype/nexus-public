@@ -24,7 +24,7 @@ import org.eclipse.sisu.Priority;
 /**
  * Rapture {@link UiPluginDescriptor} for {@code nexus-onboarding-plugin}.
  *
- * @since 3.next
+ * @since 3.17
  */
 @Named
 @Singleton

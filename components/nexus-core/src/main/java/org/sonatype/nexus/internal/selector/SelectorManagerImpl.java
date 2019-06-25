@@ -149,7 +149,11 @@ public class SelectorManagerImpl
   @Override
   @Guarded(by = STARTED)
   public void delete(final SelectorConfiguration configuration) {
-    store.delete(configuration);
+    if (isInUse(configuration)) {
+      throw new IllegalStateException("Content selector " + configuration.getName() + " is in use and cannot be deleted");
+    } else {
+      store.delete(configuration);
+    }
   }
 
   @Subscribe
@@ -276,5 +280,11 @@ public class SelectorManagerImpl
 
   private String getContentSelector(final Privilege privilege) {
     return privilege.getPrivilegeProperty(P_CONTENT_SELECTOR);
+  }
+
+  private boolean isInUse(final SelectorConfiguration configuration) {
+    return securitySystem.listPrivileges().stream()
+        .filter(privilege -> RepositoryContentSelectorPrivilegeDescriptor.TYPE.equals(privilege.getType()))
+        .anyMatch(privilege -> privilege.getPrivilegeProperty(P_CONTENT_SELECTOR).equals(configuration.getName()));
   }
 }

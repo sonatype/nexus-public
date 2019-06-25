@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -28,10 +29,30 @@ import org.sonatype.goodies.lifecycle.Lifecycle;
 public interface LogManager
   extends Lifecycle
 {
+  String DEFAULT_LOGGER = "logfile";
+
   Set<File> getLogFiles();
 
   @Nullable
   File getLogFile(String fileName);
+
+  /**
+   * If the named logger is a file based log, return the file name associated with it.
+   *
+   * @since 3.17
+   * @param loggerName name of the logger whose log file's name, if applicable, should be returned
+   * @return The file name to which the named logger appends
+   */
+  Optional<String> getLogFor(String loggerName);
+
+  /**
+   * If the named logger is a file based log, return the file associated with it.
+   *
+   * @since 3.17
+   * @param loggerName name of the logger whose log file, if applicable, should be returned
+   * @return The file to which the named logger appends
+   */
+  Optional<File> getLogFileForLogger(String loggerName);
 
   /**
    * Provides access to named log-file streams.

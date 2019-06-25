@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 /**
  * Go format security facet.
  *
- * @since 3.next
+ * @since 3.17
  */
 @Named
 public class GolangSecurityFacet

@@ -13,7 +13,7 @@
 /**
  * Repository settings form for an apt repository
  *
- * @since 3.next
+ * @since 3.17
  */
 Ext.define('NX.coreui.view.repository.recipe.AptProxy', {
   extend: 'NX.coreui.view.repository.RepositorySettingsForm',

@@ -30,7 +30,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Add routingRuleId link to Configuration
  *
- * @since 3.next
+ * @since 3.17
  */
 @Named
 @Singleton

@@ -267,7 +267,7 @@ public interface BlobStore
    * Returns true if the blobstore has no blobs within it.
    *
    * @return {@code true} if the blobstore has no blobs within it.
-   * @since 3.next
+   * @since 3.17
    */
   boolean isEmpty();
 }

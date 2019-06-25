@@ -36,7 +36,7 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 @Named(AptFormat.NAME)
 @Singleton

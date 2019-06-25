@@ -35,7 +35,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Apt-specific {@link ContentValidator} that "hints" default content validator for apt package metadata and format
  * specific files
  *
- * @since 3.next
+ * @since 3.17
  */
 @Named(AptFormat.NAME)
 @Singleton

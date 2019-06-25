@@ -21,7 +21,7 @@ import org.hibernate.validator.constraints.NotBlank
 /**
  * Routing Rule Preview grid row transfer object.
  *
- * @since 3.next
+ * @since 3.17
  */
 @CompileStatic
 @Builder

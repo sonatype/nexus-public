@@ -33,6 +33,8 @@ import org.sonatype.nexus.common.log.LogManager;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.io.input.ReversedLinesFileReader;
 
+import static org.sonatype.nexus.common.log.LogManager.DEFAULT_LOGGER;
+
 /**
  * {@link LastShutdownTimeService} implementation.
  *
@@ -48,7 +50,6 @@ public class LastShutdownTimeServiceImpl
   private static final String NEXUS_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
   private static final String GROUP_NAME = "time";
   private static final String START_INDICATOR = "org.sonatype.nexus.pax.logging.NexusLogActivator - start";
-  private static final String LOG_FILE_NAME = "nexus.log";
   private static final int DEFAULT_LINE_READING_LIMIT = 10_000;
 
   private final DateFormat nexusFormat = new SimpleDateFormat(NEXUS_DATE_FORMAT);
@@ -77,11 +78,11 @@ public class LastShutdownTimeServiceImpl
   }
 
   private Optional<Date> findBestEstimate(final LogManager logManager) {
-    File nexusFile = logManager.getLogFile(LOG_FILE_NAME);
+    File nexusFile = logManager.getLogFileForLogger(DEFAULT_LOGGER).orElse(null);
     Optional<Date> estimatedTime = Optional.empty();
 
     if (nexusFile == null) {
-      log.warn("Missing {} , so last shutdown time can't be estimated.", LOG_FILE_NAME);
+      log.warn("Missing log file for {} , so last shutdown time can't be estimated.", DEFAULT_LOGGER);
     } else if(nexusFile.length() == 0) {
       log.warn("Empty log file {} , so last shutdown time can't be estimated.", nexusFile);
     } else {

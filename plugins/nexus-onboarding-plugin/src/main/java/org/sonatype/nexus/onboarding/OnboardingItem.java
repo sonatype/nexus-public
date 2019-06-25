@@ -16,7 +16,7 @@ package org.sonatype.nexus.onboarding;
  * An item that needs to be configured in the onboarding process in the UI, before other actions can be taken.
  *
  * @see OnboardingManager
- * @since 3.next
+ * @since 3.17
  */
 public interface OnboardingItem
 {

@@ -23,7 +23,7 @@ import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotItem;
 import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotItem.ContentSpecifier;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 @Named
 public class AptProxySnapshotFacet

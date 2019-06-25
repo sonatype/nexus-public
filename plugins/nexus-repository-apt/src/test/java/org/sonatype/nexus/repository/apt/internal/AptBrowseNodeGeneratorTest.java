@@ -26,7 +26,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 public class AptBrowseNodeGeneratorTest
     extends TestSupport

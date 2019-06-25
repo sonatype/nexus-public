@@ -14,12 +14,16 @@ package org.sonatype.nexus.coreui
 
 import org.sonatype.nexus.validation.group.Create
 
+import groovy.transform.CompileStatic
+import groovy.transform.ToString
 import org.hibernate.validator.constraints.NotEmpty
 import org.hibernate.validator.constraints.Range
 
 /**
  * @since 3.0
  */
+@CompileStatic
+@ToString(includePackage = false, includeNames = true)
 class BlobStoreXO
 {
   @NotEmpty

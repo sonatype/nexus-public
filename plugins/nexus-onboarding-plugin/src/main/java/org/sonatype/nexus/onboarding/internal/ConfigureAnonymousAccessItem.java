@@ -23,7 +23,7 @@ import org.sonatype.nexus.security.anonymous.AnonymousManager;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 @Named
 @Singleton

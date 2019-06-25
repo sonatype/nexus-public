@@ -61,7 +61,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 import static org.sonatype.nexus.repository.apt.internal.debian.Utils.isDebPackageContentType;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 @Named
 @Facet.Exposed

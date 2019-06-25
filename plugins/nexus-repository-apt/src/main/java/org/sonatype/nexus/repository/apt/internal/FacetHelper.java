@@ -34,7 +34,7 @@ import static org.sonatype.nexus.repository.apt.internal.PackageName.PACKAGES_XZ
 import static org.sonatype.nexus.repository.apt.internal.ReleaseName.*;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 public class FacetHelper
 {

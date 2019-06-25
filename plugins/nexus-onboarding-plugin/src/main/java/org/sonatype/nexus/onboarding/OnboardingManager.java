@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * Manage the onboarding process, will maintain a list of {@link OnboardingItem}s that need to be acted upon
  *
- * @since 3.next
+ * @since 3.17
  */
 public interface OnboardingManager
 {

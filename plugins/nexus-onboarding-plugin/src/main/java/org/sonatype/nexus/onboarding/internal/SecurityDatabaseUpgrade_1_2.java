@@ -31,7 +31,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Upgrade step to mark admin user as 'changepassword' so user must change it
  *
- * @since 3.next
+ * @since 3.17
  */
 @Named
 @Singleton

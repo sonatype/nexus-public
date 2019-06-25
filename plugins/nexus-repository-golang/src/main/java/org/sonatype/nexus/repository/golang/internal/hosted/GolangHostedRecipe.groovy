@@ -29,12 +29,13 @@ import org.sonatype.nexus.repository.view.ConfigurableViewFacet
 import org.sonatype.nexus.repository.view.Route
 import org.sonatype.nexus.repository.view.Router
 import org.sonatype.nexus.repository.view.ViewFacet
+import org.sonatype.nexus.repository.view.handlers.HighAvailabilitySupportChecker
 
 import static java.lang.Boolean.parseBoolean
 import static java.lang.System.getProperty
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 @Named(GolangHostedRecipe.NAME)
 @Singleton
@@ -50,10 +51,12 @@ class GolangHostedRecipe
   Provider<GolangHostedFacetImpl> hostedFacet
 
   @Inject
-  GolangHostedRecipe(@Named(HostedType.NAME) final Type type,
+  GolangHostedRecipe(final HighAvailabilitySupportChecker highAvailabilitySupportChecker,
+                     @Named(HostedType.NAME) final Type type,
                      @Named(GolangFormat.NAME) final Format format)
   {
-    super(type, format)
+    super(highAvailabilitySupportChecker, type, format)
+
   }
 
   @Override
@@ -70,7 +73,7 @@ class GolangHostedRecipe
 
   @Override
   boolean isFeatureEnabled() {
-    return(parseBoolean(getProperty("nexus.golang.hosted", "false")))
+    return super.isFeatureEnabled() && (parseBoolean(getProperty("nexus.golang.hosted", "false")))
   }
 
   /**
@@ -85,6 +88,7 @@ class GolangHostedRecipe
       builder.route(new Route.Builder().matcher(matcher)
           .handler(timingHandler)
           .handler(securityHandler)
+          .handler(highAvailabilitySupportHandler)
           .handler(exceptionHandler)
           .handler(handlerContributor)
           .handler(partialFetchHandler)
@@ -98,6 +102,7 @@ class GolangHostedRecipe
       builder.route(new Route.Builder().matcher(matcher)
           .handler(timingHandler)
           .handler(securityHandler)
+          .handler(highAvailabilitySupportHandler)
           .handler(exceptionHandler)
           .handler(handlerContributor)
           .handler(partialFetchHandler)
@@ -111,6 +116,7 @@ class GolangHostedRecipe
     builder.route(new Route.Builder().matcher(uploadMatcher())
         .handler(timingHandler)
         .handler(securityHandler)
+        .handler(highAvailabilitySupportHandler)
         .handler(exceptionHandler)
         .handler(handlerContributor)
         .handler(conditionalRequestHandler)

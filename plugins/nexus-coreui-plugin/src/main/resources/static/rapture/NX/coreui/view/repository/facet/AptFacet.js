@@ -13,7 +13,7 @@
 /**
  * Configuration specific to apt repositories.
  *
- * @since 3.next
+ * @since 3.17
  */
 Ext.define('NX.coreui.view.repository.facet.AptFacet', {
   extend: 'Ext.form.FieldContainer',

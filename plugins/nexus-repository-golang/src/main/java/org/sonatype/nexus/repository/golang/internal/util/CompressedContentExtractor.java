@@ -30,7 +30,7 @@ import org.apache.commons.io.input.NullInputStream;
 /**
  * Extracts a file from a zip image
  *
- * @since 3.next
+ * @since 3.17
  */
 public class CompressedContentExtractor
     extends ComponentSupport

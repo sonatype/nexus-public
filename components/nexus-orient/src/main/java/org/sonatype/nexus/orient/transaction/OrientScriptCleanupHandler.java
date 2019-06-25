@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 /**
  * Orient handler that cleans up open transactions
  *
- * @since 3.next
+ * @since 3.17
  */
 @Named
 @Singleton

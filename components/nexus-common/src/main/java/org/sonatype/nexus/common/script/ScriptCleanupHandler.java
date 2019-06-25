@@ -15,7 +15,7 @@ package org.sonatype.nexus.common.script;
 /**
  * Handler that executes cleanup steps after execution of scripts
  *
- * @since 3.next
+ * @since 3.17
  */
 public interface ScriptCleanupHandler
 {

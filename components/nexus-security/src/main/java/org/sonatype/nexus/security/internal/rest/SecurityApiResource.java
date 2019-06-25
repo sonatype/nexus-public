@@ -33,10 +33,10 @@ import org.sonatype.nexus.security.user.UserManager;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
-import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
+import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 @Named
 @Singleton
@@ -47,7 +47,7 @@ public class SecurityApiResource
     extends ComponentSupport
     implements Resource, SecurityApiResourceDoc
 {
-  static final String RESOURCE_URI = V1_API_PREFIX + "/security/";
+  static final String RESOURCE_URI = BETA_API_PREFIX + "/security/";
 
   private final Map<String, UserManager> userManagers;
 

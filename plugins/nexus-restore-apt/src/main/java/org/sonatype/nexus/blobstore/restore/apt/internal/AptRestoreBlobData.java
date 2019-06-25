@@ -16,7 +16,7 @@ import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobDataSupport;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 public class AptRestoreBlobData
     extends RestoreBlobDataSupport

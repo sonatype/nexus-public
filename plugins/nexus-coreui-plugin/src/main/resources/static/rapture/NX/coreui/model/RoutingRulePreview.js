@@ -15,7 +15,7 @@
 /**
  * Routing Rule Preview tree model.
  *
- * @since 3.next
+ * @since 3.17
  */
 Ext.define('NX.coreui.model.RoutingRulePreview', {
   extend: 'Ext.data.TreeModel',

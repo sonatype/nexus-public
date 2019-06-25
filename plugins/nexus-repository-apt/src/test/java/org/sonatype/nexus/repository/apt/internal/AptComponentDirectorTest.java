@@ -37,7 +37,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 public class AptComponentDirectorTest
     extends TestSupport

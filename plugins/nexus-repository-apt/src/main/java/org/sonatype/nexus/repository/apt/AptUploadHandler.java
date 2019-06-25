@@ -39,7 +39,7 @@ import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 @Singleton
 @Named(AptFormat.NAME)

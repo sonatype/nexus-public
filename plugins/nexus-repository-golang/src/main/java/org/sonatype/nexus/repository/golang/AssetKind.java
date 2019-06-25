@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.cache.CacheControllerHolder.CacheType;
 /**
  * Asset kinds for go
  *
- * @since 3.next
+ * @since 3.17
  */
 public enum AssetKind
 {

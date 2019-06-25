@@ -105,7 +105,7 @@ public class RepositoryPermissionChecker
    * Ensures the user has any of the supplied permissions, or a RepositoryAdminPermission with the action to any
    * of the repositories. Throws an AuthorizationException if the user does not have the required permission.
    *
-   * @since 3.next
+   * @since 3.17
    * @param permissions the permissions to check first
    * @param action the action to use in the admin permission
    * @param repositories the repositories to check the action against
@@ -128,7 +128,7 @@ public class RepositoryPermissionChecker
   }
 
   /**
-   * @since 3.next
+   * @since 3.17
    * @param repositories to test against browse permissions and content selector permissions
    * @return the repositories which the user has access to browse
    */
@@ -137,7 +137,7 @@ public class RepositoryPermissionChecker
   }
 
   /**
-   * @since 3.next
+   * @since 3.17
    * @param repositories to test the actions permission against
    * @param actions the repository-admin actions
    * @return the repositories which the user is permitted the admin action

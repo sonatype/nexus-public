@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.golang.internal.metadata;
 /**
  * Object for storing Go specific attributes
  *
- * @since 3.next
+ * @since 3.17
  */
 public final class GolangAttributes
 {

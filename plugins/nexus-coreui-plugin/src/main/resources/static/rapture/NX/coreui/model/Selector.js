@@ -27,6 +27,8 @@ Ext.define('NX.coreui.model.Selector', {
     {name: 'name', type: 'string', sortType: 'asUCText'},
     {name: 'type', type: 'string', sortType: 'asUCText', defaultValue: 'csel'},
     {name: 'description', type: 'string', sortType: 'asUCText', convert: Ext.htmlEncode},
-    {name: 'expression', type: 'string', sortType: 'asUCText'}
+    {name: 'expression', type: 'string', sortType: 'asUCText'},
+    {name: 'usedBy', type: 'auto' /* array */},
+    {name: 'usedByCount', type: 'int' }
   ]
 });

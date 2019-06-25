@@ -157,6 +157,69 @@ Ext.define('NX.coreui.controller.Selectors', {
     }
   },
 
+  /**
+   * @protected
+   * Enable 'Delete' when user has 'delete' permission for selected content selector.
+   */
+  bindDeleteButton: function(button) {
+    var me = this;
+
+    button.mon(
+        NX.Conditions.and(
+            NX.Conditions.isPermitted(this.permission + ':delete'),
+            NX.Conditions.watchEvents([
+              { observable: me.getStore('Selector'), events: ['load']},
+              { observable: Ext.History, events: ['change']}
+            ], me.watchEventsHandler())
+        ),
+        {
+          satisfied: function () {
+            button.enable();
+          },
+          unsatisfied: function () {
+            button.disable();
+          }
+        }
+    );
+  },
+
+  /**
+   * @private
+   */
+  watchEventsHandler: function() {
+    var me = this,
+        store = me.getStore('Selector');
+
+    return function() {
+      var entityId = me.getModelIdFromBookmark(),
+          model = entityId ? store.findRecord('id', entityId, 0, false, true, true) : undefined,
+          usedBy = model && model.get('usedBy'),
+          usedByCount = model && model.get('usedByCount'),
+          message;
+
+      me.clearInfo();
+
+      if (usedByCount) {
+        message = NX.I18n.format('Selector_SelectorFeature_Delete_Disabled_Message',
+            Ext.util.Format.plural(usedByCount, 'privilege'));
+        if (Array.isArray(usedBy) && usedBy.length) {
+          message = message + ': ' + usedBy.map(me.getLinkToPrivilege).join(', ');
+        }
+        me.showInfo(message);
+        return false;
+      }
+
+      return !!model;
+    };
+  },
+
+  /**
+   *  @private
+   */
+  getLinkToPrivilege: function (privilege) {
+    return '<a href="#admin/security/privileges:' + privilege + '">' + privilege + '</a>';
+  },
+
   recordLoaded: function(formPanel, record) {
     var me = this;
 
@@ -196,6 +259,9 @@ Ext.define('NX.coreui.controller.Selectors', {
         NX.Messages.add({
           text: NX.I18n.format('Selectors_Delete_Message', description), type: 'success'
         });
+      }
+      else if (Ext.isObject(response) && Ext.isDefined(response.errors)) {
+        NX.Messages.error(response.errors['*']);
       }
     });
   },

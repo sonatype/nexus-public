@@ -57,7 +57,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 /**
  * Resource for REST API to perform operations on the user.
  *
- * @since 3.next
+ * @since 3.17
  */
 @Named
 @Singleton

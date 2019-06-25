@@ -58,7 +58,7 @@ import static org.sonatype.nexus.repository.view.Payload.UNKNOWN_SIZE;
 /**
  * Go hosted implementation
  *
- * @since 3.next
+ * @since 3.17
  */
 @Named
 public class GolangHostedFacetImpl

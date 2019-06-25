@@ -25,7 +25,7 @@ import org.sonatype.nexus.repository.apt.internal.snapshot.SnapshotItem.ContentS
 import org.sonatype.nexus.repository.view.Content;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 @Named
 public class AptHostedSnapshotFacet

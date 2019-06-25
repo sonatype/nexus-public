@@ -18,6 +18,7 @@ import javax.inject.Singleton
 
 import org.sonatype.nexus.audit.InitiatorProvider
 import org.sonatype.nexus.common.node.NodeAccess
+import org.sonatype.nexus.repository.rest.internal.api.RepositoryItemIDXO
 import org.sonatype.nexus.repository.storage.Asset
 import org.sonatype.nexus.repository.storage.AssetCreatedEvent
 import org.sonatype.nexus.repository.storage.AssetDeletedEvent
@@ -95,6 +96,7 @@ class RepositoryAssetWebhook
 
       payload.asset = new RepositoryAssetWebhookPayload.RepositoryAsset(
           id: asset.entityMetadata.id.value,
+          assetId: new RepositoryItemIDXO(event.repositoryName, asset.entityMetadata.id.value).value,
           format: asset.format(),
           name: asset.name()
       )
@@ -121,6 +123,8 @@ class RepositoryAssetWebhook
     static class RepositoryAsset
     {
       String id
+
+      String assetId
 
       String format
 

@@ -32,7 +32,9 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.net.HttpHeaders.CONTENT_DISPOSITION;
+import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
+import static org.sonatype.nexus.common.log.LogManager.DEFAULT_LOGGER;
 
 /**
  * Log REST resource.
@@ -79,12 +81,14 @@ public class LogResource
     if (count == null) {
       count = Long.MAX_VALUE;
     }
-    InputStream log = logManager.getLogFileStream("nexus.log", from, count);
+    String logName = logManager.getLogFor(DEFAULT_LOGGER)
+        .orElseThrow(() -> new NotFoundException("Failed to determine log file name for " + DEFAULT_LOGGER));
+    InputStream log = logManager.getLogFileStream(logName, from, count);
     if (log == null) {
       throw new NotFoundException("nexus.log not found");
     }
     return Response.ok(log)
-        .header(CONTENT_DISPOSITION, "attachment; filename=\"nexus.log\"")
+        .header(CONTENT_DISPOSITION, format("attachment; filename=\"%s\"", logName))
         .build();
   }
 }

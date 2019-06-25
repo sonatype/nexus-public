@@ -470,6 +470,7 @@ public class FileBlobStore
 
       blobAttributes.setDeleted(true);
       blobAttributes.setDeletedReason(reason);
+      blobAttributes.setDeletedDateTime(new DateTime());
       blobAttributes.store();
 
       // record blob for hard-deletion when the next compact task runs

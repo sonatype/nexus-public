@@ -11,6 +11,10 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
+[id^=nx-onboarding-wizard].nx-wizard-panel {
+  border-top: none !important;
+}
+
 [id^=nx-onboarding-wizard].nx-wizard-panel .screenheader {
     border: 0 !important;
     padding: 0 !important;

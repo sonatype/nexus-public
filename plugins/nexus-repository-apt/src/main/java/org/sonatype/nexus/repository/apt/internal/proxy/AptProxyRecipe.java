@@ -44,19 +44,19 @@ import org.sonatype.nexus.repository.view.ConfigurableViewFacet;
 import org.sonatype.nexus.repository.view.Route;
 import org.sonatype.nexus.repository.view.Router;
 import org.sonatype.nexus.repository.view.ViewFacet;
+import org.sonatype.nexus.repository.view.handlers.FormatHighAvailabilitySupportHandler;
 import org.sonatype.nexus.repository.view.handlers.ConditionalRequestHandler;
 import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler;
 import org.sonatype.nexus.repository.view.handlers.ExceptionHandler;
+import org.sonatype.nexus.repository.view.handlers.HighAvailabilitySupportChecker;
 import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler;
 import org.sonatype.nexus.repository.view.handlers.TimingHandler;
 import org.sonatype.nexus.repository.view.matchers.AlwaysMatcher;
 
-
-
 import static org.sonatype.nexus.repository.http.HttpHandlers.notFound;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 @Named(AptProxyRecipe.NAME)
 @Singleton
@@ -68,6 +68,9 @@ public class AptProxyRecipe
 
   @Inject
   Provider<AptSecurityFacet> securityFacet;
+
+  @Inject
+  FormatHighAvailabilitySupportHandler highAvailabilitySupportHandler;
 
   @Inject
   Provider<ConfigurableViewFacet> viewFacet;
@@ -142,8 +145,10 @@ public class AptProxyRecipe
   RoutingRuleHandler routingRuleHandler;
 
   @Inject
-  public AptProxyRecipe(@Named(ProxyType.NAME) final Type type, @Named(AptFormat.NAME) final Format format) {
-    super(type, format);
+  public AptProxyRecipe(final HighAvailabilitySupportChecker highAvailabilitySupportChecker,
+                        @Named(ProxyType.NAME) final Type type, @Named(AptFormat.NAME) final Format format)
+  {
+    super(highAvailabilitySupportChecker, type, format);
   }
 
   @Override
@@ -169,6 +174,7 @@ public class AptProxyRecipe
     builder.route(new Route.Builder().matcher(new AlwaysMatcher())
         .handler(timingHandler)
         .handler(securityHandler)
+        .handler(highAvailabilitySupportHandler)
         .handler(routingRuleHandler)
         .handler(exceptionHandler)
         .handler(negativeCacheHandler)

@@ -13,6 +13,7 @@
 package org.sonatype.nexus.internal.selector;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +35,9 @@ import org.sonatype.nexus.selector.SelectorFactory;
 import org.sonatype.nexus.selector.VariableSource;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 
 import static com.google.common.collect.Sets.newHashSet;
@@ -44,6 +47,8 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.security.RepositoryContentSelectorPrivilegeDescriptor.P_REPOSITORY;
 import static org.sonatype.nexus.repository.security.RepositorySelector.ALL;
@@ -73,6 +78,9 @@ public class SelectorManagerImplTest
   private SelectorManagerImpl manager;
 
   private List<SelectorConfiguration> selectorConfigurations;
+
+  @Rule
+  public final ExpectedException expectedException = ExpectedException.none();
 
   @Before
   public void setUp() throws Exception {
@@ -172,6 +180,31 @@ public class SelectorManagerImplTest
     assertThat(selectors.size(), is(0));
   }
 
+  @Test
+  public void testDelete_Succeeds() {
+    SelectorConfiguration selectorConfiguration = new SelectorConfiguration();
+    selectorConfiguration.setName("selector");
+    selectorConfiguration.setType(CselSelector.TYPE);
+
+    manager.create(selectorConfiguration);
+    verify(store).create(selectorConfiguration);
+
+    manager.delete(selectorConfiguration);
+    verify(store).delete(selectorConfiguration);
+  }
+
+  @Test
+  public void testDelete_FailsWhenContentSelectorIsUsedByPrivilege() throws Exception {
+    SelectorConfiguration selector = createSelectorConfiguration("role", "privilege", "selector", "repository");
+
+    expectedException.expect(IllegalStateException.class);
+    expectedException.expectMessage("Content selector selector is in use and cannot be deleted");
+
+    manager.delete(selector);
+
+    verifyZeroInteractions(store);
+  }
+
   private SelectorConfiguration getSelectorConfiguration(final String type, final String expression) {
     SelectorConfiguration selectorConfiguration = new SelectorConfiguration();
     Map<String, Object> attributes = new HashMap<>();
@@ -210,7 +243,7 @@ public class SelectorManagerImplTest
     privilege.getProperties().put(P_REPOSITORY, repositoryName);
 
     when(authorizationManager.getPrivilege(privilegeId)).thenReturn(privilege);
-
+    when(securitySystem.listPrivileges()).thenReturn(Collections.singleton(privilege));
 
     return privilege;
   }

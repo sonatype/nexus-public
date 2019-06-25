@@ -52,7 +52,7 @@ import static org.sonatype.nexus.repository.storage.Query.builder;
 import static org.sonatype.nexus.repository.apt.internal.debian.Utils.isDebPackageContentType;
 
 /**
- * @since 3.next
+ * @since 3.17
  */
 @Named
 public class AptFacetImpl
