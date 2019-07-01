@@ -63,6 +63,7 @@ import org.joda.time.DateTime;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.lang.Boolean.TRUE;
+import static java.util.Objects.isNull;
 
 /**
  * A support class which implements basic payload logic; subclasses provide format-specific operations.
@@ -537,8 +538,14 @@ public abstract class ProxyFacetSupport
       // not in cache, consider it stale
       return true;
     }
+
     final CacheInfo cacheInfo = content.getAttributes().get(CacheInfo.class);
-    return cacheInfo == null || getCacheController(context).isStale(cacheInfo);
+
+    if(isNull(cacheInfo)) {
+      log.warn("CacheInfo missing for {}, assuming stale content.", content);
+      return true;
+    }
+    return getCacheController(context).isStale(cacheInfo);
   }
 
   /**

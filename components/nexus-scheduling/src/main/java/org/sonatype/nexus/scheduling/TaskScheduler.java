@@ -90,4 +90,17 @@ public interface TaskScheduler
    */
   @Nullable
   List<ClusteredTaskState> getClusteredTaskStateById(String taskId);
+
+  /**
+   * Attempts to cancel execution of the task ({@code id}).  This attempt will
+   * fail if the task has already completed, has already been cancelled,
+   *  or could not be cancelled for some other reason.
+   *
+   * @return {@code false} if the task could not be cancelled,
+   * typically because it has already completed normally;
+   * {@code true} otherwise
+   *
+   * @since 3.next
+   */
+  boolean cancel(String id, boolean mayInterruptIfRunning);
 }

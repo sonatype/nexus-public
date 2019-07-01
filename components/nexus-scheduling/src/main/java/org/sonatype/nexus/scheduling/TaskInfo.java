@@ -29,7 +29,7 @@ import org.sonatype.nexus.scheduling.schedule.Schedule;
  * (ie. by some other thread). In that case, some of the methods will throw {@link TaskRemovedException} on invocation
  * to signal that state.
  *
- * For task entering {@link State#DONE}, this class will behave a bit differently:
+ * For task entering {@link TaskState.Group#DONE}, this class will behave a bit differently:
  * they will never throw {@link TaskRemovedException}, and upon they are done, the task info will cache
  * task configuration, schedule, current and last run state forever.
  *
@@ -84,45 +84,12 @@ public interface TaskInfo
    */
   Schedule getSchedule();
 
-  /**
-   * Task instance might be waiting (to be run, either by schedule or manually), or might be running, or might be
-   * done (will never run again, is "done"). The "done" state is ending state for task, it will according to it's
-   * {@link Schedule} not execute anymore.
-   *
-   * Scheduler will never give out "fresh" task info instances with state "done" as done task is also removed.
-   * These states might be get into only by having a "single shot" task ended. Instances in
-   * this "ending" state, while still holding valid configuration and schedule, might be used to reschedule a
-   * NEW task instance, but the reference to this instance should be dropped and let for GC to collect it, and
-   * continue with the newly returned task info.
-   *
-   * Transitions:
-   * {@link #WAITING} -> {@link #RUNNING}
-   * {@link #RUNNING} -> {@link #WAITING}
-   * {@link #RUNNING} -> {@link #DONE}
-   */
-  enum State
-  {
-    WAITING, RUNNING, DONE
-  }
-
-  /**
-   * Running task instance might be running okay, being blocked (by other tasks), or might be canceled but the
-   * cancellation was not yet detected or some cleanup is being done.
-   *
-   * Possible transitions: currentRunState.ordinal <= newRunState.ordinal
-   * Ending states are {@link #RUNNING} and {@link #CANCELED}.
-   */
-  enum RunState
-  {
-    STARTING, BLOCKED, RUNNING, CANCELED
-  }
-
   interface CurrentState
   {
     /**
      * Returns the state of task, never {@code null}.
      */
-    State getState();
+    TaskState getState();
 
     /**
      * Returns the date of next run, if applicable, or {@code null}.
@@ -140,19 +107,14 @@ public interface TaskInfo
      * If task is running, returns it's run state, otherwise {@code null}.
      */
     @Nullable
-    RunState getRunState();
+    TaskState getRunState();
 
     /**
-     * If task is in states {@link State#RUNNING} or {@link State#DONE}, returns it's future, otherwise {@code null}.
-     * In case of {@link State#DONE} the future is done too.
+     * If task is in states {@link TaskState.Group#RUNNING} or {@link TaskState.Group#DONE}, returns it's future, otherwise {@code null}.
+     * In case of {@link TaskState.Group#DONE} the future is done too.
      */
     @Nullable
     Future<?> getFuture();
-  }
-
-  enum EndState
-  {
-    OK, FAILED, CANCELED, INTERRUPTED
   }
 
   interface LastRunState
@@ -160,7 +122,7 @@ public interface TaskInfo
     /**
      * Returns the last end state.
      */
-    EndState getEndState();
+    TaskState getEndState();
 
     /**
      * Returns the date of last run start.

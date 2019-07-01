@@ -23,8 +23,8 @@ import org.sonatype.nexus.repository.browse.internal.RebuildBrowseNodesTaskDescr
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskInfo.CurrentState;
-import org.sonatype.nexus.scheduling.TaskInfo.RunState;
 import org.sonatype.nexus.scheduling.TaskScheduler;
+import org.sonatype.nexus.scheduling.TaskState;
 
 import com.google.common.collect.Sets;
 import org.junit.Before;
@@ -58,7 +58,7 @@ public class BrowseStateContributorTest
   @Test
   public void testGetState() {
     List<TaskInfo> tasks = Arrays
-        .asList(createTaskInfo(RebuildBrowseNodesTaskDescriptor.TYPE_ID, RunState.RUNNING, ALL_REPOSITORIES));
+        .asList(createTaskInfo(RebuildBrowseNodesTaskDescriptor.TYPE_ID, TaskState.RUNNING, ALL_REPOSITORIES));
     when(taskScheduler.listsTasks()).thenReturn(tasks);
 
     Map<String, Object> state = underTest.getState();
@@ -71,9 +71,9 @@ public class BrowseStateContributorTest
   @Test
   public void testGetState_multipleTasks() {
     List<TaskInfo> tasks = Arrays
-        .asList(createTaskInfo(RebuildBrowseNodesTaskDescriptor.TYPE_ID, RunState.RUNNING, "repo1"),
-            createTaskInfo(RebuildBrowseNodesTaskDescriptor.TYPE_ID, RunState.RUNNING, "repo2"),
-            createTaskInfo(RebuildBrowseNodesTaskDescriptor.TYPE_ID, RunState.RUNNING, "repo3"));
+        .asList(createTaskInfo(RebuildBrowseNodesTaskDescriptor.TYPE_ID, TaskState.RUNNING, "repo1"),
+            createTaskInfo(RebuildBrowseNodesTaskDescriptor.TYPE_ID, TaskState.RUNNING, "repo2"),
+            createTaskInfo(RebuildBrowseNodesTaskDescriptor.TYPE_ID, TaskState.RUNNING, "repo3"));
     when(taskScheduler.listsTasks()).thenReturn(tasks);
 
     Map<String, Object> state = underTest.getState();
@@ -86,9 +86,9 @@ public class BrowseStateContributorTest
   @Test
   public void testGetState_firstTaskAllReposOthersIgnored() {
     List<TaskInfo> tasks = Arrays
-        .asList(createTaskInfo(RebuildBrowseNodesTaskDescriptor.TYPE_ID, RunState.RUNNING, ALL_REPOSITORIES),
-            createTaskInfo(RebuildBrowseNodesTaskDescriptor.TYPE_ID, RunState.RUNNING, "repo2"),
-            createTaskInfo(RebuildBrowseNodesTaskDescriptor.TYPE_ID, RunState.RUNNING, "repo3"));
+        .asList(createTaskInfo(RebuildBrowseNodesTaskDescriptor.TYPE_ID, TaskState.RUNNING, ALL_REPOSITORIES),
+            createTaskInfo(RebuildBrowseNodesTaskDescriptor.TYPE_ID, TaskState.RUNNING, "repo2"),
+            createTaskInfo(RebuildBrowseNodesTaskDescriptor.TYPE_ID, TaskState.RUNNING, "repo3"));
     when(taskScheduler.listsTasks()).thenReturn(tasks);
 
     Map<String, Object> state = underTest.getState();
@@ -104,8 +104,8 @@ public class BrowseStateContributorTest
   @Test
   public void testGetState_mixedTaskTypes() {
     List<TaskInfo> tasks = Arrays
-        .asList(createTaskInfo(RebuildBrowseNodesTaskDescriptor.TYPE_ID, RunState.RUNNING, "repo1"),
-            createTaskInfo("typeId", RunState.RUNNING, "repo2"));
+        .asList(createTaskInfo(RebuildBrowseNodesTaskDescriptor.TYPE_ID, TaskState.RUNNING, "repo1"),
+            createTaskInfo("typeId", TaskState.RUNNING, "repo2"));
     when(taskScheduler.listsTasks()).thenReturn(tasks);
 
     Map<String, Object> state = underTest.getState();
@@ -115,7 +115,7 @@ public class BrowseStateContributorTest
     assertThat(state.get("browseTreeMaxNodes"), is(10));
   }
 
-  private TaskInfo createTaskInfo(String typeId, RunState runState, String repositoryName) {
+  private TaskInfo createTaskInfo(String typeId, TaskState runState, String repositoryName) {
     CurrentState currentState = mock(CurrentState.class);
     when(currentState.getRunState()).thenReturn(runState);
 

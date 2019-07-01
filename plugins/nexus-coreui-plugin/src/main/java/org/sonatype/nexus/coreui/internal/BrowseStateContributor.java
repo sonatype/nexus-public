@@ -27,6 +27,7 @@ import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
 import org.sonatype.nexus.repository.browse.internal.RebuildBrowseNodesTaskDescriptor;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
+import org.sonatype.nexus.scheduling.TaskState;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.RepositoryTaskSupport.ALL_REPOSITORIES;
@@ -62,7 +63,7 @@ public class BrowseStateContributor
   private Set<String> getRepositoryNamesForRunningTasks() {
     Set<String> repositoryNames = new HashSet<>();
     for (TaskInfo taskInfo : taskScheduler.listsTasks()) {
-      if (RebuildBrowseNodesTaskDescriptor.TYPE_ID.equals(taskInfo.getTypeId()) && TaskInfo.RunState.RUNNING
+      if (RebuildBrowseNodesTaskDescriptor.TYPE_ID.equals(taskInfo.getTypeId()) && TaskState.RUNNING
           .equals(taskInfo.getCurrentState().getRunState())) {
         String repositoryName = taskInfo.getConfiguration().getString(REPOSITORY_NAME_FIELD_ID);
         if (ALL_REPOSITORIES.equals(repositoryName)) {

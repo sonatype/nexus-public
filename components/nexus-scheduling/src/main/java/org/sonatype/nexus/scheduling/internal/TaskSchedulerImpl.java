@@ -166,4 +166,9 @@ public class TaskSchedulerImpl
     checkNotNull(taskId);
     return clusteredTaskStateStore.getClusteredState(taskId);
   }
+
+  @Override
+  public boolean cancel(final String id, final boolean mayInterruptIfRunning) {
+    return getScheduler().cancel(id, mayInterruptIfRunning);
+  }
 }

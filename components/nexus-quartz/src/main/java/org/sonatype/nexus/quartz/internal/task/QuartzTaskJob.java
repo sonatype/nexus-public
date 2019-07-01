@@ -33,9 +33,8 @@ import org.sonatype.nexus.scheduling.Task;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskFactory;
 import org.sonatype.nexus.scheduling.TaskInfo;
-import org.sonatype.nexus.scheduling.TaskInfo.RunState;
-import org.sonatype.nexus.scheduling.TaskInfo.State;
 import org.sonatype.nexus.scheduling.TaskInterruptedException;
+import org.sonatype.nexus.scheduling.TaskState;
 import org.sonatype.nexus.scheduling.events.TaskBlockedEvent;
 import org.sonatype.nexus.scheduling.events.TaskEventCanceled;
 import org.sonatype.nexus.scheduling.events.TaskStartedRunningEvent;
@@ -53,9 +52,9 @@ import org.quartz.UnableToInterruptJobException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static org.sonatype.nexus.scheduling.TaskInfo.RunState.BLOCKED;
-import static org.sonatype.nexus.scheduling.TaskInfo.RunState.RUNNING;
-import static org.sonatype.nexus.scheduling.TaskInfo.RunState.STARTING;
+import static org.sonatype.nexus.scheduling.TaskState.RUNNING;
+import static org.sonatype.nexus.scheduling.TaskState.RUNNING_BLOCKED;
+import static org.sonatype.nexus.scheduling.TaskState.RUNNING_STARTING;
 
 /**
  * Quartz {@link Job} wrapping a Nexus {@link Task}.
@@ -207,9 +206,9 @@ public class QuartzTaskJob
           markTaskAsRunning();
           return;
         }
-        TaskInfo.RunState previousRunState = taskFuture.getRunState();
-        taskFuture.setRunState(BLOCKED);
-        if (BLOCKED != previousRunState) {
+        TaskState previousRunState = taskFuture.getRunState();
+        taskFuture.setRunState(RUNNING_BLOCKED);
+        if (RUNNING_BLOCKED != previousRunState) {
           // the loop might need multiple iterations but we only want to send the event for an actual state transition
           eventManager.post(new TaskBlockedEvent(taskInfo));
         }
@@ -266,14 +265,14 @@ public class QuartzTaskJob
     return scheduler.get().listsTasks().stream()
         .filter(t -> !task.getId().equals(t.getId())
             && task.taskConfiguration().getTypeId().equals(t.getConfiguration().getTypeId())
-            && State.RUNNING == t.getCurrentState().getState()
+            && t.getCurrentState().getState().isRunning()
             && notStartingOrBlocked(t.getCurrentState().getRunState())
         )
         .collect(Collectors.toList());
   }
 
-  private boolean notStartingOrBlocked(final RunState runState) {
-    return !(STARTING == runState || BLOCKED == runState);
+  private boolean notStartingOrBlocked(final TaskState runState) {
+    return !(RUNNING_STARTING == runState || RUNNING_BLOCKED == runState);
   }
 
   @Override

@@ -17,19 +17,16 @@ import org.sonatype.nexus.common.collect.ImmutableNestedAttributesMap;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.attributes.AttributesFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.npm.internal.tasks.ReindexNpmRepositoryManager;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskInfo.CurrentState;
 import org.sonatype.nexus.scheduling.TaskScheduler;
+import org.sonatype.nexus.scheduling.TaskState;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static org.sonatype.nexus.repository.npm.internal.tasks.ReindexNpmRepositoryTask.NPM_V1_SEARCH_UNSUPPORTED;
-import static org.sonatype.nexus.repository.npm.internal.tasks.ReindexNpmRepositoryTaskDescriptor.REPOSITORY_NAME_FIELD_ID;
-import static org.sonatype.nexus.repository.npm.internal.tasks.ReindexNpmRepositoryTaskDescriptor.TYPE_ID;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -38,6 +35,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.npm.internal.tasks.ReindexNpmRepositoryTask.NPM_V1_SEARCH_UNSUPPORTED;
+import static org.sonatype.nexus.repository.npm.internal.tasks.ReindexNpmRepositoryTaskDescriptor.REPOSITORY_NAME_FIELD_ID;
+import static org.sonatype.nexus.repository.npm.internal.tasks.ReindexNpmRepositoryTaskDescriptor.TYPE_ID;
 
 public class ReindexNpmRepositoryManagerTest
     extends TestSupport
@@ -80,7 +80,7 @@ public class ReindexNpmRepositoryManagerTest
     when(taskScheduler.listsTasks()).thenReturn(singletonList(taskInfo));
     when(taskInfo.getConfiguration()).thenReturn(taskConfiguration);
     when(taskInfo.getCurrentState()).thenReturn(taskCurrentState);
-    when(taskCurrentState.getState()).thenReturn(TaskInfo.State.RUNNING);
+    when(taskCurrentState.getState()).thenReturn(TaskState.RUNNING);
     when(repositoryManager.browse()).thenReturn(singletonList(repository));
     when(repository.getName()).thenReturn(REPOSITORY_NAME);
     when(repository.facet(AttributesFacet.class)).thenReturn(attributesFacet);
@@ -154,7 +154,7 @@ public class ReindexNpmRepositoryManagerTest
 
   @Test
   public void processRepositoryWithoutRunningTaskBasedOnCurrentState() {
-    when(taskCurrentState.getState()).thenReturn(TaskInfo.State.DONE);
+    when(taskCurrentState.getState()).thenReturn(TaskState.OK);
 
     underTest.doStart();
 

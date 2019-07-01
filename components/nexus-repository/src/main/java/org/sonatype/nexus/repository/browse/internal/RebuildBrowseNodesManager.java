@@ -134,7 +134,7 @@ public class RebuildBrowseNodesManager
   private boolean launchExistingTask(final String repositoryName) throws TaskRemovedException {
     for (TaskInfo taskInfo : taskScheduler.listsTasks()) {
       if (isRebuildTask(repositoryName, taskInfo)) {
-        if (!TaskInfo.State.RUNNING.equals(taskInfo.getCurrentState().getState())) {
+        if (!taskInfo.getCurrentState().getState().isRunning()) {
           taskInfo.runNow();
         }
         return true;

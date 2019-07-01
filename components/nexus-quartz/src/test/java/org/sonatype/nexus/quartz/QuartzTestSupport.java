@@ -19,6 +19,7 @@ import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
+import org.sonatype.nexus.scheduling.TaskState;
 import org.sonatype.nexus.scheduling.schedule.Hourly;
 import org.sonatype.nexus.scheduling.schedule.Schedule;
 
@@ -98,7 +99,7 @@ public abstract class QuartzTestSupport
     await().atMost(RUN_TIMEOUT, MILLISECONDS).until(() -> taskScheduler().getExecutedTaskCount(), is(expectedCount));
   }
 
-  public void assertTaskState(final TaskInfo taskInfo, final TaskInfo.State expectedState) {
+  public void assertTaskState(final TaskInfo taskInfo, final TaskState expectedState) {
     // unfortunately, a task's Future.get() returns before the task state is updated so polling is in order to be safe
     await().atMost(RUN_TIMEOUT, MILLISECONDS).until(() -> taskInfo.getCurrentState().getState(), is(expectedState));
   }

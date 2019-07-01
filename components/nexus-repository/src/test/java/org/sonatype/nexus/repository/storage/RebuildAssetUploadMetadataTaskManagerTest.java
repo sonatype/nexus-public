@@ -12,17 +12,9 @@
  */
 package org.sonatype.nexus.repository.storage;
 
-import java.util.Date;
-import java.util.concurrent.Future;
-
-import javax.annotation.Nullable;
-
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
-import org.sonatype.nexus.scheduling.TaskInfo.CurrentState;
-import org.sonatype.nexus.scheduling.TaskInfo.RunState;
-import org.sonatype.nexus.scheduling.TaskInfo.State;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 
 import org.junit.Before;
@@ -83,41 +75,5 @@ public class RebuildAssetUploadMetadataTaskManagerTest
     TaskInfo taskInfo = mock(TaskInfo.class);
     when(taskInfo.getConfiguration()).thenReturn(taskConfiguration);
     return taskInfo;
-  }
-
-  private CurrentState createCurrentState(State state) {
-    CurrentState currentState = new CurrentState()
-    {
-      @Override
-      public State getState() {
-        return state;
-      }
-
-      @Nullable
-      @Override
-      public Date getNextRun() {
-        return null;
-      }
-
-      @Nullable
-      @Override
-      public Date getRunStarted() {
-        return null;
-      }
-
-      @Nullable
-      @Override
-      public RunState getRunState() {
-        return null;
-      }
-
-      @Nullable
-      @Override
-      public Future<?> getFuture() {
-        return null;
-      }
-    };
-
-    return currentState;
   }
 }

@@ -42,9 +42,9 @@ public class RaptureSettings
 
   public static final int DEFAULT_LONG_REQUEST_TIMEOUT = 3 * 60; // seconds
 
-  public static final int DEFAULT_SEARCH_REQUEST_TIMEOUT = 55; // seconds
+  public static final int DEFAULT_SEARCH_REQUEST_TIMEOUT = 0; // seconds
 
-  public static final int MIN_SEARCH_REQUEST_TIMEOUT = 15; // seconds
+  public static final int MIN_SEARCH_REQUEST_TIMEOUT = 0; // seconds
 
   private boolean debugAllowed = DEFAULT_DEBUG_ALLOWED;
 

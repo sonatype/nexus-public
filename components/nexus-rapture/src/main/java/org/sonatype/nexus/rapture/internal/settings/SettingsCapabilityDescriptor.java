@@ -82,20 +82,23 @@ public class SettingsCapabilityDescriptor
     @DefaultMessage("Standard request timeout")
     String requestTimeoutLabel();
 
-    @DefaultMessage("Period of time to keep the connection alive for requests expected to take a normal period of time (seconds)")
+    @DefaultMessage(
+        "Period of time to keep the connection alive for requests expected to take a normal period of time (seconds)")
     String requestTimeoutHelp();
 
     @DefaultMessage("Extended request timeout")
     String longRequestTimeoutLabel();
 
-    @DefaultMessage("Period of time to keep the connection alive for requests expected to take an extended period of time (seconds)")
+    @DefaultMessage(
+        "Period of time to keep the connection alive for requests expected to take an extended period of time (seconds)")
     String longRequestTimeoutHelp();
 
     @DefaultMessage("Search request timeout")
     String searchRequestTimeoutLabel();
 
     @DefaultMessage("Period of time to keep the connection alive for search requests (seconds); " +
-        "this value should be less than the request time in order for the correct error messages to be displayed")
+        "this value should be less than the request time in order for the correct error messages to be displayed. " +
+        "If this value is not set, the standard request timeout will be used instead.")
     String searchRequestTimeoutHelp();
 
     @DefaultMessage("Title")
@@ -159,9 +162,8 @@ public class SettingsCapabilityDescriptor
             SettingsCapabilityConfiguration.SEARCH_REQUEST_TIMEOUT,
             messages.searchRequestTimeoutLabel(),
             messages.searchRequestTimeoutHelp(),
-            FormField.MANDATORY
-        ).withInitialValue(RaptureSettings.DEFAULT_SEARCH_REQUEST_TIMEOUT)
-            .withMinimumValue(RaptureSettings.MIN_SEARCH_REQUEST_TIMEOUT)
+            FormField.OPTIONAL
+        ).withMinimumValue(RaptureSettings.MIN_SEARCH_REQUEST_TIMEOUT)
     );
   }
 
@@ -194,5 +196,4 @@ public class SettingsCapabilityDescriptor
   public Set<Tag> getTags() {
     return Tag.tags(Tag.categoryTag("UI"));
   }
-
 }

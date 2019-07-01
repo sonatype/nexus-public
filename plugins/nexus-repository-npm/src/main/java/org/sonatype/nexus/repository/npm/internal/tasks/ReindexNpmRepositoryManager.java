@@ -107,7 +107,7 @@ public class ReindexNpmRepositoryManager
       String typeId = taskConfiguration.getTypeId();
       String repositoryName = taskConfiguration.getString(REPOSITORY_NAME_FIELD_ID);
       if (ReindexNpmRepositoryTaskDescriptor.TYPE_ID.equals(typeId) && repository.getName().equals(repositoryName) &&
-          TaskInfo.State.RUNNING.equals(taskInfo.getCurrentState().getState())) {
+          taskInfo.getCurrentState().getState().isRunning()) {
         return true;
       }
     }

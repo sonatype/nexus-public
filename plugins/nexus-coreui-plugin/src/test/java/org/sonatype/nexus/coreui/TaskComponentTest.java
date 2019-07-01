@@ -19,10 +19,8 @@ import java.util.List;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.scheduling.ClusteredTaskState;
 import org.sonatype.nexus.scheduling.TaskInfo;
-import org.sonatype.nexus.scheduling.TaskInfo.EndState;
-import org.sonatype.nexus.scheduling.TaskInfo.RunState;
-import org.sonatype.nexus.scheduling.TaskInfo.State;
 import org.sonatype.nexus.scheduling.TaskScheduler;
+import org.sonatype.nexus.scheduling.TaskState;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -33,7 +31,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
-
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -57,123 +54,123 @@ public class TaskComponentTest
   @Test
   public void testGetAggregateState_RunningVsWaiting() {
     List<ClusteredTaskState> states = Arrays.asList(
-        new ClusteredTaskState("node-a", State.RUNNING, RunState.STARTING, null, null, null),
-        new ClusteredTaskState("node-b", State.WAITING, null, null, null, null));
-    assertThat(component.getAggregateState(states), is(State.RUNNING));
+        new ClusteredTaskState("node-a", TaskState.RUNNING, TaskState.RUNNING_STARTING, null, null, null),
+        new ClusteredTaskState("node-b", TaskState.WAITING, null, null, null, null));
+    assertThat(component.getAggregateState(states), is(TaskState.RUNNING));
   }
 
   @Test
   public void testGetAggregateState_RunningVsDone() {
     List<ClusteredTaskState> states = Arrays.asList(
-        new ClusteredTaskState("node-a", State.RUNNING, RunState.STARTING, null, null, null),
-        new ClusteredTaskState("node-b", State.DONE, null, null, null, null));
-    assertThat(component.getAggregateState(states), is(State.RUNNING));
+        new ClusteredTaskState("node-a", TaskState.RUNNING, TaskState.RUNNING_STARTING, null, null, null),
+        new ClusteredTaskState("node-b", TaskState.OK, null, null, null, null));
+    assertThat(component.getAggregateState(states), is(TaskState.RUNNING));
   }
 
   @Test
   public void testGetAggregateState_WaitingVsDone() {
     List<ClusteredTaskState> states = Arrays.asList(
-        new ClusteredTaskState("node-a", State.WAITING, null, null, null, null),
-        new ClusteredTaskState("node-b", State.DONE, null, null, null, null));
-    assertThat(component.getAggregateState(states), is(State.WAITING));
+        new ClusteredTaskState("node-a", TaskState.WAITING, null, null, null, null),
+        new ClusteredTaskState("node-b", TaskState.OK, null, null, null, null));
+    assertThat(component.getAggregateState(states), is(TaskState.WAITING));
   }
 
   @Test
   public void testGetAggregateRunState_CanceledVsRunning() {
     List<ClusteredTaskState> states = Arrays.asList(
-        new ClusteredTaskState("node-a", State.RUNNING, RunState.CANCELED, null, null, null),
-        new ClusteredTaskState("node-b", State.RUNNING, RunState.RUNNING, null, null, null),
-        new ClusteredTaskState("node-c", State.WAITING, null, null, null, null));
-    assertThat(component.getAggregateRunState(states), is(RunState.CANCELED));
+        new ClusteredTaskState("node-a", TaskState.RUNNING, TaskState.RUNNING_CANCELED, null, null, null),
+        new ClusteredTaskState("node-b", TaskState.RUNNING, TaskState.RUNNING, null, null, null),
+        new ClusteredTaskState("node-c", TaskState.WAITING, null, null, null, null));
+    assertThat(component.getAggregateRunState(states), is(TaskState.RUNNING_CANCELED));
   }
 
   @Test
   public void testGetAggregateRunState_CanceledVsBlocked() {
     List<ClusteredTaskState> states = Arrays.asList(
-        new ClusteredTaskState("node-a", State.RUNNING, RunState.CANCELED, null, null, null),
-        new ClusteredTaskState("node-b", State.RUNNING, RunState.BLOCKED, null, null, null),
-        new ClusteredTaskState("node-c", State.WAITING, null, null, null, null));
-    assertThat(component.getAggregateRunState(states), is(RunState.CANCELED));
+        new ClusteredTaskState("node-a", TaskState.RUNNING, TaskState.RUNNING_CANCELED, null, null, null),
+        new ClusteredTaskState("node-b", TaskState.RUNNING, TaskState.RUNNING_BLOCKED, null, null, null),
+        new ClusteredTaskState("node-c", TaskState.WAITING, null, null, null, null));
+    assertThat(component.getAggregateRunState(states), is(TaskState.RUNNING_CANCELED));
   }
 
   @Test
   public void testGetAggregateRunState_CanceledVsStarting() {
     List<ClusteredTaskState> states = Arrays.asList(
-        new ClusteredTaskState("node-a", State.RUNNING, RunState.CANCELED, null, null, null),
-        new ClusteredTaskState("node-b", State.RUNNING, RunState.STARTING, null, null, null),
-        new ClusteredTaskState("node-c", State.WAITING, null, null, null, null));
-    assertThat(component.getAggregateRunState(states), is(RunState.CANCELED));
+        new ClusteredTaskState("node-a", TaskState.RUNNING, TaskState.RUNNING_CANCELED, null, null, null),
+        new ClusteredTaskState("node-b", TaskState.RUNNING, TaskState.RUNNING_STARTING, null, null, null),
+        new ClusteredTaskState("node-c", TaskState.WAITING, null, null, null, null));
+    assertThat(component.getAggregateRunState(states), is(TaskState.RUNNING_CANCELED));
   }
 
   @Test
   public void testGetAggregateRunState_RunningVsBlocked() {
     List<ClusteredTaskState> states = Arrays.asList(
-        new ClusteredTaskState("node-a", State.RUNNING, RunState.RUNNING, null, null, null),
-        new ClusteredTaskState("node-b", State.RUNNING, RunState.BLOCKED, null, null, null),
-        new ClusteredTaskState("node-c", State.WAITING, null, null, null, null));
-    assertThat(component.getAggregateRunState(states), is(RunState.RUNNING));
+        new ClusteredTaskState("node-a", TaskState.RUNNING, TaskState.RUNNING, null, null, null),
+        new ClusteredTaskState("node-b", TaskState.RUNNING, TaskState.RUNNING_BLOCKED, null, null, null),
+        new ClusteredTaskState("node-c", TaskState.WAITING, null, null, null, null));
+    assertThat(component.getAggregateRunState(states), is(TaskState.RUNNING));
   }
 
   @Test
   public void testGetAggregateRunState_RunningVsStarting() {
     List<ClusteredTaskState> states = Arrays.asList(
-        new ClusteredTaskState("node-a", State.RUNNING, RunState.RUNNING, null, null, null),
-        new ClusteredTaskState("node-b", State.RUNNING, RunState.STARTING, null, null, null),
-        new ClusteredTaskState("node-c", State.WAITING, null, null, null, null));
-    assertThat(component.getAggregateRunState(states), is(RunState.RUNNING));
+        new ClusteredTaskState("node-a", TaskState.RUNNING, TaskState.RUNNING, null, null, null),
+        new ClusteredTaskState("node-b", TaskState.RUNNING, TaskState.RUNNING_STARTING, null, null, null),
+        new ClusteredTaskState("node-c", TaskState.WAITING, null, null, null, null));
+    assertThat(component.getAggregateRunState(states), is(TaskState.RUNNING));
   }
 
   @Test
   public void testGetAggregateRunState_BlockedVsStarting() {
     List<ClusteredTaskState> states = Arrays.asList(
-        new ClusteredTaskState("node-a", State.RUNNING, RunState.BLOCKED, null, null, null),
-        new ClusteredTaskState("node-b", State.RUNNING, RunState.STARTING, null, null, null),
-        new ClusteredTaskState("node-c", State.WAITING, null, null, null, null));
-    assertThat(component.getAggregateRunState(states), is(RunState.BLOCKED));
+        new ClusteredTaskState("node-a", TaskState.RUNNING, TaskState.RUNNING_BLOCKED, null, null, null),
+        new ClusteredTaskState("node-b", TaskState.RUNNING, TaskState.RUNNING_STARTING, null, null, null),
+        new ClusteredTaskState("node-c", TaskState.WAITING, null, null, null, null));
+    assertThat(component.getAggregateRunState(states), is(TaskState.RUNNING_BLOCKED));
   }
 
   @Test
   public void testGetAggregateEndState_FailedVsCanceled() {
     List<ClusteredTaskState> states = Arrays.asList(
-        new ClusteredTaskState("node-a", State.WAITING, null, EndState.FAILED, null, null),
-        new ClusteredTaskState("node-b", State.WAITING, null, EndState.CANCELED, null, null),
-        new ClusteredTaskState("node-c", State.WAITING, null, null, null, null));
-    assertThat(component.getAggregateEndState(states), is(EndState.FAILED));
+        new ClusteredTaskState("node-a", TaskState.WAITING, null, TaskState.FAILED, null, null),
+        new ClusteredTaskState("node-b", TaskState.WAITING, null, TaskState.CANCELED, null, null),
+        new ClusteredTaskState("node-c", TaskState.WAITING, null, null, null, null));
+    assertThat(component.getAggregateEndState(states), is(TaskState.FAILED));
   }
 
   @Test
   public void testGetAggregateEndState_FailedVsOk() {
     List<ClusteredTaskState> states = Arrays.asList(
-        new ClusteredTaskState("node-a", State.WAITING, null, EndState.FAILED, null, null),
-        new ClusteredTaskState("node-b", State.WAITING, null, EndState.OK, null, null),
-        new ClusteredTaskState("node-c", State.WAITING, null, null, null, null));
-    assertThat(component.getAggregateEndState(states), is(EndState.FAILED));
+        new ClusteredTaskState("node-a", TaskState.WAITING, null, TaskState.FAILED, null, null),
+        new ClusteredTaskState("node-b", TaskState.WAITING, null, TaskState.OK, null, null),
+        new ClusteredTaskState("node-c", TaskState.WAITING, null, null, null, null));
+    assertThat(component.getAggregateEndState(states), is(TaskState.FAILED));
   }
 
   @Test
   public void testGetAggregateEndState_CanceledVsOk() {
     List<ClusteredTaskState> states = Arrays.asList(
-        new ClusteredTaskState("node-a", State.WAITING, null, EndState.CANCELED, null, null),
-        new ClusteredTaskState("node-b", State.WAITING, null, EndState.OK, null, null),
-        new ClusteredTaskState("node-c", State.WAITING, null, null, null, null));
-    assertThat(component.getAggregateEndState(states), is(EndState.CANCELED));
+        new ClusteredTaskState("node-a", TaskState.WAITING, null, TaskState.CANCELED, null, null),
+        new ClusteredTaskState("node-b", TaskState.WAITING, null, TaskState.OK, null, null),
+        new ClusteredTaskState("node-c", TaskState.WAITING, null, null, null, null));
+    assertThat(component.getAggregateEndState(states), is(TaskState.CANCELED));
   }
 
   @Test
   public void testGetAggregateLastRun() {
     List<ClusteredTaskState> states = Arrays.asList(
-        new ClusteredTaskState("node-a", State.WAITING, null, null, new Date(1234567890), null),
-        new ClusteredTaskState("node-b", State.WAITING, null, null, new Date(987654321), null),
-        new ClusteredTaskState("node-c", State.WAITING, null, null, null, null));
+        new ClusteredTaskState("node-a", TaskState.WAITING, null, null, new Date(1234567890), null),
+        new ClusteredTaskState("node-b", TaskState.WAITING, null, null, new Date(987654321), null),
+        new ClusteredTaskState("node-c", TaskState.WAITING, null, null, null, null));
     assertThat(component.getAggregateLastRun(states), is(new Date(1234567890)));
   }
 
   @Test
   public void testGetAggregateRunDuration() {
     List<ClusteredTaskState> states = Arrays.asList(
-        new ClusteredTaskState("node-a", State.WAITING, null, null, null, 123456L),
-        new ClusteredTaskState("node-b", State.WAITING, null, null, null, 654321L),
-        new ClusteredTaskState("node-c", State.WAITING, null, null, null, null));
+        new ClusteredTaskState("node-a", TaskState.WAITING, null, null, null, 123456L),
+        new ClusteredTaskState("node-b", TaskState.WAITING, null, null, null, 654321L),
+        new ClusteredTaskState("node-c", TaskState.WAITING, null, null, null, null));
     assertThat(component.getAggregateRunDuration(states), is(654321L));
   }
 
@@ -181,15 +178,15 @@ public class TaskComponentTest
   public void testAsTaskStates() {
     assertThat(component.asTaskStates(null), is(nullValue()));
     List<ClusteredTaskState> states = Arrays.asList(
-        new ClusteredTaskState("node-a", State.RUNNING, RunState.STARTING, null, null, null),
-        new ClusteredTaskState("node-b", State.RUNNING, RunState.BLOCKED, EndState.OK, null, 10000L));
+        new ClusteredTaskState("node-a", TaskState.RUNNING_STARTING, TaskState.RUNNING_STARTING, null, null, null),
+        new ClusteredTaskState("node-b", TaskState.RUNNING_BLOCKED, TaskState.RUNNING_BLOCKED, TaskState.OK, null, 10000L));
     List<TaskStateXO> xos = component.asTaskStates(states);
     assertThat(xos, hasSize(2));
     assertThat(xos.get(0).getNodeId(), is("node-a"));
-    assertThat(xos.get(0).getStatus(), is(State.RUNNING.name()));
+    assertThat(xos.get(0).getStatus(), is(TaskState.RUNNING_STARTING.name()));
     assertThat(xos.get(0).getStatusDescription(), is("Starting"));
     assertThat(xos.get(1).getNodeId(), is("node-b"));
-    assertThat(xos.get(1).getStatus(), is(State.RUNNING.name()));
+    assertThat(xos.get(1).getStatus(), is(TaskState.RUNNING_BLOCKED.name()));
     assertThat(xos.get(1).getStatusDescription(), is("Blocked"));
     assertThat(xos.get(1).getLastRunResult(), is("Ok [10s]"));
   }
@@ -197,9 +194,9 @@ public class TaskComponentTest
   @Test
   public void testAsTaskStates_SuppressedIfAllCompletedSuccessfully() {
     List<ClusteredTaskState> states = Arrays.asList(
-        new ClusteredTaskState("node-a", State.WAITING, null, null, null, null),
-        new ClusteredTaskState("node-b", State.DONE, null, null, null, null),
-        new ClusteredTaskState("node-c", State.WAITING, null, EndState.OK, null, null));
+        new ClusteredTaskState("node-a", TaskState.WAITING, null, null, null, null),
+        new ClusteredTaskState("node-b", TaskState.OK, null, null, null, null),
+        new ClusteredTaskState("node-c", TaskState.WAITING, null, TaskState.OK, null, null));
     assertThat(component.asTaskStates(states), is(nullValue()));
   }
 
@@ -207,7 +204,7 @@ public class TaskComponentTest
   public void testValidateState_runningLocally() {
     TaskInfo taskInfo = mock(TaskInfo.class);
     TaskInfo.CurrentState localState = mock(TaskInfo.CurrentState.class);
-    when(localState.getState()).thenReturn(State.RUNNING);
+    when(localState.getState()).thenReturn(TaskState.RUNNING);
     when(taskInfo.getId()).thenReturn("taskId");
     when(taskInfo.getCurrentState()).thenReturn(localState);
     when(component.getScheduler().getClusteredTaskStateById("taskId")).thenReturn(null);
@@ -222,9 +219,9 @@ public class TaskComponentTest
     TaskInfo taskInfo = mock(TaskInfo.class);
     TaskInfo.CurrentState localState = mock(TaskInfo.CurrentState.class);
     List<ClusteredTaskState> clusteredStates = Arrays.asList(
-        new ClusteredTaskState("node-a", State.WAITING, null, null, null, null),
-        new ClusteredTaskState("node-b", State.RUNNING, RunState.RUNNING, null, null, null));
-    when(localState.getState()).thenReturn(State.WAITING);
+        new ClusteredTaskState("node-a", TaskState.WAITING, null, null, null, null),
+        new ClusteredTaskState("node-b", TaskState.RUNNING, TaskState.RUNNING, null, null, null));
+    when(localState.getState()).thenReturn(TaskState.WAITING);
     when(taskInfo.getId()).thenReturn("taskId");
     when(taskInfo.getCurrentState()).thenReturn(localState);
     when(component.getScheduler().getClusteredTaskStateById("taskId")).thenReturn(clusteredStates);
@@ -239,9 +236,9 @@ public class TaskComponentTest
     TaskInfo taskInfo = mock(TaskInfo.class);
     TaskInfo.CurrentState localState = mock(TaskInfo.CurrentState.class);
     List<ClusteredTaskState> clusteredStates = Arrays.asList(
-        new ClusteredTaskState("node-a", State.WAITING, null, null, null, null),
-        new ClusteredTaskState("node-b", State.WAITING, null, null, null, null));
-    when(localState.getState()).thenReturn(State.WAITING);
+        new ClusteredTaskState("node-a", TaskState.WAITING, null, null, null, null),
+        new ClusteredTaskState("node-b", TaskState.WAITING, null, null, null, null));
+    when(localState.getState()).thenReturn(TaskState.WAITING);
     when(taskInfo.getId()).thenReturn("taskId");
     when(taskInfo.getCurrentState()).thenReturn(localState);
     when(component.getScheduler().getClusteredTaskStateById("taskId")).thenReturn(clusteredStates);

@@ -56,8 +56,9 @@ import org.sonatype.nexus.quartz.internal.task.QuartzTaskJobListener;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskState;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
-import org.sonatype.nexus.scheduling.TaskInfo.EndState;
+import org.sonatype.nexus.scheduling.TaskInfo.CurrentState;
 import org.sonatype.nexus.scheduling.TaskRemovedException;
+import org.sonatype.nexus.scheduling.TaskState;
 import org.sonatype.nexus.scheduling.schedule.Manual;
 import org.sonatype.nexus.scheduling.schedule.Now;
 import org.sonatype.nexus.scheduling.schedule.Schedule;
@@ -104,7 +105,8 @@ import static org.sonatype.nexus.quartz.internal.task.QuartzTaskState.getLastRun
 import static org.sonatype.nexus.quartz.internal.task.QuartzTaskState.hasLastRunState;
 import static org.sonatype.nexus.quartz.internal.task.QuartzTaskState.setLastRunState;
 import static org.sonatype.nexus.scheduling.TaskDescriptorSupport.LIMIT_NODE_KEY;
-import static org.sonatype.nexus.scheduling.TaskInfo.EndState.INTERRUPTED;
+import static org.sonatype.nexus.scheduling.TaskState.INTERRUPTED;
+import static org.sonatype.nexus.scheduling.TaskState.RUNNING;
 
 /**
  * Quartz {@link SchedulerSPI}.
@@ -274,7 +276,7 @@ public class QuartzSchedulerSPI
   /**
    * Checks the last run time against its last trigger fire time.
    * If the trigger's last fire time doesn't match with the jobs last fire time,
-   * then the {@link EndState} is set to interrupted
+   * then the {@link TaskState} is set to interrupted
    *
    * @param nexusLastRunTime - approximate time at which the last instance of nexus was shutdown
    */
@@ -293,7 +295,7 @@ public class QuartzSchedulerSPI
 
       if (!hasLastRunState(taskConfig) || getLastRunState(taskConfig).getRunStarted().before(latestFire)) {
         long estimatedDuration = Math.max(nexusLastRunTime.orElse(latestFire).getTime() - latestFire.getTime(), 0);
-        setLastRunState(taskConfig, EndState.INTERRUPTED, latestFire, estimatedDuration);
+        setLastRunState(taskConfig, INTERRUPTED, latestFire, estimatedDuration);
 
         log.warn("Updating lastRunState to interrupted for jobKey {} taskConfig: {}", jobDetail.getKey(), taskConfig);
         try {
@@ -474,8 +476,7 @@ public class QuartzSchedulerSPI
     QuartzTaskJobListener toBeUpdated = findJobListener(jobDetail.getKey());
     if (toBeUpdated != null) {
       QuartzTaskInfo taskInfo = toBeUpdated.getTaskInfo();
-      taskInfo.setNexusTaskStateIfInState(
-          TaskInfo.State.WAITING,
+      taskInfo.setNexusTaskStateIfWaiting(
           new QuartzTaskState(
               taskInfo.getConfiguration().apply(configurationOf(jobDetail)),
               taskInfo.getSchedule(),
@@ -490,8 +491,7 @@ public class QuartzSchedulerSPI
     QuartzTaskJobListener toBeUpdated = findJobListener(trigger.getJobKey());
     if (toBeUpdated != null) {
       QuartzTaskInfo taskInfo = toBeUpdated.getTaskInfo();
-      taskInfo.setNexusTaskStateIfInState(
-          TaskInfo.State.WAITING,
+      taskInfo.setNexusTaskStateIfWaiting(
           new QuartzTaskState(
               taskInfo.getConfiguration(),
               triggerConverter.convert(trigger),
@@ -654,8 +654,7 @@ public class QuartzSchedulerSPI
         scheduler.rescheduleJob(trigger.getKey(), trigger);
 
         // update TaskInfo, but only if it's WAITING, as running one will pick up the change by job listener when done
-        old.setNexusTaskStateIfInState(
-            TaskInfo.State.WAITING,
+        old.setNexusTaskStateIfWaiting(
             new QuartzTaskState(
                 config,
                 schedule,
@@ -852,7 +851,7 @@ public class QuartzSchedulerSPI
     // avoid marking local state as running if task is limited to run on a different node
     if (!isLimitedToAnotherNode(config)) {
       taskInfo.setNexusTaskState(
-          TaskInfo.State.RUNNING,
+          RUNNING,
           taskState,
           new QuartzTaskFuture(
               this,
@@ -893,6 +892,17 @@ public class QuartzSchedulerSPI
     catch (SchedulerException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @Guarded(by = STARTED)
+  @Override
+  public boolean cancel(final String id, final boolean mayInterruptIfRunning) {
+    return Optional.ofNullable(id)
+        .map(this::getTaskById)
+        .map(TaskInfo::getCurrentState)
+        .map(CurrentState::getFuture)
+        .map(f -> f.cancel(mayInterruptIfRunning))
+        .orElse(false);
   }
 
   @Subscribe

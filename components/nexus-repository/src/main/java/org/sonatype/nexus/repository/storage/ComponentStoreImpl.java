@@ -12,12 +12,16 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
@@ -29,10 +33,14 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
+import org.sonatype.nexus.orient.entity.AttachedEntityId;
 import org.sonatype.nexus.repository.Repository;
 
 import com.google.common.collect.ImmutableList;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singletonList;
@@ -105,5 +113,45 @@ public class ComponentStoreImpl
     }
 
     return filteredComponents;
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public long countComponents(@Nullable final Iterable<Bucket> buckets) {
+    try (ODatabaseDocumentTx db = databaseInstance.get().acquire()) {
+      return entityAdapter.countByQuery(db, null, null, buckets, null);
+    }
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public OIndex<?> getIndex(final String indexName) {
+    try (ODatabaseDocumentTx db = databaseInstance.get().acquire()) {
+      return db.getMetadata().getIndexManager().getIndex(indexName);
+    }
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public <T> List<Entry<T, EntityId>> getNextPage(final OIndexCursor cursor, final int limit) {
+    List<Entry<T, EntityId>> page = new ArrayList<>(limit);
+
+    // For reasons unknown Orient needs the connection despite the code not using it
+    try (ODatabaseDocumentTx db = databaseInstance.get().acquire()) {
+      cursor.setPrefetchSize(limit);
+      while (page.size() < limit) {
+        Entry<Object, OIdentifiable> entry = cursor.nextEntry();
+        if (entry == null) {
+          break;
+        }
+
+        @SuppressWarnings("unchecked")
+        T key = (T) entry.getKey();
+        EntityId value = new AttachedEntityId(entityAdapter, entry.getValue().getIdentity());
+        page.add(new SimpleEntry<>(key, value));
+      }
+    }
+
+    return page;
   }
 }

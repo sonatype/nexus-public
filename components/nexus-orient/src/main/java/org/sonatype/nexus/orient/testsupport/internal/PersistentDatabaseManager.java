@@ -14,7 +14,8 @@ package org.sonatype.nexus.orient.testsupport.internal;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.UUID;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import org.sonatype.nexus.common.io.DirectoryHelper;
 import org.sonatype.nexus.orient.DatabaseManager;
@@ -30,11 +31,12 @@ import com.orientechnologies.common.io.OFileUtils;
 public class PersistentDatabaseManager
     extends DatabaseManagerSupport
 {
+  private static final Path BASEDIR = new File(System.getProperty("basedir", "")).toPath();
+
   private final File databasesDirectory;
 
-  public PersistentDatabaseManager() {
-    File targetDir = new File(getClass().getProtectionDomain().getCodeSource().getLocation().getFile()).getParentFile();
-    databasesDirectory = new File(targetDir, "test-db." + UUID.randomUUID().toString().replace("-", ""));
+  public PersistentDatabaseManager() throws IOException {
+    databasesDirectory = Files.createTempDirectory(BASEDIR.resolve("target"), "test-db.").toFile();
     log.info("Database dir: {}", databasesDirectory);
   }
 

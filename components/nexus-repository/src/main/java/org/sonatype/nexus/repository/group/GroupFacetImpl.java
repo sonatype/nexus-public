@@ -45,6 +45,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterables;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.isNull;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 import static org.sonatype.nexus.validation.ConstraintViolations.maybeAdd;
@@ -240,7 +241,17 @@ public class GroupFacetImpl
    * Returns {@code true} if the content is considered stale; otherwise {@code false}.
    */
   protected boolean isStale(@Nullable final Content content) {
-    return content == null || cacheController.isStale(content.getAttributes().require(CacheInfo.class));
+    if (content == null) {
+      return true;
+    }
+
+    final CacheInfo cacheInfo = content.getAttributes().get(CacheInfo.class);
+
+    if(isNull(cacheInfo)) {
+      log.warn("CacheInfo missing for {}, assuming stale content.", content);
+      return true;
+    }
+    return cacheController.isStale(cacheInfo);
   }
 
   /**

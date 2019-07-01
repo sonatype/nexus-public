@@ -17,14 +17,18 @@ import java.util.Optional;
 import javax.validation.ConstraintViolation;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.cache.CacheController;
+import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.group.GroupFacetImpl.Config;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
+import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import com.google.common.collect.ImmutableSet;
@@ -33,6 +37,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import static com.google.common.collect.ImmutableList.copyOf;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -54,6 +59,15 @@ public class GroupFacetImplTest
 
   @Mock
   private Format format = mock(Format.class);
+
+  @Mock
+  private Content content;
+
+  @Mock
+  private AttributesMap attributesMap;
+
+  @Mock
+  private CacheInfo cacheInfo;
 
   private GroupType groupType = new GroupType();
 
@@ -117,6 +131,30 @@ public class GroupFacetImplTest
       System.out.println(repo.getName());
     }
     assertThat(underTest.allMembers(), contains(group1, hosted1));
+  }
+
+  @Test
+  public void whenContentIsNullIsStale() {
+    assertThat(underTest.isStale(null), is(true));
+  }
+
+  @Test
+  public void whenCacheInfoIsNullThenIsStale() {
+    when(content.getAttributes()).thenReturn(attributesMap);
+    when(attributesMap.get(CacheInfo.class)).thenReturn(null);
+
+    assertThat(underTest.isStale(content), is(true));
+  }
+
+  @Test
+  public void whenCachePresentTheNotStale() {
+    when(content.getAttributes()).thenReturn(attributesMap);
+    when(attributesMap.get(CacheInfo.class)).thenReturn(cacheInfo);
+    CacheController cacheController = mock(CacheController.class);
+    underTest.cacheController = cacheController;
+    when(cacheController.isStale(cacheInfo)).thenReturn(false);
+
+    assertThat(underTest.isStale(content), is(false));
   }
 
   private ConstraintViolationFactory makeConstraintViolationFactory() {

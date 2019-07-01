@@ -65,7 +65,7 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
 
   protected static final Pattern UUID_PATTERN = Pattern
       .compile(
-          ".*vol-\\d{2}/chap-\\d{2}/\\b[0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12}\\b.properties$",
+          ".*vol-\\d{2}[/\\\\]chap-\\d{2}[/\\\\]\\b[0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12}\\b.properties$",
           Pattern.CASE_INSENSITIVE);
 
   public BlobStoreSupport(final BlobIdLocationResolver blobIdLocationResolver,

@@ -22,6 +22,7 @@ import org.sonatype.nexus.quartz.internal.QuartzSchedulerSPI;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskRemovedException;
+import org.sonatype.nexus.scheduling.TaskState;
 import org.sonatype.nexus.scheduling.events.TaskDeletedEvent;
 import org.sonatype.nexus.scheduling.schedule.Manual;
 import org.sonatype.nexus.scheduling.schedule.Schedule;
@@ -31,13 +32,15 @@ import org.quartz.SchedulerException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static org.sonatype.nexus.scheduling.TaskState.RUNNING;
+import static org.sonatype.nexus.scheduling.TaskState.WAITING;
 
 /**
  * Quartz {@link TaskInfo}.
  *
  * When this class has future (is not null), the task is meant to be started (either by schedule or by "runNow").
  *
- * When this class has no future, that means that task is in {@link State#WAITING} or {@link State#DONE} states.
+ * When this class has no future, that means that task is in {@link TaskState.Group#WAITING} or {@link TaskState.Group#DONE} states.
  *
  * @since 3.0
  */
@@ -56,7 +59,7 @@ public class QuartzTaskInfo
 
   private final JobKey jobKey;
 
-  private volatile State state;
+  private volatile TaskState state;
 
   private volatile QuartzTaskState taskState;
 
@@ -74,44 +77,44 @@ public class QuartzTaskInfo
     this.scheduler = checkNotNull(scheduler);
     this.jobKey = checkNotNull(jobKey);
     this.removed = false;
-    setNexusTaskState(taskFuture != null ? State.RUNNING : State.WAITING, taskState, taskFuture);
+    setNexusTaskState(taskFuture != null ? RUNNING : WAITING, taskState, taskFuture);
   }
 
   public synchronized boolean isRemovedOrDone() {
-    return removed || State.DONE == state;
+    return removed || state.isDone();
   }
 
-  public synchronized void setNexusTaskState(final State state,
+  public synchronized void setNexusTaskState(final TaskState newState,
                                              final QuartzTaskState taskState,
                                              @Nullable final QuartzTaskFuture taskFuture)
   {
-    checkNotNull(state);
+    checkNotNull(newState);
     checkNotNull(taskState);
-    checkState(State.RUNNING != state || taskFuture != null, "Running task must have future");
+    checkState(!newState.isRunning() || taskFuture != null, "Running task must have future");
 
     final TaskConfiguration config = taskState.getConfiguration();
 
     if (this.state == null) {
-      log.info("Task {} : state={}", config.getTaskLogName(), state);
+      log.info("Task {} : state={}", config.getTaskLogName(), newState);
     }
     else {
-      if (this.state != state) {
+      if (this.state != newState) {
         // we have a transition
-        String newState = state.name();
-        if (state != State.RUNNING && taskState.getLastRunState() != null) {
+        String newStateName = newState.name();
+        if (newState.isWaiting() && taskState.getLastRunState() != null) {
           // we ended running and have lastRunState available, enhance log with it
-          newState = newState + " (" + taskState.getLastRunState().getEndState().name() + ")";
+          newStateName = newStateName + " (" + taskState.getLastRunState().getEndState().name() + ")";
         }
         if (log.isDebugEnabled()) {
           log.info("Task {} : {} state change {} -> {}",
               jobKey,
               config.getTaskLogName(),
-              this.state, newState);
+              this.state, newStateName);
         }
         else {
           log.info("Task {} state change {} -> {}",
               config.getTaskLogName(),
-              this.state, newState);
+              this.state, newStateName);
         }
       }
       else {
@@ -119,18 +122,18 @@ public class QuartzTaskInfo
         log.debug("Task {} : {} : state={} nextRun={}",
             jobKey.getName(),
             config.getTaskLogName(),
-            state,
+            newState,
             taskState.getNextExecutionTime()
         );
       }
     }
 
-    this.state = state;
+    this.state = newState;
     this.taskState = taskState;
     this.taskFuture = taskFuture;
 
     // DONE tasks should be removed, if not removed already by #remove() method
-    if (!removed && state == State.DONE) {
+    if (!removed && newState.isDone()) {
       scheduler.removeTask(jobKey);
       removed = true;
       log.debug("Task {} : {} is done and removed", jobKey.getName(), config.getTaskLogName());
@@ -138,13 +141,12 @@ public class QuartzTaskInfo
   }
 
   /**
-   * Sets task state only if it's in given state, otherwise does nothing.
+   * Sets task state only if it's {@link TaskState#WAITING}, otherwise does nothing.
    */
-  public synchronized void setNexusTaskStateIfInState(final State state,
-                                                      final QuartzTaskState taskState,
+  public synchronized void setNexusTaskStateIfWaiting(final QuartzTaskState taskState,
                                                       @Nullable final QuartzTaskFuture taskFuture)
   {
-    if (this.state == state) {
+    if (state.isWaiting()) {
       setNexusTaskState(state, taskState, taskFuture);
     }
   }
@@ -190,8 +192,6 @@ public class QuartzTaskInfo
 
   @Override
   public synchronized CurrentState getCurrentState() {
-    // TODO: why was this check here?
-    // checkState(state == State.DONE || !removed, "Task already removed/updated");
     if (taskState.getSchedule() instanceof Manual) {
       return new CurrentStateImpl(state, null, taskFuture);
     }
@@ -225,7 +225,7 @@ public class QuartzTaskInfo
     if (!QuartzTaskState.hasLastRunState(config)) {
       // if no last state (removed even before 1st run), add one noting it got removed/canceled
       // if was running and is cancelable, the task will itself set a proper ending state
-      QuartzTaskState.setLastRunState(config, EndState.CANCELED, new Date(), 0L);
+      QuartzTaskState.setLastRunState(config, TaskState.CANCELED, new Date(), 0L);
     }
 
     removed = true;
@@ -246,7 +246,7 @@ public class QuartzTaskInfo
   public TaskInfo runNow(final String triggerSource) throws TaskRemovedException {
 
     synchronized (this) {
-      checkState(State.RUNNING != state, "Task %s already running", taskState.getConfiguration().getTaskLogName());
+      checkState(!state.isRunning(), "Task %s already running", taskState.getConfiguration().getTaskLogName());
 
       if (!getConfiguration().isEnabled()) {
         log.warn("Task {} is disabled and will not be run", taskState.getConfiguration().getTaskLogName());
@@ -292,20 +292,20 @@ public class QuartzTaskInfo
   private static class CurrentStateImpl
       implements CurrentState
   {
-    private final State state;
+    private final TaskState state;
 
     private final Date nextRun;
 
     private final QuartzTaskFuture future;
 
-    public CurrentStateImpl(final State state, final Date nextRun, final QuartzTaskFuture taskFuture) {
+    public CurrentStateImpl(final TaskState state, final Date nextRun, final QuartzTaskFuture taskFuture) {
       this.state = state;
       this.nextRun = nextRun;
       this.future = taskFuture;
     }
 
     @Override
-    public State getState() {
+    public TaskState getState() {
       return state;
     }
 
@@ -318,13 +318,13 @@ public class QuartzTaskInfo
     @Override
     @Nullable
     public Date getRunStarted() {
-      return state == State.RUNNING ? future.getStartedAt() : null;
+      return state.isRunning() ? future.getStartedAt() : null;
     }
 
     @Override
     @Nullable
-    public RunState getRunState() {
-      return state == State.RUNNING ? future.getRunState() : null;
+    public TaskState getRunState() {
+      return state.isRunning() ? future.getRunState() : null;
     }
 
     @Override

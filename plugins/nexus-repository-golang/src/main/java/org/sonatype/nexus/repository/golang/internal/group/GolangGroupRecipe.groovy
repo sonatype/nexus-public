@@ -80,6 +80,7 @@ class GolangGroupRecipe
       builder.route(new Route.Builder().matcher(matcher)
           .handler(timingHandler)
           .handler(securityHandler)
+          .handler(highAvailabilitySupportHandler)
           .handler(exceptionHandler)
           .handler(handlerContributor)
           .handler(groupHandler)

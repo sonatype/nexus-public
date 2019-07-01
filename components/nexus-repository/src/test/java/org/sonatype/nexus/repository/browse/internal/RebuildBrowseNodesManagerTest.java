@@ -37,8 +37,8 @@ import org.sonatype.nexus.repository.storage.MetadataNode;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskInfo.CurrentState;
-import org.sonatype.nexus.scheduling.TaskInfo.State;
 import org.sonatype.nexus.scheduling.TaskScheduler;
+import org.sonatype.nexus.scheduling.TaskState;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.Before;
@@ -269,8 +269,8 @@ public class RebuildBrowseNodesManagerTest
     when(taskInfo.getCurrentState()).thenReturn(currentState);
     when(taskInfo2.getConfiguration()).thenReturn(matchConfiguration);
     when(taskInfo2.getCurrentState()).thenReturn(currentState2);
-    when(currentState.getState()).thenReturn(State.WAITING);
-    when(currentState2.getState()).thenReturn(running ? State.RUNNING : State.WAITING);
+    when(currentState.getState()).thenReturn(TaskState.WAITING);
+    when(currentState2.getState()).thenReturn(running ? TaskState.RUNNING : TaskState.WAITING);
     when(taskScheduler.listsTasks()).thenReturn(Arrays.asList(taskInfo, taskInfo2));
   }
 

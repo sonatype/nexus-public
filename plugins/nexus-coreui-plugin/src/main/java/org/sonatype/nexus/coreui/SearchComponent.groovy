@@ -92,10 +92,10 @@ class SearchComponent
 
     try {
       def sort = parameters?.sort?.get(0)
+      def sortBuilders = searchUtils.getSortBuilders(sort?.property, sort?.direction)
+      def timeout = uiSettingsManager.settings.searchRequestTimeout ?: uiSettingsManager.settings.requestTimeout - 5
 
-      SearchResponse response = searchService.
-          search(query, searchUtils.getSortBuilders(sort?.property, sort?.direction), parameters.start,
-              parameters.limit, uiSettingsManager.settings.requestTimeout - 5)
+      SearchResponse response = searchService.search(query, sortBuilders, parameters.start, parameters.limit, timeout)
       List<SearchResultComponent> searchResultComponents = searchResultsGenerator.getSearchResultList(response)
 
       return new LimitedPagedResponse<ComponentXO>(

@@ -16,10 +16,6 @@ import java.util.Date;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.scheduling.TaskInfo.EndState;
-import org.sonatype.nexus.scheduling.TaskInfo.RunState;
-import org.sonatype.nexus.scheduling.TaskInfo.State;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -31,20 +27,20 @@ public class ClusteredTaskState
 {
   private final String nodeId;
 
-  private final State state;
+  private final TaskState state;
 
-  private final RunState runState;
+  private final TaskState runState;
 
-  private final EndState lastEndState;
+  private final TaskState lastEndState;
 
   private final Date lastRunStarted;
 
   private final Long lastRunDuration;
 
   public ClusteredTaskState(String nodeId,
-                            State state,
-                            @Nullable RunState runState,
-                            @Nullable EndState lastEndState,
+                            TaskState state,
+                            @Nullable TaskState runState,
+                            @Nullable TaskState lastEndState,
                             @Nullable Date lastRunStarted,
                             @Nullable Long lastRunDuration)
   {
@@ -60,17 +56,17 @@ public class ClusteredTaskState
     return nodeId;
   }
 
-  public State getState() {
+  public TaskState getState() {
     return state;
   }
 
   @Nullable
-  public RunState getRunState() {
+  public TaskState getRunState() {
     return runState;
   }
 
   @Nullable
-  public EndState getLastEndState() {
+  public TaskState getLastEndState() {
     return lastEndState;
   }
 

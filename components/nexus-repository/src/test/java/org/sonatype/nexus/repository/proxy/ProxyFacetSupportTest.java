@@ -270,4 +270,18 @@ public class ProxyFacetSupportTest
     assertThat(message, containsString("proxy repo {} failed to fetch {}"));
     assertThat(message, containsString("content not in cache."));
   }
+
+  @Test
+  public void whenCacheInfoIsNullThenIsStaleIsTrue() throws Exception {
+    when(attributesMap.get(CacheInfo.class)).thenReturn(null);
+    when(cacheController.isStale(cacheInfo)).thenReturn(true);
+    doReturn(content).when(underTest).getCachedContent(cachedContext);
+
+    doReturn(reFetchedContent).when(underTest).fetch(cachedContext, content);
+    doReturn(reFetchedContent).when(underTest).store(cachedContext, reFetchedContent);
+
+    Content foundContent = underTest.get(cachedContext);
+
+    assertThat(foundContent, is(reFetchedContent));
+  }
 }

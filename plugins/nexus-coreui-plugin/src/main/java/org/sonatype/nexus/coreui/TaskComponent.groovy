@@ -26,10 +26,8 @@ import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.scheduling.ClusteredTaskState
 import org.sonatype.nexus.scheduling.TaskConfiguration
 import org.sonatype.nexus.scheduling.TaskInfo
-import org.sonatype.nexus.scheduling.TaskInfo.EndState
-import org.sonatype.nexus.scheduling.TaskInfo.RunState
-import org.sonatype.nexus.scheduling.TaskInfo.State
 import org.sonatype.nexus.scheduling.TaskScheduler
+import org.sonatype.nexus.scheduling.TaskState
 import org.sonatype.nexus.scheduling.schedule.Cron
 import org.sonatype.nexus.scheduling.schedule.Daily
 import org.sonatype.nexus.scheduling.schedule.Hourly
@@ -53,6 +51,16 @@ import groovy.transform.PackageScope
 import org.apache.shiro.authz.annotation.RequiresAuthentication
 import org.apache.shiro.authz.annotation.RequiresPermissions
 import org.hibernate.validator.constraints.NotEmpty
+
+import static org.sonatype.nexus.scheduling.TaskState.CANCELED
+import static org.sonatype.nexus.scheduling.TaskState.FAILED
+import static org.sonatype.nexus.scheduling.TaskState.INTERRUPTED
+import static org.sonatype.nexus.scheduling.TaskState.OK
+import static org.sonatype.nexus.scheduling.TaskState.RUNNING
+import static org.sonatype.nexus.scheduling.TaskState.RUNNING_BLOCKED
+import static org.sonatype.nexus.scheduling.TaskState.RUNNING_CANCELED
+import static org.sonatype.nexus.scheduling.TaskState.RUNNING_STARTING
+import static org.sonatype.nexus.scheduling.TaskState.WAITING
 
 /**
  * Task {@link DirectComponent}.
@@ -184,32 +192,7 @@ class TaskComponent
   @RequiresPermissions('nexus:tasks:stop')
   @Validate
   void stop(final @NotEmpty String id) {
-    scheduler.getTaskById(id)?.currentState?.future?.cancel(false)
-  }
-
-  @PackageScope
-  String getStatusDescription(final State state, final RunState runState) {
-    switch (state) {
-      case State.WAITING:
-        return 'Waiting'
-
-      case State.RUNNING:
-        switch (runState) {
-          case RunState.RUNNING:
-            return 'Running'
-
-          case RunState.BLOCKED:
-            return 'Blocked'
-
-          case RunState.CANCELED:
-            return 'Cancelling'
-
-          case RunState.STARTING:
-            return 'Starting'
-        }
-      case State.DONE:
-        return 'Done'
-    }
+    scheduler.cancel(id, false)
   }
 
   @PackageScope
@@ -250,24 +233,24 @@ class TaskComponent
   }
 
   @PackageScope
-  String getLastRunResult(final EndState endState, final Long runDuration) {
+  String getLastRunResult(final TaskState endState, final Long runDuration) {
     String lastRunResult = null
 
     if (endState) {
       switch (endState) {
-        case EndState.OK:
+        case OK:
           lastRunResult = 'Ok'
           break
 
-        case EndState.CANCELED:
+        case CANCELED:
           lastRunResult = 'Canceled'
           break
 
-        case EndState.FAILED:
+        case FAILED:
           lastRunResult = 'Error'
           break
 
-        case EndState.INTERRUPTED:
+        case INTERRUPTED:
           lastRunResult = 'Interrupted'
           break
 
@@ -301,14 +284,12 @@ class TaskComponent
   @PackageScope
   TaskXO asTaskXO(final TaskInfo task) {
     List<ClusteredTaskState> clusteredTaskStates = scheduler.getClusteredTaskStateById(task.id)
-    State state = task.currentState.state
-    RunState runState = task.currentState.runState
-    EndState endState = task.lastRunState?.endState
+    TaskState state = task.currentState.state
+    TaskState endState = task.lastRunState?.endState
     Date lastRun = task.lastRunState?.runStarted
     Long runDuration = task.lastRunState?.runDuration
     if (clusteredTaskStates) {
       state = getAggregateState(clusteredTaskStates)
-      runState = getAggregateRunState(clusteredTaskStates)
       endState = getAggregateEndState(clusteredTaskStates)
       lastRun = getAggregateLastRun(clusteredTaskStates)
       runDuration = getAggregateRunDuration(clusteredTaskStates)
@@ -321,14 +302,14 @@ class TaskComponent
         typeId: task.configuration.typeId,
         typeName: task.configuration.typeName,
         status: state,
-        statusDescription: task.configuration.enabled ? getStatusDescription(state, runState) : 'Disabled',
+        statusDescription: task.configuration.enabled ? state.description : 'Disabled',
         clusteredTaskStates: asTaskStates(clusteredTaskStates),
         schedule: getSchedule(task.schedule),
         lastRun: lastRun,
         lastRunResult: getLastRunResult(endState, runDuration),
         nextRun: getNextRun(task),
-        runnable: state in [State.WAITING],
-        stoppable: state in [State.RUNNING],
+        runnable: state.waiting,
+        stoppable: state.running,
         alertEmail: task.configuration.alertEmail,
         properties: task.configuration.asMap()
     )
@@ -360,20 +341,21 @@ class TaskComponent
   }
 
   @PackageScope
-  State getAggregateState(final List<ClusteredTaskState> clusteredTaskStates) {
-    return findTopPriorityState(clusteredTaskStates*.state as Set, [State.RUNNING, State.WAITING, State.DONE])
+  TaskState getAggregateState(final List<ClusteredTaskState> clusteredTaskStates) {
+    return findTopPriorityState(clusteredTaskStates*.state as Set, [RUNNING, WAITING, OK])
   }
 
   @PackageScope
-  RunState getAggregateRunState(final List<ClusteredTaskState> clusteredTaskStates) {
-    return findTopPriorityState(clusteredTaskStates*.runState as Set, [RunState.CANCELED, RunState.RUNNING,
-        RunState.BLOCKED, RunState.STARTING])
+  TaskState getAggregateRunState(final List<ClusteredTaskState> clusteredTaskStates) {
+    return findTopPriorityState(clusteredTaskStates*.runState as Set,
+        [RUNNING_CANCELED, RUNNING,
+         RUNNING_BLOCKED, RUNNING_STARTING])
   }
 
   @PackageScope
-  EndState getAggregateEndState(final List<ClusteredTaskState> clusteredTaskStates) {
-    return findTopPriorityState(clusteredTaskStates*.lastEndState as Set, [EndState.FAILED, EndState.CANCELED,
-        EndState.INTERRUPTED, EndState.OK])
+  TaskState getAggregateEndState(final List<ClusteredTaskState> clusteredTaskStates) {
+    return findTopPriorityState(clusteredTaskStates*.lastEndState as Set, [FAILED, CANCELED,
+                                                                           INTERRUPTED, OK])
   }
 
   @PackageScope
@@ -402,7 +384,7 @@ class TaskComponent
         new TaskStateXO(
           nodeId: it.nodeId,
           status: it.state,
-          statusDescription: getStatusDescription(it.state, it.runState),
+          statusDescription: it.state.description,
           lastRunResult: getLastRunResult(it.lastEndState, it.lastRunDuration)
         )
       }
@@ -412,7 +394,7 @@ class TaskComponent
 
   private boolean hasAnyNotCompletedSuccessfully(final List<ClusteredTaskState> clusteredTaskStates) {
     return clusteredTaskStates.any {
-      it.state == State.RUNNING || it.lastEndState in [EndState.INTERRUPTED, EndState.FAILED, EndState.CANCELED]
+      it.state.running || it.lastEndState in [INTERRUPTED, FAILED, CANCELED]
     }
   }
 
@@ -454,11 +436,11 @@ class TaskComponent
 
   @PackageScope
   void validateState(final TaskInfo task) {
-    State localState = task.currentState.state
+    TaskState localState = task.currentState.state
     List<ClusteredTaskState> clusteredTaskStates = scheduler.getClusteredTaskStateById(task.id)
-    boolean running = localState == State.RUNNING ||
+    boolean running = localState.running ||
         (clusteredTaskStates != null &&
-         clusteredTaskStates.any { clusteredTaskState -> clusteredTaskState.state == State.RUNNING })
+         clusteredTaskStates.any { clusteredTaskState -> clusteredTaskState.state.running })
     if (running) {
       throw new IllegalStateException(
           'Task can not be edited while it is being executed or it is in line to be executed')

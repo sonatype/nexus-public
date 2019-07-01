@@ -20,8 +20,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.quartz.internal.QuartzSchedulerSPI;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
-import org.sonatype.nexus.scheduling.TaskInfo.EndState;
-import org.sonatype.nexus.scheduling.TaskInfo.State;
+import org.sonatype.nexus.scheduling.TaskState;
 import org.sonatype.nexus.scheduling.events.TaskEventStarted;
 import org.sonatype.nexus.scheduling.events.TaskEventStoppedCanceled;
 import org.sonatype.nexus.scheduling.events.TaskEventStoppedDone;
@@ -37,6 +36,11 @@ import org.quartz.Trigger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.quartz.TriggerKey.triggerKey;
+import static org.sonatype.nexus.scheduling.TaskState.CANCELED;
+import static org.sonatype.nexus.scheduling.TaskState.FAILED;
+import static org.sonatype.nexus.scheduling.TaskState.OK;
+import static org.sonatype.nexus.scheduling.TaskState.RUNNING;
+import static org.sonatype.nexus.scheduling.TaskState.WAITING;
 
 /**
  * A {#link JobListenerSupport} that provides NX Task integration by creating future when task starts, recording
@@ -135,7 +139,7 @@ public class QuartzTaskJobListener
 
       // set the future on taskinfo
       taskInfo.setNexusTaskState(
-          State.RUNNING,
+          RUNNING,
           new QuartzTaskState(
               QuartzTaskJob.configurationOf(context.getJobDetail()),
               scheduler.triggerConverter().convert(currentTrigger),
@@ -160,15 +164,15 @@ public class QuartzTaskJobListener
     // on Executed, the taskInfo might be removed or even replaced, so use the one we started with
     // DO NOT TOUCH the listener's instance
     final QuartzTaskInfo taskInfo = (QuartzTaskInfo) context.get(QuartzTaskInfo.TASK_INFO_KEY);
-    final EndState endState;
+    final TaskState endState;
     if (future.isCancelled()) {
-      endState = EndState.CANCELED;
+      endState = CANCELED;
     }
     else if (jobException != null) {
-      endState = EndState.FAILED;
+      endState = FAILED;
     }
     else {
-      endState = EndState.OK;
+      endState = OK;
     }
 
     final TaskConfiguration taskConfiguration = QuartzTaskJob.configurationOf(context.getJobDetail());
@@ -199,7 +203,7 @@ public class QuartzTaskJobListener
     final Schedule jobSchedule = scheduler.triggerConverter().convert(currentTrigger);
 
     // state: if not removed and will fire again: WAITING, otherwise DONE
-    final State state = !taskInfo.isRemovedOrDone() && nextFireTime != null ? State.WAITING : State.DONE;
+    final TaskState state = !taskInfo.isRemovedOrDone() && nextFireTime != null ? WAITING : OK;
 
     // unwrap the Quartz wrapped exception and set future result
     final Exception failure = jobException != null && jobException.getCause() instanceof Exception ?
@@ -211,7 +215,7 @@ public class QuartzTaskJobListener
     taskInfo.setNexusTaskState(
         state,
         new QuartzTaskState(taskConfiguration, jobSchedule, nextFireTime),
-        State.DONE == state ? future : null
+        state.isDone() ? future : null
     );
 
     // fire events

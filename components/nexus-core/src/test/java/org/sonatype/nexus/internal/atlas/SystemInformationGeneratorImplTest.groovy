@@ -77,10 +77,10 @@ class SystemInformationGeneratorImplTest
       def generator = mockSystemInformationGenerator()
 
     when:
-      def data = NetworkInterface.networkInterfaces.toList().collectEntries {
-        [ (it.name): generator.reportNetworkInterface(it) ]
-      }
-
+      def data = NetworkInterface.networkInterfaces.toList().findAll {
+        it.inetAddresses != null && it.inetAddresses.hasMoreElements()
+      }.collectEntries { [(it.name): generator.reportNetworkInterface(it)] }
+    
     then:
       data.keySet().size()
       data.each { k, v ->

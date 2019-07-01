@@ -14,22 +14,26 @@ package org.sonatype.nexus.scheduling.internal.resources
 
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
+
 import javax.ws.rs.WebApplicationException
 import javax.ws.rs.core.Response.Status
 
 import org.sonatype.nexus.scheduling.TaskConfiguration
 import org.sonatype.nexus.scheduling.TaskInfo
 import org.sonatype.nexus.scheduling.TaskScheduler
+import org.sonatype.nexus.scheduling.TaskState
 import org.sonatype.nexus.scheduling.schedule.Schedule
 
 import spock.lang.Specification
 
-import static TaskInfo.State.*
 import static javax.ws.rs.core.Response.Status.CONFLICT
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR
 import static javax.ws.rs.core.Response.Status.NOT_FOUND
+import static org.sonatype.nexus.scheduling.TaskState.OK
+import static org.sonatype.nexus.scheduling.TaskState.RUNNING
+import static org.sonatype.nexus.scheduling.TaskState.WAITING
 
-public class TasksResourceTest
+class TasksResourceTest
     extends Specification {
   def tasksResource
 
@@ -46,7 +50,7 @@ public class TasksResourceTest
       new TestTaskInfo(id: 'task2', name: 'Task 2', typeId: 'aType', currentState: new TestCurrentState(state: RUNNING,
           runStarted: new Date(), future: new CompletableFuture()), configuration: visibleConfig),
       new TestTaskInfo(id: 'task3', name: 'Task 3', typeId: 'anotherType',
-          currentState: new TestCurrentState(state: DONE, runStarted: new Date(),
+          currentState: new TestCurrentState(state: OK, runStarted: new Date(),
               future: CompletableFuture.completedFuture(null)), configuration: visibleConfig)
   ]
 
@@ -69,7 +73,7 @@ public class TasksResourceTest
       page.items*.id == ['task1', 'task2', 'task3']
       page.items*.name == ['Task 1', 'Task 2', 'Task 3']
       page.items*.type == ['anotherType', 'aType', 'anotherType']
-      page.items*.currentState == [WAITING.toString(), RUNNING.toString(), DONE.toString()]
+      page.items*.currentState == [WAITING.toString(), RUNNING.toString(), OK.toString()]
   }
 
   def 'getTasks filters on task type'() {
@@ -190,10 +194,10 @@ public class TasksResourceTest
   }
 
   class TestCurrentState implements TaskInfo.CurrentState {
-    TaskInfo.State state
+    TaskState state
     Date nextRun
     Date runStarted
-    TaskInfo.RunState runState
+    TaskState runState
     Future future
   }
 }

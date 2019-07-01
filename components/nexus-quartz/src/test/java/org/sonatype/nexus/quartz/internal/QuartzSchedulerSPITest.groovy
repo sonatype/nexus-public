@@ -31,7 +31,7 @@ import org.sonatype.nexus.quartz.internal.task.QuartzTaskInfo
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskJobListener
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskState
 import org.sonatype.nexus.scheduling.TaskConfiguration
-import org.sonatype.nexus.scheduling.TaskInfo.EndState
+import org.sonatype.nexus.scheduling.TaskState
 import org.sonatype.nexus.scheduling.schedule.Daily
 import org.sonatype.nexus.scheduling.schedule.Hourly
 import org.sonatype.nexus.scheduling.schedule.Manual
@@ -78,8 +78,9 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 import static org.sonatype.nexus.quartz.internal.task.QuartzTaskState.LAST_RUN_STATE_END_STATE
 import static org.sonatype.nexus.quartz.internal.task.QuartzTaskState.LAST_RUN_STATE_RUN_DURATION
 import static org.sonatype.nexus.quartz.internal.task.QuartzTaskState.LAST_RUN_STATE_RUN_STARTED
-import static org.sonatype.nexus.scheduling.TaskInfo.EndState.FAILED
-import static org.sonatype.nexus.scheduling.TaskInfo.EndState.INTERRUPTED
+import static org.sonatype.nexus.scheduling.TaskState.FAILED
+import static org.sonatype.nexus.scheduling.TaskState.INTERRUPTED
+import static org.sonatype.nexus.scheduling.TaskState.OK
 
 /**
  * {@link QuartzSchedulerSPI} tests.
@@ -355,7 +356,7 @@ class QuartzSchedulerSPITest
     interruptStateTestHelper(
         false,
         DateTime.parse("2002-01-01").toDate(),
-        EndState.OK,
+        OK,
         DateTime.parse("2003-01-01").toDate()
     )
   }
@@ -375,7 +376,7 @@ class QuartzSchedulerSPITest
     interruptStateTestHelper(
         true,
         DateTime.parse("2002-01-01").toDate(),
-        EndState.OK,
+        OK,
         DateTime.parse("2001-01-01").toDate()
     )
   }
@@ -385,7 +386,7 @@ class QuartzSchedulerSPITest
     interruptStateTestHelper(
         false,
         null,
-        EndState.OK,
+        OK,
         DateTime.parse("2001-01-01").toDate()
     )
   }
@@ -445,7 +446,7 @@ class QuartzSchedulerSPITest
   void interruptStateTestHelper(
       boolean shouldBeInterrupted,
       Date lastTriggerDate,
-      EndState endState,
+      TaskState endState,
       Date lastRunDate,
       Date shutdownDate = DateTime.parse("2003-01-01T00:00").toDate())
   {
@@ -478,7 +479,7 @@ class QuartzSchedulerSPITest
     }
 
     if (shouldBeInterrupted) {
-      assertEquals(EndState.INTERRUPTED.name(), jobDataMap.get(LAST_RUN_STATE_END_STATE),)
+      assertEquals(INTERRUPTED.name(), jobDataMap.get(LAST_RUN_STATE_END_STATE),)
       assertEquals(lastTriggerDate.time.toString(), jobDataMap.get(LAST_RUN_STATE_RUN_STARTED),)
       assertEquals((shutdownDate.time - lastTriggerDate.time).toString(), jobDataMap.get(LAST_RUN_STATE_RUN_DURATION))
 

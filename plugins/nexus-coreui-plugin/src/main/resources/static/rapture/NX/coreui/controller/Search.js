@@ -270,7 +270,8 @@ Ext.define('NX.coreui.controller.Search', {
    */
   setResponseMessage: function() {
     var rawData = this.getSearchResultStore().proxy.reader.rawData,
-        searchRequestTimeoutInSeconds = NX.State.getValue('uiSettings', {})['searchRequestTimeout'],
+        searchRequestTimeoutInSeconds = NX.State.getValue('uiSettings', {})['searchRequestTimeout'] ||
+            NX.State.getValue('uiSettings', {})['requestTimeout'] - 5,
         timedOut = rawData && rawData.timedOut,
         limited = rawData && rawData.limited,
         format = Ext.util.Format.numberRenderer('0,000'),

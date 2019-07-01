@@ -66,16 +66,6 @@
 
   <build>
     <plugins>
-      <!-- Note:  this is needed for some IDEs to detect as a Java project.
-           Since this plugin does not use groovy should have no ill impacts -->
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
-          <compilerId>javac</compilerId>
-        </configuration>
-      </plugin>
       <plugin>
         <groupId>org.apache.karaf.tooling</groupId>
         <artifactId>karaf-maven-plugin</artifactId>

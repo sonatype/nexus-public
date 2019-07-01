@@ -30,8 +30,8 @@ import static org.mockito.Mockito.doReturn
 import static org.mockito.Mockito.times
 import static org.mockito.Mockito.verify
 import static org.mockito.Mockito.when
-import static org.sonatype.nexus.scheduling.TaskInfo.State.RUNNING
-import static org.sonatype.nexus.scheduling.TaskInfo.State.WAITING
+import static org.sonatype.nexus.scheduling.TaskState.RUNNING
+import static org.sonatype.nexus.scheduling.TaskState.WAITING
 
 class TaskActivationTest
     extends TestSupport
