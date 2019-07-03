@@ -1080,7 +1080,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     CleanupPolicy_CleanupPolicySettingsForm_Criteria_Title: 'Criteria',
     CleanupPolicy_CleanupPolicySettingsForm_AddCriteria_Text: 'Add criteria',
     CleanupPolicy_CleanupPolicySettingsForm_LastBlobUpdated_FieldLabel: 'Published Before',
-    CleanupPolicy_CleanupPolicySettingsForm_LastBlobUpdated_HelpText: 'Restrict cleanup to components that were published to NXRM more than the given number of days ago. (Blob updated date)',
+    CleanupPolicy_CleanupPolicySettingsForm_LastBlobUpdated_HelpText: 'Restrict cleanup to components that were published to Nexus more than the given number of days ago. (Blob updated date)',
     CleanupPolicy_CleanupPolicySettingsForm_LastDownloaded_FieldLabel: 'Last Downloaded Before',
     CleanupPolicy_CleanupPolicySettingsForm_LastDownloaded_HelpText: 'Restrict cleanup to components that were last downloaded more than the given number of days ago. (Last downloaded	date)',
     CleanupPolicy_CleanupPolicySettingsForm_IsPrerelease_FieldLabel: 'Release Type',
