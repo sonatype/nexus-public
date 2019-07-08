@@ -34,7 +34,7 @@ public class UrlValidator
 {
   private static final Pattern SCHEME_RE = Pattern.compile("^https?$", Pattern.CASE_INSENSITIVE);
   private static final Pattern USER_INFO_RE = Pattern.compile("^(?:\\S+(?::\\S*)?)?$", Pattern.CASE_INSENSITIVE);
-  private static final Pattern RESOURCE_RE = Pattern.compile("^(?:\\S*)?$", Pattern.CASE_INSENSITIVE);
+  private static final Pattern RESOURCE_RE = Pattern.compile("^(?:[ \\S]*\\S)?$", Pattern.CASE_INSENSITIVE);
   private static final Pattern HOSTNAME_RE = Pattern.compile("^(?:[^\"<>^`{|}:/]+)$", Pattern.CASE_INSENSITIVE);
   private static final Pattern IPV6_RE = Pattern.compile("^\\[(?<ipv6>[0-9:a-f]{3,39})\\]$", Pattern.CASE_INSENSITIVE);
   private static final InetAddressValidator INET_ADDRESS_VALIDATOR = new InetAddressValidator();

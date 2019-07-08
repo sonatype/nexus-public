@@ -10,4 +10,15 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-console.log("\n\n\n!!!!!!!! Frontend !!!!!!!!\n\n\n");
+import Axios from 'axios';
+Axios.defaults.xsrfCookieName = Axios.defaults.xsrfHeaderName = 'NX-ANTI-CSRF-TOKEN';
+
+import React from 'react';
+import ReactDOM from 'react-dom';
+import AnonymousSettings from './components/admin/AnonymousSettings';
+
+window.React = React;
+window.ReactDOM = ReactDOM;
+window.REACT_COMPONENTS = {
+  AnonymousSettings: AnonymousSettings
+};

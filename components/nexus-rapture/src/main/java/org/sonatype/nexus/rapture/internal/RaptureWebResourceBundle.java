@@ -327,6 +327,10 @@ public class RaptureWebResourceBundle
       }
     }
 
+    if (reactFrontendConfiguration.isEnabled()) {
+      styles.add(uri("frontend-bundle.css"));
+    }
+
     return styles;
   }
 

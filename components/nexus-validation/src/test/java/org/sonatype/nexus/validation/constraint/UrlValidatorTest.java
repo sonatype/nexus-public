@@ -78,6 +78,7 @@ public class UrlValidatorTest
         {"http://example.com/?q=URL%20with-encoded%20characters", true},
         {"http://42.net", true},
         {"http://123456789", true},
+        {"http://test.com/%20/", true},
         // valid IPv6 addresses
         {"http://[2001:0db8:0000:0000:0000:ff00:0042:8329]", true},
         {"http://[2001:db8:0:0:0:ff00:42:8329]", true},
@@ -121,6 +122,7 @@ public class UrlValidatorTest
         {"http://trailing-slash-is-.invalid/", false},
         {"http://1.1.1.1.1", false},
         {"http://whois.nic.삼성", false}, // java.net.URI doesn't support IDN
+        {"http://test.com/%20", false}
     });
   }
 

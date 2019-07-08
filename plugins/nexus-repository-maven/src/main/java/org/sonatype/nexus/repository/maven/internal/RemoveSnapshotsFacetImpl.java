@@ -138,9 +138,15 @@ public class RemoveSnapshotsFacetImpl
       for (GAV gav : metadataUpdateRequired) {
         Optional<MavenHostedFacet> mavenHostedFacet = repository.optionalFacet(MavenHostedFacet.class);
         if (mavenHostedFacet.isPresent()) {
-          mavenHostedFacet.get().deleteMetadata(gav.group, gav.name, gav.baseVersion);
-          intervalLogger
-              .info("Elapsed time: {}, updated metadata for {} GAVs", intervalLogger.getElapsed(), ++processed);
+          try {
+            mavenHostedFacet.get().deleteMetadata(gav.group, gav.name, gav.baseVersion);
+            intervalLogger
+                .info("Elapsed time: {}, updated metadata for {} GAVs", intervalLogger.getElapsed(), ++processed);
+          }
+          catch (Exception e) {
+            log.warn("Unable to delete/rebuild {} {} {}", gav.group, gav.name, gav.baseVersion,
+                log.isDebugEnabled() ? e : null);
+          }
         }
       }
 

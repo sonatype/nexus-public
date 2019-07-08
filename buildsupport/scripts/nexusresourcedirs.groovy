@@ -39,4 +39,16 @@ roots.split(',').each { root ->
   }
 }
 
+// use the original source first, but if the file is derived it will only be available in the target/classes/static dirs
+roots.split(',').each { root ->
+  def dir = new File(root)
+  if (dir.exists()) {
+    dir.eachDirRecurse {
+      if (it.path.endsWith('target/classes/static')) {
+        dirs << it.parentFile.canonicalPath
+      }
+    }
+  }
+}
+
 println dirs.join(',')

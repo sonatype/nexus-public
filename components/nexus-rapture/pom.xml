@@ -279,9 +279,7 @@
     <profile>
       <id>npmbuild</id>
       <activation>
-        <property>
-          <name>npmbuild</name>
-        </property>
+        <activeByDefault>true</activeByDefault>
       </activation>
 
       <build>

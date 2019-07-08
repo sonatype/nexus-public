@@ -41,9 +41,9 @@
       </dependency>
 
       <dependency>
-        <groupId>com.github.oshi</groupId>
+        <groupId>com.github.dblock</groupId>
         <artifactId>oshi-core</artifactId>
-        <version>3.5.0</version>
+        <version>1.4</version>
       </dependency>
 
       <dependency>

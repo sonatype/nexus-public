@@ -46,7 +46,7 @@ Ext.define('NX.coreui.controller.AnonymousSettings', {
   /**
    * @override
    */
-  init: function () {
+  init: function() {
     var me = this;
 
     me.getApplication().getFeaturesController().registerFeature({
@@ -54,34 +54,62 @@ Ext.define('NX.coreui.controller.AnonymousSettings', {
       path: '/Security/Anonymous',
       text: NX.I18n.get('AnonymousSettings_Text'),
       description: NX.I18n.get('AnonymousSettings_Description'),
-      view: { xtype: 'nx-coreui-security-anonymous-settings' },
+      view: {xtype: 'nx-coreui-security-anonymous-settings'},
       iconConfig: {
         file: 'user_silhouette.png',
         variants: ['x16', 'x32']
       },
-      visible: function () {
+      visible: function() {
         return NX.Permissions.check('nexus:settings:read');
       }
     }, me);
 
-    me.listen({
-      controller: {
-        '#Refresh': {
-          refresh: me.loadRealmTypes
+    if (NX.State.getValue('reactFrontend', false)) {
+      me.listen({
+        controller: {
+          '#Refresh': {
+            refresh: function() {
+              var rootNode = document.getElementById('anonymous-settings-page');
+              ReactDOM.unmountComponentAtNode(rootNode);
+              ReactDOM.render(
+                  React.createElement(REACT_COMPONENTS.AnonymousSettings),
+                  rootNode
+              );
+            }
+          }
+        },
+        component: {
+          'nx-coreui-security-anonymous-settings': {
+            afterrender: function() {
+              ReactDOM.render(
+                  React.createElement(REACT_COMPONENTS.AnonymousSettings),
+                  document.getElementById('anonymous-settings-page')
+              );
+            }
+          }
         }
-      },
-      component: {
-        'nx-coreui-security-anonymous-settings': {
-          beforerender: me.loadRealmTypes
+      });
+    }
+    else {
+      me.listen({
+        controller: {
+          '#Refresh': {
+            refresh: me.loadRealmTypes
+          }
+        },
+        component: {
+          'nx-coreui-security-anonymous-settings': {
+            beforerender: me.loadRealmTypes
+          }
         }
-      }
-    });
+      });
+    }
   },
 
   /**
    * @private
    */
-  loadRealmTypes: function () {
+  loadRealmTypes: function() {
     var me = this,
         panel = me.getPanel();
 

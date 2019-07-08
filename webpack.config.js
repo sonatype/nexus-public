@@ -10,7 +10,8 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-const CopyModulesPlugin = require("copy-modules-webpack-plugin");
+const CopyModulesPlugin = require('copy-modules-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const path = require('path');
 
 module.exports = {
@@ -23,14 +24,31 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.jsx?$/,
         exclude: /node_modules/,
-        loader: 'babel-loader'
+        use: [
+          {
+            loader: 'babel-loader',
+            options: {
+              presets: [
+                  '@babel/preset-react',
+                  [
+                      '@babel/preset-env',
+                    {
+                      targets: 'last 1 Chrome version, last 1 Firefox version, Firefox ESR, last 1 Safari version, ie >= 11, last 1 Edge version' // see https://help.sonatype.com/repomanager3/system-requirements#SystemRequirements-WebBrowser
+                    }
+                  ]
+              ]
+            }
+          }
+        ]
       },
       {
         test: /\.css$/,
         use: [
-          'style-loader',
+          {
+            loader: MiniCssExtractPlugin.loader
+          },
           'css-loader'
         ]
       }
@@ -39,6 +57,12 @@ module.exports = {
   plugins: [
     new CopyModulesPlugin({
       destination: path.resolve(__dirname, 'components', 'nexus-rapture', 'target', 'webpack-modules')
+    }),
+    new MiniCssExtractPlugin({
+      filename: 'frontend-bundle.css'
     })
-  ]
+  ],
+  resolve: {
+    extensions: ['.js', '.jsx']
+  }
 };

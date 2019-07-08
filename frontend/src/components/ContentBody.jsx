@@ -10,37 +10,14 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.rapture;
+import React from 'react';
 
-import java.util.Map;
+export default function ContentBody(props) {
+  const wrapperStyle = {
+    padding: '12px'
+  };
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-
-import com.google.common.collect.ImmutableMap;
-
-/**
- * @since 3.17
- */
-@Named
-@Singleton
-public class ReactFrontendConfiguration
-    implements StateContributor
-{
-  private final boolean enabled;
-
-  @Inject
-  public ReactFrontendConfiguration(@Named("${nexus.react.frontend.enabled:-false}") final boolean enabled) {
-    this.enabled = enabled;
-  }
-
-  public boolean isEnabled() {
-    return enabled;
-  }
-
-  @Override
-  public Map<String, Object> getState() {
-    return ImmutableMap.of("reactFrontend", enabled);
-  }
+  return <div style={wrapperStyle}>
+    {props.children}
+  </div>;
 }

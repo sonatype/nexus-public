@@ -5,13 +5,24 @@
     "watch": "webpack --mode=development --watch"
   },
   "devDependencies": {
-    "@babel/core": "^7.4.0",
-    "babel-loader": "^8.0.5",
-    "copy-modules-webpack-plugin": "^2.0.2",
-    "css-loader": "^2.1.1",
-    "style-loader": "^0.23.1",
-    "webpack": "^4.29.6",
-    "webpack-cli": "^3.3.0"
+    "@babel/core": "7.4.5",
+    "babel-loader": "8.0.6",
+    "copy-modules-webpack-plugin": "2.0.2",
+    "css-loader": "3.0.0",
+    "mini-css-extract-plugin": "0.7.0",
+    "webpack": "4.34.0",
+    "webpack-cli": "3.3.4"
   },
-  "private": true
+  "private": true,
+  "dependencies": {
+    "@babel/preset-env": "7.4.5",
+    "@babel/preset-react": "7.0.0",
+    "@fortawesome/fontawesome-svg-core": "1.2.19",
+    "@fortawesome/free-solid-svg-icons": "5.9.0",
+    "@fortawesome/react-fontawesome": "0.1.4",
+    "axios": "0.19.0",
+    "prop-types": "15.7.2",
+    "react": "16.8.6",
+    "react-dom": "16.8.6"
+  }
 }

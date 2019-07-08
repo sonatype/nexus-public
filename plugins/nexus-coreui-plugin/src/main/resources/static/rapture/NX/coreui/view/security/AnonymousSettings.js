@@ -25,45 +25,49 @@ Ext.define('NX.coreui.view.security.AnonymousSettings', {
     'NX.I18n'
   ],
 
-  initComponent: function () {
+  html: '<div id="anonymous-settings-page" style="height: 100%; min-height: 600px;"></div>',
+
+  initComponent: function() {
     var me = this;
 
-    me.settingsForm = [
-      {
-        xtype: 'nx-settingsform',
-        settingsFormSuccessMessage: NX.I18n.get('Security_AnonymousSettings_Update_Success'),
-        api: {
-          load: 'NX.direct.coreui_AnonymousSettings.read',
-          submit: 'NX.direct.coreui_AnonymousSettings.update'
-        },
-        editableCondition: NX.Conditions.isPermitted('nexus:settings:update'),
-        editableMarker: NX.I18n.get('Security_AnonymousSettings_Update_Error'),
-        items: [
-          {
-            xtype: 'checkbox',
-            name: 'enabled',
-            value: true,
-            boxLabel: NX.I18n.get('Security_AnonymousSettings_Allow_BoxLabel')
+    if (!NX.State.getValue('reactFrontend', false)) {
+      me.settingsForm = [
+        {
+          xtype: 'nx-settingsform',
+          settingsFormSuccessMessage: NX.I18n.get('Security_AnonymousSettings_Update_Success'),
+          api: {
+            load: 'NX.direct.coreui_AnonymousSettings.read',
+            submit: 'NX.direct.coreui_AnonymousSettings.update'
           },
-          {
-            xtype: 'textfield',
-            name: 'userId',
-            fieldLabel: NX.I18n.get('Security_AnonymousSettings_Username_FieldLabel'),
-            allowBlank: false
-          },
-          {
-            xtype: 'combo',
-            name: 'realmName',
-            fieldLabel: NX.I18n.get('Security_AnonymousSettings_Realm_FieldLabel'),
-            queryMode: 'local',
-            displayField: 'name',
-            valueField: 'id',
-            store: 'RealmType',
-            editable: false
-          }
-        ]
-      }
-    ];
+          editableCondition: NX.Conditions.isPermitted('nexus:settings:update'),
+          editableMarker: NX.I18n.get('Security_AnonymousSettings_Update_Error'),
+          items: [
+            {
+              xtype: 'checkbox',
+              name: 'enabled',
+              value: true,
+              boxLabel: NX.I18n.get('Security_AnonymousSettings_Allow_BoxLabel')
+            },
+            {
+              xtype: 'textfield',
+              name: 'userId',
+              fieldLabel: NX.I18n.get('Security_AnonymousSettings_Username_FieldLabel'),
+              allowBlank: false
+            },
+            {
+              xtype: 'combo',
+              name: 'realmName',
+              fieldLabel: NX.I18n.get('Security_AnonymousSettings_Realm_FieldLabel'),
+              queryMode: 'local',
+              displayField: 'name',
+              valueField: 'id',
+              store: 'RealmType',
+              editable: false
+            }
+          ]
+        }
+      ];
+    }
 
     me.callParent();
   }
