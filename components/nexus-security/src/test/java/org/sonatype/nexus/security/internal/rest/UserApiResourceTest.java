@@ -325,7 +325,7 @@ public class UserApiResourceTest
         if (item instanceof WebApplicationMessageException) {
           WebApplicationMessageException e = (WebApplicationMessageException) item;
           return e.getResponse().getStatus() == status.getStatusCode()
-              && message.equals(e.getResponse().getEntity().toString())
+              && ("\"" + message + "\"").equals(e.getResponse().getEntity().toString())
               && MediaType.APPLICATION_JSON_TYPE.equals(e.getResponse().getMediaType());
         }
         return false;

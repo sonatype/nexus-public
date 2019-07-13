@@ -23,6 +23,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseNodeGenerator;
+import org.sonatype.nexus.repository.browse.BrowsePaths;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.BrowseNodeStore;
 import org.sonatype.nexus.repository.storage.Component;
@@ -74,7 +75,7 @@ public class BrowseNodeManager
     checkNotNull(asset);
 
     BrowseNodeGenerator generator = pathGenerators.getOrDefault(asset.format(), defaultGenerator);
-    createBrowseNodes(repositoryName, generator, asset);
+    createBrowseNodes(repositoryName, asset.format(), generator, asset);
   }
 
   /**
@@ -91,25 +92,29 @@ public class BrowseNodeManager
 
     String repositoryName = repository.getName();
     BrowseNodeGenerator generator = pathGenerators.getOrDefault(repository.getFormat().getValue(), defaultGenerator);
-    assets.forEach(asset -> createBrowseNodes(repositoryName, generator, asset));
+    assets.forEach(asset -> createBrowseNodes(repositoryName, repository.getFormat().getValue(), generator, asset));
   }
 
   /**
    * Creates an asset browse node and optional component browse node if the asset has a component.
    */
-  private void createBrowseNodes(final String repositoryName, final BrowseNodeGenerator generator, final Asset asset) {
+  private void createBrowseNodes(final String repositoryName,
+                                 final String format,
+                                 final BrowseNodeGenerator generator,
+                                 final Asset asset)
+  {
     try {
       Component component = asset.componentId() != null ? componentStore.read(asset.componentId()) : null;
 
-      List<String> assetPath = generator.computeAssetPath(asset, component);
-      if (!assetPath.isEmpty()) {
-        browseNodeStore.createAssetNode(repositoryName, assetPath, asset);
+      List<BrowsePaths> assetPaths = generator.computeAssetPaths(asset, component);
+      if (!assetPaths.isEmpty()) {
+        browseNodeStore.createAssetNode(repositoryName, format, assetPaths, asset);
       }
 
       if (component != null) {
-        List<String> componentPath = generator.computeComponentPath(asset, component);
-        if (!componentPath.isEmpty()) {
-          browseNodeStore.createComponentNode(repositoryName, componentPath, component);
+        List<BrowsePaths> componentPaths = generator.computeComponentPaths(asset, component);
+        if (!componentPaths.isEmpty()) {
+          browseNodeStore.createComponentNode(repositoryName, format, componentPaths, component);
         }
       }
     }

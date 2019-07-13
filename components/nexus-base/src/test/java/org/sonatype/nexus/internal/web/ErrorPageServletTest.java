@@ -23,6 +23,7 @@ import org.sonatype.nexus.common.app.ApplicationVersionSupport;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.internal.template.TemplateHelperImpl;
+import org.sonatype.nexus.servlet.XFrameOptions;
 
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -40,10 +41,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import static com.google.common.net.HttpHeaders.X_FRAME_OPTIONS;
 import static java.util.Arrays.asList;
 import static org.eclipse.jetty.servlet.ErrorPageErrorHandler.GLOBAL_ERROR_PAGE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.stringContainsInOrder;
 
 /**
@@ -67,8 +70,10 @@ public class ErrorPageServletTest
       }
     }, new VelocityEngine());
 
+    XFrameOptions xFrameOptions = new XFrameOptions(true);
+
     ServletContextHandler context = new ServletContextHandler();
-    context.addServlet(new ServletHolder(new ErrorPageServlet(templateHelper)), "/error.html");
+    context.addServlet(new ServletHolder(new ErrorPageServlet(templateHelper, xFrameOptions)), "/error.html");
     context.addServlet(new ServletHolder(new BadServlet()), "/bad/*");
 
     ErrorPageErrorHandler errorHandler = new ErrorPageErrorHandler();
@@ -119,6 +124,9 @@ public class ErrorPageServletTest
         String body = EntityUtils.toString(response.getEntity());
 
         assertThat(body, stringContainsInOrder(asList("403", "Forbidden", "You can't see this")));
+
+        assertThat(response.getFirstHeader(X_FRAME_OPTIONS), notNullValue());
+        assertThat(response.getFirstHeader(X_FRAME_OPTIONS).getValue(), is("DENY"));
       }
     }
   }

@@ -294,7 +294,7 @@ public class BrowseServiceImpl
                                                 final Repository repository,
                                                 final MetadataNodeEntityAdapter<T> adapter)
   {
-    String sql = format("SELECT FROM %s WHERE contentAuth(@this, :browsedRepository) == true", orid);
+    String sql = format("SELECT FROM %s WHERE contentAuth(@this.name, @this.format, :browsedRepository) == true", orid);
 
     Map<String, Object> params = ImmutableMap.of("browsedRepository", repository.getName());
 

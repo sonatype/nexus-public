@@ -12,11 +12,9 @@
  */
 package org.sonatype.nexus.repository.storage;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.UnaryOperator;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -29,7 +27,7 @@ import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.AttachedEntityId;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
-import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
+import org.sonatype.nexus.repository.browse.BrowsePaths;
 
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -42,7 +40,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getFirst;
-import static org.sonatype.nexus.common.text.Strings2.lower;
+import static com.google.common.collect.Lists.newArrayList;
 
 /**
  * {@link BrowseNode} entity-adapter.
@@ -58,6 +56,10 @@ public class BrowseNodeEntityAdapter
 
   public static final String P_REPOSITORY_NAME = "repository_name";
 
+  public static final String P_FORMAT = "format";
+
+  public static final String P_PATH = "path";
+
   public static final String P_PARENT_PATH = "parent_path";
 
   public static final String P_NAME = "name";
@@ -66,15 +68,9 @@ public class BrowseNodeEntityAdapter
 
   public static final String P_ASSET_ID = "asset_id";
 
-  public static final String P_ASSET_NAME_LOWERCASE = "asset_name_lowercase";
-
   public static final String AUTHZ_REPOSITORY_NAME = "authz_repository_name";
 
   private static final String BASE_PATH = "base_path";
-
-  private static final String BASE_BOUNDARY = "base_boundary";
-
-  private static final String SUBTREE_BOUNDARY = "subtree_boundary";
 
   private static final String I_REPOSITORY_NAME_PARENT_PATH_NAME = new OIndexNameBuilder()
       .type(DB_CLASS)
@@ -93,21 +89,17 @@ public class BrowseNodeEntityAdapter
       .property(P_ASSET_ID)
       .build();
 
-  private static final String FIND_BY_PATH = String.format(
+  private static final String FIND_BY_PARENT_PATH = String.format(
       "select expand(rid) from index:%s where key=[:%s,:%s,:%s] limit 1",
       I_REPOSITORY_NAME_PARENT_PATH_NAME, P_REPOSITORY_NAME, P_PARENT_PATH, P_NAME);
+
+  private static final String COUNT_CHILDREN = String.format(
+      "select count(*) from %s where (%s=:%s and %s=:%s)",
+      DB_CLASS, P_REPOSITORY_NAME, P_REPOSITORY_NAME, P_PARENT_PATH, BASE_PATH);
 
   private static final String FIND_CHILDREN = String.format(
       "select from %s where (%s=:%s and %s=:%s)",
       DB_CLASS, P_REPOSITORY_NAME, P_REPOSITORY_NAME, P_PARENT_PATH, BASE_PATH);
-
-  private static final String FIND_FIRST_SUBTREE = String.format(
-      "select from %s where (%s=:%s and %s>:%s and %s<:%s)",
-      DB_CLASS, P_REPOSITORY_NAME, P_REPOSITORY_NAME, P_PARENT_PATH, BASE_PATH, P_PARENT_PATH, BASE_BOUNDARY);
-
-  private static final String FIND_NEXT_SUBTREE = String.format(
-      "select from %s where (%s=:%s and %s>=:%s and %s<:%s)",
-      DB_CLASS, P_REPOSITORY_NAME, P_REPOSITORY_NAME, P_PARENT_PATH, SUBTREE_BOUNDARY, P_PARENT_PATH, BASE_BOUNDARY);
 
   private static final String FIND_BY_COMPONENT = String.format(
       "select from %s where %s=:%s",
@@ -125,27 +117,24 @@ public class BrowseNodeEntityAdapter
 
   private final AssetEntityAdapter assetEntityAdapter;
 
-  private final int timeoutMillis;
-
   @Inject
   public BrowseNodeEntityAdapter(final ComponentEntityAdapter componentEntityAdapter,
-                                 final AssetEntityAdapter assetEntityAdapter,
-                                 final BrowseNodeConfiguration configuration)
+                                 final AssetEntityAdapter assetEntityAdapter)
   {
     super(DB_CLASS);
     this.assetEntityAdapter = checkNotNull(assetEntityAdapter);
     this.componentEntityAdapter = checkNotNull(componentEntityAdapter);
-    this.timeoutMillis = configuration.getQueryTimeout().toMillisI();
   }
 
   @Override
   protected void defineType(final OClass type) {
     type.createProperty(P_REPOSITORY_NAME, OType.STRING).setMandatory(true).setNotNull(true);
+    type.createProperty(P_FORMAT, OType.STRING).setMandatory(true).setNotNull(true);
+    type.createProperty(P_PATH, OType.STRING).setMandatory(true).setNotNull(true);
     type.createProperty(P_PARENT_PATH, OType.STRING).setMandatory(true).setNotNull(true);
     type.createProperty(P_NAME, OType.STRING).setMandatory(true).setNotNull(true);
     type.createProperty(P_COMPONENT_ID, OType.LINK, componentEntityAdapter.getSchemaType());
     type.createProperty(P_ASSET_ID, OType.LINK, assetEntityAdapter.getSchemaType());
-    type.createProperty(P_ASSET_NAME_LOWERCASE, OType.STRING);
   }
 
   @Override
@@ -167,12 +156,16 @@ public class BrowseNodeEntityAdapter
   }
 
   @Override
-  protected void readFields(final ODocument document, final BrowseNode entity) throws Exception {
+  protected void readFields(final ODocument document, final BrowseNode entity) {
     String repositoryName = document.field(P_REPOSITORY_NAME, OType.STRING);
+    String format = document.field(P_FORMAT, OType.STRING);
+    String path = document.field(P_PATH, OType.STRING);
     String parentPath = document.field(P_PARENT_PATH, OType.STRING);
     String name = document.field(P_NAME, OType.STRING);
 
     entity.setRepositoryName(repositoryName);
+    entity.setFormat(format);
+    entity.setPath(path);
     entity.setParentPath(parentPath);
     entity.setName(name);
 
@@ -184,14 +177,14 @@ public class BrowseNodeEntityAdapter
     ORID assetId = document.field(P_ASSET_ID, ORID.class);
     if (assetId != null) {
       entity.setAssetId(new AttachedEntityId(assetEntityAdapter, assetId));
-      String assetNameLowercase = document.field(P_ASSET_NAME_LOWERCASE, OType.STRING);
-      entity.setAssetNameLowercase(assetNameLowercase);
     }
   }
 
   @Override
   protected void writeFields(final ODocument document, final BrowseNode entity) throws Exception {
     document.field(P_REPOSITORY_NAME, entity.getRepositoryName());
+    document.field(P_FORMAT, entity.getFormat());
+    document.field(P_PATH, entity.getPath());
     document.field(P_PARENT_PATH, entity.getParentPath());
     document.field(P_NAME, entity.getName());
 
@@ -201,7 +194,6 @@ public class BrowseNodeEntityAdapter
 
     if (entity.getAssetId() != null) {
       document.field(P_ASSET_ID, assetEntityAdapter.recordIdentity(entity.getAssetId()));
-      document.field(P_ASSET_NAME_LOWERCASE, entity.getAssetNameLowercase());
     }
   }
 
@@ -210,10 +202,15 @@ public class BrowseNodeEntityAdapter
    */
   public void createComponentNode(final ODatabaseDocumentTx db,
                                   final String repositoryName,
-                                  final List<String> path,
+                                  final String format,
+                                  final List<BrowsePaths> paths,
                                   final Component component)
   {
-    BrowseNode node = newNode(repositoryName, path);
+    //create any parent folder nodes for this component if not already existing
+    maybeCreateParentNodes(db, repositoryName, format, paths.subList(0, paths.size() - 1));
+
+    //now create the component node
+    BrowseNode node = newNode(repositoryName, format, paths);
     ODocument document = findNodeRecord(db, node);
     if (document == null) {
       // complete the new entity before persisting
@@ -240,15 +237,19 @@ public class BrowseNodeEntityAdapter
    */
   public void createAssetNode(final ODatabaseDocumentTx db,
                               final String repositoryName,
-                              final List<String> path,
+                              final String format,
+                              final List<BrowsePaths> paths,
                               final Asset asset)
   {
-    BrowseNode node = newNode(repositoryName, path);
+    //create any parent folder nodes for this asset if not already existing
+    maybeCreateParentNodes(db, repositoryName, format, paths.subList(0, paths.size() - 1));
+
+    //now create the asset node
+    BrowseNode node = newNode(repositoryName, format, paths);
     ODocument document = findNodeRecord(db, node);
     if (document == null) {
       // complete the new entity before persisting
       node.setAssetId(EntityHelper.id(asset));
-      node.setAssetNameLowercase(lower(asset.name()));
       addEntity(db, node);
     }
     else {
@@ -257,7 +258,13 @@ public class BrowseNodeEntityAdapter
       if (oldAssetId == null) {
         // shortcut: merge new information directly into existing record
         document.field(P_ASSET_ID, newAssetId);
-        document.field(P_ASSET_NAME_LOWERCASE, lower(asset.name()));
+        String path = document.field(P_PATH, OType.STRING);
+
+        //if this node is now an asset, we don't want a trailing slash
+        if (!asset.name().endsWith("/") && path.endsWith("/")) {
+          path = path.substring(0, path.length() - 1);
+          document.field(P_PATH, path);
+        }
         document.save();
       }
       else if (!oldAssetId.equals(newAssetId)) {
@@ -268,13 +275,42 @@ public class BrowseNodeEntityAdapter
   }
 
   /**
+   * Iterate over the list of path strings, and create a browse node for each one if not already there.
+   */
+  private void maybeCreateParentNodes(final ODatabaseDocumentTx db,
+                                      final String repositoryName,
+                                      final String format,
+                                      final List<BrowsePaths> paths)
+  {
+    for (int i = paths.size() ; i > 0 ; i--) {
+      BrowseNode parentNode = newNode(repositoryName, format, paths.subList(0, i));
+      if (!parentNode.getPath().endsWith("/")) {
+        parentNode.setPath(parentNode.getPath() + "/");
+      }
+      ODocument document = findNodeRecord(db, parentNode);
+      if (document == null) {
+        addEntity(db, parentNode);
+      }
+      else {
+        //if the parent exists, but doesn't have proper folder path (ending with "/") change it
+        //this would typically only happen with nested assets
+        if (!document.field(P_PATH).toString().endsWith("/")) {
+          document.field(P_PATH, document.field(P_PATH) + "/");
+          document.save();
+        }
+        break;
+      }
+    }
+  }
+
+  /**
    * Creates a basic {@link BrowseNode} for the given repository and path.
    */
-  private static BrowseNode newNode(final String repositoryName, final List<String> path) {
+  private static BrowseNode newNode(final String repositoryName, final String format, final List<BrowsePaths> paths) {
     BrowseNode node = new BrowseNode();
     node.setRepositoryName(repositoryName);
-    node.setParentPath(joinPath(path.subList(0, path.size() - 1)));
-    node.setName(path.get(path.size() - 1));
+    node.setFormat(format);
+    node.setPaths(paths);
     return node;
   }
 
@@ -284,7 +320,7 @@ public class BrowseNodeEntityAdapter
   @Nullable
   private static ODocument findNodeRecord(final ODatabaseDocumentTx db, BrowseNode node) {
     return getFirst(
-        db.command(new OCommandSQL(FIND_BY_PATH)).execute(
+        db.command(new OCommandSQL(FIND_BY_PARENT_PATH)).execute(
             ImmutableMap.of(
                 P_REPOSITORY_NAME, node.getRepositoryName(),
                 P_PARENT_PATH, node.getParentPath(),
@@ -308,6 +344,7 @@ public class BrowseNodeEntityAdapter
         document.save();
       }
       else {
+        maybeDeleteParents(db, document.field(P_REPOSITORY_NAME), document.field(P_PARENT_PATH));
         document.delete();
       }
     });
@@ -326,10 +363,10 @@ public class BrowseNodeEntityAdapter
       if (document.containsField(P_COMPONENT_ID)) {
         // component still exists, just remove asset details
         document.removeField(P_ASSET_ID);
-        document.removeField(P_ASSET_NAME_LOWERCASE);
         document.save();
       }
       else {
+        maybeDeleteParents(db, document.field(P_REPOSITORY_NAME), document.field(P_PARENT_PATH));
         document.delete();
       }
     }
@@ -353,92 +390,70 @@ public class BrowseNodeEntityAdapter
                                     final String assetFilter,
                                     final Map<String, Object> filterParameters)
   {
-    // timeout function which helps avoid runaway subtree queries when filtering assets
-    UnaryOperator<OCommandSQL> timeoutFunction = configureTimeoutFunction(assetFilter);
-
-    List<BrowseNode> listing = new ArrayList<>();
-
     Map<String, Object> parameters = new HashMap<>(filterParameters);
     parameters.put(P_REPOSITORY_NAME, repositoryName);
 
-    // STEP 1: make a note of any direct child nodes with visible assets (or no asset)
-
-    OCommandSQL sql = buildQuery(FIND_CHILDREN, true, assetFilter, maxNodes);
+    // STEP 1: make a note of any direct child nodes that are visible
+    OCommandSQL sql = buildQuery(FIND_CHILDREN, assetFilter, maxNodes);
 
     String basePath = joinPath(path);
     parameters.put(BASE_PATH, basePath);
 
-    Map<String, BrowseNode> children = new HashMap<>();
-    transform(db.command(sql).execute(parameters)).forEach(child -> {
-      children.put(child.getName(), child);
+    List<BrowseNode> children = newArrayList(transform(db.command(sql).execute(parameters)));
+
+    children.forEach(child -> {
+      // STEP 2: check if the child has any children of its own, if not, it's a leaf
+      List<ODocument> result = db.command(new OCommandSQL(COUNT_CHILDREN)).execute(
+          ImmutableMap.of(P_REPOSITORY_NAME, repositoryName, BASE_PATH, child.getParentPath() + child.getName() + "/"));
+
+      if ((long) result.get(0).field("count") == 0) {
+        child.setLeaf(true);
+      }
     });
 
-    // STEP 2: search for the first subtree with at least one (indirect) visible asset
-
-    sql = buildQuery(FIND_FIRST_SUBTREE, false, assetFilter, 1);
-
-    // subtree nodes have paths greater than '/org/foo/base/' and less than '/org/foo/base0'
-    String baseBoundary = basePath.substring(0, basePath.length() - 1) + '0';
-    parameters.put(BASE_BOUNDARY, baseBoundary);
-
-    List<ODocument> subtree = db.command(timeoutFunction.apply(sql)).execute(parameters);
-
-    sql = buildQuery(FIND_NEXT_SUBTREE, false, assetFilter, 1);
-
-    while (!subtree.isEmpty() && listing.size() < maxNodes) {
-
-      // STEP 3: build node from subtree path, using direct child nodes to fill in details
-
-      // extract the name of the child folder directly under the base path
-      String childName = childName(basePath, subtree.get(0).field(P_PARENT_PATH));
-
-      // use direct child node if available, as it has the component/asset detail
-      BrowseNode child = children.remove(childName);
-      if (child == null) {
-        // otherwise create a placeholder/virtual node that leads to the subtree
-        child = new BrowseNode();
-        child.setRepositoryName(repositoryName);
-        child.setParentPath(basePath);
-        child.setName(childName);
-      }
-      listing.add(child);
-
-      // STEP 4: move on to the next subtree with at least one (indirect) visible asset
-
-      // jump past the current subtree, for example if the last subtree was '/org/foo/base/wibble/'
-      // then we kick-off the next search with any paths greater or equal to '/org/foo/base/wibble0'
-
-      String subtreeBoundary = basePath + childName + '0';
-      parameters.put(SUBTREE_BOUNDARY, subtreeBoundary);
-
-      subtree = db.command(timeoutFunction.apply(sql)).execute(parameters);
-    }
-
-    // STEP 5: add any leftover direct child nodes with visible assets, and mark them as leaves
-
-    for (BrowseNode child : children.values()) {
-      if (child.getAssetId() != null) {
-        child.setLeaf(true); // we know this is a leaf because we didn't find a matching subtree
-        listing.add(child);
-      }
-    }
-
-    return listing;
+    return children;
   }
 
   /**
-   * Function that applies a gradually reducing timeout across successive queries until a deadline.
+   * remove any parent nodes that only contain 1 child, and if not an asset/component node of course
    */
-  private UnaryOperator<OCommandSQL> configureTimeoutFunction(final String assetFilter) {
-    // only apply if we're filtering assets as that's when subtree queries could take a while
-    if (timeoutMillis > 0 && !assetFilter.isEmpty()) {
-      long deadlineMillis = System.currentTimeMillis() + timeoutMillis;
-      return sql -> {
-        long remainingMillis = Math.max(1, deadlineMillis - System.currentTimeMillis());
-        return new OCommandSQL(sql.getText() + " timeout " + remainingMillis + " return");
-      };
+  private void maybeDeleteParents(final ODatabaseDocumentTx db, final String repositoryName, final String parentPath) {
+    if (!"/".equals(parentPath)) {
+      List<ODocument> result = db.command(new OCommandSQL(COUNT_CHILDREN))
+          .execute(ImmutableMap.of(P_REPOSITORY_NAME, repositoryName, BASE_PATH, parentPath));
+
+      //count of 1 meaning the node we are currently deleting
+      if ((long) result.get(0).field("count") == 1) {
+        ODocument parent = getFirst(db.command(new OCommandSQL(FIND_BY_PARENT_PATH)).execute(ImmutableMap
+            .of(P_REPOSITORY_NAME, repositoryName, P_PARENT_PATH, previousParentPath(parentPath), P_NAME,
+                previousParentName(parentPath))), null);
+
+        if (parent != null && parent.field(P_COMPONENT_ID) == null && parent.field(P_ASSET_ID) == null) {
+          maybeDeleteParents(db, repositoryName, parent.field(P_PARENT_PATH));
+          parent.delete();
+        }
+      }
     }
-    return UnaryOperator.identity(); // otherwise apply no timeout
+  }
+
+  /**
+   * take a string path and return the string at the previous level, i.e. "/foo/bar/com/" -> "/foo/bar/"
+   */
+  private String previousParentPath(String parentPath) {
+    //parentPath always ends with slash, pull it out for this check
+    String withoutSlash = parentPath.substring(0, parentPath.length() - 1);
+    //make sure to include the slash
+    return withoutSlash.substring(0, withoutSlash.lastIndexOf('/') + 1);
+  }
+
+  /**
+   * take a string path and return the string of the last segment, i.e. "/foo/bar/com/" -> "com"
+   */
+  private String previousParentName(String parentPath) {
+    //parentPath always ends with slash, pull it out for this check
+    String withoutSlash = parentPath.substring(0, parentPath.length() - 1);
+
+    return withoutSlash.substring(withoutSlash.lastIndexOf('/') + 1);
   }
 
   /**
@@ -451,36 +466,19 @@ public class BrowseNodeEntityAdapter
   }
 
   /**
-   * Extracts the name of the folder directly after the base path.
-   *
-   * Assumes basePath is a prefix of path, and basePath ends in a slash.
-   */
-  private static String childName(final String basePath, final String path) {
-    return path.substring(basePath.length(), path.indexOf('/', basePath.length()));
-  }
-
-  /**
    * Builds a visible node query from the primary select clause, optional asset filter, and limit.
    *
    * Optionally include nodes which don't have assets (regardless of the filter) to allow their
    * component details to be used in the final listing when they overlap with visible subtrees.
    */
-  private static OCommandSQL buildQuery(final String select,
-                                        final boolean includeNonAssetNodes,
+  private OCommandSQL buildQuery(final String select,
                                         final String assetFilter,
                                         final int limit)
   {
     StringBuilder buf = new StringBuilder(select);
 
     if (!assetFilter.isEmpty()) {
-      buf.append(" and (").append(P_ASSET_ID);
-      if (includeNonAssetNodes) {
-        buf.append(" is null or ");
-      }
-      else {
-        buf.append(" is not null and ");
-      }
-      buf.append(assetFilter).append(')');
+      buf.append(" and (").append(assetFilter).append(')');
     }
 
     buf.append(" limit ").append(limit);

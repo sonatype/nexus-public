@@ -25,12 +25,9 @@ import org.sonatype.nexus.repository.storage.Component;
 public abstract class ComponentPathBrowseNodeGenerator
     extends AssetPathBrowseNodeGenerator
 {
-  /**
-   * Component path is one level above the asset path.
-   */
   @Override
-  public List<String> computeComponentPath(final Asset asset, final Component component) {
-    List<String> assetPath = computeAssetPath(asset, component);
-    return assetPath.subList(0, assetPath.size() - 1);
+  public List<BrowsePaths> computeComponentPaths(final Asset asset, final Component component) {
+    List<BrowsePaths> assetPaths = computeAssetPaths(asset, component);
+    return assetPaths.subList(0, assetPaths.size() - 1);
   }
 }

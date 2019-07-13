@@ -1,0 +1,69 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AnonymousSettings renders correctly 1`] = `
+<ContentBody>
+  <SettingsSection
+    isLoading={true}
+  >
+    <Component
+      labelText="Access:"
+    >
+      <Checkbox
+        isChecked={false}
+        labelText="Allow anonymous users to access the server"
+        name="enabled"
+        onChange={[Function]}
+      />
+    </Component>
+    <Component
+      labelText="Username:"
+    >
+      <Textfield
+        isRequired={false}
+        name="userId"
+        onChange={[Function]}
+        style={
+          Object {
+            "width": "250px",
+          }
+        }
+        value=""
+      />
+    </Component>
+    <Component
+      labelText="Realm:"
+    >
+      <Select
+        name="realmName"
+        onChange={[Function]}
+        style={
+          Object {
+            "width": "250px",
+          }
+        }
+        value=""
+      />
+    </Component>
+    <Component>
+      <Button
+        disabled={true}
+        isPrimary={true}
+        onClick={[Function]}
+        style={
+          Object {
+            "marginRight": "10px",
+          }
+        }
+      >
+        Save
+      </Button>
+      <Button
+        disabled={true}
+        onClick={[Function]}
+      >
+        Discard
+      </Button>
+    </Component>
+  </SettingsSection>
+</ContentBody>
+`;

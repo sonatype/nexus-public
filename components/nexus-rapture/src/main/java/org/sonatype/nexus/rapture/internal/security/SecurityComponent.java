@@ -13,8 +13,6 @@
 package org.sonatype.nexus.rapture.internal.security;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -179,14 +177,11 @@ public class SecurityComponent
   public Map<String, Object> getState() {
     Map<String, Object> state = new HashMap<>();
     state.put("user", getUser());
-    state.put("permissions", getPermissions());
 
     AnonymousConfiguration anonymousConfiguration = anonymousManager.getConfiguration();
     state.put("anonymousUsername", anonymousConfiguration.isEnabled() ? anonymousConfiguration.getUserId() : null);
     return state;
   }
-
-  // FIXME: Avoid calculating permissions for every poll request
 
   private List<PermissionXO> calculatePermissions(final Subject subject) {
     log.debug("Calculating permissions");
@@ -211,15 +206,6 @@ public class SecurityComponent
         result.add(entry);
       }
     }
-
-    // FIXME: Permissions must be sorted for state-hash calculation :-(
-    Collections.sort(result, new Comparator<PermissionXO>()
-    {
-      @Override
-      public int compare(final PermissionXO o1, final PermissionXO o2) {
-        return o1.getId().compareTo(o2.getId());
-      }
-    });
 
     return result;
   }

@@ -13,8 +13,8 @@
 import PropTypes from 'prop-types';
 import React, {useEffect, useRef, useState} from 'react';
 
-import Colors from '../../constants/Colors';
-import UIStrings from '../../constants/UIStrings';
+import Colors from '../../../../constants/Colors';
+import UIStrings from '../../../../constants/UIStrings';
 
 export default function SettingsSection({isLoading, children}) {
   const wrapperRef = useRef();

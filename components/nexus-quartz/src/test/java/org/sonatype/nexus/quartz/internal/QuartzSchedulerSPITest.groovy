@@ -75,9 +75,9 @@ import static org.mockito.Mockito.verify
 import static org.mockito.Mockito.verifyNoMoreInteractions
 import static org.mockito.Mockito.when
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED
-import static org.sonatype.nexus.quartz.internal.task.QuartzTaskState.LAST_RUN_STATE_END_STATE
-import static org.sonatype.nexus.quartz.internal.task.QuartzTaskState.LAST_RUN_STATE_RUN_DURATION
-import static org.sonatype.nexus.quartz.internal.task.QuartzTaskState.LAST_RUN_STATE_RUN_STARTED
+import static org.sonatype.nexus.scheduling.TaskConfiguration.LAST_RUN_STATE_END_STATE
+import static org.sonatype.nexus.scheduling.TaskConfiguration.LAST_RUN_STATE_RUN_DURATION
+import static org.sonatype.nexus.scheduling.TaskConfiguration.LAST_RUN_STATE_RUN_STARTED
 import static org.sonatype.nexus.scheduling.TaskState.FAILED
 import static org.sonatype.nexus.scheduling.TaskState.INTERRUPTED
 import static org.sonatype.nexus.scheduling.TaskState.OK

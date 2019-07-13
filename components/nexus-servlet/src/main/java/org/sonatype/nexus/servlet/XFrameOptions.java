@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-package org.sonatype.nexus.internal.security;
+package org.sonatype.nexus.servlet;
 
 import java.io.Serializable;
 import java.util.HashSet;
@@ -26,7 +26,8 @@ import javax.inject.Singleton;
  */
 @Named
 @Singleton
-public class XFrameOptions implements Serializable
+public class XFrameOptions
+    implements Serializable
 {
   private static final long serialVersionUID = 5092514762222572451L;
 

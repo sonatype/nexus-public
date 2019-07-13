@@ -180,7 +180,6 @@ class TasksResourceTest
     String message
     String triggerSource
     TaskInfo.CurrentState currentState
-    TaskInfo.LastRunState lastRunState
     TaskConfiguration configuration
     Schedule schedule
 

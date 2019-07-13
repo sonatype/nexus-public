@@ -38,6 +38,7 @@ import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.extdirect.DirectComponent;
 import org.sonatype.nexus.security.authc.AntiCsrfHelper;
+import org.sonatype.nexus.servlet.XFrameOptions;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
@@ -67,6 +68,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.net.HttpHeaders.X_FRAME_OPTIONS;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.commons.lang.StringEscapeUtils.escapeHtml;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
@@ -91,16 +93,20 @@ public class ExtDirectServlet
 
   private final ExtDirectDispatcher extDirectDispatcher;
 
+  private final XFrameOptions xFrameOptions;
+
   @Inject
   public ExtDirectServlet(final ApplicationDirectories directories,
                           final BeanLocator beanLocator,
                           final ExtDirectDispatcher extDirectDispatcher,
+                          final XFrameOptions xFrameOptions,
                           @Named("${nexus.security.anticsrftoken.enabled:-true}") final boolean antiCsrfTokenEnabled)
   {
     super(antiCsrfTokenEnabled, AntiCsrfHelper.ANTI_CSRF_TOKEN_NAME, -1);
     this.directories = checkNotNull(directories);
     this.beanLocator = checkNotNull(beanLocator);
     this.extDirectDispatcher = checkNotNull(extDirectDispatcher);
+    this.xFrameOptions = checkNotNull(xFrameOptions);
   }
 
   @Override
@@ -134,6 +140,7 @@ public class ExtDirectServlet
 
         // Send the error from the exception in a json object so we may capture it on the frontend.
         response.setContentType("text/html");
+        response.setHeader(X_FRAME_OPTIONS, xFrameOptions.getValueForPath(request.getPathInfo()));
         response.getWriter().append("<html><body><textarea>{\"tid\":" + tid +
             ",\"action\":\"coreui_Upload\",\"method\":\"doUpload\",\"result\":{\"success\": false,\"message\":\"" +
             escapeHtml(fileUploadException.getMessage()) + "\"},\"type\":\"rpc\"}</textarea></body></html>").flush();

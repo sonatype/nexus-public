@@ -42,6 +42,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_FORMAT;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
 /**
  * Custom {@link OSQLFunction} for applying a jexl expression and repository(ies) to an individual asset as part of a
@@ -122,8 +124,9 @@ public class ContentExpressionFunction
       }
     }
 
-    return contentAuthHelper.checkAssetPermissions(asset, membersForAuth.toArray(new String[membersForAuth.size()])) &&
-        checkJexlExpression(asset, jexlExpression, asset.field(AssetEntityAdapter.P_FORMAT, String.class));
+    return contentAuthHelper.checkPathPermissions(asset.field(P_NAME), asset.field(P_FORMAT),
+        membersForAuth.toArray(new String[membersForAuth.size()])) && checkJexlExpression(asset, jexlExpression,
+        asset.field(AssetEntityAdapter.P_FORMAT, String.class));
   }
 
   @Nullable
@@ -134,7 +137,7 @@ public class ContentExpressionFunction
   }
 
   private String getAssetName(ODocument asset) {
-    return asset.field(AssetEntityAdapter.P_NAME, String.class);
+    return asset.field(P_NAME, String.class);
   }
 
   private boolean checkJexlExpression(final ODocument asset,

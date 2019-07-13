@@ -14,10 +14,12 @@ package org.sonatype.nexus.repository.npm.internal;
 
 import java.util.List;
 
+import javax.annotation.Nullable;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.browse.AssetPathBrowseNodeGenerator;
+import org.sonatype.nexus.repository.browse.BrowsePaths;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
 
@@ -43,11 +45,10 @@ public class NpmBrowseNodeGenerator
    * </ul>
    */
   @Override
-  public List<String> computeAssetPath(final Asset asset, final Component component) {
+  public List<BrowsePaths> computeAssetPaths(final Asset asset, @Nullable final Component component) {
     checkNotNull(asset);
 
-    return super.computeAssetPath(asset, component).stream()
-        .filter(nameComponent -> !"-".equals(nameComponent))
+    return super.computeAssetPaths(asset, component).stream().filter(paths -> !"-".equals(paths.getBrowsePath()))
         .collect(toList());
   }
 }

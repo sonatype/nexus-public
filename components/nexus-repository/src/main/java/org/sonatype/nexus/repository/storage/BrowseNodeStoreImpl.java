@@ -31,11 +31,11 @@ import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
-import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
+import org.sonatype.nexus.repository.browse.BrowsePaths;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.repository.types.GroupType;
@@ -61,7 +61,8 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;
 import static org.sonatype.nexus.repository.storage.BrowseNodeEntityAdapter.AUTHZ_REPOSITORY_NAME;
 import static org.sonatype.nexus.repository.storage.BrowseNodeEntityAdapter.P_ASSET_ID;
-import static org.sonatype.nexus.repository.storage.BrowseNodeEntityAdapter.P_ASSET_NAME_LOWERCASE;
+import static org.sonatype.nexus.repository.storage.BrowseNodeEntityAdapter.P_FORMAT;
+import static org.sonatype.nexus.repository.storage.BrowseNodeEntityAdapter.P_PATH;
 
 /**
  * @since 3.7
@@ -117,20 +118,28 @@ public class BrowseNodeStoreImpl
 
   @Override
   @Guarded(by = STARTED)
-  public void createComponentNode(final String repositoryName, final List<String> path, final Component component) {
+  public void createComponentNode(final String repositoryName,
+                                  final String format,
+                                  final List<BrowsePaths> paths,
+                                  final Component component)
+  {
     inTxRetry(databaseInstance)
         // handle case where assets try to create the exact same component-level path at once
         .retryOn(ONeedRetryException.class, ORecordDuplicatedException.class)
-        .run(db -> entityAdapter.createComponentNode(db, repositoryName, path, component));
+        .run(db -> entityAdapter.createComponentNode(db, repositoryName, format, paths, component));
   }
 
   @Override
   @Guarded(by = STARTED)
-  public void createAssetNode(final String repositoryName, final List<String> path, final Asset asset) {
+  public void createAssetNode(final String repositoryName,
+                              final String format,
+                              final List<BrowsePaths> paths,
+                              final Asset asset)
+  {
     inTxRetry(databaseInstance)
         // handle case where an asset and its component try to create the exact same path at once
         .retryOn(ONeedRetryException.class, ORecordDuplicatedException.class)
-        .run(db -> entityAdapter.createAssetNode(db, repositoryName, path, asset));
+        .run(db -> entityAdapter.createAssetNode(db, repositoryName, format, paths, asset));
   }
 
   @Override
@@ -171,8 +180,7 @@ public class BrowseNodeStoreImpl
   @Guarded(by = STARTED)
   public Iterable<BrowseNode> getByPath(final Repository repository,
                                         final List<String> path,
-                                        final int maxNodes,
-                                        @Nullable final String keyword)
+                                        final int maxNodes)
   {
     List<SelectorConfiguration> selectors = emptyList();
 
@@ -187,7 +195,7 @@ public class BrowseNodeStoreImpl
     }
 
     Map<String, Object> filterParameters = new HashMap<>();
-    String assetFilter = buildAssetFilter(repository, keyword, selectors, filterParameters);
+    String assetFilter = buildAssetFilter(repository, selectors, filterParameters);
 
     BrowseNodeFilter filter = browseNodeFilters.getOrDefault(repository.getFormat().getValue(), (node, name) -> true);
 
@@ -247,18 +255,11 @@ public class BrowseNodeStoreImpl
    * Builds an asset filter in SQL for the current user.
    */
   private String buildAssetFilter(final Repository repository,
-                                  @Nullable final String keyword,
                                   final List<SelectorConfiguration> selectors,
                                   final Map<String, Object> filterParameters)
   {
     StringBuilder filterBuilder = new StringBuilder();
-    if (keyword != null) {
-      appendKeywordFilter(filterBuilder, keyword, filterParameters);
-    }
     if (!selectors.isEmpty()) {
-      if (filterBuilder.length() > 0) {
-        filterBuilder.append(" and ");
-      }
       appendContentAuthFilter(filterBuilder, repository, selectors, filterParameters);
     }
     return filterBuilder.toString();
@@ -269,17 +270,6 @@ public class BrowseNodeStoreImpl
    */
   private boolean hasBrowsePermission(final String repositoryName, final String format) {
     return securityHelper.anyPermitted(new RepositoryViewPermission(format, repositoryName, BreadActions.BROWSE));
-  }
-
-  /**
-   * Appends a keyword filter in SQL.
-   */
-  private void appendKeywordFilter(final StringBuilder filterBuilder,
-                                   final String keyword,
-                                   final Map<String, Object> filterParameters)
-  {
-    filterBuilder.append(P_ASSET_NAME_LOWERCASE).append(" like :keyword_filter");
-    filterParameters.put("keyword_filter", '%' + Strings2.lower(keyword) + '%');
   }
 
   /**
@@ -298,8 +288,8 @@ public class BrowseNodeStoreImpl
     }
 
     SelectorSqlBuilder sqlBuilder = new SelectorSqlBuilder()
-        .propertyAlias("path", P_ASSET_ID + ".name")
-        .propertyAlias("format", P_ASSET_ID + ".format")
+        .propertyAlias("path", P_PATH)
+        .propertyAlias("format", P_FORMAT)
         .propertyPrefix(P_ASSET_ID + ".attributes." + format + ".");
 
     int cselCount = 0;
@@ -335,7 +325,8 @@ public class BrowseNodeStoreImpl
       }
 
       // call 'contentAuth' function if we need to evaluate any non-CSEL selectors (such as JEXL based selectors)
-      filterBuilder.append(String.format("contentAuth(@this.%s, :%s, true) = true", P_ASSET_ID, AUTHZ_REPOSITORY_NAME));
+      filterBuilder.append(
+          String.format("contentAuth(@this.%s, @this.%s, :%s, true) = true", P_PATH, P_FORMAT, AUTHZ_REPOSITORY_NAME));
 
       filterParameters.put(AUTHZ_REPOSITORY_NAME, repositoryName);
     }

@@ -14,43 +14,40 @@ package org.sonatype.nexus.repository.browse.internal;
 
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.browse.BrowseNodeGenerator;
+import org.sonatype.nexus.repository.browse.BrowsePaths;
+import org.sonatype.nexus.repository.browse.BrowseTestSupport;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
-import org.sonatype.nexus.repository.storage.DefaultComponent;
 
 import org.junit.Test;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class DefaultBrowseNodeGeneratorTest
-    extends TestSupport
+    extends BrowseTestSupport
 {
   private BrowseNodeGenerator generator = new DefaultBrowseNodeGenerator();
 
   @Test
   public void computeAssetPathWithNoComponent() {
-    Component component = null;
     Asset asset = createAsset("/path/asset");
 
-    List<String> path = generator.computeAssetPath(asset, component);
+    List<BrowsePaths> paths = generator.computeAssetPaths(asset, null);
 
-    assertThat(path, contains("path", "asset"));
+    assertPaths(asList("path", "asset"), paths);
   }
 
   @Test
   public void computeAssetPathWithNoComponent_trailingSlash() {
-    Component component = null;
     Asset asset = createAsset("/path/asset/");
 
-    List<String> path = generator.computeAssetPath(asset, component);
+    List<BrowsePaths> paths = generator.computeAssetPaths(asset, null);
 
-    assertThat(path, contains("path", "asset"));
+    assertPaths(asList("path", "asset"), paths);
   }
 
   @Test
@@ -58,9 +55,9 @@ public class DefaultBrowseNodeGeneratorTest
     Component component = createComponent("component", null, null);
     Asset asset = createAsset("path/assetName");
 
-    List<String> path = generator.computeAssetPath(asset, component);
+    List<BrowsePaths> paths = generator.computeAssetPaths(asset, component);
 
-    assertThat(path, contains(component.name(), "assetName"));
+    assertPaths(asList(component.name(), "assetName"), paths);
   }
 
   @Test
@@ -68,9 +65,9 @@ public class DefaultBrowseNodeGeneratorTest
     Component component = createComponent("component", null, "1.0.0");
     Asset asset = createAsset("path/assetName");
 
-    List<String> path = generator.computeAssetPath(asset, component);
+    List<BrowsePaths> paths = generator.computeAssetPaths(asset, component);
 
-    assertThat(path, contains(component.name(), component.version(), "assetName"));
+    assertPaths(asList(component.name(), component.version(), "assetName"), paths);
   }
 
   @Test
@@ -78,9 +75,9 @@ public class DefaultBrowseNodeGeneratorTest
     Component component = createComponent("component", "group", "1.0.0");
     Asset asset = createAsset("path/assetName");
 
-    List<String> path = generator.computeAssetPath(asset, component);
+    List<BrowsePaths> paths = generator.computeAssetPaths(asset, component);
 
-    assertThat(path, contains(component.group(), component.name(), component.version(), "assetName"));
+    assertPaths(asList(component.group(), component.name(), component.version(), "assetName"), paths);
   }
 
   @Test
@@ -88,9 +85,9 @@ public class DefaultBrowseNodeGeneratorTest
     Component component = createComponent("component", null, null);
     Asset asset = createAsset("path/assetName");
 
-    List<String> path = generator.computeComponentPath(asset, component);
+    List<BrowsePaths> paths = generator.computeComponentPaths(asset, component);
 
-    assertThat(path, contains(component.name()));
+    assertPaths(singletonList(component.name()), paths, true);
   }
 
   @Test
@@ -98,9 +95,9 @@ public class DefaultBrowseNodeGeneratorTest
     Component component = createComponent("component", null, "1.0.0");
     Asset asset = createAsset("path/assetName");
 
-    List<String> path = generator.computeComponentPath(asset, component);
+    List<BrowsePaths> paths = generator.computeComponentPaths(asset, component);
 
-    assertThat(path, contains(component.name(), component.version()));
+    assertPaths(asList(component.name(), component.version()), paths, true);
   }
 
   @Test
@@ -108,9 +105,9 @@ public class DefaultBrowseNodeGeneratorTest
     Component component = createComponent("component", "group", "1.0.0");
     Asset asset = createAsset("path/assetName");
 
-    List<String> path = generator.computeComponentPath(asset, component);
+    List<BrowsePaths> paths = generator.computeComponentPaths(asset, component);
 
-    assertThat(path, contains(component.group(), component.name(), component.version()));
+    assertPaths(asList(component.group(), component.name(), component.version()), paths, true);
   }
 
   @Test
@@ -133,23 +130,5 @@ public class DefaultBrowseNodeGeneratorTest
     assertThat(generator.lastSegment("/a/b/"), is("b"));
     assertThat(generator.lastSegment("a/.b"), is(".b"));
     assertThat(generator.lastSegment("a/b.c"), is("b.c"));
-  }
-
-  private Asset createAsset(final String assetName) {
-    Asset asset = mock(Asset.class);
-    when(asset.name()).thenReturn(assetName);
-    return asset;
-  }
-
-  private Component createComponent(final String name,
-                                    final String group,
-                                    final String version)
-  {
-    Component component = new DefaultComponent();
-    component.name(name);
-    component.group(group);
-    component.version(version);
-
-    return component;
   }
 }

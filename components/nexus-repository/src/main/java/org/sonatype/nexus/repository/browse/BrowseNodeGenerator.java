@@ -26,15 +26,9 @@ import org.sonatype.nexus.repository.storage.Component;
  */
 public interface BrowseNodeGenerator
 {
-  /**
-   * @return the path to the asset
-   */
-  List<String> computeAssetPath(Asset asset, @Nullable Component component);
+  List<BrowsePaths> computeAssetPaths(Asset asset, @Nullable Component component);
 
-  /**
-   * @return the path to the component
-   */
-  List<String> computeComponentPath(Asset asset, Component component);
+  List<BrowsePaths> computeComponentPaths(Asset asset, Component component);
 
   /**
    * @return last segment of the given path string

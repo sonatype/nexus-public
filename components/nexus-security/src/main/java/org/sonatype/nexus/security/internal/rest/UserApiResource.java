@@ -248,6 +248,6 @@ public class UserApiResource
   }
 
   private WebApplicationMessageException createWebException(final Status status, final String message) {
-    return new WebApplicationMessageException(status, message, MediaType.APPLICATION_JSON);
+    return new WebApplicationMessageException(status, "\"" + message + "\"", MediaType.APPLICATION_JSON);
   }
 }

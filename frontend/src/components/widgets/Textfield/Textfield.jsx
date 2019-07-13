@@ -10,26 +10,11 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
 import PropTypes from 'prop-types';
 import React from 'react';
 
-import Colors from '../../constants/Colors';
-import UIStrings from '../../constants/UIStrings';
-
-const requiredErrorMessageStyle = {
-  alignItems: 'center',
-  color: Colors.TEXTFIELD.ERROR.FONT,
-  display: 'flex'
-};
-const errorTextStyle = {
-  padding: '2px 0 0 2px'
-};
-const RequiredErrorMessage = <span style={requiredErrorMessageStyle}>
-  <FontAwesomeIcon icon={faExclamationCircle} />
-  <span style={errorTextStyle}> { UIStrings.ERROR.FIELD_REQUIRED } </span>
-</span>;
+import Colors from '../../../constants/Colors';
+import RequiredErrorMessage from '../RequiredErrorMessage/RequiredErrorMessage';
 
 export default function Textfield({name, value, onChange, isRequired, style}) {
   const isMissingRequiredValue = isRequired && !value;
@@ -51,7 +36,7 @@ export default function Textfield({name, value, onChange, isRequired, style}) {
         onChange={onChange}
         style={inputStyle}
     />
-    { isMissingRequiredValue ? RequiredErrorMessage : null }
+    {isMissingRequiredValue ? <RequiredErrorMessage/> : null}
   </>;
 }
 

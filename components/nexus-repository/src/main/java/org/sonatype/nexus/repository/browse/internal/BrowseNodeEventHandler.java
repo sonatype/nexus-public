@@ -56,13 +56,11 @@ public class BrowseNodeEventHandler
   }
 
   @Subscribe
-  @AllowConcurrentEvents
   public void on(final AssetDeletedEvent event) {
     handle(event, e -> browseNodeManager.deleteAssetNode(e.getAssetId()));
   }
 
   @Subscribe
-  @AllowConcurrentEvents
   public void on(final ComponentDeletedEvent event) {
     handle(event, e -> browseNodeManager.deleteComponentNode(e.getComponentId()));
   }

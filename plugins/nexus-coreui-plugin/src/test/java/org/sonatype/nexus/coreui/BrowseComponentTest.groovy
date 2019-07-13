@@ -64,11 +64,10 @@ class BrowseComponentTest
     when: 'Requesting the list of root nodes'
       TreeStoreLoadParameters treeStoreLoadParameters = new TreeStoreLoadParameters(
           repositoryName: REPOSITORY_NAME,
-          node: ROOT,
-          filter: 'foo')
+          node: ROOT)
 
       1 * repositoryManager.get(REPOSITORY_NAME) >> repository
-      1 * browseNodeStore.getByPath(repository, [], configuration.maxHtmlNodes,'foo') >> browseNodes
+      1 * browseNodeStore.getByPath(repository, [], configuration.maxHtmlNodes) >> browseNodes
       List<BrowseNodeXO> xos = browseComponent.read(treeStoreLoadParameters)
 
     then: 'the 3 root entries are returned'
@@ -87,11 +86,10 @@ class BrowseComponentTest
     when: 'Requesting the list of root nodes'
       TreeStoreLoadParameters treeStoreLoadParameters = new TreeStoreLoadParameters(
           repositoryName: REPOSITORY_NAME,
-          node: 'com/boogie/down',
-          filter: null)
+          node: 'com/boogie/down')
 
       1 * repositoryManager.get(REPOSITORY_NAME) >> repository
-      1 * browseNodeStore.getByPath(repository, ['com','boogie','down'], configuration.maxHtmlNodes, null) >> browseNodes
+      1 * browseNodeStore.getByPath(repository, ['com','boogie','down'], configuration.maxHtmlNodes) >> browseNodes
       List<BrowseNodeXO> xos = browseComponent.read(treeStoreLoadParameters)
 
     then: 'the 3 entries are returned'
@@ -113,7 +111,7 @@ class BrowseComponentTest
         node: 'com/boo%2Fgie/down')
 
       1 * repositoryManager.get(REPOSITORY_NAME) >> repository
-      1 * browseNodeStore.getByPath(repository, ['com','boo/gie','down'], configuration.maxHtmlNodes, null) >> browseNodes
+      1 * browseNodeStore.getByPath(repository, ['com','boo/gie','down'], configuration.maxHtmlNodes) >> browseNodes
     List<BrowseNodeXO> xos = browseComponent.read(treeStoreLoadParameters)
 
     then: 'the 3 entries are returned'

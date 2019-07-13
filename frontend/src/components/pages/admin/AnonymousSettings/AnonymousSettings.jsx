@@ -13,14 +13,14 @@
 import React, {useState, useEffect} from 'react';
 
 import Axios from 'axios';
-import Button from '../widgets/Button';
-import ContentBody from '../ContentBody';
-import Checkbox from '../widgets/Checkbox';
-import ExtJS from '../../interface/ExtJS';
-import SettingsSection from './SettingsSection';
-import Select from '../widgets/Select/Select';
-import Textfield from '../widgets/Textfield';
-import UIStrings from '../../constants/UIStrings';
+import Button from '../../../widgets/Button/Button';
+import Checkbox from '../../../widgets/Checkbox/Checkbox';
+import ContentBody from '../../../layout/common/ContentBody/ContentBody';
+import ExtJS from '../../../../interface/ExtJS';
+import Select from '../../../widgets/Select/Select';
+import SettingsSection from '../../../layout/admin/SettingsSection/SettingsSection';
+import Textfield from '../../../widgets/Textfield/Textfield';
+import UIStrings from '../../../../constants/UIStrings';
 
 export default function AnonymousSettings() {
   const [anonymousSettings, setAnonymousSettings] = useState({
@@ -28,9 +28,7 @@ export default function AnonymousSettings() {
     realmName: '',
     userId: ''
   });
-
   const [pristineSettings, setPristineSettings] = useState({});
-
   const [realmTypes, setRealmTypes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -140,7 +138,7 @@ export default function AnonymousSettings() {
         <Button
             isPrimary={true}
             style={primaryButtonStyle}
-            disabled={isPristine}
+            disabled={isPristine || !userId}
             onClick={handleSave}
         >
           {UIStrings.SETTINGS.SAVE_BUTTON_LABEL}

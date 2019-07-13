@@ -60,7 +60,6 @@ class BrowseComponent
   List<BrowseNodeXO> read(TreeStoreLoadParameters treeStoreLoadParameters) {
     String repositoryName = treeStoreLoadParameters.repositoryName
     String path = treeStoreLoadParameters.node
-    String filter = treeStoreLoadParameters.filter
 
     Repository repository = repositoryManager.get(repositoryName)
 
@@ -72,7 +71,7 @@ class BrowseComponent
       pathSegments = path.split('/').collect EncodingUtil.&urlDecode
     }
 
-    return browseNodeStore.getByPath(repository, pathSegments, configuration.maxNodes, filter).collect { browseNode ->
+    return browseNodeStore.getByPath(repository, pathSegments, configuration.maxNodes).collect { browseNode ->
       def encodedPath = EncodingUtil.urlEncode(browseNode.name)
       new BrowseNodeXO(
           id: isRoot(path) ? encodedPath : (path + '/' + encodedPath),

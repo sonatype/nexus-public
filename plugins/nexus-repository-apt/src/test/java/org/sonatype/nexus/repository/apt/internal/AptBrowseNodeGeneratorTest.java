@@ -14,22 +14,20 @@ package org.sonatype.nexus.repository.apt.internal;
 
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.repository.browse.BrowsePaths;
+import org.sonatype.nexus.repository.browse.BrowseTestSupport;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
-import org.sonatype.nexus.repository.storage.DefaultComponent;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static java.util.Arrays.asList;
 
 /**
  * @since 3.17
  */
 public class AptBrowseNodeGeneratorTest
-    extends TestSupport
+    extends BrowseTestSupport
 {
   private AptBrowseNodeGenerator generator = new AptBrowseNodeGenerator();
 
@@ -38,23 +36,7 @@ public class AptBrowseNodeGeneratorTest
     Component component = createComponent("nano", "amd64", "1.0.0");
     Asset asset = createAsset("path/assetName");
 
-    List<String> path = generator.computeComponentPath(asset, component);
-    assertEquals("packages/n/nano/1.0.0/amd64/nano", String.join("/", path));
-  }
-
-  private Asset createAsset(final String assetName) {
-    Asset asset = mock(Asset.class);
-    when(asset.name()).thenReturn(assetName);
-    return asset;
-  }
-
-  private Component createComponent(final String name, final String group, final String version)
-  {
-    Component component = new DefaultComponent();
-    component.name(name);
-    component.group(group);
-    component.version(version);
-
-    return component;
+    List<BrowsePaths> paths = generator.computeComponentPaths(asset, component);
+    assertPaths(asList("packages", "n", "nano", "1.0.0", "amd64", "nano"), paths, true);
   }
 }

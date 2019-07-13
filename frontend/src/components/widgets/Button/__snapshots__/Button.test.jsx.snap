@@ -1,0 +1,82 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Button allows for its style to be overriden 1`] = `
+<button
+  name="b1"
+  onChange={[Function]}
+  style={
+    Object {
+      "backgroundColor": "rgba(243, 243, 243, 1)",
+      "border": "none",
+      "borderRadius": "3px",
+      "color": "rgba(51, 51, 51, 1)",
+      "fontFamily": "inherit",
+      "fontSize": "1em",
+      "height": "2em",
+      "minWidth": "76px",
+      "opacity": "1",
+    }
+  }
+/>
+`;
+
+exports[`Button renders correctly 1`] = `
+<button
+  name="b1"
+  onChange={[Function]}
+  style={
+    Object {
+      "backgroundColor": "rgba(243, 243, 243, 1)",
+      "border": "solid 1px rgba(51, 51, 51, 1)",
+      "borderRadius": "3px",
+      "color": "rgba(51, 51, 51, 1)",
+      "fontFamily": "inherit",
+      "fontSize": "1em",
+      "height": "2em",
+      "minWidth": "76px",
+      "opacity": "1",
+    }
+  }
+/>
+`;
+
+exports[`Button renders correctly as a primary button 1`] = `
+<button
+  name="b1"
+  onChange={[Function]}
+  style={
+    Object {
+      "backgroundColor": "rgba(10, 108, 184, 1)",
+      "border": "solid 1px rgba(51, 51, 51, 1)",
+      "borderRadius": "3px",
+      "color": "white",
+      "fontFamily": "inherit",
+      "fontSize": "1em",
+      "height": "2em",
+      "minWidth": "76px",
+      "opacity": "1",
+    }
+  }
+/>
+`;
+
+exports[`Button renders correctly when disabled 1`] = `
+<button
+  disabled={true}
+  name="b1"
+  onChange={[Function]}
+  style={
+    Object {
+      "backgroundColor": "rgba(243, 243, 243, 1)",
+      "border": "solid 1px rgba(51, 51, 51, 1)",
+      "borderRadius": "3px",
+      "color": "rgba(51, 51, 51, 1)",
+      "fontFamily": "inherit",
+      "fontSize": "1em",
+      "height": "2em",
+      "minWidth": "76px",
+      "opacity": "0.5",
+    }
+  }
+/>
+`;

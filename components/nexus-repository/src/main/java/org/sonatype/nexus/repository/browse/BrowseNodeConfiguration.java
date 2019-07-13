@@ -15,11 +15,7 @@ package org.sonatype.nexus.repository.browse;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.sonatype.goodies.common.Time;
-
 import com.google.common.annotations.VisibleForTesting;
-
-import static org.sonatype.goodies.common.Time.seconds;
 
 /**
  * Configuration options for browse tree
@@ -39,27 +35,23 @@ public class BrowseNodeConfiguration
 
   private final int maxHtmlNodes;
 
-  private final Time queryTimeout;
-
   @Inject
   public BrowseNodeConfiguration(@Named("${nexus.browse.component.tree.automaticRebuild:-true}") final boolean automaticRebuild,
                                  @Named("${nexus.browse.component.tree.rebuildPageSize:-1000}") final int rebuildPageSize,
                                  @Named("${nexus.browse.component.tree.deletePageSize:-1000}") final int deletePageSize,
                                  @Named("${nexus.browse.component.tree.maxNodes:-10000}") final int maxNodes,
-                                 @Named("${nexus.browse.component.tree.maxHtmlNodes:-10000}") final int maxHtmlNodes,
-                                 @Named("${nexus.browse.component.tree.queryTimeout:-59s}") final Time queryTimeout)
+                                 @Named("${nexus.browse.component.tree.maxHtmlNodes:-10000}") final int maxHtmlNodes)
   {
     this.automaticRebuild = automaticRebuild;
     this.rebuildPageSize = rebuildPageSize;
     this.deletePageSize = deletePageSize;
     this.maxNodes = maxNodes;
     this.maxHtmlNodes = maxHtmlNodes;
-    this.queryTimeout = queryTimeout;
   }
 
   @VisibleForTesting
   public BrowseNodeConfiguration() {
-    this(true, 1000, 1000, 10_000, 10_000, seconds(0));
+    this(true, 1000, 1000, 10_000, 10_000);
   }
 
   /**
@@ -92,15 +84,6 @@ public class BrowseNodeConfiguration
    */
   public int getMaxHtmlNodes() {
     return maxHtmlNodes;
-  }
-
-  /**
-   * How long to wait for filtered subtree queries to complete before returning a potentially truncated set of results
-   *
-   * @since 3.7
-   */
-  public Time getQueryTimeout() {
-    return queryTimeout;
   }
 
   /**

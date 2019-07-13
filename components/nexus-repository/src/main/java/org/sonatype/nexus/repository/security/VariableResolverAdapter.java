@@ -43,4 +43,9 @@ public interface VariableResolverAdapter
    * @since 3.8
    */
   VariableSource fromCoordinates(String format, String path, Map<String, String> coordinates);
+
+  /**
+   * @since 3.next
+   */
+  VariableSource fromPath(String path, String format);
 }

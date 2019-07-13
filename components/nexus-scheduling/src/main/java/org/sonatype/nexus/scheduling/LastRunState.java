@@ -10,32 +10,29 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import PropTypes from 'prop-types';
-import React from 'react';
+package org.sonatype.nexus.scheduling;
 
-import Colors from '../../constants/Colors'
+import java.util.Date;
 
-export default function Button({isPrimary, children, style, ...rest}) {
-  const colors = isPrimary ? Colors.BUTTON.PRIMARY : Colors.BUTTON.SECONDARY;
-  const buttonStyle = {
-    backgroundColor: colors.BACKGROUND,
-    border: `solid 1px ${colors.BORDER}`,
-    borderRadius: '3px',
-    color: colors.FONT,
-    fontFamily: 'inherit',
-    fontSize: '1em',
-    height: '2em',
-    minWidth: '76px',
-    opacity: rest && rest.disabled ? '0.5' : '1',
-    ...style
-  };
+/**
+ * Encapsulates the end state of the last run of a task.
+ *
+ * @since 3.next
+ */
+public interface LastRunState
+{
+  /**
+   * Returns the last end state.
+   */
+  TaskState getEndState();
 
-  return <button style={buttonStyle} {...rest}>
-      { children }
-    </button>;
+  /**
+   * Returns the date of last run start.
+   */
+  Date getRunStarted();
+
+  /**
+   * Returns the last run duration.
+   */
+  long getRunDuration();
 }
-
-Button.propTypes = {
-  isPrimary: PropTypes.bool,
-  style: PropTypes.object
-};

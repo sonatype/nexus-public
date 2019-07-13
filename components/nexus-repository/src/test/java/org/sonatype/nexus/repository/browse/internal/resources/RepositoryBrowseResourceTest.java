@@ -141,10 +141,10 @@ public class RepositoryBrowseResourceTest
 
 
     when(browseNodeStore
-        .getByPath(repository, Collections.emptyList(), configuration.getMaxHtmlNodes(), null))
+        .getByPath(repository, Collections.emptyList(), configuration.getMaxHtmlNodes()))
         .thenReturn(Collections.singleton(browseNode("org")));
     when(browseNodeStore
-        .getByPath(repository, Collections.singletonList("org"), configuration.getMaxHtmlNodes(), null))
+        .getByPath(repository, Collections.singletonList("org"), configuration.getMaxHtmlNodes()))
         .thenReturn(Collections.singleton(browseNode("sonatype")));
     when(repositoryManager.get(REPOSITORY_NAME)).thenReturn(repository);
 
@@ -156,7 +156,7 @@ public class RepositoryBrowseResourceTest
   public void validateRootRequest() throws Exception {
     when(uriInfo.getAbsolutePath()).thenReturn(UriBuilder.fromPath(URL_PREFIX + "central/").build());
 
-    underTest.getHtml(REPOSITORY_NAME, "", null, uriInfo);
+    underTest.getHtml(REPOSITORY_NAME, "", uriInfo);
 
     ArgumentCaptor<TemplateParameters> argument = ArgumentCaptor.forClass(TemplateParameters.class);
     verify(templateHelper).render(any(), argument.capture());
@@ -176,7 +176,7 @@ public class RepositoryBrowseResourceTest
   public void validateNonRootRequest() throws Exception {
     when(uriInfo.getAbsolutePath()).thenReturn(UriBuilder.fromPath(URL_PREFIX + "central/org/").build());
 
-    underTest.getHtml(REPOSITORY_NAME, "org/", null, uriInfo);
+    underTest.getHtml(REPOSITORY_NAME, "org/", uriInfo);
 
     ArgumentCaptor<TemplateParameters> argument = ArgumentCaptor.forClass(TemplateParameters.class);
     verify(templateHelper).render(any(), argument.capture());
@@ -199,10 +199,10 @@ public class RepositoryBrowseResourceTest
     when(asset.blobUpdated()).thenReturn(new DateTime(0));
     when(asset.name()).thenReturn("a1.txt");
     when(repository.getUrl()).thenReturn("http://foo/bar");
-    when(browseNodeStore.getByPath(repository, Collections.emptyList(), configuration.getMaxHtmlNodes(), null))
+    when(browseNodeStore.getByPath(repository, Collections.emptyList(), configuration.getMaxHtmlNodes()))
         .thenReturn(nodes);
 
-    underTest.getHtml(REPOSITORY_NAME, "", null, uriInfo);
+    underTest.getHtml(REPOSITORY_NAME, "", uriInfo);
 
     ArgumentCaptor<TemplateParameters> argument = ArgumentCaptor.forClass(TemplateParameters.class);
     verify(templateHelper).render(any(), argument.capture());
@@ -219,7 +219,6 @@ public class RepositoryBrowseResourceTest
 
   @Test
   public void validateAsset_groupRepository() throws Exception {
-    String filter = "test";
     Repository groupRepository = mock(Repository.class);
     when(groupRepository.getType()).thenReturn(new GroupType());
     when(groupRepository.getName()).thenReturn("group-repository");
@@ -236,10 +235,10 @@ public class RepositoryBrowseResourceTest
     when(asset.name()).thenReturn("a1.txt");
     when(groupRepository.getUrl()).thenReturn("http://foo/bar");
     when(browseNodeStore
-        .getByPath(groupRepository, Collections.emptyList(), configuration.getMaxHtmlNodes(), filter))
+        .getByPath(groupRepository, Collections.emptyList(), configuration.getMaxHtmlNodes()))
         .thenReturn(nodes);
 
-    underTest.getHtml("group-repository", "", filter, uriInfo);
+    underTest.getHtml("group-repository", "", uriInfo);
 
     ArgumentCaptor<TemplateParameters> argument = ArgumentCaptor.forClass(TemplateParameters.class);
     verify(templateHelper).render(any(), argument.capture());
@@ -255,43 +254,11 @@ public class RepositoryBrowseResourceTest
   }
 
   @Test
-  public void validateFilterAppliedToNonAssetUrls() throws Exception {
-    String filter = "test/test";
-    Repository groupRepository = mock(Repository.class);
-    when(groupRepository.getType()).thenReturn(new GroupType());
-    when(groupRepository.getName()).thenReturn("group-repository");
-    when(groupRepository.getFormat()).thenReturn(new Format("format") { });
-    when(groupRepository.facet(StorageFacet.class)).thenReturn(storageFacet);
-    GroupFacet groupFacet = mock(GroupFacet.class);
-    when(groupFacet.allMembers()).thenReturn(Arrays.asList(groupRepository, repository));
-    when(groupRepository.optionalFacet(GroupFacet.class)).thenReturn(Optional.of(groupFacet));
-    when(repositoryManager.get("group-repository")).thenReturn(groupRepository);
-
-    List<BrowseNode> nodes = asList(browseNode("bar"));
-    when(groupRepository.getUrl()).thenReturn("http://foo/");
-    when(browseNodeStore
-        .getByPath(groupRepository, Collections.emptyList(), configuration.getMaxHtmlNodes(), filter))
-        .thenReturn(nodes);
-
-    underTest.getHtml("group-repository", "", filter, uriInfo);
-
-    ArgumentCaptor<TemplateParameters> argument = ArgumentCaptor.forClass(TemplateParameters.class);
-    verify(templateHelper).render(any(), argument.capture());
-
-    List<BrowseListItem> listItems = (List<BrowseListItem>) argument.getValue().get().get("listItems");
-    assertThat(listItems.size(), is(1));
-
-    BrowseListItem item = listItems.get(0);
-    assertThat(item.getName(), is("bar"));
-    assertThat(item.getResourceUri(), is("bar/?filter=test%2Ftest"));
-  }
-
-  @Test
   public void validateRootRequestWithoutTrailingSlash() throws Exception {
     when(uriInfo.getAbsolutePath()).thenReturn(
         UriBuilder.fromPath(URL_PREFIX + "central").build());
 
-    Response response = underTest.getHtml(REPOSITORY_NAME, "", null, uriInfo);
+    Response response = underTest.getHtml(REPOSITORY_NAME, "", uriInfo);
     assertThat(response.getStatus(), is(303));
     assertThat(response.getHeaders().get("location").get(0).toString(), is(URL_PREFIX + "central/"));
   }
@@ -301,7 +268,7 @@ public class RepositoryBrowseResourceTest
     when(uriInfo.getAbsolutePath()).thenReturn(
         UriBuilder.fromPath(URL_PREFIX + "central/org").build());
 
-    Response response = underTest.getHtml(REPOSITORY_NAME, "org", "", uriInfo);
+    Response response = underTest.getHtml(REPOSITORY_NAME, "org", uriInfo);
     assertThat(response.getStatus(), is(303));
     assertThat(response.getHeaders().get("location").get(0).toString(), is(URL_PREFIX + "central/org/"));
   }
@@ -311,7 +278,7 @@ public class RepositoryBrowseResourceTest
     expectedException.expect(WebApplicationException.class);
     expectedException.expectMessage("Path not found");
 
-    underTest.getHtml(REPOSITORY_NAME, "missing", "", uriInfo);
+    underTest.getHtml(REPOSITORY_NAME, "missing", uriInfo);
   }
 
   @Test
@@ -320,7 +287,7 @@ public class RepositoryBrowseResourceTest
     expectedException.expect(WebApplicationException.class);
     expectedException.expectMessage("Repository not found");
 
-    underTest.getHtml(REPOSITORY_NAME, "missing", null, uriInfo);
+    underTest.getHtml(REPOSITORY_NAME, "missing", uriInfo);
   }
 
   @Test
@@ -328,28 +295,28 @@ public class RepositoryBrowseResourceTest
     expectedException.expect(WebApplicationException.class);
     expectedException.expectMessage("Repository not found");
 
-    underTest.getHtml("missing", "org", "", uriInfo);
+    underTest.getHtml("missing", "org", uriInfo);
   }
 
   @Test
   public void validateRepositoryNotAuthorizedRequest() throws Exception {
     when(browseNodeStore.getByPath(repository, Collections.singletonList("org"),
-        configuration.getMaxHtmlNodes(), null))
+        configuration.getMaxHtmlNodes()))
         .thenReturn(Collections.emptyList());
     when(securityHelper.allPermitted(any())).thenReturn(false);
     expectedException.expect(WebApplicationException.class);
     expectedException.expectMessage("Repository not found");
 
-    underTest.getHtml(REPOSITORY_NAME, "org", "", uriInfo);
+    underTest.getHtml(REPOSITORY_NAME, "org", uriInfo);
   }
 
   @Test
   public void validateRepositoryWithNoBrowseNodesRequest() throws Exception {
     when(browseNodeStore.getByPath(repository, Collections.emptyList(),
-        configuration.getMaxHtmlNodes(), ""))
+        configuration.getMaxHtmlNodes()))
         .thenReturn(Collections.emptyList());
 
-    underTest.getHtml(REPOSITORY_NAME, "", "", uriInfo);
+    underTest.getHtml(REPOSITORY_NAME, "", uriInfo);
 
     ArgumentCaptor<TemplateParameters> argument = ArgumentCaptor.forClass(TemplateParameters.class);
     verify(templateHelper).render(any(), argument.capture());
@@ -358,7 +325,11 @@ public class RepositoryBrowseResourceTest
 
   @Test
   public void validateRepositoryWithNoBrowseNodesRequest_nullResponseFromGetChildrenByPath() throws Exception {
-    underTest.getHtml(REPOSITORY_NAME, "", "", uriInfo);
+    when(browseNodeStore.getByPath(repository, Collections.emptyList(),
+        configuration.getMaxHtmlNodes()))
+        .thenReturn(null);
+
+    underTest.getHtml(REPOSITORY_NAME, "", uriInfo);
 
     ArgumentCaptor<TemplateParameters> argument = ArgumentCaptor.forClass(TemplateParameters.class);
     verify(templateHelper).render(any(), argument.capture());
@@ -368,10 +339,10 @@ public class RepositoryBrowseResourceTest
   @Test
   public void validateAssetFoldersAreTreatedLikeFolders() {
     BrowseNode folderAsset = browseNode("folderAsset", mock(EntityId.class), false);
-    when(browseNodeStore.getByPath(repository, Collections.emptyList(), configuration.getMaxHtmlNodes(), null))
+    when(browseNodeStore.getByPath(repository, Collections.emptyList(), configuration.getMaxHtmlNodes()))
         .thenReturn(asList(folderAsset));
 
-    underTest.getHtml(REPOSITORY_NAME, "", null, uriInfo);
+    underTest.getHtml(REPOSITORY_NAME, "", uriInfo);
 
     ArgumentCaptor<TemplateParameters> argument = ArgumentCaptor.forClass(TemplateParameters.class);
     verify(templateHelper).render(any(), argument.capture());
@@ -387,10 +358,10 @@ public class RepositoryBrowseResourceTest
   @Test
   public void validateAssetUriIsUrlEscapedToPreventXss() {
     BrowseNode browseNode = browseNode("<img src=\"foo\">");
-    when(browseNodeStore.getByPath(repository, Collections.emptyList(), configuration.getMaxHtmlNodes(), null))
+    when(browseNodeStore.getByPath(repository, Collections.emptyList(), configuration.getMaxHtmlNodes()))
         .thenReturn(asList(browseNode));
 
-    underTest.getHtml(REPOSITORY_NAME, "", null, uriInfo);
+    underTest.getHtml(REPOSITORY_NAME, "", uriInfo);
 
     ArgumentCaptor<TemplateParameters> argument = ArgumentCaptor.forClass(TemplateParameters.class);
     verify(templateHelper).render(any(), argument.capture());

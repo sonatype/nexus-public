@@ -14,10 +14,9 @@ package org.sonatype.nexus.repository.storage;
 
 import java.util.List;
 
-import javax.annotation.Nullable;
-
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.browse.BrowsePaths;
 
 /**
  * Store providing access to the browse tree for assets & components.
@@ -29,12 +28,12 @@ public interface BrowseNodeStore
   /**
    * Creates a {@link BrowseNode} for the given asset.
    */
-  void createAssetNode(String repositoryName, List<String> path, Asset asset);
+  void createAssetNode(String repositoryName, String format, List<BrowsePaths> paths, Asset asset);
 
   /**
    * Creates a {@link BrowseNode} for the given component.
    */
-  void createComponentNode(String repositoryName, List<String> path, Component component);
+  void createComponentNode(String repositoryName, String format, List<BrowsePaths> paths, Component component);
 
   /**
    * Deletes the asset's {@link BrowseNode}.
@@ -53,8 +52,6 @@ public interface BrowseNodeStore
 
   /**
    * Returns the {@link BrowseNode}s directly visible under the given path.
-   *
-   * An optional substring can be supplied to further filter the nodes by name.
    */
-  Iterable<BrowseNode> getByPath(Repository repository, List<String> path, int maxNodes, @Nullable String filter);
+  Iterable<BrowseNode> getByPath(Repository repository, List<String> path, int maxNodes);
 }

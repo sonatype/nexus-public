@@ -18,7 +18,7 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskInfo.CurrentState;
-import org.sonatype.nexus.scheduling.TaskInfo.LastRunState;
+import org.sonatype.nexus.scheduling.LastRunState;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

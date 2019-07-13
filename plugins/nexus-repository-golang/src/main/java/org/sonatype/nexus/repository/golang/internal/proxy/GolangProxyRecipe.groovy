@@ -43,7 +43,7 @@ import org.sonatype.nexus.repository.view.handlers.HighAvailabilitySupportChecke
 class GolangProxyRecipe
   extends GolangRecipeSupport
 {
-  private static final String NAME = 'go-proxy'
+  protected static final String NAME = 'go-proxy'
 
   @Inject
   RoutingRuleHandler routingRuleHandler

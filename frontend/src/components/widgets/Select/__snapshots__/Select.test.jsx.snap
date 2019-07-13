@@ -1,0 +1,34 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Select renders correctly 1`] = `
+<select
+  className="nx-react-select"
+  style={
+    Object {
+      "MozAppearance": "none",
+      "WebkitAppearance": "none",
+      "appearance": "none",
+      "background": "no-repeat 100% 50% url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0Ljk1IDEwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWF4WU1pZCI+PGRlZnM+PHN0eWxlPi5jbHMtMXtmaWxsOiNmZmY7fS5jbHMtMntmaWxsOiM0NDQ7fTwvc3R5bGU+PC9kZWZzPjx0aXRsZT5hcnJvd3M8L3RpdGxlPjxyZWN0IGNsYXNzPSJjbHMtMSIgd2lkdGg9IjQuOTUiIGhlaWdodD0iMTAiLz48cG9seWdvbiBjbGFzcz0iY2xzLTIiIHBvaW50cz0iMS40MSA0LjY3IDIuNDggMy4xOCAzLjU0IDQuNjcgMS40MSA0LjY3Ii8+PHBvbHlnb24gY2xhc3M9ImNscy0yIiBwb2ludHM9IjMuNTQgNS4zMyAyLjQ4IDYuODIgMS40MSA1LjMzIDMuNTQgNS4zMyIvPjwvc3ZnPg==)",
+      "border": "solid 1px rgba(210, 210, 210, 1)",
+      "borderRadius": "0",
+      "borderTopColor": "rgba(194, 194, 194, 1)",
+      "display": "block",
+      "fontSize": "1em",
+      "height": "2em",
+      "paddingLeft": "0.4em",
+      "width": "100%",
+    }
+  }
+>
+  <option
+    value="1"
+  >
+    1
+  </option>
+  <option
+    value="2"
+  >
+    2
+  </option>
+</select>
+`;

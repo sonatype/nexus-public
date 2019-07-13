@@ -14,6 +14,7 @@ package org.sonatype.nexus.internal.web;
 
 import java.io.IOException;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.servlet.Filter;
@@ -26,9 +27,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.servlet.XFrameOptions;
 
 import org.eclipse.sisu.Hidden;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.net.HttpHeaders.X_FRAME_OPTIONS;
 import static javax.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 
 /**
@@ -45,6 +49,13 @@ public class ErrorPageFilter
     extends ComponentSupport
     implements Filter
 {
+  private final XFrameOptions xFrameOptions;
+
+  @Inject
+  public ErrorPageFilter(final XFrameOptions xFrameOptions) {
+    this.xFrameOptions = checkNotNull(xFrameOptions);
+  }
+
   @Override
   public void init(final FilterConfig config) throws ServletException {
     // ignore
@@ -69,6 +80,7 @@ public class ErrorPageFilter
     }
     catch (Exception e) {
       ErrorPageServlet.attachCause(request, e);
+      response.setHeader(X_FRAME_OPTIONS, xFrameOptions.getValueForPath(request.getPathInfo()));
       response.sendError(SC_INTERNAL_SERVER_ERROR);
     }
   }

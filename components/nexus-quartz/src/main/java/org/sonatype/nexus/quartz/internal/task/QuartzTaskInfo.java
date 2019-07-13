@@ -200,12 +200,6 @@ public class QuartzTaskInfo
     }
   }
 
-  @Nullable
-  @Override
-  public synchronized LastRunState getLastRunState() {
-    return taskState.getLastRunState();
-  }
-
   @Override
   public synchronized boolean remove() {
     final TaskConfiguration config = taskState.getConfiguration();
@@ -222,10 +216,10 @@ public class QuartzTaskInfo
       return false;
     }
 
-    if (!QuartzTaskState.hasLastRunState(config)) {
+    if (!config.hasLastRunState()) {
       // if no last state (removed even before 1st run), add one noting it got removed/canceled
       // if was running and is cancelable, the task will itself set a proper ending state
-      QuartzTaskState.setLastRunState(config, TaskState.CANCELED, new Date(), 0L);
+      config.setLastRunState(TaskState.CANCELED, new Date(), 0L);
     }
 
     removed = true;

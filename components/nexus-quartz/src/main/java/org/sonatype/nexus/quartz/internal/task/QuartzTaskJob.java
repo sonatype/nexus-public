@@ -13,7 +13,6 @@
 package org.sonatype.nexus.quartz.internal.task;
 
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -43,8 +42,6 @@ import com.google.common.base.Throwables;
 import org.quartz.DisallowConcurrentExecution;
 import org.quartz.InterruptableJob;
 import org.quartz.Job;
-import org.quartz.JobDataMap;
-import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.PersistJobDataAfterExecution;
@@ -52,6 +49,8 @@ import org.quartz.UnableToInterruptJobException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static org.sonatype.nexus.quartz.internal.task.QuartzTaskUtils.configurationOf;
+import static org.sonatype.nexus.quartz.internal.task.QuartzTaskUtils.updateJobData;
 import static org.sonatype.nexus.scheduling.TaskState.RUNNING;
 import static org.sonatype.nexus.scheduling.TaskState.RUNNING_BLOCKED;
 import static org.sonatype.nexus.scheduling.TaskState.RUNNING_STARTING;
@@ -286,33 +285,5 @@ public class QuartzTaskJob
       throw new UnableToInterruptJobException("Task not cancelable: " + task);
     }
     // else premature/too-late; ignore
-  }
-
-  /**
-   * Extracts {@link TaskConfiguration} from given {@link JobDetail}.
-   *
-   * Only copies string values from job-data map.
-   */
-  public static TaskConfiguration configurationOf(final JobDetail jobDetail) {
-    checkNotNull(jobDetail);
-    TaskConfiguration config = new TaskConfiguration();
-    for (Entry<String, Object> entry : jobDetail.getJobDataMap().entrySet()) {
-      if (entry.getValue() instanceof String) {
-        config.setString(entry.getKey(), (String) entry.getValue());
-      }
-    }
-    return config;
-  }
-
-  /**
-   * Saves {@link TaskConfiguration} back to the given {@link JobDetail}.
-   */
-  public static void updateJobData(final JobDetail jobDetail, final TaskConfiguration taskConfiguration) {
-    JobDataMap jobDataMap = jobDetail.getJobDataMap();
-    taskConfiguration.asMap().forEach((key, value) -> {
-      if (!value.equals(jobDataMap.get(key))) {
-        jobDataMap.put(key, value); // only touch jobDataMap if value actually changed
-      }
-    });
   }
 }

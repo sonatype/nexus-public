@@ -32,7 +32,7 @@ import static org.mockito.Mockito.when;
 public class BrowseAssetsSqlBuilderTest
     extends TestSupport
 {
-  static final String CONTENT_AUTH_WHERE = "contentAuth(@this, :browsedRepository) == true";
+  static final String CONTENT_AUTH_WHERE = "contentAuth(@this.name, @this.format, :browsedRepository) == true";
 
   static final String FILTER_WHERE = "name LIKE :nameFilter";
 

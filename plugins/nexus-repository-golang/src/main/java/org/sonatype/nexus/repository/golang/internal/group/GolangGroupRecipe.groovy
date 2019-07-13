@@ -43,7 +43,7 @@ import org.sonatype.nexus.repository.view.handlers.HighAvailabilitySupportChecke
 class GolangGroupRecipe
     extends GolangRecipeSupport
 {
-  private static final String NAME = 'go-group'
+  protected static final String NAME = 'go-group'
 
   @Inject
   Provider<GroupFacetImpl> groupFacet

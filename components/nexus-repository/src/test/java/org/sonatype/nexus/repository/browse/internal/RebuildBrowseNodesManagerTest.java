@@ -17,7 +17,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.common.entity.EntityId;
@@ -25,6 +24,7 @@ import org.sonatype.nexus.orient.HexRecordIdObfuscator;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
+import org.sonatype.nexus.repository.browse.BrowseTestSupport;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
@@ -46,8 +46,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static java.util.Arrays.asList;
 import static java.util.Collections.emptySet;
+import static java.util.Collections.singletonList;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
@@ -59,7 +59,7 @@ import static org.sonatype.nexus.repository.browse.internal.RebuildBrowseNodesTa
 import static org.sonatype.nexus.repository.storage.BucketEntityAdapter.P_PENDING_DELETION;
 
 public class RebuildBrowseNodesManagerTest
-    extends TestSupport
+    extends BrowseTestSupport
 {
   private static final String REPOSITORY_NAME = "repo";
   @Rule
@@ -121,7 +121,7 @@ public class RebuildBrowseNodesManagerTest
     bucketEntityAdapter = new BucketEntityAdapter();
     componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter, componentFactory, emptySet());
     assetEntityAdapter = new AssetEntityAdapter(bucketEntityAdapter, componentEntityAdapter);
-    browseNodeEntityAdapter = new BrowseNodeEntityAdapter(componentEntityAdapter, assetEntityAdapter, new BrowseNodeConfiguration());
+    browseNodeEntityAdapter = new BrowseNodeEntityAdapter(componentEntityAdapter, assetEntityAdapter);
     underTest = new RebuildBrowseNodesManager(databaseInstanceRule.getInstanceProvider(), taskScheduler, configuration,
         bucketEntityAdapter);
 
@@ -193,7 +193,8 @@ public class RebuildBrowseNodesManagerTest
       assetEntityAdapter.addEntity(db, asset);
     }
     try (ODatabaseDocumentTx db = databaseInstanceRule.getInstance().acquire()) {
-      browseNodeEntityAdapter.createAssetNode(db, REPOSITORY_NAME, asList(asset.name()), asset);
+      browseNodeEntityAdapter
+          .createAssetNode(db, REPOSITORY_NAME, "maven2", toBrowsePaths(singletonList(asset.name())), asset);
     }
 
     when(taskScheduler.createTaskConfigurationInstance(RebuildBrowseNodesTaskDescriptor.TYPE_ID))
@@ -229,7 +230,8 @@ public class RebuildBrowseNodesManagerTest
       assetEntityAdapter.addEntity(db, asset);
     }
     try (ODatabaseDocumentTx db = databaseInstanceRule.getInstance().acquire()) {
-      browseNodeEntityAdapter.createAssetNode(db, REPOSITORY_NAME, asList(asset.name()), asset);
+      browseNodeEntityAdapter
+          .createAssetNode(db, REPOSITORY_NAME, "maven2", toBrowsePaths(singletonList(asset.name())), asset);
     }
     try (ODatabaseDocumentTx db = databaseInstanceRule.getInstance().acquire()) {
       assetEntityAdapter.deleteEntity(db, asset);

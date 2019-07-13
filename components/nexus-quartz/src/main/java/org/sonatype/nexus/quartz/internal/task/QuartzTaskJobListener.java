@@ -14,8 +14,6 @@ package org.sonatype.nexus.quartz.internal.task;
 
 import java.util.Date;
 
-import javax.annotation.Nullable;
-
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.quartz.internal.QuartzSchedulerSPI;
@@ -31,11 +29,12 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.JobKey;
 import org.quartz.JobListener;
-import org.quartz.SchedulerException;
 import org.quartz.Trigger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.quartz.TriggerKey.triggerKey;
+import static org.sonatype.nexus.quartz.internal.task.QuartzTaskUtils.configurationOf;
+import static org.sonatype.nexus.quartz.internal.task.QuartzTaskUtils.getCurrentTrigger;
+import static org.sonatype.nexus.quartz.internal.task.QuartzTaskUtils.updateJobData;
 import static org.sonatype.nexus.scheduling.TaskState.CANCELED;
 import static org.sonatype.nexus.scheduling.TaskState.FAILED;
 import static org.sonatype.nexus.scheduling.TaskState.OK;
@@ -79,40 +78,6 @@ public class QuartzTaskJobListener
     return taskInfo;
   }
 
-  /**
-   * Returns the trigger associated with NX Task wrapping job.
-   *
-   * The trigger executing this Job does NOT have to be THAT trigger, think about "runNow"!
-   * So, this method returns the associated trigger, while the trigger in context might be something
-   * completely different.
-   *
-   * If not found, returns {@code null}.
-   */
-  @Nullable
-  private Trigger getJobTrigger(final JobExecutionContext context) {
-    try {
-      final JobKey jobKey = context.getJobDetail().getKey();
-      return context.getScheduler().getTrigger(triggerKey(jobKey.getName(), jobKey.getGroup()));
-    }
-    catch (SchedulerException e) {
-      return null;
-    }
-  }
-
-  /**
-   * Returns the current trigger for currently executing NX Task.
-   *
-   * That is either its associated trigger loaded up by key using {@link #getJobTrigger(JobExecutionContext)},
-   * or if not found (can happen when invoked from {@link #jobWasExecuted(JobExecutionContext, JobExecutionException)}
-   * method for a canceled/removed job, the "current" trigger from context is returned.
-   *
-   * Never returns {@code null}, as Quartz context always contains a trigger.
-   */
-  private Trigger getCurrentTrigger(final JobExecutionContext context) {
-    final Trigger jobTrigger = getJobTrigger(context);
-    return jobTrigger != null ? jobTrigger : context.getTrigger();
-  }
-
   @Override
   public void jobToBeExecuted(final JobExecutionContext context) {
     final JobKey jobKey = context.getJobDetail().getKey();
@@ -141,7 +106,7 @@ public class QuartzTaskJobListener
       taskInfo.setNexusTaskState(
           RUNNING,
           new QuartzTaskState(
-              QuartzTaskJob.configurationOf(context.getJobDetail()),
+              configurationOf(context.getJobDetail()),
               scheduler.triggerConverter().convert(currentTrigger),
               currentTrigger.getNextFireTime()
           ),
@@ -175,20 +140,12 @@ public class QuartzTaskJobListener
       endState = OK;
     }
 
-    final TaskConfiguration taskConfiguration = QuartzTaskJob.configurationOf(context.getJobDetail());
+    final TaskConfiguration taskConfiguration = configurationOf(context.getJobDetail());
     long runDuration = System.currentTimeMillis() - future.getStartedAt().getTime();
 
-    QuartzTaskState.setLastRunState(
-        taskConfiguration,
-        endState,
-        future.getStartedAt(),
-        runDuration);
+    taskConfiguration.setLastRunState(endState, future.getStartedAt(), runDuration);
 
-    QuartzTaskState.setLastRunState(
-        context.getJobDetail(),
-        endState,
-        future.getStartedAt(),
-        runDuration);
+    updateJobData(context.getJobDetail(), taskConfiguration);
 
     log.trace("Job {} : {} lastRunState={}",
         jobKey.getName(), taskInfo.getConfiguration().getTaskLogName(), endState);

@@ -117,24 +117,6 @@ public interface TaskInfo
     Future<?> getFuture();
   }
 
-  interface LastRunState
-  {
-    /**
-     * Returns the last end state.
-     */
-    TaskState getEndState();
-
-    /**
-     * Returns the date of last run start.
-     */
-    Date getRunStarted();
-
-    /**
-     * Returns the last run duration.
-     */
-    long getRunDuration();
-  }
-
   /**
    * Returns the task current state, never {@code null}.
    *
@@ -148,7 +130,9 @@ public interface TaskInfo
    * Returns the task last run state, if there was any, otherwise {@code null}.
    */
   @Nullable
-  LastRunState getLastRunState();
+  default LastRunState getLastRunState() {
+    return getConfiguration().getLastRunState();
+  }
 
   /**
    * Removes (with canceling if runs) the task.

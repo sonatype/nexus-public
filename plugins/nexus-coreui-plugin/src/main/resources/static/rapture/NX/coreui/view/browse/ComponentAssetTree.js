@@ -106,12 +106,6 @@ Ext.define('NX.coreui.view.browse.ComponentAssetTree', {
           },
           '->',
           {
-            xtype: 'nx-searchbox',
-            emptyText: NX.I18n.get('Grid_Plugin_FilterBox_Empty'),
-            searchDelay: 200,
-            width: 200
-          },
-          {
             xtype: 'label',
             itemId: 'nx-coreui-component-asset-tree-advanced-search',
             html: '<a href="#browse/search">Advanced search...</a>'

@@ -27,6 +27,7 @@ import com.google.common.collect.ImmutableMap;
 import org.joda.time.DateTime;
 import org.joda.time.base.AbstractInstant;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
@@ -56,6 +57,12 @@ import static com.google.common.base.Preconditions.checkState;
 public class TaskConfiguration
     implements TaskLogInfo
 {
+  public static final String LAST_RUN_STATE_END_STATE = "lastRunState.endState";
+
+  public static final String LAST_RUN_STATE_RUN_STARTED = "lastRunState.runStarted";
+
+  public static final String LAST_RUN_STATE_RUN_DURATION = "lastRunState.runDuration";
+
   static final String ID_KEY = ".id";
 
   static final String NAME_KEY = ".name";
@@ -221,6 +228,31 @@ public class TaskConfiguration
     setBoolean(RECOVERABLE_KEY, requestRecovery);
   }
 
+  public boolean hasLastRunState() {
+    return getString(LAST_RUN_STATE_END_STATE) != null;
+  }
+
+  @Nullable
+  public LastRunState getLastRunState() {
+    if (hasLastRunState()) {
+      String endStateString = getString(LAST_RUN_STATE_END_STATE);
+      long runStarted = getLong(LAST_RUN_STATE_RUN_STARTED, System.currentTimeMillis());
+      long runDuration = getLong(LAST_RUN_STATE_RUN_DURATION, 0);
+      return new LastRunStateImpl(TaskState.valueOf(endStateString), new Date(runStarted), runDuration);
+    }
+    return null;
+  }
+
+  public void setLastRunState(final TaskState endState, final Date runStarted, final long runDuration) {
+    checkNotNull(endState);
+    checkNotNull(runStarted);
+    checkArgument(runDuration >= 0);
+
+    setString(LAST_RUN_STATE_END_STATE, endState.name());
+    setLong(LAST_RUN_STATE_RUN_STARTED, runStarted.getTime());
+    setLong(LAST_RUN_STATE_RUN_DURATION, runDuration);
+  }
+
   //
   // Typed configuration helpers
   //
@@ -291,5 +323,48 @@ public class TaskConfiguration
   public boolean containsKey(final String key) {
     checkNotNull(key);
     return configuration.containsKey(key);
+  }
+
+  /**
+   * {@link LastRunState} implementation.
+   */
+  private static class LastRunStateImpl
+      implements LastRunState
+  {
+    private final TaskState endState;
+
+    private final Date runStarted;
+
+    private final long runDuration;
+
+    public LastRunStateImpl(final TaskState endState, final Date runStarted, final long runDuration) {
+      this.endState = endState;
+      this.runStarted = runStarted;
+      this.runDuration = runDuration;
+    }
+
+    @Override
+    public TaskState getEndState() {
+      return endState;
+    }
+
+    @Override
+    public Date getRunStarted() {
+      return runStarted;
+    }
+
+    @Override
+    public long getRunDuration() {
+      return runDuration;
+    }
+
+    @Override
+    public String toString() {
+      return getClass().getSimpleName() + "{" +
+          "endState=" + endState +
+          ", runStarted=" + runStarted +
+          ", runDuration=" + runDuration +
+          '}';
+    }
   }
 }

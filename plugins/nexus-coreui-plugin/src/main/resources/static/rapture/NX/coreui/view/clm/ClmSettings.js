@@ -110,7 +110,7 @@ Ext.define('NX.coreui.view.clm.ClmSettings', {
         },
         {
           xtype: 'numberfield',
-          name: 'timeout',
+          name: 'timeoutSeconds',
           fieldLabel: NX.I18n.get('ClmSettings_ConnectionTimeout_FieldLabel'),
           helpText: NX.I18n.get('ClmSettings_ConnectionTimeout_HelpText'),
           emptyText: NX.I18n.get('ClmSettings_ConnectionTimeout_EmptyText'),

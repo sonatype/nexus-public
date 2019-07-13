@@ -15,7 +15,7 @@ Axios.defaults.xsrfCookieName = Axios.defaults.xsrfHeaderName = 'NX-ANTI-CSRF-TO
 
 import React from 'react';
 import ReactDOM from 'react-dom';
-import AnonymousSettings from './components/admin/AnonymousSettings';
+import AnonymousSettings from './components/pages/admin/AnonymousSettings/AnonymousSettings';
 
 window.React = React;
 window.ReactDOM = ReactDOM;

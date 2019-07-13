@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.common.entity.EntityId;
@@ -24,6 +23,8 @@ import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseNodeGenerator;
+import org.sonatype.nexus.repository.browse.BrowsePaths;
+import org.sonatype.nexus.repository.browse.BrowseTestSupport;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.BrowseNodeStore;
 import org.sonatype.nexus.repository.storage.Component;
@@ -36,13 +37,14 @@ import org.mockito.Mock;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 public class BrowseNodeManagerTest
-    extends TestSupport
+    extends BrowseTestSupport
 {
   private static final String DEFAULT = "default";
 
@@ -80,33 +82,36 @@ public class BrowseNodeManagerTest
 
   @Test
   public void createFromAssetSavesNodesForAssetWithoutComponent() {
-    List<String> assetPath = asList("asset");
-    Component component = null;
+    List<BrowsePaths> assetPath = toBrowsePaths(singletonList("asset"));
     Asset asset = createAsset("asset", "assetId", "otherFormat", null);
 
-    when(defaultBrowseNodeGenerator.computeAssetPath(asset, component)).thenReturn(assetPath);
-    when(defaultBrowseNodeGenerator.computeComponentPath(asset, component)).thenReturn(emptyList());
+    when(defaultBrowseNodeGenerator.computeAssetPaths(asset, null)).thenReturn(assetPath);
+    when(defaultBrowseNodeGenerator.computeComponentPaths(asset, null)).thenReturn(emptyList());
 
     manager.createFromAsset(REPOSITORY_NAME, asset);
 
-    verify(browseNodeStore).createAssetNode(REPOSITORY_NAME, asList(asset.name()), asset);
+    verify(browseNodeStore)
+        .createAssetNode(REPOSITORY_NAME, "otherFormat", toBrowsePaths(singletonList(asset.name())), asset);
 
     verifyNoMoreInteractions(browseNodeStore);
   }
 
   @Test
   public void createFromAssetSavesNodesForFormatSpecificAssetWithComponent() {
-    List<String> assetPath = asList("component", "asset");
+    List<BrowsePaths> assetPath = toBrowsePaths(asList("component", "asset"));
+
     Component component = createComponent("component", null, null, "componentId");
     Asset asset = createAsset("asset", "assetId", MAVEN_2, EntityHelper.id(component));
 
-    when(maven2BrowseNodeGenerator.computeAssetPath(asset, component)).thenReturn(assetPath);
-    when(maven2BrowseNodeGenerator.computeComponentPath(asset, component)).thenReturn(assetPath.subList(0, 1));
+    when(maven2BrowseNodeGenerator.computeAssetPaths(asset, component)).thenReturn(assetPath);
+    when(maven2BrowseNodeGenerator.computeComponentPaths(asset, component)).thenReturn(assetPath.subList(0, 1));
 
     manager.createFromAsset(REPOSITORY_NAME, asset);
 
-    verify(browseNodeStore).createComponentNode(REPOSITORY_NAME, asList(component.name()), component);
-    verify(browseNodeStore).createAssetNode(REPOSITORY_NAME, asList(component.name(), asset.name()), asset);
+    verify(browseNodeStore)
+        .createComponentNode(REPOSITORY_NAME, MAVEN_2, toBrowsePaths(singletonList(component.name())), component);
+    verify(browseNodeStore)
+        .createAssetNode(REPOSITORY_NAME, MAVEN_2, toBrowsePaths(asList(component.name(), asset.name())), asset);
 
     verifyNoMoreInteractions(browseNodeStore);
   }
@@ -120,13 +125,13 @@ public class BrowseNodeManagerTest
 
     for (Asset asset : assets) {
       String name = asset.name();
-      when(maven2BrowseNodeGenerator.computeAssetPath(asset, null)).thenReturn(asList(name));
+      when(maven2BrowseNodeGenerator.computeAssetPaths(asset, null)).thenReturn(toBrowsePaths(singletonList(name)));
     }
 
     manager.createFromAssets(repository, assets);
 
     for (Asset asset : assets) {
-      verify(browseNodeStore).createAssetNode(REPOSITORY_NAME, asList(asset.name()), asset);
+      verify(browseNodeStore).createAssetNode(REPOSITORY_NAME, MAVEN_2, toBrowsePaths(singletonList(asset.name())), asset);
     }
 
     verifyNoMoreInteractions(browseNodeStore);
@@ -148,10 +153,10 @@ public class BrowseNodeManagerTest
       Asset asset = assets.get(i);
       Component component = components.get(i);
       String name = asset.name();
-      when(maven2BrowseNodeGenerator.computeAssetPath(asset, component)).thenReturn(
-          asList(component.group(), component.name(), component.version(), name));
-      when(maven2BrowseNodeGenerator.computeComponentPath(asset, component)).thenReturn(asList(
-          component.group(), component.name(), component.version()));
+      when(maven2BrowseNodeGenerator.computeAssetPaths(asset, component))
+          .thenReturn(toBrowsePaths(asList(component.group(), component.name(), component.version(), name)));
+      when(maven2BrowseNodeGenerator.computeComponentPaths(asset, component))
+          .thenReturn(toBrowsePaths(asList(component.group(), component.name(), component.version())));
     }
 
     manager.createFromAssets(repository, assets);
@@ -159,10 +164,10 @@ public class BrowseNodeManagerTest
     for (int i = 0; i < assets.size(); i++) {
       Asset asset = assets.get(i);
       Component component = components.get(i);
-      verify(browseNodeStore).createComponentNode(REPOSITORY_NAME,
-          asList(component.group(), component.name(), component.version()), component);
-      verify(browseNodeStore).createAssetNode(REPOSITORY_NAME,
-          asList(component.group(), component.name(), component.version(), asset.name()), asset);
+      verify(browseNodeStore).createComponentNode(REPOSITORY_NAME, MAVEN_2,
+          toBrowsePaths(asList(component.group(), component.name(), component.version())), component);
+      verify(browseNodeStore).createAssetNode(REPOSITORY_NAME, MAVEN_2,
+          toBrowsePaths(asList(component.group(), component.name(), component.version(), asset.name())), asset);
     }
 
     verifyNoMoreInteractions(browseNodeStore);

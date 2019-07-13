@@ -1,14 +1,25 @@
 {
   "scripts": {
     "build": "webpack --mode=production",
-    "test": "",
+    "test": "jest --config frontend/jest.config.js",
+    "test-coverage": "npm test -- --coverage",
+    "test-watch": "npm test -- --watch",
+    "test-watch-debug": "node --inspect-brk node_modules/.bin/jest --config frontend/jest.config.js --runInBand --watchAll",
     "watch": "webpack --mode=development --watch"
   },
   "devDependencies": {
     "@babel/core": "7.4.5",
+    "@babel/preset-env": "7.4.5",
+    "@babel/preset-react": "7.0.0",
+    "babel-jest": "24.8.0",
     "babel-loader": "8.0.6",
-    "copy-modules-webpack-plugin": "2.0.2",
+    "babel-polyfill": "6.26.0",
+    "copy-modules-webpack-plugin": "2.0.3",
     "css-loader": "3.0.0",
+    "enzyme": "3.10.0",
+    "enzyme-adapter-react-16": "1.14.0",
+    "jest": "24.8.0",
+    "jest-enzyme": "7.0.2",
     "mini-css-extract-plugin": "0.7.0",
     "webpack": "4.34.0",
     "webpack-cli": "3.3.4"

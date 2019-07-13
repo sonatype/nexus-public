@@ -49,8 +49,9 @@ public class BucketManager
     extends ComponentSupport
     implements StorageLocationManager
 {
-  private static final String OLD_LIFECYCLE_EXPIRATION_RULE_ID = "Expire soft-deleted blobstore objects";
-  private static final String LIFECYCLE_EXPIRATION_RULE_ID_PREFIX = "Expire soft-deleted objects in blobstore ";
+  static final String OLD_LIFECYCLE_EXPIRATION_RULE_ID = "Expire soft-deleted blobstore objects";
+
+  static final String LIFECYCLE_EXPIRATION_RULE_ID_PREFIX = "Expire soft-deleted objects in blobstore ";
 
   private AmazonS3 s3;
 

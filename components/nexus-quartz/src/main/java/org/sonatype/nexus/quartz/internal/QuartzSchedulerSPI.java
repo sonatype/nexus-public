@@ -97,13 +97,10 @@ import static org.quartz.impl.matchers.GroupMatcher.jobGroupEquals;
 import static org.quartz.impl.matchers.KeyMatcher.keyEquals;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
-import static org.sonatype.nexus.quartz.internal.task.QuartzTaskJob.configurationOf;
-import static org.sonatype.nexus.quartz.internal.task.QuartzTaskJob.updateJobData;
 import static org.sonatype.nexus.quartz.internal.task.QuartzTaskJobListener.listenerName;
-import static org.sonatype.nexus.quartz.internal.task.QuartzTaskState.LAST_RUN_STATE_END_STATE;
-import static org.sonatype.nexus.quartz.internal.task.QuartzTaskState.getLastRunState;
-import static org.sonatype.nexus.quartz.internal.task.QuartzTaskState.hasLastRunState;
-import static org.sonatype.nexus.quartz.internal.task.QuartzTaskState.setLastRunState;
+import static org.sonatype.nexus.quartz.internal.task.QuartzTaskUtils.configurationOf;
+import static org.sonatype.nexus.quartz.internal.task.QuartzTaskUtils.updateJobData;
+import static org.sonatype.nexus.scheduling.TaskConfiguration.LAST_RUN_STATE_END_STATE;
 import static org.sonatype.nexus.scheduling.TaskDescriptorSupport.LIMIT_NODE_KEY;
 import static org.sonatype.nexus.scheduling.TaskState.INTERRUPTED;
 import static org.sonatype.nexus.scheduling.TaskState.RUNNING;
@@ -293,9 +290,9 @@ public class QuartzSchedulerSPI
       TaskConfiguration taskConfig = configurationOf(jobDetail);
       Date latestFire = latestFireWrapper.get();
 
-      if (!hasLastRunState(taskConfig) || getLastRunState(taskConfig).getRunStarted().before(latestFire)) {
+      if (!taskConfig.hasLastRunState() || taskConfig.getLastRunState().getRunStarted().before(latestFire)) {
         long estimatedDuration = Math.max(nexusLastRunTime.orElse(latestFire).getTime() - latestFire.getTime(), 0);
-        setLastRunState(taskConfig, INTERRUPTED, latestFire, estimatedDuration);
+        taskConfig.setLastRunState(INTERRUPTED, latestFire, estimatedDuration);
 
         log.warn("Updating lastRunState to interrupted for jobKey {} taskConfig: {}", jobDetail.getKey(), taskConfig);
         try {

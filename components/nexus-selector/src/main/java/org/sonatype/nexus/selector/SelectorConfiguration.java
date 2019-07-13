@@ -62,7 +62,7 @@ public class SelectorConfiguration
     return attributes;
   }
 
-  public void setAttributes(final Map<String, Object> attributes) {
+  public void setAttributes(final Map<String, ? extends Object> attributes) {
     this.attributes = new HashMap<>(attributes.size());
     // prevent OrientDB deserialization exceptions by converting value to String - see NEXUS-17850
     attributes.forEach((key, value) -> this.attributes.put(key, value.toString()));

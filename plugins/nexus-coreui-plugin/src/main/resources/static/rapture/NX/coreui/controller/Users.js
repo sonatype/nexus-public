@@ -233,14 +233,7 @@ Ext.define('NX.coreui.controller.Users', {
     var list = this.getList(),
         userId = list.getSelectionModel().getSelection()[0].get('userId');
 
-    NX.Security.doWithAuthenticationToken(
-        'Changing password requires validation of your credentials.',
-        {
-          success: function(authToken) {
-            Ext.widget('nx-coreui-user-changepassword', { userId: userId, authToken: authToken });
-          }
-        }
-    );
+    Ext.widget('nx-coreui-user-changepassword', { userId: userId });
   },
 
   /**
@@ -249,14 +242,7 @@ Ext.define('NX.coreui.controller.Users', {
   showChangePasswordWindowForUserAccount: function(button) {
     var userId = button.up('form').down('#userId').getValue();
 
-    NX.Security.doWithAuthenticationToken(
-        'Changing password requires validation of your credentials.',
-        {
-          success: function(authToken) {
-            Ext.widget('nx-coreui-user-changepassword', { userId: userId, authToken: authToken });
-          }
-        }
-    );
+    Ext.widget('nx-coreui-user-changepassword', { userId: userId });
   },
 
   /**
@@ -549,12 +535,19 @@ Ext.define('NX.coreui.controller.Users', {
     var win = button.up('window'),
         password = button.up('form').down('#password').getValue();
 
-    NX.direct.coreui_User.changePassword(win.authToken, win.userId, password, function(response) {
-      if (Ext.isObject(response) && response.success) {
-        win.close();
-        NX.Messages.add({ text: NX.I18n.get('Users_Change_Success'), type: 'success' });
-      }
-    });
+    NX.Security.doWithAuthenticationToken(
+        'Changing password requires validation of your credentials.',
+        {
+          success: function(authToken) {
+            NX.direct.coreui_User.changePassword(authToken, win.userId, password, function(response) {
+              if (Ext.isObject(response) && response.success) {
+                win.close();
+                NX.Messages.add({ text: NX.I18n.get('Users_Change_Success'), type: 'success' });
+              }
+            });
+          }
+        }
+    );
   },
 
   /**

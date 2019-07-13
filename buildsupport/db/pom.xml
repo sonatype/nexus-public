@@ -118,6 +118,12 @@
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-jdbc</artifactId>
         <version>${orientdb.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>

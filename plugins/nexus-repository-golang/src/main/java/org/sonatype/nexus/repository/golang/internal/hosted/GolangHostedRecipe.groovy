@@ -41,7 +41,7 @@ import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getBoole
 class GolangHostedRecipe
     extends GolangRecipeSupport
 {
-  private static final String NAME = 'go-hosted'
+  protected static final String NAME = 'go-hosted'
 
   @Inject
   HostedHandlers hostedHandlers
