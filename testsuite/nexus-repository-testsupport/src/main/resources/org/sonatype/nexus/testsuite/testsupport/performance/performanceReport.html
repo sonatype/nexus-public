@@ -1,0 +1,63 @@
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Nexus Performance Report</title>
+  <script type="text/javascript"
+          src="https://www.google.com/jsapi?autoload={
+            'modules':[{
+              'name':'visualization',
+              'version':'1',
+              'packages':['corechart']
+            }]
+          }"></script>
+  <script type="text/javascript">
+    google.setOnLoadCallback(drawChart);
+
+    function drawChart() {
+      var data = google.visualization.arrayToDataTable([
+        /*ROW-DATA*/
+      ]);
+
+      var options = {
+        title: 'Nexus 3 Request-Processing Performance',
+        hAxis: {
+          title: '# of Client Threads',
+        },
+        vAxis: {
+          title: 'Requests/Second'
+        }
+      };
+
+      var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+
+      chart.draw(data, options);
+    }
+  </script>
+</head>
+<body>
+<h1>Format Performance Report</h1>
+<div id="curve_chart" style="width: 1100px; height: 800px"></div>
+
+<h3>Example Production Loads</h3>
+<i>RSO: 16.25 rps<br/>
+  OSSRH: 64.5 rps</i>
+
+<h2>System Information</h2>
+<pre><!-- SYSTEM-INFO --></pre>
+</body>
+</html>
