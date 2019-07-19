@@ -265,7 +265,7 @@ public class BlobStoreManagerImpl
   }
 
   @Override
-  @Guarded(by = STARTED)
+  @Guarded(by = { STARTED, FAILED })
   public void delete(final String name) throws Exception {
     checkNotNull(name);
     if (!repositoryManagerProvider.get().isBlobstoreUsed(name)) {
@@ -277,7 +277,7 @@ public class BlobStoreManagerImpl
   }
 
   @Override
-  @Guarded(by = STARTED)
+  @Guarded(by = { STARTED, FAILED })
   public void forceDelete(final String name) throws Exception {
     checkNotNull(name);
     databaseFreezeService.checkUnfrozen("Unable to delete a BlobStore while database is frozen.");

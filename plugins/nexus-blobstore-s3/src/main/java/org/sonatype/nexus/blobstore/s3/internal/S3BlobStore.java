@@ -531,6 +531,8 @@ public class S3BlobStore
     catch (AmazonS3Exception s3Exception) {
       if ("BucketNotEmpty".equals(s3Exception.getErrorCode())) {
         log.warn("Unable to delete non-empty blob store bucket {}", getConfiguredBucket());
+      } else if ("ExpiredToken".equals(s3Exception.getErrorCode())) {
+        log.warn("Unable to delete blob store bucket {}. Token expired.", getConfiguredBucket());
       }
       else {
         throw new BlobStoreException(s3Exception, null);
