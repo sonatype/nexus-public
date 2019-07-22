@@ -20,6 +20,7 @@ import javax.validation.Valid
 import javax.validation.constraints.NotNull
 import javax.validation.groups.Default
 
+import org.sonatype.nexus.datastore.DataStoreConfigurationSource
 import org.sonatype.nexus.datastore.DataStoreDescriptor
 import org.sonatype.nexus.datastore.api.DataStore
 import org.sonatype.nexus.datastore.api.DataStoreConfiguration
@@ -41,7 +42,6 @@ import org.apache.shiro.authz.annotation.RequiresPermissions
 import org.hibernate.validator.constraints.NotEmpty
 
 import static java.util.Collections.singletonList
-import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE_NAME
 import static org.sonatype.nexus.security.BreadActions.READ
 
 /**
@@ -63,6 +63,9 @@ class DataStoreComponent
   Map<String, DataStoreDescriptor> dataStoreDescriptors
 
   @Inject
+  Map<String, DataStoreConfigurationSource> dataStoreConfigurationSources
+
+  @Inject
   RepositoryManager repositoryManager
 
   @Inject
@@ -70,7 +73,7 @@ class DataStoreComponent
 
   @Inject
   @Named('${nexus.datastore.enabled:-false}')
-  boolean enabled;
+  boolean enabled
 
   @Override
   @Nullable
@@ -102,8 +105,22 @@ class DataStoreComponent
           id: key,
           name: descriptor.name,
           formFields: descriptor.formFields.collect { FormFieldXO.create(it) },
-          isModifiable: descriptor.isModifiable(),
           isEnabled: descriptor.isEnabled()
+      )
+    }
+  }
+
+  @DirectMethod
+  @Timed
+  @ExceptionMetered
+  @RequiresPermissions('nexus:datastores:read')
+  List<DataStoreSourceXO> readSources() {
+    dataStoreConfigurationSources.collect { key, source ->
+      new DataStoreSourceXO(
+          id: key,
+          name: source.name,
+          isModifiable: source.isModifiable(),
+          isEnabled: source.isEnabled()
       )
     }
   }
@@ -139,17 +156,21 @@ class DataStoreComponent
     new DataStoreConfiguration(
         name: dataStoreXO.name,
         type: dataStoreXO.type,
+        source: dataStoreXO.source,
         attributes: dataStoreXO.attributes
     )
   }
 
   DataStoreXO asDataStoreXO(final DataStore dataStore) {
+    String storeName = dataStore.configuration.name
+    boolean isContentStore = dataStoreManager.isContentStore(storeName)
     def dataStoreXO = new DataStoreXO(
-        name: dataStore.configuration.name,
+        name: storeName,
         type: dataStore.configuration.type,
+        source: dataStore.configuration.source,
         attributes: dataStore.configuration.attributes,
-        inUse: CONFIG_DATASTORE_NAME.equalsIgnoreCase(dataStore.configuration.name) ||
-            repositoryManager.isDataStoreUsed(dataStore.configuration.name)
+        inUse: !isContentStore || repositoryManager.isDataStoreUsed(storeName),
+        isContentStore: isContentStore
     )
     return dataStoreXO
   }

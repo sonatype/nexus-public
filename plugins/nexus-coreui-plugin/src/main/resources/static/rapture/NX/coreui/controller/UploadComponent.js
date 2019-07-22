@@ -79,7 +79,7 @@ Ext.define('NX.coreui.controller.UploadComponent', {
       iconCls: 'x-fa fa-upload',
       authenticationRequired: false,
       visible: function() {
-          return NX.Permissions.check('nexus:component:add');
+          return NX.Permissions.check('nexus:component:create');
       }
     };
 

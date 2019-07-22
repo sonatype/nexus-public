@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.coreui
 
+import org.sonatype.nexus.datastore.DataStoreConfigurationSource
 import org.sonatype.nexus.datastore.DataStoreDescriptor
 import org.sonatype.nexus.datastore.api.DataStore
 import org.sonatype.nexus.datastore.api.DataStoreConfiguration
@@ -29,7 +30,9 @@ class DataStoreComponentTest
     extends Specification
 {
 
-  DataStoreManager dataStoreManager = Mock()
+  DataStoreManager dataStoreManager = Mock() {
+    isContentStore(_) >> { callRealMethod() } // default method
+  }
 
   RepositoryManager repositoryManager = Mock()
 
@@ -53,12 +56,24 @@ class DataStoreComponentTest
       types.collect{[it.id, it.name, it.formFields]} == [['MyType', 'MyType', []]]
   }
 
+  def 'Read sources returns config source data'() {
+    given: 'A data store source'
+      dataStoreComponent.dataStoreConfigurationSources =
+          [MySource: [getName: { -> 'MySource' }] as DataStoreConfigurationSource]
+
+    when: 'Reading data store sources'
+      def sources = dataStoreComponent.readSources()
+
+    then: 'The descriptor information is returned'
+      sources.collect{[it.id, it.name]} == [['MySource', 'MySource']]
+  }
+
   def 'Create data store creates and returns new data store'() {
     given: 'A data store create request'
-      DataStoreXO dataStoreXO = new DataStoreXO(name: 'mydata', type: 'jdbc',
+      DataStoreXO dataStoreXO = new DataStoreXO(name: 'mydata', type: 'jdbc', source: 'local',
           attributes: [url: 'mock:some/datastore/url'])
       DataStoreConfiguration expectedConfig = new DataStoreConfiguration(name: 'mydata', type: 'jdbc',
-          attributes: [url: 'mock:some/datastore/url'])
+          source: 'local', attributes: [url: 'mock:some/datastore/url'])
       DataStore dataStore = Mock()
 
     when: 'The data store is created'
@@ -74,19 +89,19 @@ class DataStoreComponentTest
   def 'Config data store is always in use'() {
     given:
       DataStoreConfiguration configConfig = new DataStoreConfiguration(name: 'config', type: 'jdbc',
-        attributes: [url: 'mock:some/datastore/url'])
-      DataStoreConfiguration componentConfig = new DataStoreConfiguration(name: 'component', type: 'jdbc',
-        attributes: [url: 'mock:some/datastore/url'])
+        source: 'local', attributes: [url: 'mock:some/datastore/url'])
+      DataStoreConfiguration contentConfig = new DataStoreConfiguration(name: 'content', type: 'jdbc',
+        source: 'local', attributes: [url: 'mock:some/datastore/url'])
       DataStore configDataStore = Mock()
-      DataStore componentDataStore = Mock()
+      DataStore contentDataStore = Mock()
 
     when: 'Browsing data stores'
       def results = dataStoreComponent.read()
 
     then: 'Config data store is in use'
       _ * configDataStore.configuration >> configConfig
-      _ * componentDataStore.configuration >> componentConfig
-      1 * dataStoreManager.browse() >> [configDataStore, componentDataStore]
+      _ * contentDataStore.configuration >> contentConfig
+      1 * dataStoreManager.browse() >> [configDataStore, contentDataStore]
       results.size == 2
       results[0].inUse == true
       results[1].inUse == false
@@ -95,9 +110,9 @@ class DataStoreComponentTest
   def 'Data store reports if in use by a repository'() {
     given:
       DataStoreConfiguration usedConfig = new DataStoreConfiguration(name: 'used', type: 'jdbc',
-        attributes: [url: 'mock:some/datastore/url'])
+        source: 'local', attributes: [url: 'mock:some/datastore/url'])
       DataStoreConfiguration unusedConfig = new DataStoreConfiguration(name: 'unused', type: 'jdbc',
-        attributes: [url: 'mock:some/datastore/url'])
+        source: 'local', attributes: [url: 'mock:some/datastore/url'])
       DataStore usedDataStore = Mock()
       DataStore unusedDataStore = Mock()
 

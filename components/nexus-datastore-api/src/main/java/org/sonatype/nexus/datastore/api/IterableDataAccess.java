@@ -12,33 +12,41 @@
  */
 package org.sonatype.nexus.datastore.api;
 
+import java.util.Optional;
+
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.entity.HasEntityId;
 
 /**
  * Generic CRUD {@link DataAccess} that accesses zero to many entities of the same type.
  *
  * @since 3.next
  */
-public interface IterableDataAccess<E, ID extends EntityId>
-    extends DataAccess, Iterable<E>
+public interface IterableDataAccess<E extends HasEntityId>
+    extends DataAccess
 {
   /**
-   * Creates a new entity.
+   * Browse existing entities.
    */
-  E create(E entity);
+  Iterable<E> browse();
 
   /**
-   * Retrieves the entity with the given id.
+   * Create a new entity.
    */
-  E read(ID id);
+  void create(E entity);
 
   /**
-   * Updates an existing entity.
+   * Retrieve the entity with the given id.
    */
-  E update(E entity);
+  Optional<E> read(EntityId id);
 
   /**
-   * Deletes the entity with the given id.
+   * Update an existing entity.
    */
-  void delete(ID id);
+  void update(E entity);
+
+  /**
+   * Delete the entity with the given id.
+   */
+  boolean delete(EntityId id);
 }

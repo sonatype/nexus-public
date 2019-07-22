@@ -75,7 +75,7 @@ Ext.define('NX.coreui.migration.RepositoryDefaultsScreen', {
           helpText: NX.I18n.render(me, 'DataStore_HelpText'),
           emptyText: NX.I18n.render(me, 'DataStore_EmptyText'),
           editable: false,
-          store: 'ComponentDatastore',
+          store: 'ContentDatastore',
           queryMode: 'local',
           displayField: 'name',
           valueField: 'name',

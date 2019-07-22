@@ -617,7 +617,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
 
     if (uploadButton && repository) {
       if (NX.State.getValue('upload') &&
-          NX.Permissions.check('nexus:component:add') &&
+          NX.Permissions.check('nexus:component:create') &&
           repository.getData().type === 'hosted' &&
           repository.getData().versionPolicy !== 'SNAPSHOT') {
         store.load(function (store, results) {

@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.datastore.api;
 
-import javax.annotation.Nullable;
+import java.util.Optional;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
 
@@ -26,36 +26,42 @@ public interface DataStoreManager
 {
   String CONFIG_DATASTORE_NAME = "config";
 
-  String COMPONENT_DATASTORE_NAME = "component";
+  String CONTENT_DATASTORE_NAME = "content";
 
   /**
-   * @return all data stores
+   * Browse existing data stores.
    */
   Iterable<DataStore<?>> browse();
 
   /**
    * Create a new data store.
    */
-  DataStore<?> create(DataStoreConfiguration dataStoreConfiguration) throws Exception;
+  DataStore<?> create(DataStoreConfiguration configuration) throws Exception;
 
   /**
    * Update an existing data store.
    */
-  DataStore<?> update(DataStoreConfiguration dataStoreConfiguration) throws Exception;
+  DataStore<?> update(DataStoreConfiguration configuration) throws Exception;
 
   /**
    * Lookup a data store by name.
    */
-  @Nullable
-  DataStore<?> get(String name);
+  Optional<DataStore<?>> get(String storeName);
 
   /**
    * Delete a data store by name.
    */
-  void delete(String name) throws Exception;
+  boolean delete(String storeName) throws Exception;
 
   /**
-   * Returns true if a data store with the provided name already exists. Check is case-insensitive.
+   * @return {@code true} if the named data store already exists. Check is case-insensitive.
    */
-  boolean exists(String name);
+  boolean exists(String storeName);
+
+  /**
+   * @return {@code true} if the named data store holds content metadata.
+   */
+  default boolean isContentStore(String storeName) {
+    return !CONFIG_DATASTORE_NAME.equalsIgnoreCase(storeName);
+  }
 }

@@ -37,12 +37,34 @@ Ext.define('NX.coreui.view.datastore.DatastoreSettingsForm', {
     me.editableCondition = me.editableCondition || NX.Conditions.and(
         NX.Conditions.isPermitted('nexus:datastores:update'),
         NX.Conditions.formHasRecord('nx-coreui-datastore-settings-form', function(model) {
-          var datastoreTypeModel = NX.getApplication().getStore('DatastoreType').getById(model.data.type);
-          return datastoreTypeModel.data.isModifiable;
+          var datastoreSourceModel = NX.getApplication().getStore('DatastoreSource').getById(model.data.source);
+          return datastoreSourceModel.data.isModifiable;
         })
     );
 
     me.items = [
+      {
+        xtype: 'combo',
+        name: 'source',
+        itemId: 'source',
+        fieldLabel: NX.I18n.get('Datastore_DatastoreAdd_Source_FieldLabel'),
+        emptyText: NX.I18n.get('Datastore_DatastoreAdd_Source_EmptyText'),
+        editable: false,
+        store: 'DatastoreSource',
+        queryMode: 'local',
+        displayField: 'name',
+        valueField: 'id',
+        readOnly: true,
+        onChange: function(newValue, oldValue) {
+          var comboxBox = this;
+          var value = newValue || oldValue;
+          if (!newValue) {
+            comboxBox.setValue(value);
+            comboxBox.originalValue = value;
+            comboxBox.validate();
+          }
+        }
+      },
       {
         xtype: 'combo',
         name: 'type',

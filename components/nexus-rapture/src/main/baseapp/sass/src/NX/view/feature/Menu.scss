@@ -45,6 +45,10 @@
       .x-tree-icon {
         filter: grayscale(0) drop-shadow(1px 1px 1px rgba(0,0,0,0.3));
         -webkit-filter: grayscale(0) drop-shadow(1px 1px 1px rgba(0,0,0,0.3));
+
+        &.nx-icon-feature-browse-welcome-x16 {
+        filter: #{"brightness(0) invert(0.175)"};
+        }
       }
     }
 
@@ -55,8 +59,7 @@
       font-size: 1em;
 
       &.nx-icon-feature-browse-welcome-x16 {
-        filter: grayscale(100%);
-        -webkit-filter: grayscale(100%);
+        filter: #{"brightness(0) invert(0.175)"};
       }
     }
 
@@ -67,16 +70,28 @@
     .x-grid-item-selected {
       .x-grid-cell {
         color: $color-white;
-        background-color: $color-cerulean-blue;
+        background-color: $color-nxrm-green;
+
+        &:hover {
+          color: $color-black;
+        }
       }
-      .x-tree-icon {
+
+      &:hover .x-tree-icon {
+        color: $color-black;
+      }
+
+      &.x-grid-item-over .x-tree-expander {
+        border-left-color: $color-black;
+      }
+
+      &:not(.x-grid-item-over) .x-tree-icon {
         color: $color-white;
         filter: saturate(1) grayscale(0);
         -webkit-filter: saturate(1) grayscale(0);
 
         &.nx-icon-feature-browse-welcome-x16 {
-          filter: grayscale(100%);
-          -webkit-filter: grayscale(100%);
+          filter: #{" brightness(0) invert(1)"};
         }
       }
       .x-tree-expander {

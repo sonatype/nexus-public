@@ -18,6 +18,7 @@ import java.util.List;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.scheduling.ClusteredTaskState;
+import org.sonatype.nexus.scheduling.CurrentState;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.TaskState;
@@ -203,7 +204,7 @@ public class TaskComponentTest
   @Test
   public void testValidateState_runningLocally() {
     TaskInfo taskInfo = mock(TaskInfo.class);
-    TaskInfo.CurrentState localState = mock(TaskInfo.CurrentState.class);
+    CurrentState localState = mock(CurrentState.class);
     when(localState.getState()).thenReturn(TaskState.RUNNING);
     when(taskInfo.getId()).thenReturn("taskId");
     when(taskInfo.getCurrentState()).thenReturn(localState);
@@ -217,7 +218,7 @@ public class TaskComponentTest
   @Test
   public void testValidateState_runningOnCluster() {
     TaskInfo taskInfo = mock(TaskInfo.class);
-    TaskInfo.CurrentState localState = mock(TaskInfo.CurrentState.class);
+    CurrentState localState = mock(CurrentState.class);
     List<ClusteredTaskState> clusteredStates = Arrays.asList(
         new ClusteredTaskState("node-a", TaskState.WAITING, null, null, null, null),
         new ClusteredTaskState("node-b", TaskState.RUNNING, TaskState.RUNNING, null, null, null));
@@ -234,7 +235,7 @@ public class TaskComponentTest
   @Test
   public void testValidateState_notRunning() {
     TaskInfo taskInfo = mock(TaskInfo.class);
-    TaskInfo.CurrentState localState = mock(TaskInfo.CurrentState.class);
+    CurrentState localState = mock(CurrentState.class);
     List<ClusteredTaskState> clusteredStates = Arrays.asList(
         new ClusteredTaskState("node-a", TaskState.WAITING, null, null, null, null),
         new ClusteredTaskState("node-b", TaskState.WAITING, null, null, null, null));

@@ -31,20 +31,34 @@
   }
 
   .nx-health-button-red span span {
-    color: $color-free-speech-red;
+    color: $color-venetian-red;
+  }
+
+  .nx-health-button-red:hover span span {
+    color: $color-venetian-red;
+  }
+
+  .nx-health-button-green {
+    &:hover span span {
+      color: $color-white;
+    }
+
+    span span {
+      color: $color-nxrm-green;
+    }
   }
 
   .nx-health-button-green span span {
-    color: $color-pigment-green;
+    color: $color-nxrm-green;
   }
 }
 
 @include extjs-button-medium-ui(
     $ui: 'nx-header',
     $background-color: transparent,
-    $background-color-over: $color-salem,
-    $background-color-focus: $color-salem,
-    $background-color-pressed: $color-jewel,
+    $background-color-over: $color-nxrm-green,
+    $background-color-focus: transparent,
+    $background-color-pressed: $color-nxrm-green,
     $background-color-disabled: transparent,
     $color: $color-white,
     $color-over: $color-white,

@@ -18,6 +18,7 @@ import java.util.concurrent.Future
 import javax.ws.rs.WebApplicationException
 import javax.ws.rs.core.Response.Status
 
+import org.sonatype.nexus.scheduling.CurrentState
 import org.sonatype.nexus.scheduling.TaskConfiguration
 import org.sonatype.nexus.scheduling.TaskInfo
 import org.sonatype.nexus.scheduling.TaskScheduler
@@ -179,7 +180,8 @@ class TasksResourceTest
     String typeId
     String message
     String triggerSource
-    TaskInfo.CurrentState currentState
+
+    CurrentState currentState
     TaskConfiguration configuration
     Schedule schedule
 
@@ -192,7 +194,7 @@ class TasksResourceTest
     def runs = []
   }
 
-  class TestCurrentState implements TaskInfo.CurrentState {
+  class TestCurrentState implements CurrentState {
     TaskState state
     Date nextRun
     Date runStarted

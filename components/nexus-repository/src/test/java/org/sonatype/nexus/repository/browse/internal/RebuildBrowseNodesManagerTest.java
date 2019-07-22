@@ -36,7 +36,7 @@ import org.sonatype.nexus.repository.storage.ComponentFactory;
 import org.sonatype.nexus.repository.storage.MetadataNode;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
-import org.sonatype.nexus.scheduling.TaskInfo.CurrentState;
+import org.sonatype.nexus.scheduling.CurrentState;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.TaskState;
 

@@ -29,7 +29,5 @@ class DataStoreTypeXO
 
   List<FormFieldXO> formFields
 
-  boolean isModifiable
-
   boolean isEnabled
 }

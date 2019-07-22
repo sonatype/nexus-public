@@ -23,7 +23,9 @@ Ext.define('NX.coreui.model.Datastore', {
   fields: [
     {name: 'name', type: 'string', sortType: 'asUCText'},
     {name: 'type', type: 'string', sortType: 'asUCText'},
+    {name: 'source', type: 'string', sortType: 'asUCText'},
     {name: 'attributes', type: 'auto' /*object*/, defaultValue: null },
+    {name: 'isContentStore', type: 'boolean'},
     {name: 'inUse', type: 'boolean'}
   ]
 });

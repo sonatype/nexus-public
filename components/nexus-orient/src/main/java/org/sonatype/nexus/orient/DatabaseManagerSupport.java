@@ -59,6 +59,19 @@ public abstract class DatabaseManagerSupport
 
   public static final String SYSTEM_PASSWORD = "admin";
 
+  public static final int DEFAULT_BUFFER_SIZE_IN_BYTES = 16 * 1024;
+
+  public static final int DEFAULT_COMPRESSION_LEVEL = 3;
+
+  private static final String NEXUS_BACKUP_BUFFER_SIZE_PROPERTY =
+      "${nexus.backup.bufferSize:-" + DEFAULT_BUFFER_SIZE_IN_BYTES + "}";
+
+  private static final String NEXUS_BACKUP_IMPORT_BUFFER_SIZE_PROPERTY =
+      "${nexus.backup.importBufferSize:-" + DEFAULT_BUFFER_SIZE_IN_BYTES + "}";
+
+  private static final String NEXUS_BACKUP_COMPRESSION_LEVEL_PROPERTY =
+      "${nexus.backup.compressionLevel:-" + DEFAULT_COMPRESSION_LEVEL + "}";
+
   private static final String EXPLAIN_PREFIX = "org.sonatype.nexus.orient.explain.";
 
   private final Map<String,DatabasePoolSupport> pools = Maps.newHashMap();
@@ -69,6 +82,12 @@ public abstract class DatabaseManagerSupport
 
   private int maxConnections = DEFAULT_MAX_CONNECTIONS;
 
+  private int backupBufferSize = DEFAULT_BUFFER_SIZE_IN_BYTES;
+
+  private int backupCompressionLevel = DEFAULT_COMPRESSION_LEVEL;
+
+  private int importBufferSize = DEFAULT_BUFFER_SIZE_IN_BYTES;
+
   @Inject
   public void setMaxConnectionsPerCore(@Named(MAX_CONNECTIONS_PER_CORE_PLACEHOLDER) final int maxConnectionsPerCore) {
     this.maxConnectionsPerCore = maxConnectionsPerCore;
@@ -77,6 +96,23 @@ public abstract class DatabaseManagerSupport
   @Inject
   public void setMaxConnections(@Named(MAX_CONNECTIONS_PLACEHOLDER) final int maxConnections) {
     this.maxConnections = maxConnections;
+  }
+
+  @Inject
+  public void setBackupBufferSize(@Named(NEXUS_BACKUP_BUFFER_SIZE_PROPERTY) final int backupBufferSize) {
+    this.backupBufferSize = backupBufferSize;
+  }
+
+  @Inject
+  public void setBackupCompressionLevel(
+      @Named(NEXUS_BACKUP_COMPRESSION_LEVEL_PROPERTY) final int backupCompressionLevel)
+  {
+    this.backupCompressionLevel = backupCompressionLevel;
+  }
+
+  @Inject
+  public void setImportBufferSize(@Named(NEXUS_BACKUP_IMPORT_BUFFER_SIZE_PROPERTY) final int importBufferSize) {
+    this.importBufferSize = importBufferSize;
   }
 
   @Override
@@ -288,5 +324,20 @@ public abstract class DatabaseManagerSupport
     if (pool != null) {
       pool.replaceStorage(storage);
     }
+  }
+
+  @Override
+  public int getBackupCompressionLevel() {
+    return backupCompressionLevel;
+  }
+
+  @Override
+  public int getBackupBufferSize() {
+    return backupBufferSize;
+  }
+
+  @Override
+  public int getImportBufferSize() {
+    return importBufferSize;
   }
 }

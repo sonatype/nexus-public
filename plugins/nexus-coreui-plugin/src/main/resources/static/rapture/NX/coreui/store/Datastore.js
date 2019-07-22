@@ -38,20 +38,3 @@ Ext.define('NX.coreui.store.Datastore', {
   sorters: { property: 'name', direction: 'ASC' }
 
 });
-
-/**
- * Thin wrapper that just exposes component data stores (ie. excluding 'config')
- *
- * @since 3.next
- */
-Ext.define('NX.coreui.store.ComponentDatastore', {
-  extend: 'Ext.data.ChainedStore',
-  source: 'Datastore',
-  // drill-down code expects 'load' to exist on all stores
-  load: Ext.emptyFn,
-  filters: {
-    filterFn: function(item) {
-      return item.data.name !== 'config';
-    }
-  }
-});

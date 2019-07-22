@@ -21,12 +21,12 @@ public interface SingletonDataAccess<E>
     extends DataAccess
 {
   /**
-   * Gets current state of the entity.
+   * Get current state of the entity.
    */
   E get();
 
   /**
-   * Sets a new state for the entity.
+   * Set a new state for the entity.
    */
-  E set(E entity);
+  void set(E entity);
 }

@@ -17,7 +17,7 @@ import java.util.concurrent.Future;
 
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
-import org.sonatype.nexus.scheduling.TaskInfo.CurrentState;
+import org.sonatype.nexus.scheduling.CurrentState;
 import org.sonatype.nexus.scheduling.LastRunState;
 import org.sonatype.nexus.scheduling.TaskState;
 

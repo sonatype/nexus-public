@@ -44,7 +44,8 @@ Ext.define('NX.coreui.view.datastore.DatastoreList', {
           }
         },
         {header: NX.I18n.get('Datastore_DatastoreList_Name_Header'), dataIndex: 'name', stateId: 'name', flex: 1,  renderer: Ext.htmlEncode},
-        {header: NX.I18n.get('Datastore_DatastoreList_Type_Header'), dataIndex: 'type', stateId: 'type'}
+        {header: NX.I18n.get('Datastore_DatastoreList_Type_Header'), dataIndex: 'type', stateId: 'type'},
+        {header: NX.I18n.get('Datastore_DatastoreList_Source_Header'), dataIndex: 'source', stateId: 'source'}
       ],
 
       viewConfig: {

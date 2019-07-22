@@ -46,12 +46,6 @@ public class DatabaseExternalizerImpl
   extends ComponentSupport
   implements DatabaseExternalizer
 {
-  public static final int BACKUP_BUFFER_SIZE = 16 * 1024;
-
-  public static final int IMPORT_BUFFER_SIZE = 16 * 1024;
-
-  public static final int BACKUP_COMPRESSION_LEVEL = 9;
-
   private final DatabaseManager databaseManager;
 
   private final String name;
@@ -96,7 +90,7 @@ public class DatabaseExternalizerImpl
 
       log.debug("Starting backup");
       db.backup(output, null, null, new LoggingCommandOutputListener("BACKUP"),
-          BACKUP_COMPRESSION_LEVEL, BACKUP_BUFFER_SIZE);
+          databaseManager.getBackupCompressionLevel(), databaseManager.getBackupBufferSize());
       log.debug("Completed backup");
     }
   }
@@ -198,12 +192,12 @@ public class DatabaseExternalizerImpl
 
     File file = new File(dir, EXPORT_FILENAME);
     if (file.exists()) {
-      input = new BufferedInputStream(new FileInputStream(file), IMPORT_BUFFER_SIZE);
+      input = new BufferedInputStream(new FileInputStream(file), databaseManager.getImportBufferSize());
     }
     else {
       file = new File(dir, EXPORT_GZ_FILENAME);
       if (file.exists()) {
-        input = new GZIPInputStream(new FileInputStream(file), IMPORT_BUFFER_SIZE);
+        input = new GZIPInputStream(new FileInputStream(file), databaseManager.getImportBufferSize());
       }
     }
 

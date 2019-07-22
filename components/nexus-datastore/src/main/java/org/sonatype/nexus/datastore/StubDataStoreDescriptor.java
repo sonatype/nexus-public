@@ -46,12 +46,12 @@ public class StubDataStoreDescriptor
 
   private static final Messages messages = I18N.create(Messages.class);
 
-  private final FormField<?> url;
+  private final FormField<?> jdbcUrl;
 
   @Inject
   public StubDataStoreDescriptor() {
-    this.url = new StringTextFormField(
-        "url",
+    this.jdbcUrl = new StringTextFormField(
+        "jdbcUrl",
         messages.urlLabel(),
         null,
         MANDATORY
@@ -65,6 +65,6 @@ public class StubDataStoreDescriptor
 
   @Override
   public List<FormField<?>> getFormFields() {
-    return asList(url);
+    return asList(jdbcUrl);
   }
 }

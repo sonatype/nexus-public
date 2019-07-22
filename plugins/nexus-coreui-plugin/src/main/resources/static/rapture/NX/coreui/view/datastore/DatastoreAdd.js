@@ -52,6 +52,17 @@ Ext.define('NX.coreui.view.datastore.DatastoreAdd', {
 
     me.callParent();
 
+    var sourceCombo = me.down('#source');
+    sourceCombo.setReadOnly(false);
+    sourceCombo.on({
+      beforerender: function() {
+        var me = this;
+        me.setStore('ModifiableDatastoreSource');
+        me.setValue(me.getStore('ModifiableDatastoreSource').first().data.id);
+        sourceCombo.resetOriginalValue();
+      }
+    });
+
     var typeCombo = me.down('#type');
     typeCombo.setReadOnly(false);
     typeCombo.on({

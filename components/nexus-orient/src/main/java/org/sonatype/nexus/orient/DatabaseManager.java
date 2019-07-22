@@ -63,4 +63,25 @@ public interface DatabaseManager
    */
   @Deprecated
   void replaceStorage(OStorage storage);
+
+  /**
+   * Gets the configured backup compression level
+   *
+   * @since 3.next
+   */
+  int getBackupCompressionLevel();
+
+  /**
+   * Gets the configured backup buffer size in bytes
+   *
+   * @since 3.next
+   */
+  int getBackupBufferSize();
+
+  /**
+   * Gets the configured import buffer size in bytes
+   *
+   * @since 3.next
+   */
+  int getImportBufferSize();
 }

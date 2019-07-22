@@ -23,7 +23,7 @@ public interface DataStore<S extends DataSession<?>>
     extends Lifecycle
 {
   /**
-   * Configure the data store.
+   * Configure the data store; changes won't take effect until the store is (re)started.
    */
   void setConfiguration(DataStoreConfiguration configuration);
 
@@ -38,7 +38,22 @@ public interface DataStore<S extends DataSession<?>>
   boolean isStarted();
 
   /**
+   * Registers the given {@link DataAccess} type with this store.
+   */
+  void register(Class<? extends DataAccess> accessType);
+
+  /**
+   * Unregisters the given {@link DataAccess} type with this store.
+   */
+  void unregister(Class<? extends DataAccess> accessType);
+
+  /**
    * Opens a new {@link DataSession}.
    */
   S openSession();
+
+  /**
+   * Permanently stops this data store.
+   */
+  void shutdown() throws Exception;
 }

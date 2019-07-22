@@ -12,18 +12,14 @@
  */
 package org.sonatype.nexus.datastore;
 
-import javax.inject.Inject;
+import java.util.Map;
+
 import javax.inject.Named;
 
+import org.sonatype.nexus.datastore.api.DataAccess;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DataStore;
-import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
 import org.sonatype.nexus.transaction.Transaction;
-
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableMap;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Temporary stubbed {@link DataStore}.
@@ -34,23 +30,19 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class StubDataStore
     extends DataStoreSupport<Transaction, DataSession<Transaction>>
 {
-  @Inject
-  public StubDataStore() {
-    // prototype
+  @Override
+  protected void doStart(final String storeName, final Map<String, String> attributes) throws Exception {
+    // no-op
   }
 
-  @VisibleForTesting
-  public StubDataStore(final String name) {
-    configuration = new DataStoreConfiguration();
-    configuration.setName(name);
-    configuration.setType("jdbc");
-    configuration.setAttributes(ImmutableMap.of("url", "jdbc:example"));
-    try {
-      start();
-    }
-    catch (Exception e) {
-      throw new IllegalStateException(e);
-    }
+  @Override
+  public void register(final Class<? extends DataAccess> accessType) {
+    // no-op
+  }
+
+  @Override
+  public void unregister(final Class<? extends DataAccess> accessType) {
+    // no-op
   }
 
   @Override

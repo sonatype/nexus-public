@@ -83,24 +83,28 @@ public class CleanupITSupport
     ThreadContext.bind(FakeAlmightySubject.forUserId("disabled-security"));
   }
 
-  protected void setPolicyToBeLastBlobUpdatedInSeconds(final Repository repository, final int lastBlobUpdatedSeconds)
+  protected void setPolicyToBeLastBlobUpdatedInSeconds(final Repository repository,
+                                                       final int lastBlobUpdatedSeconds)
       throws Exception
   {
-    createOrUpdatePolicyWithCriteria(ImmutableMap.of(LAST_BLOB_UPDATED_KEY, Integer.toString(lastBlobUpdatedSeconds)));
+    createOrUpdatePolicyWithCriteria(ImmutableMap.of(LAST_BLOB_UPDATED_KEY, Integer.toString(lastBlobUpdatedSeconds)),
+        repository.getFormat().getValue());
     addPolicyToRepository(testName.getMethodName(), repository);
   }
 
   protected void setPolicyToBeLastDownloadedInSeconds(final Repository repository, final int lastDownloadedSeconds)
       throws Exception
   {
-    createOrUpdatePolicyWithCriteria(ImmutableMap.of(LAST_DOWNLOADED_KEY, Integer.toString(lastDownloadedSeconds)));
+    createOrUpdatePolicyWithCriteria(ImmutableMap.of(LAST_DOWNLOADED_KEY, Integer.toString(lastDownloadedSeconds)),
+        repository.getFormat().getValue());
     addPolicyToRepository(testName.getMethodName(), repository);
   }
 
   protected void setPolicyToBePrerelease(final Repository repository, final boolean prerelease)
       throws Exception
   {
-    createOrUpdatePolicyWithCriteria(ImmutableMap.of(IS_PRERELEASE_KEY, Boolean.toString(prerelease)));
+    createOrUpdatePolicyWithCriteria(ImmutableMap.of(IS_PRERELEASE_KEY, Boolean.toString(prerelease)),
+        repository.getFormat().getValue());
     addPolicyToRepository(testName.getMethodName(), repository);
   }
 
@@ -113,19 +117,20 @@ public class CleanupITSupport
   {
     createOrUpdatePolicyWithCriteria(ImmutableMap.of(LAST_BLOB_UPDATED_KEY, Integer.toString(lastBlobUpdatedSeconds),
         LAST_DOWNLOADED_KEY, Integer.toString(lastDownloadedSeconds),
-        IS_PRERELEASE_KEY, Boolean.toString(prerelease)));
-    
+        IS_PRERELEASE_KEY, Boolean.toString(prerelease)), repository.getFormat().getValue());
+
     addPolicyToRepository(testName.getMethodName(), repository);
   }
 
-  protected void createOrUpdatePolicyWithCriteria(final Map<String, String> criteria) {
+  protected void createOrUpdatePolicyWithCriteria(final Map<String, String> criteria, final String format) {
     CleanupPolicy existingPolicy = cleanupPolicyStorage.get(testName.getMethodName());
 
     if (existingPolicy != null) {
       existingPolicy.setCriteria(criteria);
       cleanupPolicyStorage.update(existingPolicy);
-    } else {
-      cleanupPolicyStorage.add(new CleanupPolicy(testName.getMethodName(), "This is a policy for testing", "maven2",
+    }
+    else {
+      cleanupPolicyStorage.add(new CleanupPolicy(testName.getMethodName(), "This is a policy for testing", format,
           CLEANUP_MODE, criteria));
     }
   }

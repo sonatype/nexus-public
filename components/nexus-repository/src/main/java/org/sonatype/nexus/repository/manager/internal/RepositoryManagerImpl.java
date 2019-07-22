@@ -13,10 +13,12 @@
 package org.sonatype.nexus.repository.manager.internal;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -24,6 +26,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
+import javax.validation.ConstraintViolation;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
@@ -46,6 +49,7 @@ import org.sonatype.nexus.repository.config.internal.ConfigurationEvent;
 import org.sonatype.nexus.repository.config.internal.ConfigurationStore;
 import org.sonatype.nexus.repository.config.internal.ConfigurationUpdatedEvent;
 import org.sonatype.nexus.repository.group.GroupFacet;
+import org.sonatype.nexus.repository.manager.ConfigurationValidator;
 import org.sonatype.nexus.repository.manager.DefaultRepositoriesContributor;
 import org.sonatype.nexus.repository.manager.RepositoryCreatedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryDeletedEvent;
@@ -71,6 +75,8 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 import static org.sonatype.nexus.repository.storage.StorageFacetConstants.BLOB_STORE_NAME;
 import static org.sonatype.nexus.repository.storage.StorageFacetConstants.DATA_STORE_NAME;
 import static org.sonatype.nexus.repository.storage.StorageFacetConstants.STORAGE;
+import static org.sonatype.nexus.validation.ConstraintViolations.maybeAdd;
+import static org.sonatype.nexus.validation.ConstraintViolations.maybePropagate;
 
 /**
  * Default {@link RepositoryManager} implementation.
@@ -117,6 +123,8 @@ public class RepositoryManagerImpl
 
   private final GroupMemberMappingCache groupMemberMappingCache;
 
+  private final List<ConfigurationValidator> configurationValidators;
+
   @Inject
   public RepositoryManagerImpl(final EventManager eventManager,
                                final ConfigurationStore store,
@@ -128,7 +136,8 @@ public class RepositoryManagerImpl
                                final DatabaseFreezeService databaseFreezeService,
                                @Named("${nexus.skipDefaultRepositories:-false}") final boolean skipDefaultRepositories,
                                final BlobStoreManager blobStoreManager,
-                               final GroupMemberMappingCache groupMemberMappingCache)
+                               final GroupMemberMappingCache groupMemberMappingCache,
+                               final List<ConfigurationValidator> configurationValidators)
   {
     this.eventManager = checkNotNull(eventManager);
     this.store = checkNotNull(store);
@@ -141,6 +150,7 @@ public class RepositoryManagerImpl
     this.skipDefaultRepositories = skipDefaultRepositories;
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.groupMemberMappingCache = checkNotNull(groupMemberMappingCache);
+    this.configurationValidators = checkNotNull(configurationValidators);
   }
 
   /**
@@ -331,6 +341,8 @@ public class RepositoryManagerImpl
 
     log.info("Creating repository: {} -> {}", repositoryName, configuration);
 
+    validateConfiguration(configuration);
+
     Repository repository = newRepository(configuration);
 
     if (!EventHelper.isReplicating()) {
@@ -354,6 +366,8 @@ public class RepositoryManagerImpl
 
     log.info("Updating repository: {} -> {}", repositoryName, configuration);
 
+    validateConfiguration(configuration);
+
     Repository repository = repository(repositoryName);
 
     // ensure configuration sanity
@@ -370,6 +384,14 @@ public class RepositoryManagerImpl
     eventManager.post(new RepositoryUpdatedEvent(repository));
 
     return repository;
+  }
+
+  private void validateConfiguration(final Configuration configuration) {
+    Set<ConstraintViolation<?>> violations = new HashSet<>();
+    configurationValidators.forEach(
+        validator -> maybeAdd(violations, validator.validate(configuration))
+    );
+    maybePropagate(violations, log);
   }
 
   @Override

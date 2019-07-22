@@ -26,7 +26,7 @@ import org.sonatype.nexus.formfields.FormField;
 public interface DataStoreDescriptor
 {
   /**
-   * A user friendly name of the data store type to be presented in UI.
+   * A user friendly name of the data store type to be presented in the UI.
    */
   String getName();
 
@@ -34,13 +34,6 @@ public interface DataStoreDescriptor
    * Form fields to configure the data store.
    */
   List<FormField<?>> getFormFields();
-
-  /**
-   * Can the data store can be modified after creating?
-   */
-  default boolean isModifiable() {
-    return true;
-  }
 
   /**
    * Validate the given configuration.

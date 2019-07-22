@@ -299,7 +299,7 @@ class NexusSecurityContributor
                 type: 'application',
                 properties: [
                     domain : 'component',
-                    actions: 'add'
+                    actions: 'create'
                 ]
             ),
         ],

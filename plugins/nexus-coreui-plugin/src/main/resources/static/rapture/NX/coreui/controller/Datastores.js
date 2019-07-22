@@ -32,9 +32,11 @@ Ext.define('NX.coreui.controller.Datastores', {
     'Datastore'
   ],
   stores: [
-    'Datastore',
+    'DatastoreSource',
     'DatastoreType',
-    'ComponentDatastore'
+    'Datastore',
+    'ModifiableDatastoreSource',
+    'ContentDatastore'
   ],
   views: [
     'datastore.DatastoreAdd',
@@ -197,6 +199,7 @@ Ext.define('NX.coreui.controller.Datastores', {
 
     if (list) {
       me.getStore('Datastore').clearFilter();
+      me.getStore('DatastoreSource').load();
       me.getStore('DatastoreType').load();
     }
   },

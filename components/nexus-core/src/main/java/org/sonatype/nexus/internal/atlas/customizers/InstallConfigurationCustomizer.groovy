@@ -98,7 +98,7 @@ class InstallConfigurationCustomizer
       def etcDir = new File(workDir, 'etc')
 
       maybeIncludeFile new File(etcDir, 'nexus.properties'), 'install/etc', HIGH
-      maybeIncludeFile new File(etcDir, 'fabric/hazelcast-network.xml'), 'install/etc/fabric', HIGH
+      maybeIncludeDir new File(etcDir, 'fabric'), 'install/etc', HIGH
       maybeIncludeDir new File(etcDir, 'logback'), 'install/etc', HIGH
     }
   }

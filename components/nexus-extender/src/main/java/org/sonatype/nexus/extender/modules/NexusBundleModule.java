@@ -83,6 +83,7 @@ public class NexusBundleModule
   protected List<Module> modules() {
     List<Module> modules = new ArrayList<>();
 
+    maybeAddDataAccessBindings(modules);
     maybeAddSecurityFilter(modules);
     maybeAddServletContext(modules);
     maybeAddMetricsRegistry(modules);
@@ -105,6 +106,12 @@ public class NexusBundleModule
   @Override
   protected Module spaceModule() {
     return new SpaceModule(space, BeanScanning.GLOBAL_INDEX);
+  }
+
+  private void maybeAddDataAccessBindings(final List<Module> modules) {
+    if (imports.contains("org.sonatype.nexus.datastore")) {
+      modules.add(new DataAccessModule(space.getBundle()));
+    }
   }
 
   private void maybeAddSecurityFilter(final List<Module> modules) {

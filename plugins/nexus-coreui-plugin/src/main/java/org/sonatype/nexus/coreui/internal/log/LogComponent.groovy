@@ -52,7 +52,7 @@ extends DirectComponentSupport
   @Timed
   @ExceptionMetered
   @RequiresAuthentication
-  @RequiresPermissions('nexus:logging:mark')
+  @RequiresPermissions('nexus:logging:create')
   @Validate
   void mark(final @NotNull @Valid MarkerXO markerXO) {
     logMarker.markLog(markerXO.message)

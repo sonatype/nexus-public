@@ -46,8 +46,6 @@ import static java.util.Collections.singletonList
 import static java.util.UUID.randomUUID
 import static java.util.stream.Collectors.toList
 import static org.fest.assertions.api.Assertions.assertThat
-import static org.hamcrest.Matchers.contains
-import static org.hamcrest.Matchers.empty
 import static org.hamcrest.Matchers.equalTo
 import static org.hamcrest.Matchers.instanceOf
 import static org.junit.Assert.assertFalse
@@ -269,7 +267,7 @@ class RepositoryManagerImplTest
     repositoryManager = new RepositoryManagerImpl(eventManager, configurationStore, repositoryFactory,
         configurationFacetProvider, ImmutableMap.of(recipeName, recipe), securityContributor,
         defaultRepositoriesContributorList, databaseFreezeService, skipDefaultRepositories, blobStoreManager,
-        groupMemberMappingCache)
+        groupMemberMappingCache, [])
 
     repositoryManager.doStart()
     return repositoryManager

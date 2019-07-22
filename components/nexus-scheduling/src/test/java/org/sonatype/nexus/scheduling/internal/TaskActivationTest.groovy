@@ -18,7 +18,7 @@ import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeChangeEvent
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeService
 import org.sonatype.nexus.scheduling.TaskInfo
-import org.sonatype.nexus.scheduling.TaskInfo.CurrentState
+import org.sonatype.nexus.scheduling.CurrentState
 import org.sonatype.nexus.scheduling.spi.SchedulerSPI
 
 import org.junit.Before

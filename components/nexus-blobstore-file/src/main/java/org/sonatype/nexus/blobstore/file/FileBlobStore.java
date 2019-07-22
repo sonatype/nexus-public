@@ -856,7 +856,7 @@ public class FileBlobStore
     }
 
     @Override
-    public InputStream getInputStream() {
+    protected InputStream doGetInputStream() {
       Path contentPath = contentPath(getId());
       try {
         checkExists(contentPath, getId());

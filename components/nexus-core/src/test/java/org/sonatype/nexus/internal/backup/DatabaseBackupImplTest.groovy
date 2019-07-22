@@ -47,7 +47,7 @@ class DatabaseBackupImplTest
   def 'checks that a file can be accessed'() {
     databaseRestorer.isRestoreFromLocation(_) >> false
     applicationVersion.getVersion() >> "3.4.1"
-    def databaseBackup = new DatabaseBackupImpl(databaseServer, databaseManager, databaseRestorer, 9, 1024, applicationDirectories, applicationVersion)
+    def databaseBackup = new DatabaseBackupImpl(databaseServer, databaseManager, databaseRestorer, applicationDirectories, applicationVersion)
 
     when: 'using a temp folder and a temp file'
       File temp = databaseBackup.checkTarget(System.getProperty("java.io.tmpdir"), "test", LocalDateTime.now())
@@ -61,7 +61,7 @@ class DatabaseBackupImplTest
   def 'restore to location is disallowed'() {
     databaseRestorer.isRestoreFromLocation(_) >> true
     applicationVersion.getVersion() >> "3.4.1"
-    def databaseBackup = new DatabaseBackupImpl(databaseServer, databaseManager, databaseRestorer, 9, 1024, applicationDirectories, applicationVersion)
+    def databaseBackup = new DatabaseBackupImpl(databaseServer, databaseManager, databaseRestorer, applicationDirectories, applicationVersion)
 
     when: 'the target is checked'
       databaseBackup.checkTarget(".", "test", LocalDateTime.now())

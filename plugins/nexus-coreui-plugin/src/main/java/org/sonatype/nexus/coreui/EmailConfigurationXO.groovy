@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.coreui
 
+import javax.validation.constraints.NotNull
+
 import org.sonatype.nexus.validation.constraint.Hostname
 import org.sonatype.nexus.validation.constraint.PortNumber
 
@@ -34,6 +36,7 @@ class EmailConfigurationXO
   String host
 
   @PortNumber
+  @NotNull
   Integer port
 
   String username

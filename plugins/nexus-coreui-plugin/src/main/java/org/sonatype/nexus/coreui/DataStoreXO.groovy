@@ -13,7 +13,9 @@
 package org.sonatype.nexus.coreui
 
 import javax.validation.constraints.NotNull
+import javax.validation.constraints.Pattern
 
+import org.sonatype.nexus.validation.constraint.NamePatternConstants
 import org.sonatype.nexus.validation.group.Create
 
 import org.hibernate.validator.constraints.NotEmpty
@@ -23,6 +25,7 @@ import org.hibernate.validator.constraints.NotEmpty
  */
 class DataStoreXO
 {
+  @Pattern(regexp = NamePatternConstants.REGEX, message = NamePatternConstants.MESSAGE)
   @NotEmpty
   @UniqueDataStoreName(groups = Create)
   String name
@@ -30,8 +33,13 @@ class DataStoreXO
   @NotEmpty
   String type
 
+  @NotEmpty
+  String source
+
   @NotNull
   Map<String, String> attributes
 
   boolean inUse
+
+  boolean isContentStore
 }

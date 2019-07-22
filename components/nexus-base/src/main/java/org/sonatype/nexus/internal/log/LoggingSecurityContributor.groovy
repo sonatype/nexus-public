@@ -66,7 +66,7 @@ class LoggingSecurityContributor
                 type: 'application',
                 properties: [
                     domain: 'logging',
-                    actions: 'mark'
+                    actions: 'create'
                 ]
             ),
         ]

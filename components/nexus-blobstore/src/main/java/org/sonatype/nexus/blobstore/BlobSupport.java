@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.blobstore;
 
+import java.io.BufferedInputStream;
+import java.io.InputStream;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -79,4 +81,20 @@ public abstract class BlobSupport
   public Lock lock() {
     return Locks.lock(lock);
   }
+
+  @Override
+  public InputStream getInputStream() {
+    InputStream inputStream = doGetInputStream();
+    if (!inputStream.markSupported()) {
+      return new BufferedInputStream(inputStream);
+    }
+    return inputStream;
+  }
+
+  /**
+   * Gets the natural input stream for the given blob
+   *
+   * @since 3.next
+   */
+  protected abstract InputStream doGetInputStream();
 }

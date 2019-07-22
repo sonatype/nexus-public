@@ -74,7 +74,7 @@ public class UploadResource extends ComponentSupport implements Resource
   @Path("{repositoryName}")
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
-  @RequiresPermissions("nexus:component:add")
+  @RequiresPermissions("nexus:component:create")
   public Response postComponent(@PathParam("repositoryName") final String repositoryName,
                                 @Context final HttpServletRequest request)
       throws IOException

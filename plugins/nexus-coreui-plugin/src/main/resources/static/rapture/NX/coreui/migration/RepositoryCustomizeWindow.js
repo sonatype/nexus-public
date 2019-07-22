@@ -131,7 +131,7 @@ Ext.define('NX.coreui.migration.RepositoryCustomizeWindow', {
             helpText: NX.I18n.render(me, 'DataStore_HelpText'),
             emptyText: NX.I18n.render(me, 'DataStore_EmptyText'),
             editable: false,
-            store: 'ComponentDatastore',
+            store: 'ContentDatastore',
             queryMode: 'local',
             displayField: 'name',
             valueField: 'name',

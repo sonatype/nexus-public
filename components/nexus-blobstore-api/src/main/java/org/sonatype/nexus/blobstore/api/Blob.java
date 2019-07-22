@@ -34,7 +34,8 @@ public interface Blob
 
   /**
    * Opens an input stream to the blob's content. The returned stream may be closed asynchronously if the blob is
-   * {@link BlobStore#deleteHard(BlobId) hard deleted}.
+   * {@link BlobStore#deleteHard(BlobId) hard deleted}. The input stream must support {@link InputStream#mark(int)}
+   * because the ability to inspect the stream must be supported
    *
    * @throws BlobStoreException may be thrown if the blob is {@link BlobStore#delete deleted} or
    *                            {@link BlobStore#delete hard deleted}.

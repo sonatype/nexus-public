@@ -97,7 +97,7 @@ Ext.define('NX.coreui.view.repository.facet.StorageFacet', {
             helpText: NX.I18n.get('Repository_Facet_StorageFacet_DataStore_HelpText'),
             emptyText: NX.I18n.get('Repository_Facet_StorageFacet_DataStore_EmptyText'),
             editable: false,
-            store: 'ComponentDatastore',
+            store: 'ContentDatastore',
             queryMode: 'local',
             displayField: 'name',
             valueField: 'name',
