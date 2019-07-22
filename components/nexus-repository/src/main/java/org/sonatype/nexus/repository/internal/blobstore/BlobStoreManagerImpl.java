@@ -52,6 +52,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Optional.empty;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.FAILED;
 
 /**
  * Default {@link BlobStoreManager} implementation.
