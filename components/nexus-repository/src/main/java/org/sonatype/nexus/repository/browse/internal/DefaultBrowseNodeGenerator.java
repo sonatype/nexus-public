@@ -19,6 +19,7 @@ import javax.annotation.Nullable;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.text.Strings2;
+import org.sonatype.nexus.repository.browse.BrowsePaths;
 import org.sonatype.nexus.repository.browse.ComponentPathBrowseNodeGenerator;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
@@ -41,19 +42,17 @@ public class DefaultBrowseNodeGenerator
    * @return componentPath/lastSegment(assetPath) if the component was not null, otherwise assetPath
    */
   @Override
-  public List<String> computeAssetPath(final Asset asset, @Nullable final Component component) {
+  public List<BrowsePaths> computeAssetPaths(final Asset asset, @Nullable final Component component) {
     checkNotNull(asset);
 
     if (component != null) {
-      List<String> path = computeComponentPath(asset, component);
-
-      // place asset just below component
-      path.add(lastSegment(asset.name()));
-
-      return path;
+      List<BrowsePaths> paths = computeComponentPaths(asset, component);
+      String lastSegment = lastSegment(asset.name());
+      BrowsePaths.appendPath(paths, lastSegment);
+      return paths;
     }
     else {
-      return super.computeAssetPath(asset, null);
+      return super.computeAssetPaths(asset, component);
     }
   }
 
@@ -61,19 +60,16 @@ public class DefaultBrowseNodeGenerator
    * @return [componentGroup]/componentName/[componentVersion]
    */
   @Override
-  public List<String> computeComponentPath(final Asset asset, final Component component) {
-    List<String> path = new ArrayList<>();
+  public List<BrowsePaths> computeComponentPaths(final Asset asset, final Component component) {
+    List<String> paths = new ArrayList<>();
 
     if (!Strings2.isBlank(component.group())) {
-      path.add(component.group());
+      paths.add(component.group());
     }
-
-    path.add(component.name());
-
+    paths.add(component.name());
     if (!Strings2.isBlank(component.version())) {
-      path.add(component.version());
+      paths.add(component.version());
     }
-
-    return path;
+    return BrowsePaths.fromPaths(paths, true);
   }
 }

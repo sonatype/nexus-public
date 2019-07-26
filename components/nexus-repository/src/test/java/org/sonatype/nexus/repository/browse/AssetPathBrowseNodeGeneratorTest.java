@@ -16,62 +16,44 @@ import java.util.List;
 
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
-import org.sonatype.nexus.repository.storage.DefaultComponent;
 
 import org.junit.Test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static java.util.Arrays.asList;
 
 public class AssetPathBrowseNodeGeneratorTest
+  extends BrowseTestSupport
 {
   private BrowseNodeGenerator generator = new AssetPathBrowseNodeGenerator()
   {
   };
 
   @Test
-  public void computeAssetPathNoComponent() {
+  public void computeAssetPathsNoComponent() {
     Asset asset = createAsset("asset/path/foo");
 
-    List<String> path = generator.computeAssetPath(asset, null);
+    List<BrowsePaths> paths = generator.computeAssetPaths(asset, null);
 
-    assertThat(path, contains("asset", "path", "foo"));
+    assertPaths(asList("asset", "path", "foo"), paths);
   }
 
   @Test
-  public void computeAssetPathWithComponent() {
+  public void computeAssetPathsWithComponent() {
     Component component = createComponent("component", "group", "1.0.0");
     Asset asset = createAsset("asset/path/foo");
 
-    List<String> path = generator.computeAssetPath(asset, component);
+    List<BrowsePaths> paths = generator.computeAssetPaths(asset, component);
 
-    assertThat(path, contains("asset", "path", "foo"));
+    assertPaths(asList("asset", "path", "foo"), paths);
   }
 
   @Test
-  public void computeComponentPathWithComponent() {
+  public void computeComponentPathsWithComponent() {
     Component component = createComponent("component", "group", "1.0.0");
     Asset asset = createAsset("asset/path/foo");
 
-    List<String> path = generator.computeComponentPath(asset, component);
+    List<BrowsePaths> paths = generator.computeComponentPaths(asset, component);
 
-    assertThat(path, contains("asset", "path", "foo"));
-  }
-
-  private Asset createAsset(final String assetName) {
-    Asset asset = mock(Asset.class);
-    when(asset.name()).thenReturn(assetName);
-    return asset;
-  }
-
-  private Component createComponent(final String name, final String group, final String version) {
-    Component component = new DefaultComponent();
-    component.name(name);
-    component.group(group);
-    component.version(version);
-
-    return component;
+    assertPaths(asList("asset", "path", "foo"), paths);
   }
 }

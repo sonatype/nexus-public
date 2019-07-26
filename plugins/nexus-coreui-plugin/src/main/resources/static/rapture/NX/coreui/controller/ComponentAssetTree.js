@@ -60,7 +60,6 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     {ref: 'repositoryList', selector: 'nx-coreui-componentassettreefeature nx-coreui-browse-repository-list'},
     {ref: 'componentAssetTree', selector: 'nx-coreui-componentassettreefeature nx-coreui-component-asset-tree'},
     {ref: 'componentAssetTreePanel', selector: 'nx-coreui-componentassettreefeature nx-coreui-component-asset-tree treepanel'},
-    {ref: 'treeFilterBox', selector: 'nx-coreui-componentassettreefeature nx-searchbox'},
     {ref: 'advancedSearchLink', selector: 'nx-coreui-componentassettreefeature #nx-coreui-component-asset-tree-advanced-search'},
     {ref: 'uploadButton', selector: 'nx-coreui-componentassettreefeature button[action=upload]'},
     {ref: 'htmlViewLink', selector: 'nx-coreui-componentassettreefeature #nx-coreui-component-asset-tree-html-view'},
@@ -128,10 +127,6 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
         'nx-coreui-componentassettreefeature treepanel': {
           select: me.selectNode,
           itemkeydown: me.itemKeyDown
-        },
-        'nx-coreui-componentassettreefeature nx-searchbox': {
-          search: me.onFilterChanged,
-          searchcleared: me.onFilterChanged
         },
         'nx-coreui-component-componentinfo button[action=deleteComponent]': {
           click: me.deleteComponent
@@ -317,40 +312,6 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     var message = { type: 'warning', text: NX.I18n.get('Component_Asset_Tree_Results_Warning')};
     if (records && records.length === NX.State.getValue('browseTreeMaxNodes') && !NX.Messages.messageExists(message)) {
       NX.Messages.add(message);
-    }
-  },
-
-  /**
-   * @private
-   * Handle when the filter changes, so the tree will be reloaded and future node requests will contain the filter
-   * parameter
-   */
-  onFilterChanged: function(filterBox, value) {
-    var me = this,
-        componentAssetTreeStore = me.getStore('ComponentAssetTree'),
-        emptyText = me.getComponentAssetTreePanel().view.emptyText,
-        advancedSearchLink = me.getAdvancedSearchLink(),
-        treePanel = me.getComponentAssetTreePanel(),
-        url;
-
-    if (me.selectedRepository) {
-      // repository selected, filter the tree
-      if (value) {
-        url = 'browse/search=' + encodeURIComponent('keyword=' + value);
-        emptyText = emptyText.replace(/>.*</, '>' + NX.I18n.get('Component_Asset_Tree_Filtered_EmptyText_View') + '<');
-        emptyText = emptyText.replace('browse/search', url);
-
-        advancedSearchLink.setText(advancedSearchLink.initialConfig.html.replace('browse/search', url), false);
-      } else {
-        emptyText = emptyText.replace(/>.*</, '>' + NX.I18n.get('Component_Asset_Tree_EmptyText_View') + '<');
-
-        advancedSearchLink.setText(advancedSearchLink.initialConfig.html, false);
-      }
-      treePanel.view.emptyText = emptyText;
-
-      componentAssetTreeStore.proxy.setExtraParam('filter', value);
-
-      me.reloadNodes();
     }
   },
 
@@ -613,16 +574,6 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
       // In theory we should be able to just pass in the above load listener here, but for some reason it isn't being called
       repoList.getStore().load();
     }
-  },
-
-  /**
-   * @private
-   * Clears the filter box before the view is changed
-   */
-  onBeforeDeactivate: function(oldCard) {
-    var filterBox = oldCard.down('nx-searchbox');
-
-    filterBox && filterBox.clearSearch && filterBox.clearSearch();
   },
 
   /**

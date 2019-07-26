@@ -57,8 +57,13 @@ Ext.define('NX.coreui.controller.Search', {
     { ref: 'searchResult', selector: 'nx-coreui-searchfeature nx-coreui-search-result-list' },
     { ref: 'componentDetails', selector: 'nx-coreui-searchfeature nx-coreui-component-details' },
     { ref: 'assetList', selector: 'nx-coreui-searchfeature nx-coreui-component-asset-list' },
-    { ref: 'quickSearch', selector: 'nx-header-panel #quicksearch' }
+    { ref: 'quickSearch', selector: 'nx-header-panel #quicksearch' },
+    { ref: 'info', selector: 'nx-coreui-searchfeature #info' },
+    { ref: 'warning', selector: 'nx-coreui-searchfeature #warning' }
   ],
+
+  timedOutMessage: null,
+  limitMessage: null,
 
   /**
    * @override
@@ -123,7 +128,8 @@ Ext.define('NX.coreui.controller.Search', {
       },
       component: {
         'nx-coreui-searchfeature nx-coreui-search-result-list': {
-          beforerender: me.onBeforeRender
+          beforerender: me.onBeforeRender,
+          render: me.showHideResponseMessage
         },
         'nx-coreui-searchfeature': {
           afterrender: me.initCriterias
@@ -147,11 +153,12 @@ Ext.define('NX.coreui.controller.Search', {
           search: me.onQuickSearch,
           searchcleared: me.onQuickSearch
         }
+      },
+      store: {
+        '#SearchResult': {
+          load: me.setResponseMessage
+        }
       }
-    });
-
-    me.getStore('SearchResult').on('load', function() {
-      me.showHideLimitMessage();
     });
   },
 
@@ -258,22 +265,63 @@ Ext.define('NX.coreui.controller.Search', {
 
   /**
    * @private
-   * Show or hide the results limited message.
+   *
+   * Store a message to be displayed along with the store results
    */
-  showHideLimitMessage: function() {
-    var me = this,
-        rawData =  me.getStore('SearchResult').proxy.reader.rawData,
-        info = me.getFeature() ? me.getFeature().down('#info') : null,
-        format = Ext.util.Format.numberRenderer('0,000');
-    if (info) {
-      if (rawData && rawData.limited) {
-        info.setTitle(NX.I18n.format('Search_Results_Limit_Message',
-            format(rawData.total), format(rawData.unlimitedTotal)));
-        info.show();
-      }
-      else {
-        info.hide();
-      }
+  setResponseMessage: function() {
+    var rawData = this.getSearchResultStore().proxy.reader.rawData,
+        searchRequestTimeoutInSeconds = NX.State.getValue('uiSettings', {})['searchRequestTimeout'] ||
+            NX.State.getValue('uiSettings', {})['requestTimeout'] - 5,
+        timedOut = rawData && rawData.timedOut,
+        limited = rawData && rawData.limited,
+        format = Ext.util.Format.numberRenderer('0,000'),
+        learnMore = '<a target="_blank" href="' + NX.controller.Help.getDocsUrl() + '/Searching+for+Components">' +
+            NX.I18n.get('Search_Results_TimedOut_LearnMore') + ' <i class="fa fa-external-link" /></a>';
+
+    if (timedOut) {
+      this.timedOutMessage = NX.I18n.format('Search_Results_TimedOut_Message', searchRequestTimeoutInSeconds, learnMore);
+    }
+    else {
+      this.timedOutMessage = null;
+    }
+
+    if (limited) {
+      this.limitMessage = NX.I18n.format('Search_Results_Limit_Message', format(rawData.total), format(rawData.unlimitedTotal));
+    }
+    else {
+      this.limitMessage = null;
+    }
+
+    this.showHideResponseMessage();
+  },
+
+  /**
+   * @private
+   *
+   * Show/hide the response messages
+   */
+  showHideResponseMessage: function() {
+    var warning = this.getWarning(),
+        info = this.getInfo();
+
+    if (!warning || !info) {
+      return;
+    }
+
+    if (this.timedOutMessage) {
+      warning.setTitle(this.timedOutMessage);
+      warning.show();
+    }
+    else {
+      warning.hide();
+    }
+
+    if (this.limitMessage) {
+      info.setTitle(this.limitMessage);
+      info.show();
+    }
+    else {
+      info.hide();
     }
   },
 

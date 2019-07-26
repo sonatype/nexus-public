@@ -110,7 +110,7 @@ public interface SearchService
    *
    * @since 3.1
    */
-  SearchResponse search(QueryBuilder query, @Nullable List<SortBuilder> sort, int from, int size);
+  SearchResponse search(QueryBuilder query, @Nullable List<SortBuilder> sort, int from, int size, Integer timeout);
 
   /**
    * Search component metadata and browse results with content selectors applied.

@@ -23,6 +23,7 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
+import org.sonatype.nexus.repository.browse.BrowsePaths;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.selector.SelectorManager;
 
@@ -69,7 +70,7 @@ public class BrowseNodeStoreLoadTest
 
   @Before
   public void setUp() throws Exception {
-    BrowseNodeConfiguration configuration = new BrowseNodeConfiguration(true, 1000, DELETE_PAGE_SIZE, 10_000, 10_000, seconds(0));
+    BrowseNodeConfiguration configuration = new BrowseNodeConfiguration(true, 1000, DELETE_PAGE_SIZE, 10_000, 10_000);
 
     BucketEntityAdapter bucketEntityAdapter = new BucketEntityAdapter();
     ComponentFactory componentFactory = new ComponentFactory(emptySet());
@@ -77,7 +78,7 @@ public class BrowseNodeStoreLoadTest
         emptySet());
     AssetEntityAdapter assetEntityAdapter = new AssetEntityAdapter(bucketEntityAdapter, componentEntityAdapter);
 
-    BrowseNodeEntityAdapter browseNodeEntityAdapter = new BrowseNodeEntityAdapter(componentEntityAdapter, assetEntityAdapter, configuration);
+    BrowseNodeEntityAdapter browseNodeEntityAdapter = new BrowseNodeEntityAdapter(componentEntityAdapter, assetEntityAdapter);
 
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
       bucketEntityAdapter.register(db);
@@ -130,14 +131,17 @@ public class BrowseNodeStoreLoadTest
   public void exercisePathContentionBetweenAssets() throws Exception {
     ConcurrentRunner runner = new ConcurrentRunner(1, 30);
 
-    List<String> componentPath = asList("some", "kind", "of", "path");
+    List<BrowsePaths> componentPath = asList(new BrowsePaths("some", "some"), new BrowsePaths("kind", "some/kind"),
+        new BrowsePaths("of", "some/kind/of"), new BrowsePaths("path", "some/kind/of/path"));
 
     for (int i = 0; i < ASSET_COUNT; i++) {
       int assetIndex = i;
       runner.addTask(1, () -> {
-        underTest.createComponentNode(REPOSITORY_NAME, componentPath, component);
-        List<String> assetPath = newArrayList(concat(componentPath, asList("to", "asset" + assetIndex)));
-        underTest.createAssetNode(REPOSITORY_NAME, assetPath, assets.get(assetIndex));
+        underTest.createComponentNode(REPOSITORY_NAME, "aformat", componentPath, component);
+        List<BrowsePaths> assetPath = newArrayList(concat(componentPath,
+            asList(new BrowsePaths("to", "some/kind/of/path/to"),
+                new BrowsePaths("asset" + assetIndex, "some/kind/of/path/to/asset" + assetIndex))));
+        underTest.createAssetNode(REPOSITORY_NAME, "aformat", assetPath, assets.get(assetIndex));
       });
     }
 
@@ -148,14 +152,15 @@ public class BrowseNodeStoreLoadTest
   public void exercisePathContentionBetweenAssetAndComponent() throws Exception {
     ConcurrentRunner runner = new ConcurrentRunner(1, 30);
 
-    List<String> commonPath = asList("some", "kind", "of", "path");
+    List<BrowsePaths> commonPath = asList(new BrowsePaths("some", "some"), new BrowsePaths("kind", "some/kind"),
+        new BrowsePaths("of", "some/kind/of"), new BrowsePaths("path", "some/kind/of/path"));
 
     runner.addTask(1, () -> {
-      underTest.createComponentNode(REPOSITORY_NAME, commonPath, component);
+      underTest.createComponentNode(REPOSITORY_NAME, "aformat", commonPath, component);
     });
 
     runner.addTask(1, () -> {
-      underTest.createAssetNode(REPOSITORY_NAME, commonPath, assets.get(0));
+      underTest.createAssetNode(REPOSITORY_NAME, "aformat", commonPath, assets.get(0));
     });
 
     runner.go();

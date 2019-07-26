@@ -24,6 +24,7 @@ import java.util.stream.Stream;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseResult;
 import org.sonatype.nexus.repository.browse.QueryOptions;
@@ -123,6 +124,9 @@ public class BrowseServiceImplTest
   Asset assetTwo;
 
   @Mock
+  Format format;
+
+  @Mock
   AssetEntityAdapter assetEntityAdapter;
 
   @Mock
@@ -159,6 +163,8 @@ public class BrowseServiceImplTest
 
     when(mavenReleases.facet(StorageFacet.class)).thenReturn(storageFacet);
     when(mavenReleases.getName()).thenReturn("releases");
+    when(mavenReleases.getFormat()).thenReturn(format);
+    when(format.getValue()).thenReturn("maven2");
 
     when(storageFacet.txSupplier()).thenReturn(txSupplier);
     when(txSupplier.get()).thenReturn(storageTx);
@@ -316,7 +322,7 @@ public class BrowseServiceImplTest
   @Test
   public void testGetAssetById() {
     String expectedSql =
-        format("SELECT FROM %s WHERE contentAuth(@this, :browsedRepository) == true", assetOneORID);
+        format("SELECT FROM %s WHERE contentAuth(@this.name, @this.format, :browsedRepository) == true", assetOneORID);
 
     when(storageTx.browse(eq(expectedSql), paramsCaptor.capture())).thenReturn(Collections.singletonList(assetOneDoc));
 
@@ -389,7 +395,7 @@ public class BrowseServiceImplTest
   @Test
   public void testGetAssetById_NoResultsIsNull() {
     String expectedSql =
-        format("SELECT FROM %s WHERE contentAuth(@this, :browsedRepository) == true", assetOneORID);
+        format("SELECT FROM %s WHERE contentAuth(@this.name, @this.format, :browsedRepository) == true", assetOneORID);
 
     when(storageTx.browse(eq(expectedSql), paramsCaptor.capture())).thenReturn(Collections.emptyList());
 
@@ -403,7 +409,7 @@ public class BrowseServiceImplTest
   @Test
   public void testGetComponentById() {
     String expectedSql =
-        format("SELECT FROM %s WHERE contentAuth(@this, :browsedRepository) == true", componentOneORID);
+        format("SELECT FROM %s WHERE contentAuth(@this.name, @this.format, :browsedRepository) == true", componentOneORID);
 
     when(storageTx.browse(eq(expectedSql), paramsCaptor.capture()))
         .thenReturn(Collections.singletonList(componentOneDoc));
@@ -420,7 +426,7 @@ public class BrowseServiceImplTest
   @Test
   public void testGetComponentById_NoResultsIsNull() {
     String expectedSql =
-        format("SELECT FROM %s WHERE contentAuth(@this, :browsedRepository) == true", componentOneORID);
+        format("SELECT FROM %s WHERE contentAuth(@this.name, @this.format, :browsedRepository) == true", componentOneORID);
 
     when(storageTx.browse(eq(expectedSql), paramsCaptor.capture())).thenReturn(Collections.emptyList());
 

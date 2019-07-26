@@ -19,6 +19,7 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.capability.CapabilitySupport;
 import org.sonatype.nexus.capability.Condition;
+import org.sonatype.nexus.rapture.UiSettingsManager;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -32,10 +33,10 @@ public class SettingsCapability
     extends CapabilitySupport<SettingsCapabilityConfiguration>
 {
 
-  private final Rapture rapture;
+  private final UiSettingsManager rapture;
 
   @Inject
-  public SettingsCapability(final Rapture rapture) {
+  public SettingsCapability(final UiSettingsManager rapture) {
     this.rapture = checkNotNull(rapture);
   }
 

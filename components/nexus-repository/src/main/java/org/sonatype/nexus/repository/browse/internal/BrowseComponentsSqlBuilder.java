@@ -85,7 +85,7 @@ public class BrowseComponentsSqlBuilder
         .map((bucket) -> MetadataNodeEntityAdapter.P_BUCKET + " = " + bucket)
         .collect(Collectors.joining(" OR ")));
     if (queryOptions.getContentAuth()) {
-      whereClauses.add("contentAuth(@this, :browsedRepository) == true");
+      whereClauses.add("contentAuth(@this.name, @this.format, :browsedRepository) == true");
     }
     if (queryOptions.getFilter() != null) {
       whereClauses.add(

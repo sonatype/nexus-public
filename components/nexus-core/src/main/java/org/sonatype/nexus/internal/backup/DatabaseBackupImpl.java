@@ -47,10 +47,6 @@ public class DatabaseBackupImpl
     implements DatabaseBackup
 {
 
-  private final int compressionLevel;
-
-  private final int bufferSize;
-
   private final DatabaseServer databaseServer;
 
   private final DatabaseManager databaseManager;
@@ -64,15 +60,11 @@ public class DatabaseBackupImpl
   @Inject
   public DatabaseBackupImpl(final DatabaseServer databaseServer, final DatabaseManager databaseManager,
                             final DatabaseRestorer databaseRestorer,
-                            @Named("${nexus.backup.compressionLevel:-9}") final int compressionLevel,
-                            @Named("${nexus.backup.bufferSize:-1024}") final int bufferSize,
                             final ApplicationDirectories applicationDirectories,
                             final ApplicationVersion applicationVersion) {
     this.databaseServer = checkNotNull(databaseServer);
     this.databaseManager = checkNotNull(databaseManager);
     this.databaseRestorer = checkNotNull(databaseRestorer);
-    this.compressionLevel = compressionLevel;
-    this.bufferSize = bufferSize;
     this.applicationDirectories = checkNotNull(applicationDirectories);
     this.applicationVersion = checkNotNull(applicationVersion);
   }
@@ -80,7 +72,8 @@ public class DatabaseBackupImpl
   @Override
   public Callable<Void> fullBackup(final String backupFolder, final String dbName, final LocalDateTime timestamp) throws IOException {
     File backupFile = checkTarget(backupFolder, dbName, timestamp);
-    return new DatabaseBackupRunner(databaseManager.instance(dbName), backupFile, compressionLevel, bufferSize);
+    return new DatabaseBackupRunner(databaseManager.instance(dbName), backupFile,
+        databaseManager.getBackupCompressionLevel(), databaseManager.getBackupBufferSize());
   }
 
   @VisibleForTesting

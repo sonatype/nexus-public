@@ -15,12 +15,10 @@ package org.sonatype.nexus.repository.storage;
 import java.util.HashMap;
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityHelper;
-import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
-import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
+import org.sonatype.nexus.repository.browse.BrowseTestSupport;
 
 import com.google.common.base.Splitter;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -33,6 +31,7 @@ import static java.util.Collections.emptySet;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.hasProperty;
@@ -41,7 +40,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 
 public class BrowseNodeEntityAdapterTest
-    extends TestSupport
+    extends BrowseTestSupport
 {
   private static final String REPOSITORY_NAME = "test-repo";
 
@@ -72,7 +71,7 @@ public class BrowseNodeEntityAdapterTest
     componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter, componentFactory, emptySet());
     assetEntityAdapter = new AssetEntityAdapter(bucketEntityAdapter, componentEntityAdapter);
 
-    underTest = new BrowseNodeEntityAdapter(componentEntityAdapter, assetEntityAdapter, new BrowseNodeConfiguration());
+    underTest = new BrowseNodeEntityAdapter(componentEntityAdapter, assetEntityAdapter);
 
     try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
       bucketEntityAdapter.register(db);
@@ -89,51 +88,100 @@ public class BrowseNodeEntityAdapterTest
     List<String> path = Splitter.on('/').omitEmptyStrings().splitToList(asset.name());
 
     try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
-      underTest.createComponentNode(db, REPOSITORY_NAME, path.subList(0, 3), component);
+      underTest.createComponentNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(path.subList(0, 3)), component);
 
       assertThat(underTest.browse(db),
-          contains(
+          containsInAnyOrder(
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/")),
+                  hasProperty("name", is("org")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/")),
+                  hasProperty("name", is("foo")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/")))
+              ,
               allOf(
                   hasProperty("repositoryName", is(REPOSITORY_NAME)),
                   hasProperty("parentPath", is("/org/foo/")),
                   hasProperty("name", is("1.0")),
                   hasProperty("componentId", is(EntityHelper.id(component))),
                   hasProperty("assetId", nullValue()),
-                  hasProperty("assetNameLowercase", nullValue()))
-              ));
+                  hasProperty("path", is("org/foo/1.0")))
+          ));
 
-      underTest.createAssetNode(db, REPOSITORY_NAME, path, asset);
+      underTest.createAssetNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(path), asset);
 
       assertThat(underTest.browse(db),
-          contains(
+          containsInAnyOrder(
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/")),
+                  hasProperty("name", is("org")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/")),
+                  hasProperty("name", is("foo")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/")))
+              ,
               allOf(
                   hasProperty("repositoryName", is(REPOSITORY_NAME)),
                   hasProperty("parentPath", is("/org/foo/")),
                   hasProperty("name", is("1.0")),
                   hasProperty("componentId", is(EntityHelper.id(component))),
                   hasProperty("assetId", nullValue()),
-                  hasProperty("assetNameLowercase", nullValue())),
+                  hasProperty("path", is("org/foo/1.0/")))
+              ,
               allOf(
                   hasProperty("repositoryName", is(REPOSITORY_NAME)),
                   hasProperty("parentPath", is("/org/foo/1.0/")),
                   hasProperty("name", is("foo-1.0.jar")),
                   hasProperty("componentId", nullValue()),
                   hasProperty("assetId", is(EntityHelper.id(asset))),
-                  hasProperty("assetNameLowercase", is(Strings2.lower(asset.name()))))
-              ));
+                  hasProperty("path", is("org/foo/1.0/foo-1.0.jar")))
+          ));
 
       underTest.deleteAssetNode(db, EntityHelper.id(asset));
 
       assertThat(underTest.browse(db),
-          contains(
+          containsInAnyOrder(
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/")),
+                  hasProperty("name", is("org")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/")),
+                  hasProperty("name", is("foo")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/")))
+              ,
               allOf(
                   hasProperty("repositoryName", is(REPOSITORY_NAME)),
                   hasProperty("parentPath", is("/org/foo/")),
                   hasProperty("name", is("1.0")),
                   hasProperty("componentId", is(EntityHelper.id(component))),
                   hasProperty("assetId", nullValue()),
-                  hasProperty("assetNameLowercase", nullValue()))
-              ));
+                  hasProperty("path", is("org/foo/1.0/")))
+          ));
 
       underTest.deleteComponentNode(db, EntityHelper.id(component));
 
@@ -146,44 +194,116 @@ public class BrowseNodeEntityAdapterTest
     List<String> path = Splitter.on('/').omitEmptyStrings().splitToList(asset.name());
 
     try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
-      underTest.createComponentNode(db, REPOSITORY_NAME, path, component);
+      underTest.createComponentNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(path), component);
 
       assertThat(underTest.browse(db),
-          contains(
+          containsInAnyOrder(
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/")),
+                  hasProperty("name", is("org")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/")),
+                  hasProperty("name", is("foo")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/")),
+                  hasProperty("name", is("1.0")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/1.0/")))
+              ,
               allOf(
                   hasProperty("repositoryName", is(REPOSITORY_NAME)),
                   hasProperty("parentPath", is("/org/foo/1.0/")),
                   hasProperty("name", is("foo-1.0.jar")),
                   hasProperty("componentId", is(EntityHelper.id(component))),
-                  hasProperty("assetId", nullValue()),
-                  hasProperty("assetNameLowercase", nullValue()))
-              ));
+                  hasProperty("assetId", is(nullValue())),
+                  hasProperty("path", is("org/foo/1.0/foo-1.0.jar")))
+          ));
 
-      underTest.createAssetNode(db, REPOSITORY_NAME, path, asset);
+      underTest.createAssetNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(path), asset);
 
       assertThat(underTest.browse(db),
-          contains(
+          containsInAnyOrder(
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/")),
+                  hasProperty("name", is("org")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/")),
+                  hasProperty("name", is("foo")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/")),
+                  hasProperty("name", is("1.0")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/1.0/")))
+              ,
               allOf(
                   hasProperty("repositoryName", is(REPOSITORY_NAME)),
                   hasProperty("parentPath", is("/org/foo/1.0/")),
                   hasProperty("name", is("foo-1.0.jar")),
                   hasProperty("componentId", is(EntityHelper.id(component))),
                   hasProperty("assetId", is(EntityHelper.id(asset))),
-                  hasProperty("assetNameLowercase", is(Strings2.lower(asset.name()))))
-              ));
+                  hasProperty("path", is("org/foo/1.0/foo-1.0.jar")))
+          ));
 
       underTest.deleteAssetNode(db, EntityHelper.id(asset));
 
       assertThat(underTest.browse(db),
-          contains(
+          containsInAnyOrder(
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/")),
+                  hasProperty("name", is("org")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/")),
+                  hasProperty("name", is("foo")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/")),
+                  hasProperty("name", is("1.0")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/1.0/")))
+              ,
               allOf(
                   hasProperty("repositoryName", is(REPOSITORY_NAME)),
                   hasProperty("parentPath", is("/org/foo/1.0/")),
                   hasProperty("name", is("foo-1.0.jar")),
                   hasProperty("componentId", is(EntityHelper.id(component))),
-                  hasProperty("assetId", nullValue()),
-                  hasProperty("assetNameLowercase", nullValue()))
-              ));
+                  hasProperty("assetId", is(nullValue())),
+                  hasProperty("path", is("org/foo/1.0/foo-1.0.jar")))
+          ));
 
       underTest.deleteComponentNode(db, EntityHelper.id(component));
 
@@ -193,44 +313,116 @@ public class BrowseNodeEntityAdapterTest
     // now try out-of-order to check partial delete still works
 
     try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
-      underTest.createAssetNode(db, REPOSITORY_NAME, path, asset);
+      underTest.createAssetNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(path), asset);
 
       assertThat(underTest.browse(db),
-          contains(
+          containsInAnyOrder(
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/")),
+                  hasProperty("name", is("org")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/")),
+                  hasProperty("name", is("foo")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/")),
+                  hasProperty("name", is("1.0")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/1.0/")))
+              ,
               allOf(
                   hasProperty("repositoryName", is(REPOSITORY_NAME)),
                   hasProperty("parentPath", is("/org/foo/1.0/")),
                   hasProperty("name", is("foo-1.0.jar")),
-                  hasProperty("componentId", nullValue()),
+                  hasProperty("componentId", is(nullValue())),
                   hasProperty("assetId", is(EntityHelper.id(asset))),
-                  hasProperty("assetNameLowercase", is(Strings2.lower(asset.name()))))
-              ));
+                  hasProperty("path", is("org/foo/1.0/foo-1.0.jar")))
+          ));
 
-      underTest.createComponentNode(db, REPOSITORY_NAME, path, component);
+      underTest.createComponentNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(path), component);
 
       assertThat(underTest.browse(db),
-          contains(
+          containsInAnyOrder(
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/")),
+                  hasProperty("name", is("org")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/")),
+                  hasProperty("name", is("foo")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/")),
+                  hasProperty("name", is("1.0")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/1.0/")))
+              ,
               allOf(
                   hasProperty("repositoryName", is(REPOSITORY_NAME)),
                   hasProperty("parentPath", is("/org/foo/1.0/")),
                   hasProperty("name", is("foo-1.0.jar")),
                   hasProperty("componentId", is(EntityHelper.id(component))),
                   hasProperty("assetId", is(EntityHelper.id(asset))),
-                  hasProperty("assetNameLowercase", is(Strings2.lower(asset.name()))))
-              ));
+                  hasProperty("path", is("org/foo/1.0/foo-1.0.jar")))
+          ));
 
       underTest.deleteComponentNode(db, EntityHelper.id(component));
 
       assertThat(underTest.browse(db),
-          contains(
+          containsInAnyOrder(
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/")),
+                  hasProperty("name", is("org")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/")),
+                  hasProperty("name", is("foo")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/")),
+                  hasProperty("name", is("1.0")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/1.0/")))
+              ,
               allOf(
                   hasProperty("repositoryName", is(REPOSITORY_NAME)),
                   hasProperty("parentPath", is("/org/foo/1.0/")),
                   hasProperty("name", is("foo-1.0.jar")),
-                  hasProperty("componentId", nullValue()),
+                  hasProperty("componentId", is(nullValue())),
                   hasProperty("assetId", is(EntityHelper.id(asset))),
-                  hasProperty("assetNameLowercase", is(Strings2.lower(asset.name()))))
-              ));
+                  hasProperty("path", is("org/foo/1.0/foo-1.0.jar")))
+          ));
 
       underTest.deleteAssetNode(db, EntityHelper.id(asset));
 
@@ -257,18 +449,42 @@ public class BrowseNodeEntityAdapterTest
     List<String> patchPath = Splitter.on('/').omitEmptyStrings().splitToList(patchAsset.name());
 
     try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
-      underTest.createComponentNode(db, REPOSITORY_NAME, path, component);
-      underTest.createComponentNode(db, REPOSITORY_NAME, patchPath, component);
+      underTest.createComponentNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(path), component);
+      underTest.createComponentNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(patchPath), component);
 
       assertThat(underTest.browse(db),
-          contains(
+          containsInAnyOrder(
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/")),
+                  hasProperty("name", is("org")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/")),
+                  hasProperty("name", is("foo")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/")),
+                  hasProperty("name", is("1.0")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/1.0/")))
+              ,
               allOf(
                   hasProperty("repositoryName", is(REPOSITORY_NAME)),
                   hasProperty("parentPath", is("/org/foo/1.0/")),
                   hasProperty("name", is("foo-1.0.jar")),
                   hasProperty("componentId", is(EntityHelper.id(component))),
                   hasProperty("assetId", nullValue()),
-                  hasProperty("assetNameLowercase", nullValue()))
+                  hasProperty("path", is("org/foo/1.0/foo-1.0.jar")))
               ,
               allOf(
                   hasProperty("repositoryName", is(REPOSITORY_NAME)),
@@ -276,21 +492,45 @@ public class BrowseNodeEntityAdapterTest
                   hasProperty("name", is("foo-1.0-1.jar")),
                   hasProperty("componentId", is(EntityHelper.id(component))),
                   hasProperty("assetId", nullValue()),
-                  hasProperty("assetNameLowercase", nullValue()))
+                  hasProperty("path", is("org/foo/1.0/foo-1.0-1.jar")))
               ));
 
-      underTest.createAssetNode(db, REPOSITORY_NAME, path, asset);
-      underTest.createAssetNode(db, REPOSITORY_NAME, patchPath, patchAsset);
+      underTest.createAssetNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(path), asset);
+      underTest.createAssetNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(patchPath), patchAsset);
 
       assertThat(underTest.browse(db),
-          contains(
+          containsInAnyOrder(
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/")),
+                  hasProperty("name", is("org")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/")),
+                  hasProperty("name", is("foo")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/")),
+                  hasProperty("name", is("1.0")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/1.0/")))
+              ,
               allOf(
                   hasProperty("repositoryName", is(REPOSITORY_NAME)),
                   hasProperty("parentPath", is("/org/foo/1.0/")),
                   hasProperty("name", is("foo-1.0.jar")),
                   hasProperty("componentId", is(EntityHelper.id(component))),
                   hasProperty("assetId", is(EntityHelper.id(asset))),
-                  hasProperty("assetNameLowercase", is(Strings2.lower(asset.name()))))
+                  hasProperty("path", is("org/foo/1.0/foo-1.0.jar")))
               ,
               allOf(
                   hasProperty("repositoryName", is(REPOSITORY_NAME)),
@@ -298,21 +538,45 @@ public class BrowseNodeEntityAdapterTest
                   hasProperty("name", is("foo-1.0-1.jar")),
                   hasProperty("componentId", is(EntityHelper.id(component))),
                   hasProperty("assetId", is(EntityHelper.id(patchAsset))),
-                  hasProperty("assetNameLowercase", is(Strings2.lower(patchAsset.name()))))
+                  hasProperty("path", is("org/foo/1.0/foo-1.0-1.jar")))
               ));
 
       underTest.deleteAssetNode(db, EntityHelper.id(asset));
       underTest.deleteAssetNode(db, EntityHelper.id(patchAsset));
 
       assertThat(underTest.browse(db),
-          contains(
+          containsInAnyOrder(
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/")),
+                  hasProperty("name", is("org")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/")),
+                  hasProperty("name", is("foo")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/")),
+                  hasProperty("name", is("1.0")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/1.0/")))
+              ,
               allOf(
                   hasProperty("repositoryName", is(REPOSITORY_NAME)),
                   hasProperty("parentPath", is("/org/foo/1.0/")),
                   hasProperty("name", is("foo-1.0.jar")),
                   hasProperty("componentId", is(EntityHelper.id(component))),
                   hasProperty("assetId", nullValue()),
-                  hasProperty("assetNameLowercase", nullValue()))
+                  hasProperty("path", is("org/foo/1.0/foo-1.0.jar")))
               ,
               allOf(
                   hasProperty("repositoryName", is(REPOSITORY_NAME)),
@@ -320,7 +584,7 @@ public class BrowseNodeEntityAdapterTest
                   hasProperty("name", is("foo-1.0-1.jar")),
                   hasProperty("componentId", is(EntityHelper.id(component))),
                   hasProperty("assetId", nullValue()),
-                  hasProperty("assetNameLowercase", nullValue()))
+                  hasProperty("path", is("org/foo/1.0/foo-1.0-1.jar")))
               ));
 
       underTest.deleteComponentNode(db, EntityHelper.id(component));
@@ -331,18 +595,42 @@ public class BrowseNodeEntityAdapterTest
     // now try out-of-order to check partial delete still works
 
     try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
-      underTest.createAssetNode(db, REPOSITORY_NAME, path, asset);
-      underTest.createAssetNode(db, REPOSITORY_NAME, patchPath, patchAsset);
+      underTest.createAssetNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(path), asset);
+      underTest.createAssetNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(patchPath), patchAsset);
 
       assertThat(underTest.browse(db),
-          contains(
+          containsInAnyOrder(
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/")),
+                  hasProperty("name", is("org")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/")),
+                  hasProperty("name", is("foo")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/")),
+                  hasProperty("name", is("1.0")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/1.0/")))
+              ,
               allOf(
                   hasProperty("repositoryName", is(REPOSITORY_NAME)),
                   hasProperty("parentPath", is("/org/foo/1.0/")),
                   hasProperty("name", is("foo-1.0.jar")),
                   hasProperty("componentId", nullValue()),
                   hasProperty("assetId", is(EntityHelper.id(asset))),
-                  hasProperty("assetNameLowercase", is(Strings2.lower(asset.name()))))
+                  hasProperty("path", is("org/foo/1.0/foo-1.0.jar")))
               ,
               allOf(
                   hasProperty("repositoryName", is(REPOSITORY_NAME)),
@@ -350,21 +638,45 @@ public class BrowseNodeEntityAdapterTest
                   hasProperty("name", is("foo-1.0-1.jar")),
                   hasProperty("componentId", nullValue()),
                   hasProperty("assetId", is(EntityHelper.id(patchAsset))),
-                  hasProperty("assetNameLowercase", is(Strings2.lower(patchAsset.name()))))
+                  hasProperty("path", is("org/foo/1.0/foo-1.0-1.jar")))
               ));
 
-      underTest.createComponentNode(db, REPOSITORY_NAME, path, component);
-      underTest.createComponentNode(db, REPOSITORY_NAME, patchPath, component);
+      underTest.createComponentNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(path), component);
+      underTest.createComponentNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(patchPath), component);
 
       assertThat(underTest.browse(db),
-          contains(
+          containsInAnyOrder(
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/")),
+                  hasProperty("name", is("org")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/")),
+                  hasProperty("name", is("foo")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/")),
+                  hasProperty("name", is("1.0")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/1.0/")))
+              ,
               allOf(
                   hasProperty("repositoryName", is(REPOSITORY_NAME)),
                   hasProperty("parentPath", is("/org/foo/1.0/")),
                   hasProperty("name", is("foo-1.0.jar")),
                   hasProperty("componentId", is(EntityHelper.id(component))),
                   hasProperty("assetId", is(EntityHelper.id(asset))),
-                  hasProperty("assetNameLowercase", is(Strings2.lower(asset.name()))))
+                  hasProperty("path", is("org/foo/1.0/foo-1.0.jar")))
               ,
               allOf(
                   hasProperty("repositoryName", is(REPOSITORY_NAME)),
@@ -372,20 +684,44 @@ public class BrowseNodeEntityAdapterTest
                   hasProperty("name", is("foo-1.0-1.jar")),
                   hasProperty("componentId", is(EntityHelper.id(component))),
                   hasProperty("assetId", is(EntityHelper.id(patchAsset))),
-                  hasProperty("assetNameLowercase", is(Strings2.lower(patchAsset.name()))))
+                  hasProperty("path", is("org/foo/1.0/foo-1.0-1.jar")))
               ));
 
       underTest.deleteComponentNode(db, EntityHelper.id(component));
 
       assertThat(underTest.browse(db),
-          contains(
+          containsInAnyOrder(
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/")),
+                  hasProperty("name", is("org")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/")),
+                  hasProperty("name", is("foo")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/")),
+                  hasProperty("name", is("1.0")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/1.0/")))
+              ,
               allOf(
                   hasProperty("repositoryName", is(REPOSITORY_NAME)),
                   hasProperty("parentPath", is("/org/foo/1.0/")),
                   hasProperty("name", is("foo-1.0.jar")),
                   hasProperty("componentId", nullValue()),
                   hasProperty("assetId", is(EntityHelper.id(asset))),
-                  hasProperty("assetNameLowercase", is(Strings2.lower(asset.name()))))
+                  hasProperty("path", is("org/foo/1.0/foo-1.0.jar")))
               ,
               allOf(
                   hasProperty("repositoryName", is(REPOSITORY_NAME)),
@@ -393,7 +729,7 @@ public class BrowseNodeEntityAdapterTest
                   hasProperty("name", is("foo-1.0-1.jar")),
                   hasProperty("componentId", nullValue()),
                   hasProperty("assetId", is(EntityHelper.id(patchAsset))),
-                  hasProperty("assetNameLowercase", is(Strings2.lower(patchAsset.name()))))
+                  hasProperty("path", is("org/foo/1.0/foo-1.0-1.jar")))
               ));
 
       underTest.deleteAssetNode(db, EntityHelper.id(asset));
@@ -408,20 +744,44 @@ public class BrowseNodeEntityAdapterTest
     List<String> path = Splitter.on('/').omitEmptyStrings().splitToList(asset.name());
 
     try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
-      underTest.createAssetNode(db, REPOSITORY_NAME, path, asset);
-      underTest.createAssetNode(db, REPOSITORY_NAME, path, asset);
-      underTest.createAssetNode(db, REPOSITORY_NAME, path, asset);
+      underTest.createAssetNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(path), asset);
+      underTest.createAssetNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(path), asset);
+      underTest.createAssetNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(path), asset);
 
       assertThat(underTest.browse(db),
-          contains(
+          containsInAnyOrder(
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/")),
+                  hasProperty("name", is("org")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/")),
+                  hasProperty("name", is("foo")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/")))
+              ,
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/org/foo/")),
+                  hasProperty("name", is("1.0")),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("org/foo/1.0/")))
+              ,
               allOf(
                   hasProperty("repositoryName", is(REPOSITORY_NAME)),
                   hasProperty("parentPath", is("/org/foo/1.0/")),
                   hasProperty("name", is("foo-1.0.jar")),
                   hasProperty("componentId", nullValue()),
                   hasProperty("assetId", is(EntityHelper.id(asset))),
-                  hasProperty("assetNameLowercase", is(Strings2.lower(asset.name()))))
-              ));
+                  hasProperty("path", is("org/foo/1.0/foo-1.0.jar")))
+          ));
     }
   }
 
@@ -430,12 +790,22 @@ public class BrowseNodeEntityAdapterTest
     List<String> path = Splitter.on('/').omitEmptyStrings().splitToList(asset.name());
 
     try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
-      underTest.createComponentNode(db, REPOSITORY_NAME, path.subList(0, 3), component);
-      underTest.createAssetNode(db, REPOSITORY_NAME, path, asset);
+      underTest.createComponentNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(path.subList(0, 3)), component);
+      underTest.createAssetNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(path), asset);
 
-      assertThat(underTest.count(db), is(2L));
+      assertThat(underTest.count(db), is(4L));
 
       int deleteCount = underTest.deleteByRepository(db, REPOSITORY_NAME, 1);
+
+      assertThat(deleteCount, is(1));
+      assertThat(underTest.count(db), is(3L));
+
+      deleteCount = underTest.deleteByRepository(db, REPOSITORY_NAME, 1);
+
+      assertThat(deleteCount, is(1));
+      assertThat(underTest.count(db), is(2L));
+
+      deleteCount = underTest.deleteByRepository(db, REPOSITORY_NAME, 1);
 
       assertThat(deleteCount, is(1));
       assertThat(underTest.count(db), is(1L));
@@ -457,8 +827,8 @@ public class BrowseNodeEntityAdapterTest
     List<String> path = Splitter.on('/').omitEmptyStrings().splitToList(asset.name());
 
     try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
-      underTest.createComponentNode(db, REPOSITORY_NAME, path.subList(0, 3), component);
-      underTest.createAssetNode(db, REPOSITORY_NAME, path, asset);
+      underTest.createComponentNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(path.subList(0, 3)), component);
+      underTest.createAssetNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(path), asset);
 
       assertThat(underTest.getByPath(db, REPOSITORY_NAME, path.subList(0, 0), 1, "", emptyMap()),
           contains(
@@ -469,7 +839,7 @@ public class BrowseNodeEntityAdapterTest
                   hasProperty("leaf", is(false)),
                   hasProperty("componentId", nullValue()),
                   hasProperty("assetId", nullValue()),
-                  hasProperty("assetNameLowercase", nullValue()))
+                  hasProperty("path", is("org/")))
               ));
 
       assertThat(underTest.getByPath(db, REPOSITORY_NAME, path.subList(0, 1), 1, "", emptyMap()),
@@ -481,7 +851,7 @@ public class BrowseNodeEntityAdapterTest
                   hasProperty("leaf", is(false)),
                   hasProperty("componentId", nullValue()),
                   hasProperty("assetId", nullValue()),
-                  hasProperty("assetNameLowercase", nullValue()))
+                  hasProperty("path", is("org/foo/")))
               ));
 
       assertThat(underTest.getByPath(db, REPOSITORY_NAME, path.subList(0, 2), 1, "", emptyMap()),
@@ -493,7 +863,7 @@ public class BrowseNodeEntityAdapterTest
                   hasProperty("leaf", is(false)),
                   hasProperty("componentId", is(EntityHelper.id(component))),
                   hasProperty("assetId", nullValue()),
-                  hasProperty("assetNameLowercase", nullValue()))
+                  hasProperty("path", is("org/foo/1.0/")))
               ));
 
       assertThat(underTest.getByPath(db, REPOSITORY_NAME, path.subList(0, 3), 1, "", emptyMap()),
@@ -505,7 +875,7 @@ public class BrowseNodeEntityAdapterTest
                   hasProperty("leaf", is(true)),
                   hasProperty("componentId", nullValue()),
                   hasProperty("assetId", is(EntityHelper.id(asset))),
-                  hasProperty("assetNameLowercase", is(Strings2.lower(asset.name()))))
+                  hasProperty("path", is("org/foo/1.0/foo-1.0.jar")))
               ));
 
       assertThat(underTest.getByPath(db, REPOSITORY_NAME, path, 1, "", emptyMap()), is(empty()));
@@ -518,8 +888,8 @@ public class BrowseNodeEntityAdapterTest
     List<String> path = Splitter.on('/').omitEmptyStrings().splitToList(asset.name());
 
     try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
-      underTest.createComponentNode(db, REPOSITORY_NAME, path, component);
-      underTest.createAssetNode(db, REPOSITORY_NAME, path, asset);
+      underTest.createComponentNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(path), component);
+      underTest.createAssetNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(path), asset);
 
       assertThat(underTest.getByPath(db, REPOSITORY_NAME, path.subList(0, 0), 1, "", emptyMap()),
           contains(
@@ -530,7 +900,7 @@ public class BrowseNodeEntityAdapterTest
                   hasProperty("leaf", is(false)),
                   hasProperty("componentId", nullValue()),
                   hasProperty("assetId", nullValue()),
-                  hasProperty("assetNameLowercase", nullValue()))
+                  hasProperty("path", is("org/")))
               ));
 
       assertThat(underTest.getByPath(db, REPOSITORY_NAME, path.subList(0, 1), 1, "", emptyMap()),
@@ -542,7 +912,7 @@ public class BrowseNodeEntityAdapterTest
                   hasProperty("leaf", is(false)),
                   hasProperty("componentId", nullValue()),
                   hasProperty("assetId", nullValue()),
-                  hasProperty("assetNameLowercase", nullValue()))
+                  hasProperty("path", is("org/foo/")))
               ));
 
       assertThat(underTest.getByPath(db, REPOSITORY_NAME, path.subList(0, 2), 1, "", emptyMap()),
@@ -554,7 +924,7 @@ public class BrowseNodeEntityAdapterTest
                   hasProperty("leaf", is(false)),
                   hasProperty("componentId", nullValue()),
                   hasProperty("assetId", nullValue()),
-                  hasProperty("assetNameLowercase", nullValue()))
+                  hasProperty("path", is("org/foo/1.0/")))
               ));
 
       assertThat(underTest.getByPath(db, REPOSITORY_NAME, path.subList(0, 3), 1, "", emptyMap()),
@@ -566,7 +936,7 @@ public class BrowseNodeEntityAdapterTest
                   hasProperty("leaf", is(true)),
                   hasProperty("componentId", is(EntityHelper.id(component))),
                   hasProperty("assetId", is(EntityHelper.id(asset))),
-                  hasProperty("assetNameLowercase", is(Strings2.lower(asset.name()))))
+                  hasProperty("path", is("org/foo/1.0/foo-1.0.jar")))
               ));
 
       assertThat(underTest.getByPath(db, REPOSITORY_NAME, path, 1, "", emptyMap()), is(empty()));
@@ -588,8 +958,8 @@ public class BrowseNodeEntityAdapterTest
       parentAsset.name("/org/foo");
       assetEntityAdapter.addEntity(db, parentAsset);
 
-      underTest.createAssetNode(db, REPOSITORY_NAME, path.subList(0, 2), parentAsset);
-      underTest.createAssetNode(db, REPOSITORY_NAME, path, asset);
+      underTest.createAssetNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(path.subList(0, 2)), parentAsset);
+      underTest.createAssetNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(path), asset);
 
       assertThat(underTest.getByPath(db, REPOSITORY_NAME, path.subList(0, 0), 1, "", emptyMap()),
           contains(
@@ -600,7 +970,7 @@ public class BrowseNodeEntityAdapterTest
                   hasProperty("leaf", is(false)),
                   hasProperty("componentId", nullValue()),
                   hasProperty("assetId", nullValue()),
-                  hasProperty("assetNameLowercase", nullValue()))
+                  hasProperty("path", is("org/")))
               ));
 
       assertThat(underTest.getByPath(db, REPOSITORY_NAME, path.subList(0, 1), 1, "", emptyMap()),
@@ -612,7 +982,7 @@ public class BrowseNodeEntityAdapterTest
                   hasProperty("leaf", is(false)),
                   hasProperty("componentId", nullValue()),
                   hasProperty("assetId", is(EntityHelper.id(parentAsset))),
-                  hasProperty("assetNameLowercase", is(Strings2.lower(parentAsset.name()))))
+                  hasProperty("path", is("org/foo/")))
               ));
 
       assertThat(underTest.getByPath(db, REPOSITORY_NAME, path.subList(0, 2), 1, "", emptyMap()),
@@ -624,7 +994,7 @@ public class BrowseNodeEntityAdapterTest
                   hasProperty("leaf", is(false)),
                   hasProperty("componentId", nullValue()),
                   hasProperty("assetId", nullValue()),
-                  hasProperty("assetNameLowercase", nullValue()))
+                  hasProperty("path", is("org/foo/1.0/")))
               ));
 
       assertThat(underTest.getByPath(db, REPOSITORY_NAME, path.subList(0, 3), 1, "", emptyMap()),
@@ -636,7 +1006,7 @@ public class BrowseNodeEntityAdapterTest
                   hasProperty("leaf", is(true)),
                   hasProperty("componentId", nullValue()),
                   hasProperty("assetId", is(EntityHelper.id(asset))),
-                  hasProperty("assetNameLowercase", is(Strings2.lower(asset.name()))))
+                  hasProperty("path", is("org/foo/1.0/foo-1.0.jar")))
               ));
 
       assertThat(underTest.getByPath(db, REPOSITORY_NAME, path, 1, "", emptyMap()), is(empty()));

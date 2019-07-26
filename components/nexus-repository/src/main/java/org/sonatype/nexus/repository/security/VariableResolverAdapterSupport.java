@@ -108,4 +108,13 @@ public abstract class VariableResolverAdapterSupport
   protected void addCoordinates(final VariableSourceBuilder builder, final Map<String, String> coordinates) {
     builder.addResolver(new PropertiesResolver<>("coordinate", coordinates));
   }
+
+  @Override
+  public VariableSource fromPath(final String path, final String format) {
+    VariableSourceBuilder builder = new VariableSourceBuilder();
+    builder.addResolver(new ConstantVariableResolver(path, PATH));
+    builder.addResolver(new ConstantVariableResolver(format, FORMAT));
+
+    return builder.build();
+  }
 }

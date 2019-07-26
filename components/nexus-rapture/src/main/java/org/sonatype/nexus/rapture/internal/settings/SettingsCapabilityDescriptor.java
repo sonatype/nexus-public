@@ -82,14 +82,24 @@ public class SettingsCapabilityDescriptor
     @DefaultMessage("Standard request timeout")
     String requestTimeoutLabel();
 
-    @DefaultMessage("Period of time to keep the connection alive for requests expected to take a normal period of time (seconds)")
+    @DefaultMessage(
+        "Period of time to keep the connection alive for requests expected to take a normal period of time (seconds)")
     String requestTimeoutHelp();
 
     @DefaultMessage("Extended request timeout")
     String longRequestTimeoutLabel();
 
-    @DefaultMessage("Period of time to keep the connection alive for requests expected to take an extended period of time (seconds)")
+    @DefaultMessage(
+        "Period of time to keep the connection alive for requests expected to take an extended period of time (seconds)")
     String longRequestTimeoutHelp();
+
+    @DefaultMessage("Search request timeout")
+    String searchRequestTimeoutLabel();
+
+    @DefaultMessage("Period of time to keep the connection alive for search requests (seconds); " +
+        "this value should be less than the request time in order for the correct error messages to be displayed. " +
+        "If this value is not set, the standard request timeout will be used instead.")
+    String searchRequestTimeoutHelp();
 
     @DefaultMessage("Title")
     String titleLabel();
@@ -147,7 +157,13 @@ public class SettingsCapabilityDescriptor
             messages.longRequestTimeoutHelp(),
             FormField.MANDATORY
         ).withInitialValue(RaptureSettings.DEFAULT_LONG_REQUEST_TIMEOUT)
-            .withMinimumValue(RaptureSettings.DEFAULT_LONG_REQUEST_TIMEOUT)
+            .withMinimumValue(RaptureSettings.DEFAULT_LONG_REQUEST_TIMEOUT),
+        new NumberTextFormField(
+            SettingsCapabilityConfiguration.SEARCH_REQUEST_TIMEOUT,
+            messages.searchRequestTimeoutLabel(),
+            messages.searchRequestTimeoutHelp(),
+            FormField.OPTIONAL
+        ).withMinimumValue(RaptureSettings.MIN_SEARCH_REQUEST_TIMEOUT)
     );
   }
 
@@ -180,5 +196,4 @@ public class SettingsCapabilityDescriptor
   public Set<Tag> getTags() {
     return Tag.tags(Tag.categoryTag("UI"));
   }
-
 }

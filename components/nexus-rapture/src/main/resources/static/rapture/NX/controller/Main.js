@@ -47,9 +47,13 @@ Ext.define('NX.controller.Main', {
     var me = this;
 
     me.getApplication().getIconController().addIcons({
-      'nexus': {
-        file: 'nexus.png',
-        variants: ['x16', 'x24', 'x32', 'x48', 'x100']
+      'nexus-white': {
+        file: 'nexus-white.png',
+        variants: ['x32']
+      },
+      'nexus-black': {
+        file: 'nexus-black.png',
+        variants: ['x16', 'x100']
       },
       'sonatype': {
         file: 'sonatype.png',

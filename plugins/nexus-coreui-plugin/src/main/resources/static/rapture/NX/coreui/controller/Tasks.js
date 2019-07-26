@@ -190,13 +190,13 @@ Ext.define('NX.coreui.controller.Tasks', {
         me = this,
         summary = me.getSummary();
 
-    info[NX.I18n.get('Tasks_ID_Info')] = model.getId();
-    info[NX.I18n.get('Tasks_Name_Info')] = model.get('name');
-    info[NX.I18n.get('Tasks_Type_Info')] = model.get('typeName');
-    info[NX.I18n.get('Tasks_Status_Info')] = model.get('statusDescription');
-    info[NX.I18n.get('Tasks_NextRun_Info')] = model.get('nextRun');
-    info[NX.I18n.get('Tasks_LastRun_Info')] = model.get('lastRun');
-    info[NX.I18n.get('Tasks_LastResult_Info')] = model.get('lastRunResult');
+    info[NX.I18n.get('Tasks_ID_Info')] = Ext.htmlEncode(model.getId());
+    info[NX.I18n.get('Tasks_Name_Info')] = Ext.htmlEncode(model.get('name'));
+    info[NX.I18n.get('Tasks_Type_Info')] = Ext.htmlEncode(model.get('typeName'));
+    info[NX.I18n.get('Tasks_Status_Info')] = Ext.htmlEncode(model.get('statusDescription'));
+    info[NX.I18n.get('Tasks_NextRun_Info')] = Ext.htmlEncode(model.get('nextRun'));
+    info[NX.I18n.get('Tasks_LastRun_Info')] = Ext.htmlEncode(model.get('lastRun'));
+    info[NX.I18n.get('Tasks_LastResult_Info')] = Ext.htmlEncode(model.get('lastRunResult'));
 
     summary.showInfo(info);
     me.maybeShowSummaryStatuses(model);

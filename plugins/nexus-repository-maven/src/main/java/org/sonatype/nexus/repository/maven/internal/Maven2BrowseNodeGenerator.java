@@ -20,6 +20,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.text.Strings2;
+import org.sonatype.nexus.repository.browse.BrowsePaths;
 import org.sonatype.nexus.repository.browse.ComponentPathBrowseNodeGenerator;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
@@ -61,19 +62,20 @@ public class Maven2BrowseNodeGenerator
    * @return componentPath/lastSegment(assetPath) if the component was not null, otherwise assetPath
    */
   @Override
-  public List<String> computeAssetPath(final Asset asset, @Nullable final Component component) {
+  public List<BrowsePaths> computeAssetPaths(final Asset asset, @Nullable final Component component) {
     checkNotNull(asset);
 
     if (component != null) {
-      List<String> path = computeComponentPath(asset, component);
+      List<BrowsePaths> paths = computeComponentPaths(asset, component);
 
-      // place asset just below component
-      path.add(lastSegment(asset.name()));
+      String lastSegment = lastSegment(asset.name());
 
-      return path;
+      BrowsePaths.appendPath(paths, lastSegment);
+
+      return paths;
     }
     else {
-      return super.computeAssetPath(asset, null);
+      return super.computeAssetPaths(asset, null);
     }
   }
 
@@ -81,24 +83,29 @@ public class Maven2BrowseNodeGenerator
    * @return [componentGroupDotsToDashes]/componentName/[componentVersion]
    */
   @Override
-  public List<String> computeComponentPath(final Asset asset, final Component component) {
-    List<String> path = new ArrayList<>();
+  public List<BrowsePaths> computeComponentPaths(final Asset asset, final Component component) {
+    List<String> pathParts = new ArrayList<>();
 
     if (!Strings2.isBlank(component.group())) {
-      path.addAll(Splitter.on('.').omitEmptyStrings().splitToList(component.group()));
+      pathParts.addAll(Splitter.on('.').omitEmptyStrings().splitToList(component.group()));
     }
 
-    path.add(component.name());
+    pathParts.add(component.name());
+
+    List<BrowsePaths> paths = BrowsePaths.fromPaths(pathParts, true);
 
     if (!Strings2.isBlank(component.version())) {
       String baseVersion = component.attributes().child("maven2").get("baseVersion", String.class);
+      //the request path should be as expected by maven, so that security is applied properly, hence we use the
+      //same path for both nodes added below
+      String requestPath = paths.get(paths.size() - 1).getRequestPath() + baseVersion + "/";
       if (!component.version().equals(baseVersion)) {
         // Put the SNAPSHOT version (baseVersion) before the component version in the tree.
-        path.add(baseVersion);
+        BrowsePaths.appendPath(paths, baseVersion, requestPath);
       }
-      path.add(component.version());
+      BrowsePaths.appendPath(paths, component.version(), requestPath);
     }
 
-    return path;
+    return paths;
   }
 }

@@ -73,7 +73,7 @@
 <div id="loading-mask"></div>
 <div id="loading">
   <div id="loading-background">
-    <img id="loading-logo" src="$raptureUrl/resources/images/loading-logo.png?$urlSuffix" alt="Product Logo"/>
+    <img id="loading-logo" src="$raptureUrl/resources/images/nxrm-logo-white.svg?$urlSuffix" alt="Product Logo" width='116' height='116' />
     <img id="loading-product" src="$raptureUrl/resources/images/loading-product.png?$urlSuffix" alt="Nexus Repository Manager"/>
     <div class="loading-indicator">
       <img id="loading-spinner" src="$raptureUrl/resources/images/loading-spinner.gif?$urlSuffix" alt="Loading Spinner"/>

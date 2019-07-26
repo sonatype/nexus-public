@@ -93,8 +93,8 @@ testProjects = [':nexus-insight-testsupport', ':nexus-docker-testsupport', ':nex
    //sources="custom Maven sources arguments here"
  */
 configDefaults = [
-    javaMaxMem   : '2g',
-    directMaxMem : '2g',
+    javaMaxMem   : '2703m',
+    directMaxMem : '2703m',
     vmOptions    : '',
     port         : 8081,
     sslPort      : 8443,

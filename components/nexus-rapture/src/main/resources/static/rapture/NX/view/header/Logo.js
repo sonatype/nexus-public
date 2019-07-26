@@ -33,7 +33,7 @@ Ext.define('NX.view.header.Logo', {
    * @protected
    */
   initComponent: function() {
-    this.setSrc(NX.Icons.url('nexus', 'x32'));
+    this.setSrc(NX.Icons.url('nexus-white', 'x32'));
     this.callParent();
   }
 });

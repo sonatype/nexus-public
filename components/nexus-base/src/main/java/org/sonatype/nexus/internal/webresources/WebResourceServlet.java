@@ -25,8 +25,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
-import org.sonatype.nexus.internal.security.XFrameOptions;
 import org.sonatype.nexus.servlet.ServletHelper;
+import org.sonatype.nexus.servlet.XFrameOptions;
 import org.sonatype.nexus.webresources.WebResource;
 import org.sonatype.nexus.webresources.WebResource.Prepareable;
 import org.sonatype.nexus.webresources.WebResourceService;

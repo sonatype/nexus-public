@@ -119,7 +119,7 @@ public class RebuildBrowseNodesTask
           processed += assetsSize;
 
           long elapsed = sw.elapsed(TimeUnit.MILLISECONDS);
-          progressLogger.info("Rebuilt {} / {} browse nodes in {} ms", processed, total, elapsed);
+          progressLogger.info("Rebuilt browse nodes for {} / {} assets in {} ms", processed, total, elapsed);
 
           nextPage = assetStore.getNextPage(cursor, rebuildPageSize);
         }

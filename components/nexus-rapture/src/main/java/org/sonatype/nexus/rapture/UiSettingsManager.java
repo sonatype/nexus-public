@@ -10,16 +10,15 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.rapture.internal.settings;
+package org.sonatype.nexus.rapture;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.rapture.internal.settings.RaptureSettings;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-
-// TODO: rename to SettingsManager?
 
 /**
  * Rapture.
@@ -28,7 +27,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Named
 @Singleton
-public class Rapture
+public class UiSettingsManager
     extends ComponentSupport
 {
   private RaptureSettings settings = new RaptureSettings();

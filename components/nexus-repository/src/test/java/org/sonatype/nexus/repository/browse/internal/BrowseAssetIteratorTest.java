@@ -66,7 +66,7 @@ public class BrowseAssetIteratorTest {
 
   @Before
   public void init() {
-    when(contentAuthHelper.checkAssetPermissions(any(), eq(FOO))).thenReturn(true);
+    when(contentAuthHelper.checkPathPermissions(any(), any(), eq(FOO))).thenReturn(true);
   }
 
   @Test

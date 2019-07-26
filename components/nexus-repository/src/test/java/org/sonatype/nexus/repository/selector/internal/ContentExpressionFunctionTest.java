@@ -105,7 +105,7 @@ public class ContentExpressionFunctionTest
   @Test
   public void testMatchingAsset_SingleRepository() throws Exception {
     when(selectorManager.evaluate(any(), any())).thenReturn(true);
-    when(contentAuthHelper.checkAssetPermissions(any(), eq(REPOSITORY_NAME))).thenReturn(true);
+    when(contentAuthHelper.checkPathPermissions(any(), any(), eq(REPOSITORY_NAME))).thenReturn(true);
     assertThat(underTest
         .execute(underTest, null, null, new Object[]{assetDocument, "jexlexpression", REPOSITORY_NAME, ""},
             null), is(true));
@@ -114,7 +114,7 @@ public class ContentExpressionFunctionTest
   @Test
   public void testMatchingAsset_AllRepositories() throws Exception {
     when(selectorManager.evaluate(any(), any())).thenReturn(true);
-    when(contentAuthHelper.checkAssetPermissions(any(), eq(REPOSITORY_NAME))).thenReturn(true);
+    when(contentAuthHelper.checkPathPermissions(any(), any(), eq(REPOSITORY_NAME))).thenReturn(true);
     Map<String, List<String>> repoToContainedGroupMap = new HashMap<>();
     repoToContainedGroupMap.put(REPOSITORY_NAME, Arrays.asList(REPOSITORY_NAME));
     assertThat(underTest.execute(underTest, null, null, new Object[]{
@@ -125,7 +125,7 @@ public class ContentExpressionFunctionTest
   @Test
   public void testMatchingAsset_AllRepositories_inGroup() throws Exception {
     when(selectorManager.evaluate(any(), any())).thenReturn(true);
-    when(contentAuthHelper.checkAssetPermissions(any(), eq(REPOSITORY_NAME), eq("groupRepo"))).thenReturn(true);
+    when(contentAuthHelper.checkPathPermissions(any(), any(), eq(REPOSITORY_NAME), eq("groupRepo"))).thenReturn(true);
     Map<String, List<String>> repoToContainedGroupMap = new HashMap<>();
     repoToContainedGroupMap.put(REPOSITORY_NAME, Arrays.asList(REPOSITORY_NAME, "groupRepo"));
     assertThat(underTest.execute(underTest, null, null, new Object[]{

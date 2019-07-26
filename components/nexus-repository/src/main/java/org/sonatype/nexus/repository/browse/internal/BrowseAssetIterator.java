@@ -34,6 +34,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.join;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_FORMAT;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
 /**
  * An {@link Iterator<ODocument>} that will either browse the {@code asset} class if {@code rid} is {@code null},
@@ -202,7 +204,7 @@ public class BrowseAssetIterator
   }
 
   private Predicate<ODocument> contentAuthFilter() {
-    return doc -> contentAuthHelper.checkAssetPermissions(doc, repositoryName);
+    return doc -> contentAuthHelper.checkPathPermissions(doc.field(P_NAME), doc.field(P_FORMAT), repositoryName);
   }
 
   private static String toBucketId(final Object obj) {

@@ -12,8 +12,10 @@
  */
 package org.sonatype.nexus.repository.search;
 
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -21,6 +23,7 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.stateguard.Guarded;
+import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.orient.entity.AttachedEntityId;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.Format;
@@ -31,19 +34,25 @@ import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.BucketEntityAdapter;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
+import org.sonatype.nexus.repository.storage.ComponentStore;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
+import com.google.common.base.Stopwatch;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.transform;
+import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REPOSITORY_NAME;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_BUCKET;
@@ -60,14 +69,17 @@ public class SearchFacetImpl
     extends FacetSupport
     implements SearchFacet
 {
-  private static final String COMPONENTS_IN_BUCKET = String.format(
-      "select from %s where %s = :bucket", ComponentEntityAdapter.DB_CLASS, P_BUCKET);
+  private static final int PAGE_SIZE = 1_000;
+
+  private static final int BUCKET = 0;
 
   private final SearchService searchService;
 
   private final Map<String, ComponentMetadataProducer> componentMetadataProducers;
 
   private final ComponentEntityAdapter componentEntityAdapter;
+
+  private final ComponentStore componentStore;
 
   private final BucketEntityAdapter bucketEntityAdapter;
 
@@ -77,11 +89,13 @@ public class SearchFacetImpl
   public SearchFacetImpl(final SearchService searchService,
                          final Map<String, ComponentMetadataProducer> componentMetadataProducers,
                          final ComponentEntityAdapter componentEntityAdapter,
+                         final ComponentStore componentStore,
                          final BucketEntityAdapter bucketEntityAdapter)
   {
     this.searchService = checkNotNull(searchService);
     this.componentMetadataProducers = checkNotNull(componentMetadataProducers);
     this.componentEntityAdapter = checkNotNull(componentEntityAdapter);
+    this.componentStore = checkNotNull(componentStore);
     this.bucketEntityAdapter = checkNotNull(bucketEntityAdapter);
   }
 
@@ -107,12 +121,47 @@ public class SearchFacetImpl
 
   @Transactional
   protected void rebuildComponentIndex() {
-    StorageTx tx = UnitOfWork.currentTx();
-    Bucket bucket = tx.findBucket(getRepository());
-    if (bucket != null) {
+    try {
+      Repository repository = getRepository();
+      StorageTx tx = UnitOfWork.currentTx();
+      Bucket bucket = tx.findBucket(repository);
       ORID bucketId = bucketEntityAdapter.recordIdentity(bucket);
-      Iterable<ODocument> docs = tx.browse(COMPONENTS_IN_BUCKET, ImmutableMap.of(P_BUCKET, bucketId));
-      bulkPut(transform(filter(docs, Objects::nonNull), this::componentId));
+
+      if (bucket == null) {
+        log.warn("Unable to rebuild search index for repository {}", repository.getName());
+        return;
+      }
+
+      long processed = 0;
+      long total = componentStore.countComponents(ImmutableList.of(bucket));
+
+      if (total > 0) {
+        ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60);
+        Stopwatch sw = Stopwatch.createStarted();
+
+        OIndexCursor cursor = componentStore.getIndex(ComponentEntityAdapter.I_BUCKET_GROUP_NAME_VERSION).cursor();
+        List<Entry<OCompositeKey, EntityId>> nextPage = componentStore.getNextPage(cursor, PAGE_SIZE);
+        while (!Iterables.isEmpty(nextPage)) {
+          List<EntityId> componentIds = nextPage.stream()
+              .filter(entry -> bucketId.equals(entry.getKey().getKeys().get(BUCKET)))
+              .map(Entry::getValue)
+              .collect(toList());
+
+          processed += componentIds.size();
+
+          bulkPut(componentIds);
+
+          long elapsed = sw.elapsed(TimeUnit.MILLISECONDS);
+          progressLogger
+              .info("Indexed {} / {} {} components in {} ms", processed, total, repository.getName(), elapsed);
+
+          nextPage = componentStore.getNextPage(cursor, PAGE_SIZE);
+        }
+        progressLogger.flush(); // ensure the final progress message is flushed
+      }
+    }
+    catch (Exception e) {
+      log.error("Unable to rebuild search index for repository {}", getRepository().getName(), e);
     }
   }
 

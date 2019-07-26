@@ -37,8 +37,7 @@ Ext.define('NX.controller.Permissions', {
     me.listen({
       controller: {
         '#State': {
-          userchanged: me.fetchPermissions,
-          permissionschanged: me.loadPermissions
+          userchanged: me.fetchPermissions
         }
       },
       store: {
@@ -57,19 +56,9 @@ Ext.define('NX.controller.Permissions', {
    * @override
    */
   onLaunch: function () {
-    var me = this,
-        rawData = NX.State.getValue('permissions');
+    var me = this;
 
-    //<if debug>
-    me.logTrace('Initial permissions:', rawData);
-    //</if>
-
-    me.getStore('Permission').loadRawData(rawData, false);
-    NX.Permissions.setPermissions(me.getPermissions());
-
-    //<if debug>
-    me.logInfo('Permissions primed');
-    //</if>
+    me.fetchPermissions();
   },
 
   /**
@@ -87,25 +76,10 @@ Ext.define('NX.controller.Permissions', {
   fetchPermissions: function () {
     var me = this;
 
-    NX.Permissions.resetPermissions();
     //<if debug>
     me.logDebug('Fetching permissions...');
     //</if>
     me.getStore('Permission').load();
-  },
-
-  /**
-   * @private
-   */
-  loadPermissions: function (permissions) {
-    var me = this;
-
-    //<if debug>
-    me.logDebug('Loading permissions...');
-    //</if>
-
-    me.getStore('Permission').loadRawData(permissions, false);
-    me.firePermissionsChanged();
   },
 
   /**

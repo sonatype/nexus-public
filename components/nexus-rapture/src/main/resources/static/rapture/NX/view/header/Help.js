@@ -41,7 +41,7 @@ Ext.define('NX.view.header.Help', {
     me.menu = [
       {
         text: NX.I18n.get('Header_Help_About_Text'),
-        iconCls: 'nx-icon-nexus-x16',
+        iconCls: 'nx-icon-nexus-black-x16',
         tooltip: NX.I18n.get('Header_Help_About_Tooltip'),
         action: 'about'
       },

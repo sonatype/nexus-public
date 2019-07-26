@@ -24,6 +24,7 @@ import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
+import org.sonatype.nexus.repository.browse.BrowsePaths;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.repository.types.GroupType;
@@ -65,7 +66,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static org.sonatype.goodies.common.Time.seconds;
 
 public class BrowseNodeStoreImplTest
     extends TestSupport
@@ -183,7 +183,7 @@ public class BrowseNodeStoreImplTest
         browseNodeEntityAdapter,
         securityHelper,
         selectorManager,
-        new BrowseNodeConfiguration(true, 1000, DELETE_PAGE_SIZE, 10_000, 10_000, seconds(0)),
+        new BrowseNodeConfiguration(true, 1000, DELETE_PAGE_SIZE, 10_000, 10_000),
         ImmutableMap.of(FORMAT_NAME, browseNodeFilter),
         ImmutableMap.of(DefaultBrowseNodeComparator.NAME, new DefaultBrowseNodeComparator(new VersionComparator())));
 
@@ -199,16 +199,18 @@ public class BrowseNodeStoreImplTest
 
   @Test
   public void storeOperations() throws Exception {
-    List<String> componentPath = asList("org", "foo", "1.0");
-    List<String> assetPath = asList("org", "foo", "1.0", "foo-1.0.jar");
+    List<BrowsePaths> componentPath = asList(new BrowsePaths("org", "org"), new BrowsePaths("foo", "org/foo"),
+        new BrowsePaths("1.0", "org/foo/1.0"));
+    List<BrowsePaths> assetPath = asList(new BrowsePaths("org", "org"), new BrowsePaths("foo", "org/foo"),
+        new BrowsePaths("1.0", "org/foo/1.0"), new BrowsePaths("foo-1.0.jar", "org/foo/1.0/foo-1.0.jar"));
 
-    underTest.createComponentNode(REPOSITORY_NAME, componentPath, component);
-    underTest.createAssetNode(REPOSITORY_NAME, assetPath, asset);
+    underTest.createComponentNode(REPOSITORY_NAME, "aformat", componentPath, component);
+    underTest.createAssetNode(REPOSITORY_NAME, "aformat", assetPath, asset);
     underTest.deleteAssetNode(assetId);
     underTest.deleteComponentNode(componentId);
 
-    verify(browseNodeEntityAdapter).createComponentNode(db, REPOSITORY_NAME, componentPath, component);
-    verify(browseNodeEntityAdapter).createAssetNode(db, REPOSITORY_NAME, assetPath, asset);
+    verify(browseNodeEntityAdapter).createComponentNode(db, REPOSITORY_NAME, "aformat", componentPath, component);
+    verify(browseNodeEntityAdapter).createAssetNode(db, REPOSITORY_NAME, "aformat", assetPath, asset);
     verify(browseNodeEntityAdapter).deleteAssetNode(db, assetId);
     verify(browseNodeEntityAdapter).deleteComponentNode(db, componentId);
 
@@ -229,24 +231,10 @@ public class BrowseNodeStoreImplTest
 
     when(securityHelper.anyPermitted(any())).thenReturn(true);
 
-    underTest.getByPath(repository, queryPath, MAX_NODES, null);
+    underTest.getByPath(repository, queryPath, MAX_NODES);
 
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(browseNodeEntityAdapter).getByPath(db, REPOSITORY_NAME, queryPath, MAX_NODES, "", emptyMap());
-    verifyNoMoreInteractions(browseNodeEntityAdapter, securityHelper, selectorManager);
-  }
-
-  @Test
-  public void keywordQueryWithBrowsePermission() throws Exception {
-    List<String> queryPath = asList("org", "foo");
-
-    when(securityHelper.anyPermitted(any())).thenReturn(true);
-
-    underTest.getByPath(repository, queryPath, MAX_NODES, "wibble");
-
-    verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
-    verify(browseNodeEntityAdapter).getByPath(db, REPOSITORY_NAME, queryPath, MAX_NODES,
-        "asset_name_lowercase like :keyword_filter", ImmutableMap.of("keyword_filter", "%wibble%"));
     verifyNoMoreInteractions(browseNodeEntityAdapter, securityHelper, selectorManager);
   }
 
@@ -257,21 +245,7 @@ public class BrowseNodeStoreImplTest
     when(securityHelper.anyPermitted(any())).thenReturn(false);
     when(selectorManager.browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME))).thenReturn(emptyList());
 
-    underTest.getByPath(repository, queryPath, MAX_NODES, null);
-
-    verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
-    verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
-    verifyNoMoreInteractions(browseNodeEntityAdapter, securityHelper, selectorManager);
-  }
-
-  @Test
-  public void keywordQueryWithoutBrowsePermissionOrSelectors() throws Exception {
-    List<String> queryPath = asList("org", "foo");
-
-    when(securityHelper.anyPermitted(any())).thenReturn(false);
-    when(selectorManager.browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME))).thenReturn(emptyList());
-
-    underTest.getByPath(repository, queryPath, MAX_NODES, "wibble");
+    underTest.getByPath(repository, queryPath, MAX_NODES);
 
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
@@ -285,31 +259,13 @@ public class BrowseNodeStoreImplTest
     when(securityHelper.anyPermitted(any())).thenReturn(false);
     when(selectorManager.browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME))).thenReturn(asList(byGroup));
 
-    underTest.getByPath(repository, queryPath, MAX_NODES, null);
+    underTest.getByPath(repository, queryPath, MAX_NODES);
 
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
     verify(selectorManager).toSql(eq(byGroup), any());
     verify(browseNodeEntityAdapter).getByPath(db, REPOSITORY_NAME, queryPath, MAX_NODES,
         "(asset_id.attributes.test-format.groupId = :s0p0)", ImmutableMap.of("s0p0", "org.sonatype"));
-    verifyNoMoreInteractions(browseNodeEntityAdapter, securityHelper, selectorManager);
-  }
-
-  @Test
-  public void keywordQueryWithContentSelector() throws Exception {
-    List<String> queryPath = asList("org", "foo");
-
-    when(securityHelper.anyPermitted(any())).thenReturn(false);
-    when(selectorManager.browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME))).thenReturn(asList(byGroup));
-
-    underTest.getByPath(repository, queryPath, MAX_NODES, "wibble");
-
-    verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
-    verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
-    verify(selectorManager).toSql(eq(byGroup), any());
-    verify(browseNodeEntityAdapter).getByPath(db, REPOSITORY_NAME, queryPath, MAX_NODES,
-        "asset_name_lowercase like :keyword_filter and (asset_id.attributes.test-format.groupId = :s0p0)",
-        ImmutableMap.of("keyword_filter", "%wibble%", "s0p0", "org.sonatype"));
     verifyNoMoreInteractions(browseNodeEntityAdapter, securityHelper, selectorManager);
   }
 
@@ -321,7 +277,7 @@ public class BrowseNodeStoreImplTest
     when(selectorManager.browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME)))
         .thenReturn(asList(byGroup, byVersion));
 
-    underTest.getByPath(repository, queryPath, MAX_NODES, null);
+    underTest.getByPath(repository, queryPath, MAX_NODES);
 
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
@@ -334,27 +290,6 @@ public class BrowseNodeStoreImplTest
   }
 
   @Test
-  public void keywordQueryWithContentSelectors() throws Exception {
-    List<String> queryPath = asList("org", "foo");
-
-    when(securityHelper.anyPermitted(any())).thenReturn(false);
-    when(selectorManager.browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME)))
-        .thenReturn(asList(byGroup, byVersion));
-
-    underTest.getByPath(repository, queryPath, MAX_NODES, "wibble");
-
-    verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
-    verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
-    verify(selectorManager).toSql(eq(byGroup), any());
-    verify(selectorManager).toSql(eq(byVersion), any());
-    verify(browseNodeEntityAdapter).getByPath(db, REPOSITORY_NAME, queryPath, MAX_NODES,
-        "asset_name_lowercase like :keyword_filter and"
-            + " ((asset_id.attributes.test-format.groupId = :s0p0) or (asset_id.attributes.test-format.version = :s1p0))",
-        ImmutableMap.of("keyword_filter", "%wibble%", "s0p0", "org.sonatype", "s1p0", "2.1"));
-    verifyNoMoreInteractions(browseNodeEntityAdapter, securityHelper, selectorManager);
-  }
-
-  @Test
   public void simpleQueryWithContentSelectorMix() throws Exception {
     List<String> queryPath = asList("org", "foo");
 
@@ -362,7 +297,7 @@ public class BrowseNodeStoreImplTest
     when(selectorManager.browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME)))
         .thenReturn(asList(byGroup, jexl, byVersion));
 
-    underTest.getByPath(repository, queryPath, MAX_NODES, null);
+    underTest.getByPath(repository, queryPath, MAX_NODES);
 
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
@@ -370,30 +305,8 @@ public class BrowseNodeStoreImplTest
     verify(selectorManager).toSql(eq(byVersion), any());
     verify(browseNodeEntityAdapter).getByPath(db, REPOSITORY_NAME, queryPath, MAX_NODES,
         "((asset_id.attributes.test-format.groupId = :s0p0) or (asset_id.attributes.test-format.version = :s1p0)"
-            + " or contentAuth(@this.asset_id, :authz_repository_name, true) = true)",
+            + " or contentAuth(@this.path, @this.format, :authz_repository_name, true) = true)",
         ImmutableMap.of("s0p0", "org.sonatype", "s1p0", "2.1", "authz_repository_name", "test-repo"));
-    verifyNoMoreInteractions(browseNodeEntityAdapter, securityHelper, selectorManager);
-  }
-
-  @Test
-  public void keywordQueryWithContentSelectorMix() throws Exception {
-    List<String> queryPath = asList("org", "foo");
-
-    when(securityHelper.anyPermitted(any())).thenReturn(false);
-    when(selectorManager.browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME)))
-        .thenReturn(asList(byGroup, jexl, byVersion));
-
-    underTest.getByPath(repository, queryPath, MAX_NODES, "wibble");
-
-    verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
-    verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
-    verify(selectorManager).toSql(eq(byGroup), any());
-    verify(selectorManager).toSql(eq(byVersion), any());
-    verify(browseNodeEntityAdapter).getByPath(db, REPOSITORY_NAME, queryPath, MAX_NODES,
-        "asset_name_lowercase like :keyword_filter and"
-            + " ((asset_id.attributes.test-format.groupId = :s0p0) or (asset_id.attributes.test-format.version = :s1p0)"
-            + " or contentAuth(@this.asset_id, :authz_repository_name, true) = true)",
-        ImmutableMap.of("keyword_filter", "%wibble%", "s0p0", "org.sonatype", "s1p0", "2.1", "authz_repository_name", "test-repo"));
     verifyNoMoreInteractions(browseNodeEntityAdapter, securityHelper, selectorManager);
   }
 
@@ -404,30 +317,13 @@ public class BrowseNodeStoreImplTest
     when(securityHelper.anyPermitted(any())).thenReturn(false);
     when(selectorManager.browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME))).thenReturn(asList(jexl));
 
-    underTest.getByPath(repository, queryPath, MAX_NODES, null);
+    underTest.getByPath(repository, queryPath, MAX_NODES);
 
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
     verify(browseNodeEntityAdapter).getByPath(db, REPOSITORY_NAME, queryPath, MAX_NODES,
-        "contentAuth(@this.asset_id, :authz_repository_name, true) = true",
+        "contentAuth(@this.path, @this.format, :authz_repository_name, true) = true",
         ImmutableMap.of("authz_repository_name", REPOSITORY_NAME));
-    verifyNoMoreInteractions(browseNodeEntityAdapter, securityHelper, selectorManager);
-  }
-
-  @Test
-  public void keywordQueryWithJEXL() throws Exception {
-    List<String> queryPath = asList("org", "foo");
-
-    when(securityHelper.anyPermitted(any())).thenReturn(false);
-    when(selectorManager.browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME))).thenReturn(asList(jexl));
-
-    underTest.getByPath(repository, queryPath, MAX_NODES, "wibble");
-
-    verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
-    verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
-    verify(browseNodeEntityAdapter).getByPath(db, REPOSITORY_NAME, queryPath, MAX_NODES,
-        "asset_name_lowercase like :keyword_filter and contentAuth(@this.asset_id, :authz_repository_name, true) = true",
-        ImmutableMap.of("keyword_filter", "%wibble%", "authz_repository_name", REPOSITORY_NAME));
     verifyNoMoreInteractions(browseNodeEntityAdapter, securityHelper, selectorManager);
   }
 
@@ -447,7 +343,7 @@ public class BrowseNodeStoreImplTest
     when(browseNodeEntityAdapter.getByPath(db, MEMBER_C, queryPath, MAX_NODES, "", emptyMap()))
         .thenReturn(asList(node(MEMBER_C, "com"), node(MEMBER_C, "javax")));
 
-    Iterable<BrowseNode> nodes = underTest.getByPath(repository, queryPath, MAX_NODES, null);
+    Iterable<BrowseNode> nodes = underTest.getByPath(repository, queryPath, MAX_NODES);
 
     // check that duplicate nodes were removed, should follow a 'first-one-wins' approach
     assertThat(nodes, containsInAnyOrder(
@@ -479,7 +375,7 @@ public class BrowseNodeStoreImplTest
     when(browseNodeEntityAdapter.getByPath(db, MEMBER_C, queryPath, 1, "", emptyMap()))
         .thenReturn(asList(node(MEMBER_C, "com")));
 
-    Iterable<BrowseNode> nodes = underTest.getByPath(repository, queryPath, 1, null);
+    Iterable<BrowseNode> nodes = underTest.getByPath(repository, queryPath, 1);
 
     // check that the limit was correctly applied to the merged results
     assertThat(nodes, containsInAnyOrder(
@@ -491,21 +387,6 @@ public class BrowseNodeStoreImplTest
     verifyNoMoreInteractions(browseNodeEntityAdapter, securityHelper, selectorManager);
   }
 
-
-  @Test
-  public void keywordQueryWithSingleQuote() throws Exception {
-    List<String> queryPath = asList("org", "foo");
-
-    when(securityHelper.anyPermitted(any())).thenReturn(true);
-
-    underTest.getByPath(repository, queryPath, MAX_NODES, "'");
-
-    verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
-    verify(browseNodeEntityAdapter).getByPath(db, REPOSITORY_NAME, queryPath, MAX_NODES,
-        "asset_name_lowercase like :keyword_filter", ImmutableMap.of("keyword_filter", "%'%"));
-    verifyNoMoreInteractions(browseNodeEntityAdapter, securityHelper, selectorManager);
-  }
-
   @Test
   public void filterResponses() throws Exception {
     List<String> queryPath = asList("org", "foo");
@@ -514,7 +395,7 @@ public class BrowseNodeStoreImplTest
     when(browseNodeEntityAdapter.getByPath(any(), any(), any(), anyInt(), any(), anyMap()))
         .thenReturn(ImmutableList.of(new BrowseNode()));
 
-    underTest.getByPath(repository, queryPath, MAX_NODES, null);
+    underTest.getByPath(repository, queryPath, MAX_NODES);
 
     verify(browseNodeFilter).test(any(), eq(REPOSITORY_NAME));
   }
@@ -570,7 +451,7 @@ public class BrowseNodeStoreImplTest
         browseNodeEntityAdapter,
         securityHelper,
         selectorManager,
-        new BrowseNodeConfiguration(true, 1000, DELETE_PAGE_SIZE, 10_000, 10_000, seconds(0)),
+        new BrowseNodeConfiguration(true, 1000, DELETE_PAGE_SIZE, 10_000, 10_000),
         ImmutableMap.of(FORMAT_NAME, browseNodeFilter),
         ImmutableMap.of(DefaultBrowseNodeComparator.NAME, new DefaultBrowseNodeComparator(new VersionComparator()), FORMAT_NAME, new TestComparator()));
 
@@ -587,7 +468,7 @@ public class BrowseNodeStoreImplTest
   }
 
   private List<String> versions(List<String> queryPath) {
-    return StreamSupport.stream(underTest.getByPath(repository, queryPath, MAX_NODES, null).spliterator(), false)
+    return StreamSupport.stream(underTest.getByPath(repository, queryPath, MAX_NODES).spliterator(), false)
         .map(BrowseNode::getName).collect(toList());
   }
 

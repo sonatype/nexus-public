@@ -5,13 +5,13 @@
 @include extjs-button-medium-ui(
     $ui: 'nx-mode',
     $background-color: transparent,
-    $background-color-over: $color-gainsboro,
+    $background-color-over: $color-nxrm-green,
     $background-color-focus: $color-gainsboro,
-    $background-color-pressed: $color-navy-blue,
+    $background-color-pressed: $color-nxrm-green,
     $background-color-disabled: transparent,
     $color: $color-white,
-    $color-over: $color-navy-blue,
-    $color-focus: $color-navy-blue,
+    $color-over: $color-white,
+    $color-focus: $color-white,
     $color-pressed: $color-white,
     $color-disabled: $color-white,
     $border-width: 0,
@@ -45,23 +45,6 @@
   }
 }
 
-.nx-modebutton:hover {
-  .x-btn-glyph {
-    color: $color-navy-blue;
-  }
-  .x-btn-inner {
-    color: $color-navy-blue;
-  }
-}
-
-.nx-modebutton.x-btn-pressed:hover {
-  .x-btn-glyph {
-    color: $color-white;
-  }
-  .x-btn-inner {
-    color: $color-white;
-  }
-}
 
 /* Caret used to indicate the current mode. Hidden by default. */
 

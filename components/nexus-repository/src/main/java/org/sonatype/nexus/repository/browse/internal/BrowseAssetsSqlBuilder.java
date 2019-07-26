@@ -68,7 +68,7 @@ public class BrowseAssetsSqlBuilder
           .collect(Collectors.joining(" OR ")) + ")");
     }
     if (queryOptions.getContentAuth()) {
-      whereClauses.add("contentAuth(@this, :browsedRepository) == true");
+      whereClauses.add("contentAuth(@this.name, @this.format, :browsedRepository) == true");
     }
 
     return whereClause(Joiner.on(" AND ").join(whereClauses), queryOptions.getFilter() != null,

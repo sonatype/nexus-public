@@ -30,6 +30,7 @@ import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
 import org.sonatype.nexus.common.template.TemplateThrowableAdapter;
 import org.sonatype.nexus.servlet.ServletHelper;
+import org.sonatype.nexus.servlet.XFrameOptions;
 
 import org.apache.commons.lang.StringEscapeUtils;
 import org.slf4j.Logger;
@@ -37,6 +38,7 @@ import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Throwables.getRootCause;
+import static com.google.common.net.HttpHeaders.X_FRAME_OPTIONS;
 import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
 
 /**
@@ -87,12 +89,15 @@ public class ErrorPageServlet
 
   private final TemplateHelper templateHelper;
 
+  private final XFrameOptions xFrameOptions;
+
   private final URL template;
 
   @Inject
-  public ErrorPageServlet(final TemplateHelper templateHelper)
+  public ErrorPageServlet(final TemplateHelper templateHelper, final XFrameOptions xFrameOptions)
   {
     this.templateHelper = checkNotNull(templateHelper);
+    this.xFrameOptions = checkNotNull(xFrameOptions);
     template = getClass().getResource(TEMPLATE_RESOURCE);
     checkNotNull(template);
   }
@@ -126,6 +131,7 @@ public class ErrorPageServlet
       response.setStatus(errorCode, errorMessage);
     }
 
+    response.setHeader(X_FRAME_OPTIONS, xFrameOptions.getValueForPath(request.getPathInfo()));
     response.setContentType("text/html");
 
     // ensure sanity of passed in strings which are used to render html content

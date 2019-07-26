@@ -12,10 +12,14 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.AbstractEntity;
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.repository.browse.BrowsePaths;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -30,6 +34,10 @@ public class BrowseNode
 {
   private String repositoryName;
 
+  private String format;
+
+  private String path;
+
   private String parentPath;
 
   private String name;
@@ -42,15 +50,31 @@ public class BrowseNode
   @Nullable
   private EntityId assetId;
 
-  @Nullable
-  private String assetNameLowercase;
-
   public String getRepositoryName() {
     return require(repositoryName, BrowseNodeEntityAdapter.P_REPOSITORY_NAME);
   }
 
   public void setRepositoryName(final String repositoryName) {
     this.repositoryName = checkNotNull(repositoryName);
+  }
+
+  public String getFormat() {
+    return require(format, BrowseNodeEntityAdapter.P_FORMAT);
+  }
+
+  public void setFormat(final String format) {
+    this.format = checkNotNull(format);
+  }
+
+  /**
+   * @since 3.next
+   */
+  public String getPath() {
+    return require(path, BrowseNodeEntityAdapter.P_PATH);
+  }
+
+  public void setPath(final String path) {
+    this.path = checkNotNull(path);
   }
 
   /**
@@ -113,19 +137,17 @@ public class BrowseNode
     this.assetId = checkNotNull(assetId);
   }
 
-  /**
-   * @since 3.6.1
-   */
-  @Nullable
-  public String getAssetNameLowercase() {
-    return assetNameLowercase;
+  public void setPaths(List<BrowsePaths> paths) {
+    setParentPath(joinPath(
+        paths.subList(0, paths.size() - 1).stream().map(BrowsePaths::getBrowsePath).collect(Collectors.toList())));
+    setName(paths.get(paths.size() - 1).getBrowsePath());
+    setPath(paths.get(paths.size() - 1).getRequestPath());
   }
 
-  /**
-   * @since 3.6.1
-   */
-  public void setAssetNameLowercase(final String assetNameLowercase) {
-    this.assetNameLowercase = checkNotNull(assetNameLowercase);
+  private static String joinPath(final List<String> path) {
+    StringBuilder buf = new StringBuilder("/");
+    path.forEach(s -> buf.append(s).append("/"));
+    return buf.toString();
   }
 
   private <V> V require(final V value, final String name) {
@@ -137,12 +159,13 @@ public class BrowseNode
   public String toString() {
     return "BrowseNode{" +
         "repositoryName=" + repositoryName +
+        ", format=" + format +
         ", parentPath=" + parentPath +
         ", name=" + name +
+        ", path=" + path +
         ", leaf=" + leaf +
         ", componentId='" + componentId + '\'' +
         ", assetId='" + assetId + '\'' +
-        ", assetNameLowercase='" + assetNameLowercase + '\'' +
         '}';
   }
 }

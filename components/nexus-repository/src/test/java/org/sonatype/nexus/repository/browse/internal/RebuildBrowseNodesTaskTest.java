@@ -50,7 +50,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static org.sonatype.goodies.common.Time.seconds;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.I_BUCKET_COMPONENT_NAME;
 
 public class RebuildBrowseNodesTaskTest
@@ -110,7 +109,7 @@ public class RebuildBrowseNodesTaskTest
         assetStore,
         bucketStore,
         browseNodeManager,
-        new BrowseNodeConfiguration(true, REBUILD_PAGE_SIZE, 1000, 10_000, 10_000, seconds(0))
+        new BrowseNodeConfiguration(true, REBUILD_PAGE_SIZE, 1000, 10_000, 10_000)
     );
   }
 

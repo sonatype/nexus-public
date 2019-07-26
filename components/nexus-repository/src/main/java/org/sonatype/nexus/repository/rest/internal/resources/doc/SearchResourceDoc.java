@@ -27,7 +27,8 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-import static org.sonatype.nexus.repository.rest.internal.resources.AssetDownloadResponseProcessor.*;
+import static org.sonatype.nexus.repository.rest.internal.resources.AssetDownloadResponseProcessor.NO_SEARCH_RESULTS_FOUND;
+import static org.sonatype.nexus.repository.rest.internal.resources.AssetDownloadResponseProcessor.SEARCH_RETURNED_MULTIPLE_ASSETS;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.GROUP;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.NAME;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.VERSION;
@@ -44,6 +45,7 @@ public interface SearchResourceDoc
   String SORT_DESCRIPTION = "The field to sort the results against, if left empty, a sort based on match weight will be used.";
   String SEARCH_AND_DL_SORT_DESCRIPTION = "The field to sort the results against, if left empty and more than 1 result is returned, the request will fail.";
   String DIRECTION_DESCRIPTION = "The direction to sort records in, defaults to ascending ('asc') for all sort fields, except version, which defaults to descending ('desc')";
+  String TIMEOUT_DESCRIPTION = "How long to wait for search results in seconds. If this value is not provided, the system default timeout will be used.";
 
   String ALLOWABLE_SORT_VALUES = GROUP + ", " + NAME + ", " + VERSION + ", repository";
   String ALLOWABLE_SORT_DIRECTIONS = "asc, desc";
@@ -56,6 +58,8 @@ public interface SearchResourceDoc
       final String sort,
       @ApiParam(value = DIRECTION_DESCRIPTION, allowEmptyValue = true, allowableValues = ALLOWABLE_SORT_DIRECTIONS)
       final String direction,
+      @ApiParam(value = TIMEOUT_DESCRIPTION, allowEmptyValue = true)
+      final Integer timeout,
       @Context final UriInfo uriInfo);
 
   @ApiOperation("Search assets")
@@ -66,6 +70,8 @@ public interface SearchResourceDoc
       final String sort,
       @ApiParam(value = DIRECTION_DESCRIPTION, allowEmptyValue = true, allowableValues = ALLOWABLE_SORT_DIRECTIONS)
       final String direction,
+      @ApiParam(value = TIMEOUT_DESCRIPTION, allowEmptyValue = true)
+      final Integer timeout,
       @Context final UriInfo uriInfo);
 
   @ApiOperation(value = "Search and download asset",
@@ -80,5 +86,7 @@ public interface SearchResourceDoc
       final String sort,
       @ApiParam(value = DIRECTION_DESCRIPTION, allowEmptyValue = true, allowableValues = ALLOWABLE_SORT_DIRECTIONS)
       final String direction,
+      @ApiParam(value = TIMEOUT_DESCRIPTION, allowEmptyValue = true)
+      final Integer timeout,
       @Context final UriInfo uriInfo);
 }

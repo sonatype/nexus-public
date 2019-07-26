@@ -14,22 +14,19 @@ package org.sonatype.nexus.repository.npm.internal;
 
 import java.util.List;
 
-import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.browse.BrowseNodeGenerator;
-import org.sonatype.nexus.repository.npm.internal.NpmBrowseNodeGenerator;
+import org.sonatype.nexus.repository.browse.BrowsePaths;
+import org.sonatype.nexus.repository.browse.BrowseTestSupport;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.DefaultComponent;
 
 import org.junit.Test;
 
-import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static java.util.Arrays.asList;
 
 public class NpmBrowseNodeGeneratorTest
-    extends TestSupport
+    extends BrowseTestSupport
 {
   private BrowseNodeGenerator generator = new NpmBrowseNodeGenerator();
 
@@ -38,9 +35,9 @@ public class NpmBrowseNodeGeneratorTest
     Asset asset = createAsset("@types/jquery/-/jquery-1.0.0.tgz");
     Component component = new DefaultComponent();
 
-    List<String> assetPath = generator.computeAssetPath(asset, component);
+    List<BrowsePaths> assetPaths = generator.computeAssetPaths(asset, component);
 
-    assertThat(assetPath, contains("@types", "jquery", "jquery-1.0.0.tgz"));
+    assertPaths(asList("@types", "jquery", "jquery-1.0.0.tgz"), asList("@types", "jquery", "-/jquery-1.0.0.tgz"), assetPaths);
   }
 
   @Test
@@ -48,9 +45,9 @@ public class NpmBrowseNodeGeneratorTest
     Asset asset = createAsset("jquery/-/jquery-1.0.0.tgz");
     Component component = new DefaultComponent();
 
-    List<String> assetPath = generator.computeAssetPath(asset, component);
+    List<BrowsePaths> assetPaths = generator.computeAssetPaths(asset, component);
 
-    assertThat(assetPath, contains("jquery", "jquery-1.0.0.tgz"));
+    assertPaths(asList("jquery", "jquery-1.0.0.tgz"), asList("jquery", "-/jquery-1.0.0.tgz"), assetPaths);
   }
 
   @Test
@@ -58,14 +55,8 @@ public class NpmBrowseNodeGeneratorTest
     Asset asset = createAsset("jquery/-/jquery-1.0.0.tgz");
     Component component = new DefaultComponent();
 
-    List<String> componentPath = generator.computeComponentPath(asset, component);
+    List<BrowsePaths> assetPaths = generator.computeComponentPaths(asset, component);
 
-    assertThat(componentPath, contains("jquery", "jquery-1.0.0.tgz"));
-  }
-
-  private Asset createAsset(String assetName) {
-    Asset asset = mock(Asset.class);
-    when(asset.name()).thenReturn(assetName);
-    return asset;
+    assertPaths(asList("jquery", "jquery-1.0.0.tgz"), asList("jquery", "-/jquery-1.0.0.tgz"), assetPaths);
   }
 }

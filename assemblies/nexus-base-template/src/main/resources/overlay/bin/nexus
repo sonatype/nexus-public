@@ -15,15 +15,15 @@ fi
 # Set up some easily accessible MIN/MAX params for JVM mem usage
 #
 if [ "x$JAVA_MIN_MEM" = "x" ]; then
-    JAVA_MIN_MEM=1200M
+    JAVA_MIN_MEM=2703m
     export JAVA_MIN_MEM
 fi
 if [ "x$JAVA_MAX_MEM" = "x" ]; then
-    JAVA_MAX_MEM=1200M
+    JAVA_MAX_MEM=2703m
     export JAVA_MAX_MEM
 fi
 if [ "x$DIRECT_MAX_MEM" = "x" ]; then
-    DIRECT_MAX_MEM=2G
+    DIRECT_MAX_MEM=2703m
     export DIRECT_MAX_MEM
 fi
 

@@ -221,9 +221,9 @@ Ext.define('NX.coreui.controller.Capabilities', {
     var summary = this.getSummaryTab(),
         info = {};
 
-    info[NX.I18n.get('Capabilities_TypeName_Text')] = model.get('typeName');
-    info[NX.I18n.get('Capabilities_Description_Text')] = model.get('description');
-    info[NX.I18n.get('Capabilities_State_Text')] = Ext.String.capitalize(model.get('state'));
+    info[NX.I18n.get('Capabilities_TypeName_Text')] = Ext.htmlEncode(model.get('typeName'));
+    info[NX.I18n.get('Capabilities_Description_Text')] = Ext.htmlEncode(model.get('description'));
+    info[NX.I18n.get('Capabilities_State_Text')] = Ext.htmlEncode(Ext.String.capitalize(model.get('state')));
 
     if (Ext.isDefined(model.get('tags'))) {
       Ext.apply(info, model.get('tags'));

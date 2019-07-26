@@ -21,10 +21,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
-import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.selector.VariableSource;
-
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.storage.DatabaseThreadUtils.withOtherDatabase;
@@ -50,27 +47,16 @@ public class ContentAuthHelper
     this.contentPermissionChecker = checkNotNull(contentPermissionChecker);
   }
 
-  public boolean checkAssetPermissions(final ODocument asset, final String... repositoryNames) {
-    String format = asset.field(AssetEntityAdapter.P_FORMAT, String.class);
+  public boolean checkPathPermissions(final String path, final String format, final String... repositoryNames) {
     VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(format);
-    VariableSource variableSource = variableResolverAdapter.fromDocument(asset);
-    return withOtherDatabase(() -> {
-      for (String repositoryName : repositoryNames) {
-        if (contentPermissionChecker.isPermitted(repositoryName, format, BROWSE, variableSource)) {
-          return true;
-        }
-      }
-      return false;
-    });
+    VariableSource variableSource = variableResolverAdapter.fromPath(path, format);
+    return withOtherDatabase(() -> Arrays.stream(repositoryNames).anyMatch(repositoryName -> contentPermissionChecker
+        .isPermitted(repositoryName, format, BROWSE, variableSource)));
   }
 
-  /**
-   * @since 3.6
-   */
-  public boolean checkAssetPermissionsJexlOnly(final ODocument asset, final String... repositoryNames) {
-    String format = asset.field(AssetEntityAdapter.P_FORMAT, String.class);
+  public boolean checkPathPermissionsJexlOnly(final String path, final String format, final String... repositoryNames) {
     VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(format);
-    VariableSource variableSource = variableResolverAdapter.fromDocument(asset);
+    VariableSource variableSource = variableResolverAdapter.fromPath(path, format);
     return withOtherDatabase(() -> Arrays.stream(repositoryNames).anyMatch(repositoryName -> contentPermissionChecker
         .isPermittedJexlOnly(repositoryName, format, BROWSE, variableSource)));
   }

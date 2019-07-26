@@ -3,7 +3,7 @@
   <parent>
     <artifactId>nexus-thirdparty-bundles</artifactId>
     <groupId>org.sonatype.nexus.bundles</groupId>
-    <version>3.17.0-01</version>
+    <version>3.18.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>org.sonatype.nexus.bundles.elasticsearch</artifactId>
@@ -126,7 +126,6 @@
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>build-helper-maven-plugin</artifactId>
-            <version>1.9.1</version>
             <executions>
               <execution>
                 <phase>package</phase>
@@ -136,7 +135,7 @@
                 <configuration>
                   <artifacts>
                     <artifact>
-                      <file>/home/bamboo/bamboo-agent-home/xml-data/build-dir/NX3-INT30-REL/thirdparty-bundles/elasticsearch/target/dependency/elasticsearch-javadoc.jar</file>
+                      <file>${project.build.directory}/dependency/elasticsearch-javadoc.jar</file>
                       <classifier>javadoc</classifier>
                       <type>jar</type>
                     </artifact>

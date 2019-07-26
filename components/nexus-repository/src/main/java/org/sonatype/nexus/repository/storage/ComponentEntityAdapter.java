@@ -75,7 +75,7 @@ public class ComponentEntityAdapter
    */
   public static final String P_CI_NAME = "ci_name";
 
-  private static final String I_BUCKET_GROUP_NAME_VERSION = new OIndexNameBuilder()
+  public static final String I_BUCKET_GROUP_NAME_VERSION = new OIndexNameBuilder()
       .type(DB_CLASS)
       .property(P_BUCKET)
       .property(P_GROUP)
