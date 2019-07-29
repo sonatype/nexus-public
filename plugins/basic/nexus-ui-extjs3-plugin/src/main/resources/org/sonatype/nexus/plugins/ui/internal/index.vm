@@ -162,7 +162,7 @@
 
 <div id="header">
   <div id="branding" class="left-side">
-    <img src="images/header_branding.png" alt="Sonatype Nexus"/>
+    <img src="images/NexusRepoMngr_horiz_white+color@2x.png" alt="Sonatype Nexus" class="nxrm-logo">
   </div>
   <div class="right-side">
     <div><span id="head-link-l" class="head-link"></span><span id="head-link-m" class="head-link"></span><span
