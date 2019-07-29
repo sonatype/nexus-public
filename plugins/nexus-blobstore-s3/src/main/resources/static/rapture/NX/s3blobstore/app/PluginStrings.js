@@ -24,6 +24,9 @@ Ext.define('NX.s3blobstore.app.PluginStrings', {
   ],
 
   keys: {
+    S3Blobstore_Help: '<em>S3 blob stores require specific permissions to support full provisioning and functionality through Nexus Repository Manager. ' +
+        'Consult our <a href="https://links.sonatype.com/products/nexus/blobstores/s3/docs" target="_blank">documentation</a>' +
+        ' for the specific set of permissions required.</em>',
     S3Blobstore_Region_FieldLabel: 'Region',
     S3Blobstore_Region_HelpText: 'The AWS Region to use',
     S3Blobstore_Bucket_FieldLabel: 'Bucket',

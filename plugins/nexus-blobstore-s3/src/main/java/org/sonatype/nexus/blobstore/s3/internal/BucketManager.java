@@ -21,6 +21,7 @@ import org.sonatype.nexus.blobstore.StorageLocationManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.BucketLifecycleConfiguration;
 import com.amazonaws.services.s3.model.BucketLifecycleConfiguration.Rule;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
@@ -38,6 +39,13 @@ import static org.apache.commons.collections.CollectionUtils.isEmpty;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreConfigurationHelper.getBucketPrefix;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreConfigurationHelper.getConfiguredBucket;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreConfigurationHelper.getConfiguredExpirationInDays;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.ACCESS_DENIED_CODE;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.INVALID_ACCESS_KEY_ID_CODE;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.SIGNATURE_DOES_NOT_MATCH_CODE;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.bucketOwnershipError;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.buildException;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.insufficientCreatePermissionsError;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.unexpectedError;
 
 /**
  * Creates and deletes buckets for the {@link S3BlobStore}.
@@ -62,9 +70,19 @@ public class BucketManager
   @Override
   public void prepareStorageLocation(final BlobStoreConfiguration blobStoreConfiguration) {
     String bucket = getConfiguredBucket(blobStoreConfiguration);
-
+    checkPermissions(getConfiguredBucket(blobStoreConfiguration));
     if (!s3.doesBucketExistV2(bucket)) {
-      s3.createBucket(bucket);
+      try {
+        s3.createBucket(bucket);
+      }
+      catch (AmazonS3Exception e) {
+        if (ACCESS_DENIED_CODE.equals(e.getErrorCode())) {
+          log.debug("Error creating bucket {}", bucket, e);
+          throw insufficientCreatePermissionsError();
+        }
+        log.info("Error creating bucket {}", bucket, e);
+        throw unexpectedError("creating bucket");
+      }
       setBucketLifecycleConfiguration(s3, blobStoreConfiguration, null);
     }
     else {
@@ -194,6 +212,42 @@ public class BucketManager
     }
     else {
       return false;
+    }
+  }
+
+  private void checkPermissions(final String bucket) {
+    checkCredentials(bucket);
+    if (s3.doesBucketExistV2(bucket)) {
+      checkBucketOwner(bucket);
+    }
+  }
+
+  private void checkCredentials(final String bucket) {
+    try {
+      s3.doesBucketExistV2(bucket);
+    }
+    catch (AmazonS3Exception e) {
+      if (INVALID_ACCESS_KEY_ID_CODE.equals(e.getErrorCode()) ||
+          SIGNATURE_DOES_NOT_MATCH_CODE.equals(e.getErrorCode())) {
+        log.debug("Exception thrown checking AWS credentials", e);
+        throw buildException(e);
+      }
+      log.info("Exception thrown checking AWS credentials.", e);
+      throw unexpectedError("checking credentials");
+    }
+  }
+
+  private void checkBucketOwner(final String bucket) {
+    try {
+      s3.getBucketAcl(bucket);
+    }
+    catch (AmazonS3Exception e) {
+      if (ACCESS_DENIED_CODE.equals(e.getErrorCode())) {
+        log.debug("Exception thrown checking bucket owner.", e);
+        throw bucketOwnershipError();
+      }
+      log.info("Exception thrown checking bucket owner.", e);
+      throw unexpectedError("checking bucket ownership");
     }
   }
 }

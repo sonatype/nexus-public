@@ -10,29 +10,15 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import classNames from 'classnames';
 import React from 'react';
 
-import Colors from '../../../constants/Colors';
-import SelectCSS from './Select.css';
+import './Select.scss';
 
-export default function Select({children, style, ...rest}) {
-  const selectStyle = {
-    MozAppearance: 'none',
-    WebkitAppearance: 'none',
-    appearance: 'none',
-    background: 'no-repeat 100% 50% url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0Ljk1IDEwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWF4WU1pZCI+PGRlZnM+PHN0eWxlPi5jbHMtMXtmaWxsOiNmZmY7fS5jbHMtMntmaWxsOiM0NDQ7fTwvc3R5bGU+PC9kZWZzPjx0aXRsZT5hcnJvd3M8L3RpdGxlPjxyZWN0IGNsYXNzPSJjbHMtMSIgd2lkdGg9IjQuOTUiIGhlaWdodD0iMTAiLz48cG9seWdvbiBjbGFzcz0iY2xzLTIiIHBvaW50cz0iMS40MSA0LjY3IDIuNDggMy4xOCAzLjU0IDQuNjcgMS40MSA0LjY3Ii8+PHBvbHlnb24gY2xhc3M9ImNscy0yIiBwb2ludHM9IjMuNTQgNS4zMyAyLjQ4IDYuODIgMS40MSA1LjMzIDMuNTQgNS4zMyIvPjwvc3ZnPg==)',
-    border: `solid 1px ${Colors.SELECT.BORDER}`,
-    borderTopColor: Colors.SELECT.BORDER_TOP,
-    borderRadius: '0',
-    display: 'block',
-    fontSize: '1em',
-    height: '2em',
-    paddingLeft: '0.4em',
-    width: '100%',
-    ...style
-  };
+export default function Select({children, className, ...rest}) {
+  const classes = classNames('nxrm-select', className);
 
-  return <select style={selectStyle} className='nx-react-select' {...rest}>
+  return <select className={classes} {...rest}>
     {children}
   </select>;
 }

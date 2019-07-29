@@ -24,6 +24,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.times;
@@ -166,27 +167,13 @@ public class AntiCsrfHelperTest
     assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
   }
 
-  /*
-   * PowerShell inexplicably includes a UserAgent pretending to be a browser, this ensures our whitelist allows it.
-   */
   @Test
-  public void testIsAccessAllowed_whitelist() {
+  public void shouldGrantAccessWhenUserAgentIsWhiteListed() {
     underTest = new AntiCsrfHelper(true, "foo");
-    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
-    assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
 
-    when(httpServletRequest.getMethod()).thenReturn(HttpMethod.POST);
-
-    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT))
-        .thenReturn("Mozilla/5.0 (Windows NT; Windows NT 10.0; en-CA) WindowsPowerShell/5.1.17134.590");
-    assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
     when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT))
         .thenReturn("Mozilla/5.0 (Windows NT; Windows NT 10.0; en-CA) foo/5.1.17134.590");
     assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
-
-    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT))
-        .thenReturn("Mozilla/5.0 (Windows NT; Windows NT 10.0; en-CA) bar/5.1.17134.590");
-    assertThat(underTest.isAccessAllowed(httpServletRequest), is(false));
 
     underTest = new AntiCsrfHelper(true, "foo,bar");
     when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT))
@@ -196,6 +183,37 @@ public class AntiCsrfHelperTest
     when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT))
         .thenReturn("Mozilla/5.0 (Windows NT; Windows NT 10.0; en-CA) bar/5.1.17134.590");
     assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
+  }
+
+  @Test
+  public void shouldAllowAccessWhenUserAgentIsNull() {
+    underTest = new AntiCsrfHelper(true, EMPTY);
+
+    assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
+  }
+
+  /*
+   * PowerShell inexplicably includes a UserAgent pretending to be a browser, this ensures our whitelist allows it.
+   */
+  @Test
+  public void shouldAlwaysAllowAccessForWindowsPowerShell() {
+    underTest = new AntiCsrfHelper(true, EMPTY);
+
+    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT))
+        .thenReturn("Mozilla/5.0 (Windows NT; Windows NT 10.0; en-CA) WindowsPowerShell/5.1.17134.590")
+        .thenReturn("Mozilla/5.0 (Windows NT; Windows NT 10.0; en-CA) PowerShell/6.2.55342.442");
+
+    assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
+    assertThat(underTest.isAccessAllowed(httpServletRequest), is(true));
+  }
+
+  @Test
+  public void shouldDenyAccessWhenUserAgentIsNotWhiteListed() {
+    underTest = new AntiCsrfHelper(true, "foo");
+
+    when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT))
+        .thenReturn("Mozilla/5.0 (Windows NT; Windows NT 10.0; en-CA) bar/5.1.17134.590");
+    assertThat(underTest.isAccessAllowed(httpServletRequest), is(false));
   }
 
   /*

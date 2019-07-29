@@ -30,12 +30,11 @@ import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.BucketEntityAdapter;
 import org.sonatype.nexus.repository.storage.ComponentDatabase;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
-import org.sonatype.nexus.scheduling.TaskInfo;
-import org.sonatype.nexus.scheduling.TaskRemovedException;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -120,7 +119,9 @@ public class RebuildBrowseNodesManager
       });
 
       for (Bucket bucket : buckets) {
-        if (!launchExistingTask(bucket.getRepositoryName())) {
+        boolean existingTask = taskScheduler.findAndSubmit(RebuildBrowseNodesTaskDescriptor.TYPE_ID,
+            ImmutableMap.of(RebuildBrowseNodesTaskDescriptor.REPOSITORY_NAME_FIELD_ID, bucket.getRepositoryName()));
+        if (!existingTask) {
           launchNewTask(bucket.getRepositoryName());
         }
       }
@@ -131,30 +132,12 @@ public class RebuildBrowseNodesManager
     log.debug("scheduling rebuild browse nodes tasks took {} ms", sw.elapsed(TimeUnit.MILLISECONDS));
   }
 
-  private boolean launchExistingTask(final String repositoryName) throws TaskRemovedException {
-    for (TaskInfo taskInfo : taskScheduler.listsTasks()) {
-      if (isRebuildTask(repositoryName, taskInfo)) {
-        if (!taskInfo.getCurrentState().getState().isRunning()) {
-          taskInfo.runNow();
-        }
-        return true;
-      }
-    }
-
-    return false;
-  }
-
   private void launchNewTask(final String repositoryName) {
     TaskConfiguration configuration = taskScheduler
         .createTaskConfigurationInstance(RebuildBrowseNodesTaskDescriptor.TYPE_ID);
     configuration.setString(RebuildBrowseNodesTaskDescriptor.REPOSITORY_NAME_FIELD_ID, repositoryName);
     configuration.setName("Rebuild repository browse tree - (" + repositoryName + ")");
     taskScheduler.submit(configuration);
-  }
-
-  private boolean isRebuildTask(final String repositoryName, final TaskInfo taskInfo) {
-    return RebuildBrowseNodesTaskDescriptor.TYPE_ID.equals(taskInfo.getConfiguration().getTypeId()) && repositoryName
-        .equals(taskInfo.getConfiguration().getString(RebuildBrowseNodesTaskDescriptor.REPOSITORY_NAME_FIELD_ID));
   }
 
   private List<ODocument> execute(final ODatabaseDocumentTx db, // NOSONAR

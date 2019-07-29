@@ -304,7 +304,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_BowerProxyFacet_RewritePackageUrls_HelpText: 'Force Bower to retrieve packages through the proxy repository',
     Repository_Facet_DockerHostedFacet_V1_Title: 'Docker Registry API Support',
     Repository_Facet_DockerHostedFacet_V1_Enabled: 'Enable Docker V1 API',
-    Repository_Facet_DockerHostedFacet_V1_Enabled_Help: 'Allow clients to use the V1 API to interact with this Repository',
+    Repository_Facet_DockerHostedFacet_V1_Enabled_Help: 'Allow clients to use the V1 API to interact with this repository',
     Repository_Facet_DockerConnectorFacet_Title: 'Repository Connectors',
     Repository_Facet_DockerConnectorFacet_Help: '<em>Connectors allow Docker clients to connect directly ' +
         'to hosted registries, but are not always required. Consult our <a href="https://links.sonatype.com/products/nexus/docker-ssl-connector/docs" target="_blank">documentation</a>' +

@@ -15,6 +15,7 @@ package org.sonatype.nexus.blobstore.s3.internal
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 
 import com.amazonaws.services.s3.AmazonS3
+import com.amazonaws.services.s3.model.AmazonS3Exception
 import com.amazonaws.services.s3.model.BucketLifecycleConfiguration
 import com.amazonaws.services.s3.model.BucketLifecycleConfiguration.Rule
 import com.amazonaws.services.s3.model.BucketLifecycleConfiguration.Transition
@@ -30,6 +31,14 @@ import spock.lang.Unroll
 
 import static org.sonatype.nexus.blobstore.s3.internal.BucketManager.LIFECYCLE_EXPIRATION_RULE_ID_PREFIX
 import static org.sonatype.nexus.blobstore.s3.internal.BucketManager.OLD_LIFECYCLE_EXPIRATION_RULE_ID
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.BUCKET_KEY
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.CONFIG_KEY
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.ACCESS_DENIED_CODE
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.BUCKET_OWNERSHIP_ERR_MSG
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.ERROR_CODE_MESSAGES
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.INSUFFICIENT_PERM_CREATE_BUCKET_ERR_MSG
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.INVALID_ACCESS_KEY_ID_CODE
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.SIGNATURE_DOES_NOT_MATCH_CODE
 
 /**
  * {@link BucketManager} tests.
@@ -259,6 +268,64 @@ class BucketManagerTest
       [userRule()]                                              | 0                        | 1
       [userRule(), oldNxrmRule(), userRule()]                   | 0                        | 1
       [userRule(), newNxrmRule('my_s3_blob_store'), userRule()] | 0                        | 1
+  }
+
+  @Unroll
+  def 'An error will be thrown when the bucket cannot be created'() {
+    given:
+      def bucketName = 'bucketName'
+      s3.doesBucketExistV2(bucketName) >> false
+      s3.createBucket(bucketName) >> { throw Mock(AmazonS3Exception) { getErrorCode() >> errorCode } }
+      BlobStoreConfiguration config = new BlobStoreConfiguration(attributes: [(CONFIG_KEY): [(BUCKET_KEY): bucketName]])
+      bucketManager.s3 = s3
+    when:
+      bucketManager.prepareStorageLocation(config)
+    then:
+      def e = thrown(S3BlobStoreException)
+      e.message == message
+
+    where:
+      errorCode              | message
+      ACCESS_DENIED_CODE     | INSUFFICIENT_PERM_CREATE_BUCKET_ERR_MSG
+      'Some_Unexpected_Code' | 'An unexpected error occurred creating bucket. Check the logs for more details.'
+  }
+
+  @Unroll
+  def 'An error will be thrown if invalid permissions are supplied'() {
+    given:
+      def bucketName = 'bucketName'
+      s3.doesBucketExistV2(bucketName) >> { throw Mock(AmazonS3Exception) { getErrorCode() >> errorCode } }
+      BlobStoreConfiguration config = new BlobStoreConfiguration(attributes: [(CONFIG_KEY): [(BUCKET_KEY): bucketName]])
+      bucketManager.s3 = s3
+    when:
+      bucketManager.prepareStorageLocation(config)
+    then:
+      def e = thrown(S3BlobStoreException)
+      e.message == message
+    where:
+      errorCode               | message
+      'InvalidAccessKeyId'    | ERROR_CODE_MESSAGES[INVALID_ACCESS_KEY_ID_CODE]
+      'SignatureDoesNotMatch' | ERROR_CODE_MESSAGES[SIGNATURE_DOES_NOT_MATCH_CODE]
+      'Some_Unexpected_Code'  | 'An unexpected error occurred checking credentials. Check the logs for more details.'
+  }
+
+  @Unroll
+  def 'An error will be thrown if the user does not have access to an existing bucket'() {
+    given:
+      def bucketName = 'bucketName'
+      s3.doesBucketExistV2(bucketName) >> true
+      s3.getBucketAcl(bucketName) >> { throw Mock(AmazonS3Exception) { getErrorCode() >> errorCode } }
+      BlobStoreConfiguration config = new BlobStoreConfiguration(attributes: [(CONFIG_KEY): [(BUCKET_KEY): bucketName]])
+      bucketManager.s3 = s3
+    when:
+      bucketManager.prepareStorageLocation(config)
+    then:
+      def e = thrown(S3BlobStoreException)
+      e.message == message
+    where:
+      errorCode              | message
+      'AccessDenied'         | BUCKET_OWNERSHIP_ERR_MSG
+      'Some_Unexpected_Code' | 'An unexpected error occurred checking bucket ownership. Check the logs for more details.'
   }
 
   private Rule userRule() {

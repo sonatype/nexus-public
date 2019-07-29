@@ -12,6 +12,8 @@
  */
 import React, {useState, useEffect} from 'react';
 
+import './AnonymousSettings.scss';
+
 import Axios from 'axios';
 import Button from '../../../widgets/Button/Button';
 import Checkbox from '../../../widgets/Checkbox/Checkbox';
@@ -92,10 +94,8 @@ export default function AnonymousSettings() {
       (key) => pristineSettings[key] === anonymousSettings[key]
   );
   const {enabled, userId, realmName} = anonymousSettings;
-  const primaryButtonStyle = {marginRight: '10px'};
-  const widthOverride = {width: '250px'};
 
-  return <ContentBody>
+  return <ContentBody className='nxrm-anonymous-settings'>
     <SettingsSection isLoading={isLoading}>
       <SettingsSection.FieldWrapper
           labelText={UIStrings.ANONYMOUS_SETTINGS.ENABLED_CHECKBOX_LABEL}
@@ -115,7 +115,7 @@ export default function AnonymousSettings() {
             value={userId}
             onChange={handleInputChange}
             isRequired={!isLoading}
-            style={widthOverride}
+            className='nxrm-anonymous-settings-field'
         />
       </SettingsSection.FieldWrapper>
       <SettingsSection.FieldWrapper
@@ -125,7 +125,7 @@ export default function AnonymousSettings() {
             name='realmName'
             value={realmName}
             onChange={handleInputChange}
-            style={widthOverride}
+            className='nxrm-anonymous-settings-field'
         >
           {
             realmTypes.map((realmType) =>
@@ -137,7 +137,6 @@ export default function AnonymousSettings() {
       <SettingsSection.Footer>
         <Button
             isPrimary={true}
-            style={primaryButtonStyle}
             disabled={isPristine || !userId}
             onClick={handleSave}
         >

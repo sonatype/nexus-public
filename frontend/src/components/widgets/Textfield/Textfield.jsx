@@ -10,31 +10,26 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import React from 'react';
 
-import Colors from '../../../constants/Colors';
+import './Textfield.scss';
+
 import RequiredErrorMessage from '../RequiredErrorMessage/RequiredErrorMessage';
 
-export default function Textfield({name, value, onChange, isRequired, style}) {
+export default function Textfield({name, value, onChange, isRequired, className}) {
   const isMissingRequiredValue = isRequired && !value;
-  const inputStyle = {
-    border: 'solid 1px',
-    borderColor: isMissingRequiredValue ? Colors.TEXTFIELD.ERROR.BORDER : Colors.TEXTFIELD.BORDER,
-    borderTopColor: isMissingRequiredValue ? Colors.TEXTFIELD.ERROR.BORDER_TOP : Colors.TEXTFIELD.BORDER_TOP,
-    fontSize: '1em',
-    height: '2em',
-    paddingLeft: '0.4em',
-    width: '100%',
-    ...style
-  };
+  const classes = classNames('nxrm-textfield', className, {
+    'missing-required-value': isMissingRequiredValue
+  });
   return <>
     <input
         name={name}
         type='text'
         value={value}
         onChange={onChange}
-        style={inputStyle}
+        className={classes}
     />
     {isMissingRequiredValue ? <RequiredErrorMessage/> : null}
   </>;

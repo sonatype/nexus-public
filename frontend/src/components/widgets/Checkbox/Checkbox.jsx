@@ -13,18 +13,16 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 
-export default function Checkbox({name, isChecked, onChange, labelText}) {
-  const inputStyle = {
-    marginLeft: 0
-  };
+import './Checkbox.scss';
 
+export default function Checkbox({name, isChecked, onChange, labelText}) {
   return <label>
     <input
         name={name}
         type='checkbox'
         checked={isChecked}
         onChange={onChange}
-        style={inputStyle}
+        className='nxrm-checkbox'
     />
     {labelText}
   </label>;

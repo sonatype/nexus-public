@@ -14,8 +14,10 @@ package org.sonatype.nexus.scheduling.internal;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
@@ -170,5 +172,27 @@ public class TaskSchedulerImpl
   @Override
   public boolean cancel(final String id, final boolean mayInterruptIfRunning) {
     return getScheduler().cancel(id, mayInterruptIfRunning);
+  }
+
+  @Nullable
+  @Override
+  public TaskInfo getTaskByTypeId(final String typeId) {
+    return getScheduler().getTaskByTypeId(typeId);
+  }
+
+  @Nullable
+  @Override
+  public TaskInfo getTaskByTypeId(final String typeId, final Map<String, String> config) {
+    return getScheduler().getTaskByTypeId(typeId, config);
+  }
+
+  @Override
+  public boolean findAndSubmit(final String typeId) {
+    return getScheduler().findAndSubmit(typeId);
+  }
+
+  @Override
+  public boolean findAndSubmit(final String typeId, final Map<String, String> config) {
+    return getScheduler().findAndSubmit(typeId, config);
   }
 }

@@ -13,7 +13,6 @@
 import {shallow} from 'enzyme';
 import React from 'react';
 
-import Colors from '../../../constants/Colors';
 import RequiredErrorMessage from '../RequiredErrorMessage/RequiredErrorMessage';
 import Textfield from './Textfield';
 
@@ -37,8 +36,7 @@ describe('Textfield', () => {
     const wrapper = getTextField();
 
     expect(wrapper.containsMatchingElement(<RequiredErrorMessage/>)).toBe(false);
-
-    expect(wrapper.find('input')).toHaveStyle('borderColor', Colors.TEXTFIELD.BORDER);
+    expect(wrapper.find('input').hasClass('missing-required-value')).toBe(false);
   });
 
   it('hides the error message when the value is required and not empty', () => {
@@ -47,8 +45,7 @@ describe('Textfield', () => {
     });
 
     expect(wrapper.containsMatchingElement(<RequiredErrorMessage/>)).toBe(false);
-
-    expect(wrapper.find('input')).toHaveStyle('borderColor', Colors.TEXTFIELD.BORDER);
+    expect(wrapper.find('input').hasClass('missing-required-value')).toBe(false);
   });
 
   it('shows the error message when the value is required but empty', () => {
@@ -58,7 +55,6 @@ describe('Textfield', () => {
     });
 
     expect(wrapper.containsMatchingElement(<RequiredErrorMessage/>)).toBe(true);
-
-    expect(wrapper.find('input')).toHaveStyle('borderColor', Colors.TEXTFIELD.ERROR.BORDER);
+    expect(wrapper.find('input').hasClass('missing-required-value')).toBe(true);
   });
 });

@@ -27,6 +27,22 @@ Ext.define('NX.s3blobstore.view.BlobstoreSettings', {
 
   settingsForm: [
     {
+      xtype: 'nx-responsive-panel',
+      layout: {
+        type: 'hbox',
+        align: 'center',
+        pack: 'center'
+      },
+      items: [
+        {
+          xtype: 'panel',
+          bodypadding: '10px',
+          width: '85%',
+          html: NX.I18n.get('S3Blobstore_Help')
+        }
+      ]
+    },
+    {
       xtype: 'combo',
       name: 'property_region',
       fieldLabel: NX.I18n.get('S3Blobstore_Region_FieldLabel'),

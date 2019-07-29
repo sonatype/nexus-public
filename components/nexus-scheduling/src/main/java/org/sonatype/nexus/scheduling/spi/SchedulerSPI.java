@@ -13,6 +13,7 @@
 package org.sonatype.nexus.scheduling.spi;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Nullable;
 
@@ -106,4 +107,43 @@ public interface SchedulerSPI
    * @since 3.next
    */
   boolean cancel(String id, boolean mayInterruptIfRunning);
+
+  /**
+   * Returns the {@link TaskInfo} of the first task with type ID matching {@code typeId}, otherwise {@code null}.
+   */
+  @Nullable
+  TaskInfo getTaskByTypeId(String typeId);
+
+  /**
+   * Returns the {@link TaskInfo} of the first task with type ID matching {@code typeId}
+   * and {@link TaskConfiguration} matching {@code config}, otherwise {@code null}.
+   * <p/>
+   * All entries in {@code config} must match entries in the task's {@link TaskConfiguration} to be
+   * considered a match. Any entries of {@code config} with either a null key or null value will be ignored.
+   */
+  @Nullable
+  TaskInfo getTaskByTypeId(String typeId, Map<String, String> config);
+
+  /**
+   * Find the first task with type ID matching {@code typeId}.
+   * <p/>
+   * If found, submit the task for execution if it is not already running.
+   *
+   * @param typeId task type ID
+   * @return {@code true} if a task is found, {@code false} otherwise
+   */
+  boolean findAndSubmit(String typeId);
+
+  /**
+   * Find the first task with type ID matching {@code typeId} and {@link TaskConfiguration} matching {@code config}.
+   * <p/>
+   * All entries in {@code config} must match entries in the task's {@link TaskConfiguration} to be
+   * considered a match. Any entries of {@code config} with either a null key or null value will be ignored.
+   * <p/>
+   * If found, submit the task for execution if it is not already running.
+   *
+   * @param typeId task type ID
+   * @return {@code true} if a task is found, {@code false} otherwise
+   */
+  boolean findAndSubmit(String typeId, Map<String, String> config);
 }

@@ -18,11 +18,9 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.attributes.AttributesFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
-import org.sonatype.nexus.scheduling.TaskInfo;
-import org.sonatype.nexus.scheduling.CurrentState;
 import org.sonatype.nexus.scheduling.TaskScheduler;
-import org.sonatype.nexus.scheduling.TaskState;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -59,28 +57,15 @@ public class ReindexNpmRepositoryManagerTest
   @Mock
   ImmutableNestedAttributesMap repositoryAttributes;
 
-  @Mock
-  TaskInfo taskInfo;
-
-  @Mock
-  CurrentState taskCurrentState;
-
-  TaskConfiguration taskConfiguration = new TaskConfiguration();
-
   TaskConfiguration submittedTaskConfiguration = new TaskConfiguration();
 
   ReindexNpmRepositoryManager underTest;
 
   @Before
   public void setUp() {
-    taskConfiguration.setTypeId(TYPE_ID);
-    taskConfiguration.setString(REPOSITORY_NAME_FIELD_ID, REPOSITORY_NAME);
-
     when(taskScheduler.createTaskConfigurationInstance(TYPE_ID)).thenReturn(submittedTaskConfiguration);
-    when(taskScheduler.listsTasks()).thenReturn(singletonList(taskInfo));
-    when(taskInfo.getConfiguration()).thenReturn(taskConfiguration);
-    when(taskInfo.getCurrentState()).thenReturn(taskCurrentState);
-    when(taskCurrentState.getState()).thenReturn(TaskState.RUNNING);
+    when(taskScheduler.findAndSubmit(TYPE_ID, ImmutableMap.of(REPOSITORY_NAME_FIELD_ID, REPOSITORY_NAME)))
+        .thenReturn(false);
     when(repositoryManager.browse()).thenReturn(singletonList(repository));
     when(repository.getName()).thenReturn(REPOSITORY_NAME);
     when(repository.facet(AttributesFacet.class)).thenReturn(attributesFacet);
@@ -127,6 +112,9 @@ public class ReindexNpmRepositoryManagerTest
 
   @Test
   public void skipRepositoryWithRunningTask() {
+    when(taskScheduler.findAndSubmit(TYPE_ID, ImmutableMap.of(REPOSITORY_NAME_FIELD_ID, REPOSITORY_NAME)))
+        .thenReturn(true);
+
     underTest.doStart();
 
     verify(taskScheduler, never()).submit(any(TaskConfiguration.class));
@@ -134,8 +122,6 @@ public class ReindexNpmRepositoryManagerTest
 
   @Test
   public void processRepositoryWithoutRunningTaskBasedOnTypeId() {
-    taskConfiguration.setTypeId("dummy");
-
     underTest.doStart();
 
     verifySubmittedTaskConfiguration();
@@ -144,8 +130,6 @@ public class ReindexNpmRepositoryManagerTest
 
   @Test
   public void processRepositoryWithoutRunningTaskBasedOnRepositoryName() {
-    taskConfiguration.setString(REPOSITORY_NAME_FIELD_ID, "other-repository-name");
-
     underTest.doStart();
 
     verifySubmittedTaskConfiguration();
@@ -154,8 +138,6 @@ public class ReindexNpmRepositoryManagerTest
 
   @Test
   public void processRepositoryWithoutRunningTaskBasedOnCurrentState() {
-    when(taskCurrentState.getState()).thenReturn(TaskState.OK);
-
     underTest.doStart();
 
     verifySubmittedTaskConfiguration();

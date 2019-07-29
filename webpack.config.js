@@ -12,6 +12,8 @@
  */
 const CopyModulesPlugin = require('copy-modules-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const TerserJSPlugin = require('terser-webpack-plugin');
 const path = require('path');
 
 module.exports = {
@@ -33,15 +35,25 @@ module.exports = {
         ]
       },
       {
-        test: /\.css$/,
+        test: /\.scss$/,
         use: [
           {
             loader: MiniCssExtractPlugin.loader
           },
-          'css-loader'
+          'css-loader',
+          'sass-loader'
         ]
       }
     ]
+  },
+  optimization: {
+    minimizer: [
+        new TerserJSPlugin({
+          cache: true,
+          parallel: true,
+          sourceMap: true
+        }),
+        new OptimizeCSSAssetsPlugin({})]
   },
   plugins: [
     new CopyModulesPlugin({

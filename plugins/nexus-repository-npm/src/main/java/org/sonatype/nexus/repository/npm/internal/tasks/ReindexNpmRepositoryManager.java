@@ -23,14 +23,15 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.attributes.AttributesFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
-import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 
+import com.google.common.collect.ImmutableMap;
+
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.npm.internal.tasks.ReindexNpmRepositoryTask.NPM_V1_SEARCH_UNSUPPORTED;
-import static org.sonatype.nexus.repository.npm.internal.tasks.ReindexNpmRepositoryTaskDescriptor.REPOSITORY_NAME_FIELD_ID;
 import static java.lang.Boolean.TRUE;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
+import static org.sonatype.nexus.repository.npm.internal.tasks.ReindexNpmRepositoryTask.NPM_V1_SEARCH_UNSUPPORTED;
+import static org.sonatype.nexus.repository.npm.internal.tasks.ReindexNpmRepositoryTaskDescriptor.REPOSITORY_NAME_FIELD_ID;
 
 /**
  * Ad-hoc "manager" class that checks to see if any npm repositories are in need of reindexing, and in the event that
@@ -68,8 +69,12 @@ public class ReindexNpmRepositoryManager
     }
     try {
       for (Repository repository : repositoryManager.browse()) {
-        if (isUnprocessedNpmRepository(repository) && !hasRunningTask(repository)) {
-          runReindexTaskForRepository(repository);
+        if (isUnprocessedNpmRepository(repository)) {
+          boolean existingTask = taskScheduler.findAndSubmit(ReindexNpmRepositoryTaskDescriptor.TYPE_ID,
+              ImmutableMap.of(REPOSITORY_NAME_FIELD_ID, repository.getName()));
+          if (!existingTask) {
+            runReindexTaskForRepository(repository);
+          }
         }
       }
     }
@@ -96,21 +101,5 @@ public class ReindexNpmRepositoryManager
     AttributesFacet attributesFacet = repository.facet(AttributesFacet.class);
     ImmutableNestedAttributesMap attributes = attributesFacet.getAttributes();
     return TRUE.equals(attributes.get(NPM_V1_SEARCH_UNSUPPORTED));
-  }
-
-  /**
-   * Returns whether or not a reindexing task exists for a particular npm repository.
-   */
-  private boolean hasRunningTask(final Repository repository) {
-    for (TaskInfo taskInfo : taskScheduler.listsTasks()) {
-      TaskConfiguration taskConfiguration = taskInfo.getConfiguration();
-      String typeId = taskConfiguration.getTypeId();
-      String repositoryName = taskConfiguration.getString(REPOSITORY_NAME_FIELD_ID);
-      if (ReindexNpmRepositoryTaskDescriptor.TYPE_ID.equals(typeId) && repository.getName().equals(repositoryName) &&
-          taskInfo.getCurrentState().getState().isRunning()) {
-        return true;
-      }
-    }
-    return false;
   }
 }

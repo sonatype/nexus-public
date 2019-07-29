@@ -24,6 +24,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
@@ -54,9 +55,9 @@ import org.sonatype.nexus.quartz.internal.task.QuartzTaskInfo;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskJob;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskJobListener;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskState;
+import org.sonatype.nexus.scheduling.CurrentState;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
-import org.sonatype.nexus.scheduling.CurrentState;
 import org.sonatype.nexus.scheduling.TaskRemovedException;
 import org.sonatype.nexus.scheduling.TaskState;
 import org.sonatype.nexus.scheduling.schedule.Manual;
@@ -91,6 +92,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Maps.filterKeys;
+import static java.util.Collections.emptyMap;
 import static org.quartz.TriggerBuilder.newTrigger;
 import static org.quartz.TriggerKey.triggerKey;
 import static org.quartz.impl.matchers.GroupMatcher.jobGroupEquals;
@@ -900,6 +902,60 @@ public class QuartzSchedulerSPI
         .map(CurrentState::getFuture)
         .map(f -> f.cancel(mayInterruptIfRunning))
         .orElse(false);
+  }
+
+  @Nullable
+  @Override
+  public TaskInfo getTaskByTypeId(final String typeId) {
+    return getTaskByTypeId(typeId, emptyMap());
+  }
+
+  @Nullable
+  @Override
+  public TaskInfo getTaskByTypeId(final String typeId,  final Map<String, String> config) {
+    checkNotNull(typeId);
+    checkNotNull(config);
+    return listsTasks().stream()
+        .filter(t -> typeId.equals(t.getTypeId()))
+        .filter(matchConfig(config))
+        .findFirst()
+        .orElse(null);
+  }
+
+  @Override
+  public boolean findAndSubmit(final String typeId) {
+    return findAndSubmit(typeId, emptyMap());
+  }
+
+  @Override
+  public boolean findAndSubmit(final String typeId, final Map<String, String> config) {
+    checkNotNull(typeId);
+    checkNotNull(config);
+    TaskInfo taskInfo = getTaskByTypeId(typeId, config);
+    if (taskInfo == null) {
+      return false;
+    }
+    else {
+      try {
+        if (!taskInfo.getCurrentState().getState().isRunning()) {
+          taskInfo.runNow();
+        }
+      }
+      catch (TaskRemovedException e) {
+        log.error("Unable to submit task: {}", taskInfo, e);
+      }
+      return true;
+    }
+  }
+
+  private Predicate<TaskInfo> matchConfig(final Map<String, String> config) {
+    return t -> {
+      TaskConfiguration tc = t.getConfiguration();
+      return config.entrySet().stream()
+          .filter(e -> e.getKey() != null)
+          .filter(e -> e.getValue() != null)
+          .allMatch(e -> e.getValue().equals(tc.getString(e.getKey())));
+    };
   }
 
   @Subscribe

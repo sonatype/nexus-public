@@ -1,7 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`AnonymousSettings renders correctly 1`] = `
-<ContentBody>
+<ContentBody
+  className="nxrm-anonymous-settings"
+>
   <SettingsSection
     isLoading={true}
   >
@@ -19,14 +21,10 @@ exports[`AnonymousSettings renders correctly 1`] = `
       labelText="Username:"
     >
       <Textfield
+        className="nxrm-anonymous-settings-field"
         isRequired={false}
         name="userId"
         onChange={[Function]}
-        style={
-          Object {
-            "width": "250px",
-          }
-        }
         value=""
       />
     </Component>
@@ -34,13 +32,9 @@ exports[`AnonymousSettings renders correctly 1`] = `
       labelText="Realm:"
     >
       <Select
+        className="nxrm-anonymous-settings-field"
         name="realmName"
         onChange={[Function]}
-        style={
-          Object {
-            "width": "250px",
-          }
-        }
         value=""
       />
     </Component>
@@ -49,11 +43,6 @@ exports[`AnonymousSettings renders correctly 1`] = `
         disabled={true}
         isPrimary={true}
         onClick={[Function]}
-        style={
-          Object {
-            "marginRight": "10px",
-          }
-        }
       >
         Save
       </Button>

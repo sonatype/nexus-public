@@ -59,7 +59,7 @@ public class AntiCsrfHelper extends ComponentSupport
 
   private List<String> createUserAgentMatchers(final String whitelist) {
     List<String> matchers = new ArrayList<>();
-    matchers.add("WindowsPowerShell");
+    matchers.add("PowerShell");
 
     if (!Strings2.isBlank(whitelist)) {
       for (String substring : whitelist.split(",")) {
@@ -120,7 +120,7 @@ public class AntiCsrfHelper extends ComponentSupport
     String userAgent = request.getHeader("User-Agent");
 
     return userAgent == null || !userAgent.startsWith("Mozilla/")
-        || matchers.stream().anyMatch(m -> userAgent.contains(m));
+        || matchers.stream().anyMatch(userAgent::contains);
   }
 
   private Optional<String> getCookie(final HttpServletRequest request, final String cookieName) {

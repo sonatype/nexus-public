@@ -30,7 +30,9 @@ import org.sonatype.nexus.quartz.internal.orient.TriggerUpdatedEvent
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskInfo
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskJobListener
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskState
+import org.sonatype.nexus.scheduling.CurrentState
 import org.sonatype.nexus.scheduling.TaskConfiguration
+import org.sonatype.nexus.scheduling.TaskInfo
 import org.sonatype.nexus.scheduling.TaskState
 import org.sonatype.nexus.scheduling.schedule.Daily
 import org.sonatype.nexus.scheduling.schedule.Hourly
@@ -62,18 +64,14 @@ import org.quartz.spi.JobStore
 import org.quartz.spi.OperableTrigger
 
 import static junit.framework.TestCase.assertEquals
+import static org.hamcrest.Matchers.equalTo
+import static org.hamcrest.Matchers.hasSize
+import static org.junit.Assert.assertThat
 import static org.mockito.Matchers.any
 import static org.mockito.Matchers.anyObject
 import static org.mockito.Matchers.eq
 import static org.mockito.Matchers.notNull
-import static org.mockito.Mockito.doAnswer
-import static org.mockito.Mockito.mock
-import static org.mockito.Mockito.never
-import static org.mockito.Mockito.reset
-import static org.mockito.Mockito.times
-import static org.mockito.Mockito.verify
-import static org.mockito.Mockito.verifyNoMoreInteractions
-import static org.mockito.Mockito.when
+import static org.mockito.Mockito.*
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED
 import static org.sonatype.nexus.scheduling.TaskConfiguration.LAST_RUN_STATE_END_STATE
 import static org.sonatype.nexus.scheduling.TaskConfiguration.LAST_RUN_STATE_RUN_DURATION
@@ -81,6 +79,8 @@ import static org.sonatype.nexus.scheduling.TaskConfiguration.LAST_RUN_STATE_RUN
 import static org.sonatype.nexus.scheduling.TaskState.FAILED
 import static org.sonatype.nexus.scheduling.TaskState.INTERRUPTED
 import static org.sonatype.nexus.scheduling.TaskState.OK
+import static org.sonatype.nexus.scheduling.TaskState.RUNNING
+import static org.sonatype.nexus.scheduling.TaskState.WAITING
 
 /**
  * {@link QuartzSchedulerSPI} tests.
@@ -409,6 +409,92 @@ class QuartzSchedulerSPITest
         null,
         null
     )
+  }
+
+  @Test
+  void 'Test finding task by type id'() {
+    def tasks = [
+      taskInfo('0', 'type1', [:], WAITING),
+      taskInfo('1', 'type2', [:], WAITING)
+    ]
+
+    def spyUnderTest = spy(underTest)
+    doReturn(tasks).when(spyUnderTest).listsTasks()
+
+    assertThat(spyUnderTest.listsTasks(), hasSize(2))
+    assertThat(spyUnderTest.getTaskByTypeId('type2'), equalTo(tasks[1]))
+  }
+
+  @Test
+  void 'Test finding task by type id and config'() {
+    def tasks = [
+        taskInfo('0', 'type1', [foo: 'bar'], WAITING),
+        taskInfo('1', 'type1', [moo: 'baz'], WAITING),
+        taskInfo('2', 'type2', [foo: 'bar'], WAITING),
+        taskInfo('3', 'type2', [moo: 'baz'], WAITING)
+    ]
+
+    def spyUnderTest = spy(underTest)
+    doReturn(tasks).when(spyUnderTest).listsTasks()
+
+    assertThat(spyUnderTest.listsTasks(), hasSize(tasks.size()))
+    assertThat(spyUnderTest.getTaskByTypeId('type1', [foo: 'bar']), equalTo(tasks[0]))
+  }
+
+  @Test
+  void 'Test finding and submitting a task by type id'() {
+    def tasks = [
+        taskInfo('0', 'type1', [:], RUNNING),
+        taskInfo('1', 'type2', [:], WAITING)
+    ]
+
+    def spyUnderTest = spy(underTest)
+    doReturn(tasks).when(spyUnderTest).listsTasks()
+
+    assertThat(spyUnderTest.findAndSubmit('type1'), equalTo(true))
+    assertThat(spyUnderTest.findAndSubmit('type2'), equalTo(true))
+    assertThat(spyUnderTest.findAndSubmit('type3'), equalTo(false))
+    verify(tasks[0], never()).runNow()
+    verify(tasks[1], times(1)).runNow()
+  }
+
+  @Test
+  void 'Test finding and submitting a task by type id and config'() {
+    def tasks = [
+        taskInfo('0', 'type1', [foo: 'bar'], RUNNING),
+        taskInfo('1', 'type1', [moo: 'baz'], WAITING),
+        taskInfo('2', 'type2', [foo: 'bar'], RUNNING),
+        taskInfo('3', 'type2', [moo: 'baz'], WAITING),
+        taskInfo('4', 'type3', [foo: 'bar'], RUNNING),
+        taskInfo('5', 'type3', [moo: 'baz'], WAITING)
+    ]
+
+    def spyUnderTest = spy(underTest)
+    doReturn(tasks).when(spyUnderTest).listsTasks()
+
+    assertThat(spyUnderTest.findAndSubmit('type1', [foo: 'bar']), equalTo(true))
+    assertThat(spyUnderTest.findAndSubmit('type2', [moo: 'baz']), equalTo(true))
+    assertThat(spyUnderTest.findAndSubmit('type3', [foo: 'bar', moo: 'baz']), equalTo(false))
+    verify(tasks[0], never()).runNow()
+    verify(tasks[1], never()).runNow()
+    verify(tasks[2], never()).runNow()
+    verify(tasks[3], times(1)).runNow()
+    verify(tasks[4], never()).runNow()
+    verify(tasks[5], never()).runNow()
+  }
+
+  static taskInfo(final String id, final String typeId, final Map<String, String> config, final TaskState currentState)
+  {
+    def tc = new TaskConfiguration(id: id, typeId: typeId)
+    config.each { k, v -> tc.setString(k, v)}
+    def tcs = mock(CurrentState)
+    when(tcs.state).thenReturn(currentState)
+    def ti = mock(TaskInfo)
+    when(ti.id).thenReturn(id)
+    when(ti.typeId).thenReturn(typeId)
+    when(ti.configuration).thenReturn(tc)
+    when(ti.currentState).thenReturn(tcs)
+    return ti
   }
 
   def static setupJobParameters(Scheduler scheduler, ListenerManager listenerManager, String keyName) {

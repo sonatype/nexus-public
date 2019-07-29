@@ -13,40 +13,34 @@
 import PropTypes from 'prop-types';
 import React, {useEffect, useRef, useState} from 'react';
 
-import Colors from '../../../../constants/Colors';
+import './SettingsSection.scss';
+
 import UIStrings from '../../../../constants/UIStrings';
 
 export default function SettingsSection({isLoading, children}) {
   const wrapperRef = useRef();
   const [loadingMaskHeight, setLoadingMaskHeight] = useState(0);
 
-  useEffect (() => {
+  useEffect(() => {
     const wrapperHeight = wrapperRef.current.clientHeight;
     if (wrapperHeight !== loadingMaskHeight) {
       setLoadingMaskHeight(wrapperHeight);
     }
   });
 
-  const wrapperStyle = {
-    backgroundColor: Colors.SETTINGS_SECTION.BACKGROUND,
-    border: `solid 1px ${Colors.SETTINGS_SECTION.BORDER}`,
-    padding: '12px'
-  };
-  const loadingMaskStyle = {
-    alignItems: 'center',
-    backgroundColor: Colors.LOADING_MASK.BACKGROUND,
-    color: Colors.LOADING_MASK.FONT,
-    display: 'flex',
-    fontSize: '1.5em',
-    height: loadingMaskHeight,
-    justifyContent: 'center',
-    position: 'absolute',
-    width: 'calc(100% - 24px)'
-  };
+  let loadingMask = null;
+  if (isLoading) {
+    const loadingMaskStyle = {
+      height: loadingMaskHeight
+    };
+    loadingMask = <span style={loadingMaskStyle} className='nxrm-settings-section-loading-mask'>
+      {UIStrings.SETTINGS.LOADING_MASK}
+    </span>;
+  }
 
   return <>
-    {isLoading ? <span style={loadingMaskStyle}>{UIStrings.SETTINGS.LOADING_MASK}</span> : null}
-    <div style={wrapperStyle} ref={wrapperRef}>
+    {loadingMask}
+    <div className='nxrm-settings-section' ref={wrapperRef}>
       {children}
     </div>
   </>;
@@ -57,19 +51,10 @@ SettingsSection.propTypes = {
 };
 
 SettingsSection.FieldWrapper = function({labelText, children}) {
-  const fieldWrapperStyle = {
-    display: 'block',
-    marginBottom: '15px'
-  };
-  const labelTextStyle = {
-    display: 'block',
-    fontWeight: 'bold',
-    marginBottom: '4px'
-  };
   const WrapperElement = labelText ? 'label' : 'div';
 
-  return <WrapperElement style={fieldWrapperStyle}>
-    {labelText ? <span style={labelTextStyle}>{labelText}</span> : null}
+  return <WrapperElement className='nxrm-settings-section-field-wrapper'>
+    {labelText ? <span className='nxrm-settings-section-field-wrapper-label'>{labelText}</span> : null}
     {children}
   </WrapperElement>;
 };
@@ -79,12 +64,7 @@ SettingsSection.FieldWrapper.propTypes = {
 };
 
 SettingsSection.Footer = function({children}) {
-  const wrapperStyle = {
-    display: 'flex',
-    marginTop: '10px'
-  };
-
-  return <div style={wrapperStyle}>
+  return <div className='nxrm-settings-section-footer'>
     {children}
   </div>;
 };

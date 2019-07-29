@@ -10,14 +10,15 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import classNames from 'classnames';
 import React from 'react';
 
-export default function ContentBody(props) {
-  const wrapperStyle = {
-    padding: '12px'
-  };
+import './ContentBody.scss';
 
-  return <div style={wrapperStyle}>
-    {props.children}
+export default function ContentBody({children, className}) {
+  const classes = classNames('nxrm-content-body', className);
+
+  return <div className={classes}>
+    {children}
   </div>;
 }

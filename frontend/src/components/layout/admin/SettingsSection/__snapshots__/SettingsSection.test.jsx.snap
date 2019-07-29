@@ -2,21 +2,10 @@
 
 exports[`SettingsSection SettingsSection.FieldWrapper renders correctly with label 1`] = `
 <label
-  style={
-    Object {
-      "display": "block",
-      "marginBottom": "15px",
-    }
-  }
+  className="nxrm-settings-section-field-wrapper"
 >
   <span
-    style={
-      Object {
-        "display": "block",
-        "fontWeight": "bold",
-        "marginBottom": "4px",
-      }
-    }
+    className="nxrm-settings-section-field-wrapper-label"
   >
     test label
   </span>
@@ -28,12 +17,7 @@ exports[`SettingsSection SettingsSection.FieldWrapper renders correctly with lab
 
 exports[`SettingsSection SettingsSection.FieldWrapper renders correctly without label 1`] = `
 <div
-  style={
-    Object {
-      "display": "block",
-      "marginBottom": "15px",
-    }
-  }
+  className="nxrm-settings-section-field-wrapper"
 >
   <input
     type="text"
@@ -43,12 +27,7 @@ exports[`SettingsSection SettingsSection.FieldWrapper renders correctly without 
 
 exports[`SettingsSection SettingsSection.Footer renders correctly 1`] = `
 <div
-  style={
-    Object {
-      "display": "flex",
-      "marginTop": "10px",
-    }
-  }
+  className="nxrm-settings-section-footer"
 >
   <button>
     test
@@ -59,13 +38,7 @@ exports[`SettingsSection SettingsSection.Footer renders correctly 1`] = `
 exports[`SettingsSection renders correctly 1`] = `
 <Fragment>
   <div
-    style={
-      Object {
-        "backgroundColor": "white",
-        "border": "solid 1px rgba(210, 210, 210, 1)",
-        "padding": "12px",
-      }
-    }
+    className="nxrm-settings-section"
   >
     <span>
       test
@@ -77,30 +50,17 @@ exports[`SettingsSection renders correctly 1`] = `
 exports[`SettingsSection renders correctly while isLoading 1`] = `
 <Fragment>
   <span
+    className="nxrm-settings-section-loading-mask"
     style={
       Object {
-        "alignItems": "center",
-        "backgroundColor": "rgba(0, 0, 0, 0.5)",
-        "color": "white",
-        "display": "flex",
-        "fontSize": "1.5em",
         "height": 0,
-        "justifyContent": "center",
-        "position": "absolute",
-        "width": "calc(100% - 24px)",
       }
     }
   >
     Loading...
   </span>
   <div
-    style={
-      Object {
-        "backgroundColor": "white",
-        "border": "solid 1px rgba(210, 210, 210, 1)",
-        "padding": "12px",
-      }
-    }
+    className="nxrm-settings-section"
   >
     <span>
       test

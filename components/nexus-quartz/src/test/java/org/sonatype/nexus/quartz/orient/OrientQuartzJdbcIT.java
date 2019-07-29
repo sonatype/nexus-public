@@ -16,6 +16,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
+
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -50,10 +53,8 @@ public class OrientQuartzJdbcIT {
 
   private static final String SIMPLE_JOB = "SimpleJob";
 
-  private static String DB_CONNECTION_STR = "plocal:./quartz-test";
-
   @ClassRule
-  public static OrientDbRule dbRule = new OrientDbRule(DB_CONNECTION_STR);
+  public static DatabaseInstanceRule database = DatabaseInstanceRule.inFilesystem("quartz-test");
 
   private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -61,10 +62,15 @@ public class OrientQuartzJdbcIT {
 
   @Before
   public void before() throws Exception {
+    String dbUrl;
+    try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
+      OrientQuartzSchema.register(db);
+      dbUrl = db.getURL();
+    }
     SimpleThreadPool threadPool = new SimpleThreadPool(3, Thread.NORM_PRIORITY);
     threadPool.initialize();
     OrientConnectionProvider connProvider = new OrientConnectionProvider();
-    connProvider.setConnectionString(DB_CONNECTION_STR);
+    connProvider.setConnectionString(dbUrl);
     connProvider.setUser("admin");
     connProvider.setPassword("admin");
     connProvider.setUsePool(true);

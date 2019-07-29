@@ -62,6 +62,7 @@ Ext.define('NX.app.Application', {
 
     // panel overrides
     'NX.ext.panel.Panel',
+    'NX.ext.panel.ResponsivePanel',
     'NX.ext.panel.Header',
 
     // toolbar overrides

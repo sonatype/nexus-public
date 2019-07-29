@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.browse.internal;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 
@@ -34,12 +33,12 @@ import org.sonatype.nexus.repository.storage.BucketEntityAdapter;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
 import org.sonatype.nexus.repository.storage.ComponentFactory;
 import org.sonatype.nexus.repository.storage.MetadataNode;
+import org.sonatype.nexus.scheduling.CurrentState;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
-import org.sonatype.nexus.scheduling.CurrentState;
-import org.sonatype.nexus.scheduling.TaskScheduler;
-import org.sonatype.nexus.scheduling.TaskState;
+import org.sonatype.nexus.scheduling.internal.TaskSchedulerImpl;
 
+import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.Before;
 import org.junit.Rule;
@@ -87,7 +86,7 @@ public class RebuildBrowseNodesManagerTest
   private Repository repository;
 
   @Mock
-  private TaskScheduler taskScheduler;
+  private TaskSchedulerImpl taskScheduler;
 
   @Mock
   private TaskInfo taskInfo;
@@ -138,29 +137,12 @@ public class RebuildBrowseNodesManagerTest
 
   @Test
   public void doStartRunsExistingTask() throws Exception {
-    setupExistingTask(false);
+    setupExistingTask();
 
     assetEntityAdapter.addEntity(databaseInstanceRule.getInstance().acquire(), createAsset("asset", "maven2", bucket));
 
     underTest.doStart();
-    //doesn't match the repo, so shouldn't be called
-    verify(taskInfo, never()).runNow();
-    //matches the repo so should be called
-    verify(taskInfo2).runNow();
     //only called when no match found, so should not be called
-    verify(taskScheduler, never()).createTaskConfigurationInstance(RebuildBrowseNodesTaskDescriptor.TYPE_ID);
-  }
-
-  @Test
-  public void doStartDoesntRunExistingRunningTask() throws Exception {
-    setupExistingTask(true);
-
-    assetEntityAdapter.addEntity(databaseInstanceRule.getInstance().acquire(), createAsset("asset", "maven2", bucket));
-
-    underTest.doStart();
-    //as the task should already be running, we shouldn't call runNow on either of these tasks
-    verify(taskInfo, never()).runNow();
-    verify(taskInfo2, never()).runNow();
     verify(taskScheduler, never()).createTaskConfigurationInstance(RebuildBrowseNodesTaskDescriptor.TYPE_ID);
   }
 
@@ -260,20 +242,13 @@ public class RebuildBrowseNodesManagerTest
     assertNull(taskConfiguration.getString(REPOSITORY_NAME_FIELD_ID));
   }
 
-  private void setupExistingTask(final boolean running) {
-    TaskConfiguration matchConfiguration = new TaskConfiguration();
-    matchConfiguration.setTypeId(RebuildBrowseNodesTaskDescriptor.TYPE_ID);
-    matchConfiguration.setString(RebuildBrowseNodesTaskDescriptor.REPOSITORY_NAME_FIELD_ID, REPOSITORY_NAME);
-    TaskConfiguration noMatchConfiguration = new TaskConfiguration();
-    noMatchConfiguration.setTypeId(RebuildBrowseNodesTaskDescriptor.TYPE_ID);
-    noMatchConfiguration.setString(RebuildBrowseNodesTaskDescriptor.REPOSITORY_NAME_FIELD_ID, "badreponame");
-    when(taskInfo.getConfiguration()).thenReturn(noMatchConfiguration);
-    when(taskInfo.getCurrentState()).thenReturn(currentState);
-    when(taskInfo2.getConfiguration()).thenReturn(matchConfiguration);
-    when(taskInfo2.getCurrentState()).thenReturn(currentState2);
-    when(currentState.getState()).thenReturn(TaskState.WAITING);
-    when(currentState2.getState()).thenReturn(running ? TaskState.RUNNING : TaskState.WAITING);
-    when(taskScheduler.listsTasks()).thenReturn(Arrays.asList(taskInfo, taskInfo2));
+  private void setupExistingTask() {
+    when(taskScheduler.findAndSubmit(RebuildBrowseNodesTaskDescriptor.TYPE_ID,
+        ImmutableMap.of(RebuildBrowseNodesTaskDescriptor.REPOSITORY_NAME_FIELD_ID, REPOSITORY_NAME)))
+        .thenReturn(true);
+    when(taskScheduler.findAndSubmit(RebuildBrowseNodesTaskDescriptor.TYPE_ID,
+        ImmutableMap.of(RebuildBrowseNodesTaskDescriptor.REPOSITORY_NAME_FIELD_ID, "badreponame")))
+        .thenReturn(true);
   }
 
   private Asset createAsset(final String name, final String format, final Bucket bucket) throws Exception {

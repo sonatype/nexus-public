@@ -2,13 +2,7 @@
 
 exports[`RequiredErrorMessage renders correctly 1`] = `
 <span
-  style={
-    Object {
-      "alignItems": "center",
-      "color": "rgba(207, 76, 53, 1)",
-      "display": "flex",
-    }
-  }
+  className="nxrm-required-error-message"
 >
   <FontAwesomeIcon
     border={false}
@@ -41,11 +35,7 @@ exports[`RequiredErrorMessage renders correctly 1`] = `
     transform={null}
   />
   <span
-    style={
-      Object {
-        "padding": "2px 0 0 2px",
-      }
-    }
+    className="nxrm-required-error-message-text"
   >
      
     This field is required

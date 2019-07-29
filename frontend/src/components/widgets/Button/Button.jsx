@@ -10,27 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import React from 'react';
 
-import Colors from '../../../constants/Colors'
+import './Button.scss';
 
-export default function Button({isPrimary, children, style, ...rest}) {
-  const colors = isPrimary ? Colors.BUTTON.PRIMARY : Colors.BUTTON.SECONDARY;
-  const buttonStyle = {
-    backgroundColor: colors.BACKGROUND,
-    border: `solid 1px ${colors.BORDER}`,
-    borderRadius: '3px',
-    color: colors.FONT,
-    fontFamily: 'inherit',
-    fontSize: '1em',
-    height: '2em',
-    minWidth: '76px',
-    opacity: rest && rest.disabled ? '0.5' : '1',
-    ...style
-  };
-
-  return <button style={buttonStyle} {...rest}>
+export default function Button({isPrimary, children, className, ...rest}) {
+  const classes = classNames('nxrm-button', className, {
+    'nxrm-button-primary': isPrimary
+  });
+  return <button className={classes} {...rest}>
       { children }
     </button>;
 }

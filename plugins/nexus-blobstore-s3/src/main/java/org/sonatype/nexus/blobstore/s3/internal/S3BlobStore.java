@@ -66,6 +66,7 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.StreamSupport.stream;
 import static org.sonatype.nexus.blobstore.DirectPathLocationStrategy.DIRECT_PATH_ROOT;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreConfigurationHelper.getConfiguredExpirationInDays;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStoreException.buildException;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.FAILED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.NEW;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
@@ -148,7 +149,7 @@ public class S3BlobStore
   @Inject
   public S3BlobStore(final AmazonS3Factory amazonS3Factory,
                      final BlobIdLocationResolver blobIdLocationResolver,
-                     @Named("multipart-uploader") final S3Uploader uploader,
+                     @Named("${nexus.s3.uploaderName:-parallelUploader}") final S3Uploader uploader,
                      final S3Copier copier,
                      final S3BlobStoreMetricsStore storeMetrics,
                      final DryRunPrefix dryRunPrefix,
@@ -156,8 +157,8 @@ public class S3BlobStore
   {
     super(blobIdLocationResolver, dryRunPrefix);
     this.amazonS3Factory = checkNotNull(amazonS3Factory);
-    this.uploader = checkNotNull(uploader);
     this.copier = checkNotNull(copier);
+    this.uploader = checkNotNull(uploader);
     this.storeMetrics = checkNotNull(storeMetrics);
     this.bucketManager = checkNotNull(bucketManager);
   }
@@ -473,6 +474,12 @@ public class S3BlobStore
       bucketManager.setS3(s3);
       bucketManager.prepareStorageLocation(blobStoreConfiguration);
       S3BlobStoreConfigurationHelper.setConfiguredBucket(blobStoreConfiguration, getConfiguredBucket());
+    }
+    catch (AmazonS3Exception e) {
+      throw buildException(e);
+    }
+    catch (S3BlobStoreException e) {
+      throw e;
     }
     catch (Exception e) {
       throw new BlobStoreException("Unable to initialize blob store bucket: " + getConfiguredBucket(), e, null);

@@ -4,11 +4,7 @@ exports[`Checkbox renders correctly 1`] = `
 <label>
   <input
     checked={false}
-    style={
-      Object {
-        "marginLeft": 0,
-      }
-    }
+    className="nxrm-checkbox"
     type="checkbox"
   />
 </label>
@@ -18,13 +14,9 @@ exports[`Checkbox renders correctly with all props 1`] = `
 <label>
   <input
     checked={true}
+    className="nxrm-checkbox"
     name="test-checkbox"
     onChange={[Function]}
-    style={
-      Object {
-        "marginLeft": 0,
-      }
-    }
     type="checkbox"
   />
   awesome checkbox

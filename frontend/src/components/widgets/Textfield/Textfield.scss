@@ -10,7 +10,22 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-select.nx-react-select::-ms-expand {
-  /* Hide dropdown button on ie11 */
-  display: none;
+
+@import '../../../styles/Colors';
+
+.nxrm-textfield {
+  border: solid 1px;
+  border-color: $gray $light-gray $light-gray;
+  font-size: 1em;
+  height: 2em;
+  padding-left: 0.4em;
+  width: 100%;
+
+  &.missing-required-value {
+    border-color: $red;
+  }
+
+  &:focus, &:active {
+    border-color: $light-blue;
+  }
 }
