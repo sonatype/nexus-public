@@ -81,4 +81,12 @@ public class ScheduleFactoryImpl
     checkNotNull(cronExpression);
     return new Cron(startAt, cronExpression);
   }
+
+  @Override
+  public Cron cron(final Date startAt, final String cronExpression, final String zoneId) {
+    checkNotNull(startAt);
+    checkNotNull(cronExpression);
+    checkNotNull(zoneId);
+    return new Cron(startAt, cronExpression, zoneId);
+  }
 }

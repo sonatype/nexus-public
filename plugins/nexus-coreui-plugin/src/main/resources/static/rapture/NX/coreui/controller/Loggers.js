@@ -128,7 +128,7 @@ Ext.define('NX.coreui.controller.Loggers', {
     this.loadStore();
     if (operation.success) {
       Ext.Array.each(operation.records, function (model) {
-        NX.Messages.add({ text: NX.I18n.format('Loggers_Write_Success', operation.action, model.get('name')), type: 'success' });
+        NX.Messages.success(NX.I18n.format('Loggers_Write_Success', operation.action, model.get('name')));
       });
     }
   },
@@ -200,7 +200,7 @@ Ext.define('NX.coreui.controller.Loggers', {
         NX.direct.logging_Loggers.remove(selection[0].getId(), function (response) {
           me.loadStore();
           if (Ext.isObject(response) && response.success) {
-            NX.Messages.add({ text: NX.I18n.format('Loggers_Delete_Success', selection[0].get('name')), type: 'success' });
+            NX.Messages.success(NX.I18n.format('Loggers_Delete_Success', selection[0].get('name')));
           }
         });
       });
@@ -218,7 +218,7 @@ Ext.define('NX.coreui.controller.Loggers', {
       NX.direct.logging_Loggers.reset(function (response) {
         me.loadStore();
         if (Ext.isObject(response) && response.success) {
-          NX.Messages.add({ text: NX.I18n.get('Loggers_Reset_Success'), type: 'success' });
+          NX.Messages.success(NX.I18n.get('Loggers_Reset_Success'));
         }
       });
     });

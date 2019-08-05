@@ -303,7 +303,7 @@ Ext.define('NX.coreui.controller.Repositories', {
       me.getContent().getEl().unmask();
       me.getStore('Repository').load();
       if (Ext.isObject(response) && response.success) {
-        NX.Messages.add({text: 'Repository deleted: ' + description, type: 'success'});
+        NX.Messages.success('Repository deleted: ' + description);
       }
     });
   },
@@ -408,7 +408,7 @@ Ext.define('NX.coreui.controller.Repositories', {
 
     NX.direct.coreui_Repository.rebuildIndex(model.getId(), function (response) {
       if (Ext.isObject(response) && response.success) {
-        NX.Messages.add({text: 'Repository index rebuilt: ' + me.getDescription(model), type: 'success'});
+        NX.Messages.success('Repository index rebuilt: ' + me.getDescription(model));
       }
     });
   },
@@ -423,7 +423,7 @@ Ext.define('NX.coreui.controller.Repositories', {
 
     NX.direct.coreui_Repository.invalidateCache(model.getId(), function (response) {
       if (Ext.isObject(response) && response.success) {
-        NX.Messages.add({text: 'Repository caches invalidated: ' + me.getDescription(model), type: 'success'});
+        NX.Messages.success('Repository caches invalidated: ' + me.getDescription(model));
       }
     });
   },

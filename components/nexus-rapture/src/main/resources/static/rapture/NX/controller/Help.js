@@ -71,6 +71,10 @@ Ext.define('NX.controller.Help', {
       'help-kb': {
         file: 'brain_trainer.png',
         variants: ['x16', 'x32']
+      },
+      'help-guides': {
+        file: 'sonatype.png',
+        variants: ['x16', 'x32']
       }
     });
 
@@ -93,6 +97,9 @@ Ext.define('NX.controller.Help', {
         },
         'nx-header-help menuitem[action=kb]': {
           click: me.onKnowledgeBase
+        },
+        'nx-header-help menuitem[action=guides]': {
+          click: me.onGuides
         }
       }
     });
@@ -146,5 +153,12 @@ Ext.define('NX.controller.Help', {
    */
   onKnowledgeBase: function() {
     this.openUrl('kb');
+  },
+
+  /**
+   * @private
+   */
+  onGuides: function() {
+    NX.Windows.open("https://links.sonatype.com/products/nxrm3/guides")
   }
 });

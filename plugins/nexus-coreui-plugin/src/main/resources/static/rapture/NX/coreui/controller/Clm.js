@@ -104,7 +104,7 @@ Ext.define('NX.coreui.controller.Clm', {
     NX.direct.clm_CLM.verifyConnection(values, function (response) {
       form.getEl().unmask();
       if (Ext.isDefined(response) && response.success) {
-        NX.Messages.add({ text: NX.I18n.format('Clm_Connection_Success', values.url), type: 'success' });
+        NX.Messages.success(NX.I18n.format('Clm_Connection_Success', values.url));
         Ext.widget('nx-coreui-clm-settings-testresults', {applications: response.data});
       }
     });

@@ -12,58 +12,94 @@
   $ui-header-padding: 10px 10px 8px 14px
 );
 
-@include extjs-window-ui(
-  $ui: 'nx-message-default',
+.x-toast {
+  border: none;
+  .x-autocontainer-innerCt {
+    padding: 0 !important;
+    display: flex;
+  }
+  .icon {
+    color: $iq-grey-100;
+    float: left;
+    font-size: 1.5em;
+    padding: 0.4em;
+    &:before {
+      vertical-align: middle;
+    }
+  }
+  .text {
+    margin: 0.5em;
+    align-self: center;
+  }
+  .dismiss {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin: 0.25em 0.25em 0.25em auto;
+    opacity: 0.5;
+    &:hover {
+      opacity: 1;
+      a {
+        text-decoration: none;
+      }
+    }
+  }
+}
 
-  $ui-header-line-height: 15px,
-  $ui-header-font-size: $font-size-h5,
-  $ui-header-font-weight: $font-weight-h5
-);
+.x-toast.success {
+  background-color: $iq-grey-100;
+  border: thin solid $iq-green-500;
+  .icon {
+    background-color: $iq-green-500;
+  }
+  .text {
+    color: $iq-green-700;
+  }
+  .dismiss a {
+    color: $iq-green-500;
+  }
+}
 
-@include extjs-window-ui(
-  $ui: 'nx-message-primary',
+.x-toast.info {
+  background-color: $iq-blue-100;
+  border: thin solid $iq-blue-500;
+  .icon {
+    background-color: $iq-blue-500;
+  }
+  .text {
+    color: $iq-blue-700;
+  }
+  .dismiss a {
+    color: $iq-blue-500;
+  }
+}
 
-  $ui-header-line-height: 15px,
-  $ui-header-font-size: $font-size-h5,
-  $ui-header-font-weight: $font-weight-h5,
-  $ui-tool-background-image: 'tools/tool-sprites',
-  $ui-header-color: $color-white,
-  $ui-header-background-color: $color-cobalt
-);
+.x-toast.warning {
+  background-color: $iq-yellow-100;
+  border: thin solid $iq-yellow-500;
+  .icon {
+    background-color: $iq-yellow-500;
+  }
+  .text {
+    color: $iq-yellow-700;
+  }
+  .dismiss a {
+    color: $iq-yellow-500;
+  }
+}
 
-@include extjs-window-ui(
-  $ui: 'nx-message-danger',
-
-  $ui-header-line-height: 15px,
-  $ui-header-font-size: $font-size-h5,
-  $ui-header-font-weight: $font-weight-h5,
-  $ui-tool-background-image: 'tools/tool-sprites',
-  $ui-header-color: $color-white,
-  $ui-header-background-color: $color-cerise
-);
-
-@include extjs-window-ui(
-  $ui: 'nx-message-warning',
-
-  $ui-header-line-height: 15px,
-  $ui-header-font-size: $font-size-h5,
-  $ui-header-font-weight: $font-weight-h5,
-  $ui-tool-background-image: 'tools/tool-sprites',
-  $ui-header-color: $color-white,
-  $ui-header-background-color: $color-sun
-);
-
-@include extjs-window-ui(
-  $ui: 'nx-message-success',
-
-  $ui-header-line-height: 15px,
-  $ui-header-font-size: $font-size-h5,
-  $ui-header-font-weight: $font-weight-h5,
-  $ui-tool-background-image: 'tools/tool-sprites',
-  $ui-header-color: $color-white,
-  $ui-header-background-color: $color-pigment-green
-);
-
+.x-toast.error {
+  background-color: $iq-red-100;
+  border: thin solid $iq-red-500;
+  .icon {
+    background-color: $iq-red-500;
+  }
+  .text {
+    color: $iq-red-700;
+  }
+  .dismiss a {
+    color: $iq-red-500;
+  }
+}
 
 // Fixed modals for the visual style guide
 .fixed-modal {

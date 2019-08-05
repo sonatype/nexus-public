@@ -345,7 +345,7 @@ Ext.define('NX.controller.State', {
     // re-enable the UI we are now connected again
     if (me.disconnectedTimes > 0) {
       me.disconnectedTimes = 0;
-      NX.Messages.add({text: NX.I18n.get('State_Reconnected_Message'), type: 'success' });
+      NX.Messages.success(NX.I18n.get('State_Reconnected_Message'));
     }
 
     NX.State.setValue('receiving', true);
@@ -378,12 +378,12 @@ Ext.define('NX.controller.State', {
         NX.State.setValue('receiving', false);
 
         if (me.disconnectedTimes <= me.maxDisconnectWarnings) {
-          NX.Messages.add({ text: NX.I18n.get('State_Disconnected_Message'), type: 'warning' });
+          NX.Messages.warning(NX.I18n.get('State_Disconnected_Message'));
         }
 
         // Give up after a few attempts and disable the UI
         if (me.disconnectedTimes > me.maxDisconnectWarnings) {
-          NX.Messages.add({text: NX.I18n.get('State_Disconnected_Message'), type: 'danger' });
+          NX.Messages.error(NX.I18n.get('State_Disconnected_Message'));
 
           // Stop polling
           me.statusProvider.disconnect();
@@ -408,7 +408,7 @@ Ext.define('NX.controller.State', {
       }
     }
     else if (event.type === 'exception') {
-      NX.Messages.add({ text: event.message, type: 'danger' });
+      NX.Messages.error(event.message);
     }
   },
 
@@ -451,10 +451,10 @@ Ext.define('NX.controller.State', {
   onLicenseChanged: function (license, oldLicense) {
     if (license && oldLicense) {
       if (license.installed && !oldLicense.installed) {
-        NX.Messages.add({ text: NX.I18n.get('State_Installed_Message'), type: 'success' });
+        NX.Messages.success(NX.I18n.get('State_Installed_Message'));
       }
       else if (!license.installed && oldLicense.installed) {
-        NX.Messages.add({ text: NX.I18n.get('State_Uninstalled_Message'), type: 'warning' });
+        NX.Messages.warning(NX.I18n.get('State_Uninstalled_Message'));
       }
     }
   },

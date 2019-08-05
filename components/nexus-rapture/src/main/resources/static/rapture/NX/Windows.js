@@ -47,7 +47,7 @@ Ext.define('NX.Windows', {
 
     win = NX.global.open(url, name, specs, replace);
     if (win === null) {
-      NX.Messages.add({text: NX.I18n.get('Windows_Popup_Message'), type: 'danger'});
+      NX.Messages.error(NX.I18n.get('Windows_Popup_Message'));
     }
     return win;
   }

@@ -474,9 +474,7 @@ Ext.define('NX.coreui.controller.Users', {
     NX.direct.coreui_User.remove(model.get('userId'), model.get('realm'), function(response) {
       me.getStore('User').load();
       if (Ext.isObject(response) && response.success) {
-        NX.Messages.add({
-          text: NX.I18n.format('Users_Delete_Success', description), type: 'success'
-        });
+        NX.Messages.success(NX.I18n.format('Users_Delete_Success', description));
       }
     });
   },
@@ -542,7 +540,7 @@ Ext.define('NX.coreui.controller.Users', {
             NX.direct.coreui_User.changePassword(authToken, win.userId, password, function(response) {
               if (Ext.isObject(response) && response.success) {
                 win.close();
-                NX.Messages.add({ text: NX.I18n.get('Users_Change_Success'), type: 'success' });
+                NX.Messages.success(NX.I18n.get('Users_Change_Success'));
               }
             });
           }

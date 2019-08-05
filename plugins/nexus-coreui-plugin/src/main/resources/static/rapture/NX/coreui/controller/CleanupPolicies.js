@@ -216,10 +216,7 @@ Ext.define('NX.coreui.controller.CleanupPolicies', {
       me.loadStores();
 
       if (Ext.isObject(response) && response.success) {
-        NX.Messages.add({
-          text: NX.I18n.format('CleanupPolicies_Delete_Success', description),
-          type: 'success'
-        });
+        NX.Messages.success(NX.I18n.format('CleanupPolicies_Delete_Success', description));
       }
     });
 

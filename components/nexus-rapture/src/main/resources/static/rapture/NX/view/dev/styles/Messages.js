@@ -19,9 +19,6 @@
  */
 Ext.define('NX.view.dev.styles.Messages', {
   extend: 'NX.view.dev.styles.StyleSection',
-  requires: [
-    'NX.Icons'
-  ],
 
   title: 'Messages',
   layout: {
@@ -36,14 +33,10 @@ Ext.define('NX.view.dev.styles.Messages', {
     var me = this;
 
     function message(type) {
-      var style = 'nx-message-' + type;
-      var icon = NX.Icons.cls('message-' + type, 'x16');
       return {
         xtype: 'window',
-        ui: style,
-        iconCls: icon,
-        title: type,
-        html: "ui: '" + style + "'",
+        baseCls: 'x-toast ' + type,
+        html: "ui: '" + type + "'",
         hidden: false,
         collapsible: false,
         floating: false,
@@ -55,11 +48,10 @@ Ext.define('NX.view.dev.styles.Messages', {
     }
 
     me.items = [
-      message('default'),
-      message('primary'),
-      message('danger'),
+      message('info'),
+      message('success'),
       message('warning'),
-      message('success')
+      message('error')
     ];
 
     me.callParent();

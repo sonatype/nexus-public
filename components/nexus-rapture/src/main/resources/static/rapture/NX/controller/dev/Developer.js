@@ -185,12 +185,11 @@ Ext.define('NX.controller.dev.Developer', {
    * @private
    */
   testMessages: function () {
-    Ext.each(['default', 'primary', 'danger', 'warning', 'success'], function (type) {
-      NX.Messages.add({
-        type: type,
-        text: 'test of ' + type
-      });
-    });
+    NX.Messages.success('Success');
+    NX.Messages.info( 'Test of a long info message. Lorem ipsum dolor sit amet, consectetur adipiscing elit, ' +
+        'sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.');
+    NX.Messages.warning('A warning test');
+    NX.Messages.error('Test of an error message');
   },
 
   /**

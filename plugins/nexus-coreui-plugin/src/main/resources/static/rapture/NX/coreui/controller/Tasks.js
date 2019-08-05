@@ -190,13 +190,13 @@ Ext.define('NX.coreui.controller.Tasks', {
         me = this,
         summary = me.getSummary();
 
-    info[NX.I18n.get('Tasks_ID_Info')] = model.getId();
-    info[NX.I18n.get('Tasks_Name_Info')] = model.get('name');
-    info[NX.I18n.get('Tasks_Type_Info')] = model.get('typeName');
-    info[NX.I18n.get('Tasks_Status_Info')] = model.get('statusDescription');
-    info[NX.I18n.get('Tasks_NextRun_Info')] = model.get('nextRun');
-    info[NX.I18n.get('Tasks_LastRun_Info')] = model.get('lastRun');
-    info[NX.I18n.get('Tasks_LastResult_Info')] = model.get('lastRunResult');
+    info[NX.I18n.get('Tasks_ID_Info')] = Ext.htmlEncode(model.getId());
+    info[NX.I18n.get('Tasks_Name_Info')] = Ext.htmlEncode(model.get('name'));
+    info[NX.I18n.get('Tasks_Type_Info')] = Ext.htmlEncode(model.get('typeName'));
+    info[NX.I18n.get('Tasks_Status_Info')] = Ext.htmlEncode(model.get('statusDescription'));
+    info[NX.I18n.get('Tasks_NextRun_Info')] = Ext.htmlEncode(model.get('nextRun'));
+    info[NX.I18n.get('Tasks_LastRun_Info')] = Ext.htmlEncode(model.get('lastRun'));
+    info[NX.I18n.get('Tasks_LastResult_Info')] = Ext.htmlEncode(model.get('lastRunResult'));
 
     summary.showInfo(info);
     me.maybeShowSummaryStatuses(model);
@@ -291,11 +291,8 @@ Ext.define('NX.coreui.controller.Tasks', {
       me.getContent().getEl().unmask();
       if (Ext.isObject(response)) {
         if (response.success) {
-          NX.Messages.add({
-            text: NX.I18n.format('Tasks_Update_Success',
-              me.getDescription(me.getTaskModel().create(response.data))),
-            type: 'success'
-          });
+          NX.Messages.success(NX.I18n.format('Tasks_Update_Success',
+              me.getDescription(me.getTaskModel().create(response.data))));
           form.fireEvent('submitted', form);
           me.getStore('Task').load();
         }
@@ -317,11 +314,8 @@ Ext.define('NX.coreui.controller.Tasks', {
     NX.direct.coreui_Task.create(values, function(response) {
       if (Ext.isObject(response)) {
         if (response.success) {
-          NX.Messages.add({
-            text: NX.I18n.format('Tasks_Create_Success',
-              me.getDescription(me.getTaskModel().create(response.data))),
-            type: 'success'
-          });
+          NX.Messages.success(NX.I18n.format('Tasks_Create_Success',
+              me.getDescription(me.getTaskModel().create(response.data))));
           me.getStore('Task').load();
         }
         else if (Ext.isDefined(response.errors)) {
@@ -446,9 +440,7 @@ Ext.define('NX.coreui.controller.Tasks', {
     NX.direct.coreui_Task.remove(model.getId(), function(response) {
       me.getStore('Task').load();
       if (Ext.isObject(response) && response.success) {
-        NX.Messages.add({
-          text: NX.I18n.format('Tasks_Delete_Success', description), type: 'success'
-        });
+        NX.Messages.success(NX.I18n.format('Tasks_Delete_Success', description));
       }
     });
   },
@@ -479,9 +471,7 @@ Ext.define('NX.coreui.controller.Tasks', {
                 me.getContent().getEl().unmask();
                 if (Ext.isObject(response) && response.success) {
                   me.getStore('Task').load();
-                  NX.Messages.add({
-                    text: NX.I18n.format('Tasks_Run_Success', description), type: 'success'
-                  });
+                  NX.Messages.success(NX.I18n.format('Tasks_Run_Success', description));
                 }
               });
             }, {scope: me});
@@ -517,9 +507,7 @@ Ext.define('NX.coreui.controller.Tasks', {
           me.getContent().getEl().unmask();
           if (Ext.isObject(response) && response.success) {
             me.getStore('Task').load();
-            NX.Messages.add({
-              text: NX.I18n.format('Tasks_Stop_Success', description), type: 'success'
-            });
+            NX.Messages.success(NX.I18n.format('Tasks_Stop_Success', description));
           }
         });
       }, { scope: me });

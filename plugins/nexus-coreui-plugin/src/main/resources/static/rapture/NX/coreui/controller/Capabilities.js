@@ -221,9 +221,9 @@ Ext.define('NX.coreui.controller.Capabilities', {
     var summary = this.getSummaryTab(),
         info = {};
 
-    info[NX.I18n.get('Capabilities_TypeName_Text')] = model.get('typeName');
-    info[NX.I18n.get('Capabilities_Description_Text')] = model.get('description');
-    info[NX.I18n.get('Capabilities_State_Text')] = Ext.String.capitalize(model.get('state'));
+    info[NX.I18n.get('Capabilities_TypeName_Text')] = Ext.htmlEncode(model.get('typeName'));
+    info[NX.I18n.get('Capabilities_Description_Text')] = Ext.htmlEncode(model.get('description'));
+    info[NX.I18n.get('Capabilities_State_Text')] = Ext.htmlEncode(Ext.String.capitalize(model.get('state')));
 
     if (Ext.isDefined(model.get('tags'))) {
       Ext.apply(info, model.get('tags'));
@@ -336,11 +336,8 @@ Ext.define('NX.coreui.controller.Capabilities', {
     NX.direct.capability_Capability.create(values, function(response) {
       if (Ext.isObject(response)) {
         if (response.success) {
-          NX.Messages.add({
-            text: NX.I18n.format('Capabilities_Create_Success',
-                me.getDescription(me.getCapabilityModel().create(response.data))),
-            type: 'success'
-          });
+          NX.Messages.success(NX.I18n.format('Capabilities_Create_Success',
+                me.getDescription(me.getCapabilityModel().create(response.data))));
           me.getStore('Capability').load();
         }
         else if (Ext.isDefined(response.errors)) {
@@ -364,11 +361,8 @@ Ext.define('NX.coreui.controller.Capabilities', {
       me.getContent().getEl().unmask();
       if (Ext.isObject(response)) {
         if (response.success) {
-          NX.Messages.add({
-            text: NX.I18n.format('Capabilities_Update_Success',
-                me.getDescription(me.getCapabilityModel().create(response.data))),
-            type: 'success'
-          });
+          NX.Messages.success(NX.I18n.format('Capabilities_Update_Success',
+                me.getDescription(me.getCapabilityModel().create(response.data))));
           form.fireEvent('submitted', form);
           me.getStore('Capability').load();
         }
@@ -391,10 +385,7 @@ Ext.define('NX.coreui.controller.Capabilities', {
     NX.direct.capability_Capability.remove(model.getId(), function(response) {
       me.getStore('Capability').load();
       if (Ext.isObject(response) && response.success) {
-        NX.Messages.add({
-          text: NX.I18n.format('Capabilities_Delete_Success', description),
-          type: 'success'
-        });
+        NX.Messages.success(NX.I18n.format('Capabilities_Delete_Success', description));
       }
     });
   },
@@ -424,10 +415,7 @@ Ext.define('NX.coreui.controller.Capabilities', {
       me.getContent().getEl().unmask();
       if (Ext.isObject(response) && response.success) {
         me.getStore('Capability').load();
-        NX.Messages.add({
-          text: NX.I18n.format('Capabilities_Enable_Text', description),
-          type: 'success'
-        });
+        NX.Messages.success(NX.I18n.format('Capabilities_Enable_Text', description));
       }
     });
   },
@@ -450,10 +438,7 @@ Ext.define('NX.coreui.controller.Capabilities', {
       me.getContent().getEl().unmask();
       if (Ext.isObject(response) && response.success) {
         me.getStore('Capability').load();
-        NX.Messages.add({
-          text: NX.I18n.format('Capabilities_Disable_Text', description),
-          type: 'success'
-        });
+        NX.Messages.success(NX.I18n.format('Capabilities_Disable_Text', description));
       }
     });
   },

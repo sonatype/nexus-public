@@ -103,7 +103,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     AnalyzeApplicationWindow_Cancel_Button: 'Cancel',
     AnalyzeApplicationWindow_Form_Html: '<p>Application analysis performs a deep inspection of this application, ' +
         'identifying potential risks.  More information is available ' +
-        '<a href="http://links.sonatype.com/products/insight/ac/home" target="_blank" class="x-link">here</a>.</p>',
+        '<a href="http://links.sonatype.com/products/insight/ac/home" target="_blank" rel="noopener" class="x-link">here</a>.</p>',
     AnalyzeApplicationWindow_Loading_Mask: 'Loading',
     AnalyzeApplicationWindow_No_Assets_Error_Title: 'Component has no application assets',
     AnalyzeApplicationWindow_No_Assets_Error_Message: 'This component has no application assets or you do not have read permission for any of it\'s application assets',
@@ -292,7 +292,14 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_RepositoryList_Status_Header: 'Status',
     Repository_RepositoryList_URL_Header: 'URL',
     Repository_RepositoryList_Filter_EmptyText: 'No repositories matched "$filter"',
-    Repository_RepositoryList_EmptyText: 'No repositories defined',
+    Repository_RepositoryList_EmptyText: '<div class="summary">There are no repositories created yet<br>' +
+        '<span style="font-weight: lighter; font-size: small;">or you don\'t have permission to browse them</span></div>' +
+        '<div class="panel nx-subsection"><h3 class="title"><span class="icon"></span>What is a repository?</h3>' +
+        '<p>A repository is a storage location where components, such as packages, libraries, binaries, and containers, ' +
+        'are retrieved so they can be installed or used. Creating and managing repositories is an essential part of ' +
+        'your Nexus Repository Manager configuration since it allows you to expose content to your end users as well ' +
+        'as provide a location for them to store more content. For more information, check ' +
+        '<a href="http://links.sonatype.com/products/nxrm3/docs/repository" target="_blank" rel="noopener noreferrer">the documentation</a>.</p></div>',
     Repository_RepositoryFeature_Delete_Button: 'Delete repository',
     Repository_RepositoryFeature_RebuildIndex_Button: 'Rebuild index',
     Repository_RepositoryFeature_HealthCheckDisable_Button: 'Disable HealthCheck',
@@ -307,9 +314,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_DockerHostedFacet_V1_Enabled_Help: 'Allow clients to use the V1 API to interact with this repository',
     Repository_Facet_DockerConnectorFacet_Title: 'Repository Connectors',
     Repository_Facet_DockerConnectorFacet_Help: '<em>Connectors allow Docker clients to connect directly ' +
-        'to hosted registries, but are not always required. Consult our <a href="https://links.sonatype.com/products/nexus/docker-ssl-connector/docs" target="_blank">documentation</a>' +
+        'to hosted registries, but are not always required. Consult our ' +
+        '<a href="https://links.sonatype.com/products/nexus/docker-ssl-connector/docs" target="_blank" rel="noopener">documentation</a>' +
         ' for which connector is appropriate for your use case. For information on scaling the repositories' +
-        ' see our <a href="https://links.sonatype.com/products/nexus/docker-scaling-repositories/docs" target="_blank">scaling documentation</a>.</em>',
+        ' see our <a href="https://links.sonatype.com/products/nexus/docker-scaling-repositories/docs" target="_blank" rel="noopener">scaling documentation</a>.</em>',
     Repository_Facet_DockerConnectorFacet_HttpPort_FieldLabel: 'HTTP',
     Repository_Facet_DockerConnectorFacet_HttpPort_HelpText: 'Create an HTTP connector at specified port. Normally used if the server is behind a secure proxy.',
     Repository_Facet_DockerConnectorFacet_HttpsPort_FieldLabel: 'HTTPS',
@@ -446,7 +454,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     HealthCheckRepositoryColumn_Analyze_Tooltip: '<span><h2>Repository Health Check Analysis</h2>Click this button to request a Repository Health Check (RHC) ' +
         'by IQ Server.  The process is non-invasive and non-disruptive. IQ Server ' +
         'will return actionable quality and security information about the open source components in the repository.' +
-        '<br><br><a href="http://links.sonatype.com/products/clm/rhc/home" ' +
+        '<br><br><a href="http://links.sonatype.com/products/clm/rhc/home" rel="noopener" ' +
         'target="_blank">How the IQ Server Repository Health Check can help you make better software faster</a></span>',
     HealthCheckRepositoryColumn_Analyze_Dialog_Title: 'Analyze Repository',
     HealthCheckRepositoryColumn_Analyze_Dialog_Msg: 'Do you want to analyze the repository {0} and others for security vulnerabilities and license issues?',
@@ -457,10 +465,11 @@ Ext.define('NX.coreui.app.PluginStrings', {
     HealthCheckRepositoryColumn_Loading: 'Loading&hellip;',
     HealthCheckRepositoryColumn_Unavailable_Tooltip: '<span><h2>Repository Health Check Unavailable</h2>A Repository Health Check (RHC) ' +
         'cannot be performed on this repository, because it is an unsupported type or out of service.<br><br>' +
-        '<a href="http://links.sonatype.com/products/clm/rhc/home" ' +
+        '<a href="http://links.sonatype.com/products/clm/rhc/home" rel="noopener" ' +
         'target="_blank">How the IQ Server Repository Health Check can help you make better software faster</a></span>',
 
-    HealthCheckSummary_Help: '<a href="http://links.sonatype.com/products/nexus/rhc/manual-remediation-with-rhc" target="_blank">What should I do with this report?</a>',
+    HealthCheckSummary_Help: '<a href="http://links.sonatype.com/products/nexus/rhc/manual-remediation-with-rhc" target="_blank"' +
+        ' rel="noopener">What should I do with this report?</a>',
 
     // Admin -> Repository -> Blob Stores
     Blobstores_Text: 'Blob Stores',
@@ -480,7 +489,14 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Blobstore_BlobstoreList_TotalSize_Header: 'Total size',
     Blobstore_BlobstoreList_AvailableSpace_Header: 'Available space',
     Blobstore_BlobstoreList_Filter_EmptyText: 'No blob stores matched "$filter"',
-    Blobstore_BlobstoreList_EmptyText: 'No blob stores defined',
+    Blobstore_BlobstoreList_EmptyText: '<div class="summary">There are no blob stores created yet<br>' +
+        '<span style="font-weight: lighter; font-size: small;">or you don\'t have permission to browse them</span></div>' +
+        '<div class="panel nx-subsection"><h3 class="title"><span class="icon"></span>What is a blob store?</h3>' +
+        '<p>The binary assets you download via proxy repositories, or publish to hosted repositories, are stored in ' +
+        'the blob store attached to those repositories. In traditional, single node NXRM deployments, blob stores ' +
+        'are typically associated with a local filesystem directory, usually within the sonatype-work directory. ' +
+        'For more information, check <a href="http://links.sonatype.com/products/nxrm3/docs/blob-store" ' +
+        'target="_blank" rel="noopener noreferrer">the documentation</a>.</p></div>',
     Blobstore_BlobstoreFeature_Delete_Button: 'Delete blob store',
     Blobstore_BlobstoreFeature_Delete_Disabled_Message: 'This blob store is in use by {0} and {1} and cannot be deleted',
     Blobstore_BlobstoreFeature_Editing_Enabled_Message: 'Updating blob store configuration will cause it to be temporarily unavailable for a short period. Edits to configuration may also leave the blob store in a non-functional state. Use caution when changing values.',
@@ -540,7 +556,13 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Selector_SelectorList_Name_Header: 'Name',
     Selector_SelectorList_Type_Header: 'Type',
     Selector_SelectorList_Description_Header: 'Description',
-    Selector_SelectorList_EmptyText: 'No selectors defined',
+    Selector_SelectorList_EmptyText: '<div class="summary">There are no content selectors created yet<br>' +
+        '<span style="font-weight: lighter; font-size: small;">or you don\'t have permission to browse them</span></div>' +
+        '<div class="panel nx-subsection"><h3 class="title"><span class="icon"></span>What is a content selector?</h3>' +
+        '<p>Content selectors provide a means for you to select specific content from all of your content. The ' +
+        'content you select is evaluated against expressions written in CSEL (Content Selector Expression Language). ' +
+        'For more information, check <a href="http://links.sonatype.com/products/nxrm3/docs/content-selector" ' +
+        'target="_blank" rel="noopener noreferrer">the documentation</a>.</p></div>',
     Selector_SelectorList_Filter_EmptyText: 'No selectors matched "$filter"',
     Selector_SelectorFeature_Delete_Button: 'Delete selector',
     Selector_SelectorFeature_Delete_Disabled_Message: 'This selector cannot be deleted because it is in use by {0}',
@@ -558,14 +580,14 @@ Ext.define('NX.coreui.app.PluginStrings', {
         '<p>Select all "raw" format content<br/><i>format == "raw"</i></p>' +
         '<p>Select all "maven2" content along a path that starts with "/org/sonatype/nexus"<br/><i>format == "maven2" and path =^ "/org/sonatype/nexus"</i></p>' +
         '<br/>' +
-        '<p>See the <a href="http://links.sonatype.com/products/nexus/selectors/docs" target="_blank">Nexus documentation</a> for more details</p>' +
+        '<p>See the <a href="http://links.sonatype.com/products/nexus/selectors/docs" target="_blank" rel="noopener">Nexus documentation</a> for more details</p>' +
         '</div>',
     Selector_SelectorSettingsForm_Expression_Examples_jexl: '<div style="font-size: 11px"><br/>' +
-        '<h4>Example <a href="http://links.sonatype.com/products/nexus/jexl" target="_blank">JEXL</a> queries:</h4>' +
+        '<h4>Example <a href="http://links.sonatype.com/products/nexus/jexl" target="_blank" rel="noopener">JEXL</a> queries:</h4>' +
         '<p>Select all "raw" format content<br/><i>format == "raw"</i></p>' +
         '<p>Select all "maven2" content along a path that starts with "/org/sonatype/nexus"<br/><i>format == "maven2" and path =^ "/org/sonatype/nexus"</i></p>' +
         '<br/>' +
-        '<p>See the <a href="http://links.sonatype.com/products/nexus/selectors/docs" target="_blank">Nexus documentation</a> for more details</p>' +
+        '<p>See the <a href="http://links.sonatype.com/products/nexus/selectors/docs" target="_blank" rel="noopener">Nexus documentation</a> for more details</p>' +
         '</div>',
     Selector_SelectorSettingsForm_SelectorID_Title: 'Selector ID',
     Selector_SelectorSettingsForm_Specification_Title: 'Specification',
@@ -746,7 +768,14 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Ldap_LdapServerList_Name_Header: 'Name',
     Ldap_LdapServerList_URL_Header: 'URL',
     Ldap_LdapServerList_Filter_EmptyText: 'No LDAP servers matched "$filter"',
-    Ldap_LdapServerList_EmptyText: 'No LDAP servers defined',
+    Ldap_LdapServerList_EmptyText: '<div class="summary">There are no LDAP servers defined yet<br>' +
+        '<span style="font-weight: lighter; font-size: small;">or you don\'t have permission to browse them</span></div>' +
+        '<div class="panel nx-subsection"><h3 class="title"><span class="icon"></span>What is LDAP?</h3>' +
+        '<p>You can configure your NXRM instance to use LDAP for authentication and user role mapping. The repository ' +
+        'manager can cache authentication information and supports multiple LDAP servers and user/group mappings ' +
+        'to take advantage of the central authentication set up across your organization in all your repository managers. ' +
+        'For more information check <a href="http://links.sonatype.com/products/nxrm3/docs/ldap" target="_blank" rel="noopener noreferrer">the ' +
+        'documentation</a>.</p></div>',
     Ldap_LdapServerFeature_Delete_Button: 'Delete connection',
     Ldap_LdapServerFeature_Connection_Title: 'Connection',
     Ldap_LdapServerFeature_UserAndGroup_Title: 'User and group',
@@ -765,7 +794,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     LdapServersConnectionFieldSet_Protocol_SecureItem: 'ldaps',
     LdapServersConnectionFieldSet_Host_EmptyText: 'Hostname',
     LdapServersConnectionFieldSet_Port_EmptyText: 'Port',
-    LdapServersConnectionFieldSet_Base_FieldLabel: 'Search base',
+    LdapServersConnectionFieldSet_Base_FieldLabel: 'Search base DN',
     LdapServersConnectionFieldSet_Base_HelpText: 'LDAP location to be added to the connection URL (e.g. "dc=example,dc=com")',
     LdapServersConnectionFieldSet_AuthMethod_FieldLabel: 'Authentication method',
     LdapServersConnectionFieldSet_AuthMethod_EmptyText: 'Select an authentication method',
@@ -778,7 +807,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     LdapServersConnectionFieldSet_Username_FieldLabel: 'Username or DN',
     LdapServersConnectionFieldSet_Username_HelpText: 'This must be a fully qualified username if simple authentication is used',
     LdapServersConnectionFieldSet_Password_FieldLabel: 'Password',
-    LdapServersConnectionFieldSet_Password_HelpText: 'The password to bind with.',
+    LdapServersConnectionFieldSet_Password_HelpText: 'The password to bind with',
     LdapServersConnectionFieldSet_Rules_Text: 'Connection rules',
     LdapServersConnectionFieldSet_Rules_HelpText: 'Set timeout parameters and max connection attempts to avoid being blacklisted',
     LdapServersConnectionFieldSet_Rules_Text1: 'Wait ',
@@ -788,8 +817,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Ldap_LdapServerConnectionForm_VerifyConnection_Button: 'Verify connection',
     Ldap_LdapServerUserAndGroupFieldSet_Template_FieldLabel: 'Configuration template',
     Ldap_LdapServerUserAndGroupFieldSet_Template_EmptyText: 'Select a template',
-    Ldap_LdapServerUserAndGroupFieldSet_BaseDN_FieldLabel: 'Base DN',
-    Ldap_LdapServerUserAndGroupFieldSet_BaseDN_HelpText: 'The base location in LDAP that users are found. This is relative to the search base (e.g. ou=people).',
+    Ldap_LdapServerUserAndGroupFieldSet_BaseDN_FieldLabel: 'User relative DN',
+    Ldap_LdapServerUserAndGroupFieldSet_BaseDN_HelpText: 'The relative DN where user objects are found (e.g. ou=people). This value will have the Search base DN value appended to form the full User search base DN',
     Ldap_LdapServerUserAndGroupFieldSet_UserSubtree_FieldLabel: 'User subtree',
     Ldap_LdapServerUserAndGroupFieldSet_UserSubtree_HelpText: 'Are users located in structures below the user base DN?',
     Ldap_LdapServerUserAndGroupFieldSet_ObjectClass_FieldLabel: 'Object class',
@@ -806,8 +835,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Ldap_LdapServerUserAndGroupFieldSet_GroupType_EmptyText: 'Select a group type',
     Ldap_LdapServerUserAndGroupFieldSet_GroupType_DynamicItem: 'Dynamic Groups',
     Ldap_LdapServerUserAndGroupFieldSet_GroupType_StaticItem: 'Static Groups',
-    Ldap_LdapServerUserAndGroupFieldSet_GroupBaseDN_FieldLabel: 'Group base DN',
-    Ldap_LdapServerUserAndGroupFieldSet_GroupBaseDN_HelpText: 'The base location in the LDAP that groups are found. This is relative to the search base (e.g. ou=Group).',
+    Ldap_LdapServerUserAndGroupFieldSet_GroupBaseDN_FieldLabel: 'Group relative DN',
+    Ldap_LdapServerUserAndGroupFieldSet_GroupBaseDN_HelpText: 'The relative DN where group objects are found (e.g. ou=Group). This value will have the Search base DN value appended to form the full Group search base DN',
     Ldap_LdapServerUserAndGroupFieldSet_GroupSubtree_FieldLabel: 'Group subtree',
     Ldap_LdapServerUserAndGroupFieldSet_GroupSubtree_HelpText: 'Are groups located in structures below the group base DN.',
     Ldap_LdapServerUserAndGroupFieldSet_GroupObject_FieldLabel: 'Group object class',
@@ -847,7 +876,15 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Ssl_SslCertificateList_IssuedTo_Header: 'Issued to',
     Ssl_SslCertificateList_IssuedBy_Header: 'Issued by',
     Ssl_SslCertificateList_Fingerprint_Header: 'Fingerprint',
-    Ssl_SslCertificateList_EmptyText: 'No SSL certificates',
+    Ssl_SslCertificateList_EmptyText: '<div class="summary">There are no SSL certificates defined yet<br>' +
+        '<span style="font-weight: lighter; font-size: small;">or you don\'t have permission to browse them</span></div>' +
+        '<div class="panel nx-subsection"><h3 class="title"><span class="icon"></span>What is SSL?</h3>' +
+        '<p>Using Secure Socket Layer (SSL) communication with the repository manager is an important security ' +
+        'feature and a recommended best practice. Secure communication can be inbound or outbound. Outbound client ' +
+        'communication may include integration with: proxy repository, email servers, LDAPS servers. Inbound client ' +
+        'communication includes: web browser HTTPS access, tool access to repository content, usage of REST APIs. ' +
+        'For more information check <a href="http://links.sonatype.com/products/nxrm3/docs/ssl-certificate" target="_blank" rel="noopener noreferrer">the ' +
+        'documentation</a>.</p></div>',
     Ssl_SslCertificateList_Filter_EmptyText: 'No SSL certificates matched "$filter"',
     Ssl_SslCertificateDetailsWindow_Title: 'Certificate Details',
     SslCertificates_Remove_Button: 'Remove certificate from truststore',
@@ -1066,7 +1103,14 @@ Ext.define('NX.coreui.app.PluginStrings', {
     CleanupPolicy_CleanupPolicyList_Preview_Button: 'Preview results',
     CleanupPolicy_CleanupPolicyList_New_Button: 'Create Cleanup Policy',
     CleanupPolicy_CleanupPolicyList_Filter_EmptyState: 'No cleanup policies matched "$filter"',
-    CleanupPolicy_CleanupPolicyList_EmptyState: 'No cleanup policies defined',
+    CleanupPolicy_CleanupPolicyList_EmptyState: '<div class="summary">There are no cleanup policies created yet<br>' +
+        '<span style="font-weight: lighter; font-size: small;">or you don\'t have permission to browse them</span></div>' +
+        '<div class="panel nx-subsection"><h3 class="title"><span class="icon"></span>What is a cleanup policy?</h3>' +
+        '<p>Cleanup policies can be used to remove content from your repositories. These policies will execute at ' +
+        'the configured frequency. Once created, a cleanup policy must be assigned to a repository from ' +
+        '<a href="#admin/repository/repositories">the repository configuration screen</a>. For more information, ' +
+        'check <a href="http://links.sonatype.com/products/nxrm3/docs/cleanup-policy" target="_blank" rel="noopener noreferrer">the ' +
+        'documentation</a>.</p></div>',
     CleanupPolicy_CleanupPolicyList_Name_Header: 'Name',
     CleanupPolicy_CleanupPolicyList_Format_Header: 'Format',
     CleanupPolicy_CleanupPolicyList_Notes_Header: 'Notes',
@@ -1223,7 +1267,14 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Task_TaskList_NextRun_Header: 'Next run',
     Task_TaskList_LastRun_Header: 'Last run',
     Task_TaskList_LastResult_Header: 'Last result',
-    Task_TaskList_EmptyState: 'No scheduled tasks defined',
+    Task_TaskList_EmptyState: '<div class="summary">There are no scheduled tasks defined yet<br>' +
+        '<span style="font-weight: lighter; font-size: small;">or you don\'t have permission to browse them</span></div>' +
+        '<div class="panel nx-subsection"><h3 class="title"><span class="icon"></span>What is a scheduled task?</h3>' +
+        '<p>The repository manager allows you to schedule the execution of maintenance tasks. The tasks can ' +
+        'carry out regular maintenance steps that will be applied to all repositories or to specific repositories ' +
+        'on a configurable schedule or simply perform other system maintenance. For more information, ' +
+        'check <a href="http://links.sonatype.com/products/nxrm3/docs/scheduled-task" target="_blank" rel="noopener noreferrer">the ' +
+        'documentation</a>.</p></div>',
     Task_TaskList_Filter_EmptyState: 'No scheduled tasks matched "$filter"',
     Task_TaskFeature_Delete_Button: 'Delete task',
     Tasks_Delete_Success: 'Task deleted: {0}',
@@ -1366,7 +1417,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Clm_Dashboard_Link_Text: '<span class="x-fa fa-dashboard"></span>IQ Server Dashboard<span class="x-fa fa-external-link"></span>',
     Clm_Dashboard_Description: 'Open IQ Server Dashboard',
     Clm_Dashboard_Disabled_Tooltip: 'IQ Server must be enabled first',
-    ClmSettings_Html: '<p><a href="http://www.sonatype.com/nexus/product-overview/nexus-lifecycle" target="_blank">IQ Server</a> ' +
+    ClmSettings_Html: '<p><a href="http://www.sonatype.com/nexus/product-overview/nexus-lifecycle" target="_blank" rel="noopener">IQ Server</a> ' +
         'can evaluate application and organization policies.</p>' +
         '<p>To enable this feature configure the IQ Server URL, username and password.</p>',
 
@@ -1413,7 +1464,13 @@ Ext.define('NX.coreui.app.PluginStrings', {
     RoutingRules_Matchers_Description: 'Regular expressions used to identify request paths that are allowed or blocked (depending on above mode)',
     RoutingRules_Matchers_Add_Button: 'Add another matcher',
     RoutingRules_Matchers_Remove_Button: 'Remove matcher',
-    RoutingRules_List_EmptyText: 'No Routing Rules defined',
+    RoutingRules_List_EmptyText: '<div class="summary">There are no routing rules created yet<br>' +
+        '<span style="font-weight: lighter; font-size: small;">or you don\'t have permission to browse them</span></div>' +
+        '<div class="panel nx-subsection"><h3 class="title"><span class="icon"></span>What is a routing rule?</h3>' +
+        '<p>Routes are like filters you can apply to groups in terms of security access and general component ' +
+        'retrieval, and can reduce the number of repositories within a group accessed in order to retrieve an ' +
+        'component. For more information, check <a href="http://links.sonatype.com/products/nxrm3/docs/routing-rule" ' +
+        'target="_blank" rel="noopener noreferrer">the documentation</a>.</p></div>',
     RoutingRules_List_Filter_EmptyText: 'Filter',
     RoutingRules_Create_Button: 'Create Routing Rule',
     RoutingRules_GlobalRoutingPreview_Button: 'Global Routing Preview',

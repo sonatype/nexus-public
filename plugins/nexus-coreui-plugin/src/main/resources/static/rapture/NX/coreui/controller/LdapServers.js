@@ -272,11 +272,8 @@ Ext.define('NX.coreui.controller.LdapServers', {
       me.getContent().getEl().unmask();
       if (Ext.isObject(response)) {
         if (response.success) {
-          NX.Messages.add({
-            text: NX.I18n.format('LdapServers_Update_Success',
-              me.getDescription(me.getLdapServerModel().create(response.data))),
-            type: 'success'
-          });
+          NX.Messages.success(NX.I18n.format('LdapServers_Update_Success',
+              me.getDescription(me.getLdapServerModel().create(response.data))));
           me.getStore('LdapServer').load();
         }
       }
@@ -301,11 +298,8 @@ Ext.define('NX.coreui.controller.LdapServers', {
       me.getContent().getEl().unmask();
       if (Ext.isObject(response)) {
         if (response.success) {
-          NX.Messages.add({
-            text: NX.I18n.format('LdapServers_Create_Success',
-              me.getDescription(me.getLdapServerModel().create(response.data))),
-            type: 'success'
-          });
+          NX.Messages.success(NX.I18n.format('LdapServers_Create_Success',
+              me.getDescription(me.getLdapServerModel().create(response.data))));
           me.getStore('LdapServer').load();
         }
       }
@@ -364,7 +358,7 @@ Ext.define('NX.coreui.controller.LdapServers', {
     NX.direct.ldap_LdapServer.remove(model.getId(), function(response) {
       me.getStore('LdapServer').load();
       if (Ext.isObject(response) && response.success) {
-        NX.Messages.add({ text: NX.I18n.format('LdapServers_Delete_Success', description), type: 'success' });
+        NX.Messages.success(NX.I18n.format('LdapServers_Delete_Success', description));
       }
     });
   },
@@ -381,7 +375,7 @@ Ext.define('NX.coreui.controller.LdapServers', {
     NX.direct.ldap_LdapServer.changeOrder(order, function(response) {
       if (Ext.isObject(response) && response.success) {
         win.close();
-        NX.Messages.add({ text: NX.I18n.get('LdapServers_ChangeOrder_Success'), type: 'success' });
+        NX.Messages.success(NX.I18n.get('LdapServers_ChangeOrder_Success'));
         me.getStore('LdapServer').load();
       }
     });
@@ -394,7 +388,7 @@ Ext.define('NX.coreui.controller.LdapServers', {
   clearCache: function(button) {
     NX.direct.ldap_LdapServer.clearCache(function(response) {
       if (Ext.isObject(response) && response.success) {
-        NX.Messages.add({ text: NX.I18n.get('LdapServers_ClearCache_Success'), type: 'success' });
+        NX.Messages.success(NX.I18n.get('LdapServers_ClearCache_Success'));
       }
     });
   },
@@ -413,7 +407,7 @@ Ext.define('NX.coreui.controller.LdapServers', {
     NX.direct.ldap_LdapServer.verifyConnection(values, function(response) {
       form.getEl().unmask();
       if (Ext.isObject(response) && response.success) {
-        NX.Messages.add({ text: NX.I18n.format('LdapServers_VerifyConnection_Success', url), type: 'success' });
+        NX.Messages.success(NX.I18n.format('LdapServers_VerifyConnection_Success', url));
       }
     });
   },
@@ -432,7 +426,7 @@ Ext.define('NX.coreui.controller.LdapServers', {
     NX.direct.ldap_LdapServer.verifyUserMapping(values, function(response) {
       me.getMain().getEl().unmask();
       if (Ext.isObject(response) && response.success) {
-        NX.Messages.add({text: NX.I18n.format('LdapServers_VerifyMapping_Success', url), type: 'success'});
+        NX.Messages.success(NX.I18n.format('LdapServers_VerifyMapping_Success', url));
         Ext.widget('nx-coreui-ldapserver-userandgroup-testresults', {mappedUsers: response.data});
       }
     });
@@ -464,7 +458,7 @@ Ext.define('NX.coreui.controller.LdapServers', {
       form.getEl().unmask();
       if (Ext.isObject(response) && response.success) {
         win.close();
-        NX.Messages.add({ text: NX.I18n.format('LdapServers_VerifyLogin_Success', url), type: 'success' });
+        NX.Messages.success(NX.I18n.format('LdapServers_VerifyLogin_Success', url));
       }
     });
   },

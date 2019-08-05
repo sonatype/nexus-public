@@ -110,11 +110,11 @@ Ext.define('NX.controller.User', {
     var me = this;
 
     if (user && !oldUser) {
-      NX.Messages.add({text: NX.I18n.format('User_SignedIn_Message', user.id), type: 'default'});
+      NX.Messages.info(NX.I18n.format('User_SignedIn_Message', user.id));
       me.fireEvent('signin', user);
     }
     else if (!user && oldUser) {
-      NX.Messages.add({text: NX.I18n.get('User_SignedOut_Message'), type: 'default'});
+      NX.Messages.info(NX.I18n.get('User_SignedOut_Message'));
       me.fireEvent('signout');
     }
 
@@ -331,10 +331,7 @@ Ext.define('NX.controller.User', {
           message = NX.I18n.get('User_ConnectFailure_Message');
         }
         win.getEl().unmask();
-        NX.Messages.add({
-          text: message,
-          type: 'warning'
-        });
+        NX.Messages.warning(message);
       }
     });
   },

@@ -309,9 +309,8 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
   },
 
   browseNodesLoaded: function(store, node, records) {
-    var message = { type: 'warning', text: NX.I18n.get('Component_Asset_Tree_Results_Warning')};
-    if (records && records.length === NX.State.getValue('browseTreeMaxNodes') && !NX.Messages.messageExists(message)) {
-      NX.Messages.add(message);
+    if (records && records.length === NX.State.getValue('browseTreeMaxNodes')) {
+      NX.Messages.warning(NX.I18n.get('Component_Asset_Tree_Results_Warning'));
     }
   },
 
@@ -675,7 +674,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
                 me.removeNodeFromTree(node);
               }
             });
-            NX.Messages.add({text: NX.I18n.format('ComponentDetails_Delete_Success', componentId), type: 'success'});
+            NX.Messages.success(NX.I18n.format('ComponentDetails_Delete_Success', componentId));
           }
         });
       });
@@ -705,7 +704,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
               selectedRecord.set('type', 'folder');
               selectedRecord.set('iconCls', me.mixins.componentUtils.getIconForAsset(selectedRecord).get('cls'));
             }
-            NX.Messages.add({text: NX.I18n.format('AssetInfo_Delete_Success', asset.get('name')), type: 'success'});
+            NX.Messages.success(NX.I18n.format('AssetInfo_Delete_Success', asset.get('name')));
           }
         });
       });
@@ -729,7 +728,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
             NX.direct.coreui_Component.deleteFolder(model.path, model.repositoryName,
                 function(response) {
                   if (Ext.isObject(response) && response.success) {
-                    NX.Messages.add({text: NX.I18n.format('FolderInfo_Delete_Success'), type: 'success'});
+                    NX.Messages.success(NX.I18n.format('FolderInfo_Delete_Success'));
                   }
                 });
           });
@@ -752,7 +751,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
             NX.direct.coreui_Component.deleteFolder(asset.get('name'), asset.get('repositoryName'),
                 function(response) {
                   if (Ext.isObject(response) && response.success) {
-                    NX.Messages.add({text: NX.I18n.format('FolderInfo_Delete_Success'), type: 'success'});
+                    NX.Messages.success(NX.I18n.format('FolderInfo_Delete_Success'));
                   }
                 });
           });
@@ -787,7 +786,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
           formValues.proprietaryPackages, formValues.reportLabel, function (response) {
             if (Ext.isObject(response) && response.success) {
               win.close();
-              NX.Messages.add({text: NX.I18n.get('ComponentDetails_Analyze_Success'), type: 'success'});
+              NX.Messages.success(NX.I18n.get('ComponentDetails_Analyze_Success'));
             }
           });
     }

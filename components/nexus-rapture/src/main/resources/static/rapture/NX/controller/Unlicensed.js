@@ -57,7 +57,7 @@ Ext.define('NX.controller.Unlicensed', {
    * Show a message and force navigation to the Licensing page, preventing all other navigation in the UI.
    */
   forceLicensing: function () {
-    NX.Messages.add({text: NX.I18n.get('State_License_Invalid_Message'), type: 'danger'});
+    NX.Messages.error(NX.I18n.get('State_License_Invalid_Message'));
     NX.Bookmarks.navigateTo(NX.Bookmarks.fromToken('admin/system/licensing'));
   }
 

@@ -67,10 +67,10 @@ Ext.define('NX.coreui.view.repository.RepositoryListTemplate', {
           'Offline',
           '</tpl>',
           '<tpl if="status.description">',
-          ' - {status.description}',
+          ' - {status.description:htmlEncode}',
           '</tpl>',
           '<tpl if="status.reason">',
-          '<br/><i>{status.reason}</i>',
+          '<br/><i>{status.reason:htmlEncode}</i>',
           '</tpl>')
       },
       {

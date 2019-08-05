@@ -93,7 +93,7 @@ Ext.define('NX.util.DownloadHelper', {
 
     // open new window in hidden download-from to initiate download
     if (NX.Windows.open(url, me.windowName) !== null) {
-      NX.Messages.add({text: NX.I18n.get('Util_DownloadHelper_Download_Message'), type: 'success'});
+      NX.Messages.success(NX.I18n.get('Util_DownloadHelper_Download_Message'));
     }
   }
 });

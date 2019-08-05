@@ -231,11 +231,8 @@ Ext.define('NX.coreui.controller.Blobstores', {
         me.getContent().getEl().unmask();
         if (Ext.isObject(response)) {
           if (response.success) {
-            NX.Messages.add({
-              text: NX.I18n.format('Blobstores_Update_Success',
-                  me.getDescription(me.getBlobstoreModel().create(response.data))),
-              type: 'success'
-            });
+            NX.Messages.success(NX.I18n.format('Blobstores_Update_Success',
+                  me.getDescription(me.getBlobstoreModel().create(response.data))));
             me.getStore('Blobstore').load();
           }
           else if (Ext.isDefined(response.errors)) {
@@ -258,7 +255,7 @@ Ext.define('NX.coreui.controller.Blobstores', {
       me.getContent().getEl().unmask();
       me.getStore('Blobstore').load();
       if (Ext.isObject(response) && response.success) {
-        NX.Messages.add({ text: 'Blobstore deleted: ' + description, type: 'success' });
+        NX.Messages.success('Blobstore deleted: ' + description);
       }
     });
   },
@@ -272,10 +269,7 @@ Ext.define('NX.coreui.controller.Blobstores', {
         model = me.getList().getSelectionModel().getLastSelected();
     NX.direct.coreui_Blobstore.promoteToGroup(model.get('name'), function (response) {
       if (Ext.isObject(response) && response.success) {
-        NX.Messages.add({
-          text: NX.I18n.format('Blobstore_BlobstoreFeature_Promote_Success', response.data.name),
-          type: 'success'
-        });
+        NX.Messages.success(NX.I18n.format('Blobstore_BlobstoreFeature_Promote_Success', response.data.name));
         me.getStore('Blobstore').load();
         button.disable();
       }

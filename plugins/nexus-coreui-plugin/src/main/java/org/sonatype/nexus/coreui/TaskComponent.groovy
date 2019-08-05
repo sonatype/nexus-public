@@ -12,6 +12,10 @@
  */
 package org.sonatype.nexus.coreui
 
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Provider
@@ -52,6 +56,8 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication
 import org.apache.shiro.authz.annotation.RequiresPermissions
 import org.hibernate.validator.constraints.NotEmpty
 
+import static org.sonatype.nexus.repository.date.TimeZoneUtils.shiftWeekDay
+import static org.sonatype.nexus.repository.date.TimeZoneUtils.shiftMonthDay
 import static org.sonatype.nexus.scheduling.TaskState.CANCELED
 import static org.sonatype.nexus.scheduling.TaskState.FAILED
 import static org.sonatype.nexus.scheduling.TaskState.INTERRUPTED
@@ -401,13 +407,17 @@ class TaskComponent
   @PackageScope
   Schedule asSchedule(final TaskXO taskXO) {
     if (taskXO.schedule == 'advanced') {
+      ZoneOffset clientZoneOffset = ZoneOffset.of(taskXO.timeZoneOffset)
       validatorProvider.get().validate(taskXO, TaskXO.AdvancedSchedule)
-      return scheduler.getScheduleFactory().cron(new Date(), taskXO.cronExpression)
+      return scheduler.getScheduleFactory().cron(new Date(), taskXO.cronExpression, clientZoneOffset.id)
     }
     if (taskXO.schedule != 'manual') {
       if (!taskXO.startDate) {
         validatorProvider.get().validate(taskXO, TaskXO.OnceToMonthlySchedule)
       }
+      ZoneOffset clientZoneOffset = ZoneOffset.of(taskXO.timeZoneOffset)
+      LocalDateTime startDateClient = LocalDateTime.ofInstant(taskXO.startDate.toInstant(), ZoneId.of(clientZoneOffset.id))
+      LocalDateTime startDateServer = LocalDateTime.ofInstant(taskXO.startDate.toInstant(), ZoneId.systemDefault())
       def date = Calendar.instance
       date.setTimeInMillis(taskXO.startDate.time)
       date.set(Calendar.SECOND, 0)
@@ -424,11 +434,13 @@ class TaskComponent
           return scheduler.getScheduleFactory().daily(date.time)
 
         case 'weekly':
-          return scheduler.getScheduleFactory().weekly(date.time, taskXO.recurringDays.collect { Weekday.values()[it - 1] } as Set<Weekday>)
+          return scheduler.getScheduleFactory().weekly(date.time, taskXO.recurringDays.
+              collect { Weekday.values()[shiftWeekDay(it - 1, startDateClient, startDateServer)] } as Set<Weekday>)
 
         case 'monthly':
           return scheduler.getScheduleFactory().monthly(date.time, taskXO.recurringDays.
-              collect { it == 999 ? CalendarDay.lastDay() : CalendarDay.day(it) } as Set<CalendarDay>)
+              collect { it == 999 ? CalendarDay.lastDay() : CalendarDay.
+                  day(shiftMonthDay(it, startDateClient, startDateServer)) } as Set<CalendarDay>)
       }
     }
     return scheduler.getScheduleFactory().manual()

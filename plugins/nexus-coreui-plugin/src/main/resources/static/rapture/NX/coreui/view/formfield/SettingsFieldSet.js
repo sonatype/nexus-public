@@ -214,7 +214,7 @@ Ext.define('NX.coreui.view.formfield.SettingsFieldSet', {
     }
 
     if (remainingMessages.length > 0) {
-      NX.Messages.add({ text: remainingMessages.join('\n'), type: 'warning' });
+      NX.Messages.warning(remainingMessages.join('\n'));
     }
   }
 

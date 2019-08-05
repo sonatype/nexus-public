@@ -266,11 +266,8 @@ Ext.define('NX.coreui.controller.Privileges', {
     NX.direct.coreui_Privilege.create(values, function(response) {
       if (Ext.isObject(response)) {
         if (response.success) {
-          NX.Messages.add({
-            text: NX.I18n.format('Privileges_Create_Success',
-                me.getDescription(me.getPrivilegeModel().create(response.data))),
-            type: 'success'
-          });
+          NX.Messages.success(NX.I18n.format('Privileges_Create_Success',
+                me.getDescription(me.getPrivilegeModel().create(response.data))));
           me.getStore('Privilege').load();
         }
         else if (Ext.isDefined(response.errors)) {
@@ -294,11 +291,8 @@ Ext.define('NX.coreui.controller.Privileges', {
       me.getContent().getEl().unmask();
       if (Ext.isObject(response)) {
         if (response.success) {
-          NX.Messages.add({
-            text: NX.I18n.format('Privileges_Update_Success',
-                me.getDescription(me.getPrivilegeModel().create(response.data))),
-            type: 'success'
-          });
+          NX.Messages.success(NX.I18n.format('Privileges_Update_Success',
+                me.getDescription(me.getPrivilegeModel().create(response.data))));
           form.fireEvent('submitted', form);
           me.getStore('Privilege').load();
         }
@@ -320,10 +314,7 @@ Ext.define('NX.coreui.controller.Privileges', {
     NX.direct.coreui_Privilege.remove(model.getId(), function (response) {
       me.getStore('Privilege').load();
       if (Ext.isObject(response) && response.success) {
-        NX.Messages.add({
-          text: NX.I18n.format('Privileges_Delete_Success', model.get('name')),
-          type: 'success'
-        });
+        NX.Messages.success(NX.I18n.format('Privileges_Delete_Success', model.get('name')));
       }
     });
   },

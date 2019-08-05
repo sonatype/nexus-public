@@ -58,6 +58,12 @@ Ext.define('NX.view.header.Help', {
         action: 'kb'
       },
       {
+        text: NX.I18n.get('Header_Help_Guides_Text'),
+        iconCls: 'nx-icon-help-guides-x16',
+        tooltip: NX.I18n.get('Header_Help_Guides_Tooltip'),
+        action: 'guides'
+      },
+      {
         text: NX.I18n.get('Header_Help_Community_Text'),
         iconCls: 'nx-icon-help-community-x16',
         tooltip: NX.I18n.get('Header_Help_Community_Tooltip'),

@@ -221,11 +221,8 @@ Ext.define('NX.coreui.controller.Datastores', {
         me.getContent().getEl().unmask();
         if (Ext.isObject(response)) {
           if (response.success) {
-            NX.Messages.add({
-              text: NX.I18n.format('Datastores_Update_Success',
-                  me.getDescription(me.getDatastoreModel().create(response.data))),
-              type: 'success'
-            });
+            NX.Messages.success(NX.I18n.format('Datastores_Update_Success',
+                  me.getDescription(me.getDatastoreModel().create(response.data))));
             me.getStore('Datastore').load();
           }
           else if (Ext.isDefined(response.errors)) {
@@ -248,7 +245,7 @@ Ext.define('NX.coreui.controller.Datastores', {
       me.getContent().getEl().unmask();
       me.getStore('Datastore').load();
       if (Ext.isObject(response) && response.success) {
-        NX.Messages.add({ text: NX.I18n.format('Datastores_Delete_Success', description), type: 'success' });
+        NX.Messages.success(NX.I18n.format('Datastores_Delete_Success', description));
       }
     });
   }

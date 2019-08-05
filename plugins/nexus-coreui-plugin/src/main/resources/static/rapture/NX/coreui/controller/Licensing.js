@@ -96,7 +96,7 @@ Ext.define('NX.coreui.controller.Licensing', {
         authToken: authToken
       },
       success: function () {
-        NX.Messages.add({ text: NX.I18n.get('Licensing_Install_Success'), type: 'success' });
+        NX.Messages.success(NX.I18n.get('Licensing_Install_Success'));
         me.getPanel().down('nx-settingsform').load(); //reload to pick up server changes
         me.getPanel().down('nx-settingsform').show();
       }

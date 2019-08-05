@@ -116,7 +116,7 @@ Ext.define('NX.coreui.controller.Log', {
       me.getContent().getEl().unmask();
       if (Ext.isObject(response)) {
         if (response.success) {
-          NX.Messages.add({ text: form.settingsFormSuccessMessage, type: 'success' });
+          NX.Messages.success(form.settingsFormSuccessMessage);
           me.retrieveLog();
           win.close();
         }

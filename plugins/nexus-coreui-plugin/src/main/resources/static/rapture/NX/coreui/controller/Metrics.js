@@ -113,7 +113,7 @@ Ext.define('NX.coreui.controller.Metrics', {
       },
 
       failure: function (response) {
-        NX.Messages.add({ type: 'warning', text: NX.I18n.get('Metrics_Refresh_Warning') });
+        NX.Messages.warning(NX.I18n.get('Metrics_Refresh_Warning'));
       },
 
       success: function (response) {

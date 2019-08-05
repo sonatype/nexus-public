@@ -69,6 +69,8 @@ Ext.define('NX.app.PluginStrings', {
     Header_Help_Documentation_Tooltip: 'Product documentation',
     Header_Help_KB_Text: 'Knowledge base',
     Header_Help_KB_Tooltip: 'Knowledge base',
+    Header_Help_Guides_Text: 'Sonatype guides',
+    Header_Help_Guides_Tooltip: 'Sonatype guides',
     Header_Help_Community_Text: 'Community',
     Header_Help_Community_Tooltip: 'Community information',
     Header_Help_Issues_Text: 'Issue tracker',

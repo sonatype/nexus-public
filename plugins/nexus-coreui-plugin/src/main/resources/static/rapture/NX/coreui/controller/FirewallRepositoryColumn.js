@@ -245,7 +245,7 @@ Ext.define('NX.coreui.controller.FirewallRepositoryColumn', {
     var me = this;
     var statusModel = me.getFirewallRepositoryStatusStore().getById(repositoryModel.getId());
     if (statusModel && statusModel.get('reportUrl')) {
-      NX.Windows.open(statusModel.get('reportUrl'), '_blank');
+      NX.Windows.open(statusModel.get('reportUrl'), 'noopener,_blank');
     }
     return false;
   }

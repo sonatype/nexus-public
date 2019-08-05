@@ -134,7 +134,6 @@ Ext.define('NX.app.Application', {
     'Features',
     'Icon',
     'KeyNav',
-    'Message',
     'Permissions'
   ],
 
@@ -269,10 +268,7 @@ Ext.define('NX.app.Application', {
    * @private
    */
   handleError: function (error) {
-    NX.Messages.add({
-      type: 'danger',
-      text: this.errorAsString(error)
-    });
+    NX.Messages.error(this.errorAsString(error));
   },
 
   /**

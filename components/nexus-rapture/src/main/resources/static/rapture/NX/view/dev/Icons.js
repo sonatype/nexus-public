@@ -35,7 +35,7 @@ Ext.define('NX.view.dev.Icons', {
     { text: 'file', dataIndex: 'file' },
     { text: 'variant', dataIndex: 'variant', width: 50 },
     { text: 'size', xtype: 'templatecolumn', tpl: '{height}x{width}', width: 80 },
-    { text: 'url', xtype: 'templatecolumn', tpl: '<a href="{url}" target="_blank">{url}</a>', flex: 1 },
+    { text: 'url', xtype: 'templatecolumn', tpl: '<a href="{url}" target="_blank" rel="noopener">{url}</a>', flex: 1 },
     { text: 'img src', xtype: 'templatecolumn', tpl: '<img src="{url}"/>' },
     {
       xtype: 'nx-iconcolumn',

@@ -80,7 +80,12 @@ Ext.define('NX.controller.ExtDirect', {
     }
 
     if (message) {
-      NX.Messages.add({text: message, type: (result && result.success) ? 'warning' : 'danger'});
+      if ((result && result.success)) {
+        NX.Messages.warning(message);
+      }
+      else {
+        NX.Messages.error(message);
+      }
     }
 
     // HACK: disabled for now as this causes problems remoting LogEvents

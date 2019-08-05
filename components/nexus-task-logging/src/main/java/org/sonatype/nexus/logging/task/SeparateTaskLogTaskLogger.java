@@ -35,6 +35,8 @@ import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
 public class SeparateTaskLogTaskLogger
     extends ProgressTaskLogger
 {
+  protected static final String TASK_LOG_LOCATION_PREFIX = "Task log: ";
+
   private final TaskLogInfo taskLogInfo;
 
   private final String taskLogIdentifier;
@@ -58,10 +60,14 @@ public class SeparateTaskLogTaskLogger
     log.info(TASK_LOG_ONLY, " Description: {}", taskLogInfo.getMessage());
     log.debug(TASK_LOG_ONLY, "Task configuration: {}", taskLogInfo.toString());
 
+    writeLogFileNameToNexusLog();
+  }
+
+  protected void writeLogFileNameToNexusLog() {
     String taskLogsHome = TaskLogHome.getTaskLogHome();
     if (taskLogsHome != null) {
       String filename = format("%s/%s.log", taskLogsHome, taskLogIdentifier);
-      log.info(NEXUS_LOG_ONLY, "Task log: " + filename);
+      log.info(NEXUS_LOG_ONLY, TASK_LOG_LOCATION_PREFIX + filename);
     }
   }
 

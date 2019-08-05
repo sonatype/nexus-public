@@ -73,7 +73,7 @@ public class QuartzTriggerConverter
 
       triggerBuilder = newTrigger()
           .startAt(s.getStartAt())
-          .withSchedule(CronScheduleBuilder.cronSchedule(s.getCronExpression()));
+          .withSchedule(CronScheduleBuilder.cronSchedule(s.getCronExpression()).inTimeZone(s.getTimeZone()));
     }
     else if (schedule instanceof Now) {
       triggerBuilder = newTrigger()

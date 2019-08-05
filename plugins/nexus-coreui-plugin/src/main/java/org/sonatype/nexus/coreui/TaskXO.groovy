@@ -52,6 +52,7 @@ class TaskXO
   String lastRunResult
   Boolean runnable
   Boolean stoppable
+  String timeZoneOffset;
 
   String alertEmail
 

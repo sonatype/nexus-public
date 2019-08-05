@@ -10,28 +10,37 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.logging.task;
+package org.sonatype.nexus.repository.proxy;
 
-import org.slf4j.Logger;
-import org.slf4j.MDC;
+import com.google.common.collect.ListMultimap;
 
 /**
- * {@link TaskLogger} for logging just to the task log. Stores a value in {@link MDC} for NexusLogFilter to find.
- *
- * @since 3.5
+ * @since 3.next
  */
-public class TaskLogOnlyTaskLogger
-    extends SeparateTaskLogTaskLogger
+public class BypassHttpErrorException
+    extends RuntimeException
 {
-  TaskLogOnlyTaskLogger(final Logger log, final TaskLogInfo taskLogInfo) {
-    super(log, taskLogInfo);
-    MDC.put(TASK_LOG_ONLY_MDC, "true");
+  private final int httpCode;
+
+  private final String reason;
+
+  private final ListMultimap<String, String> headers;
+
+  public BypassHttpErrorException(final int httpCode, final String reason, final ListMultimap<String, String> headers) {
+    this.httpCode = httpCode;
+    this.reason = reason;
+    this.headers = headers;
   }
 
-  @Override
-  protected void writeLogFileNameToNexusLog() {
-    MDC.remove(TASK_LOG_ONLY_MDC);
-    super.writeLogFileNameToNexusLog();
-    MDC.put(TASK_LOG_ONLY_MDC, "true");
+  public int getStatusCode() {
+    return httpCode;
+  }
+
+  public String getReason() {
+    return reason;
+  }
+
+  public ListMultimap<String, String> getHeaders() {
+    return headers;
   }
 }

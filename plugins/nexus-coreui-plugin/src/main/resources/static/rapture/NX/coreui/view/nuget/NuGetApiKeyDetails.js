@@ -114,7 +114,7 @@ Ext.define('NX.coreui.view.nuget.NuGetApiKeyDetails', {
     // Automatically close the window
     Ext.defer(function() {
       if (me.isVisible()) { // ignore if already closed
-        NX.Messages.add({ text: NX.I18n.get('Nuget_NuGetApiKeyDetails_AutoClose_Message') });
+        NX.Messages.info(NX.I18n.get('Nuget_NuGetApiKeyDetails_AutoClose_Message'));
         me.close();
       }
     }, 1 * 60 * 1000); // 1 minute

@@ -20,83 +20,46 @@
 Ext.define('NX.Messages', {
   singleton: true,
 
-  /**
-   * Add a new custom message.
-   *
-   * @public
-   * @param {Object} message
-   * @param {boolean} indicates that the message is already encoded
-   */
-  add: function (message, encoded) {
-    message.text = encoded ? message.text : Ext.util.Format.htmlEncode(message.text);
-    NX.getApplication().getMessageController().addMessage(message);
+  requires: [
+    'NX.State'
+  ],
+
+  info: function(message) {
+    this.toast(message, 'info', 'fa-info');
   },
 
-  /**
-   * Check if a message with a matching type already exists
-   * @public
-   * @param {Object} message
-   */
-  messageExists: function(message) {
-    return NX.getApplication().getMessageController().messageExists(message);
+  success: function(message) {
+    this.toast(message, 'success', 'fa-check-circle');
   },
 
-  //
-  // High-level helpers
-  //
-
-  /**
-   * Add a notice message.
-   *
-   * @public
-   * @param {string} message
-   * @param {boolean} indicates that the message is already encoded
-   */
-  notice: function (message, encoded) {
-    this.add({type: 'default', text: message}, encoded);
+  warning: function(message) {
+    this.toast(message, 'warning', 'fa-exclamation-circle');
   },
 
-  /**
-   * Add an info message.
-   *
-   * @public
-   * @param {string} message
-   * @param {boolean} indicates that the message is already encoded
-   */
-  info: function (message, encoded) {
-    this.add({type: 'primary', text: message}, encoded);
+  error: function(message) {
+    this.toast(message, 'error', 'fa-exclamation-triangle');
   },
 
-  /**
-   * Add an error message.
-   *
-   * @public
-   * @param {string} message
-   * @param {boolean} indicates that the message is already encoded
-   */
-  error: function (message, encoded) {
-    this.add({type: 'danger', text: message}, encoded);
-  },
-
-  /**
-   * Add a warning message.
-   *
-   * @public
-   * @param {string} message
-   * @param {boolean} indicates that the message is already encoded
-   */
-  warning: function (message, encoded) {
-    this.add({type: 'warning', text: message}, encoded);
-  },
-
-  /**
-   * Add a success message.
-   *
-   * @public
-   * @param {string} message
-   * @param {boolean} indicates that the message is already encoded
-   */
-  success: function (message, encoded) {
-    this.add({type: 'success', text: message}, encoded);
+  /** @private */
+  toast: function(message, type, iconCls) {
+    Ext.toast({
+      baseCls: type,
+      html:
+          '<div role="presentation" class="icon x-fa ' + iconCls + '"></div>' +
+          '<div class="text">' + Ext.htmlEncode(message) + '</div>' +
+          '<div class="dismiss"><a aria-label="Dismiss" href="javascript:;" onclick="Ext.getCmp(this.closest(\'.x-toast\').id).close()">×</a></div>',
+      align: 'tr',
+      anchor: Ext.ComponentQuery.query('nx-feature-content')[0],
+      stickOnClick: true,
+      minWidth: 150,
+      maxWidth: 400,
+      autoCloseDelay: NX.State.getValue('messageDuration', 5000),
+      slideInDuration: NX.State.getValue('animateDuration', 800),
+      slideBackDuration: NX.State.getValue('animateDuration', 500),
+      hideDuration: NX.State.getValue('animateDuration', 500),
+      slideInAnimation: 'elasticIn',
+      slideBackAnimation: 'elasticIn',
+      ariaRole: 'alert'
+    });
   }
 });

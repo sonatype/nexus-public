@@ -38,4 +38,6 @@ public interface ScheduleFactory
   Monthly monthly(Date startAt, Set<CalendarDay> daysToRun);
 
   Cron cron(Date startAt, String cronExpression);
+
+  Cron cron(Date startAt, String cronExpression, String zoneId);
 }

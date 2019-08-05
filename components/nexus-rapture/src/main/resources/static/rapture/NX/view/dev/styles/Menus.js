@@ -51,6 +51,7 @@ Ext.define('NX.view.dev.styles.Menus', {
           menu('About', 'nx-icon-nexus-white-x16', 'About Nexus Repository Manager', 'about'),
           menu('Documentation', 'nx-icon-help-manual-x16', 'Product documentation', 'docs'),
           menu('Knowledge Base', 'nx-icon-help-kb-x16', 'Knowledge base', 'kb'),
+          menu('Sonatype Guides', 'nx-icon-help-guides-x16', 'Sonatype Guides', 'guides'),
           menu('Community', 'nx-icon-help-community-x16', 'Community information', 'community'),
           menu('Issue Tracker', 'nx-icon-help-issues-x16', 'Issue and bug tracker', 'issues'),
           '-',

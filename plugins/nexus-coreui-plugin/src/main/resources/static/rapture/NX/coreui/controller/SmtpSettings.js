@@ -109,7 +109,7 @@ Ext.define('NX.coreui.controller.SmtpSettings', {
     NX.direct.coreui_Email.sendVerification(smtpSettings, email, function (response) {
       me.getContent().unmask();
       if (Ext.isObject(response) && response.success) {
-        NX.Messages.add({ text: NX.I18n.get('SmtpSettings_Verify_Success'), type: 'success' });
+        NX.Messages.success(NX.I18n.get('SmtpSettings_Verify_Success'));
       }
     });
   }

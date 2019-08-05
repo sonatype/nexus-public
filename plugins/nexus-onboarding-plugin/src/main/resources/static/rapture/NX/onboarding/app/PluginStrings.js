@@ -47,7 +47,7 @@ Ext.define('NX.onboarding.app.PluginStrings', {
       Description: '<p>Enabling anonymous access will allow unauthenticated downloads, browsing, and ' +
       'searching of repository content by default. Permissions for unauthenticated users can be changed by ' +
       'editing the roles assigned to the <b>anonymous</b> user.<br><br>' +
-      '<a href="https://links.sonatype.com/products/nexus/anonymous-access/docs" target="_blank">More information <span class="x-fa fa-external-link"></a></p>',
+      '<a href="https://links.sonatype.com/products/nexus/anonymous-access/docs" target="_blank" rel="noopener">More information <span class="x-fa fa-external-link"></a></p>',
       Label: 'Enable anonymous access'
     }
   }

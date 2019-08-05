@@ -315,7 +315,7 @@ Ext.define('NX.coreui.controller.Assets', {
           if (Ext.isObject(response) && response.success) {
             me.refreshComponentList();
             NX.Bookmarks.navigateBackSegments(NX.Bookmarks.getBookmark(), 1);
-            NX.Messages.add({text: NX.I18n.format('ComponentDetails_Delete_Success', componentId), type: 'success'});
+            NX.Messages.success(NX.I18n.format('ComponentDetails_Delete_Success', componentId));
           }
         });
       });
@@ -403,7 +403,7 @@ Ext.define('NX.coreui.controller.Assets', {
           formValues.proprietaryPackages, formValues.reportLabel, function(response) {
             if (Ext.isObject(response) && response.success) {
               win.close();
-              NX.Messages.add({text: NX.I18n.get('ComponentDetails_Analyze_Success'), type: 'success'});
+              NX.Messages.success(NX.I18n.get('ComponentDetails_Analyze_Success'));
             }
           });
     }
@@ -451,7 +451,7 @@ Ext.define('NX.coreui.controller.Assets', {
             });
 
             me.navigateBackOnAssetDelete(asset.get('componentId'), assetStore);
-            NX.Messages.add({text: NX.I18n.format('AssetInfo_Delete_Success', asset.get('name')), type: 'success'});
+            NX.Messages.success(NX.I18n.format('AssetInfo_Delete_Success', asset.get('name')));
           }
         });
       });

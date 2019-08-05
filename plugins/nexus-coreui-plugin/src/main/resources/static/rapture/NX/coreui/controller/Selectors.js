@@ -256,9 +256,7 @@ Ext.define('NX.coreui.controller.Selectors', {
     NX.direct.coreui_Selector.remove(model.getId(), function(response) {
       me.getSelectorStore().load();
       if (Ext.isObject(response) && response.success) {
-        NX.Messages.add({
-          text: NX.I18n.format('Selectors_Delete_Message', description), type: 'success'
-        });
+        NX.Messages.success(NX.I18n.format('Selectors_Delete_Message', description));
       }
       else if (Ext.isObject(response) && Ext.isDefined(response.errors)) {
         NX.Messages.error(response.errors['*']);

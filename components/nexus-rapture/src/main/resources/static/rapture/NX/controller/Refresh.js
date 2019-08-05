@@ -56,7 +56,7 @@ Ext.define('NX.controller.Refresh', {
 
       // Show a message here, so that if the current view doesn't actually support
       // request that users don't think the feature is broken and spam-click the refresh button
-      NX.Messages.add({ text: NX.I18n.get('Refresh_Message'), type: 'default' });
+      NX.Messages.info(NX.I18n.get('Refresh_Message'));
     }
   }
 

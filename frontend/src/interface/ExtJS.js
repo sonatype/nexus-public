@@ -12,9 +12,7 @@
  */
 const NX = window.NX;
 
-const showMessage = (text, type) => NX.Messages.add({text: text, type: type});
-
 export default {
-  showSuccessMessage: (text) => showMessage(text, 'success'),
-  showErrorMessage: (text) => showMessage(text, 'danger')
+  showSuccessMessage: (text) => NX.Messages.success(text),
+  showErrorMessage: (text) => NX.Messages.error(text)
 }

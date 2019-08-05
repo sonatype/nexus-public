@@ -439,10 +439,7 @@ Ext.define('NX.controller.Drilldown', {
         store = lists[index].getStore(),
         modelType = store.model.modelName && store.model.modelName.replace(/^.*?model\./, '').replace(/\-.*$/, '');
 
-    NX.Messages.add({
-      text: modelType + " (" + modelId + ") not found",
-      type: 'warning'
-    });
+    NX.Messages.warning(modelType + " (" + modelId + ") not found");
   },
 
   /**

@@ -178,7 +178,7 @@ Ext.define('NX.controller.UiSessionTimeout', {
    * @private
    */
   showExpirationWindow: function () {
-    NX.Messages.add({text: NX.I18n.get('UiSessionTimeout_Expire_Message'), type: 'warning'});
+    NX.Messages.warning(NX.I18n.get('UiSessionTimeout_Expire_Message'));
     this.getExpireSessionView().create();
   },
 
@@ -196,10 +196,7 @@ Ext.define('NX.controller.UiSessionTimeout', {
           win.down('button[action=close]').show();
           win.down('button[action=signin]').show();
           win.down('button[action=cancel]').hide();
-          NX.Messages.add({
-            text: NX.I18n.format('UiSessionTimeout_Expired_Message', NX.State.getValue('uiSettings')['sessionTimeout']),
-            type: 'warning'
-          });
+          NX.Messages.warning(NX.I18n.format('UiSessionTimeout_Expired_Message', NX.State.getValue('uiSettings')['sessionTimeout']));
           NX.Security.signOut();
         }
       },

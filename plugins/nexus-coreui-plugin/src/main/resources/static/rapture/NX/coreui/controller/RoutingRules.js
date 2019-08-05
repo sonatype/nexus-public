@@ -351,10 +351,7 @@ Ext.define('NX.coreui.controller.RoutingRules', {
     return function() {
       this.getRoutingRuleStore().load();
       this.loadView(0);
-      NX.Messages.add({
-        text: NX.I18n.format(successMessageKey, routingRuleName),
-        type: 'success'
-      });
+      NX.Messages.success(NX.I18n.format(successMessageKey, routingRuleName));
     }.bind(this);
   },
 
@@ -393,10 +390,7 @@ Ext.define('NX.coreui.controller.RoutingRules', {
       success: function () {
         this.getRoutingRuleStore().remove(model);
         this.loadView(0);
-        NX.Messages.add({
-          text: NX.I18n.format('RoutingRule_Delete_Message', description),
-          type: 'success'
-        });
+        NX.Messages.success(NX.I18n.format('RoutingRule_Delete_Message', description));
       }.bind(this),
       failure: function(response) {
         var status = response.status;

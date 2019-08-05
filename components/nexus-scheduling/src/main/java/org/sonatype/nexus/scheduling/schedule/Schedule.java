@@ -12,11 +12,13 @@
  */
 package org.sonatype.nexus.scheduling.schedule;
 
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -36,6 +38,8 @@ public abstract class Schedule
   public static final String SCHEDULE_START_AT = "schedule.startAt";
 
   public static final String SCHEDULE_DAYS_TO_RUN = "schedule.daysToRun";
+
+  public static final String SCHEDULE_CLIENT_TIME_ZONE = "schedule.clientTimeZone";
 
   private final Map<String, String> properties = new HashMap<>();
 
@@ -91,6 +95,12 @@ public abstract class Schedule
     return DateTime.parse(string).toDate();
   }
 
+  /**
+   * Convert a string into a timeZone.
+   */
+  public static TimeZone stringToTimeZone(final String zoneId){
+    return TimeZone.getTimeZone(ZoneId.of(zoneId));
+  }
   /**
    * Convert a set into a CSV formatted string using given mapping function.
    *

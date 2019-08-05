@@ -69,3 +69,28 @@
     padding: 2px 0;
   }
 }
+
+.x-grid-empty {
+  font-size: 1.5em;
+  margin-top: 1em;
+  text-align: center;
+
+  .panel {
+    margin: 2em auto auto;
+    width: 75%;
+
+    .title {
+      margin: 0.5em;
+      .icon {
+        font-family: FontAwesome !important;
+        font-size: 1.25em;
+        padding: 0.25em;
+
+        &:before {
+          content: "\f05a" !important;
+          vertical-align: middle;
+        }
+      }
+    }
+  }
+}

@@ -97,6 +97,7 @@ Ext.define('NX.coreui.view.task.TaskSettingsForm', {
     task.properties = me.down('nx-coreui-formfield-settingsfieldset').exportProperties(values);
     task.recurringDays = me.down('nx-coreui-task-schedulefieldset').getRecurringDays();
     task.startDate = me.down('nx-coreui-task-schedulefieldset').getStartDate();
+    task.timeZoneOffset = Ext.Date.format(new Date(), 'P');
     if (task.startDate) {
       task.startDate = task.startDate.toJSON();
     }

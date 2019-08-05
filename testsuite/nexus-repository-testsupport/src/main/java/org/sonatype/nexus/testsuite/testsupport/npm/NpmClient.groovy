@@ -83,7 +83,8 @@ class NpmClient
       String pVersion,
       String username = 'admin',
       String description = 'Simple package for testing',
-      List<String> keywords = ['test', 'simple'])
+      List<String> keywords = ['test', 'simple'],
+      String author = 'Tamas Cservenak <tamas@cservenak.net> (http://cstamas.org/)')
   {
     String tarballName = "${pName}-${pVersion}.tgz"
 
@@ -106,7 +107,7 @@ class NpmClient
             test: 'echo "No Tests"'
         ],
         keywords: keywords,
-        author: 'Tamas Cservenak <tamas@cservenak.net> (http://cstamas.org/)',
+        author: author,
         license: 'ISC'
     ]
 

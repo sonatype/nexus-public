@@ -125,7 +125,7 @@ Ext.define('NX.controller.SettingsForm', {
         success: function (basicForm, action) {
           var title = me.getSettingsFormSuccessMessage(form, action);
           if (title) {
-            NX.Messages.add({ text: title, type: 'success' });
+            NX.Messages.success(title);
           }
           form.fireEvent('submitted', form, action);
           me.loadForm(form);
