@@ -25,6 +25,8 @@ import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.Response;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ListMultimap;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.junit.Before;
@@ -118,6 +120,27 @@ public class ProxyHandlerTest
     when(request.getAction()).thenReturn(HttpMethods.GET);
     doThrow(new UncheckedIOException(new IOException("message"))).when(proxyFacet).get(context);
     assertStatusCode(underTest.handle(context), HttpStatus.BAD_GATEWAY);
+  }
+
+  @Test
+  public void testBypassHttpErrorExceptionPropagatesCodeWithMessageWithHeader() throws Exception {
+    final int httpStatus = HttpStatus.FORBIDDEN;
+    final String errorMessage = "Error Message";
+    final String headerName = "Header Name";
+    final String headerValue = "Header Value";
+
+    ListMultimap<String, String> headers = ArrayListMultimap.create();
+    headers.put(headerName, headerValue);
+    BypassHttpErrorException bypassException = new BypassHttpErrorException(httpStatus, errorMessage, headers);
+
+    when(request.getAction()).thenReturn(HttpMethods.GET);
+    doThrow(bypassException).when(proxyFacet).get(context);
+
+    Response response = underTest.handle(context);
+
+    assertStatusCode(response, httpStatus);
+    assertStatusMessage(response, errorMessage);
+    assertThat(response.getHeaders().get(headerName), is(headerValue));
   }
 
   private void assertStatusCode(final Response response, final int statusCode) {

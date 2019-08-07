@@ -23,8 +23,10 @@ import org.sonatype.nexus.common.io.CooperationException;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
+import org.sonatype.nexus.repository.view.Headers;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.Response;
+import org.sonatype.nexus.repository.view.Status;
 
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
@@ -52,6 +54,9 @@ public class ProxyHandler
         return buildPayloadResponse(context, payload);
       }
       return buildNotFoundResponse(context);
+    }
+    catch (BypassHttpErrorException e) {
+      return buildHttpErrorResponce(e);
     }
     catch (ProxyServiceException e) {
       return HttpResponses.serviceUnavailable();
@@ -82,6 +87,13 @@ public class ProxyHandler
   
   protected Response buildNotFoundResponse(final Context context) {
     return HttpResponses.notFound();
+  }
+
+  protected Response buildHttpErrorResponce(final BypassHttpErrorException proxyErrorsException) {
+    return new Response.Builder()
+        .status(new Status(false, proxyErrorsException.getStatusCode(), proxyErrorsException.getReason()))
+        .headers(new Headers(proxyErrorsException.getHeaders()))
+        .build();
   }
 
   private ProxyFacet proxyFacet(final Context context) {

@@ -46,6 +46,8 @@ import org.sonatype.nexus.repository.view.payloads.HttpEntityPayload;
 import org.sonatype.nexus.validation.constraint.Url;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ListMultimap;
 import com.google.common.io.Closeables;
 import com.google.common.net.HttpHeaders;
 import org.apache.http.Header;
@@ -73,6 +75,10 @@ public abstract class ProxyFacetSupport
     extends FacetSupport
     implements ProxyFacet
 {
+
+  public static final String BYPASS_HTTP_ERRORS_HEADER_NAME = "BYPASS_HTTP_ERRORS";
+
+  public static final String BYPASS_HTTP_ERRORS_HEADER_VALUE = "true";
 
   @VisibleForTesting
   static final String CONFIG_KEY = "proxy";
@@ -124,7 +130,7 @@ public abstract class ProxyFacetSupport
   /**
    * Configures content {@link Cooperation} for this proxy; a timeout of 0 means wait indefinitely.
    *
-   * @param enabled should threads attempt to cooperate when downloading resources
+   * @param cooperationEnabled should threads attempt to cooperate when downloading resources
    * @param majorTimeout when waiting for the main I/O request
    * @param minorTimeout when waiting for any I/O dependencies
    * @param threadsPerKey limits the threads waiting under each key
@@ -428,6 +434,8 @@ public abstract class ProxyFacetSupport
     StatusLine status = response.getStatusLine();
     log.debug("Status: {}", status);
 
+    mayThrowBypassHttpErrorException(response);
+
     final CacheInfo cacheInfo = getCacheController(context).current();
 
     if (status.getStatusCode() == HttpStatus.SC_OK) {
@@ -475,6 +483,16 @@ public abstract class ProxyFacetSupport
         || HttpStatus.SC_PROXY_AUTHENTICATION_REQUIRED == status.getStatusCode()
         || HttpStatus.SC_INTERNAL_SERVER_ERROR <= status.getStatusCode()) {
       throw new ProxyServiceException(httpResponse);
+    }
+  }
+
+  private void mayThrowBypassHttpErrorException(final HttpResponse httpResponse) {
+    final StatusLine status = httpResponse.getStatusLine();
+    if (httpResponse.containsHeader(BYPASS_HTTP_ERRORS_HEADER_NAME)) {
+      log.debug("Bypass http error: {}", status);
+      ListMultimap<String, String> headers = ArrayListMultimap.create();
+      headers.put(BYPASS_HTTP_ERRORS_HEADER_NAME, BYPASS_HTTP_ERRORS_HEADER_VALUE);
+      throw new BypassHttpErrorException(status.getStatusCode(), status.getReasonPhrase(), headers);
     }
   }
 
