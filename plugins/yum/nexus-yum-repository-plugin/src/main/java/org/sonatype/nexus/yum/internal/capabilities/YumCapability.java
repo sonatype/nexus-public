@@ -118,7 +118,7 @@ public class YumCapability
             verificationLog.append("\"").append(type).append("\" version:").append(NL);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             try {
-              if (commandLineExecutor.exec(path + " --version", baos, baos) == 0) {
+              if (commandLineExecutor.exec(path, "--version", baos, baos) == 0) {
                 String versionOutput = new String(baos.toByteArray());
                 verificationLog.append(versionOutput);
                 ensureVersionCompatible(type, versionOutput, versionConstraint, message, verificationLog);
@@ -127,6 +127,12 @@ public class YumCapability
                 message.append(and).append("\"").append(type).append("\" not available");
                 verificationLog.append(new String(baos.toByteArray()));
               }
+            }
+            catch (IllegalAccessException e) {
+              log.debug("path supplied {} not allowed to run", path, e);
+              message.append(and).append("\"").append(type).append("\" not allowed");
+              verificationLog.append(new String(baos.toByteArray()));
+              verificationLog.append(e.getMessage()).append(NL);
             }
             catch (IOException e) {
               message.append(and).append("\"").append(type).append("\" not available");

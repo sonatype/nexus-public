@@ -26,6 +26,7 @@ import javax.inject.Inject;
 
 import org.sonatype.configuration.ConfigurationException;
 import org.sonatype.nexus.NexusAppTestSupport;
+import org.sonatype.nexus.configuration.application.ApplicationDirectories;
 import org.sonatype.nexus.configuration.application.DefaultGlobalRestApiSettings;
 import org.sonatype.nexus.configuration.application.NexusConfiguration;
 import org.sonatype.nexus.proxy.RequestContext;
@@ -99,6 +100,9 @@ public class YumNexusTestSupport
   @Inject
   private DefaultGlobalRestApiSettings globalRestApiSettings;
 
+  @Inject
+  private ApplicationDirectories applicationDirectories;
+
   protected File rpmsDir() {
     return testData.resolveFile("rpms");
   }
@@ -159,10 +163,11 @@ public class YumNexusTestSupport
     {
       @Override
       public void configure(final Binder binder) {
-        binder.bind(CommandLineExecutor.class).toInstance(new CommandLineExecutor()
+        binder.bind(CommandLineExecutor.class)
+            .toInstance(new CommandLineExecutor(applicationDirectories, "createrepo,mergerepo")
         {
           @Override
-          public int exec(final String command) throws IOException {
+          public int exec(final String command, final String params) throws IOException {
             // do nothing
             return 0;
           }

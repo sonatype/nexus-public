@@ -397,7 +397,7 @@ define('repoServer/RepoServer',['extjs', 'sonatype', 'Sonatype/lib', 'Nexus/conf
                 border : false,
                 defaults : {
                   border : false,
-                  style : 'padding-top: 30px;'
+                  style : 'padding-top: 15px;'
                 },
                 items : [{
                       columnWidth : .5,
@@ -418,7 +418,7 @@ define('repoServer/RepoServer',['extjs', 'sonatype', 'Sonatype/lib', 'Nexus/conf
           }
         };
 
-        var welcomeMsg = '<p style="text-align:center;"><a href="http://nexus.sonatype.org" target="new">' + '<img src="images/nexus650x55.png" border="0" alt="Welcome to the Nexus Repository Manager"></a>' + '</p>';
+        var welcomeMsg = '<p style="text-align:center;"><a href="http://nexus.sonatype.org" target="new"><img src="images/NexusRepoMngr_withSonatype@3x.png" alt="Welcome to the Nexus Repository Manager" class="welcome-logo"></a></p>';
 
         var statusEnabled = sp.checkPermission('nexus:status', sp.READ);
         if (Sonatype.utils.anonDisabled && (!Sonatype.user.curr.isLoggedIn)) {
@@ -431,7 +431,7 @@ define('repoServer/RepoServer',['extjs', 'sonatype', 'Sonatype/lib', 'Nexus/conf
 
         welcomePanelConfig.items.push({
               border : false,
-              html : '<div class="little-padding">' + welcomeMsg + '</div>'
+              html : '<div>' + welcomeMsg + '</div>'
             });
 
         var itemCount = welcomePanelConfig.items.length;
@@ -449,7 +449,7 @@ define('repoServer/RepoServer',['extjs', 'sonatype', 'Sonatype/lib', 'Nexus/conf
                 labelWidth : 10,
                 items : [{
                       border : false,
-                      html : '<div class="little-padding">' + '<br/><p>You may browse the repositories using the options on the left.</p>' + '</div>'
+                      html : '<div><br/><p>You may browse the repositories using the options on the left.</p></div>'
                     }]
               });
         }

@@ -22,6 +22,7 @@ import java.util.concurrent.TimeoutException;
 
 import javax.inject.Inject;
 
+import org.sonatype.nexus.proxy.attributes.inspectors.DigestCalculatingInspector;
 import org.sonatype.nexus.proxy.item.RepositoryItemUid;
 import org.sonatype.nexus.proxy.item.RepositoryItemUidLock;
 import org.sonatype.nexus.proxy.maven.MavenHostedRepository;
@@ -177,7 +178,8 @@ public class GenerateMetadataTaskConcurrencyTest
         yumRegistry,
         mock(RpmScanner.class),
         mock(Manager.class),
-        mock(CommandLineExecutor.class)
+        mock(CommandLineExecutor.class),
+        mock(DigestCalculatingInspector.class)
     )
     {
       @Override

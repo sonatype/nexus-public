@@ -121,6 +121,11 @@ a:link, a:visited, a:hover, a:active {
     display: block;
 }
 
+#header .nxrm-logo {
+    height: 50px;
+    padding: 7px 0 0 10px;
+}
+
 #config-text, #log-text {
     font-family: "Trebuchet MS", verdana, lucida, arial, helvetica, sans-serif;
 }
@@ -133,6 +138,11 @@ a:link, a:visited, a:hover, a:active {
 .little-padding {
     padding: 10px;
     font-size: 14px;
+}
+
+.welcome-logo {
+    height: 98px;
+    width: 650px;
 }
 
 /* Sonatype Icons */

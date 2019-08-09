@@ -18,6 +18,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.sonatype.nexus.integrationtests.AbstractNexusIntegrationTest;
+import org.sonatype.nexus.maven.MavenXpp3Reader;
 import org.sonatype.nexus.rest.model.NexusArtifact;
 import org.sonatype.nexus.test.utils.GroupMessageUtil;
 import org.sonatype.nexus.test.utils.RepositoryMessageUtil;
@@ -26,7 +27,6 @@ import org.sonatype.nexus.test.utils.TaskScheduleUtil;
 import org.apache.maven.index.SearchType;
 import org.apache.maven.index.artifact.Gav;
 import org.apache.maven.model.Model;
-import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;

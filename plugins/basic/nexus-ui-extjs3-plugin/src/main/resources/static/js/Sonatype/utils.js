@@ -249,7 +249,7 @@ define('Sonatype/utils',['../extjs', 'Nexus/config', 'Nexus/util/Format', 'Sonat
 
         Ext.MessageBox.show({
           title: "Error",
-          msg: displayMessage,
+          msg: Ext.util.Format.htmlEncode(displayMessage),
           buttons: offerRestart ? Ext.MessageBox.OKCANCEL : Sonatype.MessageBox.OK,
           icon: Ext.MessageBox.ERROR,
           animEl: 'mb3',

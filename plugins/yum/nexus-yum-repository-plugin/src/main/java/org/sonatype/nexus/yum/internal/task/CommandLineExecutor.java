@@ -12,20 +12,28 @@
  */
 package org.sonatype.nexus.yum.internal.task;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.HashSet;
+import java.util.Set;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.gossip.Level;
 import org.sonatype.gossip.support.LoggingOutputStream;
+import org.sonatype.nexus.configuration.application.ApplicationDirectories;
 
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.PumpStreamHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.toSet;
 
 /**
  * @since yum 3.0
@@ -37,11 +45,25 @@ public class CommandLineExecutor
 
   private static final Logger LOG = LoggerFactory.getLogger(CommandLineExecutor.class);
 
-  public int exec(String command)
-      throws IOException
+  private final Set<String> allowedExecutables = new HashSet<>();
+
+  private final ApplicationDirectories applicationDirectories;
+
+  @Inject
+  public CommandLineExecutor(final ApplicationDirectories applicationDirectories,
+                             @Named("${yum.cli.allowed:-createrepo,mergerepo}") final String allowedExecutables)
+  {
+    this.applicationDirectories = applicationDirectories;
+
+    this.allowedExecutables.addAll(stream(allowedExecutables.split(",")).map(String::trim).collect(toSet()));
+  }
+
+  public int exec(String command, String params)
+      throws IOException, IllegalAccessException
   {
     return exec(
         command,
+        params,
         new LoggingOutputStream(LOG, Level.DEBUG),
         new LoggingOutputStream(LOG, Level.ERROR)
     );
@@ -56,12 +78,19 @@ public class CommandLineExecutor
    * @return exit value
    * @since 2.11
    */
-  public int exec(final String command, OutputStream out, OutputStream err)
-      throws IOException
+  public int exec(final String command, String params, OutputStream out, OutputStream err)
+      throws IOException, IllegalAccessException
   {
-    LOG.debug("Execute command : {}", command);
+    String cleanCommand = getCleanCommand(command, params);
 
-    CommandLine cmdLine = CommandLine.parse(command);
+    if (cleanCommand == null) {
+      throw new IllegalAccessException("Attempt to execute unsupported executable " + command);
+    }
+
+    LOG.debug("Execute command : {}", cleanCommand);
+
+    CommandLine cmdLine = CommandLine.parse(cleanCommand);
+
     DefaultExecutor executor = new DefaultExecutor();
     executor.setStreamHandler(new PumpStreamHandler(out, err));
 
@@ -70,4 +99,23 @@ public class CommandLineExecutor
     return exitValue;
   }
 
+  private String getCleanCommand(String command, String params) {
+    if (allowedExecutables.contains(command)) {
+      return command + " " + params;
+    }
+
+    File file = new File(command);
+
+    if (file.getAbsolutePath().startsWith(applicationDirectories.getWorkDirectory().getAbsolutePath())) {
+      LOG.debug("Attempt to execute command with illegal path {}", file.getAbsolutePath());
+      return null;
+    }
+
+    if (!allowedExecutables.contains(file.getName())) {
+      LOG.debug("Attempt to execute illegal command {}", file.getAbsolutePath());
+      return null;
+    }
+
+    return file.getAbsolutePath() + " " + params;
+  }
 }

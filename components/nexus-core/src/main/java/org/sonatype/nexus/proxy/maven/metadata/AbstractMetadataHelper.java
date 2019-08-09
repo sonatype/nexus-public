@@ -23,13 +23,13 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import org.sonatype.nexus.maven.MavenXpp3Reader;
 import org.sonatype.nexus.proxy.maven.gav.Gav;
 import org.sonatype.nexus.proxy.maven.gav.GavCalculator;
 import org.sonatype.nexus.proxy.maven.gav.M2ArtifactRecognizer;
 
 import org.apache.maven.artifact.repository.metadata.Plugin;
 import org.apache.maven.model.Model;
-import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.codehaus.plexus.configuration.PlexusConfiguration;
 import org.codehaus.plexus.configuration.xml.XmlPlexusConfiguration;
 import org.codehaus.plexus.util.ReaderFactory;

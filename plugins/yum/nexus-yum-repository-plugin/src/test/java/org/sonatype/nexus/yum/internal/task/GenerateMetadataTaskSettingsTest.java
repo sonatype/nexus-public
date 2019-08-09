@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
+import org.sonatype.nexus.proxy.attributes.inspectors.DigestCalculatingInspector;
 import org.sonatype.nexus.proxy.maven.routing.Manager;
 import org.sonatype.nexus.proxy.registry.RepositoryRegistry;
 import org.sonatype.nexus.proxy.repository.HostedRepository;
@@ -117,7 +118,8 @@ public class GenerateMetadataTaskSettingsTest
         mock(YumRegistry.class),
         mock(RpmScanner.class),
         mock(Manager.class),
-        mock(CommandLineExecutor.class)
+        mock(CommandLineExecutor.class),
+        mock(DigestCalculatingInspector.class)
     );
     task.setRpmDir(rpmsDir().getAbsolutePath());
     // when
@@ -137,7 +139,8 @@ public class GenerateMetadataTaskSettingsTest
         mock(YumRegistry.class),
         mock(RpmScanner.class),
         mock(Manager.class),
-        mock(CommandLineExecutor.class)
+        mock(CommandLineExecutor.class),
+        mock(DigestCalculatingInspector.class)
     );
     task.setRepositoryId(REPO);
     // when
@@ -157,7 +160,8 @@ public class GenerateMetadataTaskSettingsTest
         mock(YumRegistry.class),
         mock(RpmScanner.class),
         mock(Manager.class),
-        mock(CommandLineExecutor.class)
+        mock(CommandLineExecutor.class),
+        mock(DigestCalculatingInspector.class)
     );
     task.setRepositoryId(REPO);
 
@@ -186,7 +190,8 @@ public class GenerateMetadataTaskSettingsTest
         yumRegistry,
         mock(RpmScanner.class),
         mock(Manager.class),
-        mock(CommandLineExecutor.class)
+        mock(CommandLineExecutor.class),
+        mock(DigestCalculatingInspector.class)
     );
     task.setRepositoryId(REPO);
 
@@ -231,7 +236,8 @@ public class GenerateMetadataTaskSettingsTest
         yumRegistry,
         mock(RpmScanner.class),
         mock(Manager.class),
-        mock(CommandLineExecutor.class)
+        mock(CommandLineExecutor.class),
+        mock(DigestCalculatingInspector.class)
     )
     {
 
