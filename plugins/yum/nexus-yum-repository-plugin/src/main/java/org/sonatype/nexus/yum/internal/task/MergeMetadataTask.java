@@ -102,9 +102,18 @@ public class MergeMetadataTask
         final List<File> memberReposBaseDirs = getBaseDirsOfMemberRepositories();
         if (memberReposBaseDirs.size() > 1) {
           log.debug("Merging repository group '{}' out of {}", groupRepository.getId(), memberReposBaseDirs);
-          commandLineExecutor.exec(buildCommand(repoBaseDir, memberReposBaseDirs));
-          MetadataProcessor.processMergedMetadata(groupRepository, memberReposBaseDirs);
-          log.debug("Group repository '{}' merged", groupRepository.getId());
+          try {
+            commandLineExecutor.exec(yumRegistry.getMergerepoPath(), buildParams(repoBaseDir, memberReposBaseDirs));
+            MetadataProcessor.processMergedMetadata(groupRepository, memberReposBaseDirs);
+            log.debug("Group repository '{}' merged", groupRepository.getId());
+          }
+          catch (IllegalAccessException e) {
+            String msg = String
+                .format("Yum metadata merging failed, mergerepo path %s is using executable that is not allowed.",
+                    yumRegistry.getMergerepoPath());
+            log.error(msg, e);
+            throw new IOException("Yum metadata merging failed", e);
+          }
         }
         else {
           // delete without using group repository API as group repositories does not allow delete (read only)
@@ -223,7 +232,7 @@ public class MergeMetadataTask
     return groupRepository != null && !groupRepository.getMemberRepositories().isEmpty();
   }
 
-  private String buildCommand(File repoBaseDir, List<File> memberRepoBaseDirs)
+  private String buildParams(File repoBaseDir, List<File> memberRepoBaseDirs)
       throws MalformedURLException, URISyntaxException
   {
     final StringBuilder repos = new StringBuilder();
@@ -231,10 +240,7 @@ public class MergeMetadataTask
       repos.append(" --repo=");
       repos.append(memberRepoBaseDir.toURI().toASCIIString());
     }
-    return format(
-        "%s --no-database %s -o %s",
-        yumRegistry.getMergerepoPath(), repos.toString(), repoBaseDir.getAbsolutePath()
-    );
+    return format(" --no-database %s -o %s", repos.toString(), repoBaseDir.getAbsolutePath());
   }
 
   public static ScheduledTask<YumRepository> createTaskFor(final NexusScheduler nexusScheduler,

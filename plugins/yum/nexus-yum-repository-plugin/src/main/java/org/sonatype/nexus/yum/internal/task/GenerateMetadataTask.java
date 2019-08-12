@@ -166,7 +166,7 @@ public class GenerateMetadataTask
         DirSupport.mkdir(getRepoDir().toPath());
 
         File rpmListFile = createRpmListFile();
-        commandLineExecutor.exec(buildCreateRepositoryCommand(rpmListFile));
+        commandLineExecutor.exec(yumRegistry.getCreaterepoPath(), buildCreateRepositoryParams(rpmListFile));
 
         StorageItem item = repository.retrieveItem(new ResourceStoreRequest("/" + PATH_OF_REPOMD_XML));
 
@@ -174,6 +174,13 @@ public class GenerateMetadataTask
           digestCalculatingInspector.processStorageItem(item);
           repository.getAttributesHandler().storeAttributes(item);
         }
+      }
+      catch (IllegalAccessException e) {
+        String msg = String
+            .format("Yum metadata generation failed, createrepo path %s is using executable that is not allowed.",
+                yumRegistry.getCreaterepoPath());
+        LOG.error(msg, e);
+        throw new IOException("Yum metadata generation failed", e);
       }
       catch (IOException e) {
         LOG.warn("Yum metadata generation failed", e);
@@ -315,23 +322,22 @@ public class GenerateMetadataTask
     return getRepositoryId() + (isNotBlank(getVersion()) ? ("-version-" + getVersion()) : "");
   }
 
-  private String buildCreateRepositoryCommand(File packageList) {
-    StringBuilder commandLine = new StringBuilder();
-    commandLine.append(yumRegistry.getCreaterepoPath());
+  private String buildCreateRepositoryParams(File packageList) {
+    StringBuilder params = new StringBuilder();
     if (!shouldForceFullScan()) {
-      commandLine.append(" --update");
+      params.append(" --update");
     }
-    commandLine.append(" --verbose --no-database");
-    commandLine.append(" --outputdir ").append(getRepoDir().getAbsolutePath());
-    commandLine.append(" --pkglist ").append(packageList.getAbsolutePath());
-    commandLine.append(" --cachedir ").append(createCacheDir().getAbsolutePath());
+    params.append(" --verbose --no-database");
+    params.append(" --outputdir ").append(getRepoDir().getAbsolutePath());
+    params.append(" --pkglist ").append(packageList.getAbsolutePath());
+    params.append(" --cachedir ").append(createCacheDir().getAbsolutePath());
     final String yumGroupsDefinitionFile = getYumGroupsDefinitionFile();
     if (yumGroupsDefinitionFile != null) {
       final File file = new File(getRepoDir().getAbsolutePath(), yumGroupsDefinitionFile);
       final String path = file.getAbsolutePath();
       if (file.exists()) {
         if (file.getName().toLowerCase().endsWith(".xml")) {
-          commandLine.append(" --groupfile ").append(path);
+          params.append(" --groupfile ").append(path);
         }
         else {
           LOG.warn("Yum groups definition file '{}' must have an '.xml' extension, ignoring", path);
@@ -341,9 +347,9 @@ public class GenerateMetadataTask
         LOG.warn("Yum groups definition file '{}' doesn't exist, ignoring", path);
       }
     }
-    commandLine.append(" ").append(getRpmDir());
+    params.append(" ").append(getRpmDir());
 
-    return commandLine.toString();
+    return params.toString();
   }
 
   @Override
