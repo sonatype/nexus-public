@@ -786,6 +786,7 @@
               <id>httpcore</id>
               <id>httpclient</id>
               <id>metrics-guice</id>
+              <id>simpleclient_dropwizard</id>
               <id>quartz</id>
               <id>resteasy-jaxrs</id>
               <id>resteasy-atom-provider</id>

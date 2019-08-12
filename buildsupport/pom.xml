@@ -52,6 +52,7 @@
     <module>all</module>
 
     <module>extjs-maven-plugin</module>
+    <module>it-deps</module>
   </modules>
 
   <profiles>

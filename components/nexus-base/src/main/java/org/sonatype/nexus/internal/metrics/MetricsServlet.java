@@ -28,6 +28,7 @@ import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
 import com.codahale.metrics.jvm.JvmAttributeGaugeSet;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
+import io.prometheus.client.dropwizard.DropwizardExports;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.net.HttpHeaders.CONTENT_DISPOSITION;
@@ -52,6 +53,9 @@ public class MetricsServlet
     registry.register(name("jvm", "fd_usage"), new FileDescriptorRatioGauge());
     registry.register(name("jvm", "thread-states"), new ThreadStatesGaugeSet());
     registry.register(name("jvm", "garbage-collectors"), new GarbageCollectorMetricSet());
+
+    // Export to Prometheus
+    new DropwizardExports(registry).register();
   }
 
   @Override

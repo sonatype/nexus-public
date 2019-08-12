@@ -45,7 +45,7 @@ public interface VariableResolverAdapter
   VariableSource fromCoordinates(String format, String path, Map<String, String> coordinates);
 
   /**
-   * @since 3.next
+   * @since 3.18
    */
   VariableSource fromPath(String path, String format);
 }

@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.proxy;
 import com.google.common.collect.ListMultimap;
 
 /**
- * @since 3.next
+ * @since 3.18.1
  */
 public class BypassHttpErrorException
     extends RuntimeException

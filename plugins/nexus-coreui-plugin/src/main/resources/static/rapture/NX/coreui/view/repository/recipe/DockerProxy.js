@@ -53,5 +53,36 @@ Ext.define('NX.coreui.view.repository.recipe.DockerProxy', {
 
     me.down('#remoteUrl').setHelpText(NX.I18n.get('Repository_Facet_ProxyFacet_Docker_Remote_HelpText'));
     me.down('#proxyFieldSet').add(1, {xtype: 'nx-coreui-repository-docker-proxy-facet'});
+
+    Ext.override(me.getForm(), {
+      getValues: function() {
+        var vals = this.callParent(arguments);
+
+        if (vals.attributes.dockerProxy.foreignLayerUrlWhitelist &&
+            !Ext.isArray(vals.attributes.dockerProxy.foreignLayerUrlWhitelist)) {
+          vals.attributes.dockerProxy.foreignLayerUrlWhitelist = [vals.attributes.dockerProxy.foreignLayerUrlWhitelist];
+        }
+
+        return vals;
+      }
+    });
+  },
+
+  loadRecord: function(record) {
+    var me = this,
+        dockerProxyFacet = me.down('nx-coreui-repository-docker-proxy-facet'),
+        urls = record.get('attributes')['dockerProxy']['foreignLayerUrlWhitelist'];
+
+    dockerProxyFacet.resetWhitelist();
+    dockerProxyFacet.formLoad = true;
+    me.callParent(arguments);
+
+    if (urls) {
+      urls.forEach(function(url) {
+        dockerProxyFacet.addWhitelistRow(url);
+      });
+    }
+
+    dockerProxyFacet.formLoad = false;
   }
 });

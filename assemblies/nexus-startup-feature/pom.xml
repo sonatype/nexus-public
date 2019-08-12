@@ -135,6 +135,16 @@
       <artifactId>org.apache.felix.metatype</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>io.prometheus</groupId>
+      <artifactId>simpleclient_dropwizard</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.prometheus</groupId>
+      <artifactId>simpleclient_servlet</artifactId>
+    </dependency>
+
     <!--
     Install early to make sure pax-exam uses this over its 'atinject' bundle
     -->

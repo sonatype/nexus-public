@@ -67,21 +67,21 @@ public interface DatabaseManager
   /**
    * Gets the configured backup compression level
    *
-   * @since 3.next
+   * @since 3.18
    */
   int getBackupCompressionLevel();
 
   /**
    * Gets the configured backup buffer size in bytes
    *
-   * @since 3.next
+   * @since 3.18
    */
   int getBackupBufferSize();
 
   /**
    * Gets the configured import buffer size in bytes
    *
-   * @since 3.next
+   * @since 3.18
    */
   int getImportBufferSize();
 }

@@ -36,6 +36,11 @@
     <bundle>wrap:${mvn:metrics-guice}$overwrite=merge&amp;Import-Package=com.codahale.metrics*,*</bundle>
 
     <!--
+    Relax Prometheus client import constraints so we can use latest release of dropwizard/codahale metrics
+    -->
+    <bundle>wrap:${mvn:simpleclient_dropwizard}$overwrite=merge&amp;Import-Package=com.codahale.metrics*,*</bundle>
+
+    <!--
     Relax Swagger import constraints so we can use latest release of Guava, and make use of Reflections optional
     -->
     <bundle>wrap:${mvn:swagger-core}$overwrite=merge&amp;Import-Package=com.google.common.*,*</bundle>

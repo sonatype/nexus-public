@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
  * <li>/service/metrics/threads</li>
  * <li>/service/metrics/data</li>
  * <li>/service/metrics/healthcheck</li>
+ * <li>/service/metrics/prometheus</li>
  * </ul>
  * 
  * Protected by {@code nexus:metrics:read} permission.
@@ -73,6 +74,7 @@ public class MetricsModule
         serve(MOUNT_POINT + "/threads").with(new ThreadDumpServlet());
         serve(MOUNT_POINT + "/data").with(MetricsServlet.class);
         serve(MOUNT_POINT + "/healthcheck").with(HealthCheckServlet.class);
+        serve(MOUNT_POINT + "/prometheus").with(new io.prometheus.client.exporter.MetricsServlet());
 
         // record metrics for all webapp access
         filter("/*").through(new InstrumentedFilter());

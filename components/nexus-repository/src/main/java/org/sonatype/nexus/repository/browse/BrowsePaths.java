@@ -30,7 +30,7 @@ import java.util.Objects;
  * org/foo/foo -> org/foo/bar/
  * org/foo/foo/some.file -> org/foo/bar/some.file
  *
- * @since 3.next
+ * @since 3.18
  */
 public class BrowsePaths
 {

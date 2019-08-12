@@ -67,7 +67,7 @@ public class BrowseNode
   }
 
   /**
-   * @since 3.next
+   * @since 3.18
    */
   public String getPath() {
     return require(path, BrowseNodeEntityAdapter.P_PATH);

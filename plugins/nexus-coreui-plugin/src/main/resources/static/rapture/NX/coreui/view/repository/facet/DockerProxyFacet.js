@@ -24,6 +24,8 @@ Ext.define('NX.coreui.view.repository.facet.DockerProxyFacet', {
     'NX.I18n'
   ],
 
+  formLoad: false,
+
   /**
    * @override
    */
@@ -108,10 +110,135 @@ Ext.define('NX.coreui.view.repository.facet.DockerProxyFacet', {
           }
           return undefined;
         }
+      },
+      {
+        xtype: 'checkbox',
+        name: 'attributes.dockerProxy.cacheForeignLayers',
+        itemId: 'cacheForeignLayers',
+        fieldLabel: NX.I18n.get('Repository_Facet_DockerProxyFacet_ForeignLayers_FieldLabel'),
+        helpText: NX.I18n.get('Repository_Facet_DockerProxyFacet_ForeignLayers_HelpText'),
+        value: false,
+        listeners: {
+          change: function(chkbox) {
+            var whitelistActive = chkbox.getValue(),
+                whitelistSection = chkbox.up('form').down('#foreignLayerWhitelist');
+
+            whitelistSection.setDisabled(!whitelistActive);
+            whitelistSection.setVisible(whitelistActive);
+            if (!me.formLoad && me.getWhitelistRows().length === 0) {
+              me.addWhitelistRow();
+            }
+          }
+        }
+      },
+      {
+        xtype: 'fieldset',
+        itemId: 'foreignLayerWhitelist',
+        title: NX.I18n.get('Repository_Facet_DockerProxyFacet_ForeignLayersWhitelist_FieldLabel'),
+        hidden: true,
+        items: [
+          {
+            xtype: 'label',
+            text: NX.I18n.get('Repository_Facet_DockerProxyFacet_ForeignLayersWhitelist_HelpText')
+          },
+          {
+            xtype: 'fieldcontainer',
+            itemId: 'foreignLayerWhitelistRows'
+          },
+          {
+            xtype: 'button',
+            glyph: 'xf055@FontAwesome' /* fa-plus-circle */,
+            text: NX.I18n.get('Repository_Facet_DockerProxyFacet_ForeignLayersWhitelist_AddButton'),
+            tooltip: NX.I18n.get('Repository_Facet_DockerProxyFacet_ForeignLayersWhitelist_AddButton'),
+            handler: function() {
+              me.addWhitelistRow();
+              var rows = me.getWhitelistRows();
+              var row = rows[rows.length - 1];
+              row.validate();
+              row.focus();
+            }
+          }
+        ]
       }
     ];
 
     me.callParent();
+  },
+
+  addWhitelistRow: function(value) {
+    var me = this,
+        form = me.up('nx-coreui-repository-settings-form'),
+        val = me.getWhitelistRows().length === 0 ? (value || '.*') : (value || ''),
+        row = {
+          xtype: 'panel',
+          cls: ['nx-repeated-row', 'whitelist-url'],
+          layout: 'column',
+          items: [
+            {
+              xtype: 'textfield',
+              allowBlank: false,
+              name: 'attributes.dockerProxy.foreignLayerUrlWhitelist',
+              width: 'calc(100% - 36px)',
+              value: val
+            },
+            {
+              xtype: 'button',
+              cls: 'nx-remove-whitelist-row-button',
+              glyph: 'xf1f8@FontAwesome' /* fa-trash */,
+              style: {
+                marginLeft: '10px'
+              },
+              handler: function(button) {
+                var whitelist = me.getWhitelistRowsContainer();
+                whitelist.add({
+                  xtype: 'hiddenfield',
+                  isDirty: function() {
+                    return true;
+                  }
+                });
+                form.fireEvent('dirtychange', form.getForm());
+                whitelist.remove(button.up());
+                me.updateFirstRemoveButtonState();
+              }
+            }
+          ]
+        };
+
+    me.getWhitelistRowsContainer().add(row);
+    me.updateFirstRemoveButtonState();
+  },
+
+  getWhitelistRowsContainer: function() {
+    return this.down('#foreignLayerWhitelistRows');
+  },
+
+  getWhitelistRows: function() {
+    return this.getWhitelistRowsContainer().query('textfield');
+  },
+
+  updateFirstRemoveButtonState: function() {
+    var removeButtons = this.getWhitelistRowsContainer().query('button[cls=nx-remove-whitelist-row-button]');
+
+    if (removeButtons.length > 1) {
+      removeButtons[0].enable();
+    }
+    else {
+      removeButtons[0].disable();
+    }
+  },
+
+  resetWhitelist: function() {
+    var whitelist = this.getWhitelistRowsContainer(),
+        urls = this.items && this.query('panel[cls=whitelist-url]') || [],
+        dirtyHiddenFields = this.items && this.query('hiddenfield') || [];
+
+    dirtyHiddenFields.forEach(function(field) {
+      whitelist.remove(field);
+    });
+
+    urls.forEach(function(row) {
+      whitelist.remove(row);
+    });
   },
 
   deselectDefaultOption: function(radio) {
