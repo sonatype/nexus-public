@@ -10,25 +10,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext, NX*/
+package org.sonatype.nexus.blobstore.s3.internal.ui
+
+import groovy.transform.ToString
 
 /**
- * @since 3.17
+ * S3 Encryption exchange object.
+ *
+ * @since 3.next
  */
-Ext.define('NX.s3blobstore.controller.S3Blobstore', {
-  extend: 'NX.wizard.Controller',
-
-  stores: [
-    'NX.s3blobstore.store.S3Region',
-    'NX.s3blobstore.store.S3SignerType',
-    'NX.s3blobstore.store.S3EncryptionType'
-  ],
-  models: [
-    'NX.s3blobstore.model.S3Region',
-    'NX.s3blobstore.model.S3SignerType',
-    'NX.s3blobstore.model.S3EncryptionType'
-  ],
-  views: [
-    'NX.s3blobstore.view.BlobstoreSettings'
-  ]
-});
+@ToString(includePackage = false, includeNames = true)
+class S3EncryptionTypeXO
+{
+  int order
+  String id
+  String name
+}

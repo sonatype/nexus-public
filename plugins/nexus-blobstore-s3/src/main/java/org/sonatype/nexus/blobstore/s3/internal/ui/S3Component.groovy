@@ -16,17 +16,19 @@ import javax.inject.Named
 import javax.inject.Singleton
 
 import org.sonatype.nexus.blobstore.s3.internal.AmazonS3Factory
+import org.sonatype.nexus.blobstore.s3.internal.encryption.KMSEncrypter
+import org.sonatype.nexus.blobstore.s3.internal.encryption.NoEncrypter
+import org.sonatype.nexus.blobstore.s3.internal.encryption.S3ManagedEncrypter
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 
-import com.amazonaws.services.s3.model.Region
 import com.amazonaws.services.s3.AmazonS3Client
+import com.amazonaws.services.s3.model.Region
 import com.codahale.metrics.annotation.ExceptionMetered
 import com.codahale.metrics.annotation.Timed
 import com.softwarementors.extjs.djn.config.annotations.DirectAction
 import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import org.apache.shiro.authz.annotation.RequiresPermissions
-
 /**
  * S3 {@link DirectComponent}.
  *
@@ -66,6 +68,21 @@ class S3Component
         new S3SignerTypeXO(order: 0, id: AmazonS3Factory.DEFAULT, name: DEFAULT_LABEL),
         new S3SignerTypeXO(order: 1, id: AmazonS3Client.S3_SIGNER, name: AmazonS3Client.S3_SIGNER),
         new S3SignerTypeXO(order: 2, id: AmazonS3Client.S3_V4_SIGNER, name: AmazonS3Client.S3_V4_SIGNER)
+    ]
+  }
+
+  /**
+   * S3 encryption types
+   */
+  @DirectMethod
+  @Timed
+  @ExceptionMetered
+  @RequiresPermissions('nexus:settings:read')
+  List<S3EncryptionTypeXO> encryptionTypes() {
+    [
+        new S3EncryptionTypeXO(order: 0, id: NoEncrypter.ID, name: NoEncrypter.NAME),
+        new S3EncryptionTypeXO(order: 1, id: S3ManagedEncrypter.ID, name: S3ManagedEncrypter.NAME),
+        new S3EncryptionTypeXO(order: 2, id: KMSEncrypter.ID, name: KMSEncrypter.NAME)
     ]
   }
 }

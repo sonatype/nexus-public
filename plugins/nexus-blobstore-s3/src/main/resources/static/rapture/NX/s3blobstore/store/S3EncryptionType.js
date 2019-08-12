@@ -13,22 +13,32 @@
 /*global Ext, NX*/
 
 /**
- * @since 3.17
+ * S3 Encryption Type store.
+ *
+ * @since 3.next
  */
-Ext.define('NX.s3blobstore.controller.S3Blobstore', {
-  extend: 'NX.wizard.Controller',
+Ext.define('NX.s3blobstore.store.S3EncryptionType', {
+  extend: 'Ext.data.Store',
+  model: 'NX.s3blobstore.model.S3EncryptionType',
 
-  stores: [
-    'NX.s3blobstore.store.S3Region',
-    'NX.s3blobstore.store.S3SignerType',
-    'NX.s3blobstore.store.S3EncryptionType'
-  ],
-  models: [
-    'NX.s3blobstore.model.S3Region',
-    'NX.s3blobstore.model.S3SignerType',
-    'NX.s3blobstore.model.S3EncryptionType'
-  ],
-  views: [
-    'NX.s3blobstore.view.BlobstoreSettings'
+  proxy: {
+    type: 'direct',
+    paramsAsHash: false,
+
+    api: {
+      read: 'NX.direct.s3_S3.encryptionTypes'
+    },
+
+    reader: {
+      type: 'json',
+      rootProperty: 'data',
+      successProperty: 'success'
+    }
+  },
+
+  sorters: [
+    { property: 'order', direction: 'ASC' },
+    { property: 'name', direction: 'ASC' }
   ]
+
 });

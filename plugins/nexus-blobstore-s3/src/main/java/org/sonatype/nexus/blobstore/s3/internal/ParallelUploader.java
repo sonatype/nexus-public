@@ -19,31 +19,21 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletionService;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
-import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
-import org.sonatype.nexus.thread.NexusThreadFactory;
+import org.sonatype.nexus.blobstore.s3.internal.ParallelUploader.ChunkReader.Chunk;
 
 import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.AbortMultipartUploadRequest;
-import com.amazonaws.services.s3.model.CompleteMultipartUploadRequest;
-import com.amazonaws.services.s3.model.InitiateMultipartUploadRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PartETag;
 import com.amazonaws.services.s3.model.UploadPartRequest;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.util.Optional.empty;
@@ -55,33 +45,17 @@ import static java.util.Optional.of;
  *
  * @since 3.next
  */
+@Singleton
 @Named("parallelUploader")
 public class ParallelUploader
-    extends StateGuardLifecycleSupport
+    extends ParallelRequester
     implements S3Uploader
 {
-  private final int chunkSize;
-
-  private final int parallelism;
-
-  private final ExecutorService executorService;
-
   @Inject
-  public ParallelUploader(@Named("${nexus.s3.parallelupload.chunksize:-5242880}") final int chunkSize,
-                          @Named("${nexus.s3.parallelupload.parallelism:-0}") final int nThreads)
+  public ParallelUploader(@Named("${nexus.s3.parallelRequests.chunksize:-5242880}") final int chunkSize,
+                          @Named("${nexus.s3.parallelRequests.parallelism:-0}") final int nThreads)
   {
-    checkArgument(nThreads >= 0, "Must use a non-negative parallelism");
-    checkArgument(chunkSize >= 0, "Must use a non-negative chunkSize");
-    this.chunkSize = chunkSize;
-    this.parallelism = (nThreads > 0) ? nThreads : Runtime.getRuntime().availableProcessors();
-
-    this.executorService = Executors.newFixedThreadPool(parallelism,
-        new NexusThreadFactory("s3-parallel", "uploadThreads"));
-  }
-
-  @Override
-  protected void doStop() {
-    executorService.shutdownNow();
+    super(chunkSize, nThreads, "uploadThreads");
   }
 
   @Override
@@ -94,64 +68,25 @@ public class ParallelUploader
 
       if (!firstChunk.isPresent()) {
         log.error("Failed to read data for upload to key {} in bucket {}", key, bucket);
+        return;
       }
-      else if (firstChunk.get().dataLength < chunkSize) {
-        try (InputStream arrayStream = new ByteArrayInputStream(firstChunk.get().data, 0,
-            firstChunk.get().dataLength)) {
-          uploadSinglePart(s3, bucket, key, arrayStream);
-        }
+
+      log.debug("Starting upload to key {} in bucket {}", key, bucket);
+      Chunk chunk = firstChunk.get();
+      if (chunk.dataLength < chunkSize) {
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentLength(chunk.dataLength);
+        s3.putObject(bucket, key, new ByteArrayInputStream(chunk.data, 0, chunk.dataLength), metadata);
       }
       else {
-        log.debug("Starting multipart upload to key {} in bucket {}", key, bucket);
-        InitiateMultipartUploadRequest initiateRequest = new InitiateMultipartUploadRequest(bucket, key);
-        String uploadId = s3.initiateMultipartUpload(initiateRequest).getUploadId();
-        uploadMultiPart(s3, bucket, key, input, uploadId);
-        log.debug("Finished multipart upload id {} to key {} in bucket {}", uploadId, key, bucket);
+        ChunkReader parallelReader = new ChunkReader(input);
+        parallelRequests(s3, bucket, key,
+            () -> (uploadId -> uploadChunks(s3, bucket, key, uploadId, parallelReader)));
       }
+      log.debug("Finished upload to key {} in bucket {}", key, bucket);
     }
     catch (IOException | SdkClientException e) { // NOSONAR
       throw new BlobStoreException(format("Error uploading blob to bucket:%s key:%s", bucket, key), e, null);
-    }
-  }
-
-  private void uploadSinglePart(final AmazonS3 s3, final String bucket, final String key, final InputStream contents)
-      throws IOException
-  {
-    log.debug("Starting upload of {} bytes to key {} in bucket {}", contents.available(), key, bucket);
-    ObjectMetadata metadata = new ObjectMetadata();
-    metadata.setContentLength(contents.available());
-    s3.putObject(bucket, key, contents, metadata);
-  }
-
-  private void uploadMultiPart(final AmazonS3 s3,
-                               final String bucket,
-                               final String key,
-                               final InputStream inputStream,
-                               final String uploadId)
-  {
-    try {
-      CompletionService<List<PartETag>> completionService = new ExecutorCompletionService<>(executorService);
-      ChunkReader chunkReader = new ChunkReader(inputStream);
-
-      for (int i = 0; i < parallelism; i++) {
-        completionService.submit(() -> uploadChunks(s3, bucket, key, uploadId, chunkReader));
-      }
-
-      List<PartETag> partETags = new ArrayList<>();
-      for (int i = 0; i < parallelism; i++) {
-        partETags.addAll(completionService.take().get());
-      }
-
-      s3.completeMultipartUpload(new CompleteMultipartUploadRequest()
-          .withBucketName(bucket)
-          .withKey(key)
-          .withUploadId(uploadId)
-          .withPartETags(partETags));
-    }
-    catch (CancellationException | ExecutionException | InterruptedException ex) {
-      s3.abortMultipartUpload(new AbortMultipartUploadRequest(bucket, key, uploadId));
-      throw new BlobStoreException(
-          format("Error uploading blob to bucket:%s key:%s for uploadId:%s", bucket, key, uploadId), ex, null);
     }
   }
 
@@ -180,7 +115,7 @@ public class ParallelUploader
     return tags;
   }
 
-  private static class ChunkReader
+  static class ChunkReader
   {
     private final AtomicInteger counter;
 
@@ -203,20 +138,20 @@ public class ParallelUploader
 
       return bytesRead > 0 ? of(new Chunk(bytesRead, buf, counter.getAndIncrement())) : empty();
     }
-  }
 
-  private static class Chunk
-  {
-    final byte[] data;
+    static class Chunk
+    {
+      final byte[] data;
 
-    final int dataLength;
+      final int dataLength;
 
-    final int chunkNumber;
+      final int chunkNumber;
 
-    Chunk(final int dataLength, final byte[] data, final int chunkNumber) {
-      this.dataLength = dataLength;
-      this.data = data;  //NOSONAR
-      this.chunkNumber = chunkNumber;
+      Chunk(final int dataLength, final byte[] data, final int chunkNumber) {
+        this.dataLength = dataLength;
+        this.data = data;  //NOSONAR
+        this.chunkNumber = chunkNumber;
+      }
     }
   }
 }

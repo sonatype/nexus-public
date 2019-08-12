@@ -128,6 +128,56 @@ Ext.define('NX.s3blobstore.view.BlobstoreSettings', {
         }
       ]
     },
+
+    {
+      xtype: 'nx-optionalfieldset',
+      title: NX.I18n.get('S3Blobstore_EncryptionSettings_Title'),
+      checkboxToggle: true,
+      checkboxName: 'encryptionSettingsEnabled',
+      collapsed: true,
+      listeners: {
+        expand: function() {
+          var me = this;
+          var signerType = me.down('[name=property_encryption_type]');
+          if (!signerType.getValue()) {
+            signerType.setValue('none');
+          }
+        }
+      },
+      items: [
+        {
+          xtype: 'combo',
+          name: 'property_encryption_type',
+          fieldLabel: NX.I18n.get('S3Blobstore_EncryptionSettings_Type_FieldLabel'),
+          helpText: NX.I18n.get('S3Blobstore_EncryptionSettings_Type_HelpText'),
+          itemCls: 'required-field',
+          displayField: 'name',
+          valueField: 'id',
+          editable: false,
+          forceSelection: true,
+          queryMode: 'local',
+          triggerAction: 'all',
+          emptyText: 'Select...',
+          selectOnFocus: false,
+          allowBlank: true,
+          listeners: {
+            added: function() {
+              var me = this;
+              me.getStore().load();
+            }
+          },
+          store: 'NX.s3blobstore.store.S3EncryptionType'
+        },
+        {
+          xtype:'textfield',
+          name: 'property_encryption_key',
+          fieldLabel: NX.I18n.get('S3Blobstore_EncryptionSettings_KeyID_FieldLabel'),
+          helpText: NX.I18n.get('S3Blobstore_EncryptionSettings_KeyID_HelpText'),
+          allowBlank: true
+        }
+      ]
+    },
+
     {
       xtype: 'nx-optionalfieldset',
       title: NX.I18n.get('S3Blobstore_AdvancedConnectionSettings_Title'),

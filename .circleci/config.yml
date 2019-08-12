@@ -1,6 +1,9 @@
 version: 2
 jobs:
   build:
+    branches:
+      only:
+        - master
     docker:
       - image: circleci/openjdk:8-jdk
     working_directory: ~/nexus-public
@@ -19,3 +22,7 @@ jobs:
           path: ~/test-results
       - store_artifacts:
           path: ~/test-results/junit
+      - run:
+          name: Deploy Snapshot
+          command: |
+            mvn -s .circleci/circleci.settings.xml deploy -DskipTests

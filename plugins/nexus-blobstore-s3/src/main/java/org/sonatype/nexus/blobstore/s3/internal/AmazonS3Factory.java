@@ -30,6 +30,7 @@ import com.amazonaws.regions.DefaultAwsRegionProviderChain;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.NexusS3ClientBuilder;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
 
@@ -38,11 +39,11 @@ import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ACCESS_KEY_ID
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ASSUME_ROLE_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ENDPOINT_KEY;
+import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.FORCE_PATH_STYLE_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.REGION_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SECRET_ACCESS_KEY_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SESSION_TOKEN_KEY;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.SIGNERTYPE_KEY;
-import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.FORCE_PATH_STYLE_KEY;
 
 /**
  * Creates configured AmazonS3 clients.
@@ -56,7 +57,7 @@ public class AmazonS3Factory
   public static final String DEFAULT = "DEFAULT";
 
   public AmazonS3 create(final BlobStoreConfiguration blobStoreConfiguration) {
-    AmazonS3ClientBuilder builder = AmazonS3ClientBuilder.standard();
+    NexusS3ClientBuilder builder = NexusS3ClientBuilder.standard();
 
     String accessKeyId = blobStoreConfiguration.attributes(CONFIG_KEY).get(ACCESS_KEY_ID_KEY, String.class);
     String secretAccessKey = blobStoreConfiguration.attributes(CONFIG_KEY).get(SECRET_ACCESS_KEY_KEY, String.class);
@@ -90,6 +91,8 @@ public class AmazonS3Factory
     }
 
     builder = builder.withPathStyleAccessEnabled(Boolean.parseBoolean(forcePathStyle));
+
+    builder.withBlobStoreConfig(blobStoreConfiguration);
 
     return builder.build();
   }
