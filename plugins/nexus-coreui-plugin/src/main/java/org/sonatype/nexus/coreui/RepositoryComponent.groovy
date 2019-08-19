@@ -64,6 +64,8 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.shiro.authz.annotation.RequiresAuthentication
 import org.hibernate.validator.constraints.NotEmpty
 
+import static org.sonatype.nexus.coreui.internal.RepositoryCleanupAttributesUtil.initializeCleanupAttributes
+
 /**
  * Repository {@link DirectComponent}.
  *
@@ -207,6 +209,9 @@ class RepositoryComponent
     securityHelper.ensurePermitted(
         new RepositoryAdminPermission(repositoryXO.format, repositoryXO.name, [BreadActions.ADD])
     )
+
+    initializeCleanupAttributes(repositoryXO)
+
     return asRepository(repositoryManager.create(new Configuration(
         repositoryName: repositoryXO.name,
         recipeName: repositoryXO.recipe,
@@ -216,6 +221,7 @@ class RepositoryComponent
         attributes: repositoryXO.attributes
     )))
   }
+
 
   @DirectMethod
   @Timed
@@ -231,6 +237,8 @@ class RepositoryComponent
       repositoryXO.attributes.httpclient.authentication.password =
           repository.configuration.attributes?.httpclient?.authentication?.password
     }
+
+    initializeCleanupAttributes(repositoryXO)
 
     Configuration updatedConfiguration = repository.configuration.copy().with {
       online = repositoryXO.online

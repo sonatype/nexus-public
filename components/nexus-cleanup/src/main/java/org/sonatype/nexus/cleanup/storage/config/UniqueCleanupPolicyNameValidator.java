@@ -20,7 +20,6 @@ import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
 import org.sonatype.nexus.validation.ConstraintValidatorSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.cleanup.storage.CleanupPolicy.NONE_POLICY;
 
 /**
  * Ensure that Cleanup Policy names are unique case-insensitively.
@@ -40,6 +39,6 @@ public class UniqueCleanupPolicyNameValidator
 
   @Override
   public boolean isValid(final String value, final ConstraintValidatorContext context) {
-    return !NONE_POLICY.getName().equalsIgnoreCase(value) && !cleanupPolicyStorage.exists(value);
+    return !cleanupPolicyStorage.exists(value);
   }
 }

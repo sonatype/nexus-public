@@ -56,6 +56,14 @@ public class NestedAttributesMapUntypedObjectDeserializer
     return jsonParser.getChildFromRoot();
   }
 
+  protected boolean isMappingInsideArray() {
+    return jsonParser.isMappingInsideArray();
+  }
+
+  protected String currentPath() {
+    return jsonParser.currentPath();
+  }
+
   protected boolean isMappingField(final String name) {
     return jsonParser.currentPath().endsWith(name);
   }

@@ -12,7 +12,12 @@
  */
 package org.sonatype.nexus.cleanup.storage;
 
+import java.util.Map;
+
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.cleanup.config.CleanupPolicyConfiguration;
+import org.sonatype.nexus.cleanup.config.DefaultCleanupPolicyConfiguration;
+import org.sonatype.nexus.cleanup.internal.search.elasticsearch.CriteriaAppender;
 import org.sonatype.nexus.cleanup.service.CleanupComponentBrowse;
 import org.sonatype.nexus.extdirect.model.PagedResponse;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters;
@@ -28,9 +33,6 @@ import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.sonatype.nexus.cleanup.config.CleanupPolicyConfiguration;
-import org.sonatype.nexus.cleanup.config.DefaultCleanupPolicyConfiguration;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
@@ -88,6 +90,9 @@ public class CleanupPolicyComponentTest
 
   @Mock
   private CleanupPolicyConfiguration configuration;
+
+  @Mock
+  private Map<String, CriteriaAppender> criteriaAppenders;
 
   private CleanupPolicyComponent underTest;
 

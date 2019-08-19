@@ -50,4 +50,11 @@ public interface BlobStoreMetrics
    * @since 3.14
    */
   Map<String, Long> getAvailableSpaceByFileStore();
+
+  /**
+   * Indicates if the blob store metrics cannot be accessed to determine metrics.
+   *
+   * @since 3.next
+   */
+  boolean isUnavailable();
 }

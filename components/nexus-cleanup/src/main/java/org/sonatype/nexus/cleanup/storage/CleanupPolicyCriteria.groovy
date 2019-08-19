@@ -16,6 +16,9 @@ import java.util.concurrent.TimeUnit
 
 import javax.annotation.Nullable
 
+import org.sonatype.nexus.cleanup.internal.search.elasticsearch.RegexCriteriaValidator
+import org.sonatype.nexus.cleanup.storage.config.CleanupPolicyAssetNamePattern
+
 import groovy.transform.ToString
 import groovy.transform.builder.Builder
 
@@ -29,6 +32,7 @@ import static org.sonatype.nexus.cleanup.storage.CleanupPolicyReleaseType.RELEAS
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.IS_PRERELEASE_KEY
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_BLOB_UPDATED_KEY
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_DOWNLOADED_KEY
+import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REGEX_KEY
 
 /**
  *  Collection of the criteria associated with a Cleanup Policy
@@ -47,11 +51,15 @@ class CleanupPolicyCriteria
 
   CleanupPolicyReleaseType releaseType
 
+  @CleanupPolicyAssetNamePattern
+  String regex
+
   static CleanupPolicyCriteria fromMap(final Map<String, String> criteriaMap) {
     return builder()
         .lastBlobUpdated(getLastBlobUpdated(criteriaMap))
         .lastDownloaded(getLastDownloaded(criteriaMap))
         .releaseType(getReleaseType(criteriaMap))
+        .regex(getRegex(criteriaMap))
         .build()
   }
 
@@ -63,6 +71,16 @@ class CleanupPolicyCriteria
   @Nullable
   static Integer getLastDownloaded(final Map<String, String> criteriaMap) {
     return getIntegerFromCriteriaMap(criteriaMap, LAST_DOWNLOADED_KEY)
+  }
+
+  @Nullable
+  static String getRegex(final Map<String, String> criteriaMap) {
+    return getStringFromCriteriaMap(criteriaMap, REGEX_KEY)
+  }
+
+  @Nullable
+  static String getStringFromCriteriaMap(final Map<String, String> criteriaMap, final String criteria) {
+    criteriaMap?.get(criteria)
   }
 
   @Nullable
@@ -91,15 +109,23 @@ class CleanupPolicyCriteria
     final HashMap<String, String> criteriaMap = newHashMap()
 
     if (nonNull(criteria.lastBlobUpdated)) {
-      criteriaMap.put(LAST_BLOB_UPDATED_KEY, valueOf(criteria.lastBlobUpdated * DAY_IN_SECONDS))
+      def value = valueOf(criteria.lastBlobUpdated * DAY_IN_SECONDS)
+      criteriaMap.put(LAST_BLOB_UPDATED_KEY, value)
     }
 
     if (nonNull(criteria.lastDownloaded)) {
-      criteriaMap.put(LAST_DOWNLOADED_KEY, valueOf(criteria.lastDownloaded * DAY_IN_SECONDS))
+      def value = valueOf(criteria.lastDownloaded * DAY_IN_SECONDS)
+      criteriaMap.put(LAST_DOWNLOADED_KEY, value)
     }
 
     if (nonNull(criteria.releaseType)) {
-      criteriaMap.put(IS_PRERELEASE_KEY, Boolean.toString(criteria.releaseType == PRERELEASES))
+      def value = Boolean.toString(criteria.releaseType == PRERELEASES)
+      criteriaMap.put(IS_PRERELEASE_KEY, value)
+    }
+
+    if (nonNull(criteria.regex)) {
+      def value = valueOf(criteria.regex)
+      criteriaMap.put(REGEX_KEY, value)
     }
 
     return criteriaMap

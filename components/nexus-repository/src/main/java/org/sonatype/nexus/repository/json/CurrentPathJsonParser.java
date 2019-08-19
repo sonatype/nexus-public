@@ -17,6 +17,7 @@ import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.core.JsonStreamContext;
 
 import static com.fasterxml.jackson.core.JsonPointer.forPath;
+import static org.apache.commons.lang3.ArrayUtils.EMPTY_STRING_ARRAY;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 /**
@@ -48,7 +49,8 @@ public class CurrentPathJsonParser
    * @return String of current path
    */
   public String[] currentPathInParts() {
-    return currentPath().substring(1).split(JSON_PATH_SEPARATOR);
+    String currentPath = currentPath().substring(1);
+    return isBlank(currentPath) ? EMPTY_STRING_ARRAY : currentPath.split(JSON_PATH_SEPARATOR);
   }
 
   /**

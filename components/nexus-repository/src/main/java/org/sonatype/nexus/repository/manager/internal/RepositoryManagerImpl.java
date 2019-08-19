@@ -438,9 +438,9 @@ public class RepositoryManagerImpl
 
   private void removeRepositoryFromAllGroups(final Repository repositoryToRemove) throws Exception {
     for (Repository group : repositories.values()) {
-        Optional<GroupFacet> groupFacet = group.optionalFacet(GroupFacet.class);
-        if (groupFacet.isPresent() && groupFacet.get().member(repositoryToRemove)) {
-          removeRepositoryFromGroup(repositoryToRemove, group);
+      Optional<GroupFacet> groupFacet = group.optionalFacet(GroupFacet.class);
+      if (groupFacet.isPresent() && groupFacet.get().member(repositoryToRemove)) {
+        removeRepositoryFromGroup(repositoryToRemove, group);
       }
     }
   }
@@ -453,11 +453,11 @@ public class RepositoryManagerImpl
 
   private Stream<Object> blobstoreUsageStream(final String blobStoreName) {
     return stream(browse().spliterator(), false)
-      .map(Repository::getConfiguration)
-      .map(Configuration::getAttributes)
-      .map(a -> a.get(STORAGE))
-      .map(s -> s.get(BLOB_STORE_NAME))
-      .filter(blobStoreName::equals);
+        .map(Repository::getConfiguration)
+        .map(Configuration::getAttributes)
+        .map(a -> a.get(STORAGE))
+        .map(s -> s.get(BLOB_STORE_NAME))
+        .filter(blobStoreName::equals);
   }
 
   @Override
@@ -534,8 +534,9 @@ public class RepositoryManagerImpl
         .map(Configuration::getAttributes)
         .map(attributes -> attributes.get(CLEANUP_ATTRIBUTES_KEY))
         .filter(Objects::nonNull)
-        .map(cleanupPolicyMap -> cleanupPolicyMap.get(CLEANUP_NAME_KEY))
-        .filter(cleanupPolicyName::equals)
+        .map(cleanupPolicyMap -> (Set) cleanupPolicyMap.get(CLEANUP_NAME_KEY))
+        .filter(Objects::nonNull)
+        .filter(cleanupPolicies -> cleanupPolicies.contains(cleanupPolicyName))
         .isPresent();
   }
 }

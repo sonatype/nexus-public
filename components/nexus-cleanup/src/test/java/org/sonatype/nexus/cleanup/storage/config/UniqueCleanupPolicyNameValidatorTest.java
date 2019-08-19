@@ -22,7 +22,6 @@ import org.mockito.Mock;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.cleanup.storage.CleanupPolicy.NONE_POLICY;
 
 public class UniqueCleanupPolicyNameValidatorTest
     extends TestSupport
@@ -51,12 +50,5 @@ public class UniqueCleanupPolicyNameValidatorTest
     when(cleanupPolicyStorage.exists(TEST_NAME)).thenReturn(true);
 
     assertThat(underTest.isValid(TEST_NAME, null), is(false));
-  }
-
-  @Test
-  public void noneCleanupPolicyNameIsInValid() {
-    assertThat(underTest.isValid(NONE_POLICY.getName(), null), is(false));
-    assertThat(underTest.isValid(NONE_POLICY.getName().toLowerCase(), null), is(false));
-    assertThat(underTest.isValid(NONE_POLICY.getName().toUpperCase(), null), is(false));
   }
 }

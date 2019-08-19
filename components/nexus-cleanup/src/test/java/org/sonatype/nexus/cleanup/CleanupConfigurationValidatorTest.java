@@ -14,21 +14,21 @@ package org.sonatype.nexus.cleanup;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.validation.ConstraintViolation;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
-import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Recipe;
-import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
+import com.google.common.collect.ImmutableSet;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -37,6 +37,8 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class CleanupConfigurationValidatorTest
@@ -65,12 +67,6 @@ public class CleanupConfigurationValidatorTest
   private Configuration configuration;
 
   @Mock
-  private Repository repository;
-
-  @Mock
-  private NestedAttributesMap attributesMap;
-
-  @Mock
   private CleanupPolicy cleanupPolicy;
 
   @Mock
@@ -79,6 +75,12 @@ public class CleanupConfigurationValidatorTest
   @Mock
   private Recipe recipe;
 
+  @Mock
+  private Map<String, Map<String, Object>> attributes;
+
+  @Mock
+  private Map<String, Object> cleanupAttributes;
+
   private List<Recipe> recipes = new ArrayList<>();
 
   CleanupConfigurationValidator underTest;
@@ -86,8 +88,11 @@ public class CleanupConfigurationValidatorTest
   @Before
   public void setUp() throws Exception {
     when(configuration.getRepositoryName()).thenReturn(REPO_NAME);
-    when(configuration.attributes(CLEANUP_KEY)).thenReturn(attributesMap);
-    when(attributesMap.get(POLICY_NAME_KEY, String.class)).thenReturn(POLICY_NAME);
+    when(configuration.getAttributes()).thenReturn(attributes);
+    when(cleanupAttributes.containsKey(POLICY_NAME_KEY)).thenReturn(true);
+    when(cleanupAttributes.get(POLICY_NAME_KEY)).thenReturn(ImmutableSet.of(POLICY_NAME));
+    when(attributes.containsKey(CLEANUP_KEY)).thenReturn(true);
+    when(attributes.get(CLEANUP_KEY)).thenReturn(cleanupAttributes);
     when(cleanupPolicyStorage.get(POLICY_NAME)).thenReturn(cleanupPolicy);
     when(cleanupPolicy.getFormat()).thenReturn(FORMAT);
     when(constraintFactory.createViolation(anyString(), anyString())).thenReturn(constraintViolation);
@@ -106,20 +111,31 @@ public class CleanupConfigurationValidatorTest
     when(repositoryManager.get(REPO_NAME)).thenReturn(null);
 
     assertThat(underTest.validate(configuration), is(nullValue()));
+    verify(constraintFactory, times(0)).createViolation(anyString(), anyString());
   }
 
   @Test
   public void whenAttributeNotFoundReturnNull() {
-    when(configuration.attributes(CLEANUP_KEY)).thenReturn(null);
+    when(configuration.getAttributes()).thenReturn(null);
 
     assertThat(underTest.validate(configuration), is(nullValue()));
+    verify(constraintFactory, times(0)).createViolation(anyString(), anyString());
+  }
+
+  @Test
+  public void whenCleanupAttributeNotFoundReturnNull() {
+    when(attributes.containsKey(CLEANUP_KEY)).thenReturn(false);
+
+    assertThat(underTest.validate(configuration), is(nullValue()));
+    verify(constraintFactory, times(0)).createViolation(anyString(), anyString());
   }
 
   @Test
   public void whenPolicyNameNotFoundReturnNull() {
-    when(attributesMap.get(POLICY_NAME_KEY, String.class)).thenReturn(null);
+    when(cleanupAttributes.containsKey(POLICY_NAME_KEY)).thenReturn(false);
 
     assertThat(underTest.validate(configuration), is(nullValue()));
+    verify(constraintFactory, times(0)).createViolation(anyString(), anyString());
   }
 
   @Test
@@ -127,11 +143,13 @@ public class CleanupConfigurationValidatorTest
     when(cleanupPolicyStorage.get(POLICY_NAME)).thenReturn(null);
 
     assertThat(underTest.validate(configuration), is(nullValue()));
+    verify(constraintFactory, times(0)).createViolation(anyString(), anyString());
   }
 
   @Test
   public void whenValidFormatsReturnNull() {
     assertThat(underTest.validate(configuration), is(nullValue()));
+    verify(constraintFactory, times(0)).createViolation(anyString(), anyString());
   }
 
   @Test
@@ -139,5 +157,6 @@ public class CleanupConfigurationValidatorTest
     when(cleanupPolicy.getFormat()).thenReturn("other");
 
     assertThat(underTest.validate(configuration), is(constraintViolation));
+    verify(constraintFactory).createViolation(anyString(), anyString());
   }
 }

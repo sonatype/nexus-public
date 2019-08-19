@@ -1,5 +1,8 @@
 {
   "name": "third",
+  "author": {
+    "name": "third-author"
+  },
   "maintainers": [
     {
       "email": "third@example.com",

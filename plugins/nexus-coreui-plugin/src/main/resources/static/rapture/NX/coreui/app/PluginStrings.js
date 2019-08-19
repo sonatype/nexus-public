@@ -440,9 +440,11 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_HttpClientFacet_AuthenticationType_NTLM: 'Windows NTLM',
     Repository_Facet_HttpClientFacet_Authentication_Title: 'Authentication',
     Repository_Facet_HttpClientFacet_HTTP_Title: 'HTTP request settings',
-    Repository_Facet_CleanupPolicyFacet_Title: 'Cleanup Policy',
-    Repository_Facet_CleanupPolicyFacet_Policy_FieldLabel: 'Available cleanup policies',
-    Repository_Facet_CleanupPolicyFacet_Policy_HelpText: 'Select a cleanup policy',
+    Repository_Facet_CleanupPolicyFacet_Title: 'Cleanup',
+    Repository_Facet_CleanupPolicyFacet_Policy_FieldLabel: 'Cleanup Policies',
+    Repository_Facet_CleanupPolicyFacet_Policy_HelpText: 'Components that match any of the Applied policies will be deleted',
+    Repository_Facet_CleanupPolicyFacet_Policy_FromTitle: 'Available',
+    Repository_Facet_CleanupPolicyFacet_Policy_ToTitle: 'Applied',
     Repository_Facet_CleanupPolicyFacet_Policy_EmptyText: 'None',
     Repository_Formats_All: '(All Formats)',
     Repository_Facet_GolangFacet_Title: 'Go Settings',
@@ -502,6 +504,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
         'are typically associated with a local filesystem directory, usually within the sonatype-work directory. ' +
         'For more information, check <a href="http://links.sonatype.com/products/nxrm3/docs/blob-store" ' +
         'target="_blank" rel="noopener noreferrer">the documentation</a>.</p></div>',
+    Blobstore_BlobstoreList_Unlimited: 'Unlimited',
+    Blobstore_BlobstoreList_Unavailable: 'Unavailable',
     Blobstore_BlobstoreFeature_Delete_Button: 'Delete blob store',
     Blobstore_BlobstoreFeature_Delete_Disabled_Message: 'This blob store is in use by {0} and {1} and cannot be deleted',
     Blobstore_BlobstoreFeature_Editing_Enabled_Message: 'Updating blob store configuration will cause it to be temporarily unavailable for a short period. Edits to configuration may also leave the blob store in a non-functional state. Use caution when changing values.',
@@ -1139,6 +1143,9 @@ Ext.define('NX.coreui.app.PluginStrings', {
     CleanupPolicy_CleanupPolicySettingsForm_IsPrerelease_HelpText: 'Restrict cleanup to components that are of this release type',
     CleanupPolicy_CleanupPolicySettingsForm_IsPrerelease_Prereleases_Item: 'Pre-Release / Snapshot Versions',
     CleanupPolicy_CleanupPolicySettingsForm_IsPrerelease_Releases_Item: 'Release Versions',
+    CleanupPolicy_CleanupPolicySettingsForm_Regex_FieldLabel: 'Asset Name Matcher',
+    CleanupPolicy_CleanupPolicySettingsForm_Regex_HelpText: 'Restrict cleanup to components which have at least one asset name matching the specified <a href="http://links.sonatype.com/products/nexus/cleanup-policies/asset-name-matcher-regex" target="_blank" rel="noopener">regular expression pattern</a>.' +
+        '<div>Before using this feature refer to our <a href="http://links.sonatype.com/products/nexus/cleanup-policies/asset-name-matcher" target="_blank" rel="noopener">documentation</a> and preview results.</div>',
     CleanupPolicy_CleanupPolicyAdd_Create_Error: 'You do not have permission to create Cleanup Policies',
     CleanupPolicy_CleanupPolicyAdd_Create_Success: 'Cleanup Policy created: ',
     CleanupPolicy_CleanupPolicyPreviewWindow_Title: 'Cleanup Policy preview',

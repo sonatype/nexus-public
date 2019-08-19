@@ -12,7 +12,11 @@
  */
 package org.sonatype.nexus.cleanup;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -24,12 +28,14 @@ import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Recipe;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.ConfigurationValidator;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.nonNull;
 import static org.sonatype.nexus.cleanup.internal.service.CleanupServiceImpl.CLEANUP_ATTRIBUTES_KEY;
 import static org.sonatype.nexus.cleanup.internal.service.CleanupServiceImpl.CLEANUP_NAME_KEY;
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicy.ALL_CLEANUP_POLICY_FORMAT;
@@ -63,11 +69,14 @@ public class CleanupConfigurationValidator
   @Nullable
   @Override
   public ConstraintViolation<?> validate(final Configuration configuration) {
-    CleanupPolicy cleanupPolicy = getCleanupPolicy(configuration);
-    Optional<Format> format = getConfigurationFormat(configuration);
+    List<CleanupPolicy> cleanupPolicies = getCleanupPolicy(configuration);
 
-    if (cleanupPolicy != null && format.isPresent()) {
-      return validCleanupFormat(configuration.getRepositoryName(), format.get().getValue(), cleanupPolicy);
+    if (!cleanupPolicies.isEmpty()) {
+      Optional<Format> format = getConfigurationFormat(configuration);
+      if (format.isPresent()) {
+        // report on the first one oly allowing
+        return validCleanupFormat(configuration.getRepositoryName(), format.get().getValue(), cleanupPolicies.get(0));
+      }
     }
     return null;
   }
@@ -79,16 +88,32 @@ public class CleanupConfigurationValidator
         .findFirst();
   }
 
-  private CleanupPolicy getCleanupPolicy(final Configuration configuration) {
-    NestedAttributesMap attributesMap = configuration.attributes(CLEANUP_ATTRIBUTES_KEY);
+  private List<CleanupPolicy> getCleanupPolicy(final Configuration configuration) {
+    List<CleanupPolicy> cleanupPolicies = new ArrayList<>();
 
-    if (attributesMap != null) {
-      String policyName = attributesMap.get(CLEANUP_NAME_KEY, String.class);
-      if (policyName != null) {
-        return cleanupPolicyStorage.get(policyName);
-      }
+    Map<String, Map<String, Object>> attributes = configuration.getAttributes();
+    if (attributes != null && attributes.containsKey(CLEANUP_ATTRIBUTES_KEY)) {
+      addToCleanupPoliciesFromCleanupAttributes(cleanupPolicies, attributes.get(CLEANUP_ATTRIBUTES_KEY));
     }
-    return null;
+
+    return cleanupPolicies;
+  }
+
+  private void addToCleanupPoliciesFromCleanupAttributes(final List<CleanupPolicy> cleanupPolicies,
+                                                         final Map<String, Object> cleanupAttributes)
+  {
+    if (cleanupAttributes.containsKey(CLEANUP_NAME_KEY)) {
+      @SuppressWarnings("unchecked")
+      Set<String> policyNames = (Set<String>) cleanupAttributes.get(CLEANUP_NAME_KEY);
+
+      policyNames.forEach(policyName -> {
+        CleanupPolicy cleanupPolicy = cleanupPolicyStorage.get(policyName);
+
+        if (nonNull(cleanupPolicy)) {
+          cleanupPolicies.add(cleanupPolicy);
+        }
+      });
+    }
   }
 
   private ConstraintViolation<?> validCleanupFormat(final String repoName, final String repoFormat, final CleanupPolicy cleanupPolicy) {

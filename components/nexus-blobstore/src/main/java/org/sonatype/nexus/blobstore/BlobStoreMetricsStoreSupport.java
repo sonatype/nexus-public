@@ -144,11 +144,11 @@ public abstract class BlobStoreMetricsStoreSupport<T extends ImplicitSourcePrope
 
   protected abstract T getProperties();
 
-  protected abstract AccumulatingBlobStoreMetrics getAccumulatingBlobStoreMetrics();
+  protected abstract AccumulatingBlobStoreMetrics getAccumulatingBlobStoreMetrics() throws BlobStoreMetricsNotAvailableException;
 
-  protected abstract Stream<T> backingFiles();
+  protected abstract Stream<T> backingFiles() throws BlobStoreMetricsNotAvailableException;
 
-  protected BlobStoreMetrics getCombinedMetrics(final Stream<T> blobStoreMetricsFiles) {
+  protected BlobStoreMetrics getCombinedMetrics(final Stream<T> blobStoreMetricsFiles) throws BlobStoreMetricsNotAvailableException {
     AccumulatingBlobStoreMetrics blobStoreMetrics = getAccumulatingBlobStoreMetrics();
     blobStoreMetricsFiles.forEach(metricsFile -> {
       iterate(1, i -> i + 1)
@@ -188,7 +188,13 @@ public abstract class BlobStoreMetricsStoreSupport<T extends ImplicitSourcePrope
 
   @Guarded(by = STARTED)
   public BlobStoreMetrics getMetrics() {
-    return getCombinedMetrics(backingFiles());
+    try {
+      return getCombinedMetrics(backingFiles());
+    }
+    catch (BlobStoreMetricsNotAvailableException e) {
+      log.error("Blob store metrics cannot be accessed", e);
+      return UnavailableBlobStoreMetrics.getInstance();
+    }
   }
 
   @Guarded(by = STARTED)

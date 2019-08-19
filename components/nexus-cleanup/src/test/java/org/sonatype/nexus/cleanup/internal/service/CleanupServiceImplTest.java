@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.cleanup.internal.service;
 
+import java.util.List;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
 
@@ -36,10 +37,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static com.google.common.collect.Sets.newLinkedHashSet;
+import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -61,31 +65,31 @@ public class CleanupServiceImplTest
 
   @Mock
   private Repository repository1, repository2;
-  
+
   @Mock
   private CleanupComponentBrowse browseService;
-  
+
   @Mock
   private CleanupPolicyStorage cleanupPolicyStorage;
-  
+
   @Mock
   private CleanupPolicy cleanupPolicy1, cleanupPolicy2;
-  
+
   @Mock
   private CleanupMethod cleanupMethod;
-  
+
   @Mock
   private StorageFacet storageFacet;
-  
+
   @Mock
   private EntityId component1, component2, component3;
-  
+
   @Mock
   private Type type;
-  
+
   @Mock
   private StorageTx tx;
-  
+
   @Mock
   private BooleanSupplier cancelledCheck;
 
@@ -98,20 +102,20 @@ public class CleanupServiceImplTest
   public void setup() throws Exception {
     underTest = new CleanupServiceImpl(repositoryManager, browseService, cleanupPolicyStorage, cleanupMethod,
         new GroupType(), RETRY_LIMIT);
-    
+
     setupRepository(repository1, POLICY_1_NAME);
     setupRepository(repository2, POLICY_2_NAME);
 
     when(storageFacet.txSupplier()).thenReturn(() -> tx);
-    
+
     when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository1, repository2));
-    
+
     when(cleanupPolicyStorage.get(POLICY_1_NAME)).thenReturn(cleanupPolicy1);
     when(cleanupPolicyStorage.get(POLICY_2_NAME)).thenReturn(cleanupPolicy2);
 
     when(cleanupPolicy1.getCriteria()).thenReturn(ImmutableMap.of(LAST_BLOB_UPDATED_KEY, "1"));
     when(cleanupPolicy2.getCriteria()).thenReturn(ImmutableMap.of(LAST_DOWNLOADED_KEY, "2"));
-    
+
     when(browseService.browse(cleanupPolicy1, repository1)).thenReturn(ImmutableList.of(component1, component2));
     when(browseService.browse(cleanupPolicy2, repository2)).thenReturn(ImmutableList.of(component3));
 
@@ -124,9 +128,23 @@ public class CleanupServiceImplTest
   @Test
   public void fetchPolicyForEachRepositoryAndRunCleanup() throws Exception {
     underTest.cleanup(cancelledCheck);
-    
+
     verify(cleanupMethod).run(repository1, ImmutableList.of(component1, component2), cancelledCheck);
     verify(cleanupMethod).run(repository2, ImmutableList.of(component3), cancelledCheck);
+  }
+
+  @Test
+  public void fetchMultiplePoliciesForEachRepositoryAndRunCleanup() {
+    String[] policyNamesForRepo1 = {"abc", "def", "ghi"};
+    List<EntityId> componentsForRepo1 = setupForMultiplePolicies(repository1, policyNamesForRepo1);
+
+    String[] policyNamesForRepo2 = {"qwe", "rty", "uio"};
+    List<EntityId> componentsForRepo2 = setupForMultiplePolicies(repository2, policyNamesForRepo2);
+
+    underTest.cleanup(cancelledCheck);
+
+    verify(cleanupMethod, times(policyNamesForRepo1.length)).run(repository1, componentsForRepo1, cancelledCheck);
+    verify(cleanupMethod, times(policyNamesForRepo2.length)).run(repository2, componentsForRepo2, cancelledCheck);
   }
 
   @Test
@@ -141,7 +159,7 @@ public class CleanupServiceImplTest
   @Test
   public void ignoreRepositoryWhenPolicyNameAttributeIsNotPresent() throws Exception {
     repository1.getConfiguration().setAttributes(emptyMap());
-    
+
     underTest.cleanup(cancelledCheck);
 
     verify(cleanupMethod).run(repository2, ImmutableList.of(component3), cancelledCheck);
@@ -162,9 +180,9 @@ public class CleanupServiceImplTest
       when(cancelledCheck.getAsBoolean()).thenReturn(true);
       return deletionProgress;
     }).when(cleanupMethod).run(repository1, ImmutableList.of(component1, component2), cancelledCheck);
-    
+
     underTest.cleanup(cancelledCheck);
-    
+
     verify(cleanupMethod).run(repository1, ImmutableList.of(component1, component2), cancelledCheck);
     verify(cleanupMethod, never()).run(repository2, ImmutableList.of(component3), cancelledCheck);
   }
@@ -213,16 +231,36 @@ public class CleanupServiceImplTest
     verify(cleanupMethod, times(3)).run(any(), any(), any());
   }
 
-  private void setupRepository(final Repository repository, final String policyName) {
+  private void setupRepository(final Repository repository, final String... policyName) {
     Configuration repositoryConfig = new Configuration();
     when(repository.getConfiguration()).thenReturn(repositoryConfig);
 
     ImmutableMap<String, Map<String, Object>> attributes = ImmutableMap
-        .of("cleanup", ImmutableMap.of("policyName", policyName));
+        .of("cleanup", ImmutableMap.of("policyName", newLinkedHashSet(asList(policyName))));
     repositoryConfig.setAttributes(attributes);
 
     when(repository.getType()).thenReturn(type);
 
     when(repository.facet(StorageFacet.class)).thenReturn(storageFacet);
+  }
+
+  private List<EntityId> setupForMultiplePolicies(final Repository repository, final String... policyNames) {
+    setupRepository(repository, policyNames);
+    return setupComponents(repository, policyNames);
+  }
+
+  private List<EntityId> setupComponents(final Repository repository,
+                                         final String... policyNames)
+  {
+    ImmutableList<EntityId> components = ImmutableList.of(mock(EntityId.class), mock(EntityId.class));
+
+    asList(policyNames).forEach(policyName -> {
+      CleanupPolicy cleanupPolicy = mock(CleanupPolicy.class);
+      when(cleanupPolicy.getCriteria()).thenReturn(ImmutableMap.of(LAST_BLOB_UPDATED_KEY, "1"));
+      when(cleanupPolicyStorage.get(policyName)).thenReturn(cleanupPolicy);
+      when(browseService.browse(cleanupPolicy, repository)).thenReturn(components);
+    });
+
+    return components;
   }
 }

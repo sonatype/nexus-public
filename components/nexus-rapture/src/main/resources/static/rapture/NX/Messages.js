@@ -47,7 +47,7 @@ Ext.define('NX.Messages', {
       html:
           '<div role="presentation" class="icon x-fa ' + iconCls + '"></div>' +
           '<div class="text">' + Ext.htmlEncode(message) + '</div>' +
-          '<div class="dismiss"><a aria-label="Dismiss" href="javascript:;" onclick="Ext.getCmp(this.closest(\'.x-toast\').id).close()">×</a></div>',
+          '<div class="dismiss"><a aria-label="Dismiss" href="javascript:;" onclick="Ext.getCmp(this.closest(\'.x-toast\').id).close()"><i class="fa fa-times-circle"></i></a></div>',
       align: 'tr',
       anchor: Ext.ComponentQuery.query('nx-feature-content')[0],
       stickOnClick: true,

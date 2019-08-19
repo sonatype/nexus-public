@@ -86,6 +86,11 @@ public class NestedAttributesMapJsonParserTest
   }
 
   @Test
+  public void no_ChildMap_From_RootMap_On_NoChildFound() {
+    assertThat(underTest.getChildFromRoot(), nullValue());
+  }
+
+  @Test
   public void retrieve_ChildMap_From_RootMap() throws IOException {
     String simpleJson = "{\"user\":{\"description\":\"simplestuff\"}}";
     underTest = new NestedAttributesMapJsonParser(new JsonFactory().createParser(simpleJson), nestedAttributesMap);

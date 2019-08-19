@@ -81,6 +81,8 @@ public class DefaultComponentMetadataProducer
 
   public static final String LAST_DOWNLOADED_KEY = "lastDownloaded";
 
+  public static final String REGEX_KEY = "regex";
+
   private static final Logger log = LoggerFactory.getLogger(DefaultComponentMetadataProducer.class);
 
   private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormat.forPattern("YYYY-MM-dd'T'HH:mm:ss.SSSZ");

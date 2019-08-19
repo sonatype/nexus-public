@@ -20,11 +20,13 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.blobstore.AccumulatingBlobStoreMetrics;
+import org.sonatype.nexus.blobstore.BlobStoreMetricsNotAvailableException;
 import org.sonatype.nexus.blobstore.BlobStoreMetricsStoreSupport;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.scheduling.PeriodicJobService;
 
+import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.google.common.collect.ImmutableMap;
 
@@ -70,17 +72,21 @@ public class S3BlobStoreMetricsStore
   }
 
   @Override
-  protected Stream<S3PropertiesFile> backingFiles() {
-    if (s3 == null) {
-      return Stream.empty();
+  protected Stream<S3PropertiesFile> backingFiles() throws BlobStoreMetricsNotAvailableException {
+    try {
+      if (s3 == null) {
+        return Stream.empty();
+      }
+      else {
+        return s3.listObjects(bucket, bucketPrefix + nodeAccess.getId()).getObjectSummaries()
+            .stream()
+            .filter(Objects::nonNull)
+            .filter(summary -> summary.getKey().endsWith(METRICS_FILENAME))
+            .map(summary -> new S3PropertiesFile(s3, bucket, summary.getKey()));
+      }
     }
-    else {
-      Stream<S3PropertiesFile> stream = s3.listObjects(bucket, bucketPrefix + nodeAccess.getId()).getObjectSummaries()
-          .stream()
-          .filter(Objects::nonNull)
-          .filter(summary -> summary.getKey().endsWith(METRICS_FILENAME))
-          .map(summary -> new S3PropertiesFile(s3, bucket, summary.getKey()));
-      return stream;
+    catch (SdkClientException e) {
+      throw new BlobStoreMetricsNotAvailableException(e);
     }
   }
 
@@ -101,14 +107,21 @@ public class S3BlobStoreMetricsStore
 
   @Override
   public void remove() {
-    backingFiles().forEach(metricsFile -> {
-      try {
-        log.debug("Removing {}", metricsFile);
-        metricsFile.remove();
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    });
+    try {
+      backingFiles().forEach(this::removeQuietly);
+    }
+    catch (BlobStoreMetricsNotAvailableException e) {
+      log.warn("Unable to remove metrics files", e);
+    }
+  }
+
+  private void removeQuietly(final S3PropertiesFile file) {
+    try {
+      log.debug("Removing {}", file);
+      file.remove();
+    }
+    catch (IOException e) {
+      log.warn("Unable to remove metrics file {}", file, e);
+    }
   }
 }

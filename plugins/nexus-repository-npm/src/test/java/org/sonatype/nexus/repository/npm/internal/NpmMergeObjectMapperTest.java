@@ -23,6 +23,9 @@ import java.util.function.Function;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.junit.Before;
 import org.junit.Test;
@@ -67,7 +70,7 @@ public class NpmMergeObjectMapperTest
     try (InputStream inputStream = getClass().getResourceAsStream("merge-multi-depth-first.json")) {
       NestedAttributesMap result = underTest.read(inputStream);
 
-      assertThat(result.size(), equalTo(10)); // checks it has all is read + the dist_tags
+      assertThat(result.size(), equalTo(11)); // checks it has all is read + the dist_tags
       assertThat(result.get("name"), equalTo("first"));
 
       List maintainers = (List) result.get("maintainers");
@@ -158,6 +161,74 @@ public class NpmMergeObjectMapperTest
     assertThat(result.child("versions").child("1.0").backing(), hasEntry("name", "dominant"));
   }
 
+  // ---- Verifying overlaying objects of different types the same way for Map parsing as InputStreams. ---- //
+
+  @Test
+  public void merge_OverlayKey_Test() {
+    verifyOverlayKeyTest(this::mergeInputStreamsWhileStreaming);
+
+    // verify that merging via parsing works exactly the same
+    verifyOverlayKeyTest(this::mergeInputStreamsAfterParse);
+  }
+
+  @SuppressWarnings("unchecked")
+  private void verifyOverlayKeyTest(Function<List<InputStream>, NestedAttributesMap> function) {
+    NestedAttributesMap recessive = new NestedAttributesMap("recessive", Maps.newHashMap());
+    recessive.set("author", "recessive-author");
+    recessive.set("randomfield", "recessive-randomfield");
+    recessive.set("maintainers", asList("recessive-maintainer1", "recessive-maintainer2"));
+
+    NestedAttributesMap dominant = new NestedAttributesMap("dominant", Maps.newHashMap());
+    dominant.child("author").set("name", "dominant-author");
+    dominant.child("randomfield").set("name", "dominant-randomfield");
+    dominant.set("maintainers",
+        asList(
+            ImmutableMap.of("name", "dominant-maintainer1", "email", "dominant@maintainer1.com"),
+            ImmutableMap.of("name", "dominant-maintainer2", "email", "dominant@maintainer2.com")));
+
+    List<InputStream> contents = new ArrayList<>();
+    contents.add(new ByteArrayInputStream(NpmJsonUtils.bytes(recessive)));
+    contents.add(new ByteArrayInputStream(NpmJsonUtils.bytes(dominant)));
+
+    NestedAttributesMap result = function.apply(contents);
+    assertThat(result.child("author").backing(), hasEntry("name", "dominant-author"));
+    assertThat(result.child("randomfield").backing(), hasEntry("name", "dominant-randomfield"));
+
+    List<Map<String, String>> maintainers = result.get("maintainers", List.class);
+    assertThat(maintainers.get(0), hasEntry("name", "dominant-maintainer1"));
+    assertThat(maintainers.get(1), hasEntry("name", "dominant-maintainer2"));
+
+    verifyWhatGoesInMustComeOut(result);
+
+    // test opposite
+    recessive = new NestedAttributesMap("recessive", Maps.newHashMap());
+    recessive.child("author").set("name", "recessive-author");
+    recessive.child("randomfield").set("name", "recessive-randomfield");
+    recessive.set("maintainers",
+        asList(
+            ImmutableMap.of("name", "recessive-maintainer1", "email", "recessive@maintainer1.com"),
+            ImmutableMap.of("name", "recessive-maintainer2", "email", "recessive@maintainer2.com")));
+
+    dominant = new NestedAttributesMap("dominant", Maps.newHashMap());
+    dominant.set("author", "dominant-author");
+    dominant.set("randomfield", "dominant-randomfield");
+    dominant.set("maintainers", asList("dominant-maintainer1", "dominant-maintainer2"));
+
+    contents = new ArrayList<>();
+    contents.add(new ByteArrayInputStream(NpmJsonUtils.bytes(recessive)));
+    contents.add(new ByteArrayInputStream(NpmJsonUtils.bytes(dominant)));
+
+    result = function.apply(contents);
+    assertThat(result.get("author", String.class), equalTo("dominant-author"));
+    assertThat(result.get("randomfield", String.class), equalTo("dominant-randomfield"));
+
+    List<String> maintainers1 = result.get("maintainers", List.class);
+    assertThat(maintainers1.get(0), equalTo("dominant-maintainer1"));
+    assertThat(maintainers1.get(1), equalTo("dominant-maintainer2"));
+
+    verifyWhatGoesInMustComeOut(result);
+  }
+
   @Test
   public void merge_Multiple_InputStreams_Into_Map() throws IOException {
     verifyMergeMultipleContents(this::mergeInputStreamsWhileStreaming);
@@ -244,6 +315,8 @@ public class NpmMergeObjectMapperTest
     assertThat(objects.get(0), equalTo("circle"));
     assertThat(objects.get(1), equalTo(3.14));
     assertThat(((Map<String, String>) objects.get(2)), hasEntry("color", "blue"));
+
+    verifyWhatGoesInMustComeOut(result);
   }
 
   private void verifyMergingMultipleContentsWithMultiDepthJson(Function<List<InputStream>, NestedAttributesMap> function)
@@ -258,7 +331,7 @@ public class NpmMergeObjectMapperTest
   }
 
   private void verifyMergingMultipleContentsWithMultiDepthJsonResult(final NestedAttributesMap result) {
-    assertThat(result.size(), equalTo(10)); // checks it has all the merged tags + the dist_tags
+    assertThat(result.size(), equalTo(11)); // checks it has all the merged tags + the dist_tags
     assertThat(result.get("name"), equalTo("third"));
 
     List maintainers = (List) result.get("maintainers");
@@ -304,6 +377,8 @@ public class NpmMergeObjectMapperTest
 
     NestedAttributesMap funckyFieldName = dependencies.child("funcky(\"fieldname\"");
     assertThat(funckyFieldName.get("test"), equalTo("value"));
+
+    verifyWhatGoesInMustComeOut(result);
   }
 
   private NestedAttributesMap mergeInputStreamsWhileStreaming(final List<InputStream> inputStreams) {
@@ -333,5 +408,14 @@ public class NpmMergeObjectMapperTest
     }
 
     return null;
+  }
+
+  private void verifyWhatGoesInMustComeOut(final NestedAttributesMap result) {
+    try {
+      new ObjectMapper().writeValueAsString(result.backing());
+    }
+    catch (JsonProcessingException e) {
+      fail("Unable to write Map that was Read into, due to :" + e.getMessage());
+    }
   }
 }

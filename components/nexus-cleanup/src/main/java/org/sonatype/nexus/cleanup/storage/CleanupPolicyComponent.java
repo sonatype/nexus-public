@@ -26,8 +26,10 @@ import javax.inject.Singleton;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.groups.Default;
+import javax.ws.rs.WebApplicationException;
 
 import org.sonatype.nexus.cleanup.config.CleanupPolicyConfiguration;
+import org.sonatype.nexus.cleanup.internal.search.elasticsearch.RegexCriteriaValidator.InvalidExpressionException;
 import org.sonatype.nexus.cleanup.service.CleanupComponentBrowse;
 import org.sonatype.nexus.extdirect.DirectComponent;
 import org.sonatype.nexus.extdirect.DirectComponentSupport;
@@ -43,6 +45,8 @@ import org.sonatype.nexus.repository.security.RepositoryAdminPermission;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageFacet;
+import org.sonatype.nexus.rest.ValidationErrorsException;
+import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 import org.sonatype.nexus.validation.Validate;
@@ -60,14 +64,12 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.Integer.MAX_VALUE;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
-import static java.util.stream.Stream.concat;
-import static org.sonatype.nexus.cleanup.storage.CleanupPolicy.NONE_POLICY;
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicyXO.fromCleanupPolicy;
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicyXO.mergeIntoCleanupPolicy;
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicyXO.toCleanupPolicy;
@@ -98,9 +100,6 @@ public class CleanupPolicyComponent
 
   private final ObjectMapper mapper = new ObjectMapper();
 
-  private static final List<CleanupPolicyXO> NONE_POLICY_LIST =
-      singletonList(fromCleanupPolicy(NONE_POLICY, MAX_VALUE));
-
   private final CleanupPolicyStorage cleanupPolicyStorage;
 
   private final CleanupComponentBrowse cleanupComponentBrowse;
@@ -129,8 +128,7 @@ public class CleanupPolicyComponent
   }
 
   /**
-   * Retrieve {@link CleanupPolicy}s by format + add the {@link CleanupPolicy#NONE_POLICY} policy as the first
-   * option for all repositories.
+   * Retrieve {@link CleanupPolicy}s by format.
    *
    * @return a list of {@link CleanupPolicy}s
    */
@@ -144,8 +142,7 @@ public class CleanupPolicyComponent
           return format;
         })
         .map(this::getAllByFormat)
-        .map(this::prependNonePolicy)
-        .orElse(NONE_POLICY_LIST);
+        .orElse(emptyList());
   }
 
   /**
@@ -297,10 +294,6 @@ public class CleanupPolicyComponent
     return cleanupPolicyStorage.getAllByFormat(format).stream()
         .map(CleanupPolicyXO::fromCleanupPolicy)
         .collect(toList());
-  }
-
-  private List<CleanupPolicyXO> prependNonePolicy(final List<CleanupPolicyXO> policyList) {
-    return concat(NONE_POLICY_LIST.stream(), policyList.stream()).collect(toList());
   }
 
   private PagedResponse<ComponentXO> getSearchResults(final CleanupPolicyPreviewXO previewXO,

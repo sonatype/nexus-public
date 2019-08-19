@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.cleanup.storage
 
+import javax.validation.Valid
 import javax.validation.constraints.Pattern
 
 import org.sonatype.nexus.cleanup.storage.config.UniqueCleanupPolicyName
@@ -50,6 +51,7 @@ class CleanupPolicyXO
 
   String notes
 
+  @Valid
   CleanupPolicyCriteria criteria
 
   /**

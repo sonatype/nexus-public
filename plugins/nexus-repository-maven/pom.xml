@@ -170,11 +170,6 @@
       </plugin>
 
       <plugin>
-        <groupId>com.github.klieber</groupId>
-        <artifactId>phantomjs-maven-plugin</artifactId>
-      </plugin>
-
-      <plugin>
         <groupId>com.github.searls</groupId>
         <artifactId>jasmine-maven-plugin</artifactId>
         <configuration>
@@ -202,4 +197,23 @@
     </plugins>
   </build>
 
+
+  <profiles>
+    <profile>
+      <id>phantomjs</id>
+      <activation>
+        <property>
+          <name>!skipTests</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.github.klieber</groupId>
+            <artifactId>phantomjs-maven-plugin</artifactId>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

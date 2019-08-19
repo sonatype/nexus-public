@@ -36,7 +36,6 @@ Ext.define('NX.coreui.store.CleanupPolicy', {
   },
 
   sorters: [
-    { property: 'sortOrder', direction: 'DESC' },
     { property: 'name', direction: 'ASC'}
   ]
 });

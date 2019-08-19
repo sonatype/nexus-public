@@ -14,18 +14,18 @@ package org.sonatype.nexus.blobstore.file.internal;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.blobstore.AccumulatingBlobStoreMetrics;
+import org.sonatype.nexus.blobstore.BlobStoreMetricsNotAvailableException;
 import org.sonatype.nexus.blobstore.BlobStoreMetricsStoreSupport;
 import org.sonatype.nexus.scheduling.PeriodicJobService;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
@@ -34,6 +34,7 @@ import org.sonatype.nexus.common.property.PropertiesFile;
 
 import com.google.common.collect.ImmutableMap;
 
+import static java.util.stream.Collectors.toList;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -70,7 +71,7 @@ public class FileBlobStoreMetricsStore
   }
 
   @Override
-  protected AccumulatingBlobStoreMetrics getAccumulatingBlobStoreMetrics() {
+  protected AccumulatingBlobStoreMetrics getAccumulatingBlobStoreMetrics() throws BlobStoreMetricsNotAvailableException {
     try {
       FileStore fileStore = Files.getFileStore(storageDirectory);
       ImmutableMap<String, Long> availableSpace = ImmutableMap
@@ -78,31 +79,42 @@ public class FileBlobStoreMetricsStore
       return new AccumulatingBlobStoreMetrics(0, 0, availableSpace, false);
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BlobStoreMetricsNotAvailableException(e);
     }
   }
 
   @Override
-  public Stream<PropertiesFile> backingFiles() {
+  public Stream<PropertiesFile> backingFiles() throws BlobStoreMetricsNotAvailableException {
     if (storageDirectory == null) {
       return Stream.empty();
     }
-    return Optional.ofNullable(storageDirectory.toFile().listFiles((dir, name) -> name.endsWith(METRICS_FILENAME)))
-        .map(files -> Arrays.stream(files).filter(Objects::nonNull).map(PropertiesFile::new))
-        .orElse(Stream.empty());
+    try (DirectoryStream<Path> files =
+         Files.newDirectoryStream(storageDirectory, path -> path.toString().endsWith(METRICS_FILENAME))) {
+      return StreamSupport.stream(files.spliterator(), false).collect(toList()).stream()
+          .map(Path::toFile)
+          .map(PropertiesFile::new);
+    }
+    catch (IOException | SecurityException e) {
+      throw new BlobStoreMetricsNotAvailableException(e);
+    }
   }
 
   public void setStorageDir(final Path storageDirectory) {
     checkNotNull(storageDirectory);
-    checkArgument(Files.isDirectory(storageDirectory));
+    checkArgument(storageDirectory.toFile().isDirectory());
     this.storageDirectory = storageDirectory;
   }
 
   @Override
   public void remove() {
-    backingFiles()
-        .map(PropertiesFile::getFile)
-        .map(File::toPath)
-        .forEach(fileOperations::deleteQuietly);
+    try {
+      backingFiles()
+          .map(PropertiesFile::getFile)
+          .map(File::toPath)
+          .forEach(fileOperations::deleteQuietly);
+    }
+    catch (BlobStoreMetricsNotAvailableException e) {
+      log.warn("Unable to remove metrics files", e);
+    }
   }
 }

@@ -26,6 +26,8 @@ import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -44,16 +46,20 @@ import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
 import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 import static org.elasticsearch.index.query.QueryBuilders.rangeQuery;
+import static org.elasticsearch.index.query.QueryBuilders.regexpQuery;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.cleanup.internal.search.elasticsearch.RegexCriteriaAppender.DEFAULT_REGEX_MATCH_ON;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.IS_PRERELEASE_KEY;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_DOWNLOADED_KEY;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_BLOB_UPDATED_KEY;
+import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_DOWNLOADED_KEY;
+import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REGEX_KEY;
 
 public class ElasticSearchCleanupComponentBrowseTest
     extends TestSupport
@@ -81,6 +87,12 @@ public class ElasticSearchCleanupComponentBrowseTest
   @Mock
   private StorageTx tx;
 
+  @Mock
+  private MetricRegistry metricRegistry;
+
+  @Mock
+  private Timer timer;
+
   private ElasticSearchCleanupComponentBrowse underTest;
 
   @Before
@@ -88,13 +100,16 @@ public class ElasticSearchCleanupComponentBrowseTest
     underTest = new ElasticSearchCleanupComponentBrowse(ImmutableMap.of(
         LAST_DOWNLOADED_KEY, new LastDownloadedCriteriaAppender(),
         LAST_BLOB_UPDATED_KEY, new LastBlobUpdatedCriteriaAppender(),
-        IS_PRERELEASE_KEY, new PrereleaseCriteriaAppender()
-    ), searchService);
+        IS_PRERELEASE_KEY, new PrereleaseCriteriaAppender(),
+        REGEX_KEY, new RegexCriteriaAppender()
+    ), searchService, metricRegistry);
 
     when(repository.getName()).thenReturn(REPO_NAME);
 
     when(searchHit1.getId()).thenReturn(COMPONENT_ID_1);
     when(searchHit2.getId()).thenReturn(COMPONENT_ID_2);
+
+    when(metricRegistry.timer(anyString())).thenReturn(timer);
 
     UnitOfWork.beginBatch(tx);
   }
@@ -132,6 +147,16 @@ public class ElasticSearchCleanupComponentBrowseTest
   }
 
   @Test
+  public void browseRegexPolicy() {
+    String regex = "org/sonatype";
+
+    Map<String, String> criteria = ImmutableMap.of(REGEX_KEY, regex);
+
+    assertComponentsReturned(criteria);
+    assertQuery(REGEX_KEY, regexQuery(DEFAULT_REGEX_MATCH_ON, regex));
+  }
+
+  @Test
   public void browseByAndQuery() throws Exception {
     String lastBlobUpdatedSeconds = "5";
     String lastDownloadedSeconds = "20";
@@ -140,7 +165,8 @@ public class ElasticSearchCleanupComponentBrowseTest
     Map<String, String> criteria = ImmutableMap.of(
         LAST_BLOB_UPDATED_KEY, lastBlobUpdatedSeconds,
         LAST_DOWNLOADED_KEY, lastDownloadedSeconds,
-        IS_PRERELEASE_KEY, Boolean.toString(isPrerelease)
+        IS_PRERELEASE_KEY, Boolean.toString(isPrerelease),
+        REGEX_KEY, "org/sonatype"
     );
 
     assertComponentsReturned(criteria);
@@ -194,10 +220,16 @@ public class ElasticSearchCleanupComponentBrowseTest
     return boolQuery().must(matchAllQuery()).must(matchQuery(matchOn, value)).toString();
   }
 
+  private String regexQuery(final String matchOn, final String regex) {
+    return boolQuery().must(matchAllQuery()).must(regexpQuery(matchOn, regex)).toString();
+  }
+
   private String andQuery(final Map<String, String> criteria) {
     return boolQuery().must(matchAllQuery())
         .filter(rangeQuery(LAST_BLOB_UPDATED_KEY).lte(format(NOW_MINUS_SECONDS, criteria.get(LAST_BLOB_UPDATED_KEY))))
         .filter(rangeQuery(LAST_DOWNLOADED_KEY).lte(format(NOW_MINUS_SECONDS, criteria.get(LAST_DOWNLOADED_KEY))))
-        .must(matchQuery(IS_PRERELEASE_KEY, parseBoolean(criteria.get(IS_PRERELEASE_KEY)))).toString();
+        .must(matchQuery(IS_PRERELEASE_KEY, parseBoolean(criteria.get(IS_PRERELEASE_KEY))))
+        .must(regexpQuery(DEFAULT_REGEX_MATCH_ON, criteria.get(REGEX_KEY)))
+        .toString();
   }
 }

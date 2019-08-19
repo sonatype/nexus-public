@@ -9549,10 +9549,9 @@
 }
 
 .x-toast .dismiss {
-    font-size: 1.5em;
-    font-weight: bold;
-    margin: 0.25em 0.25em 0.25em auto;
-    opacity: 0.5;
+    font-size: 1em;
+    margin: 0.6em 0.5em auto auto;
+    opacity: 0.35;
 }
 
 .x-toast .dismiss:hover {

@@ -340,8 +340,9 @@ public final class NpmMetadataUtils
           }
         }
       }
-      else if (dominantValue instanceof String && recessiveValue instanceof Map) {
-        continue; // skip, this is usually versions : { "x.x.x" : "latest" } on incomplete documents
+      // skip, this is usually versions : { "x.x.x" : "latest" } on incomplete documents
+      else if (dominantValue instanceof String && recessiveValue instanceof Map && VERSIONS.equals(key)) {
+        continue;
       }
       else {
         recessive.put(key, dominantValue);

@@ -80,4 +80,9 @@ public class AccumulatingBlobStoreMetrics
   public Map<String, Long> getAvailableSpaceByFileStore() {
     return availableSpaceByFileStore;
   }
+
+  @Override
+  public boolean isUnavailable() {
+    return false;
+  }
 }

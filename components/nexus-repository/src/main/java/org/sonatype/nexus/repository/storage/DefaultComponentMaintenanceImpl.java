@@ -155,11 +155,11 @@ public class DefaultComponentMaintenanceImpl
             DeletionResult deletionResult = deleteComponentTx(component, true);
 
             if (deletionResult.getComponent() != null) {
+              deletionProgress.addCount(1);
+
               log.info("Deleted component with ID '{}', Attributes '{}' and Assets '{}' from repository {}", component,
                   deletionResult.getComponent().toStringExternal(), deletionResult.getAssets(), getRepository());
             }
-
-            deletionProgress.addCount(1);
           }
           catch (Exception e) {
             log.debug("Unable to delete component with ID {}", component, e);

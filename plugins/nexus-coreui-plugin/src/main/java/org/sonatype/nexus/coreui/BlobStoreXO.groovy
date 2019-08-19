@@ -57,6 +57,11 @@ class BlobStoreXO
 
   boolean unlimited
 
+  /**
+   * @since 3.next
+   */
+  boolean unavailable
+
   @Range
   long blobStoreUseCount
 

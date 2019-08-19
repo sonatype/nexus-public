@@ -120,11 +120,6 @@
       </plugin>
 
       <plugin>
-        <groupId>com.github.klieber</groupId>
-        <artifactId>phantomjs-maven-plugin</artifactId>
-      </plugin>
-
-      <plugin>
         <artifactId>maven-resources-plugin</artifactId>
         <executions>
           <execution>
@@ -176,4 +171,23 @@
     </plugins>
   </build>
 
+
+  <profiles>
+    <profile>
+      <id>phantomjs</id>
+      <activation>
+        <property>
+          <name>!skipTests</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.github.klieber</groupId>
+            <artifactId>phantomjs-maven-plugin</artifactId>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

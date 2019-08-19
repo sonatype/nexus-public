@@ -183,27 +183,27 @@ Ext.define('NX.coreui.controller.Repositories', {
         settingsPanel = me.getSettings(),
         formCls = Ext.ClassManager.getByAlias('widget.nx-coreui-repository-' + model.get('recipe'));
 
-    Ext.suspendLayouts();
-
     if (!formCls) {
       me.logWarn('Could not find settings form for: ' + model.getId());
     }
-    else {
-      if (Ext.isDefined(model)) {
+    else if (Ext.isDefined(model)) {
+      // load the record after we have all stores available
+      me.loadCleanupPolicies(model.get('format'), function () {
+        Ext.suspendLayouts();
         // Load the form
         settingsPanel.removeAllSettingsForms();
         settingsPanel.addSettingsForm({xtype: formCls.xtype, recipe: model});
         settingsPanel.loadRecord(model);
-        me.loadCleanupPolicies(model.get('format'));
 
         // Set immutable fields to readonly
         Ext.Array.each(settingsPanel.query('field[readOnlyOnUpdate=true]'), function (field) {
           field.setReadOnly(true);
           field.addCls('nx-combo-disabled');
         });
-      }
+
+        Ext.resumeLayouts();
+      });
     }
-    Ext.resumeLayouts();
   },
 
   /**
@@ -247,11 +247,14 @@ Ext.define('NX.coreui.controller.Repositories', {
       // Show the second panel in the create wizard, and set the breadcrumb
       me.setItemName(2, NX.I18n.format('Repositories_Create_Title', model.get('name')));
       me.setItemClass(2, NX.Icons.cls('repository-hosted', 'x16'));
-      me.loadCreateWizard(2, {xtype: 'nx-coreui-repository-add', recipe: model});
-      me.loadCleanupPolicies(model.getId().split('-')[0]);
-      if (model.getId() === 'maven2-proxy') {
-        me.cleanUpdateProxyFacetContentMaxAge(-1);
-      }
+
+      // load the wizard after we have all stores available
+      me.loadCleanupPolicies(model.getId().split('-')[0], function() {
+        me.loadCreateWizard(2, {xtype: 'nx-coreui-repository-add', recipe: model});
+        if (model.getId() === 'maven2-proxy') {
+          me.cleanUpdateProxyFacetContentMaxAge(-1);
+        }
+      });
     }
   },
 
@@ -585,8 +588,9 @@ Ext.define('NX.coreui.controller.Repositories', {
     };
   },
 
-  loadCleanupPolicies: function(format) {
+  loadCleanupPolicies: function(format, callback) {
     this.getStore('CleanupPolicy').load({
+      callback: callback,
       params: {
         filter: [
           {

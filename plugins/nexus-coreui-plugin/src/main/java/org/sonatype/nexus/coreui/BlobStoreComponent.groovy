@@ -234,12 +234,17 @@ class BlobStoreComponent
         groupName: blobStoreGroups.find { it.members.contains(blobStore) }?.blobStoreConfiguration?.name
     )
     if (blobStore.isStarted()) {
+      def metrics = blobStore.metrics
       blobStoreXO.with {
-        blobCount = blobStore.metrics.blobCount
-        totalSize = blobStore.metrics.totalSize
-        availableSpace = blobStore.metrics.availableSpace
-        unlimited = blobStore.metrics.unlimited
+        blobCount = metrics.blobCount
+        totalSize = metrics.totalSize
+        availableSpace = metrics.availableSpace
+        unlimited = metrics.unlimited
+        unavailable = metrics.unavailable
       }
+    }
+    else {
+      blobStoreXO.unavailable = true
     }
     return blobStoreXO
   }

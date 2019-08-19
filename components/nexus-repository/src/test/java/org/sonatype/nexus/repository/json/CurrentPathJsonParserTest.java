@@ -61,12 +61,10 @@ public class CurrentPathJsonParserTest
 
   @Test
   public void should_Return_CurrentPath_InParts_For_Parser() throws IOException {
-    assertThat(underTest.currentPathInParts().length, equalTo(1));
-    assertThat(underTest.currentPathInParts()[0], equalTo(""));
+    assertThat(underTest.currentPathInParts().length, equalTo(0));
 
     underTest.nextValue();
-    assertThat(underTest.currentPathInParts().length, equalTo(1));
-    assertThat(underTest.currentPathInParts()[0], equalTo(""));
+    assertThat(underTest.currentPathInParts().length, equalTo(0));
 
     underTest.nextValue();
     assertThat(underTest.currentPathInParts().length, equalTo(1));
@@ -86,8 +84,7 @@ public class CurrentPathJsonParserTest
     assertThat(underTest.currentPathInParts()[0], equalTo("user"));
 
     underTest.nextValue();
-    assertThat(underTest.currentPathInParts().length, equalTo(1));
-    assertThat(underTest.currentPathInParts()[0], equalTo(""));
+    assertThat(underTest.currentPathInParts().length, equalTo(0));
   }
 
   @Test

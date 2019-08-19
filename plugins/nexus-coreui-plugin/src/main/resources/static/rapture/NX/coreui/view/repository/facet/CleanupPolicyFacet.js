@@ -36,37 +36,26 @@ Ext.define('NX.coreui.view.repository.facet.CleanupPolicyFacet', {
         cls: 'nx-form-section',
         title: NX.I18n.get('Repository_Facet_CleanupPolicyFacet_Title'),
 
-        defaults: {
+        items: {
+          xtype: 'nx-itemselector',
+          name: 'attributes.cleanup.policyName',
+          itemId: 'cleanupPolicyName',
+          fieldLabel: NX.I18n.get('Repository_Facet_CleanupPolicyFacet_Policy_FieldLabel'),
+          helpText: NX.I18n.get('Repository_Facet_CleanupPolicyFacet_Policy_HelpText'),
+          buttons: ['add', 'remove'],
+          fromTitle: NX.I18n.get('Repository_Facet_CleanupPolicyFacet_Policy_FromTitle'),
+          toTitle: NX.I18n.get('Repository_Facet_CleanupPolicyFacet_Policy_ToTitle'),
+          editable: false,
+          store: 'CleanupPolicy',
+          valueField: 'name',
+          displayField: 'name',
           allowBlank: true,
-          itemCls: 'required-field'
-        },
-
-        items: [
-          {
-            xtype: 'combo',
-            name: 'attributes.cleanup.policyName',
-            itemId: 'cleanupPolicyName',
-            fieldLabel: NX.I18n.get('Repository_Facet_CleanupPolicyFacet_Policy_FieldLabel'),
-            helpText: NX.I18n.get('Repository_Facet_CleanupPolicyFacet_Policy_HelpText'),
-            editable: false,
-            store: 'CleanupPolicy',
-            queryMode: 'local',
-            displayField: 'name',
-            valueField: 'name',
-            listeners: {
-              afterrender: function (combo) {
-                if (!combo.getValue()) {
-                  var store = combo.getStore();
-                  if (store.getTotalCount() > 0) {
-                    var value = store.getAt(0).get('name');
-                    combo.originalValue = value;
-                    combo.setValue(value);
-                  }
-                }
-              }
-            }
-          }
-        ]
+          delimiter: null,
+          forceSelection: true,
+          queryMode: 'local',
+          triggerAction: 'all',
+          selectOnFocus: false
+        }
       }
     ];
 

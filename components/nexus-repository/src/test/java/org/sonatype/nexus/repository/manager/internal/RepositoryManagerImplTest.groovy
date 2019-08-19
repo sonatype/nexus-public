@@ -41,6 +41,7 @@ import org.mockito.Mock
 
 import static com.google.common.collect.Lists.asList
 import static com.google.common.collect.Maps.newHashMap
+import static com.google.common.collect.Sets.newHashSet
 import static java.util.Collections.emptyList
 import static java.util.Collections.singletonList
 import static java.util.UUID.randomUUID
@@ -416,22 +417,27 @@ class RepositoryManagerImplTest
   void 'repository with cleanup policy is correctly loaded'() {
     repositoryManager = buildRepositoryManagerImpl(true)
 
-    String name = randomUUID().toString().replace('-', '')
+    String cleanupPolicy1 = randomUUID().toString().replace('-', '')
+
+    Set<String> cleanupPolicies = newHashSet(cleanupPolicy1)
 
     Map<String, Object> cleanupAttributes = newHashMap()
-    cleanupAttributes.put(CLEANUP_NAME_KEY, name)
+    cleanupAttributes.put(CLEANUP_NAME_KEY, cleanupPolicies)
 
     mavenCentralConfiguration.attributes.put(CLEANUP_ATTRIBUTES_KEY, cleanupAttributes)
 
-    List<Repository> repositories = repositoryManager.browseForCleanupPolicy(name).collect(toList())
+    List<Repository> repositories = repositoryManager.browseForCleanupPolicy(cleanupPolicy1).collect(toList())
 
-    assertThat(repositories.size(), equalTo(1))
-    assertThat(repositories.get(0).configuration, equalTo(mavenCentralConfiguration))
-    assertThat(repositories
-        .get(0).configuration.attributes
-        .get(CLEANUP_ATTRIBUTES_KEY)
-        .get(CLEANUP_NAME_KEY).toString(),
-        equalTo(name))
+    assertRepositoryByCleanupPolicy(repositories, cleanupPolicy1)
+
+    String cleanupPolicy2 = randomUUID().toString().replace('-', '')
+    cleanupPolicies.add(cleanupPolicy2)
+
+    // proof we can still search for the first one added
+    assertRepositoryByCleanupPolicy(repositories, cleanupPolicy1)
+
+    // proof we can find it by the another added cleanup policies
+    assertRepositoryByCleanupPolicy(repositories, cleanupPolicy2)
   }
 
   @Test
@@ -441,7 +447,7 @@ class RepositoryManagerImplTest
     String name = randomUUID().toString().replace('-', '')
 
     Map<String, Object> cleanupAttributes = newHashMap()
-    cleanupAttributes.put(CLEANUP_NAME_KEY, name)
+    cleanupAttributes.put(CLEANUP_NAME_KEY, newHashSet(name))
 
     mavenCentralConfiguration.attributes.put(CLEANUP_ATTRIBUTES_KEY, cleanupAttributes)
     apacheSnapshotsConfiguration.attributes.put(CLEANUP_ATTRIBUTES_KEY, cleanupAttributes)
@@ -469,4 +475,15 @@ class RepositoryManagerImplTest
     //this would throw an NPE previously
     repositoryManager.findContainingGroups('test')
   }
+
+  private void assertRepositoryByCleanupPolicy(final List<Repository> repositories, final String cleanupPolicy) {
+    assertThat(repositories.size(), equalTo(1))
+    assertThat(repositories.get(0).configuration, equalTo(mavenCentralConfiguration))
+    assertThat(repositories
+        .get(0).configuration.attributes
+        .get(CLEANUP_ATTRIBUTES_KEY)
+        .get(CLEANUP_NAME_KEY).toString(),
+        equalTo(cleanupPolicy))
+  }
+
 }

@@ -12,9 +12,9 @@
  */
 package org.sonatype.nexus.cleanup.storage.event;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -23,14 +23,20 @@ import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
 import static com.google.common.collect.Maps.newHashMap;
+import static com.google.common.collect.Sets.newLinkedHashSet;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Stream.empty;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertThat;
@@ -48,10 +54,10 @@ public class CleanupPolicyEventHandlerTest
   private static final String CLEANUP_NAME_KEY = "policyName";
 
   @Mock
-  private CleanupPolicy cleanupPolicy1, cleanupPolicy2;
+  private CleanupPolicy cleanupPolicy1, cleanupPolicy2, cleanupPolicy3;
 
   @Mock
-  private EntityMetadata entityMetadata1, entityMetadata2;
+  private EntityMetadata entityMetadata1, entityMetadata2, entityMetadata3;
 
   @Mock
   private RepositoryManager repositoryManager;
@@ -64,7 +70,7 @@ public class CleanupPolicyEventHandlerTest
 
   private Map<String, Map<String, Object>> attributes1, attributes2;
 
-  private String name1, name2;
+  private String name1, name2, name3;
 
   private CleanupPolicyEventHandler underTest;
 
@@ -74,12 +80,13 @@ public class CleanupPolicyEventHandlerTest
 
     name1 = generateValidName();
     name2 = generateValidName();
+    name3 = generateValidName();
 
     Map<String, Object> cleanupAttributes1 = newHashMap();
-    cleanupAttributes1.put(CLEANUP_NAME_KEY, name1);
+    cleanupAttributes1.put(CLEANUP_NAME_KEY, newLinkedHashSet(singletonList(name1)));
 
     Map<String, Object> cleanupAttributes2 = newHashMap();
-    cleanupAttributes2.put(CLEANUP_NAME_KEY, name2);
+    cleanupAttributes2.put(CLEANUP_NAME_KEY, newLinkedHashSet(asList(name2, name3)));
 
     attributes1 = newHashMap();
     attributes1.put(CLEANUP_ATTRIBUTES_KEY, cleanupAttributes1);
@@ -89,10 +96,13 @@ public class CleanupPolicyEventHandlerTest
 
     when(cleanupPolicy1.getName()).thenReturn(name1);
     when(cleanupPolicy2.getName()).thenReturn(name2);
+    when(cleanupPolicy3.getName()).thenReturn(name3);
     when(cleanupPolicy1.getFormat()).thenReturn(ALL_CLEANUP_POLICY_FORMAT);
     when(cleanupPolicy2.getFormat()).thenReturn(ALL_CLEANUP_POLICY_FORMAT);
+    when(cleanupPolicy3.getFormat()).thenReturn(ALL_CLEANUP_POLICY_FORMAT);
     when(entityMetadata1.getEntity()).thenReturn(Optional.of(cleanupPolicy1));
     when(entityMetadata2.getEntity()).thenReturn(Optional.of(cleanupPolicy2));
+    when(entityMetadata3.getEntity()).thenReturn(Optional.of(cleanupPolicy3));
     when(configuration1.copy()).thenReturn(configuration1);
     when(configuration2.copy()).thenReturn(configuration2);
     when(configuration1.getAttributes()).thenReturn(attributes1);
@@ -101,27 +111,38 @@ public class CleanupPolicyEventHandlerTest
     when(repository2.getConfiguration()).thenReturn(configuration2);
     when(repositoryManager.browseForCleanupPolicy(name1)).thenReturn(Stream.of(repository1));
     when(repositoryManager.browseForCleanupPolicy(name2)).thenReturn(Stream.of(repository2));
+    when(repositoryManager.browseForCleanupPolicy(name3)).thenReturn(Stream.of(repository2));
   }
   
   @Test
-  public void removedCleanupAttributesFromRepository() throws Exception {
+  public void removedCleanupAttributeFromRepository() throws Exception {
     underTest.on(new CleanupPolicyDeletedEvent(entityMetadata1));
     underTest.on(new CleanupPolicyDeletedEvent(entityMetadata2));
-
-    verifyConfigurationUpdatedWithoutCleanupPolicyAttribute(2);
+    underTest.on(new CleanupPolicyDeletedEvent(entityMetadata3));
 
     assertThat(attributes1.get(CLEANUP_ATTRIBUTES_KEY), nullValue());
     assertThat(attributes2.get(CLEANUP_ATTRIBUTES_KEY), nullValue());
+
+    verifyConfigurationUpdatedWithoutCleanupPolicyAttribute(3);
+  }
+
+  @Test
+  public void removedOneCleanupPolicyFromRepositoryWithMultiPolicy() throws Exception {
+    underTest.on(new CleanupPolicyDeletedEvent(entityMetadata3));
+
+    verifyConfigurationUpdated(1);
+    verifyContainsCleanupPolicies(attributes2, cleanupPolicy2.getName());
   }
 
   @Test
   public void onlyRepositoryWithMatchingCleanupPolicyGetsAttributesRemoved() throws Exception {
     underTest.on(new CleanupPolicyDeletedEvent(entityMetadata1));
 
-    verifyConfigurationUpdatedWithoutCleanupPolicyAttribute(1);
-
     assertThat(attributes1.get(CLEANUP_ATTRIBUTES_KEY), nullValue());
     assertThat(attributes2.get(CLEANUP_ATTRIBUTES_KEY), notNullValue());
+
+    verifyConfigurationUpdatedWithoutCleanupPolicyAttribute(1);
+    verifyContainsCleanupPolicies(attributes2, cleanupPolicy2.getName(), cleanupPolicy3.getName());
   }
 
   @Test
@@ -132,10 +153,11 @@ public class CleanupPolicyEventHandlerTest
 
     underTest.on(new CleanupPolicyDeletedEvent(entityMetadata1));
 
-    verifyConfigurationUpdatedWithoutCleanupPolicyAttribute(2);
-
     assertThat(attributes1.get(CLEANUP_ATTRIBUTES_KEY), nullValue());
     assertThat(attributes2.get(CLEANUP_ATTRIBUTES_KEY), notNullValue());
+
+    verifyConfigurationUpdatedWithoutCleanupPolicyAttribute(2);
+    verifyContainsCleanupPolicies(attributes2, cleanupPolicy2.getName(), cleanupPolicy3.getName());
   }
 
   @Test
@@ -153,8 +175,20 @@ public class CleanupPolicyEventHandlerTest
   private void verifyConfigurationUpdatedWithoutCleanupPolicyAttribute(final int count) throws Exception {
     ArgumentCaptor<Configuration> argument = ArgumentCaptor.forClass(Configuration.class);
     verify(repositoryManager, times(count)).update(argument.capture());
+  }
 
-    assertThat(argument.getValue().getAttributes().get(CLEANUP_ATTRIBUTES_KEY), nullValue());
+  private void verifyConfigurationUpdated(final int count) throws Exception {
+    ArgumentCaptor<Configuration> argument = ArgumentCaptor.forClass(Configuration.class);
+    verify(repositoryManager, times(count)).update(argument.capture());
+  }
+
+  @SuppressWarnings("unchecked")
+  private void verifyContainsCleanupPolicies(final Map<String, Map<String, Object>> attributes,
+                                             String... cleanupNames)
+  {
+    Set<String> names = (Set<String>) attributes.get(CLEANUP_ATTRIBUTES_KEY).get(CLEANUP_NAME_KEY);
+    assertThat(names, hasSize(cleanupNames.length));
+    assertThat(names, contains(cleanupNames));
   }
 
   private void verifyConfigurationNeverUpdated() throws Exception {

@@ -13,14 +13,20 @@
 package org.sonatype.nexus.testsuite.raw;
 
 import java.io.File;
+import java.util.Properties;
 
 import javax.inject.Inject;
 
 import org.sonatype.goodies.httpfixture.server.fluent.Behaviours;
 import org.sonatype.goodies.httpfixture.server.fluent.Server;
 import org.sonatype.goodies.httpfixture.server.jetty.behaviour.Content;
+import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.restore.RestoreBlobStrategy;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpStatus;
+import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
+import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.testsuite.testsupport.blobstore.restore.BlobstoreRestoreTestHelper;
 import org.sonatype.nexus.testsuite.testsupport.raw.RawClient;
 import org.sonatype.nexus.testsuite.testsupport.raw.RawITSupport;
@@ -31,6 +37,9 @@ import org.junit.Test;
 import static org.apache.http.entity.ContentType.TEXT_PLAIN;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
+import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
+import static org.sonatype.nexus.repository.storage.Bucket.REPO_NAME_HEADER;
 
 public class RawRestoreBlobIT
     extends RawITSupport
@@ -53,6 +62,9 @@ public class RawRestoreBlobIT
 
   @Inject
   private BlobstoreRestoreTestHelper testHelper;
+
+  @Inject
+  private RestoreBlobStrategy restoreBlobStrategy;
 
   @Before
   public void setup() throws Exception {
@@ -83,6 +95,36 @@ public class RawRestoreBlobIT
   @Test
   public void testMetadataRestoreWhenOnlyComponentsAreMissing() throws Exception {
     verifyMetadataRestored(testHelper::simulateComponentMetadataLoss);
+  }
+
+  @Test
+  public void testNotDryRunRestore()
+  {
+    runBlobRestore(false);
+    testHelper.assertAssetNotInRepository(proxyRepository, TEST_CONTENT);
+  }
+
+  @Test
+  public void testDryRunRestore()
+  {
+    runBlobRestore(true);
+    testHelper.assertAssetInRepository(proxyRepository, TEST_CONTENT);
+  }
+
+  private void runBlobRestore(final boolean isDryRun) {
+    Asset asset;
+    Blob blob;
+    try (StorageTx tx = getStorageTx(proxyRepository)) {
+      tx.begin();
+      asset = tx.findAssetWithProperty(AssetEntityAdapter.P_NAME, TEST_CONTENT, tx.findBucket(proxyRepository));
+      blob = tx.getBlob(asset.blobRef());
+    }
+    testHelper.simulateComponentMetadataLoss();
+    Properties properties = new Properties();
+    properties.setProperty(HEADER_PREFIX + REPO_NAME_HEADER, proxyRepository.getName());
+    properties.setProperty(HEADER_PREFIX + BLOB_NAME_HEADER, asset.name());
+
+    restoreBlobStrategy.restore(properties, blob, HEADER_PREFIX + BLOB_NAME_HEADER, isDryRun);
   }
 
   private void verifyMetadataRestored(final Runnable metadataLossSimulation) throws Exception {

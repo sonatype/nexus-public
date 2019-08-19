@@ -12,8 +12,10 @@
  */
 package org.sonatype.nexus.cleanup.internal.service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 
@@ -36,8 +38,7 @@ import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Optional.empty;
-import static java.util.Optional.ofNullable;
+import static java.util.Objects.nonNull;
 
 /**
  * @since 3.14
@@ -95,7 +96,7 @@ public class CleanupServiceImpl
     AtomicLong deleted = new AtomicLong(0L);
     UnitOfWork.begin(repository.facet(StorageFacet.class).txSupplier());
     try {
-      findPolicy(repository).ifPresent(p -> {
+      findPolicies(repository).forEach(p -> {
         deleted.addAndGet(deleteByPolicy(repository, p, cancelledCheck));
         log.info("{} components cleaned up for repository {}", deleted, repository.getName());
       });
@@ -134,16 +135,34 @@ public class CleanupServiceImpl
     }
   }
 
-  private Optional<CleanupPolicy> findPolicy(final Repository repository) {
+  @SuppressWarnings("unchecked")
+  private List<CleanupPolicy> findPolicies(final Repository repository) {
+    List<CleanupPolicy> cleanupPolicies = new ArrayList<>();
+
     Map<String, Map<String, Object>> attributes = repository.getConfiguration().getAttributes();
     if (attributes != null && attributes.containsKey(CLEANUP_ATTRIBUTES_KEY)) {
-      String policyName = (String) attributes.get(CLEANUP_ATTRIBUTES_KEY).get(CLEANUP_NAME_KEY);
 
-      log.debug("Cleanup policy '{}' found for repository {}", policyName, repository.getName());
+      Set<String> policyNames = (Set<String>) attributes.get(CLEANUP_ATTRIBUTES_KEY).get(CLEANUP_NAME_KEY);
 
-      return ofNullable(cleanupPolicyStorage.get(policyName));
+      policyNames.forEach(policyName -> {
+        CleanupPolicy cleanupPolicy = cleanupPolicyStorage.get(policyName);
+
+        if (nonNull(cleanupPolicy)) {
+          log.debug("Cleanup policy '{}' found for repository {}", policyName, repository.getName());
+
+          cleanupPolicies.add(cleanupPolicy);
+        }
+        else {
+          log.debug("Cleanup policy '{}' was associated to repository {} but did not exist in storage",
+              policyName, repository.getName());
+        }
+      });
     }
-    log.debug("No cleanup policy found for repository {}", repository.getName());
-    return empty();
+
+    if (cleanupPolicies.isEmpty()) {
+      log.debug("No cleanup policies found for repository {}", repository.getName());
+    }
+
+    return cleanupPolicies;
   }
 }

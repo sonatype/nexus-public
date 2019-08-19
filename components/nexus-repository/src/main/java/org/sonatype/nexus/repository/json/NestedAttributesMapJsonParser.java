@@ -48,7 +48,7 @@ public class NestedAttributesMapJsonParser
    * the current path, if parts of the path are not existing they will
    * be manually created by the {@link NestedAttributesMap#child(String)} for that path part.
    *
-   * @return NestedAttributesMap or null if we are mapping inside an array.
+   * @return NestedAttributesMap or null if we are mapping inside an array or no child was found.
    */
   @Nullable
   public NestedAttributesMap getChildFromRoot() {
@@ -70,7 +70,7 @@ public class NestedAttributesMapJsonParser
       }
     }
 
-    return existingChild;
+    return existingChild.equals(root) ? null : existingChild;
   }
 
   /**

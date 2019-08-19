@@ -24,8 +24,6 @@ import org.sonatype.nexus.common.entity.AbstractEntity;
 public class CleanupPolicy
     extends AbstractEntity
 {
-  public static final CleanupPolicy NONE_POLICY = new CleanupPolicy("None", null, null, null, null);
-
   public static final String ALL_CLEANUP_POLICY_FORMAT = "ALL_FORMATS";
 
   private String name;

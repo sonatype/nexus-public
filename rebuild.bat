@@ -35,6 +35,8 @@ IF %ERRORLEVEL% NEQ 0 (
    EXIT /B %ERRORLEVEL%
 )
 
+call mvn dependency:properties process-test-resources -Dit -pl :functional-testsuite,:nexuspro-modern-testsuite,:nexuspro-fabric-testsuite
+
 @REM Enable Debug mode
 set KARAF_DEBUG=true
 

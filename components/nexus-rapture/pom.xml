@@ -104,11 +104,6 @@
       </plugin>
 
       <plugin>
-        <groupId>com.github.klieber</groupId>
-        <artifactId>phantomjs-maven-plugin</artifactId>
-      </plugin>
-
-      <plugin>
         <groupId>org.sonatype.plugins</groupId>
         <artifactId>yuicompressor-maven-plugin</artifactId>
         <executions>
@@ -299,6 +294,23 @@
                 </configuration>
               </execution>
             </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>phantomjs</id>
+      <activation>
+        <property>
+          <name>!skipTests</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.github.klieber</groupId>
+            <artifactId>phantomjs-maven-plugin</artifactId>
           </plugin>
         </plugins>
       </build>

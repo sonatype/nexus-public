@@ -137,6 +137,18 @@ Ext.define('NX.coreui.view.cleanuppolicy.CleanupPolicySettingsForm', {
               ])
             ],
             hidden: true
+          },
+          {
+            xtype: 'fieldcontainer',
+            itemId: 'regexContainer',
+            fieldLabel: NX.I18n.get('CleanupPolicy_CleanupPolicySettingsForm_Regex_FieldLabel'),
+            helpText: NX.I18n.get('CleanupPolicy_CleanupPolicySettingsForm_Regex_HelpText'),
+            layout: 'hbox',
+            items: [
+              me.createCheckbox('regex'),
+              me.createStringField('regex')
+            ],
+            hidden: true
           }
         ]
       }
@@ -148,19 +160,22 @@ Ext.define('NX.coreui.view.cleanuppolicy.CleanupPolicySettingsForm', {
       getValues: function() {
         var values = this.callParent(arguments);
         values.criteria = {};
-        values.criteria['lastBlobUpdated'] = values.lastBlobUpdated;
-        values.criteria['lastDownloaded'] = values.lastDownloaded;
-        values.criteria['releaseType'] = values.releaseType;
+        values.criteria['lastBlobUpdated'] = values['criteria.lastBlobUpdated'];
+        values.criteria['lastDownloaded'] = values['criteria.lastDownloaded'];
+        values.criteria['releaseType'] = values['criteria.releaseType'];
+        values.criteria['regex'] = values['criteria.regex'];
         return values;
       },
       setValues: function(values) {
-        values.lastBlobUpdatedEnabled = values.criteria['lastBlobUpdated'] !== null;
-        values.lastDownloadedEnabled = values.criteria['lastDownloaded'] !== null;
-        values.releaseTypeEnabled = values.criteria['releaseType'] !== null;
+        values['criteria.lastBlobUpdatedEnabled'] = values.criteria['lastBlobUpdated'] !== null;
+        values['criteria.lastDownloadedEnabled'] = values.criteria['lastDownloaded'] !== null;
+        values['criteria.releaseTypeEnabled'] = values.criteria['releaseType'] !== null;
+        values['criteria.regexEnabled'] = values.criteria['regex'] !== null;
 
-        values.lastBlobUpdated = values.criteria['lastBlobUpdated'];
-        values.lastDownloaded = values.criteria['lastDownloaded'];
-        values.releaseType = values.criteria['releaseType'];
+        values['criteria.lastBlobUpdated'] = values.criteria['lastBlobUpdated'];
+        values['criteria.lastDownloaded'] = values.criteria['lastDownloaded'];
+        values['criteria.releaseType'] = values.criteria['releaseType'];
+        values['criteria.regex'] = values.criteria['regex'];
         this.callParent(arguments);
       }
     });
@@ -217,7 +232,7 @@ Ext.define('NX.coreui.view.cleanuppolicy.CleanupPolicySettingsForm', {
   createNumberField: function(name) {
     return {
       xtype: 'numberfield',
-      name: name,
+      name: 'criteria.' + name,
       itemId: name,
       minValue: 1,
       // (2147483646 - 1 / 86400) java max - 1 / seconds in day
@@ -243,10 +258,34 @@ Ext.define('NX.coreui.view.cleanuppolicy.CleanupPolicySettingsForm', {
     };
   },
 
+  createStringField: function(name) {
+    return {
+      xtype: 'textfield',
+      name: 'criteria.' + name,
+      itemId: name,
+      width: 580,
+      allowBlank: false,
+      disabled: true,
+      style: {
+        marginLeft: '5px'
+      },
+      listeners: {
+        change: function() {
+          var form = this.up('form'),
+              checkbox = form.down('#' + name + 'Enabled');
+          if (this.getValue() && !checkbox.getValue()) {
+            checkbox.setValue(true);
+            checkbox.resetOriginalValue();
+          }
+        }
+      }
+    };
+  },
+
   createComboBox: function(name, store) {
     return {
       xtype: 'combo',
-      name: name,
+      name: 'criteria.' + name,
       itemId: name,
       editable: false,
       store: store,
@@ -299,7 +338,13 @@ Ext.define('NX.coreui.view.cleanuppolicy.CleanupPolicySettingsForm', {
 
       if (!visible) {
         container.down('checkbox').setValue(false);
-        container.down('combo').clearValue();
+
+        if (container.down('combo') !== null) {
+          container.down('combo').clearValue();
+        }
+        if (container.down('textfield') !== null) {
+          container.down('textfield').setValue('');
+        }
       }
     });
   },

@@ -12,11 +12,13 @@
  */
 package org.sonatype.nexus.blobstore.file.internal;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.UUID;
 import java.util.stream.Stream;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.blobstore.BlobStoreMetricsNotAvailableException;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.scheduling.internal.PeriodicJobServiceImpl;
@@ -75,7 +77,7 @@ public class FileBlobStoreMetricsStoreIT
 
   @After
   public void tearDown() throws Exception {
-    if (underTest != null) {
+    if (underTest != null && underTest.isStarted()) {
       underTest.stop();
     }
   }
@@ -128,5 +130,19 @@ public class FileBlobStoreMetricsStoreIT
     Thread.sleep(QUOTA_CHECK_INTERVAL * 1000);
     await().atMost(QUOTA_CHECK_INTERVAL, SECONDS).until(() -> underTest.getMetrics().getBlobCount(), is(1L));
     verify(quotaService, times(1)).checkQuota(blobStore);
+  }
+
+  @Test(expected=BlobStoreMetricsNotAvailableException.class)
+  public void inaccessibleStorageDirThrowsBlobStoreMetricsNotAvailableException() throws Exception {
+    File inaccessible = util.createTempDir();
+    inaccessible.setReadable(false);
+
+    try {
+      underTest.setStorageDir(inaccessible.toPath());
+      underTest.backingFiles();
+    }
+    finally {
+      inaccessible.setReadable(true);
+    }
   }
 }

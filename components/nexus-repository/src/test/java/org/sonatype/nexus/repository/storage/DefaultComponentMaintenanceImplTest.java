@@ -21,10 +21,12 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.DefaultComponentMaintenanceImpl.DeletionProgress;
+import org.sonatype.nexus.repository.storage.DefaultComponentMaintenanceImpl.DeletionResult;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.internal.stubbing.answers.Returns;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -39,7 +41,13 @@ public class DefaultComponentMaintenanceImplTest
   private DeletionProgress deleteProgress;
 
   @Mock
+  private DeletionResult deletionResult1, deletionResult2;
+
+  @Mock
   private EntityId entityId1, entityId2;
+
+  @Mock
+  private Component component1;
 
   @Mock
   private Repository repository;
@@ -95,6 +103,27 @@ public class DefaultComponentMaintenanceImplTest
     assertThat(deleteComponentsProgress.isFailed(), is(false));
 
     verify(deleteProgress, times(2)).getCount();
+  }
+
+  @Test
+  public void batchSuccessCompletesDeletion_WithAlreadyDeletedComponent() throws Exception {
+    when(component1.toStringExternal()).thenReturn("somecomponent");
+    when(deletionResult1.getComponent()).thenReturn(component1);
+    when(deletionResult2.getComponent()).thenReturn(null);
+
+    underTest = new DefaultComponentMaintenanceImpl()
+    {
+      @Override
+      protected DeletionResult deleteComponentTx(final EntityId componentId, final boolean deleteBlobs) {
+        return componentId.equals(entityId1) ? deletionResult1 : deletionResult2;
+      }
+    };
+    underTest.attach(repository);
+
+    DeletionProgress deleteComponentsProgress = underTest.deleteComponents(entityIds, () -> false, 1);
+
+    assertThat(deleteComponentsProgress.isFailed(), is(false));
+    assertThat(deleteComponentsProgress.getCount(), is(1L));
   }
 
   @Test

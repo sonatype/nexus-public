@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -34,21 +35,24 @@ import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
 import com.google.common.collect.ImmutableList;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
+import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.transform;
 import static java.util.Collections.emptyList;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
@@ -73,14 +77,20 @@ public class ElasticSearchCleanupComponentBrowse
 
   private final SearchService searchService;
 
+  private final MetricRegistry metricRegistry;
+
+  private final Map<String, Timer> timers = new ConcurrentHashMap<>();
+
   private final Map<String, CriteriaAppender> criteriaAppenders;
 
   @Inject
   public ElasticSearchCleanupComponentBrowse(final Map<String, CriteriaAppender> criteriaAppenders,
-                                             final SearchService searchService)
+                                             final SearchService searchService,
+                                             final MetricRegistry metricRegistry)
   {
     this.criteriaAppenders = checkNotNull(criteriaAppenders);
     this.searchService = checkNotNull(searchService);
+    this.metricRegistry = checkNotNull(metricRegistry);
   }
 
   @Override
@@ -88,13 +98,28 @@ public class ElasticSearchCleanupComponentBrowse
     if (policy.getCriteria().isEmpty()) {
       return emptyList();
     }
-    
+
     QueryBuilder query = convertPolicyToQuery(policy);
 
     log.debug("Searching for components to cleanup using policy {}", policy);
-    
-    return transform(searchService.browseUnrestrictedInRepos(query, ImmutableList.of(repository.getName())),
+
+    return transform(invokeSearch(policy, repository, query),
         searchHit -> new DetachedEntityId(searchHit.getId()));
+  }
+
+  private Iterable<SearchHit> invokeSearch(final CleanupPolicy policy,
+                                           final Repository repository,
+                                           final QueryBuilder query)
+  {
+    long start = System.nanoTime();
+
+    try {
+      return searchService
+          .browseUnrestrictedInRepos(query, ImmutableList.of(repository.getName()));
+    }
+    finally {
+      updateTimer(policy, repository, System.nanoTime() - start);
+    }
   }
 
   @Override
@@ -111,11 +136,7 @@ public class ElasticSearchCleanupComponentBrowse
 
     log.debug("Searching for components to cleanup using policy {}", policy);
 
-    SearchResponse searchResponse = searchService.searchUnrestrictedInRepos(query,
-        getSort(options.getSortProperty(), options.getSortDirection()),
-        options.getStart(),
-        options.getLimit(),
-        ImmutableList.of(repository.getName()));
+    SearchResponse searchResponse = invokeSearchByPage(policy, repository, options, query);
 
     List<Component> components = stream(searchResponse.getHits().spliterator(), false)
         .map(searchHit -> tx.findComponent(new DetachedEntityId(searchHit.getId())))
@@ -125,10 +146,45 @@ public class ElasticSearchCleanupComponentBrowse
     return new PagedResponse<>(searchResponse.getHits().getTotalHits(), components);
   }
 
+  private SearchResponse invokeSearchByPage(final CleanupPolicy policy,
+                                            final Repository repository,
+                                            final QueryOptions options,
+                                            final QueryBuilder query)
+  {
+    long start = System.nanoTime();
+
+    try {
+      return searchService.searchUnrestrictedInRepos(query,
+          getSort(options.getSortProperty(), options.getSortDirection()),
+          options.getStart(),
+          options.getLimit(),
+          ImmutableList.of(repository.getName()));
+    }
+    finally {
+      updateTimer(policy, repository, System.nanoTime() - start);
+    }
+  }
+
+  private void updateTimer(final CleanupPolicy policy, final Repository repository, final long value) {
+    Timer timer = timers.computeIfAbsent(policy.getName() + "." + repository.getName(), key ->
+        metricRegistry.timer(getTimerName(policy, repository)));
+    timer.update(value, NANOSECONDS);
+
+    if (log.isTraceEnabled()) {
+      log.trace("Cleanup policy {} search on {} has criteria {} and took {}ms", policy.getName(), repository.getName(),
+          policy.getCriteria(), value);
+    }
+  }
+
+  private String getTimerName(final CleanupPolicy policy, final Repository repository) {
+    return getClass().getName().replaceAll("\\$.*", "") + '.' + policy.getName() + "." + repository.getName() +
+        ".timer";
+  }
+
   private QueryBuilder convertPolicyToQuery(final CleanupPolicy policy, final QueryOptions options) {
     BoolQueryBuilder queryBuilder = convertPolicyToQuery(policy);
 
-    if(isNullOrEmpty(options.getFilter())) {
+    if (isNullOrEmpty(options.getFilter())) {
       return queryBuilder;
     }
 

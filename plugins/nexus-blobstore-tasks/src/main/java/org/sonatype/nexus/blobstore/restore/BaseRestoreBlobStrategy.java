@@ -113,7 +113,9 @@ public abstract class BaseRestoreBlobStrategy<T>
           log.debug(
               "Deleting asset as component is required but is not found, blob store: {}, repository: {}, path: {}, "
               + "blob name: {}, blob id: {}", blobStoreName, repoName, path, blobName, blob.getId());
-          deleteAsset(blobData.getRepository(), path);
+          if (!isDryRun) {
+            deleteAsset(blobData.getRepository(), path);
+          }
         }
         else {
           log.debug(

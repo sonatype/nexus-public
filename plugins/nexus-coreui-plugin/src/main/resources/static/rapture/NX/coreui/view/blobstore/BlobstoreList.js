@@ -48,16 +48,27 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreList', {
         {header: NX.I18n.get('Blobstore_BlobstoreList_BlobCount_Header'), dataIndex: 'blobCount', stateId: 'blobCount'},
         {
           header: NX.I18n.get('Blobstore_BlobstoreList_TotalSize_Header'), dataIndex: 'totalSize', stateId: 'totalSize',
-          renderer: Ext.util.Format.fileSize
+          renderer: function(value, metaData, record, row, col, store, gridView) {
+            if (record.data.unavailable) {
+              return NX.I18n.get('Blobstore_BlobstoreList_Unavailable');
+            }
+            else {
+              return Ext.util.Format.fileSize(value, metaData, record, row, col, store, gridView);
+            }
+          }
         },
         {
           header: NX.I18n.get('Blobstore_BlobstoreList_AvailableSpace_Header'), dataIndex: 'availableSpace',
           stateId: 'availableSpace', renderer: function(value, metaData, record, row, col, store, gridView) {
-            if (record.data.unlimited) {
-              return 'Unlimited';
+            if (record.data.unavailable) {
+              return NX.I18n.get('Blobstore_BlobstoreList_Unavailable');
             }
-
-            return Ext.util.Format.fileSize(value, metaData, record, row, col, store, gridView);
+            else if (record.data.unlimited) {
+              return NX.I18n.get('Blobstore_BlobstoreList_Unlimited');
+            }
+            else {
+              return Ext.util.Format.fileSize(value, metaData, record, row, col, store, gridView);
+            }
           }, flex: 1
         }
       ],

@@ -18,7 +18,6 @@ import java.util.Map;
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.common.math.Math2;
 
-import static java.lang.Math.addExact;
 import static java.util.Collections.unmodifiableMap;
 
 /**
@@ -38,23 +37,32 @@ public class BlobStoreGroupMetrics
 
   private final boolean unlimited;
 
+  private final boolean unavailable;
+
   public BlobStoreGroupMetrics(final Iterable<BlobStoreMetrics> membersMetrics) {
     long aggregatedBlobCount = 0L;
     long aggregatedTotalSize = 0L;
     Map<String, Long> aggregatedAvailableSpaceByFileStore = new HashMap<>();
     boolean aggregatedUnlimited = false;
+    int totalMembers = 0;
+    int unavailableMembers = 0;
 
     for (BlobStoreMetrics memberMetrics : membersMetrics) {
       aggregatedBlobCount = Math2.addClamped(aggregatedBlobCount, memberMetrics.getBlobCount());
       aggregatedTotalSize = Math2.addClamped(aggregatedTotalSize, memberMetrics.getTotalSize());
       aggregatedAvailableSpaceByFileStore.putAll(memberMetrics.getAvailableSpaceByFileStore());
       aggregatedUnlimited = aggregatedUnlimited || memberMetrics.isUnlimited();
+      totalMembers += 1;
+      if (memberMetrics.isUnavailable()) {
+        unavailableMembers += 1;
+      }
     }
 
     this.blobCount = aggregatedBlobCount;
     this.totalSize = aggregatedTotalSize;
     this.availableSpaceByFileStore = unmodifiableMap(aggregatedAvailableSpaceByFileStore);
     this.unlimited = aggregatedUnlimited;
+    this.unavailable = totalMembers > 0 && unavailableMembers == totalMembers;
   }
 
   @Override
@@ -82,5 +90,10 @@ public class BlobStoreGroupMetrics
   @Override
   public Map<String, Long> getAvailableSpaceByFileStore() {
     return availableSpaceByFileStore;
+  }
+
+  @Override
+  public boolean isUnavailable() {
+    return unavailable;
   }
 }

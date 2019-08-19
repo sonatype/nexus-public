@@ -271,8 +271,9 @@ Ext.define('NX.coreui.controller.CleanupPolicies', {
       return key === 'isPrerelease' ? 'releaseType' : key;
     }
 
-    function getValueFromForm(form, value) {
-      return form.findField(value + 'Enabled').getValue() === true ? form.findField(value).getValue() : null;
+    function getCriteriaValueFromForm(form, value) {
+      return form.findField(value + 'Enabled').getValue() === true ?
+          form.findField('criteria.' + value).getValue() : null;
     }
 
     function getCriteria(formExtjs) {
@@ -284,7 +285,7 @@ Ext.define('NX.coreui.controller.CleanupPolicies', {
 
         if (containerId.indexOf('Container') >= 0) {
           var key = translateKey(containerId.substring(0, containerId.indexOf('Container')));
-          var value = getValueFromForm(formExtjs, key);
+          var value = getCriteriaValueFromForm(formExtjs, key);
           if (value !== null) {
             criteria[key] = value;
           }
