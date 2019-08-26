@@ -380,15 +380,15 @@ public abstract class AbstractArtifactPlexusResource
           }
 
           if (isPom) {
-            helper.storeArtifactPom(gavRequest, is, null);
+            helper.storeArtifactPom(gavRequest, is, null, withChecksums());
             isPom = false;
           }
           else {
             if (uploadContext.isPomAvailable()) {
-              helper.storeArtifact(gavRequest, is, null);
+              helper.storeArtifact(gavRequest, is, null, withChecksums());
             }
             else {
-              helper.storeArtifactWithGeneratedPom(gavRequest, uploadContext.getPackaging(), is, null);
+              helper.storeArtifactWithGeneratedPom(gavRequest, uploadContext.getPackaging(), is, null, withChecksums());
             }
           }
         }
@@ -666,6 +666,10 @@ public abstract class AbstractArtifactPlexusResource
     }
 
     return result;
+  }
+
+  protected boolean withChecksums() {
+    return true;
   }
 
 }
