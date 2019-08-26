@@ -17,10 +17,10 @@ const TerserJSPlugin = require('terser-webpack-plugin');
 const path = require('path');
 
 module.exports = {
-  entry: './frontend/src/index.js',
+  entry: './src/frontend/src/index.js',
   output: {
     filename: 'frontend-bundle.js',
-    path: path.resolve(__dirname, 'components', 'nexus-rapture', 'target', 'classes', 'static', 'rapture')
+    path: path.resolve(__dirname, 'target', 'classes', 'static', 'rapture')
   },
   devtool: 'source-map',
   module: {
@@ -57,7 +57,7 @@ module.exports = {
   },
   plugins: [
     new CopyModulesPlugin({
-      destination: path.resolve(__dirname, 'components', 'nexus-rapture', 'target', 'webpack-modules')
+      destination: path.resolve(__dirname, 'target', 'webpack-modules')
     }),
     new MiniCssExtractPlugin({
       filename: 'frontend-bundle.css'

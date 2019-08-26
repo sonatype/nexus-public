@@ -26,6 +26,8 @@ import org.sonatype.nexus.common.entity.AbstractEntity;
 public class SelectorConfiguration
     extends AbstractEntity
 {
+  public static final String EXPRESSION = "expression";
+
   private String name;
 
   private String type;

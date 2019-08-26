@@ -1,10 +1,10 @@
 {
   "scripts": {
     "build": "webpack --mode=production",
-    "test": "jest --config frontend/jest.config.js",
+    "test": "jest --config src/frontend/jest.config.js --reporters=jest-junit",
     "test-coverage": "npm test -- --coverage",
     "test-watch": "npm test -- --watch",
-    "test-watch-debug": "node --inspect-brk node_modules/.bin/jest --config frontend/jest.config.js --runInBand --watchAll",
+    "test-watch-debug": "node --inspect-brk node_modules/.bin/jest --config src/frontend/jest.config.js --runInBand --watchAll",
     "watch": "webpack --mode=development --watch"
   },
   "devDependencies": {
@@ -20,6 +20,7 @@
     "enzyme-adapter-react-16": "1.14.0",
     "jest": "24.8.0",
     "jest-enzyme": "7.0.2",
+    "jest-junit": "7.0.0",
     "mini-css-extract-plugin": "0.7.0",
     "node-sass": "4.12.0",
     "optimize-css-assets-webpack-plugin": "5.0.3",

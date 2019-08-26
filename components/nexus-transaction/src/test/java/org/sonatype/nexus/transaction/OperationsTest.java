@@ -22,13 +22,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
@@ -42,11 +42,15 @@ public class OperationsTest
   ExampleMethods methods = new ExampleMethods();
 
   @Mock
+  TransactionalSession<Transaction> session;
+
+  @Mock
   Transaction tx;
 
   @Before
   public void setUp() {
-    UnitOfWork.begin(Suppliers.ofInstance(tx));
+    when(session.getTransaction()).thenReturn(tx);
+    UnitOfWork.begin(Suppliers.ofInstance(session));
   }
 
   @After
@@ -59,11 +63,12 @@ public class OperationsTest
 
     Transactional.operation.call(() -> methods.nonTransactional());
 
-    InOrder order = inOrder(tx);
+    InOrder order = inOrder(session, tx);
+    order.verify(session).getTransaction();
     order.verify(tx).begin();
     order.verify(tx).commit();
-    order.verify(tx).close();
-    verifyNoMoreInteractions(tx);
+    order.verify(session).close();
+    verifyNoMoreInteractions(session, tx);
   }
 
   @Test
@@ -76,7 +81,8 @@ public class OperationsTest
         .throwing(IOException.class)
         .call(() -> methods.retryOnCheckedException());
 
-    InOrder order = inOrder(tx);
+    InOrder order = inOrder(session, tx);
+    order.verify(session).getTransaction();
     order.verify(tx).begin();
     order.verify(tx).rollback();
     order.verify(tx).allowRetry(any(IOException.class));
@@ -88,8 +94,8 @@ public class OperationsTest
     order.verify(tx).allowRetry(any(IOException.class));
     order.verify(tx).begin();
     order.verify(tx).commit();
-    order.verify(tx).close();
-    verifyNoMoreInteractions(tx);
+    order.verify(session).close();
+    verifyNoMoreInteractions(session, tx);
   }
 
   @Test(expected = IOException.class)
@@ -104,15 +110,16 @@ public class OperationsTest
           .call(() -> methods.retryOnCheckedException());
     }
     finally {
-      InOrder order = inOrder(tx);
+      InOrder order = inOrder(session, tx);
+      order.verify(session).getTransaction();
       order.verify(tx).begin();
       order.verify(tx).rollback();
       order.verify(tx).allowRetry(any(IOException.class));
       order.verify(tx).begin();
       order.verify(tx).rollback();
       order.verify(tx).allowRetry(any(IOException.class));
-      order.verify(tx).close();
-      verifyNoMoreInteractions(tx);
+      order.verify(session).close();
+      verifyNoMoreInteractions(session, tx);
     }
   }
 
@@ -126,7 +133,8 @@ public class OperationsTest
         .throwing(IOException.class)
         .call(() -> methods.retryOnCheckedException());
 
-    InOrder order = inOrder(tx);
+    InOrder order = inOrder(session, tx);
+    order.verify(session).getTransaction();
     order.verify(tx).begin();
     order.verify(tx).rollback();
     order.verify(tx).allowRetry(any(IOException.class));
@@ -138,17 +146,17 @@ public class OperationsTest
     order.verify(tx).allowRetry(any(IOException.class));
     order.verify(tx).begin();
     order.verify(tx).commit();
-    order.verify(tx).close();
-    verifyNoMoreInteractions(tx);
+    order.verify(session).close();
+    verifyNoMoreInteractions(session, tx);
   }
 
   @Test
   public void testBatchModeDoesntLeakOutsideScope() {
     final Transaction[] txHolder = new Transaction[2];
 
-    UnitOfWork.begin(() -> Mockito.mock(Transaction.class));
+    UnitOfWork.begin(() -> newMockSession());
     try {
-      UnitOfWork.beginBatch(() -> Mockito.mock(Transaction.class));
+      UnitOfWork.beginBatch(() -> newMockSession());
       try {
         Transactional.operation.run(() -> txHolder[0] = UnitOfWork.currentTx());
         Transactional.operation.run(() -> txHolder[1] = UnitOfWork.currentTx());
@@ -169,5 +177,11 @@ public class OperationsTest
     finally {
       UnitOfWork.end(); // ends outer-non-batch-work
     }
+  }
+
+  private TransactionalSession<Transaction> newMockSession() {
+    TransactionalSession<Transaction> session = mock(TransactionalSession.class);
+    when(session.getTransaction()).thenReturn(mock(Transaction.class));
+    return session;
   }
 }

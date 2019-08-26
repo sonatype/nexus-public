@@ -44,6 +44,8 @@ public class KMSEncrypter
 
   public KMSEncrypter(final Optional<String> kmsId) {
     this.kmsParameters = checkNotNull(kmsId)
+        .map(String::trim)
+        .filter(id -> !id.isEmpty())
         .map(SSEAwsKeyManagementParams::new)
         .orElse(new SSEAwsKeyManagementParams());
   }

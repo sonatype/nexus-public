@@ -34,4 +34,12 @@ public interface EntityId
    */
   @Override
   String toString();
+
+  /**
+   * Shorthand for creating a detached {@link EntityId}.
+   */
+  @SuppressWarnings("deprecation")
+  static EntityId of(String value) {
+    return new DetachedEntityId(value);
+  }
 }

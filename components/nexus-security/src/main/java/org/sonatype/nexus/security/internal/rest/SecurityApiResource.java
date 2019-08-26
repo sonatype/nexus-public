@@ -47,7 +47,7 @@ public class SecurityApiResource
     extends ComponentSupport
     implements Resource, SecurityApiResourceDoc
 {
-  static final String RESOURCE_URI = BETA_API_PREFIX + "/security/";
+  public static final String RESOURCE_URI = BETA_API_PREFIX + "/security/";
 
   private final Map<String, UserManager> userManagers;
 

@@ -149,7 +149,7 @@ public class ContentExpressionFunction
 
     SelectorConfiguration selectorConfiguration = new SelectorConfiguration();
 
-    selectorConfiguration.setAttributes(ImmutableMap.of("expression", jexlExpression));
+    selectorConfiguration.setAttributes(ImmutableMap.of(SelectorConfiguration.EXPRESSION, jexlExpression));
     selectorConfiguration.setType(JexlSelector.TYPE);
     selectorConfiguration.setName("preview");
 

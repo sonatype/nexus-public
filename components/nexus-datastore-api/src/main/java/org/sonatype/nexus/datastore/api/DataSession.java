@@ -13,6 +13,7 @@
 package org.sonatype.nexus.datastore.api;
 
 import org.sonatype.nexus.transaction.Transaction;
+import org.sonatype.nexus.transaction.TransactionalSession;
 
 /**
  * Represents a session with a {@link DataStore}.
@@ -20,21 +21,10 @@ import org.sonatype.nexus.transaction.Transaction;
  * @since 3.next
  */
 public interface DataSession<T extends Transaction>
-    extends AutoCloseable
+    extends TransactionalSession<T>
 {
   /**
    * {@link DataAccess} mapping for the given type.
    */
   <D extends DataAccess> D access(Class<D> type);
-
-  /**
-   * Opens a new {@link Transaction}.
-   */
-  T openTransaction();
-
-  /**
-   * Closes the session.
-   */
-  @Override
-  void close();
 }

@@ -18,13 +18,12 @@ package org.sonatype.nexus.transaction;
  * @since 3.0
  */
 public interface Transaction
-    extends AutoCloseable
 {
-  void begin() throws Exception;
+  void begin();
 
-  void commit() throws Exception;
+  void commit();
 
-  void rollback() throws Exception;
+  void rollback();
 
   boolean isActive();
 

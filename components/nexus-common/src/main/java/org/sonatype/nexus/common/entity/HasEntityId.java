@@ -19,7 +19,7 @@ package org.sonatype.nexus.common.entity;
  */
 public interface HasEntityId
 {
-  EntityId getEntityId();
+  EntityId getId();
 
-  void setEntityId(EntityId id);
+  void setId(EntityId id);
 }

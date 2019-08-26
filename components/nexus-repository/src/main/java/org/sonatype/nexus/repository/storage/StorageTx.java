@@ -27,6 +27,7 @@ import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.transaction.Transaction;
+import org.sonatype.nexus.transaction.TransactionalSession;
 
 import com.google.common.base.Supplier;
 import com.google.common.hash.HashCode;
@@ -39,7 +40,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @since 3.0
  */
 public interface StorageTx
-    extends Transaction
+    extends TransactionalSession<StorageTx>, Transaction
 {
   /**
    * Begins the transaction.
@@ -538,4 +539,9 @@ public interface StorageTx
    * @throws MissingBlobException if the blob is missing
    */
   Blob requireBlob(BlobRef blobRef);
+
+  @Override
+  default StorageTx getTransaction() {
+    return this; // acts as both session and transaction
+  }
 }

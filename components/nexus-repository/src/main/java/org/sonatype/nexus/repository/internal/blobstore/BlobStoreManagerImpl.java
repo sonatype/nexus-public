@@ -242,17 +242,26 @@ public class BlobStoreManagerImpl
         store.update(configuration);
       }
       eventManager.post(new BlobStoreUpdatedEvent(blobStore));
-    } catch (Exception e) {
+    }
+    catch (BlobStoreException e) {
+      startWithConfig(blobStore, currentConfig);
+      throw e;
+    }
+    catch (Exception e) {
       log.error("Failed to update configuration", e);
-      if (blobStore.isStarted()) {
-        blobStore.stop();
-      }
-      blobStore.init(currentConfig);
-      blobStore.start();
+      startWithConfig(blobStore, currentConfig);
       throw new BlobStoreException("Failed to start blob store with new configuration.", null);
     }
 
     return blobStore;
+  }
+
+  private void startWithConfig(final BlobStore blobStore, final BlobStoreConfiguration config) throws Exception {
+    if (blobStore.isStarted()) {
+      blobStore.stop();
+    }
+    blobStore.init(config);
+    blobStore.start();
   }
 
   @Override

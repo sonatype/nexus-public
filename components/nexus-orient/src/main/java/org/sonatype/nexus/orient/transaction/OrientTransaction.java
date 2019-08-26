@@ -14,6 +14,7 @@ package org.sonatype.nexus.orient.transaction;
 
 import org.sonatype.nexus.transaction.RetryController;
 import org.sonatype.nexus.transaction.Transaction;
+import org.sonatype.nexus.transaction.TransactionalSession;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -27,7 +28,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 public class OrientTransaction
-    implements Transaction
+    implements TransactionalSession<OrientTransaction>, Transaction
 {
   private final ODatabaseDocumentTx db;
 
@@ -99,5 +100,10 @@ public class OrientTransaction
     else {
       return false;
     }
+  }
+
+  @Override
+  public OrientTransaction getTransaction() {
+    return this; // acts as both session and transaction
   }
 }

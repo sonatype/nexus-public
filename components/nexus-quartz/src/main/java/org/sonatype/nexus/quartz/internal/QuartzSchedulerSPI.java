@@ -81,14 +81,8 @@ import org.quartz.Trigger;
 import org.quartz.TriggerKey;
 import org.quartz.UnableToInterruptJobException;
 import org.quartz.core.QuartzScheduler;
-import org.quartz.impl.DefaultThreadExecutor;
-import org.quartz.impl.DirectSchedulerFactory;
-import org.quartz.impl.SchedulerRepository;
-import org.quartz.spi.JobFactory;
 import org.quartz.spi.JobStore;
-import org.quartz.spi.ThreadExecutor;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Maps.filterKeys;
@@ -121,8 +115,6 @@ public class QuartzSchedulerSPI
 {
   public static final String MISSING_TRIGGER_RECOVERY = ".missingTriggerRecovery";
 
-  private static final String SCHEDULER_NAME = "nexus";
-
   private static final String GROUP_NAME = "nexus";
 
   private static final Set<String> INHERITED_CONFIG_KEYS = ImmutableSet.of(LIMIT_NODE_KEY);
@@ -133,11 +125,9 @@ public class QuartzSchedulerSPI
 
   private final Provider<JobStore> jobStoreProvider;
 
-  private final JobFactory jobFactory;
-
-  private final int threadPoolSize;
-
   private final ScheduleFactory scheduleFactory;
+
+  private final Provider<Scheduler> schedulerProvider;
 
   private final QuartzTriggerConverter triggerConverter;
 
@@ -158,23 +148,18 @@ public class QuartzSchedulerSPI
   public QuartzSchedulerSPI(final EventManager eventManager,
                             final NodeAccess nodeAccess,
                             final Provider<JobStore> jobStoreProvider,
-                            final JobFactory jobFactory,
+                            final Provider<Scheduler> schedulerProvider,
                             final LastShutdownTimeService lastShutdownTimeService,
                             final DatabaseStatusDelayedExecutor delayedExecutor,
-                            @Named("${nexus.quartz.poolSize:-20}") final int threadPoolSize,
                             @Named("${nexus.quartz.recoverInterruptedJobs:-true}") final boolean recoverInterruptedJobs)
   {
     this.eventManager = checkNotNull(eventManager);
     this.nodeAccess = checkNotNull(nodeAccess);
     this.jobStoreProvider = checkNotNull(jobStoreProvider);
-    this.jobFactory = checkNotNull(jobFactory);
+    this.schedulerProvider = checkNotNull(schedulerProvider);
     this.lastShutdownTimeService = checkNotNull(lastShutdownTimeService);
     this.recoverInterruptedJobs = recoverInterruptedJobs;
     this.delayedExecutor = checkNotNull(delayedExecutor);
-
-    checkArgument(threadPoolSize > 0, "Invalid thread-pool size: %s", threadPoolSize);
-    this.threadPoolSize = threadPoolSize;
-    log.info("Thread-pool size: {}", threadPoolSize);
 
     this.scheduleFactory = new QuartzScheduleFactory();
     this.triggerConverter = new QuartzTriggerConverter(this.scheduleFactory);
@@ -198,7 +183,7 @@ public class QuartzSchedulerSPI
   @Override
   protected void doStart() throws Exception {
     // create new scheduler
-    scheduler = createScheduler();
+    scheduler = schedulerProvider.get();
 
     try {
       // access internal scheduler to simulate signals for remote updates
@@ -308,53 +293,8 @@ public class QuartzSchedulerSPI
     }
   }
 
-  /**
-   * Create a new {@link Scheduler} and set to stand-by mode.
-   */
-  private Scheduler createScheduler() throws SchedulerException {
-    // ensure executed threads have TCCL set
-    ThreadExecutor threadExecutor = new DefaultThreadExecutor()
-    {
-      @Override
-      public void execute(final Thread thread) {
-        thread.setContextClassLoader(QuartzSchedulerSPI.class.getClassLoader());
-        super.execute(thread);
-      }
-    };
-
-    // create Scheduler (implicitly registers it with repository)
-    DirectSchedulerFactory.getInstance().createScheduler(
-        SCHEDULER_NAME,
-        nodeAccess.getId(), // instance-id
-        new QuartzThreadPool(threadPoolSize),
-        threadExecutor,
-        jobStoreProvider.get(),
-        null, // scheduler plugin-map
-        null, // rmi-registry host
-        0,    // rmi-registry port
-        -1,   // idle-wait time
-        -1,   // db-failure retry-interval
-        true, // jmx-export
-        null, // custom jmx object-name, lets use the default
-        1,    // max batch-size
-        0L    // batch time-window
-    );
-    Scheduler scheduler = DirectSchedulerFactory.getInstance().getScheduler(SCHEDULER_NAME);
-    scheduler.setJobFactory(jobFactory);
-
-    // re-logging with version, as by default we limit quartz logging to WARN, hiding its default version logging
-    log.info("Quartz Scheduler v{}", scheduler.getMetaData().getVersion());
-
-    scheduler.standby();
-
-    return scheduler;
-  }
-
   @Override
   protected void doStop() throws Exception {
-    // shutdown and unregister the scheduler instance
-    scheduler.shutdown();
-    SchedulerRepository.getInstance().remove(SCHEDULER_NAME);
     scheduler = null;
   }
 

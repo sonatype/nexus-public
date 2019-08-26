@@ -13,6 +13,8 @@
 package org.sonatype.nexus.datastore.api;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
+import org.sonatype.nexus.transaction.TransactionalStore;
+import org.sonatype.nexus.transaction.UnitOfWork;
 
 /**
  * Each {@link DataStore} contains a number of {@link DataAccess} mappings accessible via {@link DataSession}s.
@@ -20,7 +22,7 @@ import org.sonatype.goodies.lifecycle.Lifecycle;
  * @since 3.next
  */
 public interface DataStore<S extends DataSession<?>>
-    extends Lifecycle
+    extends TransactionalStore<S>, Lifecycle
 {
   /**
    * Configure the data store; changes won't take effect until the store is (re)started.
@@ -48,12 +50,14 @@ public interface DataStore<S extends DataSession<?>>
   void unregister(Class<? extends DataAccess> accessType);
 
   /**
-   * Opens a new {@link DataSession}.
-   */
-  S openSession();
-
-  /**
    * Permanently stops this data store.
    */
   void shutdown() throws Exception;
+
+  /**
+   * {@link DataAccess} mapping for the given type; requires an open session.
+   */
+  static <D extends DataAccess> D access(Class<D> type) {
+    return UnitOfWork.<DataSession<?>> currentSession().access(type);
+  }
 }

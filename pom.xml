@@ -226,6 +226,12 @@
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-datastore-mybatis</artifactId>
+        <version>3.19.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-orient</artifactId>
         <version>3.19.0-SNAPSHOT</version>
       </dependency>
@@ -960,16 +966,17 @@
               <exclude>**/nexus-rapture/src/main/resources/static/rapture/Ext/patch/**</exclude>
 
               <!--
+              Exclude npm dependencies
+              -->
+              <exclude>**/nexus-rapture/node_modules/**</exclude>
+
+              <!--
               Excludes for specific classes which have compatible, yet different licences.
               -->
               <exclude>**/nexus-extdirect/**/com/softwarementors/**</exclude>
               <exclude>**/nexus-ssl/**/org/sonatype/nexus/ssl/keystore/internal/geronimo/**</exclude>
               <exclude>**/nexus-repository-apt/**/org/sonatype/nexus/repository/apt/internal/org/apache/commons/compress/archivers/ar/ArArchiveInputStream.java</exclude>
 
-              <!--
-              Exclude npm dependencies
-              -->
-              <exclude>node_modules/**</exclude>
             </excludes>
           </configuration>
         </plugin>
@@ -981,7 +988,6 @@
 
           <configuration>
             <nodeVersion>v10.15.3</nodeVersion>
-            <workingDirectory>${project.basedir}</workingDirectory>
             <installDirectory>${project.build.directory}</installDirectory>
           </configuration>
 
@@ -993,16 +999,7 @@
               </goals>
               <phase>generate-resources</phase>
             </execution>
-            <execution>
-              <id>npm ci</id>
-              <goals>
-                <goal>npm</goal>
-              </goals>
-              <phase>generate-resources</phase>
-              <configuration>
-                <arguments>ci</arguments>
-              </configuration>
-            </execution>
+
           </executions>
         </plugin>
       </plugins>

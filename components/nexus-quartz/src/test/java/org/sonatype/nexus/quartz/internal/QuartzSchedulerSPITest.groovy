@@ -60,6 +60,7 @@ import org.quartz.SchedulerException
 import org.quartz.SchedulerListener
 import org.quartz.Trigger
 import org.quartz.TriggerKey
+import org.quartz.spi.JobFactory
 import org.quartz.spi.JobStore
 import org.quartz.spi.OperableTrigger
 
@@ -97,6 +98,8 @@ class QuartzSchedulerSPITest
 
   JobStore jobStore
 
+  QuartzSchedulerProvider scheduler
+
   EventManager eventManager
 
   @Before
@@ -106,6 +109,7 @@ class QuartzSchedulerSPITest
     def provider = mock(Provider)
     jobStore = mock(JobStore)
     when(provider.get()).thenReturn(jobStore)
+    scheduler = new QuartzSchedulerProvider(nodeAccess, provider, mock(JobFactory), 1);
     eventManager = new SimpleEventManager()
 
     def lastShutdownTimeService = mock(LastShutdownTimeService)
@@ -115,9 +119,9 @@ class QuartzSchedulerSPITest
     doAnswer({ it.getArguments()[0].run() }).when(statusDelayedExecutor).execute(notNull(Runnable.class))
 
     underTest = new QuartzSchedulerSPI(
-        eventManager, nodeAccess, provider, mock(JobFactoryImpl), lastShutdownTimeService, statusDelayedExecutor, 1,
-        true
+        eventManager, nodeAccess, provider, scheduler, lastShutdownTimeService, statusDelayedExecutor, true
     )
+    scheduler.start()
     underTest.start()
     underTest.states.current = STARTED
     eventManager.register(underTest)
@@ -125,6 +129,7 @@ class QuartzSchedulerSPITest
 
   @After
   void after() {
+    scheduler.stop()
     underTest.stop()
   }
 

@@ -13,6 +13,7 @@
 package org.sonatype.nexus.selector;
 
 import java.util.List;
+import java.util.Optional;
 
 import javax.annotation.Nullable;
 
@@ -60,6 +61,11 @@ public interface SelectorManager
    */
   @Nullable
   SelectorConfiguration read(EntityId entityId);
+
+  /**
+   * Find by name
+   */
+  Optional<SelectorConfiguration> findByName(String name);
 
   /**
    * Persist a new selector configuration.

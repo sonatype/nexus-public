@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.orient.transaction;
 
-import java.util.function.Supplier;
-
 import javax.annotation.Nullable;
 import javax.inject.Provider;
 
@@ -21,6 +19,7 @@ import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.transaction.Operations;
 import org.sonatype.nexus.transaction.Transaction;
 import org.sonatype.nexus.transaction.Transactional;
+import org.sonatype.nexus.transaction.TransactionalStore;
 
 import static org.sonatype.nexus.orient.transaction.OrientTransaction.currentDb;
 
@@ -75,9 +74,9 @@ public class OrientOperations<E extends Exception, B extends OrientOperations<E,
    */
   protected OrientOperations(final Transactional spec,
                              @Nullable final Class<E> throwing,
-                             @Nullable final Supplier<? extends Transaction> db)
+                             @Nullable final TransactionalStore<?> store)
   {
-    super(spec, throwing, db);
+    super(spec, throwing, store);
   }
 
   /**
@@ -86,8 +85,8 @@ public class OrientOperations<E extends Exception, B extends OrientOperations<E,
   @Override
   protected <X extends Exception> Operations<X, ?> copy(final Transactional spec,
                                                         @Nullable final Class<X> throwing,
-                                                        @Nullable final Supplier<? extends Transaction> db)
+                                                        @Nullable final TransactionalStore<?> store)
   {
-    return new OrientOperations<>(spec, throwing, db);
+    return new OrientOperations<>(spec, throwing, store);
   }
 }

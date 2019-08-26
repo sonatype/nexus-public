@@ -12,23 +12,21 @@
  */
 package org.sonatype.nexus.transaction;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
-import com.google.common.base.Suppliers;
-import com.google.common.base.Throwables;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static org.sonatype.nexus.transaction.UnitOfWork.Scope.LOCAL_STORE;
+import static org.sonatype.nexus.transaction.UnitOfWork.Scope.TRANSACTIONAL;
+import static org.sonatype.nexus.transaction.UnitOfWork.Scope.UNIT_OF_WORK;
 
 /**
  * Utility class that lets you scope a sequence of work containing transactional methods:
  *
  * <pre>
- * UnitOfWork.begin(transactionSupplier);
+ * UnitOfWork.begin(sessionSupplier);
  * try {
  *   // ... do transactional work
  * }
@@ -37,10 +35,10 @@ import static com.google.common.base.Preconditions.checkState;
  * }
  * </pre>
  *
- * If you want the same transaction to be re-used (i.e. batched) across the unit-of-work:
+ * If you want the same session to be re-used (i.e. batched) across the unit-of-work:
  *
  * <pre>
- * UnitOfWork.beginBatch(transactionSupplier);
+ * UnitOfWork.beginBatch(sessionSupplier);
  * try {
  *   // ... do transactional work
  * }
@@ -64,70 +62,54 @@ import static com.google.common.base.Preconditions.checkState;
  * @since 3.0
  */
 public final class UnitOfWork
+    implements TransactionalSession<Transaction>
 {
-  private static final ThreadLocal<UnitOfWork> SELF = new ThreadLocal<>();
+  private static final ThreadLocal<UnitOfWork> CURRENT_WORK = new ThreadLocal<>();
 
-  private final Deque<Supplier<? extends Transaction>> dbHistory = new ArrayDeque<>();
+  enum Scope
+  {
+    TRANSACTIONAL, UNIT_OF_WORK, LOCAL_STORE
+  }
 
-  private Transaction tx;
+  @Nullable
+  private final UnitOfWork parent;
 
-  private UnitOfWork() {
-    // internal use only
+  private final TransactionalStore<?> store;
+
+  private final Scope scope;
+
+  @Nullable
+  TransactionalSession<?> session;
+
+  private UnitOfWork(final UnitOfWork parent, final TransactionalStore<?> store, final Scope scope) {
+    this.parent = parent;
+    this.store = checkNotNull(store);
+    this.scope = checkNotNull(scope);
   }
 
   /**
-   * Begins a unit-of-work which acquires a fresh transaction each time one is needed.
+   * Begins a unit-of-work which uses a new session for each {@link Transactional} operation.
    */
-  public static void begin(final Supplier<? extends Transaction> db) {
+  public static void begin(final Supplier<? extends TransactionalSession<?>> db) {
     checkNotNull(db);
-    createWork().doBegin(db);
+    doBegin(db::get, TRANSACTIONAL);
   }
 
   /**
-   * Begins a unit-of-work which only acquires a transaction when needed and then re-uses it (batch-mode).
+   * Begins a unit-of-work which lazily uses the same session for each {@link Transactional} operation.
    */
-  public static void beginBatch(final Supplier<? extends Transaction> db) {
-    begin(Suppliers.compose(tx -> new BatchTransaction(tx), db::get));
+  public static void beginBatch(final Supplier<? extends TransactionalSession<?>> db) {
+    checkNotNull(db);
+    doBegin(db::get, UNIT_OF_WORK);
   }
 
   /**
-   * Begins a unit-of-work which immediately acquires the given transaction and re-uses it (batch-mode).
+   * Begins a unit-of-work which eagerly uses a given session for each {@link Transactional} operation.
    */
-  public static void beginBatch(final Transaction tx) {
-    begin(Suppliers.ofInstance(new BatchTransaction(tx)));
-    currentWork().acquireTransaction(null);
-  }
-
-  /**
-   * @return current transaction
-   *
-   * @throws IllegalStateException if no transaction has been acquired for the current context
-   */
-  @SuppressWarnings("unchecked")
-  public static <T extends Transaction> T currentTx() {
-    Transaction tx = currentWork().tx;
-    if (tx instanceof BatchTransaction) {
-      tx = ((BatchTransaction) tx).delegate;
-    }
-    checkState(tx != null, "No transaction for current context");
-    return (T) tx;
-  }
-
-  /**
-   * Pauses current unit-of-work to avoid leaking context when sending events, etc.
-   */
-  public static UnitOfWork pause() {
-    final UnitOfWork self = SELF.get();
-    SELF.remove();
-    return self;
-  }
-
-  /**
-   * Resumes the given unit-of-work.
-   */
-  public static void resume(final UnitOfWork self) {
-    checkState(SELF.get() == null, "Unit of work is already set");
-    SELF.set(self);
+  public static void beginBatch(final TransactionalSession<?> session) {
+    checkNotNull(session);
+    doBegin(() -> session, UNIT_OF_WORK);
+    currentWork().session = session; // make sure session is immediately available
   }
 
   /**
@@ -137,82 +119,166 @@ public final class UnitOfWork
     currentWork().doEnd();
   }
 
-  // -------------------------------------------------------------------------
-
-  static UnitOfWork createWork() {
-    UnitOfWork self = SELF.get();
-    if (self == null) {
-      self = new UnitOfWork();
-      SELF.set(self);
-    }
-    return self;
-  }
-
-  static UnitOfWork currentWork() {
-    final UnitOfWork self = SELF.get();
-    checkState(self != null, "Unit of work has not been set");
-    return self;
-  }
-
-  boolean isActive() {
-    return tx != null && tx.isActive();
+  /**
+   * @return current session
+   *
+   * @throws IllegalStateException if no session exists for the current context
+   *
+   * @since 3.next
+   */
+  @SuppressWarnings("unchecked")
+  public static <S extends TransactionalSession<?>> S currentSession() {
+    TransactionalSession<?> session = currentWork().session;
+    checkState(session != null, "No transactional session");
+    return (S) session;
   }
 
   /**
-   * Acquires transaction from given supplier; otherwise falls back to the current unit-of-work.
+   * @return current transaction
+   *
+   * @throws IllegalStateException if no transaction exists for the current context
    */
-  Transaction acquireTransaction(@Nullable final Supplier<? extends Transaction> customDb) {
-    if (tx == null) {
-      Supplier<? extends Transaction> db = customDb;
-      if (db == null) {
-        db = dbHistory.peek();
-        checkState(db != null, "Unit of work has not been set");
-      }
-      tx = checkNotNull(db.get());
-    }
-    return tx;
+  @SuppressWarnings("unchecked")
+  public static <T extends Transaction> T currentTx() {
+    Transaction tx = currentWork().getTransaction();
+    checkState(tx != null, "No transaction in progress");
+    return (T) tx;
   }
 
-  void releaseTransaction() {
-    if (!(tx instanceof BatchTransaction)) {
-      tx = null;
-      if (dbHistory.isEmpty()) {
-        SELF.remove(); // avoid dangling thread-local
-      }
+  /**
+   * Pauses current unit-of-work (if it exists) to avoid leaking context when sending events, etc.
+   */
+  @Nullable
+  public static UnitOfWork pause() {
+    UnitOfWork pausedWork = CURRENT_WORK.get();
+    CURRENT_WORK.remove();
+    return pausedWork;
+  }
+
+  /**
+   * Resumes the previously paused unit-of-work (if it exists).
+   */
+  public static void resume(@Nullable final UnitOfWork pausedWork) {
+    checkState(CURRENT_WORK.get() == null, "Cannot resume unit-of-work while other work is ongoing");
+    if (pausedWork != null) {
+      CURRENT_WORK.set(pausedWork);
     }
   }
 
   // -------------------------------------------------------------------------
 
-  private void doBegin(final Supplier<? extends Transaction> db) {
-    checkState(tx == null, "Transaction already in progress");
-    dbHistory.push(db);
+  @Override
+  public Transaction getTransaction() {
+    // shortcut when session and transaction concerns are mixed (works better with mocking)
+    if (session instanceof Transaction) {
+      return (Transaction) session;
+    }
+    else if (session != null) {
+      return session.getTransaction();
+    }
+    return null;
+  }
+
+  /**
+   * Called when our wrapper session from {@link #doOpenSession(TransactionalStore)} is closed.
+   */
+  @Override
+  public void close() {
+    if (scope == LOCAL_STORE) {
+      popWork(); // automatically pop any local work so it won't leak outside the store
+    }
+
+    if (scope != UNIT_OF_WORK) {
+      doCloseSession(); // close the original session now our wrapper session is closed
+    }
+
+    // sessions with unit-of-work scope are left open and closed when that work ends
+  }
+
+  // -------------------------------------------------------------------------
+
+  /**
+   * Peeks at the current transaction; returns {@code null} if there isn't one.
+   */
+  @Nullable
+  static Transaction peekTransaction() {
+    UnitOfWork currentWork = CURRENT_WORK.get();
+    return currentWork != null ? currentWork.getTransaction() : null;
+  }
+
+  /**
+   * Opens a new session; from the local store if it exists or from the surrounding unit-of-work.
+   */
+  static TransactionalSession<?> openSession(@Nullable final TransactionalStore<?> localStore) {
+    UnitOfWork currentWork = CURRENT_WORK.get();
+    // introduce a short-lived unit-of-work when we need to track a locally sourced session
+    if (localStore != null && (currentWork == null || currentWork.scope == UNIT_OF_WORK)) {
+      currentWork = new UnitOfWork(currentWork, localStore, LOCAL_STORE);
+      CURRENT_WORK.set(currentWork);
+    }
+    else {
+      checkState(currentWork != null, "Unit of work has not been set");
+    }
+    return currentWork.doOpenSession(localStore);
+  }
+
+  // -------------------------------------------------------------------------
+
+  private static UnitOfWork currentWork() {
+    UnitOfWork currentWork = CURRENT_WORK.get();
+    checkState(currentWork != null, "Unit of work has not been set");
+    return currentWork;
+  }
+
+  private static void doBegin(final TransactionalStore<?> store, final Scope scope) {
+    UnitOfWork parent = CURRENT_WORK.get();
+    checkState(parent == null || parent.session == null,
+        "Transaction in progress, pause current unit-of-work before beginning new work");
+    CURRENT_WORK.set(new UnitOfWork(parent, store, scope));
+  }
+
+  /**
+   * Opens a new session if one doesn't already exist.
+   *
+   * Returns this work as a wrapper session so {@link #doCloseSession()} is called when the client closes the session.
+   */
+  private TransactionalSession<?> doOpenSession(@Nullable final TransactionalStore<?> localStore) {
+    if (session == null) {
+      session = checkNotNull(localStore != null ? localStore.openSession() : store.openSession());
+    }
+    return this; // implicitly wraps the new session so we can intercept close
+  }
+
+  /**
+   * Closes the current session if it exists.
+   */
+  private void doCloseSession() {
+    if (session != null) {
+      try {
+        session.close();
+      }
+      finally {
+        session = null;
+      }
+    }
   }
 
   private void doEnd() {
-    Throwable throwing = null;
-    if (tx instanceof BatchTransaction) {
-      checkState(!tx.isActive(), "Transaction still in progress");
-      try {
-        ((BatchTransaction) tx).closeBatch();
-      }
-      catch (final Throwable e) {
-        throwing = e;
-      }
-      finally {
-        tx = null;
-      }
+    if (scope != UNIT_OF_WORK) {
+      checkState(session == null, "Cannot end unit-of-work while transaction in progress");
+    }
+
+    popWork(); // pop the work that was originally pushed when this unit-of-work began
+
+    doCloseSession();
+  }
+
+  private void popWork() {
+    if (parent != null) {
+      CURRENT_WORK.set(parent);
     }
     else {
-      checkState(tx == null, "Transaction still in progress");
-    }
-    dbHistory.pop();
-    if (dbHistory.isEmpty()) {
-      SELF.remove(); // avoid dangling thread-local
-    }
-    if (throwing != null) {
-      Throwables.throwIfUnchecked(throwing);
-      throw new RuntimeException(throwing);
+      CURRENT_WORK.remove();
     }
   }
 }

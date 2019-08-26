@@ -10,16 +10,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.entity;
+package org.sonatype.nexus.datastore.api;
 
 /**
- * Mix-in for entities that want to track their version; for example to detect concurrent updates.
+ * Thrown when a named {@link DataStore} was not found.
  *
  * @since 3.next
  */
-public interface HasEntityVersion
+public class DataStoreNotFoundException
+    extends RuntimeException
 {
-  int getEntityVersion();
+  private static final long serialVersionUID = -7516739829244823213L;
 
-  void setEntityVersion(int version);
+  public DataStoreNotFoundException(final String storeName) {
+    super("Data store not found: " + storeName);
+  }
 }

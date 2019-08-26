@@ -12,17 +12,15 @@
  */
 package org.sonatype.nexus.transaction;
 
-import java.util.function.Supplier;
-
 /**
- * Something that can supply {@link Transaction}s to its {@link Transactional} methods.
+ * Represents some kind of storage with transactional behaviour.
  *
- * @since 3.0
+ * @since 3.next
  */
-public interface TransactionalAware
+public interface TransactionalStore<S extends TransactionalSession<?>>
 {
   /**
-   * @return Supplier of transactions
+   * Opens a new {@link TransactionalSession}.
    */
-  Supplier<? extends Transaction> txSupplier();
+  S openSession();
 }

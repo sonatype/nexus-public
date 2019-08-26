@@ -121,7 +121,7 @@ public class ExampleMethods
   // should throw IllegalStateException
   @Transactional
   public void beginWorkInTransaction() {
-    UnitOfWork.begin(Suppliers.ofInstance((Transaction) null));
+    UnitOfWork.begin(Suppliers.ofInstance((TransactionalSession<?>) null));
   }
 
   // should throw IllegalStateException

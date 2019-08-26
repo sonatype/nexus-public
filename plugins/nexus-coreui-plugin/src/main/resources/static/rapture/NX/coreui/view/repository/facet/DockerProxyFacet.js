@@ -168,6 +168,7 @@ Ext.define('NX.coreui.view.repository.facet.DockerProxyFacet', {
   addWhitelistRow: function(value) {
     var me = this,
         form = me.up('nx-coreui-repository-settings-form'),
+        idx = me.getWhitelistRows().length,
         val = me.getWhitelistRows().length === 0 ? (value || '.*') : (value || ''),
         row = {
           xtype: 'panel',
@@ -177,7 +178,7 @@ Ext.define('NX.coreui.view.repository.facet.DockerProxyFacet', {
             {
               xtype: 'textfield',
               allowBlank: false,
-              name: 'attributes.dockerProxy.foreignLayerUrlWhitelist',
+              name: 'attributes.dockerProxy.whitelistUrl[' + idx + ']',
               width: 'calc(100% - 36px)',
               value: val
             },
@@ -198,14 +199,14 @@ Ext.define('NX.coreui.view.repository.facet.DockerProxyFacet', {
                 });
                 form.fireEvent('dirtychange', form.getForm());
                 whitelist.remove(button.up());
-                me.updateFirstRemoveButtonState();
+                me.setFirstRemoveButtonState();
               }
             }
           ]
         };
 
     me.getWhitelistRowsContainer().add(row);
-    me.updateFirstRemoveButtonState();
+    me.setFirstRemoveButtonState();
   },
 
   getWhitelistRowsContainer: function() {
@@ -216,7 +217,7 @@ Ext.define('NX.coreui.view.repository.facet.DockerProxyFacet', {
     return this.getWhitelistRowsContainer().query('textfield');
   },
 
-  updateFirstRemoveButtonState: function() {
+  setFirstRemoveButtonState: function() {
     var removeButtons = this.getWhitelistRowsContainer().query('button[cls=nx-remove-whitelist-row-button]');
 
     if (removeButtons.length > 1) {

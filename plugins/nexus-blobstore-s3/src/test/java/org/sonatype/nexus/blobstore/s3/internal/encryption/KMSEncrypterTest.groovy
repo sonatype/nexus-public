@@ -24,6 +24,24 @@ class KMSEncrypterTest
 {
 
   @Unroll
+  def 'Constructor properly handles kmsId:\'#kmsId\''() {
+    when: 'you create a kms encrypter'
+      new KMSEncrypter(Optional.ofNullable(kmsId))
+
+    then: 'aws sdk is setup properly'
+      noExceptionThrown()
+
+    where:
+        kmsId << [
+          null,
+          "",
+          " ",
+          "   ",
+          "aProperKeyId"
+      ]
+  }
+
+  @Unroll
   def 'Supplying no kms id adds the correct kms parameters to \'#request\''() {
     given: 'an encrypter without a selected key'
       def request = Mock(requestType)

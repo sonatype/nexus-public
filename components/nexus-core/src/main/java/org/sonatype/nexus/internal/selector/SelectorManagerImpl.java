@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import javax.inject.Inject;
@@ -55,6 +56,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
+import org.apache.commons.lang3.StringUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
@@ -97,7 +99,7 @@ public class SelectorManagerImpl
     checkNotNull(selectorFactory);
     selectorCache = CacheBuilder.newBuilder().softValues().build(CacheLoader.from(config -> {
       String type = config.getType();
-      String expression = config.getAttributes().get("expression");
+      String expression = config.getAttributes().get(SelectorConfiguration.EXPRESSION);
       return selectorFactory.createSelector(type, expression);
     }));
   }
@@ -132,6 +134,12 @@ public class SelectorManagerImpl
   @Guarded(by = STARTED)
   public SelectorConfiguration read(final EntityId entityId) {
     return store.read(entityId);
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public Optional<SelectorConfiguration> findByName(final String name) {
+    return browse().stream().filter(selector -> StringUtils.equals(name, selector.getName())).findFirst();
   }
 
   @Override

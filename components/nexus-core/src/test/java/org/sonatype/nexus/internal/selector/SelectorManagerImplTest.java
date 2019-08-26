@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.security.RepositoryContentSelectorPrivilegeDescriptor;
@@ -203,6 +204,23 @@ public class SelectorManagerImplTest
     manager.delete(selector);
 
     verifyZeroInteractions(store);
+  }
+
+  @Test
+  public void findByNameReturnsEmptyOptional() throws Exception {
+    Optional<SelectorConfiguration> configuration = manager.findByName("invalidSelectorName");
+    assertThat(configuration.isPresent(), is(false));
+  }
+
+  @Test
+  public void findByNameReturnsExpectedSelector() throws Exception {
+    SelectorConfiguration expectedSelector = getSelectorConfiguration(CselSelector.TYPE, "bar");
+    List<SelectorConfiguration> configs = asList(expectedSelector);
+    selectorConfigurations.addAll(configs);
+
+    Optional<SelectorConfiguration> configuration = manager.findByName(expectedSelector.getName());
+
+    assertThat(configuration.get(), is(expectedSelector));
   }
 
   private SelectorConfiguration getSelectorConfiguration(final String type, final String expression) {

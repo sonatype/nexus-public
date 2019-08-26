@@ -41,7 +41,7 @@ public class UnitOfWorkTest
 
   @Test(expected = IllegalStateException.class)
   public void testCannotResumeTwice() {
-    UnitOfWork.begin(Suppliers.<Transaction> ofInstance(null));
+    UnitOfWork.begin(Suppliers.<TransactionalSession<Transaction>> ofInstance(null));
     try {
       UnitOfWork work = UnitOfWork.pause();
       UnitOfWork.resume(work);
