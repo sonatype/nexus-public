@@ -13,7 +13,6 @@
 package org.sonatype.nexus.datastore.api;
 
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
 
@@ -64,12 +63,5 @@ public interface DataStoreManager
    */
   default boolean isContentStore(String storeName) {
     return !CONFIG_DATASTORE_NAME.equalsIgnoreCase(storeName);
-  }
-
-  /**
-   * @return supplier of sessions from the named data store.
-   */
-  default Supplier<DataSession<?>> asSessionSupplier(String storeName) {
-    return () -> get(storeName).orElseThrow(() -> new DataStoreNotFoundException(storeName)).openSession();
   }
 }

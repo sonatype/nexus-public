@@ -17,6 +17,7 @@ import java.util.stream.Collectors
 import org.sonatype.nexus.blobstore.BlobIdLocationResolver
 import org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver
 import org.sonatype.nexus.blobstore.api.BlobId
+import org.sonatype.nexus.blobstore.api.BlobMetrics
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreException
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker
@@ -153,8 +154,8 @@ class S3BlobStoreTest
       blobStore.init(cfg)
       blobStore.doStart()
       def attributesS3Object = mockS3Object(attributesContents)
-      1 * s3.doesObjectExist('mybucket', pathPrefix + propertiesLocation(blobId)) >> true
-      1 * s3.getObject('mybucket', pathPrefix + propertiesLocation(blobId)) >> attributesS3Object
+      2 * s3.doesObjectExist('mybucket', pathPrefix + propertiesLocation(blobId)) >> true
+      2 * s3.getObject('mybucket', pathPrefix + propertiesLocation(blobId)) >> attributesS3Object
 
     when: 'blob is deleted'
       def deleted = blobStore.delete(blobId, 'successful test')
@@ -197,8 +198,8 @@ class S3BlobStoreTest
       def cfg = new BlobStoreConfiguration()
       cfg.attributes = [s3: [bucket: 'mybucket', prefix: '']]
       def attributesS3Object = mockS3Object(attributesContents)
-      1 * s3.doesObjectExist('mybucket', propertiesLocation(blobId)) >> true
-      1 * s3.getObject('mybucket', propertiesLocation(blobId)) >> attributesS3Object
+      _ * s3.doesObjectExist('mybucket', propertiesLocation(blobId)) >> true
+      _ * s3.getObject('mybucket', propertiesLocation(blobId)) >> attributesS3Object
 
     when: 'blob is deleted with given lifecycle expiry days'
       cfg.attributes('s3').set('expiration', expiryDays)
@@ -243,6 +244,7 @@ class S3BlobStoreTest
 
     then: 'deleted attribute and deleted s3 tag are removed'
       restored == true
+      1 * blobAttributes.getMetrics() >> Mock(BlobMetrics)
       1 * blobAttributes.setDeleted(false)
       1 * blobAttributes.setDeletedReason(null)
       1 * s3.setObjectTagging(_) >> { args ->

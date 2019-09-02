@@ -367,7 +367,7 @@ public class NpmGroupFacet
    * false otherwise.
    */
   @VisibleForTesting
-  protected boolean shouldServeFirstResult(final List packages, final NpmPackageId packageId) {
+  protected boolean shouldServeFirstResult(final List<?> packages, final NpmPackageId packageId) {
     return packages.size() == 1 || (!mergeMetadata && isEmpty(packageId.scope()));
   }
 

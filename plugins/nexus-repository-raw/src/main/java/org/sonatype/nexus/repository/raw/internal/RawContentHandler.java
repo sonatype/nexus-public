@@ -31,7 +31,6 @@ import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.repository.http.HttpMethods.DELETE;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
-import static org.sonatype.nexus.repository.http.HttpMethods.MKCOL;
 import static org.sonatype.nexus.repository.http.HttpMethods.PUT;
 
 /**

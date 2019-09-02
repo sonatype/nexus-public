@@ -27,9 +27,15 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Vector;
+
+import javax.naming.InvalidNameException;
+import javax.naming.ldap.LdapName;
+import javax.naming.ldap.Rdn;
 
 import com.google.common.hash.Hashing;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
@@ -200,6 +206,23 @@ public final class CertificateUtil
   public static String calculateFingerprint(final Certificate certificate) throws CertificateEncodingException {
     String sha1Hash = calculateSha1(certificate);
     return encode(sha1Hash, ':', 2);
+  }
+
+  public static Map<String, String> getIssuerRdns(final X509Certificate certificate) throws InvalidNameException {
+    return getRdns(certificate.getIssuerX500Principal().getName());
+  }
+
+  public static Map<String, String> getSubjectRdns(final X509Certificate certificate) throws InvalidNameException {
+    return getRdns(certificate.getSubjectX500Principal().getName());
+  }
+
+  private static Map<String, String> getRdns(final String dn) throws InvalidNameException {
+    Map<String, String> rdns = new HashMap<>();
+    LdapName ldapName = new LdapName(dn);
+    for (Rdn rdn : ldapName.getRdns()) {
+      rdns.put(rdn.getType(), rdn.getValue().toString());
+    }
+    return rdns;
   }
 
   private static String encode(final String input, final char separator, final int delay) {

@@ -16,9 +16,6 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.Optional;
 
-import org.sonatype.nexus.repository.npm.internal.NpmPackageParser;
-import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchFacet;
-
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobRef;
@@ -28,8 +25,8 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryTaskSupport;
 import org.sonatype.nexus.repository.attributes.AttributesFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.npm.internal.tasks.ReindexNpmRepositoryTask;
-import org.sonatype.nexus.repository.npm.internal.tasks.ReindexNpmRepositoryTaskDescriptor;
+import org.sonatype.nexus.repository.npm.internal.NpmPackageParser;
+import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchFacet;
 import org.sonatype.nexus.repository.search.SearchFacet;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
@@ -43,10 +40,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static org.sonatype.nexus.repository.RepositoryTaskSupport.ALL_REPOSITORIES;
-import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind.PACKAGE_ROOT;
-import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind.REPOSITORY_ROOT;
-import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind.TARBALL;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
@@ -59,6 +52,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.RepositoryTaskSupport.ALL_REPOSITORIES;
+import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind.PACKAGE_ROOT;
+import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind.REPOSITORY_ROOT;
+import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind.TARBALL;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
 public class ReindexNpmRepositoryTaskTest
@@ -170,8 +167,7 @@ public class ReindexNpmRepositoryTaskTest
     when(storageFacet.txSupplier()).thenReturn(() -> storageTx);
     when(storageTx.requireBlob(assetBlobRef)).thenReturn(assetBlob);
     when(storageTx.requireBlob(badAssetBlobRef)).thenThrow(new RuntimeException("bad asset"));
-    when(storageTx.findAssets(any(String.class), any(Map.class), any(Iterable.class), any(String.class))).thenReturn(
-        emptyList());
+    when(storageTx.findAssets(any(String.class), any(), any(), any(String.class))).thenReturn(emptyList());
 
     when(assetBlob.getInputStream()).thenReturn(assetInputStream);
     when(npmPackageParser.parsePackageJson(any())).thenReturn(FORMAT_ATTRIBUTES);
@@ -215,7 +211,7 @@ public class ReindexNpmRepositoryTaskTest
   @Test
   public void repositoryRootAssetIsIgnored() throws Exception {
     when(formatAttributes.get(P_ASSET_KIND, String.class)).thenReturn(REPOSITORY_ROOT.toString());
-    when(storageTx.findAssets(any(String.class), any(Map.class), any(Iterable.class), any(String.class))).thenReturn(
+    when(storageTx.findAssets(any(String.class), any(), any(), any(String.class))).thenReturn(
         singletonList(asset), emptyList());
 
     underTest.call();
@@ -226,7 +222,7 @@ public class ReindexNpmRepositoryTaskTest
   @Test
   public void packageRootAssetIsIgnored() throws Exception {
     when(formatAttributes.get(P_ASSET_KIND, String.class)).thenReturn(PACKAGE_ROOT.toString());
-    when(storageTx.findAssets(any(String.class), any(Map.class), any(Iterable.class), any(String.class))).thenReturn(
+    when(storageTx.findAssets(any(String.class), any(), any(), any(String.class))).thenReturn(
         singletonList(asset), emptyList());
 
     underTest.call();
@@ -238,7 +234,7 @@ public class ReindexNpmRepositoryTaskTest
   public void tarballAssetWithoutFormatAttributesIsIgnored() throws Exception {
     when(npmPackageParser.parsePackageJson(any())).thenReturn(emptyMap());
     when(formatAttributes.get(P_ASSET_KIND, String.class)).thenReturn(TARBALL.toString());
-    when(storageTx.findAssets(any(String.class), any(Map.class), any(Iterable.class), any(String.class))).thenReturn(
+    when(storageTx.findAssets(any(String.class), any(), any(), any(String.class))).thenReturn(
         singletonList(asset), emptyList());
 
     underTest.call();
@@ -251,7 +247,7 @@ public class ReindexNpmRepositoryTaskTest
   @Test
   public void tarballAssetWithFormatAttributesIsProcessed() throws Exception {
     when(formatAttributes.get(P_ASSET_KIND, String.class)).thenReturn(TARBALL.toString());
-    when(storageTx.findAssets(any(String.class), any(Map.class), any(Iterable.class), any(String.class))).thenReturn(
+    when(storageTx.findAssets(any(String.class), any(), any(), any(String.class))).thenReturn(
         singletonList(asset), emptyList());
 
     underTest.call();
@@ -265,7 +261,7 @@ public class ReindexNpmRepositoryTaskTest
   public void exceptionOnBadTarballAssetIsGracefullyHandled() throws Exception {
     when(formatAttributes.get(P_ASSET_KIND, String.class)).thenReturn(TARBALL.toString());
     when(badAssetFormatAttributes.get(P_ASSET_KIND, String.class)).thenReturn(TARBALL.toString());
-    when(storageTx.findAssets(any(String.class), any(Map.class), any(Iterable.class), any(String.class))).thenReturn(
+    when(storageTx.findAssets(any(String.class), any(), any(), any(String.class))).thenReturn(
         singletonList(badAsset), singletonList(asset), emptyList());
 
     underTest.call();
@@ -282,7 +278,7 @@ public class ReindexNpmRepositoryTaskTest
   public void repositoryFlagClearedWhenTaskIsComplete() throws Exception {
     when(formatAttributes.get(P_ASSET_KIND, String.class)).thenReturn(TARBALL.toString());
     when(badAssetFormatAttributes.get(P_ASSET_KIND, String.class)).thenReturn(TARBALL.toString());
-    when(storageTx.findAssets(any(String.class), any(Map.class), any(Iterable.class), any(String.class))).thenReturn(
+    when(storageTx.findAssets(any(String.class), any(), any(), any(String.class))).thenReturn(
         singletonList(badAsset), singletonList(asset), emptyList());
 
     underTest.call();
@@ -293,7 +289,7 @@ public class ReindexNpmRepositoryTaskTest
   @Test
   public void repositoryFlagNotClearedWhenTaskDoesNotComplete() throws Exception {
     when(badAssetFormatAttributes.get(P_ASSET_KIND, String.class)).thenReturn(TARBALL.toString());
-    when(storageTx.findAssets(any(String.class), any(Map.class), any(Iterable.class), any(String.class)))
+    when(storageTx.findAssets(any(String.class), any(), any(), any(String.class)))
         .thenThrow(new RuntimeException("cannot browse"));
 
     try {

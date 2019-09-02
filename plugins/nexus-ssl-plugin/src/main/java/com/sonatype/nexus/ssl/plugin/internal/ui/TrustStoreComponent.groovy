@@ -107,8 +107,8 @@ extends DirectComponentSupport
     if (certificate instanceof X509Certificate) {
       X509Certificate x509Certificate = (X509Certificate) certificate
 
-      Map<String, String> subjectRdns = getRdns(x509Certificate.subjectX500Principal.name)
-      Map<String, String> issuerRdns = getRdns(x509Certificate.issuerX500Principal.name)
+      Map<String, String> subjectRdns = CertificateUtil.getSubjectRdns(x509Certificate)
+      Map<String, String> issuerRdns = CertificateUtil.getSubjectRdns(x509Certificate)
 
       return new CertificateXO(
           id: fingerprint,
@@ -133,14 +133,5 @@ extends DirectComponentSupport
           fingerprint: fingerprint
       )
     }
-  }
-
-  private static Map<String, String> getRdns(final String dn) {
-    Map<String, String> rdns = [:]
-    LdapName ldapName = new LdapName(dn)
-    for (Rdn rdn : ldapName.rdns) {
-      rdns.put(rdn.type, rdn.value.toString())
-    }
-    return rdns
   }
 }

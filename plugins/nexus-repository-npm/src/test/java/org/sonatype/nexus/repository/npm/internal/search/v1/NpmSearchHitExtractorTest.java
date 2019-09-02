@@ -17,8 +17,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchHitExtractor;
-
 import org.sonatype.goodies.testsupport.TestSupport;
 
 import org.elasticsearch.search.SearchHit;
@@ -67,6 +65,7 @@ public class NpmSearchHitExtractorTest
     when(searchHit.getSource()).thenReturn(source);
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void testWithEmptyAssetList() {
     Map<String, Object> source = searchHit.getSource();
@@ -102,6 +101,7 @@ public class NpmSearchHitExtractorTest
     assertThat(underTest.extractKeywords(searchHit), is(empty()));
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void testWithoutEntityAttributes() {
     Map<String, Object> source = searchHit.getSource();
@@ -121,6 +121,7 @@ public class NpmSearchHitExtractorTest
     assertThat(underTest.extractKeywords(searchHit), is(empty()));
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void testWithoutFormatAttributes() {
     Map<String, Object> source = searchHit.getSource();
@@ -141,6 +142,7 @@ public class NpmSearchHitExtractorTest
     assertThat(underTest.extractKeywords(searchHit), is(empty()));
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void testWithoutContentAttributes() {
     Map<String, Object> source = searchHit.getSource();

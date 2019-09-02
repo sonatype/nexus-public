@@ -73,10 +73,9 @@ extends DirectComponentSupport
                                  final @Nullable Integer port,
                                  final @Nullable String protocolHint)
   {
-    int actualPort = port ?: 443
     Certificate[] chain
     try {
-      chain = retrieveCertificates(host, actualPort, protocolHint)
+      chain = certificateRetriever.retrieveCertificates(host, port, protocolHint)
     }
     catch (Exception e) {
       String errorMessage = e.message
@@ -86,6 +85,7 @@ extends DirectComponentSupport
       throw new IOException(errorMessage)
     }
     if (!chain || chain.length == 0) {
+      int actualPort = port ?: 443
       throw new IOException("Could not retrieve an SSL certificate from '${host}:${actualPort}'")
     }
     return asCertificateXO(chain[0], isInTrustStore(chain[0]))
@@ -104,25 +104,6 @@ extends DirectComponentSupport
   CertificateXO details(final @NotBlank @PemCertificate String pem) {
     Certificate certificate = decodePEMFormattedCertificate(pem)
     return asCertificateXO(certificate, isInTrustStore(certificate))
-  }
-
-  Certificate[] retrieveCertificates(final String host,
-                                     final int port,
-                                     final String protocolHint)
-  {
-    if (!protocolHint) {
-      try {
-        return certificateRetriever.retrieveCertificates(host, port)
-      }
-      catch (Exception e) {
-        log.debug('Cannot connect directly to {}:{}. Will retry using https protocol.', host, port, e)
-        return certificateRetriever.retrieveCertificatesFromHttpsServer(host, port)
-      }
-    }
-    else if ('https'.equalsIgnoreCase(protocolHint)) {
-      return certificateRetriever.retrieveCertificatesFromHttpsServer(host, port)
-    }
-    return certificateRetriever.retrieveCertificates(host, port)
   }
 
   boolean isInTrustStore(final Certificate certificate) {

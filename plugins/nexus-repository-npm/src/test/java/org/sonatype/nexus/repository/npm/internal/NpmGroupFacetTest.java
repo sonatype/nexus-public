@@ -53,11 +53,11 @@ import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
-import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 
 import static com.google.common.collect.Maps.newHashMap;
@@ -146,6 +146,9 @@ public class NpmGroupFacetTest
 
   @Mock
   private ConfigurationFacet configurationFacet;
+
+  @Captor
+  private ArgumentCaptor<Supplier<InputStream>> inputStreamCaptor;
 
   private CooperationFactory cooperationFactory = new LocalCooperationFactory();
 
@@ -405,15 +408,12 @@ public class NpmGroupFacetTest
     return list;
   }
 
-  @SuppressWarnings("unchecked")
   private Supplier<InputStream> captureGroupStoredBlobInputStream() throws IOException {
-    ArgumentCaptor argumentCaptor = ArgumentCaptor.forClass(Supplier.class);
-
     verify(storageTx).createBlob(any(),
-        (Supplier<InputStream>) argumentCaptor.capture()
+        inputStreamCaptor.capture()
         , any(), any(), any(), anyBoolean());
 
 
-    return (Supplier<InputStream>) argumentCaptor.getValue();
+    return inputStreamCaptor.getValue();
   }
 }

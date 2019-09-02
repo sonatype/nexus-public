@@ -20,12 +20,12 @@ import javax.inject.Singleton;
 import org.apache.ibatis.type.TypeHandler;
 
 /**
- * MyBatis {@link TypeHandler} that maps a simple attribute map to/from JSON strings.
+ * MyBatis {@link TypeHandler} that maps a (possibly nested) attribute map to/from JSON strings.
  */
 @Named
 @Singleton
 public class AttributesTypeHandler
-    extends JsonTypeHandler<Map<String, String>>
+    extends JsonTypeHandler<Map<String, ?>>
 {
   // nothing to add
 }

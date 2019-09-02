@@ -102,6 +102,7 @@ public abstract class MavenClientITSupport
     return artifactId;
   }
 
+  @SuppressWarnings("unchecked")
   private List<Map<String, Object>> searchForComponent(final String repository,
                                                        final String artifactId,
                                                        final String version)
@@ -117,7 +118,7 @@ public abstract class MavenClientITSupport
         .buildGet()
         .invoke();
 
-    Map map = response.readEntity(Map.class);
+    Map<String, Object> map = response.readEntity(Map.class);
     return (List<Map<String, Object>>) map.get("items");
   }
 

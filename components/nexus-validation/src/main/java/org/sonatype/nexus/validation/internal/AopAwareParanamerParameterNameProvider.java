@@ -40,7 +40,7 @@ public class AopAwareParanamerParameterNameProvider
    */
   private static final String GUICE_ENHANCED = "$$EnhancerByGuice$$";
 
-  private static boolean isEnhancedSubclass(final Class type) {
+  private static boolean isEnhancedSubclass(final Class<?> type) {
     return type.getName().contains(GUICE_ENHANCED);
   }
 

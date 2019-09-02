@@ -135,7 +135,7 @@ public class StreamCopier<T>
    *
    * @return StreamCopier
    */
-  public StreamCopier afterReadLeaveStreamsOpen() {
+  public StreamCopier<T> afterReadLeaveStreamsOpen() {
     this.afterReadLeaveStreamsOpen = true;
     return this;
   }

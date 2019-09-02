@@ -64,6 +64,13 @@ public interface PyPiHostedFacet
   Asset upload(String filename, Map<String, String> attributes, TempBlobPartPayload payload) throws IOException;
 
   /**
+   * Perform package and gpgSignature (if set) upload
+   * @param pyPiPackage A PyPi package which may have a gpgSignature
+   * @return the created/updated asset which represents the PyPi package wheel file
+   */
+  Asset upload(SignablePyPiPackage pyPiPackage) throws IOException;
+
+  /**
    * Extract metadata from a package
    *
    * @param tempBlob the temporary blob

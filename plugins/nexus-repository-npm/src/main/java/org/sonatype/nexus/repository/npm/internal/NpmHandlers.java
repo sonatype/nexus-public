@@ -17,12 +17,11 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexFacet;
-import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchFacet;
-
 import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexFacet;
+import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchFacet;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;

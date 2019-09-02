@@ -46,6 +46,7 @@ public class UrlValidator
     }
 
     try {
+      @SuppressWarnings("unused")
       URL ignored = uri.toURL(); // NOSONAR
 
       return isValidScheme(uri.getScheme())

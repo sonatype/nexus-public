@@ -52,7 +52,7 @@ class ParanamerValidationTest
     def obj = new TestSubject()
 
     Object[] values = [ null ]
-    Class[] groups = []
+    Class<?>[] groups = []
     def violations = factory.validator.forExecutables().validateParameters(obj, method, values, groups)
     log violations
     assert violations.size() == 1

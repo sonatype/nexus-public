@@ -18,12 +18,10 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 
 import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserManager;
-import org.sonatype.nexus.validation.constraint.NamePatternConstants;
 
 import io.swagger.annotations.ApiModelProperty;
 import org.hibernate.validator.constraints.Email;
@@ -38,7 +36,6 @@ import org.hibernate.validator.constraints.NotEmpty;
 public class ApiUser
 {
   @NotBlank
-  @Pattern(regexp = NamePatternConstants.REGEX, message = NamePatternConstants.MESSAGE)
   @ApiModelProperty(NexusSecurityApiConstants.USER_ID_DESCRIPTION)
   private String userId;
 

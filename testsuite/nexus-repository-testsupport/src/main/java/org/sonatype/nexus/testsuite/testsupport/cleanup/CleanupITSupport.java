@@ -183,6 +183,7 @@ public class CleanupITSupport
     Map<String, Object> cleanup = attributes.get(CLEANUP_KEY);
 
     if (nonNull(cleanup)) {
+      @SuppressWarnings("unchecked")
       Set<String> policies = (Set<String>) cleanup.get(POLICY_NAME_KEY);
 
       if (isNull(policies)) {

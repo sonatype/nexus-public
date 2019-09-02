@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 
 import javax.annotation.Nullable;
@@ -220,19 +221,52 @@ public class PyPiHostedFacetImpl
     }
   }
 
-  @Override
   @TransactionalStoreBlob
+  @Override
   public Asset upload(final String filename, final Map<String, String> attributes, final TempBlobPartPayload payload)
       throws IOException
   {
+    return savePyPiWheelPayload(filename, attributes, payload);
+  }
+
+  protected Asset savePyPiWheelPayload(
+      final String filename,
+      final Map<String, String> attributes,
+      final TempBlobPartPayload wheelPayload) throws IOException
+  {
     checkNotNull(filename);
 
-    TempBlob tempBlob = payload.getTempBlob();
+    TempBlob tempBlob = wheelPayload.getTempBlob();
 
     final String name = checkNotNull(attributes.get(P_NAME));
     final String version = checkNotNull(attributes.get(P_VERSION));
     final String normalizedName = normalizeName(name);
 
+    validateMd5Hash(attributes, tempBlob);
+
+    PyPiIndexFacet indexFacet = facet(PyPiIndexFacet.class);
+    // A package has been added or redeployed and therefore the cached index is no longer relevant
+    indexFacet.deleteIndex(name);
+
+    StorageTx tx = UnitOfWork.currentTx();
+    Bucket bucket = tx.findBucket(getRepository());
+
+    String packagePath = createPackagePath(name, version, filename);
+
+    Component component = findOrCreateComponent(name, version, normalizedName, indexFacet, tx, bucket);
+
+    component.formatAttributes().set(P_SUMMARY, attributes.get(P_SUMMARY)); // use the most recent summary received?
+    tx.saveComponent(component);
+
+    Asset asset = findOrCreateAsset(tx, bucket, packagePath, component, AssetKind.PACKAGE.name());
+
+    PyPiDataUtils.copyAttributes(asset, attributes);
+    saveAsset(tx, asset, tempBlob, wheelPayload);
+
+    return asset;
+  }
+
+  private void validateMd5Hash(final Map<String, String> attributes, final TempBlob tempBlob) {
     if (attributes.containsKey("md5_digest")) {
       String expectedDigest = attributes.get("md5_digest");
       HashCode hashCode = tempBlob.getHashes().get(MD5);
@@ -242,51 +276,119 @@ public class PyPiHostedFacetImpl
             "Digests do not match, found: " + hashValue + ", expected: " + expectedDigest);
       }
     }
+  }
 
-    PyPiIndexFacet indexFacet = facet(PyPiIndexFacet.class);
-    // A package has been added or redeployed and therefore the cached index is no longer relevant
-    indexFacet.deleteIndex(name);
-    
-    StorageTx tx = UnitOfWork.currentTx();
-    Bucket bucket = tx.findBucket(getRepository());
-
-    String packagePath = createPackagePath(name, version, filename);
-
+  private Component findOrCreateComponent(
+      final String name,
+      final String version,
+      final String normalizedName,
+      final PyPiIndexFacet indexFacet, final StorageTx tx, final Bucket bucket)
+  {
     Component component = findComponent(tx, getRepository(), normalizedName, version);
     if (component == null) {
-      //
-      // The setup.py register and setup.py upload operations in Python distutils do not correctly generate CR/LF
-      // sequences, which causes commons-fileupload to be unable to read the headers and throws an exception. This is
-      // a known issue to the Python maintainers and a fix was made for newer distutils releases, but even though both
-      // affected code paths are mentioned in the issue, they only remembered to fix the upload operation.
-      //
-      // Allowing creation of a new component on upload seems to be the most obvious way we can implement a workaround
-      // on our side, even though it is not directly in keeping with how the tools are supposed to work. 
-      //
-      // See https://bugs.python.org/issue10510 for the "fixed" Python distutils issue.
-      //
-      component = tx.createComponent(bucket, getRepository().getFormat()).name(normalizedName).version(version);
-      setComponentName(component.formatAttributes(), name);
-      component.formatAttributes().set(P_VERSION, version);
+      component = createComponent(name, version, normalizedName, tx, bucket);
 
       //A new component so we will need to regenerate the root index
       indexFacet.deleteRootIndex();
     }
+    return component;
+  }
 
-    component.formatAttributes().set(P_SUMMARY, attributes.get(P_SUMMARY)); // use the most recent summary received?
-    tx.saveComponent(component);
+  private Component createComponent(
+      final String name,
+      final String version,
+      final String normalizedName,
+      final StorageTx tx, final Bucket bucket)
+  {
+    Component component;//
+    // The setup.py register and setup.py upload operations in Python distutils do not correctly generate CR/LF
+    // sequences, which causes commons-fileupload to be unable to read the headers and throws an exception. This is
+    // a known issue to the Python maintainers and a fix was made for newer distutils releases, but even though both
+    // affected code paths are mentioned in the issue, they only remembered to fix the upload operation.
+    //
+    // Allowing creation of a new component on upload seems to be the most obvious way we can implement a workaround
+    // on our side, even though it is not directly in keeping with how the tools are supposed to work.
+    //
+    // See https://bugs.python.org/issue10510 for the "fixed" Python distutils issue.
+    //
+    component = tx.createComponent(bucket, getRepository().getFormat()).name(normalizedName).version(version);
+    setComponentName(component.formatAttributes(), name);
+    component.formatAttributes().set(P_VERSION, version);
+    return component;
+  }
 
+  private Asset findOrCreateAsset(
+      final StorageTx tx,
+      final Bucket bucket,
+      final String packagePath,
+      final Component component, final String assetKind)
+  {
     Asset asset = findAsset(tx, bucket, packagePath);
     if (asset == null) {
       asset = tx.createAsset(bucket, component);
       asset.name(packagePath);
-      asset.formatAttributes().set(P_ASSET_KIND, AssetKind.PACKAGE.name());
+      asset.formatAttributes().set(P_ASSET_KIND, assetKind);
     }
-
-    PyPiDataUtils.copyAttributes(asset, attributes);
-    saveAsset(tx, asset, tempBlob, payload);
-
     return asset;
+  }
+
+  @TransactionalStoreBlob
+  @Override
+  public Asset upload(final SignablePyPiPackage pyPiPackage) throws IOException {
+    try (TempBlobPartPayload wheelPayload = pyPiPackage.getWheelPayload()) {
+
+      Map<String, String> attributes = pyPiPackage.getAttributes();
+      String wheelFileName = wheelPayload.getName();
+
+      Asset savedPiPyPackage = savePyPiWheelPayload(wheelFileName, attributes, wheelPayload);
+
+      TempBlobPartPayload gpgSignaturePayload = pyPiPackage.getGpgSignature();
+      if (gpgSignaturePayload != null) {
+        saveGpgSignaturePayload(gpgSignaturePayload, attributes);
+      }
+      return savedPiPyPackage;
+    }
+  }
+
+  protected void saveGpgSignaturePayload(
+      final TempBlobPartPayload gpgSignaturePayload,
+      final Map<String, String> attributes)
+      throws IOException
+  {
+    try (TempBlobPartPayload gpgSignature = gpgSignaturePayload) {
+      String name = attributes.get(P_NAME);
+      String version = attributes.get(P_VERSION);
+      StorageTx tx = UnitOfWork.currentTx();
+
+      Optional.ofNullable(findComponent(tx, getRepository(), normalizeName(name), version))
+          .map(component -> createGpgSignatureAsset(gpgSignature.getName(), name, version, component, tx))
+          .map(asset -> saveGpgSignatureAsset(tx, asset, gpgSignature))
+          .orElseThrow(() -> new IllegalStateException(String.format("Component %s/%s not found.", name, version)));
+    }
+  }
+
+  private Asset createGpgSignatureAsset(
+      final String signatureFileName,
+      final String name,
+      final String version, final Component component,
+      final StorageTx tx)
+  {
+    String packageSignaturePath = createPackagePath(name, version, signatureFileName);
+    Bucket bucket = tx.findBucket(getRepository());
+    return findOrCreateAsset(tx, bucket, packageSignaturePath, component, AssetKind.PACKAGE_SIGNATURE.name());
+  }
+
+  private Content saveGpgSignatureAsset(
+      final StorageTx tx,
+      final Asset asset,
+      final TempBlobPartPayload gpgSignaturePayload)
+  {
+    try {
+      return saveAsset(tx, asset, gpgSignaturePayload.getTempBlob(), gpgSignaturePayload);
+    }
+    catch (IOException exception) {
+      throw new RuntimeException(exception);
+    }
   }
 
   /**

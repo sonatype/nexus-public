@@ -29,6 +29,8 @@ import org.sonatype.nexus.repository.storage.DefaultContentValidator;
 import com.google.common.base.Supplier;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.commons.lang.StringUtils.endsWith;
+import static org.apache.commons.lang.StringUtils.startsWith;
 
 /**
  * PyPI-specific {@link ContentValidator} that treats accesses to index pages as being HTML content.
@@ -41,6 +43,12 @@ public class PyPiContentValidator
     extends ComponentSupport
     implements ContentValidator
 {
+  protected static final String ASC_FILE_EXTENSION = ".asc";
+
+  protected static final String TEXT_FILE_EXTENSION = ".txt";
+
+  protected static final String HTML_FILE_EXTENSION = ".html";
+
   private final DefaultContentValidator defaultContentValidator;
 
   @Inject
@@ -56,11 +64,23 @@ public class PyPiContentValidator
                                      @Nullable final String contentName,
                                      @Nullable final String declaredContentType) throws IOException
   {
-    String name = contentName;
-    if (name != null && name.startsWith("simple/")) {
-      name += ".html";
-    }
+    String name = modifyContentNameForSpecialCases(contentName);
     return defaultContentValidator
         .determineContentType(strictContentTypeValidation, contentSupplier, mimeRulesSource, name, declaredContentType);
+  }
+
+  private String modifyContentNameForSpecialCases(final String contentName) {
+    String name = contentName;
+    if (isAscFileExtension(contentName)) {
+      name += TEXT_FILE_EXTENSION;
+    }
+    else if (startsWith(name, "simple/")) {
+      name += HTML_FILE_EXTENSION;
+    }
+    return name;
+  }
+
+  private boolean isAscFileExtension(@Nullable final String contentName) {
+    return endsWith(contentName, ASC_FILE_EXTENSION);
   }
 }

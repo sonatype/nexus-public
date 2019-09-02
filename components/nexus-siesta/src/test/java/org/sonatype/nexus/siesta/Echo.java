@@ -53,7 +53,7 @@ public interface Echo
 
   @GET
   @Path("/multiple")
-  List<String> get(@QueryParam("foo") Iterator foo);
+  List<String> get(@QueryParam("foo") Iterator<?> foo);
 
   @GET
   List<String> get(@QueryParam("params") MultivaluedMap<String, String> queryParams);

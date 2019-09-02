@@ -396,6 +396,11 @@ public class S3BlobStore
       s3.setObjectTagging(tagAsDeleted(attributePath(blobId)));
       blob.markStale();
 
+      Long contentSize = getContentSizeForDeletion(blobAttributes);
+      if (contentSize != null) {
+        storeMetrics.recordDeletion(contentSize);
+      }
+
       return true;
     }
     catch (Exception e) {
@@ -629,9 +634,10 @@ public class S3BlobStore
   }
 
   @Override
-  protected void doUndelete(final BlobId blobId) {
+  protected void doUndelete(final BlobId blobId, final BlobAttributes attributes) {
     s3.setObjectTagging(untagAsDeleted(contentPath(blobId)));
     s3.setObjectTagging(untagAsDeleted(attributePath(blobId)));
+    storeMetrics.recordAddition(attributes.getMetrics().getContentSize());
   }
 
   @Override

@@ -29,9 +29,12 @@ import org.sonatype.nexus.datastore.DataStoreConfigurationManager;
 import org.sonatype.nexus.datastore.DataStoreDescriptor;
 import org.sonatype.nexus.datastore.api.ContentDataAccess;
 import org.sonatype.nexus.datastore.api.DataAccess;
+import org.sonatype.nexus.datastore.api.DataSession;
+import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
 import org.sonatype.nexus.datastore.api.DataStoreManager;
+import org.sonatype.nexus.datastore.api.DataStoreNotFoundException;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 
@@ -60,7 +63,7 @@ import static org.sonatype.nexus.common.text.Strings2.lower;
 @ManagedObject
 public class DataStoreManagerImpl
     extends StateGuardLifecycleSupport
-    implements DataStoreManager
+    implements DataStoreManager, DataSessionSupplier
 {
   private static final Key<Class<DataAccess>> DATA_ACCESS_KEY = new Key<Class<DataAccess>>(){/**/};
 
@@ -119,6 +122,11 @@ public class DataStoreManagerImpl
       }
     }
     dataStores.clear();
+  }
+
+  @Override
+  public DataSession<?> openSession(final String storeName) {
+    return get(storeName).orElseThrow(() -> new DataStoreNotFoundException(storeName)).openSession();
   }
 
   @Override
@@ -199,7 +207,8 @@ public class DataStoreManagerImpl
       store.setConfiguration(newConfiguration);
       log.debug("Restarting {}", store);
       store.start();
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       updateFailure = e;
 
       // roll back to known 'good' configuration

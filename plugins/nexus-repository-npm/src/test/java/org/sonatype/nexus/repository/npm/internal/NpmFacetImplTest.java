@@ -17,9 +17,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import org.sonatype.nexus.repository.npm.internal.*;
-import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexInvalidatedEvent;
-
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobRef;
@@ -27,6 +24,7 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexInvalidatedEvent;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;
@@ -39,12 +37,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.REPOSITORY_ROOT_ASSET;
 import static java.util.Collections.singletonMap;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.REPOSITORY_ROOT_ASSET;
 
 public class NpmFacetImplTest
     extends TestSupport
@@ -215,13 +213,13 @@ public class NpmFacetImplTest
     verifyTarballAndVersion(packageId, tarball, version);
   }
 
-  private void verifyAssetCreated(String name) throws Exception {
+  private void verifyAssetCreated(final String name) throws Exception {
     verify(tx).createAsset(eq(bucket), eq(format));
     verify(tx).saveAsset(asset);
     verify(asset).name(eq(name));
   }
 
-  private void verifyTarballAndVersion(NpmPackageId packageId, String tarball, String version) throws Exception {
+  private void verifyTarballAndVersion(final NpmPackageId packageId, final String tarball, final String version) throws Exception {
     verify(tx).createComponent(bucket, repository.getFormat());
     verify(component).name(eq(packageId.name()));
     verify(component).version(eq(version));

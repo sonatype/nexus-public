@@ -133,6 +133,7 @@ public class MavenRestoreBlobStrategyTest
     when(blobStoreManager.get("test")).thenReturn(mock(BlobStore.class));
   }
 
+  @SuppressWarnings("deprecation")
   @Test
   public void testRestore() throws Exception {
     underTest.restore(properties, blob, "test");
@@ -141,6 +142,7 @@ public class MavenRestoreBlobStrategyTest
     verifyNoMoreInteractions(mavenFacet);
   }
 
+  @SuppressWarnings("deprecation")
   @Test
   public void testRestoreSkipNotFacet() {
     when(repository.optionalFacet(StorageFacet.class)).thenReturn(Optional.empty());
@@ -148,6 +150,7 @@ public class MavenRestoreBlobStrategyTest
     verifyNoMoreInteractions(mavenFacet);
   }
 
+  @SuppressWarnings("deprecation")
   @Test
   public void testRestoreSkipExistingContent() throws Exception {
     when(mavenFacet.get(mavenPath)).thenReturn(mock(Content.class));

@@ -69,7 +69,7 @@ public final class PyPiInfoUtils
   /**
    * Extracts metadata from archive files, returning an empty map on failure.
    */
-  static Map<String, String> extractMetadata(InputStream is) {
+  static Map<String, String> extractMetadata(final InputStream is) {
     checkNotNull(is);
     Map<String, Exception> exceptions = new HashMap<>();
 
@@ -144,15 +144,15 @@ public final class PyPiInfoUtils
    * essentially stored as a file of email headers.)
    */
   @VisibleForTesting
-  static Map<String, List<String>> parsePackageInfo(InputStream in) throws Exception {
+  static Map<String, List<String>> parsePackageInfo(final InputStream in) throws Exception {
     checkNotNull(in);
     LinkedHashMap<String, List<String>> results = new LinkedHashMap<>();
 
     // All package info or metadata file types have their metadata stored in the same manner as email headers
     InternetHeaders headers = new InternetHeaders(in);
-    Enumeration headerEnumeration = headers.getAllHeaders();
+    Enumeration<Header> headerEnumeration = headers.getAllHeaders();
     while (headerEnumeration.hasMoreElements()) {
-      Header header = (Header) headerEnumeration.nextElement();
+      Header header = headerEnumeration.nextElement();
       String underscoreName = header.getName().toLowerCase().replace('-', '_');
       String name = NAME_SUBSTITUTIONS.getOrDefault(underscoreName, underscoreName);
       String value = convertHeaderValue(header.getValue());

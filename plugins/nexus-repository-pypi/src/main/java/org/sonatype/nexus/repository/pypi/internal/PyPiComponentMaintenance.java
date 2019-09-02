@@ -28,6 +28,7 @@ import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_NAME;
+import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
 /**
  * A component maintenance facet that removes the component once no assets exist for it. Used for PyPI since we have to
@@ -57,10 +58,9 @@ public class PyPiComponentMaintenance
     final EntityId componentId = asset.componentId();
     if (componentId != null) {
       deleteRootIndex();
-      
-      // We are deleting a package and therefore need to remove the associated index as it is no longer valid
-      deleteCachedIndex(asset.formatAttributes().get(P_NAME, String.class));
-      
+
+      deleteCachedIndexForPackage(asset);
+
       final Component component = tx.findComponentInBucket(componentId, bucket);
       if (component != null && !tx.browseAssets(component).iterator().hasNext()) {
         deletedAssets.addAll(deleteComponentTx(componentId, deleteBlob).getAssets());
@@ -68,6 +68,17 @@ public class PyPiComponentMaintenance
     }
 
     return deletedAssets;
+  }
+
+  private void deleteCachedIndexForPackage(final Asset asset) {
+    if (assetKindIsPackage(asset)) {
+      // We are deleting a package and therefore need to remove the associated index as it is no longer valid
+      deleteCachedIndex(asset.formatAttributes().get(P_NAME, String.class));
+    }
+  }
+
+  private boolean assetKindIsPackage(final Asset asset) {
+    return AssetKind.PACKAGE.name().equals(asset.formatAttributes().get(P_ASSET_KIND));
   }
 
   /**

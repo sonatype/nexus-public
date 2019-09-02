@@ -26,9 +26,11 @@ import org.codehaus.plexus.interpolation.EnvarBasedValueSource;
 import org.codehaus.plexus.interpolation.InterpolationException;
 import org.codehaus.plexus.interpolation.Interpolator;
 import org.codehaus.plexus.interpolation.MapBasedValueSource;
+import org.codehaus.plexus.interpolation.SingleResponseValueSource;
 import org.codehaus.plexus.interpolation.StringSearchInterpolator;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.stream.Collectors.toMap;
 
 /**
@@ -42,6 +44,8 @@ public abstract class DataStoreSupport<T extends Transaction, S extends DataSess
 {
   protected DataStoreConfiguration configuration;
 
+  private String storeName;
+
   @Override
   public DataStoreConfiguration getConfiguration() {
     return configuration;
@@ -49,12 +53,14 @@ public abstract class DataStoreSupport<T extends Transaction, S extends DataSess
 
   @Override
   public void setConfiguration(final DataStoreConfiguration configuration) {
-    this.configuration = checkNotNull(configuration);
+    checkArgument(!isNullOrEmpty(configuration.getName()));
+    this.configuration = configuration;
+    this.storeName = configuration.getName();
   }
 
   @Override
   protected final void doStart() throws Exception {
-    doStart(configuration.getName(), interpolatedAttributes());
+    doStart(storeName, interpolatedAttributes());
   }
 
   protected abstract void doStart(final String storeName, final Map<String, String> attributes) throws Exception;
@@ -67,12 +73,43 @@ public abstract class DataStoreSupport<T extends Transaction, S extends DataSess
   }
 
   /**
+   * Log the given WARN message along with the store name.
+   */
+  protected void warn(final String format, final Object... args) {
+    log.warn(inStore(format), args);
+  }
+
+  /**
+   * Log the given INFO message along with the store name.
+   */
+  protected void info(final String format, final Object... args) {
+    log.info(inStore(format), args);
+  }
+
+  /**
+   * Log the given DEBUG message along with the store name.
+   */
+  protected void debug(final String format, final Object... args) {
+    if (log.isDebugEnabled()) {
+      log.debug(inStore(format), args);
+    }
+  }
+
+  /**
+   * Contextualize the given log message with the store name.
+   */
+  private String inStore(final String message) {
+    return storeName + " - " + message;
+  }
+
+  /**
    * Interpolate configuration attributes when starting the data store.
    */
   private Map<String, String> interpolatedAttributes() throws Exception {
     Map<String, String> attributes = configuration.getAttributes();
 
     Interpolator interpolator = new StringSearchInterpolator();
+    interpolator.addValueSource(new SingleResponseValueSource("storeName", storeName));
     interpolator.addValueSource(new MapBasedValueSource(attributes));
     interpolator.addValueSource(new MapBasedValueSource(System.getProperties()));
     interpolator.addValueSource(new EnvarBasedValueSource());

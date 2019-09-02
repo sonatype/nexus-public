@@ -81,12 +81,13 @@ public class NpmPublishParserTest
 
   String contentHash;
 
+  @SuppressWarnings("deprecation")
   @Before
   public void setUp() {
     when(tempBlob.getBlob()).thenReturn(blob);
     when(blob.getId()).thenReturn(blobId);
     when(blobId.toString()).thenReturn("blob-id");
-    when(storageFacet.createTempBlob(any(InputStream.class), any(Iterable.class))).thenAnswer(invocation -> {
+    when(storageFacet.createTempBlob(any(InputStream.class), any())).thenAnswer(invocation -> {
       byte[] content = ByteStreams.toByteArray((InputStream) invocation.getArguments()[0]);
       Hasher hasher = Hashing.sha1().newHasher().putBytes(content);
       contentHash = hasher.hash().toString();
@@ -237,6 +238,7 @@ public class NpmPublishParserTest
     assertMaintainer(name, versions.child("1.0"));
   }
 
+  @SuppressWarnings("unchecked")
   private void assertMaintainer(final String name, final NestedAttributesMap packageRoot) {
     Map<String, Object> map = (Map<String, Object>) packageRoot.get("maintainers", ArrayList.class).get(0);
     assertThat(map.get("name"), is(name));

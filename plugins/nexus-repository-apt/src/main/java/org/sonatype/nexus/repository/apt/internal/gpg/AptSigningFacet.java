@@ -112,7 +112,6 @@ public class AptSigningFacet
           new JcaPGPContentSignerBuilder(signKey.getPublicKey().getAlgorithm(), PGPUtil.SHA256).setProvider("BC"));
       sigGenerator.init(PGPSignature.CANONICAL_TEXT_DOCUMENT, privKey);
 
-      @SuppressWarnings("unchecked")
       Iterator<String> userIds = signKey.getUserIDs();
       if (userIds.hasNext()) {
         PGPSignatureSubpacketGenerator sigSubpacketGenerator = new PGPSignatureSubpacketGenerator();
@@ -174,11 +173,11 @@ public class AptSigningFacet
 
       Iterator<PGPSecretKeyRing> keyRings = pgpSec.getKeyRings();
       while (keyRings.hasNext()) {
-        PGPSecretKeyRing keyRing = (PGPSecretKeyRing) keyRings.next();
+        PGPSecretKeyRing keyRing = keyRings.next();
 
         Iterator<PGPSecretKey> keys = keyRing.getSecretKeys();
         while (keys.hasNext()) {
-          PGPSecretKey key = (PGPSecretKey) keys.next();
+          PGPSecretKey key = keys.next();
 
           if (key.isSigningKey()) {
             return key;

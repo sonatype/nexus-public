@@ -97,7 +97,7 @@ public class GolangITSupport
     }
   }
 
-  protected PackageInfo fetchPackageInfo(HttpResponse response) throws Exception {
+  protected PackageInfo fetchPackageInfo(final HttpResponse response) throws Exception {
     assertThat(status(response), is(OK));
 
     String responseString = EntityUtils.toString(response.getEntity());
@@ -128,7 +128,7 @@ public class GolangITSupport
     assertThat(getLastDownloadedTime(repository, path).isBeforeNow(), is(true));
   }
 
-  protected byte[] getExpectedListResponseBytes(final List versions) {
+  protected byte[] getExpectedListResponseBytes(final List<?> versions) {
     return Joiner.on("\n").join(versions).getBytes(UTF_8);
   }
 

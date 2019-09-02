@@ -39,15 +39,15 @@ public class MyBatisDataStoreDescriptor
 {
   public static final String NAME = "jdbc";
 
-  static final String JDBC_URL = "jdbcUrl";
+  public static final String JDBC_URL = "jdbcUrl";
 
-  static final String USERNAME = "username";
+  public static final String USERNAME = "username";
 
-  static final String PASSWORD = "password";
+  public static final String PASSWORD = "password";
 
-  static final String SCHEMA = "schema";
+  public static final String SCHEMA = "schema";
 
-  static final String ADVANCED = "advanced";
+  public static final String ADVANCED = "advanced";
 
   private interface Messages
       extends MessageBundle

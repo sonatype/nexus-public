@@ -99,7 +99,7 @@ public class DataStoreConfigurationLocalSourceTest
     assertThat(config.getSource(), is(LOCAL));
     assertThat(config.getType(), is("jdbc"));
     assertThat(config.getAttributes().keySet(), hasSize(1));
-    assertThat(config.getAttributes(), hasEntry("jdbcUrl", "jdbc:h2:file:${karaf.data}/db/config"));
+    assertThat(config.getAttributes(), hasEntry("jdbcUrl", "jdbc:h2:file:${karaf.data}/db/${storeName}"));
   }
 
   @Test
@@ -110,7 +110,7 @@ public class DataStoreConfigurationLocalSourceTest
     assertThat(config.getSource(), is(LOCAL));
     assertThat(config.getType(), is("jdbc"));
     assertThat(config.getAttributes().keySet(), hasSize(1));
-    assertThat(config.getAttributes(), hasEntry("jdbcUrl", "jdbc:h2:file:${karaf.data}/db/exampleStore"));
+    assertThat(config.getAttributes(), hasEntry("jdbcUrl", "jdbc:h2:file:${karaf.data}/db/${storeName}"));
   }
 
   @Test

@@ -120,6 +120,16 @@ public class PyPiCommandLineITSupport
         .orElseThrow(() -> new AssertionError(format("No way that we uploaded %s", cliPath)));
   }
 
+  public void twineUploadWheelAndGpgSignatureFiles(
+      final String profile,
+      final String wheelFilePath,
+      final String gpgSignatureFilePath)
+  {
+    exec(format("twine upload -r %s %s %s", profile, wheelFilePath, gpgSignatureFilePath))
+        .orElseThrow(() -> new AssertionError(
+            format("Failed to upload %s and %s", wheelFilePath, gpgSignatureFilePath)));
+  }
+
   /**
    * Runs a <code>easy_install</code>
    *

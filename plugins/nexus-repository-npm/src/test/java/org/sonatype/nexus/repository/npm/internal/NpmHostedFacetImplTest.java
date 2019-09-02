@@ -21,9 +21,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sonatype.nexus.repository.npm.NpmFacet;
-import org.sonatype.nexus.repository.npm.NpmUploadHandlerTest;
-
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobRef;
@@ -34,6 +31,8 @@ import org.sonatype.nexus.common.entity.DetachedEntityVersion;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.npm.NpmFacet;
+import org.sonatype.nexus.repository.npm.NpmUploadHandlerTest;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;
@@ -53,6 +52,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.Matchers;
 import org.mockito.Mock;
 
 import static java.util.Collections.emptyMap;
@@ -131,8 +131,8 @@ public class NpmHostedFacetImplTest extends TestSupport
 
     when(tempBlob.getHashes())
         .thenReturn(Collections.singletonMap(HashAlgorithm.SHA1, HashCode.fromBytes("abcd".getBytes())));
-
-    when(storageTx.createBlob(anyString(), any(Supplier.class), anyCollection(), anyMap(), anyString(), anyBoolean()))
+    when(storageTx.createBlob(anyString(), Matchers.<Supplier<InputStream>> any(), anyCollection(), anyMap(),
+        anyString(), anyBoolean()))
         .thenReturn(assetBlob);
 
     UnitOfWork.beginBatch(storageTx);

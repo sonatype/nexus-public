@@ -70,15 +70,18 @@ public class CertificateRetriever
 
   private static final TrustManager ACCEPT_ALL_TRUST_MANAGER = new X509TrustManager()
   {
+    @Override
     public X509Certificate[] getAcceptedIssuers() {
       return null;
     }
 
-    public void checkClientTrusted(X509Certificate[] certs, String authType) {
+    @Override
+    public void checkClientTrusted(final X509Certificate[] certs, final String authType) {
       // all trusted
     }
 
-    public void checkServerTrusted(X509Certificate[] certs, String authType) {
+    @Override
+    public void checkServerTrusted(final X509Certificate[] certs, final String authType) {
       // all trusted
     }
   };
@@ -176,6 +179,42 @@ public class CertificateRetriever
       if (socket != null) {
         socket.close();
       }
+    }
+  }
+
+  /**
+   * Retrieves certificate chain of specified host:port using direct socket connection.
+   *
+   * @param host to get certificate chain from (cannot be null)
+   * @param port of host to connect to, 443 will be used if not provided
+   * @param protocolHint
+   * @return certificate chain
+   * @throws Exception Re-thrown from accessing the remote host
+   *
+   * @since 3.next
+   */
+  public Certificate[] retrieveCertificates(
+      final String host,
+      final Integer port,
+      final String protocolHint) throws Exception
+  {
+    int actualPort = port != null ? port : 443;
+
+    if ("https".equalsIgnoreCase(protocolHint)) {
+      return retrieveCertificatesFromHttpsServer(host, actualPort);
+    }
+
+    try {
+      return retrieveCertificates(host, actualPort);
+    }
+    catch (Exception e) {
+      if (protocolHint == null) {
+        log.debug("Cannot connect directly to {}:{}. Will retry using https protocol.", host, actualPort, e);
+        return retrieveCertificatesFromHttpsServer(host, actualPort);
+      }
+
+      log.debug("Cannot connect directly to {}:{}.", host, actualPort, e);
+      return null; // NOSONAR
     }
   }
 }

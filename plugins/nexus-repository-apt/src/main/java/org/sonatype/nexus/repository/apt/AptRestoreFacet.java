@@ -16,7 +16,6 @@ import java.io.IOException;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.repository.Facet;
-import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Query;
 import org.sonatype.nexus.repository.view.Content;

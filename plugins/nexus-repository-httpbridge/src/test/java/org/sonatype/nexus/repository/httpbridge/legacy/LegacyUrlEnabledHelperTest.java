@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.httpbridge.legacy;
 
-import java.util.List;
-
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.capability.CapabilityContext;
 import org.sonatype.nexus.capability.CapabilityReference;
@@ -30,6 +28,7 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
 public class LegacyUrlEnabledHelperTest
@@ -53,8 +52,7 @@ public class LegacyUrlEnabledHelperTest
   public void setup() throws Exception {
     System.setProperty(LEGACY_ENABLED, "false");
 
-    List capabilityReferences = singletonList(capabilityReference);
-    when(capabilityRegistry.get(any(CapabilityReferenceFilter.class))).thenReturn(capabilityReferences);
+    doReturn(singletonList(capabilityReference)).when(capabilityRegistry).get(any(CapabilityReferenceFilter.class));
     when(capabilityReference.context()).thenReturn(capabilityContext);
     when(capabilityContext.isActive()).thenReturn(false);
 

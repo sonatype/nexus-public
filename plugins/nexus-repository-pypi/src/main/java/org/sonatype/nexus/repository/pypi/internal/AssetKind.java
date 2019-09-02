@@ -27,7 +27,8 @@ public enum AssetKind
   ROOT_INDEX(CacheControllerHolder.METADATA),
   INDEX(CacheControllerHolder.METADATA),
   PACKAGE(CacheControllerHolder.CONTENT),
-  SEARCH(CacheControllerHolder.METADATA);
+  SEARCH(CacheControllerHolder.METADATA),
+  PACKAGE_SIGNATURE(CacheControllerHolder.METADATA);
 
   private final CacheType cacheType;
 

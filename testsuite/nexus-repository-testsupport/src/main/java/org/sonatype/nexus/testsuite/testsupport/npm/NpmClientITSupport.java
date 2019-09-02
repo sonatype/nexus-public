@@ -236,6 +236,7 @@ public abstract class NpmClientITSupport
     assertThat(versionsMap.backing().keySet(), equalTo(ImmutableSet.copyOf(versions)));
   }
 
+  @SuppressWarnings("unchecked")
   private List<Map<String, Object>> searchForComponent(final String repository,
                                                        final String name,
                                                        final String version) throws Exception
@@ -250,7 +251,7 @@ public abstract class NpmClientITSupport
         .buildGet()
         .invoke();
 
-    Map map = response.readEntity(Map.class);
+    Map<String, Object> map = response.readEntity(Map.class);
     return (List<Map<String, Object>>) map.get("items");
   }
 

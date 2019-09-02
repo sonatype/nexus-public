@@ -88,7 +88,7 @@ public class DataStoreSupportTest
     config.setName(name);
     config.setType("testType");
     config.setSource("local");
-    config.setAttributes(ImmutableMap.of("jdbcUrl", "jdbc:h2:${karaf.data}/db/test"));
+    config.setAttributes(ImmutableMap.of("jdbcUrl", "jdbc:h2:${karaf.data}/db/${storeName}"));
     return config;
   }
 
@@ -102,8 +102,8 @@ public class DataStoreSupportTest
     ArgumentCaptor<Map> captor = forClass(Map.class);
     verify(underTest).doStart(eq("testStore"), captor.capture());
 
-    assertThat((Map<String, String>) captor.getValue(), hasEntry("jdbcUrl", "jdbc:h2:/tmp/example/db/test"));
-    assertThat(underTest.getConfiguration().getAttributes(), hasEntry("jdbcUrl", "jdbc:h2:${karaf.data}/db/test"));
+    assertThat((Map<String, String>) captor.getValue(), hasEntry("jdbcUrl", "jdbc:h2:/tmp/example/db/testStore"));
+    assertThat(underTest.getConfiguration().getAttributes(), hasEntry("jdbcUrl", "jdbc:h2:${karaf.data}/db/${storeName}"));
   }
 
   @Test

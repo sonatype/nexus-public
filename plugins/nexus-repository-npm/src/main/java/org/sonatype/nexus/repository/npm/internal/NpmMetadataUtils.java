@@ -335,8 +335,8 @@ public final class NpmMetadataUtils
           recessive.put(key, overlay(recessiveChild, dominantChild, mergeVersionDocuments));
         }
         else {
-          for (Entry dominantVersion : dominantChild.entrySet()) {
-            recessiveChild.put(String.valueOf(dominantVersion.getKey()), dominantVersion.getValue());
+          for (Entry<String, Object> dominantVersion : dominantChild.entrySet()) {
+            recessiveChild.put(dominantVersion.getKey(), dominantVersion.getValue());
           }
         }
       }
@@ -375,7 +375,7 @@ public final class NpmMetadataUtils
     return version;
   }
 
-  public static String getLatestVersionFromPackageRoot(NestedAttributesMap pkg) {
+  public static String getLatestVersionFromPackageRoot(final NestedAttributesMap pkg) {
     return pkg.child(DIST_TAGS).get(LATEST, String.class);
   }
 }

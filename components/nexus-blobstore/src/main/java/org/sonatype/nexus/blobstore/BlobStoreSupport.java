@@ -153,7 +153,7 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
         attributes.setDeleted(false);
         attributes.setDeletedReason(null);
         try {
-          doUndelete(blobId);
+          doUndelete(blobId, attributes);
           attributes.store();
         }
         catch (IOException e) {
@@ -171,7 +171,7 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
 
   protected abstract String attributePathString(BlobId blobId);
 
-  protected void doUndelete(final BlobId blobId) {
+  protected void doUndelete(final BlobId blobId, final BlobAttributes attributes) {
     // no-op
   }
 

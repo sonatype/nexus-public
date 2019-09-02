@@ -58,14 +58,27 @@ public class GolangContentValidator
                                      @Nullable final String contentName,
                                      @Nullable final String declaredContentType) throws IOException
   {
-    if (contentName != null && contentName.endsWith(".mod")) {
-      // Note: this is due to fact that Tika has glob "*.mod" extension enlisted at audio/x-mod
-      return defaultContentValidator.determineContentType(
-          strictContentTypeValidation, contentSupplier, mimeRulesSource, contentName + ".txt", declaredContentType
-      );
-    }
+
+    String modifiedContentName = modifyContentName(contentName);
+
     return defaultContentValidator.determineContentType(
-        strictContentTypeValidation, contentSupplier, mimeRulesSource, contentName, declaredContentType
+        strictContentTypeValidation, contentSupplier, mimeRulesSource, modifiedContentName, declaredContentType
     );
+  }
+
+  private String modifyContentName(@Nullable final String contentName) {
+    if (contentName != null) {
+      if (contentName.endsWith(".mod")) {
+        // Note: this is due to fact that Tika has glob "*.mod" extension enlisted at audio/x-mod
+        return contentName + ".txt";
+      }
+      else if (contentName.endsWith("/list")) {
+        // It is valid to return an empty list file. The latest version of Tika (1.20) recognises this as an 
+        // application/octet-stream which is wrong and causes NXRM to error and return a 404 instead of a 200 response.
+        return contentName + ".json";
+      }
+    }
+    
+    return contentName;
   }
 }

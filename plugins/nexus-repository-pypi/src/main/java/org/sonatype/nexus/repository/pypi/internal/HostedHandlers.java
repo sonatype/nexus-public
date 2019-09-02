@@ -52,9 +52,11 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiConstants.ACTION_FILE_UPLOAD;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiConstants.FIELD_ACTION;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiConstants.FIELD_CONTENT;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiConstants.GPG_SIGNATURE;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiDataUtils.HASH_ALGORITHMS;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.name;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.packagesPath;
@@ -117,16 +119,14 @@ public final class HostedHandlers
   /**
    * Handle request to register or upload (depending on the :action parameter).
    */
-  final Handler postContent = context -> {
-    Map<String, String> attributes = new LinkedHashMap<>();
-    try (TempBlobPartPayload upload = extractPayloads(context, attributes)) {
-      String action = attributes.get(FIELD_ACTION);
-      if (!ACTION_FILE_UPLOAD.equals(action)) {
-        throw new IllegalStateException("Unsupported :action, found: " + action);
-      }
-      context.getRepository().facet(PyPiHostedFacet.class).upload(upload.getName(), attributes, upload);
-      return HttpResponses.ok();
+  protected final Handler postContent = context -> {
+    SignablePyPiPackage pyPiPackage = extractPayloads(context);
+    String action = pyPiPackage.getAttributes().get(FIELD_ACTION);
+    if (!ACTION_FILE_UPLOAD.equals(action)) {
+      throw new IllegalStateException("Unsupported :action, found: " + action);
     }
+    context.getRepository().facet(PyPiHostedFacet.class).upload(pyPiPackage);
+    return HttpResponses.ok();
   };
 
   /**
@@ -134,29 +134,35 @@ public final class HostedHandlers
    * one file upload with a field name of "content" should be present in the upload, or {@link IllegalStateException}
    * is thrown to indicate unexpected input.
    */
-  private TempBlobPartPayload extractPayloads(final Context context, final Map<String, String> attributes) throws IOException {
+  private SignablePyPiPackage extractPayloads(final Context context) throws IOException {
     checkNotNull(context);
-    checkNotNull(attributes);
-    Repository repository = context.getRepository();
+    Map<String, String> attributes = new LinkedHashMap<>();
     Request request = context.getRequest();
-    Iterable<PartPayload> payloads = checkNotNull(request.getMultiparts());
-    TempBlobPartPayload upload = null;
-    for (PartPayload payload : payloads) {
+    TempBlobPartPayload contentBlob = null;
+    TempBlobPartPayload signatureBlob = null;
+
+    for (PartPayload payload : checkNotNull(request.getMultiparts())) {
       if (payload.isFormField()) {
         addAttribute(attributes, payload);
       }
       else if (FIELD_CONTENT.equals(payload.getFieldName())) {
-        if (upload != null) {
-          throw new IllegalStateException();
-        }
-        StorageFacet storageFacet = repository.facet(StorageFacet.class);
-        upload = new TempBlobPartPayload(payload, storageFacet.createTempBlob(payload, HASH_ALGORITHMS));
+        checkState(contentBlob == null);
+        contentBlob = createBlobFromPayload(payload, context.getRepository());
+      } else if (GPG_SIGNATURE.equals(payload.getFieldName())) {
+        checkState(signatureBlob == null);
+        signatureBlob = createBlobFromPayload(payload, context.getRepository());
       }
     }
-    if (upload == null) {
-      throw new IllegalStateException();
-    }
-    return upload;
+    checkState (contentBlob != null);
+    return new SignablePyPiPackage(contentBlob, attributes, signatureBlob);
+  }
+
+
+  private TempBlobPartPayload createBlobFromPayload(
+      final PartPayload payload, final Repository repository) throws IOException
+  {
+    StorageFacet storageFacet = repository.facet(StorageFacet.class);
+    return new TempBlobPartPayload(payload, storageFacet.createTempBlob(payload, HASH_ALGORITHMS));
   }
 
   /**

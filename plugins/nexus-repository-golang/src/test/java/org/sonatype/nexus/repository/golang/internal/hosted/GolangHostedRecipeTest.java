@@ -17,7 +17,6 @@ import org.sonatype.nexus.repository.golang.GolangFormat;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.view.handlers.HighAvailabilitySupportChecker;
 
-import org.fest.util.Strings;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;

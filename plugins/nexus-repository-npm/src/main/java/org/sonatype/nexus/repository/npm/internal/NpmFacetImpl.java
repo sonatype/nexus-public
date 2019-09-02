@@ -19,14 +19,13 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.sonatype.nexus.repository.npm.NpmFacet;
-import org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind;
-import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexInvalidatedEvent;
-
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.npm.NpmFacet;
+import org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind;
+import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexInvalidatedEvent;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;

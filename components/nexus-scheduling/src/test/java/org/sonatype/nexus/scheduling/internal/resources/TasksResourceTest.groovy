@@ -199,6 +199,6 @@ class TasksResourceTest
     Date nextRun
     Date runStarted
     TaskState runState
-    Future future
+    Future<?> future
   }
 }

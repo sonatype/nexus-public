@@ -17,7 +17,6 @@ import java.io.IOException;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.json.CurrentPathJsonParser;
 
-import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

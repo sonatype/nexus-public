@@ -60,6 +60,8 @@ public class DataStoreConfigurationLocalSource
 {
   static final String LOCAL = "local";
 
+  private static final String JDBC_TEMPLATE_URL = "jdbc:h2:file:${karaf.data}/db/${storeName}";
+
   private static final String NAME_KEY = "name";
 
   private static final String TYPE_KEY = "type";
@@ -137,7 +139,7 @@ public class DataStoreConfigurationLocalSource
       if (storeType == null) {
         storeType = "jdbc";
         storeProperties.setProperty(TYPE_KEY, storeType);
-        storeProperties.setProperty("jdbcUrl", "jdbc:h2:file:${karaf.data}/db/" + storeName);
+        storeProperties.setProperty("jdbcUrl", JDBC_TEMPLATE_URL);
       }
 
       DataStoreConfiguration configuration = new DataStoreConfiguration();

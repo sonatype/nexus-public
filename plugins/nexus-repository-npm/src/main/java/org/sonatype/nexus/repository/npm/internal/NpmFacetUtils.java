@@ -26,16 +26,15 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
-import org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind;
-
-import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.orient.entity.AttachedEntityHelper;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;
@@ -55,15 +54,13 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static com.google.common.collect.Maps.newHashMap;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Objects.isNull;
-import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind.TARBALL;
 import static java.util.Collections.singletonList;
+import static java.util.Objects.isNull;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
+import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind.TARBALL;
 import static org.sonatype.nexus.repository.npm.internal.NpmJsonUtils.serialize;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;

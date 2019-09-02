@@ -59,7 +59,7 @@ public class PerformanceChart
     reportHtml = reportHtml.replace("<!-- SYSTEM-INFO -->", buildSystemInfo());
 
     log.info("Writing performance chart to {}", outputFile);
-    Files.write(reportHtml, outputFile, StandardCharsets.UTF_8);
+    Files.asCharSink(outputFile, StandardCharsets.UTF_8).write(reportHtml);
   }
 
   private static String loadReportTemplate() throws IOException {

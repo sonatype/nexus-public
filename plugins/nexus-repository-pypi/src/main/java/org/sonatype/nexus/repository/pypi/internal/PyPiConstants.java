@@ -59,6 +59,8 @@ public final class PyPiConstants
    */
   public static final String DIST_INFO_SUFFIX = ".dist-info";
 
+  public static final String GPG_SIGNATURE = "gpg_signature";
+
   private PyPiConstants() {
     // empty
   }

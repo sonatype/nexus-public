@@ -12,13 +12,12 @@
  */
 package org.sonatype.nexus.repository.npm.internal;
 
-import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexFacetGroup;
-import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexInvalidatedEvent;
-
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.group.GroupFacet;
+import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexFacetGroup;
+import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexInvalidatedEvent;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.StorageFacet;
@@ -36,8 +35,8 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.REPOSITORY_ROOT_ASSET;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
 public class NpmSearchIndexFacetGroupTest
     extends TestSupport

@@ -15,7 +15,6 @@ package org.sonatype.nexus.datastore.mybatis;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Properties;
@@ -24,7 +23,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.app.ApplicationDirectories;
-import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.thread.TcclBlock;
 import org.sonatype.nexus.datastore.DataStoreSupport;
@@ -32,6 +30,7 @@ import org.sonatype.nexus.datastore.api.DataAccess;
 import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.transaction.Transaction;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Splitter.MapSplitter;
 import com.google.inject.Key;
@@ -55,6 +54,7 @@ import org.eclipse.sisu.inject.BeanLocator;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Splitter.onPattern;
 import static java.nio.file.Files.exists;
+import static java.nio.file.Files.newInputStream;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.common.text.Strings2.isBlank;
 import static org.sonatype.nexus.common.thread.TcclBlock.begin;
@@ -95,14 +95,27 @@ public class MyBatisDataStore
     this.beanLocator = checkNotNull(beanLocator);
   }
 
-  @Override
-  protected void doStart(final String name, final Map<String, String> attributes) throws Exception {
+  @VisibleForTesting
+  public MyBatisDataStore() {
+    this.directories = null;
+    this.beanLocator = null;
+  }
 
-    dataSource = new HikariDataSource(configureHikari(attributes));
-    Environment environment = new Environment(name, new JdbcTransactionFactory(), dataSource);
+  @Override
+  protected void doStart(final String storeName, final Map<String, String> attributes) throws Exception {
+
+    dataSource = new HikariDataSource(configureHikari(storeName, attributes));
+    Environment environment = new Environment(storeName, new JdbcTransactionFactory(), dataSource);
     sessionFactory = new DefaultSqlSessionFactory(configureMyBatis(environment));
 
-    beanLocator.watch(TYPE_HANDLER_KEY, TYPE_HANDLER_MEDIATOR, this);
+    if (beanLocator == null) {
+      // add standard handlers for testing
+      register(new AttributesTypeHandler());
+      register(new EntityIdTypeHandler());
+    }
+    else {
+      beanLocator.watch(TYPE_HANDLER_KEY, TYPE_HANDLER_MEDIATOR, this);
+    }
   }
 
   @Override
@@ -124,7 +137,7 @@ public class MyBatisDataStore
 
     // now register the actual mapper
     sessionFactory.getConfiguration().addMapper(accessType);
-    log.info("Registered {} with MyBatis", accessType);
+    info("Registered {} with MyBatis", accessType);
 
     // finally create the schema for this DAO
     try (SqlSession session = sessionFactory.openSession()) {
@@ -147,8 +160,9 @@ public class MyBatisDataStore
   /**
    * Supplies the populated Hikari configuration for this store.
    */
-  private HikariConfig configureHikari(final Map<String, String> attributes) {
+  private HikariConfig configureHikari(final String storeName, final Map<String, String> attributes) {
     Properties properties = new Properties();
+    properties.put("poolName", storeName);
     properties.putAll(attributes);
     // Parse and unflatten advanced attributes
     Object advanced = properties.remove(ADVANCED);
@@ -166,23 +180,36 @@ public class MyBatisDataStore
    * Supplies the populated MyBatis configuration for this store.
    */
   private Configuration configureMyBatis(final Environment environment) throws IOException {
-    try (InputStream in = Files.newInputStream(myBatisConfigPath(environment));
-         TcclBlock block = begin(getClass())) {
-      Configuration myBatisConfig = new XMLConfigBuilder(in).parse();
-      myBatisConfig.setEnvironment(environment);
-      myBatisConfig.setObjectFactory(new DefaultObjectFactory()
-      {
-        @Override
-        public <T> boolean isCollection(Class<T> type) {
-          // modify MyBatis behaviour to let it map collection results to Iterable
-          return Iterable.class.isAssignableFrom(type) || super.isCollection(type);
-        }
-      });
+    Configuration myBatisConfig = loadMyBatisConfiguration(environment);
 
-      // alias some base NXRM types common across various DAOs
-      myBatisConfig.getTypeAliasRegistry().registerAlias(EntityId.class);
+    myBatisConfig.setEnvironment(environment);
+    myBatisConfig.setObjectFactory(new DefaultObjectFactory()
+    {
+      @Override
+      public <T> boolean isCollection(Class<T> type) {
+        // modify MyBatis behaviour to let it map collection results to Iterable
+        return Iterable.class.isAssignableFrom(type) || super.isCollection(type);
+      }
+    });
 
-      return myBatisConfig;
+    return myBatisConfig;
+  }
+
+  /**
+   * Loads the MyBatis configuration for this store.
+   */
+  @VisibleForTesting
+  protected Configuration loadMyBatisConfiguration(final Environment environment) throws IOException {
+    if (directories == null) {
+      info("Using default MyBatis configuration");
+      return new Configuration();
+    }
+
+    Path configPath = myBatisConfigPath(environment);
+
+    info("Loading MyBatis configuration from {}", configPath);
+    try (InputStream in = newInputStream(configPath); TcclBlock block = begin(getClass())) {
+      return new XMLConfigBuilder(in).parse();
     }
   }
 
@@ -223,7 +250,7 @@ public class MyBatisDataStore
         registry.registerAlias(clazz);
       }
       catch (RuntimeException | LinkageError e) {
-        log.debug("Unable to register type alias", e);
+        debug("Unable to register type alias", e);
       }
     }
   }
@@ -231,9 +258,10 @@ public class MyBatisDataStore
   /**
    * Registers the given {@link TypeHandler} with MyBatis.
    */
-  private void register(final TypeHandler<?> handler) {
+  @VisibleForTesting
+  public void register(final TypeHandler<?> handler) {
     sessionFactory.getConfiguration().getTypeHandlerRegistry().register(handler);
-    log.info("Registered {} with MyBatis", handler.getClass());
+    info("Registered {} with MyBatis", handler.getClass());
   }
 
   /**
