@@ -18,13 +18,12 @@ import javax.inject.Named
 import javax.inject.Provider
 import javax.inject.Singleton
 
-import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexFacetHosted
-import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchFacetHosted
-
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.http.HttpHandlers
+import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexFacetHosted
+import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchFacetHosted
 import org.sonatype.nexus.repository.types.HostedType
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
 import org.sonatype.nexus.repository.view.Router
@@ -33,6 +32,7 @@ import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler
 
 import static org.sonatype.nexus.repository.http.HttpMethods.DELETE
 import static org.sonatype.nexus.repository.http.HttpMethods.GET
+import static org.sonatype.nexus.repository.http.HttpMethods.HEAD
 import static org.sonatype.nexus.repository.http.HttpMethods.PUT
 
 /**
@@ -117,7 +117,7 @@ class NpmHostedRecipe
         .create())
 
     // GET /packageName (npm install)
-    builder.route(packageMatcher(GET)
+    builder.route(packageMatcher(GET, HEAD)
         .handler(timingHandler)
         .handler(securityHandler)
         .handler(NpmHandlers.npmErrorHandler)
@@ -175,7 +175,7 @@ class NpmHostedRecipe
         .create())
 
     // GET /packageName/-/tarballName (npm install)
-    builder.route(tarballMatcher(GET)
+    builder.route(tarballMatcher(GET, HEAD)
         .handler(timingHandler)
         .handler(securityHandler)
         .handler(NpmHandlers.npmErrorHandler)
@@ -207,6 +207,33 @@ class NpmHostedRecipe
         .handler(contentHeadersHandler)
         .handler(unitOfWorkHandler)
         .handler(NpmHandlers.deleteTarball)
+        .create())
+
+    // GET /-/package/packageName/dist-tags (npm dist-tag ls pkg)
+    builder.route(distTagsMatcher(GET)
+        .handler(timingHandler)
+        .handler(securityHandler)
+        .handler(NpmHandlers.npmErrorHandler)
+        .handler(unitOfWorkHandler)
+        .handler(NpmHandlers.getDistTags)
+        .create())
+
+    // PUT /-/package/packageName/dist-tags (npm dist-tag add pkg@version tag)
+    builder.route(distTagsUpdateMatcher(PUT)
+        .handler(timingHandler)
+        .handler(securityHandler)
+        .handler(NpmHandlers.npmErrorHandler)
+        .handler(unitOfWorkHandler)
+        .handler(NpmHandlers.putDistTags)
+        .create())
+
+    // DELETE /-/package/packageName/dist-tags (npm dist-tag rm pkg tag)
+    builder.route(distTagsUpdateMatcher(DELETE)
+        .handler(timingHandler)
+        .handler(securityHandler)
+        .handler(NpmHandlers.npmErrorHandler)
+        .handler(unitOfWorkHandler)
+        .handler(NpmHandlers.deleteDistTags)
         .create())
 
     createUserRoutes(builder)

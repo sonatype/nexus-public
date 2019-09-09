@@ -201,7 +201,7 @@ public class MemorySecurityConfiguration
   }
 
   @Override
-  public void updatePrivilege(final CPrivilege privilege) throws NoSuchPrivilegeException {
+  public void updatePrivilege(final CPrivilege privilege) {
     checkNotNull(privilege);
     checkNotNull(privilege.getId());
     if (privileges.replace(privilege.getId(), privilege) == null) {

@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.security;
 
 import java.util.List;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -22,10 +23,14 @@ import org.sonatype.goodies.i18n.MessageBundle;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.RepositoryCombobox;
 import org.sonatype.nexus.formfields.StringTextFormField;
+import org.sonatype.nexus.repository.Format;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.security.rest.ApiPrivilegeRepositoryViewRequest;
 import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.CPrivilegeBuilder;
+import org.sonatype.nexus.security.privilege.Privilege;
 import org.sonatype.nexus.security.privilege.PrivilegeDescriptor;
-import org.sonatype.nexus.security.privilege.PrivilegeDescriptorSupport;
+import org.sonatype.nexus.repository.security.rest.ApiPrivilegeRepositoryView;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -42,7 +47,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 @Named(RepositoryViewPrivilegeDescriptor.TYPE)
 @Singleton
 public class RepositoryViewPrivilegeDescriptor
-    extends PrivilegeDescriptorSupport
+    extends RepositoryPrivilegeDescriptorSupport<ApiPrivilegeRepositoryView, ApiPrivilegeRepositoryViewRequest>
 {
   public static final String TYPE = RepositoryViewPermission.DOMAIN;
 
@@ -81,8 +86,9 @@ public class RepositoryViewPrivilegeDescriptor
 
   private final List<FormField> formFields;
 
-  public RepositoryViewPrivilegeDescriptor() {
-    super(TYPE);
+  @Inject
+  public RepositoryViewPrivilegeDescriptor(final RepositoryManager repositoryManager, final List<Format> formats) {
+    super(TYPE, repositoryManager, formats);
     this.formFields = ImmutableList.of(
         new StringTextFormField(
             P_FORMAT,
@@ -142,5 +148,10 @@ public class RepositoryViewPrivilegeDescriptor
         .property(P_REPOSITORY, name)
         .property(P_ACTIONS, actions)
         .create();
+  }
+
+  @Override
+  public ApiPrivilegeRepositoryView createApiPrivilegeImpl(final Privilege privilege) {
+    return new ApiPrivilegeRepositoryView(privilege);
   }
 }

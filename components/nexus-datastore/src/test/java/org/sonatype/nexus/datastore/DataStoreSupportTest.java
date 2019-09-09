@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.datastore;
 
+import java.sql.Connection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -67,6 +68,11 @@ public class DataStoreSupportTest
     @Override
     public DataSession<Transaction> openSession() {
       return mock(DataSession.class);
+    }
+
+    @Override
+    public Connection openConnection() {
+      return mock(Connection.class);
     }
 
     @Override

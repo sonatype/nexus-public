@@ -150,7 +150,7 @@ abstract class NpmRecipeSupport
   /**
    * Matcher for npm package metadata.
    */
-  static Builder packageMatcher(String httpMethod) {
+  static Builder packageMatcher(String ...httpMethod) {
     new Builder().matcher(
         LogicMatchers.and(
             new ActionMatcher(httpMethod),
@@ -182,7 +182,7 @@ abstract class NpmRecipeSupport
   /**
    * Matcher for npm package tarballs.
    */
-  static Builder tarballMatcher(String httpMethod) {
+  static Builder tarballMatcher(String ...httpMethod) {
     new Builder().matcher(
         LogicMatchers.and(
             new ActionMatcher(httpMethod),
@@ -190,6 +190,36 @@ abstract class NpmRecipeSupport
                 new TokenMatcher('/{' + NpmHandlers.T_PACKAGE_NAME + '}/-/{' + NpmHandlers.T_TARBALL_NAME + '}'),
                 new TokenMatcher('/@{' + NpmHandlers.T_PACKAGE_SCOPE + '}/{' + NpmHandlers.T_PACKAGE_NAME + '}/-/{' +
                     NpmHandlers.T_TARBALL_NAME + '}'),
+            )
+        )
+    )
+  }
+
+  /**
+   * Matcher for npm package dist-tags.
+   */
+  static Builder distTagsMatcher(String httpMethod) {
+    new Builder().matcher(
+        LogicMatchers.and(
+            new ActionMatcher(httpMethod),
+            LogicMatchers.or(
+                new TokenMatcher('/-/package/{' + NpmHandlers.T_PACKAGE_NAME + '}/dist-tags'),
+                new TokenMatcher('/-/package/@{' + NpmHandlers.T_PACKAGE_SCOPE + '}/{' + NpmHandlers.T_PACKAGE_NAME + '}/dist-tags'),
+            )
+        )
+    )
+  }
+
+  /**
+   * Matcher for npm package dist-tags.
+   */
+  static Builder distTagsUpdateMatcher(String httpMethod) {
+    new Builder().matcher(
+        LogicMatchers.and(
+            new ActionMatcher(httpMethod),
+            LogicMatchers.or(
+                new TokenMatcher('/-/package/{' + NpmHandlers.T_PACKAGE_NAME + '}/dist-tags/{' + NpmHandlers.T_PACKAGE_TAG +'}'),
+                new TokenMatcher('/-/package/@{' + NpmHandlers.T_PACKAGE_SCOPE + '}/{' + NpmHandlers.T_PACKAGE_NAME + '}/dist-tags/{' + NpmHandlers.T_PACKAGE_TAG + '}'),
             )
         )
     )

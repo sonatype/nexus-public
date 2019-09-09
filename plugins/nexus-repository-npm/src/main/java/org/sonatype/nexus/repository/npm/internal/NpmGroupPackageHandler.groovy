@@ -16,9 +16,6 @@ import javax.annotation.Nonnull
 import javax.inject.Named
 import javax.inject.Singleton
 
-import org.sonatype.nexus.repository.Repository
-import org.sonatype.nexus.repository.group.GroupFacet
-import org.sonatype.nexus.repository.group.GroupHandler
 import org.sonatype.nexus.repository.storage.MissingAssetBlobException
 import org.sonatype.nexus.repository.storage.StorageFacet
 import org.sonatype.nexus.repository.view.Context
@@ -27,9 +24,6 @@ import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher.State
 import org.sonatype.nexus.transaction.Transactional
 
 import static java.util.Objects.isNull
-import static org.sonatype.nexus.repository.http.HttpConditions.makeConditional
-import static org.sonatype.nexus.repository.http.HttpConditions.makeUnconditional
-import static org.sonatype.nexus.repository.http.HttpStatus.OK
 import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.errorInputStream
 import static org.sonatype.nexus.repository.npm.internal.NpmResponses.notFound
 import static org.sonatype.nexus.repository.npm.internal.NpmResponses.ok
@@ -43,7 +37,7 @@ import static org.sonatype.nexus.repository.group.GroupHandler.DispatchedReposit
 @Named
 @Singleton
 class NpmGroupPackageHandler
-    extends GroupHandler
+    extends NpmGroupHandler
 {
   @Override
   protected Response doGet(@Nonnull final Context context,
@@ -85,28 +79,8 @@ class NpmGroupPackageHandler
     return ok(content)
   }
 
-  private NpmGroupFacet getGroupFacet(final Context context) {
-    return context.getRepository().facet(GroupFacet.class) as NpmGroupFacet
-  }
-
   private StorageFacet getStorageFacet(final Context context) {
     return context.getRepository().facet(StorageFacet.class) as StorageFacet
-  }
-
-  private Map<Repository, Response> getResponses(final Context context,
-                                                 final DispatchedRepositories dispatched,
-                                                 final NpmGroupFacet groupFacet)
-  {
-    // Remove conditional headers before making "internal" requests: https://issues.sonatype.org/browse/NEXUS-13915
-    makeUnconditional(context.getRequest())
-
-    try {
-      // get all and filter for HTTP OK responses
-      return getAll(context, groupFacet.members(), dispatched).findAll { k, v -> v.status.code == OK }
-    }
-    finally {
-      makeConditional(context.getRequest())
-    }
   }
 
   private InputStream handleMissingBlob(final Context context,

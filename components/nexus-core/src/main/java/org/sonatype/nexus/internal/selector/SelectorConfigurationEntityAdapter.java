@@ -14,6 +14,7 @@ package org.sonatype.nexus.internal.selector;
 
 import java.util.Map;
 
+import javax.annotation.Nullable;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -88,10 +89,15 @@ public class SelectorConfigurationEntityAdapter
   /**
    * @since 3.6
    */
+  @Nullable
   public SelectorConfiguration getByName(final ODatabaseDocumentTx db, final String name) {
     Map<String, Object> parameters = ImmutableMap.of(P_NAME, name);
 
     Iterable<ODocument> docs = db.command(new OCommandSQL(FIND_BY_NAME)).execute(parameters);
+
+    if (!docs.iterator().hasNext()) {
+      return null;
+    }
 
     return this.readEntity(Iterables.getFirst(docs, null));
   }

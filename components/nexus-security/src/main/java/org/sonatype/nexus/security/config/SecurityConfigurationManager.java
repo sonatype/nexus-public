@@ -15,7 +15,6 @@ package org.sonatype.nexus.security.config;
 import java.util.List;
 import java.util.Set;
 
-import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
 import org.sonatype.nexus.security.role.NoSuchRoleException;
 import org.sonatype.nexus.security.user.NoSuchRoleMappingException;
 import org.sonatype.nexus.security.user.UserNotFoundException;
@@ -119,17 +118,17 @@ public interface SecurityConfigurationManager
   /**
    * Retrieve an existing privilege
    */
-  CPrivilege readPrivilege(String id) throws NoSuchPrivilegeException;
+  CPrivilege readPrivilege(String id);
 
   /**
    * Update an existing privilege
    */
-  void updatePrivilege(CPrivilege privilege) throws NoSuchPrivilegeException;
+  void updatePrivilege(CPrivilege privilege);
 
   /**
    * Delete an existing privilege
    */
-  void deletePrivilege(String id) throws NoSuchPrivilegeException;
+  void deletePrivilege(String id);
 
   void cleanRemovedPrivilege(String privilegeId);
 

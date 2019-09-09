@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.npm.internal;
 
+import java.io.IOException;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
@@ -54,6 +55,8 @@ public final class NpmHandlers
   static final String T_PACKAGE_NAME = "packageName";
 
   static final String T_PACKAGE_VERSION = "packageVersion";
+
+  static final String T_PACKAGE_TAG = "packageTag";
 
   static final String T_PACKAGE_SCOPE = "packageScope";
 
@@ -302,6 +305,67 @@ public final class NpmHandlers
       log.debug("[deleteToken] repository: {} tokens: {}", repository.getName(), state.getTokens());
 
       return repository.facet(NpmTokenFacet.class).logout(context);
+    }
+  };
+
+  static Handler getDistTags = new Handler()
+  {
+    @Nonnull
+    @Override
+    public Response handle(@Nonnull final Context context) throws Exception {
+      State state = context.getAttributes().require(TokenMatcher.State.class);
+      Repository repository = context.getRepository();
+      log.debug("[getPackage] repository: {} tokens: {}", repository.getName(), state.getTokens());
+
+      NpmPackageId packageId = packageId(state);
+      Content content = repository.facet(NpmHostedFacet.class)
+          .getDistTags(packageId);
+      if (content != null) {
+        return NpmResponses.ok(content);
+      }
+      else {
+        return NpmResponses.packageNotFound(packageId);
+      }
+    }
+  };
+
+  static Handler putDistTags = new Handler()
+  {
+    @Nonnull
+    @Override
+    public Response handle(@Nonnull final Context context) throws Exception {
+      State state = context.getAttributes().require(TokenMatcher.State.class);
+      Repository repository = context.getRepository();
+      log.debug("[putDistTags] repository: {} tokens: {}", repository.getName(), state.getTokens());
+
+      try {
+        repository.facet(NpmHostedFacet.class)
+            .putDistTags(packageId(state), state.getTokens().get(T_PACKAGE_TAG), context.getRequest().getPayload());
+        return NpmResponses.ok();
+      }
+      catch (IOException e) { //NOSONAR
+        return NpmResponses.badRequest(e.getMessage());
+      }
+    }
+  };
+
+  static Handler deleteDistTags = new Handler()
+  {
+    @Nonnull
+    @Override
+    public Response handle(@Nonnull final Context context) throws Exception {
+      State state = context.getAttributes().require(TokenMatcher.State.class);
+      Repository repository = context.getRepository();
+      log.debug("[putDistTags] repository: {} tokens: {}", repository.getName(), state.getTokens());
+
+      try {
+        repository.facet(NpmHostedFacet.class)
+            .deleteDistTags(packageId(state), state.getTokens().get(T_PACKAGE_TAG), context.getRequest().getPayload());
+        return NpmResponses.ok();
+      }
+      catch (IOException e) { //NOSONAR
+        return NpmResponses.badRequest(e.getMessage());
+      }
     }
   };
 }

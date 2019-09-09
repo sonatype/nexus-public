@@ -20,6 +20,9 @@ import org.sonatype.nexus.security.config.SecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityConfigurationCleaner;
 import org.sonatype.nexus.security.config.SecurityConfigurationSource;
 import org.sonatype.nexus.security.config.SecurityContributor;
+import org.sonatype.nexus.security.privilege.DuplicatePrivilegeException;
+import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
+import org.sonatype.nexus.security.privilege.ReadonlyPrivilegeException;
 
 import org.apache.shiro.authc.credential.PasswordService;
 import org.junit.Before;
@@ -30,6 +33,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 public class SecurityConfigurationManagerImplTest
@@ -47,11 +51,14 @@ public class SecurityConfigurationManagerImplTest
   @Mock
   private EventManager eventManager;
 
+  @Mock
+  private MemorySecurityConfiguration memorySecurityConfiguration;
+
   private SecurityConfigurationManagerImpl manager;
 
   @Before
   public void setUp() {
-    when(configSource.loadConfiguration()).thenReturn(new MemorySecurityConfiguration());
+    when(configSource.loadConfiguration()).thenReturn(memorySecurityConfiguration);
     manager = new SecurityConfigurationManagerImpl(configSource, configCleaner, passwordService, eventManager);
   }
 
@@ -92,5 +99,58 @@ public class SecurityConfigurationManagerImplTest
     assertThat(manager.listPrivileges(), hasSize(0));
     assertThat(manager.listPrivileges(), hasSize(1));
     assertThat(mutableContributorCallCount[0], is(2));
+  }
+
+  @Test(expected = DuplicatePrivilegeException.class)
+  public void testCretePrivilege_duplicateFromOrient() {
+    CPrivilege privilege = new CPrivilege();
+    privilege.setId("dup");
+    privilege.setName("dup");
+
+    doThrow(new DuplicatePrivilegeException("dup")).when(memorySecurityConfiguration).addPrivilege(privilege);
+
+    manager.createPrivilege(privilege);
+  }
+
+  @Test(expected = DuplicatePrivilegeException.class)
+  public void testCreatePrivilege_duplicateFromContributors() {
+    addSimpleContributor("dup");
+
+    CPrivilege privilege = new CPrivilege();
+    privilege.setId("dup");
+    privilege.setName("dup");
+
+    manager.createPrivilege(privilege);
+  }
+
+  @Test(expected = ReadonlyPrivilegeException.class)
+  public void testUpdatePrivilege_readOnly() {
+    addSimpleContributor("readonly");
+
+    CPrivilege forUpdate = new CPrivilege();
+    forUpdate.setId("readonly");
+    forUpdate.setName("readonly");
+
+    manager.updatePrivilege(forUpdate);
+  }
+
+  @Test(expected = ReadonlyPrivilegeException.class)
+  public void testDeletePrivilege_readOnly() {
+    when(memorySecurityConfiguration.removePrivilege("readonly")).thenThrow(new NoSuchPrivilegeException("readonly"));
+    
+    addSimpleContributor("readonly");
+
+    manager.deletePrivilege("readonly");
+  }
+
+  private void addSimpleContributor(final String privName) {
+    manager.addContributor(() -> {
+      SecurityConfiguration config = new MemorySecurityConfiguration();
+      CPrivilege readonlyPriv = new CPrivilege();
+      readonlyPriv.setId(privName);
+      readonlyPriv.setName(privName);
+      config.addPrivilege(readonlyPriv);
+      return config;
+    });
   }
 }

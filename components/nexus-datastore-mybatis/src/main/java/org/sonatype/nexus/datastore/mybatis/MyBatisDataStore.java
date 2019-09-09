@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Map;
 import java.util.Properties;
 
@@ -39,6 +41,7 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.apache.ibatis.builder.xml.XMLConfigBuilder;
 import org.apache.ibatis.mapping.Environment;
+import org.apache.ibatis.mapping.VendorDatabaseIdProvider;
 import org.apache.ibatis.reflection.factory.DefaultObjectFactory;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSession;
@@ -59,6 +62,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 import static org.sonatype.nexus.common.text.Strings2.isBlank;
 import static org.sonatype.nexus.common.thread.TcclBlock.begin;
 import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.ADVANCED;
+import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.JDBC_URL;
 import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.SCHEMA;
 
 /**
@@ -157,6 +161,12 @@ public class MyBatisDataStore
     return new MyBatisDataSession(sessionFactory.openSession());
   }
 
+  @Guarded(by = STARTED)
+  @Override
+  public Connection openConnection() throws SQLException {
+    return dataSource.getConnection();
+  }
+
   /**
    * Supplies the populated Hikari configuration for this store.
    */
@@ -164,15 +174,23 @@ public class MyBatisDataStore
     Properties properties = new Properties();
     properties.put("poolName", storeName);
     properties.putAll(attributes);
+
+    // workaround https://github.com/pgjdbc/pgjdbc/issues/265
+    if (attributes.get(JDBC_URL).startsWith("jdbc:postgresql")) {
+      properties.put("dataSource.stringtype", "unspecified");
+    }
+
     // Parse and unflatten advanced attributes
     Object advanced = properties.remove(ADVANCED);
     if (advanced instanceof String) {
       TO_MAP.split((String) advanced).forEach(properties::putIfAbsent);
     }
+
     // Hikari doesn't like blank schemas in its config
     if (isBlank(properties.getProperty(SCHEMA))) {
       properties.remove(SCHEMA);
     }
+
     return new HikariConfig(properties);
   }
 
@@ -182,7 +200,12 @@ public class MyBatisDataStore
   private Configuration configureMyBatis(final Environment environment) throws IOException {
     Configuration myBatisConfig = loadMyBatisConfiguration(environment);
 
+    String databaseId = new VendorDatabaseIdProvider().getDatabaseId(environment.getDataSource());
+    info("MyBatis databaseId: {}", databaseId);
+
+    // configuration elements that must always be applied
     myBatisConfig.setEnvironment(environment);
+    myBatisConfig.setDatabaseId(databaseId);
     myBatisConfig.setObjectFactory(new DefaultObjectFactory()
     {
       @Override

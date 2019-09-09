@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.datastore.api;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+
 import org.sonatype.goodies.lifecycle.Lifecycle;
 import org.sonatype.nexus.transaction.TransactionalStore;
 import org.sonatype.nexus.transaction.UnitOfWork;
@@ -48,6 +51,13 @@ public interface DataStore<S extends DataSession<?>>
    * Unregisters the given {@link DataAccess} type with this store.
    */
   void unregister(Class<? extends DataAccess> accessType);
+
+  /**
+   * Opens a new JDBC {@link Connection} to this store.
+   *
+   * @throws UnsupportedOperationException if this store doesn't support JDBC
+   */
+  Connection openConnection() throws SQLException;
 
   /**
    * Permanently stops this data store.

@@ -424,6 +424,36 @@ class NpmClient
     }
   }
 
+  NestedAttributesMap listDistTags(String packageName) {
+    return fetch('-/package/' + packageName + '/dist-tags')
+  }
+
+  void addDistTag(String packageName, String tag, String value, int stat = OK) {
+    CloseableHttpResponse response = put(resolve('-/package/' + packageName + '/dist-tags/' + tag), value)
+    EntityUtils.consume(response.entity)
+    assert status(response) == stat
+  }
+
+  void removeDistTag(String packageName, String tag, int stat = OK) {
+    CloseableHttpResponse response = delete(resolve('-/package/' + packageName + '/dist-tags/' + tag))
+    EntityUtils.consume(response.entity)
+    assert status(response) == stat
+  }
+
+  private CloseableHttpResponse put(URI uri, String entity, String username = null, String password = null) {
+    HttpPut put = new HttpPut(uri)
+    put.setEntity(new ByteArrayEntity(entity.bytes, ContentType.TEXT_PLAIN))
+    if (apiToken) {
+      put.setHeader("authorization", "Bearer $apiToken")
+    }
+    if (username && password) {
+      return execute(put, username, password)
+    }
+    else {
+      return execute(put)
+    }
+  }
+
   CloseableHttpResponse delete(final String path) {
     return delete(resolve(path))
   }

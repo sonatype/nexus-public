@@ -12,6 +12,12 @@
  */
 package org.sonatype.nexus.datastore.mybatis.testsupport;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,18 +31,25 @@ import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
 import org.sonatype.nexus.datastore.api.DataStoreNotFoundException;
 import org.sonatype.nexus.datastore.mybatis.MyBatisDataStore;
 
+import com.google.common.base.Splitter;
+import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.apache.ibatis.type.TypeHandler;
 import org.junit.rules.ExternalResource;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Throwables.throwIfUnchecked;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
+import static java.nio.file.Files.createTempDirectory;
 import static java.util.Arrays.stream;
 import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.of;
+import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getBoolean;
+import static org.sonatype.nexus.common.text.Strings2.isBlank;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE_NAME;
 import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.JDBC_URL;
 
@@ -49,6 +62,10 @@ public class DataSessionRule
     extends ExternalResource
     implements DataSessionSupplier
 {
+  private static final Path BASEDIR = new File(System.getProperty("basedir", "")).toPath();
+
+  private static final String POSTGRES_NO_CLEANUP_KEY = "ot.epg.no-cleanup";
+
   private static final Logger log = LoggerFactory.getLogger(DataSessionRule.class);
 
   private final Map<String, String> attributes = new HashMap<>();
@@ -60,6 +77,10 @@ public class DataSessionRule
   private final List<TypeHandler<?>> typeHandlers = new ArrayList<>();
 
   private final Map<String, MyBatisDataStore> stores;
+
+  private List<String> jdbcUrls;
+
+  private Object postgres;
 
   /**
    * Supplies in-memory config sessions.
@@ -73,8 +94,7 @@ public class DataSessionRule
    */
   public DataSessionRule(final String storeName, final String... storeNames) {
     stores = concat(of(storeName), stream(storeNames)).collect(toImmutableMap(identity(), this::newStore));
-
-    attribute(JDBC_URL, "jdbc:h2:mem:${storeName}");
+    jdbcUrls = discoverJdbcUrls();
   }
 
   /**
@@ -106,6 +126,25 @@ public class DataSessionRule
     return this;
   }
 
+  /**
+   * Discover the JDBC URLs to run the tests against.
+   */
+  protected List<String> discoverJdbcUrls() {
+    String urls = System.getProperty("test.jdbcUrls");
+    if (isBlank(urls)) {
+      urls = "jdbc:h2:mem:${storeName}";
+      // skip PostgreSQL unless explicitly enabled
+      if (getBoolean("test.postgres", false)) {
+        urls = urls + ',' + startPostgres();
+      }
+    }
+
+    return Splitter.on(',')
+        .trimResults()
+        .omitEmptyStrings()
+        .splitToList(urls);
+  }
+
   @Override
   protected void before() {
     stores.forEach((storeName, store) -> {
@@ -129,6 +168,40 @@ public class DataSessionRule
     });
   }
 
+  @Override
+  public Statement apply(final Statement base, final Description description) {
+    return new Statement()
+    {
+      @Override
+      public void evaluate() throws Throwable {
+        System.clearProperty(POSTGRES_NO_CLEANUP_KEY);
+        try {
+          // run test against each JDBC URL
+          for (String url : jdbcUrls) {
+            attribute(JDBC_URL, url);
+            before();
+            try {
+              base.evaluate();
+            }
+            finally {
+              after();
+            }
+          }
+        }
+        catch (RuntimeException|Error e) {
+          // keep persisted data around if the test fails
+          System.setProperty(POSTGRES_NO_CLEANUP_KEY, "true");
+          throw e;
+        }
+        finally {
+          if (postgres != null) {
+            stopPostgres();
+          }
+        }
+      }
+    };
+  }
+
   private MyBatisDataStore newStore(final String storeName) {
     DataStoreConfiguration config = new DataStoreConfiguration();
     config.setName(storeName);
@@ -147,6 +220,11 @@ public class DataSessionRule
   }
 
   @Override
+  public Connection openConnection(final String storeName) throws SQLException {
+    return ofNullable(stores.get(storeName)).orElseThrow(() -> new DataStoreNotFoundException(storeName)).openConnection();
+  }
+
+  @Override
   protected void after() {
     stores.values().forEach(t -> {
       try {
@@ -156,5 +234,32 @@ public class DataSessionRule
         log.warn("Problem stopping {}", t, e);
       }
     });
+  }
+
+  protected String startPostgres() {
+    try {
+      File dataDir = createTempDirectory(BASEDIR.resolve("target"), "pg_").toFile();
+
+      postgres = EmbeddedPostgres.builder()
+          .setCleanDataDirectory(getBoolean("test.cleanOnSuccess", true))
+          .setDataDirectory(dataDir)
+          .start();
+
+      // use the same underlying PostgreSQL database as backing for each store
+      return ((EmbeddedPostgres) postgres).getJdbcUrl("postgres", "postgres");
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  protected void stopPostgres() {
+    try {
+      ((EmbeddedPostgres) postgres).close();
+      postgres = null;
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 }

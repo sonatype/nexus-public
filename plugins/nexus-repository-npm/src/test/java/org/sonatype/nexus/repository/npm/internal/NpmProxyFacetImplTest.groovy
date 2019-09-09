@@ -12,13 +12,12 @@
  */
 package org.sonatype.nexus.repository.npm.internal
 
-import org.sonatype.nexus.repository.npm.NpmFacet
-import org.sonatype.nexus.repository.npm.internal.NpmProxyFacetImpl.ProxyTarget
-
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.common.collect.AttributesMap
 import org.sonatype.nexus.common.collect.NestedAttributesMap
 import org.sonatype.nexus.repository.Repository
+import org.sonatype.nexus.repository.npm.NpmFacet
+import org.sonatype.nexus.repository.npm.internal.NpmProxyFacetImpl.ProxyTarget
 import org.sonatype.nexus.repository.view.Content
 import org.sonatype.nexus.repository.view.Context
 import org.sonatype.nexus.repository.view.Parameters
@@ -33,12 +32,9 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 
-import static org.sonatype.nexus.repository.npm.internal.NpmProxyFacetImpl.ProxyTarget.SEARCH_V1_RESULTS
-import static org.sonatype.nexus.repository.npm.internal.NpmProxyFacetImpl.ProxyTarget.TARBALL
 import static java.nio.charset.StandardCharsets.UTF_8
-
-import static org.junit.Assert.assertThat
 import static org.hamcrest.Matchers.is
+import static org.junit.Assert.assertThat
 import static org.mockito.Matchers.any
 import static org.mockito.Matchers.eq
 import static org.mockito.Matchers.same
@@ -48,6 +44,8 @@ import static org.mockito.Mockito.doThrow
 import static org.mockito.Mockito.never
 import static org.mockito.Mockito.spy
 import static org.mockito.Mockito.verify
+import static org.sonatype.nexus.repository.npm.internal.NpmProxyFacetImpl.ProxyTarget.SEARCH_V1_RESULTS
+import static org.sonatype.nexus.repository.npm.internal.NpmProxyFacetImpl.ProxyTarget.TARBALL
 
 class NpmProxyFacetImplTest
     extends TestSupport

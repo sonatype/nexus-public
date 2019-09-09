@@ -15,8 +15,6 @@ package org.sonatype.nexus.repository.npm.internal;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.inject.Named;
@@ -130,13 +128,8 @@ public class NpmHostedComponentMaintenanceImpl
       return getRepository().facet(NpmHostedFacet.class).deletePackage(packageId, null, deleteBlob);
     }
     else {
-      Iterator<Entry<String, Object>> distTags = packageRoot.child(NpmMetadataUtils.DIST_TAGS).iterator();
-      while (distTags.hasNext()) {
-        Entry<String, Object> distTag = distTags.next();
-        if (version.getKey().equals(distTag.getValue())) {
-          distTags.remove();
-        }
-      }
+      NpmFacetUtils.removeDistTagsFromTagsWithVersion(packageRoot, version.getKey());
+
       packageRoot.child(NpmMetadataUtils.TIME).remove(version.getKey());
       NpmMetadataUtils.maintainTime(packageRoot);
       NpmFacetUtils.savePackageRoot(UnitOfWork.currentTx(), packageRootAsset, packageRoot);

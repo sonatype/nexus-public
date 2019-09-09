@@ -32,6 +32,7 @@ import org.sonatype.nexus.security.config.CUser;
 import org.sonatype.nexus.security.config.CUserRoleMapping;
 import org.sonatype.nexus.security.config.SecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityConfigurationSource;
+import org.sonatype.nexus.security.privilege.DuplicatePrivilegeException;
 import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
 import org.sonatype.nexus.security.role.NoSuchRoleException;
 import org.sonatype.nexus.security.user.NoSuchRoleMappingException;
@@ -41,6 +42,7 @@ import org.sonatype.nexus.security.user.UserNotFoundException;
 import com.google.common.collect.ImmutableList;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
@@ -298,17 +300,22 @@ public class OrientSecurityConfigurationSource
       checkNotNull(privilege.getId());
       log.trace("Adding privilege: {}", privilege.getId());
 
-      inTxRetry(databaseInstance).run(db -> privilegeEntityAdapter.addEntity(db, privilege));
+      try {
+        inTxRetry(databaseInstance).run(db -> privilegeEntityAdapter.addEntity(db, privilege));
+      }
+      catch (ORecordDuplicatedException e) {
+        throw new DuplicatePrivilegeException(privilege.getId(), e);
+      }
     }
 
     @Override
-    public void updatePrivilege(final CPrivilege privilege) throws NoSuchPrivilegeException {
+    public void updatePrivilege(final CPrivilege privilege) {
       checkNotNull(privilege);
       checkNotNull(privilege.getId());
       log.trace("Updating privilege: {}", privilege.getId());
 
       try {
-        inTxRetry(databaseInstance).throwing(NoSuchPrivilegeException.class).run(db -> {
+        inTxRetry(databaseInstance).run(db -> {
           CPrivilege existing = privilegeEntityAdapter.read(db, privilege.getId());
           if (existing == null) {
             throw new NoSuchPrivilegeException(privilege.getId());
@@ -327,7 +334,13 @@ public class OrientSecurityConfigurationSource
       log.trace("Removing privilege: {}", id);
 
       try {
-        return inTxRetry(databaseInstance).call(db -> privilegeEntityAdapter.delete(db, id));
+        return inTxRetry(databaseInstance).call(db -> {
+          CPrivilege existing = privilegeEntityAdapter.read(db, id);
+          if (existing == null) {
+            throw new NoSuchPrivilegeException(id);
+          }
+          return privilegeEntityAdapter.delete(db, id);
+        });
       }
       catch (OConcurrentModificationException e) {
         throw concurrentlyModified("Privilege", id);

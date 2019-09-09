@@ -17,7 +17,6 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
 import org.sonatype.nexus.security.role.NoSuchRoleException;
 import org.sonatype.nexus.security.user.NoSuchRoleMappingException;
 import org.sonatype.nexus.security.user.UserNotFoundException;
@@ -63,7 +62,7 @@ public interface SecurityConfiguration
 
   void addPrivilege(CPrivilege privilege);
 
-  void updatePrivilege(CPrivilege privilege) throws NoSuchPrivilegeException;
+  void updatePrivilege(CPrivilege privilege);
 
   boolean removePrivilege(String id);
 

@@ -13,9 +13,20 @@
 package org.sonatype.nexus.security.privilege;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response.Status;
+
+import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.config.CPrivilege;
+import org.sonatype.nexus.security.privilege.rest.ApiPrivilege;
+import org.sonatype.nexus.security.privilege.rest.ApiPrivilegeRequest;
+import org.sonatype.nexus.security.privilege.rest.ApiPrivilegeWithActionsRequest;
+import org.sonatype.nexus.security.privilege.rest.PrivilegeAction;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -35,10 +46,12 @@ import static com.google.common.base.Preconditions.checkState;
  *
  * @since 3.0
  */
-public abstract class PrivilegeDescriptorSupport
-    implements PrivilegeDescriptor
+public abstract class PrivilegeDescriptorSupport<T extends ApiPrivilege, Y extends ApiPrivilegeRequest>
+    implements PrivilegeDescriptor<T,Y>
 {
   public static final String ALL = "*";
+
+  public static final String INVALID_ACTIONS = "\"Privilege of type '%s' cannot use action(s) of type '%s'.\"";
 
   private final String type;
 
@@ -133,5 +146,23 @@ public abstract class PrivilegeDescriptorSupport
       stringBuilder.append(" privilege");
     }
     return stringBuilder.toString();
+  }
+
+  protected void validateActions(final ApiPrivilegeWithActionsRequest apiPrivilege, Collection<PrivilegeAction> validActions) {
+    final Collection<PrivilegeAction> invalidActions = new HashSet<>();
+
+    apiPrivilege.getActions().stream().forEach(a -> {
+      if (!validActions.contains(a)) {
+        invalidActions.add(a);
+      }
+    });
+
+    if (!invalidActions.isEmpty()) {
+      String invalidActionNames = String
+          .join(",", invalidActions.stream().map(PrivilegeAction::name).collect(Collectors.toList()));
+      throw new WebApplicationMessageException(Status.BAD_REQUEST,
+          String.format(INVALID_ACTIONS, getType(), invalidActionNames),
+          MediaType.APPLICATION_JSON);
+    }
   }
 }

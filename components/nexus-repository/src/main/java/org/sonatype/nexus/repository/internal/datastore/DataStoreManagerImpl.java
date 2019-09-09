@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.internal.datastore;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -127,6 +129,11 @@ public class DataStoreManagerImpl
   @Override
   public DataSession<?> openSession(final String storeName) {
     return get(storeName).orElseThrow(() -> new DataStoreNotFoundException(storeName)).openSession();
+  }
+
+  @Override
+  public Connection openConnection(final String storeName) throws SQLException {
+    return get(storeName).orElseThrow(() -> new DataStoreNotFoundException(storeName)).openConnection();
   }
 
   @Override

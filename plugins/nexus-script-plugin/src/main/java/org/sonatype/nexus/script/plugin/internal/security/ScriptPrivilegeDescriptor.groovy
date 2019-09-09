@@ -12,24 +12,33 @@
  */
 package org.sonatype.nexus.script.plugin.internal.security
 
-import javax.inject.Named
-import javax.inject.Singleton
-
+import com.google.common.base.Joiner
+import com.google.common.collect.ImmutableList
+import groovy.transform.CompileStatic
+import org.apache.shiro.authz.Permission
 import org.sonatype.goodies.i18n.I18N
 import org.sonatype.goodies.i18n.MessageBundle
 import org.sonatype.goodies.i18n.MessageBundle.DefaultMessage
 import org.sonatype.nexus.formfields.FormField
 import org.sonatype.nexus.formfields.StringTextFormField
+import org.sonatype.nexus.rest.WebApplicationMessageException
+import org.sonatype.nexus.script.ScriptManager
+import org.sonatype.nexus.script.plugin.internal.rest.ApiPrivilegeScript
+import org.sonatype.nexus.script.plugin.internal.rest.ApiPrivilegeScriptRequest
 import org.sonatype.nexus.security.config.CPrivilege
 import org.sonatype.nexus.security.config.CPrivilegeBuilder
+import org.sonatype.nexus.security.privilege.Privilege
 import org.sonatype.nexus.security.privilege.PrivilegeDescriptorSupport
+import org.sonatype.nexus.security.privilege.rest.PrivilegeAction
 
-import com.google.common.base.Joiner
-import com.google.common.collect.ImmutableList
-import groovy.transform.CompileStatic
-import org.apache.shiro.authz.Permission
+import javax.inject.Inject
+import javax.inject.Named
+import javax.inject.Singleton
+import javax.ws.rs.core.MediaType
+import javax.ws.rs.core.Response
 
 import static com.google.common.base.Preconditions.checkArgument
+import static com.google.common.base.Preconditions.checkNotNull
 
 /**
  * Descriptor for {@link ScriptPermission}
@@ -39,8 +48,10 @@ import static com.google.common.base.Preconditions.checkArgument
 @Singleton
 @CompileStatic
 class ScriptPrivilegeDescriptor
-    extends PrivilegeDescriptorSupport
+    extends PrivilegeDescriptorSupport<ApiPrivilegeScript, ApiPrivilegeScriptRequest>
 {
+  public static final String INVALID_SCRIPT = "\"Invalid script '%s' supplied.\""
+
   public static final String TYPE = ScriptPermission.DOMAIN
 
   public static final String P_NAME = 'name'
@@ -70,7 +81,10 @@ class ScriptPrivilegeDescriptor
 
   private final List<FormField> formFields
 
-  ScriptPrivilegeDescriptor() {
+  private final ScriptManager scriptManager;
+
+  @Inject
+  public ScriptPrivilegeDescriptor(final ScriptManager scriptManager) {
     super(TYPE)
     this.formFields = ImmutableList.of(
         (FormField) new StringTextFormField(
@@ -86,6 +100,7 @@ class ScriptPrivilegeDescriptor
             FormField.MANDATORY
         )
     )
+    this.scriptManager = checkNotNull(scriptManager)
   }
 
   @Override
@@ -118,5 +133,23 @@ class ScriptPrivilegeDescriptor
   static String id(final String name, final String... actions) {
     checkArgument(actions.length > 0)
     return "nx-$TYPE-$name-${Joiner.on(',').join(actions)}"
+  }
+
+  @Override
+  ApiPrivilegeScript createApiPrivilegeImpl(final Privilege privilege) {
+    return new ApiPrivilegeScript(privilege)
+  }
+
+  @Override
+  void validate(final ApiPrivilegeScriptRequest apiPrivilege) {
+    validateActions(apiPrivilege, PrivilegeAction.getBreadRunActions())
+    validateScript(apiPrivilege.scriptName)
+  }
+
+  void validateScript(final String scriptName) {
+    if (scriptManager.get(scriptName) == null) {
+      throw new WebApplicationMessageException(Response.Status.BAD_REQUEST,
+          String.format(INVALID_SCRIPT, scriptName), MediaType.APPLICATION_JSON)
+    }
   }
 }

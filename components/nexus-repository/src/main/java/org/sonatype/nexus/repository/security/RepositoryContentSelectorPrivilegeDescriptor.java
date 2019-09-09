@@ -14,8 +14,11 @@ package org.sonatype.nexus.repository.security;
 
 import java.util.List;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response.Status;
 
 import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
@@ -23,16 +26,23 @@ import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.RepositoryCombobox;
 import org.sonatype.nexus.formfields.SelectorComboFormField;
 import org.sonatype.nexus.formfields.StringTextFormField;
+import org.sonatype.nexus.repository.Format;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.security.rest.ApiPrivilegeRepositoryContentSelectorRequest;
+import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.CPrivilegeBuilder;
+import org.sonatype.nexus.security.privilege.Privilege;
 import org.sonatype.nexus.security.privilege.PrivilegeDescriptor;
-import org.sonatype.nexus.security.privilege.PrivilegeDescriptorSupport;
+import org.sonatype.nexus.repository.security.rest.ApiPrivilegeRepositoryContentSelector;
+import org.sonatype.nexus.selector.SelectorManager;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import org.apache.shiro.authz.Permission;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Repository selector {@link PrivilegeDescriptor}.
@@ -43,8 +53,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 @Named(RepositoryContentSelectorPrivilegeDescriptor.TYPE)
 @Singleton
 public class RepositoryContentSelectorPrivilegeDescriptor
-    extends PrivilegeDescriptorSupport
+    extends RepositoryPrivilegeDescriptorSupport<ApiPrivilegeRepositoryContentSelector, ApiPrivilegeRepositoryContentSelectorRequest>
 {
+  public static final String INVALID_SELECTOR = "\"Invalid selector '%s' supplied.\"";
+
   public static final String TYPE = RepositoryContentSelectorPermission.DOMAIN;
 
   public static final String P_CONTENT_SELECTOR = "contentSelector";
@@ -82,8 +94,15 @@ public class RepositoryContentSelectorPrivilegeDescriptor
 
   private final List<FormField> formFields;
 
-  public RepositoryContentSelectorPrivilegeDescriptor() {
-    super(TYPE);
+  private final SelectorManager selectorManager;
+
+  @Inject
+  public RepositoryContentSelectorPrivilegeDescriptor(final RepositoryManager repositoryManager,
+                                                      final SelectorManager selectorManager,
+                                                      final List<Format> formats)
+  {
+    super(TYPE, repositoryManager, formats);
+    this.selectorManager = checkNotNull(selectorManager);
     this.formFields = ImmutableList.of(
         new SelectorComboFormField(
             P_CONTENT_SELECTOR,
@@ -155,5 +174,25 @@ public class RepositoryContentSelectorPrivilegeDescriptor
         .property(P_REPOSITORY, selector.toSelector())
         .property(P_ACTIONS, actions)
         .create();
+  }
+
+  @Override
+  public ApiPrivilegeRepositoryContentSelector createApiPrivilegeImpl(final Privilege privilege) {
+    return new ApiPrivilegeRepositoryContentSelector(privilege);
+  }
+
+  @Override
+  public void validate(final ApiPrivilegeRepositoryContentSelectorRequest apiPrivilege) {
+    super.validate(apiPrivilege);
+    validateContentSelector(apiPrivilege);
+  }
+
+  protected void validateContentSelector(final ApiPrivilegeRepositoryContentSelectorRequest apiPrivilege) {
+    String cs = apiPrivilege.getContentSelector();
+
+    if (!selectorManager.findByName(cs).isPresent()) {
+      throw new WebApplicationMessageException(Status.BAD_REQUEST,
+          String.format(INVALID_SELECTOR, apiPrivilege.getContentSelector()), MediaType.APPLICATION_JSON);
+    }
   }
 }

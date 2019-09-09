@@ -232,6 +232,14 @@
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-datastore-mybatis</artifactId>
+        <version>3.19.0-SNAPSHOT</version>
+        <classifier>features</classifier>
+        <type>xml</type>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-orient</artifactId>
         <version>3.19.0-SNAPSHOT</version>
       </dependency>
@@ -741,6 +749,10 @@
               </Include-Resource>
               <!-- clear default to avoid spurious !* warnings -->
               <Private-Package/>
+              <!-- record feature-flagged classes/package-info's -->
+              <Feature-Flagged>
+                $(classes;ANNOTATED;org.sonatype.nexus.common.app.FeatureFlag)
+              </Feature-Flagged>
             </instructions>
           </configuration>
         </plugin>

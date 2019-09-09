@@ -39,6 +39,7 @@ import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.storage.TempBlob;
+import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
@@ -58,6 +59,7 @@ import org.mockito.Mock;
 import static java.util.Collections.emptyMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
@@ -184,6 +186,37 @@ public class NpmHostedFacetImplTest extends TestSupport
     catch (NullPointerException e) {
       assertThat(e.getMessage(), is("Uploaded package is invalid, or is missing package.json"));
     }
+  }
+
+  @Test
+  public void getDistTagNoResponseWhenPackageRootNotFound() {
+    Content content = underTest.getDistTags(NpmPackageId.parse("package"));
+
+    assertThat(content, is(nullValue()));
+  }
+
+  @Test
+  public void getDistTagWhenPackageRootFound() throws Exception {
+    Bucket bucket = mock(Bucket.class);
+    Asset asset = mock(Asset.class);
+    Blob blob = mock(Blob.class);
+    ByteArrayInputStream bis = new ByteArrayInputStream("{\"dist-tags\":{\"latest\":\"1.0.0\"}}".getBytes());
+    when(storageTx.findBucket(repository)).thenReturn(bucket);
+    when(storageTx.findAssetWithProperty("name", "package", bucket)).thenReturn(asset);
+    when(storageTx.requireBlob(asset.requireBlobRef())).thenReturn(blob);
+    when(blob.getInputStream()).thenReturn(bis);
+
+    final Content content = underTest.getDistTags(NpmPackageId.parse("package"));
+
+    final String actual = IOUtils.toString(content.openInputStream());
+    assertThat(actual, is("{\"latest\":\"1.0.0\"}"));
+  }
+
+  @Test(expected = IOException.class)
+  public void updateTagLatestIsInvalid() throws Exception {
+    NpmPackageId packageId = new NpmPackageId(null, "package");
+
+    underTest.putDistTags(packageId, "latest", null);
   }
 
   private void mockPackageMetadata() {

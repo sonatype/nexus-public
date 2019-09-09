@@ -18,7 +18,7 @@ package org.sonatype.nexus.security.internal.rest;
  *
  * @since 3.17
  */
-final class NexusSecurityApiConstants
+public final class NexusSecurityApiConstants
 {
   static final String USER_ID_DESCRIPTION = "The userid which is required for login. This value cannot be changed.";
 
@@ -35,11 +35,38 @@ final class NexusSecurityApiConstants
 
   static final String ROLES_DESCRIPTION = "The roles which the user has been assigned within Nexus.";
 
-  static final String INVALID_PERMISSIONS = "Not privileged to perform operation.";
+  public static final String INVALID_PERMISSIONS = "The user does not have permission to perform the operation.";
 
   static final String USER_NOT_FOUND = "User not found in the system.";
 
   static final String USER_OR_SOURCE_NOT_FOUND = "User or user source not found in the system.";
+
+  public static final String PRIVILEGE_MISCONFIGURED = "Privilege object not configured properly.";
+
+  public static final String PRIVILEGE_NOT_FOUND = "Privilege not found in the system.";
+
+  public static final String PRIVILEGE_READ_ONLY = "The privilege is internal and may not be altered.";
+
+  public static final String PRIVILEGE_TYPE_DESCRIPTION = "The type of privilege, each type covers different portions of the system. External values supplied to this will be ignored by the system.";
+
+  public static final String PRIVILEGE_NAME_DESCRIPTION = "The name of the privilege.  This value cannot be changed.";
+
+  public static final String PRIVILEGE_READONLY_DESCRIPTION = "Indicates whether the privilege can be changed. External values supplied to this will be ignored by the system.";
+
+  public static final String PRIVILEGE_DOMAIN_DESCRIPTION = "The domain (i.e. 'blobstores', 'capabilities' or even '*' for all) that this privilege is granting access to."
+      + "  Note that creating new privileges with a domain is only necessary when using plugins that define their own domain(s).";
+
+  public static final String PRIVILEGE_REPOSITORY_FORMAT_DESCRIPTION = "The repository format (i.e 'nuget', 'npm') this privilege will grant access to (or * for all).";
+
+  public static final String PRIVILEGE_REPOSITORY_DESCRIPTION = "The name of the repository this privilege will grant access to (or * for all).";
+
+  public static final String PRIVILEGE_CONTENT_SELECTOR_DESCRIPTION = "The name of a content selector that will be used to grant access to content via this privilege.";
+
+  public static final String PRIVILEGE_SCRIPT_DESCRIPTION = "The name of a script to give access to.";
+
+  public static final String PRIVILEGE_PATTERN_DESCRIPTION = "A colon separated list of parts that create a permission string.";
+
+  public static final String PRIVILEGE_ACTION_DESCRIPTION = "A collection of actions to associate with the privilege, using BREAD syntax (browse,read,edit,add,delete,all) as well as 'run' for script privileges.";
 
   private NexusSecurityApiConstants() {
     // pointless comment and constructor for sonar

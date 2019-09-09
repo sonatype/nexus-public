@@ -40,7 +40,9 @@ import org.sonatype.nexus.security.config.SecurityConfigurationCleaner;
 import org.sonatype.nexus.security.config.SecurityConfigurationManager;
 import org.sonatype.nexus.security.config.SecurityConfigurationSource;
 import org.sonatype.nexus.security.config.SecurityContributor;
+import org.sonatype.nexus.security.privilege.DuplicatePrivilegeException;
 import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
+import org.sonatype.nexus.security.privilege.ReadonlyPrivilegeException;
 import org.sonatype.nexus.security.role.NoSuchRoleException;
 import org.sonatype.nexus.security.user.NoSuchRoleMappingException;
 import org.sonatype.nexus.security.user.UserNotFoundException;
@@ -120,6 +122,10 @@ public class SecurityConfigurationManagerImpl
 
   @Override
   public void createPrivilege(CPrivilege privilege) {
+    if (getMergedConfiguration().getPrivileges().stream().anyMatch(p -> p.getId().equals(privilege.getId()))) {
+      throw new DuplicatePrivilegeException(privilege.getId());
+    }
+
     getDefaultConfiguration().addPrivilege(privilege);
   }
 
@@ -142,11 +148,19 @@ public class SecurityConfigurationManagerImpl
   }
 
   @Override
-  public void deletePrivilege(String id) throws NoSuchPrivilegeException {
-    boolean found = getDefaultConfiguration().removePrivilege(id);
-    if (!found) {
+  public void deletePrivilege(String id) {
+    try {
+      getDefaultConfiguration().removePrivilege(id);
+    }
+    catch (NoSuchPrivilegeException e) {
+      //note that readonly check is done here, rather than at orient level, as we dont store readonly flag with
+      //config, basically any privileges added via SecurityContributor impls are marked as readonly
+      if (getMergedConfiguration().getPrivileges().stream().anyMatch(p -> p.getId().equals(id))) {
+        throw new ReadonlyPrivilegeException(id);
+      }
       throw new NoSuchPrivilegeException(id);
     }
+
     cleanRemovedPrivilege(id);
   }
 
@@ -169,7 +183,7 @@ public class SecurityConfigurationManagerImpl
   }
 
   @Override
-  public CPrivilege readPrivilege(String id) throws NoSuchPrivilegeException {
+  public CPrivilege readPrivilege(String id) {
     CPrivilege privilege = getMergedConfiguration().getPrivilege(id);
     if (privilege != null) {
       return privilege;
@@ -209,7 +223,18 @@ public class SecurityConfigurationManagerImpl
   }
 
   @Override
-  public void updatePrivilege(CPrivilege privilege) throws NoSuchPrivilegeException {
+  public void updatePrivilege(CPrivilege privilege) {
+    CPrivilege existing = getDefaultConfiguration().getPrivilege(privilege.getId());
+
+    if (existing == null) {
+      //note that readonly check is done here, rather than at orient level, as we dont store readonly flag with
+      //config, basically any privileges added via SecurityContributor impls are marked as readonly
+      if (getMergedConfiguration().getPrivileges().stream().anyMatch(p -> p.getId().equals(privilege.getId()))) {
+        throw new ReadonlyPrivilegeException(privilege.getId());
+      }
+      throw new NoSuchPrivilegeException(privilege.getId());
+    }
+
     getDefaultConfiguration().updatePrivilege(privilege);
   }
 

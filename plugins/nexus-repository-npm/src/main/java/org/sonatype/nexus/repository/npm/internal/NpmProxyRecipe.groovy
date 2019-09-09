@@ -18,15 +18,14 @@ import javax.inject.Named
 import javax.inject.Provider
 import javax.inject.Singleton
 
-import org.sonatype.nexus.repository.npm.internal.NpmProxyFacetImpl.ProxyTarget
-import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexFacetProxy
-
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.cache.NegativeCacheFacet
 import org.sonatype.nexus.repository.http.HttpHandlers
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet
+import org.sonatype.nexus.repository.npm.internal.NpmProxyFacetImpl.ProxyTarget
+import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexFacetProxy
 import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchFacetProxy
 import org.sonatype.nexus.repository.purge.PurgeUnusedFacet
 import org.sonatype.nexus.repository.storage.SingleAssetComponentMaintenance
@@ -38,6 +37,7 @@ import org.sonatype.nexus.repository.view.ViewFacet
 import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler
 
 import static org.sonatype.nexus.repository.http.HttpMethods.GET
+import static org.sonatype.nexus.repository.http.HttpMethods.HEAD
 
 /**
  * npm proxy repository recipe.
@@ -144,7 +144,7 @@ class NpmProxyRecipe
         .create())
 
     // GET /packageName (npm install)
-    builder.route(packageMatcher(GET)
+    builder.route(packageMatcher(GET, HEAD)
         .handler(timingHandler)
         .handler(securityHandler)
         .handler(routingHandler)
@@ -160,7 +160,7 @@ class NpmProxyRecipe
         .create())
 
     // GET /packageName/-/tarballName (npm install)
-    builder.route(tarballMatcher(GET)
+    builder.route(tarballMatcher(GET, HEAD)
         .handler(timingHandler)
         .handler(securityHandler)
         .handler(routingHandler)
@@ -173,6 +173,19 @@ class NpmProxyRecipe
         .handler(proxyTargetHandler.rcurry(ProxyTarget.TARBALL))
         .handler(unitOfWorkHandler)
         .handler(lastDownloadedHandler)
+        .handler(proxyHandler)
+        .create())
+
+    // GET /-/package/packageName/dist-tags
+    builder.route(distTagsMatcher(GET)
+        .handler(timingHandler)
+        .handler(securityHandler)
+        .handler(routingHandler)
+        .handler(NpmHandlers.npmErrorHandler)
+        .handler(handlerContributor)
+        .handler(contentHeadersHandler)
+        .handler(proxyTargetHandler.rcurry(ProxyTarget.DIST_TAGS))
+        .handler(unitOfWorkHandler)
         .handler(proxyHandler)
         .create())
 

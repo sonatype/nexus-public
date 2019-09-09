@@ -23,6 +23,9 @@ import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.StringTextFormField;
 import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.CPrivilegeBuilder;
+import org.sonatype.nexus.security.privilege.rest.ApiPrivilegeApplication;
+import org.sonatype.nexus.security.privilege.rest.ApiPrivilegeApplicationRequest;
+import org.sonatype.nexus.security.privilege.rest.PrivilegeAction;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -37,7 +40,7 @@ import org.apache.shiro.authz.Permission;
 @Named(ApplicationPrivilegeDescriptor.TYPE)
 @Singleton
 public class ApplicationPrivilegeDescriptor
-    extends PrivilegeDescriptorSupport
+    extends PrivilegeDescriptorSupport<ApiPrivilegeApplication, ApiPrivilegeApplicationRequest>
 {
   public static final String TYPE = "application";
 
@@ -119,5 +122,15 @@ public class ApplicationPrivilegeDescriptor
         .property(P_DOMAIN, domain)
         .property(P_ACTIONS, actions)
         .create();
+  }
+
+  @Override
+  public ApiPrivilegeApplication createApiPrivilegeImpl(final Privilege privilege) {
+    return new ApiPrivilegeApplication(privilege);
+  }
+
+  @Override
+  public void validate(final ApiPrivilegeApplicationRequest apiPrivilege) {
+    validateActions(apiPrivilege, PrivilegeAction.getBreadAssociateActions());
   }
 }

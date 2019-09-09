@@ -21,7 +21,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -45,7 +47,9 @@ import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.view.Content;
+import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.payloads.BlobPayload;
+import org.sonatype.nexus.repository.view.payloads.BytesPayload;
 import org.sonatype.nexus.repository.view.payloads.StreamPayload;
 import org.sonatype.nexus.repository.view.payloads.StreamPayload.InputStreamSupplier;
 import org.sonatype.nexus.thread.io.StreamCopier;
@@ -59,15 +63,22 @@ import static com.google.common.collect.Maps.newHashMap;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonList;
 import static java.util.Objects.isNull;
+import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
+import static org.sonatype.nexus.repository.http.HttpStatus.OK;
 import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind.TARBALL;
+import static org.sonatype.nexus.repository.npm.internal.NpmJsonUtils.mapper;
 import static org.sonatype.nexus.repository.npm.internal.NpmJsonUtils.serialize;
+import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.DIST_TAGS;
+import static org.sonatype.nexus.repository.npm.internal.NpmVersionComparator.extractNewestVersion;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_VERSION;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_BUCKET;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
+import static org.sonatype.nexus.repository.view.ContentTypes.APPLICATION_JSON;
+import static org.sonatype.nexus.repository.view.Status.success;
 
 /**
  * Shared code of npm facets.
@@ -172,8 +183,8 @@ public final class NpmFacetUtils
   /**
    * Convert an {@link Asset} representing a package root to a {@link Content} via a {@link StreamPayload}.
    *
-   * @param repository              {@link Repository} to look up package root from.
-   * @param packageRootAsset        {@link Asset} associated with blob holding package root.
+   * @param repository       {@link Repository} to look up package root from.
+   * @param packageRootAsset {@link Asset} associated with blob holding package root.
    * @return Content of asset blob
    */
   public static NpmContent toContent(final Repository repository, final Asset packageRootAsset)
@@ -186,8 +197,8 @@ public final class NpmFacetUtils
   /**
    * Build a {@link NpmStreamPayload} out of the {@link InputStream} representing the package root.
    *
-   * @param repository              {@link Repository} to look up package root from.
-   * @param packageRootAsset        {@link Asset} associated with blob holding package root.
+   * @param repository       {@link Repository} to look up package root from.
+   * @param packageRootAsset {@link Asset} associated with blob holding package root.
    */
   public static NpmStreamPayload toPayload(final Repository repository,
                                            final Asset packageRootAsset)
@@ -398,9 +409,9 @@ public final class NpmFacetUtils
    * Deletes the package root and all related tarballs too.
    */
   static Set<String> deletePackageRoot(final StorageTx tx,
-                                   final Repository repository,
-                                   final NpmPackageId packageId,
-                                   final boolean deleteBlobs)
+                                       final Repository repository,
+                                       final NpmPackageId packageId,
+                                       final boolean deleteBlobs)
   {
     // find package asset -> delete
     Asset packageRootAsset = findPackageRootAsset(tx, tx.findBucket(repository), packageId);
@@ -490,10 +501,104 @@ public final class NpmFacetUtils
 
     try {
       return blob.getInputStream();
-    } catch (BlobStoreException ignore) { // NOSONAR
+    }
+    catch (BlobStoreException ignore) { // NOSONAR
       // we want any issue with the blob store stream to be caught during the getting of the input stream as throw the
       // the same type of exception as a missing asset blob, so that we can pass the associated asset around.
       throw new MissingAssetBlobException(packageRootAsset);
     }
+  }
+
+  /**
+   * Converts the tags to a {@link Content} containing the tags as a json object
+   */
+  public static Content distTagsToContent(final NestedAttributesMap distTags) throws IOException {
+    final byte[] bytes = mapper.writeValueAsBytes(distTags.backing());
+    return new Content(new BytesPayload(bytes, APPLICATION_JSON));
+  }
+
+  /**
+   * Updates the packageRoot with this set of dist-tags
+   */
+  public static void updateDistTags(final StorageTx tx,
+                                    final Asset packageRootAsset,
+                                    final String tag,
+                                    final Object version) throws IOException
+  {
+    NestedAttributesMap packageRoot = loadPackageRoot(tx, packageRootAsset);
+    NestedAttributesMap distTags = packageRoot.child(DIST_TAGS);
+    distTags.set(tag, version);
+
+    savePackageRoot(tx, packageRootAsset, packageRoot);
+  }
+
+  /**
+   * Deletes the {@param tag} from the packageRoot
+   */
+  public static void deleteDistTags(final StorageTx tx,
+                                    final Asset packageRootAsset,
+                                    final String tag) throws IOException
+  {
+    NestedAttributesMap packageRoot = NpmFacetUtils.loadPackageRoot(tx, packageRootAsset);
+    if (packageRoot.contains(DIST_TAGS)) {
+      NestedAttributesMap distTags = packageRoot.child(DIST_TAGS);
+      distTags.remove(tag);
+      NpmFacetUtils.savePackageRoot(tx, packageRootAsset, packageRoot);
+    }
+  }
+
+  /**
+   * Removes all tags that are associated with a given {@param version}. If that version is also set as the
+   * latest, the new latest is also populated from the remaining package versions stored
+   */
+  public static void removeDistTagsFromTagsWithVersion(final NestedAttributesMap packageRoot, final String version) {
+    if (packageRoot.contains(DIST_TAGS)) {
+      packageRoot.child(NpmMetadataUtils.DIST_TAGS).entries().removeIf(e -> version.equals(e.getValue()));
+    }
+  }
+
+  /**
+   * Merges the dist-tag responses from all members and merges the values
+   */
+  public static Response mergeDistTagResponse(final Map<Repository, Response> responses) throws IOException {
+    final List<NestedAttributesMap> collection = responses
+        .values().stream()
+        .map(response -> (Content) response.getPayload())
+        .filter(Objects::nonNull)
+        .map(NpmFacetUtils::readDistTagResponse)
+        .filter(Objects::nonNull)
+        .collect(toList());
+
+    final NestedAttributesMap merged = collection.get(0);
+    if (collection.size() > 1) {
+      collection.subList(1, collection.size())
+          .forEach(response -> response.backing().forEach(populateLatestVersion(merged)));
+    }
+
+    return new Response.Builder()
+        .status(success(OK))
+        .payload(new BytesPayload(NpmJsonUtils.bytes(merged), APPLICATION_JSON))
+        .build();
+  }
+
+  private static BiConsumer<String, Object> populateLatestVersion(final NestedAttributesMap merged) {
+    return (k, v) -> {
+      if (!merged.contains(k)) {
+        merged.set(k, v);
+      }
+      else {
+        final String newestVersion = extractNewestVersion.apply(merged.get(k, String.class), (String) v);
+        merged.set(k, newestVersion);
+      }
+    };
+  }
+
+  private static NestedAttributesMap readDistTagResponse(final Content content) {
+    try (InputStream is = content.openInputStream()) {
+      return NpmJsonUtils.parse(() -> is);
+    }
+    catch (IOException ignore) { //NOSONAR
+    }
+    return null;
   }
 }

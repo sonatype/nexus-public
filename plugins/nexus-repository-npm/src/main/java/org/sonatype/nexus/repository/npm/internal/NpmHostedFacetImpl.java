@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.npm.internal;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -38,22 +39,26 @@ import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
+import org.sonatype.nexus.repository.transaction.TransactionalStoreMetadata;
 import org.sonatype.nexus.repository.transaction.TransactionalTouchBlob;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.eventbus.Subscribe;
+import org.apache.commons.io.IOUtils;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Arrays.asList;
 import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.findPackageRootAsset;
+import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.findPackageTarballComponent;
 import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.savePackageRoot;
 import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.toContent;
 import static org.sonatype.nexus.repository.npm.internal.NpmFieldFactory.missingRevFieldMatcher;
 import static org.sonatype.nexus.repository.npm.internal.NpmFieldFactory.rewriteTarballUrlMatcher;
+import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.DIST_TAGS;
 import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.META_ID;
 import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.META_REV;
 import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.selectVersionByTarballName;
@@ -418,5 +423,106 @@ public class NpmHostedFacetImpl
       return Collections.emptySet();
     }
     return tx.deleteComponent(tarballComponent, deleteBlob);
+  }
+
+  @Nullable
+  @Override
+  @TransactionalTouchBlob
+  public Content getDistTags(final NpmPackageId packageId) {
+    checkNotNull(packageId);
+    log.debug("Getting package: {}", packageId);
+    StorageTx tx = UnitOfWork.currentTx();
+    Asset packageRootAsset = findPackageRootAsset(tx, tx.findBucket(getRepository()), packageId);
+    if (packageRootAsset == null) {
+      return null;
+    }
+
+    try {
+      final NestedAttributesMap packageRoot = NpmFacetUtils.loadPackageRoot(tx, packageRootAsset);
+      final NestedAttributesMap distTags = packageRoot.child(DIST_TAGS);
+      return NpmFacetUtils.distTagsToContent(distTags);
+    }
+    catch (IOException e) {
+      log.info("Unable to obtain dist-tags for {}", packageId.id(), e);
+    }
+    return null;
+  }
+
+  @Override
+  public void putDistTags(final NpmPackageId packageId, final String tag, final Payload payload)
+      throws IOException
+  {
+    checkNotNull(packageId);
+    checkNotNull(tag);
+    log.debug("Updating distTags: {}", packageId);
+
+    if ("latest".equals(tag)) {
+      throw new IOException("Unable to update latest tag");
+    }
+
+    String version = parseVersionToTag(packageId, tag, payload);
+    doPutDistTags(packageId, tag, version);
+  }
+
+  @TransactionalStoreMetadata
+  protected void doPutDistTags(final NpmPackageId packageId, final String tag, final String version)
+      throws IOException
+  {
+    StorageTx tx = UnitOfWork.currentTx();
+    Asset packageRootAsset = findPackageRootAsset(tx, tx.findBucket(getRepository()), packageId);
+    if (packageRootAsset == null) {
+      return;
+    }
+
+    if (findPackageTarballComponent(tx, getRepository(), packageId, version) == null) {
+      throw new IOException(String
+          .format("version %s of package %s is not present in repository %s", version, packageId.id(),
+              getRepository().getName()));
+    }
+
+    try {
+      NpmFacetUtils.updateDistTags(tx, packageRootAsset, tag, version);
+    }
+    catch (IOException e) {
+      log.error("Unable to update dist-tags for {}", packageId.id(), e);
+    }
+  }
+
+  @TransactionalStoreMetadata
+  @Override
+  public void deleteDistTags(final NpmPackageId packageId, final String tag, final Payload payload) throws IOException
+  {
+    checkNotNull(packageId);
+    checkNotNull(tag);
+    log.debug("Deleting distTags: {}", packageId);
+
+    if ("latest".equals(tag)) {
+      throw new IOException("Unable to delete latest");
+    }
+
+    StorageTx tx = UnitOfWork.currentTx();
+    Asset packageRootAsset = findPackageRootAsset(tx, tx.findBucket(getRepository()), packageId);
+    if (packageRootAsset == null) {
+      return;
+    }
+
+    try {
+      NpmFacetUtils.deleteDistTags(tx, packageRootAsset, tag);
+    }
+    catch (IOException e) {
+      log.info("Unable to obtain dist-tags for {}", packageId.id(), e);
+    }
+  }
+
+  private String parseVersionToTag(final NpmPackageId packageId,
+                                   @Nullable final String tag,
+                                   final Payload payload) throws IOException
+  {
+    String version;
+    try (InputStream is = payload.openInputStream()) {
+      version = IOUtils.toString(is).replaceAll("\"", "");
+      log.debug("Adding tag {}:{} to {}", tag, version, packageId);
+    }
+    return version;
   }
 }

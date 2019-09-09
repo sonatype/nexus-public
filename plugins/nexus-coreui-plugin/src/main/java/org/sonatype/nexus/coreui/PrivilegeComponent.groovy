@@ -12,25 +12,6 @@
  */
 package org.sonatype.nexus.coreui
 
-import javax.inject.Inject
-import javax.inject.Named
-import javax.inject.Singleton
-import javax.validation.Valid
-import javax.validation.constraints.NotNull
-import javax.validation.groups.Default
-
-import org.sonatype.nexus.extdirect.DirectComponent
-import org.sonatype.nexus.extdirect.DirectComponentSupport
-import org.sonatype.nexus.extdirect.model.PagedResponse
-import org.sonatype.nexus.extdirect.model.StoreLoadParameters
-import org.sonatype.nexus.security.SecuritySystem
-import org.sonatype.nexus.security.authz.AuthorizationManager
-import org.sonatype.nexus.security.privilege.Privilege
-import org.sonatype.nexus.security.privilege.PrivilegeDescriptor
-import org.sonatype.nexus.validation.Validate
-import org.sonatype.nexus.validation.group.Create
-import org.sonatype.nexus.validation.group.Update
-
 import com.codahale.metrics.annotation.ExceptionMetered
 import com.codahale.metrics.annotation.Timed
 import com.google.common.collect.Maps
@@ -40,6 +21,25 @@ import groovy.transform.PackageScope
 import org.apache.shiro.authz.annotation.RequiresAuthentication
 import org.apache.shiro.authz.annotation.RequiresPermissions
 import org.hibernate.validator.constraints.NotEmpty
+import org.sonatype.nexus.extdirect.DirectComponent
+import org.sonatype.nexus.extdirect.DirectComponentSupport
+import org.sonatype.nexus.extdirect.model.PagedResponse
+import org.sonatype.nexus.extdirect.model.StoreLoadParameters
+import org.sonatype.nexus.security.SecuritySystem
+import org.sonatype.nexus.security.authz.AuthorizationManager
+import org.sonatype.nexus.security.privilege.Privilege
+import org.sonatype.nexus.security.privilege.PrivilegeDescriptor
+import org.sonatype.nexus.security.privilege.ReadonlyPrivilegeException
+import org.sonatype.nexus.validation.Validate
+import org.sonatype.nexus.validation.group.Create
+import org.sonatype.nexus.validation.group.Update
+
+import javax.inject.Inject
+import javax.inject.Named
+import javax.inject.Singleton
+import javax.validation.Valid
+import javax.validation.constraints.NotNull
+import javax.validation.groups.Default
 
 import static com.google.common.base.Preconditions.checkArgument
 import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE
@@ -171,8 +171,13 @@ class PrivilegeComponent
   @RequiresPermissions('nexus:privileges:update')
   @Validate(groups = [Update.class, Default.class])
   PrivilegeXO update(final @NotNull @Valid PrivilegeXO privilege) {
-    AuthorizationManager authorizationManager = securitySystem.getAuthorizationManager(DEFAULT_SOURCE)
-    return convert(authorizationManager.updatePrivilege(convert(privilege)))
+    try {
+      AuthorizationManager authorizationManager = securitySystem.getAuthorizationManager(DEFAULT_SOURCE)
+      return convert(authorizationManager.updatePrivilege(convert(privilege)))
+    }
+    catch (ReadonlyPrivilegeException e) {
+      throw new IllegalAccessException("Privilege [${privilege.id}] is readonly and cannot be updated")
+    }
   }
 
   /**
@@ -187,10 +192,12 @@ class PrivilegeComponent
   @Validate
   void remove(@NotEmpty final String id) {
     AuthorizationManager authorizationManager = securitySystem.getAuthorizationManager(DEFAULT_SOURCE)
-    if (authorizationManager.getPrivilege(id)?.readOnly) {
+    try {
+      authorizationManager.deletePrivilege(id)
+    }
+    catch (ReadonlyPrivilegeException e) {
       throw new IllegalAccessException("Privilege [${id}] is readonly and cannot be deleted")
     }
-    authorizationManager.deletePrivilege(id)
   }
 
   /**

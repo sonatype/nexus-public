@@ -101,4 +101,17 @@ public interface NpmHostedFacet
    */
   void putPackageRoot(final NpmPackageId packageId, @Nullable final String revision,
                       final NestedAttributesMap newPackageRoot) throws IOException;
+
+  /**
+   * Returns the package metadata or {@code null}.
+   */
+  @Nullable
+  Content getDistTags(NpmPackageId packageId) throws IOException;
+
+  /**
+   * Performs a "publish" of a dist-tag.
+   */
+  void putDistTags(NpmPackageId packageId, String tag, Payload payload) throws IOException;
+
+  void deleteDistTags(NpmPackageId packageId, String tag, Payload payload) throws IOException;
 }

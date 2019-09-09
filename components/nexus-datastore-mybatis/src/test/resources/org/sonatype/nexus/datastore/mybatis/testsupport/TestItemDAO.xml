@@ -27,6 +27,17 @@
     )
   </insert>
 
+  <insert id="createSchema" databaseId="PostgreSQL">
+    CREATE TABLE IF NOT EXISTS test_item (
+      id VARCHAR(100) NOT NULL,
+      version INT NOT NULL,
+      enabled BOOLEAN NOT NULL,
+      notes VARCHAR(400) NOT NULL,
+      properties JSONB NOT NULL,
+      CONSTRAINT pk_test_item_id PRIMARY KEY (id)
+    )
+  </insert>
+
   <select id="browse" resultType="TestItem">
     SELECT * FROM test_item
   </select>

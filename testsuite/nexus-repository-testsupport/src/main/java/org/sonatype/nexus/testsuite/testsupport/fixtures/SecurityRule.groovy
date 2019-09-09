@@ -12,9 +12,10 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.fixtures
 
-
-import javax.inject.Provider
-
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+import org.apache.shiro.authz.Permission
+import org.junit.rules.ExternalResource
 import org.sonatype.nexus.repository.security.RepositoryContentSelectorPrivilegeDescriptor
 import org.sonatype.nexus.security.SecuritySystem
 import org.sonatype.nexus.security.privilege.Privilege
@@ -26,10 +27,7 @@ import org.sonatype.nexus.selector.CselSelector
 import org.sonatype.nexus.selector.SelectorConfiguration
 import org.sonatype.nexus.selector.SelectorManager
 
-import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
-import org.apache.shiro.authz.Permission
-import org.junit.rules.ExternalResource
+import javax.inject.Provider
 
 import static com.google.common.base.Preconditions.checkNotNull
 import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE
@@ -67,13 +65,34 @@ class SecurityRule
       try {
         securitySystemProvider.get().deleteUser(it.getUserId(), DEFAULT_SOURCE)
       }
-      catch(Exception e) { // NOSONAR
+      catch (Exception e) { //NOSONAR
         log.debug("Failed to cleanup user: {}", it.getUserId(), e)
       }
     }
-    roles.each { securitySystemProvider.get().getAuthorizationManager(DEFAULT_SOURCE).deleteRole(it.getRoleId()) }
-    privileges.each { securitySystemProvider.get().getAuthorizationManager(DEFAULT_SOURCE).deletePrivilege(it.id) }
-    selectors.each { selectorManagerProvider.get().delete(it) }
+    roles.each {
+      try {
+        securitySystemProvider.get().getAuthorizationManager(DEFAULT_SOURCE).deleteRole(it.getRoleId())
+      }
+      catch (Exception e) { //NOSONAR
+        log.debug("Failed to cleanup role: {}", it.getRoleId(), e)
+      }
+    }
+    privileges.each {
+      try {
+        securitySystemProvider.get().getAuthorizationManager(DEFAULT_SOURCE).deletePrivilege(it.id)
+      }
+      catch (Exception e) { //NOSONAR
+        log.debug("Failed to cleanup privilege: {}", it.getId(), e)
+      }
+    }
+    selectors.each {
+      try {
+        selectorManagerProvider.get().delete(it)
+      }
+      catch (Exception e) { //NOSONAR
+        log.debug("Failed to cleanup content selector: {}", it.getName(), e)
+      }
+    }
   }
 
   Privilege getPrivilege(final String privilege) {
@@ -90,6 +109,29 @@ class SecurityRule
         type: RepositoryContentSelectorPrivilegeDescriptor.TYPE,
         readOnly: false,
         properties: ['contentSelector': selector, 'repository': repository, 'actions': actions]
+    )
+
+    privileges << privilege
+
+    securitySystemProvider.get().getAuthorizationManager(DEFAULT_SOURCE).addPrivilege(privilege)
+  }
+
+  /**
+   * Note that the properties should be in multiples of 2 (key/value pairs)
+   */
+  Privilege createPrivilege(final String type, final String name, final String... properties) {
+    def propMap = [:]
+    for (int i = 0 ; i < properties.length ; i+=2) {
+      propMap.put(properties[i], properties[i+1])
+    }
+
+    def privilege = new Privilege(
+        id: name,
+        name: name,
+        description: name,
+        type: type,
+        readOnly: false,
+        properties: propMap
     )
 
     privileges << privilege

@@ -72,6 +72,7 @@ import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.toContent
 import static org.sonatype.nexus.repository.npm.internal.NpmFieldFactory.rewriteTarballUrlMatcher;
 import static org.sonatype.nexus.repository.npm.internal.NpmHandlers.packageId;
 import static org.sonatype.nexus.repository.npm.internal.NpmHandlers.tarballName;
+import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.DIST_TAGS;
 import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.VERSIONS;
 import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.merge;
 
@@ -107,6 +108,9 @@ public class NpmProxyFacetImpl
     else if (ProxyTarget.PACKAGE == proxyTarget) {
       return getPackageRoot(context, packageId(matcherState(context)));
     }
+    else if (ProxyTarget.DIST_TAGS == proxyTarget) {
+      return getDistTags(packageId(matcherState(context)));
+    }
     else if (ProxyTarget.TARBALL == proxyTarget) {
       TokenMatcher.State state = matcherState(context);
       return getTarball(packageId(state), tarballName(state));
@@ -140,6 +144,10 @@ public class NpmProxyFacetImpl
     try (TempBlob tempBlob = storageFacet.createTempBlob(content, NpmFacetUtils.HASH_ALGORITHMS)) {
       if (ProxyTarget.PACKAGE == proxyTarget) {
         return putPackageRoot(packageId(matcherState(context)), tempBlob, content);
+      }
+      else if (ProxyTarget.DIST_TAGS == proxyTarget) {
+        putPackageRoot(packageId(matcherState(context)), tempBlob, content);
+        return getDistTags(packageId(matcherState(context)));
       }
       else if (ProxyTarget.TARBALL == proxyTarget) {
         TokenMatcher.State state = matcherState(context);
@@ -187,6 +195,17 @@ public class NpmProxyFacetImpl
         url = newUrl;
       }
     }
+    else if (ProxyTarget.DIST_TAGS == proxyTarget) {
+      NpmPackageId packageId = packageId(matcherState(context));
+      if (packageId.scope() != null) {
+        String newUrl = "@" + packageId.scope() + "%2f" + packageId.name();
+        log.trace("Scoped package URL fix: {} -> {}", url, newUrl);
+        url = newUrl;
+      }
+      else {
+        url = packageId.name();
+      }
+    }
     else if (ProxyTarget.SEARCH_V1_RESULTS == proxyTarget) {
       Parameters parameters = context.getRequest().getParameters();
       if (parameters != null) {
@@ -227,6 +246,24 @@ public class NpmProxyFacetImpl
         .fieldMatchers(rewriteTarballUrlMatcher(getRepository(), packageId.id()))
         .packageId(packageRootAsset.name())
         .missingBlobInputStreamSupplier(missingBlobException -> doGetOnMissingBlob(context, missingBlobException));
+  }
+
+  @TransactionalTouchMetadata
+  protected Content getDistTags(final NpmPackageId packageId) {
+    checkNotNull(packageId);
+    StorageTx tx = UnitOfWork.currentTx();
+    Asset packageRootAsset = NpmFacetUtils.findPackageRootAsset(tx, tx.findBucket(getRepository()), packageId);
+    if (packageRootAsset != null) {
+      try {
+        final NestedAttributesMap attributesMap = NpmFacetUtils.loadPackageRoot(tx, packageRootAsset);
+        final NestedAttributesMap distTags = attributesMap.child(DIST_TAGS);
+        return NpmFacetUtils.distTagsToContent(distTags);
+      }
+      catch (IOException e) {
+        log.error("Unable to read packageRoot {}", packageId.id(), e);
+      }
+    }
+    return null;
   }
 
   private Content putPackageRoot(final NpmPackageId packageId,
@@ -526,6 +563,7 @@ public class NpmProxyFacetImpl
     SEARCH_INDEX(CacheControllerHolder.METADATA),
     SEARCH_V1_RESULTS(CacheControllerHolder.METADATA),
     PACKAGE(CacheControllerHolder.METADATA),
+    DIST_TAGS(CacheControllerHolder.METADATA),
     TARBALL(CacheControllerHolder.CONTENT);
 
     private final CacheType cacheType;

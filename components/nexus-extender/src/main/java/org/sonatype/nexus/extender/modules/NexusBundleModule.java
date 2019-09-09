@@ -25,10 +25,11 @@ import com.google.inject.Module;
 import org.apache.shiro.guice.aop.ShiroAopModule;
 import org.eclipse.sisu.inject.MutableBeanLocator;
 import org.eclipse.sisu.launch.BundleModule;
-import org.eclipse.sisu.space.BeanScanning;
 import org.eclipse.sisu.space.SpaceModule;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.Constants;
+
+import static org.sonatype.nexus.extender.modules.FeatureFlaggedIndex.filterByFeatureFlag;
 
 /**
  * Nexus specific {@link BundleModule} that uses bundle imports to decide what to install.
@@ -105,7 +106,7 @@ public class NexusBundleModule
 
   @Override
   protected Module spaceModule() {
-    return new SpaceModule(space, BeanScanning.GLOBAL_INDEX);
+    return new SpaceModule(space, filterByFeatureFlag(space.getBundle()));
   }
 
   private void maybeAddDataAccessBindings(final List<Module> modules) {

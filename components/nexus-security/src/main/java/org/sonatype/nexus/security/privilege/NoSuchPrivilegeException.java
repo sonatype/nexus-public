@@ -16,7 +16,7 @@ package org.sonatype.nexus.security.privilege;
  * Thrown when a {@link Privilege} could not be found.
  */
 public class NoSuchPrivilegeException
-    extends Exception
+    extends PrivilegeException
 {
   private static final long serialVersionUID = 820651866330926246L;
 

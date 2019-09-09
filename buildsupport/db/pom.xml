@@ -177,6 +177,12 @@
       </dependency>
 
       <dependency>
+        <groupId>com.opentable.components</groupId>
+        <artifactId>otj-pg-embedded</artifactId>
+        <version>0.13.1</version>
+      </dependency>
+
+      <dependency>
         <groupId>net.java.dev.jna</groupId>
         <artifactId>jna</artifactId>
         <version>4.5.0</version>

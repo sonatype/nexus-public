@@ -21,6 +21,8 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.servlet.Filter;
 import javax.servlet.ServletContext;
@@ -43,6 +45,7 @@ import com.google.inject.servlet.GuiceFilter;
 import org.apache.karaf.features.Feature;
 import org.apache.karaf.features.FeaturesService;
 import org.apache.karaf.features.FeaturesService.Option;
+import org.apache.karaf.features.Repository;
 import org.eclipse.sisu.inject.BeanLocator;
 import org.eclipse.sisu.wire.ParameterKeys;
 import org.eclipse.sisu.wire.WireModule;
@@ -63,6 +66,7 @@ import org.slf4j.LoggerFactory;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.singletonMap;
+import static java.util.regex.Pattern.compile;
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshBundles;
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshManagedBundles;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.CAPABILITIES;
@@ -70,6 +74,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.KERNEL;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.OFF;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SECURITY;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
+import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getBoolean;
 import static org.sonatype.nexus.common.text.Strings2.isEmpty;
 
 /**
@@ -90,6 +95,8 @@ public class NexusContextListener
    * Start-level at which point any additional Nexus plugins/features should be available.
    */
   public static final int NEXUS_PLUGIN_START_LEVEL = 200;
+
+  private static final Pattern INSTALL_MODE_FEATURE_FLAG_PATTERN = compile("featureFlag:(enabledByDefault:)?(.*)");
 
   private static final String NEXUS_LIFECYCLE_STARTUP_PHASE = "nexus.lifecycle.startupPhase";
 
@@ -171,7 +178,7 @@ public class NexusContextListener
       });
 
       // if we know what to install go ahead and continue activation then register filter when done
-      String featureNames = (String) nexusProperties.get("nexus-features");
+      String featureNames = selectNexusFeatures();
       if (!Strings.isNullOrEmpty(featureNames)) {
         installNexusFeatures(featureNames);
       }
@@ -306,7 +313,47 @@ public class NexusContextListener
   }
 
   /**
-   * Install all features listed under "nexus-features".
+   * Select features to install.
+   */
+  private String selectNexusFeatures() {
+    // start with the features listed under $nexus-features
+    StringBuilder featureNames = new StringBuilder().append(nexusProperties.get("nexus-features"));
+    try {
+      // next add any optional features that have been feature-flagged
+      Repository flagsRepository = featuresService.getRepository("nexus-flags-feature");
+      if (flagsRepository != null) {
+        for (Feature feature : flagsRepository.getFeatures()) {
+          if (isFeatureFlagEnabled(feature.getInstall())) {
+            if (featureNames.length() > 0) {
+              featureNames.append(',');
+            }
+            featureNames.append(feature.getId());
+          }
+        }
+      }
+    }
+    catch (Exception e) {
+      log.warn("Problem selecting from nexus-flags-feature", e);
+    }
+    return featureNames.toString();
+  }
+
+  /**
+   * Is the given install flag enabled?
+   */
+  private boolean isFeatureFlagEnabled(final String installMode) {
+    if (installMode != null) {
+      // repurpose Karaf's installMode to pass along feature-flag details
+      Matcher matcher = INSTALL_MODE_FEATURE_FLAG_PATTERN.matcher(installMode);
+      if (matcher.matches()) {
+        return getBoolean(matcher.group(2), matcher.group(1) != null);
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Install selected features.
    */
   private void installNexusFeatures(final String featureNames) throws Exception {
     final Set<Feature> features = new LinkedHashSet<>();

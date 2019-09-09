@@ -331,7 +331,7 @@ public final class NpmMetadataUtils
         if (isSpecialOverlayKey(key)) {
           recessive.put(key, dominantValue);
         }
-        else if (mergeVersionDocuments || !VERSIONS.equals(key)) {
+        else if (mergeVersionDocuments || !(VERSIONS.equals(key) || DIST_TAGS.equals(key))) {
           recessive.put(key, overlay(recessiveChild, dominantChild, mergeVersionDocuments));
         }
         else {

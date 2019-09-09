@@ -12,26 +12,26 @@
  */
 package org.sonatype.nexus.repository.npm.internal
 
-import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchGroupHandler
-
 import javax.annotation.Nonnull
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Provider
 import javax.inject.Singleton
 
-import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexFacetGroup
 import org.sonatype.nexus.repository.Facet
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.group.GroupHandler
 import org.sonatype.nexus.repository.http.HttpHandlers
+import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexFacetGroup
+import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchGroupHandler
 import org.sonatype.nexus.repository.types.GroupType
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
 import org.sonatype.nexus.repository.view.Router
 
 import static org.sonatype.nexus.repository.http.HttpMethods.GET
+import static org.sonatype.nexus.repository.http.HttpMethods.HEAD
 
 /**
  * npm group repository recipe.
@@ -53,6 +53,9 @@ class NpmGroupRecipe
 
   @Inject
   NpmGroupPackageHandler packageHandler
+
+  @Inject
+  NpmGroupDistTagsHandler distTagsHandler
 
   @Inject
   GroupHandler tarballHandler
@@ -101,7 +104,7 @@ class NpmGroupRecipe
         .create())
 
     // GET /packageName (npm install)
-    builder.route(packageMatcher(GET)
+    builder.route(packageMatcher(GET, HEAD)
         .handler(timingHandler)
         .handler(securityHandler)
         .handler(unitOfWorkHandler)
@@ -110,11 +113,20 @@ class NpmGroupRecipe
         .create())
 
     // GET /packageName/-/tarballName (npm install)
-    builder.route(tarballMatcher(GET)
+    builder.route(tarballMatcher(GET, HEAD)
         .handler(timingHandler)
         .handler(securityHandler)
         .handler(handlerContributor)
         .handler(tarballHandler)
+        .create())
+
+    // GET /-/package/packageName/dist-tags (npm dist-tag ls pkg)
+    builder.route(distTagsMatcher(GET)
+        .handler(timingHandler)
+        .handler(securityHandler)
+        .handler(unitOfWorkHandler)
+        .handler(lastDownloadedHandler)
+        .handler(distTagsHandler)
         .create())
 
     createUserRoutes(builder)
