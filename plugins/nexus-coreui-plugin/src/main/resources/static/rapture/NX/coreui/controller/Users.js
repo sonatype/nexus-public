@@ -192,7 +192,18 @@ Ext.define('NX.coreui.controller.Users', {
           me.addTab({ xtype: 'nx-coreui-user-settings-external', title: 'Settings', weight: 10 });
           externalSettingsPanel = me.getExternalSettings();
         }
-        externalSettingsPanel.loadRecord(model);
+        //we purposefully don't load the roles/externalRoles when retrieving list as we need to query crowd for each user
+        //very time consuming, rather we query for the role data when a user is selected
+        NX.direct.coreui_User.get(model.get('userId'), model.get('realm'), function(response) {
+          if (Ext.isObject(response) && response.success) {
+              model.set('roles', response.data.roles);
+              model.set('externalRoles', response.data.externalRoles);
+              externalSettingsPanel.loadRecord(model);
+          }
+          else {
+            me.removeTab(externalSettingsPanel);
+          }
+        });
       }
       else {
         if (!settingsPanel) {

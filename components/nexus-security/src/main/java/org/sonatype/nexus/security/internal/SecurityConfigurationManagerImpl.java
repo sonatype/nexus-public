@@ -43,7 +43,10 @@ import org.sonatype.nexus.security.config.SecurityContributor;
 import org.sonatype.nexus.security.privilege.DuplicatePrivilegeException;
 import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
 import org.sonatype.nexus.security.privilege.ReadonlyPrivilegeException;
+import org.sonatype.nexus.security.role.DuplicateRoleException;
 import org.sonatype.nexus.security.role.NoSuchRoleException;
+import org.sonatype.nexus.security.role.ReadonlyRoleException;
+import org.sonatype.nexus.security.role.RoleContainsItselfException;
 import org.sonatype.nexus.security.user.NoSuchRoleMappingException;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 
@@ -131,6 +134,12 @@ public class SecurityConfigurationManagerImpl
 
   @Override
   public void createRole(CRole role) {
+    if (getMergedConfiguration().getRoles().stream().anyMatch(p -> p.getId().equals(role.getId()))) {
+      throw new DuplicateRoleException(role.getId());
+    }
+
+    validateContainedRolesAndPrivileges(role);
+
     getDefaultConfiguration().addRole(role);
   }
 
@@ -165,10 +174,17 @@ public class SecurityConfigurationManagerImpl
   }
 
   @Override
-  public void deleteRole(String id) throws NoSuchRoleException {
-    boolean found = getDefaultConfiguration().removeRole(id);
-    if (!found) {
-      throw new NoSuchRoleException(id);
+  public void deleteRole(String id) {
+    try {
+      getDefaultConfiguration().removeRole(id);
+    }
+    catch (NoSuchRoleException e) {
+      //note that readonly check is done here, rather than at orient level, as we dont store readonly flag with
+      //config, basically any roles added via SecurityContributor impls are marked as readonly
+      if (getMergedConfiguration().getRoles().stream().anyMatch(p -> p.getId().equals(id))) {
+        throw new ReadonlyRoleException(id);
+      }
+      throw e;
     }
     configCleaner.roleRemoved(getDefaultConfiguration(), id);
   }
@@ -198,7 +214,7 @@ public class SecurityConfigurationManagerImpl
   }
 
   @Override
-  public CRole readRole(String id) throws NoSuchRoleException {
+  public CRole readRole(String id) {
     CRole role = getMergedConfiguration().getRole(id);
     if (role != null) {
       return role;
@@ -239,7 +255,22 @@ public class SecurityConfigurationManagerImpl
   }
 
   @Override
-  public void updateRole(CRole role) throws NoSuchRoleException {
+  public void updateRole(CRole role) {
+    CRole existing = getDefaultConfiguration().getRole(role.getId());
+
+    if (existing == null) {
+      //note that readonly check is done here, rather than at orient level, as we dont store readonly flag with
+      //config, basically any role added via SecurityContributor impls are marked as readonly
+      if (getMergedConfiguration().getRoles().stream().anyMatch(p -> p.getId().equals(role.getId()))) {
+        throw new ReadonlyRoleException(role.getId());
+      }
+      throw new NoSuchRoleException(role.getId());
+    }
+
+    validateContainedRolesAndPrivileges(role);
+
+    validateRoleDoesntContainItself(role);
+
     getDefaultConfiguration().updateRole(role);
   }
 
@@ -443,5 +474,35 @@ public class SecurityConfigurationManagerImpl
     }
 
     return newRole;
+  }
+
+  /**
+   * Simply validates the existence of each role/privilege assigned
+   * (readRole/readPrivilege throw NoSuch(Role/Privilege)Exception if not found)
+   */
+  private void validateContainedRolesAndPrivileges(CRole role) {
+    role.getRoles().forEach(this::readRole);
+    role.getPrivileges().forEach(this::readPrivilege);
+  }
+
+  /**
+   * Validate a role doesn't contain itself (either directly or indirectly)
+   *
+   * @param role The role to validate
+   */
+  private void validateRoleDoesntContainItself(CRole role) {
+    validateRoleDoesntContainItself(role, role, new HashSet<>());
+  }
+
+  private void validateRoleDoesntContainItself(CRole role, CRole child, Set<String> checkedRoles) {
+    child.getRoles().forEach(r -> {
+      if (r.equals(role.getId())) {
+        throw new RoleContainsItselfException(role.getId());
+      }
+      else if (!checkedRoles.contains(r)){
+        checkedRoles.add(r);
+        validateRoleDoesntContainItself(role, readRole(r), checkedRoles);
+      }
+    });
   }
 }

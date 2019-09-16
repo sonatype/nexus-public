@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.sonatype.nexus.quartz.internal.QuartzTestDAO">
+  <insert id="createSchema" />
+
+  <select id="tables" resultType="String" databaseId="H2">
+    SELECT table_name FROM information_schema.tables WHERE table_name LIKE 'QRTZ_%'
+  </select>
+
+  <select id="tables" resultType="String" databaseId="PostgreSQL">
+    SELECT table_name FROM information_schema.tables WHERE table_name LIKE 'qrtz_%'
+  </select>
+
+  <select id="primaryKeys" resultType="String">
+    SELECT constraint_name FROM information_schema.table_constraints WHERE constraint_type = 'PRIMARY KEY'
+  </select>
+
+  <select id="foreignKeys" resultType="String">
+    SELECT constraint_name FROM information_schema.table_constraints WHERE constraint_type = 'FOREIGN KEY'
+  </select>
+
+  <select id="indexes" resultType="String" databaseId="H2">
+    SELECT index_name FROM information_schema.indexes WHERE index_name LIKE 'IDX_QRTZ_%'
+  </select>
+
+  <select id="indexes" resultType="String" databaseId="PostgreSQL">
+    SELECT indexname FROM pg_indexes WHERE schemaname = 'public'
+  </select>
+
+  <select id="expectedIndexes" resultType="Integer" databaseId="H2">
+    SELECT 54 as count
+  </select>
+
+  <select id="expectedIndexes" resultType="Integer" databaseId="PostgreSQL">
+    SELECT 31 as count
+  </select>
+</mapper>

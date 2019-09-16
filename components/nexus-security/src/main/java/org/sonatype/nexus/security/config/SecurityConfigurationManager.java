@@ -15,7 +15,6 @@ package org.sonatype.nexus.security.config;
 import java.util.List;
 import java.util.Set;
 
-import org.sonatype.nexus.security.role.NoSuchRoleException;
 import org.sonatype.nexus.security.user.NoSuchRoleMappingException;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 
@@ -89,17 +88,17 @@ public interface SecurityConfigurationManager
   /**
    * Retrieve an existing role
    */
-  CRole readRole(String id) throws NoSuchRoleException;
+  CRole readRole(String id);
 
   /**
    * Update an existing role
    */
-  void updateRole(CRole role) throws NoSuchRoleException;
+  void updateRole(CRole role);
 
   /**
    * Delete an existing role
    */
-  void deleteRole(String id) throws NoSuchRoleException;
+  void deleteRole(String id);
 
   //
   // Privileges

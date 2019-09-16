@@ -68,6 +68,18 @@ public final class NexusSecurityApiConstants
 
   public static final String PRIVILEGE_ACTION_DESCRIPTION = "A collection of actions to associate with the privilege, using BREAD syntax (browse,read,edit,add,delete,all) as well as 'run' for script privileges.";
 
+  public static final String ROLE_SOURCE_DESCRIPTION = "The user source which is the origin of this role.";
+
+  public static final String ROLE_ID_DESCRIPTION = "The id of the role.";
+
+  public static final String ROLE_NAME_DESCRIPTION = "The name of the role.";
+
+  public static final String ROLE_DESCRIPTION_DESCRIPTION = "The description of this role.";
+
+  public static final String ROLE_PRIVILEGES_DESCRIPTION = "The list of privileges assigned to this role.";
+
+  public static final String ROLE_ROLES_DESCRIPTION = "The list of roles assigned to this role.";
+
   private NexusSecurityApiConstants() {
     // pointless comment and constructor for sonar
   }

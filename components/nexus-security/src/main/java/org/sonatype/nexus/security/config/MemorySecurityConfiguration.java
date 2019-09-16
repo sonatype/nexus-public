@@ -243,7 +243,7 @@ public class MemorySecurityConfiguration
   }
 
   @Override
-  public void updateRole(final CRole role) throws NoSuchRoleException {
+  public void updateRole(final CRole role) {
     checkNotNull(role);
     checkNotNull(role.getId());
     if (roles.replace(role.getId(), role) == null) {

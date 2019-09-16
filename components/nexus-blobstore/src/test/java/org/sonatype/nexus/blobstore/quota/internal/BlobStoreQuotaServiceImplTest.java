@@ -15,8 +15,6 @@ package org.sonatype.nexus.blobstore.quota.internal;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.validation.ValidationException;
-
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
@@ -24,6 +22,7 @@ import org.sonatype.nexus.blobstore.quota.BlobStoreQuota;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaResult;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -107,13 +106,13 @@ public class BlobStoreQuotaServiceImplTest
     service.validateSoftQuotaConfig(config);
   }
 
-  @Test(expected = ValidationException.class)
+  @Test(expected = ValidationErrorsException.class)
   public void emptyStringQuotaTypeFails() {
     when(attributes.get(BlobStoreQuotaSupport.TYPE_KEY, String.class)).thenReturn("");
     service.validateSoftQuotaConfig(config);
   }
 
-  @Test(expected = ValidationException.class)
+  @Test(expected = ValidationErrorsException.class)
   public void unknownQuotaTypeFails() {
     when(attributes.get(BlobStoreQuotaSupport.TYPE_KEY, String.class)).thenReturn("TOTALLY_FAKE");
     service.validateSoftQuotaConfig(config);

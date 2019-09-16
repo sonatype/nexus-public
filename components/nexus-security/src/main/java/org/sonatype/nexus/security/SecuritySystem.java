@@ -230,4 +230,11 @@ public interface SecuritySystem
    * @since 3.0
    */
   UserManager getUserManager(final String source) throws NoSuchUserManagerException;
+
+  /**
+   * Retrieve list of known authorization sources
+   *
+   * @since 3.next
+   */
+  List<String> listSources();
 }

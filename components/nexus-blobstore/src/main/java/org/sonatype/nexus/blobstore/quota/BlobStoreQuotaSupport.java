@@ -112,6 +112,14 @@ public abstract class BlobStoreQuotaSupport
     return limitObj.longValue();
   }
 
+  /**
+   * @return the quota's type
+   * @since 3.next
+   */
+  public static String getType(final BlobStoreConfiguration config) {
+    return config.attributes(ROOT_KEY).get(TYPE_KEY, String.class);
+  }
+
   @Override
   public String toString() {
     return getDisplayName();

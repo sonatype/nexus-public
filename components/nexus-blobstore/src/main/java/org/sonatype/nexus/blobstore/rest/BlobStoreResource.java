@@ -12,10 +12,13 @@
  */
 package org.sonatype.nexus.blobstore.rest;
 
+import java.util.List;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -33,9 +36,12 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Streams.stream;
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 
 /**
@@ -43,22 +49,19 @@ import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
  */
 @Named
 @Singleton
-@Path(BlobStoreResource.RESOURCE_URI)
+@Path("/")
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
 public class BlobStoreResource
     extends ComponentSupport
     implements Resource, BlobStoreResourceDoc
 {
-  public static final String RESOURCE_URI = V1_API_PREFIX + "/blobstores";
-
   private final BlobStoreManager blobStoreManager;
 
   private final BlobStoreQuotaService quotaService;
 
   @Inject
-  public BlobStoreResource(final BlobStoreManager blobStoreManager,
-                           final BlobStoreQuotaService quotaService)
+  public BlobStoreResource(final BlobStoreManager blobStoreManager, final BlobStoreQuotaService quotaService)
   {
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.quotaService = checkNotNull(quotaService);
@@ -68,7 +71,30 @@ public class BlobStoreResource
   @RequiresAuthentication
   @RequiresPermissions("nexus:blobstores:read")
   @GET
-  @Path("/{id}/quota-status")
+  @Path(BETA_API_PREFIX + "/blobstores")
+  public List<GenericBlobStoreApiResponse> listBlobStores() {
+    return stream(blobStoreManager.browse())
+        .map(GenericBlobStoreApiResponse::new)
+        .collect(toList());
+  }
+
+  @Override
+  @RequiresAuthentication
+  @RequiresPermissions("nexus:blobstores:delete")
+  @DELETE
+  @Path(BETA_API_PREFIX + "/blobstores/{name}")
+  public void deleteBlobStore(@PathParam("name") final String name) throws Exception {
+    if (!blobStoreManager.exists(name)) {
+      BlobStoreResourceUtil.throwBlobStoreNotFoundException();
+    }
+    blobStoreManager.delete(name);
+  }
+
+  @Override
+  @RequiresAuthentication
+  @RequiresPermissions("nexus:blobstores:read")
+  @GET
+  @Path(V1_API_PREFIX + "/blobstores/{id}/quota-status")
   public BlobStoreQuotaResultXO quotaStatus(@PathParam("id") final String id) {
     BlobStore blobStore = blobStoreManager.get(id);
 

@@ -19,6 +19,7 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
+import org.sonatype.nexus.datastore.DataStoreUsageChecker;
 import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
@@ -29,7 +30,7 @@ import org.sonatype.nexus.repository.config.Configuration;
  * @since 3.0
  */
 public interface RepositoryManager
-  extends Lifecycle
+  extends DataStoreUsageChecker, Lifecycle
 {
   Iterable<Repository> browse();
 
@@ -48,11 +49,6 @@ public interface RepositoryManager
   Repository update(Configuration configuration) throws Exception;
 
   void delete(String name) throws Exception;
-
-  /**
-   * @since 3.next
-   */
-  boolean isDataStoreUsed(String dataStoreName);
 
   boolean isBlobstoreUsed(String blobStoreName);
 

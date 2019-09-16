@@ -12,9 +12,14 @@
  */
 package org.sonatype.nexus.blobstore.file.internal;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
+import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
+import org.sonatype.nexus.common.app.ApplicationDirectories;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -22,6 +27,8 @@ import org.mockito.Mock;
 
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.sonatype.nexus.blobstore.file.FileBlobStore.CONFIG_KEY;
+import static org.sonatype.nexus.blobstore.file.FileBlobStore.PATH_KEY;
 
 public class FileBlobStoreDescriptorTest
     extends TestSupport
@@ -29,16 +36,21 @@ public class FileBlobStoreDescriptorTest
   @Mock
   BlobStoreQuotaService quotaService;
 
+  @Mock
+  ApplicationDirectories applicationDirectories;
+
   FileBlobStoreDescriptor descriptor;
 
   @Before
   public void setup() {
-    descriptor = new FileBlobStoreDescriptor(quotaService);
+    descriptor = new FileBlobStoreDescriptor(quotaService, applicationDirectories);
   }
 
   @Test
-  public void descriptorValidationCallQuotaValidation() {
+  public void descriptorValidationCallQuotaValidation() throws Exception {
     BlobStoreConfiguration config = new BlobStoreConfiguration();
+    Path tempDir = Files.createTempDirectory("test");
+    config.attributes(CONFIG_KEY).set(PATH_KEY, tempDir.toAbsolutePath().toString());
     descriptor.validateConfig(config);
     verify(quotaService, times(1)).validateSoftQuotaConfig(config);
   }

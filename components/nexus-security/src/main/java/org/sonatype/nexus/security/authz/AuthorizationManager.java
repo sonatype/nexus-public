@@ -16,7 +16,6 @@ import java.util.Set;
 
 import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
 import org.sonatype.nexus.security.privilege.Privilege;
-import org.sonatype.nexus.security.role.NoSuchRoleException;
 import org.sonatype.nexus.security.role.Role;
 
 /**
@@ -43,7 +42,7 @@ public interface AuthorizationManager
   /**
    * Returns a Role base on an Id.
    */
-  Role getRole(String roleId) throws NoSuchRoleException;
+  Role getRole(String roleId);
 
   /**
    * Adds a role to this AuthorizationManager.
@@ -53,12 +52,12 @@ public interface AuthorizationManager
   /**
    * Updates a role in this AuthorizationManager.
    */
-  Role updateRole(Role role) throws NoSuchRoleException;
+  Role updateRole(Role role);
 
   /**
    * Removes a role in this AuthorizationManager.
    */
-  void deleteRole(String roleId) throws NoSuchRoleException;
+  void deleteRole(String roleId);
 
   // Privilege CRUDS
 

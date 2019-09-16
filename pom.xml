@@ -509,6 +509,12 @@
         <version>3.19.0-SNAPSHOT</version>
       </dependency>
 
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-test-db</artifactId>
+        <version>3.19.0-SNAPSHOT</version>
+      </dependency>
+
       <!-- assemblies -->
 
       <dependency>
@@ -1646,6 +1652,19 @@
                       </pluginExecutionFilter>
                       <action>
                         <execute/>
+                      </action>
+                    </pluginExecution>
+                    <pluginExecution>
+                      <pluginExecutionFilter>
+                        <groupId>com.github.eirslett</groupId>
+                        <artifactId>frontend-maven-plugin</artifactId>
+                        <versionRange>[1.7.5,)</versionRange>
+                        <goals>
+                          <goal>npm</goal>
+                        </goals>
+                      </pluginExecutionFilter>
+                      <action>
+                        <ignore/>
                       </action>
                     </pluginExecution>
                   </pluginExecutions>

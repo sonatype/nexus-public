@@ -250,6 +250,16 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchApt_Text: 'Apt',
     SearchApt_Description: 'Search for components in Apt repositories',
 
+    // Browse -> Search -> Cocoapods
+    SearchCocoapods_Text: 'Cocoapods',
+    SearchCocoapods_Description: 'Search for components in Cocoapods repositories',
+
+    // Browse -> Search -> Conda
+    SearchConda_Text: 'Conda',
+    SearchConda_Description: 'Search for components in Conda repositories',
+    SearchConda_Group: 'Conda Repositories',
+    SearchConda_License_FieldLabel: 'License',
+
     // Browse -> Browse
     FeatureGroups_Browse_Text: 'Browse',
     FeatureGroups_Browse_Description: 'Browse assets and components',
@@ -350,6 +360,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_AptSigningFacet_Keypair_FieldLabel: 'Signing Key',
     Repository_Facet_AptSigningFacet_Keypair_HelpText: 'PGP signing key pair (armored private key e.g. gpg --export-secret-key --armor <Name or ID>)',
     Repository_Facet_AptSigningFacet_Passphrase_FieldLabel: 'Passphrase',
+    Repository_Facet_CondaFacet_Title: 'Conda Settings',
     Repository_Facet_GroupFacet_Title: 'Group',
     Repository_Facet_HttpClientFacet_Title: 'HTTP',
     Repository_Facet_Maven2Facet_Title: 'Maven 2',

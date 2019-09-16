@@ -68,6 +68,19 @@ public interface RepositoryApi
                              final boolean strictContentTypeValidation);
 
   /**
+   * Create a Cocoapods proxy repository.
+   * @param name The name of the new Repository
+   * @param remoteUrl The url of the external proxy for this Repository
+   * @param blobStoreName The BlobStore the Repository should use
+   * @param strictContentTypeValidation Whether or not the Repository should enforce strict content types
+   * @return the newly created Repository
+   */
+  Repository createCocoapodsProxy(final String name,
+                            final String remoteUrl,
+                            final String blobStoreName,
+                            final boolean strictContentTypeValidation);
+
+  /**
    * Create a Maven hosted repository.
    * @param name The name of the new Repository
    * @param blobStoreName The BlobStore the Repository should use

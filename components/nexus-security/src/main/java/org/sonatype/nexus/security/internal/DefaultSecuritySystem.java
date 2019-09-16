@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.crypto.Cipher;
@@ -553,5 +554,10 @@ public class DefaultSecuritySystem
       throw new NoSuchUserManagerException(source);
     }
     return userManagers.get(source);
+  }
+
+  @Override
+  public List<String> listSources() {
+    return authorizationManagers.keySet().stream().sorted().collect(Collectors.toList());
   }
 }

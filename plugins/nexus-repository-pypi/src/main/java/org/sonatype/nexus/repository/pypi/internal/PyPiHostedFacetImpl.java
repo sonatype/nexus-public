@@ -332,37 +332,38 @@ public class PyPiHostedFacetImpl
     return asset;
   }
 
-  @TransactionalStoreBlob
   @Override
   public Asset upload(final SignablePyPiPackage pyPiPackage) throws IOException {
-    try (TempBlobPartPayload wheelPayload = pyPiPackage.getWheelPayload()) {
-
-      Map<String, String> attributes = pyPiPackage.getAttributes();
-      String wheelFileName = wheelPayload.getName();
-
-      Asset savedPiPyPackage = savePyPiWheelPayload(wheelFileName, attributes, wheelPayload);
-
-      TempBlobPartPayload gpgSignaturePayload = pyPiPackage.getGpgSignature();
-      if (gpgSignaturePayload != null) {
-        saveGpgSignaturePayload(gpgSignaturePayload, attributes);
-      }
-      return savedPiPyPackage;
+    Asset savedPiPyPackage;
+    Map<String, String>attributes = pyPiPackage.getAttributes();
+    try (TempBlobPartPayload payload = pyPiPackage.getWheelPayload()) {
+      savedPiPyPackage = storeWheelPayload(payload, attributes);
     }
+    try (TempBlobPartPayload payload = pyPiPackage.getGpgSignature()) {
+      storeGpgSignaturePayload(payload, attributes);
+    }
+    return savedPiPyPackage;
   }
 
-  protected void saveGpgSignaturePayload(
-      final TempBlobPartPayload gpgSignaturePayload,
-      final Map<String, String> attributes)
-      throws IOException
+  @TransactionalStoreBlob
+  protected Asset storeWheelPayload(final TempBlobPartPayload wheelPayload,
+                                    final Map<String, String> attributes) throws IOException
   {
-    try (TempBlobPartPayload gpgSignature = gpgSignaturePayload) {
+    String wheelFileName = wheelPayload.getName();
+    return savePyPiWheelPayload(wheelFileName, attributes, wheelPayload);
+  }
+
+  @TransactionalStoreBlob
+  protected void storeGpgSignaturePayload(final TempBlobPartPayload gpgPayload,
+                                          final Map<String, String> attributes) throws IOException {
+    if (gpgPayload != null) {
       String name = attributes.get(P_NAME);
       String version = attributes.get(P_VERSION);
       StorageTx tx = UnitOfWork.currentTx();
 
       Optional.ofNullable(findComponent(tx, getRepository(), normalizeName(name), version))
-          .map(component -> createGpgSignatureAsset(gpgSignature.getName(), name, version, component, tx))
-          .map(asset -> saveGpgSignatureAsset(tx, asset, gpgSignature))
+          .map(component -> createGpgSignatureAsset(gpgPayload.getName(), name, version, component, tx))
+          .map(asset -> saveGpgSignatureAsset(tx, asset, gpgPayload))
           .orElseThrow(() -> new IllegalStateException(String.format("Component %s/%s not found.", name, version)));
     }
   }

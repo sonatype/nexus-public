@@ -56,15 +56,7 @@
     <dependency>
       <groupId>org.sonatype.goodies</groupId>
       <artifactId>goodies-testsupport</artifactId>
-      <optional>true</optional>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.opentable.components</groupId>
-      <artifactId>otj-pg-embedded</artifactId>
-      <optional>true</optional>
-      <scope>provided</scope>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 

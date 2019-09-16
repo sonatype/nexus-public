@@ -19,7 +19,6 @@ import java.util.function.Predicate;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
-import javax.validation.ValidationException;
 
 import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
@@ -35,10 +34,15 @@ import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.formfields.ComboboxFormField;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.ItemselectFormField;
+import org.sonatype.nexus.rest.ValidationErrorsException;
+
+import org.apache.commons.lang.StringUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static org.sonatype.nexus.blobstore.group.BlobStoreGroup.CONFIG_KEY;
+import static org.sonatype.nexus.blobstore.group.BlobStoreGroup.FILL_POLICY_KEY;
 import static org.sonatype.nexus.blobstore.group.BlobStoreGroup.MEMBERS_KEY;
 import static org.sonatype.nexus.blobstore.group.BlobStoreGroupConfigurationHelper.memberNames;
 import static org.sonatype.nexus.formfields.FormField.MANDATORY;
@@ -126,7 +130,13 @@ public class BlobStoreGroupDescriptor
     super.validateConfig(config);
     validateEnabled();
     String name = config.getName();
-    List<String> memberNames = memberNames(config);
+
+    String fillPolicy = config.attributes(CONFIG_KEY).get(FILL_POLICY_KEY, String.class);
+    if (StringUtils.isBlank(fillPolicy)) {
+      throw new ValidationErrorsException("Blob store group requires a fill policy configuration");
+    }
+
+    List<String> memberNames = config.attributes(CONFIG_KEY).get(MEMBERS_KEY, List.class);
     validateNotEmptyOrSelfReferencing(name, memberNames);
     validateEligibleMembers(name, memberNames);
     validateOnlyEmptyOrNotWritableExistingMembersRemoved(name, memberNames);
@@ -134,17 +144,17 @@ public class BlobStoreGroupDescriptor
 
   private void validateEnabled() {
     if (!isEnabled()) {
-      throw new ValidationException("Blob store groups are not enabled");
+      throw new ValidationErrorsException("Blob store groups are not enabled");
     }
   }
 
   private void validateNotEmptyOrSelfReferencing(final String name, final List<String> memberNames) {
-    if (memberNames.isEmpty()) {
-      throw new ValidationException("Blob Store '" + name + "' cannot be empty");
+    if (memberNames == null || memberNames.isEmpty()) {
+      throw new ValidationErrorsException("Blob Store '" + name + "' cannot be empty");
     }
 
     if (memberNames.contains(name)) {
-      throw new ValidationException("Blob Store '" + name + "' cannot contain itself");
+      throw new ValidationErrorsException("Blob Store '" + name + "' cannot contain itself");
     }
   }
 
@@ -153,7 +163,7 @@ public class BlobStoreGroupDescriptor
       BlobStore member = blobStoreManager.get(memberName);
       if (!member.isGroupable()) {
         BlobStoreConfiguration memberConfig = member.getBlobStoreConfiguration();
-        throw new ValidationException(
+        throw new ValidationErrorsException(
             format("Blob Store '%s' is of type '%s' and is not eligible to be a group member", memberName,
                 memberConfig.getType()));
       }
@@ -161,14 +171,14 @@ public class BlobStoreGroupDescriptor
       // target member may not be a member of a different group
       Predicate<String> sameGroup = name::equals;
       blobStoreManager.getParent(memberName).filter(sameGroup.negate()).ifPresent(groupName -> {
-        throw new ValidationException(
+        throw new ValidationErrorsException(
             format("Blob Store '%s' is already a member of Blob Store Group '%s'", memberName, groupName));
       });
 
       // target member may not be set as repository storage
       int repoCount = blobStoreUtil.usageCount(memberName);
       if (repoCount > 0) {
-        throw new ValidationException(format(
+        throw new ValidationErrorsException(format(
             "Blob Store '%s' is set as storage for %s repositories and is not eligible to be a group member",
             memberName, repoCount));
       }
@@ -184,7 +194,7 @@ public class BlobStoreGroupDescriptor
           if (!memberNames.contains(existingMemberName)) {
             BlobStore existingMember = blobStoreManager.get(existingMemberName);
             if (existingMember.isWritable() || !existingMember.isEmpty()) {
-              throw new ValidationException(
+              throw new ValidationErrorsException(
                   format("Blob Store '%s' cannot be removed from Blob Store Group '%s', " +
                       "use 'Admin - Remove a member from a blob store group' task instead",
                       existingMemberName, name));

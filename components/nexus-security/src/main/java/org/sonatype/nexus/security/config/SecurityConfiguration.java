@@ -17,7 +17,6 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.security.role.NoSuchRoleException;
 import org.sonatype.nexus.security.user.NoSuchRoleMappingException;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 
@@ -73,7 +72,7 @@ public interface SecurityConfiguration
 
   void addRole(CRole role);
 
-  void updateRole(CRole role) throws NoSuchRoleException;
+  void updateRole(CRole role);
 
   boolean removeRole(String id);
 }

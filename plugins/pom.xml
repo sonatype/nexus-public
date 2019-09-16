@@ -38,6 +38,8 @@
     <module>nexus-repository-maven</module>
     <module>nexus-repository-npm</module>
     <module>nexus-repository-apt</module>
+    <module>nexus-repository-cocoapods</module>
+    <module>nexus-repository-conda</module>
     <module>nexus-repository-pypi</module>
     <module>nexus-repository-raw</module>
     <module>nexus-restore-apt</module>
@@ -238,6 +240,39 @@
       <dependency>
         <groupId>org.sonatype.nexus.plugins</groupId>
         <artifactId>nexus-repository-apt</artifactId>
+        <version>3.19.0-SNAPSHOT</version>
+        <classifier>features</classifier>
+        <type>xml</type>
+      </dependency>
+
+
+      <!-- repository-cocoapods -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-repository-cocoapods</artifactId>
+        <version>3.19.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-repository-cocoapods</artifactId>
+        <version>3.19.0-SNAPSHOT</version>
+        <classifier>features</classifier>
+        <type>xml</type>
+      </dependency>
+
+      <!-- repository-conda -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-repository-conda</artifactId>
+        <version>3.19.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-repository-conda</artifactId>
         <version>3.19.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>

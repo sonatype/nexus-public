@@ -132,6 +132,20 @@
 
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-repository-cocoapods</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-repository-conda</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-repository-pypi</artifactId>
       <classifier>features</classifier>
       <type>xml</type>

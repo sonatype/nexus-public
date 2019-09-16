@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.blobstore.group.internal
 
-import javax.validation.ValidationException
 
 import org.sonatype.nexus.blobstore.BlobStoreUtil
 import org.sonatype.nexus.blobstore.api.BlobId
@@ -23,6 +22,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreMetrics
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup
 import org.sonatype.nexus.blobstore.group.BlobStoreGroupService
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService
+import org.sonatype.nexus.rest.ValidationErrorsException
 
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -63,7 +63,7 @@ class BlobStoreGroupDescriptorTest
 
     when: 'the config is validated'
       config.name = 'self'
-      config.attributes = [group: [members: members]]
+      config.attributes = [group: [members: members, fillPolicy: WriteToFirstMemberFillPolicy.TYPE]]
       blobStoreGroupDescriptor.validateConfig(config)
 
     then: 'validate succeeds'
@@ -79,15 +79,15 @@ class BlobStoreGroupDescriptorTest
   def 'Validate invalid members #members'() {
     given: 'A config'
       def config = new BlobStoreConfiguration()
-      blobStores.nested = mockBlobStore('nested', BlobStoreGroup.TYPE, [group: [members: ['self']]], false)
+      blobStores.nested = mockBlobStore('nested', BlobStoreGroup.TYPE, [group: [members: ['self'], fillPolicy: WriteToFirstMemberFillPolicy.TYPE]], false)
 
     when: 'the config is validated'
       config.name = 'self'
-      config.attributes = [group: [members: members]]
+      config.attributes = [group: [members: members, fillPolicy: WriteToFirstMemberFillPolicy.TYPE]]
       blobStoreGroupDescriptor.validateConfig(config)
 
     then: 'a validation exception is thrown'
-      def exception = thrown(ValidationException)
+      def exception = thrown(ValidationErrorsException)
       exception.message == expectedMessage
 
     where:
@@ -105,22 +105,23 @@ class BlobStoreGroupDescriptorTest
     when: 'a new group is created with the same member as the existing group'
       blobStoreGroupDescriptor.
           validateConfig(new BlobStoreConfiguration(name: 'invalidGroup', type: BlobStoreGroup.TYPE,
-              attributes: [group: [members: ['store1']]]))
+              attributes: [group: [members: ['store1'], fillPolicy: WriteToFirstMemberFillPolicy.TYPE]]))
 
     then: 'a validation exception is thrown'
       blobStoreManager.getParent('store1') >> Optional.of('group1')
-      def exception = thrown(ValidationException)
+      def exception = thrown(ValidationErrorsException)
       exception.message == "Blob Store 'store1' is already a member of Blob Store Group 'group1'"
   }
 
   def 'blob stores cant be group members if set as repo storage'() {
     when: 'attempting to create a group with that blob store'
-      blobStoreGroupDescriptor.validateConfig(new BlobStoreConfiguration(name: 'invalidGroup', type: BlobStoreGroup.TYPE,
-        attributes: [group: [members: ['store1']]]))
+      blobStoreGroupDescriptor.
+          validateConfig(new BlobStoreConfiguration(name: 'invalidGroup', type: BlobStoreGroup.TYPE,
+              attributes: [group: [members: ['store1'], fillPolicy: WriteToFirstMemberFillPolicy.TYPE]]))
 
     then: 'a validation exception is thrown'
       blobStoreUtil.usageCount('store1') >> 1
-      def exception = thrown(ValidationException)
+      def exception = thrown(ValidationErrorsException)
       exception.message ==
           "Blob Store 'store1' is set as storage for 1 repositories and is not eligible to be a group member"
   }
@@ -135,27 +136,27 @@ class BlobStoreGroupDescriptorTest
     when: 'the member is removed'
       blobStoreGroupDescriptor.
           validateConfig(new BlobStoreConfiguration(name: 'group1', type: BlobStoreGroup.TYPE,
-              attributes: [group: [members: ['store1']]]))
+              attributes: [group: [members: ['store1'], fillPolicy: WriteToFirstMemberFillPolicy.TYPE]]))
 
     then: 'a validation exception is thrown'
-      def exception = thrown(ValidationException)
+      def exception = thrown(ValidationErrorsException)
       exception.message ==
-            "Blob Store 'nonEmptyStore' cannot be removed from Blob Store Group 'group1', " +
-            "use 'Admin - Remove a member from a blob store group' task instead"
+          "Blob Store 'nonEmptyStore' cannot be removed from Blob Store Group 'group1', " +
+          "use 'Admin - Remove a member from a blob store group' task instead"
   }
 
   def 'a group blob store validates its quota'() {
     when: 'attempting to create a group'
       blobStoreGroupDescriptor.validateConfig(new BlobStoreConfiguration(name: 'group', type: BlobStoreGroup.TYPE,
-          attributes: [group: [members: ['single']]]))
+          attributes: [group: [members: ['single'], fillPolicy: WriteToFirstMemberFillPolicy.TYPE]]))
 
     then: 'quota validity is checked'
-       1 * quotaService.validateSoftQuotaConfig(*_)
+      1 * quotaService.validateSoftQuotaConfig(*_)
   }
 
   private BlobStoreGroup mockBlobStoreGroup(final String name, final List<BlobStore> members) {
     def config = new BlobStoreConfiguration(name: name, type: BlobStoreGroup.TYPE,
-        attributes: [group: [members: members.collect { it.blobStoreConfiguration.name }]])
+        attributes: [group: [members: members.collect { it.blobStoreConfiguration.name }], fillPolicy: WriteToFirstMemberFillPolicy.TYPE])
     def group = Mock(BlobStoreGroup)
     group.isGroupable() >> false
     group.getBlobStoreConfiguration() >> config
@@ -167,7 +168,8 @@ class BlobStoreGroupDescriptorTest
                                   final String type,
                                   attributes = [:],
                                   Boolean groupable = true,
-                                  BlobStoreMetrics metrics = null) {
+                                  BlobStoreMetrics metrics = null)
+  {
     def blobStore = Mock(BlobStore)
     def config = new BlobStoreConfiguration()
     blobStore.getBlobStoreConfiguration() >> config

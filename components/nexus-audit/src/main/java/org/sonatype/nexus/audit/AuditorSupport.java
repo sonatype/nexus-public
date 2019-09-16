@@ -134,9 +134,12 @@ public abstract class AuditorSupport
   }
 
   /**
-   * Helper to conviert an iterable into a string.
+   * Helper to convert an iterable into a string.
    */
   protected static String string(final Iterable value) {
+    if (value == null) {
+      return null;
+    }
     return LIST_JOINER.join(value);
   }
 }

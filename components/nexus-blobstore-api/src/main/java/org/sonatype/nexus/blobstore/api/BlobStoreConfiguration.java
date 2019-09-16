@@ -63,6 +63,10 @@ public class BlobStoreConfiguration
   }
 
   public Map<String, Map<String, Object>> getAttributes() {
+    if (attributes == null) {
+      attributes = Maps.newHashMap();
+    }
+
     return attributes;
   }
 

@@ -34,6 +34,7 @@ import org.sonatype.nexus.security.config.SecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityConfigurationSource;
 import org.sonatype.nexus.security.privilege.DuplicatePrivilegeException;
 import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
+import org.sonatype.nexus.security.role.DuplicateRoleException;
 import org.sonatype.nexus.security.role.NoSuchRoleException;
 import org.sonatype.nexus.security.user.NoSuchRoleMappingException;
 import org.sonatype.nexus.security.user.UserManager;
@@ -372,17 +373,27 @@ public class OrientSecurityConfigurationSource
       checkNotNull(role.getId());
       log.trace("Adding role: {}", role.getId());
 
-      inTxRetry(databaseInstance).run(db -> roleEntityAdapter.addEntity(db, role));
+      try {
+        inTxRetry(databaseInstance).run(db -> {
+          if (roleEntityAdapter.read(db, role.getId()) != null) {
+            throw new DuplicateRoleException(role.getId());
+          }
+          roleEntityAdapter.addEntity(db, role);
+        });
+      }
+      catch (ORecordDuplicatedException e) {
+        throw new DuplicateRoleException(role.getId(), e);
+      }
     }
 
     @Override
-    public void updateRole(final CRole role) throws NoSuchRoleException {
+    public void updateRole(final CRole role) {
       checkNotNull(role);
       checkNotNull(role.getId());
       log.trace("Updating role: {}", role.getId());
 
       try {
-        inTxRetry(databaseInstance).throwing(NoSuchRoleException.class).run(db -> {
+        inTxRetry(databaseInstance).run(db -> {
           CRole existing = roleEntityAdapter.read(db, role.getId());
           if (existing == null) {
             throw new NoSuchRoleException(role.getId());
@@ -404,7 +415,13 @@ public class OrientSecurityConfigurationSource
       log.trace("Removing role: {}", id);
 
       try {
-        return inTxRetry(databaseInstance).call(db -> roleEntityAdapter.delete(db, id));
+        return inTxRetry(databaseInstance).call(db -> {
+          CRole existing = roleEntityAdapter.read(db, id);
+          if (existing == null) {
+            throw new NoSuchRoleException(id);
+          }
+          return roleEntityAdapter.delete(db, id);
+        });
       }
       catch (OConcurrentModificationException e) {
         throw concurrentlyModified("Role", id);

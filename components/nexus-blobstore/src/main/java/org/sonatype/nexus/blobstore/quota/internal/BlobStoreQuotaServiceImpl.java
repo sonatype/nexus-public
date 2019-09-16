@@ -27,6 +27,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuota;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaResult;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Optional.ofNullable;
@@ -55,7 +56,7 @@ public class BlobStoreQuotaServiceImpl
   public void validateSoftQuotaConfig(final BlobStoreConfiguration config) {
     getQuotaType(config).ifPresent(type -> {
       if(!quotas.containsKey(type)) {
-        throw new ValidationException("To enable Soft Quota, you must select a Type of Quota");
+        throw new ValidationErrorsException("To enable Soft Quota, you must select a Type of Quota");
       }
     });
     getQuota(config).ifPresent(quota -> quota.validateConfig(config));

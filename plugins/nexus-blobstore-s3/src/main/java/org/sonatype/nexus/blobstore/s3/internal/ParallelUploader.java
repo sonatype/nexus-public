@@ -51,6 +51,8 @@ public class ParallelUploader
     extends ParallelRequester
     implements S3Uploader
 {
+  private static final Chunk EMPTY_CHUNK = new ChunkReader.Chunk(0, new byte[0], 0);
+
   @Inject
   public ParallelUploader(@Named("${nexus.s3.parallelRequests.chunksize:-5242880}") final int chunkSize,
                           @Named("${nexus.s3.parallelRequests.parallelism:-0}") final int nThreads)
@@ -61,18 +63,13 @@ public class ParallelUploader
   @Override
   public void upload(final AmazonS3 s3, final String bucket, final String key, final InputStream contents) {
     try (InputStream input = new BufferedInputStream(contents, chunkSize)) {
+      log.debug("Starting upload to key {} in bucket {}", key, bucket);
+
       input.mark(chunkSize);
       ChunkReader chunkReader = new ChunkReader(input);
-      Optional<Chunk> firstChunk = chunkReader.readChunk(chunkSize);
+      Chunk chunk = chunkReader.readChunk(chunkSize).orElse(EMPTY_CHUNK);
       input.reset();
 
-      if (!firstChunk.isPresent()) {
-        log.error("Failed to read data for upload to key {} in bucket {}", key, bucket);
-        return;
-      }
-
-      log.debug("Starting upload to key {} in bucket {}", key, bucket);
-      Chunk chunk = firstChunk.get();
       if (chunk.dataLength < chunkSize) {
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentLength(chunk.dataLength);

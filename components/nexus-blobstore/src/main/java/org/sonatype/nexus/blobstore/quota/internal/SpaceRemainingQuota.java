@@ -14,13 +14,13 @@ package org.sonatype.nexus.blobstore.quota.internal;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
-import javax.validation.ValidationException;
 
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuota;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaResult;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
@@ -42,7 +42,7 @@ public class SpaceRemainingQuota
   @Override
   public void validateConfig(final BlobStoreConfiguration config) {
     if (getLimit(config) <= 0) {
-      throw new ValidationException(DISPLAY_NAME + " quotas must have a Quota Limit greater than 0");
+      throw new ValidationErrorsException(DISPLAY_NAME + " quotas must have a Quota Limit greater than 0");
     }
   }
 

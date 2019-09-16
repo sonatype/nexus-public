@@ -28,7 +28,8 @@ import static com.google.common.base.Preconditions.checkNotNull
 @CompileStatic
 public class RepositoryRule
     extends ExternalResource
-    implements MavenRepoRecipes, RawRepoRecipes, NpmRepoRecipes, PyPiRepoRecipes, AptRepoRecipes, GolangRepoRecipes
+    implements MavenRepoRecipes, RawRepoRecipes, NpmRepoRecipes, PyPiRepoRecipes, AptRepoRecipes, GolangRepoRecipes,
+        CocoapodsRepoRecipes, CondaRepoRecipes
 {
   final Provider<RepositoryManager> repositoryManagerProvider
 
@@ -40,9 +41,12 @@ public class RepositoryRule
 
   @Override
   protected void after() {
+    def repositoryManager = repositoryManagerProvider.get()
     repositories.each { Repository repository ->
-      log.debug 'Deleting test repository: {}', repository.name
-      repositoryManagerProvider.get().delete(repository.name)
+      if (repositoryManager.exists(repository.name)) {
+        log.debug 'Deleting test repository: {}', repository.name
+        repositoryManager.delete(repository.name)
+      }
     }
     repositories.clear()
   }
@@ -66,5 +70,5 @@ public class RepositoryRule
     log.debug 'Deleting test repository: {}', repository.name
     repositoryManagerProvider.get().delete(repository.name)
   }
-  
+
 }

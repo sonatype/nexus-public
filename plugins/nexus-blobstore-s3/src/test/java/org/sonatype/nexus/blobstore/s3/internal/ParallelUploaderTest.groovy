@@ -27,6 +27,20 @@ class ParallelUploaderTest
     extends Specification
 {
 
+  def 'an empty stream still causes an upload'() {
+    given: 'A parallel uploader'
+      ParallelUploader parallelUploader = new ParallelUploader(100, 4)
+      AmazonS3 s3 = Mock()
+
+    when: 'an upload is started'
+      def input = new ByteArrayInputStream(new byte[0])
+      parallelUploader.upload(s3, 'bucketName', 'key', input)
+
+    then: 'the putObject method is called'
+      1 * s3.putObject(_, _, _, _)
+      0 * s3.initiateMultipartUpload(_)
+  }
+
   def 'upload uploads with the multipart api'() {
     given: 'A parallel uploader'
       ParallelUploader parallelUploader = new ParallelUploader(100, 4)

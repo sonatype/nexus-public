@@ -16,7 +16,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.datastore.mybatis.testsupport.DataSessionRule;
+import org.sonatype.nexus.testdb.DataSessionRule;
 
 import org.junit.After;
 import org.junit.Before;

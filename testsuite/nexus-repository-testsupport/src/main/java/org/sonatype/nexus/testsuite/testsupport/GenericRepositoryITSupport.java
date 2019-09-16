@@ -48,6 +48,10 @@ import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.testsuite.testsupport.apt.AptClient;
 import org.sonatype.nexus.testsuite.testsupport.apt.AptClientFactory;
+import org.sonatype.nexus.testsuite.testsupport.conda.CondaClient;
+import org.sonatype.nexus.testsuite.testsupport.conda.CondaClientFactory;
+import org.sonatype.nexus.testsuite.testsupport.cocoapods.CocoapodsClient;
+import org.sonatype.nexus.testsuite.testsupport.cocoapods.CocoapodsClientFactory;
 import org.sonatype.nexus.testsuite.testsupport.fixtures.RepositoryRule;
 import org.sonatype.nexus.testsuite.testsupport.golang.GolangClient;
 import org.sonatype.nexus.testsuite.testsupport.npm.NpmClient;
@@ -82,6 +86,10 @@ public abstract class GenericRepositoryITSupport<RR extends RepositoryRule>
   protected static final int MAX_NUGET_CLIENT_CONNECTIONS = 100;
 
   protected AptClientFactory aptClientFactory = new AptClientFactory();
+
+  protected CondaClientFactory condaClientFactory = new CondaClientFactory();
+
+  protected CocoapodsClientFactory cocoapodsClientFactory = new CocoapodsClientFactory();
 
   @Inject
   protected RepositoryManager repositoryManager;
@@ -165,6 +173,30 @@ public abstract class GenericRepositoryITSupport<RR extends RepositoryRule>
     checkNotNull(repositoryManager.get(repositoryName));
     return aptClientFactory
         .createClient(resolveUrl(nexusUrl, SLASH_REPO_SLASH + repositoryName + "/"), username, password);
+  }
+
+  protected CocoapodsClient createCocoapodsClient(final String repositoryName) throws Exception {
+    Credentials creds = credentials();
+    return createCocoapodsClient(repositoryName, creds.getUserPrincipal().getName(), creds.getPassword());
+  }
+
+  protected CocoapodsClient createCocoapodsClient(final String repositoryName, final String username, final String password)
+  {
+    checkNotNull(repositoryManager.get(repositoryName));
+    return cocoapodsClientFactory
+        .createClient(resolveUrl(nexusUrl, SLASH_REPO_SLASH + repositoryName + "/"), username, password);
+  }
+
+  protected CondaClient createCondaClient(final String repositoryName) {
+    Credentials creds = credentials();
+    return createCondaClient(repositoryName, creds.getUserPrincipal().getName(), creds.getPassword());
+  }
+
+  protected CondaClient createCondaClient(final String repositoryName, final String username, final String password)
+  {
+    checkNotNull(repositoryManager.get(repositoryName));
+    return condaClientFactory
+        .createClient(resolveUrl(nexusUrl, SLASH_REPO_SLASH + repositoryName + "/main/"), username, password);
   }
 
   protected void enableRealm(final String realmName) {

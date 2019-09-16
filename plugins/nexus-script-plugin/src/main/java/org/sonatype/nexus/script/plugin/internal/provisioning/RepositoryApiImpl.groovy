@@ -172,6 +172,17 @@ class RepositoryApiImpl
   }
 
   @Nonnull
+  Repository createCocoapodsProxy(final String name,
+                                  final String remoteUrl,
+                                  final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
+                                  final boolean strictContentTypeValidation = true)
+  {
+    def configuration = createProxy(
+        name,'cocoapods-proxy', remoteUrl, blobStoreName, strictContentTypeValidation)
+    createRepository(configuration)
+  }
+
+  @Nonnull
   Repository createMavenHosted(final String name,
                                final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
                                final boolean strictContentTypeValidation = true,

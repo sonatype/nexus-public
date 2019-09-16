@@ -12,6 +12,10 @@
  */
 package org.sonatype.nexus.blobstore.file.internal;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -21,12 +25,18 @@ import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptorSupport;
+import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
+import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.StringTextFormField;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static org.sonatype.nexus.blobstore.file.FileBlobStore.BASEDIR;
+import static org.sonatype.nexus.blobstore.file.FileBlobStore.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.file.FileBlobStore.PATH_KEY;
 import static org.sonatype.nexus.formfields.FormField.MANDATORY;
 
@@ -51,11 +61,16 @@ public class FileBlobStoreDescriptor
 
   private static final Messages messages = I18N.create(Messages.class);
 
+  private final ApplicationDirectories applicationDirectories;
+
   private final FormField path;
 
   @Inject
-  public FileBlobStoreDescriptor(final BlobStoreQuotaService quotaService) {
+  public FileBlobStoreDescriptor(final BlobStoreQuotaService quotaService,
+                                 final ApplicationDirectories applicationDirectories)
+  {
     super(quotaService);
+    this.applicationDirectories = applicationDirectories;
     this.path = new StringTextFormField(
         PATH_KEY,
         messages.pathLabel(),
@@ -74,4 +89,35 @@ public class FileBlobStoreDescriptor
     return asList(path);
   }
 
+  @Override
+  public void validateConfig(final BlobStoreConfiguration config) {
+    super.validateConfig(config);
+
+    Path path = Paths.get(config.attributes(CONFIG_KEY).get(PATH_KEY, String.class));
+
+    try {
+      if (!path.isAbsolute()) {
+        Path baseDir = applicationDirectories.getWorkDirectory(BASEDIR).toPath().toRealPath().normalize();
+        path = baseDir.resolve(path.normalize());
+      }
+
+      if (!Files.isDirectory(path)) {
+        Files.createDirectories(path);
+      }
+      else if (Files.isRegularFile(path)) {
+        throw new ValidationErrorsException(
+            format("Blob store could not be written to path '%s' because it is a file not a directory", path));
+      }
+    }
+    catch (IOException e) {
+      throw new ValidationErrorsException(
+          format("Blob store could not be written because the base directory %s could not be written to",
+              applicationDirectories.getWorkDirectory(BASEDIR).getPath()));
+    }
+
+    if (!Files.isWritable(path)) {
+      throw new ValidationErrorsException(
+          format("Blob store could not be written to path '%s' because it was not writable", path));
+    }
+  }
 }

@@ -44,6 +44,15 @@ Ext.define('NX.coreui.util.RepositoryUrls', {
           assetName = assetModel.get('name');
       return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
     },
+    cocoapods: function (assetModel) {
+      var repositoryName = assetModel.get('repositoryName'),
+          assetName = assetModel.get('name');
+      return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + encodeURIComponent(repositoryName) + '/' + encodeURI(assetName), assetName);
+    },
+    conda: function(assetModel) {
+      var repositoryName = assetModel.get('repositoryName'), assetName = assetModel.get('name');
+      return NX.util.Url.asLink(NX.util.Url.baseUrl + '/repository/' + repositoryName + '/' + assetName, assetName);
+    },
     npm: function (assetModel) {
       var repositoryName = assetModel.get('repositoryName'),
           assetName = assetModel.get('name');

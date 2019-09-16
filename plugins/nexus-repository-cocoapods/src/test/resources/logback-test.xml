@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+  <!-- Rewrites logging level for routing tests-->
+  <logger name="org.sonatype.nexus.repository" level="DEBUG"/>
+</configuration>

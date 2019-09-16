@@ -76,7 +76,7 @@
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-datastore-mybatis</artifactId>
+      <artifactId>nexus-test-db</artifactId>
       <scope>test</scope>
     </dependency>
 

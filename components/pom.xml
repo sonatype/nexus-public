@@ -78,6 +78,7 @@
     <module>nexus-swagger</module>
     <module>nexus-task-logging</module>
     <module>nexus-test-common</module>
+    <module>nexus-test-db</module>
     <module>nexus-thread</module>
     <module>nexus-transaction</module>
     <module>nexus-upgrade</module>

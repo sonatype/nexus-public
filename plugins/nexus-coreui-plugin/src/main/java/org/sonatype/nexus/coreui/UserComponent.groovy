@@ -74,6 +74,19 @@ class UserComponent
   BeanLocator beanLocator
 
   /**
+   * Retrieve user by id.
+   * @since 3.next
+   * @return details of the requested userId
+   */
+  @DirectMethod
+  @Timed
+  @ExceptionMetered
+  @RequiresPermissions('nexus:users:read')
+  UserXO get(final String userId, final String source) {
+    return convert(securitySystem.getUser(userId, source))
+  }
+
+  /**
    * Retrieve users.
    * @return a list of users
    */
