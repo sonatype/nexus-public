@@ -22,4 +22,8 @@ public interface HasEntityId
   EntityId getId();
 
   void setId(EntityId id);
+
+  default void clearId() {
+    setId(null);
+  }
 }

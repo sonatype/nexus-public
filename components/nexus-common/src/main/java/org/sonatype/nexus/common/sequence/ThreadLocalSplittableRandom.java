@@ -10,28 +10,25 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.entity;
+package org.sonatype.nexus.common.sequence;
 
-import javax.annotation.Nonnull;
+import java.security.SecureRandom;
+import java.util.SplittableRandom;
 
 /**
- * Entity identifier.
+ * {@link SplittableRandom} that automatically splits itself across threads.
  *
- * @since 3.0
+ * @since 3.next
  */
-public interface EntityId
+public class ThreadLocalSplittableRandom
+    extends ThreadLocal<SplittableRandom>
 {
-  /**
-   * External identifier for entity.
-   */
-  @Nonnull
-  String getValue();
+  private final SplittableRandom random = new SplittableRandom(new SecureRandom().nextLong());
 
-  /**
-   * Returns human-readable representation for logging.
-   *
-   * @see #getValue() for the external representation.
-   */
   @Override
-  String toString();
+  protected SplittableRandom initialValue() {
+    synchronized (random) {
+      return random.split();
+    }
+  }
 }

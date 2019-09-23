@@ -33,6 +33,7 @@ import org.sonatype.nexus.datastore.mybatis.MyBatisDataStore;
 
 import com.google.common.base.Splitter;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
+import org.apache.ibatis.plugin.Interceptor;
 import org.apache.ibatis.type.TypeHandler;
 import org.junit.rules.ExternalResource;
 import org.junit.runner.Description;
@@ -75,6 +76,8 @@ public class DataSessionRule
   private final List<Class<? extends DataAccess>> contentAccessTypes = new ArrayList<>();
 
   private final List<TypeHandler<?>> typeHandlers = new ArrayList<>();
+
+  private final List<Interceptor> interceptors = new ArrayList<>();
 
   private final Map<String, MyBatisDataStore> stores;
 
@@ -127,6 +130,14 @@ public class DataSessionRule
   }
 
   /**
+   * Registers the given interceptor with all sessions managed by this rule.
+   */
+  public DataSessionRule intercept(final Interceptor interceptor) {
+    interceptors.add(interceptor);
+    return this;
+  }
+
+  /**
    * Discover the JDBC URLs to run the tests against.
    */
   protected List<String> discoverJdbcUrls() {
@@ -159,6 +170,7 @@ public class DataSessionRule
         }
 
         typeHandlers.forEach(store::register);
+        interceptors.forEach(store::register);
       }
       catch (Exception e) {
         log.warn("Problem starting {}", storeName, e);

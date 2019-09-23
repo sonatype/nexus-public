@@ -62,6 +62,19 @@ Ext.define('NX.coreui.controller.MetricHealth', {
       }
     }, me);
 
+    me.getApplication().getIconController().addIcons({
+      'unhealthy': {
+        file: 'exclamation.png',
+        variants: ['x16', 'x32'],
+        preload: true
+      },
+      'healthy': {
+        file: 'accept.png',
+        variants: ['x16', 'x32'],
+        preload: true
+      }
+    });
+
     me.listen({
       controller: {
         '#Refresh': {

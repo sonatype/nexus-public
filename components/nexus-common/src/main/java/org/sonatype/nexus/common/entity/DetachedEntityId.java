@@ -22,10 +22,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Detached {@link EntityId}.
  *
  * @since 3.0
- *
- * @deprecated use {@link EntityId#of(String)} instead
  */
-@Deprecated
 public class DetachedEntityId
     implements EntityId, Serializable
 {

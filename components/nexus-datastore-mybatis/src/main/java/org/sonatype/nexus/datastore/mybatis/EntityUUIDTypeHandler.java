@@ -16,24 +16,28 @@ import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.UUID;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.entity.EntityUUID;
 
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
 
+import static com.google.common.base.Preconditions.checkState;
+
 /**
- * MyBatis {@link TypeHandler} that maps {@link EntityId} to/from SQL strings.
+ * MyBatis {@link TypeHandler} that maps UUID-backed {@link EntityId}s to/from SQL.
  *
  * @since 3.next
  */
 @Named
 @Singleton
-public class EntityIdTypeHandler
+public class EntityUUIDTypeHandler
     extends BaseTypeHandler<EntityId>
 {
   @Override
@@ -42,25 +46,26 @@ public class EntityIdTypeHandler
                                   final EntityId parameter,
                                   final JdbcType jdbcType) throws SQLException
   {
-    ps.setString(parameterIndex, parameter.getValue());
+    checkState(parameter instanceof EntityUUID, "Expecting EntityUUID");
+    ps.setObject(parameterIndex, ((EntityUUID) parameter).uuid());
   }
 
   @Override
   public EntityId getNullableResult(final ResultSet rs, final String columnName) throws SQLException {
-    return nullableEntityId(rs.getString(columnName));
+    return nullableEntityUUID(rs.getObject(columnName, UUID.class));
   }
 
   @Override
   public EntityId getNullableResult(final ResultSet rs, final int columnIndex) throws SQLException {
-    return nullableEntityId(rs.getString(columnIndex));
+    return nullableEntityUUID(rs.getObject(columnIndex, UUID.class));
   }
 
   @Override
   public EntityId getNullableResult(final CallableStatement cs, final int columnIndex) throws SQLException {
-    return nullableEntityId(cs.getString(columnIndex));
+    return nullableEntityUUID(cs.getObject(columnIndex, UUID.class));
   }
 
-  private EntityId nullableEntityId(final String value) {
-    return value != null ? EntityId.of(value) : null;
+  private EntityId nullableEntityUUID(final UUID uuid) {
+    return uuid != null ? new EntityUUID(uuid) : null;
   }
 }

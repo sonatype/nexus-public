@@ -12,26 +12,53 @@
  */
 package org.sonatype.nexus.common.entity;
 
-import javax.annotation.Nonnull;
+import java.util.UUID;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Entity identifier.
+ * {@link EntityId} backed by a {@link UUID}.
  *
- * @since 3.0
+ * @since 3.next
  */
-public interface EntityId
+public class EntityUUID
+    implements EntityId
 {
-  /**
-   * External identifier for entity.
-   */
-  @Nonnull
-  String getValue();
+  private final UUID id;
 
-  /**
-   * Returns human-readable representation for logging.
-   *
-   * @see #getValue() for the external representation.
-   */
+  public EntityUUID(final UUID id) {
+    this.id = checkNotNull(id);
+  }
+
+  public UUID uuid() {
+    return id;
+  }
+
   @Override
-  String toString();
+  public String getValue() {
+    return id.toString();
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o instanceof EntityUUID) {
+      return id.equals(((EntityUUID) o).id);
+    }
+    return false;
+  }
+
+  @Override
+  public int hashCode() {
+    return id.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + "{" +
+        "id='" + id + '\'' +
+        '}';
+  }
 }

@@ -18,7 +18,7 @@
 
   <insert id="createSchema">
     CREATE TABLE IF NOT EXISTS test_item (
-      id VARCHAR(100) NOT NULL,
+      id UUID NOT NULL,
       version INT NOT NULL,
       enabled BOOLEAN NOT NULL,
       notes VARCHAR(400) NOT NULL,
@@ -29,7 +29,7 @@
 
   <insert id="createSchema" databaseId="PostgreSQL">
     CREATE TABLE IF NOT EXISTS test_item (
-      id VARCHAR(100) NOT NULL,
+      id UUID NOT NULL,
       version INT NOT NULL,
       enabled BOOLEAN NOT NULL,
       notes VARCHAR(400) NOT NULL,
@@ -48,7 +48,7 @@
   </insert>
 
   <select id="read" resultType="TestItem">
-    SELECT * FROM test_item WHERE id = #{value}
+    SELECT * FROM test_item WHERE id = #{id}
   </select>
 
   <update id="update" parameterType="TestItem">
@@ -57,7 +57,7 @@
   </update>
 
   <delete id="delete">
-    DELETE FROM test_item WHERE id = #{value}
+    DELETE FROM test_item WHERE id = #{id}
   </delete>
 
 </mapper>

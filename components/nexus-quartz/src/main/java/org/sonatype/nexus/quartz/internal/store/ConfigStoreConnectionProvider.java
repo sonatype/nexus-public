@@ -19,6 +19,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.datastore.api.DataStore;
 
@@ -32,6 +33,7 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE
  *
  * @since 3.next
  */
+@FeatureFlag(name = "nexus.datastore.enabled")
 @Named
 @Singleton
 public class ConfigStoreConnectionProvider

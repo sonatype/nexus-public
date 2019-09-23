@@ -42,6 +42,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import org.apache.ibatis.builder.xml.XMLConfigBuilder;
 import org.apache.ibatis.mapping.Environment;
 import org.apache.ibatis.mapping.VendorDatabaseIdProvider;
+import org.apache.ibatis.plugin.Interceptor;
 import org.apache.ibatis.reflection.factory.DefaultObjectFactory;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSession;
@@ -61,6 +62,7 @@ import static java.nio.file.Files.newInputStream;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.common.text.Strings2.isBlank;
 import static org.sonatype.nexus.common.thread.TcclBlock.begin;
+import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE_NAME;
 import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.ADVANCED;
 import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.JDBC_URL;
 import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.SCHEMA;
@@ -75,6 +77,8 @@ import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.SC
 public class MyBatisDataStore
     extends DataStoreSupport<Transaction, MyBatisDataSession>
 {
+  private static final String REGISTERED_MESSAGE = "Registered {} with MyBatis";
+
   private static final Key<TypeHandler> TYPE_HANDLER_KEY = Key.get(TypeHandler.class);
 
   private static final TypeHandlerMediator TYPE_HANDLER_MEDIATOR = new TypeHandlerMediator();
@@ -115,7 +119,7 @@ public class MyBatisDataStore
     if (beanLocator == null) {
       // add standard handlers for testing
       register(new AttributesTypeHandler());
-      register(new EntityIdTypeHandler());
+      register(new EntityUUIDTypeHandler());
     }
     else {
       beanLocator.watch(TYPE_HANDLER_KEY, TYPE_HANDLER_MEDIATOR, this);
@@ -141,7 +145,7 @@ public class MyBatisDataStore
 
     // now register the actual mapper
     sessionFactory.getConfiguration().addMapper(accessType);
-    info("Registered {} with MyBatis", accessType);
+    info(REGISTERED_MESSAGE, accessType);
 
     // finally create the schema for this DAO
     try (SqlSession session = sessionFactory.openSession()) {
@@ -215,6 +219,10 @@ public class MyBatisDataStore
       }
     });
 
+    if (CONFIG_DATASTORE_NAME.equals(environment.getId())) {
+      myBatisConfig.addInterceptor(new EntityInterceptor());
+    }
+
     return myBatisConfig;
   }
 
@@ -279,12 +287,21 @@ public class MyBatisDataStore
   }
 
   /**
+   * Registers the given {@link Interceptor} with MyBatis.
+   */
+  @VisibleForTesting
+  public void register(final Interceptor interceptor) {
+    sessionFactory.getConfiguration().addInterceptor(interceptor);
+    info(REGISTERED_MESSAGE, interceptor.getClass());
+  }
+
+  /**
    * Registers the given {@link TypeHandler} with MyBatis.
    */
   @VisibleForTesting
   public void register(final TypeHandler<?> handler) {
     sessionFactory.getConfiguration().getTypeHandlerRegistry().register(handler);
-    info("Registered {} with MyBatis", handler.getClass());
+    info(REGISTERED_MESSAGE, handler.getClass());
   }
 
   /**

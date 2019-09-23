@@ -151,7 +151,11 @@ public class RepositoryPermissionChecker
   }
 
   /**
+   * Ensures that the current user has an administrative privilege with the given action to the given repository.
+   *
    * @since 3.next
+   *
+   * @throws AuthorizationException
    */
   public void ensureUserCanAdmin(final String action, final Repository repository) {
     securityHelper.ensurePermitted(new RepositoryAdminPermission(repository.getFormat().getValue(), repository.getName(), singletonList(action)));

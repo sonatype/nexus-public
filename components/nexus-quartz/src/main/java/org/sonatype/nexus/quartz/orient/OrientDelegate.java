@@ -16,17 +16,23 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.quartz.Job;
 import org.quartz.JobDetail;
 import org.quartz.TriggerKey;
 import org.quartz.impl.JobDetailImpl;
 import org.quartz.impl.jdbcjobstore.StdJDBCDelegate;
+import org.quartz.impl.matchers.GroupMatcher;
 import org.quartz.spi.ClassLoadHelper;
+
+import static org.quartz.TriggerKey.triggerKey;
 
 /**
  * OrientDB specific JDBC job store delegate.
@@ -128,5 +134,48 @@ public class OrientDelegate
       return new ByteArrayInputStream(bytes);
     }
     return getObjectFromBlob(rs, colName);
+  }
+
+  // Workaround for Orient bug with "LIKE '%'"
+  // https://www.prjhub.com/#/issues/10825
+  @Override
+  protected String toSqlLikeClause(final GroupMatcher<?> matcher) {
+    String groupName = super.toSqlLikeClause(matcher);
+    return "%".equals(groupName) ? "%%" : groupName;
+  }
+
+  // Workaround for Orient not respecting setMaxRows and setFetchSize
+  // on PreparedStatement and a Quartz bug not respecting maxCount
+  // https://github.com/quartz-scheduler/quartz/issues/491
+  @Override
+  public List<TriggerKey> selectTriggerToAcquire(Connection conn, long noLaterThan, long noEarlierThan, int maxCount)
+      throws SQLException {
+    PreparedStatement ps = null;
+    ResultSet rs = null; // NOSONAR
+    List<TriggerKey> nextTriggers = new LinkedList<>();
+    try {
+      ps = conn.prepareStatement(rtp(SELECT_NEXT_TRIGGER_TO_ACQUIRE));
+
+      // Set max rows to retrieve
+      if (maxCount < 1) {
+        maxCount = 1; // we want at least one trigger back. NOSONAR
+      }
+
+      ps.setString(1, STATE_WAITING);
+      ps.setBigDecimal(2, new BigDecimal(String.valueOf(noLaterThan)));
+      ps.setBigDecimal(3, new BigDecimal(String.valueOf(noEarlierThan)));
+      rs = ps.executeQuery();
+
+      while (rs.next() && nextTriggers.size() < maxCount) {
+        nextTriggers.add(triggerKey(
+            rs.getString(COL_TRIGGER_NAME),
+            rs.getString(COL_TRIGGER_GROUP)));
+      }
+
+      return nextTriggers;
+    } finally {
+      closeResultSet(rs);
+      closeStatement(ps);
+    }
   }
 }

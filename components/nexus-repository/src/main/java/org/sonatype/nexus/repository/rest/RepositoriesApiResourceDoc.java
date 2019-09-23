@@ -13,7 +13,11 @@
 
 package org.sonatype.nexus.repository.rest;
 
+import java.util.List;
+
 import javax.ws.rs.core.Response;
+
+import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -36,4 +40,10 @@ public interface RepositoriesApiResourceDoc
   })
   Response deleteRepository(@ApiParam(value = "Name of the repository to delete") final String repositoryName)
       throws Exception;
+
+  @ApiOperation("List repositories")
+  @ApiResponses(value = {@ApiResponse(code = 200, message = "Repositories list returned"),
+      @ApiResponse(code = 401, message = "Authentication required"),
+      @ApiResponse(code = 403, message = "Insufficient permissions")})
+  List<AbstractApiRepository> getRepositories();
 }

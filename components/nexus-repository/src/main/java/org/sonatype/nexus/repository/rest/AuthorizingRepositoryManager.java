@@ -13,6 +13,8 @@
 
 package org.sonatype.nexus.repository.rest;
 
+import java.util.List;
+
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 
@@ -22,8 +24,11 @@ import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.security.BreadActions.DELETE;
+import static org.sonatype.nexus.security.BreadActions.READ;
 
 /**
+ * A repository manager which limits access to repositories based on the current user's permissions.
+ *
  * @since 3.next
  */
 public class AuthorizingRepositoryManager
@@ -49,5 +54,12 @@ public class AuthorizingRepositoryManager
       return true;
     }
     return false;
+  }
+
+  /**
+   * Returns the repositories which the user has an administrative read privilege.
+   */
+  public List<Repository> getRepositoriesWithAdmin() {
+    return repositoryPermissionChecker.userHasRepositoryAdminPermission(repositoryManager.browse(), READ);
   }
 }

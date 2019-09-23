@@ -10,28 +10,25 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.entity;
-
-import javax.annotation.Nonnull;
+/*global Ext, NX*/
 
 /**
- * Entity identifier.
- *
- * @since 3.0
+ * @since 3.next
  */
-public interface EntityId
-{
-  /**
-   * External identifier for entity.
-   */
-  @Nonnull
-  String getValue();
+Ext.define('NX.coreui.migration.NoUpgradeHAScreen', {
+  extend: 'NX.wizard.Screen',
+  alias: 'widget.nx-coreui-migration-no-upgrade-ha',
 
   /**
-   * Returns human-readable representation for logging.
-   *
-   * @see #getValue() for the external representation.
+   * @override
    */
-  @Override
-  String toString();
-}
+  initComponent: function () {
+    Ext.apply(this, {
+      title: NX.I18n.render(this, 'Title'),
+
+      description: NX.I18n.render(this, 'Description')
+    });
+
+    this.callParent();
+  }
+});

@@ -10,28 +10,37 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.entity;
+package org.sonatype.nexus.datastore.mybatis;
 
-import javax.annotation.Nonnull;
+import java.util.SplittableRandom;
+import java.util.UUID;
+
+import org.sonatype.nexus.common.sequence.ThreadLocalSplittableRandom;
 
 /**
- * Entity identifier.
+ * Generates COMB-style {@link UUID}s for use as database keys: 6-byte timestamp plus 10-byte randomness.
  *
- * @since 3.0
+ * @since 3.next
  */
-public interface EntityId
+public class CombUUID
 {
-  /**
-   * External identifier for entity.
-   */
-  @Nonnull
-  String getValue();
+  private static final ThreadLocalSplittableRandom randomHolder = new ThreadLocalSplittableRandom();
+
+  private CombUUID() {
+    // static utility class
+  }
 
   /**
-   * Returns human-readable representation for logging.
-   *
-   * @see #getValue() for the external representation.
+   * @return a new COMB-style UUID
    */
-  @Override
-  String toString();
+  public static UUID combUUID() {
+    SplittableRandom random = randomHolder.get();
+
+    long hiBits = random.nextLong();
+    long loBits = random.nextLong();
+
+    hiBits = (System.currentTimeMillis() << 16) | (hiBits & 0x000000000000FFFF);
+
+    return new UUID(hiBits, loBits);
+  }
 }

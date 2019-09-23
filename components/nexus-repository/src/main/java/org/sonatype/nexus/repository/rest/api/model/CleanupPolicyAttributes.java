@@ -10,28 +10,31 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.entity;
+package org.sonatype.nexus.repository.rest.api.model;
 
-import javax.annotation.Nonnull;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.annotations.ApiModelProperty;
 
 /**
- * Entity identifier.
+ * REST API model which describes cleanup policies for a repository.
  *
- * @since 3.0
+ * @since 3.next
  */
-public interface EntityId
+public class CleanupPolicyAttributes
 {
-  /**
-   * External identifier for entity.
-   */
-  @Nonnull
-  String getValue();
+  @ApiModelProperty(value = "Components that match any of the applied policies will be deleted",
+      example = "weekly-cleanup")
+  protected List<String> policyNames;
 
-  /**
-   * Returns human-readable representation for logging.
-   *
-   * @see #getValue() for the external representation.
-   */
-  @Override
-  String toString();
+  @JsonCreator
+  public CleanupPolicyAttributes(@JsonProperty("policyNames") final List<String> policyNames) {
+    this.policyNames = policyNames;
+  }
+
+  public List<String> getPolicyNames() {
+    return policyNames;
+  }
 }

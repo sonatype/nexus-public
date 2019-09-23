@@ -12,21 +12,30 @@
  */
 package org.sonatype.nexus.testdb.example;
 
+import java.util.UUID;
+
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.entity.EntityUUID;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.testdb.DataSessionRule;
 
 import com.google.common.collect.ImmutableMap;
+import org.apache.ibatis.executor.Executor;
+import org.apache.ibatis.plugin.Interceptor;
+import org.apache.ibatis.plugin.Intercepts;
+import org.apache.ibatis.plugin.Invocation;
+import org.apache.ibatis.plugin.Signature;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static java.util.UUID.randomUUID;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 /**
  * Test the {@link DataSessionRule}.
@@ -34,8 +43,30 @@ import static org.junit.Assert.assertThat;
 public class DataSessionRuleTest
     extends TestSupport
 {
+  /**
+   * Intercepts MyBatis commits so we can arbitrarily fail them.
+   */
+  @Intercepts({ @Signature(type = Executor.class, method = "commit", args = { boolean.class }) })
+  static class CommitInterceptor
+      implements Interceptor
+  {
+    boolean failNextCommit; // one-shot flag to fail the next commit
+
+    @Override
+    public Object intercept(final Invocation invocation) throws Throwable {
+      if (failNextCommit) {
+        // close connection without telling MyBatis - proceeding commit will then fail
+        ((Executor) invocation.getTarget()).getTransaction().getConnection().close();
+        failNextCommit = false;
+      }
+      return invocation.proceed();
+    }
+  }
+
+  private CommitInterceptor commitInterceptor = new CommitInterceptor();
+
   @Rule
-  public DataSessionRule sessionRule = new DataSessionRule().access(TestItemDAO.class);
+  public DataSessionRule sessionRule = new DataSessionRule().access(TestItemDAO.class).intercept(commitInterceptor);
 
   @Test
   public void testCrudOperations() {
@@ -45,7 +76,6 @@ public class DataSessionRuleTest
       assertThat(dao.browse(), emptyIterable());
 
       TestItem itemA = new TestItem();
-      itemA.setId(EntityId.of(randomUUID().toString()));
       itemA.setVersion(1);
       itemA.setEnabled(true);
       itemA.setNotes("test-entity");
@@ -58,7 +88,6 @@ public class DataSessionRuleTest
       assertThat(dao.browse(), contains(itemA));
 
       TestItem itemB = new TestItem();
-      itemB.setId(EntityId.of(randomUUID().toString()));
       itemB.setVersion(2);
       itemB.setEnabled(false);
       itemB.setNotes("test-entity");
@@ -70,7 +99,7 @@ public class DataSessionRuleTest
 
       assertThat(dao.browse(), contains(itemA, itemB));
 
-      assertFalse(dao.read(EntityId.of("missing")).isPresent());
+      assertFalse(dao.read(new EntityUUID(new UUID(4, 2))).isPresent());
 
       dao.delete(itemA.getId());
 
@@ -80,5 +109,75 @@ public class DataSessionRuleTest
 
       assertThat(dao.browse(), emptyIterable());
     }
+  }
+
+  @Test
+  public void testEntityIdManagement() {
+    TestItem itemA = new TestItem();
+    TestItem itemB = new TestItem();
+
+    itemA.setNotes("test-entity-1");
+    itemA.setProperties(ImmutableMap.of());
+
+    itemB.setNotes("test-entity-2");
+    itemB.setProperties(ImmutableMap.of());
+
+    try (DataSession<?> session = sessionRule.openSession("config")) {
+      TestItemDAO dao = session.access(TestItemDAO.class);
+
+      dao.create(itemA);
+      dao.create(itemB);
+
+      // implicit rollback
+    }
+
+    assertThat(itemA.getId(), nullValue()); // cleared on implicit rollback
+    assertThat(itemB.getId(), nullValue());
+
+    try (DataSession<?> session = sessionRule.openSession("config")) {
+      TestItemDAO dao = session.access(TestItemDAO.class);
+
+      dao.create(itemA);
+      dao.create(itemB);
+
+      commitInterceptor.failNextCommit = true;
+
+      try {
+        session.getTransaction().commit();
+        fail("Expected this commit to fail");
+      }
+      catch (RuntimeException ignore) {
+        // expected
+      }
+    }
+
+    assertThat(itemA.getId(), nullValue());
+    assertThat(itemB.getId(), nullValue());
+
+    try (DataSession<?> session = sessionRule.openSession("config")) {
+      TestItemDAO dao = session.access(TestItemDAO.class);
+
+      dao.create(itemA);
+
+      session.getTransaction().rollback();
+
+      dao.create(itemB);
+
+      session.getTransaction().commit();
+    }
+
+    assertThat(itemA.getId(), nullValue()); // cleared on explicit rollback
+    assertThat(itemB.getId(), notNullValue());
+
+    try (DataSession<?> session = sessionRule.openSession("config")) {
+      TestItemDAO dao = session.access(TestItemDAO.class);
+
+      dao.delete(itemB.getId());
+
+      session.getTransaction().commit();
+    }
+
+    assertThat(itemA.getId(), nullValue());
+    assertThat(itemB.getId(), notNullValue()); // kept after delete
   }
 }

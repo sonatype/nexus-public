@@ -10,28 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.entity;
+package org.sonatype.nexus.repository.rest.api;
 
-import javax.annotation.Nonnull;
+import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
 
 /**
- * Entity identifier.
+ * Formats can implement this interface to supply custom objects to use in the RepositoryApiResource.
  *
- * @since 3.0
+ * @since 3.next
  */
-public interface EntityId
+public interface ApiRepositoryAdapter
 {
-  /**
-   * External identifier for entity.
-   */
-  @Nonnull
-  String getValue();
-
-  /**
-   * Returns human-readable representation for logging.
-   *
-   * @see #getValue() for the external representation.
-   */
-  @Override
-  String toString();
+  AbstractApiRepository adapt(Repository repository);
 }

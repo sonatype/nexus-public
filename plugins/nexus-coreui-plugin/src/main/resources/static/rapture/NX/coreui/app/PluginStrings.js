@@ -1574,6 +1574,12 @@ Ext.define('NX.coreui.app.PluginStrings', {
       PlanStepDetail_Mask: 'Fetching details'
     },
 
+    'NX.coreui.migration.NoUpgradeHAScreen': {
+      Title: 'High Availability Cluster (HA-C) Detected',
+      Description: '<p>Upgrading from Nexus Repository Manager 2 while running a HA-C is not available.</p>' +
+          '<p>Please run Nexus Repository Manager 3 as a single-node to continue.</p>'
+    },
+
     'NX.coreui.migration.AgentScreen': {
       Title: 'Agent Connection',
       Description: "<p>Configure the connection to remote server's upgrade-agent.<br/>" +

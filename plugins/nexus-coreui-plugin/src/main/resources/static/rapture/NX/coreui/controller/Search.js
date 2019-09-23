@@ -70,9 +70,7 @@ Ext.define('NX.coreui.controller.Search', {
    */
   init: function() {
     var me = this;
-
     me.callParent();
-
     me.getApplication().getIconController().addIcons({
       'search-default': {
         file: 'magnifier.png',
@@ -93,9 +91,18 @@ Ext.define('NX.coreui.controller.Search', {
       'search-saved': {
         file: 'magnifier.png',
         variants: ['x16', 'x32']
+      },
+      'message-primary': {
+        file: 'information.png',
+        variants: ['x16', 'x32'],
+        preload: true
+      },
+      'message-danger': {
+        file: 'exclamation.png',
+        variants: ['x16', 'x32'],
+        preload: true
       }
     });
-
     me.registerFilter([
       {
         id: 'keyword',
@@ -115,11 +122,9 @@ Ext.define('NX.coreui.controller.Search', {
         readOnly: true
       }
     ], me);
-
     me.getStore('SearchFilter').each(function(model) {
       me.registerFeature(model, me);
     });
-
     me.listen({
       controller: {
         '#Refresh': {

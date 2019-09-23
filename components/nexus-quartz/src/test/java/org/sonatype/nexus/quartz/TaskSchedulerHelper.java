@@ -46,6 +46,7 @@ import org.eclipse.sisu.space.URLClassSpace;
 import org.eclipse.sisu.wire.ParameterKeys;
 import org.eclipse.sisu.wire.WireModule;
 import org.quartz.spi.JobFactory;
+import org.quartz.spi.JobStore;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.mockito.Matchers.anyString;
@@ -145,6 +146,9 @@ public class TaskSchedulerHelper
 
       binder.bind(LastShutdownTimeService.class).toInstance(lastShutdownTimeService);
       when(lastShutdownTimeService.estimateLastShutdownTime()).thenReturn(Optional.empty());
+
+      // filtering by feature flag is not supported here yet
+      binder.bind(JobStore.class).to(JobStoreImpl.class);
     };
 
     this.injector = Guice.createInjector(new WireModule(

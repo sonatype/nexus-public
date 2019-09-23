@@ -42,7 +42,7 @@ public class TestItem
 
   @Override
   public void setId(final EntityId id) {
-    this.id = checkNotNull(id);
+    this.id = id;
   }
 
   @Override

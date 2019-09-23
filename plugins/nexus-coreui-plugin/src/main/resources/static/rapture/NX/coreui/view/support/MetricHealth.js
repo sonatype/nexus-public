@@ -46,7 +46,7 @@ Ext.define('NX.coreui.view.support.MetricHealth', {
           width: 36,
           iconVariant: 'x16',
           iconName: function (value, meta, record) {
-            return record.get('healthy') ? 'message-success' : 'message-danger'; 
+            return record.get('healthy') ? 'healthy' : 'unhealthy';
           }
         },
         {

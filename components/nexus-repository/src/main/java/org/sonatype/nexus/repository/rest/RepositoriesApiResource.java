@@ -13,17 +13,25 @@
 
 package org.sonatype.nexus.repository.rest;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.rest.api.ApiRepositoryAdapter;
+import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
 import org.sonatype.nexus.rest.Resource;
 
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
@@ -50,16 +58,40 @@ public class RepositoriesApiResource
 
   private final AuthorizingRepositoryManager authorizingRepositoryManager;
 
+  private final Map<String, ApiRepositoryAdapter> convertersByFormat;
+
+  private final ApiRepositoryAdapter defaultAdapter;
+
   @Inject
-  public RepositoriesApiResource(final AuthorizingRepositoryManager authorizingRepositoryManager) {
+  public RepositoriesApiResource(
+      final AuthorizingRepositoryManager authorizingRepositoryManager,
+      @Named("default") final ApiRepositoryAdapter defaultAdapter,
+      final Map<String, ApiRepositoryAdapter> convertersByFormat)
+  {
     this.authorizingRepositoryManager = checkNotNull(authorizingRepositoryManager);
+    this.defaultAdapter = checkNotNull(defaultAdapter);
+    this.convertersByFormat = checkNotNull(convertersByFormat);
   }
 
+
+  @Override
   @DELETE
   @Path("/{repositoryName}")
   @RequiresAuthentication
   public Response deleteRepository(@PathParam("repositoryName") final String repositoryName) throws Exception {
     boolean isDeleted = authorizingRepositoryManager.delete(repositoryName);
     return Response.status(isDeleted ? NO_CONTENT : NOT_FOUND).build();
+  }
+
+  @Override
+  @RequiresAuthentication
+  @GET
+  public List<AbstractApiRepository> getRepositories() {
+    return authorizingRepositoryManager.getRepositoriesWithAdmin().stream().map(this::convert)
+        .collect(Collectors.toList());
+  }
+
+  private AbstractApiRepository convert(final Repository repository) {
+    return convertersByFormat.getOrDefault(repository.getFormat().toString(), defaultAdapter).adapt(repository);
   }
 }

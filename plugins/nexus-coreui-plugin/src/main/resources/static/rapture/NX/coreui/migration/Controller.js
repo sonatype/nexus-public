@@ -22,6 +22,7 @@ Ext.define('NX.coreui.migration.Controller', {
   requires: [
     'NX.I18n',
     'NX.Permissions',
+    'NX.State',
     'NX.coreui.store.Datastore',
     'NX.coreui.store.Blobstore',
     'NX.coreui.migration.PlanStepDetailWindow',
@@ -29,6 +30,7 @@ Ext.define('NX.coreui.migration.Controller', {
     'NX.coreui.migration.PreviewStore',
     'NX.coreui.migration.ProgressStore',
     'NX.coreui.migration.Panel',
+    'NX.coreui.migration.NoUpgradeHAStep',
     'NX.coreui.migration.OverviewStep',
     'NX.coreui.migration.ContentStep',
     'NX.coreui.migration.AgentStep',
@@ -94,17 +96,21 @@ Ext.define('NX.coreui.migration.Controller', {
       }
     }, me);
 
-    me.registerSteps([
-      'NX.coreui.migration.OverviewStep',
-      'NX.coreui.migration.AgentStep',
-      'NX.coreui.migration.ContentStep',
-      'NX.coreui.migration.RepositoryDefaultsStep',
-      'NX.coreui.migration.RepositoriesStep',
-      'NX.coreui.migration.PreviewStep',
-      'NX.coreui.migration.PhasePrepareStep',
-      'NX.coreui.migration.PhaseSyncStep',
-      'NX.coreui.migration.PhaseFinishStep'
-    ]);
+    me.registerSteps(NX.State.isClustered() ?
+        ['NX.coreui.migration.NoUpgradeHAStep'] :
+        [
+          'NX.coreui.migration.OverviewStep',
+          'NX.coreui.migration.AgentStep',
+          'NX.coreui.migration.ContentStep',
+          'NX.coreui.migration.RepositoryDefaultsStep',
+          'NX.coreui.migration.RepositoriesStep',
+          'NX.coreui.migration.PreviewStep',
+          'NX.coreui.migration.PhasePrepareStep',
+          'NX.coreui.migration.PhaseSyncStep',
+          'NX.coreui.migration.PhaseFinishStep'
+        ]);
+
+
 
     me.listen({
       component: {

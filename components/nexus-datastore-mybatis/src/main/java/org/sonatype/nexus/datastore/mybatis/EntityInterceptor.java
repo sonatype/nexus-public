@@ -10,28 +10,30 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.entity;
+package org.sonatype.nexus.datastore.mybatis;
 
-import javax.annotation.Nonnull;
+import org.apache.ibatis.executor.Executor;
+import org.apache.ibatis.plugin.Interceptor;
+import org.apache.ibatis.plugin.Invocation;
 
 /**
- * Entity identifier.
+ * MyBatis {@link Interceptor} that wraps any new {@link Executor} with {@link EntityExecutor}.
  *
- * @since 3.0
+ * @since 3.next
  */
-public interface EntityId
+public class EntityInterceptor
+    implements Interceptor
 {
-  /**
-   * External identifier for entity.
-   */
-  @Nonnull
-  String getValue();
-
-  /**
-   * Returns human-readable representation for logging.
-   *
-   * @see #getValue() for the external representation.
-   */
   @Override
-  String toString();
+  public Object plugin(final Object delegate) {
+    if (delegate instanceof Executor) {
+      return new EntityExecutor((Executor) delegate);
+    }
+    return delegate;
+  }
+
+  @Override
+  public Object intercept(final Invocation invocation) {
+    throw new UnsupportedOperationException("unused");
+  }
 }

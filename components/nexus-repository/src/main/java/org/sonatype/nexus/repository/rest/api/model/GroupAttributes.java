@@ -10,28 +10,32 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.entity;
+package org.sonatype.nexus.repository.rest.api.model;
 
-import javax.annotation.Nonnull;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.annotations.ApiModelProperty;
+import org.hibernate.validator.constraints.NotEmpty;
 
 /**
- * Entity identifier.
+ * REST API model used to describe a group repository.
  *
- * @since 3.0
+ * @since 3.next
  */
-public interface EntityId
+public class GroupAttributes
 {
-  /**
-   * External identifier for entity.
-   */
-  @Nonnull
-  String getValue();
+  @ApiModelProperty(value = "Member repositories' names", example = "internal, external-proxy")
+  @NotEmpty
+  protected final List<String> memberNames;
 
-  /**
-   * Returns human-readable representation for logging.
-   *
-   * @see #getValue() for the external representation.
-   */
-  @Override
-  String toString();
+  @JsonCreator
+  public GroupAttributes(@JsonProperty("memberNames") final List<String> memberNames) {
+    this.memberNames = memberNames;
+  }
+
+  public List<String> getMemberNames() {
+    return memberNames;
+  }
 }

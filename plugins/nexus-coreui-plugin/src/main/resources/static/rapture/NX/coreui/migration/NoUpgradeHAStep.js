@@ -10,28 +10,21 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.entity;
-
-import javax.annotation.Nonnull;
+/*global Ext, NX*/
 
 /**
- * Entity identifier.
+ * Migration check HA step
  *
- * @since 3.0
+ * @since 3.next
  */
-public interface EntityId
-{
-  /**
-   * External identifier for entity.
-   */
-  @Nonnull
-  String getValue();
+Ext.define('NX.coreui.migration.NoUpgradeHAStep', {
+  extend: 'NX.wizard.Step',
+  requires: [
+    'NX.coreui.migration.NoUpgradeHAScreen'
+  ],
 
-  /**
-   * Returns human-readable representation for logging.
-   *
-   * @see #getValue() for the external representation.
-   */
-  @Override
-  String toString();
-}
+  config: {
+    screen: 'NX.coreui.migration.NoUpgradeHAScreen',
+    enabled: true
+  }
+});
