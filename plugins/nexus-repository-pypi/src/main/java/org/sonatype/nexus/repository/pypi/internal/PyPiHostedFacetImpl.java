@@ -15,7 +15,9 @@ package org.sonatype.nexus.repository.pypi.internal;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.LinkedHashMap;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -23,6 +25,7 @@ import java.util.TreeMap;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.naming.event.ObjectChangeListener;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
@@ -108,11 +111,11 @@ public class PyPiHostedFacetImpl
 
   private Content createAndSaveRootIndex(final Bucket bucket) throws IOException {
     StorageTx tx = UnitOfWork.currentTx();
-    Map<String, String> links = findAllLinks();
+    Map<String, PyPiLink> links = findAllLinks();
 
     Asset asset = createRootIndexAsset(bucket);
 
-    String rootIndexHtml = PyPiIndexUtils.buildRootIndexPage(templateHelper, links);
+    String rootIndexHtml = PyPiIndexUtils.buildRootIndexPage(templateHelper, links.values());
     return storeHtmlPage(tx, asset, rootIndexHtml);
   }
 
@@ -126,11 +129,15 @@ public class PyPiHostedFacetImpl
   }
 
   @Transactional
-  protected Map<String, String> findAllLinks() {
+  protected Map<String, PyPiLink> findAllLinks() {
     StorageTx tx = UnitOfWork.currentTx();
-    Map<String, String> links = new TreeMap<>();
+    Map<String, PyPiLink> links = new TreeMap<>();
     Iterable<Component> components = tx.browseComponents(tx.findBucket(getRepository()));
-    components.forEach((component) -> links.put(component.name(), component.name() + "/"));
+    for(Component component : components) {
+      String name = component.name();
+      String link = component.name() + "/";
+      links.put(name, new PyPiLink(name, link));
+    }
     return links;
   }
 
@@ -185,12 +192,14 @@ public class PyPiHostedFacetImpl
   }
 
   private String buildIndex(final String name, final StorageTx tx) {
-    Map<String, String> links = new LinkedHashMap<>();
-    for (Asset asset : findAssetsByComponentName(tx, getRepository(), name)) {
+    List<PyPiLink> links = new LinkedList<>();
+    for (Asset asset: findAssetsByComponentName(tx, getRepository(), name)) {
+      AttributesMap pypiAttributes = asset.attributes().child(PyPiFormat.NAME);
       String path = asset.name();
       String file = path.substring(path.lastIndexOf('/') + 1);
       String link = String.format("../../%s#md5=%s", path, asset.getChecksum(MD5));
-      links.put(file, link);
+      String dataRequiresPython = (String)pypiAttributes.get(PyPiAttributes.P_REQUIRES_PYTHON, "");
+      links.add(new PyPiLink(file, link, dataRequiresPython));
     }
 
     return PyPiIndexUtils.buildIndexPage(templateHelper, name, links);

@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -70,8 +71,7 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiFileUtils.extractN
 import static org.sonatype.nexus.repository.pypi.internal.PyPiFileUtils.extractVersionFromFilename;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.buildIndexPage;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.buildRootIndexPage;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.makeIndexRelative;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.makeRootIndexRelative;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.extractLinksFromIndex;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiInfoUtils.extractMetadata;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.INDEX_PATH_PREFIX;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.indexPath;
@@ -242,16 +242,17 @@ public class PyPiProxyFacetImpl
 
   private Content putRootIndex(final Content content) throws IOException {
     try (InputStream inputStream = content.openInputStream()) {
-      Map<String, String> links = makeRootIndexRelative(inputStream);
+      List<PyPiLink> links = extractLinksFromIndex(inputStream);
       String indexPage = buildRootIndexPage(templateHelper, links);
       return storeHtmlPage(content, indexPage, ROOT_INDEX, INDEX_PATH_PREFIX);
     }
   }
 
+
   private Content putIndex(final String name, final Content content) throws IOException {
     String html;
     try (InputStream inputStream = content.openInputStream()) {
-      Map<String, String> links = makeIndexRelative(inputStream);
+      List<PyPiLink> links = extractLinksFromIndex(inputStream);
       html = buildIndexPage(templateHelper, name.substring(name.indexOf('/') + 1, name.length() - 1), links);
     }
     return storeHtmlPage(content, html, INDEX, name);

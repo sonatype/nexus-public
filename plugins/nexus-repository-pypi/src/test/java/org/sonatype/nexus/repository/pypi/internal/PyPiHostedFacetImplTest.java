@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.pypi.internal;
 
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Set;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.template.TemplateHelper;
@@ -79,10 +78,8 @@ public class PyPiHostedFacetImplTest
     ));
     underTest.attach(repository);
 
-    Map<String, String> links = underTest.findAllLinks();
-
-    Set<String> strings = links.keySet();
-    String[] result = strings.toArray(new String[0]);
+    Map<String, PyPiLink> links = underTest.findAllLinks();
+    String[] result = links.values().stream().map(PyPiLink::getFile).distinct().toArray(String[]::new);
     assertThat(result[0], is("0"));
     assertThat(result[1], is("a"));
     assertThat(result[2], is("z"));

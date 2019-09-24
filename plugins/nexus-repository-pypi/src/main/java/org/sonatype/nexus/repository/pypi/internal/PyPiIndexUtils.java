@@ -19,10 +19,9 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -52,11 +51,20 @@ public final class PyPiIndexUtils
   private static final Logger log = LoggerFactory.getLogger(PyPiIndexUtils.class);
 
   /**
-   * Returns a map (in original order of appearance) of the files and associated paths extracted from the index.
+   * From PEP_053:
+   * A repository MAY include a data-requires-python attribute on a file link.
+   * This exposes the Requires-Python metadata field, specified in PEP 345, for the corresponding release.
+   * Where this is present, installer tools SHOULD ignore the download when installing
+   * to a Python version that doesn't satisfy the requirement.
    */
-  static Map<String, String> extractLinksFromIndex(final InputStream in) throws IOException {
+  private static final String PYPI_REQUIRES_PYTHON = "data-requires-python";
+
+  /**
+   * Return a list (in original order of appearance) of PyPiLinkInfo extracted from the index.
+   */
+  static List<PyPiLink> extractLinksFromIndex(final InputStream in) throws IOException {
     checkNotNull(in);
-    Map<String, String> results = new LinkedHashMap<>();
+    List<PyPiLink> results = new LinkedList<>();
     try (Reader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
       String html = CharStreams.toString(reader);
       Document document = Jsoup.parse(html);
@@ -64,47 +72,58 @@ public final class PyPiIndexUtils
       for (Element link : links) {
         String file = link.text().trim();
         String path = link.attr("href");
-        if (!results.containsKey(file)) {
-          results.put(file, path);
-        }
+        String requiresPython = link.attr(PYPI_REQUIRES_PYTHON);
+        results.add(new PyPiLink(file, path, requiresPython));
       }
     }
     return results;
   }
 
+
+  /**
+   * Convert a link to a map ready to be used for "pypi-index.vm".
+   */
+  static ImmutableMap<String, String> indexLinkToMap(PyPiLink link) {
+    return ImmutableMap.of(
+            "link", makePackageLinkRelative(link.getLink()),
+            "file", link.getFile(),
+            "data-requires-python", link.getDataPythonRequires()
+    );
+  }
+
+  /**
+   * Convert a link to a map ready to be used for "pypi-root-index.vm".
+   */
+  static ImmutableMap<String, String> rootIndexLinkToMap(PyPiLink link) {
+    return ImmutableMap.of(
+            "link", makeRootIndexLinkRelative(link.getLink()),
+            "name", link.getFile()
+    );
+  }
+
   /**
    * Returns a string containing the HTML simple index page for the links, rendered in iteration order.
    */
-  static String buildIndexPage(final TemplateHelper helper, final String name, final Map<String, String> links) {
+  static String buildIndexPage(final TemplateHelper helper, final String name, final Collection<PyPiLink> links) {
     checkNotNull(helper);
     checkNotNull(name);
     checkNotNull(links);
     URL template = PyPiIndexUtils.class.getResource("pypi-index.vm");
     TemplateParameters params = helper.parameters();
     params.set("name", name);
-    params.set("assets", links.entrySet().stream()
-        .map((link) -> ImmutableMap.of(
-            "link", link.getValue(),
-            "file", link.getKey())
-        )
-        .collect(Collectors.toList()));
+    params.set("assets", links.stream().map(PyPiIndexUtils::indexLinkToMap).collect(Collectors.toList()));
     return helper.render(template, params);
   }
 
   /**
    * Returns a string containing the HTML simple root index page for the links, rendered in iteration order.
    */
-  static String buildRootIndexPage(final TemplateHelper helper, final Map<String, String> links) {
+  static String buildRootIndexPage(final TemplateHelper helper, final Collection<PyPiLink> links) {
     checkNotNull(helper);
     checkNotNull(links);
     URL template = PyPiIndexUtils.class.getResource("pypi-root-index.vm");
     TemplateParameters params = helper.parameters();
-    params.set("assets", links.entrySet().stream().map((link) -> {
-      Map<String, String> data = new HashMap<>();
-      data.put("link", link.getValue());
-      data.put("name", link.getKey());
-      return data;
-    }).collect(Collectors.toList()));
+    params.set("assets", links.stream().map(PyPiIndexUtils::rootIndexLinkToMap).collect(Collectors.toList()));
     return helper.render(template, params);
   }
 
@@ -113,45 +132,27 @@ public final class PyPiIndexUtils
    * assumption based on email discussions with donald@stufft.io that there are no plans to have packages at any
    * location other than under the /packages directory.
    */
-  private static Map<String, String> makeLinksRelative(final Map<String, String> oldLinks,
-                                                       final Function<String, String> linkTranslator) {
-    checkNotNull(oldLinks);
-    Map<String, String> newLinks = new LinkedHashMap<>();
-    for (Entry<String, String> oldLink : oldLinks.entrySet()) {
-      String newLink = linkTranslator.apply(oldLink.getValue());
-      if (newLink != null) {
-        newLinks.put(oldLink.getKey(), newLink);
-      }
+  private static String makeLinkRelative(final String oldLink, final Function<String, String> linkTranslator) {
+    checkNotNull(oldLink);
+    String newLink = linkTranslator.apply(oldLink);
+    if (newLink != null) {
+      return newLink;
     }
-    return newLinks;
+    return oldLink;
   }
 
   /**
    * Rewrites an index page so that the links are all relative where possible.
    */
-  static Map<String, String> makeIndexRelative(final InputStream in) throws IOException {
-    return makePackageLinksRelative(extractLinksFromIndex(in));
-  }
-
-  /**
-   * Rewrites an index page so that the links are all relative where possible.
-   */
-  static Map<String, String> makePackageLinksRelative(final Map<String, String> oldLinks) {
-    return makeLinksRelative(oldLinks, PyPiIndexUtils::maybeRewriteLink);
+  private static String makePackageLinkRelative(final String oldLink) {
+    return makeLinkRelative(oldLink, PyPiIndexUtils::maybeRewriteLink);
   }
 
   /**
    * Rewrites a root index page from a stream so that the links are all relative where possible.
    */
-  static Map<String, String> makeRootIndexRelative(final InputStream in) throws IOException {
-    return makeRootIndexLinksRelative(extractLinksFromIndex(in));
-  }
-
-  /**
-   * Rewrites a root index page so that the links are all relative where possible.
-   */
-  static Map<String, String> makeRootIndexLinksRelative(final Map<String, String> oldLinks) {
-    return makeLinksRelative(oldLinks, PyPiIndexUtils::maybeRewriteRootLink);
+  private static String makeRootIndexLinkRelative(final String oldLink) {
+    return makeLinkRelative(oldLink, PyPiIndexUtils::maybeRewriteRootLink);
   }
 
   /**
