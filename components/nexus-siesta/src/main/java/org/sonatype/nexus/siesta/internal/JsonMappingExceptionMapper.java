@@ -30,7 +30,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 /**
  * Maps {@link JsonMappingExceptionMapper} to {@link Status#BAD_REQUEST} in case there is a deserialization error.
  *
- * @since 3.next
+ * @since 3.19
  */
 @Named
 @Singleton

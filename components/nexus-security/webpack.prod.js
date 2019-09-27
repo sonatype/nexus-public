@@ -10,9 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import { configure } from 'enzyme';
-import Adapter from 'enzyme-adapter-react-16';
-import JestEnzyme from 'jest-enzyme';
-import 'babel-polyfill';
+const merge = require('webpack-merge');
+const path = require('path');
 
-configure({ adapter: new Adapter() });
+const common = require('./webpack.common');
+
+module.exports = merge(common, {
+  mode: 'production',
+  devtool: 'source-map',
+
+  output: {
+    filename: 'nexus-security-bundle.[hash].js',
+    path: path.resolve(__dirname, 'target', 'classes', 'static')
+  }
+});

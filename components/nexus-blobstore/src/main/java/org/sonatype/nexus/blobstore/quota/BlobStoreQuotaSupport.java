@@ -114,7 +114,7 @@ public abstract class BlobStoreQuotaSupport
 
   /**
    * @return the quota's type
-   * @since 3.next
+   * @since 3.19
    */
   public static String getType(final BlobStoreConfiguration config) {
     return config.attributes(ROOT_KEY).get(TYPE_KEY, String.class);

@@ -13,7 +13,7 @@
 package org.sonatype.nexus.security.role;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 public class ReadonlyRoleException
     extends RoleException

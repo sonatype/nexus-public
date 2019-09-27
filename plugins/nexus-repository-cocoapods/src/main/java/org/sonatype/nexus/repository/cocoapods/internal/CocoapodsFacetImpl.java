@@ -52,7 +52,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 import static org.sonatype.nexus.repository.storage.Query.builder;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 @Named
 public class CocoapodsFacetImpl

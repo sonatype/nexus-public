@@ -32,7 +32,6 @@ import org.sonatype.nexus.orient.entity.AttachedEntityId;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 import org.sonatype.nexus.repository.config.Configuration;
-import org.sonatype.nexus.repository.routing.RoutingRulesConfiguration;
 import org.sonatype.nexus.repository.routing.internal.RoutingRuleEntityAdapter;
 import org.sonatype.nexus.security.PasswordHelper;
 
@@ -77,18 +76,14 @@ public class ConfigurationEntityAdapter
 
   private final PasswordHelper passwordHelper;
 
-  private final RoutingRulesConfiguration routingRulesConfiguration;
-
   private final RoutingRuleEntityAdapter routingRuleEntityAdapter;
 
   @Inject
   public ConfigurationEntityAdapter(final PasswordHelper passwordHelper,
-                                    final RoutingRulesConfiguration routingRulesConfiguration,
                                     final RoutingRuleEntityAdapter routingRuleEntityAdapter)
   {
     super(DB_CLASS);
     this.passwordHelper = checkNotNull(passwordHelper);
-    this.routingRulesConfiguration = checkNotNull(routingRulesConfiguration);
     this.routingRuleEntityAdapter = checkNotNull(routingRuleEntityAdapter);
   }
 
@@ -120,12 +115,11 @@ public class ConfigurationEntityAdapter
     String repositoryName = document.field(P_REPOSITORY_NAME, OType.STRING);
     Boolean online = document.field(P_ONLINE, OType.BOOLEAN);
     Map<String, Map<String, Object>> attributes = document.field(P_ATTRIBUTES, OType.EMBEDDEDMAP);
-    if (routingRulesConfiguration.isEnabled()) {
-      ODocument routingRule = document.field(P_ROUTING_RULE_ID, OType.LINK);
-      EntityId routingRuleId =
-          routingRule == null ? null : new AttachedEntityId(routingRuleEntityAdapter, routingRule.getIdentity());
-      entity.setRoutingRuleId(routingRuleId);
-    }
+
+    ODocument routingRule = document.field(P_ROUTING_RULE_ID, OType.LINK);
+    EntityId routingRuleId =
+        routingRule == null ? null : new AttachedEntityId(routingRuleEntityAdapter, routingRule.getIdentity());
+    entity.setRoutingRuleId(routingRuleId);
 
     entity.setRecipeName(recipeName);
     entity.setRepositoryName(repositoryName);
@@ -149,12 +143,8 @@ public class ConfigurationEntityAdapter
     document.field(P_ONLINE, entity.isOnline());
     document.field(P_ATTRIBUTES, encrypt(attributes));
 
-    if (routingRulesConfiguration.isEnabled()) {
-      document.field(P_ROUTING_RULE_ID, entity.getRoutingRuleId() != null ?
-          getRecordIdObfuscator()
-              .decode(routingRuleEntityAdapter.getSchemaType(), entity.getRoutingRuleId().getValue()) :
-          null);
-    }
+    document.field(P_ROUTING_RULE_ID, entity.getRoutingRuleId() != null ? getRecordIdObfuscator()
+        .decode(routingRuleEntityAdapter.getSchemaType(), entity.getRoutingRuleId().getValue()) : null);
   }
 
   /**
@@ -183,7 +173,7 @@ public class ConfigurationEntityAdapter
         value = transform.apply((String) value);
       }
       else {
-        value = detach(value); 
+        value = detach(value);
       }
       processed.put(entry.getKey(), (V) value);
     }

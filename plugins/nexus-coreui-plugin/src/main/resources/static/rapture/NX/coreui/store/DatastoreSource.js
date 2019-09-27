@@ -15,7 +15,7 @@
 /**
  * Datastore Source store.
  *
- * @since 3.next
+ * @since 3.19
  */
 Ext.define('NX.coreui.store.DatastoreSource', {
   extend: 'Ext.data.Store',

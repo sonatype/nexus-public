@@ -25,7 +25,7 @@ import org.junit.Test;
 import static java.util.Arrays.asList;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 public class CocoapodsBrowseNodeGeneratorTest
     extends BrowseTestSupport

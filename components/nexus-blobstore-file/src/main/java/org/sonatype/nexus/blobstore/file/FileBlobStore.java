@@ -828,7 +828,8 @@ public class FileBlobStore
     File attributeFile = path.toFile();
     return attributeFile.isFile() &&
         attributeFile.getName().endsWith(BLOB_ATTRIBUTE_SUFFIX) &&
-        !attributeFile.getName().startsWith(TEMPORARY_BLOB_ID_PREFIX);
+        !attributeFile.getName().startsWith(TEMPORARY_BLOB_ID_PREFIX) &&
+        !attributeFile.getAbsolutePath().contains(CONTENT_TMP_PATH);
   }
 
   private void createEmptyDeletionsIndex(final File deletionsIndex) throws IOException {
@@ -913,7 +914,7 @@ public class FileBlobStore
   }
 
   @VisibleForTesting
-  Path getContentDir() {
+  public Path getContentDir() {
     return contentDir;
   }
 

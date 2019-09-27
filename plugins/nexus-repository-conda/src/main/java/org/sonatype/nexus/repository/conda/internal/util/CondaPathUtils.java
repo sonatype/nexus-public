@@ -18,7 +18,7 @@ import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher.State;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 public class CondaPathUtils
 {

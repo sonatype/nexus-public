@@ -34,7 +34,7 @@ import static java.lang.Math.min;
  * copyObject request is
  * used instead if only a single chunk would be copied.
  *
- * @since 3.next
+ * @since 3.19
  */
 @Singleton
 @Named("parallelCopier")

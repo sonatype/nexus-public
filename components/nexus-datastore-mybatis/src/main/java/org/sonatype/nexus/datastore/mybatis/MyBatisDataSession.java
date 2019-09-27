@@ -25,7 +25,7 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * MyBatis {@link DataSession}.
  *
- * @since 3.next
+ * @since 3.19
  */
 public class MyBatisDataSession
     implements DataSession<Transaction>, Transaction

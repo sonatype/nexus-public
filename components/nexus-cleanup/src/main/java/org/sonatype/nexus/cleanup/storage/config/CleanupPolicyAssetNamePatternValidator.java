@@ -23,7 +23,7 @@ import static org.sonatype.nexus.cleanup.internal.search.elasticsearch.RegexCrit
 
 /**
  *
- * @since 3.next
+ * @since 3.19
  */
 @Named
 public class CleanupPolicyAssetNamePatternValidator

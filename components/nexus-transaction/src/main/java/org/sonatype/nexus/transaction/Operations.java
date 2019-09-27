@@ -144,7 +144,7 @@ public class Operations<E extends Exception, B extends Operations<E, B>>
   /**
    * Uses the given {@link TransactionalStore} to supply {@link TransactionalSession}s.
    *
-   * @since 3.next
+   * @since 3.19
    */
   public final B withStore(final TransactionalStore<?> _store) {
     return (B) copy(spec, throwing, checkNotNull(_store));

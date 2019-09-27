@@ -46,4 +46,24 @@ public interface RepositoriesApiResourceDoc
       @ApiResponse(code = 401, message = "Authentication required"),
       @ApiResponse(code = 403, message = "Insufficient permissions")})
   List<AbstractApiRepository> getRepositories();
+
+  @ApiOperation("Schedule a 'Repair - Rebuild repository search' Task. Hosted or proxy repositories only.")
+  @ApiResponses(value = {
+      @ApiResponse(code = 204, message = "Repository search index rebuild has been scheduled"),
+      @ApiResponse(code = 400, message = "Repository is not of hosted or proxy type"),
+      @ApiResponse(code = 401, message = "Authentication required"),
+      @ApiResponse(code = 403, message = "Insufficient permissions"),
+      @ApiResponse(code = 404, message = "Repository not found")
+  })
+  void rebuildIndex(@ApiParam(value = "Name of the repository to rebuild index") final String repositoryName);
+
+  @ApiOperation("Invalidate repository cache. Proxy or group repositories only.")
+  @ApiResponses(value = {
+      @ApiResponse(code = 204, message = "Repository cache invalidated"),
+      @ApiResponse(code = 400, message = "Repository is not of proxy or group type"),
+      @ApiResponse(code = 401, message = "Authentication required"),
+      @ApiResponse(code = 403, message = "Insufficient permissions"),
+      @ApiResponse(code = 404, message = "Repository not found")
+  })
+  void invalidateCache(@ApiParam(value = "Name of the repository to invalidate cache") final String repositoryName);
 }

@@ -23,6 +23,7 @@ import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -33,11 +34,13 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.rest.api.ApiRepositoryAdapter;
 import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
 import org.sonatype.nexus.rest.Resource;
+import org.sonatype.nexus.rest.WebApplicationMessageException;
 
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
@@ -73,7 +76,6 @@ public class RepositoriesApiResource
     this.convertersByFormat = checkNotNull(convertersByFormat);
   }
 
-
   @Override
   @DELETE
   @Path("/{repositoryName}")
@@ -93,5 +95,39 @@ public class RepositoriesApiResource
 
   private AbstractApiRepository convert(final Repository repository) {
     return convertersByFormat.getOrDefault(repository.getFormat().toString(), defaultAdapter).adapt(repository);
+  }
+
+  @POST
+  @Path("/{repositoryName}/rebuild-index")
+  @RequiresAuthentication
+  public void rebuildIndex(@PathParam("repositoryName") final String repositoryName) {
+    try {
+      authorizingRepositoryManager.rebuildSearchIndex(repositoryName);
+    }
+    catch (IncompatibleRepositoryException e) {
+      log.debug("Not a hosted or proxy repository '{}'", repositoryName, e);
+      throw new WebApplicationMessageException(BAD_REQUEST, "\"" + e.getMessage() + "\"", APPLICATION_JSON);
+    }
+    catch (RepositoryNotFoundException e) {
+      log.debug("Repository not found '{}'", repositoryName, e);
+      throw new WebApplicationMessageException(NOT_FOUND, "\"" + e.getMessage() + "\"", APPLICATION_JSON);
+    }
+  }
+
+  @POST
+  @Path("/{repositoryName}/invalidate-cache")
+  @RequiresAuthentication
+  public void invalidateCache(@PathParam("repositoryName") final String repositoryName) {
+    try {
+      authorizingRepositoryManager.invalidateCache(repositoryName);
+    }
+    catch (IncompatibleRepositoryException e) {
+      log.debug("Not a proxy nor group repository '{}'", repositoryName, e);
+      throw new WebApplicationMessageException(BAD_REQUEST, "\"" + e.getMessage() + "\"", APPLICATION_JSON);
+    }
+    catch (RepositoryNotFoundException e) {
+      log.debug("Repository not found '{}'", repositoryName, e);
+      throw new WebApplicationMessageException(NOT_FOUND, "\"" + e.getMessage() + "\"", APPLICATION_JSON);
+    }
   }
 }

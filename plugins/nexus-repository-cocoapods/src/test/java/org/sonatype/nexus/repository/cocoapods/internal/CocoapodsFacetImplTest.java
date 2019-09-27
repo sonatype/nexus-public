@@ -55,7 +55,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 public class CocoapodsFacetImplTest
     extends TestSupport

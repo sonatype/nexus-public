@@ -47,7 +47,7 @@ import static org.sonatype.nexus.security.BreadActions.READ
 /**
  * DataStore {@link org.sonatype.nexus.extdirect.DirectComponent}.
  *
- * @since 3.next
+ * @since 3.19
  */
 @Named
 @Singleton

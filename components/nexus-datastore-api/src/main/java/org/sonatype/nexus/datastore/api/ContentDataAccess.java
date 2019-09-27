@@ -17,7 +17,7 @@ package org.sonatype.nexus.datastore.api;
  *
  * This access will be managed by the content data store(s) rather than the config data store.
  *
- * @since 3.next
+ * @since 3.19
  */
 public interface ContentDataAccess
     extends DataAccess

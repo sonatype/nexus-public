@@ -23,7 +23,7 @@ import io.swagger.annotations.ApiParam;
 /**
  * REST facade for {@link FileBlobStoreResource}
  *
- * @since 3.next
+ * @since 3.19
  */
 @Api("Blob Store")
 public interface FileBlobStoreResourceDoc

@@ -13,7 +13,7 @@
 /**
  * Repository settings form for an cocoapods repository
  *
- * @since 3.next
+ * @since 3.19
  */
 Ext.define('NX.coreui.view.repository.recipe.CocoapodsProxy', {
   extend: 'NX.coreui.view.repository.RepositorySettingsForm',

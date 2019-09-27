@@ -10,7 +10,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.rapture;
+package org.sonatype.nexus.ui;
+
+import java.util.List;
 
 import javax.annotation.Nullable;
 
@@ -55,4 +57,14 @@ public interface UiPluginDescriptor
    */
   @Nullable
   String getConfigClassName();
+
+  /**
+   * @return a list of script files that should be included on the page (this is used for non-extjs plugins)
+   */
+  List<String> getScripts(final boolean isDebug);
+
+  /**
+   * @return a list of stylesheets that should be included on the page (this is used for non-extjs plugins)
+   */
+  List<String> getStyles();
 }

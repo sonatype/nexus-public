@@ -30,7 +30,7 @@ import com.google.common.collect.ImmutableList;
 /**
  * MyBatis {@link DataStoreDescriptor}.
  *
- * @since 3.next
+ * @since 3.19
  */
 @Singleton
 @Named(MyBatisDataStoreDescriptor.NAME)

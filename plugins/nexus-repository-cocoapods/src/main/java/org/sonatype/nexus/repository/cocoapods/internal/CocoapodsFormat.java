@@ -18,7 +18,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.repository.Format;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 @Named(CocoapodsFormat.NAME)
 @Singleton

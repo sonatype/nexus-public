@@ -21,7 +21,7 @@ import static java.lang.System.getProperty;
 /**
  * Installs the fast {@link FeaturesService} wrapper.
  *
- * @since 3.next
+ * @since 3.19
  */
 public class Activator
     implements BundleActivator

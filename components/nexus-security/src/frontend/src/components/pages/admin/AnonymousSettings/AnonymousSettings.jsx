@@ -15,13 +15,13 @@ import React, {useState, useEffect} from 'react';
 import './AnonymousSettings.scss';
 
 import Axios from 'axios';
-import Button from '../../../widgets/Button/Button';
-import Checkbox from '../../../widgets/Checkbox/Checkbox';
-import ContentBody from '../../../layout/common/ContentBody/ContentBody';
+import Button from '../../../../components/widgets/Button/Button';
+import Checkbox from '../../../../components/widgets/Checkbox/Checkbox';
+import ContentBody from '../../../../components/layout/common/ContentBody/ContentBody';
 import ExtJS from '../../../../interface/ExtJS';
-import Select from '../../../widgets/Select/Select';
-import SettingsSection from '../../../layout/admin/SettingsSection/SettingsSection';
-import Textfield from '../../../widgets/Textfield/Textfield';
+import Select from '../../../../components/widgets/Select/Select';
+import SettingsSection from '../../../../components/layout/admin/SettingsSection/SettingsSection';
+import Textfield from '../../../../components/widgets/Textfield/Textfield';
 import UIStrings from '../../../../constants/UIStrings';
 
 export default function AnonymousSettings() {

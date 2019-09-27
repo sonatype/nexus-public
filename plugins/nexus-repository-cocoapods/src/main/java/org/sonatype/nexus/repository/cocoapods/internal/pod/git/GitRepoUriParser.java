@@ -19,7 +19,7 @@ import javax.annotation.Nullable;
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 public class GitRepoUriParser
 {

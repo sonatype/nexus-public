@@ -15,11 +15,11 @@ import React from 'react';
 
 import Axios from 'axios';
 import AnonymousSettings from './AnonymousSettings';
-import Button from '../../../widgets/Button/Button';
-import Checkbox from '../../../widgets/Checkbox/Checkbox';
-import Select from '../../../widgets/Select/Select';
-import Textfield from '../../../widgets/Textfield/Textfield';
-import UIStrings from "../../../../constants/UIStrings";
+import Button from '../../../../components/widgets/Button/Button';
+import Checkbox from '../../../../components/widgets/Checkbox/Checkbox';
+import Select from '../../../../components/widgets/Select/Select';
+import Textfield from '../../../../components/widgets/Textfield/Textfield';
+import UIStrings from '../../../../constants/UIStrings';
 
 const mockRealmTypes = [
   {id: 'r1', name: 'Realm One'},

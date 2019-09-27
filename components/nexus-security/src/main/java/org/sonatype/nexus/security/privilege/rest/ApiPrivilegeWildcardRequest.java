@@ -20,7 +20,7 @@ import io.swagger.annotations.ApiModelProperty;
 import org.hibernate.validator.constraints.NotBlank;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 public class ApiPrivilegeWildcardRequest
     extends ApiPrivilegeRequest

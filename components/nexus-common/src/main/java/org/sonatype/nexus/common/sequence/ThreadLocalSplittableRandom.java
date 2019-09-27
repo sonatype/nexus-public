@@ -18,7 +18,7 @@ import java.util.SplittableRandom;
 /**
  * {@link SplittableRandom} that automatically splits itself across threads.
  *
- * @since 3.next
+ * @since 3.19
  */
 public class ThreadLocalSplittableRandom
     extends ThreadLocal<SplittableRandom>

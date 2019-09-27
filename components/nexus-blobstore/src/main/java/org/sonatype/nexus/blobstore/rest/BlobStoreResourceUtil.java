@@ -18,7 +18,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 public class BlobStoreResourceUtil
 {

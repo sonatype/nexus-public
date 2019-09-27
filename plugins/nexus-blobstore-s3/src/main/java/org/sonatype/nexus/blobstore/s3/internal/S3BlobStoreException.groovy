@@ -24,7 +24,7 @@ import static java.lang.String.format
 /**
  * A {@link BlobStoreException} specific to the S3 implementation
  *
- * @since 3.next
+ * @since 3.19
  */
 class S3BlobStoreException
     extends BlobStoreException

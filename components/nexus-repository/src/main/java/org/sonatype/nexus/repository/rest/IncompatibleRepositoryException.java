@@ -10,24 +10,15 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-export default {
-  SETTINGS: {
-    DISCARD_BUTTON_LABEL: 'Discard',
-    LOADING_MASK: 'Loading...',
-    SAVE_BUTTON_LABEL: 'Save'
-  },
-  ANONYMOUS_SETTINGS: {
-    ENABLED_CHECKBOX_LABEL: 'Access:',
-    ENABLED_CHECKBOX_DESCRIPTION: 'Allow anonymous users to access the server',
-    USERNAME_TEXTFIELD_LABEL: 'Username:',
-    REALM_SELECT_LABEL: 'Realm:',
-    MESSAGES: {
-      LOAD_ERROR: 'An error occurred while loading Anonymous settings, see console for more details',
-      SAVE_SUCCESS: 'Anonymous security settings updated',
-      SAVE_ERROR: 'An error occurred while updating Anonymous settings, see console for more details'
-    }
-  },
-  ERROR: {
-    FIELD_REQUIRED: 'This field is required'
+
+package org.sonatype.nexus.repository.rest;
+
+/**
+ * @since 3.next
+ */
+public class IncompatibleRepositoryException extends Exception
+{
+  public IncompatibleRepositoryException(final String message) {
+    super(message);
   }
-};
+}

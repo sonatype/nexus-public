@@ -23,7 +23,57 @@ Ext.define('NX.coreui.view.repository.facet.HttpClientFacet', {
   requires: [
     'NX.I18n'
   ],
-  /**
+
+  authFields: function() {
+    var me = this;
+    return [
+      {
+        xtype: 'combo',
+        name: 'attributes.httpclient.authentication.type',
+        fieldLabel: NX.I18n.get('Repository_Facet_HttpClientFacet_AuthenticationType_FieldLabel'),
+        editable: false,
+        store: me.getAuthTypeStore(),
+        value: 'username',
+        listeners: {
+          'change': function(combo) {
+            me.authTypeChanged(combo);
+          }
+        }
+      },
+      {
+        xtype: 'textfield',
+        id: 'attributes_httpclient_authentication_username',
+        name: 'attributes.httpclient.authentication.username',
+        fieldLabel: NX.I18n.get('System_AuthenticationSettings_Username_FieldLabel'),
+        allowBlank: false
+      },
+      {
+        xtype: 'textfield',
+        id: 'attributes_httpclient_authentication_password',
+        inputType: 'password',
+        name: 'attributes.httpclient.authentication.password',
+        fieldLabel: NX.I18n.get('System_AuthenticationSettings_Password_FieldLabel'),
+        allowBlank: false
+      },
+      {
+        xtype: 'fieldcontainer',
+        itemId: 'ntlmFields',
+        hidden: true,
+        items: [
+          {
+            xtype: 'textfield',
+            name: 'attributes.httpclient.authentication.ntlmHost',
+            fieldLabel: NX.I18n.get('System_AuthenticationSettings_WindowsNtlmHostname_FieldLabel')
+          },
+          {
+            xtype: 'textfield',
+            name: 'attributes.httpclient.authentication.ntlmDomain',
+            fieldLabel: NX.I18n.get('System_AuthenticationSettings_WindowsNtlmDomain_FieldLabel')
+          }
+        ]
+      }
+    ];
+  }, /**
    * @override
    */
   initComponent: function() {
@@ -42,63 +92,7 @@ Ext.define('NX.coreui.view.repository.facet.HttpClientFacet', {
             checkboxToggle: true,
             checkboxName: 'authEnabled',
             collapsed: true,
-            items: [
-              {
-                xtype: 'combo',
-                name: 'attributes.httpclient.authentication.type',
-                fieldLabel: NX.I18n.get('Repository_Facet_HttpClientFacet_AuthenticationType_FieldLabel'),
-                editable: false,
-                store: [
-                  ['username', NX.I18n.get('Repository_Facet_HttpClientFacet_AuthenticationType_Username')],
-                  ['ntlm', NX.I18n.get('Repository_Facet_HttpClientFacet_AuthenticationType_NTLM')]
-                ],
-                value: 'username' ,
-                listeners: {
-                  'change': function(combo) {
-                    var ntlmFields = this.up('form').down('#ntlmFields');
-
-                    if(combo.getValue() === 'ntlm') {
-                      ntlmFields.show();
-                      ntlmFields.enable();
-                    }
-                    else {
-                      ntlmFields.hide();
-                      ntlmFields.disable();
-                    }
-                  }
-                }
-              },
-              {
-                xtype:'textfield',
-                name: 'attributes.httpclient.authentication.username',
-                fieldLabel: NX.I18n.get('System_AuthenticationSettings_Username_FieldLabel'),
-                allowBlank: false
-              },
-              {
-                xtype: 'textfield',
-                inputType: 'password',
-                name: 'attributes.httpclient.authentication.password',
-                fieldLabel: NX.I18n.get('System_AuthenticationSettings_Password_FieldLabel'),
-                allowBlank: false
-              },
-              {
-                xtype: 'fieldcontainer',
-                itemId: 'ntlmFields',
-                hidden: true,
-                items:[
-                  {
-                    xtype:'textfield',
-                    name: 'attributes.httpclient.authentication.ntlmHost',
-                    fieldLabel: NX.I18n.get('System_AuthenticationSettings_WindowsNtlmHostname_FieldLabel')
-                  },
-                  {
-                    xtype:'textfield',
-                    name: 'attributes.httpclient.authentication.ntlmDomain',
-                    fieldLabel: NX.I18n.get('System_AuthenticationSettings_WindowsNtlmDomain_FieldLabel')
-                  }
-                ]
-              }
-            ]
+            items: this.authFields(me)
           },
           {
             xtype: 'nx-optionalfieldset',
@@ -152,6 +146,27 @@ Ext.define('NX.coreui.view.repository.facet.HttpClientFacet', {
     ];
 
     me.callParent();
+  },
+
+  authTypeChanged: function(combo) {
+    var me = this;
+    var ntlmFields = me.up('form').down('#ntlmFields');
+
+    if(combo.getValue() === 'ntlm') {
+      ntlmFields.show();
+      ntlmFields.enable();
+    }
+    else {
+      ntlmFields.hide();
+      ntlmFields.disable();
+    }
+  },
+
+  getAuthTypeStore: function() {
+    return [
+      ['username', NX.I18n.get('Repository_Facet_HttpClientFacet_AuthenticationType_Username')],
+      ['ntlm', NX.I18n.get('Repository_Facet_HttpClientFacet_AuthenticationType_NTLM')]
+    ];
   }
 
 });

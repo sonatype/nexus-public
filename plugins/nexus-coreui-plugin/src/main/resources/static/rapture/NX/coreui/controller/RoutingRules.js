@@ -74,7 +74,7 @@ Ext.define('NX.coreui.controller.RoutingRules', {
         variants: ['x16', 'x32']
       },
       visible: function() {
-        return NX.Permissions.check('nexus:*') && NX.State.getValue('routingRules');
+        return NX.Permissions.check('nexus:*');
       },
       weight: 500
     };
@@ -157,15 +157,12 @@ Ext.define('NX.coreui.controller.RoutingRules', {
 
   bindButton: function(button) {
     button.mon(
-        NX.Conditions.and(
-            NX.Conditions.isPermitted(this.permission),
-            NX.Conditions.watchState('routingRules')
-        ),
+        NX.Conditions.isPermitted(this.permission),
         {
-          satisfied: function () {
+          satisfied: function() {
             button.enable();
           },
-          unsatisfied: function () {
+          unsatisfied: function() {
             button.disable();
           }
         }
@@ -182,7 +179,6 @@ Ext.define('NX.coreui.controller.RoutingRules', {
     button.mon(
         NX.Conditions.and(
             NX.Conditions.isPermitted(this.permission + ':delete'),
-            NX.Conditions.watchState('routingRules'),
             NX.Conditions.watchEvents([
                   {observable: this.getStore('RoutingRule'), events: ['load']},
                   {observable: Ext.History, events: ['change']}

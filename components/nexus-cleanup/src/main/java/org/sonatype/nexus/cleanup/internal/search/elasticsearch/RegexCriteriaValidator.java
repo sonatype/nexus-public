@@ -17,7 +17,7 @@ import org.apache.lucene.util.automaton.RegExp;
 import static java.lang.String.format;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 public class RegexCriteriaValidator
 {

@@ -36,7 +36,7 @@ import static java.util.stream.Collectors.toMap;
 /**
  * Common support class for {@link DataStore}s.
  *
- * @since 3.next
+ * @since 3.19
  */
 public abstract class DataStoreSupport<T extends Transaction, S extends DataSession<T>>
     extends StateGuardLifecycleSupport

@@ -20,7 +20,7 @@ import org.hibernate.validator.constraints.NotBlank;
 import org.hibernate.validator.constraints.Range;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 public class BlobStoreApiSoftQuota
 {

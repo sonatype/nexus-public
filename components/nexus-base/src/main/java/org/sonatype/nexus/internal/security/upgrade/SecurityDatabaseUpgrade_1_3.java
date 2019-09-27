@@ -38,7 +38,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Upgrade step to replace 'mark' and 'add' actions with 'create' in application type privileges
  *
- * @since 3.next
+ * @since 3.19
  */
 @Named
 @Singleton

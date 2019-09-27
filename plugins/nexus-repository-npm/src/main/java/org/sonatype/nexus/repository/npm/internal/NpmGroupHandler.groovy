@@ -24,7 +24,7 @@ import static org.sonatype.nexus.repository.http.HttpStatus.OK
 import static org.sonatype.nexus.repository.group.GroupHandler.DispatchedRepositories
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 class NpmGroupHandler
     extends GroupHandler

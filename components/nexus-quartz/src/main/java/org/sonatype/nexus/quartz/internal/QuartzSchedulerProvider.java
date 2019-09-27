@@ -36,7 +36,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 /**
  * {@link Scheduler} provider.
  * 
- * @since 3.next
+ * @since 3.19
  */
 @Named
 @ManagedLifecycle(phase = SERVICES)

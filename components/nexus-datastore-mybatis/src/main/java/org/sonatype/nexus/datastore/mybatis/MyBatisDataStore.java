@@ -70,7 +70,7 @@ import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.SC
 /**
  * MyBatis {@link DataStore}.
  *
- * @since 3.next
+ * @since 3.19
  */
 @Named(MyBatisDataStoreDescriptor.NAME)
 @SuppressWarnings("rawtypes")

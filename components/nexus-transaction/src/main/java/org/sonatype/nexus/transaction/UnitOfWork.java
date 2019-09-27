@@ -124,7 +124,7 @@ public final class UnitOfWork
    *
    * @throws IllegalStateException if no session exists for the current context
    *
-   * @since 3.next
+   * @since 3.19
    */
   @SuppressWarnings("unchecked")
   public static <S extends TransactionalSession<?>> S currentSession() {

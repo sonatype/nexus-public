@@ -13,7 +13,7 @@
 package org.sonatype.nexus.security.privilege;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 public class ReadonlyPrivilegeException
     extends PrivilegeException

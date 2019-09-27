@@ -21,7 +21,7 @@ import org.sonatype.nexus.formfields.FormField;
 /**
  * Describes a {@link DataStore} type.
  *
- * @since 3.next
+ * @since 3.19
  */
 public interface DataStoreDescriptor
 {

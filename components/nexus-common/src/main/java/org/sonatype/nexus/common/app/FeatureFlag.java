@@ -22,7 +22,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 /**
  * Flags packages or components that should only exist when the named system property is {@code true}.
  *
- * @since 3.next
+ * @since 3.19
  */
 @Retention(RUNTIME)
 @Target({ PACKAGE, TYPE })

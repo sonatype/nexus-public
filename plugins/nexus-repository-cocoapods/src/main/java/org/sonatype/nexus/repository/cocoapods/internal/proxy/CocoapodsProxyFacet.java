@@ -46,7 +46,7 @@ import static org.sonatype.nexus.repository.cocoapods.internal.CocoapodsFormat.C
 import static org.sonatype.nexus.repository.cocoapods.internal.CocoapodsFormat.removeInitialSlashFromPath;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 @Named
 @Facet.Exposed

@@ -20,7 +20,6 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 import org.sonatype.nexus.repository.routing.RoutingMode;
 import org.sonatype.nexus.repository.routing.RoutingRule;
-import org.sonatype.nexus.repository.routing.RoutingRulesConfiguration;
 import org.sonatype.nexus.rest.ValidationErrorXO;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
@@ -52,8 +51,7 @@ public class RoutingRuleStoreImplTest extends TestSupport
   @Before
   public void setUp() throws Exception {
     RoutingRuleEntityAdapter routingRuleEntityAdapter = new RoutingRuleEntityAdapter();
-    RoutingRulesConfiguration configuration = new RoutingRulesConfiguration(true);
-    underTest = new RoutingRuleStoreImpl(database.getInstanceProvider(), routingRuleEntityAdapter, configuration);
+    underTest = new RoutingRuleStoreImpl(database.getInstanceProvider(), routingRuleEntityAdapter);
   }
 
   @Test
@@ -131,20 +129,6 @@ public class RoutingRuleStoreImplTest extends TestSupport
 
     RoutingRule rule = underTest.getByName("foo");
     assertThat(rule.name(), is("foo"));
-  }
-
-  @Test
-  public void testStart_disabled() throws Exception {
-    RoutingRuleEntityAdapter routingRuleEntityAdapter = new RoutingRuleEntityAdapter();
-    RoutingRulesConfiguration configuration = new RoutingRulesConfiguration(false);
-    underTest = new RoutingRuleStoreImpl(database.getInstanceProvider(), routingRuleEntityAdapter, configuration);
-    underTest.start();
-
-    try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
-      OSchema schema = db.getMetadata().getSchema();
-      OClass type = schema.getClass(RoutingRuleEntityAdapter.DB_CLASS);
-      assertNull(type);
-    }
   }
 
   @Test

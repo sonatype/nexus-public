@@ -40,7 +40,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 /**
  * {@link JobStore} implementation that uses JDBC.
  *
- * @since 3.next
+ * @since 3.19
  */
 @FeatureFlag(name = "nexus.quartz.jobstore.jdbc")
 @ManagedLifecycle(phase = SCHEMAS)

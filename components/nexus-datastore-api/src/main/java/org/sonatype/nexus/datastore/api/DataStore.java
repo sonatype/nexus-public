@@ -22,7 +22,7 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 /**
  * Each {@link DataStore} contains a number of {@link DataAccess} mappings accessible via {@link DataSession}s.
  *
- * @since 3.next
+ * @since 3.19
  */
 public interface DataStore<S extends DataSession<?>>
     extends TransactionalStore<S>, Lifecycle

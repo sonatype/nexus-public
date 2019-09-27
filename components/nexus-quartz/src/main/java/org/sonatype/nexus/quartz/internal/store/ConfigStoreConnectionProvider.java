@@ -31,7 +31,7 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE
 /**
  * Supplies JDBC connections to Quartz from the shared config {@link DataStore}.
  *
- * @since 3.next
+ * @since 3.19
  */
 @FeatureFlag(name = "nexus.datastore.enabled")
 @Named

@@ -24,7 +24,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Ensure that data store names are unique case-insensitively.
  *
- * @since 3.next
+ * @since 3.19
  */
 @Named
 public class UniqueDataStoreNameValidator

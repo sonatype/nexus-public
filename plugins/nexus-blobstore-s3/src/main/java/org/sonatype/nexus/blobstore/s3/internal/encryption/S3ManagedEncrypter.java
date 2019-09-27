@@ -26,7 +26,7 @@ import static java.util.Optional.ofNullable;
 
 /**
  * Adds S3 managed encryption to S3 requests.
- * @since 3.next
+ * @since 3.19
  */
 @Named(S3ManagedEncrypter.ID)
 public class S3ManagedEncrypter

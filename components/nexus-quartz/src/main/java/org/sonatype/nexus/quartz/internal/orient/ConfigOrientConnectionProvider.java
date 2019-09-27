@@ -35,7 +35,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Supplies JDBC connections to Quartz from the OrientDB config database.
  *
- * @since 3.next
+ * @since 3.19
  */
 @FeatureFlag(name = "nexus.quartz.jobstore.orient")
 @Named

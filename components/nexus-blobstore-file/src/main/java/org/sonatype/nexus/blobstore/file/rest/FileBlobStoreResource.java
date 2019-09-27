@@ -42,7 +42,7 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 @Named
 @Singleton

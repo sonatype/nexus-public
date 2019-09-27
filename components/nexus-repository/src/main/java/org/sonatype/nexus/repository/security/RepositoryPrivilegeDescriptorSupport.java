@@ -29,7 +29,7 @@ import org.sonatype.nexus.security.privilege.rest.PrivilegeAction;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 public abstract class RepositoryPrivilegeDescriptorSupport<T extends ApiPrivilegeWithRepository, Y extends ApiPrivilegeWithRepositoryRequest>
     extends PrivilegeDescriptorSupport<T,Y>

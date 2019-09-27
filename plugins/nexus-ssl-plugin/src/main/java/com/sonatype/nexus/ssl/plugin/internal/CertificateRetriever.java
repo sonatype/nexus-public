@@ -191,7 +191,7 @@ public class CertificateRetriever
    * @return certificate chain
    * @throws Exception Re-thrown from accessing the remote host
    *
-   * @since 3.next
+   * @since 3.19
    */
   public Certificate[] retrieveCertificates(
       final String host,

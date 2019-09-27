@@ -33,7 +33,7 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * MyBatis {@link TypeHandler} that maps UUID-backed {@link EntityId}s to/from SQL.
  *
- * @since 3.next
+ * @since 3.19
  */
 @Named
 @Singleton

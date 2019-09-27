@@ -11,18 +11,11 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 const CopyModulesPlugin = require('copy-modules-webpack-plugin');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const TerserJSPlugin = require('terser-webpack-plugin');
 const path = require('path');
 
 module.exports = {
   entry: './src/frontend/src/index.js',
-  output: {
-    filename: 'frontend-bundle.js',
-    path: path.resolve(__dirname, 'target', 'classes', 'static', 'rapture')
-  },
-  devtool: 'source-map',
   module: {
     rules: [
       {
@@ -33,34 +26,21 @@ module.exports = {
             loader: 'babel-loader'
           }
         ]
-      },
-      {
-        test: /\.scss$/,
-        use: [
-          {
-            loader: MiniCssExtractPlugin.loader
-          },
-          'css-loader',
-          'sass-loader'
-        ]
       }
     ]
   },
   optimization: {
     minimizer: [
-        new TerserJSPlugin({
-          cache: true,
-          parallel: true,
-          sourceMap: true
-        }),
-        new OptimizeCSSAssetsPlugin({})]
+      new TerserJSPlugin({
+        cache: true,
+        parallel: true,
+        sourceMap: true
+      })
+    ]
   },
   plugins: [
     new CopyModulesPlugin({
       destination: path.resolve(__dirname, 'target', 'webpack-modules')
-    }),
-    new MiniCssExtractPlugin({
-      filename: 'frontend-bundle.css'
     })
   ],
   resolve: {

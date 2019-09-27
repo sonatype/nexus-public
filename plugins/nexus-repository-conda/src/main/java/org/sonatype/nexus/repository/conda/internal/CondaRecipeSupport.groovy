@@ -33,7 +33,6 @@ import org.sonatype.nexus.repository.storage.UnitOfWorkHandler
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
 import org.sonatype.nexus.repository.view.Context
 import org.sonatype.nexus.repository.view.Matcher
-import org.sonatype.nexus.repository.view.handlers.BrowseUnsupportedHandler
 import org.sonatype.nexus.repository.view.handlers.ConditionalRequestHandler
 import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler
 import org.sonatype.nexus.repository.view.handlers.ExceptionHandler
@@ -67,7 +66,7 @@ import static org.sonatype.nexus.repository.http.HttpMethods.HEAD
 /**
  * Support for Conda recipes.
  *
- * @since 3.next
+ * @since 3.19
  */
 abstract class CondaRecipeSupport
     extends RecipeSupport
@@ -110,9 +109,6 @@ abstract class CondaRecipeSupport
 
   @Inject
   UnitOfWorkHandler unitOfWorkHandler
-
-  @Inject
-  BrowseUnsupportedHandler browseUnsupportedHandler
 
   @Inject
   HandlerContributor handlerContributor

@@ -12,14 +12,18 @@
  */
 package org.sonatype.nexus.rapture.internal;
 
+import java.util.List;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.rapture.UiPluginDescriptor;
-import org.sonatype.nexus.rapture.UiPluginDescriptorSupport;
+import org.sonatype.nexus.ui.UiPluginDescriptor;
+import org.sonatype.nexus.ui.UiPluginDescriptorSupport;
 
 import org.eclipse.sisu.Priority;
+
+import static java.util.Arrays.asList;
 
 /**
  * Rapture {@link UiPluginDescriptor} for {@code nexus-rapture}.
@@ -30,11 +34,22 @@ import org.eclipse.sisu.Priority;
 @Singleton
 @Priority(Integer.MAX_VALUE) // always load first
 public class UiPluginDescriptorImpl
-  extends UiPluginDescriptorSupport
+    extends UiPluginDescriptorSupport
 {
+  private final List<String> scripts;
+
+  private final List<String> debugScripts;
+
   @Inject
   public UiPluginDescriptorImpl() {
     super("nexus-rapture");
     setConfigClassName("NX.app.PluginConfig");
+    scripts = asList("/static/frontend-bundle.js");
+    debugScripts = asList("/static/frontend-bundle-debug.js");
+  }
+
+  @Override
+  public List<String> getScripts(final boolean isDebug) {
+    return isDebug ? debugScripts : scripts;
   }
 }

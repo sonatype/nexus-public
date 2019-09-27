@@ -327,13 +327,15 @@ public class QuartzSchedulerSPI
   }
 
   private void applyActive() throws SchedulerException {
-    if (!active && !scheduler.isInStandbyMode()) {
-      scheduler.standby();
-      log.info("Scheduler put into stand-by mode");
-    }
-    else if (active && scheduler.isInStandbyMode()) {
-      scheduler.start();
-      log.info("Scheduler put into ready mode");
+    try (TcclBlock tccl = TcclBlock.begin(this)) {
+      if (!active && !scheduler.isInStandbyMode()) {
+        scheduler.standby();
+        log.info("Scheduler put into stand-by mode");
+      }
+      else if (active && scheduler.isInStandbyMode()) {
+        scheduler.start();
+        log.info("Scheduler put into ready mode");
+      }
     }
   }
 

@@ -17,7 +17,7 @@ import java.net.URI;
 import org.sonatype.nexus.repository.cocoapods.internal.CocoapodsConfig;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 public class GitApiHelper
 {

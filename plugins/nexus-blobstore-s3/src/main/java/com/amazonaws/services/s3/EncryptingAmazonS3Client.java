@@ -40,7 +40,7 @@ import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.ENCRYPTION_TY
  *
  * The odd packaging is due to {@link AmazonS3ClientParams}
  *
- * @since 3.next
+ * @since 3.19
  */
 public class EncryptingAmazonS3Client
     extends AmazonS3Client

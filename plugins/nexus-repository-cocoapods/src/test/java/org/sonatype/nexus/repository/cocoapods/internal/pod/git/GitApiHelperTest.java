@@ -23,7 +23,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 @RunWith(JUnitParamsRunner.class)
 public class GitApiHelperTest

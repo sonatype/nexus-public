@@ -15,8 +15,17 @@ package org.sonatype.nexus.repository.rest;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.cache.NegativeCacheFacet;
+import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.proxy.ProxyFacet;
+import org.sonatype.nexus.repository.search.RebuildIndexTaskDescriptor;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
+import org.sonatype.nexus.repository.types.GroupType;
+import org.sonatype.nexus.repository.types.HostedType;
+import org.sonatype.nexus.repository.types.ProxyType;
+import org.sonatype.nexus.scheduling.TaskConfiguration;
+import org.sonatype.nexus.scheduling.TaskScheduler;
 
 import org.apache.shiro.authz.AuthorizationException;
 import org.junit.Before;
@@ -30,9 +39,11 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.security.BreadActions.EDIT;
 
 public class AuthorizingRepositoryManagerTest
     extends TestSupport
@@ -45,6 +56,9 @@ public class AuthorizingRepositoryManagerTest
 
   @Mock
   private RepositoryPermissionChecker repositoryPermissionChecker;
+
+  @Mock
+  private TaskScheduler taskScheduler;
 
   @Mock
   private Repository repository;
@@ -85,5 +99,124 @@ public class AuthorizingRepositoryManagerTest
     expectedException.expect(AuthorizationException.class);
 
     authorizingRepositoryManager.delete("repository");
+  }
+
+  @Test
+  public void rebuildIndexShouldThrowExceptionIfRepositoryDoesNotExist() throws Exception {
+    expectedException.expect(RepositoryNotFoundException.class);
+
+    authorizingRepositoryManager.rebuildSearchIndex("absent");
+
+    verify(repositoryManager).get(eq("repository"));
+    verifyNoMoreInteractions(repositoryManager, repositoryPermissionChecker, taskScheduler);
+  }
+
+  @Test
+  public void rebuildIndexShouldThrowExceptionIfRepositoryTypeIsNotHostedOrProxy() throws Exception {
+    when(repository.getType()).thenReturn(new GroupType());
+    expectedException.expect(IncompatibleRepositoryException.class);
+
+    authorizingRepositoryManager.rebuildSearchIndex("repository");
+
+    verify(repositoryManager).get(eq("repository"));
+    verifyNoMoreInteractions(repositoryManager, repositoryPermissionChecker, taskScheduler);
+  }
+
+  @Test
+  public void rebuildIndexShouldThrowExceptionIfInsufficientPermissions() throws Exception {
+    when(repository.getType()).thenReturn(new HostedType());
+    doThrow(new AuthorizationException("User is not permitted."))
+        .when(repositoryPermissionChecker)
+        .ensureUserCanAdmin(any(), any());
+    expectedException.expect(AuthorizationException.class);
+
+    authorizingRepositoryManager.rebuildSearchIndex("repository");
+
+    verify(repositoryManager).get(eq("repository"));
+    verify(repositoryPermissionChecker).ensureUserCanAdmin(eq(EDIT), eq(repository));
+    verifyNoMoreInteractions(repositoryManager, repositoryPermissionChecker, taskScheduler);
+  }
+
+  @Test
+  public void rebuildIndexShouldTriggerTask() throws Exception {
+    TaskConfiguration taskConfiguration = mock(TaskConfiguration.class);
+    when(taskScheduler.createTaskConfigurationInstance(any())).thenReturn(taskConfiguration);
+    when(repository.getType()).thenReturn(new HostedType());
+
+    authorizingRepositoryManager.rebuildSearchIndex("repository");
+
+    verify(repositoryManager).get(eq("repository"));
+    verify(repositoryPermissionChecker).ensureUserCanAdmin(eq(EDIT), eq(repository));
+    verify(taskScheduler).createTaskConfigurationInstance(RebuildIndexTaskDescriptor.TYPE_ID);
+    verify(taskScheduler).submit(any());
+    verifyNoMoreInteractions(repositoryManager, repositoryPermissionChecker, taskScheduler);
+  }
+
+  @Test
+  public void invalidateCacheShouldThrowExceptionIfRepositoryDoesNotExist() throws Exception {
+    expectedException.expect(RepositoryNotFoundException.class);
+
+    authorizingRepositoryManager.invalidateCache("absent");
+
+    verify(repositoryManager).get(eq("repository"));
+    verifyNoMoreInteractions(repositoryManager, repositoryPermissionChecker, taskScheduler);
+  }
+
+  @Test
+  public void invalidateCacheShouldThrowExceptionIfRepositoryTypeIsNotProxyOrGroup() throws Exception {
+    when(repository.getType()).thenReturn(new HostedType());
+    expectedException.expect(IncompatibleRepositoryException.class);
+
+    authorizingRepositoryManager.invalidateCache("repository");
+
+    verify(repositoryManager).get(eq("repository"));
+    verifyNoMoreInteractions(repositoryManager, repositoryPermissionChecker, taskScheduler);
+  }
+
+  @Test
+  public void invalidateCacheShouldThrowExceptionIfInsufficientPermissions() throws Exception {
+    when(repository.getType()).thenReturn(new GroupType());
+    doThrow(new AuthorizationException("User is not permitted."))
+        .when(repositoryPermissionChecker)
+        .ensureUserCanAdmin(any(), any());
+    expectedException.expect(AuthorizationException.class);
+
+    authorizingRepositoryManager.invalidateCache("repository");
+
+    verify(repositoryManager).get(eq("repository"));
+    verify(repositoryPermissionChecker).ensureUserCanAdmin(eq(EDIT), eq(repository));
+    verifyNoMoreInteractions(repositoryManager, repositoryPermissionChecker, taskScheduler);
+  }
+
+  @Test
+  public void invalidateCacheProxyRepository() throws Exception {
+    when(repository.getType()).thenReturn(new ProxyType());
+    ProxyFacet proxyFacet = mock(ProxyFacet.class);
+    when(repository.facet(ProxyFacet.class)).thenReturn(proxyFacet);
+    NegativeCacheFacet negativeCacheFacet = mock(NegativeCacheFacet.class);
+    when(repository.facet(NegativeCacheFacet.class)).thenReturn(negativeCacheFacet);
+
+    authorizingRepositoryManager.invalidateCache("repository");
+
+    verify(repositoryManager).get(eq("repository"));
+    verify(repositoryPermissionChecker).ensureUserCanAdmin(eq(EDIT), eq(repository));
+    verify(repository).facet(ProxyFacet.class);
+    verify(proxyFacet).invalidateProxyCaches();
+    verifyNoMoreInteractions(repositoryManager, repositoryPermissionChecker, proxyFacet);
+  }
+
+  @Test
+  public void invalidateCacheGroupRepository() throws Exception {
+    when(repository.getType()).thenReturn(new GroupType());
+    GroupFacet groupFacet = mock(GroupFacet.class);
+    when(repository.facet(GroupFacet.class)).thenReturn(groupFacet);
+
+    authorizingRepositoryManager.invalidateCache("repository");
+
+    verify(repositoryManager).get(eq("repository"));
+    verify(repositoryPermissionChecker).ensureUserCanAdmin(eq(EDIT), eq(repository));
+    verify(repository).facet(GroupFacet.class);
+    verify(groupFacet).invalidateGroupCaches();
+    verifyNoMoreInteractions(repositoryManager, repositoryPermissionChecker, groupFacet);
   }
 }

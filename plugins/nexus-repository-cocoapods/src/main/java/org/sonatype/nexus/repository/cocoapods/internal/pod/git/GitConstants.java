@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.cocoapods.internal.pod.git;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 public class GitConstants
 {

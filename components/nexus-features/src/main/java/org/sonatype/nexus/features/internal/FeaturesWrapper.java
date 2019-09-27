@@ -54,7 +54,7 @@ import static org.osgi.framework.Constants.SERVICE_RANKING;
  * is refreshed - the standard Karaf behaviour can often end up rebooting the entire application even though it
  * doesn't strictly need to do that.
  *
- * @since 3.next
+ * @since 3.19
  */
 public class FeaturesWrapper
     extends ServiceTracker<FeaturesService, FeaturesService>

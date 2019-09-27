@@ -75,7 +75,7 @@ class UserComponent
 
   /**
    * Retrieve user by id.
-   * @since 3.next
+   * @since 3.19
    * @return details of the requested userId
    */
   @DirectMethod

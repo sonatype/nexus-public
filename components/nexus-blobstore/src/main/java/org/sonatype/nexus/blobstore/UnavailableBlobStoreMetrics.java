@@ -20,7 +20,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 /**
  * An implementation of {@link BlobStoreMetrics} indicating the metrics can't be loaded.
  *
- * @since 3.next
+ * @since 3.19
  */
 public class UnavailableBlobStoreMetrics
     implements BlobStoreMetrics

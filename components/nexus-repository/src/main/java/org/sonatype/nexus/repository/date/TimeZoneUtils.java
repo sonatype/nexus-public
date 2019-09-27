@@ -20,7 +20,7 @@ import static org.sonatype.nexus.scheduling.schedule.Weekly.Weekday.SUN;
 /**
  * Utils for the nexus repository allowing perform specific timezone operations.
  *
- * @since 3.next
+ * @since 3.19
  */
 public class TimeZoneUtils
 {

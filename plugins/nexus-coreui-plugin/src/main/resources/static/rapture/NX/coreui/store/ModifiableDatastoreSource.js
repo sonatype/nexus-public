@@ -15,7 +15,7 @@
 /**
  * Thin wrapper that just exposes modifiable data store sources
  *
- * @since 3.next
+ * @since 3.19
  */
 Ext.define('NX.coreui.store.ModifiableDatastoreSource', {
   extend: 'Ext.data.ChainedStore',

@@ -32,7 +32,7 @@ import static com.orientechnologies.orient.core.metadata.schema.OType.STRING;
 /**
  * Populate an OrientDB database with the schema required for use as a Quartz JDBC job store.
  *
- * @since 3.next
+ * @since 3.19
  */
 public class OrientQuartzSchema {
 
@@ -57,7 +57,7 @@ public class OrientQuartzSchema {
   /**
    * Create the classes necessary for the Quartz JDBC job store.
    *
-   * @since 3.next
+   * @since 3.19
    */
   public static void register(final ODatabaseDocumentTx db) {
     checkNotNull(db);

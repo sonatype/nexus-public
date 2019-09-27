@@ -19,7 +19,7 @@ import org.apache.ibatis.plugin.Invocation;
 /**
  * MyBatis {@link Interceptor} that wraps any new {@link Executor} with {@link EntityExecutor}.
  *
- * @since 3.next
+ * @since 3.19
  */
 public class EntityInterceptor
     implements Interceptor

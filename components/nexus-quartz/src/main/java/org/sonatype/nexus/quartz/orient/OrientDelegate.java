@@ -40,7 +40,7 @@ import static org.quartz.TriggerKey.triggerKey;
  * Currently overrides {@link #selectJobForTrigger(Connection, ClassLoadHelper, TriggerKey, boolean)} since
  * the standard implementation uses a table join which is not supported by the OrientDB SQL dialect.
  *
- * @since 3.next
+ * @since 3.19
  */
 public class OrientDelegate
     extends StdJDBCDelegate

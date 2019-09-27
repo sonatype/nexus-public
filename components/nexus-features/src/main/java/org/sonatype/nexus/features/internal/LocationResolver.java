@@ -27,7 +27,7 @@ import static org.apache.karaf.util.maven.Parser.pathFromMaven;
  * Also prefer a 'reference:' prefix (which avoids a copy) when it's a plain undecorated file link.
  * This tells Karaf to load the bundle directly without making a copy under the cache directory.
  *
- * @since 3.next
+ * @since 3.19
  */
 public class LocationResolver
 {

@@ -34,7 +34,7 @@ import static org.sonatype.nexus.repository.http.HttpStatus.OK;
 /**
  * Swagger documentation for {@link org.sonatype.nexus.repository.rest.internal.resources.ContentSelectorsApiResource}
  *
- * @since 3.next
+ * @since 3.19
  */
 @Api(value = "content-selectors")
 public interface ContentSelectorsResourceDoc

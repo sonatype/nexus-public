@@ -30,7 +30,7 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
 /**
  * Defines which cleanup policy fields to display for Conda.
  *
- * @since 3.next
+ * @since 3.19
  */
 @Named(CondaFormat.NAME)
 @Singleton

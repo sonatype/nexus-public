@@ -10,7 +10,10 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.rapture;
+package org.sonatype.nexus.ui;
+
+import java.util.Collections;
+import java.util.List;
 
 import javax.annotation.Nullable;
 
@@ -85,5 +88,15 @@ public class UiPluginDescriptorSupport
 
   public void setConfigClassName(final String configClassName) {
     this.configClassName = configClassName;
+  }
+
+  @Override
+  public List<String> getScripts(final boolean isDebug) {
+    return Collections.emptyList();
+  }
+
+  @Override
+  public List<String> getStyles() {
+    return Collections.emptyList();
   }
 }

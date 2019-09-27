@@ -27,7 +27,7 @@ import org.sonatype.nexus.repository.cocoapods.internal.pod.git.GitRepoUriParser
 import static org.sonatype.nexus.repository.cocoapods.internal.pod.git.GitConstants.GITHUB_HOST;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 @Named
 public class PodPathProvider

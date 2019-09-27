@@ -58,7 +58,7 @@ class BlobStoreXO
   boolean unlimited
 
   /**
-   * @since 3.next
+   * @since 3.19
    */
   boolean unavailable
 
