@@ -34,6 +34,7 @@ Ext.define('NX.coreui.view.routing.RoutingRulesAdd', {
       settingsFormSuccessMessage: function(data) {
         return NX.I18n.format('RoutingRule_Create_Message', data['name']);
       },
+      editableCondition: NX.Conditions.watchState('routingRules'),
       editableMarker: NX.I18n.get('RoutingRule_Create_Error'),
 
       buttons: [

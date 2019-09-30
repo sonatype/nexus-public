@@ -449,7 +449,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_HttpClientFacet_AuthenticationType_FieldLabel: 'Authentication type',
     Repository_Facet_HttpClientFacet_AuthenticationType_Username: 'Username',
     Repository_Facet_HttpClientFacet_AuthenticationType_NTLM: 'Windows NTLM',
-    Repository_Facet_HttpClientFacet_AuthenticationType_Bearer_Token: 'Preemptive Bearer Token',
     Repository_Facet_HttpClientFacet_Authentication_Title: 'Authentication',
     Repository_Facet_HttpClientFacet_HTTP_Title: 'HTTP request settings',
     Repository_Facet_CleanupPolicyFacet_Title: 'Cleanup',
@@ -1374,8 +1373,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     System_AuthenticationSettings_Password_FieldLabel: 'Password',
     System_AuthenticationSettings_WindowsNtlmHostname_FieldLabel: 'Windows NTLM hostname',
     System_AuthenticationSettings_WindowsNtlmDomain_FieldLabel: 'Windows NTLM domain',
-    System_AuthenticationSettings_Bearer_Token_FieldLabel: 'Token',
-    System_AuthenticationSettings_Bearer_Token_HelpText: 'Include only the token value, not the Bearer prefix.',
 
     // HTTP Request section
     System_HttpRequestSettings_UserAgentCustomization_FieldLabel: 'User-agent customization',

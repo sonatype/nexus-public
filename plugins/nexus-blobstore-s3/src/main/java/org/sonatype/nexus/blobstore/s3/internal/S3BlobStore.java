@@ -594,7 +594,6 @@ public class S3BlobStore
   private Stream<BlobId> blobIdStream(Iterable<S3ObjectSummary> summaries) {
     return stream(summaries.spliterator(), false)
       .filter(o -> o.getKey().endsWith(BLOB_ATTRIBUTE_SUFFIX))
-      .filter(o -> !o.getKey().contains(CONTENT_TMP_PATH))
       .map(S3AttributesLocation::new)
       .map(this::getBlobIdFromAttributeFilePath)
       .map(BlobId::new);

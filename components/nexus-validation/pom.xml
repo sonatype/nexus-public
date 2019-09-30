@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-components</artifactId>
-    <version>3.20.0-SNAPSHOT</version>
+    <version>3.19.0-01</version>
   </parent>
 
   <artifactId>nexus-validation</artifactId>
@@ -56,12 +56,6 @@
     <dependency>
       <groupId>com.thoughtworks.paranamer</groupId>
       <artifactId>paranamer</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-annotations</artifactId>
-      <optional>true</optional>
     </dependency>
 
     <dependency>

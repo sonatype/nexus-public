@@ -57,10 +57,8 @@ class NpmITSupport
     return repos.createNpmGroup(repositoryName, members)
   }
 
-  Repository createNpmProxyRepository(final String name, final String remoteUrl,
-                                      final Map<String, Object> authentication = [:])
-  {
-    return repos.createNpmProxy(name, remoteUrl, authentication)
+  Repository createNpmProxyRepository(final String name, final String remoteUrl) {
+    return repos.createNpmProxy(name, remoteUrl)
   }
 
   protected def checkLogin(NpmClient client, String username, String password, int expectedStatus) {

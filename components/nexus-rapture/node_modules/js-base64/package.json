@@ -1,0 +1,32 @@
+{
+  "name": "js-base64",
+  "version": "2.5.1",
+  "description": "Yet another Base64 transcoder in pure-JS",
+  "main": "base64.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha --compilers js:babel-register"
+  },
+  "devDependencies": {
+    "babel-preset-env": "^1.7.0",
+    "babel-register": "^6.26.0",
+    "mocha": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/dankogai/js-base64.git"
+  },
+  "keywords": [
+    "base64"
+  ],
+  "author": "Dan Kogai",
+  "license": "BSD-3-Clause",
+  "readmeFilename": "README.md",
+  "gitHead": "8bfa436f733bec60c95c720e1d720c28b43ae0b2"
+
+,"_resolved": "https://registry.npmjs.org/js-base64/-/js-base64-2.5.1.tgz"
+,"_integrity": "sha512-M7kLczedRMYX4L8Mdh4MzyAMM9O5osx+4FcOQuTvr3A9F2D9S5JXheN0ewNbrvK2UatkTRhL5ejGmGSjNMiZuw=="
+,"_from": "js-base64@2.5.1"
+}

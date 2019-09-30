@@ -34,6 +34,8 @@ Ext.define('NX.coreui.view.routing.RoutingRulesSettingsForm', {
 
     me.editableMarker = me.editableMarker || NX.I18n.get('RoutingRules_SettingsForm_Update_Error');
 
+    me.editableCondition = me.editableCondition || NX.Conditions.watchState('routingRules');
+
     me.items = [
       {
         xtype: 'fieldcontainer',

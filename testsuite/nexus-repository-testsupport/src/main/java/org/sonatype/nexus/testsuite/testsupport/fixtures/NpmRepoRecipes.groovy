@@ -20,7 +20,6 @@ import org.sonatype.nexus.repository.storage.WritePolicy
 
 import groovy.transform.CompileStatic
 
-import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME
 import static org.sonatype.nexus.repository.storage.StorageFacetConstants.BLOB_STORE_NAME
 import static org.sonatype.nexus.repository.storage.StorageFacetConstants.STORAGE
 
@@ -51,9 +50,9 @@ trait NpmRepoRecipes
 
   @Nonnull
   Repository createNpmProxy(final String name,
-                            final String remoteUrl,
-                            final Map<String, Object> authentication = [:]) {
-    createRepository(createProxy(name, 'npm-proxy', remoteUrl, true, DEFAULT_BLOBSTORE_NAME, authentication))
+                            final String remoteUrl)
+  {
+    createRepository(createProxy(name, 'npm-proxy', remoteUrl))
   }
 
   @Nonnull

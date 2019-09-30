@@ -41,12 +41,9 @@ public class RepositoryRule
 
   @Override
   protected void after() {
-    def repositoryManager = repositoryManagerProvider.get()
     repositories.each { Repository repository ->
-      if (repositoryManager.exists(repository.name)) {
-        log.debug 'Deleting test repository: {}', repository.name
-        repositoryManager.delete(repository.name)
-      }
+      log.debug 'Deleting test repository: {}', repository.name
+      repositoryManagerProvider.get().delete(repository.name)
     }
     repositories.clear()
   }

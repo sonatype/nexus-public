@@ -372,7 +372,8 @@ Ext.define('NX.coreui.app.PluginConfig', {
     {
       id: 'NX.coreui.controller.RoutingRules',
       active: function() {
-        return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
+        return NX.State.getValue('routingRules') &&
+            NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
       }
     }
   ]

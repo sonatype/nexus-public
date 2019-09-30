@@ -53,8 +53,6 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
 {
   public static final String BLOB_ATTRIBUTE_SUFFIX = ".properties";
 
-  public static final String CONTENT_TMP_PATH = "/content/tmp/";
-
   private final Map<String, Timer> timers = new ConcurrentHashMap<>();
 
   private MetricRegistry metricRegistry;

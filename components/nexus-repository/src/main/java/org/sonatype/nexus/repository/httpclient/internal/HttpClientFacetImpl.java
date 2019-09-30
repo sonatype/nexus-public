@@ -24,7 +24,6 @@ import javax.validation.Valid;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.httpclient.HttpClientManager;
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
-import org.sonatype.nexus.httpclient.config.BearerTokenAuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.ConfigurationCustomizer;
 import org.sonatype.nexus.httpclient.config.ConnectionConfiguration;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
@@ -167,15 +166,6 @@ public class HttpClientFacetImpl
       log.debug("Basic auth header cannot be created for auth config of {}", config.authentication);
       return null;
     }
-  }
-
-  @Override
-  public String getBearerToken() {
-    if (config.authentication != null &&
-        BearerTokenAuthenticationConfiguration.TYPE.equals(config.authentication.getType())) {
-      return ((BearerTokenAuthenticationConfiguration) config.authentication).getBearerToken();
-    }
-    return null;
   }
 
   @Override

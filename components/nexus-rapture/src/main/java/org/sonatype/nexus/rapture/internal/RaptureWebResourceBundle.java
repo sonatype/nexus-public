@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -32,10 +31,10 @@ import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.template.TemplateAccessible;
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
-import org.sonatype.nexus.rapture.ReactFrontendConfiguration;
+import org.sonatype.nexus.rapture.UiPluginDescriptor;
 import org.sonatype.nexus.rapture.internal.state.StateComponent;
+import org.sonatype.nexus.rapture.ReactFrontendConfiguration;
 import org.sonatype.nexus.servlet.ServletHelper;
-import org.sonatype.nexus.ui.UiPluginDescriptor;
 import org.sonatype.nexus.webresources.GeneratedWebResource;
 import org.sonatype.nexus.webresources.WebResource;
 import org.sonatype.nexus.webresources.WebResourceBundle;
@@ -47,7 +46,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.stream.Collectors.toList;
 
 /**
  * Rapture {@link WebResourceBundle}.
@@ -314,19 +312,6 @@ public class RaptureWebResourceBundle
   }
 
   /**
-   * @param path
-   * @return BaseUrlHolder.get() + /static/ + path
-   */
-  private URI relativeToAbsoluteUri(final String path) {
-    try {
-      return new URI(String.format("%s%s", BaseUrlHolder.get(), path));
-    }
-    catch (URISyntaxException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  /**
    * Generate the list of CSS styles to include in the index.html.
    */
   private List<URI> getStyles() {
@@ -343,12 +328,7 @@ public class RaptureWebResourceBundle
     }
 
     if (reactFrontendConfiguration.isEnabled()) {
-      List<URI> resources = pluginDescriptors.stream()
-          .map(UiPluginDescriptor::getStyles)
-          .flatMap(Collection::stream)
-          .map(this::relativeToAbsoluteUri)
-          .collect(toList());
-      styles.addAll(resources);
+      styles.add(uri("frontend-bundle.css"));
     }
 
     return styles;
@@ -358,8 +338,6 @@ public class RaptureWebResourceBundle
    * Generate the list of javascript sources to include in the index.html.
    */
   private List<URI> getScripts() {
-    boolean debug = isDebug();
-
     List<URI> scripts = Lists.newArrayList();
 
     scripts.add(uri(mode("baseapp-{mode}.js")));
@@ -368,16 +346,11 @@ public class RaptureWebResourceBundle
     scripts.add(uri("d3.v4.min.js"));
 
     if (reactFrontendConfiguration.isEnabled()) {
-      List<URI> resources = pluginDescriptors.stream()
-          .map(descriptor -> descriptor.getScripts(isDebug()))
-          .flatMap(Collection::stream)
-          .map(this::relativeToAbsoluteUri)
-          .collect(toList());
-      scripts.addAll(resources);
+      scripts.add(uri("frontend-bundle.js"));
     }
 
     // add all "prod" plugin scripts if debug is not enabled
-    if (!debug) {
+    if (!isDebug()) {
       for (UiPluginDescriptor descriptor : pluginDescriptors) {
         if (descriptor.hasScript()) {
           String path = String.format("%s-prod.js", descriptor.getPluginId());

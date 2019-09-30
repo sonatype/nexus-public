@@ -11,12 +11,14 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import Axios from 'axios';
-import React from 'react';
-import ReactDOM from 'react-dom';
-
 Axios.defaults.xsrfCookieName = Axios.defaults.xsrfHeaderName = 'NX-ANTI-CSRF-TOKEN';
 
-window.axios = Axios;
-window.react = React;
-window.ReactDOM = ReactDOM;
+import React from 'react';
+import ReactDOM from 'react-dom';
+import AnonymousSettings from './components/pages/admin/AnonymousSettings/AnonymousSettings';
 
+window.React = React;
+window.ReactDOM = ReactDOM;
+window.REACT_COMPONENTS = {
+  AnonymousSettings: AnonymousSettings
+};

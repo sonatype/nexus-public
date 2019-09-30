@@ -29,7 +29,6 @@ import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheControllerHolder;
 import org.sonatype.nexus.repository.cache.CacheControllerHolder.CacheType;
 import org.sonatype.nexus.repository.cache.CacheInfo;
-import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.npm.NpmFacet;
 import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexFilter;
 import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexInvalidatedEvent;
@@ -60,10 +59,6 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpRequestBase;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
@@ -100,19 +95,6 @@ public class NpmProxyFacetImpl
       log.debug("npm tarball URL not resolvable: {}", e.getMessage());
       return null;
     }
-  }
-
-  /**
-   * Execute http client request.
-   */
-  protected HttpResponse execute(final Context context, final HttpClient client, final HttpRequestBase request)
-      throws IOException
-  {
-    String bearerToken = getRepository().facet(HttpClientFacet.class).getBearerToken();
-    if (StringUtils.isNotBlank(bearerToken)) {
-      request.setHeader("Authorization", "Bearer " + bearerToken);
-    }
-    return super.execute(context, client, request);
   }
 
   @Override

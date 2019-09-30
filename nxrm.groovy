@@ -475,7 +475,7 @@ def processTestArgs() {
 
   if (testsArg == "skipAll") {
     buildOptions.testsDesc = "Skipping all compiling & execution"
-    buildOptions.tests = "-DskipTests -Dmaven.test.skip=true"
+    buildOptions.tests = "-Dmaven.test.skip=true"
   }
   else if (testsArg == "skip") {
     buildOptions.testsDesc = "Compiling all (unit & integration) but skipping execution"

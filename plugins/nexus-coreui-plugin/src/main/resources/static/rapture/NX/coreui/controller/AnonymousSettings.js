@@ -70,9 +70,9 @@ Ext.define('NX.coreui.controller.AnonymousSettings', {
           '#Refresh': {
             refresh: function() {
               var rootNode = document.getElementById('anonymous-settings-page');
-              window.ReactDOM.unmountComponentAtNode(rootNode);
-              window.ReactDOM.render(
-                  window.react.createElement(REACT_COMPONENTS.AnonymousSettings),
+              ReactDOM.unmountComponentAtNode(rootNode);
+              ReactDOM.render(
+                  React.createElement(REACT_COMPONENTS.AnonymousSettings),
                   rootNode
               );
             }
@@ -81,8 +81,8 @@ Ext.define('NX.coreui.controller.AnonymousSettings', {
         component: {
           'nx-coreui-security-anonymous-settings': {
             afterrender: function() {
-              window.ReactDOM.render(
-                  window.react.createElement(REACT_COMPONENTS.AnonymousSettings),
+              ReactDOM.render(
+                  React.createElement(REACT_COMPONENTS.AnonymousSettings),
                   document.getElementById('anonymous-settings-page')
               );
             }

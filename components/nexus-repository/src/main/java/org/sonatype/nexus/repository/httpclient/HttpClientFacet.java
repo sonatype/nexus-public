@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.httpclient;
 
-import javax.annotation.Nullable;
-
 import org.sonatype.nexus.repository.Facet;
 
 import org.apache.http.Header;
@@ -33,10 +31,4 @@ public interface HttpClientFacet
   RemoteConnectionStatus getStatus();
 
   Header createBasicAuthHeader();
-
-  /**
-   * @since 3.next
-   */
-  @Nullable
-  String getBearerToken();
 }

@@ -1,0 +1,30 @@
+{
+  "name": "flush-write-stream",
+  "version": "1.1.1",
+  "description": "A write stream constructor that supports a flush function that is called before finish is emitted",
+  "main": "index.js",
+  "dependencies": {
+    "inherits": "^2.0.3",
+    "readable-stream": "^2.3.6"
+  },
+  "devDependencies": {
+    "tape": "^4.2.2"
+  },
+  "scripts": {
+    "test": "tape test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mafintosh/flush-write-stream.git"
+  },
+  "author": "Mathias Buus (@mafintosh)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mafintosh/flush-write-stream/issues"
+  },
+  "homepage": "https://github.com/mafintosh/flush-write-stream"
+
+,"_resolved": "https://registry.npmjs.org/flush-write-stream/-/flush-write-stream-1.1.1.tgz"
+,"_integrity": "sha512-3Z4XhFZ3992uIq0XOqb9AreonueSYphE6oYbpt5+3u06JWklbsPkNv3ZKkP9Bz/r+1MWCaMoSQ28P85+1Yc77w=="
+,"_from": "flush-write-stream@1.1.1"
+}

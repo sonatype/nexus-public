@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-components</artifactId>
-    <version>3.20.0-SNAPSHOT</version>
+    <version>3.19.0-01</version>
   </parent>
 
   <artifactId>nexus-security</artifactId>
@@ -116,12 +116,6 @@
     </dependency>
 
     <dependency>
-      <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-ui-plugin</artifactId>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
       <groupId>javax.ws.rs</groupId>
       <artifactId>javax.ws.rs-api</artifactId>
       <scope>provided</scope>
@@ -173,91 +167,5 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>com.github.eirslett</groupId>
-        <artifactId>frontend-maven-plugin</artifactId>
-
-        <configuration>
-          <nodeVersion>${node.version}</nodeVersion>
-          <npmVersion>${npm.version}</npmVersion>
-          <workingDirectory>${project.basedir}</workingDirectory>
-          <installDirectory>${project.build.directory}</installDirectory>
-        </configuration>
-
-        <executions>
-          <execution>
-            <id>install node and npm</id>
-            <goals>
-              <goal>install-node-and-npm</goal>
-            </goals>
-            <phase>generate-resources</phase>
-          </execution>
-          <execution>
-            <id>npm ci</id>
-            <goals>
-              <goal>npm</goal>
-            </goals>
-            <phase>generate-resources</phase>
-            <configuration>
-              <arguments>ci</arguments>
-            </configuration>
-          </execution>
-          <execution>
-            <id>npm run build</id>
-            <goals>
-              <goal>npm</goal>
-            </goals>
-            <phase>compile</phase>
-            <configuration>
-              <arguments>run build</arguments>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
-
-  <profiles>
-    <profile>
-      <id>npm-unit-tests</id>
-      <activation>
-        <property>
-          <name>!skipTests</name>
-        </property>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>com.github.eirslett</groupId>
-            <artifactId>frontend-maven-plugin</artifactId>
-
-            <configuration>
-              <environmentVariables>
-                <JEST_SUITE_NAME>React-Tests</JEST_SUITE_NAME>
-                <JEST_JUNIT_OUTPUT_NAME>TEST-react-jest.xml</JEST_JUNIT_OUTPUT_NAME>
-                <JEST_JUNIT_OUTPUT_DIR>${project.build.directory}/jest-reports/</JEST_JUNIT_OUTPUT_DIR>
-              </environmentVariables>
-            </configuration>
-
-            <executions>
-              <execution>
-                <id>npm-unit-test</id>
-                <goals>
-                  <goal>npm</goal>
-                </goals>
-                <phase>test</phase>
-                <configuration>
-                  <arguments>run test -- --reporters=jest-junit</arguments>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
 
 </project>

@@ -64,42 +64,36 @@ trait ConfigurationRecipes
                             final String recipeName,
                             final String remoteUrl,
                             final boolean strictContentTypeValidation = true,
-                            final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
-                            final Map<String, Object> authentication = [:])
+                            final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME)
   {
     checkNotNull(name)
     checkArgument(recipeName && recipeName.endsWith('-proxy'))
-
-    def attributes = [
-        httpclient   : [
-            connection: [
-                blocked  : false,
-                autoBlock: true
-            ] as Map<String, Object>
-        ] as Map<String, Object>,
-        proxy        : [
-            remoteUrl     : remoteUrl,
-            contentMaxAge : 1440,
-            metadataMaxAge: 1440
-        ] as Map<String, Object>,
-        negativeCache: [
-            enabled   : true,
-            timeToLive: 1440
-        ] as Map<String, Object>,
-        storage      : [
-            blobStoreName              : blobStoreName,
-            strictContentTypeValidation: strictContentTypeValidation
-        ] as Map<String, Object>
-    ]
-    if (!authentication.isEmpty()) {
-      attributes.httpclient.authentication = authentication
-    }
 
     new Configuration(
         repositoryName: name,
         recipeName: recipeName,
         online: true,
-        attributes: attributes
+        attributes: [
+            httpclient   : [
+                connection: [
+                    blocked  : false,
+                    autoBlock: true
+                ] as Map
+            ] as Map,
+            proxy        : [
+                remoteUrl     : remoteUrl,
+                contentMaxAge : 1440,
+                metadataMaxAge: 1440
+            ] as Map,
+            negativeCache: [
+                enabled   : true,
+                timeToLive: 1440
+            ] as Map,
+            storage      : [
+                blobStoreName              : blobStoreName,
+                strictContentTypeValidation: strictContentTypeValidation
+            ] as Map
+        ]
     )
   }
 
@@ -121,10 +115,10 @@ trait ConfigurationRecipes
         attributes: [
             group  : [
                 memberNames: members.toList()
-            ] as Map<String, Object>,
+            ] as Map,
             storage: [
                 blobStoreName: BlobStoreManager.DEFAULT_BLOBSTORE_NAME
-            ] as Map<String, Object>
+            ] as Map
         ]
     )
   }

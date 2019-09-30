@@ -31,6 +31,7 @@ import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.repository.routing.RoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
+import org.sonatype.nexus.repository.routing.RoutingRulesConfiguration;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.validation.constraint.NamePatternConstants;
 
@@ -51,9 +52,7 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
 @Named
 @ManagedLifecycle(phase = SCHEMAS)
 @Singleton
-public class RoutingRuleStoreImpl
-    extends StateGuardLifecycleSupport
-    implements RoutingRuleStore
+public class RoutingRuleStoreImpl extends StateGuardLifecycleSupport implements RoutingRuleStore
 {
   private static final String NONE = "none";
 
@@ -61,16 +60,23 @@ public class RoutingRuleStoreImpl
 
   private final RoutingRuleEntityAdapter entityAdapter;
 
+  private final boolean enabled;
+
   @Inject
   public RoutingRuleStoreImpl(@Named(DatabaseInstanceNames.CONFIG) final Provider<DatabaseInstance> databaseInstance,
-                              final RoutingRuleEntityAdapter entityAdapter)
+                              final RoutingRuleEntityAdapter entityAdapter,
+                              final RoutingRulesConfiguration configuration)
   {
     this.databaseInstance = databaseInstance;
     this.entityAdapter = entityAdapter;
+    this.enabled = configuration.isEnabled();
   }
 
   @Override
   protected void doStart() throws Exception {
+    if (!enabled) {
+      return;
+    }
     try (ODatabaseDocumentTx db = databaseInstance.get().connect()) {
       entityAdapter.register(db);
     }

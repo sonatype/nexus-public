@@ -32,8 +32,7 @@ public abstract class AuthenticationConfiguration
    */
   public static final Map<String, Class<? extends AuthenticationConfiguration>> TYPES = ImmutableMap.of(
       UsernameAuthenticationConfiguration.TYPE, UsernameAuthenticationConfiguration.class,
-      NtlmAuthenticationConfiguration.TYPE, NtlmAuthenticationConfiguration.class,
-      BearerTokenAuthenticationConfiguration.TYPE, BearerTokenAuthenticationConfiguration.class
+      NtlmAuthenticationConfiguration.TYPE, NtlmAuthenticationConfiguration.class
   );
 
   private final String type;

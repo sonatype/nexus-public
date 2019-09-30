@@ -1,0 +1,33 @@
+{
+  "name": "parse-asn1",
+  "version": "5.1.4",
+  "description": "utility library for parsing asn1 files for use with browserify-sign.",
+  "main": "index.js",
+  "scripts": {
+    "unit": "node ./test",
+    "standard": "standard",
+    "test": "npm run standard && npm run unit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/crypto-browserify/parse-asn1.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "asn1.js": "^4.0.0",
+    "browserify-aes": "^1.0.0",
+    "create-hash": "^1.1.0",
+    "evp_bytestokey": "^1.0.0",
+    "pbkdf2": "^3.0.3",
+    "safe-buffer": "^5.1.1"
+  },
+  "devDependencies": {
+    "tape": "^3.4.0",
+    "standard": "^5.0.0"
+  }
+
+,"_resolved": "https://registry.npmjs.org/parse-asn1/-/parse-asn1-5.1.4.tgz"
+,"_integrity": "sha512-Qs5duJcuvNExRfFZ99HDD3z4mAi3r9Wl/FOjEOijlxwCZs7E7mW2vjTpgQ4J8LpTF8x5v+1Vn5UQFejmWT11aw=="
+,"_from": "parse-asn1@5.1.4"
+}
