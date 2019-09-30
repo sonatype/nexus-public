@@ -297,7 +297,7 @@ public class RepositoryPlexusResource
               }
             }
 
-            repository.setLocalUrl(model.getOverrideLocalStorageUrl());
+            repository.setLocalUrl(validOverrideLocalStorageUrl(model.getOverrideLocalStorageUrl()));
 
             getNexusConfiguration().saveConfiguration();
           }
