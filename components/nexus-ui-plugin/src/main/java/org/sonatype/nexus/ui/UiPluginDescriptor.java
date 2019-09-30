@@ -14,49 +14,16 @@ package org.sonatype.nexus.ui;
 
 import java.util.List;
 
-import javax.annotation.Nullable;
-
 /**
  * Rapture UI plugin descriptor.
  *
  * Using component priority to determine inclusion order.  Ordering is important to properly load the UI.
  *
- * Plugins are required to define these resources for "debug" mode:
- * <ul>
- *   <li>/static/rapture/resources/<em>plugin-id</em>-debug.css</li>
- * </ul>
- *
- * ... and for "prod" mode:
- * <ul>
- *   <li>/static/rapture/<em>plugin-id</em>-prod.js</li>
- *   <li>/static/rapture/resources/<em>plugin-id</em>-prod.css</li>
- * </ul>
- *
- * @since 3.0
+ * @since 3.next
  */
 public interface UiPluginDescriptor
 {
-  /**
-   * The plugin identifier.  This is normally the POM artifactId.
-   * This is used to generate references to Javascript and CSS sources.
-   */
-  String getPluginId();
-
-  boolean hasStyle();
-
-  boolean hasScript();
-
-  /**
-   * Extjs application plugin namespace.
-   */
-  @Nullable
-  String getNamespace();
-
-  /**
-   * The Extjs class name of the {@code PluginConfig} for the plugin.
-   */
-  @Nullable
-  String getConfigClassName();
+  String getName();
 
   /**
    * @return a list of script files that should be included on the page (this is used for non-extjs plugins)

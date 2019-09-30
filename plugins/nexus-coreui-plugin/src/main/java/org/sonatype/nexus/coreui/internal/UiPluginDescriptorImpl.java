@@ -15,8 +15,8 @@ package org.sonatype.nexus.coreui.internal;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.ui.UiPluginDescriptor;
-import org.sonatype.nexus.ui.UiPluginDescriptorSupport;
+import org.sonatype.nexus.rapture.UiPluginDescriptor;
+import org.sonatype.nexus.rapture.UiPluginDescriptorSupport;
 
 import org.eclipse.sisu.Priority;
 
@@ -29,7 +29,7 @@ import org.eclipse.sisu.Priority;
 @Singleton
 @Priority(Integer.MAX_VALUE - 100) // after nexus-rapture
 public class UiPluginDescriptorImpl
-  extends UiPluginDescriptorSupport
+    extends UiPluginDescriptorSupport
 {
   public UiPluginDescriptorImpl() {
     super("nexus-coreui-plugin");

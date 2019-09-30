@@ -31,6 +31,7 @@ import org.sonatype.nexus.httpclient.HttpClientManager;
 import org.sonatype.nexus.httpclient.HttpClientPlan;
 import org.sonatype.nexus.httpclient.HttpClientPlan.Customizer;
 import org.sonatype.nexus.httpclient.HttpSchemes;
+import org.sonatype.nexus.ssl.TrustStore;
 
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
@@ -63,9 +64,12 @@ public class CertificateRetriever
 {
   private final HttpClientManager httpClientManager;
 
+  private final TrustStore trustStore;
+
   @Inject
-  public CertificateRetriever(final HttpClientManager httpClientManager) {
+  public CertificateRetriever(final HttpClientManager httpClientManager, final TrustStore trustStore) {
     this.httpClientManager = checkNotNull(httpClientManager);
+    this.trustStore = checkNotNull(trustStore);
   }
 
   private static final TrustManager ACCEPT_ALL_TRUST_MANAGER = new X509TrustManager()
@@ -101,7 +105,7 @@ public class CertificateRetriever
 
     // setup custom connection manager so we can configure SSL to trust-all
     SSLContext sc = SSLContext.getInstance("TLS");
-    sc.init(null, new TrustManager[]{ACCEPT_ALL_TRUST_MANAGER}, null);
+    sc.init(trustStore.getKeyManagers(), new TrustManager[]{ACCEPT_ALL_TRUST_MANAGER}, null);
     SSLConnectionSocketFactory sslSocketFactory = new SSLConnectionSocketFactory(sc, NoopHostnameVerifier.INSTANCE);
     Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create()
         .register(HttpSchemes.HTTP, PlainConnectionSocketFactory.getSocketFactory())
@@ -166,7 +170,7 @@ public class CertificateRetriever
     SSLSocket socket = null;
     try {
       SSLContext sc = SSLContext.getInstance("TLS");
-      sc.init(null, new TrustManager[]{ACCEPT_ALL_TRUST_MANAGER}, null);
+      sc.init(trustStore.getKeyManagers(), new TrustManager[]{ACCEPT_ALL_TRUST_MANAGER}, null);
 
       javax.net.ssl.SSLSocketFactory sslSocketFactory = sc.getSocketFactory();
       socket = (SSLSocket) sslSocketFactory.createSocket(host, port);

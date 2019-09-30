@@ -53,30 +53,8 @@ public class SecurityUiPluginDescriptor
   }
 
   @Override
-  public String getPluginId() {
+  public String getName() {
     return "nexus-security-plugin";
-  }
-
-  @Override
-  public boolean hasStyle() {
-    return false;
-  }
-
-  @Override
-  public boolean hasScript() {
-    return false;
-  }
-
-  @Nullable
-  @Override
-  public String getNamespace() {
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public String getConfigClassName() {
-    return null;
   }
 
   @Nullable

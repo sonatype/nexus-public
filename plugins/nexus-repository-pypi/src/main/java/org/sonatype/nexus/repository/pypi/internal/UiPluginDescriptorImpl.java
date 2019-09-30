@@ -16,7 +16,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.ui.UiPluginDescriptorSupport;
+import org.sonatype.nexus.rapture.UiPluginDescriptorSupport;
 
 import org.eclipse.sisu.Priority;
 

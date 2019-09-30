@@ -16,7 +16,7 @@ import javax.annotation.Priority;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.ui.UiPluginDescriptorSupport;
+import org.sonatype.nexus.rapture.UiPluginDescriptorSupport;
 
 /**
  * Rapture {@link org.sonatype.nexus.ui.UiPluginDescriptor} for {@code nexus-repository-npm}

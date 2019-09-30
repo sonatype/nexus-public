@@ -40,6 +40,7 @@ import org.sonatype.nexus.webresources.GeneratedWebResource;
 import org.sonatype.nexus.webresources.WebResource;
 import org.sonatype.nexus.webresources.WebResourceBundle;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -77,6 +78,8 @@ public class RaptureWebResourceBundle
 
   private final List<UiPluginDescriptor> pluginDescriptors;
 
+  private final List<org.sonatype.nexus.rapture.UiPluginDescriptor> extJsPluginDescriptors;
+
   private final Gson gson;
 
   private final ReactFrontendConfiguration reactFrontendConfiguration;
@@ -87,6 +90,7 @@ public class RaptureWebResourceBundle
                                   final Provider<StateComponent> stateComponentProvider,
                                   final TemplateHelper templateHelper,
                                   final List<UiPluginDescriptor> pluginDescriptors,
+                                  final List<org.sonatype.nexus.rapture.UiPluginDescriptor> extJsPluginDescriptors,
                                   final ReactFrontendConfiguration reactFrontendConfiguration)
   {
     this.applicationVersion = checkNotNull(applicationVersion);
@@ -94,10 +98,16 @@ public class RaptureWebResourceBundle
     this.stateComponentProvider = checkNotNull(stateComponentProvider);
     this.templateHelper = checkNotNull(templateHelper);
     this.pluginDescriptors = checkNotNull(pluginDescriptors);
+    this.extJsPluginDescriptors = checkNotNull(extJsPluginDescriptors);
     this.reactFrontendConfiguration = checkNotNull(reactFrontendConfiguration);
 
     log.info("UI plugin descriptors:");
     for (UiPluginDescriptor descriptor : pluginDescriptors) {
+      log.info("  {}", descriptor.getName());
+    }
+
+    log.info("ExtJS UI plugin descriptors:");
+    for (org.sonatype.nexus.rapture.UiPluginDescriptor descriptor : extJsPluginDescriptors) {
       log.info("  {}", descriptor.getPluginId());
     }
 
@@ -193,7 +203,7 @@ public class RaptureWebResourceBundle
                 .set("baseUrl", BaseUrlHolder.get())
                 .set("debug", isDebug())
                 .set("urlSuffix", generateUrlSuffix())
-                .set("namespaces", getNamespaces())
+                .set("namespaces", getExtJsNamespaces())
         );
       }
     };
@@ -221,7 +231,7 @@ public class RaptureWebResourceBundle
                 .set("baseUrl", BaseUrlHolder.get())
                 .set("debug", isDebug())
                 .set("state", gson.toJson(getState()))
-                .set("pluginConfigs", getPluginConfigs())
+                .set("pluginConfigs", getExtJsPluginConfigs())
         );
       }
     };
@@ -268,9 +278,10 @@ public class RaptureWebResourceBundle
   /**
    * Find all plugin configs.
    */
-  private List<String> getPluginConfigs() {
+  @VisibleForTesting
+  List<String> getExtJsPluginConfigs() {
     List<String> classNames = Lists.newArrayList();
-    for (UiPluginDescriptor descriptor : pluginDescriptors) {
+    for (org.sonatype.nexus.rapture.UiPluginDescriptor descriptor : extJsPluginDescriptors) {
       String className = descriptor.getConfigClassName();
       if (className != null) {
         classNames.add(className);
@@ -282,9 +293,10 @@ public class RaptureWebResourceBundle
   /**
    * Determine all plugin namespaces.
    */
-  private List<String> getNamespaces() {
+  @VisibleForTesting
+  List<String> getExtJsNamespaces() {
     List<String> namespaces = Lists.newArrayList();
-    for (UiPluginDescriptor descriptor : pluginDescriptors) {
+    for (org.sonatype.nexus.rapture.UiPluginDescriptor descriptor : extJsPluginDescriptors) {
       String ns = descriptor.getNamespace();
       if (ns != null) {
         namespaces.add(ns);
@@ -329,18 +341,14 @@ public class RaptureWebResourceBundle
   /**
    * Generate the list of CSS styles to include in the index.html.
    */
-  private List<URI> getStyles() {
+  @VisibleForTesting
+  List<URI> getStyles() {
     List<URI> styles = Lists.newArrayList();
     styles.add(uri(mode("resources/loading-{mode}.css")));
     styles.add(uri(mode("resources/baseapp-{mode}.css")));
 
-    // add all plugin styles
-    for (UiPluginDescriptor descriptor : pluginDescriptors) {
-      if (descriptor.hasStyle()) {
-        String path = String.format("resources/%s-{mode}.css", descriptor.getPluginId());
-        styles.add(uri(mode(path)));
-      }
-    }
+    // add extjs descriptor styles
+    styles.addAll(getExtJsStyles());
 
     if (reactFrontendConfiguration.isEnabled()) {
       List<URI> resources = pluginDescriptors.stream()
@@ -354,10 +362,22 @@ public class RaptureWebResourceBundle
     return styles;
   }
 
+  private List<URI> getExtJsStyles() {
+    List<URI> styles = Lists.newArrayList();
+    for (org.sonatype.nexus.rapture.UiPluginDescriptor descriptor : extJsPluginDescriptors) {
+      if (descriptor.hasStyle()) {
+        String path = String.format("resources/%s-{mode}.css", descriptor.getPluginId());
+        styles.add(uri(mode(path)));
+      }
+    }
+    return styles;
+  }
+
   /**
    * Generate the list of javascript sources to include in the index.html.
    */
-  private List<URI> getScripts() {
+  @VisibleForTesting
+  List<URI> getScripts() {
     boolean debug = isDebug();
 
     List<URI> scripts = Lists.newArrayList();
@@ -367,26 +387,37 @@ public class RaptureWebResourceBundle
     scripts.add(uri("bootstrap.js"));
     scripts.add(uri("d3.v4.min.js"));
 
+    scripts.addAll(
+        extJsPluginDescriptors.stream().map(descriptor -> descriptor.getScripts(debug)).flatMap(Collection::stream)
+            .map(this::relativeToAbsoluteUri).collect(toList()));
+
     if (reactFrontendConfiguration.isEnabled()) {
       List<URI> resources = pluginDescriptors.stream()
-          .map(descriptor -> descriptor.getScripts(isDebug()))
+          .map(descriptor -> descriptor.getScripts(debug))
           .flatMap(Collection::stream)
           .map(this::relativeToAbsoluteUri)
           .collect(toList());
       scripts.addAll(resources);
     }
 
-    // add all "prod" plugin scripts if debug is not enabled
     if (!debug) {
-      for (UiPluginDescriptor descriptor : pluginDescriptors) {
-        if (descriptor.hasScript()) {
-          String path = String.format("%s-prod.js", descriptor.getPluginId());
-          scripts.add(uri(path));
-        }
-      }
+      // add all extjs scripts
+      scripts.addAll(getExtJsScripts());
     }
 
     scripts.add(uri("app.js"));
+    return scripts;
+  }
+
+  private List<URI> getExtJsScripts() {
+    List<URI> scripts = Lists.newArrayList();
+    for (org.sonatype.nexus.rapture.UiPluginDescriptor descriptor : extJsPluginDescriptors) {
+      if (descriptor.hasScript()) {
+        String path = String.format("%s-prod.js", descriptor.getPluginId());
+        scripts.add(uri(path));
+      }
+    }
+
     return scripts;
   }
 }
