@@ -10,26 +10,32 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.cocoapods;
+package org.sonatype.nexus.cleanup.analytics;
 
-import java.io.IOException;
+import javax.inject.Inject;
+import javax.inject.Named;
 
-import javax.annotation.Nullable;
+import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
+import org.sonatype.nexus.common.app.FeatureFlag;
 
-import org.sonatype.nexus.repository.Facet;
-import org.sonatype.nexus.repository.view.Content;
+import com.codahale.metrics.annotation.Gauge;
+import org.eclipse.sisu.EagerSingleton;
 
 /**
- * @since 3.19
+ * Provides analytics for cleanup policies
+ *
+ * @since 3.next
  */
-@Facet.Exposed
-public interface CocoapodsFacet
-    extends Facet
+@Named
+@EagerSingleton
+@FeatureFlag(name = "nexus.analytics.enabled")
+public class CleanupAnalytics
 {
-  @Nullable
-  Content get(final String path);
+  @Inject
+  private CleanupPolicyStorage cleanupPolicyStorage;
 
-  Content getOrCreateAsset(final String path, final Content content, boolean toAttachComponent) throws IOException;
-
-  boolean delete(final String path) throws IOException;
+  @Gauge(name = "nexus.analytics.cleanup.count", absolute = true)
+  public Long count() {
+    return cleanupPolicyStorage.count();
+  }
 }

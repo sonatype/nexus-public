@@ -62,8 +62,10 @@ public class ConfigOrientConnectionProvider
 
   @Override
   public void shutdown() throws SQLException {
-    orientConnectionProvider.shutdown();
-    orientConnectionProvider = null;
+    if (orientConnectionProvider != null) {
+      orientConnectionProvider.shutdown();
+      orientConnectionProvider = null;
+    }
   }
 
   @Override

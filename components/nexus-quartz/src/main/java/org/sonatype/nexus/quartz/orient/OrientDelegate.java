@@ -54,8 +54,8 @@ public class OrientDelegate
   {
     PreparedStatement ps = null;
     ResultSet rs = null;
-    String triggerName;
-    String triggerGroup;
+    String jobName;
+    String jobGroup;
 
     try {
       ps = conn.prepareStatement(rtp(SELECT_TRIGGER));
@@ -64,8 +64,8 @@ public class OrientDelegate
       rs = ps.executeQuery();
 
       if (rs.next()) {
-        triggerName = rs.getString(1);
-        triggerGroup = rs.getString(2);
+        jobName = rs.getString(COL_JOB_NAME);
+        jobGroup = rs.getString(COL_JOB_GROUP);
       }
       else {
         if (logger.isDebugEnabled()) {
@@ -81,19 +81,19 @@ public class OrientDelegate
 
     try {
       ps = conn.prepareStatement(rtp(SELECT_JOB_DETAIL));
-      ps.setString(1, triggerName);
-      ps.setString(2, triggerGroup);
+      ps.setString(1, jobName);
+      ps.setString(2, jobGroup);
       rs = ps.executeQuery();
 
       if (rs.next()) {
         JobDetailImpl job = new JobDetailImpl();
-        job.setName(rs.getString(1));
-        job.setGroup(rs.getString(2));
-        job.setDurability(getBoolean(rs, 3));
+        job.setName(jobName);
+        job.setGroup(jobGroup);
+        job.setDurability(getBoolean(rs, COL_IS_DURABLE));
         if (loadJobClass) {
-          job.setJobClass(loadHelper.loadClass(rs.getString(4), Job.class));
+          job.setJobClass(loadHelper.loadClass(rs.getString(COL_JOB_CLASS), Job.class));
         }
-        job.setRequestsRecovery(getBoolean(rs, 5));
+        job.setRequestsRecovery(getBoolean(rs, COL_REQUESTS_RECOVERY));
 
         return job;
       }

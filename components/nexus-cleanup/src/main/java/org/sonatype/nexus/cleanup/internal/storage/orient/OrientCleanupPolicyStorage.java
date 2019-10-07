@@ -70,6 +70,12 @@ public class OrientCleanupPolicyStorage
 
   @Override
   @Guarded(by = STARTED)
+  public long count() {
+    return inTxRetry(databaseInstance).call(db -> entityAdapter.count(db));
+  }
+
+  @Override
+  @Guarded(by = STARTED)
   public CleanupPolicy add(final CleanupPolicy item) {
     return inTxRetry(databaseInstance).call(db -> entityAdapter.readEntity(entityAdapter.addEntity(db, item)));
   }

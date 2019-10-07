@@ -18,6 +18,7 @@ import java.util.HashMap;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Format;
@@ -105,6 +106,8 @@ public class CocoapodsFacetImplTest
   private Asset asset;
 
   private Component component;
+
+  private AttributesMap attributesMap;
 
   @Before
   public void init() throws Exception {
@@ -213,6 +216,7 @@ public class CocoapodsFacetImplTest
 
   private void configTestObject() throws Exception {
     podPathParser = new PodPathParser("https://api.github.com");
+    attributesMap = new NestedAttributesMap("", new HashMap<>());
     cocoapodsFacet = Guice.createInjector(new TransactionModule(), new AbstractModule()
     {
       @Override
@@ -232,10 +236,10 @@ public class CocoapodsFacetImplTest
     when(repository.getFormat()).thenReturn(format);
     when(assetBlob.getBlob()).thenReturn(blob);
     when(storageTx.setBlob(any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(assetBlob);
+    when(content.getAttributes()).thenReturn(attributesMap);
   }
 
   private void configAttributeMap() {
-    NestedAttributesMap attributesMap = new NestedAttributesMap("", new HashMap<>());
     doReturn(attributesMap).when(asset).attributes();
     doReturn(new DateTime()).when(asset).blobUpdated();
     doReturn(attributesMap).when(asset).formatAttributes();
