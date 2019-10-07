@@ -734,9 +734,9 @@
                     <exclude>commons-vfs:commons-vfs</exclude>
 
                     <!--
-                    Ban beanutils which includes commons-collections.
+                    Ban beanutils pre-1.9 which includes embedded commons-collections.
                     -->
-                    <exclude>commons-beanutils:commons-beanutils</exclude>
+                    <exclude>commons-beanutils:commons-beanutils:(,1.9]</exclude>
 
                     <!--
                     Security hazard: osvdb-68314
