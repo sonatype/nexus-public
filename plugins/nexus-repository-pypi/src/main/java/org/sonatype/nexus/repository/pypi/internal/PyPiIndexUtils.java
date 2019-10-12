@@ -79,11 +79,10 @@ public final class PyPiIndexUtils
     return results;
   }
 
-
   /**
    * Convert a link to a map ready to be used for "pypi-index.vm".
    */
-  static ImmutableMap<String, String> indexLinkToMap(PyPiLink link) {
+  static ImmutableMap<String, String> indexLinkToMap(final PyPiLink link) {
     return ImmutableMap.of(
             "link", makePackageLinkRelative(link.getLink()),
             "file", link.getFile(),
@@ -94,7 +93,7 @@ public final class PyPiIndexUtils
   /**
    * Convert a link to a map ready to be used for "pypi-root-index.vm".
    */
-  static ImmutableMap<String, String> rootIndexLinkToMap(PyPiLink link) {
+  static ImmutableMap<String, String> rootIndexLinkToMap(final PyPiLink link) {
     return ImmutableMap.of(
             "link", makeRootIndexLinkRelative(link.getLink()),
             "name", link.getFile()

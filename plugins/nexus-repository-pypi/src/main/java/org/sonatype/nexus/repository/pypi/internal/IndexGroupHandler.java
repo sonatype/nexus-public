@@ -120,7 +120,7 @@ class IndexGroupHandler
     Payload payload = checkNotNull(response.getPayload());
     try (InputStream in = payload.openInputStream()) {
       List<PyPiLink> links = PyPiIndexUtils.extractLinksFromIndex(in);
-      for (PyPiLink link: links) {
+      for (PyPiLink link : links) {
         String file = link.getFile();
         if (!results.containsKey(file)) {
           results.put(file, link);
