@@ -34,7 +34,7 @@ import static org.apache.commons.lang.StringUtils.isBlank;
  * A whitelisted path has its subdirectories included. For example, whitelisting the directory {@code /foo/bar} would
  * allow repositories to set their storage to {@code /foo/bar/baz}.
  *
- * @since 2.next
+ * @since 2.14.15
  */
 @Named
 @Singleton

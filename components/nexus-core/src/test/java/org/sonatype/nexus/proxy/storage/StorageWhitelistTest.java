@@ -19,7 +19,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 /**
- * @since 2.next
+ * @since 2.14.15
  */
 public class StorageWhitelistTest
 {

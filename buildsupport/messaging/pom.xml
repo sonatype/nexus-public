@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>2.14.15-SNAPSHOT</version>
+    <version>2.14.16-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-messaging</artifactId>

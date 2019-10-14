@@ -52,7 +52,7 @@ import static org.sonatype.nexus.proxy.storage.StorageWhitelist.PROP_NAME;
  * if it is not found. Its value will be created from all existing repositories which have a value set for
  * {@code overrideLocalStorageUrl}
  *
- * @since 2.next
+ * @since 2.14.15
  */
 @Singleton
 @Named("StorageWhitelistUpgradeEvent")

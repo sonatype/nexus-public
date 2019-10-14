@@ -59,7 +59,7 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.proxy.storage.StorageWhitelist.PROP_NAME;
 
 /**
- * @since 2.next
+ * @since 2.14.15
  */
 public class StorageWhitelistUpgradeEventTest
     extends TestSupport
