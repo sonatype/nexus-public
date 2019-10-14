@@ -10,15 +10,27 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-
-package org.sonatype.nexus.repository.rest;
+package org.sonatype.nexus.rest;
 
 /**
+ * Constants for REST API documentation.
+ *
  * @since 3.next
  */
-public class IncompatibleRepositoryException extends Exception
+public class ApiDocConstants
 {
-  public IncompatibleRepositoryException(final String message) {
-    super(message);
+  private ApiDocConstants() {
   }
+
+  public static final String AUTHENTICATION_REQUIRED = "Authentication required";
+
+  public static final String INSUFFICIENT_PERMISSIONS = "Insufficient permissions";
+
+  public static final String RESOURCE_NOT_FOUND = "Resource not found";
+
+  public static final String RESOURCE_CREATED = "Resource created";
+
+  public static final String RESOURCE_UPDATED = "Resource updated";
+
+  public static final String RESOURCE_DELETED = "Resource deleted";
 }

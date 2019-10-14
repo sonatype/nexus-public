@@ -14,10 +14,10 @@ package org.sonatype.nexus.transaction;
 
 import java.io.IOException;
 import java.util.Set;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.common.sequence.ThreadLocalSplittableRandom;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
@@ -42,6 +42,8 @@ import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getTime;
 public class RetryController
     extends ComponentSupport
 {
+  private static final ThreadLocalSplittableRandom randomHolder = new ThreadLocalSplittableRandom();
+
   private static final int DEFAULT_RETRY_LIMIT = 8;
 
   private static final int DEFAULT_MIN_SLOTS = 2;
@@ -257,7 +259,7 @@ public class RetryController
    */
   private long randomDelay(final int nextRetry, final Exception cause) {
     int slots = min(max(1 << nextRetry, minSlots), maxSlots);
-    int randomSlot = ThreadLocalRandom.current().nextInt(slots);
+    int randomSlot = randomHolder.get().nextInt(slots);
     if (isMajorException(cause)) {
       // avoid zero wait if it's a major exception
       return majorDelayMillis * (randomSlot + 1);

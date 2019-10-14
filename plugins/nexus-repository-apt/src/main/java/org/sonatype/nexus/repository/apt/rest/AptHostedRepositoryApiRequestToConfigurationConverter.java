@@ -10,32 +10,26 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.cleanup.analytics;
+package org.sonatype.nexus.repository.apt.rest;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
-import org.sonatype.nexus.common.app.FeatureFlag;
-
-import com.codahale.metrics.annotation.Gauge;
-import org.eclipse.sisu.EagerSingleton;
+import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.rest.api.HostedRepositoryApiRequestToConfigurationConverter;
 
 /**
- * Provides analytics for cleanup policies
- *
  * @since 3.next
  */
 @Named
-@EagerSingleton
-@FeatureFlag(name = "nexus.analytics.enabled")
-public class CleanupAnalytics
+public class AptHostedRepositoryApiRequestToConfigurationConverter
+    extends HostedRepositoryApiRequestToConfigurationConverter<AptHostedRepositoryApiRequest>
 {
-  @Inject
-  private CleanupPolicyStorage cleanupPolicyStorage;
-
-  @Gauge(name = "nexus.analytics.cleanup_policy_count", absolute = true)
-  public Long count() {
-    return cleanupPolicyStorage.count();
+  @Override
+  public Configuration convert(final AptHostedRepositoryApiRequest request) {
+    Configuration configuration = super.convert(request);
+    configuration.attributes("apt").set("distribution", request.getApt().getDistribution());
+    configuration.attributes("aptSigning").set("keypair", request.getAptSigning().getKeypair());
+    configuration.attributes("aptSigning").set("passphrase", request.getAptSigning().getPassphrase());
+    return configuration;
   }
 }

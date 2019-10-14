@@ -161,6 +161,13 @@ public class RepositoryPermissionChecker
     securityHelper.ensurePermitted(new RepositoryAdminPermission(repository.getFormat().getValue(), repository.getName(), singletonList(action)));
   }
 
+  /**
+   * @since 3.next
+   */
+  public void ensureUserCanAdmin(final String action, final String format, final String repositoryName) {
+    securityHelper.ensurePermitted(new RepositoryAdminPermission(format, repositoryName, singletonList(action)));
+  }
+
   private List<Repository> userHasPermission(
       final Function<Repository, Permission> permissionSupplier,
       final Repository... repositories)

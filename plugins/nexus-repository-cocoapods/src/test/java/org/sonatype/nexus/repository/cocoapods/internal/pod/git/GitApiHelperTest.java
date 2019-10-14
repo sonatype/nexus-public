@@ -37,7 +37,8 @@ public class GitApiHelperTest
       final String ref,
       final String apiUri)
   {
-    CocoapodsConfig config = new CocoapodsConfig("https://api.github.com", "https://bitbucket.org");
+    CocoapodsConfig config =
+        new CocoapodsConfig("https://api.github.com", "https://bitbucket.org", "https://gitlab.com");
     GitArtifactInfo info = new GitArtifactInfo(host, vendor, repository, ref);
     assertThat(GitApiHelper.buildApiUri(info, config).toString(), is(apiUri));
   }
@@ -59,6 +60,14 @@ public class GitApiHelperTest
         new Object[]{
             "bitbucket.org", "jefrydagucci", "asbaseiosproject", null,
             "https://bitbucket.org/jefrydagucci/asbaseiosproject/get/master.tar.gz"
+        },
+        new Object[]{
+            "gitlab.com", "abtasty-public", "mobile/abtastysdkios", "1.1",
+            "https://gitlab.com/abtasty-public/mobile/abtastysdkios/-/archive/1.1/1.1.tar.gz"
+        },
+        new Object[]{
+            "gitlab.com", "abtasty-public", "mobile/abtastysdkios", null,
+            "https://gitlab.com/abtasty-public/mobile/abtastysdkios/-/archive/master/master.tar.gz"
         }
     };
   }

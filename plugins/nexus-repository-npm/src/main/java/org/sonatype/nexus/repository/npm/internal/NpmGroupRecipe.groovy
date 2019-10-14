@@ -29,6 +29,7 @@ import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchGroupHandle
 import org.sonatype.nexus.repository.types.GroupType
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
 import org.sonatype.nexus.repository.view.Router
+import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler
 
 import static org.sonatype.nexus.repository.http.HttpMethods.GET
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD
@@ -62,6 +63,9 @@ class NpmGroupRecipe
 
   @Inject
   NpmSearchGroupHandler searchHandler
+
+  @Inject
+  ContentHeadersHandler contentHeadersHandler
 
   @Inject
   NpmGroupRecipe(@Named(GroupType.NAME) final Type type,
@@ -108,6 +112,8 @@ class NpmGroupRecipe
         .handler(timingHandler)
         .handler(securityHandler)
         .handler(unitOfWorkHandler)
+        .handler(conditionalRequestHandler)
+        .handler(contentHeadersHandler)
         .handler(lastDownloadedHandler)
         .handler(packageHandler)
         .create())

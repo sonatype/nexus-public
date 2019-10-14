@@ -52,12 +52,14 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.http.HttpStatus.NOT_FOUND;
 import static org.sonatype.nexus.repository.http.HttpStatus.OK;
+import static org.sonatype.nexus.repository.view.Content.CONTENT_LAST_MODIFIED;
 import static org.sonatype.nexus.repository.view.Status.success;
 
 public class NpmGroupPackageHandlerTest
@@ -229,6 +231,20 @@ public class NpmGroupPackageHandlerTest
       MatcherAssert.assertThat(map.get("error"), Matchers.equalTo(
           "Failed to stream response due to: Members had no metadata to merge for repository " + group.getName()));
     }
+  }
+
+  @Test
+  public void shouldReturnLastModifiedAttribute() throws Exception {
+    NpmContent content = mock(NpmContent.class);
+    AttributesMap attributes = new AttributesMap();
+    attributes.set(CONTENT_LAST_MODIFIED, "01-01-2020");
+    when(content.getAttributes()).thenReturn(attributes);
+    when(groupFacet.getFromCache(eq(context))).thenReturn(content);
+
+    Response response = underTest.doGet(context, dispatchedRepositories);
+
+    assertThat(response.getAttributes().contains(CONTENT_LAST_MODIFIED), is(true));
+    assertThat(response.getAttributes().get(CONTENT_LAST_MODIFIED), is("01-01-2020"));
   }
 
   private NpmContent createNpmContentWithMissingAssetBlob() {

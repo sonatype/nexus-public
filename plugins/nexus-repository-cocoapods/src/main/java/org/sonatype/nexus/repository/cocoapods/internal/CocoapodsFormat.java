@@ -25,36 +25,13 @@ import org.sonatype.nexus.repository.Format;
 public class CocoapodsFormat
     extends Format
 {
-  public static final String HTTP_NXRM_PREFIX = "http/";
-
-  public static final String HTTPS_NXRM_PREFIX = "https/";
-
-  public static final String HTTP_URL_PREFIX = "http://";
-
-  public static final String HTTPS_URL_PREFIX = "https://";
 
   public static final String CDN_METADATA_PREFIX = "cdn_metadata/";
 
   public static final String NAME = "cocoapods";
 
-  public static final String INVALID_SPEC_FILE_ERROR = "Invalid spec file: %s";
-
   public CocoapodsFormat() {
     super(NAME);
-  }
-
-  public static String escapeUriToPath(final String uri) {
-    return uri.replace("://", "/");
-  }
-
-  public static String unescapePathToUri(final String path) {
-    if (path.startsWith(HTTP_NXRM_PREFIX)) {
-      return path.replaceFirst(HTTP_NXRM_PREFIX, HTTP_URL_PREFIX);
-    }
-    else if (path.startsWith(HTTPS_NXRM_PREFIX)) {
-      return path.replaceFirst(HTTPS_NXRM_PREFIX, HTTPS_URL_PREFIX);
-    }
-    return path;
   }
 
   public static String removeInitialSlashFromPath(final String path) {

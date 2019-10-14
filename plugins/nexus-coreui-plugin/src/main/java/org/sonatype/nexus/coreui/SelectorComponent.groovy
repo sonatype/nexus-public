@@ -27,6 +27,7 @@ import org.sonatype.nexus.common.entity.DetachedEntityId
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.repository.security.RepositoryContentSelectorPrivilegeDescriptor
 import org.sonatype.nexus.security.SecuritySystem
+import org.sonatype.nexus.security.privilege.Privilege
 import org.sonatype.nexus.selector.SelectorConfiguration
 import org.sonatype.nexus.selector.SelectorFactory
 import org.sonatype.nexus.selector.SelectorManager
@@ -75,7 +76,8 @@ class SelectorComponent
   @ExceptionMetered
   @RequiresPermissions('nexus:selectors:read')
   List<SelectorXO> read() {
-    return selectorManager.browse().collect { asSelector(it) }
+    def privileges = securitySystem.listPrivileges()
+    return selectorManager.browse().collect { asSelector(it, privileges) }
   }
 
   /**
@@ -95,7 +97,7 @@ class SelectorComponent
         attributes: ['expression': selectorXO.expression]
     )
     selectorManager.create(configuration)
-    return asSelector(configuration)
+    return asSelector(configuration, securitySystem.listPrivileges())
   }
 
   /**
@@ -144,8 +146,8 @@ class SelectorComponent
     return selectorManager.browse().collect { new ReferenceXO(id: it.name, name: it.name) }
   }
 
-  SelectorXO asSelector(final SelectorConfiguration configuration) {
-    def privileges = getPrivilegesUsingSelector(configuration)
+  SelectorXO asSelector(final SelectorConfiguration configuration, final Set<Privilege> privilegeSet) {
+    def privileges = getPrivilegesUsingSelector(configuration, privilegeSet)
 
     return new SelectorXO(
         id: configuration.entityMetadata.id.value,
@@ -158,8 +160,8 @@ class SelectorComponent
     )
   }
 
-  private List<String> getPrivilegesUsingSelector(final SelectorConfiguration selectorConfiguration) {
-    securitySystem.listPrivileges().stream()
+  private List<String> getPrivilegesUsingSelector(final SelectorConfiguration selectorConfiguration, Set<Privilege> privileges) {
+    privileges.stream()
       .filter({ privilege -> RepositoryContentSelectorPrivilegeDescriptor.TYPE == privilege.type })
       .filter({ privilege -> selectorConfiguration.name == privilege.properties[RepositoryContentSelectorPrivilegeDescriptor.P_CONTENT_SELECTOR]})
       .map({ privilege -> privilege.name })

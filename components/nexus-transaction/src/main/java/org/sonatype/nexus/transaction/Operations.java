@@ -24,8 +24,8 @@ import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.transaction.UnitOfWork.peekTransaction;
 import static org.sonatype.nexus.transaction.UnitOfWork.openSession;
+import static org.sonatype.nexus.transaction.UnitOfWork.peekTransaction;
 
 /**
  * Fluent API for wrapping lambda operations with {@link Transactional} behaviour:
@@ -200,9 +200,12 @@ public class Operations<E extends Exception, B extends Operations<E, B>>
    */
   private <T> T transactional(final OperationPoint<T, E> point) throws E {
     Transaction tx = peekTransaction();
-    if (tx != null) {
+    if (tx != null) { // nested transactional session
+      if (store != null) {
+        tx.capture(store);
+      }
       if (tx.isActive()) {
-        return point.proceed(); // nested transaction, no need to wrap
+        return point.proceed(); // no need to wrap active transaction
       }
       return proceedWithTransaction(point, tx);
     }

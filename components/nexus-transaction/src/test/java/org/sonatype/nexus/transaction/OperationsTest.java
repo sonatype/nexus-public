@@ -39,7 +39,7 @@ import static org.mockito.Mockito.when;
 public class OperationsTest
     extends TestSupport
 {
-  ExampleMethods methods = new ExampleMethods();
+  ExampleMethods methods = new ExampleMethods(new ExampleMethods.ExampleNestedStore());
 
   @Mock
   TransactionalSession<Transaction> session;

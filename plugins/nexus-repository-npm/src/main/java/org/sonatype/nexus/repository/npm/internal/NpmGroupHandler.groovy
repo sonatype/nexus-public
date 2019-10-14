@@ -18,8 +18,6 @@ import org.sonatype.nexus.repository.group.GroupHandler
 import org.sonatype.nexus.repository.view.Context
 import org.sonatype.nexus.repository.view.Response
 
-import static org.sonatype.nexus.repository.http.HttpConditions.makeConditional
-import static org.sonatype.nexus.repository.http.HttpConditions.makeUnconditional
 import static org.sonatype.nexus.repository.http.HttpStatus.OK
 import static org.sonatype.nexus.repository.group.GroupHandler.DispatchedRepositories
 
@@ -33,16 +31,8 @@ class NpmGroupHandler
                                                    final DispatchedRepositories dispatched,
                                                    final NpmGroupFacet groupFacet)
   {
-    // Remove conditional headers before making "internal" requests: https://issues.sonatype.org/browse/NEXUS-13915
-    makeUnconditional(context.getRequest())
-
-    try {
-      // get all and filter for HTTP OK responses
-      return getAll(context, groupFacet.members(), dispatched).findAll { k, v -> v.status.code == OK }
-    }
-    finally {
-      makeConditional(context.getRequest())
-    }
+    // get all and filter for HTTP OK responses
+    return getAll(context, groupFacet.members(), dispatched).findAll { k, v -> v.status.code == OK }
   }
 
   protected NpmGroupFacet getGroupFacet(final Context context) {

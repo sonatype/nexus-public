@@ -10,20 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.cocoapods.internal.pod.git;
+package org.sonatype.nexus.repository.rest.api;
 
 /**
- * @since 3.19
+ * @since 3.next
  */
-public class GitConstants
+public class RepositoryNotFoundException
+    extends Exception
 {
-  public static final String GITHUB_HOST = "github.com";
+  private static final String MESSAGE = "Repository not found";
 
-  public static final String BITBUCKET_HOST = "bitbucket.org";
-
-  public static final String GITLAB_HOST = "gitlab.com";
-
-  public static final String GITHUB_POD_EXTENSION = ".tar.gz";
-
-  private GitConstants() {}
+  public RepositoryNotFoundException() {
+    super(MESSAGE);
+  }
 }

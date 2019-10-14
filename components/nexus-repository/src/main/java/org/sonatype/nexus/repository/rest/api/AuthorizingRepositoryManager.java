@@ -10,8 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-
-package org.sonatype.nexus.repository.rest;
+package org.sonatype.nexus.repository.rest.api;
 
 import java.util.List;
 
@@ -20,6 +19,7 @@ import javax.inject.Inject;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.RepositoryCacheUtils;
+import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.search.RebuildIndexTask;
 import org.sonatype.nexus.repository.search.RebuildIndexTaskDescriptor;
@@ -31,6 +31,7 @@ import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.security.BreadActions.ADD;
 import static org.sonatype.nexus.security.BreadActions.DELETE;
 import static org.sonatype.nexus.security.BreadActions.EDIT;
 import static org.sonatype.nexus.security.BreadActions.READ;
@@ -57,6 +58,26 @@ public class AuthorizingRepositoryManager
     this.repositoryManager = checkNotNull(repositoryManager);
     this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
     this.taskScheduler = checkNotNull(taskScheduler);
+  }
+
+  public void create(@Nonnull final Configuration configuration) throws Exception {
+    String format = configuration.getRecipeName().split("-")[0];
+    repositoryPermissionChecker.ensureUserCanAdmin(ADD, format, configuration.getRepositoryName());
+    repositoryManager.create(configuration);
+  }
+
+  public boolean update(@Nonnull final Configuration configuration) throws Exception {
+    Repository repository = repositoryManager.get(configuration.getRepositoryName());
+    if (repository != null) {
+      repositoryPermissionChecker.ensureUserCanAdmin(EDIT, repository);
+      Configuration updatedConfig = repository.getConfiguration().copy();
+      updatedConfig.setRoutingRuleId(configuration.getRoutingRuleId());
+      updatedConfig.setOnline(configuration.isOnline());
+      updatedConfig.setAttributes(configuration.getAttributes());
+      repositoryManager.update(updatedConfig);
+      return true;
+    }
+    return false;
   }
 
   public boolean delete(@Nonnull final String name) throws Exception {

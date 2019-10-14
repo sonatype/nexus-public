@@ -287,13 +287,10 @@ class NpmClient
     }
   }
 
-  NestedAttributesMap conditionalFetch(final String packageName, final String modified) {
+  NestedAttributesMap conditionalFetch(final String packageName, final String modified, final int expectedStatus) {
     HttpResponse response = conditionalGet(resolve(packageName), modified)
     try {
-      assert status(response) == OK
-      assert response.entity
-      assert response.entity.contentType.value == ContentTypes.APPLICATION_JSON
-      return deserialize(response.entity.content)
+      assert status(response) == expectedStatus
     }
     finally {
       EntityUtils.consumeQuietly(response.entity)

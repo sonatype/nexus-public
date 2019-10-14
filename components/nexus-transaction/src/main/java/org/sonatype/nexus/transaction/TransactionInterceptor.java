@@ -35,17 +35,20 @@ final class TransactionInterceptor
 {
   @Override
   public Object invoke(final MethodInvocation mi) throws Throwable {
-    Transaction tx = peekTransaction();
-    if (tx != null) {
-      if (tx.isActive()) {
-        return mi.proceed(); // nested transaction, no need to wrap
-      }
-      return proceedWithTransaction(mi, tx);
-    }
-
     TransactionalStore<?> store = null;
     if (mi.getThis() instanceof TransactionalStore<?>) {
       store = (TransactionalStore<?>) mi.getThis();
+    }
+
+    Transaction tx = peekTransaction();
+    if (tx != null) { // nested transactional session
+      if (store != null) {
+        tx.capture(store);
+      }
+      if (tx.isActive()) {
+        return mi.proceed(); // no need to wrap active transaction
+      }
+      return proceedWithTransaction(mi, tx);
     }
 
     try (TransactionalSession<?> session = openSession(store)) {

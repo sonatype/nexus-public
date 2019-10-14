@@ -21,11 +21,13 @@ import org.sonatype.nexus.repository.cocoapods.internal.CocoapodsConfig;
  */
 public class GitApiHelper
 {
-  private static final String GITHUB_API_GET_REPO_SNAPSHOT_URL_TEMPLATE = "%s/repos/%s/%s/tarball/%s";
+  private static final String GITHUB_API_GET_REPO_SNAPSHOT_URL_TEMPLATE = "%1$s/repos/%2$s/%3$s/tarball/%4$s";
 
-  private static final String BITBUCKET_API_GET_REPO_SNAPSHOT_URL_TEMPLATE = "%s/%s/%s/get/%s.tar.gz";
+  private static final String BITBUCKET_API_GET_REPO_SNAPSHOT_URL_TEMPLATE = "%1$s/%2$s/%3$s/get/%4$s.tar.gz";
 
-  private static final String BITBUCKET_DEFAULT_BRANCH = "master";
+  private static final String GITLAB_API_GET_REPO_SNAPSHOT_URL_TEMPLATE = "%1$s/%2$s/%3$s/-/archive/%4$s/%4$s.tar.gz";
+
+  private static final String DEFAULT_BRANCH = "master";
 
   private GitApiHelper() {}
 
@@ -53,7 +55,12 @@ public class GitApiHelper
         return new GitProviderConfig(
             BITBUCKET_API_GET_REPO_SNAPSHOT_URL_TEMPLATE,
             cocoapodsConfig.getBitbucketApiUri(),
-            BITBUCKET_DEFAULT_BRANCH);
+            DEFAULT_BRANCH);
+      case GitConstants.GITLAB_HOST:
+        return new GitProviderConfig(
+            GITLAB_API_GET_REPO_SNAPSHOT_URL_TEMPLATE,
+            cocoapodsConfig.getGitlabApiUri(),
+            DEFAULT_BRANCH);
       default:
         throw new IllegalArgumentException("invalid host: " + host);
     }

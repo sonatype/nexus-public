@@ -68,6 +68,7 @@ import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
 
 import com.codahale.metrics.annotation.Gauge;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.Subscribe;
 import org.quartz.JobBuilder;
@@ -749,9 +750,14 @@ public class QuartzSchedulerSPI
     return nexusJobs;
   }
 
-  @Gauge(name = "nexus.analytics.tasks.configured", absolute = true)
-  public Map<String, Long> countTasksByTypeId() throws SchedulerException {
-    return listsTasks().stream().collect(groupingBy(TaskInfo::getTypeId, counting()));
+  @Gauge(name = "nexus.analytics.tasks", absolute = true)
+  public List<Map<String, Object>> countTasksByTypeId() throws SchedulerException {
+    return listsTasks().stream()
+        .collect(groupingBy(TaskInfo::getTypeId, counting()))
+        .entrySet()
+        .stream()
+        .map(e -> ImmutableMap.<String, Object>of("name", e.getKey(), "instance_count", e.getValue()))
+        .collect(Collectors.toList());
   }
 
   /**

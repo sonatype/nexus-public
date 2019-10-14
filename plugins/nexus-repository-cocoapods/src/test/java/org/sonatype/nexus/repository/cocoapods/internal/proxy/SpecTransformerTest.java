@@ -26,7 +26,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
  */
 public class SpecTransformerTest
 {
-  private PodPathProvider podPathProvider = new PodPathProvider("https://api.github.com", "https://bitbucket.org");
+  private PodPathProvider podPathProvider =
+      new PodPathProvider("https://api.github.com", "https://bitbucket.org", "https://gitlab.com");
 
   @Test
   public void gitHubToProxiedSpecPositiveTest() throws Exception {

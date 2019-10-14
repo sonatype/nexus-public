@@ -16,7 +16,6 @@ import java.util.List;
 
 import org.sonatype.nexus.repository.browse.BrowsePaths;
 import org.sonatype.nexus.repository.browse.BrowseTestSupport;
-import org.sonatype.nexus.repository.cocoapods.internal.CocoapodsBrowseNodeGenerator;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
 
@@ -48,6 +47,25 @@ public class CocoapodsBrowseNodeGeneratorTest
 
     assertPaths(asList("pods", componentGroup, componentName, componentVersion, assetName), pathsAsset, false);
     assertPaths(asList("pods", componentGroup, componentName, componentVersion), pathsComponent, true);
+  }
+
+  @Test
+  public void shouldRemoveRestParametersFromAssetName() {
+    final String assetName = "assetName?param=value";
+    final String assetViewName = "assetName";
+    final String assetPath = "path/to/" + assetName;
+    final String componentGroup = "testGroup";
+    final String componentName = "testComponentName";
+    final String componentVersion = "testVersion";
+
+    Component component = createComponent(componentName, componentGroup, componentVersion);
+    Asset asset = createAsset(assetPath);
+
+    List<BrowsePaths> pathsAssetWithComponent = generator.computeAssetPaths(asset, component);
+    List<BrowsePaths> pathsAsset = generator.computeAssetPaths(asset, component);
+
+    assertPaths(asList("pods", componentGroup, componentName, componentVersion, assetViewName), pathsAsset, false);
+    assertPaths(asList("pods", componentGroup, componentName, componentVersion, assetViewName), pathsAssetWithComponent, false);
   }
 
   @Test

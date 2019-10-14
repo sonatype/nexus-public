@@ -10,8 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-
-package org.sonatype.nexus.repository.rest;
+package org.sonatype.nexus.repository.rest.api;
 
 import java.util.List;
 
@@ -25,6 +24,11 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
+import static org.sonatype.nexus.rest.ApiDocConstants.AUTHENTICATION_REQUIRED;
+import static org.sonatype.nexus.rest.ApiDocConstants.INSUFFICIENT_PERMISSIONS;
+import static org.sonatype.nexus.rest.ApiDocConstants.RESOURCE_DELETED;
+import static org.sonatype.nexus.rest.ApiDocConstants.RESOURCE_NOT_FOUND;
+
 /**
  * @since 3.next
  */
@@ -33,10 +37,10 @@ public interface RepositoriesApiResourceDoc
 {
   @ApiOperation("Delete repository of any format")
   @ApiResponses(value = {
-      @ApiResponse(code = 204, message = "Repository deleted"),
-      @ApiResponse(code = 401, message = "Authentication required"),
-      @ApiResponse(code = 403, message = "Insufficient permissions"),
-      @ApiResponse(code = 404, message = "Repository not found")
+      @ApiResponse(code = 204, message = RESOURCE_DELETED),
+      @ApiResponse(code = 401, message = AUTHENTICATION_REQUIRED),
+      @ApiResponse(code = 403, message = INSUFFICIENT_PERMISSIONS),
+      @ApiResponse(code = 404, message = RESOURCE_NOT_FOUND)
   })
   Response deleteRepository(@ApiParam(value = "Name of the repository to delete") final String repositoryName)
       throws Exception;

@@ -10,20 +10,31 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.cocoapods.internal.pod.git;
+package org.sonatype.nexus.repository.rest;
+
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.annotations.ApiModelProperty;
+import org.hibernate.validator.constraints.NotEmpty;
 
 /**
- * @since 3.19
+ * @since 3.next
  */
-public class GitConstants
+public class GroupAttributes
 {
-  public static final String GITHUB_HOST = "github.com";
+  @ApiModelProperty(value = "Member repositories' names", example = "internal, external-proxy")
+  @NotEmpty
+  @SameFormat
+  private final List<String> memberNames;
 
-  public static final String BITBUCKET_HOST = "bitbucket.org";
+  @JsonCreator
+  public GroupAttributes(@JsonProperty("memberNames") final List<String> memberNames) {
+    this.memberNames = memberNames;
+  }
 
-  public static final String GITLAB_HOST = "gitlab.com";
-
-  public static final String GITHUB_POD_EXTENSION = ".tar.gz";
-
-  private GitConstants() {}
+  public List<String> getMemberNames() {
+    return memberNames;
+  }
 }

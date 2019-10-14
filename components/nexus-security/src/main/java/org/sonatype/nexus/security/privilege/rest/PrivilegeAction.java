@@ -101,7 +101,7 @@ public enum PrivilegeAction
     return Arrays.asList(BROWSE, READ, EDIT, ADD, DELETE, RUN, ALL);
   }
 
-  public static List<PrivilegeAction> getBreadAssociateActions() {
-    return Arrays.asList(BROWSE, READ, EDIT, ADD, DELETE, ASSOCIATE, DISASSOCIATE, ALL);
+  public static List<PrivilegeAction> getCrudActions() {
+    return Arrays.asList(READ, EDIT, ADD, DELETE, ASSOCIATE, DISASSOCIATE, ALL);
   }
 }

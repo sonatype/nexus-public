@@ -275,6 +275,22 @@ public class TransactionalTest
   }
 
   @Test
+  public void testNestedTransactionalStoreIsCaptured() throws Exception {
+
+    methods.captureNestedStore();
+
+    InOrder order = inOrder(session, tx);
+    order.verify(session).getTransaction();
+    order.verify(tx).begin();
+    order.verify(session).getTransaction();
+    order.verify(tx).capture(methods.nestedStore);
+    order.verify(tx).isActive();
+    order.verify(tx).commit();
+    order.verify(session).close();
+    verifyNoMoreInteractions(session, tx);
+  }
+
+  @Test
   public void testCanSeeTransactionInsideTransactional() {
     methods.canSeeTransactionInsideTransactional();
   }

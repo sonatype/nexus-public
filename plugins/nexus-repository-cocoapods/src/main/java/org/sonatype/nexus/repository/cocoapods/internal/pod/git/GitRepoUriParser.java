@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.cocoapods.internal.pod.git;
 
 import java.net.URI;
+import java.util.Arrays;
 
 import javax.annotation.Nullable;
 
@@ -31,7 +32,7 @@ public class GitRepoUriParser
 
   private static final int GIT_PATH_SEGMENTS_COUNT = 3;
 
-  private GitRepoUriParser(){}
+  private GitRepoUriParser() {}
 
   public static GitArtifactInfo parseGitRepoUri(final URI gitRepoUri, @Nullable final String ref) {
     checkArgument(isRepoSupported(gitRepoUri), "repository not supported: " + gitRepoUri);
@@ -44,14 +45,42 @@ public class GitRepoUriParser
     }
 
     String[] segments = gitPath.split("/");
-    return new GitArtifactInfo(gitRepoUri.getHost(), segments[VENDOR_POSITION], segments[REPO_POSITION], ref);
+
+    return new GitArtifactInfo(
+        gitRepoUri.getHost(),
+        segments[VENDOR_POSITION],
+        extractRepository(segments, gitRepoUri.getHost()),
+        ref);
+  }
+
+  private static String extractRepository(final String[] segments, final String host) {
+    switch (host) {
+      case GitConstants.GITHUB_HOST:
+      case GitConstants.BITBUCKET_HOST:
+        return segments[REPO_POSITION];
+      case GitConstants.GITLAB_HOST:
+        return String.join("/", Arrays.copyOfRange(segments, REPO_POSITION, segments.length));
+      default:
+        throw new IllegalStateException("invalid git repository: " + host);
+    }
   }
 
   public static boolean isGitUriFormatSupported(final URI repoUri) {
-    return repoUri.getPath().split("/").length == GIT_PATH_SEGMENTS_COUNT;
+    int segmentsCnt = repoUri.getPath().split("/").length;
+    switch (repoUri.getHost()) {
+      case GitConstants.GITHUB_HOST:
+      case GitConstants.BITBUCKET_HOST:
+        return segmentsCnt == GIT_PATH_SEGMENTS_COUNT;
+      case GitConstants.GITLAB_HOST:
+        return segmentsCnt >= GIT_PATH_SEGMENTS_COUNT;
+      default:
+        return false;
+    }
   }
 
   public static boolean isRepoSupported(final URI repoUri) {
-    return repoUri.getHost().equals(GitConstants.GITHUB_HOST) || repoUri.getHost().equals(GitConstants.BITBUCKET_HOST);
+    return repoUri.getHost().equals(GitConstants.GITHUB_HOST)
+        || repoUri.getHost().equals(GitConstants.BITBUCKET_HOST)
+        || repoUri.getHost().equals(GitConstants.GITLAB_HOST);
   }
 }
