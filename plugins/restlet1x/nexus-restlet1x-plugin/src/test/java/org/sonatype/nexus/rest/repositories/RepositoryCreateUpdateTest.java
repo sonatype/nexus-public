@@ -12,12 +12,14 @@
  */
 package org.sonatype.nexus.rest.repositories;
 
+import java.nio.file.Paths;
+
 import org.sonatype.nexus.NexusAppTestSupport;
-import org.sonatype.nexus.configuration.application.NexusConfiguration;
 import org.sonatype.nexus.proxy.maven.ChecksumPolicy;
 import org.sonatype.nexus.proxy.maven.RepositoryPolicy;
 import org.sonatype.nexus.proxy.repository.Repository;
 import org.sonatype.nexus.proxy.repository.RepositoryWritePolicy;
+import org.sonatype.nexus.proxy.storage.StorageWhitelist;
 import org.sonatype.nexus.rest.AbstractNexusPlexusResource;
 import org.sonatype.nexus.rest.model.AuthenticationSettings;
 import org.sonatype.nexus.rest.model.RemoteConnectionSettings;
@@ -25,8 +27,12 @@ import org.sonatype.nexus.rest.model.RepositoryProxyResource;
 import org.sonatype.nexus.rest.model.RepositoryResourceRemoteStorage;
 import org.sonatype.nexus.rest.model.RepositoryResourceResponse;
 import org.sonatype.plexus.rest.resource.PlexusResource;
+import org.sonatype.plexus.rest.resource.PlexusResourceException;
+import org.sonatype.plexus.rest.resource.error.ErrorMessage;
+import org.sonatype.plexus.rest.resource.error.ErrorResponse;
 
 import junit.framework.Assert;
+import org.codehaus.plexus.context.Context;
 import org.codehaus.plexus.util.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,12 +43,19 @@ import org.restlet.data.Response;
 public class RepositoryCreateUpdateTest
     extends NexusAppTestSupport
 {
+  private static final String OVERRIDE_LOCAL_STORAGE_PATH = "storage/foo/bar";
 
   @Before
   public void prepare()
       throws Exception
   {
     startNx();
+  }
+
+  @Override
+  protected void customizeContext(final Context ctx) {
+    super.customizeContext(ctx);
+    ctx.put(StorageWhitelist.PROP_NAME, Paths.get(getWorkHomeDir().getAbsolutePath(), OVERRIDE_LOCAL_STORAGE_PATH));
   }
 
   @Test
@@ -304,10 +317,9 @@ public class RepositoryCreateUpdateTest
   public void testUpdateLocalStorage()
       throws Exception
   {
-
     RepositoryProxyResource originalResource = this.sendAndGetResponse();
     String newlocalStorage =
-        originalResource.getDefaultLocalStorageUrl().replaceAll(originalResource.getId(), "foo/bar");
+        originalResource.getDefaultLocalStorageUrl().replaceAll(originalResource.getId(), "foo/baz");
     originalResource.setOverrideLocalStorageUrl(newlocalStorage);
 
     RepositoryPlexusResource plexusResource =
@@ -321,6 +333,24 @@ public class RepositoryCreateUpdateTest
     RepositoryResourceResponse repoRequest = new RepositoryResourceResponse();
     repoRequest.setData(originalResource);
 
+    // request should fail as the storage location is not whitelisted
+    try {
+      plexusResource.put(null, request, response, repoRequest);
+      org.junit.Assert.fail("Expected update to fail due to non-whitelisted storage location");
+    }
+    catch (PlexusResourceException e) {
+      ErrorResponse errorResponse = (ErrorResponse)e.getResultObject();
+      assert errorResponse != null && errorResponse.getErrors().size() == 1;
+
+      ErrorMessage errorMessage = (ErrorMessage)errorResponse.getErrors().get(0);
+      assert errorMessage != null && errorMessage.getId().equals("overrideLocalStorageUrl") && errorMessage.getMsg().equals("Specified location is not approved for storage. See nexus.log for details.");
+    }
+
+    // use a whitelisted storage location
+    newlocalStorage = Paths
+        .get(getWorkHomeDir().getAbsolutePath(), OVERRIDE_LOCAL_STORAGE_PATH, originalResource.getId()).toString();
+    originalResource.setOverrideLocalStorageUrl(newlocalStorage);
+    repoRequest.setData(originalResource);
     RepositoryResourceResponse repoResponse =
         (RepositoryResourceResponse) plexusResource.put(null, request, response, repoRequest);
     RepositoryProxyResource result = (RepositoryProxyResource) repoResponse.getData();

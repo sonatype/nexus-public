@@ -24,6 +24,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
 import org.sonatype.configuration.ConfigurationException;
+import org.sonatype.configuration.validation.InvalidConfigurationException;
 import org.sonatype.nexus.configuration.model.CLocalStorage;
 import org.sonatype.nexus.configuration.model.CRemoteStorage;
 import org.sonatype.nexus.configuration.model.CRepository;
@@ -48,7 +49,6 @@ import org.sonatype.nexus.templates.repository.ManuallyConfiguredRepositoryTempl
 import org.sonatype.plexus.rest.resource.PathProtectionDescriptor;
 import org.sonatype.plexus.rest.resource.PlexusResourceException;
 
-import org.apache.commons.lang.StringUtils;
 import org.codehaus.enunciate.contract.jaxrs.ResourceMethodSignature;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.restlet.Context;
@@ -57,6 +57,8 @@ import org.restlet.data.Response;
 import org.restlet.data.Status;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.Variant;
+
+import static org.apache.commons.lang.StringUtils.isNotEmpty;
 
 /**
  * A resource list for Repository list.
@@ -172,90 +174,95 @@ public class RepositoryListPlexusResource
   {
     CRepository appModel = new DefaultCRepository();
 
-    Xpp3Dom ex = null;
+    try {
+      Xpp3Dom ex = null;
 
-    appModel.setLocalStatus(LocalStatus.IN_SERVICE.name());
-    if (target != null) {
-      appModel.setLocalStatus(target.getLocalStatus());
+      appModel.setLocalStatus(LocalStatus.IN_SERVICE.name());
+      if (target != null) {
+        appModel.setLocalStatus(target.getLocalStatus());
 
-      ex = (Xpp3Dom) target.getExternalConfiguration();
-    }
-    else {
-      ex = new Xpp3Dom(DefaultCRepository.EXTERNAL_CONFIGURATION_NODE_NAME);
-    }
-
-    appModel.setId(resource.getId());
-
-    appModel.setName(resource.getName());
-
-    appModel.setExposed(resource.isExposed());
-
-    appModel.setProviderRole(resource.getProviderRole());
-
-    if (RepositoryBaseResourceConverter.REPO_TYPE_VIRTUAL.equals(resource.getRepoType())) {
-      appModel.setExternalConfiguration(ex);
-
-      // indexer is unaware of the m2 layout conversion
-      appModel.setIndexable(false);
-
-      RepositoryShadowResource repoResource = (RepositoryShadowResource) resource;
-
-      M2LayoutedM1ShadowRepositoryConfiguration exConf = new M2LayoutedM1ShadowRepositoryConfiguration(ex);
-
-      exConf.setMasterRepositoryId(repoResource.getShadowOf());
-
-      exConf.setSynchronizeAtStartup(repoResource.isSyncAtStartup());
-
-    }
-    else if (!RepositoryBaseResourceConverter.REPO_TYPE_GROUP.equals(resource.getRepoType())) {
-      RepositoryResource repoResource = (RepositoryResource) resource;
-
-      // we can use the default if the value is empty
-      if (StringUtils.isNotEmpty(repoResource.getWritePolicy())) {
-        appModel.setWritePolicy(repoResource.getWritePolicy());
-      }
-
-      appModel.setBrowseable(repoResource.isBrowseable());
-
-      appModel.setIndexable(repoResource.isIndexable());
-      appModel.setSearchable(repoResource.isIndexable());
-
-      appModel.setNotFoundCacheTTL(repoResource.getNotFoundCacheTTL());
-
-      appModel.setExternalConfiguration(ex);
-
-      M2RepositoryConfiguration exConf = new M2RepositoryConfiguration(ex);
-
-      exConf.setRepositoryPolicy(EnumUtil.valueOf(repoResource.getRepoPolicy(), RepositoryPolicy.class));
-
-      if (repoResource.getOverrideLocalStorageUrl() != null) {
-        appModel.setLocalStorage(new CLocalStorage());
-
-        appModel.getLocalStorage().setUrl(repoResource.getOverrideLocalStorageUrl());
-
-        appModel.getLocalStorage().setProvider("file");
+        ex = (Xpp3Dom) target.getExternalConfiguration();
       }
       else {
-        appModel.setLocalStorage(null);
+        ex = new Xpp3Dom(DefaultCRepository.EXTERNAL_CONFIGURATION_NODE_NAME);
       }
 
-      RepositoryResourceRemoteStorage remoteStorage = repoResource.getRemoteStorage();
-      if (remoteStorage != null) {
-        appModel.setNotFoundCacheActive(true);
+      appModel.setId(resource.getId());
 
-        appModel.setRemoteStorage(new CRemoteStorage());
+      appModel.setName(resource.getName());
 
-        appModel.getRemoteStorage().setUrl(remoteStorage.getRemoteStorageUrl());
+      appModel.setExposed(resource.isExposed());
 
-        appModel.getRemoteStorage().setProvider(
-            remoteProviderHintFactory.getDefaultRoleHint(remoteStorage.getRemoteStorageUrl()));
+      appModel.setProviderRole(resource.getProviderRole());
+
+      if (RepositoryBaseResourceConverter.REPO_TYPE_VIRTUAL.equals(resource.getRepoType())) {
+        appModel.setExternalConfiguration(ex);
+
+        // indexer is unaware of the m2 layout conversion
+        appModel.setIndexable(false);
+
+        RepositoryShadowResource repoResource = (RepositoryShadowResource) resource;
+
+        M2LayoutedM1ShadowRepositoryConfiguration exConf = new M2LayoutedM1ShadowRepositoryConfiguration(ex);
+
+        exConf.setMasterRepositoryId(repoResource.getShadowOf());
+
+        exConf.setSynchronizeAtStartup(repoResource.isSyncAtStartup());
+
+      }
+      else if (!RepositoryBaseResourceConverter.REPO_TYPE_GROUP.equals(resource.getRepoType())) {
+        RepositoryResource repoResource = (RepositoryResource) resource;
+
+        // we can use the default if the value is empty
+        if (isNotEmpty(repoResource.getWritePolicy())) {
+          appModel.setWritePolicy(repoResource.getWritePolicy());
+        }
+
+        appModel.setBrowseable(repoResource.isBrowseable());
+
+        appModel.setIndexable(repoResource.isIndexable());
+        appModel.setSearchable(repoResource.isIndexable());
+
+        appModel.setNotFoundCacheTTL(repoResource.getNotFoundCacheTTL());
+
+        appModel.setExternalConfiguration(ex);
+
+        M2RepositoryConfiguration exConf = new M2RepositoryConfiguration(ex);
+
+        exConf.setRepositoryPolicy(EnumUtil.valueOf(repoResource.getRepoPolicy(), RepositoryPolicy.class));
+
+        if (isNotEmpty(repoResource.getOverrideLocalStorageUrl())) {
+          appModel.setLocalStorage(new CLocalStorage());
+
+          appModel.getLocalStorage().setUrl(validOverrideLocalStorageUrl(repoResource.getOverrideLocalStorageUrl()));
+
+          appModel.getLocalStorage().setProvider("file");
+        }
+        else {
+          appModel.setLocalStorage(null);
+        }
+
+        RepositoryResourceRemoteStorage remoteStorage = repoResource.getRemoteStorage();
+        if (remoteStorage != null) {
+          appModel.setNotFoundCacheActive(true);
+
+          appModel.setRemoteStorage(new CRemoteStorage());
+
+          appModel.getRemoteStorage().setUrl(remoteStorage.getRemoteStorageUrl());
+
+          appModel.getRemoteStorage().setProvider(
+              remoteProviderHintFactory.getDefaultRoleHint(remoteStorage.getRemoteStorageUrl()));
+        }
+      }
+
+      appModel.setProviderHint(resource.getProvider());
+
+      if (RepositoryProxyResource.class.isAssignableFrom(resource.getClass())) {
+        appModel = getRepositoryProxyAppModel((RepositoryProxyResource) resource, appModel);
       }
     }
-
-    appModel.setProviderHint(resource.getProvider());
-
-    if (RepositoryProxyResource.class.isAssignableFrom(resource.getClass())) {
-      appModel = getRepositoryProxyAppModel((RepositoryProxyResource) resource, appModel);
+    catch (InvalidConfigurationException e) {
+      handleConfigurationException(e);
     }
 
     return appModel;

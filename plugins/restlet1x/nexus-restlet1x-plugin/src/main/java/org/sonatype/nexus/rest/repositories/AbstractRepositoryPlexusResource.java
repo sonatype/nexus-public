@@ -17,12 +17,15 @@ import java.util.Collection;
 
 import javax.inject.Inject;
 
+import org.sonatype.configuration.validation.InvalidConfigurationException;
+import org.sonatype.configuration.validation.ValidationMessage;
+import org.sonatype.configuration.validation.ValidationResponse;
 import org.sonatype.nexus.configuration.application.ApplicationConfiguration;
 import org.sonatype.nexus.configuration.application.AuthenticationInfoConverter;
 import org.sonatype.nexus.configuration.application.GlobalRemoteConnectionSettings;
 import org.sonatype.nexus.configuration.model.CRemoteAuthentication;
 import org.sonatype.nexus.configuration.model.CRemoteConnectionSettings;
-import org.sonatype.nexus.configuration.model.CRepositoryCoreConfiguration;
+import org.sonatype.nexus.configuration.validator.ApplicationValidationResponse;
 import org.sonatype.nexus.proxy.NoSuchRepositoryException;
 import org.sonatype.nexus.proxy.ResourceStoreRequest;
 import org.sonatype.nexus.proxy.item.RepositoryItemUid;
@@ -37,6 +40,7 @@ import org.sonatype.nexus.proxy.repository.ProxyRepository;
 import org.sonatype.nexus.proxy.repository.RemoteStatus;
 import org.sonatype.nexus.proxy.repository.Repository;
 import org.sonatype.nexus.proxy.repository.ShadowRepository;
+import org.sonatype.nexus.proxy.storage.StorageWhitelist;
 import org.sonatype.nexus.rest.AbstractNexusPlexusResource;
 import org.sonatype.nexus.rest.NexusCompat;
 import org.sonatype.nexus.rest.NoSuchRepositoryAccessException;
@@ -60,6 +64,8 @@ import org.restlet.data.Response;
 import org.restlet.data.Status;
 import org.restlet.resource.ResourceException;
 
+import static org.apache.commons.lang.StringUtils.isNotEmpty;
+
 public abstract class AbstractRepositoryPlexusResource
     extends AbstractNexusPlexusResource
 {
@@ -75,6 +81,8 @@ public abstract class AbstractRepositoryPlexusResource
   private ApplicationConfiguration applicationConfiguration;
 
   private RepositoryURLBuilder repositoryURLBuilder;
+
+  private StorageWhitelist storageWhitelist;
 
   @Inject
   public void setAuthenticationInfoConverter(final AuthenticationInfoConverter authenticationInfoConverter) {
@@ -94,6 +102,11 @@ public abstract class AbstractRepositoryPlexusResource
   @Inject
   public void setRepositoryURLBuilder(final RepositoryURLBuilder repositoryURLBuilder) {
     this.repositoryURLBuilder = repositoryURLBuilder;
+  }
+
+  @Inject
+  public void setStorageWhitelist(final StorageWhitelist storageWhitelist) {
+    this.storageWhitelist = storageWhitelist;
   }
 
   protected AuthenticationInfoConverter getAuthenticationInfoConverter() {
@@ -447,5 +460,31 @@ public abstract class AbstractRepositoryPlexusResource
     cRemoteConnectionSettings.setUserAgentCustomizationString(remoteConnectionSettings.getUserAgentString());
 
     return cRemoteConnectionSettings;
+  }
+
+  /**
+   * Validates the specified {@code storageLocationUrl} as an allowed URL for the 'overrideLocalStorageUrl' property
+   * of a repository configuration. Valid values are based on the configured {@link StorageWhitelist}
+   *
+   * @param storageLocationUrl the requested local storage url
+   * @return the {@code storageLocationUrl} if valid
+   * @throws InvalidConfigurationException if {@code storageLocationUrl} is not whitelisted
+   */
+  protected String validOverrideLocalStorageUrl(final String storageLocationUrl) throws InvalidConfigurationException {
+    if (isNotEmpty(storageLocationUrl) && !storageWhitelist.isApproved(storageLocationUrl)) {
+      getLogger().warn(
+          "The location '{}' has not been whitelisted for use as repository storage. Add the value to the '{}' property in nexus.properties. See 'Override Storage Location' under {} for details",
+          storageLocationUrl,
+          StorageWhitelist.PROP_NAME,
+          "https://links.sonatype.com/products/nxrm2/configuring-repositories");
+
+      String message = "Specified location is not approved for storage. See nexus.log for details.";
+      ValidationResponse vr = new ApplicationValidationResponse();
+      ValidationMessage error = new ValidationMessage("overrideLocalStorageUrl", message, message);
+      vr.addValidationError(error);
+      throw new InvalidConfigurationException(vr);
+    }
+
+    return storageLocationUrl;
   }
 }

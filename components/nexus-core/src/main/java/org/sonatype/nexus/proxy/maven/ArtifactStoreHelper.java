@@ -314,6 +314,16 @@ public class ArtifactStoreHelper
 
   public void storeArtifactPom(ArtifactStoreRequest gavRequest, InputStream is, Map<String, String> attributes)
       throws UnsupportedStorageOperationException, IllegalOperationException, ItemNotFoundException,
+      StorageException, AccessDeniedException
+  {
+    storeArtifactPom(gavRequest, is, attributes, true);
+  }
+
+  public void storeArtifactPom(ArtifactStoreRequest gavRequest,
+                               InputStream is,
+                               Map<String, String> attributes,
+                               boolean withChecksums)
+      throws UnsupportedStorageOperationException, IllegalOperationException, ItemNotFoundException,
              StorageException, AccessDeniedException
   {
     checkRequest(gavRequest);
@@ -324,7 +334,12 @@ public class ArtifactStoreHelper
 
     gavRequest.setRequestPath(repository.getGavCalculator().gavToPath(gav));
 
-    repository.storeItemWithChecksums(gavRequest, is, attributes);
+    if (withChecksums) {
+      repository.storeItemWithChecksums(gavRequest, is, attributes);
+    }
+    else {
+      repository.storeItem(gavRequest, is, attributes);
+    }
 
     try {
       repository.getMetadataManager().deployArtifact(gavRequest);
@@ -336,6 +351,13 @@ public class ArtifactStoreHelper
 
   public void storeArtifact(ArtifactStoreRequest gavRequest, InputStream is, Map<String, String> attributes)
       throws UnsupportedStorageOperationException, IllegalOperationException, ItemNotFoundException,
+      StorageException, AccessDeniedException
+  {
+    storeArtifact(gavRequest, is, attributes, true);
+  }
+
+  public void storeArtifact(ArtifactStoreRequest gavRequest, InputStream is, Map<String, String> attributes, boolean withChecksums)
+      throws UnsupportedStorageOperationException, IllegalOperationException, ItemNotFoundException,
              StorageException, AccessDeniedException
   {
     checkRequest(gavRequest);
@@ -346,11 +368,24 @@ public class ArtifactStoreHelper
 
     gavRequest.setRequestPath(repository.getGavCalculator().gavToPath(gav));
 
-    repository.storeItemWithChecksums(gavRequest, is, attributes);
+    if (withChecksums) {
+      repository.storeItemWithChecksums(gavRequest, is, attributes);
+    }
+    else {
+      repository.storeItem(gavRequest, is, attributes);
+    }
   }
 
   public void storeArtifactWithGeneratedPom(ArtifactStoreRequest gavRequest, String packaging, InputStream is,
                                             Map<String, String> attributes)
+      throws UnsupportedStorageOperationException, IllegalOperationException, ItemNotFoundException,
+      StorageException, AccessDeniedException
+  {
+    storeArtifactWithGeneratedPom(gavRequest, packaging, is, attributes, true);
+  }
+
+  public void storeArtifactWithGeneratedPom(ArtifactStoreRequest gavRequest, String packaging, InputStream is,
+                                            Map<String, String> attributes, boolean withChecksums)
       throws UnsupportedStorageOperationException, IllegalOperationException, ItemNotFoundException,
              StorageException, AccessDeniedException
   {
@@ -394,8 +429,12 @@ public class ArtifactStoreHelper
         // writing to string, not to happen
       }
 
-      repository.storeItemWithChecksums(pomRequest, new ByteArrayInputStream(sw.toString().getBytes()),
-          attributes);
+      if (withChecksums) {
+        repository.storeItemWithChecksums(pomRequest, new ByteArrayInputStream(sw.toString().getBytes()), attributes);
+      }
+      else {
+        repository.storeItem(pomRequest, new ByteArrayInputStream(sw.toString().getBytes()), attributes);
+      }
 
       try {
         repository.getMetadataManager().deployArtifact(pomRequest);
@@ -408,7 +447,13 @@ public class ArtifactStoreHelper
 
     // reset path if anything changed it
     gavRequest.setRequestPath(repository.getGavCalculator().gavToPath(gavRequest.getGav()));
-    repository.storeItemWithChecksums(gavRequest, is, attributes);
+
+    if (withChecksums) {
+      repository.storeItemWithChecksums(gavRequest, is, attributes);
+    }
+    else {
+      repository.storeItem(gavRequest, is, attributes);
+    }
   }
 
   // =======================================================================================

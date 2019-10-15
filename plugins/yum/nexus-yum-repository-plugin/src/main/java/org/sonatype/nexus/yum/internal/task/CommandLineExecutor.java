@@ -26,6 +26,7 @@ import org.sonatype.gossip.Level;
 import org.sonatype.gossip.support.LoggingOutputStream;
 import org.sonatype.nexus.configuration.application.ApplicationDirectories;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.PumpStreamHandler;
@@ -99,12 +100,18 @@ public class CommandLineExecutor
     return exitValue;
   }
 
-  private String getCleanCommand(String command, String params) {
+  @VisibleForTesting
+  String getCleanCommand(String command, String params) {
     if (allowedExecutables.contains(command)) {
       return command + " " + params;
     }
 
     File file = new File(command);
+
+    if (!file.exists()) {
+      LOG.debug("Attempt to execute command that doesn't exist {}", file.getAbsolutePath());
+      return null;
+    }
 
     if (file.getAbsolutePath().startsWith(applicationDirectories.getWorkDirectory().getAbsolutePath())) {
       LOG.debug("Attempt to execute command with illegal path {}", file.getAbsolutePath());

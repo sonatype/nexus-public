@@ -13,14 +13,19 @@
 package org.sonatype.nexus.yum.internal.task;
 
 import java.io.File;
-import java.io.IOException;
 
 import org.sonatype.nexus.configuration.application.ApplicationDirectories;
 import org.sonatype.nexus.yum.internal.support.YumNexusTestSupport;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -29,62 +34,65 @@ public class CommandLineExecutorTest
 {
   private CommandLineExecutor underTest;
 
-  private ApplicationDirectories applicationDirectories;
+  @Rule
+  public TemporaryFolder tmp = new TemporaryFolder();
+
+  private File work;
+
+  private File bin;
+
+  private File createrepo;
+
+  private File notcreaterepo;
+
+  private File workcreaterepo;
+
+  private File mergerepo;
 
   @Before
-  public void setup() {
-    applicationDirectories = mock(ApplicationDirectories.class);
-    when(applicationDirectories.getWorkDirectory()).thenReturn(new File("/a/dir"));
+  public void setup() throws Exception {
+    work = tmp.newFolder("work");
+    bin = tmp.newFolder("bin");
+
+    createrepo = tmp.newFile("bin" + File.separator + "createrepo");
+    notcreaterepo = tmp.newFile("bin" + File.separator + "notcreaterepo");
+    workcreaterepo = tmp.newFile("work" + File.separator + "createrepo");
+    mergerepo = tmp.newFile("bin" + File.separator + "mergerepo");
+
+    ApplicationDirectories  applicationDirectories = mock(ApplicationDirectories.class);
+    when(applicationDirectories.getWorkDirectory()).thenReturn(work);
     underTest = new CommandLineExecutor(applicationDirectories, "createrepo,mergerepo");
   }
 
-  //IOException should be thrown as validation will pass, but executable isn't there
-  @Test(expected = IOException.class)
-  public void exec_createRepo() throws Exception
-  {
-    underTest.exec("/fake/path/createrepo", "--version");
+  @Test
+  public void getCleanCommand_legalAccess() {
+    assertCleanCommand("createrepo");
+    assertCleanCommand("mergerepo");
+    assertCleanCommand(createrepo.getAbsolutePath());
+    assertCleanCommand(mergerepo.getAbsolutePath());
   }
 
-  //IOException should be thrown as validation will pass, but executable isn't there
-  @Test(expected = IOException.class)
-  public void exec_createRepoNoPath() throws Exception
-  {
-    underTest = new CommandLineExecutor(applicationDirectories, "createreposhouldntexist,mergereposhouldntexist");
-    underTest.exec("createreposhouldntexist", "--version");
+  @Test
+  public void getCleanCommand_illegalAccess() {
+    assertNotCleanCommand("/fake/path/createrepo");
+    assertNotCleanCommand("/fake/path/mergerepo");
+    assertNotCleanCommand("/fake/path/somethingelse");
+    assertNotCleanCommand(bin.getAbsolutePath() + File.separator + "createreposhouldntexist");
+    // exists but isn't in allowed executables
+    assertNotCleanCommand(notcreaterepo.getAbsolutePath());
+    // extra command args are not allowed
+    assertNotCleanCommand(bin.getAbsolutePath() + File.separator + "createrepo --somethingbad");
+    // commands launching things inside nexus are not allowed
+    assertNotCleanCommand(workcreaterepo.getAbsolutePath());
+    // this will trick weak validation logic into thinking it's a path to a createrepo executable
+    assertNotCleanCommand("/bin/bash -c curl${IFS}http://192.168.88.1:8000/ || " + createrepo.getAbsolutePath());
   }
 
-  //IOException should be thrown as validation will pass, but executable isn't there
-  @Test(expected = IOException.class)
-  public void exec_mergeRepo() throws Exception
-  {
-    underTest.exec("/fake/path/mergerepo", "--version");
+  private void assertCleanCommand(String command) {
+    assertThat(underTest.getCleanCommand(command, "--version"), is(not(nullValue())));
   }
 
-  //IOException should be thrown as validation will pass, but executable isn't there
-  @Test(expected = IOException.class)
-  public void exec_mergeRepoNoPath() throws Exception
-  {
-    underTest = new CommandLineExecutor(applicationDirectories, "createreposhouldntexist,mergereposhouldntexist");
-    underTest.exec("mergereposhouldntexist", "--version");
-  }
-
-  //IllegalAccessException should be thrown as this executable isn't allowed
-  @Test(expected = IllegalAccessException.class)
-  public void exec_notAllowed() throws Exception
-  {
-    underTest.exec("/fake/path/somethingelse", "--someotherflag");
-  }
-
-  //IllegalAccessException should be thrown as commands launching things inside nexus are not allowed
-  @Test(expected = IllegalAccessException.class)
-  public void exec_pathNotAllowed() throws Exception
-  {
-    underTest.exec("/a/dir/createrepo", "--someotherflag");
-  }
-
-  @Test(expected = IllegalAccessException.class)
-  public void exec_extraConfigNotAllowed() throws Exception
-  {
-    underTest.exec("/fake/path/createrepo --somethingbad", "--someotherflag");
+  private void assertNotCleanCommand(String command) {
+    assertThat(underTest.getCleanCommand(command, "--version"), is(nullValue()));
   }
 }
