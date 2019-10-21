@@ -23,7 +23,7 @@ import javax.annotation.Nullable;
 public enum PrivilegeAction
 {
   //the names/actions of these are very important, do not change without great consideration
-  BROWSE("browse"), READ("read"), EDIT("edit"), ADD("add"), DELETE("delete"), RUN("run"), ASSOCIATE("associate"), DISASSOCIATE("disassociate"), ALL("*");
+  READ("read"), BROWSE("browse"), EDIT("edit"), ADD("add"), DELETE("delete"), RUN("run"), ASSOCIATE("associate"), DISASSOCIATE("disassociate"), ALL("*");
 
   private final String action;
 

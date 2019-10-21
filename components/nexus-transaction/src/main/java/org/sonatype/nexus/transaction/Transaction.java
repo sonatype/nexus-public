@@ -45,4 +45,16 @@ public interface Transaction
   default void capture(TransactionalStore<?> store) {
     // do nothing by default
   }
+
+  /**
+   * @see Transactional#reason()
+   * @since 3.next
+   */
+  void reason(String reason);
+
+  /**
+   * @see Transactional#reason()
+   * @since 3.next
+   */
+  String reason();
 }

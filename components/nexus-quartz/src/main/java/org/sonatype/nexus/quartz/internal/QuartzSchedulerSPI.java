@@ -750,6 +750,9 @@ public class QuartzSchedulerSPI
     return nexusJobs;
   }
 
+  /**
+   * @since 3.next
+   */
   @Gauge(name = "nexus.analytics.tasks", absolute = true)
   public List<Map<String, Object>> countTasksByTypeId() throws SchedulerException {
     return listsTasks().stream()

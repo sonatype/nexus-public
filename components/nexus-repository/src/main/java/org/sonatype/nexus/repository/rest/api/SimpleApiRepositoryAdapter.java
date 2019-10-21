@@ -12,8 +12,8 @@
  */
 package org.sonatype.nexus.repository.rest.api;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -117,16 +117,16 @@ public class SimpleApiRepositoryAdapter
   }
 
   protected GroupAttributes getGroupAttributes(final Repository repository) {
-    List<String> memberNames =
-        repository.getConfiguration().attributes("group").get("memberNames", new TypeToken<List<String>>()
+    Collection<String> memberNames =
+        repository.getConfiguration().attributes("group").get("memberNames", new TypeToken<Collection<String>>()
         {
         });
     return new GroupAttributes(memberNames);
   }
 
   protected CleanupPolicyAttributes getCleanupPolicyAttributes(final Repository repository) {
-    List<String> policyNames =
-        repository.getConfiguration().attributes("cleanup").get("policyName", new TypeToken<List<String>>()
+    Collection<String> policyNames =
+        repository.getConfiguration().attributes("cleanup").get("policyName", new TypeToken<Collection<String>>()
         {
         }, Collections.emptyList());
 

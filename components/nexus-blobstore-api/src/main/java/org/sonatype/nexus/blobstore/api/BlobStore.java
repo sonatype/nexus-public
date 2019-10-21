@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
+import org.sonatype.nexus.transaction.TransactionalStore;
 
 import com.google.common.hash.HashCode;
 import org.slf4j.Logger;
@@ -33,7 +34,7 @@ import org.slf4j.Logger;
  * @since 3.0
  */
 public interface BlobStore
-    extends Lifecycle
+    extends TransactionalStore<BlobSession<?>>, Lifecycle
 {
   /**
    * An identifying name for disaster recovery purposes (which isn't required to be strictly unique)

@@ -82,7 +82,9 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
         name: 'name',
         itemId: 'name',
         fieldLabel: NX.I18n.get('Blobstore_BlobstoreSettingsForm_Name_FieldLabel'),
-        readOnly: true
+        readOnly: true,
+        maxLength: 255,
+        enforceMaxLength: true
       },
       {
         xtype: 'checkbox',

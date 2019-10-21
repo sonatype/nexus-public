@@ -14,18 +14,25 @@ package org.sonatype.nexus.repository.pypi.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Supplier;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.common.collect.AttributesMap;
+import org.sonatype.nexus.common.io.Cooperation;
+import org.sonatype.nexus.common.io.CooperationFactory;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.cache.CacheInfo;
+import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.group.GroupFacetImpl;
 import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -37,24 +44,30 @@ import org.sonatype.nexus.repository.storage.AssetEvent;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
-import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalTouchBlob;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.ContentTypes;
-import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.payloads.BlobPayload;
+import org.sonatype.nexus.repository.view.payloads.StringPayload;
+import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
+import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
+import static org.sonatype.nexus.repository.cache.CacheInfo.invalidateAsset;
 import static org.sonatype.nexus.repository.pypi.internal.AssetKind.INDEX;
 import static org.sonatype.nexus.repository.pypi.internal.AssetKind.ROOT_INDEX;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiDataUtils.HASH_ALGORITHMS;
@@ -66,7 +79,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 import static org.sonatype.nexus.repository.view.Content.CONTENT_LAST_MODIFIED;
 
 /**
- * PyPi specific implementation of {@link GroupFacetImpl} merging and caching index
+ * PyPi specific implementation of {@link GroupFacetImpl} allowing for {@link Cooperation}, merging and caching
  *
  * @since 3.15
  */
@@ -75,6 +88,12 @@ import static org.sonatype.nexus.repository.view.Content.CONTENT_LAST_MODIFIED;
 public class PyPiGroupFacet
     extends GroupFacetImpl
 {
+  @Nullable
+  private CooperationFactory.Builder cooperationBuilder;
+
+  @Nullable
+  private Cooperation indexRootCooperation;
+
   @Inject
   public PyPiGroupFacet(final RepositoryManager repositoryManager,
                         final ConstraintViolationFactory constraintViolationFactory,
@@ -83,45 +102,120 @@ public class PyPiGroupFacet
     super(repositoryManager, constraintViolationFactory, groupType);
   }
 
+  @Inject
+  protected void configureCooperation(
+      final CooperationFactory cooperationFactory,
+      @Named("${nexus.pypi.indexRoot.cooperation.enabled:-true}") final boolean cooperationEnabled,
+      @Named("${nexus.pypi.indexRoot.cooperation.majorTimeout:-0s}") final Time majorTimeout,
+      @Named("${nexus.pypi.indexRoot.cooperation.minorTimeout:-30s}") final Time minorTimeout,
+      @Named("${nexus.pypi.indexRoot.cooperation.threadsPerKey:-100}") final int threadsPerKey)
+  {
+    if (cooperationEnabled) {
+      this.cooperationBuilder = cooperationFactory.configure()
+          .majorTimeout(majorTimeout)
+          .minorTimeout(minorTimeout)
+          .threadsPerKey(threadsPerKey);
+    }
+  }
+
+  @VisibleForTesting
+  void buildCooperation() {
+    if (nonNull(cooperationBuilder)) {
+      this.indexRootCooperation = cooperationBuilder.build(getRepository().getName() + ":indexRoot");
+    }
+  }
+
+  @Override
+  protected void doInit(final Configuration configuration) throws Exception {
+    super.doInit(configuration);
+    buildCooperation();
+  }
+
+  /**
+   * Build the PyPi Index Root merging all the given responses into one. This method allows {@link Cooperation} to
+   * work, meaning that multiple requests to the same group request path will join in returning the same result.
+   */
+  public Content buildIndexRoot(final String name, final AssetKind assetKind, final Supplier<String> lazyMergeResult)
+      throws IOException
+  {
+    if (isNull(indexRootCooperation)) {
+      return buildMergedIndexRoot(name, lazyMergeResult, true);
+    }
+
+    try {
+      return indexRootCooperation.cooperate(name, failover -> {
+
+        if (failover) {
+          // re-check cache when failing over to new thread
+          Content latestContent = indexRootCooperation.join(() -> getFromCache(name, assetKind));
+          if (nonNull(latestContent)) {
+            return latestContent;
+          }
+        }
+
+        return buildMergedIndexRoot(name, lazyMergeResult, true);
+      });
+    }
+    catch (IOException e) {
+      log.error("Unable to use Cooperation to merge {} for repository {}",
+          name, getRepository().getName(), e);
+    }
+
+    return buildMergedIndexRoot(name, lazyMergeResult, false); // last resort, merge but don't cache
+  }
+
+  protected Content buildMergedIndexRoot(final String name, final Supplier<String> lazyMergeResult, boolean save)
+      throws IOException
+  {
+    try {
+      String html = lazyMergeResult.get();
+      Content newContent = new Content(new StringPayload(html, ContentTypes.TEXT_HTML));
+      return save ? saveToCache(name, newContent) : newContent;
+    }
+    catch (UncheckedIOException e) { // NOSONAR: unchecked wrapper, we're only interested in its cause
+      throw e.getCause();
+    }
+  }
+
   @Subscribe
   @Guarded(by = STARTED)
   @AllowConcurrentEvents
   public void on(final AssetCreatedEvent event) {
-    maybeDeleteFromCache(event);
+    maybeInvalidateCache(event);
   }
 
   @Subscribe
   @Guarded(by = STARTED)
   @AllowConcurrentEvents
   public void on(final AssetDeletedEvent event) {
-    maybeDeleteFromCache(event);
+    maybeInvalidateCache(event);
   }
 
-  private void maybeDeleteFromCache(final AssetEvent event) {
+  private void maybeInvalidateCache(final AssetEvent event) {
     if (event.isLocal() &&
         member(event.getRepositoryName()) &&
         ROOT_INDEX.name().equals(event.getAsset().formatAttributes().get(P_ASSET_KIND, String.class))) {
-      deleteFromCache(INDEX_PATH_PREFIX);
+      invalidateCache(INDEX_PATH_PREFIX);
     }
   }
 
-  private void deleteFromCache(final String name) {
+  private void invalidateCache(final String name) {
     UnitOfWork.begin(getRepository().facet(StorageFacet.class).txSupplier());
     try {
-      doDeleteFromCache(name);
+      doInvalidateCache(name);
     }
     finally {
       UnitOfWork.end();
     }
   }
 
-  @TransactionalDeleteBlob
-  protected void doDeleteFromCache(final String name) {
+  @Transactional(retryOn = ONeedRetryException.class, swallow = ORecordNotFoundException.class)
+  protected void doInvalidateCache(final String name) {
     StorageTx tx = UnitOfWork.currentTx();
     Asset asset = tx.findAssetWithProperty(P_NAME, name, tx.findBucket(getRepository()));
-    if (asset != null) {
-      log.info("Deleting cached content {} from {}", name, getRepository().getName());
-      tx.deleteAsset(asset);
+    if (asset != null && invalidateAsset(asset)) {
+      log.info("Invalidating cached content {} from {}", name, getRepository().getName());
+      tx.saveAsset(asset);
     }
   }
 
@@ -174,7 +268,7 @@ public class PyPiGroupFacet
   }
 
   @TransactionalStoreBlob
-  public Payload saveToCache(final String name, final Content content) throws IOException {
+  public Content saveToCache(final String name, final Content content) throws IOException {
     StorageTx tx = UnitOfWork.currentTx();
 
     Asset asset = getAsset(tx, name);

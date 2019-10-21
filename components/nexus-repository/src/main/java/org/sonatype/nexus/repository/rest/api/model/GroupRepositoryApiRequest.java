@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.rest.api.model;
 
 import javax.validation.constraints.NotNull;
 
-import org.sonatype.nexus.repository.rest.GroupAttributes;
 import org.sonatype.nexus.repository.types.GroupType;
 
 import com.fasterxml.jackson.annotation.JsonCreator;

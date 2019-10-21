@@ -60,6 +60,11 @@ public class ExampleMethods
     return "success";
   }
 
+  @Transactional(reason = "Testing!")
+  public String customReason() {
+    return "success";
+  }
+
   @Transactional
   public String outer() {
     return inner();

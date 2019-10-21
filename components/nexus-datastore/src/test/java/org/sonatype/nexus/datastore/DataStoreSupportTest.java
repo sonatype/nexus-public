@@ -22,7 +22,6 @@ import org.sonatype.nexus.common.stateguard.StateGuardModule;
 import org.sonatype.nexus.datastore.api.DataAccess;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
-import org.sonatype.nexus.transaction.Transaction;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
@@ -53,7 +52,7 @@ public class DataStoreSupportTest
   public final RestoreSystemProperties restoreSystemProperties = new RestoreSystemProperties();
 
   static class TestDataStore
-      extends DataStoreSupport<Transaction, DataSession<Transaction>>
+      extends DataStoreSupport<DataSession<?>>
   {
     @Override
     public void register(final Class<? extends DataAccess> accessType) {
@@ -66,7 +65,7 @@ public class DataStoreSupportTest
     }
 
     @Override
-    public DataSession<Transaction> openSession() {
+    public DataSession<?> openSession() {
       return mock(DataSession.class);
     }
 
@@ -81,7 +80,7 @@ public class DataStoreSupportTest
     }
   }
 
-  private DataStoreSupport<?, ?> underTest;
+  private DataStoreSupport<?> underTest;
 
   @Before
   public void setUp() throws Exception {

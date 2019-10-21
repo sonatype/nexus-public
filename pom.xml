@@ -769,6 +769,10 @@
               <Feature-Flagged>
                 $(classes;ANNOTATED;org.sonatype.nexus.common.app.FeatureFlag)
               </Feature-Flagged>
+              <!-- workaround CGLIB issue when method intercepting subclasses in different modules -->
+              <Import-Package>
+                $(if;$(classes;EXTENDS;*.(Blob|Data)StoreSupport);org.sonatype.nexus.transaction),*
+              </Import-Package>
             </instructions>
           </configuration>
         </plugin>
@@ -1002,7 +1006,7 @@
               <!--
               Exclude npm dependencies
               -->
-              <exclude>**/nexus-rapture/node_modules/**</exclude>
+              <exclude>**/nexus-*/node_modules/**</exclude>
 
               <!--
               Excludes for specific classes which have compatible, yet different licences.

@@ -41,9 +41,9 @@ trait AptRepoRecipes
   }
 
   @Nonnull
-  Repository createAptProxy(final String name, final String remoteUrl, final String distribution) {
+  Repository createAptProxy(final String name, final String remoteUrl, final String distribution, Boolean flat = false) {
     def configuration = createProxy(name, 'apt-proxy', remoteUrl)
-    configuration.attributes.apt = ['distribution': distribution] as Map
+    configuration.attributes.apt = ['distribution': distribution, 'flat': flat] as Map
     createRepository(configuration)
   }
   abstract Repository createRepository(final Configuration configuration)

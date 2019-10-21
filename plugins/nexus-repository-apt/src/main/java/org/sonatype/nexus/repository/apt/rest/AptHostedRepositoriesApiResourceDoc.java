@@ -22,34 +22,35 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
+import static org.sonatype.nexus.rest.ApiDocConstants.API_REPOSITORY_MANAGEMENT;
 import static org.sonatype.nexus.rest.ApiDocConstants.AUTHENTICATION_REQUIRED;
 import static org.sonatype.nexus.rest.ApiDocConstants.INSUFFICIENT_PERMISSIONS;
-import static org.sonatype.nexus.rest.ApiDocConstants.RESOURCE_CREATED;
-import static org.sonatype.nexus.rest.ApiDocConstants.RESOURCE_NOT_FOUND;
-import static org.sonatype.nexus.rest.ApiDocConstants.RESOURCE_UPDATED;
+import static org.sonatype.nexus.rest.ApiDocConstants.REPOSITORY_CREATED;
+import static org.sonatype.nexus.rest.ApiDocConstants.REPOSITORY_NOT_FOUND;
+import static org.sonatype.nexus.rest.ApiDocConstants.REPOSITORY_UPDATED;
 
 /**
  * @since 3.next
  */
-@Api(value = "Repository Management")
+@Api(value = API_REPOSITORY_MANAGEMENT)
 public interface AptHostedRepositoriesApiResourceDoc
 {
   @ApiOperation("Create APT hosted repository")
   @ApiResponses(value = {
-      @ApiResponse(code = 201, message = RESOURCE_CREATED),
+      @ApiResponse(code = 201, message = REPOSITORY_CREATED),
       @ApiResponse(code = 401, message = AUTHENTICATION_REQUIRED),
       @ApiResponse(code = 403, message = INSUFFICIENT_PERMISSIONS)
   })
-  Response createHostedRepository(@Valid @NotNull final AptHostedRepositoryApiRequest request);
+  Response createRepository(@Valid @NotNull final AptHostedRepositoryApiRequest request);
 
   @ApiOperation("Update APT hosted repository")
   @ApiResponses(value = {
-      @ApiResponse(code = 204, message = RESOURCE_UPDATED),
+      @ApiResponse(code = 204, message = REPOSITORY_UPDATED),
       @ApiResponse(code = 401, message = AUTHENTICATION_REQUIRED),
       @ApiResponse(code = 403, message = INSUFFICIENT_PERMISSIONS),
-      @ApiResponse(code = 404, message = RESOURCE_NOT_FOUND)
+      @ApiResponse(code = 404, message = REPOSITORY_NOT_FOUND)
   })
-  Response updateHostedRepository(
+  Response updateRepository(
       @Valid @NotNull final AptHostedRepositoryApiRequest request,
       @ApiParam(value = "Name of the repository to update") final String repositoryName);
 }

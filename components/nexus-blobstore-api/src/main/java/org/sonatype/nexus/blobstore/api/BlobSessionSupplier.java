@@ -10,32 +10,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.cleanup.analytics;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-
-import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
-import org.sonatype.nexus.common.app.FeatureFlag;
-
-import com.codahale.metrics.annotation.Gauge;
-import org.eclipse.sisu.EagerSingleton;
+package org.sonatype.nexus.blobstore.api;
 
 /**
- * Provides analytics for cleanup policies
+ * {@link BlobSession} supplier; for use by clients who don't need the full store API.
  *
  * @since 3.next
  */
-@Named
-@EagerSingleton
-@FeatureFlag(name = "nexus.analytics.enabled")
-public class CleanupAnalytics
+public interface BlobSessionSupplier
 {
-  @Inject
-  private CleanupPolicyStorage cleanupPolicyStorage;
-
-  @Gauge(name = "nexus.analytics.cleanup_policy_count", absolute = true)
-  public Long count() {
-    return cleanupPolicyStorage.count();
-  }
+  /**
+   * Opens a new {@link BlobSession} against the named blob store.
+   *
+   * @throws BlobStoreNotFoundException if the store does not exist
+   */
+  BlobSession<?> openSession(String storeName);
 }

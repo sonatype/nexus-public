@@ -14,13 +14,12 @@ package org.sonatype.nexus.datastore.mybatis;
 
 import org.sonatype.nexus.datastore.api.DataAccess;
 import org.sonatype.nexus.datastore.api.DataSession;
-import org.sonatype.nexus.transaction.RetryController;
 import org.sonatype.nexus.transaction.Transaction;
+import org.sonatype.nexus.transaction.TransactionSupport;
 
 import org.apache.ibatis.session.SqlSession;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 /**
  * MyBatis {@link DataSession}.
@@ -28,13 +27,10 @@ import static com.google.common.base.Preconditions.checkState;
  * @since 3.19
  */
 public class MyBatisDataSession
-    implements DataSession<Transaction>, Transaction
+    extends TransactionSupport
+    implements DataSession<Transaction>
 {
   private final SqlSession session;
-
-  private boolean active = false;
-
-  private int retries = 0;
 
   public MyBatisDataSession(final SqlSession session) {
     this.session = checkNotNull(session);
@@ -51,42 +47,17 @@ public class MyBatisDataSession
   }
 
   @Override
-  public void close() {
-    session.close();
-  }
-
-  @Override
-  public void begin() {
-    checkState(!active, "Nested transaction");
-    active = true;
-  }
-
-  @Override
-  public void commit() {
-    retries = 0;
-    active = false;
+  protected void doCommit() {
     session.commit();
   }
 
   @Override
-  public void rollback() {
-    active = false;
+  protected void doRollback() {
     session.rollback();
   }
 
   @Override
-  public boolean isActive() {
-    return active;
-  }
-
-  @Override
-  public boolean allowRetry(final Exception cause) {
-    if (RetryController.INSTANCE.allowRetry(retries, cause)) {
-      retries++;
-      return true;
-    }
-    else {
-      return false;
-    }
+  public void close() {
+    session.close();
   }
 }

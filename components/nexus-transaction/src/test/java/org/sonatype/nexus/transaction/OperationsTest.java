@@ -31,6 +31,7 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.transaction.Transactional.DEFAULT_REASON;
 
 /**
  * Test operations behaviour.
@@ -65,6 +66,7 @@ public class OperationsTest
 
     InOrder order = inOrder(session, tx);
     order.verify(session).getTransaction();
+    order.verify(tx).reason(DEFAULT_REASON);
     order.verify(tx).begin();
     order.verify(tx).commit();
     order.verify(session).close();
@@ -83,6 +85,7 @@ public class OperationsTest
 
     InOrder order = inOrder(session, tx);
     order.verify(session).getTransaction();
+    order.verify(tx).reason(DEFAULT_REASON);
     order.verify(tx).begin();
     order.verify(tx).rollback();
     order.verify(tx).allowRetry(any(IOException.class));
@@ -112,6 +115,7 @@ public class OperationsTest
     finally {
       InOrder order = inOrder(session, tx);
       order.verify(session).getTransaction();
+      order.verify(tx).reason(DEFAULT_REASON);
       order.verify(tx).begin();
       order.verify(tx).rollback();
       order.verify(tx).allowRetry(any(IOException.class));
@@ -135,6 +139,7 @@ public class OperationsTest
 
     InOrder order = inOrder(session, tx);
     order.verify(session).getTransaction();
+    order.verify(tx).reason(DEFAULT_REASON);
     order.verify(tx).begin();
     order.verify(tx).rollback();
     order.verify(tx).allowRetry(any(IOException.class));

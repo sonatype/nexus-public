@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.rest;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Objects;
 
 import javax.inject.Inject;
@@ -32,7 +32,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Named
 public class SameFormatValidator
-    extends ConstraintValidatorSupport<SameFormat, List<String>>
+    extends ConstraintValidatorSupport<SameFormat, Collection<String>>
 {
   private final RepositoryManager repositoryManager;
 
@@ -42,7 +42,7 @@ public class SameFormatValidator
   }
 
   @Override
-  public boolean isValid(final List<String> memberNames, final ConstraintValidatorContext context) {
+  public boolean isValid(final Collection<String> memberNames, final ConstraintValidatorContext context) {
     return memberNames.stream()
         .map(repositoryManager::get)
         .filter(Objects::nonNull)

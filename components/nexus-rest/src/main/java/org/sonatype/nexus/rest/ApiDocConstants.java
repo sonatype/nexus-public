@@ -26,11 +26,13 @@ public class ApiDocConstants
 
   public static final String INSUFFICIENT_PERMISSIONS = "Insufficient permissions";
 
-  public static final String RESOURCE_NOT_FOUND = "Resource not found";
+  public static final String REPOSITORY_NOT_FOUND = "Repository not found";
 
-  public static final String RESOURCE_CREATED = "Resource created";
+  public static final String REPOSITORY_CREATED = "Repository created";
 
-  public static final String RESOURCE_UPDATED = "Resource updated";
+  public static final String REPOSITORY_UPDATED = "Repository updated";
 
-  public static final String RESOURCE_DELETED = "Resource deleted";
+  public static final String REPOSITORY_DELETED = "Repository deleted";
+
+  public static final String API_REPOSITORY_MANAGEMENT = "Repository Management";
 }

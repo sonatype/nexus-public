@@ -15,21 +15,28 @@ package org.sonatype.nexus.repository.rest.api;
 import java.util.StringJoiner;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.validation.ConstraintViolationException;
-import javax.validation.Validator;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.rest.api.model.AbstractRepositoryApiRequest;
 import org.sonatype.nexus.rest.Resource;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authz.AuthorizationException;
+import org.apache.shiro.authz.annotation.RequiresAuthentication;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -44,24 +51,22 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
     extends ComponentSupport
     implements Resource
 {
-  protected final AuthorizingRepositoryManager authorizingRepositoryManager;
+  private final AuthorizingRepositoryManager authorizingRepositoryManager;
 
-  protected final Provider<Validator> validatorProvider;
-
-  protected final AbstractRepositoryApiRequestToConfigurationConverter<T> configurationAdapter;
+  private final AbstractRepositoryApiRequestToConfigurationConverter<T> configurationAdapter;
 
   @Inject
   public AbstractRepositoriesApiResource(
       final AuthorizingRepositoryManager authorizingRepositoryManager,
-      final Provider<Validator> validatorProvider,
       final AbstractRepositoryApiRequestToConfigurationConverter<T> configurationAdapter)
   {
     this.authorizingRepositoryManager = checkNotNull(authorizingRepositoryManager);
-    this.validatorProvider = checkNotNull(validatorProvider);
     this.configurationAdapter = checkNotNull(configurationAdapter);
   }
 
-  protected Response createRepository(final T request) {
+  @POST
+  @RequiresAuthentication
+  public Response createRepository(@Valid final T request) {
     try {
       authorizingRepositoryManager.create(configurationAdapter.convert(request));
       return Response.status(Status.CREATED).build();
@@ -81,9 +86,19 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
     }
   }
 
-  protected boolean updateRepository(final T request) {
+  @PUT
+  @Path("/{repositoryName}")
+  @RequiresAuthentication
+  public Response updateRepository(
+      @Valid @NotNull final T request,
+      @PathParam("repositoryName") final String repositoryName)
+  {
     try {
-      return authorizingRepositoryManager.update(configurationAdapter.convert(request));
+      Configuration newConfiguration = configurationAdapter.convert(request);
+      ensureRepositoryNameMatches(request, repositoryName);
+      boolean updated = authorizingRepositoryManager.update(newConfiguration);
+      Status status = updated ? Status.NO_CONTENT : Status.NOT_FOUND;
+      return Response.status(status).build();
     }
     catch (AuthorizationException | AuthenticationException | ConstraintViolationException e) {
       throw e;
@@ -97,6 +112,12 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
       String message = stringJoiner.toString();
       log.debug("Failed to edit a repository via REST: {}", message, e);
       throw new WebApplicationMessageException(BAD_REQUEST, message, APPLICATION_JSON);
+    }
+  }
+
+  private void ensureRepositoryNameMatches(final T request, final String repositoryName) {
+    if (!repositoryName.equals(request.getName())) {
+      throw new ValidationErrorsException("name", "Renaming a repository is not supported");
     }
   }
 }
