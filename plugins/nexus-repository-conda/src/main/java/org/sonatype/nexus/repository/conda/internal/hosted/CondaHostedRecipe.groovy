@@ -124,6 +124,7 @@ class CondaHostedRecipe
         builder.defaultHandlers(HttpHandlers.notFound())
         facet.configure(builder.create())
         return facet
+
     }
 
 }
