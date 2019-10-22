@@ -19,7 +19,7 @@ import org.sonatype.nexus.common.entity.HasName;
 /**
  * Generic CRUD {@link DataAccess} that accesses zero to many uniquely named entities of the same type.
  *
- * @since 3.next
+ * @since 3.19
  */
 public interface NamedDataAccess<E extends HasName>
     extends DataAccess

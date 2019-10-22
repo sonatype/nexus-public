@@ -20,7 +20,7 @@ import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.client.CloseableHttpClient;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 public class CondaClientFactory
     extends NexusClientFactory<CondaClient>

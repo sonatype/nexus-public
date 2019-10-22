@@ -25,7 +25,7 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
 /**
  * Appends criteria for matches based on regular expression
  *
- * @since 3.next
+ * @since 3.19
  */
 @Named(REGEX_KEY)
 public class RegexCriteriaAppender

@@ -12,26 +12,20 @@
  */
 package org.sonatype.nexus.rapture;
 
+import java.util.List;
+
 import javax.annotation.Nullable;
 
 /**
- * Rapture UI plugin descriptor.
- *
- * Using component priority to determine inclusion order.  Ordering is important to properly load the UI.
- *
- * Plugins are required to define these resources for "debug" mode:
- * <ul>
- *   <li>/static/rapture/resources/<em>plugin-id</em>-debug.css</li>
- * </ul>
- *
- * ... and for "prod" mode:
- * <ul>
- *   <li>/static/rapture/<em>plugin-id</em>-prod.js</li>
- *   <li>/static/rapture/resources/<em>plugin-id</em>-prod.css</li>
- * </ul>
+ * Rapture ExtJS UI plugin descriptor.
  *
  * @since 3.0
+ * @deprecated as of 3.20, replaced by {@link org.sonatype.nexus.ui.UiPluginDescriptor}
+ *
+ * Note that this class should only be implemented if your plugin is including UI content using ExtJs.  If you are
+ * using react (as the UI is moving towards) use {@link org.sonatype.nexus.ui.UiPluginDescriptor}
  */
+@Deprecated
 public interface UiPluginDescriptor
 {
   /**
@@ -55,4 +49,10 @@ public interface UiPluginDescriptor
    */
   @Nullable
   String getConfigClassName();
+
+  /**
+   * @since 3.next
+   * @return a list of script files that should be included on the page
+   */
+  List<String> getScripts(final boolean isDebug);
 }

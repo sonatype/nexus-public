@@ -27,7 +27,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 /**
  * Maps {@link JsonProcessingExceptionMapper} to {@link Status#BAD_REQUEST} in case there is a deserialization error.
  *
- * @since 3.next
+ * @since 3.19
  */
 @Named
 @Singleton

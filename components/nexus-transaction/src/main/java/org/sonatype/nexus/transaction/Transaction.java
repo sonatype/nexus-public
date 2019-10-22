@@ -36,4 +36,25 @@ public interface Transaction
    * @throws RuntimeException may be thrown to implicitly deny the retry
    */
   boolean allowRetry(Exception cause);
+
+  /**
+   * Notifies this transaction if it captures another {@link TransactionalStore} during a nested transaction.
+   *
+   * @since 3.next
+   */
+  default void capture(TransactionalStore<?> store) {
+    // do nothing by default
+  }
+
+  /**
+   * @see Transactional#reason()
+   * @since 3.next
+   */
+  void reason(String reason);
+
+  /**
+   * @see Transactional#reason()
+   * @since 3.next
+   */
+  String reason();
 }

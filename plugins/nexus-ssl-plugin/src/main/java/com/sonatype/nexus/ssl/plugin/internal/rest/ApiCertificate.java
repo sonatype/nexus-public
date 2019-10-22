@@ -23,7 +23,7 @@ import javax.naming.InvalidNameException;
 import org.sonatype.nexus.ssl.CertificateUtil;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 public class ApiCertificate
 {

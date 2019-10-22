@@ -15,7 +15,7 @@ package org.sonatype.nexus.datastore;
 /**
  * Checks whether data stores are currently being used by the system.
  *
- * @since 3.next
+ * @since 3.19
  */
 public interface DataStoreUsageChecker
 {

@@ -15,7 +15,7 @@ package org.sonatype.nexus.common.entity;
 /**
  * Mix-in for entities that want to track their version; for example to detect concurrent updates.
  *
- * @since 3.next
+ * @since 3.19
  */
 public interface HasVersion
 {

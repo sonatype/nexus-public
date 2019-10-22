@@ -21,7 +21,7 @@ import groovy.transform.CompileStatic
 
 /**
  * Factory for Conda {@link Repository} {@link Configuration}
- * @since 3.next
+ * @since 3.19
  */
 @CompileStatic
 trait CondaRepoRecipes

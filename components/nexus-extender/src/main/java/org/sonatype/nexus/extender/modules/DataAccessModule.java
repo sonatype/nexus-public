@@ -34,7 +34,7 @@ import static java.util.Optional.of;
 /**
  * Binds any DAO classes in the bundle so they can be processed later by datastore implementations.
  *
- * @since 3.next
+ * @since 3.19
  */
 public class DataAccessModule
     extends AbstractModule

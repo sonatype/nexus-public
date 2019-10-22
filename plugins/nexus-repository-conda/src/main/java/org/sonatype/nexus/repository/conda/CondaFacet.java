@@ -31,7 +31,7 @@ import org.sonatype.nexus.repository.view.Payload;
 import com.google.common.base.Supplier;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 @Facet.Exposed
 public interface CondaFacet

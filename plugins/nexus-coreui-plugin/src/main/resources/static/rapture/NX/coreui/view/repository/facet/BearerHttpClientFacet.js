@@ -1,0 +1,87 @@
+/*
+ * Sonatype Nexus (TM) Open Source Version
+ * Copyright (c) 2008-present Sonatype, Inc.
+ * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+ *
+ * This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+ * which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+ *
+ * Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+ * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+ * Eclipse Foundation. All other trademarks are the property of their respective owners.
+ */
+/*global Ext, NX*/
+
+/**
+ * Configuration specific to Http connections for npm repositories including bearer token support.
+ *
+ * @since 3.next
+ */
+Ext.define('NX.coreui.view.repository.facet.BearerHttpClientFacet', {
+  extend: 'NX.coreui.view.repository.facet.HttpClientFacet',
+  alias: 'widget.nx-coreui-repository-httpclient-facet-with-bearer-token',
+  requires: [
+    'NX.I18n'
+  ],
+
+  authFields: function() {
+    var me = this;
+    var parentAuthFields = me.callParent(arguments);
+    parentAuthFields.push(
+        {
+          xtype: 'textfield',
+          inputType: 'password',
+          id: 'attributes_httpclient_authentication_bearerToken',
+          name: 'attributes.httpclient.authentication.bearerToken',
+          fieldLabel: NX.I18n.get('System_AuthenticationSettings_Bearer_Token_FieldLabel'),
+          helpText: NX.I18n.get('System_AuthenticationSettings_Bearer_Token_HelpText'),
+          hidden: true,
+          disabled: true,
+          allowBlank: false
+        });
+    return parentAuthFields;
+  },
+
+  authTypeChanged: function(combo) {
+    var me = this;
+    me.callParent(arguments);
+
+    var bearerTokenField = this.up('form').down('#attributes_httpclient_authentication_bearerToken');
+    var usernameField = this.up('form').down('#attributes_httpclient_authentication_username');
+    var passwordField = this.up('form').down('#attributes_httpclient_authentication_password');
+
+    if (combo.getValue() === 'bearerToken') {
+      usernameField.hide();
+      usernameField.disable();
+      usernameField.allowBlank = true;
+
+      passwordField.hide();
+      passwordField.disable();
+      passwordField.allowBlank = true;
+
+      bearerTokenField.show();
+      bearerTokenField.enable();
+    }
+    else {
+      bearerTokenField.hide();
+      bearerTokenField.disable();
+
+      usernameField.show();
+      usernameField.enable();
+      usernameField.allowBlank = false;
+
+      passwordField.show();
+      passwordField.enable();
+      passwordField.allowBlank = false;
+    }
+  },
+
+  getAuthTypeStore: function() {
+    var me = this;
+    var parentAuthTypes = me.callParent(arguments);
+    parentAuthTypes.push(
+        ['bearerToken', NX.I18n.get('Repository_Facet_HttpClientFacet_AuthenticationType_Bearer_Token')]);
+    return parentAuthTypes;
+  }
+
+});

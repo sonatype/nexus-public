@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.cocoapods.internal;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 public class CocoapodsConfig
 {
@@ -21,9 +21,12 @@ public class CocoapodsConfig
 
   private String bitbucketApiUri;
 
-  public CocoapodsConfig(final String gitHubApiUri, final String bitbucketApiUri) {
+  private String gitlabApiUri;
+
+  public CocoapodsConfig(final String gitHubApiUri, final String bitbucketApiUri, final String gitlabApiUri) {
     this.gitHubApiUri = gitHubApiUri;
     this.bitbucketApiUri = bitbucketApiUri;
+    this.gitlabApiUri = gitlabApiUri;
   }
 
   public String getGitHubApiUri() {
@@ -32,5 +35,9 @@ public class CocoapodsConfig
 
   public String getBitbucketApiUri() {
     return bitbucketApiUri;
+  }
+
+  public String getGitlabApiUri() {
+    return gitlabApiUri;
   }
 }

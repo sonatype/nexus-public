@@ -15,7 +15,7 @@
  * global Ext, NX
  * Repository "Settings" form for a Conda Proxy repository
  *
- * @since 3.next
+ * @since 3.19
  */
 Ext.define('NX.conda.view.repository.recipe.CondaProxy', {
   extend: 'NX.coreui.view.repository.RepositorySettingsForm',

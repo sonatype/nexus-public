@@ -25,7 +25,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 @Api(value = "Security Management: Privileges")
 public interface RepositoryPrivilegeApiResourceDoc

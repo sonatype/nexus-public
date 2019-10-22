@@ -25,7 +25,7 @@ import io.swagger.annotations.ApiModelProperty;
 import org.hibernate.validator.constraints.NotEmpty;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 public abstract class ApiPrivilegeWithActions
     extends ApiPrivilege

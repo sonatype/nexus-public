@@ -15,7 +15,7 @@
 /**
  * Migration check HA step
  *
- * @since 3.next
+ * @since 3.19
  */
 Ext.define('NX.coreui.migration.NoUpgradeHAStep', {
   extend: 'NX.wizard.Step',

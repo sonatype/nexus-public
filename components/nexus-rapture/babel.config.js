@@ -21,5 +21,8 @@ module.exports = {
         targets: 'last 1 Chrome version, last 1 Firefox version, Firefox ESR, last 1 Safari version, ie >= 11, last 1 Edge version'
       }
     ]
+  ],
+  plugins: [
+    '@babel/plugin-proposal-export-default-from'
   ]
 };

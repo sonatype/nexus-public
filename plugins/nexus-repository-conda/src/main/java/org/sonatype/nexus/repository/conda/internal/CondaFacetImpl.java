@@ -45,7 +45,7 @@ import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_VER
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 @Named
 public class CondaFacetImpl

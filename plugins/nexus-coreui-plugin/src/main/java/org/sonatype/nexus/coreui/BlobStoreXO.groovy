@@ -12,7 +12,11 @@
  */
 package org.sonatype.nexus.coreui
 
+import javax.validation.constraints.Size
+
 import org.sonatype.nexus.validation.group.Create
+import static org.sonatype.nexus.blobstore.BlobStoreSupport.MAX_NAME_LENGTH
+import static org.sonatype.nexus.blobstore.BlobStoreSupport.MIN_NAME_LENGTH
 
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
@@ -28,6 +32,7 @@ class BlobStoreXO
 {
   @NotEmpty
   @UniqueBlobStoreName(groups = Create)
+  @Size(min = MIN_NAME_LENGTH, max = MAX_NAME_LENGTH)
   String name
 
   @NotEmpty
@@ -58,7 +63,7 @@ class BlobStoreXO
   boolean unlimited
 
   /**
-   * @since 3.next
+   * @since 3.19
    */
   boolean unavailable
 

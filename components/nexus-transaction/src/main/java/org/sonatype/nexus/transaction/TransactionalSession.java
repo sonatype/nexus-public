@@ -15,7 +15,7 @@ package org.sonatype.nexus.transaction;
 /**
  * Represents an open session with a {@link TransactionalStore}.
  *
- * @since 3.next
+ * @since 3.19
  */
 public interface TransactionalSession<T extends Transaction>
     extends AutoCloseable

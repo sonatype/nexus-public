@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * {@link EntityId} backed by a {@link UUID}.
  *
- * @since 3.next
+ * @since 3.19
  */
 public class EntityUUID
     implements EntityId

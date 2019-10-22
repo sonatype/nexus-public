@@ -25,7 +25,7 @@ import org.quartz.utils.ConnectionProvider;
  * This class will typically be used via the Quartz {@code org.quartz.jobStore.driverDelegateClass}
  * configuration property.
  *
- * @since 3.next
+ * @since 3.19
  */
 public class OrientConnectionProvider
     implements ConnectionProvider

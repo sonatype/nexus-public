@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -25,6 +26,7 @@ import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
 import org.sonatype.nexus.blobstore.BlobStoreDescriptorSupport;
+import org.sonatype.nexus.blobstore.BlobStoreUtil;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
@@ -39,6 +41,7 @@ import static org.sonatype.nexus.blobstore.file.FileBlobStore.BASEDIR;
 import static org.sonatype.nexus.blobstore.file.FileBlobStore.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.file.FileBlobStore.PATH_KEY;
 import static org.sonatype.nexus.formfields.FormField.MANDATORY;
+import static org.sonatype.nexus.blobstore.BlobStoreSupport.MAX_NAME_LENGTH;
 
 /**
  * A {@link BlobStoreDescriptor} for {@link FileBlobStore}.
@@ -65,12 +68,16 @@ public class FileBlobStoreDescriptor
 
   private final FormField path;
 
+  private final BlobStoreUtil blobStoreUtil;
+
   @Inject
   public FileBlobStoreDescriptor(final BlobStoreQuotaService quotaService,
-                                 final ApplicationDirectories applicationDirectories)
+                                 final ApplicationDirectories applicationDirectories,
+                                 final BlobStoreUtil blobStoreUtil)
   {
     super(quotaService);
     this.applicationDirectories = applicationDirectories;
+    this.blobStoreUtil = blobStoreUtil;
     this.path = new StringTextFormField(
         PATH_KEY,
         messages.pathLabel(),
@@ -93,7 +100,11 @@ public class FileBlobStoreDescriptor
   public void validateConfig(final BlobStoreConfiguration config) {
     super.validateConfig(config);
 
-    Path path = Paths.get(config.attributes(CONFIG_KEY).get(PATH_KEY, String.class));
+    Path path = Optional.ofNullable(config.attributes(CONFIG_KEY).get(PATH_KEY, String.class))
+        .filter(s -> blobStoreUtil.validateFilePath(s, MAX_NAME_LENGTH))
+        .map(s -> Paths.get(s))
+        .orElseThrow(() -> new ValidationErrorsException(
+            format("The maximum name length for any folder in the path is %d.", MAX_NAME_LENGTH)));
 
     try {
       if (!path.isAbsolute()) {

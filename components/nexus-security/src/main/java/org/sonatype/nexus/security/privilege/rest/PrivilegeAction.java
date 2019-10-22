@@ -18,12 +18,12 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 public enum PrivilegeAction
 {
   //the names/actions of these are very important, do not change without great consideration
-  BROWSE("browse"), READ("read"), EDIT("edit"), ADD("add"), DELETE("delete"), RUN("run"), ASSOCIATE("associate"), DISASSOCIATE("disassociate"), ALL("*");
+  READ("read"), BROWSE("browse"), EDIT("edit"), ADD("add"), DELETE("delete"), RUN("run"), ASSOCIATE("associate"), DISASSOCIATE("disassociate"), ALL("*");
 
   private final String action;
 
@@ -101,7 +101,7 @@ public enum PrivilegeAction
     return Arrays.asList(BROWSE, READ, EDIT, ADD, DELETE, RUN, ALL);
   }
 
-  public static List<PrivilegeAction> getBreadAssociateActions() {
-    return Arrays.asList(BROWSE, READ, EDIT, ADD, DELETE, ASSOCIATE, DISASSOCIATE, ALL);
+  public static List<PrivilegeAction> getCrudActions() {
+    return Arrays.asList(READ, EDIT, ADD, DELETE, ASSOCIATE, DISASSOCIATE, ALL);
   }
 }

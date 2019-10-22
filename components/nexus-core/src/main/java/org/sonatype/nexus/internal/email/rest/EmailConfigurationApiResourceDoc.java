@@ -29,7 +29,7 @@ import static org.sonatype.nexus.repository.http.HttpStatus.OK;
 /**
  * Swagger documentation for {@link EmailConfigurationApiResource}
  *
- * @since 3.next
+ * @since 3.19
  */
 @Api(value = "email")
 public interface EmailConfigurationApiResourceDoc

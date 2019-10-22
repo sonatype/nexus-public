@@ -23,12 +23,13 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 @RunWith(JUnitParamsRunner.class)
 public class PodPathProviderTest
 {
-  private PodPathProvider podPathProvider = new PodPathProvider("https://api.github.com", "https://bitbucket.org");
+  private PodPathProvider podPathProvider =
+      new PodPathProvider("https://api.github.com", "https://bitbucket.org", "https://gitlab.com");
 
   @Test
   @Parameters(method = "provideGeneratePodFileNameGitParams")
@@ -76,6 +77,14 @@ public class PodPathProviderTest
         new Object[]{
             "https://bitbucket.org/jefrydagucci/asbaseiosproject.git", "asbaseiosproject", "v0.9.2", null,
             "pods/asbaseiosproject/v0.9.2/https/bitbucket.org/jefrydagucci/asbaseiosproject/get/master.tar.gz"
+        },
+        new Object[]{
+            "https://gitlab.com/streethawk/sdks/streethawk-sdk-ios.git", "streethawk", "1.10.2", "1.10.2",
+            "pods/streethawk/1.10.2/https/gitlab.com/streethawk/sdks/streethawk-sdk-ios/-/archive/1.10.2/1.10.2.tar.gz"
+        },
+        new Object[]{
+            "https://gitlab.com/streethawk/sdks/streethawk-sdk-ios.git", "streethawk", "1.10.2", null,
+            "pods/streethawk/1.10.2/https/gitlab.com/streethawk/sdks/streethawk-sdk-ios/-/archive/master/master.tar.gz"
         }
     };
   }

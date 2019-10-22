@@ -15,6 +15,7 @@ package org.sonatype.nexus.internal.httpclient;
 import java.io.IOException;
 
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
+import org.sonatype.nexus.httpclient.config.BearerTokenAuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.NtlmAuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.UsernameAuthenticationConfiguration;
 import org.sonatype.nexus.security.PasswordHelper;
@@ -62,6 +63,10 @@ public class AuthenticationConfigurationSerializer
       jgen.writeStringField("password", passwordHelper.encrypt(ntc.getPassword()));
       jgen.writeStringField("domain", ntc.getDomain());
       jgen.writeStringField("host", ntc.getHost());
+    }
+    else if (value instanceof BearerTokenAuthenticationConfiguration) {
+      BearerTokenAuthenticationConfiguration btac = (BearerTokenAuthenticationConfiguration) value;
+      jgen.writeStringField(BearerTokenAuthenticationConfiguration.TYPE, passwordHelper.encrypt(btac.getBearerToken()));
     }
     else {
       // be foolproof, if new type added but this class is not updated

@@ -18,7 +18,7 @@ import org.sonatype.nexus.transaction.TransactionalSession;
 /**
  * Represents a session with a {@link DataStore}.
  *
- * @since 3.next
+ * @since 3.19
  */
 public interface DataSession<T extends Transaction>
     extends TransactionalSession<T>

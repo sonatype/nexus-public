@@ -33,7 +33,7 @@ import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_FORBIDDEN;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 @Api(value = "Security: Certificates")
 public interface CertificateApiResourceDoc

@@ -22,7 +22,7 @@ import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.ROOT_KEY;
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.TYPE_KEY;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 public abstract class BlobStoreApiModel
 {

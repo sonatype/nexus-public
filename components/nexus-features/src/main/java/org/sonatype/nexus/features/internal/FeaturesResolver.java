@@ -32,7 +32,7 @@ import static java.util.Collections.synchronizedSet;
  * Elements such as configuration snippets, conditionals, version ranges, etc. are ignored.
  * This is an acceptable simplification because our NXRM features don't use those elements.
  *
- * @since 3.next
+ * @since 3.19
  */
 public class FeaturesResolver
 {

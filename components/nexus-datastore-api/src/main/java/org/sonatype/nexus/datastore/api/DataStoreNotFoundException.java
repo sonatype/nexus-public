@@ -15,7 +15,7 @@ package org.sonatype.nexus.datastore.api;
 /**
  * Thrown when a named {@link DataStore} was not found.
  *
- * @since 3.next
+ * @since 3.19
  */
 public class DataStoreNotFoundException
     extends RuntimeException

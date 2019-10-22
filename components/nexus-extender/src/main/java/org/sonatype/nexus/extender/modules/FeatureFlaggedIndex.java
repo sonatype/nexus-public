@@ -40,7 +40,7 @@ import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getBoole
  * Filters out components whose type or package is annotated with {@link FeatureFlag}
  * when the associated system property indicates that feature is currently disabled.
  *
- * @since 3.next
+ * @since 3.19
  */
 public class FeatureFlaggedIndex
     implements ClassFinder

@@ -19,7 +19,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 public class GenericBlobStoreApiResponse
     extends BlobStoreApiModel

@@ -49,7 +49,7 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.CONTENT_DATASTOR
 /**
  * Source of {@link DataStoreConfiguration}s from property files in the fabric working directory.
  *
- * @since 3.next
+ * @since 3.19
  */
 @Named(LOCAL)
 @Priority(MIN_VALUE)

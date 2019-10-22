@@ -24,12 +24,15 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
+import org.sonatype.nexus.blobstore.api.BlobSession;
+import org.sonatype.nexus.blobstore.api.BlobSessionSupplier;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreCreatedEvent;
 import org.sonatype.nexus.blobstore.api.BlobStoreDeletedEvent;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.blobstore.api.BlobStoreNotFoundException;
 import org.sonatype.nexus.blobstore.api.BlobStoreUpdatedEvent;
 import org.sonatype.nexus.blobstore.file.FileBlobStoreConfigurationBuilder;
 import org.sonatype.nexus.common.event.EventAware;
@@ -51,6 +54,7 @@ import com.google.common.eventbus.Subscribe;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Optional.empty;
+import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
 /**
@@ -63,7 +67,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 @ManagedObject
 public class BlobStoreManagerImpl
     extends StateGuardLifecycleSupport
-    implements BlobStoreManager, EventAware
+    implements BlobStoreManager, BlobSessionSupplier, EventAware
 {
   private final EventManager eventManager;
 
@@ -377,5 +381,10 @@ public class BlobStoreManagerImpl
   public Optional<String> getParent(final String blobStoreName) {
     BlobStore blobStore = get(blobStoreName);
     return blobStore == null ? empty() : store.findParent(blobStoreName).map(BlobStoreConfiguration::getName);
+  }
+
+  @Override
+  public BlobSession<?> openSession(final String storeName) {
+    return ofNullable(get(storeName)).orElseThrow(() -> new BlobStoreNotFoundException(storeName)).openSession();
   }
 }

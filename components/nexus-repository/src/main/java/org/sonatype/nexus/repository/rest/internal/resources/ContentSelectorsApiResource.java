@@ -51,7 +51,7 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.sonatype.nexus.selector.SelectorConfiguration.EXPRESSION;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 @Named
 @Singleton

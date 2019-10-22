@@ -15,7 +15,7 @@
 /**
  * Datastore feature panel.
  *
- * @since 3.next
+ * @since 3.19
  */
 Ext.define('NX.coreui.view.datastore.DatastoreFeature', {
   extend: 'NX.view.drilldown.Drilldown',

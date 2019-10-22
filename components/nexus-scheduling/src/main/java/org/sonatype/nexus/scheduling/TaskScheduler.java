@@ -101,7 +101,7 @@ public interface TaskScheduler
    * typically because it has already completed normally;
    * {@code true} otherwise
    *
-   * @since 3.next
+   * @since 3.19
    */
   boolean cancel(String id, boolean mayInterruptIfRunning);
 

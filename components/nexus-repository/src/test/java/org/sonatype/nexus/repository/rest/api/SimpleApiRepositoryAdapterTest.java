@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.rest.api;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.function.Function;
 
 import org.sonatype.goodies.common.Time;
@@ -81,12 +82,12 @@ public class SimpleApiRepositoryAdapterTest
     SimpleApiGroupRepository groupRepository = (SimpleApiGroupRepository) underTest.adapt(repository);
     assertRepository(groupRepository, "group", true);
     assertThat(groupRepository.getGroup().getMemberNames(), contains("a", "b"));
-    assertThat(groupRepository.getStorage().getStrictContentTypeValidation(), is(false));
+    assertThat(groupRepository.getStorage().getStrictContentTypeValidation(), is(true));
 
-    setStorageAttributes(repository, "default", /* non-default */ true, null);
+    setStorageAttributes(repository, "default", /* non-default */ false, null);
     groupRepository = (SimpleApiGroupRepository) underTest.adapt(repository);
     assertThat(groupRepository.getStorage().getBlobStoreName(), is("default"));
-    assertThat(groupRepository.getStorage().getStrictContentTypeValidation(), is(true));
+    assertThat(groupRepository.getStorage().getStrictContentTypeValidation(), is(false));
   }
 
   @Test
@@ -95,15 +96,15 @@ public class SimpleApiRepositoryAdapterTest
 
     SimpleApiHostedRepository hostedRepository = (SimpleApiHostedRepository) underTest.adapt(repository);
     assertRepository(hostedRepository, "hosted", true);
-    assertThat(hostedRepository.getStorage().getStrictContentTypeValidation(), is(false));
+    assertThat(hostedRepository.getStorage().getStrictContentTypeValidation(), is(true));
     assertThat(hostedRepository.getStorage().getWritePolicy(), is("ALLOW"));
 
     // set some values
-    setStorageAttributes(repository, "default", /* non-default */ true, WritePolicy.DENY);
+    setStorageAttributes(repository, "default", /* non-default */ false, WritePolicy.DENY);
     hostedRepository = (SimpleApiHostedRepository) underTest.adapt(repository);
 
     assertThat(hostedRepository.getStorage().getBlobStoreName(), is("default"));
-    assertThat(hostedRepository.getStorage().getStrictContentTypeValidation(), is(true));
+    assertThat(hostedRepository.getStorage().getStrictContentTypeValidation(), is(false));
     assertThat(hostedRepository.getStorage().getWritePolicy(), is("DENY"));
   }
 
@@ -182,12 +183,12 @@ public class SimpleApiRepositoryAdapterTest
   @Test
   public void testAdapt_proxyRepositoryStorageAttributes() throws Exception {
     Repository repository = createRepository(new ProxyType());
-    setStorageAttributes(repository, "default", /* non-default */ true, null);
+    setStorageAttributes(repository, "default", /* non-default */ false, null);
 
     SimpleApiProxyRepository proxyRepository = (SimpleApiProxyRepository) underTest.adapt(repository);
 
     assertThat(proxyRepository.getStorage().getBlobStoreName(), is("default"));
-    assertThat(proxyRepository.getStorage().getStrictContentTypeValidation(), is(true));
+    assertThat(proxyRepository.getStorage().getStrictContentTypeValidation(), is(false));
   }
 
   @Test
@@ -325,7 +326,7 @@ public class SimpleApiRepositoryAdapterTest
     assertThat(cleanupFn.apply(restRepository).getPolicyNames(), empty());
 
     NestedAttributesMap storage = repository.getConfiguration().attributes("cleanup");
-    storage.set("policyName", Arrays.asList("policy-a"));
+    storage.set("policyName", Collections.singleton("policy-a"));
 
     restRepository = underTest.adapt(repository);
     assertThat(cleanupFn.apply(restRepository).getPolicyNames(), contains("policy-a"));

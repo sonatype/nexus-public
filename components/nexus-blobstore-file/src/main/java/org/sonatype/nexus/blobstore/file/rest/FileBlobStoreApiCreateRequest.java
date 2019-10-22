@@ -15,7 +15,7 @@ package org.sonatype.nexus.blobstore.file.rest;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 public class FileBlobStoreApiCreateRequest
     extends FileBlobStoreApiModel

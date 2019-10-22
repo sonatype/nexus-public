@@ -35,16 +35,9 @@ Ext.define('NX.coreui.view.repository.facet.RoutingRuleFacetViewController', {
   onBeforeRender: function() {
     this.lookupReference('routingRuleCombo').setHelpText(NX.I18n.get('Repository_Facet_RoutingRuleFacet_HelpText'));
     this.getViewModel().set('title', NX.I18n.get('Repository_Facet_RoutingRuleFacet_Title'));
-
-    this.getView().setVisible(NX.State.getValue('routingRules', true)); // nexus.routing.rules.enabled
   },
 
   onAfterRender: function() {
-    if (!NX.State.getValue('routingRules', true)) { // nexus.routing.rules.enabled
-      this.getView().disable();
-      return;
-    }
-
     var combo = this.lookupReference('routingRuleCombo'),
         store = this.getStore('RoutingRules'),
         model = store.getModel();

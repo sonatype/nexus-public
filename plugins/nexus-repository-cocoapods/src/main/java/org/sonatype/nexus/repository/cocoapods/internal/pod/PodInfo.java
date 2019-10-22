@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.cocoapods.internal.pod;
 import java.net.URI;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 public class PodInfo
 {

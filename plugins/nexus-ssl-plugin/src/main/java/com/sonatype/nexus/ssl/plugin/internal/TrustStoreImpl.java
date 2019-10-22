@@ -165,6 +165,11 @@ public class TrustStoreImpl
     return _sslcontext;
   }
 
+  @Override
+  public KeyManager[] getKeyManagers() {
+    return keyManagers; // NOSONAR
+  }
+
   @Subscribe
   public void onKeyStoreDataUpdated(final KeyStoreDataEvent event) {
     sslcontext = null;

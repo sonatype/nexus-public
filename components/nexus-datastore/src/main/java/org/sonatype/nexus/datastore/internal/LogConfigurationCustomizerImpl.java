@@ -22,7 +22,7 @@ import static org.sonatype.nexus.common.log.LoggerLevel.DEFAULT;
 /**
  * DataStore {@link LogConfigurationCustomizer}.
  *
- * @since 3.next
+ * @since 3.19
  */
 @Named
 @Singleton

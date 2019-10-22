@@ -41,7 +41,7 @@ import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.p
 import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.version;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 public class CondaPathUtilsTest
     extends TestSupport

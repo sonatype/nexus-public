@@ -34,7 +34,7 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.security.BreadActions.READ;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 public class CondaSecurityFacetTest
     extends TestSupport

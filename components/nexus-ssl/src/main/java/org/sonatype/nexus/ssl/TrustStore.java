@@ -16,9 +16,8 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.util.Collection;
 
+import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
-
-import org.sonatype.nexus.ssl.KeystoreException;
 
 /**
  * Nexus SSL TrustStore.
@@ -82,4 +81,11 @@ public interface TrustStore
    * @since 3.0
    */
   SSLContext getSSLContext();
+
+  /**
+   * Get the {@link KeyManager}'s
+   *
+   * @since 3.next
+   */
+  KeyManager[] getKeyManagers();
 }

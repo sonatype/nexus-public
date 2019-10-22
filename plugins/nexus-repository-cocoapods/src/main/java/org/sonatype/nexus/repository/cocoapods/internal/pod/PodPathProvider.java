@@ -19,15 +19,15 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.repository.cocoapods.internal.CocoapodsConfig;
-import org.sonatype.nexus.repository.cocoapods.internal.CocoapodsFormat;
 import org.sonatype.nexus.repository.cocoapods.internal.pod.git.GitApiHelper;
 import org.sonatype.nexus.repository.cocoapods.internal.pod.git.GitArtifactInfo;
 import org.sonatype.nexus.repository.cocoapods.internal.pod.git.GitRepoUriParser;
 
+import static org.sonatype.nexus.repository.cocoapods.internal.pod.PodsUtils.escapeUriToPath;
 import static org.sonatype.nexus.repository.cocoapods.internal.pod.git.GitConstants.GITHUB_HOST;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 @Named
 public class PodPathProvider
@@ -41,9 +41,10 @@ public class PodPathProvider
   @Inject
   public PodPathProvider(
       @Named("${nexus.cocoapods.gitHubApiUri:-https://api.github.com}") final String githubApiUri,
-      @Named("${nexus.cocoapods.bitbucketApiUri:-https://bitbucket.org}") final String bitbucketApiUri)
+      @Named("${nexus.cocoapods.bitbucketApiUri:-https://bitbucket.org}") final String bitbucketApiUri,
+      @Named("${nexus.cocoapods.gitlabApiUri:-https://gitlab.com}") final String gitlabApiUri)
   {
-    config = new CocoapodsConfig(githubApiUri, bitbucketApiUri);
+    config = new CocoapodsConfig(githubApiUri, bitbucketApiUri, gitlabApiUri);
   }
 
   public String buildNxrmPath(
@@ -58,7 +59,7 @@ public class PodPathProvider
         info.getHost().equals(GITHUB_HOST) ? GITHUB_POD_PATH_TEMPLATE : POD_PATH_TEMPLATE,
         name,
         version,
-        CocoapodsFormat.escapeUriToPath(gitApiUri));
+        escapeUriToPath(gitApiUri));
   }
 
   public String buildNxrmPath(
@@ -68,6 +69,6 @@ public class PodPathProvider
         POD_PATH_TEMPLATE,
         name,
         version,
-        CocoapodsFormat.escapeUriToPath(httpDownloadUri));
+        escapeUriToPath(httpDownloadUri));
   }
 }

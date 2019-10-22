@@ -15,6 +15,7 @@ package org.sonatype.nexus.internal.httpclient;
 import java.io.IOException;
 
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
+import org.sonatype.nexus.httpclient.config.BearerTokenAuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.NtlmAuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.UsernameAuthenticationConfiguration;
 import org.sonatype.nexus.security.PasswordHelper;
@@ -65,6 +66,10 @@ public class AuthenticationConfigurationDeserializer
       ntc.setPassword(passwordHelper.tryDecrypt(ntc.getPassword()));
       ntc.setDomain(ntc.getDomain());
       ntc.setHost(ntc.getHost());
+    }
+    else if (BearerTokenAuthenticationConfiguration.class.equals(type)) {
+      BearerTokenAuthenticationConfiguration btac = (BearerTokenAuthenticationConfiguration) configuration;
+      btac.setBearerToken(passwordHelper.tryDecrypt(btac.getBearerToken()));
     }
     return configuration;
   }

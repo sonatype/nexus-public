@@ -40,7 +40,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 @Named
 @Singleton

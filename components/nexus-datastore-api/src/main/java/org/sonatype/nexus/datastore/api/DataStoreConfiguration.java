@@ -22,7 +22,7 @@ import static java.util.regex.Pattern.compile;
 /**
  * {@link DataStore} configuration.
  *
- * @since 3.next
+ * @since 3.19
  */
 public class DataStoreConfiguration
 {

@@ -38,7 +38,7 @@ import static org.sonatype.nexus.orient.DatabaseInstanceNames.CONFIG;
 /**
  * Update Repositories to have multiple Cleanup Policies
  *
- * @since 3.next
+ * @since 3.19
  */
 @Named
 @Singleton

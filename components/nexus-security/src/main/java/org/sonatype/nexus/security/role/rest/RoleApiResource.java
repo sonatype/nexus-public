@@ -58,7 +58,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 @Named
 @Singleton

@@ -18,12 +18,11 @@ import java.util.Arrays;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.sonatype.nexus.repository.cocoapods.internal.CocoapodsFormat;
-
+import static org.sonatype.nexus.repository.cocoapods.internal.pod.PodsUtils.unescapePathToUri;
 import static org.sonatype.nexus.repository.cocoapods.internal.pod.git.GitConstants.GITHUB_POD_EXTENSION;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 @Named
 public class PodPathParser
@@ -83,7 +82,7 @@ public class PodPathParser
   }
 
   private URI formatPathToUri(final String path, final String host) {
-    String uri = CocoapodsFormat.unescapePathToUri(path);
+    String uri = unescapePathToUri(path);
     if (githubApiHost.equals(host)) {
       uri = uri.replace(GITHUB_POD_EXTENSION, "");
     }

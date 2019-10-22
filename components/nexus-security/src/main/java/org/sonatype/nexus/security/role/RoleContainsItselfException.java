@@ -14,7 +14,7 @@ package org.sonatype.nexus.security.role;
 
 /**
  * Thrown when a {@link Role} contains its own id in the assigned roles.
- * @since 3.next
+ * @since 3.19
  */
 public class RoleContainsItselfException
     extends RoleException

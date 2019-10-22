@@ -32,9 +32,11 @@ import javax.inject.Named;
 import javax.inject.Provider;
 
 import org.sonatype.goodies.common.Time;
+import org.sonatype.nexus.blobstore.MemoryBlobSession;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
+import org.sonatype.nexus.blobstore.api.BlobSession;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
@@ -150,6 +152,12 @@ public class BlobStoreGroup
   @Override
   public BlobStoreConfiguration getBlobStoreConfiguration() {
     return this.blobStoreConfiguration;
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public BlobSession<?> openSession() {
+    return new MemoryBlobSession(this);
   }
 
   @Override

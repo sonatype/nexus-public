@@ -56,9 +56,6 @@ public class RoutingRuleHelperImplTest
   private Repository repository;
 
   @Mock
-  RoutingRulesConfiguration config;
-
-  @Mock
   RepositoryPermissionChecker repositoryPermissionChecker;
 
   @Before
@@ -68,17 +65,13 @@ public class RoutingRuleHelperImplTest
     when(routingRuleStore.getById("allow")).thenReturn(new RoutingRule("allow", "some description", RoutingMode.ALLOW,
         Arrays.asList(".*foobar.*", "^/org/apache/.*")));
     when(repository.getName()).thenReturn("test-repo");
-    when(config.isEnabled()).thenReturn(true);
     cache = new RoutingRuleCache(routingRuleStore);
-    underTest = new RoutingRuleHelperImpl(cache, repositoryManager, config, repositoryPermissionChecker);
+    underTest = new RoutingRuleHelperImpl(cache, repositoryManager, repositoryPermissionChecker);
   }
 
   @Test
   public void testHandle_disabled() throws Exception {
     assertBlocked("block", "/com/sonatype/internal/secrets");
-
-    when(config.isEnabled()).thenReturn(false);
-    assertAllowed("block", "/com/sonatype/internal/secrets");
   }
 
   @Test
@@ -139,9 +132,9 @@ public class RoutingRuleHelperImplTest
     when(repository3.getName()).thenReturn("test-repo-3");
     when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository, repository2, repository3));
 
-    configureRepositoryMock(repository,"rule-1");
-    configureRepositoryMock(repository2,"rule-2");
-    configureRepositoryMock(repository3,"rule-2");
+    configureRepositoryMock(repository, "rule-1");
+    configureRepositoryMock(repository2, "rule-2");
+    configureRepositoryMock(repository3, "rule-2");
 
     Map<EntityId, List<Repository>> assignedRepositoryMap = underTest.calculateAssignedRepositories();
     assertEquals(2, assignedRepositoryMap.size());

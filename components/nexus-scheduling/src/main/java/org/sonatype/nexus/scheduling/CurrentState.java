@@ -20,7 +20,7 @@ import javax.annotation.Nullable;
 /**
  * Encapsulates the current state of a task.
  * 
- * @since 3.next
+ * @since 3.19
  */
 public interface CurrentState
 {

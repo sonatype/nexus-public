@@ -19,7 +19,7 @@ import org.sonatype.goodies.lifecycle.Lifecycle;
 /**
  * {@link DataStore} manager.
  *
- * @since 3.next
+ * @since 3.19
  */
 public interface DataStoreManager
     extends Lifecycle

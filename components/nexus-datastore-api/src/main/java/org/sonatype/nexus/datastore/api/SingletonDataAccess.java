@@ -15,7 +15,7 @@ package org.sonatype.nexus.datastore.api;
 /**
  * Generic {@link DataAccess} that only accesses one single entity.
  *
- * @since 3.next
+ * @since 3.19
  */
 public interface SingletonDataAccess<E>
     extends DataAccess

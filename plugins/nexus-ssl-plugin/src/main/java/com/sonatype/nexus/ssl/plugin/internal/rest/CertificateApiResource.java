@@ -59,7 +59,7 @@ import org.hibernate.validator.constraints.NotBlank;
 import org.hibernate.validator.constraints.NotEmpty;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 @Named
 @Singleton

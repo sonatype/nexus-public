@@ -20,7 +20,6 @@ import org.sonatype.nexus.common.stateguard.Transitions;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
-import org.sonatype.nexus.transaction.Transaction;
 
 import org.codehaus.plexus.interpolation.EnvarBasedValueSource;
 import org.codehaus.plexus.interpolation.InterpolationException;
@@ -36,9 +35,9 @@ import static java.util.stream.Collectors.toMap;
 /**
  * Common support class for {@link DataStore}s.
  *
- * @since 3.next
+ * @since 3.19
  */
-public abstract class DataStoreSupport<T extends Transaction, S extends DataSession<T>>
+public abstract class DataStoreSupport<S extends DataSession<?>>
     extends StateGuardLifecycleSupport
     implements DataStore<S>
 {

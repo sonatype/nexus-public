@@ -35,7 +35,7 @@ import static org.quartz.TriggerKey.triggerKey;
 /**
  * Utilities for adapting the scheduling API to Quartz.
  *
- * @since 3.next
+ * @since 3.19
  */
 public class QuartzTaskUtils {
   private static final Logger LOG = LoggerFactory.getLogger(QuartzTaskUtils.class);

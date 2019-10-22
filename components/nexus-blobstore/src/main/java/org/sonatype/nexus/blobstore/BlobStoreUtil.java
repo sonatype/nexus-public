@@ -25,4 +25,13 @@ public interface BlobStoreUtil {
    * @return number of repositories using the blob store
    */
   int usageCount(String blobStoreId);
+
+  /**
+   * Returns true if the file path is valid. The path is valid if all the folder names in the path are less than the given maximum.
+   * @since 3.next
+   * @param filePath A file path
+   * @param maxLength The max length
+   * @return True if valid, false otherwise
+   */
+  boolean validateFilePath(String filePath, int maxLength);
 }

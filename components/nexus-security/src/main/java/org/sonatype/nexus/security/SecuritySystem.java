@@ -234,7 +234,7 @@ public interface SecuritySystem
   /**
    * Retrieve list of known authorization sources
    *
-   * @since 3.next
+   * @since 3.19
    */
   List<String> listSources();
 }

@@ -31,7 +31,6 @@ import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
 import org.sonatype.nexus.datastore.api.DataStoreNotFoundException;
 import org.sonatype.nexus.datastore.mybatis.MyBatisDataStore;
 
-import com.google.common.base.Splitter;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.apache.ibatis.plugin.Interceptor;
 import org.apache.ibatis.type.TypeHandler;
@@ -44,12 +43,14 @@ import org.slf4j.LoggerFactory;
 import static com.google.common.base.Throwables.throwIfUnchecked;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static java.nio.file.Files.createTempDirectory;
+import static java.time.Duration.ofSeconds;
 import static java.util.Arrays.stream;
 import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.of;
 import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getBoolean;
+import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getInteger;
 import static org.sonatype.nexus.common.text.Strings2.isBlank;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE_NAME;
 import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.JDBC_URL;
@@ -57,7 +58,7 @@ import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.JD
 /**
  * JUnit rule to supply {@link DataSession}s without needing the full store ceremony.
  *
- * @since 3.next
+ * @since 3.19
  */
 public class DataSessionRule
     extends ExternalResource
@@ -81,7 +82,7 @@ public class DataSessionRule
 
   private final Map<String, MyBatisDataStore> stores;
 
-  private List<String> jdbcUrls;
+  private String jdbcUrl;
 
   private Object postgres;
 
@@ -97,7 +98,7 @@ public class DataSessionRule
    */
   public DataSessionRule(final String storeName, final String... storeNames) {
     stores = concat(of(storeName), stream(storeNames)).collect(toImmutableMap(identity(), this::newStore));
-    jdbcUrls = discoverJdbcUrls();
+    jdbcUrl = discoverJdbcUrl();
   }
 
   /**
@@ -138,22 +139,19 @@ public class DataSessionRule
   }
 
   /**
-   * Discover the JDBC URLs to run the tests against.
+   * Discover the JDBC URL to run the tests against.
    */
-  protected List<String> discoverJdbcUrls() {
-    String urls = System.getProperty("test.jdbcUrls");
-    if (isBlank(urls)) {
-      urls = "jdbc:h2:mem:${storeName}";
-      // skip PostgreSQL unless explicitly enabled
+  protected String discoverJdbcUrl() {
+    String url = System.getProperty("test.jdbcUrl");
+    if (isBlank(url)) {
       if (getBoolean("test.postgres", false)) {
-        urls = urls + ',' + startPostgres();
+        url = startPostgres();
+      }
+      else  {
+        url = "jdbc:h2:mem:${storeName}";
       }
     }
-
-    return Splitter.on(',')
-        .trimResults()
-        .omitEmptyStrings()
-        .splitToList(urls);
+    return url;
   }
 
   @Override
@@ -188,16 +186,13 @@ public class DataSessionRule
       public void evaluate() throws Throwable {
         System.clearProperty(POSTGRES_NO_CLEANUP_KEY);
         try {
-          // run test against each JDBC URL
-          for (String url : jdbcUrls) {
-            attribute(JDBC_URL, url);
-            before();
-            try {
-              base.evaluate();
-            }
-            finally {
-              after();
-            }
+          attribute(JDBC_URL, jdbcUrl);
+          before();
+          try {
+            base.evaluate();
+          }
+          finally {
+            after();
           }
         }
         catch (RuntimeException|Error e) {
@@ -253,6 +248,7 @@ public class DataSessionRule
       File dataDir = createTempDirectory(BASEDIR.resolve("target"), "pg_").toFile();
 
       postgres = EmbeddedPostgres.builder()
+          .setPGStartupWait(ofSeconds(getInteger("test.waitForPostgres", 30)))
           .setCleanDataDirectory(getBoolean("test.cleanOnSuccess", true))
           .setDataDirectory(dataDir)
           .start();
