@@ -45,7 +45,11 @@ public interface ComponentsResourceDoc
       final String continuationToken,
 
       @ApiParam(value = "Repository from which you would like to retrieve components", required = true)
-      final String repository);
+      final String repository,
+
+      @ApiParam(value = "Page size of the response")
+      final int limit
+  );
 
   @ApiOperation("Get a single component")
   @ApiResponses(value = {

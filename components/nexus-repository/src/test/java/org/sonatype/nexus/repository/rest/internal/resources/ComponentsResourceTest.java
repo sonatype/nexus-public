@@ -201,7 +201,7 @@ public class ComponentsResourceTest
     when(browseService.browseComponents(eq(mavenReleases), queryOptionsCaptor.capture()))
         .thenReturn(componentBrowseResult);
 
-    Page<ComponentXO> componentXOPage = underTest.getComponents(null, mavenReleasesId);
+    Page<ComponentXO> componentXOPage = underTest.getComponents(null, mavenReleasesId, 10);
 
     assertThat(componentXOPage.getItems(), hasSize(2));
     assertThat(componentXOPage.getContinuationToken(), is("88491cd1d185dd1318fdba4364e78406"));
@@ -253,7 +253,7 @@ public class ComponentsResourceTest
         .recordIdentity(detachedEntityIdCaptor.capture());
 
     thrown.expect(hasProperty("response", hasProperty("status", is(NOT_ACCEPTABLE))));
-    underTest.getComponents("whatever", mavenReleasesId);
+    underTest.getComponents("whatever", mavenReleasesId, 10);
   }
 
   private RepositoryItemIDXO getRepositoryItemIdXO(final Component resultComponent) {
@@ -300,7 +300,7 @@ public class ComponentsResourceTest
 
     when(componentEntityAdapter.recordIdentity(detachedEntityIdCaptor.capture())).thenReturn(componentTwoORID);
 
-    Page<ComponentXO> componentXOPage = underTest.getComponents("88491cd1d185dd1318fdba4364e78406", mavenReleasesId);
+    Page<ComponentXO> componentXOPage = underTest.getComponents("88491cd1d185dd1318fdba4364e78406", mavenReleasesId, 10);
 
     assertThat(componentXOPage.getItems(), hasSize(2));
     assertThat(componentXOPage.getContinuationToken(), isEmptyOrNullString());

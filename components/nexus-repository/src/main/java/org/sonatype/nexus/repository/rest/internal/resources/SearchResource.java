@@ -23,6 +23,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -127,6 +128,7 @@ public class SearchResource
       @QueryParam(SORT_FIELD) final String sort,
       @QueryParam(SORT_DIRECTION) final String direction,
       @QueryParam("timeout") final Integer timeout,
+      @QueryParam("limit") @DefaultValue("50") final Integer pageSize,
       @Context final UriInfo uriInfo)
   {
     QueryBuilder query = searchUtils.buildQuery(uriInfo);
@@ -134,14 +136,14 @@ public class SearchResource
     int from = tokenEncoder.decode(continuationToken, query);
 
     SearchResponse response = searchService
-        .search(query, searchUtils.getSortBuilders(sort, direction, false), from, getPageSize(), timeout);
+        .search(query, searchUtils.getSortBuilders(sort, direction, false), from, pageSize, timeout);
 
     List<ComponentXO> componentXOs = Arrays.stream(response.getHits().hits())
         .map(this::toComponent)
         .collect(toList());
 
-    return new Page<>(componentXOs, componentXOs.size() == getPageSize() ?
-        tokenEncoder.encode(from, getPageSize(), query) : null);
+    return new Page<>(componentXOs, componentXOs.size() == pageSize ?
+        tokenEncoder.encode(from, pageSize, query) : null);
   }
 
   private ComponentXO toComponent(final SearchHit hit) {
@@ -181,6 +183,7 @@ public class SearchResource
       @QueryParam(SORT_FIELD) final String sort,
       @QueryParam(SORT_DIRECTION) final String direction,
       @QueryParam("timeout") final Integer timeout,
+      @QueryParam("limit") @DefaultValue("50") final Integer pageSize,
       @Context final UriInfo uriInfo)
   {
     QueryBuilder query = searchUtils.buildQuery(uriInfo);
@@ -188,11 +191,11 @@ public class SearchResource
     int from = tokenEncoder.decode(continuationToken, query);
 
     SearchResponse componentResponse = searchService
-        .search(query, searchUtils.getSortBuilders(sort, direction, false), from, getPageSize(), timeout);
+        .search(query, searchUtils.getSortBuilders(sort, direction, false), from, pageSize, timeout);
 
     List<AssetXO> assetXOs = retrieveAssets(componentResponse, uriInfo);
-    return new Page<>(assetXOs, componentResponse.getHits().hits().length == getPageSize() ?
-        tokenEncoder.encode(from, getPageSize(), query) : null);
+    return new Page<>(assetXOs, componentResponse.getHits().hits().length == pageSize ?
+        tokenEncoder.encode(from, pageSize, query) : null);
   }
 
   /**
@@ -207,7 +210,7 @@ public class SearchResource
   {
     QueryBuilder query = searchUtils.buildQuery(uriInfo);
 
-    List<AssetXO> assetXOs = retrieveAssets(query, sort, direction, timeout, uriInfo);
+    List<AssetXO> assetXOs = retrieveAssets(query, sort, direction, timeout, pageSize, uriInfo);
 
     return new AssetDownloadResponseProcessor(assetXOs, !Strings2.isEmpty(sort)).process();
   }
@@ -226,19 +229,21 @@ public class SearchResource
                                        final String direction,
                                        final UriInfo uriInfo,
                                        final int from,
-                                       final Integer timeout)
+                                       final Integer timeout,
+                                       final Integer pageSize)
   {
     return this.retrieveAssets(
-        searchService.search(query, searchUtils.getSortBuilders(sort, direction, false), from, getPageSize(), timeout), uriInfo);
+        searchService.search(query, searchUtils.getSortBuilders(sort, direction, false), from, pageSize, timeout), uriInfo);
   }
 
   private List<AssetXO> retrieveAssets(final QueryBuilder query,
                                        final String sort,
                                        final String direction,
                                        final Integer timeout,
+                                       final Integer pageSize,
                                        final UriInfo uriInfo)
   {
-    return this.retrieveAssets(query, sort, direction, uriInfo, 0, timeout);
+    return this.retrieveAssets(query, sort, direction, uriInfo, 0, timeout, pageSize);
   }
 
   @SuppressWarnings("unchecked")
@@ -267,14 +272,4 @@ public class SearchResource
           throw new IllegalStateException(format("Duplicate key %s", u));
         }, MultivaluedHashMap::new));
   }
-
-  private int getPageSize() {
-    return pageSize;
-  }
-
-  @VisibleForTesting
-  void setPageSize(final int pageSize) {
-    this.pageSize = pageSize;
-  }
-
 }

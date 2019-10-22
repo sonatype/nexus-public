@@ -60,6 +60,8 @@ public interface SearchResourceDoc
       final String direction,
       @ApiParam(value = TIMEOUT_DESCRIPTION, allowEmptyValue = true)
       final Integer timeout,
+      @ApiParam(value = "Page size of the response")
+      final Integer limit,
       @Context final UriInfo uriInfo);
 
   @ApiOperation("Search assets")
@@ -72,6 +74,8 @@ public interface SearchResourceDoc
       final String direction,
       @ApiParam(value = TIMEOUT_DESCRIPTION, allowEmptyValue = true)
       final Integer timeout,
+      @ApiParam(value = "Page size of the response")
+      final Integer limit,
       @Context final UriInfo uriInfo);
 
   @ApiOperation(value = "Search and download asset",

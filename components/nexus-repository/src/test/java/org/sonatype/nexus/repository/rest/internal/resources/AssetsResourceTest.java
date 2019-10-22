@@ -121,7 +121,7 @@ public class AssetsResourceTest
 
     when(browseService.browseAssets(eq(mavenReleases), queryOptionsCaptor.capture())).thenReturn(browseResult);
 
-    Page<AssetXO> assetXOPage = underTest.getAssets(null, "maven-releases");
+    Page<AssetXO> assetXOPage = underTest.getAssets(null, "maven-releases", 10);
     assertThat(assetXOPage.getContinuationToken(), is("asset-two-continuation"));
     assertThat(assetXOPage.getItems(), hasSize(2));
   }
@@ -133,7 +133,7 @@ public class AssetsResourceTest
 
     when(browseService.browseAssets(eq(mavenReleases), queryOptionsCaptor.capture())).thenReturn(browseResult);
 
-    Page<AssetXO> assetXOPage = underTest.getAssets(null, "maven-releases");
+    Page<AssetXO> assetXOPage = underTest.getAssets(null, "maven-releases", 10);
     assertThat(assetXOPage.getContinuationToken(), isEmptyOrNullString());
     assertThat(assetXOPage.getItems(), hasSize(2));
   }
@@ -214,6 +214,6 @@ public class AssetsResourceTest
         .recordIdentity(any(EntityId.class));
 
     thrown.expect(hasProperty("response", hasProperty("status", is(NOT_ACCEPTABLE))));
-    underTest.getAssets("whatever", "maven-releases");
+    underTest.getAssets("whatever", "maven-releases", 10);
   }
 }

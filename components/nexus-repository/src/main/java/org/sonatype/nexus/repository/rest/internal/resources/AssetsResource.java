@@ -19,6 +19,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
@@ -98,13 +99,14 @@ public class AssetsResource
 
   @GET
   public Page<AssetXO> getAssets(@QueryParam("continuationToken") final String continuationToken,
-      @QueryParam("repository") final String repositoryId)
+      @QueryParam("repository") final String repositoryId,
+      @QueryParam("limit") @DefaultValue("10") final int limit)
   {
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryId);
 
     BrowseResult<Asset> assetBrowseResult = browseService.browseAssets(
         repository,
-        new QueryOptions(null, "id", "asc", 0, 10, lastIdFromContinuationToken(continuationToken)));
+        new QueryOptions(null, "id", "asc", 0, limit, lastIdFromContinuationToken(continuationToken)));
 
     List<AssetXO> assetXOs = assetBrowseResult.getResults().stream()
         .map(asset -> fromAsset(asset, repository))
