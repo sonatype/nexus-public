@@ -20,10 +20,12 @@ import org.sonatype.nexus.repository.storage.MissingAssetBlobException
 import org.sonatype.nexus.repository.storage.StorageFacet
 import org.sonatype.nexus.repository.view.Context
 import org.sonatype.nexus.repository.view.Response
+import org.sonatype.nexus.repository.view.Status
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher.State
 import org.sonatype.nexus.transaction.Transactional
 
 import static java.util.Objects.isNull
+import static org.sonatype.nexus.repository.http.HttpStatus.OK
 import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.errorInputStream
 import static org.sonatype.nexus.repository.npm.internal.NpmResponses.notFound
 import static org.sonatype.nexus.repository.npm.internal.NpmResponses.ok
@@ -76,7 +78,11 @@ class NpmGroupPackageHandler
       missingBlobException -> handleMissingBlob(context, responses, groupFacet, missingBlobException)
     }
 
-    return ok(content)
+    return new Response.Builder()
+        .status(Status.success(OK))
+        .payload(content)
+        .attributes(content.attributes)
+        .build()
   }
 
   private StorageFacet getStorageFacet(final Context context) {

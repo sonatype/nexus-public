@@ -20,7 +20,7 @@ import org.sonatype.nexus.common.entity.HasEntityId;
 /**
  * Generic CRUD {@link DataAccess} that accesses zero to many entities of the same type.
  *
- * @since 3.next
+ * @since 3.19
  */
 public interface IterableDataAccess<E extends HasEntityId>
     extends DataAccess

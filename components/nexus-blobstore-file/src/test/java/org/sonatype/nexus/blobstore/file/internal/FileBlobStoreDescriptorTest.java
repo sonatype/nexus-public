@@ -16,8 +16,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.blobstore.BlobStoreUtil;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
-import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 
@@ -25,8 +25,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.file.FileBlobStore.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.file.FileBlobStore.PATH_KEY;
 
@@ -37,13 +40,19 @@ public class FileBlobStoreDescriptorTest
   BlobStoreQuotaService quotaService;
 
   @Mock
+  BlobStoreUtil blobStoreUtil;
+
+  @Mock
   ApplicationDirectories applicationDirectories;
 
   FileBlobStoreDescriptor descriptor;
 
+  private static final int MAX_NAME_LENGTH = 255;
+
   @Before
   public void setup() {
-    descriptor = new FileBlobStoreDescriptor(quotaService, applicationDirectories);
+    descriptor = new FileBlobStoreDescriptor(quotaService, applicationDirectories, blobStoreUtil);
+    when(blobStoreUtil.validateFilePath(anyString(), anyInt())).thenReturn(true);
   }
 
   @Test
@@ -54,4 +63,14 @@ public class FileBlobStoreDescriptorTest
     descriptor.validateConfig(config);
     verify(quotaService, times(1)).validateSoftQuotaConfig(config);
   }
+
+  @Test
+  public void descriptorValidationCallPathValidation() throws Exception {
+    BlobStoreConfiguration config = new BlobStoreConfiguration();
+    String tempDir = Files.createTempDirectory("test").toString();
+    config.attributes(CONFIG_KEY).set(PATH_KEY, tempDir);
+    descriptor.validateConfig(config);
+    verify(blobStoreUtil, times(1)).validateFilePath(tempDir, MAX_NAME_LENGTH);
+  }
+
 }

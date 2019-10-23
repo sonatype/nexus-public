@@ -34,7 +34,7 @@ import static java.lang.String.CASE_INSENSITIVE_ORDER;
 /**
  * Manages {@link DataStoreConfiguration}s supplied by one or more sources.
  *
- * @since 3.next
+ * @since 3.19
  */
 @Named
 @Singleton

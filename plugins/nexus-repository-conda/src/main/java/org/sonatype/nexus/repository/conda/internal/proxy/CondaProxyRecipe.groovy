@@ -32,11 +32,10 @@ import org.sonatype.nexus.repository.view.ConfigurableViewFacet
 import org.sonatype.nexus.repository.view.Route
 import org.sonatype.nexus.repository.view.Router.Builder
 import org.sonatype.nexus.repository.view.ViewFacet
-import org.sonatype.nexus.repository.view.handlers.BrowseUnsupportedHandler
 import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 @Named(CondaProxyRecipe.NAME)
 @Singleton
@@ -86,6 +85,8 @@ class CondaProxyRecipe
   private ViewFacet configure(final ConfigurableViewFacet facet) {
     Builder builder = new Builder()
 
+    addBrowseUnsupportedRoute(builder)
+
     [rootChannelIndexHtmlMatcher(), rootChannelDataJsonMatcher(), rootChannelRssXmlMatcher(), archIndexHtmlMatcher(),
      archRepodataJsonMatcher(), archRepodataJsonBz2Matcher(), archRepodata2JsonMatcher(), archTarPackageMatcher(), archCondaPackageMatcher()].
         each { matcher ->
@@ -105,12 +106,6 @@ class CondaProxyRecipe
               .handler(proxyHandler)
               .create())
         }
-
-    builder.route(new Route.Builder()
-        .matcher(BrowseUnsupportedHandler.MATCHER)
-        .handler(browseUnsupportedHandler)
-        .handler(routingHandler)
-        .create())
 
     builder.defaultHandlers(HttpHandlers.notFound())
 

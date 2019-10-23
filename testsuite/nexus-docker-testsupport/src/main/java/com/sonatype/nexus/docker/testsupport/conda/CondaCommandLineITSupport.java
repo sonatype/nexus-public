@@ -25,7 +25,7 @@ import static java.util.Collections.emptyList;
 /**
  * Conda implementation of a Docker Command Line enabled container.
  *
- * @since 3.next
+ * @since 3.19
  */
 public class CondaCommandLineITSupport
     extends ContainerCommandLineITSupport

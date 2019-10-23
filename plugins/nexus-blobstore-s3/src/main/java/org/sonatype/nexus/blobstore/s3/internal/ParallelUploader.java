@@ -43,7 +43,7 @@ import static java.util.Optional.of;
  * Uploads an InputStream, using multipart upload in parallel if the file is larger or equal to the chunk size.
  * A normal putObject request is used instead if only a single chunk would be sent.
  *
- * @since 3.next
+ * @since 3.19
  */
 @Singleton
 @Named("parallelUploader")

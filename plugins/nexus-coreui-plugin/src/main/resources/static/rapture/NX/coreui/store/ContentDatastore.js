@@ -15,7 +15,7 @@
 /**
  * Thin wrapper that just exposes content data stores
  *
- * @since 3.next
+ * @since 3.19
  */
 Ext.define('NX.coreui.store.ContentDatastore', {
   extend: 'Ext.data.ChainedStore',

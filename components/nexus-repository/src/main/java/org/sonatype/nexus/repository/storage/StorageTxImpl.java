@@ -70,6 +70,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 import static org.sonatype.nexus.repository.storage.StorageTxImpl.State.ACTIVE;
 import static org.sonatype.nexus.repository.storage.StorageTxImpl.State.CLOSED;
 import static org.sonatype.nexus.repository.storage.StorageTxImpl.State.OPEN;
+import static org.sonatype.nexus.transaction.Transactional.DEFAULT_REASON;
 
 /**
  * Default {@link StorageTx} implementation.
@@ -112,6 +113,8 @@ public class StorageTxImpl
   private final ComponentFactory componentFactory;
 
   private int retries = 0;
+
+  private String reason = DEFAULT_REASON;
 
   public StorageTxImpl(final String createdBy,
                        final String createdByIp,
@@ -202,6 +205,16 @@ public class StorageTxImpl
     else {
       throw new RetryDeniedException("Exceeded retry limit", cause);
     }
+  }
+
+  @Override
+  public void reason(final String reason) {
+    this.reason = checkNotNull(reason);
+  }
+
+  @Override
+  public String reason() {
+    return reason;
   }
 
   @Override

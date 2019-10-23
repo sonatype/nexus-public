@@ -26,7 +26,6 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.routing.RoutingMode;
 import org.sonatype.nexus.repository.routing.RoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingRuleHelper;
-import org.sonatype.nexus.repository.routing.RoutingRulesConfiguration;
 import org.sonatype.nexus.repository.security.RepositoryAdminPermission;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 import org.sonatype.nexus.repository.types.ProxyType;
@@ -52,8 +51,6 @@ public class RoutingRuleHelperImpl
 
   private final RepositoryManager repositoryManager;
 
-  private final RoutingRulesConfiguration configuration;
-
   private final RepositoryPermissionChecker repositoryPermissionChecker;
 
   private volatile Iterable<Permission> repositoryAddPermissions;
@@ -62,21 +59,15 @@ public class RoutingRuleHelperImpl
   public RoutingRuleHelperImpl(
       final RoutingRuleCache routingRuleCache,
       final RepositoryManager repositoryManager,
-      final RoutingRulesConfiguration configuration,
       final RepositoryPermissionChecker repositoryPermissionChecker)
   {
     this.routingRuleCache = checkNotNull(routingRuleCache);
     this.repositoryManager = checkNotNull(repositoryManager);
-    this.configuration = checkNotNull(configuration);
     this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
   }
 
   @Override
   public boolean isAllowed(final Repository repository, final String path) {
-    if (!configuration.isEnabled()) {
-      return true;
-    }
-
     RoutingRule routingRule = routingRuleCache.getRoutingRule(repository);
 
     if (routingRule == null) {

@@ -47,6 +47,7 @@ import org.apache.http.impl.client.StandardHttpRequestRetryHandler;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Collections.emptyList;
 import static org.apache.http.client.config.AuthSchemes.BASIC;
 import static org.apache.http.client.config.AuthSchemes.DIGEST;
 import static org.apache.http.client.config.AuthSchemes.NTLM;
@@ -250,17 +251,23 @@ public class ConfigurationCustomizer
       authSchemes = ImmutableList.of(NTLM, DIGEST, BASIC);
       credentials = new NTCredentials(auth.getUsername(), auth.getPassword(), auth.getHost(), auth.getDomain());
     }
+    else if (authentication instanceof BearerTokenAuthenticationConfiguration) {
+      credentials = null;
+      authSchemes = emptyList();
+    }
     else {
       throw new IllegalArgumentException("Unsupported authentication configuration: " + authentication);
     }
 
-    if (proxyHost != null) {
-      plan.addCredentials(new AuthScope(proxyHost), credentials);
-      plan.getRequest().setProxyPreferredAuthSchemes(authSchemes);
-    }
-    else {
-      plan.addCredentials(AuthScope.ANY, credentials);
-      plan.getRequest().setTargetPreferredAuthSchemes(authSchemes);
+    if (credentials != null) {
+      if (proxyHost != null) {
+        plan.addCredentials(new AuthScope(proxyHost), credentials);
+        plan.getRequest().setProxyPreferredAuthSchemes(authSchemes);
+      }
+      else {
+        plan.addCredentials(AuthScope.ANY, credentials);
+        plan.getRequest().setTargetPreferredAuthSchemes(authSchemes);
+      }
     }
   }
 }

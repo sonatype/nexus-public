@@ -12,11 +12,14 @@
  */
 package org.sonatype.nexus.repository.pypi.internal;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.io.UncheckedIOException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -29,12 +32,12 @@ import org.sonatype.nexus.repository.group.GroupHandler;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.repository.view.Content;
-import org.sonatype.nexus.repository.view.ContentTypes;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
-import org.sonatype.nexus.repository.view.payloads.StringPayload;
+
+import com.google.common.base.Suppliers;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.pypi.internal.AssetKind.INDEX;
@@ -82,17 +85,31 @@ class IndexGroupHandler
     Map<Repository, Response> memberResponses = getAll(context, groupFacet.members(), dispatched);
 
     if (groupFacet.isStale(name, content, memberResponses)) {
-      String html = mergeResponses(name, assetKind, memberResponses);
-      Content newContent = new Content(new StringPayload(html, ContentTypes.TEXT_HTML));
-      return HttpResponses.ok(groupFacet.saveToCache(name, newContent));
+      return HttpResponses.ok(
+          groupFacet.buildIndexRoot(
+              name, assetKind, lazyMergeResult(name, assetKind, memberResponses)));
     }
 
     return HttpResponses.ok(content);
   }
 
+  private Supplier<String> lazyMergeResult(final String name,
+                                           final AssetKind assetKind,
+                                           final Map<Repository, Response> remoteResponses)
+  {
+    return Suppliers.memoize(() -> {
+      try {
+        return mergeResponses(name, assetKind, remoteResponses);
+      }
+      catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+    });
+  }
+
   private String mergeResponses(final String name,
                                 final AssetKind assetKind,
-                                final Map<Repository, Response> remoteResponses) throws Exception
+                                final Map<Repository, Response> remoteResponses) throws IOException
   {
     Map<String, PyPiLink> results = new TreeMap<>();
 
@@ -114,7 +131,7 @@ class IndexGroupHandler
   /**
    * Processes the content of a particular repository's response.
    */
-  private void processResults(final Response response, final Map<String, PyPiLink> results) throws Exception {
+  private void processResults(final Response response, final Map<String, PyPiLink> results) throws IOException {
     checkNotNull(response);
     checkNotNull(results);
     Payload payload = checkNotNull(response.getPayload());

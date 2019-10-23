@@ -44,7 +44,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 /**
  * Ensures that cleanup configuration is valid
  *
- * @since 3.next
+ * @since 3.19
  */
 @Named
 public class CleanupConfigurationValidator

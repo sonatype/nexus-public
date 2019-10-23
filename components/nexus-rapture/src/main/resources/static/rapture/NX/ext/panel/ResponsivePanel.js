@@ -15,7 +15,7 @@
 /**
  * Panel with responsive behavior
  *
- * @since 3.next
+ * @since 3.19
  */
 Ext.define('NX.ext.panel.ResponsivePanel', {
   extend: 'Ext.panel.Panel',

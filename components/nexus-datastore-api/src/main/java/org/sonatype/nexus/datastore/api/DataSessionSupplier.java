@@ -18,7 +18,7 @@ import java.sql.SQLException;
 /**
  * {@link DataSession} supplier; for use by clients who don't need the full store API.
  *
- * @since 3.next
+ * @since 3.19
  */
 public interface DataSessionSupplier
 {

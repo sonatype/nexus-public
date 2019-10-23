@@ -27,7 +27,7 @@ import static org.sonatype.nexus.repository.group.GroupHandler.DispatchedReposit
 /**
  * Merge dist tag results from all member repositories.
  *
- * @since 3.next
+ * @since 3.19
  */
 @Named
 @Singleton

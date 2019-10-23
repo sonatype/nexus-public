@@ -22,7 +22,7 @@ import org.sonatype.nexus.security.config.SecurityContributor
 /**
  * DataStore security configuration.
  *
- * @since 3.next
+ * @since 3.19
  */
 @Named
 @Singleton

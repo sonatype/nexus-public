@@ -39,7 +39,7 @@ import static java.lang.String.format;
 /**
  * Common class to execute parallel requests to S3 for a MultipartUpload operation
  *
- * @since 3.next
+ * @since 3.19
  */
 public abstract class ParallelRequester
     extends StateGuardLifecycleSupport

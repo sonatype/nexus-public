@@ -21,7 +21,7 @@ import org.sonatype.nexus.validation.group.Create
 import org.hibernate.validator.constraints.NotEmpty
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 class DataStoreXO
 {

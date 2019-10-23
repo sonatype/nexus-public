@@ -15,7 +15,7 @@
 /**
  * Datastore Type store.
  *
- * @since 3.next
+ * @since 3.19
  */
 Ext.define('NX.coreui.store.DatastoreType', {
   extend: 'Ext.data.Store',

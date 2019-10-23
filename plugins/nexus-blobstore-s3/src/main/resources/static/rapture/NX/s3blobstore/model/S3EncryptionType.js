@@ -15,7 +15,7 @@
 /**
  * S3Encryption model.
  *
- * @since 3.next
+ * @since 3.19
  */
 Ext.define('NX.s3blobstore.model.S3EncryptionType', {
   extend: 'Ext.data.Model',

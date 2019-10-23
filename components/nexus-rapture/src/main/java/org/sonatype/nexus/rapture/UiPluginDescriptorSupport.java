@@ -12,9 +12,10 @@
  */
 package org.sonatype.nexus.rapture;
 
-import javax.annotation.Nullable;
+import java.util.Collections;
+import java.util.List;
 
-import org.sonatype.goodies.common.ComponentSupport;
+import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -22,16 +23,15 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Support for {@link UiPluginDescriptor} implementations.
  *
  * @since 3.0
+ * @deprecated as of 3.20, replaced by {@link org.sonatype.nexus.ui.UiPluginDescriptorSupport}
+ *
+ * Note that this class should only be implemented if your plugin is including UI content using ExtJs.  If you are
+ * using react (as the UI is moving towards) use {@link org.sonatype.nexus.ui.UiPluginDescriptor}
  */
-public class UiPluginDescriptorSupport
-  extends ComponentSupport
-  implements UiPluginDescriptor
+@Deprecated
+public abstract class UiPluginDescriptorSupport
+    implements UiPluginDescriptor
 {
-  /**
-   * Artifact ID of UI-contributing plugin.  Used to resolve the location of its contributed web-resources.
-   */
-  private final String pluginId;
-
   private boolean hasStyle = true;
 
   private boolean hasScript = true;
@@ -39,6 +39,11 @@ public class UiPluginDescriptorSupport
   private String namespace;
 
   private String configClassName;
+
+  /**
+   * Artifact ID of UI-contributing plugin.  Used to resolve the location of its contributed web-resources.
+   */
+  private final String pluginId;
 
   public UiPluginDescriptorSupport(final String artifactId) {
     this.pluginId = checkNotNull(artifactId);
@@ -85,5 +90,10 @@ public class UiPluginDescriptorSupport
 
   public void setConfigClassName(final String configClassName) {
     this.configClassName = configClassName;
+  }
+
+  @Override
+  public List<String> getScripts(final boolean isDebug) {
+    return Collections.emptyList();
   }
 }

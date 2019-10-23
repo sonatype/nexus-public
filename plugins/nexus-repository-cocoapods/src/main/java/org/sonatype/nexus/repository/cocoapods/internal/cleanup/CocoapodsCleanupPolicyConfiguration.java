@@ -28,7 +28,7 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REGEX_KEY;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 @Named(CocoapodsFormat.NAME)
 @Singleton

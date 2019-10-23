@@ -32,7 +32,7 @@ import static com.sonatype.nexus.docker.testsupport.conda.CondaClientITConfigFac
 import static java.util.Collections.singletonList;
 
 /**
- * @since 3.next
+ * @since 3.19
  * Support class for Conda Format Client ITs.
  */
 public abstract class CondaClientITSupport

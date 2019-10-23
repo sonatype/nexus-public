@@ -43,6 +43,7 @@ final class TransactionalWrapper
    * Applies transactional behaviour around the method call, supports automatic retries.
    */
   public Object proceedWithTransaction(final Transaction tx) throws Throwable {
+    tx.reason(spec.reason());
     while (true) {
       boolean committed = false;
       Throwable throwing = null;

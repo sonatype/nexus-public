@@ -25,10 +25,10 @@ public class PodPathParserTest
 
   @Test
   public void shouldParsePodPathWithHttpUri() {
-    final PodInfo info = podPathParser.parse("pods/name/version/http/example.com/test.tar.gz");
+    final PodInfo info = podPathParser.parse("pods/name/version/http/example.com/test.tar.gz?param=value");
     assertEquals(info.getName(), "name");
     assertEquals(info.getVersion(), "version");
-    assertEquals(info.getUri().toString(), "http://example.com/test.tar.gz");
+    assertEquals(info.getUri().toString(), "http://example.com/test.tar.gz?param=value");
   }
 
   @Test

@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull
 
 /**
  * Represents a Python .whl file, attributes and Gpg Signature which is optional.
- * @since 3.next
+ * @since 3.19
  */
 class SignablePyPiPackage
 {

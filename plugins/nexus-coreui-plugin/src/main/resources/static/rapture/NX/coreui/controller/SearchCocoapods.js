@@ -15,7 +15,7 @@
 /**
  * Cocoapods repository search contribution.
  *
- * @since 3.next
+ * @since 3.19
  */
 Ext.define('NX.coreui.controller.SearchCocoapods', {
   extend: 'NX.app.Controller',

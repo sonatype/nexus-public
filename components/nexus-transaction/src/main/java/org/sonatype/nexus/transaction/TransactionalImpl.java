@@ -24,6 +24,8 @@ import java.util.Arrays;
 final class TransactionalImpl
     implements Transactional
 {
+  private final String reason;
+
   private final Class[] commitOn;
 
   private final Class[] retryOn;
@@ -31,7 +33,8 @@ final class TransactionalImpl
   private final Class[] swallow;
 
   @SuppressWarnings("pmd:ArrayIsStoredDirectly") // we assume these are safe to store
-  TransactionalImpl(final Class[] commitOn, final Class[] retryOn, final Class[] swallow) {
+  TransactionalImpl(final String reason, final Class[] commitOn, final Class[] retryOn, final Class[] swallow) {
+    this.reason = reason;
     this.commitOn = commitOn;
     this.retryOn = retryOn;
     this.swallow = swallow;
@@ -40,6 +43,11 @@ final class TransactionalImpl
   @Override
   public Class<? extends Annotation> annotationType() {
     return Transactional.class;
+  }
+
+  @Override
+  public String reason() {
+    return reason;
   }
 
   @Override
@@ -59,7 +67,8 @@ final class TransactionalImpl
 
   @Override
   public int hashCode() {
-    return (127 * "commitOn".hashCode() ^ Arrays.hashCode(commitOn))
+    return (127 * "reason".hashCode() ^ reason.hashCode())
+        + (127 * "commitOn".hashCode() ^ Arrays.hashCode(commitOn))
         + (127 * "retryOn".hashCode() ^ Arrays.hashCode(retryOn))
         + (127 * "swallow".hashCode() ^ Arrays.hashCode(swallow));
   }
@@ -75,15 +84,17 @@ final class TransactionalImpl
     }
 
     final Transactional spec = (Transactional) o;
-    return Arrays.equals(commitOn, spec.commitOn())
+    return reason.equals(spec.reason())
+        && Arrays.equals(commitOn, spec.commitOn())
         && Arrays.equals(retryOn, spec.retryOn())
         && Arrays.equals(swallow, spec.swallow());
   }
 
   @Override
   public String toString() {
-    return String.format("@%s(commitOn=%s, retryOn=%s, swallow=%s)",
+    return String.format("@%s(reason=%s, commitOn=%s, retryOn=%s, swallow=%s)",
         annotationType().getName(),
+        reason,
         Arrays.toString(commitOn),
         Arrays.toString(retryOn),
         Arrays.toString(swallow));

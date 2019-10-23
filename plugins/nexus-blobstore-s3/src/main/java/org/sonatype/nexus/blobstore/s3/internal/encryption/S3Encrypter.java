@@ -19,7 +19,7 @@ import com.amazonaws.services.s3.model.InitiateMultipartUploadRequest;
 /**
  * Adds any encryption necessary to S3 requests.
  *
- * @since 3.next
+ * @since 3.19
  */
 public interface S3Encrypter
 {

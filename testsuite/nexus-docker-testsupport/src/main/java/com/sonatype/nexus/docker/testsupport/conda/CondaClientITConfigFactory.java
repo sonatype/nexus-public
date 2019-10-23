@@ -22,7 +22,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 /**
  * Factory for creation of Conda required objects
  *
- * @since 3.next
+ * @since 3.19
  */
 public class CondaClientITConfigFactory
 {

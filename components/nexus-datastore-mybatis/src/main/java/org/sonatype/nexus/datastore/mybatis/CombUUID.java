@@ -20,7 +20,7 @@ import org.sonatype.nexus.common.sequence.ThreadLocalSplittableRandom;
 /**
  * Generates COMB-style {@link UUID}s for use as database keys: 6-byte timestamp plus 10-byte randomness.
  *
- * @since 3.next
+ * @since 3.19
  */
 public class CombUUID
 {

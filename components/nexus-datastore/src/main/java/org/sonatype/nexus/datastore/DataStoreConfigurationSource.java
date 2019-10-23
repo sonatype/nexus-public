@@ -17,7 +17,7 @@ import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
 /**
  * Source of {@link DataStoreConfiguration}s.
  *
- * @since 3.next
+ * @since 3.19
  */
 public interface DataStoreConfigurationSource
 {

@@ -15,7 +15,7 @@
 /**
  * Datastore "Settings" panel.
  *
- * @since 3.next
+ * @since 3.19
  */
 Ext.define('NX.coreui.view.datastore.DatastoreSettings', {
   extend: 'NX.view.SettingsPanel',

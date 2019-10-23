@@ -26,7 +26,7 @@ import org.apache.http.util.EntityUtils;
 import static com.google.common.net.HttpHeaders.IF_MODIFIED_SINCE;
 
 /**
- * @since 3.next
+ * @since 3.19
  * Conda Client
  */
 public class CondaClient

@@ -94,7 +94,7 @@ public abstract class BlobSupport
   /**
    * Gets the natural input stream for the given blob
    *
-   * @since 3.next
+   * @since 3.19
    */
   protected abstract InputStream doGetInputStream();
 }

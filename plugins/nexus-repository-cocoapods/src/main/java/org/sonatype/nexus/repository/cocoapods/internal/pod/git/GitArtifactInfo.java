@@ -17,7 +17,7 @@ import javax.annotation.Nullable;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 public class GitArtifactInfo
 {

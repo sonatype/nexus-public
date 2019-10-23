@@ -41,7 +41,7 @@ import static org.sonatype.nexus.datastore.mybatis.CombUUID.combUUID;
 /**
  * MyBatis {@link Executor} wrapper that automatically generates {@link EntityId}s for new entities.
  *
- * @since 3.next
+ * @since 3.19
  */
 public class EntityExecutor
     implements Executor

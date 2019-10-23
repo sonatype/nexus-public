@@ -18,10 +18,9 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.view.Content;
-import org.sonatype.nexus.repository.view.Payload;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 @Facet.Exposed
 public interface CocoapodsFacet
@@ -30,7 +29,7 @@ public interface CocoapodsFacet
   @Nullable
   Content get(final String path);
 
-  Content getOrCreateAsset(final String path, final Payload payload, boolean toAttachComponent) throws IOException;
+  Content getOrCreateAsset(final String path, final Content content, boolean toAttachComponent) throws IOException;
 
   boolean delete(final String path) throws IOException;
 }

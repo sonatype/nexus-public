@@ -25,7 +25,7 @@ import static java.util.Objects.nonNull;
 /**
  * Repository / Cleanup Util that provide utilities for the the cleanup attributes.
  *
- * @since 3.next
+ * @since 3.19
  */
 public class RepositoryCleanupAttributesUtil
 {

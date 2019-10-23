@@ -29,7 +29,7 @@ import static org.sonatype.nexus.repository.rest.internal.resources.doc.ContentS
 /**
  * ContentSelector transfer object for REST APIs.
  *
- * @since 3.next
+ * @since 3.19
  */
 @CompileStatic
 @ToString(includePackage = false, includeNames = true)

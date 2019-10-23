@@ -15,7 +15,7 @@
 /**
  * Datastore grid.
  *
- * @since 3.next
+ * @since 3.19
  */
 Ext.define('NX.coreui.view.datastore.DatastoreList', {
   extend: 'NX.view.drilldown.Master',

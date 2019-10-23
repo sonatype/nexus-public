@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.rest.api.model;
 
-import java.util.List;
+import java.util.Collection;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -27,14 +27,14 @@ public class CleanupPolicyAttributes
 {
   @ApiModelProperty(value = "Components that match any of the applied policies will be deleted",
       example = "weekly-cleanup")
-  protected List<String> policyNames;
+  protected Collection<String> policyNames;
 
   @JsonCreator
-  public CleanupPolicyAttributes(@JsonProperty("policyNames") final List<String> policyNames) {
+  public CleanupPolicyAttributes(@JsonProperty("policyNames") final Collection<String> policyNames) {
     this.policyNames = policyNames;
   }
 
-  public List<String> getPolicyNames() {
+  public Collection<String> getPolicyNames() {
     return policyNames;
   }
 }

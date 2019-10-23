@@ -20,7 +20,6 @@ import org.sonatype.nexus.repository.config.Configuration
 import org.sonatype.nexus.repository.routing.RoutingMode
 import org.sonatype.nexus.repository.routing.RoutingRule
 import org.sonatype.nexus.repository.routing.RoutingRuleStore
-import org.sonatype.nexus.repository.routing.RoutingRulesConfiguration
 import org.sonatype.nexus.repository.routing.internal.RoutingRuleEntityAdapter
 import org.sonatype.nexus.repository.routing.internal.RoutingRuleStoreImpl
 import org.sonatype.nexus.security.PasswordHelper
@@ -51,13 +50,11 @@ class ConfigurationStoreImplTest
 
   private RoutingRuleStore routingRuleStore
 
-  private RoutingRulesConfiguration routingRulesConfiguration = new RoutingRulesConfiguration(true)
-
   private RoutingRuleEntityAdapter routingRuleEntityAdapter = new RoutingRuleEntityAdapter()
 
   @Before
   void setUp() {
-    def entityAdapter = new ConfigurationEntityAdapter(passwordHelper, routingRulesConfiguration, routingRuleEntityAdapter)
+    def entityAdapter = new ConfigurationEntityAdapter(passwordHelper, routingRuleEntityAdapter)
     entityAdapter.enableObfuscation(new HexRecordIdObfuscator())
     routingRuleEntityAdapter.enableObfuscation(new HexRecordIdObfuscator())
 
@@ -165,8 +162,7 @@ class ConfigurationStoreImplTest
 
   @Test
   void 'save routing rule id'() {
-    routingRuleStore = new RoutingRuleStoreImpl(database.instanceProvider, routingRuleEntityAdapter,
-        routingRulesConfiguration)
+    routingRuleStore = new RoutingRuleStoreImpl(database.instanceProvider, routingRuleEntityAdapter)
     routingRuleStore.start()
 
     RoutingRule routingRule = routingRuleStore.create(new RoutingRule(

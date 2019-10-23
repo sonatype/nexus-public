@@ -54,7 +54,7 @@ public interface BlobStoreMetrics
   /**
    * Indicates if the blob store metrics cannot be accessed to determine metrics.
    *
-   * @since 3.next
+   * @since 3.19
    */
   boolean isUnavailable();
 }

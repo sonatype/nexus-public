@@ -15,7 +15,7 @@ package org.sonatype.nexus.datastore.api;
 /**
  * Each {@link DataAccess} mapping consists of a schema and associated operations.
  *
- * @since 3.next
+ * @since 3.19
  */
 public interface DataAccess
 {

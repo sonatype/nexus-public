@@ -15,7 +15,7 @@
 /**
  * Datastores controller.
  *
- * @since 3.next
+ * @since 3.19
  */
 Ext.define('NX.coreui.controller.Datastores', {
   extend: 'NX.controller.Drilldown',

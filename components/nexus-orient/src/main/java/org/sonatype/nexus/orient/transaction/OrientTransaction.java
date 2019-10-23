@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.transaction.Transactional.DEFAULT_REASON;
 
 /**
  * {@link Transaction} backed by an OrientDB connection.
@@ -33,6 +34,8 @@ public class OrientTransaction
   private final ODatabaseDocumentTx db;
 
   private int retries = 0;
+
+  private String reason = DEFAULT_REASON;
 
   OrientTransaction(final ODatabaseDocumentTx db) {
     this.db = checkNotNull(db);
@@ -100,6 +103,16 @@ public class OrientTransaction
     else {
       return false;
     }
+  }
+
+  @Override
+  public void reason(final String reason) {
+    this.reason = checkNotNull(reason);
+  }
+
+  @Override
+  public String reason() {
+    return reason;
   }
 
   @Override

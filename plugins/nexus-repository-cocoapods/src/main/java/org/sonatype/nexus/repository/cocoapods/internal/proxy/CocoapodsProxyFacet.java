@@ -44,9 +44,10 @@ import static org.sonatype.nexus.repository.cache.CacheControllerHolder.CONTENT;
 import static org.sonatype.nexus.repository.cocoapods.internal.AssetKind.SPEC;
 import static org.sonatype.nexus.repository.cocoapods.internal.CocoapodsFormat.CDN_METADATA_PREFIX;
 import static org.sonatype.nexus.repository.cocoapods.internal.CocoapodsFormat.removeInitialSlashFromPath;
+import static org.sonatype.nexus.repository.cocoapods.internal.pod.PodsUtils.extractPodPath;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 @Named
 @Facet.Exposed
@@ -103,7 +104,7 @@ public class CocoapodsProxyFacet
         }
       case SPEC:
       case POD:
-        ret = facet(CocoapodsFacet.class).get(path);
+        ret = facet(CocoapodsFacet.class).get(extractPodPath(context));
         break;
       default:
         throw new IllegalStateException(ASSET_KIND_ERROR + assetKind.name());
@@ -131,7 +132,7 @@ public class CocoapodsProxyFacet
         cacheControllerHolder.getMetadataCacheController().invalidateCache();
         break;
       case POD:
-        ret = facet(CocoapodsFacet.class).getOrCreateAsset(path, content, toAttachComponent);
+        ret = facet(CocoapodsFacet.class).getOrCreateAsset(extractPodPath(context), content, toAttachComponent);
         break;
       default:
         throw new IllegalStateException(ASSET_KIND_ERROR + assetKind.name());
@@ -141,7 +142,7 @@ public class CocoapodsProxyFacet
 
   @Override
   protected String getUrl(final Context context) {
-    final String path = removeInitialSlashFromPath(context.getRequest().getPath());
+    String path = removeInitialSlashFromPath(context.getRequest().getPath());
     String ret;
     AssetKind assetKind = context.getAttributes().require(AssetKind.class);
     switch (assetKind) {
@@ -150,7 +151,7 @@ public class CocoapodsProxyFacet
         ret = path;
         break;
       case POD:
-        ret = podPathParser.parse(path).getUri().toString();
+        ret = podPathParser.parse(extractPodPath(context)).getUri().toString();
         break;
       default:
         throw new IllegalStateException(ASSET_KIND_ERROR + assetKind.name());

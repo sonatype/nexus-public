@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.config.Configuration;
 /**
  * Configuration checks can be conducted for any new or updated repositories
  *
- * @since 3.next
+ * @since 3.19
  */
 public interface ConfigurationValidator
 {

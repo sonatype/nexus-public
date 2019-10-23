@@ -21,7 +21,7 @@ import com.amazonaws.services.s3.model.InitiateMultipartUploadRequest;
 /**
  * Adds no encryption to a S3 request.
  *
- * @since 3.next
+ * @since 3.19
  */
 @Named(NoEncrypter.ID)
 public class NoEncrypter

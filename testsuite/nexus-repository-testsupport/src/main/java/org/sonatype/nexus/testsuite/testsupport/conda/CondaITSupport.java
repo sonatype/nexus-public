@@ -37,7 +37,7 @@ import static java.util.stream.Collectors.toList;
 /**
  * Support for Conda ITs.
  *
- * @since 3.next
+ * @since 3.19
  */
 @Category(CondaTestGroup.class)
 public class CondaITSupport

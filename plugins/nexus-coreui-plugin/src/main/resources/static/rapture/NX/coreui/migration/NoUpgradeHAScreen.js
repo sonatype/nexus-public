@@ -13,7 +13,7 @@
 /*global Ext, NX*/
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 Ext.define('NX.coreui.migration.NoUpgradeHAScreen', {
   extend: 'NX.wizard.Screen',

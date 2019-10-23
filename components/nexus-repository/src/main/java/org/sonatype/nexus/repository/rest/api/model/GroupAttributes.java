@@ -12,7 +12,9 @@
  */
 package org.sonatype.nexus.repository.rest.api.model;
 
-import java.util.List;
+import java.util.Collection;
+
+import org.sonatype.nexus.repository.rest.SameFormat;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -28,14 +30,15 @@ public class GroupAttributes
 {
   @ApiModelProperty(value = "Member repositories' names", example = "internal, external-proxy")
   @NotEmpty
-  protected final List<String> memberNames;
+  @SameFormat
+  protected final Collection<String> memberNames;
 
   @JsonCreator
-  public GroupAttributes(@JsonProperty("memberNames") final List<String> memberNames) {
+  public GroupAttributes(@JsonProperty("memberNames") final Collection<String> memberNames) {
     this.memberNames = memberNames;
   }
 
-  public List<String> getMemberNames() {
+  public Collection<String> getMemberNames() {
     return memberNames;
   }
 }

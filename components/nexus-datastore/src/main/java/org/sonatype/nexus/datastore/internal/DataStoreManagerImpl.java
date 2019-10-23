@@ -56,7 +56,7 @@ import static org.sonatype.nexus.common.text.Strings2.lower;
 /**
  * Default {@link DataStoreManager} implementation.
  *
- * @since 3.next
+ * @since 3.19
  */
 @Named
 @Singleton

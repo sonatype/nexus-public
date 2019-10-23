@@ -29,6 +29,15 @@ import java.lang.annotation.Target;
 @Target({ ElementType.METHOD, ElementType.ANNOTATION_TYPE })
 public @interface Transactional
 {
+  String DEFAULT_REASON = "transaction";
+
+  /**
+   * The reason for this transactional operation.
+   *
+   * @since 3.next
+   */
+  String reason() default DEFAULT_REASON;
+
   /**
    * List of exceptions to commit (not rollback) on.
    */

@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.Format;
 /**
  * Conda repository format.
  *
- * @since 3.next
+ * @since 3.19
  */
 @Named(CondaFormat.NAME)
 @Singleton

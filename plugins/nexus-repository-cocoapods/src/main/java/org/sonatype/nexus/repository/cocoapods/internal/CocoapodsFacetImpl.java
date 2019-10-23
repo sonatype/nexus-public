@@ -37,7 +37,6 @@ import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalTouchBlob;
 import org.sonatype.nexus.repository.view.Content;
-import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.BlobPayload;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
@@ -52,7 +51,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 import static org.sonatype.nexus.repository.storage.Query.builder;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 @Named
 public class CocoapodsFacetImpl
@@ -84,8 +83,9 @@ public class CocoapodsFacetImpl
     if (asset == null) {
       return null;
     }
-
-    return new Content(new BlobPayload(tx.requireBlob(asset.requireBlobRef()), asset.requireContentType()));
+    Content content = new Content(new BlobPayload(tx.requireBlob(asset.requireBlobRef()), asset.requireContentType()));
+    Content.extractFromAsset(asset, HASH_ALGORITHMS, content.getAttributes());
+    return content;
   }
 
   @Override
@@ -97,11 +97,11 @@ public class CocoapodsFacetImpl
 
   @Override
   @TransactionalStoreBlob
-  public Content getOrCreateAsset(final String path, final Payload payload, boolean toAttachComponent)
+  public Content getOrCreateAsset(final String path, final Content content, boolean toAttachComponent)
       throws IOException
   {
     StorageFacet storageFacet = facet(StorageFacet.class);
-    try (final TempBlob tempBlob = storageFacet.createTempBlob(payload, HASH_ALGORITHMS)) {
+    try (final TempBlob tempBlob = storageFacet.createTempBlob(content, HASH_ALGORITHMS)) {
       StorageTx tx = UnitOfWork.currentTx();
       Bucket bucket = tx.findBucket(getRepository());
 
@@ -115,12 +115,13 @@ public class CocoapodsFacetImpl
           asset = tx.createAsset(bucket, getRepository().getFormat()).name(path);
         }
       }
+      Content.applyToAsset(asset, content.getAttributes());
       AssetBlob blob = tx.setBlob(asset, path, tempBlob, HASH_ALGORITHMS, null, null, false);
       tx.saveAsset(asset);
 
-      final Content content = new Content(new BlobPayload(blob.getBlob(), asset.requireContentType()));
-      Content.extractFromAsset(asset, HASH_ALGORITHMS, content.getAttributes());
-      return content;
+      final Content updatedContent = new Content(new BlobPayload(blob.getBlob(), asset.requireContentType()));
+      Content.extractFromAsset(asset, HASH_ALGORITHMS, updatedContent.getAttributes());
+      return updatedContent;
     }
   }
 

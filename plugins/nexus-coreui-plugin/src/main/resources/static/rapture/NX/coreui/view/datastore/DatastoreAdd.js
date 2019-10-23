@@ -15,7 +15,7 @@
 /**
  * Add datastore window.
  *
- * @since 3.next
+ * @since 3.19
  */
 Ext.define('NX.coreui.view.datastore.DatastoreAdd', {
   extend: 'NX.view.AddPanel',

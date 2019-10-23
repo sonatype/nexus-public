@@ -19,7 +19,7 @@ import org.sonatype.nexus.security.privilege.Privilege;
 import org.sonatype.nexus.security.privilege.rest.PrivilegeAction;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 public class ApiPrivilegeRepositoryViewRequest
     extends ApiPrivilegeWithRepositoryRequest

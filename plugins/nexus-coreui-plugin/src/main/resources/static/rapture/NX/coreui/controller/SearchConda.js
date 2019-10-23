@@ -15,7 +15,7 @@
  * global Ext, NX
  * Conda repository search contribution.
  *
- * @since 3.next
+ * @since 3.19
  */
 Ext.define('NX.coreui.controller.SearchConda', {
   extend: 'NX.app.Controller',

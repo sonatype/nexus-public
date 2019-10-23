@@ -31,7 +31,7 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 import static java.util.Collections.emptySet;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 @Named
 public class CondaComponentMaintenanceFacet

@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 /**
  * Cocoapods format security facet
  *
- * @since 3.next
+ * @since 3.19
  */
 @Named
 public class CocoapodsSecurityFacet

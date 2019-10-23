@@ -33,7 +33,7 @@ import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 /**
  * Swagger documentation for {@link RoleApiResource}
  *
- * @since 3.next
+ * @since 3.19
  */
 @Api(value = "Security Management: Roles")
 public interface RoleApiResourceDoc

@@ -37,8 +37,10 @@ import org.sonatype.nexus.repository.storage.UnitOfWorkHandler;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet;
 import org.sonatype.nexus.repository.view.Context;
+import org.sonatype.nexus.repository.view.Matcher;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.Response;
+import org.sonatype.nexus.repository.view.Route;
 import org.sonatype.nexus.repository.view.handlers.BrowseUnsupportedHandler;
 import org.sonatype.nexus.repository.view.handlers.ConditionalRequestHandler;
 import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler;
@@ -54,9 +56,12 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.stubbing.Answer;
 
+import com.google.common.collect.ImmutableList;
+
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
@@ -64,7 +69,7 @@ import static org.mockito.Matchers.any;
 import static org.sonatype.nexus.repository.view.Router.LOCAL_ATTRIBUTE_PREFIX;
 
 /**
- * @since 3.next
+ * @since 3.19
  */
 public class CondaProxyRecipeTest
     extends TestSupport
@@ -178,6 +183,8 @@ public class CondaProxyRecipeTest
     when(request.getAction()).thenReturn(HttpMethods.GET);
     when(securityHandler.handle(any())).thenAnswer(createPropagationAnswer());
     when(timingHandler.handle(any())).thenAnswer(createPropagationAnswer());
+    when(browseUnsupportedHandler.getRoute()).thenReturn(
+        new Route(mock(Matcher.class), ImmutableList.of(securityHandler, browseUnsupportedHandler)));
 
     proxyRecipe = new CondaProxyRecipe(new ProxyType(), format);
 

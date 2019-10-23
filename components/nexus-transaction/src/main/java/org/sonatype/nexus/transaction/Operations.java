@@ -24,8 +24,9 @@ import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.transaction.UnitOfWork.peekTransaction;
+import static org.sonatype.nexus.transaction.Transactional.DEFAULT_REASON;
 import static org.sonatype.nexus.transaction.UnitOfWork.openSession;
+import static org.sonatype.nexus.transaction.UnitOfWork.peekTransaction;
 
 /**
  * Fluent API for wrapping lambda operations with {@link Transactional} behaviour:
@@ -76,7 +77,7 @@ public class Operations<E extends Exception, B extends Operations<E, B>>
   private static final Class<?>[] NOTHING = {};
 
   @VisibleForTesting
-  static final Transactional DEFAULT_SPEC = new TransactionalImpl(NOTHING, NOTHING, NOTHING);
+  static final Transactional DEFAULT_SPEC = new TransactionalImpl(DEFAULT_REASON, NOTHING, NOTHING, NOTHING);
 
   @VisibleForTesting
   final Transactional spec;
@@ -88,12 +89,20 @@ public class Operations<E extends Exception, B extends Operations<E, B>>
   private final TransactionalStore<?> store;
 
   /**
+   * @see Transactional#reason()
+   * @since 3.next
+   */
+  public final B reason(final String reason) {
+    return (B) copy(new TransactionalImpl(reason, spec.commitOn(), spec.retryOn(), spec.swallow()), throwing, store);
+  }
+
+  /**
    * @see Transactional#commitOn()
    */
   @SafeVarargs
   public final B commitOn(final Class<? extends Exception>... exceptionTypes) {
     Class<?>[] commitOn = deepCheckNotNull(exceptionTypes).clone();
-    return (B) copy(new TransactionalImpl(commitOn, spec.retryOn(), spec.swallow()), throwing, store);
+    return (B) copy(new TransactionalImpl(spec.reason(), commitOn, spec.retryOn(), spec.swallow()), throwing, store);
   }
 
   /**
@@ -102,7 +111,7 @@ public class Operations<E extends Exception, B extends Operations<E, B>>
   @SafeVarargs
   public final B retryOn(final Class<? extends Exception>... exceptionTypes) {
     Class<?>[] retryOn = deepCheckNotNull(exceptionTypes).clone();
-    return (B) copy(new TransactionalImpl(spec.commitOn(), retryOn, spec.swallow()), throwing, store);
+    return (B) copy(new TransactionalImpl(spec.reason(), spec.commitOn(), retryOn, spec.swallow()), throwing, store);
   }
 
   /**
@@ -111,7 +120,7 @@ public class Operations<E extends Exception, B extends Operations<E, B>>
   @SafeVarargs
   public final B swallow(final Class<? extends Exception>... exceptionTypes) {
     Class<?>[] swallow = deepCheckNotNull(exceptionTypes).clone();
-    return (B) copy(new TransactionalImpl(spec.commitOn(), spec.retryOn(), swallow), throwing, store);
+    return (B) copy(new TransactionalImpl(spec.reason(), spec.commitOn(), spec.retryOn(), swallow), throwing, store);
   }
 
   /**
@@ -144,7 +153,7 @@ public class Operations<E extends Exception, B extends Operations<E, B>>
   /**
    * Uses the given {@link TransactionalStore} to supply {@link TransactionalSession}s.
    *
-   * @since 3.next
+   * @since 3.19
    */
   public final B withStore(final TransactionalStore<?> _store) {
     return (B) copy(spec, throwing, checkNotNull(_store));
@@ -200,9 +209,12 @@ public class Operations<E extends Exception, B extends Operations<E, B>>
    */
   private <T> T transactional(final OperationPoint<T, E> point) throws E {
     Transaction tx = peekTransaction();
-    if (tx != null) {
+    if (tx != null) { // nested transactional session
+      if (store != null) {
+        tx.capture(store);
+      }
       if (tx.isActive()) {
-        return point.proceed(); // nested transaction, no need to wrap
+        return point.proceed(); // no need to wrap active transaction
       }
       return proceedWithTransaction(point, tx);
     }

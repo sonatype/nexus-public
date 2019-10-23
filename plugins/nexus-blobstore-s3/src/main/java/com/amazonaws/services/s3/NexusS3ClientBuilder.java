@@ -24,7 +24,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * It is located in this package because of {@code S3CredentialsProviderChain} and {@code AmazonS3ClientParamsWrapper}
  *
- * @since 3.next
+ * @since 3.19
  */
 public class NexusS3ClientBuilder
     extends AmazonS3Builder<NexusS3ClientBuilder, AmazonS3>

@@ -26,6 +26,7 @@ import javax.inject.Inject;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
+import org.sonatype.nexus.blobstore.api.BlobSession;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
@@ -53,6 +54,8 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
 {
   public static final String BLOB_ATTRIBUTE_SUFFIX = ".properties";
 
+  public static final String CONTENT_TMP_PATH = "/content/tmp/";
+
   private final Map<String, Timer> timers = new ConcurrentHashMap<>();
 
   private MetricRegistry metricRegistry;
@@ -67,6 +70,10 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
       .compile(
           ".*vol-\\d{2}[/\\\\]chap-\\d{2}[/\\\\]\\b[0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12}\\b.properties$",
           Pattern.CASE_INSENSITIVE);
+
+  public static final int MAX_NAME_LENGTH = 255;
+
+  public static final int MIN_NAME_LENGTH = 1;
 
   public BlobStoreSupport(final BlobIdLocationResolver blobIdLocationResolver,
                           final DryRunPrefix dryRunPrefix)
@@ -86,6 +93,12 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
 
   private void checkIsWritable() {
     checkState(isWritable(), "Operation not permitted when blob store is not writable");
+  }
+
+  @Override
+  @Guarded(by = STARTED)
+  public BlobSession<?> openSession() {
+    return new MemoryBlobSession(this);
   }
 
   @Override

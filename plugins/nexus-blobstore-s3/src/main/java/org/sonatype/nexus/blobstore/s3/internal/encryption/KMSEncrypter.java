@@ -28,7 +28,7 @@ import static java.util.Optional.empty;
  * Adds KMS encryption to S3 requests.
  * The keyID is optional and in the params
  *
- * @since 3.next
+ * @since 3.19
  */
 @Named(KMSEncrypter.ID)
 public class KMSEncrypter

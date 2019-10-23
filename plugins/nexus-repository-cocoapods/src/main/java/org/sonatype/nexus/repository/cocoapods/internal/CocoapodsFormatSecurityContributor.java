@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.security.RepositoryFormatSecurityContributo
 /**
  * Cocoapods format security resource
  *
- * @since 3.next
+ * @since 3.19
  */
 @Named
 @Singleton

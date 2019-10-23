@@ -17,7 +17,7 @@ import java.util.Date;
 /**
  * Encapsulates the end state of the last run of a task.
  *
- * @since 3.next
+ * @since 3.19
  */
 public interface LastRunState
 {

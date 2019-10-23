@@ -30,7 +30,6 @@ import org.sonatype.nexus.common.thread.TcclBlock;
 import org.sonatype.nexus.datastore.DataStoreSupport;
 import org.sonatype.nexus.datastore.api.DataAccess;
 import org.sonatype.nexus.datastore.api.DataStore;
-import org.sonatype.nexus.transaction.Transaction;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
@@ -70,12 +69,12 @@ import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.SC
 /**
  * MyBatis {@link DataStore}.
  *
- * @since 3.next
+ * @since 3.19
  */
 @Named(MyBatisDataStoreDescriptor.NAME)
 @SuppressWarnings("rawtypes")
 public class MyBatisDataStore
-    extends DataStoreSupport<Transaction, MyBatisDataSession>
+    extends DataStoreSupport<MyBatisDataSession>
 {
   private static final String REGISTERED_MESSAGE = "Registered {} with MyBatis";
 

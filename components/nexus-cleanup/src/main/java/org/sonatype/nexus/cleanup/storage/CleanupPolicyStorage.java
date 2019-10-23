@@ -25,6 +25,12 @@ public interface CleanupPolicyStorage
     extends Lifecycle
 {
   /**
+   * @since 3.next
+   * @return the count of cleanup policies stored
+   */
+  long count();
+
+  /**
    * Adds a cleanup policy
    *
    * @param item to be added
