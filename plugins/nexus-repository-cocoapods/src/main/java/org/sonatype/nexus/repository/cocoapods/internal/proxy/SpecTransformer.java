@@ -82,7 +82,7 @@ public class SpecTransformer
     }
 
     final String name = jsonSpec.get(POD_NAME_FIELD).asText();
-    final String version = jsonSpec.get(POD_VERSION_FIELD).asText();
+    final String version = jsonSpec.get(POD_VERSION_FIELD).asText().trim();
 
     URI sourceUri = buidProxiedUri(jsonSpec.get(SOURCE_NODE_NAME), name, version, repoUri);
 
