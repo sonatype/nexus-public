@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.blobstore.s3.internal
 
+import com.amazonaws.services.s3.model.BucketLifecycleConfiguration
+
 import java.util.stream.Collectors
 
 import org.sonatype.nexus.blobstore.BlobIdLocationResolver
@@ -157,6 +159,8 @@ class S3BlobStoreTest
       2 * s3.doesObjectExist('mybucket', pathPrefix + propertiesLocation(blobId)) >> true
       2 * s3.getObject('mybucket', pathPrefix + propertiesLocation(blobId)) >> attributesS3Object
 
+      s3.getBucketLifecycleConfiguration('mybucket') >> new BucketLifecycleConfiguration()
+
     when: 'blob is deleted'
       def deleted = blobStore.delete(blobId, 'successful test')
 
@@ -183,6 +187,8 @@ class S3BlobStoreTest
       blobStore.init(config)
       blobStore.doStart()
 
+      s3.getBucketLifecycleConfiguration('mybucket') >> new BucketLifecycleConfiguration()
+
     when: 'nonexistent blob is deleted'
       def deleted = blobStore.delete(new BlobId('soft-delete-fail'), 'test')
 
@@ -200,6 +206,8 @@ class S3BlobStoreTest
       def attributesS3Object = mockS3Object(attributesContents)
       _ * s3.doesObjectExist('mybucket', propertiesLocation(blobId)) >> true
       _ * s3.getObject('mybucket', propertiesLocation(blobId)) >> attributesS3Object
+
+      s3.getBucketLifecycleConfiguration('mybucket') >> new BucketLifecycleConfiguration()
 
     when: 'blob is deleted with given lifecycle expiry days'
       cfg.attributes('s3').set('expiration', expiryDays)

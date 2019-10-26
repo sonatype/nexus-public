@@ -366,48 +366,54 @@ public class S3BlobStore
   private boolean expire(final BlobId blobId, final String reason) {
     final S3Blob blob = liveBlobs.getUnchecked(blobId);
 
-    Lock lock = blob.lock();
-    try {
-      log.debug("Soft deleting blob {}", blobId);
+    // if used s3 storage has a lifecycle configuration, otherwise do hard delete
+    if (s3.getBucketLifecycleConfiguration(getConfiguredBucket()) != null) {
+      Lock lock = blob.lock();
+      try {
+        log.debug("Soft deleting blob {}", blobId);
 
-      S3BlobAttributes blobAttributes = new S3BlobAttributes(s3, getConfiguredBucket(), attributePath(blobId));
+        S3BlobAttributes blobAttributes = new S3BlobAttributes(s3, getConfiguredBucket(), attributePath(blobId));
 
-      boolean loaded = blobAttributes.load();
-      if (!loaded) {
-        // This could happen under some concurrent situations (two threads try to delete the same blob)
-        // but it can also occur if the deleted index refers to a manually-deleted blob.
-        log.warn("Attempt to mark-for-delete non-existent blob {}", blobId);
-        return false;
+        boolean loaded = blobAttributes.load();
+        if (!loaded) {
+         // This could happen under some concurrent situations (two threads try to delete the same blob)
+         // but it can also occur if the deleted index refers to a manually-deleted blob.
+          log.warn("Attempt to mark-for-delete non-existent blob {}", blobId);
+          return false;
+        }
+        else if (blobAttributes.isDeleted()) {
+          log.debug("Attempt to delete already-deleted blob {}", blobId);
+          return false;
+        }
+
+        blobAttributes.setDeleted(true);
+        blobAttributes.setDeletedReason(reason);
+        blobAttributes.setDeletedDateTime(new DateTime());
+        blobAttributes.store();
+
+        // soft delete is implemented using an S3 lifecycle that sets expiration on objects with DELETED_TAG
+        // tag the bytes
+        s3.setObjectTagging(tagAsDeleted(contentPath(blobId)));
+        // tag the attributes
+        s3.setObjectTagging(tagAsDeleted(attributePath(blobId)));
+        blob.markStale();
+
+        Long contentSize = getContentSizeForDeletion(blobAttributes);
+        if (contentSize != null) {
+          storeMetrics.recordDeletion(contentSize);
+        }
+
+        return true;
       }
-      else if (blobAttributes.isDeleted()) {
-        log.debug("Attempt to delete already-deleted blob {}", blobId);
-        return false;
+      catch (Exception e) {
+        throw new BlobStoreException(e, blobId);
       }
-
-      blobAttributes.setDeleted(true);
-      blobAttributes.setDeletedReason(reason);
-      blobAttributes.setDeletedDateTime(new DateTime());
-      blobAttributes.store();
-
-      // soft delete is implemented using an S3 lifecycle that sets expiration on objects with DELETED_TAG
-      // tag the bytes
-      s3.setObjectTagging(tagAsDeleted(contentPath(blobId)));
-      // tag the attributes
-      s3.setObjectTagging(tagAsDeleted(attributePath(blobId)));
-      blob.markStale();
-
-      Long contentSize = getContentSizeForDeletion(blobAttributes);
-      if (contentSize != null) {
-        storeMetrics.recordDeletion(contentSize);
+      finally {
+        lock.unlock();
       }
-
-      return true;
     }
-    catch (Exception e) {
-      throw new BlobStoreException(e, blobId);
-    }
-    finally {
-      lock.unlock();
+    else {
+        return deleteHard(blobId);
     }
   }
 
