@@ -185,7 +185,10 @@ public class BucketManager
       s3.setBucketLifecycleConfiguration(bucket, newLifecycleConfiguration);
     }
     else {
-      s3.deleteBucketLifecycleConfiguration(bucket);
+      // check if there is a lifecycleconfiguration before trying to delete one
+      if (s3.getBucketLifecycleConfiguration(bucket) != null) {
+        s3.deleteBucketLifecycleConfiguration(bucket);
+      }
     }
   }
 

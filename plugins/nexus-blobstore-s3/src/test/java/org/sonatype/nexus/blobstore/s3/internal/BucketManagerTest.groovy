@@ -178,6 +178,24 @@ class BucketManagerTest
       0 * s3.setBucketLifecycleConfiguration(_, _)
   }
 
+  def 'lifecycle configuration does not try to deleted non-existing one'() {
+    given: 'bucket without lifecycle configuration'
+
+    s3.doesBucketExistV2('mybucket') >> true
+    s3.getBucketLifecycleConfiguration('mybucket') >> null
+
+    def cfg = new BlobStoreConfiguration(name: 'mybucket')
+    cfg.attributes = [s3: [bucket: 'mybucket', expiration: '0']]
+    bucketManager.s3 = s3
+
+    when: 'prepareStorageLocation called'
+    bucketManager.prepareStorageLocation(cfg)
+
+    then: 'no call to delete non-existent lifecycle configuration'
+    0 * s3.deleteBucketLifecycleConfiguration(_)
+    0 * s3.setBucketLifecycleConfiguration(_, _)
+  }
+
   def 'global lifecycle rule switched to blob store specific if present'() {
     given: 'global lifecycleConfiguration with inital expiry days'
       def bucketConfig = new BucketLifecycleConfiguration()
