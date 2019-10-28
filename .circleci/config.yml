@@ -28,6 +28,7 @@ jobs:
   deploy-snapshot:
     executor: my-executor
     steps:
+      - checkout
       - run:
           name: Deploy Snapshot
           command: |
@@ -42,4 +43,4 @@ workflows:
             branches:
               only: master
           requires:
-          - build
+            - build
