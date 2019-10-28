@@ -1053,10 +1053,10 @@
                 </requireMavenVersion>
 
                 <!--
-                Require Java 8+
+                Require Java 8+, and less than 9
                 -->
                 <requireJavaVersion>
-                  <version>[1.8,)</version>
+                  <version>[1.8,1.9)</version>
                 </requireJavaVersion>
               </rules>
             </configuration>
