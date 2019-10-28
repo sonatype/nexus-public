@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.apt.rest;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 import org.sonatype.nexus.repository.apt.internal.AptFormat;
@@ -34,6 +35,7 @@ public class AptProxyRepositoryApiRequest
     extends ProxyRepositoryApiRequest
 {
   @NotNull
+  @Valid
   protected final AptProxyRepositoriesAttributes apt;
 
   @SuppressWarnings("squid:S00107") // suppress constructor parameter count

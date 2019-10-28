@@ -24,20 +24,20 @@ import org.hibernate.validator.constraints.NotEmpty;
  */
 public abstract class AbstractRepositoryApiRequest
 {
-  @ApiModelProperty(value = "A unique identifier for this repository", example = "internal")
+  @ApiModelProperty(value = "A unique identifier for this repository", example = "internal", required = true)
   @NotEmpty
   protected String name;
 
-  @ApiModelProperty(value = "Component format used by this repository", example = "npm")
+  @ApiModelProperty(value = "Component format used by this repository", hidden = true)
   @NotEmpty
   protected String format;
 
   @ApiModelProperty(value = "Controls if deployments of and updates to artifacts are allowed",
-      allowableValues = "hosted,proxy,group", example = "hosted")
+      allowableValues = "hosted,proxy,group", hidden = true)
   @NotEmpty
   protected String type;
 
-  @ApiModelProperty(value = "Whether this repository accepts incoming requests", example = "true")
+  @ApiModelProperty(value = "Whether this repository accepts incoming requests", example = "true", required = true)
   @NotNull
   protected Boolean online;
 

@@ -12,10 +12,13 @@
  */
 package org.sonatype.nexus.repository.rest.api.model;
 
+import javax.validation.constraints.NotNull;
+
+import org.sonatype.nexus.repository.storage.WritePolicy;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
-import org.hibernate.validator.constraints.NotEmpty;
 
 /**
  * REST API model for describing storage of hosted repositories.
@@ -25,23 +28,23 @@ import org.hibernate.validator.constraints.NotEmpty;
 public class HostedStorageAttributes
     extends StorageAttributes
 {
-  @ApiModelProperty(value = "Controls if deployments of and updates to artifacts are allowed",
+  @ApiModelProperty(value = "Controls if deployments of and updates to assets are allowed",
       allowableValues = "allow,allow_once,deny",
       example = "allow_once")
-  @NotEmpty
-  protected final String writePolicy;
+  @NotNull
+  protected final WritePolicy writePolicy;
 
   @JsonCreator
   public HostedStorageAttributes(
       @JsonProperty("blobStoreName") final String blobStoreName,
       @JsonProperty("strictContentTypeValidation") final Boolean strictContentTypeValidation,
-      @JsonProperty("writePolicy") final String writePolicy)
+      @JsonProperty("writePolicy") final WritePolicy writePolicy)
   {
     super(blobStoreName, strictContentTypeValidation);
     this.writePolicy = writePolicy;
   }
 
-  public String getWritePolicy() {
+  public WritePolicy getWritePolicy() {
     return writePolicy;
   }
 }

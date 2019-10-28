@@ -16,7 +16,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
@@ -34,6 +36,7 @@ import org.osgi.util.tracker.ServiceTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.lang.Boolean.parseBoolean;
 import static java.util.prefs.Preferences.userRoot;
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshBundles;
 import static org.apache.karaf.features.FeaturesService.Option.NoAutoRefreshManagedBundles;
@@ -64,6 +67,8 @@ public class BootstrapListener
   private static final String NEXUS_OSS_EDITION = "nexus-oss-edition";
 
   private static final String NEXUS_OSS_FEATURE = "nexus-oss-feature";
+
+  private static final String NEXUS_DB_FEATURE = "nexus-db-feature";
 
   private ListenerTracker listenerTracker;
 
@@ -98,6 +103,8 @@ public class BootstrapListener
         }
       }
 
+      selectDbFeature(properties);
+
       // pass bootstrap properties to embedded servlet listener
       servletContext.setAttribute("nexus.properties", properties);
 
@@ -114,6 +121,7 @@ public class BootstrapListener
 
       // bootstrap our chosen Nexus edition
       requireProperty(properties, NEXUS_EDITION);
+      requireProperty(properties, NEXUS_DB_FEATURE);
       installNexusEdition(bundleContext, properties);
 
       // watch out for the real Nexus listener
@@ -221,6 +229,17 @@ public class BootstrapListener
     }
   }
 
+  private static void selectDbFeature(final Properties properties) {
+    if (parseBoolean(properties.getProperty("nexus.orient.enabled", "true"))) {
+      properties.setProperty(NEXUS_DB_FEATURE, "nexus-orient");
+      properties.setProperty("nexus.orient.enabled", "true");
+    }
+    else {
+      properties.setProperty(NEXUS_DB_FEATURE, "nexus-datastore-mybatis");
+      properties.setProperty("nexus.datastore.enabled", "true");
+    }
+  }
+
   private static void installNexusEdition(final BundleContext ctx, final Properties properties)
       throws Exception
   {
@@ -231,19 +250,28 @@ public class BootstrapListener
       try {
         FeaturesService featuresService = tracker.waitForService(1000);
         Feature editionFeature = featuresService.getFeature(editionName);
-
         properties.put(NEXUS_FULL_EDITION, editionFeature.toString());
 
-        log.info("Installing: {}", editionFeature);
+        Feature dbFeature = featuresService.getFeature(properties.getProperty(NEXUS_DB_FEATURE));
 
-        // edition might already be installed in the cache; if so then skip installation
+        log.info("Installing: {} ({})", editionFeature, dbFeature);
+
+        Set<String> featureIds = new LinkedHashSet<>();
         if (!featuresService.isInstalled(editionFeature)) {
-          // avoid auto-refreshing bundles as that could trigger unwanted restart/lifecycle events
-          EnumSet<Option> options = EnumSet.of(NoAutoRefreshBundles, NoAutoRefreshManagedBundles);
-          featuresService.installFeature(editionFeature.getId(), options);
+          featureIds.add(editionFeature.getId());
+        }
+        if (!featuresService.isInstalled(dbFeature)) {
+          featureIds.add(dbFeature.getId());
         }
 
-        log.info("Installed: {}", editionFeature);
+        // edition might already be installed in the cache; if so then skip installation
+        if (!featureIds.isEmpty()) {
+          // avoid auto-refreshing bundles as that could trigger unwanted restart/lifecycle events
+          EnumSet<Option> options = EnumSet.of(NoAutoRefreshBundles, NoAutoRefreshManagedBundles);
+          featuresService.installFeatures(featureIds, options);
+        }
+
+        log.info("Installed: {} ({})", editionFeature, dbFeature);
       }
       finally {
         tracker.close();

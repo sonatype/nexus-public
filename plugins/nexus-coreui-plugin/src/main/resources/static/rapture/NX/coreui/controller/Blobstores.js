@@ -53,6 +53,10 @@ Ext.define('NX.coreui.controller.Blobstores', {
     'blobstore-default': {
       file: 'drive_network.png',
       variants: ['x16', 'x32']
+    },
+    'blobstore-failure': {
+      file: 'drive_network_error.png',
+      variants: ['x16', 'x32']
     }
   },
 

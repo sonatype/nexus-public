@@ -250,6 +250,14 @@
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-orient</artifactId>
+        <version>3.20.0-SNAPSHOT</version>
+        <classifier>features</classifier>
+        <type>xml</type>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-orient-console</artifactId>
         <version>3.20.0-SNAPSHOT</version>
       </dependency>
@@ -771,7 +779,10 @@
               </Feature-Flagged>
               <!-- workaround CGLIB issue when method intercepting subclasses in different modules -->
               <Import-Package>
-                $(if;$(classes;EXTENDS;*.(Blob|Data)StoreSupport);org.sonatype.nexus.transaction),*
+                $(if;$(classes;EXTENDS;*.FacetSupport);org.sonatype.nexus.repository.config),
+                $(if;$(classes;EXTENDS;*.(Blob|Data)StoreSupport);org.sonatype.nexus.transaction),
+                org.sonatype.nexus.orient*|com.orientechnologies*;resolution:=optional,
+                *
               </Import-Package>
             </instructions>
           </configuration>

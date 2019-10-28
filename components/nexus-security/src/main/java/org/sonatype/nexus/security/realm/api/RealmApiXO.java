@@ -10,38 +10,43 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext, NX*/
+package org.sonatype.nexus.security.realm.api;
+
+import org.sonatype.nexus.security.realm.SecurityRealm;
 
 /**
- * Task "Status" panel.
- *
- * @since 3.1
+ * REST API model of a security realm
+ * 
+ * @since 3.next
  */
-Ext.define('NX.coreui.view.task.TaskStatus', {
-  extend: 'Ext.panel.Panel',
-  alias: 'widget.nx-coreui-task-status',
-  ui: 'nx-inset',
-  requires: [
-    'NX.I18n'
-  ],
+public class RealmApiXO
+{
+  private String id;
 
-  initComponent: function() {
-    var me = this;
+  private String name;
 
-    me.items = {
-      xtype: 'grid',
-          columns: [
-        { text: NX.I18n.get('TaskFeature_Status_Node_Column'), dataIndex: 'nodeId', width: 400},
-        { text: NX.I18n.get('TaskFeature_Status_Status_Column'), dataIndex: 'statusDescription', width: 200 },
-        { text: NX.I18n.get('TaskFeature_Status_LastResult_Column'), dataIndex: 'lastRunResult', flex: 1 }
-      ]
-    };
-
-    me.callParent();
-  },
-
-  getGrid: function() {
-    var me = this;
-    return me.down('grid');
+  public RealmApiXO(final String id, final String name) {
+    this.id = id;
+    this.name = name;
   }
-});
+
+  public String getId() {
+    return id;
+  }
+
+  public void setId(final String id) {
+    this.id = id;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(final String name) {
+    this.name = name;
+  }
+
+  public static RealmApiXO from(final SecurityRealm securityRealm) {
+    return new RealmApiXO(securityRealm.getId(), securityRealm.getName());
+  }
+}

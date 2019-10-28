@@ -111,7 +111,8 @@ public class SimpleApiRepositoryAdapter
     String blobStoreName = configuration.get(StorageFacetConstants.BLOB_STORE_NAME, String.class);
     Boolean strictContentTypeValidation =
         configuration.get(StorageFacetConstants.STRICT_CONTENT_TYPE_VALIDATION, Boolean.class, Boolean.TRUE);
-    String writePolicy = toString(configuration.get(StorageFacetConstants.WRITE_POLICY), WritePolicy.ALLOW.toString());
+    WritePolicy writePolicy = WritePolicy
+        .valueOf(toString(configuration.get(StorageFacetConstants.WRITE_POLICY), WritePolicy.ALLOW.toString()));
 
     return new HostedStorageAttributes(blobStoreName, strictContentTypeValidation, writePolicy);
   }

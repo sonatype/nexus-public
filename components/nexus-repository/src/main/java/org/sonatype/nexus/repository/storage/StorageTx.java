@@ -187,7 +187,7 @@ public interface StorageTx
   Asset findAssetWithProperty(String propName, Object propValue, Bucket bucket);
 
   /**
-   * Gets an asset by some identifying property, or {@code null} if not found.
+   * Gets an asset by some identifying property, regardless of which bucket it resides in, or {@code null} if not found.
    * 
    * @since 3.6.1
    */

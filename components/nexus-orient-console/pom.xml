@@ -51,6 +51,11 @@
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-orient</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-crypto</artifactId>
+    </dependency>
   </dependencies>
 
   <build>

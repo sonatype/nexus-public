@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.rest.api.model;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 import org.sonatype.nexus.repository.types.HostedType;
@@ -28,8 +29,10 @@ public class HostedRepositoryApiRequest
     extends AbstractRepositoryApiRequest
 {
   @NotNull
+  @Valid
   private final HostedStorageAttributes storage;
 
+  @Valid
   private final CleanupPolicyAttributes cleanup;
 
   @JsonCreator

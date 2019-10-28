@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.rest.api.model;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 import org.sonatype.nexus.repository.types.ProxyType;
@@ -26,17 +27,22 @@ public class ProxyRepositoryApiRequest
     extends AbstractRepositoryApiRequest
 {
   @NotNull
+  @Valid
   private final StorageAttributes storage;
 
+  @Valid
   private final CleanupPolicyAttributes cleanup;
 
   @NotNull
+  @Valid
   private final ProxyAttributes proxy;
 
   @NotNull
+  @Valid
   private final NegativeCacheAttributes negativeCache;
 
   @NotNull
+  @Valid
   private final HttpClientAttributes httpClient;
 
   private final String routingRule;

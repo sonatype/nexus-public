@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.apt.rest;
 
+import javax.validation.constraints.NotNull;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
@@ -27,7 +29,7 @@ public class AptProxyRepositoriesAttributes
   private final String distribution;
 
   @ApiModelProperty(value = "Whether this repository is flat", example = "false")
-  @NotEmpty
+  @NotNull
   private final Boolean flat;
 
   @JsonCreator

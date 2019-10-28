@@ -123,7 +123,8 @@ trait ConfigurationRecipes
                 memberNames: members.toList()
             ] as Map<String, Object>,
             storage: [
-                blobStoreName: BlobStoreManager.DEFAULT_BLOBSTORE_NAME
+                blobStoreName: BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
+                strictContentTypeValidation: true
             ] as Map<String, Object>
         ]
     )

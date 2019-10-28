@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.security.anonymous;
 
-import org.sonatype.nexus.common.entity.AbstractEntity;
 import org.sonatype.nexus.security.internal.AuthorizingRealmImpl;
 
 /**
@@ -20,67 +19,53 @@ import org.sonatype.nexus.security.internal.AuthorizingRealmImpl;
  *
  * @since 3.0
  */
-public class AnonymousConfiguration
-    extends AbstractEntity
-  implements Cloneable
+public interface AnonymousConfiguration //NOSONAR
+    extends Cloneable
 {
   /**
    * @since 3.1
    */
-  public static final String DEFAULT_USER_ID = "anonymous";
+  String DEFAULT_USER_ID = "anonymous";
 
   /**
    * @since 3.1
    */
-  public static final String DEFAULT_REALM_NAME = AuthorizingRealmImpl.NAME;
+  String DEFAULT_REALM_NAME = AuthorizingRealmImpl.NAME;
 
-  private boolean enabled;
+  /**
+   * Obtain a copy of this configuration.
+   */
+  AnonymousConfiguration copy();
 
-  private String userId;
+  /**
+   * Get the realm in which the UserID associated with the configuration is located.
+   */
+  String getRealmName();
 
-  private String realmName;
+  /**
+   * Get the UserID which is used as the template for permissions.
+   */
+  String getUserId();
 
-  public boolean isEnabled() {
-    return enabled;
-  }
+  /**
+   * Indicates whether anonymous access is enabled in this configuration.
+   *
+   * @return
+   */
+  boolean isEnabled();
 
-  public void setEnabled(final boolean enabled) {
-    this.enabled = enabled;
-  }
+  /**
+   * Set whether anonymous access is enabled in this configuration.
+   */
+  void setEnabled(final boolean enabled);
 
-  // TODO: Sort out nullability of user-id and realm-name
+  /**
+   * Set the realm in which the UserID associated with the configuration is located.
+   */
+  void setRealmName(final String realmName);
 
-  public String getUserId() {
-    return userId;
-  }
-
-  public void setUserId(final String userId) {
-    this.userId = userId;
-  }
-
-  public String getRealmName() {
-    return realmName;
-  }
-
-  public void setRealmName(final String realmName) {
-    this.realmName = realmName;
-  }
-
-  public AnonymousConfiguration copy() {
-    try {
-      return (AnonymousConfiguration) clone();
-    }
-    catch (CloneNotSupportedException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Override
-  public String toString() {
-    return getClass().getSimpleName() + "{" +
-        "enabled=" + enabled +
-        ", userId='" + userId + '\'' +
-        ", realmName='" + realmName + '\'' +
-        '}';
-  }
+  /**
+   * Set the UserID which is used as the template for permissions.
+   */
+  void setUserId(final String userId);
 }

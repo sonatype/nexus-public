@@ -72,10 +72,10 @@ public class AnonymousSettingsResource
   @RequiresAuthentication
   @RequiresPermissions("nexus:settings:update")
   public void update(@NotNull @Valid final AnonymousSettingsXO anonymousXO) {
-    AnonymousConfiguration configuration = new AnonymousConfiguration();
+    AnonymousConfiguration configuration = anonymousManager.newConfiguration();
     configuration.setEnabled(anonymousXO.getEnabled());
-    configuration.setUserId(anonymousXO.getUserId());
     configuration.setRealmName(anonymousXO.getRealmName());
+    configuration.setUserId(anonymousXO.getUserId());
     anonymousManager.setConfiguration(configuration);
   }
 }

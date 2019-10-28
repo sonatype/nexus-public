@@ -15,14 +15,24 @@ package org.sonatype.nexus.repository.rest.api;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;
+import org.sonatype.nexus.repository.rest.api.model.HttpClientAttributes;
+import org.sonatype.nexus.repository.rest.api.model.HttpClientConnectionAttributes;
+import org.sonatype.nexus.repository.rest.api.model.HttpClientConnectionAuthenticationAttributes;
+import org.sonatype.nexus.repository.rest.api.model.NegativeCacheAttributes;
+import org.sonatype.nexus.repository.rest.api.model.ProxyAttributes;
 import org.sonatype.nexus.repository.rest.api.model.ProxyRepositoryApiRequest;
+import org.sonatype.nexus.repository.rest.api.model.StorageAttributes;
 import org.sonatype.nexus.repository.routing.RoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 
 import com.google.common.collect.Sets;
 
+import static java.util.Objects.nonNull;
 import static org.sonatype.nexus.repository.storage.StorageFacetConstants.BLOB_STORE_NAME;
 import static org.sonatype.nexus.repository.storage.StorageFacetConstants.STORAGE;
 import static org.sonatype.nexus.repository.storage.StorageFacetConstants.STRICT_CONTENT_TYPE_VALIDATION;
@@ -43,47 +53,99 @@ public class ProxyRepositoryApiRequestToConfigurationConverter<T extends ProxyRe
 
   public Configuration convert(final T request) {
     Configuration configuration = super.convert(request);
+    convertRoutingRule(request, configuration);
+    convertStorage(request, configuration);
+    convertCleanup(request, configuration);
+    convertProxy(request, configuration);
+    convertNegativeCache(request, configuration);
+    convertHttpClient(request, configuration);
+    return configuration;
+  }
+
+  private void convertHttpClient(final T request, final Configuration configuration) {
+    HttpClientAttributes httpClient = request.getHttpClient();
+    if (nonNull(httpClient)) {
+      NestedAttributesMap httpclientConfiguration = configuration.attributes("httpclient");
+      httpclientConfiguration.set("blocked", httpClient.getBlocked());
+      httpclientConfiguration.set("autoBlock", httpClient.getAutoBlock());
+      HttpClientConnectionAttributes connection = httpClient.getConnection();
+      NestedAttributesMap connectionConfiguration = httpclientConfiguration.child("connection");
+      convertConnection(connection, connectionConfiguration);
+      convertAuthentication(httpClient, connectionConfiguration);
+    }
+  }
+
+  private void convertAuthentication(
+      final HttpClientAttributes httpClient,
+      final NestedAttributesMap connectionConfiguration)
+  {
+    HttpClientConnectionAuthenticationAttributes authentication = httpClient.getAuthentication();
+    if (nonNull(authentication)) {
+      NestedAttributesMap authenticationConfiguration = connectionConfiguration.child("authentication");
+      authenticationConfiguration.set("type", authentication.getType());
+      authenticationConfiguration.set("username", authentication.getUsername());
+      authenticationConfiguration.set("password", authentication.getPassword());
+      authenticationConfiguration.set("ntlmHost", authentication.getNtlmHost());
+      authenticationConfiguration.set("ntlmDomain", authentication.getNtlmDomain());
+    }
+  }
+
+  private void convertConnection(
+      final HttpClientConnectionAttributes connection,
+      final NestedAttributesMap connectionConfiguration)
+  {
+    if (nonNull(connection)) {
+      connectionConfiguration.set("retries", connection.getRetries());
+      connectionConfiguration.set("userAgentSuffix", connection.getUserAgentSuffix());
+      connectionConfiguration.set("timeout", connection.getTimeout());
+      connectionConfiguration.set("enableCircularRedirects", connection.getEnableCircularRedirects());
+      connectionConfiguration.set("enableCookies", connection.getEnableCookies());
+    }
+  }
+
+  private void convertNegativeCache(final T request, final Configuration configuration) {
+    NegativeCacheAttributes negativeCache = request.getNegativeCache();
+    if (nonNull(negativeCache)) {
+      NestedAttributesMap negativeCacheConfiguration = configuration.attributes("negativeCache");
+      negativeCacheConfiguration.set("enabled", negativeCache.getEnabled());
+      negativeCacheConfiguration.set("timeToLive", negativeCache.getTimeToLive());
+    }
+  }
+
+  private void convertProxy(final T request, final Configuration configuration) {
+    ProxyAttributes proxy = request.getProxy();
+    if (nonNull(proxy)) {
+      NestedAttributesMap proxyConfiguration = configuration.attributes("proxy");
+      proxyConfiguration.set("remoteUrl", proxy.getRemoteUrl());
+      proxyConfiguration.set("contentMaxAge", proxy.getContentMaxAge());
+      proxyConfiguration.set("metadataMaxAge", proxy.getMetadataMaxAge());
+    }
+  }
+
+  private void convertCleanup(final T request, final Configuration configuration) {
+    CleanupPolicyAttributes cleanup = request.getCleanup();
+    if (nonNull(cleanup)) {
+      NestedAttributesMap cleanupConfiguration = configuration.attributes("cleanup");
+      cleanupConfiguration.set("policyName", Sets.newHashSet(cleanup.getPolicyNames()));
+    }
+  }
+
+  private void convertStorage(final T request, final Configuration configuration) {
+    StorageAttributes storage = request.getStorage();
+    if (nonNull(storage)) {
+      NestedAttributesMap storageConfiguration = configuration.attributes(STORAGE);
+      storageConfiguration.set(BLOB_STORE_NAME, storage.getBlobStoreName());
+      storageConfiguration.set(STRICT_CONTENT_TYPE_VALIDATION, storage.getStrictContentTypeValidation());
+    }
+  }
+
+  private void convertRoutingRule(final T request, final Configuration configuration) {
     String routingRuleName = request.getRoutingRule();
     if (!Strings2.isBlank(routingRuleName)) {
       RoutingRule routingRule = routingRuleStore.getByName(routingRuleName);
-      if (routingRule != null) {
-        configuration.attributes("routingRuleId")
-            .set("routingRuleId", routingRule.getEntityMetadata().getId().getValue());
+      if (nonNull(routingRule)) {
+        configuration.setRoutingRuleId(EntityHelper.id(routingRule));
       }
     }
-    configuration.attributes(STORAGE).set(BLOB_STORE_NAME, request.getStorage().getBlobStoreName());
-    configuration.attributes(STORAGE)
-        .set(STRICT_CONTENT_TYPE_VALIDATION, request.getStorage().getStrictContentTypeValidation());
-    configuration.attributes("cleanup")
-        .set("policyName",
-            request.getCleanup() != null ? Sets.newHashSet(request.getCleanup().getPolicyNames()) : null);
-    configuration.attributes("proxy").set("remoteUrl", request.getProxy().getRemoteUrl());
-    configuration.attributes("proxy").set("contentMaxAge", request.getProxy().getContentMaxAge());
-    configuration.attributes("proxy").set("metadataMaxAge", request.getProxy().getMetadataMaxAge());
-    configuration.attributes("negativeCache").set("enabled", request.getNegativeCache().getEnabled());
-    configuration.attributes("negativeCache").set("timeToLive", request.getNegativeCache().getTimeToLive());
-    configuration.attributes("httpclient").set("blocked", request.getHttpClient().getBlocked());
-    configuration.attributes("httpclient").set("autoBlock", request.getHttpClient().getAutoBlock());
-    configuration.attributes("httpclient").child("connection")
-        .set("retries", request.getHttpClient().getConnection().getRetries());
-    configuration.attributes("httpclient").child("connection")
-        .set("userAgentSuffix", request.getHttpClient().getConnection().getUserAgentSuffix());
-    configuration.attributes("httpclient").child("connection")
-        .set("timeout", request.getHttpClient().getConnection().getTimeout());
-    configuration.attributes("httpclient").child("connection")
-        .set("enableCircularRedirects", request.getHttpClient().getConnection().getEnableCircularRedirects());
-    configuration.attributes("httpclient").child("connection")
-        .set("enableCookies", request.getHttpClient().getConnection().getEnableCookies());
-    configuration.attributes("httpclient").child("connection").child("authentication")
-        .set("type", request.getHttpClient().getAuthentication().getType());
-    configuration.attributes("httpclient").child("connection").child("authentication")
-        .set("username", request.getHttpClient().getAuthentication().getUsername());
-    configuration.attributes("httpclient").child("connection").child("authentication")
-        .set("password", request.getHttpClient().getAuthentication().getPassword());
-    configuration.attributes("httpclient").child("connection").child("authentication")
-        .set("ntlmHost", request.getHttpClient().getAuthentication().getNtlmHost());
-    configuration.attributes("httpclient").child("connection").child("authentication")
-        .set("ntlmDomain", request.getHttpClient().getAuthentication().getNtlmDomain());
-    return configuration;
   }
 }

@@ -24,6 +24,8 @@ import com.google.inject.servlet.GuiceFilter;
 import com.google.inject.servlet.ServletModule;
 import org.eclipse.sisu.inject.Sources;
 
+import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getBoolean;
+
 /**
  * Web module.
  * 
@@ -61,6 +63,8 @@ public class WebModule
 
     highPriorityBinder.install(new MetricsModule());
 
-    install(new OrientModule());
+    if (getBoolean("nexus.orient.enabled", true)) {
+      install(new OrientModule());
+    }
   }
 }

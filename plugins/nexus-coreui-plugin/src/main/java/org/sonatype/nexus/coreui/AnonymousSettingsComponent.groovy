@@ -71,11 +71,11 @@ class AnonymousSettingsComponent
   @RequiresAuthentication
   @RequiresPermissions('nexus:settings:update')
   AnonymousSettingsXO update(final @NotNull @Valid AnonymousSettingsXO anonymousXO) {
-    anonymousManager.configuration = new AnonymousConfiguration(
-        enabled: anonymousXO.enabled,
-        userId: anonymousXO.userId,
-        realmName: anonymousXO.realmName
-    )
+    AnonymousConfiguration configuration = anonymousManager.newConfiguration()
+    configuration.setEnabled(anonymousXO.enabled)
+    configuration.setRealmName(anonymousXO.realmName)
+    configuration.setUserId(anonymousXO.userId)
+    anonymousManager.setConfiguration(configuration)
     return read()
   }
 }

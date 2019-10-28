@@ -25,6 +25,14 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
     'NX.I18n'
   ],
 
+  loadRecord: function(model) {
+    var me = this;
+    var state = me.down('[name=state]');
+    state.setText(model.data.unavailable === true ? NX.I18n.get('Blobstore_BlobstoreList_Failed') :
+        NX.I18n.get('Blobstore_BlobstoreList_Started'));
+    me.callParent(arguments);
+  },
+
   initComponent: function() {
     var me = this;
 
@@ -85,6 +93,36 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
         readOnly: true,
         maxLength: 255,
         enforceMaxLength: true
+      },
+      {
+        xtype: 'container',
+        layout: 'vbox',
+        style: {
+          'padding-top': '5px',
+          'padding-bottom': '5px'
+        },
+        items: [
+          {
+            xtype: 'label',
+            text: NX.I18n.get('Blobstore_BlobstoreSettingsForm_State_FieldLabel'),
+            style: {
+              'font-weight': 700,
+              'font-size': '13px'
+            },
+            readOnly: true
+          },
+          {
+            xtype: 'label',
+            name: 'state',
+            style: {
+              'font-size': '13px',
+              'padding-left': '6px',
+              'padding-top': '5px',
+              'padding-bottom': '4px'
+            },
+            readOnly: true
+          }
+        ]
       },
       {
         xtype: 'checkbox',

@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.realm.Realm;
+import org.eclipse.sisu.inject.BeanLocator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -57,6 +58,9 @@ public class RealmManagerImplTest
   @Mock
   private RealmConfigurationEvent configEvent;
 
+  @Mock
+  private BeanLocator beanLocator;
+
   private RealmManagerImpl manager;
 
   @Before
@@ -64,7 +68,8 @@ public class RealmManagerImplTest
     Map<String, Realm> realms = ImmutableMap.of("A", realmA, "B", realmB);
     RealmConfiguration defaultConfig = new RealmConfiguration();
     defaultConfig.setRealmNames(ImmutableList.of("A"));
-    manager = new RealmManagerImpl(eventManager, configStore, () -> defaultConfig, securityManager, realms);
+    manager =
+        new RealmManagerImpl(beanLocator, eventManager, configStore, () -> defaultConfig, securityManager, realms);
   }
 
   @Test

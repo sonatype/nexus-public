@@ -10,19 +10,42 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext, NX*/
+package org.sonatype.nexus.security.realm;
 
 /**
- * Clustered task state model.
+ * Model of a security realm.
  *
- * @since 3.1
+ * @since 3.next
  */
-Ext.define('NX.coreui.model.ClusteredTaskState', {
-  extend: 'Ext.data.Model',
-  fields: [
-    {name: 'nodeId', type: 'string', sortType: 'asUCText'},
-    {name: 'status', type: 'string', sortType: 'asUCText'},
-    {name: 'statusDescription', type: 'string', sortType: 'asUCText'},
-    {name: 'lastRunResult', type: 'string', sortType: 'asUCText'}
-  ]
-});
+public class SecurityRealm
+{
+  private String id;
+
+  private String name;
+
+  public SecurityRealm(final String id, final String name) {
+    this.id = id;
+    this.name = name;
+  }
+
+  public String getId() {
+    return id;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setId(final String id) {
+    this.id = id;
+  }
+
+  public void setName(final String name) {
+    this.name = name;
+  }
+
+  @Override
+  public String toString() {
+    return "id=" + id + " name=" + name;
+  }
+}

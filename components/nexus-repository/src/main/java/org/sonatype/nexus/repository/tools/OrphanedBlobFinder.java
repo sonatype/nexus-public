@@ -165,7 +165,7 @@ public class OrphanedBlobFinder
     try (StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get()) {
       tx.begin();
 
-      return ofNullable(tx.findAssetWithProperty(P_NAME, assetName));
+      return ofNullable(tx.findAssetWithProperty(P_NAME, assetName, tx.findBucket(repository)));
     }
   }
 

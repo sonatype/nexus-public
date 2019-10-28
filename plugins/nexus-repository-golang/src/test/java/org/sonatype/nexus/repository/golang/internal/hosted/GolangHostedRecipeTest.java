@@ -29,6 +29,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_GOLANG_HOSTED;
 
 public class GolangHostedRecipeTest
     extends TestSupport
@@ -40,22 +41,20 @@ public class GolangHostedRecipeTest
 
   private GolangHostedRecipe underTest;
 
-  private static final String NEXUS_GOLANG_HOSTED = "nexus.golang.hosted";
-
   private static String nexusGolangHostedInitialValue;
 
   @BeforeClass
   public static void init() {
-    nexusGolangHostedInitialValue = System.getProperty(NEXUS_GOLANG_HOSTED);
+    nexusGolangHostedInitialValue = System.getProperty(FEATURE_GOLANG_HOSTED);
   }
 
   @AfterClass
   public static void tearDown() {
     if (isNullOrEmpty(nexusGolangHostedInitialValue)) {
-      System.clearProperty(NEXUS_GOLANG_HOSTED);
+      System.clearProperty(FEATURE_GOLANG_HOSTED);
     }
     else {
-      System.setProperty(NEXUS_GOLANG_HOSTED, nexusGolangHostedInitialValue);
+      System.setProperty(FEATURE_GOLANG_HOSTED, nexusGolangHostedInitialValue);
     }
   }
 
@@ -66,7 +65,7 @@ public class GolangHostedRecipeTest
 
   @Test
   public void disabledByDefault() {
-    System.clearProperty(NEXUS_GOLANG_HOSTED);
+    System.clearProperty(FEATURE_GOLANG_HOSTED);
     when(highAvailabilitySupportChecker.isSupported(GO_NAME)).thenReturn(true);
     assertThat(underTest.isFeatureEnabled(), is(equalTo(false)));
     verify(highAvailabilitySupportChecker).isSupported(GO_NAME);
@@ -74,7 +73,7 @@ public class GolangHostedRecipeTest
 
   @Test
   public void enableGolang() {
-    System.setProperty(NEXUS_GOLANG_HOSTED, "true");
+    System.setProperty(FEATURE_GOLANG_HOSTED, "true");
     when(highAvailabilitySupportChecker.isSupported(GO_NAME)).thenReturn(true);
     assertThat(underTest.isFeatureEnabled(), is(equalTo(true)));
     verify(highAvailabilitySupportChecker).isSupported(GO_NAME);
@@ -82,7 +81,7 @@ public class GolangHostedRecipeTest
 
   @Test
   public void disabledIfNexusIsClusteredAndGoHostedDisabled() {
-    System.setProperty(NEXUS_GOLANG_HOSTED, "false");
+    System.setProperty(FEATURE_GOLANG_HOSTED, "false");
     when(highAvailabilitySupportChecker.isSupported(GO_NAME)).thenReturn(false);
     assertThat(underTest.isFeatureEnabled(), is(equalTo(false)));
     verify(highAvailabilitySupportChecker).isSupported(GO_NAME);
@@ -90,7 +89,7 @@ public class GolangHostedRecipeTest
 
   @Test
   public void disabledIfNexusIsClusteredAndGoHostedEnabled() {
-    System.setProperty(NEXUS_GOLANG_HOSTED, "true");
+    System.setProperty(FEATURE_GOLANG_HOSTED, "true");
     when(highAvailabilitySupportChecker.isSupported(GO_NAME)).thenReturn(false);
     assertThat(underTest.isFeatureEnabled(), is(equalTo(false)));
     verify(highAvailabilitySupportChecker).isSupported(GO_NAME);

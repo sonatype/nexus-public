@@ -16,6 +16,20 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.RangeQueryBuilder;
+import org.elasticsearch.search.SearchHit;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
@@ -26,23 +40,12 @@ import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Timer;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.search.SearchHit;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-
 import static java.lang.Boolean.parseBoolean;
 import static java.lang.String.format;
 import static java.util.Collections.emptyMap;
 import static org.apache.commons.collections.IteratorUtils.toList;
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
+import static org.elasticsearch.index.query.QueryBuilders.existsQuery;
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
 import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 import static org.elasticsearch.index.query.QueryBuilders.rangeQuery;
@@ -113,7 +116,7 @@ public class ElasticSearchCleanupComponentBrowseTest
 
     UnitOfWork.beginBatch(tx);
   }
-  
+
   @After
   public void tearDown() {
     UnitOfWork.end();
@@ -134,7 +137,7 @@ public class ElasticSearchCleanupComponentBrowseTest
     Map<String, String> criteria = ImmutableMap.of(LAST_DOWNLOADED_KEY, numberOfSeconds);
 
     assertComponentsReturned(criteria);
-    assertQuery(LAST_DOWNLOADED_KEY, timeQuery(LAST_DOWNLOADED_KEY, format(NOW_MINUS_SECONDS, numberOfSeconds)));
+    assertQuery(LAST_DOWNLOADED_KEY, lastDownloadQuery(LAST_DOWNLOADED_KEY, format(NOW_MINUS_SECONDS, numberOfSeconds)));
   }
 
   @Test
@@ -161,7 +164,7 @@ public class ElasticSearchCleanupComponentBrowseTest
     String lastBlobUpdatedSeconds = "5";
     String lastDownloadedSeconds = "20";
     boolean isPrerelease = false;
-    
+
     Map<String, String> criteria = ImmutableMap.of(
         LAST_BLOB_UPDATED_KEY, lastBlobUpdatedSeconds,
         LAST_DOWNLOADED_KEY, lastDownloadedSeconds,
@@ -188,7 +191,7 @@ public class ElasticSearchCleanupComponentBrowseTest
 
     verify(searchService, never()).browseUnrestrictedInRepos(any(), any());
   }
-  
+
   private void assertComponentsReturned(final Map<String, String> criteria) {
     CleanupPolicy lastBlobUpdatedPolicy = new CleanupPolicy();
     lastBlobUpdatedPolicy.setCriteria(criteria);
@@ -216,6 +219,13 @@ public class ElasticSearchCleanupComponentBrowseTest
     return boolQuery().must(matchAllQuery()).filter(rangeQuery(matchOn).lte(time)).toString();
   }
 
+  private String lastDownloadQuery(final String matchOn, final String time)
+  {
+    return boolQuery().must(matchAllQuery())
+        .filter(boolQuery().should(boolQuery().must(rangeQuery(matchOn).lte(time)))
+            .should(boolQuery().mustNot(existsQuery(matchOn)).filter(rangeQuery(LAST_BLOB_UPDATED_KEY).lte(time)))).toString();
+  }
+
   private String booleanQuery(final String matchOn, final boolean value) {
     return boolQuery().must(matchAllQuery()).must(matchQuery(matchOn, value)).toString();
   }
@@ -227,9 +237,31 @@ public class ElasticSearchCleanupComponentBrowseTest
   private String andQuery(final Map<String, String> criteria) {
     return boolQuery().must(matchAllQuery())
         .filter(rangeQuery(LAST_BLOB_UPDATED_KEY).lte(format(NOW_MINUS_SECONDS, criteria.get(LAST_BLOB_UPDATED_KEY))))
-        .filter(rangeQuery(LAST_DOWNLOADED_KEY).lte(format(NOW_MINUS_SECONDS, criteria.get(LAST_DOWNLOADED_KEY))))
+        .filter(getLastDownloadQuery(criteria.get(LAST_DOWNLOADED_KEY)))
         .must(matchQuery(IS_PRERELEASE_KEY, parseBoolean(criteria.get(IS_PRERELEASE_KEY))))
         .must(regexpQuery(DEFAULT_REGEX_MATCH_ON, criteria.get(REGEX_KEY)))
         .toString();
+  }
+
+  private QueryBuilder getLastDownloadQuery(String value)
+  {
+    BoolQueryBuilder neverDownloadDownloadBuilder = QueryBuilders.boolQuery();
+    neverDownloadDownloadBuilder.mustNot(existsQuery(LAST_DOWNLOADED_KEY));
+    neverDownloadDownloadBuilder.filter(
+        rangeQuery(LAST_BLOB_UPDATED_KEY)
+            .lte(format(NOW_MINUS_SECONDS, value))
+    );
+
+    RangeQueryBuilder lastDownloadRangeBuilder = rangeQuery(LAST_DOWNLOADED_KEY)
+        .lte(format(NOW_MINUS_SECONDS, value));
+
+    BoolQueryBuilder lastDownloadShouldBuilder = QueryBuilders.boolQuery();
+    lastDownloadShouldBuilder.must(lastDownloadRangeBuilder);
+
+    BoolQueryBuilder filterBuilder = QueryBuilders.boolQuery();
+    filterBuilder.should(lastDownloadShouldBuilder);
+    filterBuilder.should(neverDownloadDownloadBuilder);
+
+    return filterBuilder;
   }
 }

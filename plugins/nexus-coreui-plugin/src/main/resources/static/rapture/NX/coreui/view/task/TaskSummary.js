@@ -57,13 +57,6 @@ Ext.define('NX.coreui.view.task.TaskSummary', {
               columnWidth: 1
             }
           ]
-        },
-        {
-          xtype: 'nx-coreui-task-status',
-          ui: 'nx-subsection',
-          frame: true,
-          title: NX.I18n.get('TaskFeature_Summary_Status_Section_Title'),
-          weight: 20
         }
       ]
     };
@@ -73,10 +66,5 @@ Ext.define('NX.coreui.view.task.TaskSummary', {
 
   showInfo: function (info) {
     this.down('nx-info').showInfo(info);
-  },
-
-  getStatuses: function() {
-    var me = this;
-    return me.down('nx-coreui-task-status');
   }
 });

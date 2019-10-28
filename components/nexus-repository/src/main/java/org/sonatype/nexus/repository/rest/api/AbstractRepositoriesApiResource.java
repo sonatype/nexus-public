@@ -33,6 +33,7 @@ import org.sonatype.nexus.repository.rest.api.model.AbstractRepositoryApiRequest
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
+import org.sonatype.nexus.validation.Validate;
 
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authz.AuthorizationException;
@@ -66,7 +67,8 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
 
   @POST
   @RequiresAuthentication
-  public Response createRepository(@Valid final T request) {
+  @Validate
+  public Response createRepository(@NotNull @Valid final T request) {
     try {
       authorizingRepositoryManager.create(configurationAdapter.convert(request));
       return Response.status(Status.CREATED).build();
@@ -89,8 +91,9 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
   @PUT
   @Path("/{repositoryName}")
   @RequiresAuthentication
+  @Validate
   public Response updateRepository(
-      @Valid @NotNull final T request,
+      @NotNull @Valid final T request,
       @PathParam("repositoryName") final String repositoryName)
   {
     try {

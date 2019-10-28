@@ -16,11 +16,11 @@ import javax.validation.constraints.NotNull;
 
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;
-import org.sonatype.nexus.repository.rest.api.model.HostedStorageAttributes;
 import org.sonatype.nexus.repository.rest.api.model.HttpClientAttributes;
 import org.sonatype.nexus.repository.rest.api.model.NegativeCacheAttributes;
 import org.sonatype.nexus.repository.rest.api.model.ProxyAttributes;
 import org.sonatype.nexus.repository.rest.api.model.SimpleApiProxyRepository;
+import org.sonatype.nexus.repository.rest.api.model.StorageAttributes;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -44,7 +44,7 @@ public class MavenProxyApiRepository
       @JsonProperty("name") final String name,
       @JsonProperty("url") final String url,
       @JsonProperty("online") final Boolean online,
-      @JsonProperty("storage") final HostedStorageAttributes storage,
+      @JsonProperty("storage") final StorageAttributes storage,
       @JsonProperty("cleanup") final CleanupPolicyAttributes cleanup,
       @JsonProperty("proxy") final ProxyAttributes proxy,
       @JsonProperty("negativeCache") final NegativeCacheAttributes negativeCache,

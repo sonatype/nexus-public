@@ -23,7 +23,6 @@ import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.conda.CondaFacet;
 import org.sonatype.nexus.repository.conda.internal.AssetKind;
 import org.sonatype.nexus.repository.conda.internal.CondaFacetImpl;
-import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
 import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
 import org.sonatype.nexus.repository.storage.Asset;
@@ -67,12 +66,6 @@ import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_K
 public class CondaProxyFacetImpl
     extends ProxyFacetSupport
 {
-  // HACK: Workaround for known CGLIB issue, forces an Import-Package for org.sonatype.nexus.repository.config
-  @Override
-  protected void doValidate(final Configuration configuration) throws Exception {
-    super.doValidate(configuration);
-  }
-
   @Nullable
   @Override
   protected Content getCachedContent(final Context context) {

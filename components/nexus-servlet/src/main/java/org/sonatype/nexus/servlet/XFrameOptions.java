@@ -41,9 +41,9 @@ public class XFrameOptions
 
   private static final String SWAGGER_UI = "/swagger-ui/";
 
-  private static final String DENY = "DENY";
+  public static final String DENY = "DENY";
 
-  private static final String SAME_ORIGIN = "SAMEORIGIN";
+  public static final String SAME_ORIGIN = "SAMEORIGIN";
 
   private final boolean defaultDeny;
 

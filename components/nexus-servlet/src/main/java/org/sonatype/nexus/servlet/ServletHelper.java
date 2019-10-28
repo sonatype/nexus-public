@@ -73,8 +73,8 @@ public class ServletHelper
    */
   public static void addNoCacheResponseHeaders(final HttpServletResponse response) {
     response.setHeader(PRAGMA, "no-cache"); // HTTP/1.0
-    response.setHeader(CACHE_CONTROL, "no-cache, no-store, max-age=0, must-revalidate"); // HTTP/1.1
-    response.setHeader(CACHE_CONTROL, "post-check=0, pre-check=0"); // MS IE
+    //post-check/pre-check for IE
+    response.setHeader(CACHE_CONTROL, "no-cache, no-store, max-age=0, must-revalidate, post-check=0, pre-check=0"); // HTTP/1.1
     response.setHeader(EXPIRES, "0"); // No caching on Proxies in between client and Nexus
   }
 

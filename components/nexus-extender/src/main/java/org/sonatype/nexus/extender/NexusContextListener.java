@@ -15,7 +15,6 @@ package org.sonatype.nexus.extender;
 import java.lang.management.ManagementFactory;
 import java.util.Dictionary;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -370,7 +369,7 @@ public class NexusContextListener
 
     log.info("Installing: {}", features);
 
-    Set<String> featureIds = new HashSet<>(features.size());
+    Set<String> featureIds = new LinkedHashSet<>(features.size());
     for (final Feature f : features) {
       // feature might already be installed in the cache; if so then skip installation
       if (!featuresService.isInstalled(f)) {

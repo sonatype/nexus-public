@@ -382,11 +382,14 @@ public abstract class NexusPaxExamSupport
     return composite(
 
         // mimic nexus script
-        vmOption("-Xms600M"),
-        vmOption("-Xmx600M"),
-        vmOption("-XX:MaxDirectMemorySize=2G"),
+        vmOption("-Xms2703m"),
+        vmOption("-Xmx2703m"),
+        vmOption("-XX:MaxDirectMemorySize=2703m"),
         vmOption("-XX:+UnlockDiagnosticVMOptions"),
-        vmOption("-XX:+UnsyncloadClass"),
+        vmOption("-XX:+LogVMOutput"),
+        vmOption("-XX:LogFile=./nexus3/log/jvm.log"),
+        vmOption("-XX:-OmitStackTraceInFastThrow"),
+        vmOption("-Djava.net.preferIPv4Stack=true"),
 
         vmOption("-Djava.io.tmpdir=./nexus3/tmp/"),
 

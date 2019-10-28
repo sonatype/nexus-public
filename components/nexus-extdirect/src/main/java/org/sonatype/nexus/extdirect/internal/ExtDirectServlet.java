@@ -69,9 +69,11 @@ import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.net.HttpHeaders.X_FRAME_OPTIONS;
+import static com.softwarementors.extjs.djn.router.RequestType.FORM_UPLOAD_POST;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.commons.lang.StringEscapeUtils.escapeHtml;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
+import static org.sonatype.nexus.servlet.XFrameOptions.DENY;
 
 /**
  * Ext.Direct Servlet.
@@ -149,6 +151,13 @@ public class ExtDirectServlet
         log.warn("Unable to read the ext direct transaction id for upload", e);
         throw fileUploadException;
       }
+    }
+
+    // Silence warnings about "clickjacking" (even though it doesn't actually apply to API calls)
+    // note that we don't apply this logic for FORM_UPLOAD_POST as extjs means of uploading files uses a hidden iframe
+    // which a value of DENY will not be allowed to load
+    if (StringUtils.isBlank(response.getHeader(X_FRAME_OPTIONS)) && !FORM_UPLOAD_POST.equals(getFromRequestContentType(request))) {
+      response.setHeader(X_FRAME_OPTIONS, DENY);
     }
   }
 

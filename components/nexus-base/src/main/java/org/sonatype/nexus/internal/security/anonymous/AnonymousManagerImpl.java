@@ -87,10 +87,15 @@ public class AnonymousManagerImpl
 
     // use defaults if no configuration was loaded from the store
     if (model == null) {
-      model = defaults.get();
+      AnonymousConfiguration defaultModel = defaults.get();
 
       // default config must not be null
-      checkNotNull(model);
+      checkNotNull(defaultModel);
+
+      model = store.newConfiguration();
+      model.setEnabled(defaultModel.isEnabled());
+      model.setRealmName(defaultModel.getRealmName());
+      model.setUserId(defaultModel.getUserId());
 
       log.info("Using default configuration: {}", model);
     }
@@ -121,6 +126,12 @@ public class AnonymousManagerImpl
   @Override
   public AnonymousConfiguration getConfiguration() {
     return getConfigurationInternal().copy();
+  }
+
+
+  @Override
+  public AnonymousConfiguration newConfiguration() {
+    return store.newConfiguration();
   }
 
   @Override

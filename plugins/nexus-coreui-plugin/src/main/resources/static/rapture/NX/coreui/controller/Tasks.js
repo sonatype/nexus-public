@@ -53,7 +53,6 @@ Ext.define('NX.coreui.controller.Tasks', {
     'task.TaskScheduleOnce',
     'task.TaskScheduleWeekly',
     'task.TaskSummary',
-    'task.TaskStatus',
     'task.TaskSettings',
     'task.TaskSettingsForm',
     'formfield.SettingsFieldSet'
@@ -199,24 +198,6 @@ Ext.define('NX.coreui.controller.Tasks', {
     info[NX.I18n.get('Tasks_LastResult_Info')] = Ext.htmlEncode(model.get('lastRunResult'));
 
     summary.showInfo(info);
-    me.maybeShowSummaryStatuses(model);
-  },
-
-  /**
-   * @private
-   * Displays task status summary if there are clustered task states.
-   * @param model the task model to get states from
-   */
-  maybeShowSummaryStatuses: function(model) {
-    var me = this;
-
-    if (!model.clusteredTaskStatesStore) {
-      me.getSummary().getStatuses().hide();
-    }
-    else {
-      me.getSummary().getStatuses().show();
-      me.getSummary().getStatuses().getGrid().reconfigure(model.clusteredTaskStatesStore);
-    }
   },
 
   /**

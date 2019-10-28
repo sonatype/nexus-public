@@ -27,7 +27,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.net.HttpHeaders.X_FRAME_OPTIONS;
 import static javax.servlet.http.HttpServletResponse.SC_NO_CONTENT;
+import static org.sonatype.nexus.servlet.XFrameOptions.DENY;
 
 /**
  * Session servlet, to expose end-point for configuration of Shiro authentication filter to
@@ -59,6 +61,9 @@ public class SessionServlet
     checkState(subject.getSession(false) != null);
 
     response.setStatus(SC_NO_CONTENT);
+
+    // Silence warnings about "clickjacking" (even though it doesn't actually apply to API calls)
+    response.setHeader(X_FRAME_OPTIONS, DENY);
   }
 
   /**
@@ -78,5 +83,8 @@ public class SessionServlet
     checkState(subject.getSession(false) == null);
 
     response.setStatus(SC_NO_CONTENT);
+
+    // Silence warnings about "clickjacking" (even though it doesn't actually apply to API calls)
+    response.setHeader(X_FRAME_OPTIONS, DENY);
   }
 }

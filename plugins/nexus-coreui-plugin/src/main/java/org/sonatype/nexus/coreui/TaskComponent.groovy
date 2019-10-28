@@ -309,7 +309,6 @@ class TaskComponent
         typeName: task.configuration.typeName,
         status: state,
         statusDescription: task.configuration.enabled ? state.description : 'Disabled',
-        clusteredTaskStates: asTaskStates(clusteredTaskStates),
         schedule: getSchedule(task.schedule),
         lastRun: lastRun,
         lastRunResult: getLastRunResult(endState, runDuration),

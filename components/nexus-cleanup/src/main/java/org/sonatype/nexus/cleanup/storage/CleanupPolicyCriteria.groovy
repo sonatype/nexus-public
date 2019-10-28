@@ -16,7 +16,6 @@ import java.util.concurrent.TimeUnit
 
 import javax.annotation.Nullable
 
-import org.sonatype.nexus.cleanup.internal.search.elasticsearch.RegexCriteriaValidator
 import org.sonatype.nexus.cleanup.storage.config.CleanupPolicyAssetNamePattern
 
 import groovy.transform.ToString

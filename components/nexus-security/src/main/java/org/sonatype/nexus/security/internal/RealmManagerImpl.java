@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -34,9 +35,11 @@ import org.sonatype.nexus.security.realm.RealmConfigurationChangedEvent;
 import org.sonatype.nexus.security.realm.RealmConfigurationEvent;
 import org.sonatype.nexus.security.realm.RealmConfigurationStore;
 import org.sonatype.nexus.security.realm.RealmManager;
+import org.sonatype.nexus.security.realm.SecurityRealm;
 
 import com.google.common.collect.Lists;
 import com.google.common.eventbus.Subscribe;
+import com.google.inject.Key;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.cache.Cache;
@@ -44,9 +47,11 @@ import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.realm.AuthenticatingRealm;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.realm.Realm;
+import org.eclipse.sisu.inject.BeanLocator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
 /**
@@ -60,6 +65,8 @@ public class RealmManagerImpl
   extends StateGuardLifecycleSupport
   implements RealmManager
 {
+  private final BeanLocator beanLocator;
+
   private final EventManager eventManager;
 
   private final RealmConfigurationStore store;
@@ -75,12 +82,15 @@ public class RealmManagerImpl
   private RealmConfiguration configuration;
 
   @Inject
-  public RealmManagerImpl(final EventManager eventManager,
-                          final RealmConfigurationStore store,
-                          @Named("initial") final Provider<RealmConfiguration> defaults,
-                          final RealmSecurityManager realmSecurityManager,
-                          final Map<String, Realm> availableRealms)
+  public RealmManagerImpl(
+      final BeanLocator beanLocator,
+      final EventManager eventManager,
+      final RealmConfigurationStore store,
+      @Named("initial") final Provider<RealmConfiguration> defaults,
+      final RealmSecurityManager realmSecurityManager,
+      final Map<String, Realm> availableRealms)
   {
+    this.beanLocator = checkNotNull(beanLocator);
     this.eventManager = checkNotNull(eventManager);
     this.store = checkNotNull(store);
     log.debug("Store: {}", store);
@@ -368,5 +378,13 @@ public class RealmManagerImpl
         }
       }
     }
+  }
+
+  @Override
+  public List<SecurityRealm> getAvailableRealms() {
+    return StreamSupport.stream(beanLocator.locate(Key.get(Realm.class, Named.class)).spliterator(), false)
+        .map(entry -> {
+          return new SecurityRealm(((Named) entry.getKey()).value(), entry.getDescription());
+        }).sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName())).collect(toList());
   }
 }

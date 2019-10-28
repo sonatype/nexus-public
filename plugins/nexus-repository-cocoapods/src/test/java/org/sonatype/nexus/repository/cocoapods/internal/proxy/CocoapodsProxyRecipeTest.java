@@ -166,7 +166,7 @@ public class CocoapodsProxyRecipeTest
     when(request.getAction()).thenReturn(HttpMethods.GET);
     when(viewFacet.get()).thenReturn(cocoapodsViewFacet);
     when(format.getValue()).thenReturn(COCOAPODS_NAME);
-    timingHandler = spy(new TimingHandler());
+    timingHandler = spy(new TimingHandler(null));
 
     underTest = new CocoapodsProxyRecipe(new ProxyType(), format);
     underTest.timingHandler = timingHandler;

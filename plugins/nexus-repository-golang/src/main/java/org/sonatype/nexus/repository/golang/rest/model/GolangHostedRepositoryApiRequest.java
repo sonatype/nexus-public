@@ -10,31 +10,31 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.rest;
+package org.sonatype.nexus.repository.golang.rest.model;
 
-import java.util.List;
+import org.sonatype.nexus.repository.golang.GolangFormat;
+import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;
+import org.sonatype.nexus.repository.rest.api.model.HostedRepositoryApiRequest;
+import org.sonatype.nexus.repository.rest.api.model.HostedStorageAttributes;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
-import org.hibernate.validator.constraints.NotEmpty;
 
 /**
  * @since 3.next
  */
-public class GroupAttributes
+@JsonIgnoreProperties({"format", "type"})
+public class GolangHostedRepositoryApiRequest
+    extends HostedRepositoryApiRequest
 {
-  @ApiModelProperty(value = "Member repositories' names", example = "internal, external-proxy")
-  @NotEmpty
-  @SameFormat
-  private final List<String> memberNames;
-
   @JsonCreator
-  public GroupAttributes(@JsonProperty("memberNames") final List<String> memberNames) {
-    this.memberNames = memberNames;
-  }
-
-  public List<String> getMemberNames() {
-    return memberNames;
+  public GolangHostedRepositoryApiRequest(
+      @JsonProperty("name") final String name,
+      @JsonProperty("online") final Boolean online,
+      @JsonProperty("storage") final HostedStorageAttributes storage,
+      @JsonProperty("cleanup") final CleanupPolicyAttributes cleanup)
+  {
+    super(name, GolangFormat.NAME, online, storage, cleanup);
   }
 }

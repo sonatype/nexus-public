@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.rest.api.model;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -35,9 +36,10 @@ public class HttpClientAttributes
   @NotNull
   protected final Boolean autoBlock;
 
-  @NotNull
+  @Valid
   protected final HttpClientConnectionAttributes connection;
 
+  @Valid
   protected final HttpClientConnectionAuthenticationAttributes authentication;
 
   @JsonCreator

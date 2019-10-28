@@ -10,27 +10,26 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.security.anonymous;
+package org.sonatype.nexus.thread;
 
-import org.sonatype.nexus.common.entity.EntityMetadata;
-import org.sonatype.nexus.common.entity.EntityUpdatedEvent;
-import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
+import java.util.concurrent.ForkJoinPool;
 
 /**
- * {@link AnonymousConfiguration} updated event.
- *
- * @since 3.2
+ * @since 3.next
  */
-public class AnonymousConfigurationUpdatedEvent
-    extends EntityUpdatedEvent
-    implements AnonymousConfigurationEvent
+public class NexusForkJoinPoolFactory
 {
-  public AnonymousConfigurationUpdatedEvent(final EntityMetadata metadata) {
-    super(metadata);
+  private NexusForkJoinPoolFactory() {
+    // static utility class
   }
 
-  @Override
-  public AnonymousConfiguration getAnonymousConfiguration() {
-    return getEntity();
+  // Copied from the constant in {@link ForkJoinPool} because the constant is not visible.
+  private static final int MAX_CAP = 0x7fff;
+
+  public static ForkJoinPool createForkJoinPool(final String threadNamePrefix) {
+    NexusForkJoinWorkerThreadFactory nexusForkJoinWorkerThreadFactory =
+        new NexusForkJoinWorkerThreadFactory(threadNamePrefix);
+    return new ForkJoinPool(Math.min(MAX_CAP, Runtime.getRuntime().availableProcessors()),
+        nexusForkJoinWorkerThreadFactory, null, false);
   }
 }

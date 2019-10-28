@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.security.anonymous;
+package org.sonatype.nexus.internal.security.anonymous.orient;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -21,12 +21,14 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.internal.security.anonymous.AnonymousConfigurationStore;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
@@ -74,6 +76,13 @@ public class OrientAnonymousConfigurationStore
   @Override
   @Guarded(by = STARTED)
   public void save(final AnonymousConfiguration configuration) {
-    inTxRetry(databaseInstance).run(db -> entityAdapter.set(db, configuration));
+    checkArgument(configuration instanceof OrientAnonymousConfiguration,
+        "Anonymous configuration does not match backing store");
+    inTxRetry(databaseInstance).run(db -> entityAdapter.set(db, (OrientAnonymousConfiguration) configuration));
+  }
+
+  @Override
+  public AnonymousConfiguration newConfiguration() {
+    return new OrientAnonymousConfiguration();
   }
 }

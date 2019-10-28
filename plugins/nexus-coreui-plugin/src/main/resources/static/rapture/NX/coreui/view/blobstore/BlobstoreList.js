@@ -39,12 +39,23 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreList', {
           xtype: 'nx-iconcolumn',
           width: 36,
           iconVariant: 'x16',
-          iconName: function () {
-            return 'blobstore-default';
+          iconName: function (value, meta, record) {
+            return record.data.unavailable === true ? 'blobstore-failure' : 'blobstore-default';
           }
         },
         {header: NX.I18n.get('Blobstore_BlobstoreList_Name_Header'), dataIndex: 'name', stateId: 'name', flex: 1,  renderer: Ext.htmlEncode},
         {header: NX.I18n.get('Blobstore_BlobstoreList_Type_Header'), dataIndex: 'type', stateId: 'type'},
+        {
+          header: NX.I18n.get('Blobstore_BlobstoreList_State_Header'), dataIndex: 'state', stateId: 'state',
+          renderer: function(value, metaData, record) {
+            if (record.data.unavailable) {
+              return NX.I18n.get('Blobstore_BlobstoreList_Failed');
+            }
+            else {
+              return NX.I18n.get('Blobstore_BlobstoreList_Started');
+            }
+          }
+        },
         {header: NX.I18n.get('Blobstore_BlobstoreList_BlobCount_Header'), dataIndex: 'blobCount', stateId: 'blobCount'},
         {
           header: NX.I18n.get('Blobstore_BlobstoreList_TotalSize_Header'), dataIndex: 'totalSize', stateId: 'totalSize',

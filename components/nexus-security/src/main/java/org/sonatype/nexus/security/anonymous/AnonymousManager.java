@@ -27,6 +27,13 @@ public interface AnonymousManager
   AnonymousConfiguration getConfiguration();
 
   /**
+   * Provide a new instance of an AnonymousConfiguration.
+   *
+   * @since 3.next
+   */
+  AnonymousConfiguration newConfiguration();
+
+  /**
    * Installs new anonymous configuration.
    */
   void setConfiguration(AnonymousConfiguration configuration);

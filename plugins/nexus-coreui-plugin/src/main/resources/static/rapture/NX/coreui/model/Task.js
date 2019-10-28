@@ -19,9 +19,6 @@
  */
 Ext.define('NX.coreui.model.Task', {
   extend: 'Ext.data.Model',
-  requires: [
-    'NX.coreui.model.ClusteredTaskState'
-  ],
   fields: [
     {name: 'id', type: 'string', sortType: 'asUCText'},
     {name: 'enabled', type: 'boolean'},
@@ -41,10 +38,5 @@ Ext.define('NX.coreui.model.Task', {
     {name: 'startDate', type: 'date', dateFormat: 'c' },
     {name: 'recurringDays', type: 'auto' /*array*/},
     {name: 'cronExpression', type: 'string'}
-  ],
-  hasMany: {
-    model: 'NX.coreui.model.ClusteredTaskState',
-    associationKey: 'clusteredTaskStates',
-    name: 'clusteredTaskStates'
-  }
+  ]
 });

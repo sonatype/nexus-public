@@ -31,6 +31,7 @@ import org.sonatype.nexus.repository.view.Router
 import org.sonatype.nexus.repository.view.ViewFacet
 import org.sonatype.nexus.repository.view.handlers.HighAvailabilitySupportChecker
 
+import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_GOLANG_HOSTED
 import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getBoolean
 
 /**
@@ -72,7 +73,7 @@ class GolangHostedRecipe
 
   @Override
   boolean isFeatureEnabled() {
-    return super.isFeatureEnabled() && getBoolean("nexus.golang.hosted", false)
+    return super.isFeatureEnabled() && getBoolean(FEATURE_GOLANG_HOSTED, false)
   }
 
   /**

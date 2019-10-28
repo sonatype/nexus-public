@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.coreui
 
-import javax.annotation.Nullable
 import javax.validation.constraints.Future
 import javax.validation.constraints.NotNull
 
@@ -69,12 +68,6 @@ class TaskXO
   @NotBlank(groups = AdvancedSchedule)
   @CronExpression(groups = AdvancedSchedule)
   String cronExpression
-
-  /**
-   * @since 3.1
-   */
-  @Nullable
-  List<TaskStateXO> clusteredTaskStates
 
   public interface Schedule
   {

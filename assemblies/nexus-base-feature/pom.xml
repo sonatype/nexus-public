@@ -39,6 +39,16 @@
       <scope>provided</scope>
     </dependency>
 
+    <!--
+    Optionally installed during startup
+    -->
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-orient</artifactId>
+      <scope>provided</scope>
+      <optional>true</optional>
+    </dependency>
+
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-extender</artifactId>

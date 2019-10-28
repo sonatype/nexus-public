@@ -10,27 +10,28 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.security.anonymous;
+package org.sonatype.nexus.thread;
 
-import org.sonatype.nexus.common.entity.EntityDeletedEvent;
-import org.sonatype.nexus.common.entity.EntityMetadata;
-import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinWorkerThread;
+
+import org.hamcrest.CoreMatchers;
+import org.junit.Test;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
- * {@link AnonymousConfiguration} deleted event.
- *
- * @since 3.2
+ * @since 3.next
  */
-public class AnonymousConfigurationDeletedEvent
-    extends EntityDeletedEvent
-    implements AnonymousConfigurationEvent
+public class NexusForkJoinWorkerThreadFactoryTest
 {
-  public AnonymousConfigurationDeletedEvent(final EntityMetadata metadata) {
-    super(metadata);
+  private NexusForkJoinWorkerThreadFactory nexusForkJoinWorkerThreadFactory;
+
+  @Test
+  public void prefixIsAddedToThread() {
+    nexusForkJoinWorkerThreadFactory = new NexusForkJoinWorkerThreadFactory("prefix-test");
+    ForkJoinPool forkJoinPool = new ForkJoinPool();
+    ForkJoinWorkerThread thread = nexusForkJoinWorkerThreadFactory.newThread(forkJoinPool);
+    assertThat(thread.getName(), CoreMatchers.containsString("prefix-test"));
   }
 
-  @Override
-  public AnonymousConfiguration getAnonymousConfiguration() {
-    return getEntity();
-  }
 }

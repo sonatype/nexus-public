@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.rest.api.model;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 import org.sonatype.nexus.repository.types.GroupType;
@@ -30,10 +31,12 @@ public class GroupRepositoryApiRequest
 {
   @ApiModelProperty
   @NotNull
+  @Valid
   private final StorageAttributes storage;
 
   @ApiModelProperty
   @NotNull
+  @Valid
   private final GroupAttributes group;
 
   @JsonCreator

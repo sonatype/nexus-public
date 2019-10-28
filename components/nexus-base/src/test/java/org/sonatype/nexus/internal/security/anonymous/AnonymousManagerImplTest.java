@@ -67,6 +67,7 @@ public class AnonymousManagerImplTest
   @Before
   public void setUp() {
     when(defaults.get()).thenReturn(defaultConfig);
+    when(store.newConfiguration()).thenReturn(defaultConfig);
     when(storeConfig.copy()).thenReturn(storeConfigCopy);
     when(storeConfigCopy.copy()).thenReturn(storeConfigCopy);
     when(defaultConfig.copy()).thenReturn(defaultConfigCopy);

@@ -29,7 +29,6 @@ import javax.inject.Named;
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheInfo;
-import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
 import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
 import org.sonatype.nexus.repository.storage.Asset;
@@ -96,12 +95,6 @@ public class PyPiProxyFacetImpl
   @Inject
   public PyPiProxyFacetImpl(final TemplateHelper templateHelper) {
     this.templateHelper = checkNotNull(templateHelper);
-  }
-
-  // HACK: Workaround for known CGLIB issue, forces an Import-Package for org.sonatype.nexus.repository.config
-  @Override
-  protected void doValidate(final Configuration configuration) throws Exception {
-    super.doValidate(configuration);
   }
 
   @Nullable

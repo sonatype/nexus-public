@@ -10,28 +10,31 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.apt.rest;
+package org.sonatype.nexus.repository.golang.rest.model;
+
+import org.sonatype.nexus.repository.golang.GolangFormat;
+import org.sonatype.nexus.repository.rest.api.model.GroupAttributes;
+import org.sonatype.nexus.repository.rest.api.model.GroupRepositoryApiRequest;
+import org.sonatype.nexus.repository.rest.api.model.StorageAttributes;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
-import org.hibernate.validator.constraints.NotEmpty;
 
 /**
  * @since 3.next
  */
-public class AptHostedRepositoriesAttributes
+@JsonIgnoreProperties({"format", "type"})
+public class GolangGroupRepositoryApiRequest
+    extends GroupRepositoryApiRequest
 {
-  @ApiModelProperty(value = "Distribution to host", example = "bionic")
-  @NotEmpty
-  protected final String distribution;
-
   @JsonCreator
-  public AptHostedRepositoriesAttributes(@JsonProperty("distribution") final String distribution) {
-    this.distribution = distribution;
-  }
-
-  public String getDistribution() {
-    return distribution;
+  public GolangGroupRepositoryApiRequest(
+      @JsonProperty("name") final String name,
+      @JsonProperty("online") final Boolean online,
+      @JsonProperty("storage") final StorageAttributes storage,
+      @JsonProperty("group") final GroupAttributes group)
+  {
+    super(name, GolangFormat.NAME, online, storage, group);
   }
 }

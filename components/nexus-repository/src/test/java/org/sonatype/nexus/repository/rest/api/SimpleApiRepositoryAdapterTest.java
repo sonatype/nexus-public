@@ -97,7 +97,7 @@ public class SimpleApiRepositoryAdapterTest
     SimpleApiHostedRepository hostedRepository = (SimpleApiHostedRepository) underTest.adapt(repository);
     assertRepository(hostedRepository, "hosted", true);
     assertThat(hostedRepository.getStorage().getStrictContentTypeValidation(), is(true));
-    assertThat(hostedRepository.getStorage().getWritePolicy(), is("ALLOW"));
+    assertThat(hostedRepository.getStorage().getWritePolicy(), is(WritePolicy.ALLOW));
 
     // set some values
     setStorageAttributes(repository, "default", /* non-default */ false, WritePolicy.DENY);
@@ -105,7 +105,7 @@ public class SimpleApiRepositoryAdapterTest
 
     assertThat(hostedRepository.getStorage().getBlobStoreName(), is("default"));
     assertThat(hostedRepository.getStorage().getStrictContentTypeValidation(), is(false));
-    assertThat(hostedRepository.getStorage().getWritePolicy(), is("DENY"));
+    assertThat(hostedRepository.getStorage().getWritePolicy(), is(WritePolicy.DENY));
   }
 
   @Test

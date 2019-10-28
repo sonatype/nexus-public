@@ -13,7 +13,6 @@
 package org.sonatype.nexus.coreui;
 
 import java.util.List;
-import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -25,14 +24,12 @@ import javax.ws.rs.Produces;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.rest.Resource;
+import org.sonatype.nexus.security.realm.RealmManager;
+import org.sonatype.nexus.security.realm.SecurityRealm;
 
-import com.google.inject.Key;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
-import org.apache.shiro.realm.Realm;
-import org.eclipse.sisu.inject.BeanLocator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
@@ -49,25 +46,17 @@ public class RealmSettingsResource
 {
   static final String RESOURCE_PATH = "internal/ui/realms";
 
-  private final BeanLocator beanLocator;
+  private final RealmManager realmManager;
 
   @Inject
-  public RealmSettingsResource(final BeanLocator beanLocator) {
-    this.beanLocator = checkNotNull(beanLocator);
+  public RealmSettingsResource(final RealmManager realmManager) {
+    this.realmManager = checkNotNull(realmManager);
   }
 
   @GET
   @Path("/types")
   @RequiresPermissions("nexus:settings:read")
-  public List<ReferenceXO> readRealmTypes() {
-    return StreamSupport.stream(beanLocator.locate(Key.get(Realm.class, Named.class)).spliterator(), false)
-        .map(entry -> {
-          ReferenceXO xo = new ReferenceXO();
-          xo.setId(((Named)entry.getKey()).value());
-          xo.setName(entry.getDescription());
-          return xo;
-        })
-        .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
-        .collect(toList());
+  public List<SecurityRealm> readRealmTypes() {
+    return realmManager.getAvailableRealms();
   }
 }

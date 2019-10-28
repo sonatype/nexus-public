@@ -20,7 +20,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.repository.cache.CacheInfo;
-import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.golang.AssetKind;
 import org.sonatype.nexus.repository.golang.internal.metadata.GolangAttributes;
 import org.sonatype.nexus.repository.golang.internal.util.GolangDataAccess;
@@ -60,12 +59,6 @@ public class GolangProxyFacetImpl
   {
     this.golangPathUtils = checkNotNull(golangPathUtils);
     this.golangDataAccess = checkNotNull(golangDataAccess);
-  }
-
-  // HACK: Workaround for known CGLIB issue, forces an Import-Package for org.sonatype.nexus.repository.config
-  @Override
-  protected void doValidate(final Configuration configuration) throws Exception {
-    super.doValidate(configuration);
   }
 
   @Nullable

@@ -123,6 +123,10 @@
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-graphdb</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
 
@@ -161,25 +165,31 @@
       <dependency>
         <groupId>org.mybatis</groupId>
         <artifactId>mybatis</artifactId>
-        <version>3.5.2</version>
+        <version>3.5.3</version>
       </dependency>
 
       <dependency>
         <groupId>com.zaxxer</groupId>
         <artifactId>HikariCP</artifactId>
-        <version>3.3.1</version>
+        <version>3.4.1</version>
       </dependency>
 
       <dependency>
         <groupId>com.h2database</groupId>
         <artifactId>h2</artifactId>
-        <version>1.4.199</version>
+        <version>1.4.200</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.postgresql</groupId>
+        <artifactId>postgresql</artifactId>
+        <version>42.2.8</version>
       </dependency>
 
       <dependency>
         <groupId>com.opentable.components</groupId>
         <artifactId>otj-pg-embedded</artifactId>
-        <version>0.13.1</version>
+        <version>0.13.3</version>
       </dependency>
 
       <dependency>

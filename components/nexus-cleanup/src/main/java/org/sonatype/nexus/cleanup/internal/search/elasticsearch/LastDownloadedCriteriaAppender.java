@@ -23,7 +23,7 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
  */
 @Named(LAST_DOWNLOADED_KEY)
 public class LastDownloadedCriteriaAppender
-    extends LessThanTimeCriteriaAppender
+    extends LessThanTimeOrNeverDownloadedCriteriaAppender
 {
   public LastDownloadedCriteriaAppender() {
     super(LAST_DOWNLOADED_KEY);

@@ -178,8 +178,9 @@ public class MyBatisDataStore
     properties.put("poolName", storeName);
     properties.putAll(attributes);
 
-    // workaround https://github.com/pgjdbc/pgjdbc/issues/265
     if (attributes.get(JDBC_URL).startsWith("jdbc:postgresql")) {
+      properties.put("driverClassName", "org.postgresql.Driver");
+      // workaround https://github.com/pgjdbc/pgjdbc/issues/265
       properties.put("dataSource.stringtype", "unspecified");
     }
 

@@ -10,27 +10,16 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.security.anonymous;
-
-import org.sonatype.nexus.common.entity.EntityCreatedEvent;
-import org.sonatype.nexus.common.entity.EntityMetadata;
-import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
+package org.sonatype.nexus.common.app;
 
 /**
- * {@link AnonymousConfiguration} created event.
+ * List of available feature flags
+ * You can change it's values by editing ${data-dir}/nexus.properties configuration file.
  *
- * @since 3.2
+ * @since 3.next
  */
-public class AnonymousConfigurationCreatedEvent
-    extends EntityCreatedEvent
-    implements AnonymousConfigurationEvent
+public interface FeatureFlags
 {
-  public AnonymousConfigurationCreatedEvent(final EntityMetadata metadata) {
-    super(metadata);
-  }
-
-  @Override
-  public AnonymousConfiguration getAnonymousConfiguration() {
-    return getEntity();
-  }
+  /* Go (hosted) repository is experimental. Available values: true, false. Default value: false */
+  String FEATURE_GOLANG_HOSTED = "nexus.golang.hosted";
 }

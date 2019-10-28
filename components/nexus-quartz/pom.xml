@@ -39,11 +39,6 @@
     </dependency>
 
     <dependency>
-      <groupId>com.orientechnologies</groupId>
-      <artifactId>orientdb-jdbc</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-datastore-api</artifactId>
     </dependency>
@@ -106,17 +101,6 @@
         <configuration>
           <forkCount>1</forkCount>
           <reuseForks>false</reuseForks>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
-        <configuration>
-          <instructions>
-            <Import-Package>
-              sun.reflect.*;resolution:=optional,*
-            </Import-Package>
-          </instructions>
         </configuration>
       </plugin>
     </plugins>

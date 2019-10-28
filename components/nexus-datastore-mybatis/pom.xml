@@ -54,6 +54,12 @@
     </dependency>
 
     <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+    <dependency>
       <groupId>org.sonatype.goodies</groupId>
       <artifactId>goodies-testsupport</artifactId>
       <scope>test</scope>

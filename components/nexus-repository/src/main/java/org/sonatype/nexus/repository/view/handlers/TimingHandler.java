@@ -13,6 +13,8 @@
 package org.sonatype.nexus.repository.view.handlers;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -32,10 +34,17 @@ import com.google.common.base.Stopwatch;
 @Named
 @Singleton
 public class TimingHandler
-  extends ComponentSupport
-  implements Handler
+    extends ComponentSupport
+    implements Handler
 {
   public static final String ELAPSED_KEY = AttributeKey.get(TimingHandler.class, "elapsed");
+
+  private final Handler timing;
+
+  @Inject
+  public TimingHandler(@Named("nexus.analytics.meteringHandler") @Nullable final Handler timing) {
+    this.timing = timing;
+  }
 
   @Nonnull
   @Override
@@ -43,6 +52,9 @@ public class TimingHandler
     Stopwatch watch = Stopwatch.createStarted();
 
     try {
+      if (timing != null) {
+        context.insertHandler(timing);
+      }
       return context.proceed();
     }
     finally {

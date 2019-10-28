@@ -105,6 +105,22 @@
       <scope>runtime</scope>
     </dependency>
 
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-orient</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-datastore-mybatis</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+      <scope>runtime</scope>
+    </dependency>
+
     <!--
     Provide access to Swagger-UI
     -->
@@ -211,6 +227,8 @@
               <installedFeatures>
                 <feature>management</feature>
                 <feature>ssh</feature>
+                <feature>nexus-orient</feature>
+                <feature>nexus-datastore-mybatis</feature>
                 <feature>nexus-core-feature</feature>
                 <feature>nexus-oss-edition</feature>
               </installedFeatures>

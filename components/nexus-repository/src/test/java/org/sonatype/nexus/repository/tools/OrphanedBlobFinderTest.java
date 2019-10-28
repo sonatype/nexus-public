@@ -32,6 +32,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 
@@ -76,6 +77,9 @@ public class OrphanedBlobFinderTest
 
   @Mock
   private Repository repository;
+
+  @Mock
+  private Bucket bucket;
 
   @Mock
   private StorageFacet storageFacet;
@@ -203,7 +207,8 @@ public class OrphanedBlobFinderTest
     when(repositoryManager.get(REPOSITORY_NAME)).thenReturn(repository);
     when(repository.facet(StorageFacet.class)).thenReturn(storageFacet);
     when(storageFacet.txSupplier()).thenReturn(() -> tx);
-    when(tx.findAssetWithProperty("name", ASSET_NAME)).thenReturn(asset);
+    when(tx.findBucket(repository)).thenReturn(bucket);
+    when(tx.findAssetWithProperty("name", ASSET_NAME, bucket)).thenReturn(asset);
   }
 
   private void setupRepository(final Repository repository) {

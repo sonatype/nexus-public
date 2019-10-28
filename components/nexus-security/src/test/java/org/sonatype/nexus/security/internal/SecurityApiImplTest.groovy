@@ -40,7 +40,7 @@ class SecurityApiImplTest
 
   def 'Can update anonymous settings'() {
     given:
-      def configuration = new AnonymousConfiguration(enabled: true)
+      def configuration = new TestAnonymousConfiguration(enabled: true)
 
     when:
       def updatedConfiguration = api.setAnonymousAccess(false)
@@ -53,7 +53,7 @@ class SecurityApiImplTest
 
   def 'No save is made when anonymous settings already match'() {
     given:
-      def configuration = new AnonymousConfiguration(enabled: true)
+      def configuration = new TestAnonymousConfiguration(enabled: true)
 
     when:
       def updatedConfiguration = api.setAnonymousAccess(true)
@@ -105,4 +105,13 @@ class SecurityApiImplTest
       }
   }
 
+  static class TestAnonymousConfiguration implements AnonymousConfiguration {
+    boolean enabled
+    String realmName
+    String userId
+
+    AnonymousConfiguration copy() {
+      return this
+    }
+  }
 }

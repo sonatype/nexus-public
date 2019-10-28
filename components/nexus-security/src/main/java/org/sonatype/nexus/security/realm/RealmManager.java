@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.security.realm;
 
+import java.util.List;
+
 import org.sonatype.goodies.lifecycle.Lifecycle;
 
 /**
@@ -54,4 +56,11 @@ public interface RealmManager
    * Disable given realm-name, if not already disabled.
    */
   void disableRealm(String realmName);
+
+  /**
+   * Get the list of known available realms.
+   *
+   * @since 3.next
+   */
+  List<SecurityRealm> getAvailableRealms();
 }
