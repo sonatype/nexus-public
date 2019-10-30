@@ -43,7 +43,7 @@ import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.v
 /**
  * @since 3.19
  */
-public class CondaPathUtilsTest
+public class CondaPathAttributeMorpherTest
     extends TestSupport
 {
   private static final String MAIN = "main";

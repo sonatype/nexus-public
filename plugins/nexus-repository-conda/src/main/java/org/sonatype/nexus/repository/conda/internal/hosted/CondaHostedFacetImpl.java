@@ -43,7 +43,7 @@ import java.util.stream.StreamSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singletonList;
-import static org.sonatype.nexus.repository.conda.internal.hosted.Utils.toAttributes;
+import static org.sonatype.nexus.repository.conda.internal.hosted.AttributeMorpher.toAttributes;
 import static org.sonatype.nexus.repository.conda.internal.hosted.metadata.MetaData.asIndex;
 import static org.sonatype.nexus.repository.conda.internal.hosted.metadata.MetaData.readIndexJson;
 import static org.sonatype.nexus.repository.conda.internal.util.CondaDataAccess.HASH_ALGORITHMS;
@@ -152,7 +152,7 @@ public class CondaHostedFacetImpl
                 .stream(tx.browseAssets(bucket).spliterator(), false)
                 .filter(asset -> !asset.name().endsWith("repodata.json"))
                 .filter(asset -> tx.findComponent(asset.componentId()) != null)
-                .map(Utils::toPackageDesc)
+                .map(AttributeMorpher::toPackageDesc)
                 .forEach(tuple -> {
                     PackageDesc index = tuple.getSecond();
                     String fileName = tuple.getFirst();
@@ -258,5 +258,4 @@ public class CondaHostedFacetImpl
         }
         return group.toString();
     }
-
 }

@@ -1,4 +1,3 @@
-package org.sonatype.nexus.repository.conda.internal.hosted;
 /*
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2018-present Sonatype, Inc.
@@ -11,6 +10,7 @@ package org.sonatype.nexus.repository.conda.internal.hosted;
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+package org.sonatype.nexus.repository.conda.internal.hosted;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.conda.internal.CondaFormat;
 import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;

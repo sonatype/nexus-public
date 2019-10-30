@@ -10,12 +10,12 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext, NX*/
 
 /**
- * Repository "Settings" form for a helm Hosted repository.
+ * global Ext, NX
+ * Repository "Settings" form for a Conda Proxy repository
  *
- * @since 0.0.2
+ * @since 3.20.0
  */
 Ext.define('NX.coreui.view.repository.recipe.CondaHosted', {
   extend: 'NX.coreui.view.repository.RepositorySettingsForm',
