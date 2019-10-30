@@ -48,6 +48,7 @@ import static org.sonatype.nexus.repository.conda.internal.hosted.metadata.MetaD
 import static org.sonatype.nexus.repository.conda.internal.hosted.metadata.MetaData.readIndexJson;
 import static org.sonatype.nexus.repository.conda.internal.util.CondaDataAccess.HASH_ALGORITHMS;
 import static org.sonatype.nexus.repository.conda.internal.util.CondaDataAccess.toContent;
+import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.REPODATA_JSON;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_VERSION;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
@@ -132,7 +133,7 @@ public class CondaHostedFacetImpl
         AssetBlob assetBlob = tx.setBlob(asset, path, tempBlob, null, payload.getContentType(), false);
 
         Content content = toContent(asset, assetBlob.getBlob());
-        if (!path.contains("repodata.json")) {
+        if (!path.contains(REPODATA_JSON)) {
             String json = readIndexJson(content.openInputStream());
             toAttributes(asIndex(json), asset.formatAttributes());
         }
@@ -150,7 +151,7 @@ public class CondaHostedFacetImpl
         Map<String, RepoData> architectures = new HashMap<>();
         StreamSupport
                 .stream(tx.browseAssets(bucket).spliterator(), false)
-                .filter(asset -> !asset.name().endsWith("repodata.json"))
+                .filter(asset -> !asset.name().endsWith(REPODATA_JSON))
                 .filter(asset -> tx.findComponent(asset.componentId()) != null)
                 .map(AttributeMorpher::toPackageDesc)
                 .forEach(tuple -> {

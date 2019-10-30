@@ -23,6 +23,7 @@ import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.REPODATA_JSON;
 
 public class CondaPath {
 
@@ -244,7 +245,7 @@ public class CondaPath {
 
     private static Optional<Coordinates> parseCoordinates(String path) {
 
-        if (path.endsWith("repodata.json")) {
+        if (path.endsWith(REPODATA_JSON)) {
             return Optional.empty();
         }
         int vEndPos = path.lastIndexOf('/');
