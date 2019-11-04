@@ -35,6 +35,7 @@ import org.sonatype.nexus.httpclient.HttpClientPlan.Customizer;
 import org.sonatype.nexus.httpclient.config.ConfigurationCustomizer;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 import org.sonatype.nexus.httpclient.config.HttpClientConfigurationChangedEvent;
+import org.sonatype.nexus.internal.httpclient.orient.HttpClientConfigurationEvent;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
@@ -285,6 +286,11 @@ public class HttpClientManagerImpl
     );
 
     return builder;
+  }
+
+  @Override
+  public HttpClientConfiguration newConfiguration() {
+    return store.newConfiguration();
   }
 
   /**

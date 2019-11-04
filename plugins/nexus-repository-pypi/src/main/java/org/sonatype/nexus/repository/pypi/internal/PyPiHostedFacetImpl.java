@@ -335,17 +335,29 @@ public class PyPiHostedFacetImpl
   @Override
   public Asset upload(final SignablePyPiPackage pyPiPackage) throws IOException {
     Asset savedPiPyPackage;
-    Map<String, String>attributes = pyPiPackage.getAttributes();
-    try (TempBlobPartPayload payload = pyPiPackage.getWheelPayload()) {
-      savedPiPyPackage = storeWheelPayload(payload, attributes);
+    Map<String, String> attributes = pyPiPackage.getAttributes();
+    try (
+        TempBlobPartPayload wheelPayload = pyPiPackage.getWheelPayload();
+        TempBlobPartPayload gpgPayload = pyPiPackage.getGpgSignature()) {
+      savedPiPyPackage = storeWheelAndSignaturePayloads(wheelPayload, gpgPayload, attributes);
     }
-    try (TempBlobPartPayload payload = pyPiPackage.getGpgSignature()) {
-      storeGpgSignaturePayload(payload, attributes);
+    catch (Exception e) {
+      log.info("Unable to store wheel and gpg signature", e);
+      throw e;
     }
     return savedPiPyPackage;
   }
 
   @TransactionalStoreBlob
+  protected Asset storeWheelAndSignaturePayloads(final TempBlobPartPayload wheelPayload,
+                                               final TempBlobPartPayload gpgPayload,
+                                               final Map<String, String> attributes) throws IOException
+  {
+    Asset wheelAsset = storeWheelPayload(wheelPayload, attributes);
+    storeGpgSignaturePayload(gpgPayload, attributes);
+    return wheelAsset;
+  }
+
   protected Asset storeWheelPayload(final TempBlobPartPayload wheelPayload,
                                     final Map<String, String> attributes) throws IOException
   {
@@ -353,9 +365,9 @@ public class PyPiHostedFacetImpl
     return savePyPiWheelPayload(wheelFileName, attributes, wheelPayload);
   }
 
-  @TransactionalStoreBlob
   protected void storeGpgSignaturePayload(final TempBlobPartPayload gpgPayload,
-                                          final Map<String, String> attributes) throws IOException {
+                                          final Map<String, String> attributes) throws IOException
+  {
     if (gpgPayload != null) {
       String name = attributes.get(P_NAME);
       String version = attributes.get(P_VERSION);

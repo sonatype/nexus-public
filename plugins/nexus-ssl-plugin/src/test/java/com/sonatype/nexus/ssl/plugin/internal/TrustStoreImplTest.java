@@ -18,7 +18,8 @@ import java.security.cert.CertificateException;
 import java.util.stream.Stream;
 import javax.net.ssl.SSLContext;
 
-import com.sonatype.nexus.ssl.plugin.internal.keystore.KeyStoreDataUpdatedEvent;
+import com.sonatype.nexus.ssl.plugin.internal.keystore.orient.OrientKeyStoreDataUpdatedEvent;
+
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.common.event.EventManager;
@@ -210,7 +211,7 @@ public class TrustStoreImplTest
   {
     SSLContext sslContext1 = underTest.getSSLContext();
     SSLContext sslContext2 = underTest.getSSLContext();
-    underTest.onKeyStoreDataUpdated(new KeyStoreDataUpdatedEvent(mock(EntityMetadata.class), "trusted.ks"));
+    underTest.onKeyStoreDataUpdated(new OrientKeyStoreDataUpdatedEvent(mock(EntityMetadata.class), "trusted.ks"));
     SSLContext sslContext3 = underTest.getSSLContext();
 
     assertSame(sslContext1, sslContext2);

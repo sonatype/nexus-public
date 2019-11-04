@@ -27,14 +27,4 @@ class CleanupPolicyPreviewXO
   String repositoryName;
 
   CleanupPolicyCriteria criteria;
-
-  static CleanupPolicy toCleanupPolicy(final CleanupPolicyPreviewXO cleanupPolicyPreviewXO) {
-    return new CleanupPolicy(
-        "preview",
-        "",
-        "",
-        "",
-        CleanupPolicyCriteria.toMap(cleanupPolicyPreviewXO.criteria)
-    )
-  }
 }

@@ -21,7 +21,10 @@ import javax.annotation.Nullable;
  */
 public interface RealmConfigurationStore
 {
-  // TODO: Sort out exceptions, both of these should have some expected exceptions
+  /**
+   * @since 3.next
+   */
+  RealmConfiguration newEntity();
 
   @Nullable
   RealmConfiguration load();

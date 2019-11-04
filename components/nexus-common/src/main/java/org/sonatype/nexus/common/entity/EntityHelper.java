@@ -84,4 +84,13 @@ public class EntityHelper
     checkState(version != null, "Missing entity-version");
     return version;
   }
+
+  /**
+   * @since 3.next
+   */
+  public static void clearMetadata(final Object entity) {
+    if (entity instanceof Entity) {
+      ((Entity)entity).setEntityMetadata(null);
+    }
+  }
 }

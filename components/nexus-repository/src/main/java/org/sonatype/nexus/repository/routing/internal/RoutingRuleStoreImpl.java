@@ -22,6 +22,7 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.stateguard.Guarded;
@@ -48,6 +49,7 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
 /**
  * @since 3.16
  */
+@FeatureFlag(name = "nexus.orient.store.config")
 @Named
 @ManagedLifecycle(phase = SCHEMAS)
 @Singleton

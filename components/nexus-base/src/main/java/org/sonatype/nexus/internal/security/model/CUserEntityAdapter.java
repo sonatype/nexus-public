@@ -16,6 +16,7 @@ import javax.annotation.Nullable;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
@@ -35,6 +36,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  *
  * @since 3.0
  */
+@FeatureFlag(name = "nexus.orient.store.config")
 @Named
 @Singleton
 public class CUserEntityAdapter

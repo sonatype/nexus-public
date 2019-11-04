@@ -14,6 +14,7 @@ package org.sonatype.nexus.testsuite.testsupport.http;
 
 import javax.inject.Provider;
 
+import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.httpclient.HttpClientManager;
 import org.sonatype.nexus.httpclient.config.ConnectionConfiguration;
@@ -88,7 +89,7 @@ public class HttpConfigurationTestHelper
   private HttpClientConfiguration getCurrentConfig() {
     // Clear entity metadata to avoid data/serialization conflicts
     HttpClientConfiguration httpConfig = provideHttpClientManager().getConfiguration().copy();
-    httpConfig.setEntityMetadata(null);
+    EntityHelper.clearMetadata(httpConfig);
     return httpConfig;
   }
 

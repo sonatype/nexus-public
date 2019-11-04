@@ -18,8 +18,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
+import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityUUID;
@@ -29,43 +28,64 @@ import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
 
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.UUID.fromString;
 
 /**
  * MyBatis {@link TypeHandler} that maps UUID-backed {@link EntityId}s to/from SQL.
  *
  * @since 3.19
  */
-@Named
-@Singleton
+// not @Named because we register this manually
 public class EntityUUIDTypeHandler
     extends BaseTypeHandler<EntityId>
 {
+  private final boolean lenient;
+
+  public EntityUUIDTypeHandler(final boolean lenient) {
+    this.lenient = lenient; // pass UUIDs by string when we're being lenient
+  }
+
   @Override
   public void setNonNullParameter(final PreparedStatement ps,
                                   final int parameterIndex,
                                   final EntityId parameter,
-                                  final JdbcType jdbcType) throws SQLException
+                                  final JdbcType jdbcType)
+      throws SQLException
   {
     checkState(parameter instanceof EntityUUID, "Expecting EntityUUID");
-    ps.setObject(parameterIndex, ((EntityUUID) parameter).uuid());
+    UUID uuid = ((EntityUUID) parameter).uuid();
+    if (lenient) {
+      ps.setString(parameterIndex, uuid.toString());
+    }
+    else {
+      ps.setObject(parameterIndex, uuid);
+    }
   }
 
   @Override
   public EntityId getNullableResult(final ResultSet rs, final String columnName) throws SQLException {
-    return nullableEntityUUID(rs.getObject(columnName, UUID.class));
+    return nullableEntityUUID(rs.getObject(columnName));
   }
 
   @Override
   public EntityId getNullableResult(final ResultSet rs, final int columnIndex) throws SQLException {
-    return nullableEntityUUID(rs.getObject(columnIndex, UUID.class));
+    return nullableEntityUUID(rs.getObject(columnIndex));
   }
 
   @Override
   public EntityId getNullableResult(final CallableStatement cs, final int columnIndex) throws SQLException {
-    return nullableEntityUUID(cs.getObject(columnIndex, UUID.class));
+    return nullableEntityUUID(cs.getObject(columnIndex));
   }
 
-  private EntityId nullableEntityUUID(final UUID uuid) {
-    return uuid != null ? new EntityUUID(uuid) : null;
+  @Nullable
+  private EntityId nullableEntityUUID(@Nullable final Object uuid) {
+    // expect UUIDs but also accept strings
+    if (uuid instanceof UUID) {
+      return new EntityUUID((UUID) uuid);
+    }
+    if (uuid instanceof String) {
+      return new EntityUUID(fromString((String) uuid));
+    }
+    return null;
   }
 }

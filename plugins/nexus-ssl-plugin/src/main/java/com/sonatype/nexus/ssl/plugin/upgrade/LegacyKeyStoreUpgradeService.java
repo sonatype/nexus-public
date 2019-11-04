@@ -28,6 +28,7 @@ import com.sonatype.nexus.ssl.plugin.internal.keystore.KeyStoreManagerImpl;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.orient.OClassNameBuilder;
@@ -48,6 +49,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * 
  * @since 3.1
  */
+@FeatureFlag(name = "nexus.orient.store.config")
 @Named
 @Singleton
 public class LegacyKeyStoreUpgradeService

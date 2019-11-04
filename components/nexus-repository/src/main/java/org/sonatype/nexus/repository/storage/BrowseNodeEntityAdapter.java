@@ -21,6 +21,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.orient.OClassNameBuilder;
@@ -47,6 +48,7 @@ import static com.google.common.collect.Lists.newArrayList;
  *
  * @since 3.6
  */
+@FeatureFlag(name = "nexus.orient.store.config")
 @Named
 @Singleton
 public class BrowseNodeEntityAdapter

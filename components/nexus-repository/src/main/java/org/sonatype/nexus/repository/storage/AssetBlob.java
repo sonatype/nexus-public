@@ -38,6 +38,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class AssetBlob
 {
+  public static final boolean USE_HARD_DELETE = true;
+
+  public static final boolean USE_SOFT_DELETE = false;
+
   private final NodeAccess nodeAccess;
 
   private final BlobStore blobStore;
@@ -98,9 +102,23 @@ public class AssetBlob
    * @since 3.4
    */
   void delete(final String reason) {
+    delete(reason, USE_SOFT_DELETE);
+  }
+
+  /**
+   * Deletes this temporary {@link AssetBlob} by clearing any locally ingested blobs.
+   *
+   * @param reason for deleting this blob
+   * @param useHardDelete
+   *    true to completely remove the blob files from the blob store
+   *    false to do a soft delete for cleanup later (prefer this option for safety)
+   *
+   * @since 3.next
+   */
+  void delete(final String reason, final boolean useHardDelete) {
     if (ingestedBlob != null) {
-      if (canonicalBlob != null) {
-        // canonical redirect is in place, so it's safe to hard-delete the temp blob
+      if (canonicalBlob != null || useHardDelete) {
+        // a canonicalBlob indicates a redirect is in place, so it's safe to hard-delete the temp blob
         blobStore.deleteHard(ingestedBlob.getId());
       }
       else {

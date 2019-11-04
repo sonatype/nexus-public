@@ -16,6 +16,17 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.cleanup.internal.storage.orient.OrientCleanupPolicy;
+import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
+import org.sonatype.nexus.common.entity.DetachedEntityId;
+import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.search.SearchService;
+import org.sonatype.nexus.repository.storage.Component;
+import org.sonatype.nexus.repository.storage.StorageTx;
+import org.sonatype.nexus.transaction.UnitOfWork;
+
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.google.common.collect.ImmutableList;
@@ -30,15 +41,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
-import org.sonatype.nexus.common.entity.DetachedEntityId;
-import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.search.SearchService;
-import org.sonatype.nexus.repository.storage.Component;
-import org.sonatype.nexus.repository.storage.StorageTx;
-import org.sonatype.nexus.transaction.UnitOfWork;
 
 import static java.lang.Boolean.parseBoolean;
 import static java.lang.String.format;
@@ -180,7 +182,7 @@ public class ElasticSearchCleanupComponentBrowseTest
   public void returnEmptyWhenNoCriteria() throws Exception {
     Map<String, String> criteria = emptyMap();
 
-    CleanupPolicy lastBlobUpdatedPolicy = new CleanupPolicy();
+    CleanupPolicy lastBlobUpdatedPolicy = new OrientCleanupPolicy();
     lastBlobUpdatedPolicy.setCriteria(criteria);
 
     when(searchService.browseUnrestrictedInRepos(any(), any())).thenReturn(ImmutableList.of(searchHit1, searchHit2));
@@ -193,7 +195,7 @@ public class ElasticSearchCleanupComponentBrowseTest
   }
 
   private void assertComponentsReturned(final Map<String, String> criteria) {
-    CleanupPolicy lastBlobUpdatedPolicy = new CleanupPolicy();
+    CleanupPolicy lastBlobUpdatedPolicy = new OrientCleanupPolicy();
     lastBlobUpdatedPolicy.setCriteria(criteria);
 
     when(searchService.browseUnrestrictedInRepos(any(), any())).thenReturn(ImmutableList.of(searchHit1, searchHit2));
@@ -243,7 +245,7 @@ public class ElasticSearchCleanupComponentBrowseTest
         .toString();
   }
 
-  private QueryBuilder getLastDownloadQuery(String value)
+  private QueryBuilder getLastDownloadQuery(final String value)
   {
     BoolQueryBuilder neverDownloadDownloadBuilder = QueryBuilders.boolQuery();
     neverDownloadDownloadBuilder.mustNot(existsQuery(LAST_DOWNLOADED_KEY));

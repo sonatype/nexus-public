@@ -18,6 +18,7 @@ import java.util.Map;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.httpclient.HttpClientManager;
+import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 import org.sonatype.nexus.httpclient.config.NtlmAuthenticationConfiguration;
 import org.sonatype.nexus.httpclient.config.UsernameAuthenticationConfiguration;
 import org.sonatype.nexus.repository.Format;
@@ -84,6 +85,9 @@ public class HttpClientFacetImplTest
   
   @Mock
   private EventManager eventManager;
+
+  @Mock
+  HttpClientConfiguration httpClientConfiguration;
   
   private HttpClientFacetImpl.Config config = new HttpClientFacetImpl.Config();
 
@@ -157,6 +161,7 @@ public class HttpClientFacetImplTest
       throws Exception
   {
     when(httpClientManager.create(any())).thenReturn(closeableHttpClient);
+    when(httpClientManager.newConfiguration()).thenReturn(httpClientConfiguration);
     when(repository.facet(ConfigurationFacet.class)).thenReturn(configurationFacet);
 
     when(repository.getConfiguration()).thenReturn(configuration);

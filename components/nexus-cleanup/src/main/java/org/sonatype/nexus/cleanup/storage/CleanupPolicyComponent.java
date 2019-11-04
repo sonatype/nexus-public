@@ -26,10 +26,8 @@ import javax.inject.Singleton;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.groups.Default;
-import javax.ws.rs.WebApplicationException;
 
 import org.sonatype.nexus.cleanup.config.CleanupPolicyConfiguration;
-import org.sonatype.nexus.cleanup.internal.search.elasticsearch.RegexCriteriaValidator.InvalidExpressionException;
 import org.sonatype.nexus.cleanup.service.CleanupComponentBrowse;
 import org.sonatype.nexus.extdirect.DirectComponent;
 import org.sonatype.nexus.extdirect.DirectComponentSupport;
@@ -45,8 +43,6 @@ import org.sonatype.nexus.repository.security.RepositoryAdminPermission;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageFacet;
-import org.sonatype.nexus.rest.ValidationErrorsException;
-import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 import org.sonatype.nexus.validation.Validate;
@@ -71,8 +67,6 @@ import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicyXO.fromCleanupPolicy;
-import static org.sonatype.nexus.cleanup.storage.CleanupPolicyXO.mergeIntoCleanupPolicy;
-import static org.sonatype.nexus.cleanup.storage.CleanupPolicyXO.toCleanupPolicy;
 import static org.sonatype.nexus.security.BreadActions.ADD;
 import static org.sonatype.nexus.security.BreadActions.READ;
 
@@ -300,7 +294,7 @@ public class CleanupPolicyComponent
                                                       final Repository repository,
                                                       final QueryOptions queryOptions)
   {
-    CleanupPolicy cleanupPolicy = CleanupPolicyPreviewXO.toCleanupPolicy(previewXO);
+    CleanupPolicy cleanupPolicy = toCleanupPolicy(previewXO);
 
     UnitOfWork.begin(repository.facet(StorageFacet.class).txSupplier());
     try {
@@ -335,5 +329,44 @@ public class CleanupPolicyComponent
         READ,
         repositoryManager.browse()
     );
+  }
+
+  private CleanupPolicy toCleanupPolicy(final CleanupPolicyPreviewXO cleanupPolicyPreviewXO) {
+    CleanupPolicy policy = cleanupPolicyStorage.newCleanupPolicy();
+
+    policy.setName("preview");
+    policy.setCriteria(CleanupPolicyCriteria.toMap(cleanupPolicyPreviewXO.getCriteria()));
+
+    return policy;
+  }
+
+  private CleanupPolicy toCleanupPolicy(final CleanupPolicyXO cleanupPolicyXO) {
+    CleanupPolicy policy = cleanupPolicyStorage.newCleanupPolicy();
+
+    policy.setName(cleanupPolicyXO.getName());
+    policy.setNotes(cleanupPolicyXO.getNotes());
+    policy.setMode(cleanupPolicyXO.getMode());
+    policy.setFormat(toCleanupPolicyFormat(cleanupPolicyXO));
+    policy.setCriteria(CleanupPolicyCriteria.toMap(cleanupPolicyXO.getCriteria()));
+
+    return policy;
+  }
+
+  private static String toCleanupPolicyFormat(final CleanupPolicyXO cleanupPolicyXO) {
+    String format = cleanupPolicyXO.getFormat();
+    return CleanupPolicyXO.ALL_CLEANUP_POLICY_XO_FORMAT.equalsIgnoreCase(format)
+        ? CleanupPolicy.ALL_CLEANUP_POLICY_FORMAT
+        : format;
+  }
+
+  private static CleanupPolicy mergeIntoCleanupPolicy(
+      final CleanupPolicyXO cleanupPolicyXO,
+      final CleanupPolicy cleanupPolicy)
+  {
+    cleanupPolicy.setNotes(cleanupPolicyXO.getNotes());
+    cleanupPolicy.setFormat(toCleanupPolicyFormat(cleanupPolicyXO));
+    cleanupPolicy.setMode(cleanupPolicyXO.getMode());
+    cleanupPolicy.setCriteria(CleanupPolicyCriteria.toMap(cleanupPolicyXO.getCriteria()));
+    return cleanupPolicy;
   }
 }

@@ -18,14 +18,18 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import javax.annotation.Nullable;
+
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
 
+import static com.google.common.base.Charsets.UTF_8;
+
 /**
- * MyBatis {@link TypeHandler} that maps objects to/from JSON strings.
+ * MyBatis {@link TypeHandler} that maps objects to/from SQL as JSON.
  */
 public abstract class JsonTypeHandler<T>
     extends BaseTypeHandler<T>
@@ -41,36 +45,45 @@ public abstract class JsonTypeHandler<T>
                                         final JdbcType jdbcType)
       throws SQLException
   {
-    ps.setString(parameterIndex, writeToJson(parameter));
+    byte[] json = writeToJson(parameter);
+    if (ps.isWrapperFor(org.h2.jdbc.JdbcPreparedStatement.class)) {
+      // H2 only accepts JSON passed as UTF8 byte array
+      ps.setBytes(parameterIndex, json);
+    }
+    else {
+      // while PostgreSQL and other DBs want a UTF8 string
+      ps.setString(parameterIndex, new String(json, UTF_8));
+    }
   }
 
   @Override
   public final T getNullableResult(final ResultSet rs, final String columnName) throws SQLException {
-    return readFromJson(rs.getString(columnName));
+    return readFromJson(rs.getBytes(columnName)); // works for both byte[] and UTF8 strings
   }
 
   @Override
   public final T getNullableResult(final ResultSet rs, final int columnIndex) throws SQLException {
-    return readFromJson(rs.getString(columnIndex));
+    return readFromJson(rs.getBytes(columnIndex)); // works for both byte[] and UTF8 strings
   }
 
   @Override
   public final T getNullableResult(final CallableStatement cs, final int columnIndex) throws SQLException {
-    return readFromJson(cs.getString(columnIndex));
+    return readFromJson(cs.getBytes(columnIndex)); // works for both byte[] and UTF8 strings
   }
 
-  private String writeToJson(final Object value) throws SQLException {
+  private byte[] writeToJson(final Object value) throws SQLException {
     try {
-      return OBJECT_MAPPER.writeValueAsString(value);
+      return OBJECT_MAPPER.writeValueAsBytes(value);
     }
     catch (IOException e) {
       throw new SQLException(e);
     }
   }
 
-  private T readFromJson(final String json) throws SQLException {
+  @Nullable
+  private T readFromJson(@Nullable final byte[] json) throws SQLException {
     try {
-      return OBJECT_MAPPER.readValue(json, jsonType);
+      return json != null ? OBJECT_MAPPER.readValue(json, jsonType) : null;
     }
     catch (IOException e) {
       throw new SQLException(e);

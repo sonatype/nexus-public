@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
+import static org.sonatype.nexus.repository.storage.AssetBlob.USE_HARD_DELETE;
 
 /**
  * Keeps track of added and to-be-deleted blobs so they can be deleted as appropriate when the transaction ends,
@@ -204,7 +205,7 @@ public class BlobTx
     //
     for (AssetBlob assetBlob : newlyCreatedBlobs) {
       try {
-        assetBlob.delete("Rolling back new asset");
+        assetBlob.delete("Rolling back new asset", USE_HARD_DELETE);
       }
       catch (Throwable t) {
         log.warn("Unable to delete new blob {} while rolling back transaction", assetBlob.getBlobRef(), t);

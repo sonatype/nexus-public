@@ -29,7 +29,7 @@ public class OrderingRealmsTest
     RealmManager realmManager = lookup(RealmManager.class);
     RealmConfiguration realmConfiguration;
 
-    realmConfiguration = new RealmConfiguration();
+    realmConfiguration = new TestRealmConfiguration();
     realmConfiguration.setRealmNames(ImmutableList.of("MockRealmA", "MockRealmB"));
     realmManager.setConfiguration(realmConfiguration);
 
@@ -40,7 +40,7 @@ public class OrderingRealmsTest
     Assert.assertEquals("MockUserManagerA", jcoder.getSource());
 
     // now change the order
-    realmConfiguration = new RealmConfiguration();
+    realmConfiguration = new TestRealmConfiguration();
     realmConfiguration.setRealmNames(ImmutableList.of("MockRealmB", "MockRealmA")); // order changed
     realmManager.setConfiguration(realmConfiguration);
 

@@ -14,98 +14,32 @@ package org.sonatype.nexus.cleanup.storage;
 
 import java.util.Map;
 
-import org.sonatype.nexus.common.entity.AbstractEntity;
-
 /**
  * Represents a configured cleanup policy
  *
  * @since 3.14
  */
-public class CleanupPolicy
-    extends AbstractEntity
+public interface CleanupPolicy //NOSONAR
 {
-  public static final String ALL_CLEANUP_POLICY_FORMAT = "ALL_FORMATS";
+  String ALL_CLEANUP_POLICY_FORMAT = "ALL_FORMATS";
 
-  private String name;
+  String getName();
 
-  private String notes;
+  void setName(final String name);
 
-  /**
-   * Format that the policy is associated with or All
-   */
-  private String format;
+  String getNotes();
 
-  /**
-   * The mode that the policy should take, e.g. deletion
-   */
-  private String mode;
+  void setNotes(final String notes);
 
-  private Map<String, String> criteria;
+  String getFormat();
 
-  public CleanupPolicy() {
-    //NOSONAR
-  }
+  void setFormat(final String format);
 
-  public CleanupPolicy(final String name,
-                       final String notes,
-                       final String format,
-                       final String mode,
-                       final Map<String, String> criteria)
-  {
-    this.name = name;
-    this.notes = notes;
-    this.format = format;
-    this.mode = mode;
-    this.criteria = criteria;
-  }
+  String getMode();
 
-  public String getName() {
-    return name;
-  }
+  void setMode(final String mode);
 
-  public void setName(final String name) {
-    this.name = name;
-  }
+  Map<String, String> getCriteria();
 
-  public String getNotes() {
-    return notes;
-  }
-
-  public void setNotes(final String notes) {
-    this.notes = notes;
-  }
-
-  public String getFormat() {
-    return format;
-  }
-
-  public void setFormat(final String format) {
-    this.format = format;
-  }
-
-  public String getMode() {
-    return mode;
-  }
-
-  public void setMode(final String mode) {
-    this.mode = mode;
-  }
-
-  public Map<String, String> getCriteria() {
-    return criteria;
-  }
-
-  public void setCriteria(final Map<String, String> criteria) {
-    this.criteria = criteria;
-  }
-
-  @Override
-  public String toString() {
-    return "CleanupPolicy{" +
-        "name='" + name + '\'' +
-        ", format='" + format + '\'' +
-        ", mode='" + mode + '\'' +
-        ", criteria=" + criteria +
-        '}';
-  }
+  void setCriteria(final Map<String, String> criteria);
 }

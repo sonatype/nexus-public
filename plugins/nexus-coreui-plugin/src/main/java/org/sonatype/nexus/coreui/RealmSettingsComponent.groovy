@@ -93,9 +93,9 @@ class RealmSettingsComponent
   @RequiresPermissions('nexus:settings:update')
   @Validate
   RealmSettingsXO update(final @NotNull @Valid RealmSettingsXO realmSettingsXO) {
-    realmManager.configuration = new RealmConfiguration(
-        realmNames: realmSettingsXO.realms
-    )
+    RealmConfiguration entity = realmManager.newEntity()
+    entity.realmNames = realmSettingsXO.realms
+    realmManager.configuration = entity
     return read()
   }
 }

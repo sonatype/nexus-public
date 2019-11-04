@@ -13,7 +13,6 @@
 package org.sonatype.nexus.cleanup.internal.storage.orient;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 
 import com.google.common.collect.Maps;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -35,8 +34,8 @@ public class OrientCleanupPolicyEntityAdapterTest
 
   @Test
   public void writingItemCanBeRead() throws Exception {
-    CleanupPolicy item = createCleanupItem();
-    CleanupPolicy actual = storeAndReadBack(item);
+    OrientCleanupPolicy item = createCleanupItem();
+    OrientCleanupPolicy actual = storeAndReadBack(item);
 
     assertThat(actual.getName(), is("name"));
     assertThat(actual.getNotes(), is("notes"));
@@ -44,25 +43,25 @@ public class OrientCleanupPolicyEntityAdapterTest
     assertThat(actual.getMode(), is("TestMode"));
   }
 
-  private CleanupPolicy storeAndReadBack(final CleanupPolicy item) {
+  private OrientCleanupPolicy storeAndReadBack(final OrientCleanupPolicy item) {
     ODocument doc = writeItem(item);
     return readItem(doc);
   }
 
-  private CleanupPolicy readItem(final ODocument doc) {
-    CleanupPolicy actual = new CleanupPolicy();
+  private OrientCleanupPolicy readItem(final ODocument doc) {
+    OrientCleanupPolicy actual = new OrientCleanupPolicy();
     underTest.readFields(doc, actual);
     return actual;
   }
 
-  private ODocument writeItem(final CleanupPolicy item) {
+  private ODocument writeItem(final OrientCleanupPolicy item) {
     ODocument doc = new ODocument();
     underTest.writeFields(doc, item);
     return doc;
   }
 
-  private CleanupPolicy createCleanupItem() {
-    return new CleanupPolicy("name", "notes", "TestFormat", "TestMode",
+  private OrientCleanupPolicy createCleanupItem() {
+    return new OrientCleanupPolicy("name", "notes", "TestFormat", "TestMode",
           Maps.newHashMap());
   }
 }

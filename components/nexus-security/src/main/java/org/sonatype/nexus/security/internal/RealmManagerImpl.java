@@ -135,6 +135,11 @@ public class RealmManagerImpl
   // Configuration
   //
 
+  @Override
+  public RealmConfiguration newEntity() {
+    return store.newEntity();
+  }
+
   /**
    * Load configuration from store, or use defaults.
    */

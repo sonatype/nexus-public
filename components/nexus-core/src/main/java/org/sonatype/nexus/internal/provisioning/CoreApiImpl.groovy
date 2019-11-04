@@ -22,6 +22,7 @@ import org.sonatype.goodies.common.Time
 import org.sonatype.nexus.CoreApi
 import org.sonatype.nexus.capability.CapabilityReference
 import org.sonatype.nexus.capability.CapabilityRegistry
+import org.sonatype.nexus.common.entity.EntityHelper
 import org.sonatype.nexus.httpclient.HttpClientManager
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration
 import org.sonatype.nexus.httpclient.config.ConnectionConfiguration
@@ -238,7 +239,7 @@ class CoreApiImpl
    */
   HttpClientConfiguration detachedConfiguration() {
     HttpClientConfiguration configuration = httpClientManager.configuration
-    configuration.entityMetadata = null
+    EntityHelper.clearMetadata(configuration)
     return configuration
   }
 

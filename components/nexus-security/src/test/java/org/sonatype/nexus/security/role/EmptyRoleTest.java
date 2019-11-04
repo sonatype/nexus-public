@@ -26,6 +26,7 @@ import org.sonatype.nexus.security.internal.SecurityConfigurationManagerImpl;
 import org.sonatype.nexus.security.privilege.WildcardPrivilegeDescriptor;
 import org.sonatype.nexus.security.realm.RealmConfiguration;
 import org.sonatype.nexus.security.realm.RealmManager;
+import org.sonatype.nexus.security.realm.TestRealmConfiguration;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserSearchCriteria;
 import org.sonatype.nexus.security.user.UserStatus;
@@ -92,7 +93,7 @@ public class EmptyRoleTest
     SecuritySystem securitySystem = this.lookup(SecuritySystem.class);
 
     RealmManager realmManager = lookup(RealmManager.class);
-    RealmConfiguration realmConfiguration = new RealmConfiguration();
+    RealmConfiguration realmConfiguration = new TestRealmConfiguration();
     realmConfiguration.setRealmNames(ImmutableList.of(AuthenticatingRealmImpl.NAME, AuthorizingRealmImpl.NAME));
     realmManager.setConfiguration(realmConfiguration);
 

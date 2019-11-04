@@ -13,10 +13,13 @@
 package org.sonatype.nexus.testsuite.testsupport.conda;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.sonatype.nexus.docker.testsupport.conda.CondaCommandLineITSupport;
 import com.sonatype.nexus.docker.testsupport.framework.DockerContainerConfig;
-
+import org.joda.time.DateTime;
+import org.junit.Before;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.Asset;
@@ -25,11 +28,12 @@ import org.sonatype.nexus.repository.storage.Query;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.testsuite.testsupport.FormatClientITSupport;
 
-import org.junit.Before;
-
 import static com.google.common.collect.Lists.newArrayList;
 import static com.sonatype.nexus.docker.testsupport.conda.CondaClientITConfigFactory.createCondaConfig;
+import static java.lang.Boolean.TRUE;
 import static java.util.Collections.singletonList;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 /**
  * @since 3.19
@@ -38,7 +42,11 @@ import static java.util.Collections.singletonList;
 public abstract class CondaClientITSupport
     extends FormatClientITSupport
 {
+  public static final String DELIMITER = " ";
+
   protected CondaCommandLineITSupport condaCli;
+
+  private String environmentName;
 
   /**
    * This initialize method will add the conda resources test data directory and create the {@link #condaCli}.
@@ -80,5 +88,65 @@ public abstract class CondaClientITSupport
           singletonList(repo)
       );
     }
+  }
+
+  public Optional<String> getInstalledPackage(final String packageName)
+  {
+    List<String> installed = condaCli.listInstalled().stream().map(row -> row.trim().replaceAll("\\s+", DELIMITER))
+        .collect(Collectors.toList());
+    return installed.stream().filter(row -> row.contains(packageName)).findFirst();
+  }
+
+  public Optional<String> installPackage(final String packageName) {
+    condaCli.condaInstall(packageName);
+    List<String> listInstalled = condaCli.listInstalled();
+    List<String> installed = listInstalled.stream().map(row -> row.trim().replaceAll("\\s+", DELIMITER))
+        .collect(Collectors.toList());
+    Optional<String> curlRow = installed.stream().filter(row -> row.contains(packageName)).findFirst();
+    assertThat(curlRow.isPresent(), is(TRUE));
+    return curlRow;
+  }
+
+  public void checkRepositoryCachedPackageFormat(final Repository condaRepository,
+                                                 final Boolean isEnableTar,
+                                                 final String formatExtension,
+                                                 final String packageName)
+  {
+    condaCli.condaUpdate(); //Update client to use latest version
+    condaCli.condaExec(
+        "config --set use_only_tar_bz2 " + isEnableTar.toString()); //Set configuration to use or not legacy code
+
+    installPackage(packageName);
+    List<Component> components = findComponents(condaRepository);
+    Optional<Component> component = components.stream().filter(comp -> comp.name().contains(packageName)).findFirst();
+    assertThat(component.isPresent(), is(TRUE));
+
+    Iterable<Asset> assets = findAssets(condaRepository, component.get().name());
+    assertThat(assets.iterator().hasNext(), is(TRUE));
+
+    boolean isExistExtension = false;
+
+    while (assets.iterator().hasNext()) {
+      Asset asset = assets.iterator().next();
+      if (asset.name().endsWith(formatExtension)) {
+        isExistExtension = true;
+        break;
+      }
+    }
+    assertThat(isExistExtension, is(TRUE));
+  }
+
+  public void activateNewEnvironment()
+  {
+    environmentName = DateTime.now().toString();
+    condaCli.condaExec("create -y -n " + environmentName);
+    condaCli.condaExec("activate " + environmentName);
+  }
+
+  public void deactivateEnvironment()
+  {
+    condaCli.condaExec("deactivate");
+    condaCli.condaExec("remove -y -n " + environmentName + " --all");
+    environmentName = null;
   }
 }

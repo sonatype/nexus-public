@@ -19,8 +19,9 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
+import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
@@ -30,6 +31,7 @@ import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import com.google.common.collect.ImmutableList;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
@@ -41,6 +43,7 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
  *
  * @since 3.14
  */
+@FeatureFlag(name = "nexus.orient.store.config")
 @Named("orient")
 @ManagedLifecycle(phase = SCHEMAS)
 @Singleton
@@ -77,22 +80,28 @@ public class OrientCleanupPolicyStorage
   @Override
   @Guarded(by = STARTED)
   public CleanupPolicy add(final CleanupPolicy item) {
-    return inTxRetry(databaseInstance).call(db -> entityAdapter.readEntity(entityAdapter.addEntity(db, item)));
+    checkEntityType(item);
+
+    return inTxRetry(databaseInstance)
+        .call(db -> entityAdapter.readEntity(entityAdapter.addEntity(db, (OrientCleanupPolicy) item)));
   }
 
   @Override
   @Guarded(by = STARTED)
   public CleanupPolicy update(final CleanupPolicy cleanupPolicy) {
+    checkEntityType(cleanupPolicy);
+
     return inTxRetry(databaseInstance)
-        .call(db -> entityAdapter.readEntity(entityAdapter.editEntity(db, cleanupPolicy)));
+        .call(db -> entityAdapter.readEntity(entityAdapter.editEntity(db, (OrientCleanupPolicy) cleanupPolicy)));
   }
 
   @Override
   @Guarded(by = STARTED)
   public void remove(final CleanupPolicy cleanupPolicy) {
     checkNotNull(cleanupPolicy);
+    checkEntityType(cleanupPolicy);
 
-    inTxRetry(databaseInstance).run(db -> entityAdapter.deleteEntity(db, cleanupPolicy));
+    inTxRetry(databaseInstance).run(db -> entityAdapter.deleteEntity(db, (OrientCleanupPolicy) cleanupPolicy));
   }
 
   @Override
@@ -116,5 +125,15 @@ public class OrientCleanupPolicyStorage
   @Override
   public List<CleanupPolicy> getAllByFormat(final String format) {
     return inTx(databaseInstance).call(db -> ImmutableList.copyOf(entityAdapter.browseByFormat(db, format)));
+  }
+
+  @Override
+  public CleanupPolicy newCleanupPolicy() {
+    return entityAdapter.newEntity();
+  }
+
+  private static void checkEntityType(final CleanupPolicy cleanupPolicy) {
+    checkArgument(cleanupPolicy instanceof OrientCleanupPolicy,
+        "CleanupPolicy does not match the backing implementation");
   }
 }

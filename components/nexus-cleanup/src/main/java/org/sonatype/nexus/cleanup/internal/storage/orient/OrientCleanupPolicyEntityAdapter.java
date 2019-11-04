@@ -19,10 +19,10 @@ import javax.annotation.Nullable;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
-import org.sonatype.nexus.cleanup.storage.event.CleanupPolicyCreatedEvent;
-import org.sonatype.nexus.cleanup.storage.event.CleanupPolicyDeletedEvent;
-import org.sonatype.nexus.cleanup.storage.event.CleanupPolicyUpdatedEvent;
+import org.sonatype.nexus.cleanup.internal.storage.orient.event.OrientCleanupPolicyCreatedEvent;
+import org.sonatype.nexus.cleanup.internal.storage.orient.event.OrientCleanupPolicyDeletedEvent;
+import org.sonatype.nexus.cleanup.internal.storage.orient.event.OrientCleanupPolicyUpdatedEvent;
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.entity.EntityEvent;
 import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.orient.OClassNameBuilder;
@@ -45,14 +45,15 @@ import static java.lang.String.format;
 import static org.sonatype.nexus.cleanup.storage.CleanupPolicy.ALL_CLEANUP_POLICY_FORMAT;
 
 /**
- * Entity adapter for {@link CleanupPolicy}
+ * Entity adapter for {@link OrientCleanupPolicy}
  *
  * @since 3.14
  */
+@FeatureFlag(name = "nexus.orient.store.config")
 @Named
 @Singleton
 public class OrientCleanupPolicyEntityAdapter
-    extends IterableEntityAdapter<CleanupPolicy>
+    extends IterableEntityAdapter<OrientCleanupPolicy>
 {
   private static final String DB_CLASS = new OClassNameBuilder()
       .type("cleanup")
@@ -100,12 +101,12 @@ public class OrientCleanupPolicyEntityAdapter
   }
 
   @Override
-  protected CleanupPolicy newEntity() {
-    return new CleanupPolicy();
+  protected OrientCleanupPolicy newEntity() {
+    return new OrientCleanupPolicy();
   }
 
   @Override
-  protected void readFields(final ODocument document, final CleanupPolicy entity) {
+  protected void readFields(final ODocument document, final OrientCleanupPolicy entity) {
     entity.setName(document.field(P_NAME, OType.STRING));
     entity.setNotes(document.field(P_NOTES, OType.STRING));
     entity.setFormat(document.field(P_FORMAT, OType.STRING));
@@ -114,7 +115,7 @@ public class OrientCleanupPolicyEntityAdapter
   }
 
   @Override
-  protected void writeFields(final ODocument document, final CleanupPolicy entity) {
+  protected void writeFields(final ODocument document, final OrientCleanupPolicy entity) {
     document.field(P_NAME, entity.getName());
     document.field(P_NOTES, entity.getNotes());
     document.field(P_FORMAT, entity.getFormat());
@@ -128,13 +129,13 @@ public class OrientCleanupPolicyEntityAdapter
     return db.getRecord(rid);
   }
 
-  public CleanupPolicy get(final ODatabaseDocumentTx db, final String name) {
+  public OrientCleanupPolicy get(final ODatabaseDocumentTx db, final String name) {
     checkNotNull(db);
     checkNotNull(name);
 
     String whereClause = " WHERE (name = :name) LIMIT 1";
     Iterable<ODocument> result = buildAndRunQuery(db, whereClause, ImmutableMap.of("name", name));
-    Iterable<CleanupPolicy> policies = transform(result);
+    Iterable<OrientCleanupPolicy> policies = transform(result);
 
     return Iterables.getFirst(policies, null); //NOSONAR
   }
@@ -152,7 +153,7 @@ public class OrientCleanupPolicyEntityAdapter
     return ((long) result.get(0).field("COUNT")) != 0L;
   }
 
-  public Iterable<CleanupPolicy> browseByFormat(final ODatabaseDocumentTx db, final String format) {
+  public Iterable<OrientCleanupPolicy> browseByFormat(final ODatabaseDocumentTx db, final String format) {
     checkNotNull(format);
     Iterable<ODocument> result = buildAndRunQuery(db, BROWSE_BY_FORMAT_WHERE_CLAUSE, ImmutableMap.of("format", format));
     return transform(result);
@@ -179,11 +180,11 @@ public class OrientCleanupPolicyEntityAdapter
 
     switch (eventKind) {
       case CREATE:
-        return new CleanupPolicyCreatedEvent(metadata);
+        return new OrientCleanupPolicyCreatedEvent(metadata);
       case UPDATE:
-        return new CleanupPolicyUpdatedEvent(metadata);
+        return new OrientCleanupPolicyUpdatedEvent(metadata);
       case DELETE:
-        return new CleanupPolicyDeletedEvent(metadata);
+        return new OrientCleanupPolicyDeletedEvent(metadata);
       default:
         return null;
     }

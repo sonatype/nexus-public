@@ -76,32 +76,8 @@ class CleanupPolicyXO
         .build()
   }
 
-  static CleanupPolicy mergeIntoCleanupPolicy(final CleanupPolicyXO cleanupPolicyXO,
-                                              final CleanupPolicy cleanupPolicy) {
-    cleanupPolicy.notes = cleanupPolicyXO.notes
-    cleanupPolicy.format = toCleanupPolicyFormat(cleanupPolicyXO)
-    cleanupPolicy.mode = cleanupPolicyXO.mode
-    cleanupPolicy.criteria = CleanupPolicyCriteria.toMap(cleanupPolicyXO.criteria)
-    return cleanupPolicy
-  }
-
-  static CleanupPolicy toCleanupPolicy(final CleanupPolicyXO cleanupPolicyXO) {
-    return new CleanupPolicy(
-        cleanupPolicyXO.name,
-        cleanupPolicyXO.notes,
-        toCleanupPolicyFormat(cleanupPolicyXO),
-        cleanupPolicyXO.mode,
-        CleanupPolicyCriteria.toMap(cleanupPolicyXO.criteria)
-    )
-  }
-
   static String fromCleanupPolicyFormat(final CleanupPolicy cleanupPolicy) {
     return cleanupPolicy.format?.equalsIgnoreCase(ALL_CLEANUP_POLICY_FORMAT) ?
         ALL_CLEANUP_POLICY_XO_FORMAT : cleanupPolicy.format
-  }
-
-  static String toCleanupPolicyFormat(final CleanupPolicyXO cleanupPolicyXO) {
-    return cleanupPolicyXO.format?.equalsIgnoreCase(ALL_CLEANUP_POLICY_XO_FORMAT) ?
-        ALL_CLEANUP_POLICY_FORMAT : cleanupPolicyXO.format
   }
 }

@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.rest.api.model;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -29,7 +28,6 @@ public class HttpClientConnectionAttributes
 {
   @ApiModelProperty(value = "Total retries if the initial connection attempt suffers a timeout", example = "0",
       allowableValues = "range[0,10]")
-  @NotNull
   @Min(0L)
   @Max(10L)
   protected final Integer retries;
@@ -39,18 +37,15 @@ public class HttpClientConnectionAttributes
 
   @ApiModelProperty(value = "Seconds to wait for activity before stopping and retrying the connection", example = "60",
       allowableValues = "range[1,3600]")
-  @NotNull
   @Min(1L)
   @Max(3600L)
   protected final Integer timeout;
 
   @ApiModelProperty(value = "Whether to enable redirects to the same location (may be required by some servers)",
       example = "false")
-  @NotNull
   protected final Boolean enableCircularRedirects;
 
   @ApiModelProperty(value = "Whether to allow cookies to be stored and used", example = "false")
-  @NotNull
   protected final Boolean enableCookies;
 
   @JsonCreator

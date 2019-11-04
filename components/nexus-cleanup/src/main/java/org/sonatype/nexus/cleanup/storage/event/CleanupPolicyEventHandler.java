@@ -22,7 +22,6 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
-import org.sonatype.nexus.common.entity.EntityEvent;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventAware.Asynchronous;
 import org.sonatype.nexus.repository.config.Configuration;
@@ -86,7 +85,7 @@ public class CleanupPolicyEventHandler
     }
   }
 
-  private boolean shouldProcess(final EntityEvent event) {
+  private boolean shouldProcess(final CleanupPolicyEvent event) {
     checkNotNull(event);
     return event.isLocal();
   }

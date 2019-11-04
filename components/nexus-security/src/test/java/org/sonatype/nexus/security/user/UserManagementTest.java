@@ -21,6 +21,7 @@ import org.sonatype.nexus.security.AbstractSecurityTest;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.realm.RealmConfiguration;
 import org.sonatype.nexus.security.realm.RealmManager;
+import org.sonatype.nexus.security.realm.TestRealmConfiguration;
 
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
@@ -42,7 +43,7 @@ public class UserManagementTest
     securitySystem = getSecuritySystem();
 
     RealmManager realmManager = lookup(RealmManager.class);
-    RealmConfiguration model = new RealmConfiguration();
+    RealmConfiguration model = new TestRealmConfiguration();
     model.setRealmNames(ImmutableList.of("MockRealmA", "MockRealmB"));
     realmManager.setConfiguration(model);
   }

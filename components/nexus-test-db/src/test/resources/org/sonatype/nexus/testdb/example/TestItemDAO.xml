@@ -18,22 +18,11 @@
 
   <insert id="createSchema">
     CREATE TABLE IF NOT EXISTS test_item (
-      id UUID NOT NULL,
+      id ${UUID_TYPE} NOT NULL,
       version INT NOT NULL,
       enabled BOOLEAN NOT NULL,
       notes VARCHAR(400) NOT NULL,
-      properties TEXT NOT NULL,
-      CONSTRAINT pk_test_item_id PRIMARY KEY (id)
-    )
-  </insert>
-
-  <insert id="createSchema" databaseId="PostgreSQL">
-    CREATE TABLE IF NOT EXISTS test_item (
-      id UUID NOT NULL,
-      version INT NOT NULL,
-      enabled BOOLEAN NOT NULL,
-      notes VARCHAR(400) NOT NULL,
-      properties JSONB NOT NULL,
+      properties ${JSON_TYPE} NOT NULL,
       CONSTRAINT pk_test_item_id PRIMARY KEY (id)
     )
   </insert>

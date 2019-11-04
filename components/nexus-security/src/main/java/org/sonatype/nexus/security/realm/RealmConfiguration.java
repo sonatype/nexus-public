@@ -16,49 +16,16 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.common.entity.AbstractEntity;
-
-import com.google.common.collect.Lists;
-
 /**
- * Realm configuration.
+ * RealmConfiguration interface
  *
  * @since 3.0
  */
-public class RealmConfiguration
-    extends AbstractEntity
-  implements Cloneable
+public interface RealmConfiguration
 {
-  private List<String> realmNames;
+  List<String> getRealmNames();
 
-  public List<String> getRealmNames() {
-    if (realmNames == null) {
-      realmNames = Lists.newArrayList();
-    }
-    return realmNames;
-  }
+  void setRealmNames(@Nullable List<String> realmNames);
 
-  public void setRealmNames(@Nullable final List<String> realmNames) {
-    this.realmNames = realmNames;
-  }
-
-  public RealmConfiguration copy() {
-    try {
-      RealmConfiguration copy = (RealmConfiguration) clone();
-      if (realmNames != null) {
-        copy.realmNames = Lists.newArrayList(realmNames);
-      }
-      return copy;
-    }
-    catch (CloneNotSupportedException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Override
-  public String toString() {
-    return getClass().getSimpleName() + "{" +
-        "realmNames=" + realmNames +
-        '}';
-  }
+  RealmConfiguration copy();
 }

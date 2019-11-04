@@ -13,22 +13,21 @@
 package org.sonatype.nexus.cleanup.storage.event;
 
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
-import org.sonatype.nexus.common.entity.EntityCreatedEvent;
-import org.sonatype.nexus.common.entity.EntityMetadata;
 
 /**
- * Base class for Cleanup Policy Storage events
+ * Base interface for {@link CleanupPolicy} storage events.
  *
  * @since 3.14
  */
-public class CleanupPolicyEvent
-    extends EntityCreatedEvent
+public interface CleanupPolicyEvent
 {
-  public CleanupPolicyEvent(final EntityMetadata metadata) {
-    super(metadata);
-  }
+  /**
+   * Get the {@link CleanupPolicy} associated with the event.
+   */
+  CleanupPolicy getCleanupPolicy();
 
-  public CleanupPolicy getCleanupPolicy() {
-    return getEntity();
-  }
+  /**
+   * True if this event originated with the local node.
+   */
+  boolean isLocal();
 }

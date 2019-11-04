@@ -250,7 +250,7 @@ public class HttpClientFacetImpl
 
   private void createHttpClient() {
     // construct http client delegate
-    HttpClientConfiguration delegateConfig = new HttpClientConfiguration();
+    HttpClientConfiguration delegateConfig = httpClientManager.newConfiguration();
     delegateConfig.setConnection(config.connection);
     delegateConfig.setAuthentication(config.authentication);
     delegateConfig.setRedirectStrategy(getRedirectStrategy());

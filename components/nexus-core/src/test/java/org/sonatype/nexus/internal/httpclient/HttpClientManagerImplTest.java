@@ -17,6 +17,7 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.httpclient.HttpClientPlan;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 import org.sonatype.nexus.httpclient.config.HttpClientConfigurationChangedEvent;
+import org.sonatype.nexus.internal.httpclient.orient.HttpClientConfigurationEvent;
 
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.ConnectionConfig;
@@ -31,7 +32,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for {@link HttpClientManagerImpl}.
@@ -59,7 +65,8 @@ public class HttpClientManagerImplTest
 
   @Before
   public void setUp() {
-    underTest = new HttpClientManagerImpl(eventManager, configStore, HttpClientConfiguration::new, connectionManager,
+    underTest = new HttpClientManagerImpl(eventManager, configStore, TestHttpClientConfiguration::new,
+        connectionManager,
         defaultsCustomizer);
   }
 
@@ -103,7 +110,7 @@ public class HttpClientManagerImplTest
 
   @Test
   public void testOnStoreChanged_RemoteEvent() {
-    HttpClientConfiguration config = new HttpClientConfiguration();
+    HttpClientConfiguration config = new TestHttpClientConfiguration();
     when(configStore.load()).thenReturn(config);
     when(configEvent.isLocal()).thenReturn(false);
     when(configEvent.getRemoteNodeId()).thenReturn("remote-node-id");

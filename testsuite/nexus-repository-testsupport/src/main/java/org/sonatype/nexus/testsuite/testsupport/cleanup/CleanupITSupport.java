@@ -172,8 +172,14 @@ public class CleanupITSupport
       cleanupPolicyStorage.update(existingPolicy);
     }
     else {
-      cleanupPolicyStorage
-          .add(new CleanupPolicy(policyName, "This is a policy for testing", format, CLEANUP_MODE, criteria));
+      CleanupPolicy policy = cleanupPolicyStorage.newCleanupPolicy();
+      policy.setName(policyName);
+      policy.setFormat(format);
+      policy.setMode(CLEANUP_MODE);
+      policy.setNotes("This is a policy for testing");
+      policy.setCriteria(criteria);
+
+      cleanupPolicyStorage.add(policy);
     }
   }
 

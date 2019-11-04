@@ -149,7 +149,7 @@ class HttpSettingsComponent
 
   @PackageScope
   HttpClientConfiguration convert(final HttpSettingsXO value) {
-    def result = new HttpClientConfiguration()
+    def result = httpClientManager.newConfiguration()
 
     // convert connection configuration
     def connection = {

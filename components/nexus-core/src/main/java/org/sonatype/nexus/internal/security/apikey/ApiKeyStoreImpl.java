@@ -22,6 +22,7 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.stateguard.Guarded;
@@ -54,6 +55,7 @@ import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
  *
  * @since 3.0
  */
+@FeatureFlag(name = "nexus.orient.store.config")
 @Named
 @ManagedLifecycle(phase = SCHEMAS)
 @Singleton

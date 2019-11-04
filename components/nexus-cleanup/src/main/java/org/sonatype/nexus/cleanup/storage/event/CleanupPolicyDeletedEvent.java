@@ -12,17 +12,13 @@
  */
 package org.sonatype.nexus.cleanup.storage.event;
 
-import org.sonatype.nexus.common.entity.EntityMetadata;
-
 /**
  * Event to be sent when a cleanup policy item has been deleted
  *
  * @since 3.14
  */
-public class CleanupPolicyDeletedEvent
+public interface CleanupPolicyDeletedEvent
     extends CleanupPolicyEvent
 {
-  public CleanupPolicyDeletedEvent(final EntityMetadata metadata) {
-    super(metadata);
-  }
+
 }

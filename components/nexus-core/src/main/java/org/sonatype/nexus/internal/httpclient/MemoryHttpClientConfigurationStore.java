@@ -15,11 +15,16 @@ package org.sonatype.nexus.internal.httpclient;
 import javax.annotation.Nullable;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import javax.validation.Valid;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
+import org.sonatype.nexus.httpclient.config.ConnectionConfiguration;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
+import org.sonatype.nexus.httpclient.config.ProxyConfiguration;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.http.client.RedirectStrategy;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -32,8 +37,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Singleton
 @VisibleForTesting
 public class MemoryHttpClientConfigurationStore
-  extends ComponentSupport
-  implements HttpClientConfigurationStore
+    extends ComponentSupport
+    implements HttpClientConfigurationStore
 {
   private HttpClientConfiguration model;
 
@@ -46,5 +51,106 @@ public class MemoryHttpClientConfigurationStore
   @Override
   public synchronized void save(final HttpClientConfiguration configuration) {
     this.model = checkNotNull(configuration);
+  }
+
+  @Override
+  public HttpClientConfiguration newConfiguration() {
+    return new MemoryHttpClientConfiguration();
+  }
+
+  /**
+   * @since 3.next
+   */
+  private static class MemoryHttpClientConfiguration
+      implements HttpClientConfiguration, Cloneable
+  {
+    MemoryHttpClientConfiguration() {}
+
+    @Valid
+    @Nullable
+    private ConnectionConfiguration connection;
+
+    @Valid
+    @Nullable
+    private ProxyConfiguration proxy;
+
+    @Valid
+    @Nullable
+    private RedirectStrategy redirectStrategy;
+
+    /**
+     * @see AuthenticationConfigurationDeserializer
+     */
+    @Valid
+    @Nullable
+    private AuthenticationConfiguration authentication;
+
+    @Nullable
+    public ConnectionConfiguration getConnection() {
+      return connection;
+    }
+
+    public void setConnection(@Nullable final ConnectionConfiguration connection) {
+      this.connection = connection;
+    }
+
+    @Nullable
+    public ProxyConfiguration getProxy() {
+      return proxy;
+    }
+
+    public void setProxy(@Nullable final ProxyConfiguration proxy) {
+      this.proxy = proxy;
+    }
+
+    @Nullable
+    public AuthenticationConfiguration getAuthentication() {
+      return authentication;
+    }
+
+    public void setAuthentication(@Nullable final AuthenticationConfiguration authentication) {
+      this.authentication = authentication;
+    }
+
+    @Nullable
+    public RedirectStrategy getRedirectStrategy() {
+      return redirectStrategy;
+    }
+
+    public void setRedirectStrategy(@Nullable final RedirectStrategy redirectStrategy) {
+      this.redirectStrategy = redirectStrategy;
+    }
+
+    public MemoryHttpClientConfiguration copy() {
+      try {
+        MemoryHttpClientConfiguration copy = (MemoryHttpClientConfiguration) clone();
+        if (connection != null) {
+          copy.connection = connection.copy();
+        }
+        if (proxy != null) {
+          copy.proxy = proxy.copy();
+        }
+        if (authentication != null) {
+          copy.authentication = authentication.copy();
+        }
+        if (redirectStrategy != null) {
+          // no real cloning/copying needed, as we are allowed to use a singleton instance
+          copy.redirectStrategy = redirectStrategy;
+        }
+        return copy;
+      }
+      catch (CloneNotSupportedException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    @Override
+    public String toString() {
+      return getClass().getSimpleName() + "{" +
+          "connection=" + connection +
+          ", proxy=" + proxy +
+          ", authentication=" + authentication +
+          '}';
+    }
   }
 }

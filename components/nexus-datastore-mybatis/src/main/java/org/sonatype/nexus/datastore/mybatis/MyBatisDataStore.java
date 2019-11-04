@@ -12,15 +12,23 @@
  */
 package org.sonatype.nexus.datastore.mybatis;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -30,15 +38,19 @@ import org.sonatype.nexus.common.thread.TcclBlock;
 import org.sonatype.nexus.datastore.DataStoreSupport;
 import org.sonatype.nexus.datastore.api.DataAccess;
 import org.sonatype.nexus.datastore.api.DataStore;
+import org.sonatype.nexus.datastore.api.Expects;
+import org.sonatype.nexus.datastore.api.SchemaTemplate;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Splitter.MapSplitter;
+import com.google.common.io.Resources;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.apache.ibatis.builder.xml.XMLConfigBuilder;
+import org.apache.ibatis.builder.xml.XMLMapperBuilder;
 import org.apache.ibatis.mapping.Environment;
 import org.apache.ibatis.mapping.VendorDatabaseIdProvider;
 import org.apache.ibatis.plugin.Interceptor;
@@ -50,21 +62,30 @@ import org.apache.ibatis.session.defaults.DefaultSqlSessionFactory;
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
 import org.apache.ibatis.type.TypeAliasRegistry;
 import org.apache.ibatis.type.TypeHandler;
+import org.apache.ibatis.type.TypeHandlerRegistry;
 import org.eclipse.sisu.BeanEntry;
 import org.eclipse.sisu.Mediator;
 import org.eclipse.sisu.inject.BeanLocator;
 
+import static com.google.common.base.Charsets.UTF_8;
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Splitter.onPattern;
+import static java.lang.String.format;
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.newInputStream;
+import static java.util.Arrays.asList;
+import static java.util.regex.Pattern.DOTALL;
+import static java.util.regex.Pattern.compile;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.common.text.Strings2.isBlank;
+import static org.sonatype.nexus.common.text.Strings2.lower;
 import static org.sonatype.nexus.common.thread.TcclBlock.begin;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE_NAME;
 import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.ADVANCED;
 import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.JDBC_URL;
 import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.SCHEMA;
+import static org.sonatype.nexus.datastore.mybatis.PlaceholderTypes.configurePlaceholderTypes;
 
 /**
  * MyBatis {@link DataStore}.
@@ -87,6 +108,10 @@ public class MyBatisDataStore
   private static final Splitter KEY_VALUE = onPattern("[=:]").limit(2).trimResults().omitEmptyStrings();
 
   private static final MapSplitter TO_MAP = BY_LINE.withKeyValueSeparator(KEY_VALUE);
+
+  private static final Pattern MAPPER_BODY = compile(".*<mapper[^>]*>(.*)</mapper>", DOTALL);
+
+  private final Set<Class<?>> accessTypes = new HashSet<>();
 
   private final ApplicationDirectories directories;
 
@@ -118,7 +143,6 @@ public class MyBatisDataStore
     if (beanLocator == null) {
       // add standard handlers for testing
       register(new AttributesTypeHandler());
-      register(new EntityUUIDTypeHandler());
     }
     else {
       beanLocator.watch(TYPE_HANDLER_KEY, TYPE_HANDLER_MEDIATOR, this);
@@ -128,6 +152,7 @@ public class MyBatisDataStore
   @Override
   protected void doStop() throws Exception {
     sessionFactory = null;
+    accessTypes.clear();
     try {
       dataSource.close();
     }
@@ -138,13 +163,12 @@ public class MyBatisDataStore
 
   @Override
   public void register(final Class<? extends DataAccess> accessType) {
+    if (!accessTypes.add(accessType) || accessType.isAnnotationPresent(SchemaTemplate.class)) {
+      return; // skip registration if we've already seen this type or this is a template
+    }
 
-    // support use of package-less names
     registerSimpleAliases(accessType);
-
-    // now register the actual mapper
-    sessionFactory.getConfiguration().addMapper(accessType);
-    info(REGISTERED_MESSAGE, accessType);
+    registerDataAccessMapper(accessType);
 
     // finally create the schema for this DAO
     try (SqlSession session = sessionFactory.openSession()) {
@@ -219,6 +243,15 @@ public class MyBatisDataStore
       }
     });
 
+    boolean lenient = configurePlaceholderTypes(myBatisConfig, databaseId);
+
+    TypeHandlerRegistry handlerRegistry = myBatisConfig.getTypeHandlerRegistry();
+    handlerRegistry.register(new EntityUUIDTypeHandler(lenient));
+    if (lenient) {
+      // also support querying by UUID string when database may not have a UUID type
+      myBatisConfig.getTypeHandlerRegistry().register(new LenientUUIDTypeHandler());
+    }
+
     if (CONFIG_DATASTORE_NAME.equals(environment.getId())) {
       myBatisConfig.addInterceptor(new EntityInterceptor());
     }
@@ -240,7 +273,7 @@ public class MyBatisDataStore
 
     info("Loading MyBatis configuration from {}", configPath);
     try (InputStream in = newInputStream(configPath); TcclBlock block = begin(getClass())) {
-      return new XMLConfigBuilder(in).parse();
+      return new XMLConfigBuilder(in, null, new Properties()).parse();
     }
   }
 
@@ -283,6 +316,164 @@ public class MyBatisDataStore
       catch (RuntimeException | LinkageError e) {
         debug("Unable to register type alias", e);
       }
+    }
+  }
+
+  /**
+   * Registers the {@link DataAccess} type with MyBatis.
+   */
+  private void registerDataAccessMapper(final Class<? extends DataAccess> accessType) {
+    Class<?> templateType = findTemplateType(accessType);
+    if (templateType != null) {
+      registerTemplatedMapper(accessType, templateType);
+    }
+    else {
+      registerSimpleMapper(accessType);
+    }
+    info(REGISTERED_MESSAGE, accessType);
+  }
+
+  /**
+   * Searches the directly declared interfaces for one annotated with {@link SchemaTemplate}.
+   */
+  @Nullable
+  private Class<?> findTemplateType(Class<? extends DataAccess> accessType) {
+    for (Class<?> candidate : accessType.getInterfaces()) {
+      if (candidate.isAnnotationPresent(SchemaTemplate.class)) {
+        return candidate;
+      }
+    }
+    return null; // accessType does not directly extend an interface annotated with @SchemaTemplate
+  }
+
+  /**
+   * Registers a simple {@link DataAccess} type with MyBatis.
+   */
+  private void registerSimpleMapper(final Class<? extends DataAccess> accessType) {
+
+    // make sure any types expected by the access type are registered first
+    Expects expects = accessType.getAnnotation(Expects.class);
+    if (expects != null) {
+      asList(expects.value()).forEach(this::register);
+    }
+
+    // MyBatis will load the corresponding XML schema
+    sessionFactory.getConfiguration().addMapper(accessType);
+  }
+
+  /**
+   * Registers a templated {@link DataAccess} type with MyBatis.
+   */
+  @SuppressWarnings("unchecked")
+  private void registerTemplatedMapper(final Class<? extends DataAccess> accessType, final Class<?> templateType) {
+
+    // make sure any types expected by the template are registered first
+    Expects expects = templateType.getAnnotation(Expects.class);
+    if (expects != null) {
+      asList(expects.value()).forEach(expectedType -> {
+        if (expectedType.isAnnotationPresent(SchemaTemplate.class)) {
+          // also a template which we need to resolve using the current context
+          register(expectedAccessType(accessType, templateType, expectedType));
+        }
+        else {
+          register(expectedType);
+        }
+      });
+    }
+
+    // lower-case prefix of the access type, excluding the package; for example MavenAssetDAO / AssetDAO = maven
+    String prefix = extractPrefix(accessType.getSimpleName(), templateType.getSimpleName());
+
+    // the variable in the schema XML that we'll replace with the local prefix
+    String placeholder = templateType.getAnnotation(SchemaTemplate.class).value();
+
+    // load and populate the template's mapper XML
+    String xml = loadMapperXml(templateType, true)
+        .replace("${namespace}", accessType.getName())
+        .replace("${" + placeholder + '}', prefix);
+
+    // now append the access type's mapper XML if it has one (this is where it can define extra fields/methods)
+    String includeXml = loadMapperXml(accessType, false);
+    Matcher mapperBody = MAPPER_BODY.matcher(includeXml);
+    if (mapperBody.find()) {
+      xml = xml.replace("</mapper>", format("<!-- %s -->%s</mapper>", accessType.getName(), mapperBody.group(1)));
+    }
+
+    try {
+      log.trace(xml);
+
+      XMLMapperBuilder xmlParser = new XMLMapperBuilder(
+          new ByteArrayInputStream(xml.getBytes(UTF_8)),
+          sessionFactory.getConfiguration(),
+          mapperXmlPath(templateType) + "${" + placeholder + '=' + prefix + '}',
+          sessionFactory.getConfiguration().getSqlFragments(),
+          accessType.getName());
+
+      xmlParser.parse(); // this registers the resolved XML with MyBatis
+    }
+    catch (RuntimeException e) {
+      log.warn(xml, e);
+      throw e;
+    }
+  }
+
+  /**
+   * Finds the expected access type for the expected template type, given the current access and template types.
+   * To simplify matters we assume the current and expected access types are in the same package and classloader.
+   */
+  private Class expectedAccessType(final Class currentAccessType,
+                                   final Class currentTemplateType,
+                                   final Class expectedTemplateType)
+  {
+    String currentSuffix = currentTemplateType.getSimpleName();
+    String expectedSuffix = expectedTemplateType.getSimpleName();
+
+    // org.example.MavenAssetDAO / AssetDAO / ComponentDAO = org.example.MavenComponentDAO
+    String expectedAccessName = currentAccessType.getName().replace(currentSuffix, expectedSuffix);
+    Class expectedAccessType;
+    try {
+      expectedAccessType = currentAccessType.getClassLoader().loadClass(expectedAccessName);
+    }
+    catch (Exception | LinkageError e) {
+      throw new TypeNotPresentException(expectedAccessName, e);
+    }
+
+    // sanity check that this type has the expected class hierarchy
+    checkArgument(expectedTemplateType.isAssignableFrom(expectedAccessType),
+        "%s must extend %s", expectedAccessType, expectedTemplateType);
+
+    return expectedAccessType;
+  }
+
+  /**
+   * Returns the lower-case form of the prefix after removing templateName from accessName.
+   */
+  private String extractPrefix(final String accessName, final String templateName) {
+    checkArgument(accessName.endsWith(templateName), "%s must end with %s", accessName, templateName);
+    String prefix = lower(accessName.substring(0, accessName.length() - templateName.length()));
+    checkArgument(!prefix.isEmpty(), "%s must add a prefix to %s", accessName, templateName);
+    return prefix;
+  }
+
+  /**
+   * Absolute resource path to the type's mapper XML.
+   */
+  private String mapperXmlPath(final Class type) {
+    return '/' + type.getName().replace('.', '/') + ".xml";
+  }
+
+  /**
+   * Attempts to load the type's mapper XML. If the XML is missing and required then it throws
+   * {@link IllegalArgumentException}. If it is not required then it returns the empty string.
+   */
+  private String loadMapperXml(final Class type, final boolean required) {
+    URL resource = type.getResource(mapperXmlPath(type));
+    checkArgument(!required || resource != null, "XML resource for %s is missing", type);
+    try {
+      return resource != null ? Resources.toString(resource, UTF_8) : "";
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException("Cannot read " + resource, e);
     }
   }
 

@@ -25,6 +25,7 @@ import org.sonatype.nexus.security.privilege.WildcardPrivilegeDescriptor;
 import org.sonatype.nexus.security.realm.MockRealm;
 import org.sonatype.nexus.security.realm.RealmConfiguration;
 import org.sonatype.nexus.security.realm.RealmManager;
+import org.sonatype.nexus.security.realm.TestRealmConfiguration;
 import org.sonatype.nexus.security.user.MockUserManager;
 import org.sonatype.nexus.security.user.UserManager;
 
@@ -84,7 +85,7 @@ public class ExternalRoleMappedTest
 
     // add MockRealm to config
     RealmManager realmManager = lookup(RealmManager.class);
-    RealmConfiguration realmConfiguration = new RealmConfiguration();
+    RealmConfiguration realmConfiguration = new TestRealmConfiguration();
     realmConfiguration.setRealmNames(ImmutableList.of("Mock", AuthorizingRealmImpl.NAME));
     realmManager.setConfiguration(realmConfiguration);
 

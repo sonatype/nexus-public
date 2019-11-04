@@ -16,11 +16,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.cleanup.internal.storage.orient.event.OrientCleanupPolicyCreatedEvent;
+import org.sonatype.nexus.cleanup.internal.storage.orient.event.OrientCleanupPolicyDeletedEvent;
+import org.sonatype.nexus.cleanup.internal.storage.orient.event.OrientCleanupPolicyUpdatedEvent;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
-import org.sonatype.nexus.cleanup.storage.event.CleanupPolicyCreatedEvent;
-import org.sonatype.nexus.cleanup.storage.event.CleanupPolicyDeletedEvent;
 import org.sonatype.nexus.cleanup.storage.event.CleanupPolicyEvent;
-import org.sonatype.nexus.cleanup.storage.event.CleanupPolicyUpdatedEvent;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.orient.HexRecordIdObfuscator;
 import org.sonatype.nexus.orient.entity.EntityHook;
@@ -44,7 +44,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -53,9 +52,7 @@ import static org.sonatype.nexus.cleanup.storage.CleanupPolicy.ALL_CLEANUP_POLIC
 public class OrientCleanupPolicyStorageTest
     extends TestSupport
 {
-
-  private static final int VERSION = 0;
-
+  @SuppressWarnings("unused")
   private static class TestFormat extends Format {
     public TestFormat() {
       super("TestFormat");
@@ -147,12 +144,12 @@ public class OrientCleanupPolicyStorageTest
     String otherMode = "othermode";
     CleanupPolicy cleanupPolicy = underTest.add(item);
 
-    item.setMode("othermode");
+    item.setMode(otherMode);
     CleanupPolicy updatedCleanupPolicy = underTest.update(item);
     CleanupPolicy latestCleanupPolicy = underTest.get(item.getName());
 
-    assertCleanupPolicy(latestCleanupPolicy, "othermode");
-    assertCleanupPolicy(updatedCleanupPolicy, "othermode");
+    assertCleanupPolicy(latestCleanupPolicy, otherMode);
+    assertCleanupPolicy(updatedCleanupPolicy, otherMode);
 
     assertThat(cleanupPolicy.getName(), equalTo(updatedCleanupPolicy.getName()));
     assertThat(cleanupPolicy.getName(), equalTo(latestCleanupPolicy.getName()));
@@ -195,7 +192,7 @@ public class OrientCleanupPolicyStorageTest
     underTest.add(item);
 
     underTest.add(
-        new CleanupPolicy(item.getName(), "abcd", "OtherFormat","OtherMode",
+        new OrientCleanupPolicy(item.getName(), "abcd", "OtherFormat", "OtherMode",
             newHashMap()));
   }
 
@@ -213,7 +210,7 @@ public class OrientCleanupPolicyStorageTest
     verify(eventManager, times(1)).post(eventCaptor.capture());
 
     Object[] events = eventCaptor.getAllValues().toArray();
-    assertThat(events[0], instanceOf(CleanupPolicyCreatedEvent.class));
+    assertThat(events[0], instanceOf(OrientCleanupPolicyCreatedEvent.class));
     checkEventDetails((CleanupPolicyEvent) events[0], underTest.get(item.getName()));
   }
 
@@ -228,8 +225,8 @@ public class OrientCleanupPolicyStorageTest
     verify(eventManager, times(2)).post(eventCaptor.capture());
 
     Object[] events = eventCaptor.getAllValues().toArray();
-    assertThat(events[0], instanceOf(CleanupPolicyCreatedEvent.class));
-    assertThat(events[1], instanceOf(CleanupPolicyUpdatedEvent.class));
+    assertThat(events[0], instanceOf(OrientCleanupPolicyCreatedEvent.class));
+    assertThat(events[1], instanceOf(OrientCleanupPolicyUpdatedEvent.class));
     checkEventDetails((CleanupPolicyEvent) events[1], underTest.get(item.getName()));
   }
 
@@ -242,8 +239,8 @@ public class OrientCleanupPolicyStorageTest
     verify(eventManager, times(2)).post(eventCaptor.capture());
 
     Object[] events = eventCaptor.getAllValues().toArray();
-    assertThat(events[0], instanceOf(CleanupPolicyCreatedEvent.class));
-    assertThat(events[1], instanceOf(CleanupPolicyDeletedEvent.class));
+    assertThat(events[0], instanceOf(OrientCleanupPolicyCreatedEvent.class));
+    assertThat(events[1], instanceOf(OrientCleanupPolicyDeletedEvent.class));
   }
 
   @Test(expected = OValidationException.class)
@@ -303,10 +300,10 @@ public class OrientCleanupPolicyStorageTest
   private CleanupPolicy createPolicy(final String name) {
     Map<String, String> criteria = newHashMap();
     criteria.put(KEY, VALUE);
-    return new CleanupPolicy(name, NOTES, FORMAT, MODE, criteria);
+    return new OrientCleanupPolicy(name, NOTES, FORMAT, MODE, criteria);
   }
 
-  private void assertThatCleanupPoliciesContains(List<CleanupPolicy> cleanupPolicies, CleanupPolicy... expectedCleanupPolicies) {
+  private void assertThatCleanupPoliciesContains(final List<CleanupPolicy> cleanupPolicies, final CleanupPolicy... expectedCleanupPolicies) {
     for(CleanupPolicy cleanupPolicy: expectedCleanupPolicies) {
       assertThat(cleanupPolicies.stream().anyMatch(c -> c.getName().equals(cleanupPolicy.getName())), is(true));
     }

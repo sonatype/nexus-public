@@ -60,6 +60,9 @@ public class CleanupPolicyComponentTest
   private CleanupPolicyStorage cleanupPolicyStorage;
 
   @Mock
+  private CleanupPolicy cleanupPolicy;
+
+  @Mock
   private CleanupComponentBrowse cleanupComponentBrowse;
 
   @Mock
@@ -120,6 +123,8 @@ public class CleanupPolicyComponentTest
 
     when(storageFacet.txSupplier()).thenReturn(() -> tx);
     when(repository.facet(StorageFacet.class)).thenReturn(storageFacet);
+
+    when(cleanupPolicyStorage.newCleanupPolicy()).thenReturn(cleanupPolicy);
 
     underTest = new CleanupPolicyComponent(cleanupPolicyStorage, cleanupComponentBrowse, repositoryManager,
         ImmutableMap.of(FORMAT, configuration, DEFAULT, defaultCleanupPolicyConfiguration),

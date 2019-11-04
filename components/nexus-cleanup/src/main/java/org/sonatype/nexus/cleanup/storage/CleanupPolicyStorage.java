@@ -81,4 +81,11 @@ public interface CleanupPolicyStorage
    * @return true if it existed by the given name ignoring case, false otherwise.
    */
   boolean exists(final String cleanupPolicyName);
+
+  /**
+   * Create a new instance of a {@link CleanupPolicy} suitable for the backing implementation.
+   *
+   * @since 3.next
+   */
+  CleanupPolicy newCleanupPolicy();
 }

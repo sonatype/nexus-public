@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.internal.orient;
 
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.entity.SingletonEntityAdapter;
 
@@ -24,6 +25,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  *
  * @since 3.6.1
  */
+@FeatureFlag(name = "nexus.orient.store.config")
 class DeploymentIdentifierEntityAdapter
     extends SingletonEntityAdapter<DeploymentIdentifier>
 {

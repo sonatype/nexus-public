@@ -20,6 +20,7 @@ import org.sonatype.nexus.security.realm.RealmConfiguration;
 import org.sonatype.nexus.security.realm.RealmConfigurationChangedEvent;
 import org.sonatype.nexus.security.realm.RealmConfigurationEvent;
 import org.sonatype.nexus.security.realm.RealmConfigurationStore;
+import org.sonatype.nexus.security.realm.TestRealmConfiguration;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -66,7 +67,7 @@ public class RealmManagerImplTest
   @Before
   public void setUp() {
     Map<String, Realm> realms = ImmutableMap.of("A", realmA, "B", realmB);
-    RealmConfiguration defaultConfig = new RealmConfiguration();
+    RealmConfiguration defaultConfig = new TestRealmConfiguration();
     defaultConfig.setRealmNames(ImmutableList.of("A"));
     manager =
         new RealmManagerImpl(beanLocator, eventManager, configStore, () -> defaultConfig, securityManager, realms);
@@ -81,7 +82,7 @@ public class RealmManagerImplTest
 
   @Test
   public void testOnStoreChanged_RemoteEvent() {
-    RealmConfiguration eventConfig = new RealmConfiguration();
+    RealmConfiguration eventConfig = new TestRealmConfiguration();
     eventConfig.setRealmNames(ImmutableList.of("B"));
     when(configEvent.isLocal()).thenReturn(false);
     when(configEvent.getConfiguration()).thenReturn(eventConfig);

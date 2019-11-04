@@ -18,7 +18,8 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
+import org.sonatype.nexus.cleanup.internal.storage.orient.OrientCleanupPolicy;
+import org.sonatype.nexus.cleanup.internal.storage.orient.event.OrientCleanupPolicyDeletedEvent;
 import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
@@ -54,7 +55,7 @@ public class CleanupPolicyEventHandlerTest
   private static final String CLEANUP_NAME_KEY = "policyName";
 
   @Mock
-  private CleanupPolicy cleanupPolicy1, cleanupPolicy2, cleanupPolicy3;
+  private OrientCleanupPolicy cleanupPolicy1, cleanupPolicy2, cleanupPolicy3;
 
   @Mock
   private EntityMetadata entityMetadata1, entityMetadata2, entityMetadata3;
@@ -113,12 +114,12 @@ public class CleanupPolicyEventHandlerTest
     when(repositoryManager.browseForCleanupPolicy(name2)).thenReturn(Stream.of(repository2));
     when(repositoryManager.browseForCleanupPolicy(name3)).thenReturn(Stream.of(repository2));
   }
-  
+
   @Test
   public void removedCleanupAttributeFromRepository() throws Exception {
-    underTest.on(new CleanupPolicyDeletedEvent(entityMetadata1));
-    underTest.on(new CleanupPolicyDeletedEvent(entityMetadata2));
-    underTest.on(new CleanupPolicyDeletedEvent(entityMetadata3));
+    underTest.on(new OrientCleanupPolicyDeletedEvent(entityMetadata1));
+    underTest.on(new OrientCleanupPolicyDeletedEvent(entityMetadata2));
+    underTest.on(new OrientCleanupPolicyDeletedEvent(entityMetadata3));
 
     assertThat(attributes1.get(CLEANUP_ATTRIBUTES_KEY), nullValue());
     assertThat(attributes2.get(CLEANUP_ATTRIBUTES_KEY), nullValue());
@@ -128,7 +129,7 @@ public class CleanupPolicyEventHandlerTest
 
   @Test
   public void removedOneCleanupPolicyFromRepositoryWithMultiPolicy() throws Exception {
-    underTest.on(new CleanupPolicyDeletedEvent(entityMetadata3));
+    underTest.on(new OrientCleanupPolicyDeletedEvent(entityMetadata3));
 
     verifyConfigurationUpdated(1);
     verifyContainsCleanupPolicies(attributes2, cleanupPolicy2.getName());
@@ -136,7 +137,7 @@ public class CleanupPolicyEventHandlerTest
 
   @Test
   public void onlyRepositoryWithMatchingCleanupPolicyGetsAttributesRemoved() throws Exception {
-    underTest.on(new CleanupPolicyDeletedEvent(entityMetadata1));
+    underTest.on(new OrientCleanupPolicyDeletedEvent(entityMetadata1));
 
     assertThat(attributes1.get(CLEANUP_ATTRIBUTES_KEY), nullValue());
     assertThat(attributes2.get(CLEANUP_ATTRIBUTES_KEY), notNullValue());
@@ -151,7 +152,7 @@ public class CleanupPolicyEventHandlerTest
     when(repositoryManager.browseForCleanupPolicy(name1)).thenReturn(Stream.of(repository1, repository2));
     when(configuration2.getAttributes()).thenReturn(attributes1);
 
-    underTest.on(new CleanupPolicyDeletedEvent(entityMetadata1));
+    underTest.on(new OrientCleanupPolicyDeletedEvent(entityMetadata1));
 
     assertThat(attributes1.get(CLEANUP_ATTRIBUTES_KEY), nullValue());
     assertThat(attributes2.get(CLEANUP_ATTRIBUTES_KEY), notNullValue());
@@ -164,10 +165,10 @@ public class CleanupPolicyEventHandlerTest
   public void configurationWithoutRepositoryDoesNotGetUpdated() throws Exception {
     when(repositoryManager.browseForCleanupPolicy(any())).thenReturn(empty());
 
-    underTest.on(new CleanupPolicyDeletedEvent(entityMetadata1));
+    underTest.on(new OrientCleanupPolicyDeletedEvent(entityMetadata1));
 
     when(repositoryManager.browseForCleanupPolicy(any())).thenReturn(empty());
-    underTest.on(new CleanupPolicyDeletedEvent(entityMetadata2));
+    underTest.on(new OrientCleanupPolicyDeletedEvent(entityMetadata2));
 
     verifyConfigurationNeverUpdated();
   }
@@ -184,7 +185,7 @@ public class CleanupPolicyEventHandlerTest
 
   @SuppressWarnings("unchecked")
   private void verifyContainsCleanupPolicies(final Map<String, Map<String, Object>> attributes,
-                                             String... cleanupNames)
+                                             final String... cleanupNames)
   {
     Set<String> names = (Set<String>) attributes.get(CLEANUP_ATTRIBUTES_KEY).get(CLEANUP_NAME_KEY);
     assertThat(names, hasSize(cleanupNames.length));

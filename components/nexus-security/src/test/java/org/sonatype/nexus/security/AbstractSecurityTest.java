@@ -30,6 +30,7 @@ import org.sonatype.nexus.security.config.PreconfiguredSecurityConfigurationSour
 import org.sonatype.nexus.security.config.SecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityConfigurationSource;
 import org.sonatype.nexus.security.realm.RealmConfiguration;
+import org.sonatype.nexus.security.realm.TestRealmConfiguration;
 import org.sonatype.nexus.security.user.UserManager;
 import org.sonatype.nexus.testcommon.event.SimpleEventManager;
 
@@ -83,7 +84,7 @@ public abstract class AbstractSecurityTest
         bind(SecurityConfigurationSource.class).annotatedWith(Names.named("default")).toInstance(
             new PreconfiguredSecurityConfigurationSource(initialSecurityConfiguration()));
 
-        RealmConfiguration realmConfiguration = new RealmConfiguration();
+        RealmConfiguration realmConfiguration = new TestRealmConfiguration();
         realmConfiguration.setRealmNames(Arrays.asList("MockRealmA", "MockRealmB"));
         bind(RealmConfiguration.class).annotatedWith(Names.named("initial")).toInstance(realmConfiguration);
 

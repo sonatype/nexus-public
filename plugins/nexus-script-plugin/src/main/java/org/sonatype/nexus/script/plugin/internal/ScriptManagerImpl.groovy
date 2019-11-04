@@ -66,7 +66,10 @@ class ScriptManagerImpl
   @Override
   @Guarded(by = STARTED)
   Script create(final String name, final String content, final String type) {
-    Script script = new Script(name, content, type)
+    Script script = scriptStore.newScript()
+    script.name = name
+    script.content = content
+    script.type = type
     scriptStore.create(script)
     eventManager.post(new ScriptCreatedEvent(script))
     return script

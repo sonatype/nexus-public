@@ -25,6 +25,13 @@ public interface RealmManager
   extends Lifecycle
 {
   /**
+   * Returns a new realm configuration entity
+   *
+   * @since 3.next
+   */
+  RealmConfiguration newEntity();
+
+  /**
    * Returns copy of current realm configuration.
    */
   RealmConfiguration getConfiguration();
