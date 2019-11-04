@@ -14,22 +14,38 @@ package org.sonatype.nexus.proxy.access;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.jsecurity.realms.TargetPrivilegeDescriptor;
+import org.sonatype.nexus.jsecurity.realms.TargetPrivilegeRepositoryTargetPropertyDescriptor;
 import org.sonatype.nexus.proxy.NoSuchRepositoryException;
 import org.sonatype.nexus.proxy.ResourceStoreRequest;
 import org.sonatype.nexus.proxy.registry.RepositoryRegistry;
 import org.sonatype.nexus.proxy.repository.GroupRepository;
 import org.sonatype.nexus.proxy.repository.Repository;
+import org.sonatype.nexus.proxy.targets.Target;
 import org.sonatype.nexus.proxy.targets.TargetMatch;
+import org.sonatype.nexus.proxy.targets.TargetRegistry;
 import org.sonatype.nexus.proxy.targets.TargetSet;
+import org.sonatype.nexus.threads.FakeAlmightySubject;
 import org.sonatype.security.SecuritySystem;
+import org.sonatype.security.authorization.AuthorizationManager;
+import org.sonatype.security.authorization.NoSuchPrivilegeException;
+import org.sonatype.security.authorization.NoSuchRoleException;
+import org.sonatype.security.authorization.Privilege;
+import org.sonatype.security.authorization.Role;
+import org.sonatype.security.authorization.xml.SecurityXmlAuthorizationManager;
+import org.sonatype.security.usermanagement.User;
+import org.sonatype.security.usermanagement.UserNotFoundException;
 import org.sonatype.sisu.goodies.common.ComponentSupport;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.shiro.subject.Subject;
 
 /**
@@ -45,22 +61,73 @@ public class DefaultNexusItemAuthorizer
 
   private final RepositoryRegistry repoRegistry;
 
+  private final TargetRegistry targetRegistry;
+
+  private final AuthorizationManager defaultAuthorizationManager;
+
+  private final boolean authorizeByPrivilegedTargets;
+
+  @VisibleForTesting
+  static final String ADMIN_PRIVILEGE_ID = "1000";
+
   @Inject
   public DefaultNexusItemAuthorizer(final SecuritySystem securitySystem,
-                                    final RepositoryRegistry repoRegistry)
+                                    final RepositoryRegistry repoRegistry,
+                                    final TargetRegistry targetRegistry,
+                                    @Named(SecurityXmlAuthorizationManager.SOURCE)
+                                        final AuthorizationManager defaultAuthorizationManager,
+                                    @Named("${defaultNexusItemAuthorizer.authorizeByPrivilegedTargets:-true}")
+                                        boolean authorizeByPrivilegedTargets)
   {
     this.securitySystem = securitySystem;
     this.repoRegistry = repoRegistry;
+    this.targetRegistry = targetRegistry;
+    this.defaultAuthorizationManager = defaultAuthorizationManager;
+    this.authorizeByPrivilegedTargets = authorizeByPrivilegedTargets;
   }
 
   public boolean authorizePath(final Repository repository, final ResourceStoreRequest request, final Action action) {
-    // check repo only first, if there is directly assigned matching target permission, we're good
-    final TargetSet matched = repository.getTargetsForRequest(request);
-    if (matched != null && authorizePath(matched, action)) {
-      return true;
+    // NEXUS-21281 - try to skip scanning all targets by using the users privileged targets
+    if (authorizeByPrivilegedTargets) {
+      if (isAuthorizeByPrivilegedTargets(repository, request, action)) {
+        return true;
+      }
     }
+    else {
+      // check repo only first, if there is directly assigned matching target permission, we're good
+      final TargetSet matched = repository.getTargetsForRequest(request);
+      if (matched != null && authorizePath(matched, action)) {
+        return true;
+      }
+    }
+
     // if we are here, we need to check cascading permissions, where this repository is contained in group
     return authorizePathCascade(repository, request, action);
+  }
+
+  private boolean isAuthorizeByPrivilegedTargets(final Repository repository,
+                                                 final ResourceStoreRequest request,
+                                                 final Action action)
+  {
+    Subject subject = securitySystem.getSubject();
+
+    //typically task subject where no user in context
+    if (subject instanceof FakeAlmightySubject) {
+      return true;
+    }
+
+    User user = getUser(subject);
+    if (user != null) {
+      Set<String> assignedPrivileges = getAssignedPrivileges(user);
+
+      if (hasAdminPrivilege(assignedPrivileges)) {
+        return true;
+      }
+
+      return hasRequiredRepoTargetPrivilege(assignedPrivileges, request, repository, action);
+    }
+
+    return false;
   }
 
   private boolean authorizePathCascade(final Repository repository, final ResourceStoreRequest request,
@@ -171,6 +238,102 @@ public class DefaultNexusItemAuthorizer
       log.trace("Subject '{}' is missing required permissions; rejecting", subject.getPrincipal());
     }
 
+    return false;
+  }
+
+  private User getUser(final Subject subject) {
+    try {
+      if (subject != null) {
+        return securitySystem.getUser((String) subject.getPrincipal());
+      }
+      else {
+        log.debug("Attempt to authenticate with no Subject.");
+      }
+    }
+    catch (UserNotFoundException e) {
+      log.debug("Unable to find user: {}", e.getMessage());
+    }
+
+    return null;
+  }
+
+  private Set<String> getPrivilegedTargets(final Set<String> assignedPrivilegeIds) {
+    Set<String> assignedTargetIds = new HashSet<>();
+
+    assignedPrivilegeIds.forEach(privilegeId -> addPrivilege(assignedTargetIds, privilegeId));
+
+    return assignedTargetIds;
+  }
+
+  private Set<String> getAssignedPrivileges(final User user) {
+    Set<String> assignedPrivileges = new HashSet<>();
+    user.getRoles().forEach(roleIdentifier -> {
+      try {
+        assignedPrivileges.addAll(
+            getAllPrivilegesFromRole(defaultAuthorizationManager.getRole(roleIdentifier.getRoleId()),
+                defaultAuthorizationManager));
+      }
+      catch (NoSuchRoleException e) {
+        log.debug("Unable to find Role: '{}' for User: '{}'. Because of: {}", roleIdentifier, user, e.getMessage());
+      }
+    });
+    return assignedPrivileges;
+  }
+
+  private Set<String> getAllPrivilegesFromRole(final Role role, final AuthorizationManager authorizationManager) {
+    Set<String> privileges = new HashSet<>(role.getPrivileges());
+    role.getRoles().forEach(childRole -> {
+      try {
+        privileges.addAll(getAllPrivilegesFromRole(authorizationManager.getRole(childRole), authorizationManager));
+      }
+      catch (NoSuchRoleException e) {
+        log.debug("Unable to find Role: '{}'. Because of: {}", childRole, e.getMessage());
+      }
+    });
+    return privileges;
+  }
+
+  private void addPrivilege(final Set<String> assignedTargetIds,
+                            final String privilegeId)
+  {
+    try {
+      Privilege privilege = defaultAuthorizationManager.getPrivilege(privilegeId);
+      if (TargetPrivilegeDescriptor.TYPE.equals(privilege.getType())) {
+        assignedTargetIds.add(privilege.getPrivilegeProperty(TargetPrivilegeRepositoryTargetPropertyDescriptor.ID));
+      }
+    }
+    catch (NoSuchPrivilegeException e) {
+      log.debug("Unable to find Privilege: '{}'. Because of: {}", privilegeId, e.getMessage());
+    }
+  }
+
+  private boolean hasAdminPrivilege(final Set<String> assignedPrivileges) {
+    //admin priv, only non target priv that can give access
+    return assignedPrivileges.contains(ADMIN_PRIVILEGE_ID);
+  }
+
+  private boolean hasRequiredRepoTargetPrivilege(
+      final Set<String> assignedPrivileges,
+      final ResourceStoreRequest request,
+      final Repository repository,
+      final Action action)
+  {
+    Set<String> assignedTargetIds = getPrivilegedTargets(assignedPrivileges);
+    TargetSet targetSet = new TargetSet();
+    for (String targetId : assignedTargetIds) {
+      Target target = targetRegistry.getRepositoryTarget(targetId);
+      if (target != null) {
+        if (target.isPathContained(repository.getRepositoryContentClass(), request.getRequestPath())) {
+          targetSet.addTargetMatch(new TargetMatch(target, repository));
+        }
+      }
+      else {
+        log.debug("Unable to find Repository Target: '{}'.", targetId);
+      }
+    }
+    if (targetSet.getMatches().size() > 0) {
+      return authorizePath(targetSet, action);
+    }
     return false;
   }
 }

@@ -34,6 +34,7 @@ import org.sonatype.security.authentication.AuthenticationException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.ThreadContext;
+import org.codehaus.plexus.context.Context;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -99,6 +100,12 @@ public class AccessTest
       this.jettyTestsuiteEnvironmentBuilder = new M2TestsuiteEnvironmentBuilder(ss);
     }
     return this.jettyTestsuiteEnvironmentBuilder;
+  }
+
+  @Override
+  protected void customizeContext(final Context ctx) {
+    super.customizeContext(ctx);
+    ctx.put("defaultNexusItemAuthorizer.authorizeByPrivilegedTargets", "false");
   }
 
   @Test
