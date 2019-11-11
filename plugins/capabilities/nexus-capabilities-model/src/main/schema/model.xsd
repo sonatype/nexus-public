@@ -77,6 +77,7 @@
       <xsd:element name="storeRoot" type="xsd:string" minOccurs="0"/>
       <xsd:element name="idMapping" type="xsd:string" minOccurs="0"/>
       <xsd:element name="nameMapping" type="xsd:string" minOccurs="0"/>
+      <xsd:element name="enabled" type="xsd:boolean"/>
     </xsd:sequence>
   </xsd:complexType>
 

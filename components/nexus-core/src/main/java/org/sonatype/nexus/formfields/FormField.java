@@ -14,9 +14,11 @@ package org.sonatype.nexus.formfields;
 
 public interface FormField<T>
 {
-  public static final boolean MANDATORY = true;
+  boolean MANDATORY = true;
 
-  public static final boolean OPTIONAL = false;
+  boolean OPTIONAL = false;
+
+  boolean DISABLED = false;
 
   /**
    * Get the type of this form field
@@ -53,4 +55,11 @@ public interface FormField<T>
    * @since 2.3
    */
   T getInitialValue();
+
+  /**
+   *
+   * Get the enabled flag for this field
+   * @since 2.next
+   */
+  boolean isEnabled();
 }

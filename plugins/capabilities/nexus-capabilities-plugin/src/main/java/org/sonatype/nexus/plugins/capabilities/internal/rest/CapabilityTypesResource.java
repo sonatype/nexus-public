@@ -103,7 +103,8 @@ public class CapabilityTypesResource
                     .withLabel(input.getLabel())
                     .withHelpText(input.getHelpText())
                     .withRequired(input.isRequired())
-                    .withRegexValidation(input.getRegexValidation());
+                    .withRegexValidation(input.getRegexValidation())
+                    .withEnabled(input.isEnabled());
 
                 if (input.getInitialValue() != null) {
                   formField.setInitialValue(input.getInitialValue().toString());

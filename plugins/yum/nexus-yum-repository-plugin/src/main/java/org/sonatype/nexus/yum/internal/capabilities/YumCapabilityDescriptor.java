@@ -24,11 +24,13 @@ import org.sonatype.nexus.formfields.FormField;
 import org.sonatype.nexus.formfields.NumberTextFormField;
 import org.sonatype.nexus.formfields.StringTextFormField;
 import org.sonatype.nexus.plugins.capabilities.CapabilityIdentity;
+import org.sonatype.nexus.plugins.capabilities.CapabilityRegistry;
 import org.sonatype.nexus.plugins.capabilities.CapabilityType;
 import org.sonatype.nexus.plugins.capabilities.Tag;
 import org.sonatype.nexus.plugins.capabilities.Taggable;
 import org.sonatype.nexus.plugins.capabilities.Validator;
 import org.sonatype.nexus.plugins.capabilities.support.validator.Validators;
+import org.sonatype.nexus.yum.YumRegistry;
 import org.sonatype.sisu.goodies.i18n.I18N;
 import org.sonatype.sisu.goodies.i18n.MessageBundle;
 
@@ -68,13 +70,13 @@ public class YumCapabilityDescriptor
     @DefaultMessage("Path of \"createrepo\"")
     String createrepoPathLabel();
 
-    @DefaultMessage("Path of \"createrepo\" (e.g. /usr/bin/createrepo)")
+    @DefaultMessage("Path of \"createrepo\" (e.g. /usr/bin/createrepo). You can set this value in sonatype-work/nexus/conf/capabilities.xml")
     String createrepoPathHelp();
 
     @DefaultMessage("Path of \"mergerepo\"")
     String mergerepoPathLabel();
 
-    @DefaultMessage("Path of \"mergerepo\" (e.g. /usr/bin/mergerepo)")
+    @DefaultMessage("Path of \"mergerepo\" (e.g. /usr/bin/mergerepo). You can set this value in sonatype-work/nexus/conf/capabilities.xml")
     String mergerepoPathHelp();
   }
 
@@ -84,9 +86,12 @@ public class YumCapabilityDescriptor
 
   private final List<FormField> formFields;
 
+  private final CapabilityRegistry capabilityRegistry;
+
   @Inject
-  public YumCapabilityDescriptor(final Validators validators) {
+  public YumCapabilityDescriptor(final Validators validators, final CapabilityRegistry capabilityRegistry) {
     this.validators = validators;
+    this.capabilityRegistry = capabilityRegistry;
 
     this.formFields = Lists.<FormField>newArrayList(
         new NumberTextFormField(
@@ -94,33 +99,39 @@ public class YumCapabilityDescriptor
             messages.maxNumberParallelThreadsLabel(),
             messages.maxNumberParallelThreadsHelp(),
             FormField.OPTIONAL
-        ).withInitialValue(10),
+        ).withInitialValue(YumRegistry.DEFAULT_MAX_NUMBER_PARALLEL_THREADS),
         new StringTextFormField(
             YumCapabilityConfiguration.CREATEREPO_PATH,
             messages.createrepoPathLabel(),
             messages.createrepoPathHelp(),
-            FormField.OPTIONAL
-        ),
+            FormField.OPTIONAL,
+            null,
+            FormField.DISABLED
+        ).withInitialValue(YumRegistry.DEFAULT_CREATEREPO_PATH),
         new StringTextFormField(
             YumCapabilityConfiguration.MERGEREPO_PATH,
             messages.mergerepoPathLabel(),
             messages.mergerepoPathHelp(),
-            FormField.OPTIONAL
-        )
+            FormField.OPTIONAL,
+            null,
+            FormField.DISABLED
+        ).withInitialValue(YumRegistry.DEFAULT_MERGEREPO_PATH)
     );
   }
 
   @Override
   public Validator validator() {
     return validators.logical().and(
-        validators.capability().uniquePer(TYPE)
+        validators.capability().uniquePer(TYPE),
+        new YumCapabilityCreateValidator()
     );
   }
 
   @Override
   public Validator validator(final CapabilityIdentity id) {
     return validators.logical().and(
-        validators.capability().uniquePerExcluding(id, TYPE)
+        validators.capability().uniquePerExcluding(id, TYPE),
+        new YumCapabilityUpdateValidator(capabilityRegistry.get(id).context().properties())
     );
   }
 
