@@ -36,7 +36,7 @@ import org.sonatype.nexus.repository.storage.MetadataNode;
 import org.sonatype.nexus.scheduling.CurrentState;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
-import org.sonatype.nexus.scheduling.internal.TaskSchedulerImpl;
+import org.sonatype.nexus.scheduling.TaskSchedulerImpl;
 
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;

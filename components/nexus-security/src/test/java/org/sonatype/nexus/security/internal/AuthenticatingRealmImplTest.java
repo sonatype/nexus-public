@@ -15,6 +15,7 @@ package org.sonatype.nexus.security.internal;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.security.config.CUser;
 import org.sonatype.nexus.security.config.SecurityConfigurationManager;
+import org.sonatype.nexus.security.config.memory.MemoryCUser;
 
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.junit.Before;
@@ -40,7 +41,7 @@ public class AuthenticatingRealmImplTest
   @Mock
   private SecurityConfigurationManager configuration;
 
-  private CUser testUser = new CUser();
+  private CUser testUser = new MemoryCUser();
 
   private AuthenticatingRealmImpl underTest;
 

@@ -311,7 +311,7 @@ public class UserApiResourceTest
     user.setReadOnly(false);
     user.setStatus(UserStatus.disabled);
     user.setUserId("jsmith");
-    user.setVersion("1");
+    user.setVersion(1);
     user.setSource(UserManager.DEFAULT_SOURCE);
     user.setRoles(Collections.singleton(new RoleIdentifier(UserManager.DEFAULT_SOURCE, "nx-admin")));
     return user;

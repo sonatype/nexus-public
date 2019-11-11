@@ -35,7 +35,7 @@ public class Role
 
   private Set<String> privileges = new HashSet<String>();
 
-  private String version;
+  private int version;
 
   public Role() {
   }
@@ -61,7 +61,7 @@ public class Role
     return roleId;
   }
 
-  public void setRoleId(String roleId) {
+  public void setRoleId(final String roleId) {
     this.roleId = roleId;
   }
 
@@ -69,7 +69,7 @@ public class Role
     return name;
   }
 
-  public void setName(String name) {
+  public void setName(final String name) {
     this.name = name;
   }
 
@@ -77,7 +77,7 @@ public class Role
     return source;
   }
 
-  public void setSource(String source) {
+  public void setSource(final String source) {
     this.source = source;
   }
 
@@ -85,11 +85,11 @@ public class Role
     return roles;
   }
 
-  public void addRole(String role) {
+  public void addRole(final String role) {
     this.roles.add(role);
   }
 
-  public void setRoles(Set<String> roles) {
+  public void setRoles(final Set<String> roles) {
     this.roles = roles;
   }
 
@@ -97,15 +97,16 @@ public class Role
     return privileges;
   }
 
-  public void addPrivilege(String privilege) {
+  public void addPrivilege(final String privilege) {
     this.privileges.add(privilege);
   }
 
-  public void setPrivileges(Set<String> privilege) {
+  public void setPrivileges(final Set<String> privilege) {
     this.privileges = privilege;
   }
 
-  public int compareTo(Role o) {
+  @Override
+  public int compareTo(final Role o) {
     final int before = -1;
     final int equal = 0;
     final int after = 1;
@@ -144,7 +145,7 @@ public class Role
     return description;
   }
 
-  public void setDescription(String description) {
+  public void setDescription(final String description) {
     this.description = description;
   }
 
@@ -152,15 +153,15 @@ public class Role
     return readOnly;
   }
 
-  public void setReadOnly(boolean readOnly) {
+  public void setReadOnly(final boolean readOnly) {
     this.readOnly = readOnly;
   }
 
-  public String getVersion() {
+  public int getVersion() {
     return version;
   }
 
-  public void setVersion(final String version) {
+  public void setVersion(final int version) {
     this.version = version;
   }
 
@@ -196,7 +197,7 @@ public class Role
     if (source != null ? !source.equals(role.source) : role.source != null) {
       return false;
     }
-    if (version != null ? !version.equals(role.version) : role.version != null) {
+    if (version != role.version) {
       return false;
     }
 
@@ -212,7 +213,7 @@ public class Role
     result = 31 * result + (readOnly ? 1 : 0);
     result = 31 * result + (roles != null ? roles.hashCode() : 0);
     result = 31 * result + (privileges != null ? privileges.hashCode() : 0);
-    result = 31 * result + (version != null ? version.hashCode() : 0);
+    result = 31 * result + version;
     return result;
   }
 

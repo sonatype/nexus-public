@@ -19,12 +19,12 @@ import org.sonatype.nexus.email.EmailManager;
 import org.apache.commons.mail.EmailException;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -33,6 +33,9 @@ public class EmailConfigurationApiResourceTest
 {
   @Mock
   private EmailManager emailManager;
+
+  @Mock
+  private EmailConfiguration emailConfiguration;
 
   private EmailConfigurationApiResource underTest;
 
@@ -61,9 +64,8 @@ public class EmailConfigurationApiResourceTest
 
   @Test
   public void getEmailConfigurationObfuscatesThePassword() {
-    EmailConfiguration storedConfiguration = new EmailConfiguration();
-    storedConfiguration.setPassword("testpassword");
-    when(emailManager.getConfiguration()).thenReturn(storedConfiguration);
+    when(emailConfiguration.getPassword()).thenReturn("testpassword");
+    when(emailManager.getConfiguration()).thenReturn(emailConfiguration);
 
     ApiEmailConfiguration response = underTest.getEmailConfiguration();
 
@@ -72,24 +74,26 @@ public class EmailConfigurationApiResourceTest
 
   @Test
   public void setEmailConfigurationSetsTheNewConfiguration() {
+    EmailConfiguration newConfiguration = mock(EmailConfiguration.class);
     ApiEmailConfiguration request = new ApiEmailConfiguration();
     request.setEnabled(true);
     request.setPassword("testPassword");
 
+    when(emailManager.newConfiguration()).thenReturn(newConfiguration);
+
     underTest.setEmailConfiguration(request);
 
-    ArgumentCaptor<EmailConfiguration> emailConfigurationCaptor = ArgumentCaptor.forClass(EmailConfiguration.class);
-    verify(emailManager).setConfiguration(emailConfigurationCaptor.capture());
-    EmailConfiguration storingEmailConfiguration = emailConfigurationCaptor.getValue();
-
-    assertThat(storingEmailConfiguration.getPassword(), is(request.getPassword()));
+    verify(newConfiguration).setPassword(request.getPassword());
+    verify(newConfiguration).setEnabled(true);
+    verify(emailManager).setConfiguration(newConfiguration);
   }
 
   @Test
   public void setEmailConfigurationKeepsTheOriginalPassword() {
-    EmailConfiguration storedConfiguration = new EmailConfiguration();
-    storedConfiguration.setPassword("testpassword");
-    when(emailManager.getConfiguration()).thenReturn(storedConfiguration);
+    EmailConfiguration newConfiguration = mock(EmailConfiguration.class);
+    when(emailConfiguration.getPassword()).thenReturn("testpassword");
+    when(emailManager.getConfiguration()).thenReturn(emailConfiguration);
+    when(emailManager.newConfiguration()).thenReturn(newConfiguration);
 
     ApiEmailConfiguration request = new ApiEmailConfiguration();
     request.setEnabled(true);
@@ -97,23 +101,19 @@ public class EmailConfigurationApiResourceTest
 
     underTest.setEmailConfiguration(request);
 
-    ArgumentCaptor<EmailConfiguration> emailConfigurationCaptor = ArgumentCaptor.forClass(EmailConfiguration.class);
-    verify(emailManager).setConfiguration(emailConfigurationCaptor.capture());
-    EmailConfiguration storingEmailConfiguration = emailConfigurationCaptor.getValue();
-
-    assertThat(storingEmailConfiguration.getPassword(), is(storedConfiguration.getPassword()));
-    assertThat(storingEmailConfiguration.isEnabled(), is(true));
+    verify(newConfiguration).setPassword(emailConfiguration.getPassword());
+    verify(newConfiguration).setEnabled(true);
+    verify(emailManager).setConfiguration(newConfiguration);
   }
 
   @Test
   public void testEmailConfigurationSendsTestEmail() throws EmailException {
-    EmailConfiguration storedEmailConfiguration = new EmailConfiguration();
-    storedEmailConfiguration.setEnabled(true);
+    when(emailConfiguration.isEnabled()).thenReturn(true);
+    when(emailManager.getConfiguration()).thenReturn(emailConfiguration);
     String destinationAddress = "test@example.com";
-    when(emailManager.getConfiguration()).thenReturn(storedEmailConfiguration);
 
     underTest.testEmailConfiguration(destinationAddress);
 
-    verify(emailManager).sendVerification(storedEmailConfiguration, destinationAddress);
+    verify(emailManager).sendVerification(emailConfiguration, destinationAddress);
   }
 }

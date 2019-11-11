@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.security.config
 
+import org.sonatype.nexus.security.config.memory.MemoryCRole
+
 /**
  * @since 3.0
  */
@@ -43,7 +45,7 @@ class InitialSecurityConfiguration
             )
         ],
         roles: [
-            new CRole(
+            new MemoryCRole(
                 id: 'test',
                 name: 'test Role',
                 description: 'Test Role Description',

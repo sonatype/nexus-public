@@ -15,9 +15,7 @@ package org.sonatype.nexus.repository.maven.internal;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -30,10 +28,11 @@ import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.maven.MavenFacet;
+import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.PurgeUnusedSnapshotsFacet;
 import org.sonatype.nexus.repository.maven.internal.group.MavenGroupFacet;
-import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataRebuilder;
-import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils;
+import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
 import org.sonatype.nexus.repository.storage.Query;
@@ -65,7 +64,15 @@ import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_ARTIFACT_ID;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_GROUP_ID;
+import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.deleteWithHashes;
+import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.findAsset;
+import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.addRebuildFlag;
+import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_COMPONENT;
+import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
+import static org.sonatype.nexus.repository.storage.Query.builder;
 
 /**
  * Implementation of {@link PurgeUnusedSnapshotsFacet}. The implementation assumes that this facet will only be used
@@ -90,12 +97,11 @@ public class PurgeUnusedSnapshotsFacetImpl
       // though always include the last record for looping USING 'WHERE @rid >'
       "OR component = $a[%d];";
 
-
   private static final String UNUSED_WHERE_QUERY = "(bucket = %s AND component = $a[%d])";
 
-  private final ComponentEntityAdapter componentEntityAdapter;
+  private static final String ATTR_MAVEN_BASE_VERSION = P_ATTRIBUTES + "." + Maven2Format.NAME + "." + P_BASE_VERSION;
 
-  private final MetadataRebuilder metadataRebuilder;
+  private final ComponentEntityAdapter componentEntityAdapter;
 
   private final Type groupType;
 
@@ -107,14 +113,12 @@ public class PurgeUnusedSnapshotsFacetImpl
 
   @Inject
   public PurgeUnusedSnapshotsFacetImpl(final ComponentEntityAdapter componentEntityAdapter,
-                                       final MetadataRebuilder metadataRebuilder,
                                        @Named(GroupType.NAME) final Type groupType,
                                        @Named(HostedType.NAME) final Type hostedType,
                                        @Named("${nexus.tasks.purgeUnusedSnapshots.findUnusedLimit:-50}")
                                            int findUnusedLimit)
   {
     this.componentEntityAdapter = checkNotNull(componentEntityAdapter);
-    this.metadataRebuilder = checkNotNull(metadataRebuilder);
     this.groupType = checkNotNull(groupType);
     this.hostedType = checkNotNull(hostedType);
     this.findUnusedLimit = findUnusedLimit;
@@ -131,20 +135,10 @@ public class PurgeUnusedSnapshotsFacetImpl
       processAsGroup(facet(MavenGroupFacet.class), numberOfDays);
     }
     else if (hostedType.equals(getRepository().getType())) {
-      processAsHosted(numberOfDays);
+      purgeSnapshotsFromRepository(numberOfDays);
     }
     else {
       log.debug("Skipping repository {}, is not group or hosted", getRepository().getName());
-    }
-  }
-
-  /**
-   * Processes this facet's associated repository as a hosted repository.
-   */
-  private void processAsHosted(final int numberOfDays) {
-    Set<String> groups = purgeSnapshotsFromRepository(numberOfDays);
-    for (String groupId : groups) {
-      metadataRebuilder.rebuild(getRepository(), false, false, groupId, null, null);
     }
   }
 
@@ -160,11 +154,11 @@ public class PurgeUnusedSnapshotsFacetImpl
   /**
    * Purges snapshots from the given repository, returning a set of the affected groups for metadata rebuilding.
    */
-  private Set<String> purgeSnapshotsFromRepository(final int numberOfDays) {
+  private void purgeSnapshotsFromRepository(final int numberOfDays) {
     LocalDate olderThan = LocalDate.now().minusDays(numberOfDays);
     UnitOfWork.beginBatch(facet(StorageFacet.class).txSupplier());
     try {
-      return deleteUnusedSnapshotComponents(olderThan);
+      deleteUnusedSnapshotComponents(olderThan);
     }
     finally {
       UnitOfWork.end();
@@ -173,23 +167,20 @@ public class PurgeUnusedSnapshotsFacetImpl
 
   /**
    * Deletes the unused snapshot components and their associated metadata.
-   *
-   * @return the affected groups
    */
   @TransactionalDeleteBlob
-  protected Set<String> deleteUnusedSnapshotComponents(LocalDate olderThan) {
+  protected void deleteUnusedSnapshotComponents(LocalDate olderThan) {
     StorageTx tx = UnitOfWork.currentTx();
 
     // entire component count is used just for reporting progress
     Repository repo = getRepository();
-    long totalComponents = tx.countComponents(Query.builder().build(), singletonList(repo));
+    long totalComponents = tx.countComponents(builder().build(), singletonList(repo));
     log.info("Found {} total components in repository {} to evaluate for unused snapshots", totalComponents,
         repo.getName());
 
     ORID bucketId = id(tx.findBucket(getRepository()));
     String unusedWhereTemplate = getUnusedWhere(bucketId);
 
-    Set<String> groups = new HashSet<>();
     long skipCount = 0;
     lastComponent = new ORecordId(-1, -1);
     while (skipCount < totalComponents && !isCanceled()) {
@@ -198,11 +189,10 @@ public class PurgeUnusedSnapshotsFacetImpl
 
       for (Component component : findNextPageOfUnusedSnapshots(tx, olderThan, bucketId, unusedWhereTemplate)) {
         if (isCanceled()) {
-          return groups;
+          return;
         }
 
-        String groupId = deleteComponent(component);
-        groups.add(groupId);
+        deleteComponent(component);
       }
 
       // commit each loop as well
@@ -211,8 +201,6 @@ public class PurgeUnusedSnapshotsFacetImpl
 
       skipCount += findUnusedLimit;
     }
-
-    return groups;
   }
 
   /**
@@ -261,7 +249,7 @@ public class PurgeUnusedSnapshotsFacetImpl
         .collect(Collectors.toList());
   }
 
-  private String deleteComponent(final Component component) {
+  private void deleteComponent(final Component component) {
     log.debug("Deleting unused snapshot component {}", component);
     MavenFacet facet = facet(MavenFacet.class);
     final StorageTx tx = UnitOfWork.currentTx();
@@ -273,16 +261,44 @@ public class PurgeUnusedSnapshotsFacetImpl
     String baseVersion = attributes.get(P_BASE_VERSION, String.class);
 
     try {
-      // We have to delete all metadata through GAV levels and rebuild in the next step, as the MetadataRebuilder
-      // isn't meant to remove metadata that has been orphaned by the deletion of a component
-      MavenFacetUtils.deleteWithHashes(facet, MetadataUtils.metadataPath(groupId, artifactId, baseVersion));
-      MavenFacetUtils.deleteWithHashes(facet, MetadataUtils.metadataPath(groupId, artifactId, null));
-      MavenFacetUtils.deleteWithHashes(facet, MetadataUtils.metadataPath(groupId, null, null));
+      Bucket bucket = tx.findBucket(getRepository());
+      maybeDeleteOrFlagToRebuildMetadata(facet, tx, bucket, metadataPath(groupId, artifactId, baseVersion),
+          builder().where(P_GROUP).eq(groupId).and(P_NAME).eq(artifactId).and(ATTR_MAVEN_BASE_VERSION).eq(baseVersion)
+              .build());
+
+      //for GA metadata, if there are no other GAVs matching the GA, delete it, otherwise mark as invalid so it will
+      //be rebuilt on request
+      maybeDeleteOrFlagToRebuildMetadata(facet, tx, bucket, metadataPath(groupId, artifactId, null),
+          builder().where(P_GROUP).eq(groupId).and(P_NAME).eq(artifactId).build());
+
+      //for G metadata, if there are no other GAs matching the G, delete it, otherwise mark as invalid so it will
+      //be rebuilt on request
+      maybeDeleteOrFlagToRebuildMetadata(facet, tx, bucket, metadataPath(groupId, null, null),
+          builder().where(P_GROUP).eq(groupId).build());
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-    return groupId;
+  }
+
+  private void maybeDeleteOrFlagToRebuildMetadata(
+      final MavenFacet facet,
+      final StorageTx tx,
+      final Bucket bucket,
+      final MavenPath path,
+      final Query query) throws IOException
+  {
+    Asset metadata = findAsset(tx, bucket, path);
+    if (metadata != null) {
+      long count = tx.countComponents(query, singletonList(getRepository()));
+      if (count == 0) {
+        deleteWithHashes(facet, path);
+      }
+      else {
+        addRebuildFlag(metadata);
+        tx.saveAsset(metadata);
+      }
+    }
   }
 
   /**

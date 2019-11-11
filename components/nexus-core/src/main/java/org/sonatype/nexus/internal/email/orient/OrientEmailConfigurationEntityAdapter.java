@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.email;
+package org.sonatype.nexus.internal.email.orient;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -21,6 +21,9 @@ import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.entity.EntityEvent;
 import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.email.EmailConfiguration;
+import org.sonatype.nexus.internal.email.EmailConfigurationCreatedEvent;
+import org.sonatype.nexus.internal.email.EmailConfigurationDeletedEvent;
+import org.sonatype.nexus.internal.email.EmailConfigurationUpdatedEvent;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.SingletonEntityAdapter;
@@ -40,8 +43,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @FeatureFlag(name = "nexus.orient.store.config")
 @Named
 @Singleton
-public class EmailConfigurationEntityAdapter
-    extends SingletonEntityAdapter<EmailConfiguration>
+public class OrientEmailConfigurationEntityAdapter
+    extends SingletonEntityAdapter<OrientEmailConfiguration>
 {
   private static final String DB_CLASS = new OClassNameBuilder()
       .type("email")
@@ -74,7 +77,7 @@ public class EmailConfigurationEntityAdapter
   private final PasswordHelper passwordHelper;
 
   @Inject
-  public EmailConfigurationEntityAdapter(final PasswordHelper passwordHelper) throws Exception {
+  public OrientEmailConfigurationEntityAdapter(final PasswordHelper passwordHelper) throws Exception {
     super(DB_CLASS);
     this.passwordHelper = checkNotNull(passwordHelper);
   }
@@ -96,12 +99,12 @@ public class EmailConfigurationEntityAdapter
   }
 
   @Override
-  protected EmailConfiguration newEntity() {
-    return new EmailConfiguration();
+  protected OrientEmailConfiguration newEntity() {
+    return new OrientEmailConfiguration();
   }
 
   @Override
-  protected void readFields(final ODocument document, final EmailConfiguration entity) {
+  protected void readFields(final ODocument document, final OrientEmailConfiguration entity) {
     boolean enabled = document.field(P_ENABLED, OType.BOOLEAN);
     String host = document.field(P_HOST, OType.STRING);
     int port = document.field(P_PORT, OType.INTEGER);
@@ -130,7 +133,7 @@ public class EmailConfigurationEntityAdapter
   }
 
   @Override
-  protected void writeFields(final ODocument document, final EmailConfiguration entity) {
+  protected void writeFields(final ODocument document, final OrientEmailConfiguration entity) {
     document.field(P_ENABLED, entity.isEnabled());
     document.field(P_HOST, entity.getHost());
     document.field(P_PORT, entity.getPort());

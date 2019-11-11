@@ -37,6 +37,7 @@ import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.sonatype.nexus.repository.maven.VersionPolicy;
+import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataRebuilder;
 import org.sonatype.nexus.repository.maven.internal.validation.MavenMetadataContentValidator;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
@@ -59,13 +60,26 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.hash.HashCode;
+import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.apache.maven.model.Model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.*;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.P_ARTIFACT_ID;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.P_CLASSIFIER;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.P_EXTENSION;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.P_GROUP_ID;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.P_PACKAGING;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.P_POM_DESCRIPTION;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.P_POM_NAME;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.P_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Constants.METADATA_FILENAME;
 import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.findAsset;
 import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.findComponent;
+import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.removeRebuildFlag;
+import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.requiresRebuild;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
 /**
@@ -123,15 +137,19 @@ public class MavenFacetImpl
 
   private final boolean mavenMetadataValidationEnabled;
 
+  private final MetadataRebuilder metadataRebuilder;
+
   @Inject
   public MavenFacetImpl(final Map<String, MavenPathParser> mavenPathParsers,
                         final MavenMetadataContentValidator metadataValidator,
                         @Named("${nexus.maven.metadata.validation.enabled:-true}")
-                        final boolean mavenMetadataValidationEnabled)
+                        final boolean mavenMetadataValidationEnabled,
+                        MetadataRebuilder metadataRebuilder)
   {
     this.mavenPathParsers = checkNotNull(mavenPathParsers);
     this.metadataValidator = checkNotNull(metadataValidator);
     this.mavenMetadataValidationEnabled = mavenMetadataValidationEnabled;
+    this.metadataRebuilder = checkNotNull(metadataRebuilder);
   }
 
   @Override
@@ -185,13 +203,39 @@ public class MavenFacetImpl
 
     final StorageTx tx = UnitOfWork.currentTx();
 
-    final Asset asset = findAsset(tx, tx.findBucket(getRepository()), path);
+    Asset asset = findAsset(tx, tx.findBucket(getRepository()), path);
     if (asset == null) {
       return null;
     }
 
-    final Blob blob = tx.requireBlob(asset.requireBlobRef());
-    return toContent(asset, blob);
+    if (path.getFileName().equals(METADATA_FILENAME)) {
+      asset = maybeRebuildMetadata(tx, asset, path);
+    }
+
+    return asset == null ? null : toContent(asset, tx.requireBlob(asset.requireBlobRef()));
+  }
+
+  // rebuild the metadata if it has been marked for rebuild (except for proxy repos)
+  @Nullable
+  private Asset maybeRebuildMetadata(final StorageTx tx, final Asset asset, final MavenPath path)
+      throws IOException
+  {
+    if (requiresRebuild(asset) && !(getRepository().getType() instanceof ProxyType)) {
+      removeRebuildFlag(asset);
+      Blob metadataBlob = tx.requireBlob(asset.requireBlobRef());
+      Metadata metadata = MavenModels.readMetadata(metadataBlob.getInputStream());
+      metadataRebuilder.rebuildInTransaction(
+          getRepository(),
+          false,
+          false,
+          metadata.getGroupId(),
+          metadata.getArtifactId(),
+          metadata.getVersion()
+      );
+
+      return findAsset(tx, tx.findBucket(getRepository()), path);
+    }
+    return asset;
   }
 
   private Content toContent(final Asset asset, final Blob blob) {
@@ -209,9 +253,7 @@ public class MavenFacetImpl
 
     try (TempBlob tempBlob = storageFacet.createTempBlob(payload, HashType.ALGORITHMS)) {
       if (path.getFileName().equals(METADATA_FILENAME) && mavenMetadataValidationEnabled) {
-        
         log.debug("Validating maven-metadata.xml before storing");
-        
         metadataValidator.validate(path.getPath(), tempBlob.get());
       }
       return doPut(path, payload, tempBlob);
@@ -244,8 +286,8 @@ public class MavenFacetImpl
 
   @TransactionalStoreBlob
   protected Content doPut(final MavenPath path,
-      final Payload payload,
-      final TempBlob tempBlob)
+                          final Payload payload,
+                          final TempBlob tempBlob)
       throws IOException
   {
     final StorageTx tx = UnitOfWork.currentTx();
@@ -317,9 +359,9 @@ public class MavenFacetImpl
   }
 
   private Asset putArtifact(final StorageTx tx,
-      final MavenPath path,
-      final AssetBlob assetBlob,
-      @Nullable final AttributesMap contentAttributes)
+                            final MavenPath path,
+                            final AssetBlob assetBlob,
+                            @Nullable final AttributesMap contentAttributes)
       throws IOException
   {
     final Coordinates coordinates = checkNotNull(path.getCoordinates());
@@ -386,8 +428,8 @@ public class MavenFacetImpl
    * Parses model from {@link AssetBlob} and sets {@link Component} attributes.
    */
   private void fillInFromModel(final MavenPath mavenPath,
-      final AssetBlob assetBlob,
-      final NestedAttributesMap componentAttributes) throws IOException
+                               final AssetBlob assetBlob,
+                               final NestedAttributesMap componentAttributes) throws IOException
   {
     Model model = MavenModels.readModel(assetBlob.getBlob().getInputStream());
     if (model == null) {
@@ -427,9 +469,9 @@ public class MavenFacetImpl
   }
 
   private Asset putFile(final StorageTx tx,
-      final MavenPath path,
-      final AssetBlob assetBlob,
-      @Nullable final AttributesMap contentAttributes)
+                        final MavenPath path,
+                        final AssetBlob assetBlob,
+                        @Nullable final AttributesMap contentAttributes)
       throws IOException
   {
     final Bucket bucket = tx.findBucket(getRepository());
@@ -441,16 +483,16 @@ public class MavenFacetImpl
     }
 
     putAssetPayload(tx, asset, assetBlob, contentAttributes);
-
+    
     tx.saveAsset(asset);
 
     return asset;
   }
 
   private void putAssetPayload(final StorageTx tx,
-      final Asset asset,
-      final AssetBlob assetBlob,
-      @Nullable final AttributesMap contentAttributes)
+                               final Asset asset,
+                               final AssetBlob assetBlob,
+                               @Nullable final AttributesMap contentAttributes)
       throws IOException
   {
     tx.attachBlob(asset, assetBlob);
@@ -502,7 +544,7 @@ public class MavenFacetImpl
 
   private String fileAssetKindFor(final MavenPath path) {
     if (getMavenPathParser().isRepositoryMetadata(path)) {
-      return AssetKind.REPOSITORY_METADATA.name();
+      return REPOSITORY_METADATA.name();
     }
     else if (getMavenPathParser().isRepositoryIndex(path)) {
       return AssetKind.REPOSITORY_INDEX.name();

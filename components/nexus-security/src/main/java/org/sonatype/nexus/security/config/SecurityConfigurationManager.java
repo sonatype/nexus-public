@@ -41,13 +41,26 @@ public interface SecurityConfigurationManager
 
   /**
    * Create a new user.
+   *
+   * Note: the underlying implementation may throw an exception if the instance of {@link CUser}
+   * was not obtained by calling {@link #newUser}.
    */
   void createUser(CUser user, Set<String> roles);
 
   /**
    * Create a new user and sets the password.
+   *
+   * Note: the underlying implementation may throw an exception if the instance of {@link CUser}
+   * was not obtained by calling {@link #newUser}.
    */
   void createUser(CUser user, String password, Set<String> roles);
+
+  /**
+   * Create a new instance of {@link CUser} suitable for use with the underlying store
+   *
+   * @since 3.next
+   */
+  CUser newUser();
 
   /**
    * Retrieve an existing user
@@ -57,12 +70,18 @@ public interface SecurityConfigurationManager
   /**
    * Update an existing user. Roles are unchanged
    *
+   * Note: the underlying implementation may throw an exception if the instance of {@link CUser}
+   * was not obtained from this configuration.
+   *
    * @param user to update
    */
   void updateUser(CUser user) throws UserNotFoundException;
 
   /**
    * Update an existing user and their roles
+   *
+   * Note: the underlying implementation may throw an exception if the instance of {@link CUser}
+   * was not obtained from this configuration.
    */
   void updateUser(CUser user, Set<String> roles) throws UserNotFoundException;
 
@@ -84,6 +103,13 @@ public interface SecurityConfigurationManager
    * Create a new role
    */
   void createRole(CRole role);
+
+  /**
+   * Create a new instance of {@link CRole} suitable for use with the underlying store
+   *
+   * @since 3.next
+   */
+  CRole newRole();
 
   /**
    * Retrieve an existing role
@@ -137,6 +163,13 @@ public interface SecurityConfigurationManager
 
   void createUserRoleMapping(CUserRoleMapping userRoleMapping);
 
+  /**
+   * Create a new instance of {@link CUserRoleMapping} suitable for use with the underlying store
+   *
+   * @since 3.next
+   */
+  CUserRoleMapping newUserRoleMapping();
+
   void updateUserRoleMapping(CUserRoleMapping userRoleMapping) throws NoSuchRoleMappingException;
 
   CUserRoleMapping readUserRoleMapping(String userId, String source) throws NoSuchRoleMappingException;
@@ -144,5 +177,4 @@ public interface SecurityConfigurationManager
   List<CUserRoleMapping> listUserRoleMappings();
 
   void deleteUserRoleMapping(String userId, String source) throws NoSuchRoleMappingException;
-
 }

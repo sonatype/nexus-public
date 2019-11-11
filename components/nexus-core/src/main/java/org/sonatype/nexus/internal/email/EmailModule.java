@@ -14,6 +14,8 @@ package org.sonatype.nexus.internal.email;
 
 import javax.inject.Named;
 
+import org.sonatype.nexus.internal.email.orient.OrientEmailConfigurationStore;
+
 import com.google.inject.AbstractModule;
 
 /**

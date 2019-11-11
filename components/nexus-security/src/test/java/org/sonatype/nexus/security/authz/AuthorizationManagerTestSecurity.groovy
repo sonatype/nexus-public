@@ -13,10 +13,10 @@
 package org.sonatype.nexus.security.authz
 
 import org.sonatype.nexus.security.config.CPrivilege
-import org.sonatype.nexus.security.config.CRole
-import org.sonatype.nexus.security.config.CUser
-import org.sonatype.nexus.security.config.CUserRoleMapping
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration
+import org.sonatype.nexus.security.config.memory.MemoryCRole
+import org.sonatype.nexus.security.config.memory.MemoryCUser
+import org.sonatype.nexus.security.config.memory.MemoryCUserRoleMapping
 
 /**
  * @since 3.0
@@ -26,21 +26,21 @@ class AuthorizationManagerTestSecurity
   static MemorySecurityConfiguration securityModel() {
     return new MemorySecurityConfiguration(
         users: [
-            new CUser(
+            new MemoryCUser(
                 id: 'admin',
                 password: 'f865b53623b121fd34ee5426c792e5c33af8c227',
                 firstName: 'Administrator',
                 status: 'active',
                 email: 'admin@example.org'
             ),
-            new CUser(
+            new MemoryCUser(
                 id: 'test-user',
                 password: 'b2a0e378437817cebdf753d7dff3dd75483af9e0',
                 firstName: 'Test User',
                 status: 'active',
                 email: 'test-user@example.org'
             ),
-            new CUser(
+            new MemoryCUser(
                 id: 'anonymous',
                 password: '0a92fab3230134cca6eadd9898325b9b2ae67998',
                 firstName: 'Anonynmous User',
@@ -49,22 +49,22 @@ class AuthorizationManagerTestSecurity
             )
         ],
         userRoleMappings: [
-            new CUserRoleMapping(
+            new MemoryCUserRoleMapping(
                 userId: 'other-user',
                 source: 'default',
                 roles: ['role2', 'role3']
             ),
-            new CUserRoleMapping(
+            new MemoryCUserRoleMapping(
                 userId: 'admin',
                 source: 'default',
                 roles: ['role1']
             ),
-            new CUserRoleMapping(
+            new MemoryCUserRoleMapping(
                 userId: 'test-user',
                 source: 'default',
                 roles: ['role1', 'role2']
             ),
-            new CUserRoleMapping(
+            new MemoryCUserRoleMapping(
                 userId: 'anonymous',
                 source: 'default',
                 roles: ['role2']
@@ -112,21 +112,21 @@ class AuthorizationManagerTestSecurity
                 ])
         ],
         roles: [
-            new CRole(
+            new MemoryCRole(
                 id: 'role1',
                 name: 'RoleOne',
                 description: 'Role One',
                 privileges: ['1', '2']
             )
             ,
-            new CRole(
+            new MemoryCRole(
                 id: 'role2',
                 name: 'RoleTwo',
                 description: 'Role Two',
                 privileges: ['3', '4']
             )
             ,
-            new CRole(
+            new MemoryCRole(
                 id: 'role3',
                 name: 'RoleThree',
                 description: 'Role Three',

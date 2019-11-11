@@ -66,9 +66,7 @@ import org.sonatype.nexus.scheduling.schedule.Schedule;
 import org.sonatype.nexus.scheduling.schedule.ScheduleFactory;
 import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
 
-import com.codahale.metrics.annotation.Gauge;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.Subscribe;
 import org.quartz.JobBuilder;
@@ -89,8 +87,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Maps.filterKeys;
 import static java.util.Collections.emptyMap;
-import static java.util.stream.Collectors.counting;
-import static java.util.stream.Collectors.groupingBy;
 import static org.quartz.TriggerBuilder.newTrigger;
 import static org.quartz.TriggerKey.triggerKey;
 import static org.quartz.impl.matchers.GroupMatcher.jobGroupEquals;
@@ -748,19 +744,6 @@ public class QuartzSchedulerSPI
       }
     }
     return nexusJobs;
-  }
-
-  /**
-   * @since 3.next
-   */
-  @Gauge(name = "nexus.analytics.tasks", absolute = true)
-  public List<Map<String, Object>> countTasksByTypeId() throws SchedulerException {
-    return listsTasks().stream()
-        .collect(groupingBy(TaskInfo::getTypeId, counting()))
-        .entrySet()
-        .stream()
-        .map(e -> ImmutableMap.<String, Object>of("name", e.getKey(), "instance_count", e.getValue()))
-        .collect(Collectors.toList());
   }
 
   /**

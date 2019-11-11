@@ -15,11 +15,13 @@ package org.sonatype.nexus.repository.maven.internal.hosted.metadata;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
@@ -27,6 +29,7 @@ import org.sonatype.nexus.repository.maven.internal.Constants;
 import org.sonatype.nexus.repository.maven.internal.MavenFacetUtils;
 import org.sonatype.nexus.repository.maven.internal.MavenMimeRulesSource;
 import org.sonatype.nexus.repository.maven.internal.MavenModels;
+import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.payloads.BytesPayload;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
@@ -38,6 +41,9 @@ import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.lang.Boolean.TRUE;
+import static java.util.Objects.requireNonNull;
+import static org.sonatype.nexus.repository.cache.CacheInfo.extractFromAsset;
 
 /**
  * Utility class containing shared methods for Maven metadata.
@@ -48,6 +54,8 @@ public final class MetadataUtils
 {
   private static Logger log = LoggerFactory.getLogger(MetadataUtils.class);
 
+  private static final String METADATA_REBUILD_KEY = "forceRebuild";
+
   private MetadataUtils() {
   }
 
@@ -55,8 +63,8 @@ public final class MetadataUtils
    * Builds a Maven path for the specified metadata.
    */
   public static MavenPath metadataPath(final String groupId,
-      @Nullable final String artifactId,
-      @Nullable final String baseVersion)
+                                       @Nullable final String artifactId,
+                                       @Nullable final String baseVersion)
   {
     final StringBuilder sb = new StringBuilder();
     sb.append(groupId.replace('.', '/'));
@@ -129,5 +137,30 @@ public final class MetadataUtils
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public static void addRebuildFlag(final Asset metadataAsset) {
+    metadataAsset.formatAttributes().set(METADATA_REBUILD_KEY, true);
+  }
+
+  public static void removeRebuildFlag(final Asset metadataAsset) {
+    metadataAsset.formatAttributes().remove(METADATA_REBUILD_KEY);
+  }
+
+  /**
+   * Checks whether or not the maven metadata should be rebuilt via its associated {@link Asset}
+   *
+   * Metadata should be rebuilt if either it has been manually marked via {@link MetadataUtils#addRebuildFlag} or
+   * if it has been invalidated via it's {@link CacheInfo}.
+   */
+  public static boolean requiresRebuild(final Asset metadataAsset) {
+    requireNonNull(metadataAsset);
+
+    if (TRUE.equals(metadataAsset.formatAttributes().get(METADATA_REBUILD_KEY, false))) {
+      return true;
+    }
+
+    CacheInfo cacheInfo = extractFromAsset(metadataAsset);
+    return cacheInfo != null && cacheInfo.isInvalidated();
   }
 }

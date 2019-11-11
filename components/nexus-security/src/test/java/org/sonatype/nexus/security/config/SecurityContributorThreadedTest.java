@@ -49,7 +49,7 @@ public class SecurityContributorThreadedTest
   }
 
   @Override
-  protected void customizeModules(List<Module> modules) {
+  protected void customizeModules(final List<Module> modules) {
     super.customizeModules(modules);
     modules.add(new AbstractModule()
     {
@@ -69,11 +69,11 @@ public class SecurityContributorThreadedTest
         }
       }
 
-      private void bindStaticContributor(String name, SecurityContributor instance) {
+      private void bindStaticContributor(final String name, final SecurityContributor instance) {
         bind(SecurityContributor.class).annotatedWith(Names.named(name)).toInstance(instance);
       }
 
-      private void bindDynamicContributor(String name, MutableTestSecurityContributor instance) {
+      private void bindDynamicContributor(final String name, final MutableTestSecurityContributor instance) {
         bind(MutableTestSecurityContributor.class).annotatedWith(Names.named(name)).toInstance(instance);
         bind(SecurityContributor.class).annotatedWith(Names.named(name)).toInstance(instance);
       }

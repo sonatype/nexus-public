@@ -27,4 +27,10 @@ public interface EmailConfigurationStore
   EmailConfiguration load();
 
   void save(EmailConfiguration configuration);
+
+  /**
+   * Create a new and empty {@link EmailConfiguration}
+   * @since 3.next
+   */
+  EmailConfiguration newConfiguration();
 }

@@ -16,7 +16,14 @@
   <New id="httpsConfig" class="org.eclipse.jetty.server.HttpConfiguration">
     <Arg><Ref refid="httpConfig"/></Arg>
     <Call name="addCustomizer">
-      <Arg><New class="org.eclipse.jetty.server.SecureRequestCustomizer"/></Arg>
+      <Arg>
+        <New id="secureRequestCustomizer" class="org.eclipse.jetty.server.SecureRequestCustomizer">
+          <!-- 7776000 seconds = 90 days -->
+          <Set name="stsMaxAge"><Property name="jetty.https.stsMaxAge" default="7776000"/></Set>
+          <Set name="stsIncludeSubDomains"><Property name="jetty.https.stsIncludeSubDomains" default="false"/></Set>
+          <Set name="sniHostCheck"><Property name="jetty.https.sniHostCheck" default="false"/></Set>
+        </New>
+      </Arg>
     </Call>
   </New>
 

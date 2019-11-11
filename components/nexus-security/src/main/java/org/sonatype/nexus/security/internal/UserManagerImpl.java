@@ -87,7 +87,7 @@ public class UserManagerImpl
       return null;
     }
 
-    CUser secUser = new CUser();
+    CUser secUser = configuration.newUser();
 
     secUser.setId(user.getUserId());
     secUser.setVersion(user.getVersion());
@@ -324,7 +324,7 @@ public class UserManagerImpl
         eventManager.post(new UserRoleMappingUpdatedEvent(userId, userSource, roleMapping.getRoles()));
       }
       catch (NoSuchRoleMappingException e) { // NOSONAR
-        CUserRoleMapping roleMapping = new CUserRoleMapping();
+        CUserRoleMapping roleMapping = configuration.newUserRoleMapping();
         roleMapping.setUserId(userId);
         roleMapping.setSource(userSource);
 

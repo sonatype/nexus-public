@@ -42,9 +42,9 @@ import static org.mockito.Mockito.when
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx
 
 /**
- * Tests {@link ApiKeyStoreImpl}
+ * Tests {@link OrientApiKeyStore}
  */
-class ApiKeyStoreImplTest
+class OrientApiKeyStoreTest
     extends TestSupport
 {
   private static final String PRINCIPAL_A_NAME = 'name-a'
@@ -68,14 +68,14 @@ class ApiKeyStoreImplTest
 
   private AtomicBoolean cancelled = new AtomicBoolean(!CANCELLED)
 
-  private ApiKeyStoreImpl underTest
+  private OrientApiKeyStore underTest
 
   @Before
   void setup() {
     CancelableHelper.set(cancelled)
-    underTest = new ApiKeyStoreImpl(
+    underTest = new OrientApiKeyStore(
         database.instanceProvider,
-        new ApiKeyEntityAdapter(ClassLoader.getSystemClassLoader()),
+        new OrientApiKeyEntityAdapter(ClassLoader.getSystemClassLoader()),
         principalsHelper,
         Maps.newHashMap(),
         new DefaultApiKeyFactory(new RandomBytesGeneratorImpl(new CryptoHelperImpl()))

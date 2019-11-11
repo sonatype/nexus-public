@@ -14,123 +14,28 @@ package org.sonatype.nexus.internal.capability.storage;
 
 import java.util.Map;
 
-import org.sonatype.nexus.capability.CapabilityIdentity;
-import org.sonatype.nexus.common.entity.AbstractEntity;
-import org.sonatype.nexus.common.entity.EntityId;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-
-// TODO: Rename CapabilityStorageItem -> StorageItem?
-
-public class CapabilityStorageItem
-    extends AbstractEntity
+/**
+ * @since 2.8
+ */
+public interface CapabilityStorageItem
 {
-  private int version;
+  int getVersion();
 
-  private String type;
+  void setVersion(int version);
 
-  private boolean enabled;
+  String getType();
 
-  private String notes;
+  void setType(String type);
 
-  private Map<String, String> properties;
+  boolean isEnabled();
 
-  /**
-   * @since 2.8
-   */
-  public CapabilityStorageItem() {
-  }
+  void setEnabled(boolean enabled);
 
-  public CapabilityStorageItem(final int version,
-                               final String type,
-                               final boolean enabled,
-                               final String notes,
-                               final Map<String, String> properties)
-  {
-    this.version = version;
-    this.type = checkNotNull(type);
-    this.enabled = enabled;
-    this.notes = notes;
-    this.properties = properties;
-  }
+  String getNotes();
 
-  /**
-   * @since 2.8
-   */
-  public int getVersion() {
-    return version;
-  }
+  void setNotes(final String notes);
 
-  /**
-   * @since 2.8
-   */
-  public void setVersion(final int version) {
-    this.version = version;
-  }
+  Map<String, String> getProperties();
 
-  /**
-   * @since 2.8
-   */
-  public String getType() {
-    return type;
-  }
-
-  /**
-   * @since 2.8
-   */
-  public void setType(final String type) {
-    this.type = type;
-  }
-
-  /**
-   * @since 2.8
-   */
-  public boolean isEnabled() {
-    return enabled;
-  }
-
-  /**
-   * @since 2.8
-   */
-  public void setEnabled(final boolean enabled) {
-    this.enabled = enabled;
-  }
-
-  /**
-   * @since 2.8
-   */
-  public String getNotes() {
-    return notes;
-  }
-
-  /**
-   * @since 2.8
-   */
-  public void setNotes(final String notes) {
-    this.notes = notes;
-  }
-
-  /**
-   * @since 2.8
-   */
-  public Map<String, String> getProperties() {
-    return properties;
-  }
-
-  /**
-   * @since 2.8
-   */
-  public void setProperties(final Map<String, String> properties) {
-    this.properties = properties;
-  }
-
-  /**
-   * Returns the {@link CapabilityIdentity} for the persisted {@link EntityId}.
-   *
-   * @since 3.1
-   */
-  static CapabilityIdentity identity(EntityId entityId) {
-    return new CapabilityIdentity(entityId.getValue());
-  }
-
+  void setProperties(final Map<String, String> properties);
 }

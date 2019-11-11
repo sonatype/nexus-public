@@ -27,31 +27,99 @@ import org.sonatype.nexus.security.user.UserNotFoundException;
  */
 public interface SecurityConfiguration
 {
+  /**
+   * Get all {@link CUser}s known to this configuration.
+   */
   List<CUser> getUsers();
 
+  /**
+   * Get an existing {@link CUser} by its ID.
+   *
+   * @return the user, or null
+   */
   @Nullable
   CUser getUser(String id);
 
+  /**
+   * Obtain an instance of {@link CUser} suitable for use with the underlying storage.
+   */
+  CUser newUser();
+
+  /**
+   * Add a new {@link CUser} to the configuration.
+   *
+   * Note: the underlying implementation may throw an exception if the instance of {@link CUser}
+   * was not obtained by calling {@link #newUser}.
+   */
   void addUser(CUser user, Set<String> roles);
 
   /**
+   * Update an existing {@link CUser} without modifying its assigned roles.
+   *
+   * Note: the underlying implementation may throw an exception if the instance of {@link CUser}
+   * was not obtained from this configuration.
+   *
    * @since 3.11
    */
   void updateUser(CUser user) throws UserNotFoundException;
 
+  /**
+   * Update an existing {@link CUser} and its assigned roles.
+   *
+   * Note: the underlying implementation may throw an exception if the instance of {@link CUser}
+   * was not obtained from this configuration.
+   */
   void updateUser(CUser user, Set<String> roles) throws UserNotFoundException;
 
+  /**
+   * Remove an existing {@link CUser} by its ID.
+   *
+   * @return true if a user was removed, false otherwise
+   */
   boolean removeUser(String id);
 
+  /**
+   * Get all {@link CUserRoleMapping} instances known to this configuration.
+   */
   List<CUserRoleMapping> getUserRoleMappings();
 
+  /**
+   * Get an existing {@link CUserRoleMapping} by the userId and its user source.
+   *
+   * @param userId the userId
+   * @param source the user source (e.g. default, LDAP or Crowd)
+   */
   @Nullable
   CUserRoleMapping getUserRoleMapping(String userId, String source);
 
+  /**
+   * Obtain an instance of {@link CUserRoleMapping} suitable for use with the underlying storage.
+   *
+   * @since 3.next
+   */
+  CUserRoleMapping newUserRoleMapping();
+
+  /**
+   * Add a new {@link CUserRoleMapping} to the configuration.
+   *
+   * Note: the underlying implementation may throw an exception if the instance of {@link CUserRoleMapping}
+   * was not obtained by calling {@link #newUserRoleMapping()}.
+   */
   void addUserRoleMapping(CUserRoleMapping mapping);
 
+  /**
+   * Update an existing {@link CUserRoleMapping} in the configuration.
+   *
+   * Note: the underlying implementation may throw an exception if the instance of {@link CUserRoleMapping}
+   * was not obtained from this configuration.
+   */
   void updateUserRoleMapping(CUserRoleMapping mapping) throws NoSuchRoleMappingException;
 
+  /**
+   * Remove an existing {@link CUserRoleMapping} by its ID.
+   *
+   * @return true if a user role mapping was removed, false otherwise
+   */
   boolean removeUserRoleMapping(String userId, String source);
 
   List<CPrivilege> getPrivileges();
@@ -65,14 +133,52 @@ public interface SecurityConfiguration
 
   boolean removePrivilege(String id);
 
+  /**
+   * Get the list of {@link CRole}s known to this configuration.
+   */
   List<CRole> getRoles();
 
+  /**
+   * Get an existing {@link CRole} from the configuration by its ID.
+   */
   @Nullable
   CRole getRole(String id);
 
+  /**
+   * Obtain an instance of {@link CRole} suitable for use with the underlying storage.
+   *
+   * @since 3.next
+   */
+  CRole newRole();
+
+  /**
+   *
+   * @since 3.next
+   */
+  default CRoleBuilder newRoleBuilder() {
+    return new CRoleBuilder(newRole());
+  }
+
+  /**
+   * Add a new {@link CRole} to the configuration.
+   *
+   * Note: the underlying implementation may throw an exception if the instance of {@link CRole}
+   * was not obtained by calling {@link #newRole}.
+   */
   void addRole(CRole role);
 
+  /**
+   * Update an existing {@link CRole} in the configuration.
+   *
+   * Note: the underlying implementation may throw an exception if the instance of {@link CRole}
+   * was not obtained from this configuration.
+   */
   void updateRole(CRole role);
 
+  /**
+   * Remove an existing role by its ID.
+   *
+   * @return true if a role was removed, false otherwise
+   */
   boolean removeRole(String id);
 }

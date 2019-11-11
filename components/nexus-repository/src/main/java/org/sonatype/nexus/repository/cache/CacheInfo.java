@@ -40,24 +40,25 @@ public class CacheInfo
    * @see CacheInfo
    */
   @VisibleForTesting
-  static final String CACHE = "cache";
+  public static final String CACHE = "cache";
 
   /**
    * Cache token {@link String}.
    */
   @VisibleForTesting
-  static final String CACHE_TOKEN = "cache_token";
+  public static final String CACHE_TOKEN = "cache_token";
 
   /**
    * Last verified {@link Date}.
    */
   @VisibleForTesting
-  static final String LAST_VERIFIED = "last_verified";
+  public static final String LAST_VERIFIED = "last_verified";
 
   /**
    * Cache token used to mark individually invalidated assets.
    */
-  static final String INVALIDATED = "invalidated";
+  @VisibleForTesting
+  public static final String INVALIDATED = "invalidated";
 
   private final DateTime lastVerified;
 

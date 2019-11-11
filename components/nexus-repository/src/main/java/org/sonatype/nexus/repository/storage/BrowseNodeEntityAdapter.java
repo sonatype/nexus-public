@@ -74,6 +74,8 @@ public class BrowseNodeEntityAdapter
 
   private static final String BASE_PATH = "base_path";
 
+  private static final String LIMIT = "limit";
+
   private static final String I_REPOSITORY_NAME_PARENT_PATH_NAME = new OIndexNameBuilder()
       .type(DB_CLASS)
       .property(P_REPOSITORY_NAME)
@@ -95,13 +97,13 @@ public class BrowseNodeEntityAdapter
       "select expand(rid) from index:%s where key=[:%s,:%s,:%s] limit 1",
       I_REPOSITORY_NAME_PARENT_PATH_NAME, P_REPOSITORY_NAME, P_PARENT_PATH, P_NAME);
 
-  private static final String COUNT_CHILDREN = String.format(
-      "select count(*) from %s where (%s=:%s and %s=:%s)",
-      DB_CLASS, P_REPOSITORY_NAME, P_REPOSITORY_NAME, P_PARENT_PATH, BASE_PATH);
-
   private static final String FIND_CHILDREN = String.format(
       "select from %s where (%s=:%s and %s=:%s)",
       DB_CLASS, P_REPOSITORY_NAME, P_REPOSITORY_NAME, P_PARENT_PATH, BASE_PATH);
+
+  private static final String CHILD_COUNT = String.format(
+      "select rid from `index:%s` where key=[:%s, :%s] limit :%s",
+      I_REPOSITORY_NAME_PARENT_PATH_NAME, P_REPOSITORY_NAME, BASE_PATH, LIMIT);
 
   private static final String FIND_BY_COMPONENT = String.format(
       "select from %s where %s=:%s",
@@ -405,10 +407,7 @@ public class BrowseNodeEntityAdapter
 
     children.forEach(child -> {
       // STEP 2: check if the child has any children of its own, if not, it's a leaf
-      List<ODocument> result = db.command(new OCommandSQL(COUNT_CHILDREN)).execute(
-          ImmutableMap.of(P_REPOSITORY_NAME, repositoryName, BASE_PATH, child.getParentPath() + child.getName() + "/"));
-
-      if ((long) result.get(0).field("count") == 0) {
+      if (childCountEqualTo(db, repositoryName, child.getParentPath() + child.getName() + "/", 0)) {
         child.setLeaf(true);
       }
     });
@@ -420,20 +419,15 @@ public class BrowseNodeEntityAdapter
    * remove any parent nodes that only contain 1 child, and if not an asset/component node of course
    */
   private void maybeDeleteParents(final ODatabaseDocumentTx db, final String repositoryName, final String parentPath) {
-    if (!"/".equals(parentPath)) {
-      List<ODocument> result = db.command(new OCommandSQL(COUNT_CHILDREN))
-          .execute(ImmutableMap.of(P_REPOSITORY_NAME, repositoryName, BASE_PATH, parentPath));
+    //count of 1 meaning the node we are currently deleting
+    if (!"/".equals(parentPath) && childCountEqualTo(db, repositoryName, parentPath, 1)) {
+      ODocument parent = getFirst(db.command(new OCommandSQL(FIND_BY_PARENT_PATH)).execute(ImmutableMap
+          .of(P_REPOSITORY_NAME, repositoryName, P_PARENT_PATH, previousParentPath(parentPath), P_NAME,
+              previousParentName(parentPath))), null);
 
-      //count of 1 meaning the node we are currently deleting
-      if ((long) result.get(0).field("count") == 1) {
-        ODocument parent = getFirst(db.command(new OCommandSQL(FIND_BY_PARENT_PATH)).execute(ImmutableMap
-            .of(P_REPOSITORY_NAME, repositoryName, P_PARENT_PATH, previousParentPath(parentPath), P_NAME,
-                previousParentName(parentPath))), null);
-
-        if (parent != null && parent.field(P_COMPONENT_ID) == null && parent.field(P_ASSET_ID) == null) {
-          maybeDeleteParents(db, repositoryName, parent.field(P_PARENT_PATH));
-          parent.delete();
-        }
+      if (parent != null && parent.field(P_COMPONENT_ID) == null && parent.field(P_ASSET_ID) == null) {
+        maybeDeleteParents(db, repositoryName, parent.field(P_PARENT_PATH));
+        parent.delete();
       }
     }
   }
@@ -494,5 +488,13 @@ public class BrowseNodeEntityAdapter
   @Override
   public boolean resolveConflicts() {
     return true;
+  }
+
+  private boolean childCountEqualTo(final ODatabaseDocumentTx db,
+                                    final String repositoryName, final String basePath, final long expected)
+  {
+    List<ODocument> docs = db.command(new OCommandSQL(CHILD_COUNT)).execute(
+        ImmutableMap.of(P_REPOSITORY_NAME, repositoryName, BASE_PATH, basePath, LIMIT, expected + 1));
+    return docs.size() == expected;
   }
 }

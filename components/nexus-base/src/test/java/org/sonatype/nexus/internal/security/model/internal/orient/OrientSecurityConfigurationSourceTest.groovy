@@ -10,19 +10,18 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.security.model
+package org.sonatype.nexus.internal.security.model.internal.orient
 
+import org.sonatype.nexus.internal.security.model.CPrivilegeEntityAdapter
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule
 import org.sonatype.nexus.security.config.AdminPasswordFileManager
 import org.sonatype.nexus.security.config.CPrivilege
-import org.sonatype.nexus.security.config.CRole
-import org.sonatype.nexus.security.config.CUser
-import org.sonatype.nexus.security.config.CUserRoleMapping
 import org.sonatype.nexus.security.config.StaticSecurityConfigurationSource
 import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException
 import org.sonatype.nexus.security.role.NoSuchRoleException
 import org.sonatype.nexus.security.user.NoSuchRoleMappingException
 import org.sonatype.nexus.security.user.UserNotFoundException
+
 import org.apache.shiro.authc.credential.PasswordService
 import org.junit.Rule
 import spock.lang.Specification
@@ -49,10 +48,10 @@ class OrientSecurityConfigurationSourceTest
     source = new OrientSecurityConfigurationSource(
         database.instanceProvider,
         new StaticSecurityConfigurationSource(passwordService, adminPasswordFileManager, false),
-        new CUserEntityAdapter(),
-        new CRoleEntityAdapter(),
+        new OrientCUserEntityAdapter(),
+        new OrientCRoleEntityAdapter(),
         new CPrivilegeEntityAdapter(),
-        new CUserRoleMappingEntityAdapter()
+        new OrientCUserRoleMappingEntityAdapter()
     )
     source.start()
     source.loadConfiguration()
@@ -61,7 +60,7 @@ class OrientSecurityConfigurationSourceTest
   def 'updateUser should persist user'() {
     given:
       def admin = source.configuration.getUser('admin')
-      def newUser = new CUser(id: 'new')
+      def newUser = new OrientCUser(id: 'new')
 
     when: 'updateUser is called'
       admin.firstName = 'foo'
@@ -99,9 +98,9 @@ class OrientSecurityConfigurationSourceTest
 
   def 'updateRole should persist role and prevent concurrent modification'() {
     given:
-      source.configuration.addRole(new CRole(id: 'test', name: 'test'))
+      source.configuration.addRole(new OrientCRole(id: 'test', name: 'test'))
       def role = source.configuration.getRole('test')
-      def newRole = new CRole(id: 'new', name: 'new')
+      def newRole = new OrientCRole(id: 'new', name: 'new')
 
     when: 'updateRole is called'
       role.name = 'foo'
@@ -129,7 +128,7 @@ class OrientSecurityConfigurationSourceTest
     given:
       def adminMapping = source.configuration.getUserRoleMapping('admin', 'default')
       assert adminMapping.roles == ['nx-admin'] as Set
-      def newUserRoleMapping = new CUserRoleMapping(userId: 'badid', source: 'badsource', roles: [] as Set)
+      def newUserRoleMapping = new OrientCUserRoleMapping(userId: 'badid', source: 'badsource', roles: [] as Set)
 
     when: 'updateUserRoleMapping is called'
       adminMapping.roles = [] as Set
@@ -158,7 +157,7 @@ class OrientSecurityConfigurationSourceTest
       def roles = ['test-role'] as Set
       def userId = 'userid'
       def src = 'other'
-      def newUserRoleMapping = new CUserRoleMapping(userId: userId, source: src, roles: roles)
+      def newUserRoleMapping = new OrientCUserRoleMapping(userId: userId, source: src, roles: roles)
       source.configuration.addUserRoleMapping(newUserRoleMapping)
 
     when: 'a users roles are retrieved with different user id casing'
@@ -188,7 +187,7 @@ class OrientSecurityConfigurationSourceTest
     given: 'an existing user role mapping'
       def roles = ['test-role'] as Set
       def userId = 'userid'
-      def newUserRoleMapping = new CUserRoleMapping(userId: userId, source: src, roles: roles)
+      def newUserRoleMapping = new OrientCUserRoleMapping(userId: userId, source: src, roles: roles)
       source.configuration.addUserRoleMapping(newUserRoleMapping)
 
     when: 'a users roles are retrieved with different user id casing'

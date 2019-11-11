@@ -122,12 +122,24 @@ public class MetadataRebuilder
     final StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get();
     UnitOfWork.beginBatch(tx);
     try {
-      return new Worker(repository, update, rebuildChecksums, groupId, artifactId, baseVersion, bufferSize, timeoutSeconds)
-          .rebuildMetadata();
+      return rebuildInTransaction(repository, update, rebuildChecksums, groupId, artifactId, baseVersion);
     }
     finally {
       UnitOfWork.end();
     }
+  }
+
+  @Transactional
+  public boolean rebuildInTransaction(final Repository repository,
+                                      final boolean update,
+                                      final boolean rebuildChecksums,
+                                      @Nullable final String groupId,
+                                      @Nullable final String artifactId,
+                                      @Nullable final String baseVersion)
+  {
+    checkNotNull(repository);
+    return new Worker(repository, update, rebuildChecksums, groupId, artifactId, baseVersion, bufferSize, timeoutSeconds)
+        .rebuildMetadata();
   }
 
   /**

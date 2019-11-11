@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.security.model;
+package org.sonatype.nexus.internal.security.model.internal.orient;
 
 import java.util.Set;
 
@@ -18,7 +18,6 @@ import javax.annotation.Nullable;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
@@ -34,18 +33,17 @@ import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import static org.sonatype.nexus.security.config.CUserRoleMapping.isCaseInsensitiveSource;
+import static org.sonatype.nexus.security.config.SecuritySourceUtil.isCaseInsensitiveSource;
 
 /**
  * {@link CUserRoleMapping} entity adapter.
  *
  * @since 3.0
  */
-@FeatureFlag(name = "nexus.orient.store.config")
 @Named
 @Singleton
-public class CUserRoleMappingEntityAdapter
-    extends IterableEntityAdapter<CUserRoleMapping>
+public class OrientCUserRoleMappingEntityAdapter
+    extends IterableEntityAdapter<OrientCUserRoleMapping>
 {
   private static final String DB_CLASS = new OClassNameBuilder()
       .type("user_role_mapping")
@@ -65,24 +63,24 @@ public class CUserRoleMappingEntityAdapter
       .property(P_SOURCE)
       .build();
 
-  private final ReadEntityByPropertyAction<CUserRoleMapping> read = new ReadEntityByPropertyAction<>(this, P_USER_ID,
-      P_SOURCE);
+  private final ReadEntityByPropertyAction<OrientCUserRoleMapping> read =
+      new ReadEntityByPropertyAction<>(this, P_USER_ID, P_SOURCE);
 
-  private final ReadEntityByPropertyAction<CUserRoleMapping> readIgnoreCase = new ReadEntityByPropertyAction<>(
-      this, P_USER_ID_LOWERCASE, P_SOURCE);
+  private final ReadEntityByPropertyAction<OrientCUserRoleMapping> readIgnoreCase =
+      new ReadEntityByPropertyAction<>(this, P_USER_ID_LOWERCASE, P_SOURCE);
 
   private final DeleteEntityByPropertyAction delete = new DeleteEntityByPropertyAction(this, P_USER_ID, P_SOURCE);
 
-  private final DeleteEntityByPropertyAction deleteIgnoreCase = new DeleteEntityByPropertyAction(this,
-      P_USER_ID_LOWERCASE, P_SOURCE);
+  private final DeleteEntityByPropertyAction deleteIgnoreCase =
+      new DeleteEntityByPropertyAction(this, P_USER_ID_LOWERCASE, P_SOURCE);
 
-  private final UpdateEntityByPropertyAction<CUserRoleMapping> update = new UpdateEntityByPropertyAction<>(this,
-      P_USER_ID, P_SOURCE);
+  private final UpdateEntityByPropertyAction<OrientCUserRoleMapping> update =
+      new UpdateEntityByPropertyAction<>(this, P_USER_ID, P_SOURCE);
 
-  private final UpdateEntityByPropertyAction<CUserRoleMapping> updateIgnoreCase = new UpdateEntityByPropertyAction<>(
-      this, P_USER_ID_LOWERCASE, P_SOURCE);
+  private final UpdateEntityByPropertyAction<OrientCUserRoleMapping> updateIgnoreCase =
+      new UpdateEntityByPropertyAction<>(this, P_USER_ID_LOWERCASE, P_SOURCE);
 
-  public CUserRoleMappingEntityAdapter() {
+  public OrientCUserRoleMappingEntityAdapter() {
     super(DB_CLASS);
   }
 
@@ -98,12 +96,12 @@ public class CUserRoleMappingEntityAdapter
   }
 
   @Override
-  protected CUserRoleMapping newEntity() {
-    return new CUserRoleMapping();
+  protected OrientCUserRoleMapping newEntity() {
+    return new OrientCUserRoleMapping();
   }
 
   @Override
-  protected void readFields(final ODocument document, final CUserRoleMapping entity) throws Exception {
+  protected void readFields(final ODocument document, final OrientCUserRoleMapping entity) throws Exception {
     entity.setUserId(document.<String>field(P_USER_ID, OType.STRING));
     entity.setSource(document.<String>field(P_SOURCE, OType.STRING));
     entity.setRoles(Sets.newHashSet(document.<Set<String>>field(P_ROLES, OType.EMBEDDEDSET)));
@@ -112,14 +110,14 @@ public class CUserRoleMappingEntityAdapter
   }
 
   @Override
-  protected void writeFields(final ODocument document, final CUserRoleMapping entity) throws Exception {
+  protected void writeFields(final ODocument document, final OrientCUserRoleMapping entity) throws Exception {
     document.field(P_USER_ID, entity.getUserId());
     document.field(P_SOURCE, entity.getSource());
     document.field(P_ROLES, entity.getRoles());
   }
 
   @Nullable
-  public CUserRoleMapping read(final ODatabaseDocumentTx db, final String userId, final String source) {
+  public OrientCUserRoleMapping read(final ODatabaseDocumentTx db, final String userId, final String source) {
     return isCaseInsensitiveSource(source) ?
         readIgnoreCase.execute(db, userId.toLowerCase(), source) :
         read.execute(db, userId, source);
@@ -134,7 +132,7 @@ public class CUserRoleMappingEntityAdapter
   /**
    * @since 3.6.1
    */
-  public boolean update(final ODatabaseDocumentTx db, final CUserRoleMapping entity) {
+  public boolean update(final ODatabaseDocumentTx db, final OrientCUserRoleMapping entity) {
     return isCaseInsensitiveSource(entity.getSource()) ?
         updateIgnoreCase.execute(db, entity, entity.getUserId().toLowerCase(), entity.getSource()) :
         update.execute(db, entity, entity.getUserId(), entity.getSource());

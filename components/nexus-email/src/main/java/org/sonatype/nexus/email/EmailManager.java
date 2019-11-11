@@ -41,4 +41,10 @@ public interface EmailManager
    * Send verification email to given address.
    */
   void sendVerification(EmailConfiguration configuration, String address) throws EmailException;
+
+  /**
+   * Create a new and empty {@link EmailConfiguration}
+   * @since 3.next
+   */
+  EmailConfiguration newConfiguration();
 }

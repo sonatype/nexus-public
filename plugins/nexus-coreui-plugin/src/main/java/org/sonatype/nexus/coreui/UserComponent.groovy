@@ -182,7 +182,7 @@ class UserComponent
   UserXO update(@NotNull @Valid final UserXO userXO) {
     convert(securitySystem.updateUser(new User(
         userId: userXO.userId,
-        version: userXO.version,
+        version: Integer.valueOf(userXO.version),
         source: DEFAULT_SOURCE,
         firstName: userXO.firstName,
         lastName: userXO.lastName,

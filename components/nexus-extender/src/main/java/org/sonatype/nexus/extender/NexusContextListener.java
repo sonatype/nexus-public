@@ -452,12 +452,21 @@ public class NexusContextListener
    */
   private void prepareNexusProperties() {
     // Disable OrientDB-based stores when OrientDB is disabled.
-    String orientStoreEnabledKey = "nexus.orient.store.config";
-    Boolean orientEnabled = getBooleanProperty("nexus.orient.enabled", Boolean.TRUE);
-    Boolean orientStoresEnabled = orientEnabled && getBooleanProperty(orientStoreEnabledKey, Boolean.TRUE);
+    String orientEnabledKey = "nexus.orient.enabled";
+    adjustDependentProperty(orientEnabledKey, "nexus.orient.store.config");
+    adjustDependentProperty(orientEnabledKey, "nexus.orient.store.content");
+  }
 
-    nexusProperties.put(orientStoreEnabledKey, orientStoresEnabled);
-    System.setProperty(orientStoreEnabledKey, orientStoresEnabled.toString());
+  /**
+   * Set the value of the {@code dependentKey} property to {@code true} by default or {@code false} if the value
+   * of the {@code parentKey} property is {@code false}.
+   */
+  private void adjustDependentProperty(final String parentKey, final String dependentKey) {
+    Boolean parentEnabled = getBooleanProperty(parentKey, Boolean.TRUE);
+    Boolean dependentEnabled = parentEnabled && getBooleanProperty(dependentKey, Boolean.TRUE);
+
+    nexusProperties.put(dependentKey, dependentEnabled);
+    System.setProperty(dependentKey, dependentEnabled.toString());
   }
 
   private Boolean getBooleanProperty(final String key, final Boolean defaultValue) {

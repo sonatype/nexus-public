@@ -181,7 +181,7 @@ public class ApiUser
     user.setSource(source);
     user.setStatus(status.getStatus());
     user.setReadOnly(readOnly);
-    user.setVersion("1");
+    user.setVersion(1);
 
     Set<RoleIdentifier> roleIdentifiers = new HashSet<>();
     roles.stream().map(r -> new RoleIdentifier(UserManager.DEFAULT_SOURCE, r)).forEach(roleIdentifiers::add);

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.email;
+package org.sonatype.nexus.internal.email.orient;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -23,11 +23,13 @@ import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.email.EmailConfiguration;
+import org.sonatype.nexus.internal.email.EmailConfigurationStore;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
@@ -49,11 +51,11 @@ public class OrientEmailConfigurationStore
 {
   private final Provider<DatabaseInstance> databaseInstance;
 
-  private final EmailConfigurationEntityAdapter entityAdapter;
+  private final OrientEmailConfigurationEntityAdapter entityAdapter;
 
   @Inject
   public OrientEmailConfigurationStore(@Named(DatabaseInstanceNames.CONFIG) final Provider<DatabaseInstance> databaseInstance,
-                                       final EmailConfigurationEntityAdapter entityAdapter)
+                                       final OrientEmailConfigurationEntityAdapter entityAdapter)
   {
     this.databaseInstance = checkNotNull(databaseInstance);
     this.entityAdapter = checkNotNull(entityAdapter);
@@ -76,6 +78,14 @@ public class OrientEmailConfigurationStore
   @Override
   @Guarded(by = STARTED)
   public void save(final EmailConfiguration configuration) {
-    inTxRetry(databaseInstance).run(db -> entityAdapter.set(db, configuration));
+    checkNotNull(configuration);
+    checkArgument(configuration instanceof OrientEmailConfiguration, "Configuration arg must be an instance of OrientEmailConfiguration");
+
+    inTxRetry(databaseInstance).run(db -> entityAdapter.set(db, (OrientEmailConfiguration) configuration));
+  }
+
+  @Override
+  public EmailConfiguration newConfiguration() {
+    return new OrientEmailConfiguration();
   }
 }

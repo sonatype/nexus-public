@@ -84,15 +84,6 @@ public interface TaskScheduler
   int getExecutedTaskCount();
 
   /**
-   * Returns the state of a given task across the nodes in a clustered environment or {@code null} if clustering isn't
-   * enabled.
-   * 
-   * @since 3.1
-   */
-  @Nullable
-  List<ClusteredTaskState> getClusteredTaskStateById(String taskId);
-
-  /**
    * Attempts to cancel execution of the task ({@code id}).  This attempt will
    * fail if the task has already completed, has already been cancelled,
    *  or could not be cancelled for some other reason.
@@ -143,4 +134,11 @@ public interface TaskScheduler
    * @return {@code true} if a task is found, {@code false} otherwise
    */
   boolean findAndSubmit(String typeId, Map<String, String> config);
+
+  /**
+   * Returns the {@link ExternalTaskState} appropriate for the corresponding {@link TaskInfo}.
+   *
+   * @since 3.next
+   */
+  ExternalTaskState toExternalTaskState(TaskInfo taskInfo);
 }

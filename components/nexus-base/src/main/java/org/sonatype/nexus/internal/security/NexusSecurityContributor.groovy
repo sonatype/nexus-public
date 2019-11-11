@@ -17,9 +17,9 @@ import javax.inject.Singleton
 
 import org.sonatype.nexus.security.Roles
 import org.sonatype.nexus.security.config.CPrivilege
-import org.sonatype.nexus.security.config.CRole
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration
 import org.sonatype.nexus.security.config.SecurityContributor
+import org.sonatype.nexus.security.config.memory.MemoryCRole
 
 /**
  * Default Nexus security configuration.
@@ -308,7 +308,7 @@ class NexusSecurityContributor
             /**
              * Admin role grants all permissions (ie. super-user)
              */
-            new CRole(
+            new MemoryCRole(
                 id: Roles.ADMIN_ROLE_ID,
                 description: 'Administrator Role',
                 privileges: [
@@ -319,7 +319,7 @@ class NexusSecurityContributor
             /**
              * Anonymous role grants permissions to non-authenticated users.
              */
-            new CRole(
+            new MemoryCRole(
                 id: Roles.ANONYMOUS_ROLE_ID,
                 description: 'Anonymous Role',
                 privileges: [

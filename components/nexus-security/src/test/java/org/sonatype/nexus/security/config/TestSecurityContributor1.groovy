@@ -14,6 +14,8 @@ package org.sonatype.nexus.security.config
 
 import javax.inject.Singleton
 
+import org.sonatype.nexus.security.config.memory.MemoryCRole
+
 @Singleton
 class TestSecurityContributor1
 implements SecurityContributor
@@ -73,7 +75,7 @@ implements SecurityContributor
                 ])
         ],
         roles: [
-            new CRole(
+            new MemoryCRole(
                 id: 'anon',
                 name: 'Test Anon Role',
                 description: 'Test Anon Role Description',
@@ -81,7 +83,7 @@ implements SecurityContributor
                 roles: ['role2']
             )
             ,
-            new CRole(
+            new MemoryCRole(
                 id: 'other',
                 name: '',
                 description: '',
@@ -89,7 +91,7 @@ implements SecurityContributor
                 roles: ['role2']
             )
             ,
-            new CRole(
+            new MemoryCRole(
                 id: 'role1',
                 name: 'role1',
                 description: 'role1',
@@ -97,7 +99,7 @@ implements SecurityContributor
                 roles: ['role2']
             )
             ,
-            new CRole(
+            new MemoryCRole(
                 id: 'role2',
                 name: 'role2',
                 description: 'role2',
@@ -105,7 +107,7 @@ implements SecurityContributor
                 roles: ['role3', 'role4', 'role5']
             )
             ,
-            new CRole(
+            new MemoryCRole(
                 id: 'role3',
                 name: 'role3',
                 description: 'role3',
@@ -113,14 +115,14 @@ implements SecurityContributor
                 roles: ['role4', 'role5']
             )
             ,
-            new CRole(
+            new MemoryCRole(
                 id: 'role4',
                 name: 'role4',
                 description: 'role4',
                 privileges: ['priv1', 'priv2', 'priv3', 'priv4']
             )
             ,
-            new CRole(
+            new MemoryCRole(
                 id: 'role5',
                 name: 'role5',
                 description: 'role5',

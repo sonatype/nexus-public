@@ -42,15 +42,15 @@ import org.apache.shiro.subject.PrincipalCollection;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * {@link ApiKey} entity adapter.
+ * {@link OrientApiKey} entity adapter.
  *
  * since 3.0
  */
 @FeatureFlag(name = "nexus.orient.store.config")
 @Named
 @Singleton
-public class ApiKeyEntityAdapter
-    extends IterableEntityAdapter<ApiKey>
+public class OrientApiKeyEntityAdapter
+    extends IterableEntityAdapter<OrientApiKey>
 {
   private static final String DB_CLASS = new OClassNameBuilder()
       .type("api_key")
@@ -78,16 +78,16 @@ public class ApiKeyEntityAdapter
 
   private final DeleteEntitiesAction deleteAll = new DeleteEntitiesAction(this);
 
-  private final BrowseEntitiesByPropertyAction<ApiKey> browseByPrimaryPrincipal =
+  private final BrowseEntitiesByPropertyAction<OrientApiKey> browseByPrimaryPrincipal =
       new BrowseEntitiesByPropertyAction<>(this, P_PRIMARY_PRINCIPAL);
 
-  private final ReadEntityByPropertyAction<ApiKey> findByApiKey =
+  private final ReadEntityByPropertyAction<OrientApiKey> findByApiKey =
       new ReadEntityByPropertyAction<>(this, P_DOMAIN, P_APIKEY);
 
   private final ClassLoader uberClassLoader;
 
   @Inject
-  public ApiKeyEntityAdapter(@Named("nexus-uber") final ClassLoader uberClassLoader) {
+  public OrientApiKeyEntityAdapter(@Named("nexus-uber") final ClassLoader uberClassLoader) {
     super(DB_CLASS);
     this.uberClassLoader = checkNotNull(uberClassLoader);
   }
@@ -117,12 +117,12 @@ public class ApiKeyEntityAdapter
   }
 
   @Override
-  protected ApiKey newEntity() {
-    return new ApiKey();
+  protected OrientApiKey newEntity() {
+    return new OrientApiKey();
   }
 
   @Override
-  protected void readFields(final ODocument document, final ApiKey entity) {
+  protected void readFields(final ODocument document, final OrientApiKey entity) {
     String domain = document.field(P_DOMAIN, OType.STRING);
     String apiKey = document.field(P_APIKEY, OType.STRING);
     final PrincipalCollection principals = (PrincipalCollection) deserialize(document, P_PRINCIPALS);
@@ -144,7 +144,7 @@ public class ApiKeyEntityAdapter
   }
 
   @Override
-  protected void writeFields(final ODocument document, final ApiKey entity) {
+  protected void writeFields(final ODocument document, final OrientApiKey entity) {
     document.field(P_DOMAIN, entity.getDomain());
     document.field(P_APIKEY, String.valueOf(entity.getApiKey()));
     document.field(P_PRIMARY_PRINCIPAL, entity.getPrincipals().getPrimaryPrincipal().toString());
@@ -179,12 +179,12 @@ public class ApiKeyEntityAdapter
    *
    * @since 3.1
    */
-  public Iterable<ApiKey> browseByPrimaryPrincipal(final ODatabaseDocumentTx db, final Object value) {
+  public Iterable<OrientApiKey> browseByPrimaryPrincipal(final ODatabaseDocumentTx db, final Object value) {
     return browseByPrimaryPrincipal.execute(db, value);
   }
 
   @Nullable
-  public ApiKey findByApiKey(final ODatabaseDocumentTx db, final String domain, final char[] apiKey) {
+  public OrientApiKey findByApiKey(final ODatabaseDocumentTx db, final String domain, final char[] apiKey) {
     checkNotNull(domain);
     checkNotNull(apiKey);
     return findByApiKey.execute(db, domain, String.valueOf(apiKey));

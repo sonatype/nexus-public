@@ -10,34 +10,22 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.scheduling;
 
-import java.util.List;
+package org.sonatype.nexus.security.config;
 
-import javax.annotation.Nullable;
+import java.util.Set;
+
+import static com.google.common.collect.Sets.newHashSet;
+import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 
 /**
- * Keeps track of task states within a clustered environment. Each node advertises local task states which the store
- * distributes across the cluster for all nodes to query.
- * 
- * @since 3.1
+ * @since 3.next
  */
-public interface ClusteredTaskStateStore
+public class SecuritySourceUtil
 {
-  /**
-   * Updates the store with the current state of the specified task.
-   */
-  void setLocalState(TaskInfo taskInfo);
+  private static final Set<String> CASE_INSENSITIVE_SOURCES = newHashSet(DEFAULT_SOURCE.toLowerCase(), "crowd", "ldap");
 
-  /**
-   * Removes the state of the specified task from the store.
-   */
-  void removeClusteredState(String taskId);
-
-  /**
-   * Returns the state of a given task across the nodes in a clustered environment or {@code null} if clustering isn't
-   * enabled.
-   */
-  @Nullable
-  List<ClusteredTaskState> getClusteredState(String taskId);
+  public static boolean isCaseInsensitiveSource(final String source) {
+    return CASE_INSENSITIVE_SOURCES.contains(source.toLowerCase());
+  }
 }

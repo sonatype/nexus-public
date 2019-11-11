@@ -10,21 +10,22 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.security.model;
+package org.sonatype.nexus.internal.security.model.internal.orient;
+
+import java.util.Set;
 
 import javax.annotation.Nullable;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 import org.sonatype.nexus.orient.entity.action.DeleteEntityByPropertyAction;
 import org.sonatype.nexus.orient.entity.action.ReadEntityByPropertyAction;
 import org.sonatype.nexus.orient.entity.action.UpdateEntityByPropertyAction;
-import org.sonatype.nexus.security.config.CUser;
 
+import com.google.common.collect.Sets;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
@@ -32,44 +33,41 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
- * {@link CUser} entity adapter.
+ * {@link OrientCRole} entity adapter.
  *
  * @since 3.0
  */
-@FeatureFlag(name = "nexus.orient.store.config")
 @Named
 @Singleton
-public class CUserEntityAdapter
-    extends IterableEntityAdapter<CUser>
+public class OrientCRoleEntityAdapter
+    extends IterableEntityAdapter<OrientCRole>
 {
   private static final String DB_CLASS = new OClassNameBuilder()
-      .type("user")
+      .type("role")
       .build();
 
   private static final String P_ID = "id";
 
-  private static final String P_FIRST_NAME = "firstName";
+  private static final String P_NAME = "name";
 
-  private static final String P_LAST_NAME = "lastName";
+  private static final String P_DESCRIPTION = "description";
 
-  private static final String P_PASSWORD = "password";
+  private static final String P_PRIVILEGES = "privileges";
 
-  private static final String P_STATUS = "status";
-
-  private static final String P_EMAIL = "email";
+  private static final String P_ROLES = "roles";
 
   private static final String I_ID = new OIndexNameBuilder()
       .type(DB_CLASS)
       .property(P_ID)
       .build();
 
-  private final ReadEntityByPropertyAction<CUser> read = new ReadEntityByPropertyAction<>(this, P_ID);
+  private final ReadEntityByPropertyAction<OrientCRole> read = new ReadEntityByPropertyAction<>(this, P_ID);
 
   private final DeleteEntityByPropertyAction delete = new DeleteEntityByPropertyAction(this, P_ID);
 
-  private final UpdateEntityByPropertyAction<CUser> update = new UpdateEntityByPropertyAction<>(this, P_ID);
+  private final UpdateEntityByPropertyAction<OrientCRole> update = new UpdateEntityByPropertyAction<>(this, P_ID);
 
-  public CUserEntityAdapter() {
+  public OrientCRoleEntityAdapter() {
     super(DB_CLASS);
   }
 
@@ -77,43 +75,39 @@ public class CUserEntityAdapter
   protected void defineType(final OClass type) {
     type.createProperty(P_ID, OType.STRING)
         .setNotNull(true);
-    type.createProperty(P_FIRST_NAME, OType.STRING);
-    type.createProperty(P_LAST_NAME, OType.STRING);
-    type.createProperty(P_PASSWORD, OType.STRING)
+    type.createProperty(P_NAME, OType.STRING)
         .setNotNull(true);
-    type.createProperty(P_STATUS, OType.STRING)
-        .setNotNull(true);
-    type.createProperty(P_EMAIL, OType.STRING)
-        .setNotNull(true);
+    type.createProperty(P_DESCRIPTION, OType.STRING);
+    type.createProperty(P_PRIVILEGES, OType.EMBEDDEDSET);
+    type.createProperty(P_ROLES, OType.EMBEDDEDSET);
 
     type.createIndex(I_ID, INDEX_TYPE.UNIQUE, P_ID);
   }
 
   @Override
-  protected CUser newEntity() {
-    return new CUser();
+  protected OrientCRole newEntity() {
+    return new OrientCRole();
   }
 
   @Override
-  protected void readFields(final ODocument document, final CUser entity) throws Exception {
+  protected void readFields(final ODocument document, final OrientCRole entity) throws Exception {
     entity.setId(document.<String>field(P_ID, OType.STRING));
-    entity.setFirstName(document.<String>field(P_FIRST_NAME, OType.STRING));
-    entity.setLastName(document.<String>field(P_LAST_NAME, OType.STRING));
-    entity.setPassword(document.<String>field(P_PASSWORD, OType.STRING));
-    entity.setStatus(document.<String>field(P_STATUS, OType.STRING));
-    entity.setEmail(document.<String>field(P_EMAIL, OType.STRING));
+    entity.setName(document.<String>field(P_NAME, OType.STRING));
+    entity.setDescription(document.<String>field(P_DESCRIPTION, OType.STRING));
+    entity.setPrivileges(Sets.newHashSet(document.<Set<String>>field(P_PRIVILEGES, OType.EMBEDDEDSET)));
+    entity.setRoles(Sets.newHashSet(document.<Set<String>>field(P_ROLES, OType.EMBEDDEDSET)));
+    entity.setReadOnly(false);
 
-    entity.setVersion(String.valueOf(document.getVersion()));
+    entity.setVersion(document.getVersion());
   }
 
   @Override
-  protected void writeFields(final ODocument document, final CUser entity) throws Exception {
+  protected void writeFields(final ODocument document, final OrientCRole entity) throws Exception {
     document.field(P_ID, entity.getId());
-    document.field(P_FIRST_NAME, entity.getFirstName());
-    document.field(P_LAST_NAME, entity.getLastName());
-    document.field(P_STATUS, entity.getStatus());
-    document.field(P_EMAIL, entity.getEmail());
-    document.field(P_PASSWORD, entity.getPassword());
+    document.field(P_NAME, entity.getName());
+    document.field(P_DESCRIPTION, entity.getDescription());
+    document.field(P_PRIVILEGES, entity.getPrivileges());
+    document.field(P_ROLES, entity.getRoles());
   }
 
   //
@@ -124,7 +118,7 @@ public class CUserEntityAdapter
    * @since 3.1
    */
   @Nullable
-  public CUser read(final ODatabaseDocumentTx db, final String id) {
+  public OrientCRole read(final ODatabaseDocumentTx db, final String id) {
     return read.execute(db, id);
   }
 
@@ -138,7 +132,7 @@ public class CUserEntityAdapter
   /**
    * @since 3.6.1
    */
-  public boolean update(final ODatabaseDocumentTx db, final CUser entity) {
+  public boolean update(final ODatabaseDocumentTx db, final OrientCRole entity) {
     return update.execute(db, entity, entity.getId());
   }
 }

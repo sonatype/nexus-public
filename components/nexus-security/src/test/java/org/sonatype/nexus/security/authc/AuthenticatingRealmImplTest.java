@@ -20,6 +20,7 @@ import org.sonatype.nexus.security.AbstractSecurityTest;
 import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.CRole;
 import org.sonatype.nexus.security.config.CUser;
+import org.sonatype.nexus.security.config.memory.MemoryCUser;
 import org.sonatype.nexus.security.internal.AuthenticatingRealmImpl;
 import org.sonatype.nexus.security.internal.SecurityConfigurationManagerImpl;
 
@@ -72,12 +73,8 @@ public class AuthenticatingRealmImplTest
     String clearPassword = "default-password";
     String username = "testCreateWithPassowrdEmailUserId";
 
-    CUser user = new CUser();
-    user.setEmail("testCreateWithPassowrdEmail@somewhere");
-    user.setFirstName("testCreateWithPassowrdEmail");
-    user.setLastName("testCreateWithPassowrdEmail");
-    user.setStatus(CUser.STATUS_ACTIVE);
-    user.setId(username);
+    CUser user = user("testCreateWithPassowrdEmail@somewhere", "testCreateWithPassowrdEmail",
+        "testCreateWithPassowrdEmail", CUser.STATUS_ACTIVE, username, null);
 
     Set<String> roles = new HashSet<String>();
     roles.add("role");
@@ -162,7 +159,7 @@ public class AuthenticatingRealmImplTest
 
     configurationManager.createPrivilege(priv);
 
-    CRole role = new CRole();
+    CRole role = configurationManager.newRole();
     role.setName("name");
     role.setId("role");
     role.setDescription("desc");
@@ -170,13 +167,7 @@ public class AuthenticatingRealmImplTest
 
     configurationManager.createRole(role);
 
-    testUser = new CUser();
-    testUser.setEmail("dummyemail@somewhere");
-    testUser.setFirstName("dummyFirstName");
-    testUser.setLastName("dummyLastName");
-    testUser.setStatus(status);
-    testUser.setId("username");
-    testUser.setPassword(hash);
+    testUser = user("dummyemail@somewhere", "dummyFirstName", "dummyLastName", status, "username", hash);
 
     Set<String> roles = new HashSet<String>();
     roles.add("role");
@@ -195,5 +186,23 @@ public class AuthenticatingRealmImplTest
 
   private void buildLegacyTestAuthenticationConfig(final String password) throws Exception {
     buildTestAuthenticationConfig(CUser.STATUS_ACTIVE, legacyHashPassword(password));
+  }
+
+  private static CUser user(
+      final String email,
+      final String firstName,
+      final String lastName,
+      final String status,
+      final String id,
+      final String passwordHash)
+  {
+    CUser testUser = new MemoryCUser();
+    testUser.setEmail(email);
+    testUser.setFirstName(firstName);
+    testUser.setLastName(lastName);
+    testUser.setStatus(status);
+    testUser.setId(id);
+    testUser.setPassword(passwordHash);
+    return testUser;
   }
 }

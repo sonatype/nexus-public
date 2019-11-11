@@ -14,116 +14,49 @@ package org.sonatype.nexus.security.config;
 
 import java.io.Serializable;
 
-import org.sonatype.nexus.common.entity.AbstractEntity;
-import org.sonatype.nexus.common.text.Strings2;
-
 /**
  * Persistent user.
+ *
+ * @since 3.0
  */
-public class CUser
-    extends AbstractEntity
-    implements Serializable, Cloneable
+public interface CUser //NOSONAR
+    extends Serializable, Cloneable
 {
-  public static final String STATUS_DISABLED = "disabled";
+  String STATUS_DISABLED = "disabled";
 
-  public static final String STATUS_ACTIVE = "active";
+  String STATUS_ACTIVE = "active";
 
-  public static final String STATUS_CHANGE_PASSWORD = "changepassword";
+  String STATUS_CHANGE_PASSWORD = "changepassword";
 
-  private String id;
+  String getEmail();
 
-  private String firstName;
+  String getFirstName();
 
-  private String lastName;
+  String getId();
 
-  private String password;
+  String getLastName();
 
-  private String status;
+  String getPassword();
 
-  private String email;
+  String getStatus();
 
-  private String version;
+  void setEmail(String email);
 
-  public String getEmail() {
-    return this.email;
-  }
+  void setFirstName(String firstName);
 
-  public String getFirstName() {
-    return this.firstName;
-  }
+  void setId(String id);
 
-  public String getId() {
-    return this.id;
-  }
+  void setLastName(String lastName);
 
-  public String getLastName() {
-    return this.lastName;
-  }
+  void setPassword(String password);
 
-  public String getPassword() {
-    return this.password;
-  }
+  void setStatus(String status);
 
-  public String getStatus() {
-    return this.status;
-  }
+  int getVersion();
 
-  public void setEmail(String email) {
-    this.email = email;
-  }
+  void setVersion(final int version);
 
-  public void setFirstName(String firstName) {
-    this.firstName = firstName;
-  }
+  boolean isActive();
 
-  public void setId(String id) {
-    this.id = id;
-  }
-
-  public void setLastName(String lastName) {
-    this.lastName = lastName;
-  }
-
-  public void setPassword(String password) {
-    this.password = password;
-  }
-
-  public void setStatus(String status) {
-    this.status = status;
-  }
-
-  public String getVersion() {
-    return version;
-  }
-
-  public void setVersion(final String version) {
-    this.version = version;
-  }
-
-  public boolean isActive() {
-    return STATUS_ACTIVE.equals(status) || STATUS_CHANGE_PASSWORD.equals(status);
-  }
-
-  @Override
-  public CUser clone() {
-    try {
-      return (CUser) super.clone();
-    }
-    catch (CloneNotSupportedException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Override
-  public String toString() {
-    return getClass().getSimpleName() + "{" +
-        "id='" + id + '\'' +
-        ", firstName='" + firstName + '\'' +
-        ", lastName='" + lastName + '\'' +
-        ", password='" + Strings2.mask(password) + '\'' +
-        ", status='" + status + '\'' +
-        ", email='" + email + '\'' +
-        ", version='" + version + '\'' +
-        '}';
-  }
+  CUser clone();
 }

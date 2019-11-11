@@ -28,6 +28,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.cache.CacheInfo.INVALIDATED;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 
 /**
@@ -100,18 +101,27 @@ public class CacheInfoTest
 
   @Test
   public void invalidateAsset() {
-    final DateTime now = DateTime.now();
-    final String cacheToken = "foo-bar";
-    NestedAttributesMap attributes = new NestedAttributesMap(P_ATTRIBUTES, Maps.<String, Object>newHashMap());
-    attributes.child(CacheInfo.CACHE).set(CacheInfo.LAST_VERIFIED, now.toDate());
-    attributes.child(CacheInfo.CACHE).set(CacheInfo.CACHE_TOKEN, cacheToken);
-    Asset asset = mock(Asset.class);
-    when(asset.attributes()).thenReturn(attributes);
+    Asset asset = mockAsset(DateTime.now(), "foo-bar");
+
     assertThat(CacheInfo.invalidateAsset(asset), equalTo(true));
     assertThat(asset.attributes().child(CacheInfo.CACHE).get(CacheInfo.CACHE_TOKEN, String.class),
-        equalTo(CacheInfo.INVALIDATED));
+        equalTo(INVALIDATED));
     assertThat(CacheInfo.invalidateAsset(asset), equalTo(false)); // already invalidated
     assertThat(asset.attributes().child(CacheInfo.CACHE).get(CacheInfo.CACHE_TOKEN, String.class),
-        equalTo(CacheInfo.INVALIDATED));
+        equalTo(INVALIDATED));
+  }
+
+  private Asset mockAsset(DateTime lastVerified, String cacheToken) {
+    NestedAttributesMap attributes = new NestedAttributesMap(P_ATTRIBUTES, Maps.<String, Object>newHashMap());
+    if (lastVerified != null) {
+      attributes.child(CacheInfo.CACHE).set(CacheInfo.LAST_VERIFIED, lastVerified.toDate());
+    }
+    if (cacheToken != null) {
+      attributes.child(CacheInfo.CACHE).set(CacheInfo.CACHE_TOKEN, cacheToken);
+    }
+    Asset asset = mock(Asset.class);
+    when(asset.attributes()).thenReturn(attributes);
+
+    return asset;
   }
 }

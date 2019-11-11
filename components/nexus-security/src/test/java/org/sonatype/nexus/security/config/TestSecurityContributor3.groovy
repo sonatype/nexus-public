@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.security.config
 
+import org.sonatype.nexus.security.config.memory.MemoryCRole
+
 class TestSecurityContributor3
 implements SecurityContributor
 {
@@ -59,7 +61,7 @@ implements SecurityContributor
                 ])
         ],
         roles: [
-            new CRole(
+            new MemoryCRole(
                 id: 'anon',
                 name: '',
                 description: '',
@@ -67,7 +69,7 @@ implements SecurityContributor
                 roles: ['other']
             )
             ,
-            new CRole(
+            new MemoryCRole(
                 id: 'other',
                 name: 'Other Role',
                 description: 'Other Role Description',

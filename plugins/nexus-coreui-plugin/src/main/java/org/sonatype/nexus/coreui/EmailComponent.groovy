@@ -94,20 +94,22 @@ class EmailComponent
 
   @PackageScope
   EmailConfiguration convert(final EmailConfigurationXO value) {
-    return new EmailConfiguration(
-        enabled: value.enabled,
-        host: value.host,
-        port: value.port,
-        username: value.username,
-        password: PasswordPlaceholder.is(value.password) ? emailManager.configuration.password : value.password,
-        fromAddress: value.fromAddress,
-        subjectPrefix: value.subjectPrefix,
-        startTlsEnabled: value.startTlsEnabled,
-        startTlsRequired: value.startTlsRequired,
-        sslOnConnectEnabled: value.sslOnConnectEnabled,
-        sslCheckServerIdentityEnabled: value.sslCheckServerIdentityEnabled,
-        nexusTrustStoreEnabled: value.nexusTrustStoreEnabled
-    )
+    def emailConfiguration = emailManager.newConfiguration()
+
+    emailConfiguration.setEnabled(value.enabled)
+    emailConfiguration.setHost(value.host)
+    emailConfiguration.setPort(value.port)
+    emailConfiguration.setUsername(value.username)
+    emailConfiguration.setPassword(PasswordPlaceholder.is(value.password) ? emailManager.configuration.password : value.password)
+    emailConfiguration.setFromAddress(value.fromAddress)
+    emailConfiguration.setSubjectPrefix(value.subjectPrefix)
+    emailConfiguration.setStartTlsEnabled(value.startTlsEnabled)
+    emailConfiguration.setStartTlsRequired(value.startTlsRequired)
+    emailConfiguration.setSslOnConnectEnabled(value.sslOnConnectEnabled)
+    emailConfiguration.setSslCheckServerIdentityEnabled(value.sslCheckServerIdentityEnabled)
+    emailConfiguration.setNexusTrustStoreEnabled(value.nexusTrustStoreEnabled)
+
+    return emailConfiguration
   }
 
   /**

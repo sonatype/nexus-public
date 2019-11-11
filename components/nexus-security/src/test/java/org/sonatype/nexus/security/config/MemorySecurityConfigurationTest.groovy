@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.security.config
 
+import org.sonatype.nexus.security.config.memory.MemoryCUserRoleMapping
+
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -28,7 +30,7 @@ class MemorySecurityConfigurationTest
   def 'userRoleMappings for source: \'#src\' read ignores case: #ignoreCase'(src, ignoreCase, isFound) {
     given: 'an existing user role mapping'
       def roles = ['test-role'] as Set
-      def newUserRoleMapping = new CUserRoleMapping(userId: 'userid', source: src, roles: roles)
+      def newUserRoleMapping = new MemoryCUserRoleMapping(userId: 'userid', source: src, roles: roles)
       config.addUserRoleMapping(newUserRoleMapping)
 
     when: 'a users roles are retrieved with different user id casing'

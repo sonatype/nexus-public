@@ -12,47 +12,24 @@
  */
 package org.sonatype.nexus.internal.security.apikey;
 
-import java.util.Arrays;
-
-import org.sonatype.nexus.common.entity.AbstractEntity;
-
 import org.apache.shiro.subject.PrincipalCollection;
 
 /**
- * An Orient-stored object representing the association between a {@link PrincipalCollection} and a Api Key (char[]).
+ * A database-stored object representing the association between a {@link PrincipalCollection} and a Api Key (char[]).
  *
- * @since 3.0
+ * @since 3.next
  */
-public class ApiKey
-    extends AbstractEntity
+public interface ApiKey
 {
-  private String domain;
+  String getDomain();
 
-  private PrincipalCollection principals;
+  void setDomain(final String domain);
 
-  private char[] apiKey;
+  PrincipalCollection getPrincipals();
 
-  public void setDomain(final String domain) {
-    this.domain = domain;
-  }
+  void setPrincipals(final PrincipalCollection principals);
 
-  public void setPrincipals(final PrincipalCollection principals) {
-    this.principals = principals;
-  }
+  char[] getApiKey();
 
-  public void setApiKey(final char[] apiKey) {
-    this.apiKey = Arrays.copyOf(apiKey, apiKey.length);
-  }
-
-  public String getDomain() {
-    return domain;
-  }
-
-  public PrincipalCollection getPrincipals() {
-    return principals;
-  }
-
-  public char[] getApiKey() {
-    return Arrays.copyOf(apiKey, apiKey.length);
-  }
+  void setApiKey(final char[] apiKey);
 }

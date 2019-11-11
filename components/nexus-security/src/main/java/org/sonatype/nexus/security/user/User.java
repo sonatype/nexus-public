@@ -39,7 +39,7 @@ public class User
 
   private boolean readOnly;
 
-  private String version;
+  private int version;
 
   private Set<RoleIdentifier> roleIdentifiers = new HashSet<RoleIdentifier>();
 
@@ -138,11 +138,11 @@ public class User
     this.readOnly = readOnly;
   }
 
-  public String getVersion() {
+  public int getVersion() {
     return version;
   }
 
-  public void setVersion(final String version) {
+  public void setVersion(final int version) {
     this.version = version;
   }
 

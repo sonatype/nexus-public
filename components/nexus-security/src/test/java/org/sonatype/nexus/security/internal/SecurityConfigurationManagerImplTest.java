@@ -21,10 +21,10 @@ import org.sonatype.nexus.security.config.SecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityConfigurationCleaner;
 import org.sonatype.nexus.security.config.SecurityConfigurationSource;
 import org.sonatype.nexus.security.config.SecurityContributor;
+import org.sonatype.nexus.security.config.memory.MemoryCRole;
 import org.sonatype.nexus.security.privilege.DuplicatePrivilegeException;
 import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
 import org.sonatype.nexus.security.privilege.ReadonlyPrivilegeException;
-
 import org.sonatype.nexus.security.role.DuplicateRoleException;
 import org.sonatype.nexus.security.role.NoSuchRoleException;
 import org.sonatype.nexus.security.role.ReadonlyRoleException;
@@ -66,6 +66,7 @@ public class SecurityConfigurationManagerImplTest
   @Before
   public void setUp() {
     when(configSource.loadConfiguration()).thenReturn(memorySecurityConfiguration);
+    when(memorySecurityConfiguration.newRole()).thenAnswer(i -> new MemoryCRole());
     manager = new SecurityConfigurationManagerImpl(configSource, configCleaner, passwordService, eventManager);
   }
 
@@ -152,7 +153,7 @@ public class SecurityConfigurationManagerImplTest
 
   @Test(expected = DuplicateRoleException.class)
   public void testCreateRole_duplicateFromOrient() {
-    CRole role = new CRole();
+    CRole role = manager.newRole();
     role.setId("dup");
     role.setName("dup");
 
@@ -165,7 +166,7 @@ public class SecurityConfigurationManagerImplTest
   public void testCreateRole_duplicateFromContributors() {
     addSimpleRoleContributor("dup");
 
-    CRole role = new CRole();
+    CRole role = manager.newRole();
     role.setId("dup");
     role.setName("dup");
 
@@ -174,7 +175,7 @@ public class SecurityConfigurationManagerImplTest
 
   @Test(expected = NoSuchRoleException.class)
   public void testCreateRole_invalidRole() {
-    CRole role = new CRole();
+    CRole role = manager.newRole();
     role.setId("new");
     role.setName("new");
     role.addRole("role1");
@@ -184,7 +185,7 @@ public class SecurityConfigurationManagerImplTest
 
   @Test(expected = NoSuchPrivilegeException.class)
   public void testCreateRole_invalidPrivilege() {
-    CRole role = new CRole();
+    CRole role = manager.newRole();
     role.setId("new");
     role.setName("new");
     role.addPrivilege("priv1");
@@ -197,7 +198,7 @@ public class SecurityConfigurationManagerImplTest
     when(memorySecurityConfiguration.getPrivilege("priv1")).thenReturn(mock(CPrivilege.class));
     when(memorySecurityConfiguration.getRole("role1")).thenReturn(mock(CRole.class));
 
-    CRole role = new CRole();
+    CRole role = manager.newRole();
     role.setId("new");
     role.setName("new");
     role.addRole("role1");
@@ -210,7 +211,7 @@ public class SecurityConfigurationManagerImplTest
   public void testUpdateRole_readOnly() {
     addSimpleRoleContributor("readonly");
 
-    CRole forUpdate = new CRole();
+    CRole forUpdate = manager.newRole();
     forUpdate.setId("readonly");
     forUpdate.setName("readonly");
 
@@ -227,7 +228,7 @@ public class SecurityConfigurationManagerImplTest
 
   @Test(expected = RoleContainsItselfException.class)
   public void testUpdateRole_containsItself() {
-    CRole role = new CRole();
+    CRole role = manager.newRole();
     role.setId("new");
     role.setName("new");
     role.addRole("new");
@@ -239,12 +240,12 @@ public class SecurityConfigurationManagerImplTest
 
   @Test(expected = RoleContainsItselfException.class)
   public void testUpdateRole_containsItselfIndirectly() {
-    CRole role = new CRole();
+    CRole role = manager.newRole();
     role.setId("new");
     role.setName("new");
     role.addRole("new2");
 
-    CRole role2 = new CRole();
+    CRole role2 = manager.newRole();
     role2.setId("new2");
     role2.setName("new2");
     role2.addRole("new");
@@ -258,7 +259,7 @@ public class SecurityConfigurationManagerImplTest
   private void addSimpleRoleContributor(final String roleName) {
     manager.addContributor(() -> {
       SecurityConfiguration config = new MemorySecurityConfiguration();
-      CRole readonlyRole = new CRole();
+      CRole readonlyRole = manager.newRole();
       readonlyRole.setId(roleName);
       readonlyRole.setName(roleName);
       config.addRole(readonlyRole);

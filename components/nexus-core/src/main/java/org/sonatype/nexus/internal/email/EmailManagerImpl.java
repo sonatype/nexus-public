@@ -13,10 +13,10 @@
 package org.sonatype.nexus.internal.email;
 
 import java.util.Properties;
+import java.util.function.Function;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.mail.Session;
 import javax.net.ssl.SSLContext;
@@ -59,7 +59,7 @@ public class EmailManagerImpl
 
   private final TrustStore trustStore;
 
-  private final Provider<EmailConfiguration> defaults;
+  private final Function<EmailConfiguration, EmailConfiguration> defaults;
 
   private final Mutex lock = new Mutex();
 
@@ -69,7 +69,7 @@ public class EmailManagerImpl
   public EmailManagerImpl(final EventManager eventManager,
                           final EmailConfigurationStore store,
                           final TrustStore trustStore,
-                          @Named("initial") final Provider<EmailConfiguration> defaults)
+                          @Named("initial") final  Function<EmailConfiguration, EmailConfiguration> defaults)
   {
     this.eventManager = checkNotNull(eventManager);
     this.store = checkNotNull(store);
@@ -89,7 +89,7 @@ public class EmailManagerImpl
 
     // use defaults if no configuration was loaded from the store
     if (model == null) {
-      model = defaults.get();
+      model = defaults.apply(store.newConfiguration());
 
       // default config must not be null
       checkNotNull(model);
@@ -212,6 +212,11 @@ public class EmailManagerImpl
     mail.setMsg("Verification successful");
     mail = apply(configuration, mail);
     mail.send();
+  }
+
+  @Override
+  public EmailConfiguration newConfiguration() {
+    return store.newConfiguration();
   }
 
   @Subscribe

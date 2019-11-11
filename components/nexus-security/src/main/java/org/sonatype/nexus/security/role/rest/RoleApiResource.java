@@ -168,7 +168,7 @@ public class RoleApiResource
       }
 
       AuthorizationManager authorizationManager = getDefaultAuthorizationManager();
-      String latestVersion = authorizationManager.getRole(id).getVersion();
+      int latestVersion = authorizationManager.getRole(id).getVersion();
       Role role = fromXO(roleXO);
       role.setRoleId(id);
       role.setVersion(latestVersion);

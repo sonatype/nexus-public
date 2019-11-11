@@ -12,6 +12,10 @@
  */
 package org.sonatype.nexus.security.config
 
+import org.sonatype.nexus.security.config.memory.MemoryCUserRoleMapping
+import org.sonatype.nexus.security.config.memory.MemoryCRole
+import org.sonatype.nexus.security.config.memory.MemoryCUser
+
 /**
  * @since 3.0
  */
@@ -21,7 +25,7 @@ class DefaultSecurityConfigurationCleanerTestSecurity
   static MemorySecurityConfiguration securityModel() {
     return new MemorySecurityConfiguration(
         users: [
-            new CUser(
+            new MemoryCUser(
                 id: 'user1',
                 password: 'user1',
                 firstName: 'first1',
@@ -29,7 +33,7 @@ class DefaultSecurityConfigurationCleanerTestSecurity
                 status: 'active',
                 email: 'email'
             ),
-            new CUser(
+            new MemoryCUser(
                 id: 'user2',
                 password: 'user2',
                 firstName: 'first2',
@@ -37,7 +41,7 @@ class DefaultSecurityConfigurationCleanerTestSecurity
                 status: 'active',
                 email: 'email'
             ),
-            new CUser(
+            new MemoryCUser(
                 id: 'user3',
                 password: 'user3',
                 firstName: 'first3',
@@ -45,7 +49,7 @@ class DefaultSecurityConfigurationCleanerTestSecurity
                 status: 'active',
                 email: 'email'
             ),
-            new CUser(
+            new MemoryCUser(
                 id: 'user4',
                 password: 'user4',
                 firstName: 'first4',
@@ -53,7 +57,7 @@ class DefaultSecurityConfigurationCleanerTestSecurity
                 status: 'active',
                 email: 'email'
             ),
-            new CUser(
+            new MemoryCUser(
                 id: 'user5',
                 password: 'user5',
                 firstName: 'first5',
@@ -63,27 +67,27 @@ class DefaultSecurityConfigurationCleanerTestSecurity
             )
         ],
         userRoleMappings: [
-            new CUserRoleMapping(
+            new MemoryCUserRoleMapping(
                 userId: 'user1',
                 source: 'default',
                 roles: ['role1']
             ),
-            new CUserRoleMapping(
+            new MemoryCUserRoleMapping(
                 userId: 'user2',
                 source: 'default',
                 roles: ['role1', 'role2']
             ),
-            new CUserRoleMapping(
+            new MemoryCUserRoleMapping(
                 userId: 'user3',
                 source: 'default',
                 roles: ['role1', 'role2', 'role3']
             ),
-            new CUserRoleMapping(
+            new MemoryCUserRoleMapping(
                 userId: 'user4',
                 source: 'default',
                 roles: ['role1', 'role2', 'role3', 'role4']
             ),
-            new CUserRoleMapping(
+            new MemoryCUserRoleMapping(
                 userId: 'user5',
                 source: 'default',
                 roles: ['role1', 'role2', 'role3', 'role4', 'role5']
@@ -142,35 +146,35 @@ class DefaultSecurityConfigurationCleanerTestSecurity
             )
         ],
         roles: [
-            new CRole(
+            new MemoryCRole(
                 id: 'role1',
                 name: 'role1',
                 description: 'role1',
                 privileges: ['priv1'],
                 roles: ['role2', 'role3', 'role4', 'role5']
             ),
-            new CRole(
+            new MemoryCRole(
                 id: 'role2',
                 name: 'role2',
                 description: 'role2',
                 privileges: ['priv1', 'priv2'],
                 roles: ['role3', 'role4', 'role5']
             ),
-            new CRole(
+            new MemoryCRole(
                 id: 'role3',
                 name: 'role3',
                 description: 'role3',
                 privileges: ['priv1', 'priv2', 'priv3'],
                 roles: ['role4', 'role5']
             ),
-            new CRole(
+            new MemoryCRole(
                 id: 'role4',
                 name: 'role4',
                 description: 'role4',
                 privileges: ['priv1', 'priv2', 'priv3', 'priv4'],
                 roles: ['role5']
             ),
-            new CRole(
+            new MemoryCRole(
                 id: 'role5',
                 name: 'role5',
                 description: 'role5',

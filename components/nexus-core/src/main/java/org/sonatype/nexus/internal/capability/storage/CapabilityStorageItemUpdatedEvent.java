@@ -12,30 +12,12 @@
  */
 package org.sonatype.nexus.internal.capability.storage;
 
-import org.sonatype.nexus.capability.CapabilityIdentity;
-import org.sonatype.nexus.common.entity.EntityMetadata;
-import org.sonatype.nexus.common.entity.EntityUpdatedEvent;
-
 /**
  * {@link CapabilityStorageItem} updated event.
  *
  * @since 3.1
  */
-public class CapabilityStorageItemUpdatedEvent
-    extends EntityUpdatedEvent
-    implements CapabilityStorageItemEvent
+public interface CapabilityStorageItemUpdatedEvent
+    extends CapabilityStorageItemEvent
 {
-  public CapabilityStorageItemUpdatedEvent(final EntityMetadata metadata) {
-    super(metadata);
-  }
-
-  @Override
-  public CapabilityIdentity getCapabilityId() {
-    return CapabilityStorageItem.identity(getId());
-  }
-
-  @Override
-  public CapabilityStorageItem getCapabilityStorageItem() {
-    return getEntity();
-  }
 }

@@ -17,19 +17,15 @@ import java.util.Date;
 import javax.annotation.Nullable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Optional.ofNullable;
 
 /**
- * Describes the basic state of a task on a node within a clustered environment.
- * 
- * @since 3.1
+ * A simplified representation of a task's state suitable for external consumption.
+ *
+ * @since 3.next
  */
-public class ClusteredTaskState
-{
-  private final String nodeId;
-
+public class ExternalTaskState {
   private final TaskState state;
-
-  private final TaskState runState;
 
   private final TaskState lastEndState;
 
@@ -37,32 +33,28 @@ public class ClusteredTaskState
 
   private final Long lastRunDuration;
 
-  public ClusteredTaskState(String nodeId,
-                            TaskState state,
-                            @Nullable TaskState runState,
-                            @Nullable TaskState lastEndState,
-                            @Nullable Date lastRunStarted,
-                            @Nullable Long lastRunDuration)
+  public ExternalTaskState(final TaskState state,
+                           @Nullable final TaskState lastEndState,
+                           @Nullable final Date lastRunStarted,
+                           @Nullable final Long lastRunDuration)
   {
-    this.nodeId = checkNotNull(nodeId);
     this.state = checkNotNull(state);
-    this.runState = runState;
     this.lastEndState = lastEndState;
     this.lastRunStarted = lastRunStarted; // NOSONAR
     this.lastRunDuration = lastRunDuration;
   }
 
-  public String getNodeId() {
-    return nodeId;
+  public ExternalTaskState(final TaskInfo taskInfo) {
+    this(
+        taskInfo.getCurrentState().getState(),
+        ofNullable(taskInfo.getLastRunState()).map(LastRunState::getEndState).orElse(null),
+        ofNullable(taskInfo.getLastRunState()).map(LastRunState::getRunStarted).orElse(null),
+        ofNullable(taskInfo.getLastRunState()).map(LastRunState::getRunDuration).orElse(null)
+    );
   }
 
   public TaskState getState() {
     return state;
-  }
-
-  @Nullable
-  public TaskState getRunState() {
-    return runState;
   }
 
   @Nullable
@@ -78,12 +70,5 @@ public class ClusteredTaskState
   @Nullable
   public Long getLastRunDuration() {
     return lastRunDuration;
-  }
-
-  @Override
-  public String toString() {
-    return getClass().getSimpleName() + "{nodeId=" + nodeId + ", state=" + state + ", runState=" + runState
-        + ", lastEndState=" + lastEndState + ", lastRunStarted=" + lastRunStarted + ", lastRunDuration="
-        + lastRunDuration + "}";
   }
 }

@@ -148,7 +148,7 @@ public class ApiCreateUser
     user.setEmailAddress(emailAddress);
     user.setStatus(status.getStatus());
     user.setReadOnly(false);
-    user.setVersion("1");
+    user.setVersion(1);
     user.setSource(UserManager.DEFAULT_SOURCE);
     user.setRoles(roles.stream().map(r -> new RoleIdentifier(UserManager.DEFAULT_SOURCE, r))
         .collect(Collectors.toSet()));

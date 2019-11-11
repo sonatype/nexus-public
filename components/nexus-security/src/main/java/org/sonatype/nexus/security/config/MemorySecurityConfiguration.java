@@ -18,6 +18,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
+import org.sonatype.nexus.security.config.memory.MemoryCRole;
+import org.sonatype.nexus.security.config.memory.MemoryCUser;
+import org.sonatype.nexus.security.config.memory.MemoryCUserRoleMapping;
 import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
 import org.sonatype.nexus.security.role.NoSuchRoleException;
 import org.sonatype.nexus.security.user.NoSuchRoleMappingException;
@@ -29,7 +32,7 @@ import com.google.common.collect.Maps;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static org.sonatype.nexus.security.config.CUserRoleMapping.isCaseInsensitiveSource;
+import static org.sonatype.nexus.security.config.SecuritySourceUtil.isCaseInsensitiveSource;
 
 /**
  * Memory based {@link SecurityConfiguration}.
@@ -73,11 +76,16 @@ public class MemorySecurityConfiguration
   public void addUser(final CUser user, final Set<String> roles) {
     addUser(user);
 
-    CUserRoleMapping mapping = new CUserRoleMapping();
+    CUserRoleMapping mapping = new MemoryCUserRoleMapping();
     mapping.setUserId(user.getId());
     mapping.setSource(UserManager.DEFAULT_SOURCE);
     mapping.setRoles(roles);
     addUserRoleMapping(mapping);
+  }
+
+  @Override
+  public CUser newUser() {
+    return new MemoryCUser();
   }
 
   public void setUsers(final Collection<CUser> users) {
@@ -102,7 +110,7 @@ public class MemorySecurityConfiguration
   public void updateUser(final CUser user, final Set<String> roles) throws UserNotFoundException {
     updateUser(user);
 
-    CUserRoleMapping mapping = new CUserRoleMapping();
+    CUserRoleMapping mapping = new MemoryCUserRoleMapping();
     mapping.setUserId(user.getId());
     mapping.setSource(UserManager.DEFAULT_SOURCE);
     mapping.setRoles(roles);
@@ -271,5 +279,15 @@ public class MemorySecurityConfiguration
 
   private String userRoleMappingKey(final String userId, final String source) {
     return (isCaseInsensitiveSource(source) ? userId.toLowerCase() : userId) + "|" + source;
+  }
+
+  @Override
+  public CUserRoleMapping newUserRoleMapping() {
+    return new MemoryCUserRoleMapping();
+  }
+
+  @Override
+  public CRole newRole() {
+    return new MemoryCRole();
   }
 }

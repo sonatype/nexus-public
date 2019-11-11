@@ -124,7 +124,7 @@ public class SecurityConfigurationManagerImpl
   }
 
   @Override
-  public void createPrivilege(CPrivilege privilege) {
+  public void createPrivilege(final CPrivilege privilege) {
     if (getMergedConfiguration().getPrivileges().stream().anyMatch(p -> p.getId().equals(privilege.getId()))) {
       throw new DuplicatePrivilegeException(privilege.getId());
     }
@@ -133,7 +133,7 @@ public class SecurityConfigurationManagerImpl
   }
 
   @Override
-  public void createRole(CRole role) {
+  public void createRole(final CRole role) {
     if (getMergedConfiguration().getRoles().stream().anyMatch(p -> p.getId().equals(role.getId()))) {
       throw new DuplicateRoleException(role.getId());
     }
@@ -144,12 +144,12 @@ public class SecurityConfigurationManagerImpl
   }
 
   @Override
-  public void createUser(CUser user, Set<String> roles) {
+  public void createUser(final CUser user, final Set<String> roles) {
     createUser(user, null, roles);
   }
 
   @Override
-  public void createUser(CUser user, String password, Set<String> roles) {
+  public void createUser(final CUser user, final String password, final Set<String> roles) {
     if (!Strings2.isBlank(password)) {
       user.setPassword(passwordService.encryptPassword(password));
     }
@@ -157,7 +157,7 @@ public class SecurityConfigurationManagerImpl
   }
 
   @Override
-  public void deletePrivilege(String id) {
+  public void deletePrivilege(final String id) {
     try {
       getDefaultConfiguration().removePrivilege(id);
     }
@@ -174,7 +174,7 @@ public class SecurityConfigurationManagerImpl
   }
 
   @Override
-  public void deleteRole(String id) {
+  public void deleteRole(final String id) {
     try {
       getDefaultConfiguration().removeRole(id);
     }
@@ -190,7 +190,7 @@ public class SecurityConfigurationManagerImpl
   }
 
   @Override
-  public void deleteUser(String id) throws UserNotFoundException {
+  public void deleteUser(final String id) throws UserNotFoundException {
     boolean found = getDefaultConfiguration().removeUser(id);
 
     if (!found) {
@@ -199,7 +199,22 @@ public class SecurityConfigurationManagerImpl
   }
 
   @Override
-  public CPrivilege readPrivilege(String id) {
+  public CRole newRole() {
+    return getDefaultConfiguration().newRole();
+  }
+
+  @Override
+  public CUser newUser() {
+    return getDefaultConfiguration().newUser();
+  }
+
+  @Override
+  public CUserRoleMapping newUserRoleMapping() {
+    return getDefaultConfiguration().newUserRoleMapping();
+  }
+
+  @Override
+  public CPrivilege readPrivilege(final String id) {
     CPrivilege privilege = getMergedConfiguration().getPrivilege(id);
     if (privilege != null) {
       return privilege;
@@ -214,7 +229,7 @@ public class SecurityConfigurationManagerImpl
   }
 
   @Override
-  public CRole readRole(String id) {
+  public CRole readRole(final String id) {
     CRole role = getMergedConfiguration().getRole(id);
     if (role != null) {
       return role;
@@ -229,7 +244,7 @@ public class SecurityConfigurationManagerImpl
   }
 
   @Override
-  public CUser readUser(String id) throws UserNotFoundException {
+  public CUser readUser(final String id) throws UserNotFoundException {
     CUser user = getDefaultConfiguration().getUser(id);
 
     if (user != null) {
@@ -239,7 +254,7 @@ public class SecurityConfigurationManagerImpl
   }
 
   @Override
-  public void updatePrivilege(CPrivilege privilege) {
+  public void updatePrivilege(final CPrivilege privilege) {
     CPrivilege existing = getDefaultConfiguration().getPrivilege(privilege.getId());
 
     if (existing == null) {
@@ -255,7 +270,7 @@ public class SecurityConfigurationManagerImpl
   }
 
   @Override
-  public void updateRole(CRole role) {
+  public void updateRole(final CRole role) {
     CRole existing = getDefaultConfiguration().getRole(role.getId());
 
     if (existing == null) {
@@ -275,22 +290,22 @@ public class SecurityConfigurationManagerImpl
   }
 
   @Override
-  public void updateUser(CUser user) throws UserNotFoundException {
+  public void updateUser(final CUser user) throws UserNotFoundException {
     getDefaultConfiguration().updateUser(user);
   }
 
   @Override
-  public void updateUser(CUser user, Set<String> roles) throws UserNotFoundException {
+  public void updateUser(final CUser user, final Set<String> roles) throws UserNotFoundException {
     getDefaultConfiguration().updateUser(user, roles);
   }
 
   @Override
-  public void createUserRoleMapping(CUserRoleMapping userRoleMapping) {
+  public void createUserRoleMapping(final CUserRoleMapping userRoleMapping) {
     getDefaultConfiguration().addUserRoleMapping(userRoleMapping);
   }
 
   @Override
-  public CUserRoleMapping readUserRoleMapping(String userId, String source) throws NoSuchRoleMappingException {
+  public CUserRoleMapping readUserRoleMapping(final String userId, final String source) throws NoSuchRoleMappingException {
     CUserRoleMapping mapping = getDefaultConfiguration().getUserRoleMapping(userId, source);
 
     if (mapping != null) {
@@ -302,12 +317,12 @@ public class SecurityConfigurationManagerImpl
   }
 
   @Override
-  public void updateUserRoleMapping(CUserRoleMapping userRoleMapping) throws NoSuchRoleMappingException {
+  public void updateUserRoleMapping(final CUserRoleMapping userRoleMapping) throws NoSuchRoleMappingException {
     getDefaultConfiguration().updateUserRoleMapping(userRoleMapping);
   }
 
   @Override
-  public void deleteUserRoleMapping(String userId, String source) throws NoSuchRoleMappingException {
+  public void deleteUserRoleMapping(final String userId, final String source) throws NoSuchRoleMappingException {
     boolean found = getDefaultConfiguration().removeUserRoleMapping(userId, source);
 
     if (!found) {
@@ -330,7 +345,7 @@ public class SecurityConfigurationManagerImpl
   }
 
   @Override
-  public void cleanRemovedPrivilege(String privilegeId) {
+  public void cleanRemovedPrivilege(final String privilegeId) {
     configCleaner.privilegeRemoved(getDefaultConfiguration(), privilegeId);
   }
 
@@ -434,7 +449,7 @@ public class SecurityConfigurationManagerImpl
     return to;
   }
 
-  private CRole mergeRolesContents(CRole roleA, CRole roleB) {
+  private CRole mergeRolesContents(final CRole roleA, final CRole roleB) {
     Set<String> roles = new HashSet<>();
     // make sure they are not empty
     if (roleA.getRoles() != null) {
@@ -453,7 +468,7 @@ public class SecurityConfigurationManagerImpl
       privs.addAll(roleB.getPrivileges());
     }
 
-    CRole newRole = new CRole();
+    CRole newRole = newRole();
     newRole.setId(roleA.getId());
     newRole.setRoles(Sets.newHashSet(roles));
     newRole.setPrivileges(Sets.newHashSet(privs));
@@ -480,7 +495,7 @@ public class SecurityConfigurationManagerImpl
    * Simply validates the existence of each role/privilege assigned
    * (readRole/readPrivilege throw NoSuch(Role/Privilege)Exception if not found)
    */
-  private void validateContainedRolesAndPrivileges(CRole role) {
+  private void validateContainedRolesAndPrivileges(final CRole role) {
     role.getRoles().forEach(this::readRole);
     role.getPrivileges().forEach(this::readPrivilege);
   }
@@ -490,11 +505,11 @@ public class SecurityConfigurationManagerImpl
    *
    * @param role The role to validate
    */
-  private void validateRoleDoesntContainItself(CRole role) {
+  private void validateRoleDoesntContainItself(final CRole role) {
     validateRoleDoesntContainItself(role, role, new HashSet<>());
   }
 
-  private void validateRoleDoesntContainItself(CRole role, CRole child, Set<String> checkedRoles) {
+  private void validateRoleDoesntContainItself(final CRole role, final CRole child, final Set<String> checkedRoles) {
     child.getRoles().forEach(r -> {
       if (r.equals(role.getId())) {
         throw new RoleContainsItselfException(role.getId());

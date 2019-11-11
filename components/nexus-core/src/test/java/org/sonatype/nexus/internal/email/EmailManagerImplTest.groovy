@@ -12,7 +12,8 @@
  */
 package org.sonatype.nexus.internal.email
 
-import javax.inject.Provider
+import java.util.function.Function
+
 import javax.net.ssl.SSLContext
 
 import org.sonatype.nexus.common.event.EventManager
@@ -24,7 +25,6 @@ import org.apache.commons.mail.Email
 import org.apache.commons.mail.SimpleEmail
 import spock.lang.Specification
 import spock.lang.Unroll
-
 /**
  * Tests for {@link EmailManagerImpl}.
  */
@@ -35,19 +35,21 @@ class EmailManagerImplTest
     given: 'A configured EmailManagerImpl instance'
       TrustStore trustStore = Mock(TrustStore)
       trustStore.getSSLContext() >> SSLContext.getDefault()
-      EmailManagerImpl impl = new EmailManagerImpl(Mock(EventManager), Mock(EmailConfigurationStore), trustStore, Mock(Provider))
+      EmailManagerImpl impl = new EmailManagerImpl(Mock(EventManager), Mock(EmailConfigurationStore), trustStore, Mock(Function))
+
+    and: 'an populated EmailConfiguration'
+      def emailConfig = Mock(EmailConfiguration) {
+        _ * getHost() >> 'example.com'
+        _ * getPort() >> 25
+        _ * getFromAddress() >> 'sender@example.com'
+        _ * isStartTlsEnabled() >> startTlsEnabled
+        _ * isStartTlsRequired() >> startTlsRequired
+        _ * isSslOnConnectEnabled() >> sslOnConnect
+        _ * isSslCheckServerIdentityEnabled() >> checkServerIdentity
+        _ * isNexusTrustStoreEnabled() >> useTrustStore
+      }
     when: 'the specified email configuration is applied to the email instance'
-      Email email = impl.apply(
-          new EmailConfiguration(
-              host: 'example.com',
-              port: 25,
-              fromAddress: 'sender@example.com',
-              startTlsEnabled: startTlsEnabled,
-              startTlsRequired: startTlsRequired,
-              sslOnConnectEnabled: sslOnConnect,
-              sslCheckServerIdentityEnabled: checkServerIdentity,
-              nexusTrustStoreEnabled: useTrustStore),
-          new SimpleEmail())
+      Email email = impl.apply(emailConfig, new SimpleEmail())
     then: 'the email will be configured accordingly'
       email.startTLSEnabled == startTlsEnabled
       email.startTLSRequired == startTlsRequired
@@ -71,16 +73,17 @@ class EmailManagerImplTest
   @Unroll
   def 'Configures emails credentials correctly for username #username and password #password.'() {
     given: 'A configured EmailManagerImpl instance'
-      EmailManagerImpl impl = new EmailManagerImpl(Mock(EventManager), Mock(EmailConfigurationStore), Mock(TrustStore), Mock(Provider))
+      EmailManagerImpl impl = new EmailManagerImpl(Mock(EventManager), Mock(EmailConfigurationStore), Mock(TrustStore), Mock(Function))
+    and: 'an populated EmailConfiguration'
+      def emailConfig = Mock(EmailConfiguration) {
+        _ * getHost() >> 'example.com'
+        _ * getPort() >> 25
+        _ * getFromAddress() >> 'sender@example.com'
+        _ * getUsername() >> username
+        _ * getPassword() >> password
+      }
     when: 'the specified email configuration is applied to the email instance'
-      Email email = impl.apply(
-          new EmailConfiguration(
-              host: 'example.com',
-              port: 25,
-              fromAddress: 'sender@example.com',
-              username: username,
-              password: password),
-          new SimpleEmail())
+      Email email = impl.apply(emailConfig, new SimpleEmail())
     then: 'the email will be configured accordingly'
       email.authenticator?.passwordAuthentication?.userName == expectedUsername
       email.authenticator?.passwordAuthentication?.password == expectedPassword
@@ -98,7 +101,7 @@ class EmailManagerImplTest
       def eventManager = Mock(EventManager)
       def emailConfigurationStore = Mock(EmailConfigurationStore)
       emailConfigurationStore.load() >> Mock(EmailConfiguration)
-      EmailManagerImpl impl = new EmailManagerImpl(eventManager, emailConfigurationStore, Mock(TrustStore), Mock(Provider))
+      EmailManagerImpl impl = new EmailManagerImpl(eventManager, emailConfigurationStore, Mock(TrustStore), Mock(Function))
 
     when: 'a local event is received'
       def localEvent = Mock(EmailConfigurationEvent)

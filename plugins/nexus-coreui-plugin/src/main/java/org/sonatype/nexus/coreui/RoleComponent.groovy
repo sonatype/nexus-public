@@ -165,7 +165,7 @@ class RoleComponent
     return convert(securitySystem.getAuthorizationManager(DEFAULT_SOURCE).updateRole(
         new Role(
             roleId: roleXO.id,
-            version: roleXO.version,
+            version: Integer.valueOf(roleXO.version),
             source: roleXO.source,
             name: roleXO.name,
             description: roleXO.description,

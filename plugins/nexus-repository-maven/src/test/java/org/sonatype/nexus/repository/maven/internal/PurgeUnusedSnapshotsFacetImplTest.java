@@ -12,21 +12,26 @@
  */
 package org.sonatype.nexus.repository.maven.internal;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityMetadata;
+import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.EntityAdapter;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.maven.MavenFacet;
-import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataRebuilder;
+import org.sonatype.nexus.repository.maven.MavenPath.HashType;
+import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.BucketEntityAdapter;
 import org.sonatype.nexus.repository.storage.Component;
@@ -50,30 +55,49 @@ import org.mockito.Mock;
 
 import static java.lang.String.format;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
+import static java.util.Arrays.asList;
 import static java.util.Collections.emptySet;
+import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.not;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.cache.CacheInfo.CACHE;
+import static org.sonatype.nexus.repository.cache.CacheInfo.CACHE_TOKEN;
+import static org.sonatype.nexus.repository.cache.CacheInfo.INVALIDATED;
+import static org.sonatype.nexus.repository.cache.CacheInfo.LAST_VERIFIED;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_ARTIFACT_ID;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_GROUP_ID;
 import static org.sonatype.nexus.repository.maven.internal.PurgeUnusedSnapshotsFacetImplTest.TestData.testData;
+import static org.sonatype.nexus.repository.storage.Asset.CHECKSUM;
+import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_COMPONENT;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_BUCKET;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_FORMAT;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
+import static org.sonatype.nexus.repository.view.Content.CONTENT;
+import static org.sonatype.nexus.repository.view.Content.P_ETAG;
+import static org.sonatype.nexus.repository.view.Content.P_LAST_MODIFIED;
 
 public class PurgeUnusedSnapshotsFacetImplTest
     extends TestSupport
 {
+  private static final List<String> METADATA_PATHS = asList("my/company/foo/1.0-SNAPSHOT/maven-metadata.xml",
+      "my/company/foo/maven-metadata.xml", "my/company/maven-metadata.xml",
+      "my/company/foo/0.1-SNAPSHOT/maven-metadata.xml",
+      "my/company/bar/2.0-SNAPSHOT/maven-metadata.xml", "my/company/bar/maven-metadata.xml",
+      "this/company/baz/3.0-SNAPSHOT/maven-metadata.xml",
+      "this/company/baz/maven-metadata.xml", "this/company/maven-metadata.xml",
+      "your/company/biz/1.0-SNAPSHOT/maven-metadata.xml",
+      "your/company/biz/maven-metadata.xml", "your/company/maven-metadata.xml");
+
   static final int FIND_USED_LIMIT = 10;
 
   static final Long NUMBER_OF_COMPONENTS = 35L;
@@ -86,9 +110,6 @@ public class PurgeUnusedSnapshotsFacetImplTest
 
   final ComponentEntityAdapter componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter,
       componentFactory, emptySet());
-
-  @Mock
-  MetadataRebuilder metaRebuilder;
 
   @Mock
   Type groupType;
@@ -117,11 +138,14 @@ public class PurgeUnusedSnapshotsFacetImplTest
 
   int clusterPosition;
 
+  Maven2MavenPathParser maven2MavenPathParser = new Maven2MavenPathParser();
+
   @Before
   public void setUp() throws Exception {
     clusterPosition = 1;
-    purgeUnusedSnapshotsFacet = new PurgeUnusedSnapshotsFacetImpl(componentEntityAdapter,
-        metaRebuilder, groupType, hostedType, FIND_USED_LIMIT);
+    purgeUnusedSnapshotsFacet =
+        new PurgeUnusedSnapshotsFacetImpl(componentEntityAdapter, groupType, hostedType,
+            FIND_USED_LIMIT);
     purgeUnusedSnapshotsFacet.attach(repository);
 
     when(repository.getName()).thenReturn("test-repo");
@@ -129,6 +153,9 @@ public class PurgeUnusedSnapshotsFacetImplTest
     when(storageTx.findBucket(repository)).thenReturn(bucket);
     when(storageTx.countComponents(any(Query.class), any())).thenReturn(NUMBER_OF_COMPONENTS);
     when(storageTx.getDb()).thenReturn(oDatabaseDocumentTx);
+    METADATA_PATHS.forEach(
+        p -> when(storageTx.findAssetWithProperty(P_NAME, maven2MavenPathParser.parsePath(p).getPath(), bucket))
+            .thenReturn(createMetadataAsset(p, INVALIDATED)));
 
     UnitOfWork.beginBatch(storageTx);
 
@@ -144,14 +171,34 @@ public class PurgeUnusedSnapshotsFacetImplTest
   public void deleteUnusedSnapshotComponents() throws Exception {
     mockPagesOfComponents();
 
-    Set<String> set = purgeUnusedSnapshotsFacet.deleteUnusedSnapshotComponents(taskOlderThan);
-    assertThat(set.size(), equalTo(3));
-    assertThat(set, not(hasItem("that.company")));
-    assertThat(set, containsInAnyOrder("my.company", "your.company", "this.company"));
+    purgeUnusedSnapshotsFacet.deleteUnusedSnapshotComponents(taskOlderThan);
 
     assertComponentDeletions();
 
     assertQueries();
+
+    // ensure metadata is either deleted or marked for rebuild
+    for (String path : METADATA_PATHS) {
+      Asset metadataAsset = storageTx
+          .findAssetWithProperty(P_NAME, maven2MavenPathParser.parsePath(path).getPath(), bucket);
+      Boolean isMarkedForRebuild = metadataAsset.formatAttributes().get("forceRebuild", Boolean.class);
+      assertThat("metadata should have been marked for rebuild or deleted",
+          ((isMarkedForRebuild != null && isMarkedForRebuild) ||
+              verify(mavenFacet).delete(maven2MavenPathParser.parsePath(path))));
+    }
+  }
+
+  @Test
+  public void deleteUnusedSnapshotComponents_deleteAllLevelsOfMetadata() throws Exception {
+    //the second thenReturn(0L) in following statement will apply to all queries for assets that would use the
+    //expected level of metadata, and when 0, this causes metadata to be deleted
+    when(storageTx.countComponents(any(Query.class), any())).thenReturn(NUMBER_OF_COMPONENTS).thenReturn(0L);
+
+    mockPagesOfComponents();
+
+    purgeUnusedSnapshotsFacet.deleteUnusedSnapshotComponents(taskOlderThan);
+
+    assertAllMetadataDeleted();
   }
 
   // Mock the four pages of components. Each OCommandRequest is a page.
@@ -190,6 +237,60 @@ public class PurgeUnusedSnapshotsFacetImplTest
     assertThat(components.get(2).name(), equalTo("baz"));
     assertThat(components.get(3).name(), equalTo("foo"));
     assertThat(components.get(4).name(), equalTo("biz"));
+  }
+
+  private void assertAllMetadataDeleted() throws Exception {
+    verify(mavenFacet).delete(maven2MavenPathParser.parsePath("my/company/foo/1.0-SNAPSHOT/maven-metadata.xml"),
+        maven2MavenPathParser.parsePath("my/company/foo/1.0-SNAPSHOT/maven-metadata.xml.sha1"),
+        maven2MavenPathParser.parsePath("my/company/foo/1.0-SNAPSHOT/maven-metadata.xml.md5"));
+
+    verify(mavenFacet).delete(maven2MavenPathParser.parsePath("my/company/bar/2.0-SNAPSHOT/maven-metadata.xml"),
+        maven2MavenPathParser.parsePath("my/company/bar/2.0-SNAPSHOT/maven-metadata.xml.sha1"),
+        maven2MavenPathParser.parsePath("my/company/bar/2.0-SNAPSHOT/maven-metadata.xml.md5"));
+
+    verify(mavenFacet).delete(maven2MavenPathParser.parsePath("this/company/baz/3.0-SNAPSHOT/maven-metadata.xml"),
+        maven2MavenPathParser.parsePath("this/company/baz/3.0-SNAPSHOT/maven-metadata.xml.sha1"),
+        maven2MavenPathParser.parsePath("this/company/baz/3.0-SNAPSHOT/maven-metadata.xml.md5"));
+
+    verify(mavenFacet).delete(maven2MavenPathParser.parsePath("my/company/foo/0.1-SNAPSHOT/maven-metadata.xml"),
+        maven2MavenPathParser.parsePath("my/company/foo/0.1-SNAPSHOT/maven-metadata.xml.sha1"),
+        maven2MavenPathParser.parsePath("my/company/foo/0.1-SNAPSHOT/maven-metadata.xml.md5"));
+
+    verify(mavenFacet).delete(maven2MavenPathParser.parsePath("your/company/biz/1.0-SNAPSHOT/maven-metadata.xml"),
+        maven2MavenPathParser.parsePath("your/company/biz/1.0-SNAPSHOT/maven-metadata.xml.sha1"),
+        maven2MavenPathParser.parsePath("your/company/biz/1.0-SNAPSHOT/maven-metadata.xml.md5"));
+
+    //twice for the 1.0 and 0.1 versions
+    verify(mavenFacet, times(2)).delete(maven2MavenPathParser.parsePath("my/company/foo/maven-metadata.xml"),
+        maven2MavenPathParser.parsePath("my/company/foo/maven-metadata.xml.sha1"),
+        maven2MavenPathParser.parsePath("my/company/foo/maven-metadata.xml.md5"));
+
+    //three times for foo-1.0 bar-2.0 and foo-0.1
+    verify(mavenFacet, times(3)).delete(maven2MavenPathParser.parsePath("my/company/maven-metadata.xml"),
+        maven2MavenPathParser.parsePath("my/company/maven-metadata.xml.sha1"),
+        maven2MavenPathParser.parsePath("my/company/maven-metadata.xml.md5"));
+
+    verify(mavenFacet).delete(maven2MavenPathParser.parsePath("my/company/bar/maven-metadata.xml"),
+        maven2MavenPathParser.parsePath("my/company/bar/maven-metadata.xml.sha1"),
+        maven2MavenPathParser.parsePath("my/company/bar/maven-metadata.xml.md5"));
+
+    verify(mavenFacet).delete(maven2MavenPathParser.parsePath("this/company/baz/maven-metadata.xml"),
+        maven2MavenPathParser.parsePath("this/company/baz/maven-metadata.xml.sha1"),
+        maven2MavenPathParser.parsePath("this/company/baz/maven-metadata.xml.md5"));
+
+    verify(mavenFacet).delete(maven2MavenPathParser.parsePath("this/company/maven-metadata.xml"),
+        maven2MavenPathParser.parsePath("this/company/maven-metadata.xml.sha1"),
+        maven2MavenPathParser.parsePath("this/company/maven-metadata.xml.md5"));
+
+    verify(mavenFacet).delete(maven2MavenPathParser.parsePath("your/company/biz/maven-metadata.xml"),
+        maven2MavenPathParser.parsePath("your/company/biz/maven-metadata.xml.sha1"),
+        maven2MavenPathParser.parsePath("your/company/biz/maven-metadata.xml.md5"));
+
+    verify(mavenFacet).delete(maven2MavenPathParser.parsePath("your/company/maven-metadata.xml"),
+        maven2MavenPathParser.parsePath("your/company/maven-metadata.xml.sha1"),
+        maven2MavenPathParser.parsePath("your/company/maven-metadata.xml.md5"));
+
+    verifyNoMoreInteractions(mavenFacet);
   }
 
   private void assertQueries() {
@@ -282,6 +383,25 @@ public class PurgeUnusedSnapshotsFacetImplTest
     componentDoc.field(P_ATTRIBUTES, map);
 
     return componentDoc;
+  }
+
+  private Asset createMetadataAsset(String name, String cacheToken) {
+    Asset asset = new Asset();
+    asset.contentType(TEXT_XML);
+    asset.name(name);
+    asset.format(Maven2Format.NAME);
+    asset.attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
+    asset.formatAttributes().set(P_ASSET_KIND, REPOSITORY_METADATA.name());
+    asset.attributes().child(CHECKSUM).set(HashType.SHA1.getExt(),
+        HashAlgorithm.SHA1.function().hashString("foobar", StandardCharsets.UTF_8).toString());
+    asset.attributes().child(CHECKSUM).set(HashType.MD5.getExt(),
+        HashAlgorithm.MD5.function().hashString("foobar", StandardCharsets.UTF_8).toString());
+    asset.attributes().child(CONTENT).set(P_LAST_MODIFIED, new Date());
+    asset.attributes().child(CONTENT).set(P_ETAG, "ETAG");
+    asset.attributes().child(CACHE).set(LAST_VERIFIED, new Date());
+    asset.attributes().child(CACHE).set(CACHE_TOKEN, cacheToken);
+    asset.blobRef(new BlobRef("node", "store", "blobid"));
+    return asset;
   }
 
   static class TestData

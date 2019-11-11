@@ -343,7 +343,7 @@ public class RepositoryMetadataMerger
       log.warn("Merging with version mismatch for GA={}:{}, {} vs {}", target.getGroupId(), target.getArtifactId(),
           targetVersion, sourceVersion);
     }
-    
+
     mergePlugins(target, source);
     mergeVersioning(target, source);
     return target;

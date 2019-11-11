@@ -16,6 +16,12 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 import org.sonatype.goodies.testsupport.TestSupport
+import org.sonatype.nexus.internal.security.model.internal.orient.OrientCRole
+import org.sonatype.nexus.internal.security.model.internal.orient.OrientCRoleEntityAdapter
+import org.sonatype.nexus.internal.security.model.internal.orient.OrientCUserEntityAdapter
+import org.sonatype.nexus.internal.security.model.internal.orient.OrientCUserRoleMapping
+import org.sonatype.nexus.internal.security.model.internal.orient.OrientCUserRoleMappingEntityAdapter
+import org.sonatype.nexus.internal.security.model.internal.orient.OrientSecurityConfigurationSource
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule
 import org.sonatype.nexus.security.config.AdminPasswordFileManager
 import org.sonatype.nexus.security.config.CPrivilege
@@ -75,10 +81,10 @@ extends TestSupport
     source = new OrientSecurityConfigurationSource(
         database.instanceProvider,
         new StaticSecurityConfigurationSource(passwordService, adminPasswordFileManager, true),
-        new CUserEntityAdapter(),
-        new CRoleEntityAdapter(),
+        new OrientCUserEntityAdapter(),
+        new OrientCRoleEntityAdapter(),
         new CPrivilegeEntityAdapter(),
-        new CUserRoleMappingEntityAdapter()
+        new OrientCUserRoleMappingEntityAdapter()
     )
     source.start()
     source.loadConfiguration()
@@ -188,11 +194,11 @@ extends TestSupport
   }
 
   private void loadTestData() throws Exception {
-    configuration.addRole(new CRole(
+    configuration.addRole(new OrientCRole(
         id: 'test',
         name: 'test'
     ))
-    configuration.addUserRoleMapping(new CUserRoleMapping(
+    configuration.addUserRoleMapping(new OrientCUserRoleMapping(
         userId: 'test',
         source: 'default'
     ))
@@ -212,7 +218,7 @@ extends TestSupport
 
     // create roles and assign then to test user and test role
     (1..NUMBER_OF_THREADS).each { i ->
-      configuration.addRole(new CRole(
+      configuration.addRole(new OrientCRole(
           id: "test-${i}",
           name: "test-${i}"
       ))
@@ -226,6 +232,4 @@ extends TestSupport
       configuration.updateUserRoleMapping(mapping)
     }
   }
-
 }
-

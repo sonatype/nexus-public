@@ -27,7 +27,7 @@ Ext.define('NX.coreui.model.User', {
   },
   fields: [
     {name: 'userId', type: 'string', sortType: 'asUCText' },
-    {name: 'version', type: 'string', sortType: 'asUCText'},
+    {name: 'version', type: 'int', sortType: 'asUCText'},
     {name: 'realm', type: 'string', sortType: 'asUCText'},
     {name: 'firstName', type: 'string', sortType: 'asUCText' },
     {name: 'lastName', type: 'string', sortType: 'asUCText' },

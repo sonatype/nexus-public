@@ -54,4 +54,13 @@ public interface CapabilityStorage
    * @return capabilities (never null)
    */
   Map<CapabilityIdentity, CapabilityStorageItem> getAll();
+
+  /**
+   * @since 3.next
+   */
+  CapabilityStorageItem newStorageItem(final int version,
+                                       final String type,
+                                       final boolean enabled,
+                                       final String notes,
+                                       final Map<String, String> properties);
 }

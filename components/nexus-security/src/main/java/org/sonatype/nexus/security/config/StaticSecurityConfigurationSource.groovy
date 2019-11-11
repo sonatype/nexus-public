@@ -17,6 +17,8 @@ import javax.inject.Named
 import javax.inject.Singleton
 
 import org.sonatype.nexus.security.Roles
+import org.sonatype.nexus.security.config.memory.MemoryCUser
+import org.sonatype.nexus.security.config.memory.MemoryCUserRoleMapping
 
 import org.apache.shiro.authc.credential.PasswordService
 
@@ -67,7 +69,7 @@ class StaticSecurityConfigurationSource
 
     return new MemorySecurityConfiguration(
       users: [
-          new CUser(
+          new MemoryCUser(
               id: 'admin',
               password: password,
               firstName: 'Administrator',
@@ -75,7 +77,7 @@ class StaticSecurityConfigurationSource
               status: randomPassword ? CUser.STATUS_CHANGE_PASSWORD : CUser.STATUS_ACTIVE,
               email: 'admin@example.org'
           ),
-          new CUser(
+          new MemoryCUser(
               id: 'anonymous',
               // password='anonymous'
               password: '$shiro1$SHA-512$1024$CPJm1XWdYNg5eCAYp4L4HA==$HIGwnJhC07ZpgeVblZcFRD1F6KH+xPG8t7mIcEMbfycC+n5Ljudyoj9dzdinrLmChTrmKMCw2/z29F7HeLbTbQ==',
@@ -86,14 +88,14 @@ class StaticSecurityConfigurationSource
           )
       ],
       userRoleMappings: [
-          new CUserRoleMapping(
+          new MemoryCUserRoleMapping(
               userId: 'admin',
               source: 'default',
               roles: [
                   Roles.ADMIN_ROLE_ID
               ]
           ),
-          new CUserRoleMapping(
+          new MemoryCUserRoleMapping(
               userId: 'anonymous',
               source: 'default',
               roles: [

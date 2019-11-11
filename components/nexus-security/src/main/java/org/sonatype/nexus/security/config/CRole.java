@@ -15,141 +15,49 @@ package org.sonatype.nexus.security.config;
 import java.io.Serializable;
 import java.util.Set;
 
-import org.sonatype.nexus.common.entity.AbstractEntity;
-
-import com.google.common.collect.Sets;
-
 /**
  * Persistent role.
+ *
+ * @since 3.0
  */
-public class CRole
-    extends AbstractEntity
-    implements Serializable, Cloneable
+public interface CRole
+    extends Cloneable, Serializable
 {
-  private String id;
+  void addPrivilege(String string);
 
-  private String name;
+  void addRole(String string);
 
-  private String description;
+  String getDescription();
 
-  private Set<String> privileges;
+  String getId();
 
-  private Set<String> roles;
+  String getName();
 
-  private boolean readOnly = false;
+  Set<String> getPrivileges();
 
-  private String version;
+  Set<String> getRoles();
 
-  public void addPrivilege(String string) {
-    getPrivileges().add(string);
-  }
+  boolean isReadOnly();
 
-  public void addRole(String string) {
-    getRoles().add(string);
-  }
+  void removePrivilege(String string);
 
-  public String getDescription() {
-    return this.description;
-  }
+  void removeRole(String string);
 
-  public String getId() {
-    return this.id;
-  }
+  void setDescription(String description);
 
-  public String getName() {
-    return this.name;
-  }
+  void setId(String id);
 
-  public Set<String> getPrivileges() {
-    if (this.privileges == null) {
-      this.privileges = Sets.newHashSet();
-    }
+  void setName(String name);
 
-    return this.privileges;
-  }
+  void setPrivileges(final Set<String> privileges);
 
-  public Set<String> getRoles() {
-    if (this.roles == null) {
-      this.roles = Sets.newHashSet();
-    }
+  void setReadOnly(boolean readOnly);
 
-    return this.roles;
-  }
+  void setRoles(Set<String> roles);
 
-  public boolean isReadOnly() {
-    return this.readOnly;
-  }
+  int getVersion();
 
-  public void removePrivilege(String string) {
-    getPrivileges().remove(string);
-  }
+  void setVersion(final int version);
 
-  public void removeRole(String string) {
-    getRoles().remove(string);
-  }
-
-  public void setDescription(String description) {
-    this.description = description;
-  }
-
-  public void setId(String id) {
-    this.id = id;
-  }
-
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  public void setPrivileges(final Set<String> privileges) {
-    this.privileges = privileges;
-  }
-
-  public void setReadOnly(boolean readOnly) {
-    this.readOnly = readOnly;
-  }
-
-  public void setRoles(Set<String> roles) {
-    this.roles = roles;
-  }
-
-  public String getVersion() {
-    return version;
-  }
-
-  public void setVersion(final String version) {
-    this.version = version;
-  }
-
-  @Override
-  public CRole clone() {
-    try {
-      CRole copy = (CRole) super.clone();
-
-      if (this.privileges != null) {
-        copy.privileges = Sets.newHashSet(this.privileges);
-      }
-
-      if (this.roles != null) {
-        copy.roles = Sets.newHashSet(this.roles);
-      }
-
-      return copy;
-    }
-    catch (CloneNotSupportedException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Override
-  public String toString() {
-    return getClass().getSimpleName() + "{" +
-        "id='" + id + '\'' +
-        ", name='" + name + '\'' +
-        ", description='" + description + '\'' +
-        ", privileges=" + privileges +
-        ", roles=" + roles +
-        ", readOnly=" + readOnly +
-        ", version='" + version + '\'' +
-        '}';
-  }
+  CRole clone();
 }

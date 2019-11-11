@@ -101,6 +101,12 @@ class SecurityRule
     }
   }
 
+  Role getRole(final String roleId) {
+    securitySystemProvider.get().getAuthorizationManager(DEFAULT_SOURCE).listRoles().find {
+      it.roleId == roleId
+    }
+  }
+
   Privilege createContentSelectorPrivilege(final String name, final String selector, final String repository = '*', final String actions = '*') {
     def privilege = new Privilege(
         id: name,
@@ -140,17 +146,37 @@ class SecurityRule
   }
 
   Role createRole(final String name, final String... privilegeNames) {
+    createRole(name, new String[0], privilegeNames)
+  }
+
+  Role createRole(final String name, final String[] roleIds, final String[] privilegeNames) {
     Privilege[] privileges = privilegeNames.collect { String privilegeName -> getPrivilege(privilegeName) } as Privilege[]
-    createRole(name, privileges)
+
+    if (privileges.length != privilegeNames.length) {
+      throw new IllegalStateException("Missing privileges names: ${privilegeNames} privileges: ${privileges}")
+    }
+
+    Role[] roles = roleIds.collect { String roleId -> getRole(roleId) } as Role[]
+
+    if (roles.length != roleIds.length) {
+      throw new IllegalStateException("Missing privileges names: ${roleIds} privileges: ${roles}")
+    }
+
+    createRole(name, roles, privileges)
   }
 
   Role createRole(final String name, final Privilege... privileges) {
+    createRole(name, new Role[0], privileges)
+  }
+
+  Role createRole(final String name, final Role[] containedRoles, final Privilege[] privileges) {
     def role = new Role(
         roleId: name,
         source: DEFAULT_SOURCE,
         name: name,
         description: name,
         readOnly: false,
+        roles: containedRoles.collect { Role r -> r.roleId } as Set<String>,
         privileges: privileges.collect { Privilege p -> p.id } as Set<String>
     )
 

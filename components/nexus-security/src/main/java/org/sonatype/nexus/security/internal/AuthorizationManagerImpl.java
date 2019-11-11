@@ -89,7 +89,7 @@ public class AuthorizationManagerImpl
   }
 
   private CRole convert(final Role source) {
-    CRole target = new CRole();
+    CRole target = configuration.newRole();
     target.setId(source.getRoleId());
     target.setVersion(source.getVersion());
     target.setName(source.getName());
@@ -175,12 +175,12 @@ public class AuthorizationManagerImpl
   }
 
   @Override
-  public Role getRole(String roleId) throws NoSuchRoleException {
+  public Role getRole(final String roleId) throws NoSuchRoleException {
     return this.convert(this.configuration.readRole(roleId));
   }
 
   @Override
-  public Role addRole(Role role) {
+  public Role addRole(final Role role) {
     // the roleId of the secRole might change, so we need to keep the reference
     final CRole secRole = this.convert(role);
 
@@ -195,7 +195,7 @@ public class AuthorizationManagerImpl
   }
 
   @Override
-  public Role updateRole(Role role) throws NoSuchRoleException {
+  public Role updateRole(final Role role) throws NoSuchRoleException {
     final CRole secRole = this.convert(role);
 
     configuration.updateRole(secRole);
@@ -236,12 +236,12 @@ public class AuthorizationManagerImpl
   }
 
   @Override
-  public Privilege getPrivilege(String privilegeId) throws NoSuchPrivilegeException {
+  public Privilege getPrivilege(final String privilegeId) throws NoSuchPrivilegeException {
     return this.convert(this.configuration.readPrivilege(privilegeId));
   }
 
   @Override
-  public Privilege addPrivilege(Privilege privilege) {
+  public Privilege addPrivilege(final Privilege privilege) {
     final CPrivilege secPriv = this.convert(privilege);
     configuration.createPrivilege(secPriv);
 
@@ -254,7 +254,7 @@ public class AuthorizationManagerImpl
   }
 
   @Override
-  public Privilege updatePrivilege(Privilege privilege) throws NoSuchPrivilegeException {
+  public Privilege updatePrivilege(final Privilege privilege) throws NoSuchPrivilegeException {
     final CPrivilege secPriv = this.convert(privilege);
 
     configuration.updatePrivilege(secPriv);

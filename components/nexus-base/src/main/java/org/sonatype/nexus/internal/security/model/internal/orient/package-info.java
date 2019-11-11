@@ -10,31 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.email.internal;
+@FeatureFlag(name = "nexus.orient.enabled")
+package org.sonatype.nexus.internal.security.model.internal.orient;
 
-import javax.inject.Named;
-import javax.inject.Provider;
-import javax.inject.Singleton;
-
-import org.sonatype.nexus.email.EmailConfiguration;
-
-/**
- * Initial {@link EmailConfiguration} provider.
- *
- * @since 3.0
- */
-@Named("initial")
-@Singleton
-public class InitialEmailConfigurationProvider
-  implements Provider<EmailConfiguration>
-{
-  @Override
-  public EmailConfiguration get() {
-    EmailConfiguration configuration = new EmailConfiguration();
-    configuration.setEnabled(false);
-    configuration.setHost("localhost");
-    configuration.setPort(25);
-    configuration.setFromAddress("nexus@example.org");
-    return configuration;
-  }
-}
+import org.sonatype.nexus.common.app.FeatureFlag;

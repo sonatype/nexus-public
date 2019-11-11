@@ -51,7 +51,7 @@ public class Content
    * Key of {@link Asset} nested map of content related properties.
    */
   @VisibleForTesting
-  static final String CONTENT = "content";
+  public static final String CONTENT = "content";
 
   /**
    * Key of content "Last-Modified" attribute, with type {@link DateTime}.
@@ -135,14 +135,14 @@ public class Content
    * Key of last modified {@link Date}.
    */
   @VisibleForTesting
-  static final String P_LAST_MODIFIED = "last_modified";
+  public static final String P_LAST_MODIFIED = "last_modified";
 
   /**
    * Key of etag {@link String}. If present, was extracted from upstream response, and it has quotes removed (by RFC
    * {@code ETag} header value is {@code "quoted"}, this attribute stores it <strong>without quotes</strong>).
    */
   @VisibleForTesting
-  static final String P_ETAG = "etag";
+  public static final String P_ETAG = "etag";
 
   /**
    * Extracts non-format specific content attributes into the passed in {@link AttributesMap} (usually originating from

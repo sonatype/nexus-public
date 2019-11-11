@@ -137,7 +137,7 @@ public class DefaultCapabilityRegistry
 
       final Map<String, String> encryptedProps = encryptValuesIfNeeded(descriptor, props);
 
-      final CapabilityStorageItem item = new CapabilityStorageItem(
+      final CapabilityStorageItem item = capabilityStorage.newStorageItem(
           descriptor.version(), type.toString(), enabled, notes, encryptedProps
       );
 
@@ -209,7 +209,7 @@ public class DefaultCapabilityRegistry
 
       final Map<String, String> encryptedProps = encryptValuesIfNeeded(reference.descriptor(), props);
 
-      final CapabilityStorageItem item = new CapabilityStorageItem(
+      final CapabilityStorageItem item = capabilityStorage.newStorageItem(
           reference.descriptor().version(), reference.type().toString(), enabled, notes, encryptedProps
       );
 
@@ -412,7 +412,7 @@ public class DefaultCapabilityRegistry
           );
           continue;
         }
-        capabilityStorage.update(id, new CapabilityStorageItem(
+        capabilityStorage.update(id, capabilityStorage.newStorageItem(
                 descriptor.version(), item.getType(), item.isEnabled(), item.getNotes(), properties)
         );
       }

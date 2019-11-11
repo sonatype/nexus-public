@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.capability.storage;
+package org.sonatype.nexus.internal.capability.storage.orient;
 
 import java.util.Map;
 
@@ -18,9 +18,9 @@ import javax.annotation.Nullable;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.entity.EntityEvent;
 import org.sonatype.nexus.common.entity.EntityMetadata;
+import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItem;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
@@ -38,11 +38,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 3.0
  */
-@FeatureFlag(name = "nexus.orient.store.config")
 @Named
 @Singleton
 public class CapabilityStorageItemEntityAdapter
-  extends IterableEntityAdapter<CapabilityStorageItem>
+  extends IterableEntityAdapter<OrientCapabilityStorageItem>
 {
   private static final String DB_CLASS = new OClassNameBuilder()
       .type("capability")
@@ -72,12 +71,12 @@ public class CapabilityStorageItemEntityAdapter
   }
 
   @Override
-  protected CapabilityStorageItem newEntity() {
-    return new CapabilityStorageItem();
+  protected OrientCapabilityStorageItem newEntity() {
+    return new OrientCapabilityStorageItem();
   }
 
   @Override
-  protected void readFields(final ODocument document, final CapabilityStorageItem entity) {
+  protected void readFields(final ODocument document, final OrientCapabilityStorageItem entity) {
     entity.setVersion(document.field(P_VERSION, OType.INTEGER));
     entity.setType(document.field(P_TYPE, OType.STRING));
     entity.setEnabled(document.field(P_ENABLED, OType.BOOLEAN));
@@ -88,7 +87,7 @@ public class CapabilityStorageItemEntityAdapter
   }
 
   @Override
-  protected void writeFields(final ODocument document, final CapabilityStorageItem entity) {
+  protected void writeFields(final ODocument document, final OrientCapabilityStorageItem entity) {
     document.field(P_VERSION, entity.getVersion());
     document.field(P_TYPE, entity.getType());
     document.field(P_ENABLED, entity.isEnabled());
@@ -107,7 +106,7 @@ public class CapabilityStorageItemEntityAdapter
   }
 
   @Nullable
-  public CapabilityStorageItem read(final ODatabaseDocumentTx db, final String id) {
+  public OrientCapabilityStorageItem read(final ODatabaseDocumentTx db, final String id) {
     checkNotNull(db);
     checkNotNull(id);
 
@@ -118,7 +117,7 @@ public class CapabilityStorageItemEntityAdapter
     return null;
   }
 
-  public boolean edit(final ODatabaseDocumentTx db, final String id, final CapabilityStorageItem entity) {
+  public boolean edit(final ODatabaseDocumentTx db, final String id, final OrientCapabilityStorageItem entity) {
     checkNotNull(db);
     checkNotNull(id);
     checkNotNull(entity);
@@ -154,11 +153,11 @@ public class CapabilityStorageItemEntityAdapter
 
     switch (eventKind) {
       case CREATE:
-        return new CapabilityStorageItemCreatedEvent(metadata);
+        return new OrientCapabilityStorageItemCreatedEvent(metadata);
       case UPDATE:
-        return new CapabilityStorageItemUpdatedEvent(metadata);
+        return new OrientCapabilityStorageItemUpdatedEvent(metadata);
       case DELETE:
-        return new CapabilityStorageItemDeletedEvent(metadata);
+        return new OrientCapabilityStorageItemDeletedEvent(metadata);
       default:
         return null;
     }

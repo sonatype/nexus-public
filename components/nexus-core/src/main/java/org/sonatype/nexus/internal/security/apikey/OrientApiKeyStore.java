@@ -59,13 +59,13 @@ import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 @Named
 @ManagedLifecycle(phase = SCHEMAS)
 @Singleton
-public class ApiKeyStoreImpl
+public class OrientApiKeyStore
     extends StateGuardLifecycleSupport
     implements ApiKeyStore, EventAware
 {
   private final Provider<DatabaseInstance> databaseInstance;
 
-  private final ApiKeyEntityAdapter entityAdapter;
+  private final OrientApiKeyEntityAdapter entityAdapter;
 
   private final UserPrincipalsHelper principalsHelper;
 
@@ -74,11 +74,12 @@ public class ApiKeyStoreImpl
   private final DefaultApiKeyFactory defaultApiKeyFactory;
 
   @Inject
-  public ApiKeyStoreImpl(@Named(DatabaseInstanceNames.SECURITY) final Provider<DatabaseInstance> databaseInstance,
-                         final ApiKeyEntityAdapter entityAdapter,
-                         final UserPrincipalsHelper principalsHelper,
-                         final Map<String, ApiKeyFactory> apiKeyFactories,
-                         final DefaultApiKeyFactory defaultApiKeyFactory)
+  public OrientApiKeyStore(
+      @Named(DatabaseInstanceNames.SECURITY) final Provider<DatabaseInstance> databaseInstance,
+      final OrientApiKeyEntityAdapter entityAdapter,
+      final UserPrincipalsHelper principalsHelper,
+      final Map<String, ApiKeyFactory> apiKeyFactories,
+      final DefaultApiKeyFactory defaultApiKeyFactory)
   {
     this.databaseInstance = checkNotNull(databaseInstance);
     this.entityAdapter = checkNotNull(entityAdapter);
@@ -118,7 +119,7 @@ public class ApiKeyStoreImpl
     checkNotNull(domain);
     checkNotNull(principals);
     checkNotNull(apiKey);
-    final ApiKey entity = new ApiKey();
+    final OrientApiKey entity = entityAdapter.newEntity();
     entity.setDomain(domain);
     entity.setApiKey(apiKey);
     entity.setPrincipals(principals);
@@ -130,7 +131,7 @@ public class ApiKeyStoreImpl
   @Guarded(by = STARTED)
   public char[] getApiKey(final String domain, final PrincipalCollection principals) {
     return inTx(databaseInstance).call(db -> {
-      for (ApiKey entity : findByPrimaryPrincipal(db, principals)) {
+      for (OrientApiKey entity : findByPrimaryPrincipal(db, principals)) {
         if (entity.getDomain().equals(domain)) {
           return entity.getApiKey();
         }
@@ -144,7 +145,7 @@ public class ApiKeyStoreImpl
   @Guarded(by = STARTED)
   public PrincipalCollection getPrincipals(final String domain, final char[] apiKey) {
     return inTx(databaseInstance).call(db -> {
-      final ApiKey entity = entityAdapter.findByApiKey(db, domain, checkNotNull(apiKey));
+      final OrientApiKey entity = entityAdapter.findByApiKey(db, domain, checkNotNull(apiKey));
       return entity == null ? null : entity.getPrincipals();
     });
   }
@@ -153,7 +154,7 @@ public class ApiKeyStoreImpl
   @Guarded(by = STARTED)
   public void deleteApiKey(final String domain, final PrincipalCollection principals) {
     inTxRetry(databaseInstance).run(db -> {
-      for (ApiKey entity : findByPrimaryPrincipal(db, principals)) {
+      for (OrientApiKey entity : findByPrimaryPrincipal(db, principals)) {
         if (entity.getDomain().equals(domain)) {
           entityAdapter.deleteEntity(db, entity);
         }
@@ -165,7 +166,7 @@ public class ApiKeyStoreImpl
   @Guarded(by = STARTED)
   public void deleteApiKeys(final PrincipalCollection principals) {
     inTxRetry(databaseInstance).run(db -> {
-      for (ApiKey entity : findByPrimaryPrincipal(db, principals)) {
+      for (OrientApiKey entity : findByPrimaryPrincipal(db, principals)) {
         entityAdapter.deleteEntity(db, entity);
       }
     });
@@ -182,8 +183,8 @@ public class ApiKeyStoreImpl
   public void purgeApiKeys() {
     checkCancellation();
     inTxRetry(databaseInstance).run(db -> {
-      List<ApiKey> delete = new ArrayList<>();
-      for (ApiKey entity : entityAdapter.browse(db)) {
+      List<OrientApiKey> delete = new ArrayList<>();
+      for (OrientApiKey entity : entityAdapter.browse(db)) {
         checkCancellation();
         UnitOfWork work = UnitOfWork.pause();
         try {
@@ -198,7 +199,7 @@ public class ApiKeyStoreImpl
           db.activateOnCurrentThread();
         }
       }
-      for (ApiKey entity : delete) {
+      for (OrientApiKey entity : delete) {
         checkCancellation();
         entityAdapter.deleteEntity(db, entity);
       }
@@ -217,8 +218,8 @@ public class ApiKeyStoreImpl
     }
   }
 
-  private Iterable<ApiKey> findByPrimaryPrincipal(final ODatabaseDocumentTx db,
-                                                  final PrincipalCollection principals)
+  private Iterable<OrientApiKey> findByPrimaryPrincipal(final ODatabaseDocumentTx db,
+                                                        final PrincipalCollection principals)
   {
     final String primaryPrincipal = checkNotNull(principals).getPrimaryPrincipal().toString();
     return entityAdapter.browseByPrimaryPrincipal(db, primaryPrincipal);

@@ -15,7 +15,7 @@ package org.sonatype.nexus.internal.capability;
 import javax.inject.Named;
 
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorage;
-import org.sonatype.nexus.internal.capability.storage.OrientCapabilityStorage;
+import org.sonatype.nexus.internal.capability.storage.orient.OrientCapabilityStorage;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.assistedinject.FactoryModuleBuilder;

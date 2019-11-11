@@ -12,30 +12,12 @@
  */
 package org.sonatype.nexus.internal.capability.storage;
 
-import org.sonatype.nexus.capability.CapabilityIdentity;
-import org.sonatype.nexus.common.entity.EntityDeletedEvent;
-import org.sonatype.nexus.common.entity.EntityMetadata;
-
 /**
  * {@link CapabilityStorageItem} deleted event.
  *
  * @since 3.1
  */
-public class CapabilityStorageItemDeletedEvent
-    extends EntityDeletedEvent
-    implements CapabilityStorageItemEvent
+public interface CapabilityStorageItemDeletedEvent
+    extends CapabilityStorageItemEvent
 {
-  public CapabilityStorageItemDeletedEvent(final EntityMetadata metadata) {
-    super(metadata);
-  }
-
-  @Override
-  public CapabilityIdentity getCapabilityId() {
-    return CapabilityStorageItem.identity(getId());
-  }
-
-  @Override
-  public CapabilityStorageItem getCapabilityStorageItem() {
-    return getEntity();
-  }
 }

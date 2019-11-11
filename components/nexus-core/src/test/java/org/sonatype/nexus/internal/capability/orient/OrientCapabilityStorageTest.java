@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.capability;
+package org.sonatype.nexus.internal.capability.orient;
 
 import java.util.Map;
 
@@ -18,12 +18,12 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.capability.CapabilityIdentity;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItem;
-import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemCreatedEvent;
-import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemDeletedEvent;
-import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemEntityAdapter;
+import org.sonatype.nexus.internal.capability.storage.orient.OrientCapabilityStorageItemCreatedEvent;
+import org.sonatype.nexus.internal.capability.storage.orient.OrientCapabilityStorageItemDeletedEvent;
+import org.sonatype.nexus.internal.capability.storage.orient.CapabilityStorageItemEntityAdapter;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemEvent;
-import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemUpdatedEvent;
-import org.sonatype.nexus.internal.capability.storage.OrientCapabilityStorage;
+import org.sonatype.nexus.internal.capability.storage.orient.OrientCapabilityStorageItemUpdatedEvent;
+import org.sonatype.nexus.internal.capability.storage.orient.OrientCapabilityStorage;
 import org.sonatype.nexus.orient.HexRecordIdObfuscator;
 import org.sonatype.nexus.orient.entity.EntityHook;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
@@ -97,14 +97,9 @@ public class OrientCapabilityStorageTest
 
   @Test
   public void basicLifecycle() throws Exception {
-    CapabilityStorageItem item1 = new CapabilityStorageItem();
-    item1.setType("test");
-    item1.setVersion(0);
-    item1.setEnabled(false);
-    item1.setNotes("hello");
     Map<String,String> props = Maps.newHashMap();
     props.put("foo", "bar");
-    item1.setProperties(props);
+    CapabilityStorageItem item1 = underTest.newStorageItem(0, "test", false, "hello", props);
     log("Item: {}", item1);
 
     // add
@@ -154,13 +149,13 @@ public class OrientCapabilityStorageTest
 
     Object[] events = eventCaptor.getAllValues().toArray();
 
-    assertThat(events[0], instanceOf(CapabilityStorageItemCreatedEvent.class));
+    assertThat(events[0], instanceOf(OrientCapabilityStorageItemCreatedEvent.class));
     checkEventDetails((CapabilityStorageItemEvent) events[0], id, item1);
 
-    assertThat(events[1], instanceOf(CapabilityStorageItemUpdatedEvent.class));
+    assertThat(events[1], instanceOf(OrientCapabilityStorageItemUpdatedEvent.class));
     checkEventDetails((CapabilityStorageItemEvent) events[1], id, item3);
 
-    assertThat(events[2], instanceOf(CapabilityStorageItemDeletedEvent.class));
+    assertThat(events[2], instanceOf(OrientCapabilityStorageItemDeletedEvent.class));
     checkEventDetails((CapabilityStorageItemEvent) events[2], id, item3);
   }
 

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.security.model;
+package org.sonatype.nexus.internal.security.model.internal.orient;
 
 import java.util.ConcurrentModificationException;
 import java.util.List;
@@ -22,9 +22,9 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.internal.security.model.CPrivilegeEntityAdapter;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.security.config.CPrivilege;
@@ -46,17 +46,17 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;
 
 /**
- * Default {@link SecurityConfigurationSource} implementation using Orient db as store.
+ * Default {@link SecurityConfigurationSource} implementation using OrientDB as store.
  *
  * @since 3.0
  */
-@FeatureFlag(name = "nexus.orient.store.config")
 @Named
 @ManagedLifecycle(phase = SCHEMAS)
 @Singleton
@@ -74,13 +74,13 @@ public class OrientSecurityConfigurationSource
    */
   private final SecurityConfigurationSource securityDefaults;
 
-  private final CUserEntityAdapter userEntityAdapter;
+  private final OrientCUserEntityAdapter userEntityAdapter;
 
-  private final CRoleEntityAdapter roleEntityAdapter;
+  private final OrientCRoleEntityAdapter roleEntityAdapter;
 
   private final CPrivilegeEntityAdapter privilegeEntityAdapter;
 
-  private final CUserRoleMappingEntityAdapter userRoleMappingEntityAdapter;
+  private final OrientCUserRoleMappingEntityAdapter userRoleMappingEntityAdapter;
 
   /**
    * The configuration.
@@ -88,12 +88,13 @@ public class OrientSecurityConfigurationSource
   private SecurityConfiguration configuration;
 
   @Inject
-  public OrientSecurityConfigurationSource(@Named(DatabaseInstanceNames.SECURITY) final Provider<DatabaseInstance> databaseInstance,
-                                           @Named("static") final SecurityConfigurationSource defaults,
-                                           final CUserEntityAdapter userEntityAdapter,
-                                           final CRoleEntityAdapter roleEntityAdapter,
-                                           final CPrivilegeEntityAdapter privilegeEntityAdapter,
-                                           final CUserRoleMappingEntityAdapter userRoleMappingEntityAdapter)
+  public OrientSecurityConfigurationSource(
+      @Named(DatabaseInstanceNames.SECURITY) final Provider<DatabaseInstance> databaseInstance,
+      @Named("static") final SecurityConfigurationSource defaults,
+      final OrientCUserEntityAdapter userEntityAdapter,
+      final OrientCRoleEntityAdapter roleEntityAdapter,
+      final CPrivilegeEntityAdapter privilegeEntityAdapter,
+      final OrientCUserRoleMappingEntityAdapter userRoleMappingEntityAdapter)
   {
     this.databaseInstance = checkNotNull(databaseInstance);
     this.securityDefaults = checkNotNull(defaults);
@@ -114,7 +115,7 @@ public class OrientSecurityConfigurationSource
           if (users != null && !users.isEmpty()) {
             log.info("Initializing default users");
             for (CUser user : users) {
-              userEntityAdapter.addEntity(db, user);
+              userEntityAdapter.addEntity(db, convert(user));
             }
           }
         }
@@ -128,7 +129,7 @@ public class OrientSecurityConfigurationSource
           if (roles != null && !roles.isEmpty()) {
             log.info("Initializing default roles");
             for (CRole role : roles) {
-              roleEntityAdapter.addEntity(db, role);
+              roleEntityAdapter.addEntity(db, convert(role));
             }
           }
         }
@@ -156,7 +157,7 @@ public class OrientSecurityConfigurationSource
           if (mappings != null && !mappings.isEmpty()) {
             log.info("Initializing default user/role mappings");
             for (CUserRoleMapping mapping : mappings) {
-              userRoleMappingEntityAdapter.addEntity(db, mapping);
+              userRoleMappingEntityAdapter.addEntity(db, convert(mapping));
             }
           }
         }
@@ -178,8 +179,12 @@ public class OrientSecurityConfigurationSource
   private class OrientSecurityConfiguration
       implements SecurityConfiguration
   {
-    private ConcurrentModificationException concurrentlyModified(final String type, final String value) {
-      throw new ConcurrentModificationException(type + " '" + value + "' updated in the meantime");
+    private ConcurrentModificationException concurrentlyModified(
+        final String type,
+        final String value,
+        final Exception e)
+    {
+      throw new ConcurrentModificationException(type + " '" + value + "' updated in the meantime", e);
     }
 
     //
@@ -205,10 +210,11 @@ public class OrientSecurityConfigurationSource
     public void addUser(final CUser user, final Set<String> roles) {
       checkNotNull(user);
       checkNotNull(user.getId());
+      checkUser(user);
       log.trace("Adding user: {}", user.getId());
 
       inTxRetry(databaseInstance).run(db -> {
-        userEntityAdapter.addEntity(db, user);
+        userEntityAdapter.addEntity(db, (OrientCUser) user);
         addUserRoleMapping(mapping(user.getId(), roles));
       });
     }
@@ -217,6 +223,7 @@ public class OrientSecurityConfigurationSource
     public void updateUser(final CUser user) throws UserNotFoundException {
       checkNotNull(user);
       checkNotNull(user.getId());
+      checkUser(user);
       log.trace("Updating user: {}", user.getId());
 
       try {
@@ -225,11 +232,11 @@ public class OrientSecurityConfigurationSource
           if (existing == null) {
             throw new UserNotFoundException(user.getId());
           }
-          userEntityAdapter.update(db, user);
+          userEntityAdapter.update(db, (OrientCUser) user);
         });
       }
       catch (OConcurrentModificationException e) {
-        throw concurrentlyModified("User", user.getId());
+        throw concurrentlyModified("User", user.getId(), e);
       }
     }
 
@@ -255,7 +262,7 @@ public class OrientSecurityConfigurationSource
         });
       }
       catch (OConcurrentModificationException e) {
-        throw concurrentlyModified("User", user.getId());
+        throw concurrentlyModified("User", user.getId(), e);
       }
     }
 
@@ -274,7 +281,7 @@ public class OrientSecurityConfigurationSource
         });
       }
       catch (OConcurrentModificationException e) {
-        throw concurrentlyModified("User", id);
+        throw concurrentlyModified("User", id, e);
       }
     }
 
@@ -327,7 +334,7 @@ public class OrientSecurityConfigurationSource
         });
       }
       catch (OConcurrentModificationException e) {
-        throw concurrentlyModified("Privilege", privilege.getId());
+        throw concurrentlyModified("Privilege", privilege.getId(), e);
       }
     }
 
@@ -346,7 +353,7 @@ public class OrientSecurityConfigurationSource
         });
       }
       catch (OConcurrentModificationException e) {
-        throw concurrentlyModified("Privilege", id);
+        throw concurrentlyModified("Privilege", id, e);
       }
     }
 
@@ -373,6 +380,7 @@ public class OrientSecurityConfigurationSource
     public void addRole(final CRole role) {
       checkNotNull(role);
       checkNotNull(role.getId());
+      checkRole(role);
       log.trace("Adding role: {}", role.getId());
 
       try {
@@ -380,7 +388,7 @@ public class OrientSecurityConfigurationSource
           if (roleEntityAdapter.read(db, role.getId()) != null) {
             throw new DuplicateRoleException(role.getId());
           }
-          roleEntityAdapter.addEntity(db, role);
+          roleEntityAdapter.addEntity(db, (OrientCRole) role);
         });
       }
       catch (ORecordDuplicatedException e) {
@@ -392,6 +400,7 @@ public class OrientSecurityConfigurationSource
     public void updateRole(final CRole role) {
       checkNotNull(role);
       checkNotNull(role.getId());
+      checkRole(role);
       log.trace("Updating role: {}", role.getId());
 
       try {
@@ -401,13 +410,13 @@ public class OrientSecurityConfigurationSource
             throw new NoSuchRoleException(role.getId());
           }
           if (!Objects.equals(role.getVersion(), existing.getVersion())) {
-            throw concurrentlyModified("Role", role.getId());
+            throw concurrentlyModified("Role", role.getId(), null);
           }
-          roleEntityAdapter.update(db, role);
+          roleEntityAdapter.update(db, (OrientCRole) role);
         });
       }
       catch (OConcurrentModificationException e) {
-        throw concurrentlyModified("Role", role.getId());
+        throw concurrentlyModified("Role", role.getId(), e);
       }
     }
 
@@ -426,7 +435,7 @@ public class OrientSecurityConfigurationSource
         });
       }
       catch (OConcurrentModificationException e) {
-        throw concurrentlyModified("Role", id);
+        throw concurrentlyModified("Role", id, e);
       }
     }
 
@@ -434,8 +443,8 @@ public class OrientSecurityConfigurationSource
     // User-Role Mappings
     //
 
-    private CUserRoleMapping mapping(final String userId, final Set<String> roles) {
-      CUserRoleMapping mapping = new CUserRoleMapping();
+    private OrientCUserRoleMapping mapping(final String userId, final Set<String> roles) {
+      OrientCUserRoleMapping mapping = new OrientCUserRoleMapping();
       mapping.setUserId(userId);
       mapping.setSource(UserManager.DEFAULT_SOURCE);
       mapping.setRoles(roles);
@@ -461,16 +470,19 @@ public class OrientSecurityConfigurationSource
     @Override
     public void addUserRoleMapping(final CUserRoleMapping mapping) {
       checkNotNull(mapping);
+      checkUserRoleMapping(mapping);
       checkNotNull(mapping.getUserId());
       checkNotNull(mapping.getSource());
       log.trace("Adding user/role mappings for: {}/{}", mapping.getUserId(), mapping.getSource());
 
-      inTxRetry(databaseInstance).run(db -> userRoleMappingEntityAdapter.addEntity(db, mapping));
+      inTxRetry(databaseInstance)
+          .run(db -> userRoleMappingEntityAdapter.addEntity(db, (OrientCUserRoleMapping) mapping));
     }
 
     @Override
     public void updateUserRoleMapping(final CUserRoleMapping mapping) throws NoSuchRoleMappingException {
       checkNotNull(mapping);
+      checkUserRoleMapping(mapping);
       checkNotNull(mapping.getUserId());
       checkNotNull(mapping.getSource());
       log.trace("Updating user/role mappings for: {}/{}", mapping.getUserId(), mapping.getSource());
@@ -482,13 +494,13 @@ public class OrientSecurityConfigurationSource
             throw new NoSuchRoleMappingException(mapping.getUserId());
           }
           if (!Objects.equals(mapping.getVersion(), existing.getVersion())) {
-            throw concurrentlyModified("User-role mapping", mapping.getUserId());
+            throw concurrentlyModified("User-role mapping", mapping.getUserId(), null);
           }
-          userRoleMappingEntityAdapter.update(db, mapping);
+          userRoleMappingEntityAdapter.update(db, (OrientCUserRoleMapping) mapping);
         });
       }
       catch (OConcurrentModificationException e) {
-        throw concurrentlyModified("User-role mapping", mapping.getUserId());
+        throw concurrentlyModified("User-role mapping", mapping.getUserId(), e);
       }
     }
 
@@ -502,8 +514,74 @@ public class OrientSecurityConfigurationSource
         return inTxRetry(databaseInstance).call(db -> userRoleMappingEntityAdapter.delete(db, userId, source));
       }
       catch (OConcurrentModificationException e) {
-        throw concurrentlyModified("User-role mapping", userId);
+        throw concurrentlyModified("User-role mapping", userId, e);
       }
     }
+
+    @Override
+    public CRole newRole() {
+      return roleEntityAdapter.newEntity();
+    }
+
+    @Override
+    public CUser newUser() {
+      return userEntityAdapter.newEntity();
+    }
+
+    @Override
+    public CUserRoleMapping newUserRoleMapping() {
+      return userRoleMappingEntityAdapter.newEntity();
+    }
+  }
+
+  private OrientCRole convert(final CRole role) {
+    OrientCRole orientRole = roleEntityAdapter.newEntity();
+
+    orientRole.setDescription(role.getDescription());
+    orientRole.setId(role.getId());
+    orientRole.setName(role.getName());
+    orientRole.setPrivileges(role.getPrivileges());
+    orientRole.setReadOnly(role.isReadOnly());
+    orientRole.setRoles(role.getRoles());
+    orientRole.setVersion(role.getVersion());
+
+    return orientRole;
+  }
+
+  private OrientCUser convert(final CUser user) {
+    OrientCUser orientUser = userEntityAdapter.newEntity();
+    orientUser.setEmail(user.getEmail());
+    orientUser.setFirstName(user.getFirstName());
+    orientUser.setId(user.getId());
+    orientUser.setLastName(user.getLastName());
+    orientUser.setPassword(user.getPassword());
+    orientUser.setStatus(user.getStatus());
+    orientUser.setVersion(user.getVersion());
+
+    return orientUser;
+  }
+
+  private OrientCUserRoleMapping convert(final CUserRoleMapping userRoleMapping) {
+    OrientCUserRoleMapping orientUserRoleMapping = userRoleMappingEntityAdapter.newEntity();
+
+    orientUserRoleMapping.setRoles(userRoleMapping.getRoles());
+    orientUserRoleMapping.setSource(userRoleMapping.getSource());
+    orientUserRoleMapping.setUserId(userRoleMapping.getUserId());
+    orientUserRoleMapping.setVersion(userRoleMapping.getVersion());
+
+    return orientUserRoleMapping;
+  }
+
+  private static void checkRole(final CRole role) {
+    checkArgument(role instanceof OrientCRole, "Role is not an instance of " + OrientCRole.class.getName());
+  }
+
+  private static void checkUser(final CUser user) {
+    checkArgument(user instanceof OrientCUser, "User is not an instance of " + OrientCUser.class.getName());
+  }
+
+  private static void checkUserRoleMapping(final CUserRoleMapping userRoleMapping) {
+    checkArgument(userRoleMapping instanceof OrientCUserRoleMapping,
+        "UserRoleMapping is not an instance of " + OrientCUserRoleMapping.class.getName());
   }
 }

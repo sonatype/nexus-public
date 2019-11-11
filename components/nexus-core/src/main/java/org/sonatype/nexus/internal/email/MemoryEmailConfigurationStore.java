@@ -47,4 +47,9 @@ public class MemoryEmailConfigurationStore
   public synchronized void save(final EmailConfiguration configuration) {
     this.model = checkNotNull(configuration);
   }
+
+  @Override
+  public EmailConfiguration newConfiguration() {
+    return new MemoryEmailConfiguration();
+  }
 }

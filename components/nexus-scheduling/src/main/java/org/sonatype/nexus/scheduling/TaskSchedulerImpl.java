@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.scheduling.internal;
+package org.sonatype.nexus.scheduling;
 
 import java.util.Date;
 import java.util.List;
@@ -25,8 +25,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.scheduling.ClusteredTaskState;
-import org.sonatype.nexus.scheduling.ClusteredTaskStateStore;
+import org.sonatype.nexus.scheduling.ExternalTaskState;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskDescriptor;
 import org.sonatype.nexus.scheduling.TaskFactory;
@@ -56,19 +55,15 @@ public class TaskSchedulerImpl
 
   private final TaskFactory taskFactory;
 
-  private final ClusteredTaskStateStore clusteredTaskStateStore;
-
   private final Provider<SchedulerSPI> scheduler;
 
   @Inject
   public TaskSchedulerImpl(final EventManager eventManager,
                            final TaskFactory taskFactory,
-                           final ClusteredTaskStateStore clusteredTaskStateStore,
                            final Provider<SchedulerSPI> scheduler)
   {
     this.eventManager = checkNotNull(eventManager);
     this.taskFactory = checkNotNull(taskFactory);
-    this.clusteredTaskStateStore = checkNotNull(clusteredTaskStateStore);
     this.scheduler = checkNotNull(scheduler);
   }
 
@@ -164,9 +159,8 @@ public class TaskSchedulerImpl
   }
 
   @Override
-  public List<ClusteredTaskState> getClusteredTaskStateById(String taskId) {
-    checkNotNull(taskId);
-    return clusteredTaskStateStore.getClusteredState(taskId);
+  public ExternalTaskState toExternalTaskState(final TaskInfo taskInfo) {
+    return new ExternalTaskState(taskInfo);
   }
 
   @Override

@@ -108,14 +108,14 @@ public class EmailConfigurationApiResource
   @RequiresAuthentication
   @RequiresPermissions("nexus:settings:update")
   public void deleteEmailConfiguration() {
-    emailManager.setConfiguration(new EmailConfiguration());
+    emailManager.setConfiguration(emailManager.newConfiguration());
   }
 
   private EmailConfiguration convert(ApiEmailConfiguration apiEmailConfiguration, String originalPassword) {
     String password = apiEmailConfiguration.getPassword();
     boolean hasPassword = !StringUtils.isBlank(password);
 
-    EmailConfiguration emailConfiguration = new EmailConfiguration();
+    EmailConfiguration emailConfiguration = emailManager.newConfiguration();
     emailConfiguration.setEnabled(apiEmailConfiguration.isEnabled());
     emailConfiguration.setHost(apiEmailConfiguration.getHost());
     emailConfiguration.setPort(apiEmailConfiguration.getPort() == null ? 0 : apiEmailConfiguration.getPort());

@@ -17,6 +17,7 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.config.CUser;
 import org.sonatype.nexus.security.config.SecurityConfigurationManager;
+import org.sonatype.nexus.security.config.memory.MemoryCUser;
 
 import org.apache.shiro.authc.credential.PasswordService;
 import org.junit.Before;
@@ -51,7 +52,7 @@ public class UserManagerImplTest
 
   @Test
   public void testChangePassword() throws Exception {
-    CUser user = new CUser();
+    CUser user = new MemoryCUser();
     user.setStatus(CUser.STATUS_CHANGE_PASSWORD);
     user.setId("test");
 
