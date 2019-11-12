@@ -106,8 +106,8 @@ public class CondaPath {
     private final Optional<Coordinates> coordinates;
 
     public static CondaPath build(String path) {
-        Optional<Coordinates> coordinates = parseCoordinates(path);
         checkNotNull(path);
+        Optional<Coordinates> coordinates = parseCoordinates(path);
         return new CondaPath(path, coordinates);
     }
 

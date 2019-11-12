@@ -32,6 +32,7 @@ public class AttributeMorpher {
         NestedAttributesMap attributes = asset.formatAttributes();
         PackageDesc packageDesc = new PackageDesc();
 
+        // TODO: check possibility of passing whole object instead of strings using NestedAttributesMap.set() .
         packageDesc.setSize(asset.size().longValue());
         packageDesc.setMd5(asset.getChecksum(HashAlgorithm.MD5).toString());
         packageDesc.setSha256(asset.getChecksum(HashAlgorithm.SHA256).toString());

@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.conda.internal.hosted
 
+import org.sonatype.nexus.repository.http.HttpMethods
+import org.sonatype.nexus.repository.http.HttpResponses
 import org.sonatype.nexus.repository.view.*
 import javax.annotation.Nonnull
 
@@ -31,20 +33,20 @@ class HandlerProvider {
                     .facet(CondaHostedFacet.class)
 
             switch (method) {
-                case org.sonatype.nexus.repository.http.HttpMethods.GET:
-                case org.sonatype.nexus.repository.http.HttpMethods.HEAD:
+                case HttpMethods.GET:
+                case HttpMethods.HEAD:
                     return condaHostedFacet
                             .fetch(path)
-                            .map({ Content content -> org.sonatype.nexus.repository.http.HttpResponses.ok(content) })
-                            .orElseGet({ org.sonatype.nexus.repository.http.HttpResponses.notFound() })
-                case org.sonatype.nexus.repository.http.HttpMethods.PUT:
+                            .map({ Content content -> HttpResponses.ok(content) })
+                            .orElseGet({ HttpResponses.notFound() })
+                case HttpMethods.PUT:
                     Payload payload = context.getRequest().getPayload()
-                    return org.sonatype.nexus.repository.http.HttpResponses.ok(condaHostedFacet.upload(path, payload))
-                case org.sonatype.nexus.repository.http.HttpMethods.DELETE:
+                    return HttpResponses.ok(condaHostedFacet.upload(path, payload))
+                case HttpMethods.DELETE:
                     def success = condaHostedFacet.delete(path)
-                    return success ? org.sonatype.nexus.repository.http.HttpResponses.ok() : org.sonatype.nexus.repository.http.HttpResponses.notFound()
+                    return success ? HttpResponses.ok() : HttpResponses.notFound()
                 default:
-                    return org.sonatype.nexus.repository.http.HttpResponses.methodNotAllowed(context.getRequest().getAction(), org.sonatype.nexus.repository.http.HttpMethods.GET, org.sonatype.nexus.repository.http.HttpMethods.HEAD, org.sonatype.nexus.repository.http.HttpMethods.PUT, org.sonatype.nexus.repository.http.HttpMethods.DELETE)
+                    return HttpResponses.methodNotAllowed(context.getRequest().getAction(), HttpMethods.GET, HttpMethods.HEAD, HttpMethods.PUT, HttpMethods.DELETE)
             }
         }
     }
