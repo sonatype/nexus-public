@@ -128,12 +128,6 @@ public class YumCapability
                 verificationLog.append(new String(baos.toByteArray()));
               }
             }
-            catch (IllegalAccessException e) {
-              log.debug("path supplied {} not allowed to run", path, e);
-              message.append(and).append("\"").append(type).append("\" not allowed");
-              verificationLog.append(new String(baos.toByteArray()));
-              verificationLog.append(e.getMessage()).append(NL);
-            }
             catch (IOException e) {
               message.append(and).append("\"").append(type).append("\" not available");
               verificationLog.append(new String(baos.toByteArray()));

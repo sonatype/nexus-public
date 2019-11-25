@@ -37,8 +37,7 @@ NX.define('Nexus.capabilities.factory.TextFieldFactory', {
       helpText: formField.helpText,
       allowBlank: formField.required ? false : true,
       regex: formField.regexValidation ? new RegExp(formField.regexValidation) : null,
-      anchor: '96%',
-      disabled: !formField.enabled
+      anchor: '96%'
     };
     if (formField.type === 'password') {
       item.inputType = 'password';
@@ -46,6 +45,15 @@ NX.define('Nexus.capabilities.factory.TextFieldFactory', {
     if (formField.initialValue) {
       item.value = formField.initialValue;
     }
+
+    if (!formField.enabled) {
+      // Makes field look and act disabled, but unlike a disabled field it will submit with the form.
+      item.fieldClass = 'x-item-disabled';
+      item.readOnly = true;
+      // Flag to not toggle the field by enabling/disabling. This would break the customizations.
+      item.forceDisabled = true;
+    }
+
     return item;
   }
 

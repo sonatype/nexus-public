@@ -98,7 +98,6 @@ NX.define('Nexus.capabilities.CapabilitySettingsFieldSet', {
           if (factory) {
             item = Ext.apply(factory.create(formField), {
               requiresPermission: true,
-              forceDisabled: !formField.enabled,
               name: 'property.' + formField.id,
               factory: factory
             });

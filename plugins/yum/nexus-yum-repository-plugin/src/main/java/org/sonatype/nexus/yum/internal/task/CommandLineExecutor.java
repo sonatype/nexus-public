@@ -46,21 +46,16 @@ public class CommandLineExecutor
 
   private static final Logger LOG = LoggerFactory.getLogger(CommandLineExecutor.class);
 
-  private final Set<String> allowedExecutables = new HashSet<>();
-
   private final ApplicationDirectories applicationDirectories;
 
   @Inject
-  public CommandLineExecutor(final ApplicationDirectories applicationDirectories,
-                             @Named("${yum.cli.allowed:-createrepo,mergerepo}") final String allowedExecutables)
+  public CommandLineExecutor(final ApplicationDirectories applicationDirectories)
   {
     this.applicationDirectories = applicationDirectories;
-
-    this.allowedExecutables.addAll(stream(allowedExecutables.split(",")).map(String::trim).collect(toSet()));
   }
 
   public int exec(String command, String params)
-      throws IOException, IllegalAccessException
+      throws IOException
   {
     return exec(
         command,
@@ -80,17 +75,13 @@ public class CommandLineExecutor
    * @since 2.11
    */
   public int exec(final String command, String params, OutputStream out, OutputStream err)
-      throws IOException, IllegalAccessException
+      throws IOException
   {
-    String cleanCommand = getCleanCommand(command, params);
+    String fullCommand = command + " " + params;
 
-    if (cleanCommand == null) {
-      throw new IllegalAccessException("Attempt to execute unsupported executable " + command);
-    }
+    LOG.debug("Execute command : {}", fullCommand);
 
-    LOG.debug("Execute command : {}", cleanCommand);
-
-    CommandLine cmdLine = CommandLine.parse(cleanCommand);
+    CommandLine cmdLine = CommandLine.parse(fullCommand);
 
     DefaultExecutor executor = new DefaultExecutor();
     executor.setStreamHandler(new PumpStreamHandler(out, err));
@@ -98,31 +89,5 @@ public class CommandLineExecutor
     int exitValue = executor.execute(cmdLine);
     LOG.debug("Execution finished with exit code : {}", exitValue);
     return exitValue;
-  }
-
-  @VisibleForTesting
-  String getCleanCommand(String command, String params) {
-    if (allowedExecutables.contains(command)) {
-      return command + " " + params;
-    }
-
-    File file = new File(command);
-
-    if (!file.exists()) {
-      LOG.debug("Attempt to execute command that doesn't exist {}", file.getAbsolutePath());
-      return null;
-    }
-
-    if (file.getAbsolutePath().startsWith(applicationDirectories.getWorkDirectory().getAbsolutePath())) {
-      LOG.debug("Attempt to execute command with illegal path {}", file.getAbsolutePath());
-      return null;
-    }
-
-    if (!allowedExecutables.contains(file.getName())) {
-      LOG.debug("Attempt to execute illegal command {}", file.getAbsolutePath());
-      return null;
-    }
-
-    return file.getAbsolutePath() + " " + params;
   }
 }

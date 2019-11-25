@@ -149,7 +149,6 @@ NX.define('Nexus.capabilities.CapabilitySettings', {
 
   /**
    * Enables/disables fields marked with "requiresPermission".
-   * Fields marked "forceDisabled" are always disabled.
    * @private
    */
   togglePermission: function (items, enabled) {
@@ -163,9 +162,7 @@ NX.define('Nexus.capabilities.CapabilitySettings', {
       }
       Ext.each(iterable, function (item) {
         if (item) {
-          if (item.forceDisabled) {
-            item.disable();
-          } else if (item.requiresPermission) {
+          if (item.requiresPermission && !item.forceDisabled) {
             if (enabled) {
               item.enable();
             }

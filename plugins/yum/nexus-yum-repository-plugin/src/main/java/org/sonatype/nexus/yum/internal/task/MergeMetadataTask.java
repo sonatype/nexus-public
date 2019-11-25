@@ -102,18 +102,9 @@ public class MergeMetadataTask
         final List<File> memberReposBaseDirs = getBaseDirsOfMemberRepositories();
         if (memberReposBaseDirs.size() > 1) {
           log.debug("Merging repository group '{}' out of {}", groupRepository.getId(), memberReposBaseDirs);
-          try {
-            commandLineExecutor.exec(yumRegistry.getMergerepoPath(), buildParams(repoBaseDir, memberReposBaseDirs));
-            MetadataProcessor.processMergedMetadata(groupRepository, memberReposBaseDirs);
-            log.debug("Group repository '{}' merged", groupRepository.getId());
-          }
-          catch (IllegalAccessException e) {
-            String msg = String
-                .format("Yum metadata merging failed, mergerepo path %s is using executable that is not allowed.",
-                    yumRegistry.getMergerepoPath());
-            log.error(msg, e);
-            throw new IOException("Yum metadata merging failed", e);
-          }
+          commandLineExecutor.exec(yumRegistry.getMergerepoPath(), buildParams(repoBaseDir, memberReposBaseDirs));
+          MetadataProcessor.processMergedMetadata(groupRepository, memberReposBaseDirs);
+          log.debug("Group repository '{}' merged", groupRepository.getId());
         }
         else {
           // delete without using group repository API as group repositories does not allow delete (read only)
