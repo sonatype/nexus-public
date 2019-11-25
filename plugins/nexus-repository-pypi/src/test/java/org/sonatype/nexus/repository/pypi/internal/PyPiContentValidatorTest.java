@@ -22,7 +22,6 @@ import org.mockito.Mock;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiContentValidator.HTML_FILE_EXTENSION;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiContentValidator.TEXT_FILE_EXTENSION;
 
 public class PyPiContentValidatorTest
@@ -33,17 +32,6 @@ public class PyPiContentValidatorTest
 
   @InjectMocks
   private PyPiContentValidator pyPiContentValidator;
-
-  @Test
-  public void should_Append_Html_Extension_When_Name_Starts_With_Simple_And_Forward_Slash() throws Exception {
-    String contentName = "simple/index";
-
-    pyPiContentValidator.determineContentType(true, null, null,
-        contentName, null);
-
-    verify(defaultContentValidator)
-        .determineContentType(eq(true), any(), any(), eq(contentName + HTML_FILE_EXTENSION), any());
-  }
 
   @Test
   public void should_Append_Txt_Extension_When_Name_Ends_With_Asc_Extension() throws Exception {

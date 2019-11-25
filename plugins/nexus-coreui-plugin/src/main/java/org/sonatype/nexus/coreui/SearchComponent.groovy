@@ -17,6 +17,8 @@ import javax.inject.Named
 import javax.inject.Singleton
 import javax.validation.ValidationException
 
+import org.sonatype.nexus.common.event.EventManager
+import org.sonatype.nexus.coreui.events.UiSearchEvent
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.extdirect.model.LimitedPagedResponse
@@ -63,6 +65,9 @@ class SearchComponent
   @Inject
   UiSettingsManager uiSettingsManager
 
+  @Inject
+  EventManager eventManager;
+
   /**
    * Search based on configured filters.
    *
@@ -74,6 +79,7 @@ class SearchComponent
   @ExceptionMetered
   @RequiresPermissions('nexus:search:read')
   LimitedPagedResponse<ComponentXO> read(StoreLoadParameters parameters) {
+    eventManager.post(new UiSearchEvent())
     if (parameters.limit > searchResultsLimit) {
       parameters.limit = searchResultsLimit
     }

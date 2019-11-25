@@ -23,6 +23,7 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.RepositoryDeletedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryUpdatedEvent;
 import org.sonatype.nexus.repository.manager.internal.RepositoryImpl;
+import org.sonatype.nexus.repository.routing.OrientRoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 import org.sonatype.nexus.repository.types.ProxyType;
@@ -97,7 +98,7 @@ public class RoutingRuleCacheTest
 
   @Test
   public void invalidateRuleCacheOnUpdate() throws Exception {
-    RoutingRule rule = mockRule("rule-a");
+    OrientRoutingRule rule = mockRule("rule-a");
     Repository repository = createRepository("repo-a", "rule-a");
 
     // prime the cache
@@ -105,7 +106,7 @@ public class RoutingRuleCacheTest
     verify(store, times(1)).getById("rule-a");
 
     // Clear the cache
-    routingRuleCache.handle(new RoutingRuleUpdatedEvent(rule.getEntityMetadata()));
+    routingRuleCache.handle(new OrientRoutingRuleUpdatedEvent(rule.getEntityMetadata()));
     assertNotNull(routingRuleCache.getRoutingRule(repository));
 
     // we should have hit the store again
@@ -114,7 +115,7 @@ public class RoutingRuleCacheTest
 
   @Test
   public void invalidateRuleCacheOnDelete() throws Exception {
-    RoutingRule rule = mockRule("rule-a");
+    OrientRoutingRule rule = mockRule("rule-a");
     Repository repository = createRepository("repo-a", "rule-a");
 
     // prime the cache
@@ -122,7 +123,7 @@ public class RoutingRuleCacheTest
     verify(store, times(1)).getById("rule-a");
 
     // Clear the cache
-    routingRuleCache.handle(new RoutingRuleDeletedEvent(rule.getEntityMetadata()));
+    routingRuleCache.handle(new OrientRoutingRuleDeletedEvent(rule.getEntityMetadata()));
     assertNotNull(routingRuleCache.getRoutingRule(repository));
 
     // we should have hit the store again
@@ -180,8 +181,8 @@ public class RoutingRuleCacheTest
     verifyZeroInteractions(store);
   }
 
-  private RoutingRule mockRule(final String ruleId) {
-    RoutingRule rule = mock(RoutingRule.class);
+  private OrientRoutingRule mockRule(final String ruleId) {
+    OrientRoutingRule rule = mock(OrientRoutingRule.class);
     DetachedEntityMetadata metadata =
         new DetachedEntityMetadata(new DetachedEntityId(ruleId), new DetachedEntityVersion("1"));
     when(rule.getEntityMetadata()).thenReturn(metadata);

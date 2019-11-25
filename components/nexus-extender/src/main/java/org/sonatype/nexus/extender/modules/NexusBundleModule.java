@@ -110,7 +110,7 @@ public class NexusBundleModule
   }
 
   private void maybeAddDataAccessBindings(final List<Module> modules) {
-    if (imports.contains("org.sonatype.nexus.datastore")) {
+    if (imports.contains("org.sonatype.nexus.datastore") || imports.contains("org.sonatype.nexus.repository.content")) {
       modules.add(new DataAccessModule(space.getBundle()));
     }
   }

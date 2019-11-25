@@ -13,15 +13,15 @@
 package org.sonatype.nexus.repository.config.internal
 
 import org.sonatype.goodies.testsupport.TestSupport
-import org.sonatype.nexus.common.entity.EntityHelper
 import org.sonatype.nexus.orient.HexRecordIdObfuscator
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule
 import org.sonatype.nexus.repository.config.Configuration
+import org.sonatype.nexus.repository.routing.OrientRoutingRule
 import org.sonatype.nexus.repository.routing.RoutingMode
 import org.sonatype.nexus.repository.routing.RoutingRule
 import org.sonatype.nexus.repository.routing.RoutingRuleStore
-import org.sonatype.nexus.repository.routing.internal.RoutingRuleEntityAdapter
-import org.sonatype.nexus.repository.routing.internal.RoutingRuleStoreImpl
+import org.sonatype.nexus.repository.routing.internal.OrientRoutingRuleEntityAdapter
+import org.sonatype.nexus.repository.routing.internal.OrientRoutingRuleStore
 import org.sonatype.nexus.security.PasswordHelper
 
 import com.orientechnologies.orient.core.exception.OValidationException
@@ -50,7 +50,7 @@ class ConfigurationStoreImplTest
 
   private RoutingRuleStore routingRuleStore
 
-  private RoutingRuleEntityAdapter routingRuleEntityAdapter = new RoutingRuleEntityAdapter()
+  private OrientRoutingRuleEntityAdapter routingRuleEntityAdapter = new OrientRoutingRuleEntityAdapter()
 
   @Before
   void setUp() {
@@ -162,10 +162,10 @@ class ConfigurationStoreImplTest
 
   @Test
   void 'save routing rule id'() {
-    routingRuleStore = new RoutingRuleStoreImpl(database.instanceProvider, routingRuleEntityAdapter)
+    routingRuleStore = new OrientRoutingRuleStore(database.instanceProvider, routingRuleEntityAdapter)
     routingRuleStore.start()
 
-    RoutingRule routingRule = routingRuleStore.create(new RoutingRule(
+    RoutingRule routingRule = routingRuleStore.create(new OrientRoutingRule(
         name: 'test',
         description: '',
         mode: RoutingMode.ALLOW,
@@ -175,9 +175,9 @@ class ConfigurationStoreImplTest
     underTest.create(new Configuration(
         repositoryName: 'test',
         recipeName: 'test',
-        routingRuleId: EntityHelper.id(routingRule)
-    ))
+        routingRuleId: routingRule.id())
+    )
 
-    assert underTest.list().first().routingRuleId == EntityHelper.id(routingRule)
+    assert underTest.list().first().routingRuleId == routingRule.id()
   }
 }

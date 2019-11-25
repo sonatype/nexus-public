@@ -35,19 +35,31 @@ class BlobStoreApiImpl
 
   @Override
   BlobStoreConfiguration createFileBlobStore(final String name, final String path) {
-    return blobStoreManager.create(new BlobStoreConfiguration(name: checkNotNull(name), type: 'File',
-        attributes: [file: [path: checkNotNull(path)]])).blobStoreConfiguration
+    def attributes = [file: [path: checkNotNull(path)]]
+    def config = blobStoreManager.newConfiguration()
+    config.name = name
+    config.setType('File')
+    config.attributes = [file: [path: checkNotNull(path)]]
+    return blobStoreManager.create(config).blobStoreConfiguration
   }
 
   @Override
   BlobStoreConfiguration createBlobStoreGroup(final String name, List<String> memberNames, String fillPolicy) {
-    return blobStoreManager.create(new BlobStoreConfiguration(name: checkNotNull(name), type: 'Group',
-        attributes: [group: [members: memberNames, fillPolicy: fillPolicy]])).blobStoreConfiguration
+    def attributes = [group: [members: memberNames, fillPolicy: fillPolicy]]
+    def config = blobStoreManager.newConfiguration()
+    config.setName(name)
+    config.setType('Group')
+    config.setAttributes(attributes)
+    return blobStoreManager.create(config).blobStoreConfiguration
   }
 
   @Override
-  BlobStoreConfiguration createS3BlobStore(final String name, final Map<String, String> config) {
-    return blobStoreManager.create(new BlobStoreConfiguration(name: checkNotNull(name), type: 'S3',
-        attributes: [s3: config])).blobStoreConfiguration
+  BlobStoreConfiguration createS3BlobStore(final String name, final Map<String, String> s3Config) {
+    def attributes = [s3: s3Config]
+    def config = blobStoreManager.newConfiguration()
+    config.setName(name)
+    config.setType('Group')
+    config.setAttributes(attributes)
+    return blobStoreManager.create(config).blobStoreConfiguration
   }
 }

@@ -13,107 +13,41 @@
 package org.sonatype.nexus.repository.routing;
 
 import java.util.List;
-import java.util.Objects;
 
-import org.sonatype.nexus.common.entity.AbstractEntity;
-
-import static org.sonatype.nexus.common.entity.EntityHelper.hasMetadata;
-import static org.sonatype.nexus.common.entity.EntityHelper.id;
+import org.sonatype.nexus.common.entity.EntityId;
 
 /**
  * A RoutingRule which can be applied to a repository to block or allow requests depending on the RoutingMode
  *
  * @since 3.16
  */
-public class RoutingRule extends AbstractEntity
+public interface RoutingRule
 {
-  private String description;
+  String description();
 
-  private RoutingMode mode;
-
-  private String name;
-
-  private List<String> matchers;
-
-  public RoutingRule() {
-    // for deserialization
-  }
-
-  public RoutingRule(final String name, final String description, final RoutingMode mode, final List<String> matchers) {
-    this.description = description;
-    this.name = name;
-    this.mode = mode;
-    this.matchers = matchers;
-  }
-
-  public String description() {
-    return description;
-  }
-
-  public RoutingRule description(final String description) {
-    this.description = description;
-    return this;
-  }
+  RoutingRule description(final String description);
 
   /**
    * The block mode of this RoutingRule, when ACCESS then any request which does not match one of the matchers should be
    * blocked and when BLOCK any request which matches one of the matchers should be blocked.
    */
-  public RoutingMode mode() {
-    return mode;
-  }
+  RoutingMode mode();
 
-  public RoutingRule mode(final RoutingMode mode) {
-    this.mode = mode;
-    return this;
-  }
+  RoutingRule mode(final RoutingMode mode);
 
   /**
    * The name of this RoutingRule, must be unique
    */
-  public String name() {
-    return name;
-  }
+  String name();
 
-  public RoutingRule name(final String name) {
-    this.name = name;
-    return this;
-  }
+  RoutingRule name(final String name);
 
   /**
    * @return the list of regex matchers which this RoutingRule uses
    */
-  public List<String> matchers() {
-    return matchers;
-  }
+  List<String> matchers();
 
-  public RoutingRule matchers(final List<String> matchers) {
-    this.matchers = matchers;
-    return this;
-  }
+  RoutingRule matchers(final List<String> matchers);
 
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
-    AbstractEntity that = (AbstractEntity) o;
-    if (hasMetadata(this) && hasMetadata(that)) {
-      return Objects.equals(id(this), id(that));
-    }
-
-    return super.equals(o);
-  }
-
-  @Override
-  public int hashCode() {
-    if (hasMetadata(this)) {
-      return Objects.hash(id(this));
-    }
-    return super.hashCode();
-  }
+  EntityId id();
 }

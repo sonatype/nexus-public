@@ -34,4 +34,6 @@ public interface RoutingRuleStore
 
   @Nullable
   RoutingRule getById(String id);
+
+  RoutingRule newRoutingRule();
 }

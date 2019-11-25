@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.BlobIdLocationResolver;
+import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
@@ -140,7 +141,7 @@ public class FileBlobStoreTest
     properties.put(HEADER_PREFIX + BLOB_NAME_HEADER, "blobName");
     when(attributes.getProperties()).thenReturn(properties);
 
-    BlobStoreConfiguration configuration = new BlobStoreConfiguration();
+    BlobStoreConfiguration configuration = new MockBlobStoreConfiguration();
 
     Map<String, Map<String, Object>> attributes = new HashMap<>();
     Map<String, Object> fileMap = new HashMap<>();

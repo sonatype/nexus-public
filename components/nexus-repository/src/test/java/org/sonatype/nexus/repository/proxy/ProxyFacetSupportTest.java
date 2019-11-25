@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.proxy;
 
 import java.io.IOException;
+import java.net.URI;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -23,29 +24,52 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheControllerHolder;
 import org.sonatype.nexus.repository.cache.CacheInfo;
+import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.config.ConfigurationFacet;
+import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.httpclient.RemoteBlockedIOException;
 import org.sonatype.nexus.repository.storage.MissingBlobException;
 import org.sonatype.nexus.repository.storage.RetryDeniedException;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.ProtocolVersion;
 import org.apache.http.StatusLine;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.message.BasicHttpResponse;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.Spy;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
+import static java.util.Collections.singletonMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.BYPASS_HTTP_ERRORS_HEADER_NAME;
+import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.BYPASS_HTTP_ERRORS_HEADER_VALUE;
 
 /**
  * Tests for the abstract class {@link ProxyFacetSupport}
  */
+@RunWith(PowerMockRunner.class)
 public class ProxyFacetSupportTest
     extends TestSupport
 {
@@ -283,5 +307,46 @@ public class ProxyFacetSupportTest
     Content foundContent = underTest.get(cachedContext);
 
     assertThat(foundContent, is(reFetchedContent));
+  }
+
+  @PrepareForTest(HttpClientUtils.class)
+  @Test
+  public void leak() throws Exception {
+    HttpClientFacet httpClientFacet = Mockito.mock(HttpClientFacet.class);
+    HttpClient httpClient = Mockito.mock(HttpClient.class);
+    ConfigurationFacet configurationFacet = Mockito.mock(ConfigurationFacet.class);
+    ProxyFacetSupport.Config config = new ProxyFacetSupport.Config();
+    config.remoteUrl = new URI("http://example.com");
+
+    when(repository.facet(HttpClientFacet.class)).thenReturn(httpClientFacet);
+    when(httpClientFacet.getHttpClient()).thenReturn(httpClient);
+    when(repository.facet(ConfigurationFacet.class)).thenReturn(configurationFacet);
+    when(configurationFacet.readSection(any(Configuration.class), anyString(), eq(ProxyFacetSupport.Config.class)))
+        .thenReturn(config);
+
+    HttpResponse httpResponse = new BasicHttpResponse(
+        new BasicHttpResponse(new ProtocolVersion("HTTP", 1, 1), 304, "NOT MODIFIED").getStatusLine());
+    httpResponse.addHeader(BYPASS_HTTP_ERRORS_HEADER_NAME, BYPASS_HTTP_ERRORS_HEADER_VALUE);
+    doReturn("http://example.com").when(underTest).getUrl(cachedContext);
+    doReturn(httpResponse).when(underTest).execute(eq(cachedContext), eq(httpClient), any(HttpRequestBase.class));
+
+    mockStatic(HttpClientUtils.class);
+
+    Configuration configuration = new Configuration();
+    configuration.setAttributes(singletonMap("proxy", singletonMap("remoteUrl", "http://example.com")));
+    underTest.doConfigure(configuration);
+    underTest.doStart();
+
+    try {
+      underTest.get(cachedContext);
+      fail("Expected BypassHttpErrorException to be thrown");
+    }
+    catch (BypassHttpErrorException expected) {
+      // expected
+    }
+
+    verifyStatic();
+    HttpClientUtils.closeQuietly(httpResponse);
+    verifyNoMoreInteractions(HttpClientUtils.class);
   }
 }

@@ -43,8 +43,7 @@ public abstract class BlobStoreApiModel
     this.softQuota = softQuota;
   }
 
-  public BlobStoreConfiguration toBlobStoreConfiguration() {
-    BlobStoreConfiguration configuration = new BlobStoreConfiguration();
+  public BlobStoreConfiguration toBlobStoreConfiguration(final BlobStoreConfiguration configuration) {
     setSoftQuotaAttributes(configuration);
     return configuration;
   }

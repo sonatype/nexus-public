@@ -493,6 +493,7 @@ public abstract class ProxyFacetSupport
       log.debug("Bypass http error: {}", status);
       ListMultimap<String, String> headers = ArrayListMultimap.create();
       headers.put(BYPASS_HTTP_ERRORS_HEADER_NAME, BYPASS_HTTP_ERRORS_HEADER_VALUE);
+      HttpClientUtils.closeQuietly(httpResponse);
       throw new BypassHttpErrorException(status.getStatusCode(), status.getReasonPhrase(), headers);
     }
   }

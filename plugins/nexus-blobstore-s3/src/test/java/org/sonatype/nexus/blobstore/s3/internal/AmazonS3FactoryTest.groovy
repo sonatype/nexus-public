@@ -12,10 +12,8 @@
  */
 package org.sonatype.nexus.blobstore.s3.internal
 
-import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
+import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration
 
-import com.amazonaws.SdkClientException
-import com.amazonaws.services.s3.AmazonS3
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -26,9 +24,9 @@ class AmazonS3FactoryTest
     extends Specification
 {
 
-  AmazonS3Factory amazonS3Factory = new AmazonS3Factory()
+  AmazonS3Factory amazonS3Factory = new AmazonS3Factory(-1)
 
-  def config = new BlobStoreConfiguration()
+  def config = new MockBlobStoreConfiguration()
 
   def setup() {
     config.attributes = [s3: [bucket: 'mybucket']]

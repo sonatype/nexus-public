@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.quota
 
+import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 
@@ -76,7 +77,7 @@ class BlobStoreQuotaSupportTest
   @Unroll
   def 'Get Limit handles numbers properly'() {
     when:
-      BlobStoreConfiguration config = new BlobStoreConfiguration()
+      BlobStoreConfiguration config = new MockBlobStoreConfiguration()
       config.attributes(ROOT_KEY).set(LIMIT_KEY, value)
       def result = getLimit(config)
 
@@ -93,7 +94,7 @@ class BlobStoreQuotaSupportTest
   @Unroll
   def 'Get Limit handles error cases'() {
     when:
-      BlobStoreConfiguration config = new BlobStoreConfiguration()
+      BlobStoreConfiguration config = new MockBlobStoreConfiguration()
       config.attributes(ROOT_KEY).set(LIMIT_KEY, value)
       getLimit(config)
     then: 'blobstore fails to start'

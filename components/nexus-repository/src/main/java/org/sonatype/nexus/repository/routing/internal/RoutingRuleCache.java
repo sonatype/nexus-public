@@ -21,7 +21,6 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.entity.EntityEvent;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.repository.Repository;
@@ -121,14 +120,14 @@ public class RoutingRuleCache
 
   @AllowConcurrentEvents
   @Subscribe
-  public void handle(final RoutingRuleDeletedEvent event) {
-    routingRuleCache.invalidate(((EntityEvent) event).getId());
+  public void handle(final OrientRoutingRuleDeletedEvent event) {
+    routingRuleCache.invalidate(event.getId());
   }
 
   @AllowConcurrentEvents
   @Subscribe
-  public void handle(final RoutingRuleUpdatedEvent event) {
-    routingRuleCache.invalidate(((EntityEvent) event).getId());
+  public void handle(final OrientRoutingRuleUpdatedEvent event) {
+    routingRuleCache.invalidate(event.getId());
   }
 
   private static class RepositoryMappingCacheLoader

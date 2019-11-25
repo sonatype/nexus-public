@@ -24,12 +24,12 @@ import org.hibernate.validator.constraints.Range;
  */
 public class BlobStoreApiSoftQuota
 {
-  @ApiModelProperty("The type to use such as " + SpaceRemainingQuota.ID + ", or " + SpaceUsedQuota.ID)
   @NotBlank
+  @ApiModelProperty("The type to use such as " + SpaceRemainingQuota.ID + ", or " + SpaceUsedQuota.ID)
   private String type;
 
-  @ApiModelProperty("The limit in MB")
   @Range
+  @ApiModelProperty("The limit in MB.")
   private Long limit;
 
   public String getType() {

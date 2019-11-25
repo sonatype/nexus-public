@@ -45,10 +45,10 @@ public class FileBlobStoreApiModel
   }
 
   @Override
-  public BlobStoreConfiguration toBlobStoreConfiguration() {
-    BlobStoreConfiguration configuration = super.toBlobStoreConfiguration();
-    configuration.setType(FileBlobStore.TYPE);
-    configuration.attributes(FileBlobStore.CONFIG_KEY).set(FileBlobStore.PATH_KEY, path);
-    return configuration;
+  public BlobStoreConfiguration toBlobStoreConfiguration(final BlobStoreConfiguration configuration) {
+    BlobStoreConfiguration newConfig = super.toBlobStoreConfiguration(configuration);
+    newConfig.setType(FileBlobStore.TYPE);
+    newConfig.attributes(FileBlobStore.CONFIG_KEY).set(FileBlobStore.PATH_KEY, path);
+    return newConfig;
   }
 }

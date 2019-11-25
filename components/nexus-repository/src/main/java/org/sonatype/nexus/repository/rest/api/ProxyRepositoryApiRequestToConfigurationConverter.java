@@ -16,7 +16,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
-import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;
@@ -144,7 +143,7 @@ public class ProxyRepositoryApiRequestToConfigurationConverter<T extends ProxyRe
     if (!Strings2.isBlank(routingRuleName)) {
       RoutingRule routingRule = routingRuleStore.getByName(routingRuleName);
       if (nonNull(routingRule)) {
-        configuration.setRoutingRuleId(EntityHelper.id(routingRule));
+        configuration.setRoutingRuleId(routingRule.id());
       }
     }
   }

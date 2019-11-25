@@ -198,7 +198,7 @@ class BlobStoreComponent
     )
   }
 
-  static BlobStoreConfiguration asConfiguration(final BlobStoreXO blobStoreXO) {
+  BlobStoreConfiguration asConfiguration(final BlobStoreXO blobStoreXO) {
     if (checkBoxMapping(blobStoreXO.isQuotaEnabled)) {
       Map quotaAttributes = new HashMap<String, Object>()
       quotaAttributes.put(BlobStoreQuotaSupport.TYPE_KEY, blobStoreXO.quotaType)
@@ -206,11 +206,11 @@ class BlobStoreComponent
       blobStoreXO.attributes.put(BlobStoreQuotaSupport.ROOT_KEY, quotaAttributes)
     }
 
-    new BlobStoreConfiguration(
-        name: blobStoreXO.name,
-        type: blobStoreXO.type,
-        attributes: blobStoreXO.attributes
-    )
+    def config = blobStoreManager.newConfiguration()
+    config.name = blobStoreXO.name
+    config.setType(blobStoreXO.type)
+    config.setAttributes(blobStoreXO.attributes)
+    return config
   }
 
   private static boolean checkBoxMapping(final String value) {

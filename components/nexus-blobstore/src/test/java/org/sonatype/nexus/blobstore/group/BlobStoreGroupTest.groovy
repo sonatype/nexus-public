@@ -19,6 +19,7 @@ import javax.cache.configuration.MutableConfiguration
 import javax.inject.Provider
 
 import org.sonatype.goodies.common.Time
+import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.Blob
 import org.sonatype.nexus.blobstore.api.BlobId
 import org.sonatype.nexus.blobstore.api.BlobStore
@@ -75,7 +76,7 @@ class BlobStoreGroupTest
 
   BlobStoreGroup blobStore = new BlobStoreGroup(blobStoreManager, fillPolicyFactories, cacheHelperProvider, time)
 
-  def config = new BlobStoreConfiguration()
+  def config = new MockBlobStoreConfiguration()
 
   def 'Get with no members'() {
     given: 'An empty group'

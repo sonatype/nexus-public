@@ -33,7 +33,7 @@ import org.sonatype.nexus.repository.rest.api.model.HttpClientConnectionAttribut
 import org.sonatype.nexus.repository.rest.api.model.SimpleApiGroupRepository;
 import org.sonatype.nexus.repository.rest.api.model.SimpleApiHostedRepository;
 import org.sonatype.nexus.repository.rest.api.model.SimpleApiProxyRepository;
-import org.sonatype.nexus.repository.routing.RoutingRule;
+import org.sonatype.nexus.repository.routing.OrientRoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 import org.sonatype.nexus.repository.storage.StorageFacetConstants;
 import org.sonatype.nexus.repository.storage.WritePolicy;
@@ -174,7 +174,7 @@ public class SimpleApiRepositoryAdapterTest
     SimpleApiProxyRepository proxyRepository = (SimpleApiProxyRepository) underTest.adapt(repository);
     assertThat(proxyRepository.getRoutingRuleName(), nullValue());
 
-    when(routingRuleStore.getById(any())).thenReturn(new RoutingRule(ROUTING_RULE_NAME, null, null, null));
+    when(routingRuleStore.getById(any())).thenReturn(new OrientRoutingRule(ROUTING_RULE_NAME, null, null, null));
 
     proxyRepository = (SimpleApiProxyRepository) underTest.adapt(repository);
     assertThat(proxyRepository.getRoutingRuleName(), is(ROUTING_RULE_NAME));

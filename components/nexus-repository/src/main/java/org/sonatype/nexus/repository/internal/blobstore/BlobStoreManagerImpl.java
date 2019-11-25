@@ -117,7 +117,7 @@ public class BlobStoreManagerImpl
     List<BlobStoreConfiguration> configurations = store.list();
     if (configurations.isEmpty() && provisionDefaults.getAsBoolean()) {
       log.debug("No BlobStores configured; provisioning default BlobStore");
-      store.create(new FileBlobStoreConfigurationBuilder(DEFAULT_BLOBSTORE_NAME).build());
+      store.create(new FileBlobStoreConfigurationBuilder(DEFAULT_BLOBSTORE_NAME, this::newConfiguration).build());
       configurations = store.list();
     }
 
@@ -381,6 +381,11 @@ public class BlobStoreManagerImpl
   public Optional<String> getParent(final String blobStoreName) {
     BlobStore blobStore = get(blobStoreName);
     return blobStore == null ? empty() : store.findParent(blobStoreName).map(BlobStoreConfiguration::getName);
+  }
+
+  @Override
+  public BlobStoreConfiguration newConfiguration() {
+    return store.newConfiguration();
   }
 
   @Override

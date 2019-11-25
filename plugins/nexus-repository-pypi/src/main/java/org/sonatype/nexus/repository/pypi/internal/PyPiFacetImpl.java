@@ -44,7 +44,6 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiFileUtils.extractN
 import static org.sonatype.nexus.repository.pypi.internal.PyPiFileUtils.extractVersionFromFilename;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiInfoUtils.extractMetadata;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.isIndexPath;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.isPackagePath;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.isRootIndexPath;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.normalizeName;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
@@ -73,10 +72,7 @@ public class PyPiFacetImpl
   @Override
   @Nullable
   public Asset put(final String path, final AssetBlob assetBlob) throws IOException {
-    if (isPackagePath(path)) {
-      return putPackage(path, assetBlob);
-    }
-    else if (isRootIndexPath(path)) {
+    if (isRootIndexPath(path)) {
       log.info("Not repairing root index");
       return null;
     }
@@ -84,8 +80,8 @@ public class PyPiFacetImpl
       return putIndex(path, assetBlob);
     }
     else {
-      log.warn("Path does not represent a PyPI package or index: {}", path);
-      return null;
+      // PEP503 contains no restrictions to packages excluding rules for index and root index so assume rest is package
+      return putPackage(path, assetBlob);
     }
   }
 

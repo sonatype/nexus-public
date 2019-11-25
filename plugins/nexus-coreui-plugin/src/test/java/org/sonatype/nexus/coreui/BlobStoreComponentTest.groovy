@@ -13,6 +13,7 @@
 package org.sonatype.nexus.coreui
 
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor
+import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreException
@@ -65,10 +66,11 @@ class BlobStoreComponentTest
       BlobStoreXO blobStoreXO = new BlobStoreXO(name: 'myblobs', type: 'File',
           isQuotaEnabled: true, quotaType: 'spaceUsedQuota', quotaLimit: 10L,
           attributes: [file: [path: 'path/to/blobs/myblobs']])
-      BlobStoreConfiguration expectedConfig = new BlobStoreConfiguration(name: 'myblobs', type: 'File',
+      BlobStoreConfiguration expectedConfig = new MockBlobStoreConfiguration(name: 'myblobs', type: 'File',
           attributes: [file: [path: 'path/to/blobs/myblobs'], blobStoreQuotaConfig: [quotaType: 'spaceUsedQuota',
                                                                                      quotaLimit: 10L]])
       BlobStore blobStore = Mock()
+      1 * blobStoreManager.newConfiguration() >> Mock(BlobStoreConfiguration)
 
     when: 'The blobstore is created'
       def createdXO = blobStoreComponent.create(blobStoreXO)
@@ -126,7 +128,7 @@ class BlobStoreComponentTest
       1 * blobStoreGroupService.isEnabled() >> true
       1 * blobStoreGroupService.promote(from) >> Mock(BlobStoreGroup) {
           isStarted() >> true
-          getBlobStoreConfiguration() >> new BlobStoreConfiguration(name: 'name', type: 'type',
+          getBlobStoreConfiguration() >> new MockBlobStoreConfiguration(name: 'name', type: 'type',
             attributes: ['group': ['members': 'name-promoted'], blobStoreQuotaConfig: [:]])
         getMetrics() >> Mock(BlobStoreMetrics) {
           getBlobCount() >> 1L
@@ -150,7 +152,7 @@ class BlobStoreComponentTest
     setup:
       def groupBlobName = 'myGroup'
       def blobStore = Mock(BlobStore) {
-        getBlobStoreConfiguration() >> new BlobStoreConfiguration(name: groupBlobName, attributes: [:])
+        getBlobStoreConfiguration() >> new MockBlobStoreConfiguration(name: groupBlobName, attributes: [:])
       }
 
     when: 'trying to promote'
@@ -167,7 +169,7 @@ class BlobStoreComponentTest
   def 'given a blob store with a quota, create a proper blobStoreXO'() {
     setup:
       def blobStore = Mock(BlobStore) {
-        getBlobStoreConfiguration() >> new BlobStoreConfiguration(name: "test",
+        getBlobStoreConfiguration() >> new MockBlobStoreConfiguration(name: "test",
             attributes: [file: [path: 'path'], blobStoreQuotaConfig: [quotaType: 'spaceUsedQuota', quotaLimitBytes:
                 quotaLimitBytes]])
         getMetrics() >> Mock(BlobStoreMetrics) {
@@ -193,6 +195,7 @@ class BlobStoreComponentTest
   }
 
   def 'given a blob store XO with a quota, create a proper blob store config'() {
+    def blobStoreConfig = Mock(BlobStoreConfiguration)
     setup:
       def blobStoreXO = Mock(BlobStoreXO) {
         getName() >> 'xoTest'
@@ -202,14 +205,15 @@ class BlobStoreComponentTest
         getQuotaType() >> 'properType'
         getAttributes() >> [blobStoreQuotaConfig: [quotaType: 'shouldBeClobbered', quotaLimitBytes: 7]]
       }
+      1 * blobStoreManager.newConfiguration() >> blobStoreConfig
 
     when: 'create the config'
-      def blobStoreConfig = blobStoreComponent.asConfiguration(blobStoreXO)
+      blobStoreComponent.asConfiguration(blobStoreXO)
 
     then: 'proper object created'
-      blobStoreConfig.name == 'xoTest'
-      blobStoreConfig.type == 'type'
-      blobStoreConfig.attributes == [blobStoreQuotaConfig: [quotaType: 'properType', quotaLimitBytes: 10 * pow(10, 6)]]
+      1 * blobStoreConfig.setName('xoTest')
+      1 * blobStoreConfig.setType('type')
+      1 * blobStoreConfig.setAttributes([blobStoreQuotaConfig: [quotaType: 'properType', quotaLimitBytes: 10 * pow(10, 6)]])
   }
 
 }

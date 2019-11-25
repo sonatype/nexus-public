@@ -10,17 +10,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.api
+package org.sonatype.nexus.repository.internal.blobstore.orient
+
+import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 
 import spock.lang.Specification
 
-class BlobStoreConfigurationSpec
+class OrientBlobStoreConfigurationSpec
     extends Specification
 {
 
   def 'copy works'() {
     when: 'a configuration is created'
-      BlobStoreConfiguration source = new BlobStoreConfiguration()
+      BlobStoreConfiguration source = new OrientBlobStoreConfiguration()
       source.setName('source')
       source.setType('test type')
       source.attributes('config key').set('foo', 'bar')

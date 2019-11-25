@@ -17,6 +17,7 @@ import java.nio.file.Path;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.BlobStoreUtil;
+import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
@@ -57,7 +58,7 @@ public class FileBlobStoreDescriptorTest
 
   @Test
   public void descriptorValidationCallQuotaValidation() throws Exception {
-    BlobStoreConfiguration config = new BlobStoreConfiguration();
+    BlobStoreConfiguration config = new MockBlobStoreConfiguration();
     Path tempDir = Files.createTempDirectory("test");
     config.attributes(CONFIG_KEY).set(PATH_KEY, tempDir.toAbsolutePath().toString());
     descriptor.validateConfig(config);
@@ -66,7 +67,7 @@ public class FileBlobStoreDescriptorTest
 
   @Test
   public void descriptorValidationCallPathValidation() throws Exception {
-    BlobStoreConfiguration config = new BlobStoreConfiguration();
+    BlobStoreConfiguration config = new MockBlobStoreConfiguration();
     String tempDir = Files.createTempDirectory("test").toString();
     config.attributes(CONFIG_KEY).set(PATH_KEY, tempDir);
     descriptor.validateConfig(config);

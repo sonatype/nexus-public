@@ -347,7 +347,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_YumHostedFacet_Title: 'Yum',
     Repository_Facet_YumHostedFacet_RepodataDepth_FieldLabel: 'Repodata Depth',
     Repository_Facet_YumHostedFacet_RepodataDepth_HelpText: 'Specifies the repository depth where repodata folder(s) are created',
-    Repository_Facet_YumHostedFacet_DeployPolicy_FieldLabel: 'Deploy Policy',
+    Repository_Facet_YumHostedFacet_DeployPolicy_FieldLabel: 'Layout Policy',
     Repository_Facet_YumHostedFacet_DeployPolicy_HelpText: 'Validate that all paths are RPMs or yum metadata',
     Repository_Facet_YumHostedFacet_DeployPolicy_EmptyText: 'Select a policy',
     Repository_Facet_YumHostedFacet_DeployPolicy_StrictItem: 'Strict',

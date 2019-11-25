@@ -18,14 +18,12 @@ import java.util.List;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
+import org.sonatype.nexus.repository.routing.OrientRoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingMode;
 import org.sonatype.nexus.repository.routing.RoutingRule;
 import org.sonatype.nexus.rest.ValidationErrorXO;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -33,12 +31,13 @@ import org.junit.rules.ExpectedException;
 
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
-public class RoutingRuleStoreImplTest extends TestSupport
+public class OrientRoutingRuleStoreTest
+    extends TestSupport
 {
   @Rule
   public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory("test");
@@ -46,12 +45,12 @@ public class RoutingRuleStoreImplTest extends TestSupport
   @Rule
   public ExpectedException thrown = ExpectedException.none();
 
-  private RoutingRuleStoreImpl underTest;
+  private OrientRoutingRuleStore underTest;
 
   @Before
   public void setUp() throws Exception {
-    RoutingRuleEntityAdapter routingRuleEntityAdapter = new RoutingRuleEntityAdapter();
-    underTest = new RoutingRuleStoreImpl(database.getInstanceProvider(), routingRuleEntityAdapter);
+    OrientRoutingRuleEntityAdapter orientRoutingRuleEntityAdapter = new OrientRoutingRuleEntityAdapter();
+    underTest = new OrientRoutingRuleStore(database.getInstanceProvider(), orientRoutingRuleEntityAdapter);
   }
 
   @Test
@@ -133,43 +132,46 @@ public class RoutingRuleStoreImplTest extends TestSupport
 
   @Test
   public void testValidate_name() {
-    validate(new RoutingRule(null, "desc", RoutingMode.BLOCK, Collections.singletonList(".*")), "name",
+
+    validate(new OrientRoutingRule(null, "desc", RoutingMode.BLOCK, Collections.singletonList(".*")), "name",
         "A non-empty value must be specified");
 
-    validate(new RoutingRule("\t", "desc", RoutingMode.BLOCK, Collections.singletonList(".*")), "name",
+    validate(new OrientRoutingRule("\t", "desc", RoutingMode.BLOCK, Collections.singletonList(".*")), "name",
         "A non-empty value must be specified");
 
-    validate(new RoutingRule("asdf asdf", "desc", RoutingMode.BLOCK, Collections.singletonList(".*")), "name",
+    validate(new OrientRoutingRule("asdf asdf", "desc", RoutingMode.BLOCK, Collections.singletonList(".*")), "name",
         "Only letters, digits, underscores(_), hyphens(-), and dots(.) are allowed and may not start with underscore or dot.");
   }
 
   @Test
   public void testValidate_desc() {
-    validate(new RoutingRule("my-name", null, RoutingMode.BLOCK, Collections.singletonList(".*")), "description",
+    validate(new OrientRoutingRule("my-name", null, RoutingMode.BLOCK, Collections.singletonList(".*")), "description",
         "A non-null value must be specified");
   }
 
   @Test
   public void testValidate_matchers() {
-    validate(new RoutingRule("my-name", "desc", RoutingMode.BLOCK, null), "matchers",
+    validate(new OrientRoutingRule("my-name", "desc", RoutingMode.BLOCK, null), "matchers",
         "At least one rule must be specified");
 
-    validate(new RoutingRule("my-name", "desc", RoutingMode.BLOCK, Collections.emptyList()), "matchers",
+    validate(new OrientRoutingRule("my-name", "desc", RoutingMode.BLOCK, Collections.emptyList()), "matchers",
         "At least one rule must be specified");
 
-    validate(new RoutingRule("my-name", "desc", RoutingMode.BLOCK, Collections.singletonList(null)), "matchers[0]",
+    validate(new OrientRoutingRule("my-name", "desc", RoutingMode.BLOCK, Collections.singletonList(null)),
+        "matchers[0]",
         "Empty matchers are not allowed");
 
-    validate(new RoutingRule("my-name", "desc", RoutingMode.BLOCK, Collections.singletonList("")), "matchers[0]",
+    validate(new OrientRoutingRule("my-name", "desc", RoutingMode.BLOCK, Collections.singletonList("")), "matchers[0]",
         "Empty matchers are not allowed");
 
-    validate(new RoutingRule("my-name", "desc", RoutingMode.BLOCK, Collections.singletonList("(.*")), "matchers[0]",
+    validate(new OrientRoutingRule("my-name", "desc", RoutingMode.BLOCK, Collections.singletonList("(.*")),
+        "matchers[0]",
         String.format("Invalid regex: Unclosed group near index 3%n(.*"));
   }
 
   @Test
   public void testValidate_mode() {
-    validate(new RoutingRule("name", "desc", null, Collections.singletonList(".*")), "mode",
+    validate(new OrientRoutingRule("name", "desc", null, Collections.singletonList(".*")), "mode",
         "A non-empty value must be specified");
   }
 
@@ -194,8 +196,15 @@ public class RoutingRuleStoreImplTest extends TestSupport
     underTest.update(rule);
   }
 
+  @Test
+  public void shouldReturnAnOrientRoutingRule() {
+    final RoutingRule routingRule = underTest.newRoutingRule();
+
+    assertThat(routingRule, is(instanceOf(OrientRoutingRule.class)));
+  }
+
   private RoutingRule createRoutingRule(final String name, final String rule) {
-    RoutingRule testRoutingRule = new RoutingRule(name, "some description", RoutingMode.BLOCK,
+    RoutingRule testRoutingRule = new OrientRoutingRule(name, "some description", RoutingMode.BLOCK,
         Collections.singletonList(rule));
     underTest.create(testRoutingRule);
     return testRoutingRule;
@@ -203,7 +212,7 @@ public class RoutingRuleStoreImplTest extends TestSupport
 
   private static void validate(final RoutingRule rule, final String id, final String message) {
     try {
-      RoutingRuleStoreImpl.validate(rule);
+      OrientRoutingRuleStore.validate(rule);
       fail("Expected exception");
     }
     catch (ValidationErrorsException e) {
@@ -211,9 +220,10 @@ public class RoutingRuleStoreImplTest extends TestSupport
     }
   }
 
-  private static void assertValidationException(final ValidationErrorsException e,
-                                                final String id,
-                                                final String message)
+  private static void assertValidationException(
+      final ValidationErrorsException e,
+      final String id,
+      final String message)
   {
     for (ValidationErrorXO error : e.getValidationErrors()) {
       if (id.equals(error.getId()) && error.getMessage().startsWith(message)) {

@@ -14,16 +14,12 @@ package org.sonatype.nexus.datastore.mybatis;
 
 import java.util.Map;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
-
 import org.apache.ibatis.type.TypeHandler;
 
 /**
  * MyBatis {@link TypeHandler} that maps a (possibly nested) attribute map to/from JSON strings.
  */
-@Named
-@Singleton
+// not @Named because we register this manually
 public class AttributesTypeHandler
     extends JsonTypeHandler<Map<String, ?>>
 {

@@ -35,21 +35,20 @@ Ext.define('NX.coreui.view.repository.facet.HttpClientFacet', {
         store: me.getAuthTypeStore(),
         value: 'username',
         listeners: {
-          'change': function(combo) {
-            me.authTypeChanged(combo);
-          }
+          'change': me.authTypeChanged,
+          'afterrender': me.authTypeChanged
         }
       },
       {
         xtype: 'textfield',
-        id: 'attributes_httpclient_authentication_username',
+        itemId: 'attributes_httpclient_authentication_username',
         name: 'attributes.httpclient.authentication.username',
         fieldLabel: NX.I18n.get('System_AuthenticationSettings_Username_FieldLabel'),
         allowBlank: false
       },
       {
         xtype: 'textfield',
-        id: 'attributes_httpclient_authentication_password',
+        itemId: 'attributes_httpclient_authentication_password',
         inputType: 'password',
         name: 'attributes.httpclient.authentication.password',
         fieldLabel: NX.I18n.get('System_AuthenticationSettings_Password_FieldLabel'),
@@ -149,8 +148,7 @@ Ext.define('NX.coreui.view.repository.facet.HttpClientFacet', {
   },
 
   authTypeChanged: function(combo) {
-    var me = this;
-    var ntlmFields = me.up('form').down('#ntlmFields');
+    var ntlmFields = this.up('form').down('#ntlmFields');
 
     if(combo.getValue() === 'ntlm') {
       ntlmFields.show();

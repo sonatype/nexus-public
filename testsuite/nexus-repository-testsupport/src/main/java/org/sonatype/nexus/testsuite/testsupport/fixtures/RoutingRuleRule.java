@@ -39,8 +39,13 @@ public class RoutingRuleRule
    * Create a RoutingRule with mode block and a dummy description
    */
   public RoutingRule create(final String name, final String pattern) {
-    RoutingRule rule = new RoutingRule(name, "some description", RoutingMode.BLOCK, Collections.singletonList(pattern));
-    return create(rule);
+    final RoutingRuleStore routingRuleStore = ruleStoreProvider.get();
+    return create(routingRuleStore.newRoutingRule()
+        .name(name)
+        .description("some description")
+        .mode(RoutingMode.BLOCK)
+        .matchers(Collections.singletonList(pattern))
+    );
   }
 
   public RoutingRule create(final RoutingRule routingRule) {

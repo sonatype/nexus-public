@@ -65,6 +65,7 @@
     <module>nexus-quartz</module>
     <module>nexus-rapture</module>
     <module>nexus-repository</module>
+    <module>nexus-repository-content</module>
     <module>nexus-rest</module>
     <module>nexus-rest-client</module>
     <module>nexus-rest-jackson2</module>

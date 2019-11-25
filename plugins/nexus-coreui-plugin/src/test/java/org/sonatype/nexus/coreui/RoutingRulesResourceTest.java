@@ -23,6 +23,7 @@ import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.routing.OrientRoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingMode;
 import org.sonatype.nexus.repository.routing.RoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingRuleHelper;
@@ -175,7 +176,7 @@ public class RoutingRulesResourceTest
   }
 
   private RoutingRule routingRule(String name) {
-    RoutingRule routingRule = new RoutingRule().name(name).mode(RoutingMode.ALLOW).matchers(Collections.singletonList(".*"));
+    OrientRoutingRule routingRule = new OrientRoutingRule().name(name).mode(RoutingMode.ALLOW).matchers(Collections.singletonList(".*"));
 
     EntityMetadata entityMetadata = mock(EntityMetadata.class);
     when(entityMetadata.getId()).thenReturn(new DetachedEntityId(name));

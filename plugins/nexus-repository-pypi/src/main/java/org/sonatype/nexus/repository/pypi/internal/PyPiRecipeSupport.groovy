@@ -113,15 +113,16 @@ abstract class PyPiRecipeSupport
   }
 
   /**
-   * Matcher for index mapping.
+   * Matcher for index mapping. Handles normalized naming based on PEP503 " the only valid characters in a name are the
+   * ASCII alphabet, ASCII numbers, ., -, and _." https://www.python.org/dev/peps/pep-0503/#normalized-names
    */
   static Builder indexMatcher() {
     new Builder().matcher(
         LogicMatchers.and(
             new ActionMatcher(GET, HEAD),
             LogicMatchers.or(
-                new TokenMatcher('/simple/{name}'),
-                new TokenMatcher('/simple/{name}/')
+                new TokenMatcher('/simple/{name:[0-9a-zA-z\\._-]+}'),
+                new TokenMatcher('/simple/{name:[0-9a-zA-z\\._-]+}/')
             )
         ))
   }

@@ -60,9 +60,9 @@ public class RoutingRuleHelperImplTest
 
   @Before
   public void setup() {
-    when(routingRuleStore.getById("block")).thenReturn(new RoutingRule("block", "some description", RoutingMode.BLOCK,
+    when(routingRuleStore.getById("block")).thenReturn(new OrientRoutingRule("block", "some description", RoutingMode.BLOCK,
         Arrays.asList("^/com/sonatype/.*", ".*foobar.*")));
-    when(routingRuleStore.getById("allow")).thenReturn(new RoutingRule("allow", "some description", RoutingMode.ALLOW,
+    when(routingRuleStore.getById("allow")).thenReturn(new OrientRoutingRule("allow", "some description", RoutingMode.ALLOW,
         Arrays.asList(".*foobar.*", "^/org/apache/.*")));
     when(repository.getName()).thenReturn("test-repo");
     cache = new RoutingRuleCache(routingRuleStore);

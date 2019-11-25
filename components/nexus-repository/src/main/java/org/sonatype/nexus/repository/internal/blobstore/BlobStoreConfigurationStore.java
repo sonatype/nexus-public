@@ -64,4 +64,11 @@ public interface BlobStoreConfigurationStore
    * @since 3.15
    */
   Optional<BlobStoreConfiguration> findParent(String name);
+
+  /**
+   * Create a new empty {@link BlobStoreConfiguration} suitable for use with this store
+   *
+   * @since 3.next
+   */
+  BlobStoreConfiguration newConfiguration();
 }

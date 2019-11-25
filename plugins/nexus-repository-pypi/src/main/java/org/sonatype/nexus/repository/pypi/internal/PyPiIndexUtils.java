@@ -17,13 +17,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
@@ -33,6 +37,7 @@ import org.sonatype.nexus.common.template.TemplateParameters;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
+import org.apache.http.client.utils.URIBuilder;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -41,6 +46,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.valueOf;
+import static java.util.regex.Pattern.compile;
+import static org.apache.http.client.utils.URLEncodedUtils.parse;
 
 /**
  * Utility methods for working with PyPI indexes.
@@ -49,7 +57,15 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public final class PyPiIndexUtils
 {
+
   private static final Logger log = LoggerFactory.getLogger(PyPiIndexUtils.class);
+
+  public static final String ABSOLUTE_URL_PREFIX = "^https?://.*";
+
+  public static final Pattern PATH_WITH_HOST_PREFIX = compile(
+      "^/(?<host>[a-zA-Z0-9.-]+?)(?:/(?<port>\\d+))?/(?<scheme>https??)(?<path>/.*)");
+
+  public static final String RELATIVE_PREFIX = "../../";
 
   /**
    * Returns a map (in original order of appearance) of the files and associated paths extracted from the index.
@@ -129,15 +145,20 @@ public final class PyPiIndexUtils
   /**
    * Rewrites an index page so that the links are all relative where possible.
    */
-  static Map<String, String> makeIndexRelative(final InputStream in) throws IOException {
-    return makePackageLinksRelative(extractLinksFromIndex(in));
+  static Map<String, String> makeIndexRelative(final URI remoteUrl, final String name, final InputStream in)
+      throws IOException
+  {
+    return makePackageLinksRelative(remoteUrl, name, extractLinksFromIndex(in));
   }
 
   /**
    * Rewrites an index page so that the links are all relative where possible.
    */
-  static Map<String, String> makePackageLinksRelative(final Map<String, String> oldLinks) {
-    return makeLinksRelative(oldLinks, PyPiIndexUtils::maybeRewriteLink);
+  static Map<String, String> makePackageLinksRelative(final URI remoteUrl,
+                                                      final String name,
+                                                      final Map<String, String> oldLinks)
+  {
+    return makeLinksRelative(oldLinks, link -> rewriteLink(remoteUrl, name, link));
   }
 
   /**
@@ -159,22 +180,68 @@ public final class PyPiIndexUtils
    * skipped.
    */
   @Nullable
-  private static String maybeRewriteLink(final String link) {
-    if (link.startsWith("../../packages")) {
-      log.trace("Found index page relative link, not rewriting: {}", link);
-      return link;
+  private static String rewriteLink(final URI remoteUrl, final String name, final String link) {
+    if (link.matches(ABSOLUTE_URL_PREFIX)) {
+      return rewriteAbsoluteUri(link);
     }
+    return rewriteRelativeUri(remoteUrl, name, link);
+  }
 
-    // This allows the PyPI warehouse implementation to work as an undocumented side-effect, a request to the resulting
-    // URL will produce a 301 that ends up being followed to the actual file location on their file hosting site
-    int startIndex = link.indexOf("/packages");
-    if (startIndex != -1) {
-      log.trace("Rewriting link as relative (is this an absolute url for warehouse?): " + link);
-      return "../.." + link.substring(startIndex);
+  /**
+   * Embeds the scheme, host and port in the URL path so that it can be parsed out and proxied, even when the host
+   * does not match the remote
+   */
+  private static String rewriteAbsoluteUri(final String link) {
+    try {
+      URI linkUri = new URI(link);
+      URI relativeUri = hostPathUri(linkUri).resolve(linkUri.getPath().substring(1));
+      return RELATIVE_PREFIX + new URIBuilder(relativeUri)
+          .setFragment(linkUri.getFragment())
+          .setCustomQuery(linkUri.getQuery())
+          .build()
+          .toASCIIString();
     }
+    catch (URISyntaxException e) {
+      log.error("Error building relative path for absolute url {}. Package link is being skipped.", link, e);
+      return null;
+    }
+  }
 
-    log.trace("Found index page link without /packages reference, not rewriting: {}", link);
-    return link;
+  /**
+   * Creates a URI in the format of {host}/{port}/{scheme}/ where {port} is only used when explicitly declared
+   */
+  private static URI hostPathUri(final URI linkUri) throws URISyntaxException {
+    URI relativeUri = new URIBuilder(toPath(linkUri.getHost())).build();
+    if (linkUri.getPort() != -1) {
+      relativeUri = relativeUri.resolve(toPath(valueOf(linkUri.getPort())));
+    }
+    relativeUri = relativeUri.resolve(toPath(linkUri.getScheme()));
+    return relativeUri;
+  }
+
+  private static String toPath(final String host) {
+    return host + "/";
+  }
+
+  /**
+   * Rewrites a link relative to the remoteUrl
+   */
+  private static String rewriteRelativeUri(final URI remoteUrl, final String name, final String link) {
+    URI linkUri = remoteUrl.resolve("/").resolve(name).resolve(link);
+    try {
+      String relativePath = linkUri.getPath().substring(1);
+      if (PATH_WITH_HOST_PREFIX.matcher(linkUri.getPath()).matches()) {
+        relativePath = hostPathUri(linkUri).resolve(relativePath).getPath();
+      }
+      return RELATIVE_PREFIX + new URIBuilder(relativePath)
+          .addParameters(parse(linkUri, Charset.defaultCharset()))
+          .setFragment(linkUri.getFragment()).build()
+          .toASCIIString();
+    }
+    catch (URISyntaxException e) {
+      log.error("Error building relative path for relative path {}. Package link is being skipped.", link, e);
+      return null;
+    }
   }
 
   private static String maybeRewriteRootLink(final String link) {

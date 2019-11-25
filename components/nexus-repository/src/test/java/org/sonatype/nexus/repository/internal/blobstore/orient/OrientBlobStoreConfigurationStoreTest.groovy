@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.internal.blobstore
+package org.sonatype.nexus.repository.internal.blobstore.orient
 
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
@@ -25,21 +25,21 @@ import org.junit.Test
 import static org.junit.Assert.fail
 
 /**
- * Tests for {@link BlobStoreConfigurationStoreImpl}.
+ * Tests for {@link OrientBlobStoreConfigurationStore}.
  */
-class BlobStoreConfigurationStoreImplTest
+class OrientBlobStoreConfigurationStoreTest
     extends TestSupport
 {
   @Rule
   public DatabaseInstanceRule database = DatabaseInstanceRule.inMemory('test')
 
-  private BlobStoreConfigurationStoreImpl underTest
+  private OrientBlobStoreConfigurationStore underTest
 
   @Before
   void setup() {
-    underTest = new BlobStoreConfigurationStoreImpl(
+    underTest = new OrientBlobStoreConfigurationStore(
         database.instanceProvider,
-        new BlobStoreConfigurationEntityAdapter()
+        new OrientBlobStoreConfigurationEntityAdapter()
     )
     underTest.start()
   }
@@ -84,7 +84,7 @@ class BlobStoreConfigurationStoreImplTest
     }
     catch (ORecordDuplicatedException e) {
       // FIXME: This is fragile for refactoring
-      assert e.toString().contains(BlobStoreConfigurationEntityAdapter.I_NAME)
+      assert e.toString().contains(OrientBlobStoreConfigurationEntityAdapter.I_NAME)
     }
   }
 
@@ -102,7 +102,7 @@ class BlobStoreConfigurationStoreImplTest
   @Test
   void 'It will return the parents by matching the attributes group members'() {
     createConfig('member1', 'member1')
-    def entity = new BlobStoreConfiguration(
+    def entity = new OrientBlobStoreConfiguration(
         name: 'parent1',
         type: 'File',
         attributes: [group:[members:['member1']]]
@@ -117,7 +117,7 @@ class BlobStoreConfigurationStoreImplTest
   void 'It will return no parents if the blob store is not a member of any groups'() {
     createConfig('member1', 'member1')
     createConfig('member2', 'member2')
-    def entity = new BlobStoreConfiguration(
+    def entity = new OrientBlobStoreConfiguration(
         name: 'parent1',
         type: 'File',
         attributes: [group:[members:['member1']]]
@@ -129,7 +129,7 @@ class BlobStoreConfigurationStoreImplTest
   }
 
   private BlobStoreConfiguration createConfig(name = 'foo', path = 'bar') {
-    def entity = new BlobStoreConfiguration(
+    def entity = new OrientBlobStoreConfiguration(
         name: name,
         type: 'file',
         attributes: [file:[path:path]]

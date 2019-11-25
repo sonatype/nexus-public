@@ -31,9 +31,9 @@ public class FileBlobStoreApiCreateRequest
   }
 
   @Override
-  public BlobStoreConfiguration toBlobStoreConfiguration() {
-    BlobStoreConfiguration configuration = super.toBlobStoreConfiguration();
-    configuration.setName(name);
-    return configuration;
+  public BlobStoreConfiguration toBlobStoreConfiguration(final BlobStoreConfiguration oldConfig) {
+    BlobStoreConfiguration newConfig = super.toBlobStoreConfiguration(oldConfig);
+    newConfig.setName(name);
+    return newConfig;
   }
 }

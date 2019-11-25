@@ -31,7 +31,7 @@ Ext.define('NX.coreui.view.repository.facet.BearerHttpClientFacet', {
         {
           xtype: 'textfield',
           inputType: 'password',
-          id: 'attributes_httpclient_authentication_bearerToken',
+          itemId: 'attributes_httpclient_authentication_bearerToken',
           name: 'attributes.httpclient.authentication.bearerToken',
           fieldLabel: NX.I18n.get('System_AuthenticationSettings_Bearer_Token_FieldLabel'),
           helpText: NX.I18n.get('System_AuthenticationSettings_Bearer_Token_HelpText'),
@@ -43,12 +43,12 @@ Ext.define('NX.coreui.view.repository.facet.BearerHttpClientFacet', {
   },
 
   authTypeChanged: function(combo) {
-    var me = this;
-    me.callParent(arguments);
+    var form = this.up('form'),
+        bearerTokenField = form.down('#attributes_httpclient_authentication_bearerToken'),
+        usernameField = form.down('#attributes_httpclient_authentication_username'),
+        passwordField = form.down('#attributes_httpclient_authentication_password');
 
-    var bearerTokenField = this.up('form').down('#attributes_httpclient_authentication_bearerToken');
-    var usernameField = this.up('form').down('#attributes_httpclient_authentication_username');
-    var passwordField = this.up('form').down('#attributes_httpclient_authentication_password');
+    this.callParent(arguments);
 
     if (combo.getValue() === 'bearerToken') {
       usernameField.hide();
@@ -61,10 +61,14 @@ Ext.define('NX.coreui.view.repository.facet.BearerHttpClientFacet', {
 
       bearerTokenField.show();
       bearerTokenField.enable();
+      bearerTokenField.allowBlank = false;
+
+      form.isValid();
     }
     else {
       bearerTokenField.hide();
       bearerTokenField.disable();
+      bearerTokenField.allowBlank = true;
 
       usernameField.show();
       usernameField.enable();
@@ -73,14 +77,18 @@ Ext.define('NX.coreui.view.repository.facet.BearerHttpClientFacet', {
       passwordField.show();
       passwordField.enable();
       passwordField.allowBlank = false;
+
+      form.isValid();
     }
   },
 
   getAuthTypeStore: function() {
     var me = this;
     var parentAuthTypes = me.callParent(arguments);
-    parentAuthTypes.push(
-        ['bearerToken', NX.I18n.get('Repository_Facet_HttpClientFacet_AuthenticationType_Bearer_Token')]);
+    parentAuthTypes.push([
+        'bearerToken',
+        NX.I18n.get('Repository_Facet_HttpClientFacet_AuthenticationType_Bearer_Token')
+    ]);
     return parentAuthTypes;
   }
 

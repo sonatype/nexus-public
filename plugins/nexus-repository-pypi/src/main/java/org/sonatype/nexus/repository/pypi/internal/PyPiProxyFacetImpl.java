@@ -16,10 +16,12 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.regex.Matcher;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -49,10 +51,14 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.InputStreamEntity;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.Integer.parseInt;
+import static java.nio.charset.Charset.defaultCharset;
+import static org.apache.http.client.utils.URLEncodedUtils.parse;
 import static org.sonatype.nexus.repository.pypi.internal.AssetKind.INDEX;
 import static org.sonatype.nexus.repository.pypi.internal.AssetKind.ROOT_INDEX;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_NAME;
@@ -67,6 +73,7 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiDataUtils.toConten
 import static org.sonatype.nexus.repository.pypi.internal.PyPiFileUtils.extractFilenameFromPath;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiFileUtils.extractNameFromFilename;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiFileUtils.extractVersionFromFilename;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.PATH_WITH_HOST_PREFIX;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.buildIndexPage;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.buildRootIndexPage;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.makeIndexRelative;
@@ -77,7 +84,6 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.indexPat
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.isSearchRequest;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.matcherState;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.name;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.packagesPath;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.path;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
@@ -111,7 +117,7 @@ public class PyPiProxyFacetImpl
       case INDEX:
         return getAsset(indexPath(name(state)));
       case PACKAGE:
-        return getAsset(packagesPath(path(state)));
+        return getAsset(path(state));
       default:
         throw new IllegalStateException();
     }
@@ -130,7 +136,7 @@ public class PyPiProxyFacetImpl
       case INDEX:
         return putIndex(indexPath(name(state)), content);
       case PACKAGE:
-        return putPackage(packagesPath(path(state)), content);
+        return putPackage(path(state), content);
       default:
         throw new IllegalStateException();
     }
@@ -165,7 +171,35 @@ public class PyPiProxyFacetImpl
         throw new RuntimeException(e);
       }
     }
-    return super.buildFetchHttpRequest(uri, context);
+    return super.buildFetchHttpRequest(maybeRewriteUri(uri, context), context); // URI needs to be replaced here
+  }
+
+  /**
+   * Rewrites the uri when host, port and scheme information is embedded in the path
+   */
+  private URI maybeRewriteUri(URI uri, final Context context) {
+    Matcher matcher = PATH_WITH_HOST_PREFIX.matcher(context.getRequest().getPath());
+    if (matcher.matches()) {
+      try {
+        URI remoteUrl = getRemoteUrl().getPath().endsWith("/") ? getRemoteUrl() : getRemoteUrl().resolve("/");
+        return new URIBuilder()
+            .setPath(remoteUrl.resolve(matcher.group("path").substring(1)).getPath())
+            .addParameters(parse(uri, defaultCharset()))
+            .setPort(port(matcher.group("port")))
+            .setScheme(matcher.group("scheme"))
+            .setHost(matcher.group("host"))
+            .setFragment(uri.getFragment())
+            .build();
+      }
+      catch (URISyntaxException e) {
+        log.error("Error parsing URI for path {}", context.getRequest().getPath(), e);
+      }
+    }
+    return uri;
+  }
+
+  private int port(final String port) {
+    return port == null ? -1 : parseInt(port);
   }
 
   @TransactionalTouchBlob
@@ -244,7 +278,7 @@ public class PyPiProxyFacetImpl
   private Content putIndex(final String name, final Content content) throws IOException {
     String html;
     try (InputStream inputStream = content.openInputStream()) {
-      Map<String, String> links = makeIndexRelative(inputStream);
+      Map<String, String> links = makeIndexRelative(getRemoteUrl(), name, inputStream);
       html = buildIndexPage(templateHelper, name.substring(name.indexOf('/') + 1, name.length() - 1), links);
     }
     return storeHtmlPage(content, html, INDEX, name);

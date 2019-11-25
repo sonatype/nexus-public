@@ -12,11 +12,10 @@
  */
 package org.sonatype.nexus.blobstore.group.internal
 
-
 import org.sonatype.nexus.blobstore.BlobStoreUtil
+import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobId
 import org.sonatype.nexus.blobstore.api.BlobStore
-import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup
@@ -59,7 +58,7 @@ class BlobStoreGroupDescriptorTest
   @Unroll
   def 'Validate with valid members #members'() {
     given: 'A config'
-      def config = new BlobStoreConfiguration()
+      def config = new MockBlobStoreConfiguration()
 
     when: 'the config is validated'
       config.name = 'self'
@@ -78,7 +77,7 @@ class BlobStoreGroupDescriptorTest
   @Unroll
   def 'Validate invalid members #members'() {
     given: 'A config'
-      def config = new BlobStoreConfiguration()
+      def config = new MockBlobStoreConfiguration()
       blobStores.nested = mockBlobStore('nested', BlobStoreGroup.TYPE, [group: [members: ['self'], fillPolicy: WriteToFirstMemberFillPolicy.TYPE]], false)
 
     when: 'the config is validated'
@@ -104,7 +103,7 @@ class BlobStoreGroupDescriptorTest
 
     when: 'a new group is created with the same member as the existing group'
       blobStoreGroupDescriptor.
-          validateConfig(new BlobStoreConfiguration(name: 'invalidGroup', type: BlobStoreGroup.TYPE,
+          validateConfig(new MockBlobStoreConfiguration(name: 'invalidGroup', type: BlobStoreGroup.TYPE,
               attributes: [group: [members: ['store1'], fillPolicy: WriteToFirstMemberFillPolicy.TYPE]]))
 
     then: 'a validation exception is thrown'
@@ -116,7 +115,7 @@ class BlobStoreGroupDescriptorTest
   def 'blob stores cant be group members if set as repo storage'() {
     when: 'attempting to create a group with that blob store'
       blobStoreGroupDescriptor.
-          validateConfig(new BlobStoreConfiguration(name: 'invalidGroup', type: BlobStoreGroup.TYPE,
+          validateConfig(new MockBlobStoreConfiguration(name: 'invalidGroup', type: BlobStoreGroup.TYPE,
               attributes: [group: [members: ['store1'], fillPolicy: WriteToFirstMemberFillPolicy.TYPE]]))
 
     then: 'a validation exception is thrown'
@@ -135,7 +134,7 @@ class BlobStoreGroupDescriptorTest
 
     when: 'the member is removed'
       blobStoreGroupDescriptor.
-          validateConfig(new BlobStoreConfiguration(name: 'group1', type: BlobStoreGroup.TYPE,
+          validateConfig(new MockBlobStoreConfiguration(name: 'group1', type: BlobStoreGroup.TYPE,
               attributes: [group: [members: ['store1'], fillPolicy: WriteToFirstMemberFillPolicy.TYPE]]))
 
     then: 'a validation exception is thrown'
@@ -147,7 +146,7 @@ class BlobStoreGroupDescriptorTest
 
   def 'a group blob store validates its quota'() {
     when: 'attempting to create a group'
-      blobStoreGroupDescriptor.validateConfig(new BlobStoreConfiguration(name: 'group', type: BlobStoreGroup.TYPE,
+      blobStoreGroupDescriptor.validateConfig(new MockBlobStoreConfiguration(name: 'group', type: BlobStoreGroup.TYPE,
           attributes: [group: [members: ['single'], fillPolicy: WriteToFirstMemberFillPolicy.TYPE]]))
 
     then: 'quota validity is checked'
@@ -155,7 +154,7 @@ class BlobStoreGroupDescriptorTest
   }
 
   private BlobStoreGroup mockBlobStoreGroup(final String name, final List<BlobStore> members) {
-    def config = new BlobStoreConfiguration(name: name, type: BlobStoreGroup.TYPE,
+    def config = new MockBlobStoreConfiguration(name: name, type: BlobStoreGroup.TYPE,
         attributes: [group: [members: members.collect { it.blobStoreConfiguration.name }], fillPolicy: WriteToFirstMemberFillPolicy.TYPE])
     def group = Mock(BlobStoreGroup)
     group.isGroupable() >> false
@@ -171,7 +170,7 @@ class BlobStoreGroupDescriptorTest
                                   BlobStoreMetrics metrics = null)
   {
     def blobStore = Mock(BlobStore)
-    def config = new BlobStoreConfiguration()
+    def config = new MockBlobStoreConfiguration()
     blobStore.getBlobStoreConfiguration() >> config
     blobStore.isGroupable() >> groupable
     blobStore.getMetrics() >> (metrics ?: Mock(BlobStoreMetrics))

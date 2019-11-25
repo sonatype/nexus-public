@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.s3.internal
 
-import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
+import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration
 
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model.AmazonS3Exception
@@ -20,8 +20,8 @@ import com.amazonaws.services.s3.model.BucketLifecycleConfiguration
 import com.amazonaws.services.s3.model.BucketLifecycleConfiguration.Rule
 import com.amazonaws.services.s3.model.BucketLifecycleConfiguration.Transition
 import com.amazonaws.services.s3.model.ObjectListing
-import com.amazonaws.services.s3.model.StorageClass
 import com.amazonaws.services.s3.model.S3ObjectSummary
+import com.amazonaws.services.s3.model.StorageClass
 import com.amazonaws.services.s3.model.lifecycle.LifecycleAndOperator
 import com.amazonaws.services.s3.model.lifecycle.LifecycleFilter
 import com.amazonaws.services.s3.model.lifecycle.LifecyclePrefixPredicate
@@ -54,7 +54,7 @@ class BucketManagerTest
   def 'set lifecycle on pre-existing bucket if not present'() {
     given: 'bucket already exists, but has null lifecycle configuration'
       s3.doesBucketExistV2('mybucket') >> true
-      def cfg = new BlobStoreConfiguration()
+      def cfg = new MockBlobStoreConfiguration()
       cfg.attributes = [s3: [bucket: 'mybucket', prefix: 'myprefix', expiration: '3']]
       bucketManager.s3 = s3
 
@@ -67,7 +67,7 @@ class BucketManagerTest
 
   def 'isExpirationLifecycleConfigurationPresent returns false on empty config'() {
     given: 'empty lifecycleConfiguration'
-      def cfg = new BlobStoreConfiguration()
+      def cfg = new MockBlobStoreConfiguration()
       cfg.attributes = [s3: [bucket: 'mybucket', prefix: 'myprefix', expiration: '3']]
       def bucketConfig = new BucketLifecycleConfiguration()
       bucketManager.s3 = s3
@@ -103,7 +103,7 @@ class BucketManagerTest
 
       s3.doesBucketExistV2('mybucket') >> true
       s3.getBucketLifecycleConfiguration('mybucket') >> bucketConfig
-      def cfg = new BlobStoreConfiguration(name: 'blobs')
+      def cfg = new MockBlobStoreConfiguration(name: 'blobs')
       cfg.attributes = [s3: [bucket: 'mybucket', prefix: 'myprefix', expiration: '3']]
       bucketManager.s3 = s3
 
@@ -138,7 +138,7 @@ class BucketManagerTest
 
       s3.doesBucketExistV2('mybucket') >> true
       s3.getBucketLifecycleConfiguration('mybucket') >> bucketConfig
-      def cfg = new BlobStoreConfiguration(name: 'blobs')
+      def cfg = new MockBlobStoreConfiguration(name: 'blobs')
       cfg.attributes = [s3: [bucket: 'mybucket', prefix: 'myprefix', expiration: '3']]
       bucketManager.s3 = s3
 
@@ -166,7 +166,7 @@ class BucketManagerTest
 
       s3.doesBucketExistV2('mybucket') >> true
       s3.getBucketLifecycleConfiguration('mybucket') >> bucketConfig
-      def cfg = new BlobStoreConfiguration(name: 'mybucket')
+      def cfg = new MockBlobStoreConfiguration(name: 'mybucket')
       cfg.attributes = [s3: [bucket: 'mybucket', expiration: '0']]
       bucketManager.s3 = s3
 
@@ -191,7 +191,7 @@ class BucketManagerTest
 
       s3.doesBucketExistV2('mybucket') >> true
       s3.getBucketLifecycleConfiguration('mybucket') >> bucketConfig
-      def cfg = new BlobStoreConfiguration(name: 'blobs')
+      def cfg = new MockBlobStoreConfiguration(name: 'blobs')
       cfg.attributes = [s3: [bucket: 'mybucket', expiration: '4']]
       bucketManager.s3 = s3
 
@@ -211,7 +211,7 @@ class BucketManagerTest
       ObjectListing objectListing = Mock()
       objectListing.getObjectSummaries() >> []
       s3.listObjects(_) >> objectListing
-      def cfg = new BlobStoreConfiguration()
+      def cfg = new MockBlobStoreConfiguration()
       cfg.attributes = [s3: [bucket: 'mybucket', prefix: 'myprefix', expiration: '3']]
       bucketManager.s3 = s3
 
@@ -228,7 +228,7 @@ class BucketManagerTest
       objectListing.getObjectSummaries() >> [new S3ObjectSummary()]
       s3.listObjects(_) >> objectListing
       s3.getBucketLifecycleConfiguration(_) >> Mock(BucketLifecycleConfiguration)
-      def cfg = new BlobStoreConfiguration()
+      def cfg = new MockBlobStoreConfiguration()
       cfg.attributes = [s3: [bucket: 'mybucket', prefix: 'myprefix', expiration: '3']]
       bucketManager.s3 = s3
 
@@ -248,7 +248,7 @@ class BucketManagerTest
       s3.getBucketLifecycleConfiguration(_) >> Mock(BucketLifecycleConfiguration) {
         getRules() >> rules
       }
-      def cfg = new BlobStoreConfiguration()
+      def cfg = new MockBlobStoreConfiguration()
       cfg.attributes = [s3: [bucket: 'mybucket', prefix: 'myprefix', expiration: '3']]
       cfg.name = 'my_s3_blob_store'
       bucketManager.s3 = s3
@@ -276,7 +276,7 @@ class BucketManagerTest
       def bucketName = 'bucketName'
       s3.doesBucketExistV2(bucketName) >> false
       s3.createBucket(bucketName) >> { throw Mock(AmazonS3Exception) { getErrorCode() >> errorCode } }
-      BlobStoreConfiguration config = new BlobStoreConfiguration(attributes: [(CONFIG_KEY): [(BUCKET_KEY): bucketName]])
+      MockBlobStoreConfiguration config = new MockBlobStoreConfiguration(attributes: [(CONFIG_KEY): [(BUCKET_KEY): bucketName]])
       bucketManager.s3 = s3
     when:
       bucketManager.prepareStorageLocation(config)
@@ -295,7 +295,7 @@ class BucketManagerTest
     given:
       def bucketName = 'bucketName'
       s3.doesBucketExistV2(bucketName) >> { throw Mock(AmazonS3Exception) { getErrorCode() >> errorCode } }
-      BlobStoreConfiguration config = new BlobStoreConfiguration(attributes: [(CONFIG_KEY): [(BUCKET_KEY): bucketName]])
+      MockBlobStoreConfiguration config = new MockBlobStoreConfiguration(attributes: [(CONFIG_KEY): [(BUCKET_KEY): bucketName]])
       bucketManager.s3 = s3
     when:
       bucketManager.prepareStorageLocation(config)
@@ -315,7 +315,7 @@ class BucketManagerTest
       def bucketName = 'bucketName'
       s3.doesBucketExistV2(bucketName) >> true
       s3.getBucketAcl(bucketName) >> { throw Mock(AmazonS3Exception) { getErrorCode() >> errorCode } }
-      BlobStoreConfiguration config = new BlobStoreConfiguration(attributes: [(CONFIG_KEY): [(BUCKET_KEY): bucketName]])
+      MockBlobStoreConfiguration config = new MockBlobStoreConfiguration(attributes: [(CONFIG_KEY): [(BUCKET_KEY): bucketName]])
       bucketManager.s3 = s3
     when:
       bucketManager.prepareStorageLocation(config)

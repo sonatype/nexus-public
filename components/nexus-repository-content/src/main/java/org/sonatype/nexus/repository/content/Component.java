@@ -10,18 +10,29 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.routing.internal;
-
-import org.sonatype.nexus.common.entity.EntityDeletedEvent;
-import org.sonatype.nexus.common.entity.EntityMetadata;
+package org.sonatype.nexus.repository.content;
 
 /**
- * @since 3.17
+ * Each component represents a unique logical coordinate in a repository.
+ *
+ * @since 3.next
+ * @see Asset
  */
-public class RoutingRuleDeletedEvent
-    extends EntityDeletedEvent
+public interface Component
+    extends RepositoryContent
 {
-  public RoutingRuleDeletedEvent(final EntityMetadata metadata) {
-    super(metadata);
-  }
+  /**
+   * The component namespace; empty string if the component doesn't have a namespace.
+   */
+  String namespace();
+
+  /**
+   * The component name.
+   */
+  String name();
+
+  /**
+   * The component version; empty string if the component doesn't have a version.
+   */
+  String version();
 }

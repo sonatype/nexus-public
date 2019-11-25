@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.blobstore.s3.internal;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.goodies.common.ComponentSupport;
@@ -56,6 +57,13 @@ public class AmazonS3Factory
 {
   public static final String DEFAULT = "DEFAULT";
 
+  private final int connectionPoolSize;
+
+  @Inject
+  public AmazonS3Factory(@Named("${nexus.s3.connection.pool:--1}") final int connectionPoolSize) {
+    this.connectionPoolSize = connectionPoolSize;
+  }
+
   public AmazonS3 create(final BlobStoreConfiguration blobStoreConfiguration) {
     NexusS3ClientBuilder builder = NexusS3ClientBuilder.standard();
 
@@ -84,11 +92,14 @@ public class AmazonS3Factory
       }
     }
 
-    if (!isNullOrEmptyOrDefault(signerType)) {
-      ClientConfiguration clientConfiguration = PredefinedClientConfigurations.defaultConfig();
-      clientConfiguration.setSignerOverride(signerType);
-      builder = builder.withClientConfiguration(clientConfiguration);
+    ClientConfiguration clientConfiguration = PredefinedClientConfigurations.defaultConfig();
+    if (connectionPoolSize > 0) {
+      clientConfiguration.setMaxConnections(connectionPoolSize);
     }
+    if (!isNullOrEmptyOrDefault(signerType)) {
+      clientConfiguration.setSignerOverride(signerType);
+    }
+    builder = builder.withClientConfiguration(clientConfiguration);
 
     builder = builder.withPathStyleAccessEnabled(Boolean.parseBoolean(forcePathStyle));
 

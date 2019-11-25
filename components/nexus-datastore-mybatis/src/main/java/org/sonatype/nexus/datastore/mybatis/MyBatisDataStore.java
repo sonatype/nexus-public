@@ -33,6 +33,9 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.entity.EntityUUID;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.thread.TcclBlock;
 import org.sonatype.nexus.datastore.DataStoreSupport;
@@ -140,11 +143,7 @@ public class MyBatisDataStore
     Environment environment = new Environment(storeName, new JdbcTransactionFactory(), dataSource);
     sessionFactory = new DefaultSqlSessionFactory(configureMyBatis(environment));
 
-    if (beanLocator == null) {
-      // add standard handlers for testing
-      register(new AttributesTypeHandler());
-    }
-    else {
+    if (beanLocator != null) {
       beanLocator.watch(TYPE_HANDLER_KEY, TYPE_HANDLER_MEDIATOR, this);
     }
   }
@@ -171,6 +170,7 @@ public class MyBatisDataStore
     registerDataAccessMapper(accessType);
 
     // finally create the schema for this DAO
+    info("Creating schema for {}", accessType.getSimpleName());
     try (SqlSession session = sessionFactory.openSession()) {
       session.getMapper(accessType).createSchema();
       session.commit();
@@ -234,29 +234,50 @@ public class MyBatisDataStore
     // configuration elements that must always be applied
     myBatisConfig.setEnvironment(environment);
     myBatisConfig.setDatabaseId(databaseId);
+    myBatisConfig.setMapUnderscoreToCamelCase(true);
     myBatisConfig.setObjectFactory(new DefaultObjectFactory()
     {
       @Override
-      public <T> boolean isCollection(Class<T> type) {
+      public <T> boolean isCollection(final Class<T> type) {
         // modify MyBatis behaviour to let it map collection results to Iterable
         return Iterable.class.isAssignableFrom(type) || super.isCollection(type);
+      }
+
+      @Override
+      protected Class<?> resolveInterface(final Class<?> type) {
+        if (type == Continuation.class) {
+          return ContinuationArrayList.class;
+        }
+        return super.resolveInterface(type);
       }
     });
 
     boolean lenient = configurePlaceholderTypes(myBatisConfig, databaseId);
-
-    TypeHandlerRegistry handlerRegistry = myBatisConfig.getTypeHandlerRegistry();
-    handlerRegistry.register(new EntityUUIDTypeHandler(lenient));
-    if (lenient) {
-      // also support querying by UUID string when database may not have a UUID type
-      myBatisConfig.getTypeHandlerRegistry().register(new LenientUUIDTypeHandler());
-    }
+    registerCommonTypeHandlers(myBatisConfig.getTypeHandlerRegistry(), lenient);
 
     if (CONFIG_DATASTORE_NAME.equals(environment.getId())) {
       myBatisConfig.addInterceptor(new EntityInterceptor());
     }
 
     return myBatisConfig;
+  }
+
+  /**
+   * Register common {@link TypeHandler}s that we know will be needed in the store.
+   */
+  private void registerCommonTypeHandlers(final TypeHandlerRegistry handlerRegistry, final boolean lenient) {
+
+    handlerRegistry.register(new AttributesTypeHandler());
+    handlerRegistry.register(new NestedAttributesMapTypeHandler());
+    handlerRegistry.register(new DateTimeTypeHandler());
+
+    TypeHandler<EntityUUID> entityIdHandler = new EntityUUIDTypeHandler(lenient);
+    handlerRegistry.register(EntityUUID.class, entityIdHandler);
+    handlerRegistry.register(EntityId.class, entityIdHandler);
+    if (lenient) {
+      // also support querying by UUID string when database may not have a UUID type
+      handlerRegistry.register(new LenientUUIDTypeHandler());
+    }
   }
 
   /**
@@ -402,14 +423,22 @@ public class MyBatisDataStore
     try {
       log.trace(xml);
 
+      Configuration mybatisConfig = sessionFactory.getConfiguration();
+
       XMLMapperBuilder xmlParser = new XMLMapperBuilder(
           new ByteArrayInputStream(xml.getBytes(UTF_8)),
-          sessionFactory.getConfiguration(),
+          mybatisConfig,
           mapperXmlPath(templateType) + "${" + placeholder + '=' + prefix + '}',
-          sessionFactory.getConfiguration().getSqlFragments(),
+          mybatisConfig.getSqlFragments(),
           accessType.getName());
 
-      xmlParser.parse(); // this registers the resolved XML with MyBatis
+      xmlParser.parse();
+
+      // when the type is not visible from this classloader then MyBatis will prepare the mapper
+      // but not do the final registration - so this call is needed to complete the registration
+      if (!mybatisConfig.hasMapper(accessType)) {
+        mybatisConfig.addMapper(accessType);
+      }
     }
     catch (RuntimeException e) {
       log.warn(xml, e);

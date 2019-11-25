@@ -10,18 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.routing.internal;
-
-import org.sonatype.nexus.common.entity.EntityMetadata;
-import org.sonatype.nexus.common.entity.EntityUpdatedEvent;
+package org.sonatype.nexus.common.entity;
 
 /**
- * @since 3.17
+ * Something that's aware of what the next {@link Continuation} token will be.
+ *
+ * @since 3.next
  */
-public class RoutingRuleUpdatedEvent
-    extends EntityUpdatedEvent
+public interface ContinuationAware
 {
-  public RoutingRuleUpdatedEvent(final EntityMetadata metadata) {
-    super(metadata);
-  }
+  /**
+   * Use this token when requesting the next set of results.
+   */
+  String nextContinuationToken();
 }

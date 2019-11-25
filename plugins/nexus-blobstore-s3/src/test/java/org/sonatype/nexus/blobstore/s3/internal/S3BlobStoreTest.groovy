@@ -16,9 +16,9 @@ import java.util.stream.Collectors
 
 import org.sonatype.nexus.blobstore.BlobIdLocationResolver
 import org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver
+import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobId
 import org.sonatype.nexus.blobstore.api.BlobMetrics
-import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreException
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker
 import org.sonatype.nexus.common.log.DryRunPrefix
@@ -35,6 +35,7 @@ import spock.lang.Unroll
 
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.BLOB_ATTRIBUTE_SUFFIX
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.BLOB_CONTENT_SUFFIX
+
 /**
  * {@link S3BlobStore} tests.
  */
@@ -61,7 +62,7 @@ class S3BlobStoreTest
   S3BlobStore blobStore = new S3BlobStore(amazonS3Factory, locationResolver, uploader, copier, storeMetrics,
       dryRunPrefix, bucketManager)
 
-  def config = new BlobStoreConfiguration()
+  def config = new MockBlobStoreConfiguration()
 
   def attributesContents = """\
         |#Thu Jun 01 23:10:55 UTC 2017
@@ -82,7 +83,7 @@ class S3BlobStoreTest
   @Unroll
   def 'getBlobIdStream works with prefix #prefix'() {
     given: 'prefix setup'
-      def cfg = new BlobStoreConfiguration()
+      def cfg = new MockBlobStoreConfiguration()
       cfg.attributes = [s3: [bucket: 'mybucket', prefix: prefix]]
       blobStore.init(cfg)
       blobStore.doStart()
@@ -115,7 +116,7 @@ class S3BlobStoreTest
   @Unroll
   def "Get blob with bucket prefix #prefix"() {
     given: 'A mocked S3 setup'
-      def cfg = new BlobStoreConfiguration()
+      def cfg = new MockBlobStoreConfiguration()
       cfg.attributes = [s3: [bucket: 'mybucket', prefix: prefix]]
       def pathPrefix = prefix ? (prefix + "/") : ""
 
@@ -147,7 +148,7 @@ class S3BlobStoreTest
   def 'soft delete successful with bucket prefix #prefix'() {
     given: 'blob exists'
       def blobId = new BlobId('soft-delete-success')
-      def cfg = new BlobStoreConfiguration()
+      def cfg = new MockBlobStoreConfiguration()
       cfg.attributes = [s3: [bucket: 'mybucket', prefix: prefix]]
       def pathPrefix = prefix ? (prefix + "/") : ""
 
@@ -195,7 +196,7 @@ class S3BlobStoreTest
   def 'delete is hard when expiry days is 0 (expiry days = #expiryDays)'() {
     given: 'blob store setup'
       def blobId = new BlobId('some-blob')
-      def cfg = new BlobStoreConfiguration()
+      def cfg = new MockBlobStoreConfiguration()
       cfg.attributes = [s3: [bucket: 'mybucket', prefix: '']]
       def attributesS3Object = mockS3Object(attributesContents)
       _ * s3.doesObjectExist('mybucket', propertiesLocation(blobId)) >> true

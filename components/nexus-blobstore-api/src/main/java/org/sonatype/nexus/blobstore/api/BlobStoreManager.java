@@ -97,4 +97,11 @@ public interface BlobStoreManager
    * @since 3.15
    */
   Optional<String> getParent(String blobStoreName);
+
+  /**
+   * @return an empty {@link BlobStoreConfiguration} for use with this manager
+   *
+   * @since 3.next
+   */
+  BlobStoreConfiguration newConfiguration();
 }

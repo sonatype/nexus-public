@@ -30,7 +30,6 @@ import com.google.common.base.Supplier;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.commons.lang.StringUtils.endsWith;
-import static org.apache.commons.lang.StringUtils.startsWith;
 
 /**
  * PyPI-specific {@link ContentValidator} that treats accesses to index pages as being HTML content.
@@ -46,8 +45,6 @@ public class PyPiContentValidator
   protected static final String ASC_FILE_EXTENSION = ".asc";
 
   protected static final String TEXT_FILE_EXTENSION = ".txt";
-
-  protected static final String HTML_FILE_EXTENSION = ".html";
 
   private final DefaultContentValidator defaultContentValidator;
 
@@ -70,14 +67,10 @@ public class PyPiContentValidator
   }
 
   private String modifyContentNameForSpecialCases(final String contentName) {
-    String name = contentName;
     if (isAscFileExtension(contentName)) {
-      name += TEXT_FILE_EXTENSION;
+      return contentName + TEXT_FILE_EXTENSION;
     }
-    else if (startsWith(name, "simple/")) {
-      name += HTML_FILE_EXTENSION;
-    }
-    return name;
+    return contentName;
   }
 
   private boolean isAscFileExtension(@Nullable final String contentName) {

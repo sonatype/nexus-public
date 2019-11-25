@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.internal.blobstore;
+package org.sonatype.nexus.repository.internal.blobstore.orient;
 
 import java.util.List;
 import java.util.Map;
@@ -30,6 +30,9 @@ import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 import org.sonatype.nexus.orient.entity.action.ReadEntityByPropertyAction;
 import org.sonatype.nexus.orient.entity.action.UpdateEntityByPropertyAction;
+import org.sonatype.nexus.repository.internal.blobstore.BlobStoreConfigurationCreatedEvent;
+import org.sonatype.nexus.repository.internal.blobstore.BlobStoreConfigurationDeletedEvent;
+import org.sonatype.nexus.repository.internal.blobstore.BlobStoreConfigurationUpdatedEvent;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.orientechnologies.orient.core.collate.OCaseInsensitiveCollate;
@@ -50,8 +53,8 @@ import static java.lang.String.format;
 @FeatureFlag(name = "nexus.orient.store.config")
 @Named
 @Singleton
-public class BlobStoreConfigurationEntityAdapter
-    extends IterableEntityAdapter<BlobStoreConfiguration>
+public class OrientBlobStoreConfigurationEntityAdapter
+    extends IterableEntityAdapter<OrientBlobStoreConfiguration>
 {
   private static final String DB_CLASS = new OClassNameBuilder()
       .prefix("repository")
@@ -64,10 +67,10 @@ public class BlobStoreConfigurationEntityAdapter
 
   private static final String P_ATTRIBUTES = "attributes";
 
-  private final UpdateEntityByPropertyAction<BlobStoreConfiguration> update =
+  private final UpdateEntityByPropertyAction<OrientBlobStoreConfiguration> update =
       new UpdateEntityByPropertyAction<>(this, P_NAME);
 
-  private final ReadEntityByPropertyAction<BlobStoreConfiguration> read =
+  private final ReadEntityByPropertyAction<OrientBlobStoreConfiguration> read =
       new ReadEntityByPropertyAction<>(this, P_NAME);
 
   @VisibleForTesting
@@ -76,7 +79,7 @@ public class BlobStoreConfigurationEntityAdapter
       .property(P_NAME)
       .build();
 
-  public BlobStoreConfigurationEntityAdapter() {
+  public OrientBlobStoreConfigurationEntityAdapter() {
     super(DB_CLASS);
   }
 
@@ -96,12 +99,12 @@ public class BlobStoreConfigurationEntityAdapter
   }
 
   @Override
-  protected BlobStoreConfiguration newEntity() {
-    return new BlobStoreConfiguration();
+  protected OrientBlobStoreConfiguration newEntity() {
+    return new OrientBlobStoreConfiguration();
   }
 
   @Override
-  protected void readFields(final ODocument document, final BlobStoreConfiguration entity) {
+  protected void readFields(final ODocument document, final OrientBlobStoreConfiguration entity) {
     String name = document.field(P_NAME, OType.STRING);
     String type = document.field(P_TYPE, OType.STRING);
     Map<String, Map<String, Object>> attributes = document.field(P_ATTRIBUTES, OType.EMBEDDEDMAP);
@@ -112,7 +115,7 @@ public class BlobStoreConfigurationEntityAdapter
   }
 
   @Override
-  protected void writeFields(final ODocument document, final BlobStoreConfiguration entity) {
+  protected void writeFields(final ODocument document, final OrientBlobStoreConfiguration entity) {
     document.field(P_NAME, entity.getName());
     document.field(P_TYPE, entity.getType());
     document.field(P_ATTRIBUTES, entity.getAttributes());
@@ -145,7 +148,7 @@ public class BlobStoreConfigurationEntityAdapter
   /**
    * @since 3.14
    */
-  public boolean update(final ODatabaseDocumentTx db, final BlobStoreConfiguration entity) {
+  public boolean update(final ODatabaseDocumentTx db, final OrientBlobStoreConfiguration entity) {
     return update.execute(db, entity, entity.getName());
   }
 

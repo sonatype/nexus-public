@@ -69,7 +69,7 @@ public class FileBlobStoreResource
   @Path("/")
   @Validate
   public void createFileBlobStore(@Valid final FileBlobStoreApiCreateRequest request) throws Exception {
-    BlobStoreConfiguration configuration = request.toBlobStoreConfiguration();
+    BlobStoreConfiguration configuration = request.toBlobStoreConfiguration(blobStoreManager.newConfiguration());
 
     blobStoreManager.create(configuration);
   }
@@ -87,7 +87,7 @@ public class FileBlobStoreResource
     // Confirm that the blobstore name and type are the expected name and type
     getBlobStoreConfiguration(name);
 
-    BlobStoreConfiguration configuration = request.toBlobStoreConfiguration();
+    BlobStoreConfiguration configuration = request.toBlobStoreConfiguration(blobStoreManager.newConfiguration());
     configuration.setName(name);
 
     blobStoreManager.update(configuration);

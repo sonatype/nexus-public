@@ -16,6 +16,7 @@ import javax.inject.Provider
 
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor
+import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.common.event.EventManager
@@ -79,6 +80,7 @@ class BlobStoreManagerImplTest
 
   @Before
   void setup() {
+    when(store.newConfiguration()).thenReturn(new MockBlobStoreConfiguration())
     underTest = newBlobStoreManager()
   }
 
@@ -264,7 +266,7 @@ class BlobStoreManagerImplTest
     underTest.track(blobStoreName, blobStore)
     when(blobStore.isGroupable()).thenReturn(true)
     when(blobStore.isWritable()).thenReturn(true)
-    when(blobStore.getBlobStoreConfiguration()).thenReturn(new BlobStoreConfiguration(name: blobStoreName))
+    when(blobStore.getBlobStoreConfiguration()).thenReturn(new MockBlobStoreConfiguration(name: blobStoreName))
     when(store.findParent(blobStoreName)).thenReturn(Optional.empty())
     assert underTest.isPromotable(blobStoreName)
   }
@@ -274,8 +276,8 @@ class BlobStoreManagerImplTest
     def blobStoreName = 'child'
     def blobStore = mock(BlobStore)
     when(blobStore.isGroupable()).thenReturn(true)
-    when(blobStore.getBlobStoreConfiguration()).thenReturn(new BlobStoreConfiguration(name: blobStoreName))
-    when(store.findParent(blobStoreName)).thenReturn(Optional.of(new BlobStoreConfiguration()))
+    when(blobStore.getBlobStoreConfiguration()).thenReturn(new MockBlobStoreConfiguration(name: blobStoreName))
+    when(store.findParent(blobStoreName)).thenReturn(Optional.of(new MockBlobStoreConfiguration()))
     assert !underTest.isPromotable(blobStoreName)
   }
 
@@ -284,7 +286,7 @@ class BlobStoreManagerImplTest
     def blobStoreName = 'child'
     def blobStore = mock(BlobStore)
     when(blobStore.isGroupable()).thenReturn(false)
-    when(blobStore.getBlobStoreConfiguration()).thenReturn(new BlobStoreConfiguration(name: blobStoreName))
+    when(blobStore.getBlobStoreConfiguration()).thenReturn(new MockBlobStoreConfiguration(name: blobStoreName))
     when(store.findParent(blobStoreName)).thenReturn(Optional.empty())
     assert !underTest.isPromotable(blobStoreName)
   }
@@ -312,7 +314,7 @@ class BlobStoreManagerImplTest
   }
 
   private BlobStoreConfiguration createConfig(name = 'foo', type = 'test', attributes = [file:[path:'baz']]) {
-    def entity = new BlobStoreConfiguration(
+    def entity = new MockBlobStoreConfiguration(
         name: name,
         type: type,
         attributes: attributes

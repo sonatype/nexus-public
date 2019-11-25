@@ -179,7 +179,7 @@ public class RoutingRulesResource
     }
 
     Map<EntityId, List<Repository>> assignedRepositories = routingRuleHelper.calculateAssignedRepositories();
-    List<Repository> repositories = assignedRepositories.getOrDefault(id(routingRule), emptyList());
+    List<Repository> repositories = assignedRepositories.getOrDefault(routingRule.id(), emptyList());
     if (repositories.size() > 0) {
       throw new WebApplicationException("Routing rule is still in use by " + repositories.size() + " repositories.", Status.BAD_REQUEST);
     }
@@ -253,16 +253,18 @@ public class RoutingRulesResource
         .map(routingRuleStore::getById);
   }
 
-  private static RoutingRule fromXO(RoutingRuleXO routingRuleXO) {
-    return new RoutingRule(routingRuleXO.getName(),
-        routingRuleXO.getDescription(),
-        routingRuleXO.getMode(),
-        routingRuleXO.getMatchers());
+  private RoutingRule fromXO(RoutingRuleXO routingRuleXO) {
+    final RoutingRule routingRule = routingRuleStore.newRoutingRule();
+    routingRule.name(routingRuleXO.getName());
+    routingRule.description(routingRuleXO.getDescription());
+    routingRule.mode(routingRuleXO.getMode());
+    routingRule.matchers(routingRuleXO.getMatchers());
+    return routingRule;
   }
 
   private static RoutingRuleXO toXO(RoutingRule routingRule) {
     RoutingRuleXO routingRuleXO = new RoutingRuleXO();
-    routingRuleXO.setId(id(routingRule).getValue());
+    routingRuleXO.setId(routingRule.id().getValue());
     routingRuleXO.setName(routingRule.name());
     routingRuleXO.setDescription(routingRule.description());
     routingRuleXO.setMode(routingRule.mode());

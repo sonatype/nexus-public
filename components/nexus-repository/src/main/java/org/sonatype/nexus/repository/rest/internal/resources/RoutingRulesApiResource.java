@@ -47,7 +47,6 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static org.sonatype.nexus.common.entity.EntityHelper.id;
 import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
 /**
@@ -80,10 +79,11 @@ public class RoutingRulesApiResource
   @RequiresPermissions("nexus:*")
   public void createRoutingRule(@NotNull final RoutingRuleXO routingRuleXO)
   {
-    RoutingRule routingRule = new RoutingRule(routingRuleXO.getName(),
-        routingRuleXO.getDescription(),
-        routingRuleXO.getMode(),
-        routingRuleXO.getMatchers());
+    final RoutingRule routingRule = routingRuleStore.newRoutingRule();
+    routingRule.name(routingRuleXO.getName());
+    routingRule.description(routingRuleXO.getDescription());
+    routingRule.mode(routingRuleXO.getMode());
+    routingRule.matchers(routingRuleXO.getMatchers());
 
     routingRuleStore.create(routingRule);
   }
@@ -132,7 +132,7 @@ public class RoutingRulesApiResource
   @RequiresPermissions("nexus:*")
   public void deleteRoutingRule(@PathParam("name") final String name) {
     RoutingRule routingRule = getRuleFromStore(name);
-    EntityId routingRuleId = id(routingRule);
+    EntityId routingRuleId = routingRule.id();
     Map<EntityId, List<Repository>> assignedRepositories = routingRuleHelper.calculateAssignedRepositories();
 
     List<Repository> repositories = assignedRepositories.computeIfAbsent(routingRuleId, id -> emptyList());

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.script.plugin.internal.provisioning
 
+import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
@@ -48,7 +49,7 @@ class RepositoryApiImplTest
   void 'Can validate given an existing BlobStore'() {
     given:
       BlobStore blobStore = Mock()
-      BlobStoreConfiguration configuration = new BlobStoreConfiguration(name: 'foo')
+      BlobStoreConfiguration configuration = new MockBlobStoreConfiguration(name: 'foo')
     
     when:
       api.validateBlobStore(new Configuration(attributes: [storage: [blobStoreName: 'foo']]))

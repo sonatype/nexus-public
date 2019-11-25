@@ -14,11 +14,10 @@ package org.sonatype.nexus.blobstore.s3.internal
 
 import javax.validation.ValidationException
 
+import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStore
-import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
 import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaService
-
 
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -47,7 +46,7 @@ class S3BlobStoreDescriptorTest
 
   def 'a S3 blob store validates its quota'() {
     given:
-      def config = new BlobStoreConfiguration()
+      def config = new MockBlobStoreConfiguration()
 
     when: 'attempting to create a S3 blob store'
       s3BlobStoreDescriptor.validateConfig(config)
@@ -58,7 +57,7 @@ class S3BlobStoreDescriptorTest
 
   def 'a single s3 configuration is valid'() {
     given: 'A config'
-      def config = new BlobStoreConfiguration()
+      def config = new MockBlobStoreConfiguration()
 
     when: 'the config is validated'
       config.name = 'self'
@@ -71,7 +70,7 @@ class S3BlobStoreDescriptorTest
 
   def 'a config that shares a bucket with non-overlapping prefixes is valid'() {
     given: 'A config'
-      def config = new BlobStoreConfiguration()
+      def config = new MockBlobStoreConfiguration()
       blobStores.other = mockBlobStore('other', S3BlobStore.TYPE, [s3: [bucket: 'bucket', prefix: 'prefix']])
 
     when: 'the config is validated'
@@ -85,7 +84,7 @@ class S3BlobStoreDescriptorTest
 
   def 'a config that shares a bucket with no prefix is invalid'() {
     given: 'A config'
-      def config = new BlobStoreConfiguration()
+      def config = new MockBlobStoreConfiguration()
       blobStores.other = mockBlobStore('other', S3BlobStore.TYPE, [s3: [bucket: 'foobar']])
 
     when: 'the config is validated'
@@ -101,7 +100,7 @@ class S3BlobStoreDescriptorTest
   @Unroll
   def 'a config that shares a bucket with overlapping prefixes #existingPrefix and #newPrefix invalid'() {
     given: 'A config'
-      def config = new BlobStoreConfiguration()
+      def config = new MockBlobStoreConfiguration()
 
     when: 'the config is validated'
       blobStores.other = mockBlobStore('other', S3BlobStore.TYPE, [s3: [bucket: 'bucket', prefix: existingPrefix]])
@@ -125,7 +124,7 @@ class S3BlobStoreDescriptorTest
   @Unroll
   def 'a config that shares a bucket with non-overlapping prefixes #existingPrefix and #newPrefix valid'() {
     given: 'A config'
-      def config = new BlobStoreConfiguration()
+      def config = new MockBlobStoreConfiguration()
 
     when: 'the config is validated'
       blobStores.other = mockBlobStore('other', S3BlobStore.TYPE, [s3: [bucket: 'bucket', prefix: existingPrefix]])
@@ -145,7 +144,7 @@ class S3BlobStoreDescriptorTest
 
   def 'a config that shares a bucket name with different endpoints is valid'() {
     given: 'A config'
-      def config = new BlobStoreConfiguration()
+      def config = new MockBlobStoreConfiguration()
       blobStores.other = mockBlobStore('other', S3BlobStore.TYPE, [s3: [bucket: 'bucket', endpoint: 'aws']])
 
     when: 'the config is validated'
@@ -160,7 +159,7 @@ class S3BlobStoreDescriptorTest
   @Unroll
   def 'It will transform #prefix into #expected by trimming and collapsing duplicate slashes'() {
     given: 'an S3 blob store config with prefix'
-      def config = new BlobStoreConfiguration()
+      def config = new MockBlobStoreConfiguration()
       config.attributes(CONFIG_KEY).set(BUCKET_PREFIX_KEY, prefix)
     when: 'the config is sanitized'
       s3BlobStoreDescriptor.sanitizeConfig(config)
@@ -187,7 +186,7 @@ class S3BlobStoreDescriptorTest
                                   final String type,
                                   attributes = [:]) {
     def blobStore = Mock(BlobStore)
-    def config = new BlobStoreConfiguration()
+    def config = new MockBlobStoreConfiguration()
     blobStore.getBlobStoreConfiguration() >> config
     config.name = name
     config.type = type

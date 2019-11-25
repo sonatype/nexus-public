@@ -16,7 +16,7 @@ import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.orient.HexRecordIdObfuscator
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule
 import org.sonatype.nexus.repository.config.Configuration
-import org.sonatype.nexus.repository.routing.internal.RoutingRuleEntityAdapter
+import org.sonatype.nexus.repository.routing.internal.OrientRoutingRuleEntityAdapter
 import org.sonatype.nexus.security.PasswordHelper
 
 import com.google.common.collect.Iterables
@@ -41,7 +41,7 @@ class ConfigurationEntityAdapterTest
   @Mock
   private PasswordHelper passwordHelper
 
-  @Mock private RoutingRuleEntityAdapter routingRuleEntityAdapter
+  @Mock private OrientRoutingRuleEntityAdapter routingRuleEntityAdapter
 
   private ConfigurationEntityAdapter underTest
 

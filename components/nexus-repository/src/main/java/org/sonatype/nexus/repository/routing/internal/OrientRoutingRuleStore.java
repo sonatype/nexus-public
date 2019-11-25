@@ -30,6 +30,7 @@ import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
+import org.sonatype.nexus.repository.routing.OrientRoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 import org.sonatype.nexus.rest.ValidationErrorsException;
@@ -40,6 +41,7 @@ import com.google.common.collect.ImmutableList;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
@@ -53,7 +55,7 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
 @Named
 @ManagedLifecycle(phase = SCHEMAS)
 @Singleton
-public class RoutingRuleStoreImpl
+public class OrientRoutingRuleStore
     extends StateGuardLifecycleSupport
     implements RoutingRuleStore
 {
@@ -61,11 +63,11 @@ public class RoutingRuleStoreImpl
 
   private final Provider<DatabaseInstance> databaseInstance;
 
-  private final RoutingRuleEntityAdapter entityAdapter;
+  private final OrientRoutingRuleEntityAdapter entityAdapter;
 
   @Inject
-  public RoutingRuleStoreImpl(@Named(DatabaseInstanceNames.CONFIG) final Provider<DatabaseInstance> databaseInstance,
-                              final RoutingRuleEntityAdapter entityAdapter)
+  public OrientRoutingRuleStore(@Named(DatabaseInstanceNames.CONFIG) final Provider<DatabaseInstance> databaseInstance,
+                                final OrientRoutingRuleEntityAdapter entityAdapter)
   {
     this.databaseInstance = databaseInstance;
     this.entityAdapter = entityAdapter;
@@ -108,7 +110,7 @@ public class RoutingRuleStoreImpl
   public void delete(final RoutingRule rule) {
     checkNotNull(rule);
 
-    inTx(databaseInstance).run(db -> entityAdapter.deleteEntity(db, rule));
+    inTx(databaseInstance).run(db -> entityAdapter.deleteEntity(db, castToOrientRoutingRule(rule)));
   }
 
   @Override
@@ -122,6 +124,11 @@ public class RoutingRuleStoreImpl
     checkNotNull(id);
 
     return inTx(databaseInstance).call(db -> entityAdapter.read(db, new DetachedEntityId(id)));
+  }
+
+  @Override
+  public RoutingRule newRoutingRule() {
+    return entityAdapter.newEntity();
   }
 
   @VisibleForTesting
@@ -173,15 +180,20 @@ public class RoutingRuleStoreImpl
     }
   }
 
-  private void persist(BiConsumer<ODatabaseDocumentTx, RoutingRule> entityFunction, RoutingRule rule) {
+  private void persist(BiConsumer<ODatabaseDocumentTx, OrientRoutingRule> entityFunction, RoutingRule rule) {
     try {
-      inTxRetry(databaseInstance).run(db -> entityFunction.accept(db, rule));
+      inTxRetry(databaseInstance).run(db -> entityFunction.accept(db, castToOrientRoutingRule(rule)));
     }
     catch (ORecordDuplicatedException e) {
-      if (RoutingRuleEntityAdapter.I_NAME.equals(e.getIndexName())) {
+      if (OrientRoutingRuleEntityAdapter.I_NAME.equals(e.getIndexName())) {
         throw new ValidationErrorsException("name", "A rule with the same name already exists. Name must be unique.");
       }
       throw e;
     }
+  }
+
+  private OrientRoutingRule castToOrientRoutingRule(final RoutingRule rule) {
+    checkArgument(rule instanceof OrientRoutingRule, "Expected an OrientRoutingRule instance");
+    return (OrientRoutingRule)rule;
   }
 }

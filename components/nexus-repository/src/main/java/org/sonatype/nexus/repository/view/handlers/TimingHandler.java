@@ -39,11 +39,11 @@ public class TimingHandler
 {
   public static final String ELAPSED_KEY = AttributeKey.get(TimingHandler.class, "elapsed");
 
-  private final Handler timing;
+  private final Handler meteringHandler;
 
   @Inject
-  public TimingHandler(@Named("nexus.analytics.meteringHandler") @Nullable final Handler timing) {
-    this.timing = timing;
+  public TimingHandler(@Named("nexus.analytics.meteringHandler") @Nullable final Handler meteringHandler) {
+    this.meteringHandler = meteringHandler;
   }
 
   @Nonnull
@@ -52,8 +52,8 @@ public class TimingHandler
     Stopwatch watch = Stopwatch.createStarted();
 
     try {
-      if (timing != null) {
-        context.insertHandler(timing);
+      if (meteringHandler != null) {
+        context.insertHandler(meteringHandler);
       }
       return context.proceed();
     }

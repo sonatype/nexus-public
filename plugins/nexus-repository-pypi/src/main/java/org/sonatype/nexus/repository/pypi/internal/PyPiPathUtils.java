@@ -119,16 +119,6 @@ public final class PyPiPathUtils
     return path.startsWith(INDEX_PATH_PREFIX);
   }
 
-  /**
-   * @param path for an asset
-   * @return {@code true} if the {@code path} represents a package
-   *
-   * @since 3.14
-   */
-  static boolean isPackagePath(final String path) {
-    return path.startsWith(PACKAGE_PATH_PREFIX);
-  }
-
   private PyPiPathUtils() {
     // empty
   }

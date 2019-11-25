@@ -13,6 +13,7 @@
 package org.sonatype.nexus.datastore.mybatis;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -31,12 +32,13 @@ import static com.google.common.base.Charsets.UTF_8;
 /**
  * MyBatis {@link TypeHandler} that maps objects to/from SQL as JSON.
  */
+@SuppressWarnings("unchecked")
 public abstract class JsonTypeHandler<T>
     extends BaseTypeHandler<T>
 {
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-  private final JavaType jsonType = OBJECT_MAPPER.constructType(getRawType());
+  private final JavaType jsonType = OBJECT_MAPPER.constructType(getJsonType());
 
   @Override
   public final void setNonNullParameter(final PreparedStatement ps,
@@ -58,20 +60,27 @@ public abstract class JsonTypeHandler<T>
 
   @Override
   public final T getNullableResult(final ResultSet rs, final String columnName) throws SQLException {
-    return readFromJson(rs.getBytes(columnName)); // works for both byte[] and UTF8 strings
+    return (T) readFromJson(rs.getBytes(columnName)); // works for both byte[] and UTF8 strings
   }
 
   @Override
   public final T getNullableResult(final ResultSet rs, final int columnIndex) throws SQLException {
-    return readFromJson(rs.getBytes(columnIndex)); // works for both byte[] and UTF8 strings
+    return (T) readFromJson(rs.getBytes(columnIndex)); // works for both byte[] and UTF8 strings
   }
 
   @Override
   public final T getNullableResult(final CallableStatement cs, final int columnIndex) throws SQLException {
-    return readFromJson(cs.getBytes(columnIndex)); // works for both byte[] and UTF8 strings
+    return (T) readFromJson(cs.getBytes(columnIndex)); // works for both byte[] and UTF8 strings
   }
 
-  private byte[] writeToJson(final Object value) throws SQLException {
+  /**
+   * The type used for JSON serialization.
+   */
+  protected Type getJsonType() {
+    return getRawType();
+  }
+
+  protected byte[] writeToJson(final Object value) throws SQLException {
     try {
       return OBJECT_MAPPER.writeValueAsBytes(value);
     }
@@ -81,7 +90,7 @@ public abstract class JsonTypeHandler<T>
   }
 
   @Nullable
-  private T readFromJson(@Nullable final byte[] json) throws SQLException {
+  protected Object readFromJson(@Nullable final byte[] json) throws SQLException {
     try {
       return json != null ? OBJECT_MAPPER.readValue(json, jsonType) : null;
     }

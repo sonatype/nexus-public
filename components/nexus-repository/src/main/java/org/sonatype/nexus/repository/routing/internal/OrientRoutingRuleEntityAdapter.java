@@ -26,6 +26,7 @@ import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 import org.sonatype.nexus.orient.entity.action.ReadEntityByPropertyAction;
+import org.sonatype.nexus.repository.routing.OrientRoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingMode;
 import org.sonatype.nexus.repository.routing.RoutingRule;
 
@@ -41,8 +42,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 @FeatureFlag(name = "nexus.orient.store.config")
 @Named
 @Singleton
-public class RoutingRuleEntityAdapter
-    extends IterableEntityAdapter<RoutingRule>
+public class OrientRoutingRuleEntityAdapter
+    extends IterableEntityAdapter<OrientRoutingRule>
 {
   static final String DB_CLASS = new OClassNameBuilder().prefix("repository").type("routingrule").build();
 
@@ -56,9 +57,9 @@ public class RoutingRuleEntityAdapter
 
   static final String I_NAME = new OIndexNameBuilder().type(DB_CLASS).property(P_NAME).build();
 
-  private final ReadEntityByPropertyAction<RoutingRule> read = new ReadEntityByPropertyAction<>(this, P_NAME);
+  private final ReadEntityByPropertyAction<OrientRoutingRule> read = new ReadEntityByPropertyAction<>(this, P_NAME);
 
-  public RoutingRuleEntityAdapter() {
+  public OrientRoutingRuleEntityAdapter() {
     super(DB_CLASS);
   }
 
@@ -79,12 +80,12 @@ public class RoutingRuleEntityAdapter
   }
 
   @Override
-  protected RoutingRule newEntity() {
-    return new RoutingRule();
+  protected OrientRoutingRule newEntity() {
+    return new OrientRoutingRule();
   }
 
   @Override
-  protected void readFields(final ODocument document, final RoutingRule entity) throws Exception {
+  protected void readFields(final ODocument document, final OrientRoutingRule entity) throws Exception {
     String name = document.field(P_NAME, OType.STRING);
     String description = document.field(P_DESCRIPTION, OType.STRING);
     List<String> matchers = document.field(P_MATCHERS, OType.EMBEDDEDLIST);
@@ -97,7 +98,7 @@ public class RoutingRuleEntityAdapter
   }
 
   @Override
-  protected void writeFields(final ODocument document, final RoutingRule entity) throws Exception {
+  protected void writeFields(final ODocument document, final OrientRoutingRule entity) throws Exception {
     document.field(P_MODE, entity.mode().toString());
     document.field(P_DESCRIPTION, entity.description());
     document.field(P_NAME, entity.name());
@@ -122,9 +123,9 @@ public class RoutingRuleEntityAdapter
     log.trace("newEvent: eventKind: {}, metadata: {}", eventKind, metadata);
     switch (eventKind) {
       case UPDATE:
-        return new RoutingRuleUpdatedEvent(metadata);
+        return new OrientRoutingRuleUpdatedEvent(metadata);
       case DELETE:
-        return new RoutingRuleDeletedEvent(metadata);
+        return new OrientRoutingRuleDeletedEvent(metadata);
       default:
         return super.newEvent(document, eventKind);
     }
