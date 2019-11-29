@@ -114,7 +114,7 @@ public class AuthorizationManagerImpl
   }
 
   private CPrivilege convert(final Privilege source) {
-    CPrivilege target = new CPrivilege();
+    CPrivilege target = configuration.newPrivilege();
     target.setId(source.getId());
     target.setVersion(source.getVersion());
     target.setName(source.getName());

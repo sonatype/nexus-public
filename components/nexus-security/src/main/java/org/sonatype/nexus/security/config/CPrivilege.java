@@ -15,128 +15,47 @@ package org.sonatype.nexus.security.config;
 import java.io.Serializable;
 import java.util.Map;
 
-import org.sonatype.nexus.common.entity.AbstractEntity;
-
-import com.google.common.collect.Maps;
-
 /**
  * Persistent privilege.
+ *
+ * @since 3.0
  */
-public class CPrivilege
-    extends AbstractEntity
-    implements Serializable, Cloneable
+public interface CPrivilege
+    extends Serializable, Cloneable
 {
-  private String id;
+  void setProperty(String key, String value);
 
-  private String name;
+  String getDescription();
 
-  private String description;
+  String getId();
 
-  private String type;
+  String getName();
 
-  private Map<String, String> properties;
+  Map<String, String> getProperties();
 
-  private boolean readOnly = false;
+  String getProperty(String key);
 
-  private String version;
+  String getType();
 
-  public void setProperty(final String key, final String value) {
-    getProperties().put(key, value);
-  }
+  boolean isReadOnly();
 
-  public String getDescription() {
-    return this.description;
-  }
+  void removeProperty(String key);
 
-  public String getId() {
-    return this.id;
-  }
+  void setDescription(String description);
 
-  public String getName() {
-    return this.name;
-  }
+  void setId(String id);
 
-  public Map<String, String> getProperties() {
-    if (this.properties == null) {
-      this.properties = Maps.newHashMap();
-    }
-    return this.properties;
-  }
+  void setName(String name);
 
-  public String getProperty(final String key) {
-    return getProperties().get(key);
-  }
+  void setProperties(Map<String, String> properties);
 
-  public String getType() {
-    return this.type;
-  }
+  void setReadOnly(boolean readOnly);
 
-  public boolean isReadOnly() {
-    return this.readOnly;
-  }
+  void setType(String type);
 
-  public void removeProperty(final String key) {
-    getProperties().remove(key);
-  }
+  int getVersion();
 
-  public void setDescription(String description) {
-    this.description = description;
-  }
+  void setVersion(int version);
 
-  public void setId(String id) {
-    this.id = id;
-  }
-
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  public void setProperties(Map<String, String> properties) {
-    this.properties = properties;
-  }
-
-  public void setReadOnly(boolean readOnly) {
-    this.readOnly = readOnly;
-  }
-
-  public void setType(String type) {
-    this.type = type;
-  }
-
-  public String getVersion() {
-    return version;
-  }
-
-  public void setVersion(final String version) {
-    this.version = version;
-  }
-
-  @Override
-  public CPrivilege clone() {
-    try {
-      CPrivilege copy = (CPrivilege) super.clone();
-
-      if (this.properties != null) {
-        copy.properties = Maps.newHashMap(this.properties);
-      }
-
-      return copy;
-    }
-    catch (CloneNotSupportedException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Override
-  public String toString() {
-    return getClass().getSimpleName() + "{" +
-        "id='" + id + '\'' +
-        ", name='" + name + '\'' +
-        ", description='" + description + '\'' +
-        ", type='" + type + '\'' +
-        ", properties=" + properties +
-        ", readOnly=" + readOnly +
-        ", version='" + version + '\'' +
-        '}';
-  }
+  CPrivilege clone();
 }

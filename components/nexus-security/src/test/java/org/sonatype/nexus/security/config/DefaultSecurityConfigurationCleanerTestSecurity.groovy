@@ -12,9 +12,10 @@
  */
 package org.sonatype.nexus.security.config
 
-import org.sonatype.nexus.security.config.memory.MemoryCUserRoleMapping
+import org.sonatype.nexus.security.config.memory.MemoryCPrivilege
 import org.sonatype.nexus.security.config.memory.MemoryCRole
 import org.sonatype.nexus.security.config.memory.MemoryCUser
+import org.sonatype.nexus.security.config.memory.MemoryCUserRoleMapping
 
 /**
  * @since 3.0
@@ -94,7 +95,7 @@ class DefaultSecurityConfigurationCleanerTestSecurity
             )
         ],
         privileges: [
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'priv1',
                 type: 'method',
                 name: 'priv1',
@@ -104,7 +105,7 @@ class DefaultSecurityConfigurationCleanerTestSecurity
                     'permission': '/some/path/'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'priv2',
                 type: 'method',
                 name: 'priv2',
@@ -114,7 +115,7 @@ class DefaultSecurityConfigurationCleanerTestSecurity
                     'permission': '/some/path/'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'priv3',
                 type: 'method',
                 name: 'priv3',
@@ -124,7 +125,7 @@ class DefaultSecurityConfigurationCleanerTestSecurity
                     'permission': '/some/path/'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'priv4',
                 type: 'method',
                 name: 'priv4',
@@ -134,7 +135,7 @@ class DefaultSecurityConfigurationCleanerTestSecurity
                     'permission': '/some/path/'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'priv5',
                 type: 'method',
                 name: 'priv5',

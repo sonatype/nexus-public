@@ -14,10 +14,10 @@ package org.sonatype.nexus.script.plugin.internal.security
 
 import javax.inject.Named
 import javax.inject.Singleton
-
 import org.sonatype.nexus.security.config.CPrivilege
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration
 import org.sonatype.nexus.security.config.SecurityContributor
+import org.sonatype.nexus.security.config.memory.MemoryCPrivilege
 
 import groovy.transform.CompileStatic
 
@@ -36,7 +36,7 @@ class ScriptSecurityContributor
   MemorySecurityConfiguration getContribution() {
     def configuration = new MemorySecurityConfiguration()
     configuration.setPrivileges([
-        new CPrivilege(
+        new MemoryCPrivilege(
             id: 'nx-script-*-*',
             description: 'All permissions for Scripts',
             type: 'script',
@@ -45,7 +45,7 @@ class ScriptSecurityContributor
                 actions: '*'
             ]
         ),
-        new CPrivilege(
+        new MemoryCPrivilege(
             id: 'nx-script-*-browse',
             description: 'Browse permission for Scripts',
             type: 'script',
@@ -54,7 +54,7 @@ class ScriptSecurityContributor
                 actions: 'browse,read'
             ]
         ),
-        new CPrivilege(
+        new MemoryCPrivilege(
             id: 'nx-script-*-add',
             description: 'Add permission for Scripts',
             type: 'script',
@@ -63,7 +63,7 @@ class ScriptSecurityContributor
                 actions: 'add,read'
             ]
         ),
-        new CPrivilege(
+        new MemoryCPrivilege(
             id: 'nx-script-*-edit',
             description: 'Edit permission for Scripts',
             type: 'script',
@@ -72,7 +72,7 @@ class ScriptSecurityContributor
                 actions: 'edit,read'
             ]
         ),
-        new CPrivilege(
+        new MemoryCPrivilege(
             id: 'nx-script-*-read',
             description: 'Read permission for Scripts',
             type: 'script',
@@ -81,7 +81,7 @@ class ScriptSecurityContributor
                 actions: 'read'
             ]
         ),
-        new CPrivilege(
+        new MemoryCPrivilege(
             id: 'nx-script-*-delete',
             description: 'Delete permission for Scripts',
             type: 'script',
@@ -90,7 +90,7 @@ class ScriptSecurityContributor
                 actions: 'delete,read'
             ]
         ),
-        new CPrivilege(
+        new MemoryCPrivilege(
             id: 'nx-script-*-run',
             description: 'Run permission for Scripts',
             type: 'script',
@@ -99,7 +99,7 @@ class ScriptSecurityContributor
                 actions: 'run'
             ]
         )
-    ])
+    ] as List<CPrivilege>)
     return configuration
   }
 }

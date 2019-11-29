@@ -207,7 +207,7 @@ class PrivilegeComponent
   PrivilegeXO convert(final Privilege input) {
     return new PrivilegeXO(
         id: input.id,
-        version: input.version,
+        version: String.valueOf(input.version),
         name: input.name != null ? input.name : input.id,
         description: input.description != null ? input.description : input.id,
         type: input.type,
@@ -224,7 +224,7 @@ class PrivilegeComponent
   Privilege convert(final PrivilegeXO input) {
     return new Privilege(
         id: input.id,
-        version: input.version,
+        version: input.version.isEmpty() ? 0 : Integer.valueOf(input.version),
         name: input.name,
         description: input.description,
         type: input.type,

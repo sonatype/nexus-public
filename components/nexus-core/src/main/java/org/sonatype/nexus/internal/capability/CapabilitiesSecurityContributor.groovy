@@ -15,9 +15,9 @@ package org.sonatype.nexus.internal.capability
 import javax.inject.Named
 import javax.inject.Singleton
 
-import org.sonatype.nexus.security.config.CPrivilege
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration
 import org.sonatype.nexus.security.config.SecurityContributor
+import org.sonatype.nexus.security.config.memory.MemoryCPrivilege
 
 // FIXME: normalize names to use capability instead of capabilities
 
@@ -35,7 +35,7 @@ class CapabilitiesSecurityContributor
   MemorySecurityConfiguration getContribution() {
     return new MemorySecurityConfiguration(
         privileges: [
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-capabilities-all',
                 description: 'All permissions for Capabilities',
                 type: 'application',
@@ -44,7 +44,7 @@ class CapabilitiesSecurityContributor
                     actions: '*'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-capabilities-create',
                 description: 'Create permission for Capabilities',
                 type: 'application',
@@ -53,7 +53,7 @@ class CapabilitiesSecurityContributor
                     actions: 'create,read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-capabilities-read',
                 description: 'Read permission for Capabilities',
                 type: 'application',
@@ -62,7 +62,7 @@ class CapabilitiesSecurityContributor
                     actions: 'read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-capabilities-update',
                 description: 'Update permission for Capabilities',
                 type: 'application',
@@ -71,7 +71,7 @@ class CapabilitiesSecurityContributor
                     actions: 'update,read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-capabilities-delete',
                 description: 'Delete permission for Capabilities',
                 type: 'application',

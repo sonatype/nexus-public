@@ -199,6 +199,11 @@ public class SecurityConfigurationManagerImpl
   }
 
   @Override
+  public CPrivilege newPrivilege() {
+    return getDefaultConfiguration().newPrivilege();
+  }
+
+  @Override
   public CRole newRole() {
     return getDefaultConfiguration().newRole();
   }

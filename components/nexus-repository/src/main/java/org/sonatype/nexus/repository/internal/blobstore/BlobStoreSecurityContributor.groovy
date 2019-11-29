@@ -15,9 +15,9 @@ package org.sonatype.nexus.repository.internal.blobstore
 import javax.inject.Named
 import javax.inject.Singleton
 
-import org.sonatype.nexus.security.config.CPrivilege
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration
 import org.sonatype.nexus.security.config.SecurityContributor
+import org.sonatype.nexus.security.config.memory.MemoryCPrivilege
 
 /**
  * BlobStore security configuration.
@@ -33,7 +33,7 @@ class BlobStoreSecurityContributor
   MemorySecurityConfiguration getContribution() {
     return new MemorySecurityConfiguration(
         privileges: [
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-blobstores-all',
                 description: 'All permissions for Blob Stores',
                 type: 'application',
@@ -42,7 +42,7 @@ class BlobStoreSecurityContributor
                     actions: '*'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-blobstores-create',
                 description: 'Create permission for Blob Stores',
                 type: 'application',
@@ -51,7 +51,7 @@ class BlobStoreSecurityContributor
                     actions: 'create,read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-blobstores-read',
                 description: 'Read permission for Blob Stores',
                 type: 'application',
@@ -60,7 +60,7 @@ class BlobStoreSecurityContributor
                     actions: 'read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-blobstores-update',
                 description: 'Update permission for Blob Stores',
                 type: 'application',
@@ -69,7 +69,7 @@ class BlobStoreSecurityContributor
                     actions: 'update,read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-blobstores-delete',
                 description: 'Delete permission for Blob Stores',
                 type: 'application',

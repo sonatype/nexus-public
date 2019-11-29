@@ -12,8 +12,8 @@
  */
 package org.sonatype.nexus.security.authz
 
-import org.sonatype.nexus.security.config.CPrivilege
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration
+import org.sonatype.nexus.security.config.memory.MemoryCPrivilege
 import org.sonatype.nexus.security.config.memory.MemoryCRole
 import org.sonatype.nexus.security.config.memory.MemoryCUser
 import org.sonatype.nexus.security.config.memory.MemoryCUserRoleMapping
@@ -71,7 +71,7 @@ class AuthorizationManagerTestSecurity
             )
         ],
         privileges: [
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: '1',
                 type: 'method',
                 name: '1',
@@ -81,7 +81,7 @@ class AuthorizationManagerTestSecurity
                     'permission': '/some/path/'
                 ])
             ,
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: '2',
                 type: 'method',
                 name: '2',
@@ -91,7 +91,7 @@ class AuthorizationManagerTestSecurity
                     'permission': '/some/path/'
                 ])
             ,
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: '3',
                 type: 'method',
                 name: '3-name',
@@ -101,7 +101,7 @@ class AuthorizationManagerTestSecurity
                     'permission': '/some/path/'
                 ])
             ,
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: '4',
                 type: 'method',
                 name: '4',

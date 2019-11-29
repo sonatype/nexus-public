@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
+import org.sonatype.nexus.security.config.memory.MemoryCPrivilege;
 import org.sonatype.nexus.security.config.memory.MemoryCRole;
 import org.sonatype.nexus.security.config.memory.MemoryCUser;
 import org.sonatype.nexus.security.config.memory.MemoryCUserRoleMapping;
@@ -193,10 +194,11 @@ public class MemorySecurityConfiguration
   }
 
   @Override
-  public void addPrivilege(final CPrivilege privilege) {
+  public CPrivilege addPrivilege(final CPrivilege privilege) {
     checkNotNull(privilege);
     checkNotNull(privilege.getId());
     checkState(privileges.putIfAbsent(privilege.getId(), privilege) == null, "%s already exists", privilege.getId());
+    return privilege;
   }
 
   public void setPrivileges(final Collection<CPrivilege> privileges) {
@@ -289,5 +291,10 @@ public class MemorySecurityConfiguration
   @Override
   public CRole newRole() {
     return new MemoryCRole();
+  }
+
+  @Override
+  public CPrivilege newPrivilege() {
+    return new MemoryCPrivilege();
   }
 }

@@ -15,9 +15,9 @@ package org.sonatype.nexus.internal.atlas
 import javax.inject.Named
 import javax.inject.Singleton
 
-import org.sonatype.nexus.security.config.CPrivilege
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration
 import org.sonatype.nexus.security.config.SecurityContributor
+import org.sonatype.nexus.security.config.memory.MemoryCPrivilege
 
 /**
  * Atlas security configuration.
@@ -33,7 +33,7 @@ class AtlasSecurityContributor
   MemorySecurityConfiguration getContribution() {
     return new MemorySecurityConfiguration(
         privileges: [
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-atlas-all',
                 description: 'All permissions for Support Tools',
                 type: 'application',

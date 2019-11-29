@@ -21,6 +21,7 @@ import org.sonatype.nexus.security.config.SecurityConfiguration;
 import org.sonatype.nexus.security.config.SecurityConfigurationCleaner;
 import org.sonatype.nexus.security.config.SecurityConfigurationSource;
 import org.sonatype.nexus.security.config.SecurityContributor;
+import org.sonatype.nexus.security.config.memory.MemoryCPrivilege;
 import org.sonatype.nexus.security.config.memory.MemoryCRole;
 import org.sonatype.nexus.security.privilege.DuplicatePrivilegeException;
 import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
@@ -79,7 +80,7 @@ public class SecurityConfigurationManagerImplTest
       public SecurityConfiguration getContribution() {
         SecurityConfiguration config = new MemorySecurityConfiguration();
         if (mutableContributorCallCount[0]++ > 0) {
-          CPrivilege priv = new CPrivilege();
+          CPrivilege priv = new MemoryCPrivilege();
           priv.setId("test-id");
           priv.setType("test-type");
           config.addPrivilege(priv);
@@ -111,7 +112,7 @@ public class SecurityConfigurationManagerImplTest
 
   @Test(expected = DuplicatePrivilegeException.class)
   public void testCretePrivilege_duplicateFromOrient() {
-    CPrivilege privilege = new CPrivilege();
+    CPrivilege privilege = new MemoryCPrivilege();
     privilege.setId("dup");
     privilege.setName("dup");
 
@@ -124,7 +125,7 @@ public class SecurityConfigurationManagerImplTest
   public void testCreatePrivilege_duplicateFromContributors() {
     addSimplePrivilegeContributor("dup");
 
-    CPrivilege privilege = new CPrivilege();
+    CPrivilege privilege = new MemoryCPrivilege();
     privilege.setId("dup");
     privilege.setName("dup");
 
@@ -135,7 +136,7 @@ public class SecurityConfigurationManagerImplTest
   public void testUpdatePrivilege_readOnly() {
     addSimplePrivilegeContributor("readonly");
 
-    CPrivilege forUpdate = new CPrivilege();
+    CPrivilege forUpdate = new MemoryCPrivilege();
     forUpdate.setId("readonly");
     forUpdate.setName("readonly");
 
@@ -270,7 +271,7 @@ public class SecurityConfigurationManagerImplTest
   private void addSimplePrivilegeContributor(final String privName) {
     manager.addContributor(() -> {
       SecurityConfiguration config = new MemorySecurityConfiguration();
-      CPrivilege readonlyPriv = new CPrivilege();
+      CPrivilege readonlyPriv = new MemoryCPrivilege();
       readonlyPriv.setId(privName);
       readonlyPriv.setName(privName);
       config.addPrivilege(readonlyPriv);

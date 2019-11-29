@@ -24,7 +24,6 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
-import org.sonatype.nexus.internal.security.model.CPrivilegeEntityAdapter;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.security.config.CPrivilege;
@@ -78,7 +77,7 @@ public class OrientSecurityConfigurationSource
 
   private final OrientCRoleEntityAdapter roleEntityAdapter;
 
-  private final CPrivilegeEntityAdapter privilegeEntityAdapter;
+  private final OrientCPrivilegeEntityAdapter privilegeEntityAdapter;
 
   private final OrientCUserRoleMappingEntityAdapter userRoleMappingEntityAdapter;
 
@@ -93,7 +92,7 @@ public class OrientSecurityConfigurationSource
       @Named("static") final SecurityConfigurationSource defaults,
       final OrientCUserEntityAdapter userEntityAdapter,
       final OrientCRoleEntityAdapter roleEntityAdapter,
-      final CPrivilegeEntityAdapter privilegeEntityAdapter,
+      final OrientCPrivilegeEntityAdapter privilegeEntityAdapter,
       final OrientCUserRoleMappingEntityAdapter userRoleMappingEntityAdapter)
   {
     this.databaseInstance = checkNotNull(databaseInstance);
@@ -143,7 +142,7 @@ public class OrientSecurityConfigurationSource
           if (privileges != null && !privileges.isEmpty()) {
             log.info("Initializing default privileges");
             for (CPrivilege privilege : privileges) {
-              privilegeEntityAdapter.addEntity(db, privilege);
+              privilegeEntityAdapter.addEntity(db, convert(privilege));
             }
           }
         }
@@ -305,13 +304,15 @@ public class OrientSecurityConfigurationSource
     }
 
     @Override
-    public void addPrivilege(final CPrivilege privilege) {
+    public CPrivilege addPrivilege(final CPrivilege privilege) {
       checkNotNull(privilege);
       checkNotNull(privilege.getId());
       log.trace("Adding privilege: {}", privilege.getId());
 
       try {
-        inTxRetry(databaseInstance).run(db -> privilegeEntityAdapter.addEntity(db, privilege));
+        OrientCPrivilege persistedPrivilege = convert(privilege);
+        inTxRetry(databaseInstance).run(db -> privilegeEntityAdapter.addEntity(db, persistedPrivilege));
+        return persistedPrivilege;
       }
       catch (ORecordDuplicatedException e) {
         throw new DuplicatePrivilegeException(privilege.getId(), e);
@@ -322,6 +323,7 @@ public class OrientSecurityConfigurationSource
     public void updatePrivilege(final CPrivilege privilege) {
       checkNotNull(privilege);
       checkNotNull(privilege.getId());
+      checkPrivilege(privilege);
       log.trace("Updating privilege: {}", privilege.getId());
 
       try {
@@ -330,7 +332,7 @@ public class OrientSecurityConfigurationSource
           if (existing == null) {
             throw new NoSuchPrivilegeException(privilege.getId());
           }
-          privilegeEntityAdapter.update(db, privilege);
+          privilegeEntityAdapter.update(db, (OrientCPrivilege) privilege);
         });
       }
       catch (OConcurrentModificationException e) {
@@ -532,6 +534,28 @@ public class OrientSecurityConfigurationSource
     public CUserRoleMapping newUserRoleMapping() {
       return userRoleMappingEntityAdapter.newEntity();
     }
+
+    @Override
+    public CPrivilege newPrivilege() {
+      return privilegeEntityAdapter.newEntity();
+    }
+  }
+
+  private OrientCPrivilege convert(final CPrivilege privilege) {
+    if (privilege instanceof OrientCPrivilege) {
+      return (OrientCPrivilege) privilege;
+    }
+    OrientCPrivilege orientPrivilege = privilegeEntityAdapter.newEntity();
+
+    orientPrivilege.setDescription(privilege.getDescription());
+    orientPrivilege.setId(privilege.getId());
+    orientPrivilege.setName(privilege.getName());
+    orientPrivilege.setProperties(privilege.getProperties());
+    orientPrivilege.setReadOnly(privilege.isReadOnly());
+    orientPrivilege.setType(privilege.getType());
+    orientPrivilege.setVersion(privilege.getVersion());
+
+    return orientPrivilege;
   }
 
   private OrientCRole convert(final CRole role) {
@@ -570,6 +594,11 @@ public class OrientSecurityConfigurationSource
     orientUserRoleMapping.setVersion(userRoleMapping.getVersion());
 
     return orientUserRoleMapping;
+  }
+
+  private static void checkPrivilege(final CPrivilege privilege) {
+    checkArgument(privilege instanceof OrientCPrivilege,
+        "Privilege is not an instance of " + OrientCPrivilege.class.getName());
   }
 
   private static void checkRole(final CRole role) {

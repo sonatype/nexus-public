@@ -12,8 +12,8 @@
  */
 package org.sonatype.nexus.security.user
 
-import org.sonatype.nexus.security.config.CPrivilege
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration
+import org.sonatype.nexus.security.config.memory.MemoryCPrivilege
 import org.sonatype.nexus.security.config.memory.MemoryCRole
 import org.sonatype.nexus.security.config.memory.MemoryCUser
 import org.sonatype.nexus.security.config.memory.MemoryCUserRoleMapping
@@ -84,7 +84,7 @@ class EmptyRoleManagementTestSecurity
             )
         ],
         privileges: [
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: '1',
                 type: 'method',
                 name: '1',
@@ -94,7 +94,7 @@ class EmptyRoleManagementTestSecurity
                     'permission': '/some/path1/'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: '2',
                 type: 'method',
                 name: '2',
@@ -104,7 +104,7 @@ class EmptyRoleManagementTestSecurity
                     'permission': '/some/path2/'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: '3',
                 type: 'method',
                 name: '3',
@@ -114,7 +114,7 @@ class EmptyRoleManagementTestSecurity
                     'permission': '/some/path/'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: '4',
                 type: 'method',
                 name: '4',

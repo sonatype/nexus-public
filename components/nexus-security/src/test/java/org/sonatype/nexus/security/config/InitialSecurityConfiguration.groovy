@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.security.config
 
+import org.sonatype.nexus.security.config.memory.MemoryCPrivilege
 import org.sonatype.nexus.security.config.memory.MemoryCRole
 
 /**
@@ -23,7 +24,7 @@ class InitialSecurityConfiguration
   static MemorySecurityConfiguration getConfiguration() {
     return new MemorySecurityConfiguration(
         privileges: [
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: '1-test',
                 type: 'method',
                 name: '1-test',
@@ -33,7 +34,7 @@ class InitialSecurityConfiguration
                     'permission': '/some/path/'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: '2-test',
                 type: 'method',
                 name: '2-test',

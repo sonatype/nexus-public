@@ -122,15 +122,47 @@ public interface SecurityConfiguration
    */
   boolean removeUserRoleMapping(String userId, String source);
 
+  /**
+   * Get all {@link CPrivilege} instances known to this configuration.
+   */
   List<CPrivilege> getPrivileges();
 
+  /**
+   * Get an existing {@link CPrivilege} by its ID.
+   */
   @Nullable
   CPrivilege getPrivilege(String id);
 
-  void addPrivilege(CPrivilege privilege);
+  /**
+   * Obtain an instance of {@link CPrivilege} suitable for use with the underlying storage.
+   *
+   * @since 3.next
+   */
+  CPrivilege newPrivilege();
 
+  /**
+   * Add a new {@link CPrivilege} to the configuration.
+   *
+   * Note: the underlying implementation may return a different object than the one passed as an argument if the object
+   * does not match for the underlying storage.
+   *
+   * @return the persisted entity, may be different than the argument
+   */
+  CPrivilege addPrivilege(CPrivilege privilege);
+
+  /**
+   * Update an existing {@link CPrivilege} in the configuration.
+   *
+   * Note: the underlying implementation may throw an exception if the instance of {@link CPrivilege}
+   * was not obtained from this configuration.
+   */
   void updatePrivilege(CPrivilege privilege);
 
+  /**
+   * Remove an existing privilege by its ID.
+   *
+   * @return true if a privilege was removed, false otherwise
+   */
   boolean removePrivilege(String id);
 
   /**
