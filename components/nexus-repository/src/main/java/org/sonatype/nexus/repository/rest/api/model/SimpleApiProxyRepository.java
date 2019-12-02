@@ -24,7 +24,7 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * API Proxy Repository for simple formats which do not have custom attributes for proxies.
  *
- * @since 3.next
+ * @since 3.20
  */
 @JsonIgnoreProperties(value = {"format", "type", "url"}, allowGetters = true)
 public class SimpleApiProxyRepository

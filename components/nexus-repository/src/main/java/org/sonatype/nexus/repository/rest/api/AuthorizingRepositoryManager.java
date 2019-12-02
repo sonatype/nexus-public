@@ -39,7 +39,7 @@ import static org.sonatype.nexus.security.BreadActions.READ;
 /**
  * A repository manager which limits access to repositories based on the current user's permissions.
  *
- * @since 3.next
+ * @since 3.20
  */
 public class AuthorizingRepositoryManager
 {

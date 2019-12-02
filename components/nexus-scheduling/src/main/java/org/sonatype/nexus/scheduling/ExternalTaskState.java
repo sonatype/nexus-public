@@ -22,7 +22,7 @@ import static java.util.Optional.ofNullable;
 /**
  * A simplified representation of a task's state suitable for external consumption.
  *
- * @since 3.next
+ * @since 3.20
  */
 public class ExternalTaskState {
   private final TaskState state;

@@ -15,9 +15,9 @@ package org.sonatype.nexus.internal.metrics
 import javax.inject.Named
 import javax.inject.Singleton
 
-import org.sonatype.nexus.security.config.CPrivilege
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration
 import org.sonatype.nexus.security.config.SecurityContributor
+import org.sonatype.nexus.security.config.memory.MemoryCPrivilege
 
 /**
  * Metrics security configuration.
@@ -33,7 +33,7 @@ class MetricsSecurityContributor
   MemorySecurityConfiguration getContribution() {
     return new MemorySecurityConfiguration(
         privileges: [
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-metrics-all',
                 description: 'All permissions for Metrics',
                 type: 'application',

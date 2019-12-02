@@ -24,7 +24,7 @@ import org.sonatype.nexus.repository.rest.api.RepositoriesApiResource;
 import org.sonatype.nexus.rest.Resource;
 
 /**
- * @since 3.next
+ * @since 3.20
  */
 @Named
 @Singleton

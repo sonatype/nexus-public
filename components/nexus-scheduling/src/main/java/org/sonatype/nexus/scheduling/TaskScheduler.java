@@ -138,7 +138,7 @@ public interface TaskScheduler
   /**
    * Returns the {@link ExternalTaskState} appropriate for the corresponding {@link TaskInfo}.
    *
-   * @since 3.next
+   * @since 3.20
    */
   ExternalTaskState toExternalTaskState(TaskInfo taskInfo);
 }

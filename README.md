@@ -41,6 +41,10 @@ To run Nexus Repository, after building, unzip the assembly and start the server
 
 The `nexus-base-template` assembly is used as the basis for the official Sonatype Nexus distributions.
 
+## License
+
+This project is licensed under the Eclipse Public License - v 1.0, you can read the full text [here](LICENSE.txt)
+
 ## Getting help
 
 Looking to contribute to our code but need some help? There's a few ways to get information or our attention:

@@ -27,7 +27,7 @@ public interface RealmManager
   /**
    * Returns a new realm configuration entity
    *
-   * @since 3.next
+   * @since 3.20
    */
   RealmConfiguration newEntity();
 
@@ -67,7 +67,7 @@ public interface RealmManager
   /**
    * Get the list of known available realms.
    *
-   * @since 3.next
+   * @since 3.20
    */
   List<SecurityRealm> getAvailableRealms();
 }

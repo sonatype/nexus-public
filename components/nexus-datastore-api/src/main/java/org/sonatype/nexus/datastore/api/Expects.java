@@ -20,7 +20,7 @@ import java.lang.annotation.Target;
 /**
  * List of {@link DataAccess} types that the current {@link DataAccess} type expects to be registered first.
  *
- * @since 3.next
+ * @since 3.20
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

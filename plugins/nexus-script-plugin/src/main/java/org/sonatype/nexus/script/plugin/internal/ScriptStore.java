@@ -31,7 +31,7 @@ public interface ScriptStore
 
   /**
    * Create a new, unpopulated Script
-   * @since 3.next
+   * @since 3.20
    */
   Script newScript();
 

@@ -19,7 +19,7 @@ import org.joda.time.DateTime;
 /**
  * Metadata common to all repository content.
  *
- * @since 3.next
+ * @since 3.20
  */
 public interface RepositoryContent
 {

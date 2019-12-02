@@ -25,7 +25,7 @@ public interface CleanupPolicyStorage
     extends Lifecycle
 {
   /**
-   * @since 3.next
+   * @since 3.20
    * @return the count of cleanup policies stored
    */
   long count();
@@ -85,7 +85,7 @@ public interface CleanupPolicyStorage
   /**
    * Create a new instance of a {@link CleanupPolicy} suitable for the backing implementation.
    *
-   * @since 3.next
+   * @since 3.20
    */
   CleanupPolicy newCleanupPolicy();
 }

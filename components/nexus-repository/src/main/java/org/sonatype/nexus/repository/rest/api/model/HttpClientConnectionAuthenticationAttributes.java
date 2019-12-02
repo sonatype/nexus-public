@@ -21,7 +21,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 /**
  * REST API model for describing authentication for HTTP connections used by a proxy repository.
  *
- * @since 3.next
+ * @since 3.20
  */
 @JsonIgnoreProperties(value = {"password"}, allowSetters = true)
 public class HttpClientConnectionAuthenticationAttributes

@@ -95,50 +95,57 @@ Ext.define('NX.coreui.controller.MetricHealth', {
    * @private
    */
   load: function () {
-    var me = this,
-        panel = me.getHealthchecks(),
-        loadStore = function (response) {
-          var data = Ext.decode(response.responseText);
-          var healthchecks = [];
-          var keys = Ext.Object.getKeys(data);
-          Ext.each(keys, function (key) {
-            healthchecks.push({
-              name: key,
-              message: data[key].message,
-              healthy: data[key].healthy,
-              error: data[key].error
-            });
-          });
-          panel.getStore().loadRawData(healthchecks);
-        };
+    var me = this;
     
-    if (!panel) {
+    if (!me.getHealthchecks()) {
       return;
     }
 
     me.getContent().getEl().mask(NX.I18n.get('Metric_Health_Load_Mask'));
 
     Ext.Ajax.request({
-      url: NX.util.Url.urlOf('service/metrics/healthcheck'),
+      url: NX.util.Url.urlOf('service/rest/internal/ui/status-check'),
       method: 'GET',
       headers: {
         'accept': 'application/json'
       },
       scope: me,
-      suppressStatus: true,
 
-      callback: function (response) {
-        me.getContent().getEl().unmask();
-      },
-
-      success: function (response) {
-        loadStore(response);
-      },
-      failure: function (response) {
-        // the server will respond with a 500 code if any checks fail, but the data is still returned
-        loadStore(response);
+      callback: function (options, success, response) {
+        me.handle(response);
       }
     });
+  },
+
+  /**
+   * Handle the healthcheck response. The server may return:
+   * - 200 when all health checks pass
+   * - 500 when any health check is failing
+   * - 501 when no health checks are found
+   *
+   * It's also possible that some proxy server might intercept the request and return an incorrect response which should
+   * be indicated to the user.
+   */
+  handle: function(response) {
+    var data = Ext.decode(response.responseText, true);
+
+    this.getContent().getEl().unmask();
+
+    if (data === null) {
+      data = [];
+    }
+
+    var healthchecks = [];
+    var keys = Ext.Object.getKeys(data);
+    Ext.each(keys, function (key) {
+      healthchecks.push({
+        name: key,
+        message: data[key].message,
+        healthy: data[key].healthy,
+        error: data[key].error
+      });
+    });
+    this.getHealthchecks().getStore().loadRawData(healthchecks);
   }
 
 });

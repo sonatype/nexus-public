@@ -178,6 +178,15 @@ public abstract class NpmClientITSupport
     npmCli.login(directory);
   }
 
+  protected String npmWhoami() {
+    List<String> results = npmCli.execNpm("whoami").orElse(null);
+
+    if (results != null && results.size() == 1) {
+      return results.get(0);
+    }
+    return null;
+  }
+
   protected void npmLogout(final String repositoryUrl) {
     npmCli.execNpm("logout --registry=" + repositoryUrl);
   }

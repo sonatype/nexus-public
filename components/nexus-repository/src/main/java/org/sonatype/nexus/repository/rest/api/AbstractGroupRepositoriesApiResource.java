@@ -40,7 +40,7 @@ import static java.util.Objects.nonNull;
 import static org.sonatype.nexus.validation.ConstraintViolations.maybePropagate;
 
 /**
- * @since 3.next
+ * @since 3.20
  */
 public abstract class AbstractGroupRepositoriesApiResource<T extends GroupRepositoryApiRequest>
     extends AbstractRepositoriesApiResource<T>

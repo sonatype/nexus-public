@@ -148,6 +148,18 @@ abstract class NpmRecipeSupport
   }
 
   /**
+   * Matcher for npm whoami command.
+   */
+  static Builder whoamiMatcher() {
+    new Builder().matcher(
+        LogicMatchers.and(
+            new ActionMatcher(GET),
+            new LiteralMatcher('/-/whoami')
+        )
+    )
+  }
+
+  /**
    * Matcher for npm package metadata.
    */
   static Builder packageMatcher(String ...httpMethod) {

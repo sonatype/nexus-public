@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * {@link ContentRepository} data backed by the content data store.
  *
- * @since 3.next
+ * @since 3.20
  */
 public class ContentRepositoryData
     extends AbstractRepositoryContent

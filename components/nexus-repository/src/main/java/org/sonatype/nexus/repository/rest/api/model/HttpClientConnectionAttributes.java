@@ -22,7 +22,7 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * REST API model specifying the HTTP connection used by a proxy repository.
  *
- * @since 3.next
+ * @since 3.20
  */
 public class HttpClientConnectionAttributes
 {

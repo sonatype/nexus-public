@@ -26,11 +26,13 @@ import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
+import org.sonatype.nexus.selector.OrientSelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 
 import com.google.common.collect.ImmutableList;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
@@ -46,7 +48,7 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
 @Named
 @Singleton
 @ManagedLifecycle(phase = SCHEMAS)
-public class SelectorConfigurationStoreImpl
+public class OrientSelectorConfigurationStore
     extends StateGuardLifecycleSupport
     implements SelectorConfigurationStore
 {
@@ -55,8 +57,8 @@ public class SelectorConfigurationStoreImpl
   private final SelectorConfigurationEntityAdapter entityAdapter;
 
   @Inject
-  public SelectorConfigurationStoreImpl(@Named(DatabaseInstanceNames.CONFIG) final Provider<DatabaseInstance> databaseInstance,
-                                        final SelectorConfigurationEntityAdapter entityAdapter)
+  public OrientSelectorConfigurationStore(@Named(DatabaseInstanceNames.CONFIG) final Provider<DatabaseInstance> databaseInstance,
+                                          final SelectorConfigurationEntityAdapter entityAdapter)
   {
     this.databaseInstance = databaseInstance;
     this.entityAdapter = entityAdapter;
@@ -95,23 +97,34 @@ public class SelectorConfigurationStoreImpl
   @Guarded(by = STARTED)
   public void create(final SelectorConfiguration configuration) {
     checkNotNull(configuration);
+    checkArgument(configuration instanceof OrientSelectorConfiguration,
+        "Configuration is not an OrientSelectorConfiguration");
 
-    inTxRetry(databaseInstance).run(db -> entityAdapter.addEntity(db, configuration));
+    inTxRetry(databaseInstance).run(db -> entityAdapter.addEntity(db, (OrientSelectorConfiguration) configuration));
   }
 
   @Override
   @Guarded(by = STARTED)
   public void update(final SelectorConfiguration configuration) {
     checkNotNull(configuration);
+    checkArgument(configuration instanceof OrientSelectorConfiguration,
+        "Configuration is not an OrientSelectorConfiguration");
 
-    inTxRetry(databaseInstance).run(db -> entityAdapter.editEntity(db, configuration));
+    inTxRetry(databaseInstance).run(db -> entityAdapter.editEntity(db, (OrientSelectorConfiguration) configuration));
   }
 
   @Override
   @Guarded(by = STARTED)
   public void delete(final SelectorConfiguration configuration) {
     checkNotNull(configuration);
+    checkArgument(configuration instanceof OrientSelectorConfiguration,
+        "Configuration is not an OrientSelectorConfiguration");
 
-    inTxRetry(databaseInstance).run(db -> entityAdapter.deleteEntity(db, configuration));
+    inTxRetry(databaseInstance).run(db -> entityAdapter.deleteEntity(db, (OrientSelectorConfiguration) configuration));
+  }
+
+  @Override
+  public SelectorConfiguration newSelectorConfiguration() {
+    return entityAdapter.newEntity();
   }
 }

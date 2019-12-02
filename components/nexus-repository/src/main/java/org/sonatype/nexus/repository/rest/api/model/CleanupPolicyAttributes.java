@@ -21,7 +21,7 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * REST API model which describes cleanup policies for a repository.
  *
- * @since 3.next
+ * @since 3.20
  */
 public class CleanupPolicyAttributes
 {

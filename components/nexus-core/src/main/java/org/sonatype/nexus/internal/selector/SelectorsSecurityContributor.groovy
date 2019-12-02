@@ -15,9 +15,9 @@ package org.sonatype.nexus.internal.selector
 import javax.inject.Named
 import javax.inject.Singleton
 
-import org.sonatype.nexus.security.config.CPrivilege
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration
 import org.sonatype.nexus.security.config.SecurityContributor
+import org.sonatype.nexus.security.config.memory.MemoryCPrivilege
 
 /**
  * Selectors security configuration.
@@ -33,7 +33,7 @@ class SelectorsSecurityContributor
   MemorySecurityConfiguration getContribution() {
     return new MemorySecurityConfiguration(
         privileges: [
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-selectors-all',
                 description: 'All permissions for Content Selectors',
                 type: 'application',
@@ -42,7 +42,7 @@ class SelectorsSecurityContributor
                     actions: '*'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-selectors-create',
                 description: 'Create permission for Content Selectors',
                 type: 'application',
@@ -51,7 +51,7 @@ class SelectorsSecurityContributor
                     actions: 'create,read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-selectors-read',
                 description: 'Read permission for Content Selectors',
                 type: 'application',
@@ -60,7 +60,7 @@ class SelectorsSecurityContributor
                     actions: 'read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-selectors-update',
                 description: 'Update permission for Content Selectors',
                 type: 'application',
@@ -69,7 +69,7 @@ class SelectorsSecurityContributor
                     actions: 'update,read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-selectors-delete',
                 description: 'Delete permission for Content Selectors',
                 type: 'application',

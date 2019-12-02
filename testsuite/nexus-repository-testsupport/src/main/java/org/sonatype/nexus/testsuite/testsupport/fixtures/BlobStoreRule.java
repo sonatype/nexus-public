@@ -32,7 +32,7 @@ import static org.codehaus.groovy.runtime.InvokerHelper.asList;
 import static org.sonatype.nexus.blobstore.file.FileBlobStore.PATH_KEY;
 
 /**
- * @since 3.next
+ * @since 3.20
  */
 public class BlobStoreRule
     extends ExternalResource

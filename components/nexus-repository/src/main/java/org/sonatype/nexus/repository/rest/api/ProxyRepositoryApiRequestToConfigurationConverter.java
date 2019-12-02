@@ -37,7 +37,7 @@ import static org.sonatype.nexus.repository.storage.StorageFacetConstants.STORAG
 import static org.sonatype.nexus.repository.storage.StorageFacetConstants.STRICT_CONTENT_TYPE_VALIDATION;
 
 /**
- * @since 3.next
+ * @since 3.20
  */
 @Named
 public class ProxyRepositoryApiRequestToConfigurationConverter<T extends ProxyRepositoryApiRequest>

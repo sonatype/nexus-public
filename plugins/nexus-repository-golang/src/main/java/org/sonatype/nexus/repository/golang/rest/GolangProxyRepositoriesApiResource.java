@@ -29,7 +29,7 @@ import static org.sonatype.nexus.repository.golang.rest.GolangProxyRepositoriesA
 /**
  * REST resource for handling requests regarding proxy Golang repositories.
  *
- * @since 3.next
+ * @since 3.20
  */
 @Named
 @Singleton

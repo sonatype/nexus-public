@@ -33,7 +33,7 @@ public interface AnonymousConfigurationStore
   /**
    * Provide a new instance of {@link ApplicationConfiguration} applicable for use with this backing store.
    *
-   * @since 3.next
+   * @since 3.20
    */
   AnonymousConfiguration newConfiguration();
 }

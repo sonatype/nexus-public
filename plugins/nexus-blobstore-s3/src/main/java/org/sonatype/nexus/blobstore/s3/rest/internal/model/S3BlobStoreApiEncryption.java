@@ -23,7 +23,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
  * Encapsulates the encryption type and key to use for encrypting an s3 blob store at rest i.e AWS S3 server side
  * encryption.
  *
- * @since 3.next
+ * @since 3.20
  */
 @JsonInclude(NON_NULL)
 public class S3BlobStoreApiEncryption

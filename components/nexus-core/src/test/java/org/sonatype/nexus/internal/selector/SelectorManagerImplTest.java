@@ -29,6 +29,7 @@ import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.selector.CselSelector;
 import org.sonatype.nexus.selector.JexlSelector;
+import org.sonatype.nexus.selector.OrientSelectorConfiguration;
 import org.sonatype.nexus.selector.Selector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorEvaluationException;
@@ -183,7 +184,7 @@ public class SelectorManagerImplTest
 
   @Test
   public void testDelete_Succeeds() {
-    SelectorConfiguration selectorConfiguration = new SelectorConfiguration();
+    OrientSelectorConfiguration selectorConfiguration = new OrientSelectorConfiguration();
     selectorConfiguration.setName("selector");
     selectorConfiguration.setType(CselSelector.TYPE);
 
@@ -224,7 +225,7 @@ public class SelectorManagerImplTest
   }
 
   private SelectorConfiguration getSelectorConfiguration(final String type, final String expression) {
-    SelectorConfiguration selectorConfiguration = new SelectorConfiguration();
+    SelectorConfiguration selectorConfiguration = new OrientSelectorConfiguration();
     Map<String, Object> attributes = new HashMap<>();
     attributes.put("expression", expression);
     selectorConfiguration.setAttributes(attributes);
@@ -232,15 +233,16 @@ public class SelectorManagerImplTest
     return selectorConfiguration;
   }
 
-  private SelectorConfiguration createSelectorConfiguration(String roleId,
-                                                            String rolePrivilegeId,
-                                                            String roleSelectorName,
-                                                            String repositoryName) throws Exception
+  private SelectorConfiguration createSelectorConfiguration(
+      String roleId,
+      String rolePrivilegeId,
+      String roleSelectorName,
+      String repositoryName) throws Exception
   {
     createRole(roleId, rolePrivilegeId);
     createRepositoryContentSelectorPrivilege(rolePrivilegeId, roleSelectorName, repositoryName);
 
-    SelectorConfiguration selectorConfiguration = new SelectorConfiguration();
+    SelectorConfiguration selectorConfiguration = new OrientSelectorConfiguration();
     selectorConfiguration.setName(roleSelectorName);
 
     selectorConfigurations.add(selectorConfiguration);

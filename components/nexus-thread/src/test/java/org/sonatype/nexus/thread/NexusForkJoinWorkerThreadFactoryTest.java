@@ -20,7 +20,7 @@ import org.junit.Test;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
- * @since 3.next
+ * @since 3.20
  */
 public class NexusForkJoinWorkerThreadFactoryTest
 {

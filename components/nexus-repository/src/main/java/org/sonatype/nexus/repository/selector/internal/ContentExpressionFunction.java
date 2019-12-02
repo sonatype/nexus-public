@@ -147,7 +147,7 @@ public class ContentExpressionFunction
     VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(format);
     VariableSource variableSource = variableResolverAdapter.fromDocument(asset);
 
-    SelectorConfiguration selectorConfiguration = new SelectorConfiguration();
+    SelectorConfiguration selectorConfiguration = selectorManager.newSelectorConfiguration();
 
     selectorConfiguration.setAttributes(ImmutableMap.of(SelectorConfiguration.EXPRESSION, jexlExpression));
     selectorConfiguration.setType(JexlSelector.TYPE);

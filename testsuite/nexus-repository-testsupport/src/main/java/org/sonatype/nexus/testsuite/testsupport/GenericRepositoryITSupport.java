@@ -48,10 +48,10 @@ import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.testsuite.testsupport.apt.AptClient;
 import org.sonatype.nexus.testsuite.testsupport.apt.AptClientFactory;
-import org.sonatype.nexus.testsuite.testsupport.conda.CondaClient;
-import org.sonatype.nexus.testsuite.testsupport.conda.CondaClientFactory;
 import org.sonatype.nexus.testsuite.testsupport.cocoapods.CocoapodsClient;
 import org.sonatype.nexus.testsuite.testsupport.cocoapods.CocoapodsClientFactory;
+import org.sonatype.nexus.testsuite.testsupport.conda.CondaClient;
+import org.sonatype.nexus.testsuite.testsupport.conda.CondaClientFactory;
 import org.sonatype.nexus.testsuite.testsupport.fixtures.RepositoryRule;
 import org.sonatype.nexus.testsuite.testsupport.golang.GolangClient;
 import org.sonatype.nexus.testsuite.testsupport.npm.NpmClient;
@@ -271,11 +271,8 @@ public abstract class GenericRepositoryITSupport<RR extends RepositoryRule>
 
   protected void maybeCreateSelector(final String name, final String type, final String expression) {
     if (selectorManager.browse().stream().noneMatch(s -> name.equals(s.getName()))) {
-      SelectorConfiguration config = new SelectorConfiguration();
-      config.setName(name);
-      config.setDescription(name);
-      config.setType(type);
-      config.setAttributes(ImmutableMap.of("expression", expression));
+      SelectorConfiguration config =
+          selectorManager.newSelectorConfiguration(name, type, name, ImmutableMap.of("expression", expression));
       selectorManager.create(config);
     }
   }

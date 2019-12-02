@@ -17,7 +17,7 @@ import org.sonatype.nexus.common.entity.EntityId;
 /**
  * Top-level content metadata for the repository; distinct from the repository entity in the config store.
  *
- * @since 3.next
+ * @since 3.20
  */
 public interface ContentRepository
     extends RepositoryContent

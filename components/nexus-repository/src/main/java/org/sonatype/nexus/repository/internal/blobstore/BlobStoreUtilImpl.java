@@ -52,7 +52,7 @@ public class BlobStoreUtilImpl
   }
 
   /**
-   * @since 3.next
+   * @since 3.20
    */
   @Override
   public boolean validateFilePath(final String filePath, final int maxLength) {

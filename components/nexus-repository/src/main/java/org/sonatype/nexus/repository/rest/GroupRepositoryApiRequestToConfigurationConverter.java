@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.rest.api.AbstractRepositoryApiRequestToConf
 import org.sonatype.nexus.repository.rest.api.model.GroupRepositoryApiRequest;
 
 /**
- * @since 3.next
+ * @since 3.20
  */
 @Named
 public class GroupRepositoryApiRequestToConfigurationConverter<T extends GroupRepositoryApiRequest>

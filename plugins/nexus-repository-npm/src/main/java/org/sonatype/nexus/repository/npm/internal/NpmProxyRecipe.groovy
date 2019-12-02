@@ -82,6 +82,9 @@ class NpmProxyRecipe
   NpmProxyHandler proxyHandler
 
   @Inject
+  NpmWhoamiHandler npmWhoamiHandler;
+
+  @Inject
   NpmProxyRecipe(@Named(ProxyType.NAME) final Type type,
                  @Named(NpmFormat.NAME) final Format format)
   {
@@ -142,6 +145,12 @@ class NpmProxyRecipe
         .handler(unitOfWorkHandler)
         .handler(NpmHandlers.searchV1)
         .create())
+
+    // GET /-/whoami
+    builder.route(whoamiMatcher()
+        .handler(timingHandler)
+        .handler(npmWhoamiHandler)
+        .create());
 
     // GET /packageName (npm install)
     builder.route(packageMatcher(GET, HEAD)

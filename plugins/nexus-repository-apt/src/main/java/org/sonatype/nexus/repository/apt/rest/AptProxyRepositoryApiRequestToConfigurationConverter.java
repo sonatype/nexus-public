@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.rest.api.ProxyRepositoryApiRequestToConfigu
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 
 /**
- * @since 3.next
+ * @since 3.20
  */
 @Named
 public class AptProxyRepositoryApiRequestToConfigurationConverter

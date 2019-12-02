@@ -34,7 +34,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Simple in-memory {@link BlobSession}.
  *
- * @since 3.next
+ * @since 3.20
  */
 public class MemoryBlobSession
     extends TransactionSupport

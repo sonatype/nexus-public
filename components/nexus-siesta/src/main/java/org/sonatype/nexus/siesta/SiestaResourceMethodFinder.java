@@ -34,7 +34,7 @@ import static org.sonatype.nexus.siesta.SiestaModule.MOUNT_POINT;
  * Resource Method finder for all the resources loaded through the {@link SiestaModule}, {@link SiestaServlet}
  * and {@link ComponentContainer}.
  *
- * @since 3.next
+ * @since 3.20
  */
 public class SiestaResourceMethodFinder
 {

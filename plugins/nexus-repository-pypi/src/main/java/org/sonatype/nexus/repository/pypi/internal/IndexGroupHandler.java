@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.pypi.internal;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -110,7 +111,7 @@ class IndexGroupHandler
                                 final AssetKind assetKind,
                                 final Map<Repository, Response> remoteResponses) throws IOException
   {
-    Map<String, String> results = new TreeMap<>();
+    Map<String, PyPiLink> results = new TreeMap<>();
     for (Entry<Repository, Response> entry : remoteResponses.entrySet()) {
       Response response = entry.getValue();
       if (response.getStatus().getCode() == HttpStatus.OK && response.getPayload() != null) {
@@ -119,27 +120,25 @@ class IndexGroupHandler
     }
 
     if (INDEX.equals(assetKind)) {
-      return PyPiIndexUtils.buildIndexPage(templateHelper, name, results);
+      return PyPiIndexUtils.buildIndexPage(templateHelper, name, results.values());
     }
     else {
-      return PyPiIndexUtils.buildRootIndexPage(templateHelper, results);
+      return PyPiIndexUtils.buildRootIndexPage(templateHelper, results.values());
     }
   }
 
   /**
    * Processes the content of a particular repository's response.
    */
-  private void processResults(final Response response, final Map<String, String> results) throws IOException {
+  private void processResults(final Response response, final Map<String, PyPiLink> results) throws IOException {
     checkNotNull(response);
     checkNotNull(results);
     Payload payload = checkNotNull(response.getPayload());
     try (InputStream in = payload.openInputStream()) {
-      Map<String, String> links = PyPiIndexUtils.extractLinksFromIndex(in);
-      for (Entry<String, String> link : links.entrySet()) {
-        String file = link.getKey();
-        String path = link.getValue();
-        if (!results.containsKey(file)) {
-          results.put(file, path);
+      List<PyPiLink> links = PyPiIndexUtils.extractLinksFromIndex(in);
+      for (PyPiLink link : links) {
+        if (!results.containsKey(link.getFile())) {
+          results.put(link.getFile(), link);
         }
       }
     }

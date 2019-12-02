@@ -15,9 +15,9 @@ package org.sonatype.nexus.internal.log
 import javax.inject.Named
 import javax.inject.Singleton
 
-import org.sonatype.nexus.security.config.CPrivilege
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration
 import org.sonatype.nexus.security.config.SecurityContributor
+import org.sonatype.nexus.security.config.memory.MemoryCPrivilege
 
 /**
  * Logging security configuration.
@@ -33,7 +33,7 @@ class LoggingSecurityContributor
   MemorySecurityConfiguration getContribution() {
     return new MemorySecurityConfiguration(
         privileges: [
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-logging-all',
                 description: 'All permissions for Logging',
                 type: 'application',
@@ -42,7 +42,7 @@ class LoggingSecurityContributor
                     actions: '*'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-logging-read',
                 description: 'Read permission for Logging',
                 type: 'application',
@@ -51,7 +51,7 @@ class LoggingSecurityContributor
                     actions: 'read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-logging-update',
                 description: 'Update permission for Logging',
                 type: 'application',
@@ -60,7 +60,7 @@ class LoggingSecurityContributor
                     actions: 'update'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-logging-mark',
                 description: 'Mark permission for Logging',
                 type: 'application',

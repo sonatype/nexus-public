@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.security.model;
+package org.sonatype.nexus.internal.security.model.internal.orient;
 
 import java.util.Map;
 
@@ -25,7 +25,6 @@ import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 import org.sonatype.nexus.orient.entity.action.DeleteEntityByPropertyAction;
 import org.sonatype.nexus.orient.entity.action.ReadEntityByPropertyAction;
 import org.sonatype.nexus.orient.entity.action.UpdateEntityByPropertyAction;
-import org.sonatype.nexus.security.config.CPrivilege;
 
 import com.google.common.collect.Maps;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -35,15 +34,15 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
- * {@link CPrivilege} entity adapter.
+ * {@link OrientCPrivilege} entity adapter.
  *
  * @since 3.0
  */
 @FeatureFlag(name = "nexus.orient.store.config")
 @Named
 @Singleton
-public class CPrivilegeEntityAdapter
-    extends IterableEntityAdapter<CPrivilege>
+public class OrientCPrivilegeEntityAdapter
+    extends IterableEntityAdapter<OrientCPrivilege>
 {
   private static final String DB_CLASS = new OClassNameBuilder()
       .type("privilege")
@@ -64,13 +63,13 @@ public class CPrivilegeEntityAdapter
       .property(P_ID)
       .build();
 
-  private final ReadEntityByPropertyAction<CPrivilege> read = new ReadEntityByPropertyAction<>(this, P_ID);
+  private final ReadEntityByPropertyAction<OrientCPrivilege> read = new ReadEntityByPropertyAction<>(this, P_ID);
 
   private final DeleteEntityByPropertyAction delete = new DeleteEntityByPropertyAction(this, P_ID);
 
-  private final UpdateEntityByPropertyAction<CPrivilege> update = new UpdateEntityByPropertyAction<>(this, P_ID);
+  private final UpdateEntityByPropertyAction<OrientCPrivilege> update = new UpdateEntityByPropertyAction<>(this, P_ID);
 
-  public CPrivilegeEntityAdapter() {
+  public OrientCPrivilegeEntityAdapter() {
     super(DB_CLASS);
   }
 
@@ -90,12 +89,12 @@ public class CPrivilegeEntityAdapter
   }
 
   @Override
-  protected CPrivilege newEntity() {
-    return new CPrivilege();
+  protected OrientCPrivilege newEntity() {
+    return new OrientCPrivilege();
   }
 
   @Override
-  protected void readFields(final ODocument document, final CPrivilege entity) throws Exception {
+  protected void readFields(final ODocument document, final OrientCPrivilege entity) throws Exception {
     entity.setId(document.<String>field(P_ID, OType.STRING));
     entity.setName(document.<String>field(P_NAME, OType.STRING));
     entity.setDescription(document.<String>field(P_DESCRIPTION, OType.STRING));
@@ -103,11 +102,11 @@ public class CPrivilegeEntityAdapter
     entity.setReadOnly(false);
     entity.setProperties(Maps.newHashMap(document.<Map<String, String>>field(P_PROPERTIES, OType.EMBEDDEDMAP)));
 
-    entity.setVersion(String.valueOf(document.getVersion()));
+    entity.setVersion(document.getVersion());
   }
 
   @Override
-  protected void writeFields(final ODocument document, final CPrivilege entity) throws Exception {
+  protected void writeFields(final ODocument document, final OrientCPrivilege entity) throws Exception {
     document.field(P_ID, entity.getId());
     document.field(P_NAME, entity.getName());
     document.field(P_DESCRIPTION, entity.getDescription());
@@ -123,7 +122,7 @@ public class CPrivilegeEntityAdapter
    * @since 3.1
    */
   @Nullable
-  public CPrivilege read(final ODatabaseDocumentTx db, final String id) {
+  public OrientCPrivilege read(final ODatabaseDocumentTx db, final String id) {
     return read.execute(db, id);
   }
 
@@ -137,7 +136,7 @@ public class CPrivilegeEntityAdapter
   /**
    * @since 3.6.1
    */
-  public boolean update(final ODatabaseDocumentTx db, final CPrivilege entity) {
+  public boolean update(final ODatabaseDocumentTx db, final OrientCPrivilege entity) {
     return update.execute(db, entity, entity.getId());
   }
 }

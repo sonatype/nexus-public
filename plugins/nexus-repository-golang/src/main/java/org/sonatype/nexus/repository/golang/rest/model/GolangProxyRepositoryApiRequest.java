@@ -25,7 +25,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * @since 3.next
+ * @since 3.20
  */
 @JsonIgnoreProperties({"format", "type"})
 public class GolangProxyRepositoryApiRequest

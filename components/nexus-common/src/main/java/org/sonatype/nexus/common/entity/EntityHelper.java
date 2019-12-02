@@ -86,7 +86,7 @@ public class EntityHelper
   }
 
   /**
-   * @since 3.next
+   * @since 3.20
    */
   public static void clearMetadata(final Object entity) {
     if (entity instanceof Entity) {

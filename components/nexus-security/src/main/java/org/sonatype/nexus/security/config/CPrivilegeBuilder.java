@@ -14,6 +14,8 @@ package org.sonatype.nexus.security.config;
 
 import java.util.Arrays;
 
+import org.sonatype.nexus.security.config.memory.MemoryCPrivilege;
+
 import com.google.common.base.Joiner;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -25,7 +27,11 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class CPrivilegeBuilder
 {
-  private final CPrivilege model = new CPrivilege();
+  private final CPrivilege model;
+
+  public CPrivilegeBuilder() {
+    this.model = new MemoryCPrivilege();
+  }
 
   public CPrivilegeBuilder type(final String type) {
     model.setType(type);

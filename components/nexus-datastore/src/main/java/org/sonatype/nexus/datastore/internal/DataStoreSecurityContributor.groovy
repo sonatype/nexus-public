@@ -15,9 +15,9 @@ package org.sonatype.nexus.datastore.internal
 import javax.inject.Named
 import javax.inject.Singleton
 
-import org.sonatype.nexus.security.config.CPrivilege
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration
 import org.sonatype.nexus.security.config.SecurityContributor
+import org.sonatype.nexus.security.config.memory.MemoryCPrivilege
 
 /**
  * DataStore security configuration.
@@ -33,7 +33,7 @@ class DataStoreSecurityContributor
   MemorySecurityConfiguration getContribution() {
     return new MemorySecurityConfiguration(
         privileges: [
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-datastores-all',
                 description: 'All permissions for data stores',
                 type: 'application',
@@ -42,7 +42,7 @@ class DataStoreSecurityContributor
                     actions: '*'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-datastores-create',
                 description: 'Create permission for data stores',
                 type: 'application',
@@ -51,7 +51,7 @@ class DataStoreSecurityContributor
                     actions: 'create,read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-datastores-read',
                 description: 'Read permission for data stores',
                 type: 'application',
@@ -60,7 +60,7 @@ class DataStoreSecurityContributor
                     actions: 'read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-datastores-update',
                 description: 'Update permission for data stores',
                 type: 'application',
@@ -69,7 +69,7 @@ class DataStoreSecurityContributor
                     actions: 'update,read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-datastores-delete',
                 description: 'Delete permission for data stores',
                 type: 'application',

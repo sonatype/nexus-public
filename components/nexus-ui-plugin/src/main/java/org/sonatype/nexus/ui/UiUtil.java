@@ -20,7 +20,7 @@ import javax.annotation.Nullable;
 import org.eclipse.sisu.space.ClassSpace;
 
 /**
- * @since 3.next
+ * @since 3.20
  */
 public class UiUtil
 {

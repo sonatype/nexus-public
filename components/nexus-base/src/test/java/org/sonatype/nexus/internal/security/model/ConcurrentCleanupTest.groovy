@@ -16,6 +16,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 import org.sonatype.goodies.testsupport.TestSupport
+import org.sonatype.nexus.internal.security.model.internal.orient.OrientCPrivilegeEntityAdapter
 import org.sonatype.nexus.internal.security.model.internal.orient.OrientCRole
 import org.sonatype.nexus.internal.security.model.internal.orient.OrientCRoleEntityAdapter
 import org.sonatype.nexus.internal.security.model.internal.orient.OrientCUserEntityAdapter
@@ -24,12 +25,12 @@ import org.sonatype.nexus.internal.security.model.internal.orient.OrientCUserRol
 import org.sonatype.nexus.internal.security.model.internal.orient.OrientSecurityConfigurationSource
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule
 import org.sonatype.nexus.security.config.AdminPasswordFileManager
-import org.sonatype.nexus.security.config.CPrivilege
 import org.sonatype.nexus.security.config.CRole
 import org.sonatype.nexus.security.config.CUserRoleMapping
 import org.sonatype.nexus.security.config.SecurityConfiguration
 import org.sonatype.nexus.security.config.SecurityConfigurationCleaner
 import org.sonatype.nexus.security.config.StaticSecurityConfigurationSource
+import org.sonatype.nexus.security.config.memory.MemoryCPrivilege
 import org.sonatype.nexus.security.internal.SecurityConfigurationCleanerImpl
 
 import org.apache.shiro.authc.credential.PasswordService
@@ -83,7 +84,7 @@ extends TestSupport
         new StaticSecurityConfigurationSource(passwordService, adminPasswordFileManager, true),
         new OrientCUserEntityAdapter(),
         new OrientCRoleEntityAdapter(),
-        new CPrivilegeEntityAdapter(),
+        new OrientCPrivilegeEntityAdapter(),
         new OrientCUserRoleMappingEntityAdapter()
     )
     source.start()
@@ -205,7 +206,7 @@ extends TestSupport
 
     // create privileges and assign them to test role
     (1..NUMBER_OF_THREADS).each { i ->
-      configuration.addPrivilege(new CPrivilege(
+      configuration.addPrivilege(new MemoryCPrivilege(
           id: "test-${i}",
           type: 'target',
           name: "test-${i}"

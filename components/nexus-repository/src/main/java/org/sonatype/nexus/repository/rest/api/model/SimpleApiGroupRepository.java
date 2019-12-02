@@ -24,7 +24,7 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * API Group Repository for simple formats which do not have custom attributes for groups.
  *
- * @since 3.next
+ * @since 3.20
  */
 @JsonIgnoreProperties(value = {"format", "type", "url"}, allowGetters = true)
 public class SimpleApiGroupRepository

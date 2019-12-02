@@ -20,7 +20,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 /**
  * REST API model for apt-specific proxy attributes.
  *
- * @since 3.next
+ * @since 3.20
  */
 public class AptProxyRepositoriesAttributes
     extends AptHostedRepositoriesAttributes

@@ -37,7 +37,8 @@ Ext.define('NX.coreui.view.support.MetricHealth', {
       store: Ext.create('NX.coreui.store.MetricHealth'),
 
       viewConfig: {
-        stripeRows: true
+        stripeRows: true,
+        emptyText: NX.I18n.get('Metric_Health_Empty_Text')
       },
 
       columns: [

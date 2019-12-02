@@ -25,7 +25,7 @@ import org.apache.ibatis.annotations.Param;
 /**
  * Content repository {@link ContentDataAccess}.
  *
- * @since 3.next
+ * @since 3.20
  */
 @SchemaTemplate("format")
 public interface ContentRepositoryDAO

@@ -15,7 +15,7 @@ package org.sonatype.nexus.blobstore.api;
 /**
  * {@link BlobSession} supplier; for use by clients who don't need the full store API.
  *
- * @since 3.next
+ * @since 3.20
  */
 public interface BlobSessionSupplier
 {

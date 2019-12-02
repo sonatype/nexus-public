@@ -18,7 +18,7 @@ import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
 /**
  * An OrientDB backed implementation of {@link AnonymousConfiguration}
  *
- * @since 3.next
+ * @since 3.20
  */
 public class OrientAnonymousConfiguration
     extends AbstractEntity

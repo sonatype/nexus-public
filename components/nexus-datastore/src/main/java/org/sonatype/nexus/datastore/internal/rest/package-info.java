@@ -14,7 +14,7 @@
 /**
  * DataStore REST API
  *
- * @since 3.next
+ * @since 3.20
  */
 @FeatureFlag(name = "nexus.datastore.enabled")
 package org.sonatype.nexus.datastore.internal.rest;

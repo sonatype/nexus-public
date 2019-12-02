@@ -15,9 +15,9 @@ package com.sonatype.nexus.ssl.plugin.internal
 import javax.inject.Named
 import javax.inject.Singleton
 
-import org.sonatype.nexus.security.config.CPrivilege
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration
 import org.sonatype.nexus.security.config.SecurityContributor
+import org.sonatype.nexus.security.config.memory.MemoryCPrivilege
 
 /**
  * SSL security configuration.
@@ -33,7 +33,7 @@ class SslSecurityContributor
   MemorySecurityConfiguration getContribution() {
     return new MemorySecurityConfiguration(
         privileges: [
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-ssl-truststore-all',
                 description: 'All permissions for SSL Truststore',
                 type: 'application',
@@ -42,7 +42,7 @@ class SslSecurityContributor
                     actions: '*',
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-ssl-truststore-read',
                 description: 'Read permission for SSL Truststore',
                 type: 'application',
@@ -51,7 +51,7 @@ class SslSecurityContributor
                     actions: 'read',
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-ssl-truststore-create',
                 description: 'Create permission for SSL Truststore',
                 type: 'application',
@@ -60,7 +60,7 @@ class SslSecurityContributor
                     actions: 'create,read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-ssl-truststore-update',
                 description: 'Update permission for SSL Truststore',
                 type: 'application',
@@ -69,7 +69,7 @@ class SslSecurityContributor
                     actions: 'update,read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-ssl-truststore-delete',
                 description: 'Delete permission for SSL Truststore',
                 type: 'application',

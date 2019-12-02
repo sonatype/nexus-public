@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.content;
 /**
  * Each component represents a unique logical coordinate in a repository.
  *
- * @since 3.next
+ * @since 3.20
  * @see Asset
  */
 public interface Component

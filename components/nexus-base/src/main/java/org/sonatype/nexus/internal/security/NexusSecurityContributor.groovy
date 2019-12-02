@@ -16,9 +16,9 @@ import javax.inject.Named
 import javax.inject.Singleton
 
 import org.sonatype.nexus.security.Roles
-import org.sonatype.nexus.security.config.CPrivilege
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration
 import org.sonatype.nexus.security.config.SecurityContributor
+import org.sonatype.nexus.security.config.memory.MemoryCPrivilege
 import org.sonatype.nexus.security.config.memory.MemoryCRole
 
 /**
@@ -38,7 +38,7 @@ class NexusSecurityContributor
             /**
              * Grants permission for anything in the 'nexus:' namespace.
              */
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-all',
                 type: 'wildcard',
                 description: 'All permissions',
@@ -51,7 +51,7 @@ class NexusSecurityContributor
             // nexus:settings
             //
 
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-settings-all',
                 description: 'All permissions for Settings',
                 type: 'application',
@@ -60,7 +60,7 @@ class NexusSecurityContributor
                     actions: '*'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-settings-read',
                 description: 'Read permission for Settings',
                 type: 'application',
@@ -69,7 +69,7 @@ class NexusSecurityContributor
                     actions: 'read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-settings-update',
                 description: 'Update permission for Settings',
                 type: 'application',
@@ -83,7 +83,7 @@ class NexusSecurityContributor
             // nexus:bundles
             //
 
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-bundles-all',
                 description: 'All permissions for Bundles',
                 type: 'application',
@@ -92,7 +92,7 @@ class NexusSecurityContributor
                     actions: '*'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-bundles-read',
                 description: 'Read permission for Bundles',
                 type: 'application',
@@ -106,7 +106,7 @@ class NexusSecurityContributor
             // nexus:search
             //
 
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-search-read',
                 description: 'Read permission for Search',
                 type: 'application',
@@ -120,7 +120,7 @@ class NexusSecurityContributor
             // nexus:apikey
             //
 
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-apikey-all',
                 description: 'All permissions for APIKey',
                 type: 'application',
@@ -134,7 +134,7 @@ class NexusSecurityContributor
             // nexus:privileges
             //
 
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-privileges-all',
                 description: 'All permissions for Privileges',
                 type: 'application',
@@ -143,7 +143,7 @@ class NexusSecurityContributor
                     actions: '*'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-privileges-create',
                 description: 'Create permission for Privileges',
                 type: 'application',
@@ -152,7 +152,7 @@ class NexusSecurityContributor
                     actions: 'create,read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-privileges-read',
                 description: 'Read permission for Privileges',
                 type: 'application',
@@ -161,7 +161,7 @@ class NexusSecurityContributor
                     actions: 'read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-privileges-update',
                 description: 'Update permission for Privileges',
                 type: 'application',
@@ -170,7 +170,7 @@ class NexusSecurityContributor
                     actions: 'update,read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-privileges-delete',
                 description: 'Delete permission for Privileges',
                 type: 'application',
@@ -184,7 +184,7 @@ class NexusSecurityContributor
             // nexus:roles
             //
 
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-roles-all',
                 description: 'All permissions for Roles',
                 type: 'application',
@@ -193,7 +193,7 @@ class NexusSecurityContributor
                     actions: '*'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-roles-create',
                 description: 'Create permission for Roles',
                 type: 'application',
@@ -202,7 +202,7 @@ class NexusSecurityContributor
                     actions: 'create,read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-roles-read',
                 description: 'Read permission for Roles',
                 type: 'application',
@@ -211,7 +211,7 @@ class NexusSecurityContributor
                     actions: 'read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-roles-update',
                 description: 'Update permission for Roles',
                 type: 'application',
@@ -220,7 +220,7 @@ class NexusSecurityContributor
                     actions: 'update,read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-roles-delete',
                 description: 'Delete permission for Roles',
                 type: 'application',
@@ -234,7 +234,7 @@ class NexusSecurityContributor
             // nexus:users
             //
 
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-users-all',
                 description: 'All permissions for Users',
                 type: 'application',
@@ -243,7 +243,7 @@ class NexusSecurityContributor
                     actions: '*'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-users-create',
                 description: 'Create permission for Users',
                 type: 'application',
@@ -252,7 +252,7 @@ class NexusSecurityContributor
                     actions: 'create,read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-users-read',
                 description: 'Read permission for Users',
                 type: 'application',
@@ -261,7 +261,7 @@ class NexusSecurityContributor
                     actions: 'read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-users-update',
                 description: 'Update permission for Users',
                 type: 'application',
@@ -270,7 +270,7 @@ class NexusSecurityContributor
                     actions: 'update,read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-users-delete',
                 description: 'Delete permission for Users',
                 type: 'application',
@@ -281,7 +281,7 @@ class NexusSecurityContributor
             ),
 
             // FIXME: Sort out what the use-case is for this distinct permission, consider nexus:users:change-password?
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-userschangepw',
                 description: 'Change password permission',
                 type: 'application',
@@ -293,7 +293,7 @@ class NexusSecurityContributor
 
             // nexus:component
 
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-component-upload',
                 description: 'Upload component permission',
                 type: 'application',

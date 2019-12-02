@@ -12,86 +12,30 @@
  */
 package org.sonatype.nexus.selector;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
-
-import org.sonatype.nexus.common.entity.AbstractEntity;
 
 /**
  * {@link Selector} configuration.
  *
  * @since 3.0
  */
-public class SelectorConfiguration
-    extends AbstractEntity
+public interface SelectorConfiguration
 {
-  public static final String EXPRESSION = "expression";
+  String EXPRESSION = "expression";
 
-  private String name;
+  String getName();
 
-  private String type;
+  void setName(String name);
 
-  private String description;
+  String getType();
 
-  private Map<String,String> attributes;
+  void setType(String type);
 
-  public String getName() {
-    return name;
-  }
+  String getDescription();
 
-  public void setName(final String name) {
-    this.name = name;
-  }
+  void setDescription(String description);
 
-  public String getType() {
-    return type;
-  }
+  Map<String,String> getAttributes();
 
-  public void setType(final String type) {
-    this.type = type;
-  }
-
-  public String getDescription() {
-    return description;
-  }
-
-  public void setDescription(final String description) {
-    this.description = description;
-  }
-
-  public Map<String,String> getAttributes() {
-    return attributes;
-  }
-
-  public void setAttributes(final Map<String, ? extends Object> attributes) {
-    this.attributes = new HashMap<>(attributes.size());
-    // prevent OrientDB deserialization exceptions by converting value to String - see NEXUS-17850
-    attributes.forEach((key, value) -> this.attributes.put(key, value.toString()));
-  }
-
-  @Override
-  public boolean equals(final Object other) {
-    if (other instanceof SelectorConfiguration) {
-      SelectorConfiguration o = (SelectorConfiguration) other;
-      return Objects.equals(name, o.name) && Objects.equals(type, o.type) && Objects.equals(description, o.description)
-          && Objects.equals(attributes, o.attributes);
-    }
-    return false;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(name, type, description, attributes);
-  }
-
-  @Override
-  public String toString() {
-    return getClass().getSimpleName() + "{" +
-        "name='" + name + '\'' +
-        ", type='" + type + '\'' +
-        ", description='" + description + '\'' +
-        ", attributes='" + attributes + '\'' +
-        '}';
-  }
+  void setAttributes(Map<String, ? extends Object> attributes);
 }

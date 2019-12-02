@@ -23,7 +23,7 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * REST API model for describing storage of hosted repositories.
  *
- * @since 3.next
+ * @since 3.20
  */
 public class HostedStorageAttributes
     extends StorageAttributes

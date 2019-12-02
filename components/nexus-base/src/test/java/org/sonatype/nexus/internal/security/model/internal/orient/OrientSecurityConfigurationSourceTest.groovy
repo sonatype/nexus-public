@@ -12,10 +12,8 @@
  */
 package org.sonatype.nexus.internal.security.model.internal.orient
 
-import org.sonatype.nexus.internal.security.model.CPrivilegeEntityAdapter
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule
 import org.sonatype.nexus.security.config.AdminPasswordFileManager
-import org.sonatype.nexus.security.config.CPrivilege
 import org.sonatype.nexus.security.config.StaticSecurityConfigurationSource
 import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException
 import org.sonatype.nexus.security.role.NoSuchRoleException
@@ -50,7 +48,7 @@ class OrientSecurityConfigurationSourceTest
         new StaticSecurityConfigurationSource(passwordService, adminPasswordFileManager, false),
         new OrientCUserEntityAdapter(),
         new OrientCRoleEntityAdapter(),
-        new CPrivilegeEntityAdapter(),
+        new OrientCPrivilegeEntityAdapter(),
         new OrientCUserRoleMappingEntityAdapter()
     )
     source.start()
@@ -78,9 +76,9 @@ class OrientSecurityConfigurationSourceTest
 
   def 'updatePrivilege should persist privilege'() {
     given:
-      source.configuration.addPrivilege(new CPrivilege(id: 'test', name: 'test', type: 'test'))
+      source.configuration.addPrivilege(new OrientCPrivilege(id: 'test', name: 'test', type: 'test'))
       def privilege = source.configuration.getPrivilege('test')
-      def newPrivilege = new CPrivilege(id: 'new', name: 'new', type: 'test')
+      def newPrivilege = new OrientCPrivilege(id: 'new', name: 'new', type: 'test')
 
     when: 'updatePrivilege is called'
       privilege.name = 'foo'

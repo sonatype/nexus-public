@@ -19,7 +19,7 @@ import org.sonatype.nexus.email.EmailConfiguration;
 /**
  * Email configuration based on a {@link AbstractEntity}
  *
- * @since 3.next
+ * @since 3.20
  */
 public class OrientEmailConfiguration
     extends AbstractEntity

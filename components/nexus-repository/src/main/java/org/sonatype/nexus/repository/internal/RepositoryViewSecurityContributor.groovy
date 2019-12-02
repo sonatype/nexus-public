@@ -15,9 +15,9 @@ package org.sonatype.nexus.repository.internal
 import javax.inject.Named
 import javax.inject.Singleton
 
-import org.sonatype.nexus.security.config.CPrivilege
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration
 import org.sonatype.nexus.security.config.SecurityContributor
+import org.sonatype.nexus.security.config.memory.MemoryCPrivilege
 
 /**
  * Repository view security configuration.
@@ -37,7 +37,7 @@ class RepositoryViewSecurityContributor
             // nexus:repository-view
             //
 
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-repository-view-*-*-*',
                 description: 'All permissions for all repository views',
                 type: 'repository-view',
@@ -47,7 +47,7 @@ class RepositoryViewSecurityContributor
                     actions: '*'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-repository-view-*-*-browse',
                 description: 'Browse permission for all repository views',
                 type: 'repository-view',
@@ -57,7 +57,7 @@ class RepositoryViewSecurityContributor
                     actions: 'browse'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-repository-view-*-*-read',
                 description: 'Read permission for all repository views',
                 type: 'repository-view',
@@ -67,7 +67,7 @@ class RepositoryViewSecurityContributor
                     actions: 'read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-repository-view-*-*-edit',
                 description: 'Edit permission for all repository views',
                 type: 'repository-view',
@@ -77,7 +77,7 @@ class RepositoryViewSecurityContributor
                     actions: 'edit'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-repository-view-*-*-add',
                 description: 'Add permission for all repository views',
                 type: 'repository-view',
@@ -87,7 +87,7 @@ class RepositoryViewSecurityContributor
                     actions: 'add'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-repository-view-*-*-delete',
                 description: 'Delete permission for all repository views',
                 type: 'repository-view',

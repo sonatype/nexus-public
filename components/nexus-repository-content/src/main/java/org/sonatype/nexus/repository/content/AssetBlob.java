@@ -25,7 +25,7 @@ import org.joda.time.DateTime;
  * Apart from the {@link BlobRef} the rest of these properties are also stored in
  * the blob store, but copies of them are persisted here for performance reasons.
  *
- * @since 3.next
+ * @since 3.20
  */
 public interface AssetBlob
 {

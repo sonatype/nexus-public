@@ -27,7 +27,7 @@ import static java.util.Optional.ofNullable;
 /**
  * {@link AssetBlob} data backed by the content data store.
  *
- * @since 3.next
+ * @since 3.20
  */
 public class AssetBlobData
     implements AssetBlob

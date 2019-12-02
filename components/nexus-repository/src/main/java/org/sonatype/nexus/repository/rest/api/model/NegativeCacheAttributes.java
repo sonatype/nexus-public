@@ -21,7 +21,7 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * REST API model of a proxy repository's negative cache settings.
  *
- * @since 3.next
+ * @since 3.20
  */
 public class NegativeCacheAttributes
 {

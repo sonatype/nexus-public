@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.security.config
 
+import org.sonatype.nexus.security.config.memory.MemoryCPrivilege
 import org.sonatype.nexus.security.config.memory.MemoryCRole
 
 class TestSecurityContributor3
@@ -30,7 +31,7 @@ implements SecurityContributor
   MemorySecurityConfiguration getContribution() {
     return new MemorySecurityConfiguration(
         privileges: [
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: '4-test-' + privId,
                 type: 'method',
                 name: '4-test',
@@ -40,7 +41,7 @@ implements SecurityContributor
                     'permission': '/some/path4/'
                 ])
             ,
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: '5-test-' + privId,
                 type: 'method',
                 name: '5-test',
@@ -50,7 +51,7 @@ implements SecurityContributor
                     'permission': '/some/path5/'
                 ])
             ,
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: '6-test-' + privId,
                 type: 'method',
                 name: '6-test',

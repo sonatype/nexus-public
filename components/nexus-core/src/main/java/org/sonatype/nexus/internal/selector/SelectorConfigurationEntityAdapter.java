@@ -25,6 +25,7 @@ import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
+import org.sonatype.nexus.selector.OrientSelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -38,7 +39,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 /**
- * {@link SelectorConfiguration} entity-adapter.
+ * {@link OrientSelectorConfiguration} entity-adapter.
  *
  * since 3.0
  */
@@ -46,7 +47,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 @Named
 @Singleton
 public class SelectorConfigurationEntityAdapter
-    extends IterableEntityAdapter<SelectorConfiguration>
+    extends IterableEntityAdapter<OrientSelectorConfiguration>
 {
   private static final String DB_CLASS = new OClassNameBuilder()
       .prefix("selector")
@@ -105,12 +106,12 @@ public class SelectorConfigurationEntityAdapter
   }
 
   @Override
-  protected SelectorConfiguration newEntity() {
-    return new SelectorConfiguration();
+  protected OrientSelectorConfiguration newEntity() {
+    return new OrientSelectorConfiguration();
   }
 
   @Override
-  protected void readFields(final ODocument document, final SelectorConfiguration entity) {
+  protected void readFields(final ODocument document, final OrientSelectorConfiguration entity) {
     String name = document.field(P_NAME, OType.STRING);
     String type = document.field(P_TYPE, OType.STRING);
     String description = document.field(P_DESCRIPTION, OType.STRING);
@@ -123,7 +124,7 @@ public class SelectorConfigurationEntityAdapter
   }
 
   @Override
-  protected void writeFields(final ODocument document, final SelectorConfiguration entity) {
+  protected void writeFields(final ODocument document, final OrientSelectorConfiguration entity) {
     document.field(P_NAME, entity.getName());
     document.field(P_TYPE, entity.getType());
     document.field(P_DESCRIPTION, entity.getDescription());

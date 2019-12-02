@@ -15,7 +15,7 @@ package org.sonatype.nexus.blobstore.api;
 /**
  * Thrown when a named {@link BlobStore} was not found.
  *
- * @since 3.next
+ * @since 3.20
  */
 public class BlobStoreNotFoundException
     extends RuntimeException

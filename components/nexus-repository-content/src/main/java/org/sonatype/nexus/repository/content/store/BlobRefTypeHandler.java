@@ -30,7 +30,7 @@ import org.apache.ibatis.type.TypeHandler;
 /**
  * MyBatis {@link TypeHandler} that maps {@link BlobRef}s to/from SQL.
  *
- * @since 3.next
+ * @since 3.20
  */
 @Named
 @Singleton

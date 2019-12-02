@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * API Hosted Repository for simple formats which do not have custom attributes for hosted repositories.
  *
- * @since 3.next
+ * @since 3.20
  */
 @JsonIgnoreProperties(value = {"format", "type", "url"}, allowGetters = true)
 public class SimpleApiHostedRepository

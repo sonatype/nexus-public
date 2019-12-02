@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.internal.status;
 
+import java.util.SortedMap;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -28,6 +30,10 @@ import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
 import org.sonatype.nexus.rest.Resource;
 
 import com.codahale.metrics.annotation.Timed;
+import com.codahale.metrics.health.HealthCheck.Result;
+import com.codahale.metrics.health.HealthCheckRegistry;
+import org.apache.shiro.authz.annotation.RequiresAuthentication;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -57,12 +63,18 @@ public class StatusResource
 
   private final DatabaseFreezeService databaseFreezeService;
 
+  private HealthCheckRegistry registry;
+
   private final ExceptionSummarizer exceptionSummarizer = summarize(sameType(), warn(log));
 
   @Inject
-  public StatusResource(final StatusHealthCheckStore statusHealthCheckStore, final DatabaseFreezeService databaseFreezeService) {
+  public StatusResource(final StatusHealthCheckStore statusHealthCheckStore,
+                        final DatabaseFreezeService databaseFreezeService,
+                        final HealthCheckRegistry registry)
+  {
     this.statusHealthCheckStore = checkNotNull(statusHealthCheckStore);
     this.databaseFreezeService = checkNotNull(databaseFreezeService);
+    this.registry = checkNotNull(registry);
   }
 
   @GET
@@ -96,5 +108,17 @@ public class StatusResource
       exceptionSummarizer.log("Status health check failed, responding server is unavailable", e);
       return status(SERVICE_UNAVAILABLE).build();
     }
+  }
+
+  /**
+   * @since 3.20
+   */
+  @GET
+  @Path("/check")
+  @Timed
+  @RequiresAuthentication
+  @RequiresPermissions("nexus:metrics:read")
+  public SortedMap<String, Result> getSystemStatusChecks() {
+    return registry.runHealthChecks();
   }
 }

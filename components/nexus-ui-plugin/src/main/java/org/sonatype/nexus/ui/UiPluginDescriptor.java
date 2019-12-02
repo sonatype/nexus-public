@@ -19,7 +19,7 @@ import java.util.List;
  *
  * Using component priority to determine inclusion order.  Ordering is important to properly load the UI.
  *
- * @since 3.next
+ * @since 3.20
  */
 public interface UiPluginDescriptor
 {

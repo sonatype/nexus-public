@@ -63,6 +63,9 @@ class NpmHostedRecipe
   Provider<NpmSearchFacetHosted> npmSearchFacet
 
   @Inject
+  NpmWhoamiHandler npmWhoamiHandler;
+
+  @Inject
   NpmHostedRecipe(@Named(HostedType.NAME) final Type type,
                   @Named(NpmFormat.NAME) final Format format)
   {
@@ -115,6 +118,12 @@ class NpmHostedRecipe
         .handler(unitOfWorkHandler)
         .handler(NpmHandlers.searchV1)
         .create())
+
+    // GET /-/whoami
+    builder.route(whoamiMatcher()
+        .handler(timingHandler)
+        .handler(npmWhoamiHandler)
+        .create());
 
     // GET /packageName (npm install)
     builder.route(packageMatcher(GET, HEAD)

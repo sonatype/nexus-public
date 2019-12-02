@@ -16,7 +16,7 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.rest.api.model.AbstractRepositoryApiRequest;
 
 /**
- * @since 3.next
+ * @since 3.20
  */
 public abstract class AbstractRepositoryApiRequestToConfigurationConverter<T extends AbstractRepositoryApiRequest>
 {

@@ -14,6 +14,7 @@ package org.sonatype.nexus.security.config
 
 import javax.inject.Singleton
 
+import org.sonatype.nexus.security.config.memory.MemoryCPrivilege
 import org.sonatype.nexus.security.config.memory.MemoryCRole
 
 @Singleton
@@ -24,7 +25,7 @@ implements SecurityContributor
   MemorySecurityConfiguration getContribution() {
     return new MemorySecurityConfiguration(
         privileges: [
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: '4-test',
                 type: 'method',
                 name: '4-test',
@@ -34,7 +35,7 @@ implements SecurityContributor
                     'permission': '/some/path4/'
                 ])
             ,
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: '5-test',
                 type: 'method',
                 name: '5-test',
@@ -44,7 +45,7 @@ implements SecurityContributor
                     'permission': '/some/path5/'
                 ])
             ,
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: '6-test',
                 type: 'method',
                 name: '6-test',

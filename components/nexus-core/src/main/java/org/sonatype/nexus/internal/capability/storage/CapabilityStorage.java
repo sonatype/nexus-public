@@ -56,7 +56,7 @@ public interface CapabilityStorage
   Map<CapabilityIdentity, CapabilityStorageItem> getAll();
 
   /**
-   * @since 3.next
+   * @since 3.20
    */
   CapabilityStorageItem newStorageItem(final int version,
                                        final String type,

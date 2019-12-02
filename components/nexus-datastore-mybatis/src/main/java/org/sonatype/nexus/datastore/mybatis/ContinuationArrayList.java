@@ -20,7 +20,7 @@ import org.sonatype.nexus.common.entity.ContinuationAware;
 /**
  * Collection of elements with a token that can be used to request the next set of results.
  *
- * @since 3.next
+ * @since 3.20
  */
 public class ContinuationArrayList<E extends ContinuationAware>
     extends ArrayList<E>

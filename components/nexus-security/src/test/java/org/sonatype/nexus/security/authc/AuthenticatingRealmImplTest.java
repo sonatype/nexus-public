@@ -20,6 +20,7 @@ import org.sonatype.nexus.security.AbstractSecurityTest;
 import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.CRole;
 import org.sonatype.nexus.security.config.CUser;
+import org.sonatype.nexus.security.config.memory.MemoryCPrivilege;
 import org.sonatype.nexus.security.config.memory.MemoryCUser;
 import org.sonatype.nexus.security.internal.AuthenticatingRealmImpl;
 import org.sonatype.nexus.security.internal.SecurityConfigurationManagerImpl;
@@ -149,7 +150,7 @@ public class AuthenticatingRealmImplTest
   }
 
   private void buildTestAuthenticationConfig(final String status, final String hash) throws Exception {
-    CPrivilege priv = new CPrivilege();
+    CPrivilege priv = new MemoryCPrivilege();
     priv.setId("priv");
     priv.setName("name");
     priv.setDescription("desc");

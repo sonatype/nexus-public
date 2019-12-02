@@ -24,7 +24,7 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
 /**
  * Appends criteria for less than a given time.
  *
- * @since 3.next
+ * @since 3.20
  */
 public abstract class LessThanTimeOrNeverDownloadedCriteriaAppender
     implements CriteriaAppender

@@ -56,4 +56,6 @@ public interface SelectorConfigurationStore
    * Delete an existing configuration.
    */
   void delete(SelectorConfiguration configuration);
+
+  SelectorConfiguration newSelectorConfiguration();
 }

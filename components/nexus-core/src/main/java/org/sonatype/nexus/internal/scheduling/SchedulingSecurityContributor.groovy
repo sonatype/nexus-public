@@ -15,9 +15,9 @@ package org.sonatype.nexus.internal.scheduling
 import javax.inject.Named
 import javax.inject.Singleton
 
-import org.sonatype.nexus.security.config.CPrivilege
 import org.sonatype.nexus.security.config.MemorySecurityConfiguration
 import org.sonatype.nexus.security.config.SecurityContributor
+import org.sonatype.nexus.security.config.memory.MemoryCPrivilege
 
 /**
  * Scheduling security configuration.
@@ -33,7 +33,7 @@ class SchedulingSecurityContributor
   MemorySecurityConfiguration getContribution() {
     return new MemorySecurityConfiguration(
         privileges: [
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-tasks-all',
                 description: 'All permissions for Scheduled Tasks',
                 type: 'application',
@@ -42,7 +42,7 @@ class SchedulingSecurityContributor
                     actions: '*'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-tasks-create',
                 description: 'Create permission for Scheduled Tasks',
                 type: 'application',
@@ -51,7 +51,7 @@ class SchedulingSecurityContributor
                     actions: 'create,read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-tasks-read',
                 description: 'Read permission for Scheduled Tasks',
                 type: 'application',
@@ -60,7 +60,7 @@ class SchedulingSecurityContributor
                     actions: 'read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-tasks-update',
                 description: 'Update permission for Scheduled Tasks',
                 type: 'application',
@@ -69,7 +69,7 @@ class SchedulingSecurityContributor
                     actions: 'update,read'
                 ]
             ),
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-tasks-delete',
                 description: 'Delete permission for Scheduled Tasks',
                 type: 'application',
@@ -79,7 +79,7 @@ class SchedulingSecurityContributor
                 ]
             ),
 
-            new CPrivilege(
+            new MemoryCPrivilege(
                 id: 'nx-tasks-run',
                 description: 'Run permission for Scheduled Tasks',
                 type: 'application',

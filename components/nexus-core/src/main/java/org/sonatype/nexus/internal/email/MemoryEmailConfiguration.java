@@ -18,7 +18,7 @@ import org.sonatype.nexus.email.EmailConfiguration;
 /**
  * Email configuration that only exists in memory
  *
- * @since 3.next
+ * @since 3.20
  */
 public class MemoryEmailConfiguration
     implements Cloneable, EmailConfiguration
