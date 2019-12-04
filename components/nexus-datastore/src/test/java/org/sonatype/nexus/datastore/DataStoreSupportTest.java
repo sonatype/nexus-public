@@ -13,6 +13,7 @@
 package org.sonatype.nexus.datastore;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -76,6 +77,11 @@ public class DataStoreSupportTest
 
     @Override
     protected void doStart(final String storeName, final Map<String, String> attributes) throws Exception {
+      // do nothing
+    }
+
+    @Override
+    public void backup(final String location) throws SQLException {
       // do nothing
     }
   }

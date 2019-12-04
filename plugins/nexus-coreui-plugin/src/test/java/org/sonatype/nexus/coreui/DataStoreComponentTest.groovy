@@ -130,4 +130,23 @@ class DataStoreComponentTest
       results[1].inUse == false
   }
 
+  def 'Reading H2 databases'() {
+    given:
+      DataStoreConfiguration usedConfig = new DataStoreConfiguration(name: 'valid', type: 'jdbc',
+        source: 'local', attributes: [jdbcUrl: 'jdbc:h2:some/datastore/url'])
+      DataStoreConfiguration unusedConfig = new DataStoreConfiguration(name: 'invalid', type: 'jdbc',
+        source: 'local', attributes: [url: 'jdbc:postgresql:some/datastore/url'])
+      DataStore usedDataStore = Mock()
+      DataStore unusedDataStore = Mock()
+
+    when: 'Browsing data stores'
+      def results = dataStoreComponent.readH2()
+
+    then: 'Used data store is in use'
+      _ * usedDataStore.configuration >> usedConfig
+      _ * unusedDataStore.configuration >> unusedConfig
+      1 * dataStoreManager.browse() >> [usedDataStore, unusedDataStore]
+      results.size == 1
+      results[0].name == 'valid'
+  }
 }

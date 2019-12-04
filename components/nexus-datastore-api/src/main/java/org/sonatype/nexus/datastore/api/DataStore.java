@@ -65,6 +65,15 @@ public interface DataStore<S extends DataSession<?>>
   void shutdown() throws Exception;
 
   /**
+   * Backup this data store to the specified location.
+   *
+   * @throws UnsupportedOperationException if the underlying DataStore does not support backing up
+   *
+   * @since 3.next
+   */
+  void backup(String location) throws Exception;
+
+  /**
    * {@link DataAccess} mapping for the given type; requires an open session.
    */
   static <D extends DataAccess> D access(Class<D> type) {

@@ -98,6 +98,22 @@ class DataStoreComponent
   @DirectMethod
   @Timed
   @ExceptionMetered
+  List<DataStoreXO> readH2() {
+    repositoryPermissionChecker.ensureUserHasAnyPermissionOrAdminAccess(
+        singletonList(new ApplicationPermission('datastores', READ)),
+        READ,
+        repositoryManager.browse()
+    )
+
+    def dataStores = dataStoreManager.browse().findAll { 
+      it.configuration.attributes.getOrDefault("jdbcUrl", "").startsWith("jdbc:h2:")  }
+
+    dataStores.collect { asDataStoreXO(it) }
+  }
+
+  @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresPermissions('nexus:datastores:read')
   List<DataStoreTypeXO> readTypes() {
     dataStoreDescriptors.collect { key, descriptor ->
