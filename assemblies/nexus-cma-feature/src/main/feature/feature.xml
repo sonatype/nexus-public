@@ -14,14 +14,20 @@
 
 -->
 <features xmlns="http://karaf.apache.org/xmlns/features/v1.2.1" name="${project.artifactId}">
-  <feature name="${project.artifactId}">
-    <feature>nexus-audit-plugin</feature>
-    <feature>nexus-ssl-plugin</feature>
-    <feature>nexus-coreui-plugin</feature>
-    <feature>nexus-repository-httpbridge</feature>
-    <feature>nexus-script-plugin</feature>
-    <feature>nexus-task-log-cleanup</feature>
-    <feature>nexus-blobstore-s3</feature>
-    <feature>nexus-onboarding-plugin</feature>
+  <feature name="${project.artifactId}" install="featureFlag:enabledByDefault:nexus.orient.store.content">
+    <feature>nexus-blobstore-tasks</feature>
+    <feature>nexus-repository-apt</feature>
+    <feature>nexus-repository-cocoapods</feature>
+    <feature>nexus-repository-conda</feature>
+    <feature>nexus-repository-golang</feature>
+    <feature>nexus-repository-maven</feature>
+    <feature>nexus-repository-npm</feature>
+    <feature>nexus-repository-pypi</feature>
+    <feature>nexus-repository-raw</feature>
+    <feature>nexus-restore-apt</feature>
+    <feature>nexus-restore-maven</feature>
+    <feature>nexus-restore-npm</feature>
+    <feature>nexus-restore-pypi</feature>
+    <feature>nexus-restore-raw</feature>
   </feature>
 </features>

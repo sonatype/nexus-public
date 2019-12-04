@@ -575,6 +575,14 @@
 
       <dependency>
         <groupId>org.sonatype.nexus.assemblies</groupId>
+        <artifactId>nexus-cma-feature</artifactId>
+        <version>3.21.0-SNAPSHOT</version>
+        <classifier>features</classifier>
+        <type>xml</type>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.assemblies</groupId>
         <artifactId>nexus-base-template</artifactId>
         <version>3.21.0-SNAPSHOT</version>
         <type>zip</type>
