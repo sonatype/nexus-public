@@ -14,7 +14,10 @@ package org.sonatype.nexus.repository.rest.api;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
 import java.util.function.Function;
+
+import javax.annotation.Nullable;
 
 import org.sonatype.goodies.common.Time;
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -41,17 +44,19 @@ import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 
+import com.google.common.collect.Maps;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class SimpleApiRepositoryAdapterTest
@@ -64,14 +69,10 @@ public class SimpleApiRepositoryAdapterTest
   @Mock
   private RoutingRuleStore routingRuleStore;
 
-  private Configuration configuration = new Configuration();
-
   @Before
   public void setup() {
     underTest = new SimpleApiRepositoryAdapter(routingRuleStore);
     BaseUrlHolder.set("http://nexus-url");
-
-    configuration.setOnline(true);
   }
 
   @Test
@@ -168,7 +169,7 @@ public class SimpleApiRepositoryAdapterTest
   @Test
   public void testAdapt_proxyRepositoryRoutingRule() throws Exception {
     Repository repository = createRepository(new ProxyType());
-    EntityId entityId = Mockito.mock(EntityId.class);
+    EntityId entityId = mock(EntityId.class);
     repository.getConfiguration().setRoutingRuleId(entityId);
 
     SimpleApiProxyRepository proxyRepository = (SimpleApiProxyRepository) underTest.adapt(repository);
@@ -276,7 +277,7 @@ public class SimpleApiRepositoryAdapterTest
   }
 
   private static Repository createRepository(final Type type) throws Exception {
-    Repository repository = new RepositoryImpl(Mockito.mock(EventManager.class), type, new Format("test-format")
+    Repository repository = new RepositoryImpl(mock(EventManager.class), type, new Format("test-format")
     {
     });
     repository.init(config("my-repo"));
@@ -284,7 +285,7 @@ public class SimpleApiRepositoryAdapterTest
   }
 
   private static Configuration config(final String repositoryName) {
-    Configuration configuration = new Configuration();
+    Configuration configuration = new SimpleConfiguration();
     configuration.setOnline(true);
     configuration.setRepositoryName(repositoryName);
     return configuration;
@@ -332,4 +333,90 @@ public class SimpleApiRepositoryAdapterTest
     assertThat(cleanupFn.apply(restRepository).getPolicyNames(), contains("policy-a"));
   }
 
+  private static class SimpleConfiguration
+      implements Configuration
+  {
+    private String repositoryName;
+
+    private String recipeName;
+
+    private boolean online;
+
+    private EntityId routingRuleId;
+
+    private Map<String, Map<String, Object>> attributes;
+
+    @Override
+    public String getRepositoryName() {
+      return repositoryName;
+    }
+
+    @Override
+    public void setRepositoryName(final String repositoryName) {
+      this.repositoryName = repositoryName;
+    }
+
+    @Override
+    public String getRecipeName() {
+      return recipeName;
+    }
+
+    @Override
+    public void setRecipeName(final String recipeName) {
+      this.recipeName = recipeName;
+    }
+
+    @Override
+    public boolean isOnline() {
+      return online;
+    }
+
+    @Override
+    public void setOnline(final boolean online) {
+      this.online = online;
+    }
+
+    @Override
+    public EntityId getRoutingRuleId() {
+      return routingRuleId;
+    }
+
+    @Override
+    public void setRoutingRuleId(final EntityId routingRuleId) {
+      this.routingRuleId = routingRuleId;
+    }
+
+    @Nullable
+    @Override
+    public Map<String, Map<String, Object>> getAttributes() {
+      return attributes;
+    }
+
+    @Override
+    public void setAttributes(@Nullable final Map<String, Map<String, Object>> attributes) {
+      this.attributes = attributes;
+    }
+
+    @Override
+    public NestedAttributesMap attributes(final String key) {
+      checkNotNull(key);
+
+      if (attributes == null) {
+        attributes = Maps.newHashMap();
+      }
+
+      Map<String, Object> map = attributes.get(key);
+      if (map == null) {
+        map = Maps.newHashMap();
+        attributes.put(key, map);
+      }
+
+      return new NestedAttributesMap(key, map);
+    }
+
+    @Override
+    public Configuration copy() {
+      return this;
+    }
+  }
 }

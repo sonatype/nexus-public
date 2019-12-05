@@ -18,6 +18,7 @@ import javax.validation.ConstraintViolation;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheController;
@@ -31,6 +32,7 @@ import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Before;
 import org.junit.Test;
@@ -114,8 +116,11 @@ public class GroupFacetImplTest
     Repository group1 = groupRepository("group1", hosted1);
     Config config = new Config();
     config.memberNames = ImmutableSet.of(hosted1.getName(), hosted2.getName(), group1.getName());
-    Configuration configuration = new Configuration();
-    configuration.attributes(CONFIG_KEY).set("memberNames", config.memberNames);
+    Configuration configuration = mock(Configuration.class);
+    when(configuration.attributes(CONFIG_KEY)).thenReturn(new NestedAttributesMap(
+        "dummy",
+        ImmutableMap.of("memberNames", config.memberNames)
+    ));
     when(configurationFacet.readSection(configuration, CONFIG_KEY, Config.class)).thenReturn(config);
     underTest.doConfigure(configuration);
     assertThat(underTest.leafMembers(), contains(hosted1, hosted2));

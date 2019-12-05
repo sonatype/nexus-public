@@ -12,12 +12,14 @@
  */
 package org.sonatype.nexus.repository.maven.internal.recipes
 
+import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
 import org.sonatype.nexus.repository.config.Configuration
 import org.sonatype.nexus.repository.manager.DefaultRepositoriesContributor
+import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.maven.LayoutPolicy
 import org.sonatype.nexus.repository.maven.VersionPolicy
 import org.sonatype.nexus.repository.storage.WritePolicy
@@ -40,10 +42,13 @@ class MavenDefaultRepositoriesContributor
 
   static final String DEFAULT_PUBLIC_REPO = 'maven-public'
 
+  @Inject
+  RepositoryManager repositoryManager
+
   @Override
   List<Configuration> getRepositoryConfigurations() {
     return [
-        new Configuration(repositoryName: DEFAULT_RELEASE_REPO, recipeName: Maven2HostedRecipe.NAME, online: true, attributes:
+        newConfiguration(repositoryName: DEFAULT_RELEASE_REPO, recipeName: Maven2HostedRecipe.NAME, online: true, attributes:
             [
                 maven  : [
                     versionPolicy: VersionPolicy.RELEASE.toString(),
@@ -56,7 +61,7 @@ class MavenDefaultRepositoriesContributor
                 ]
             ]
         ),
-        new Configuration(repositoryName: DEFAULT_SNAPSHOT_REPO, recipeName: Maven2HostedRecipe.NAME, online: true, attributes:
+        newConfiguration(repositoryName: DEFAULT_SNAPSHOT_REPO, recipeName: Maven2HostedRecipe.NAME, online: true, attributes:
             [
                 maven  : [
                     versionPolicy: VersionPolicy.SNAPSHOT.toString(),
@@ -69,7 +74,7 @@ class MavenDefaultRepositoriesContributor
                 ]
             ]
         ),
-        new Configuration(repositoryName: DEFAULT_CENTRAL_REPO, recipeName: Maven2ProxyRecipe.NAME, online: true,
+        newConfiguration(repositoryName: DEFAULT_CENTRAL_REPO, recipeName: Maven2ProxyRecipe.NAME, online: true,
             attributes: [
                 httpclient   : [
                     connection: [
@@ -96,7 +101,7 @@ class MavenDefaultRepositoriesContributor
                 ]
             ]
         ),
-        new Configuration(repositoryName: DEFAULT_PUBLIC_REPO, recipeName: Maven2GroupRecipe.NAME, online: true, attributes:
+        newConfiguration(repositoryName: DEFAULT_PUBLIC_REPO, recipeName: Maven2GroupRecipe.NAME, online: true, attributes:
             [
                 maven  : [
                     versionPolicy: VersionPolicy.MIXED.toString()
@@ -110,5 +115,16 @@ class MavenDefaultRepositoriesContributor
             ]
         )
     ]
+  }
+
+  private Configuration newConfiguration(final Map map) {
+    Configuration config = repositoryManager.newConfiguration()
+    config.with {
+      repositoryName = map.repositoryName
+      recipeName = map.recipeName
+      online = map.online
+      attributes = map.attributes as Map
+    }
+    return config
   }
 }

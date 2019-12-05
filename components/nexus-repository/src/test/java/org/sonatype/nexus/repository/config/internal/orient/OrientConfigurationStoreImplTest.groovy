@@ -10,12 +10,11 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.config.internal
+package org.sonatype.nexus.repository.config.internal.orient
 
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.orient.HexRecordIdObfuscator
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule
-import org.sonatype.nexus.repository.config.Configuration
 import org.sonatype.nexus.repository.routing.OrientRoutingRule
 import org.sonatype.nexus.repository.routing.RoutingMode
 import org.sonatype.nexus.repository.routing.RoutingRule
@@ -35,9 +34,9 @@ import org.mockito.Mock
 import static org.junit.Assert.fail
 
 /**
- * Tests for {@link ConfigurationStoreImpl}.
+ * Tests for {@link OrientConfigurationStoreImpl}.
  */
-class ConfigurationStoreImplTest
+class OrientConfigurationStoreImplTest
     extends TestSupport
 {
   @Rule
@@ -46,7 +45,7 @@ class ConfigurationStoreImplTest
   @Mock
   private PasswordHelper passwordHelper
 
-  private ConfigurationStoreImpl underTest
+  private OrientConfigurationStoreImpl underTest
 
   private RoutingRuleStore routingRuleStore
 
@@ -54,11 +53,11 @@ class ConfigurationStoreImplTest
 
   @Before
   void setUp() {
-    def entityAdapter = new ConfigurationEntityAdapter(passwordHelper, routingRuleEntityAdapter)
+    def entityAdapter = new OrientConfigurationEntityAdapter(passwordHelper, routingRuleEntityAdapter)
     entityAdapter.enableObfuscation(new HexRecordIdObfuscator())
     routingRuleEntityAdapter.enableObfuscation(new HexRecordIdObfuscator())
 
-    underTest = new ConfigurationStoreImpl(
+    underTest = new OrientConfigurationStoreImpl(
         database.instanceProvider,
         entityAdapter
     )
@@ -76,7 +75,7 @@ class ConfigurationStoreImplTest
 
   @Test
   void 'create configuration'() {
-    def entity = new Configuration(
+    def entity = new OrientConfiguration(
         repositoryName: 'foo',
         recipeName: 'bar',
         attributes: [
@@ -97,7 +96,7 @@ class ConfigurationStoreImplTest
   @Test
   void 'create configuration with unique repositoryName'() {
     def create = { name ->
-      underTest.create(new Configuration(
+      underTest.create(new OrientConfiguration(
           repositoryName: name,
           recipeName: 'test'
       ))
@@ -119,7 +118,7 @@ class ConfigurationStoreImplTest
   @Test
   void 'create configuration with mandatory fields'() {
     try {
-      underTest.create(new Configuration(
+      underTest.create(new OrientConfiguration(
           // omit repositoryName
           recipeName: 'test'
       ))
@@ -131,7 +130,7 @@ class ConfigurationStoreImplTest
     }
 
     try {
-      underTest.create(new Configuration(
+      underTest.create(new OrientConfiguration(
           repositoryName: 'test'
           // omit recipeName
       ))
@@ -146,7 +145,7 @@ class ConfigurationStoreImplTest
   @Test
   void 'list configurations'() {
     def create = { name ->
-      underTest.create(new Configuration(
+      underTest.create(new OrientConfiguration(
           repositoryName: name,
           recipeName: 'test'
       ))
@@ -172,7 +171,7 @@ class ConfigurationStoreImplTest
         matchers: ['.*']
     ))
 
-    underTest.create(new Configuration(
+    underTest.create(new OrientConfiguration(
         repositoryName: 'test',
         recipeName: 'test',
         routingRuleId: routingRule.id())

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.config.internal;
 
+import org.sonatype.nexus.common.event.WithLocality;
 import org.sonatype.nexus.repository.config.Configuration;
 
 /**
@@ -20,6 +21,7 @@ import org.sonatype.nexus.repository.config.Configuration;
  * @since 3.1
  */
 public interface ConfigurationEvent
+    extends WithLocality
 {
   boolean isLocal();
 

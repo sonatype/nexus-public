@@ -167,7 +167,7 @@ public class CleanupServiceImplTest
 
   @Test
   public void ignoreRepositoryWhenAttributesNull() throws Exception {
-    when(repository1.getConfiguration()).thenReturn(new Configuration());
+    when(repository1.getConfiguration()).thenReturn(mock(Configuration.class));
 
     underTest.cleanup(cancelledCheck);
 
@@ -232,12 +232,12 @@ public class CleanupServiceImplTest
   }
 
   private void setupRepository(final Repository repository, final String... policyName) {
-    Configuration repositoryConfig = new Configuration();
+    Configuration repositoryConfig = mock(Configuration.class);
     when(repository.getConfiguration()).thenReturn(repositoryConfig);
 
     ImmutableMap<String, Map<String, Object>> attributes = ImmutableMap
         .of("cleanup", ImmutableMap.of("policyName", newLinkedHashSet(asList(policyName))));
-    repositoryConfig.setAttributes(attributes);
+    when(repositoryConfig.getAttributes()).thenReturn(attributes);
 
     when(repository.getType()).thenReturn(type);
 

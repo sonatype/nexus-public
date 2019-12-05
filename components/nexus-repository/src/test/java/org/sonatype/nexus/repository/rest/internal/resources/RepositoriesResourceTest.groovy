@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.rest.internal.resources
 
 import org.sonatype.goodies.testsupport.TestSupport
+import org.sonatype.nexus.common.collect.NestedAttributesMap
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
@@ -91,9 +92,12 @@ class RepositoriesResourceTest
     when(repository.getFormat()).thenReturn(format)
     when(repository.getType()).thenReturn(type)
     when(repository.getUrl()).thenReturn(url)
-    def configuration = new Configuration()
+    def configuration = mock(Configuration)
     if(type instanceof ProxyType) {
-      configuration.setAttributes([proxy: [remoteUrl: remoteUrl]])
+      when(configuration.attributes('proxy')).thenReturn(new NestedAttributesMap(
+          'proxy',
+          [remoteUrl: remoteUrl]
+      ))
     }
     when(repository.getConfiguration()).thenReturn(configuration)
     return repository

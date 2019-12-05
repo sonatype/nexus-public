@@ -26,12 +26,12 @@ import static com.google.common.base.Preconditions.checkNotNull
 
 @Slf4j
 @CompileStatic
-public class RepositoryRule
+class RepositoryRule
     extends ExternalResource
     implements MavenRepoRecipes, RawRepoRecipes, NpmRepoRecipes, PyPiRepoRecipes, AptRepoRecipes, GolangRepoRecipes,
         CocoapodsRepoRecipes, CondaRepoRecipes
 {
-  final Provider<RepositoryManager> repositoryManagerProvider
+  Provider<RepositoryManager> repositoryManagerProvider
 
   final List<Repository> repositories = []
 

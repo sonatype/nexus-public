@@ -59,4 +59,11 @@ public interface RepositoryManager
   Stream<Repository> browseForCleanupPolicy(final String cleanupPolicyName);
 
   Collection<Recipe> getAllSupportedRecipes();
+
+  /**
+   * Create a new {@link Configuration} instance.
+   *
+   * @since 3.next
+   */
+  Configuration newConfiguration();
 }

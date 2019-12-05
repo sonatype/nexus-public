@@ -492,6 +492,11 @@ public class RepositoryManagerImpl
     return recipes.values();
   }
 
+  @Override
+  public Configuration newConfiguration() {
+    return store.newConfiguration();
+  }
+
   @Subscribe
   public void on(final ConfigurationCreatedEvent event) {
     handleReplication(event, e -> create(e.getConfiguration()));

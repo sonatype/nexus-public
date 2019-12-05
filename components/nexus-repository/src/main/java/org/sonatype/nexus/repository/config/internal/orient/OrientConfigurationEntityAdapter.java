@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.config.internal;
+package org.sonatype.nexus.repository.config.internal.orient;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -23,7 +23,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.entity.EntityEvent;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityMetadata;
@@ -32,7 +31,6 @@ import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.AttachedEntityId;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
-import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.routing.internal.OrientRoutingRuleEntityAdapter;
 import org.sonatype.nexus.security.PasswordHelper;
 
@@ -45,15 +43,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * {@link Configuration} entity-adapter.
+ * {@link OrientConfiguration} entity-adapter.
  *
  * @since 3.0
  */
-@FeatureFlag(name = "nexus.orient.store.config")
 @Named
 @Singleton
-public class ConfigurationEntityAdapter
-    extends IterableEntityAdapter<Configuration>
+public class OrientConfigurationEntityAdapter
+    extends IterableEntityAdapter<OrientConfiguration>
 {
   public static final String DB_NAME = "repository";
 
@@ -81,8 +78,8 @@ public class ConfigurationEntityAdapter
   private final OrientRoutingRuleEntityAdapter orientRoutingRuleEntityAdapter;
 
   @Inject
-  public ConfigurationEntityAdapter(final PasswordHelper passwordHelper,
-                                    final OrientRoutingRuleEntityAdapter orientRoutingRuleEntityAdapter)
+  public OrientConfigurationEntityAdapter(final PasswordHelper passwordHelper,
+                                          final OrientRoutingRuleEntityAdapter orientRoutingRuleEntityAdapter)
   {
     super(DB_CLASS);
     this.passwordHelper = checkNotNull(passwordHelper);
@@ -107,12 +104,12 @@ public class ConfigurationEntityAdapter
   }
 
   @Override
-  protected Configuration newEntity() {
-    return new Configuration();
+  protected OrientConfiguration newEntity() {
+    return new OrientConfiguration();
   }
 
   @Override
-  protected void readFields(final ODocument document, final Configuration entity) {
+  protected void readFields(final ODocument document, final OrientConfiguration entity) {
     String recipeName = document.field(P_RECIPE_NAME, OType.STRING);
     String repositoryName = document.field(P_REPOSITORY_NAME, OType.STRING);
     Boolean online = document.field(P_ONLINE, OType.BOOLEAN);
@@ -137,7 +134,7 @@ public class ConfigurationEntityAdapter
   }
 
   @Override
-  protected void writeFields(final ODocument document, final Configuration entity) {
+  protected void writeFields(final ODocument document, final OrientConfiguration entity) {
     Map<String, Map<String, Object>> attributes = entity.getAttributes();
 
     document.field(P_RECIPE_NAME, entity.getRecipeName());
@@ -203,11 +200,11 @@ public class ConfigurationEntityAdapter
     log.trace("newEvent: eventKind: {}, repositoryName: {}, metadata: {}", eventKind, repositoryName, metadata);
     switch (eventKind) {
       case CREATE:
-        return new ConfigurationCreatedEvent(metadata, repositoryName);
+        return new OrientConfigurationCreatedEvent(metadata, repositoryName);
       case UPDATE:
-        return new ConfigurationUpdatedEvent(metadata, repositoryName);
+        return new OrientConfigurationUpdatedEvent(metadata, repositoryName);
       case DELETE:
-        return new ConfigurationDeletedEvent(metadata, repositoryName);
+        return new OrientConfigurationDeletedEvent(metadata, repositoryName);
       default:
         return null;
     }

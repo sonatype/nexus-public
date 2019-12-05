@@ -10,17 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.config.internal;
+@FeatureFlag(name = "nexus.orient.store.config")
+package org.sonatype.nexus.repository.config.internal.orient;
 
-import org.sonatype.nexus.repository.config.Configuration;
-
-/**
- * Repository {@link Configuration} created event.
- *
- * @since 3.1
- */
-public interface ConfigurationCreatedEvent
-    extends ConfigurationEvent
-{
-
-}
+import org.sonatype.nexus.common.app.FeatureFlag;
