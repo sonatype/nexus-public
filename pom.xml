@@ -749,8 +749,9 @@
         Generate sisu index metadata.
         -->
         <plugin>
-          <groupId>org.sonatype.plugins</groupId>
+          <groupId>org.eclipse.sisu</groupId>
           <artifactId>sisu-maven-plugin</artifactId>
+          <version>0.3.4</version>
           <executions>
             <execution>
               <goals>

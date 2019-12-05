@@ -22,6 +22,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
+import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
@@ -69,6 +70,7 @@ import static org.sonatype.nexus.repository.storage.BrowseNodeEntityAdapter.P_PA
  */
 @Singleton
 @ManagedLifecycle(phase = SCHEMAS)
+@Priority(Integer.MIN_VALUE)
 @Named
 public class BrowseNodeStoreImpl
     extends StateGuardLifecycleSupport
