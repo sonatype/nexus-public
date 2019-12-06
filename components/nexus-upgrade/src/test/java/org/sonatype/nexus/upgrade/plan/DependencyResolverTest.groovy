@@ -17,6 +17,7 @@ import java.util.regex.Pattern
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.upgrade.plan.DependencyResolver.CyclicDependencyException
 import org.sonatype.nexus.upgrade.plan.DependencyResolver.UnresolvedDependencyException
+import org.sonatype.nexus.upgrade.plan.DependencySource.DependsOnAware;
 
 import org.junit.Before
 import org.junit.Test
@@ -28,7 +29,7 @@ class DependencyResolverTest
     extends TestSupport
 {
   static class Thing
-      implements DependencySource<Thing>, DependencySource.DependsOnAware<Thing>
+      implements DependencySource<Thing>, DependsOnAware<Thing>
   {
     String id
 

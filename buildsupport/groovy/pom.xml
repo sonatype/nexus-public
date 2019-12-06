@@ -28,7 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <groovy.version>2.4.15</groovy.version>
+    <groovy.version>2.4.17</groovy.version>
     <ant.version>1.9.12</ant.version>
     <spock.version>1.1-groovy-2.4</spock.version>
   </properties>
