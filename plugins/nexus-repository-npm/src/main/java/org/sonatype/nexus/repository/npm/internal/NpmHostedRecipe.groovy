@@ -63,7 +63,10 @@ class NpmHostedRecipe
   Provider<NpmSearchFacetHosted> npmSearchFacet
 
   @Inject
-  NpmWhoamiHandler npmWhoamiHandler;
+  NpmWhoamiHandler npmWhoamiHandler
+
+  @Inject
+  NpmPingHandler pingHandler
 
   @Inject
   NpmHostedRecipe(@Named(HostedType.NAME) final Type type,
@@ -123,7 +126,13 @@ class NpmHostedRecipe
     builder.route(whoamiMatcher()
         .handler(timingHandler)
         .handler(npmWhoamiHandler)
-        .create());
+        .create())
+
+    // GET /-/ping
+    builder.route(pingMatcher()
+        .handler(timingHandler)
+        .handler(pingHandler)
+        .create())
 
     // GET /packageName (npm install)
     builder.route(packageMatcher(GET, HEAD)

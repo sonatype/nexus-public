@@ -82,7 +82,10 @@ class NpmProxyRecipe
   NpmProxyHandler proxyHandler
 
   @Inject
-  NpmWhoamiHandler npmWhoamiHandler;
+  NpmWhoamiHandler npmWhoamiHandler
+
+  @Inject
+  NpmPingHandler pingHandler
 
   @Inject
   NpmProxyRecipe(@Named(ProxyType.NAME) final Type type,
@@ -150,7 +153,13 @@ class NpmProxyRecipe
     builder.route(whoamiMatcher()
         .handler(timingHandler)
         .handler(npmWhoamiHandler)
-        .create());
+        .create())
+
+    // GET /-/ping
+    builder.route(pingMatcher()
+        .handler(timingHandler)
+        .handler(pingHandler)
+        .create())
 
     // GET /packageName (npm install)
     builder.route(packageMatcher(GET, HEAD)

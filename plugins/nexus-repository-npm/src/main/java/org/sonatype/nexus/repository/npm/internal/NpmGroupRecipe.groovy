@@ -68,7 +68,10 @@ class NpmGroupRecipe
   ContentHeadersHandler contentHeadersHandler
 
   @Inject
-  NpmWhoamiHandler npmWhoamiHandler;
+  NpmWhoamiHandler npmWhoamiHandler
+
+  @Inject
+  NpmPingHandler pingHandler
 
   @Inject
   NpmGroupRecipe(@Named(GroupType.NAME) final Type type,
@@ -114,7 +117,13 @@ class NpmGroupRecipe
     builder.route(whoamiMatcher()
         .handler(timingHandler)
         .handler(npmWhoamiHandler)
-        .create());
+        .create())
+
+    // GET /-/ping
+    builder.route(pingMatcher()
+        .handler(timingHandler)
+        .handler(pingHandler)
+        .create())
 
     // GET /packageName (npm install)
     builder.route(packageMatcher(GET, HEAD)
