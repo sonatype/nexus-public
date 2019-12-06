@@ -22,6 +22,7 @@ import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.WithLocality;
 import org.sonatype.nexus.repository.config.internal.ConfigurationDeletedEvent;
 import org.sonatype.nexus.repository.storage.AssetCreatedEvent;
+import org.sonatype.nexus.repository.storage.AssetUpdatedEvent;
 import org.sonatype.nexus.repository.storage.AssetDeletedEvent;
 import org.sonatype.nexus.repository.storage.ComponentDeletedEvent;
 
@@ -53,6 +54,15 @@ public class BrowseNodeEventHandler
   @AllowConcurrentEvents
   public void on(final AssetCreatedEvent event) {
     handle(event, e -> browseNodeManager.createFromAsset(e.getRepositoryName(), e.getAsset()));
+  }
+
+  @Subscribe
+  @AllowConcurrentEvents
+  public void on(final AssetUpdatedEvent event) {
+    handle(event, e -> {
+      browseNodeManager.deleteAssetNode(e.getAssetId());
+      browseNodeManager.createFromAsset(e.getRepositoryName(), e.getAsset());
+    });
   }
 
   @Subscribe
