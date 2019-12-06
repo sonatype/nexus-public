@@ -15,9 +15,9 @@
 /**
  * Anonymous Security Settings controller.
  *
- * @since 3.0
+ * @since 3.next
  */
-Ext.define('NX.coreui.controller.AnonymousSettings', {
+Ext.define('NX.coreui.controller.react.AnonymousSettingsController', {
   extend: 'NX.app.Controller',
   requires: [
     'NX.Permissions',
@@ -25,23 +25,23 @@ Ext.define('NX.coreui.controller.AnonymousSettings', {
   ],
 
   views: [
-    'security.AnonymousSettings'
-  ],
-
-  stores: [
-    'RealmType'
+    'react.MainContainer'
   ],
 
   refs: [
     {
-      ref: 'panel',
-      selector: 'nx-coreui-security-anonymous-settings'
-    },
-    {
-      ref: 'form',
-      selector: 'nx-coreui-security-anonymous-settings nx-settingsform'
+      ref: 'mainContainer',
+      selector: 'nx-coreui-react-main-container'
     }
   ],
+
+  listen: {
+    controller: {
+      '#Refresh': {
+        refresh: 'refresh'
+      }
+    }
+  },
 
   /**
    * @override
@@ -52,7 +52,10 @@ Ext.define('NX.coreui.controller.AnonymousSettings', {
       path: '/Security/Anonymous',
       text: NX.I18n.get('AnonymousSettings_Text'),
       description: NX.I18n.get('AnonymousSettings_Description'),
-      view: {xtype: 'nx-coreui-security-anonymous-settings'},
+      view: {
+        xtype: 'nx-coreui-react-main-container',
+        reactView: 'AnonymousSettings'
+      },
       iconConfig: {
         file: 'user_silhouette.png',
         variants: ['x16', 'x32']
@@ -62,38 +65,11 @@ Ext.define('NX.coreui.controller.AnonymousSettings', {
       }
     }, this);
 
-    this.listen({
-      controller: {
-        '#Refresh': {
-          refresh: this.loadRealmTypes
-        }
-      },
-      component: {
-        'nx-coreui-security-anonymous-settings': {
-          beforerender: this.loadRealmTypes
-        }
-      }
-    });
+    this.callParent();
   },
 
-  /**
-   * @private
-   */
-  loadRealmTypes: function() {
-    var panel = this.getPanel();
-
-    if (panel) {
-      this.getRealmTypeStore().load({
-        scope: this,
-        callback: function() {
-          // The form depends on this store, so load it after the store has loaded
-          var form = this.getForm();
-          if (form) {
-            form.load();
-          }
-        }
-      });
-    }
+  refresh: function() {
+    this.getMainContainer().refresh();
   }
 
 });
