@@ -37,6 +37,9 @@ import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
+import org.apache.commons.lang.exception.ExceptionUtils;
+import org.elasticsearch.search.SearchContextMissingException;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.nonNull;
 
@@ -117,10 +120,21 @@ public class CleanupServiceImpl
 
     if (!policy.getCriteria().isEmpty()) {
       do {
-        Iterable<EntityId> componentsToDelete = browseService.browse(policy, repository);
-        DeletionProgress currentProgress = cleanupMethod.run(repository, componentsToDelete, cancelledCheck);
-
-        deletionProgress.update(currentProgress);
+        try {
+          Iterable<EntityId> componentsToDelete = browseService.browse(policy, repository);
+          DeletionProgress currentProgress = cleanupMethod.run(repository, componentsToDelete, cancelledCheck);
+          deletionProgress.update(currentProgress);
+        }
+        catch (Exception e) {
+          deletionProgress.setFailed(true);
+          if (ExceptionUtils.getRootCause(e) instanceof SearchContextMissingException) {
+            log.warn("Search scroll timed out, continuing with new scrollId.", log.isDebugEnabled() ? e : null);
+            deletionProgress.setAttempts(0);
+          }
+          else {
+            log.error("Failed to delete components.", e);
+          }
+        }
       } while (!deletionProgress.isFinished());
 
       if (deletionProgress.isFailed()) {

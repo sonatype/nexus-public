@@ -33,6 +33,7 @@ import org.sonatype.nexus.repository.types.GroupType;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import org.elasticsearch.search.SearchContextMissingException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -229,6 +230,17 @@ public class CleanupServiceImplTest
     underTest.cleanup(cancelledCheck);
 
     verify(cleanupMethod, times(3)).run(any(), any(), any());
+  }
+
+  @Test
+  public void cleanupRetriedOnScrollTimeout() {
+    when(cleanupMethod.run(any(), any(), any()))
+        .thenThrow(new RuntimeException(new SearchContextMissingException(10L))).thenReturn(deletionProgress);
+
+    underTest.cleanup(cancelledCheck);
+
+    verify(cleanupMethod, times(2)).run(repository1, ImmutableList.of(component1, component2), cancelledCheck);
+    verify(cleanupMethod).run(repository2, ImmutableList.of(component3), cancelledCheck);
   }
 
   private void setupRepository(final Repository repository, final String... policyName) {
