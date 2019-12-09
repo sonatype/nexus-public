@@ -57,7 +57,7 @@ public class HttpClientAuditor
       data.setType(CHANGED_TYPE);
       data.setContext(SYSTEM_CONTEXT);
 
-      Map<String, String> attributes = data.getAttributes();
+      Map<String, Object> attributes = data.getAttributes();
 
       ConnectionConfiguration connection = configuration.getConnection();
       if (connection != null) {
@@ -84,9 +84,10 @@ public class HttpClientAuditor
     return prefix + "." + suffix;
   }
 
-  private static void proxy(final Map<String,String> attributes,
-                            final String prefix,
-                            final ProxyServerConfiguration server)
+  private static void proxy(
+      final Map<String, Object> attributes,
+      final String prefix,
+      final ProxyServerConfiguration server)
   {
     if (server == null) {
       return;

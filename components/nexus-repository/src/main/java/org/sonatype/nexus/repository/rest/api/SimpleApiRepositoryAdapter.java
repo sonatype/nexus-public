@@ -126,8 +126,13 @@ public class SimpleApiRepositoryAdapter
   }
 
   protected CleanupPolicyAttributes getCleanupPolicyAttributes(final Repository repository) {
+    Configuration configuration = repository.getConfiguration();
+    if (!configuration.getAttributes().containsKey("cleanup")) {
+      return null;
+    }
+
     Collection<String> policyNames =
-        repository.getConfiguration().attributes("cleanup").get("policyName", new TypeToken<Collection<String>>()
+        configuration.attributes("cleanup").get("policyName", new TypeToken<Collection<String>>()
         {
         }, Collections.emptyList());
 

@@ -42,7 +42,7 @@ public class AuditDTO
 
   private String context;
 
-  private Map<String, String> attributes;
+  private Map<String, Object> attributes;
 
   private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss,SSSZ");
 
@@ -112,11 +112,11 @@ public class AuditDTO
     this.context = context;
   }
 
-  public Map<String, String> getAttributes() {
+  public Map<String, Object> getAttributes() {
     return attributes;
   }
 
-  public void setAttributes(Map<String, String> attributes) {
+  public void setAttributes(Map<String, Object> attributes) {
     this.attributes = attributes;
   }
 

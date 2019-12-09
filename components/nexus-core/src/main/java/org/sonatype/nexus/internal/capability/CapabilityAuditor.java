@@ -67,7 +67,7 @@ public class CapabilityAuditor
       data.setType(type(event.getClass()));
       data.setContext(context.type().toString());
 
-      Map<String, String> attributes = data.getAttributes();
+      Map<String, Object> attributes = data.getAttributes();
       attributes.put("id", context.id().toString());
       attributes.put("type", context.type().toString());
       attributes.put("enabled", string(context.isEnabled()));

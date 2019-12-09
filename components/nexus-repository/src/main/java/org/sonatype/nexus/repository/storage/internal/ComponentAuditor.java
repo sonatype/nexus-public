@@ -59,7 +59,7 @@ public class ComponentAuditor
       data.setType(type(event.getClass()));
       data.setContext(component.name());
 
-      Map<String, String> attributes = data.getAttributes();
+      Map<String, Object> attributes = data.getAttributes();
       attributes.put("repository.name", event.getRepositoryName());
       attributes.put("format", component.format());
       attributes.put("name", component.name());

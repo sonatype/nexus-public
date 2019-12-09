@@ -61,7 +61,7 @@ public class BlobStoreAuditor
       data.setType(type(event.getClass()));
       data.setContext(configuration.getName());
 
-      Map<String, String> attributes = data.getAttributes();
+      Map<String, Object> attributes = data.getAttributes();
       attributes.put("name", configuration.getName());
       attributes.put("type", configuration.getType());
 

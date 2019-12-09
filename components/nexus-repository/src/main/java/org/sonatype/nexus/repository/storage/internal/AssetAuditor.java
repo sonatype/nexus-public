@@ -59,7 +59,7 @@ public class AssetAuditor
       data.setType(type(event.getClass()));
       data.setContext(asset.name());
 
-      Map<String, String> attributes = data.getAttributes();
+      Map<String, Object> attributes = data.getAttributes();
       attributes.put("repository.name", event.getRepositoryName());
       attributes.put("format", asset.format());
       attributes.put("name", asset.name());

@@ -64,7 +64,7 @@ public class LoggingAuditor
       data.setType(CHANGED_TYPE);
       data.setContext(logger);
 
-      Map<String,String> attributes = data.getAttributes();
+      Map<String, Object> attributes = data.getAttributes();
       attributes.put("logger", logger);
       attributes.put("level", string(level));
       record(data);

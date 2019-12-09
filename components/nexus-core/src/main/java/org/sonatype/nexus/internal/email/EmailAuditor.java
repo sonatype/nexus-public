@@ -50,7 +50,7 @@ public class EmailAuditor
       data.setType(CHANGED_TYPE);
       data.setContext(SYSTEM_CONTEXT);
 
-      Map<String, String> attributes = data.getAttributes();
+      Map<String, Object> attributes = data.getAttributes();
       attributes.put("enabled", string(configuration.isEnabled()));
       attributes.put("host", configuration.getHost());
       attributes.put("port", string(configuration.getPort()));

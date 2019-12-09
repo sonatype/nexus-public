@@ -40,6 +40,7 @@ import org.mockito.Mockito;
 import static com.google.common.collect.Maps.newHashMap;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.AdditionalMatchers.not;
 import static org.mockito.Matchers.eq;
@@ -79,7 +80,7 @@ public class MavenApiRepositoryAdapterTest
     assertThat(hostedRepository.getMaven().getLayoutPolicy(), is("STRICT"));
     assertThat(hostedRepository.getMaven().getVersionPolicy(), is("MIXED"));
     // Check fields are populated, actual values validated with SimpleApiRepositoryAdapterTest
-    assertThat(hostedRepository.getCleanup(), notNullValue());
+    assertThat(hostedRepository.getCleanup(), nullValue());
     assertThat(hostedRepository.getStorage(), notNullValue());
   }
 
@@ -92,7 +93,7 @@ public class MavenApiRepositoryAdapterTest
     assertThat(proxyRepository.getMaven().getLayoutPolicy(), is("STRICT"));
     assertThat(proxyRepository.getMaven().getVersionPolicy(), is("MIXED"));
     // Check fields are populated, actual values validated with SimpleApiRepositoryAdapterTest
-    assertThat(proxyRepository.getCleanup(), notNullValue());
+    assertThat(proxyRepository.getCleanup(), nullValue());
     assertThat(proxyRepository.getHttpClient(), notNullValue());
     assertThat(proxyRepository.getNegativeCache(), notNullValue());
     assertThat(proxyRepository.getProxy(), notNullValue());
