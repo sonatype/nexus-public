@@ -13,9 +13,11 @@
 package org.sonatype.nexus.testsuite.testsupport.fixtures
 
 import javax.annotation.Nonnull
+import javax.inject.Provider
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
 import org.sonatype.nexus.repository.config.Configuration
+import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.storage.WritePolicy
 
 import groovy.transform.CompileStatic
@@ -29,6 +31,8 @@ import static com.google.common.base.Preconditions.checkNotNull
 @CompileStatic
 trait ConfigurationRecipes
 {
+  abstract Provider<RepositoryManager> getRepositoryManagerProvider()
+
   /**
    * Create a hosted configuration for the given recipeName.
    */
@@ -42,7 +46,7 @@ trait ConfigurationRecipes
     checkNotNull(name)
     checkArgument(recipeName && recipeName.endsWith('-hosted'))
 
-    new Configuration(
+    newConfiguration(
         repositoryName: name,
         recipeName: recipeName,
         online: true,
@@ -95,7 +99,7 @@ trait ConfigurationRecipes
       attributes.httpclient.authentication = authentication
     }
 
-    new Configuration(
+    newConfiguration(
         repositoryName: name,
         recipeName: recipeName,
         online: true,
@@ -114,7 +118,7 @@ trait ConfigurationRecipes
     checkNotNull(name)
     checkArgument(recipeName && recipeName.endsWith('-group'))
 
-    new Configuration(
+    newConfiguration(
         repositoryName: name,
         recipeName: recipeName,
         online: true,
@@ -128,5 +132,14 @@ trait ConfigurationRecipes
             ] as Map<String, Object>
         ]
     )
+  }
+
+  Configuration newConfiguration(final Map map) {
+    Configuration config = repositoryManagerProvider.get().newConfiguration()
+    config.repositoryName = map.repositoryName
+    config.recipeName = map.recipeName
+    config.online = map.online
+    config.attributes = map.attributes as Map
+    return config
   }
 }

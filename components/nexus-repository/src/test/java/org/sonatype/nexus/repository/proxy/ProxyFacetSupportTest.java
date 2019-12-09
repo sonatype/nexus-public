@@ -20,6 +20,7 @@ import javax.annotation.Nullable;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheControllerHolder;
@@ -59,6 +60,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
@@ -312,9 +314,9 @@ public class ProxyFacetSupportTest
   @PrepareForTest(HttpClientUtils.class)
   @Test
   public void leak() throws Exception {
-    HttpClientFacet httpClientFacet = Mockito.mock(HttpClientFacet.class);
-    HttpClient httpClient = Mockito.mock(HttpClient.class);
-    ConfigurationFacet configurationFacet = Mockito.mock(ConfigurationFacet.class);
+    HttpClientFacet httpClientFacet = mock(HttpClientFacet.class);
+    HttpClient httpClient = mock(HttpClient.class);
+    ConfigurationFacet configurationFacet = mock(ConfigurationFacet.class);
     ProxyFacetSupport.Config config = new ProxyFacetSupport.Config();
     config.remoteUrl = new URI("http://example.com");
 
@@ -332,8 +334,11 @@ public class ProxyFacetSupportTest
 
     mockStatic(HttpClientUtils.class);
 
-    Configuration configuration = new Configuration();
-    configuration.setAttributes(singletonMap("proxy", singletonMap("remoteUrl", "http://example.com")));
+    Configuration configuration = mock(Configuration.class);
+    when(configuration.attributes("proxy")).thenReturn(new NestedAttributesMap(
+        "proxy",
+        singletonMap("remoteUrl", "http://example.com")
+    ));
     underTest.doConfigure(configuration);
     underTest.doStart();
 

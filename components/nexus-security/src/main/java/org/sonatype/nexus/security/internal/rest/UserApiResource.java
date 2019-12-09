@@ -42,6 +42,7 @@ import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
+import org.sonatype.nexus.security.config.AdminPasswordFileManager;
 import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.NoSuchUserManagerException;
 import org.sonatype.nexus.security.user.User;
@@ -53,6 +54,8 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang.StringUtils;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Resource for REST API to perform operations on the user.
@@ -68,13 +71,17 @@ public class UserApiResource
     extends ComponentSupport
     implements Resource, UserApiResourceDoc
 {
+  public static final String ADMIN_USER_ID = "admin";
   public static final String RESOURCE_URI = SecurityApiResource.RESOURCE_URI + "users/";
 
   private final SecuritySystem securitySystem;
 
+  private final AdminPasswordFileManager adminPasswordFileManager;
+
   @Inject
-  public UserApiResource(final SecuritySystem securitySystem) {
-    this.securitySystem = securitySystem;
+  public UserApiResource(final SecuritySystem securitySystem, final AdminPasswordFileManager adminPasswordFileManager) {
+    this.securitySystem = checkNotNull(securitySystem);
+    this.adminPasswordFileManager = checkNotNull(adminPasswordFileManager);
   }
 
   @Override
@@ -188,6 +195,10 @@ public class UserApiResource
 
     try {
       securitySystem.changePassword(userId, password);
+
+      if (ADMIN_USER_ID.equals(userId)) {
+        adminPasswordFileManager.removeFile();
+      }
     }
     catch (UserNotFoundException e) { // NOSONAR
       log.debug("Request to change password for invalid user '{}'.", userId);

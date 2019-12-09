@@ -18,10 +18,11 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.entity.EntityEvent;
 import org.sonatype.nexus.common.event.EventAware;
+import org.sonatype.nexus.common.event.WithLocality;
 import org.sonatype.nexus.repository.config.internal.ConfigurationDeletedEvent;
 import org.sonatype.nexus.repository.storage.AssetCreatedEvent;
+import org.sonatype.nexus.repository.storage.AssetUpdatedEvent;
 import org.sonatype.nexus.repository.storage.AssetDeletedEvent;
 import org.sonatype.nexus.repository.storage.ComponentDeletedEvent;
 
@@ -56,6 +57,15 @@ public class BrowseNodeEventHandler
   }
 
   @Subscribe
+  @AllowConcurrentEvents
+  public void on(final AssetUpdatedEvent event) {
+    handle(event, e -> {
+      browseNodeManager.deleteAssetNode(e.getAssetId());
+      browseNodeManager.createFromAsset(e.getRepositoryName(), e.getAsset());
+    });
+  }
+
+  @Subscribe
   public void on(final AssetDeletedEvent event) {
     handle(event, e -> browseNodeManager.deleteAssetNode(e.getAssetId()));
   }
@@ -71,7 +81,7 @@ public class BrowseNodeEventHandler
     handle(event, e -> browseNodeManager.deleteByRepository(e.getRepositoryName()));
   }
 
-  private <E extends EntityEvent> void handle(final E event, final Consumer<E> consumer) {
+  private <E extends WithLocality> void handle(final E event, final Consumer<E> consumer) {
     checkNotNull(event);
     if (event.isLocal()) {
       dontWaitForReplicationResults();

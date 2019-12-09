@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.apt.api;
 
+import java.util.Map;
+
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
@@ -29,11 +31,15 @@ import org.sonatype.nexus.repository.types.ProxyType;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 
+import static com.google.common.collect.Maps.newHashMap;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
+import static org.mockito.AdditionalMatchers.not;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class AptApiRepositoryAdapterTest
     extends TestSupport
@@ -43,14 +49,10 @@ public class AptApiRepositoryAdapterTest
   @Mock
   private RoutingRuleStore routingRuleStore;
 
-  private Configuration configuration = new Configuration();
-
   @Before
   public void setup() {
     underTest = new AptApiRepositoryAdapter(routingRuleStore);
     BaseUrlHolder.set("http://nexus-url");
-
-    configuration.setOnline(true);
   }
 
   @Test
@@ -92,9 +94,10 @@ public class AptApiRepositoryAdapterTest
   }
 
   private static Configuration config(final String repositoryName) {
-    Configuration configuration = new Configuration();
-    configuration.setOnline(true);
-    configuration.setRepositoryName(repositoryName);
+    Configuration configuration = mock(Configuration.class);
+    when(configuration.isOnline()).thenReturn(true);
+    when(configuration.getRepositoryName()).thenReturn(repositoryName);
+    when(configuration.attributes(not(eq("apt")))).thenReturn(new NestedAttributesMap("dummy", newHashMap()));
     return configuration;
   }
 
@@ -105,14 +108,18 @@ public class AptApiRepositoryAdapterTest
       final String passphrase,
       final Boolean flat) throws Exception
   {
-    Repository repository = new RepositoryImpl(Mockito.mock(EventManager.class), type, new AptFormat());
+    Repository repository = new RepositoryImpl(mock(EventManager.class), type, new AptFormat());
 
     Configuration configuration = config("my-repo");
-    NestedAttributesMap maven = configuration.attributes("apt");
-    maven.set("distribution", distribution);
-    maven.set("keypair", keypair);
-    maven.set("passphrase", passphrase);
-    maven.set("flat", flat);
+    Map<String, Object> apt = newHashMap();
+    apt.put("distribution", distribution);
+    apt.put("keypair", keypair);
+    apt.put("passphrase", passphrase);
+    apt.put("flat", flat);
+    Map<String, Object> attributes = newHashMap();
+    attributes.put("apt", apt);
+    NestedAttributesMap aptNested = new NestedAttributesMap("apt", apt);
+    when(configuration.attributes("apt")).thenReturn(aptNested);
     repository.init(configuration);
     return repository;
   }

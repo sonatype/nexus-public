@@ -37,9 +37,14 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
+import static com.google.common.collect.Maps.newHashMap;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
+import static org.mockito.AdditionalMatchers.not;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class MavenApiRepositoryAdapterTest
     extends TestSupport
@@ -49,14 +54,10 @@ public class MavenApiRepositoryAdapterTest
   @Mock
   private RoutingRuleStore routingRuleStore;
 
-  private Configuration configuration = new Configuration();
-
   @Before
   public void setup() {
     underTest = new MavenApiRepositoryAdapter(routingRuleStore);
     BaseUrlHolder.set("http://nexus-url");
-
-    configuration.setOnline(true);
   }
 
   @Test
@@ -111,9 +112,10 @@ public class MavenApiRepositoryAdapterTest
   }
 
   private static Configuration config(final String repositoryName) {
-    Configuration configuration = new Configuration();
-    configuration.setOnline(true);
-    configuration.setRepositoryName(repositoryName);
+    Configuration configuration = mock(Configuration.class);
+    when(configuration.isOnline()).thenReturn(true);
+    when(configuration.getRepositoryName()).thenReturn(repositoryName);
+    when(configuration.attributes(not(eq("maven")))).thenReturn(new NestedAttributesMap("dummy", newHashMap()));
     return configuration;
   }
 
@@ -131,9 +133,10 @@ public class MavenApiRepositoryAdapterTest
     Repository repository = new RepositoryImpl(Mockito.mock(EventManager.class), type, new Maven2Format());
 
     Configuration configuration = config("my-repo");
-    NestedAttributesMap maven = configuration.attributes("maven");
+    NestedAttributesMap maven = new NestedAttributesMap("maven", newHashMap());
     maven.set("layoutPolicy", LayoutPolicy.STRICT.toString());
     maven.set("versionPolicy", VersionPolicy.MIXED.toString());
+    when(configuration.attributes("maven")).thenReturn(maven);
     repository.init(configuration);
     return repository;
   }

@@ -73,6 +73,7 @@
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-repository-maven</artifactId>
+      <optional>true</optional>
       <scope>provided</scope>
     </dependency>
 
@@ -112,7 +113,10 @@
         <artifactId>maven-bundle-plugin</artifactId>
         <configuration>
           <instructions>
-            <DynamicImport-Package>groovy.*</DynamicImport-Package>
+            <DynamicImport-Package>
+              groovy.*,
+              org.sonatype.nexus.repository.maven
+            </DynamicImport-Package>
           </instructions>
         </configuration>
       </plugin>

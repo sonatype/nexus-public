@@ -15,6 +15,7 @@ package org.sonatype.nexus.common.entity;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.event.WithAffinity;
+import org.sonatype.nexus.common.event.WithLocality;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -25,7 +26,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @SuppressWarnings("unchecked")
 public abstract class EntityEvent
-    implements WithAffinity
+    implements WithAffinity, WithLocality
 {
   private final EntityMetadata metadata;
 
@@ -52,6 +53,7 @@ public abstract class EntityEvent
    *
    * @since 3.1
    */
+  @Override
   public boolean isLocal() {
     return remoteNodeId == null;
   }

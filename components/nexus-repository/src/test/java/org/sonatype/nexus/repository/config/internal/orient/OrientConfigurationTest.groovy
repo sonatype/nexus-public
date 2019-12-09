@@ -10,9 +10,10 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.config
+package org.sonatype.nexus.repository.config.internal.orient
 
 import org.sonatype.nexus.common.entity.EntityMetadata
+import org.sonatype.nexus.repository.config.Configuration
 
 import spock.lang.Specification
 
@@ -20,12 +21,12 @@ import spock.lang.Specification
  * Tests for {@link Configuration}
  * @since 3.1
  */
-class ConfigurationTest
+class OrientConfigurationTest
     extends Specification
 {
 
   def "Copy copies all properties."() {
-    Configuration original = new Configuration(repositoryName: "myrepo", recipeName: "someRecipe", online: false,
+    Configuration original = new OrientConfiguration(repositoryName: "myrepo", recipeName: "someRecipe", online: false,
         attributes: [foo: "bar"], entityMetadata: Mock(EntityMetadata))
 
     when:
@@ -40,7 +41,7 @@ class ConfigurationTest
   }
 
   def "Copy makes a copy of attributes."() {
-    Configuration original = new Configuration(repositoryName: "myrepo", recipeName: "someRecipe", online: false,
+    Configuration original = new OrientConfiguration(repositoryName: "myrepo", recipeName: "someRecipe", online: false,
         attributes: [foo: "bar"])
 
     when:
@@ -52,7 +53,7 @@ class ConfigurationTest
   }
 
   def "Copy works when attributes is null."() {
-    Configuration original = new Configuration(repositoryName: "myrepo", recipeName: "someRecipe", online: false,
+    Configuration original = new OrientConfiguration(repositoryName: "myrepo", recipeName: "someRecipe", online: false,
         attributes: null)
 
     when:
@@ -63,7 +64,7 @@ class ConfigurationTest
   }
 
   def 'Copy performs a deep clone of attributes'() {
-    Configuration original = new Configuration(repositoryName: 'myrepo', recipeName: 'someRecipe', online: false,
+    Configuration original = new OrientConfiguration(repositoryName: 'myrepo', recipeName: 'someRecipe', online: false,
         attributes: [foo: 'bar', httpclient: [authorization: [password: 'secret']]],
         entityMetadata: Mock(EntityMetadata))
 
@@ -77,7 +78,7 @@ class ConfigurationTest
 
   def 'Obfuscates sensitive data'() {
     String configStr
-    Configuration config = new Configuration(repositoryName: 'myrepo', recipeName: 'someRecipe', online: false,
+    Configuration config = new OrientConfiguration(repositoryName: 'myrepo', recipeName: 'someRecipe', online: false,
         attributes: [
             allsecrets: [password: 'mask', secret: 'mask', applicationPassword: 'mask', systemPassword: 'mask'],
             httpclient: [authorization: [password: 'mask']]

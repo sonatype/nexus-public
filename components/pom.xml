@@ -117,7 +117,7 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>org.sonatype.plugins</groupId>
+        <groupId>org.eclipse.sisu</groupId>
         <artifactId>sisu-maven-plugin</artifactId>
       </plugin>
 

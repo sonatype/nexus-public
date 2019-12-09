@@ -12,35 +12,15 @@
  */
 package org.sonatype.nexus.repository.config.internal;
 
-import org.sonatype.nexus.common.entity.EntityDeletedEvent;
-import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.repository.config.Configuration;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Repository {@link Configuration} deleted event.
  *
  * @since 3.1
  */
-public class ConfigurationDeletedEvent
-    extends EntityDeletedEvent
-    implements ConfigurationEvent
+public interface ConfigurationDeletedEvent
+    extends ConfigurationEvent
 {
-  private final String repositoryName;
 
-  public ConfigurationDeletedEvent(final EntityMetadata metadata, final String repositoryName) {
-    super(metadata);
-    this.repositoryName = checkNotNull(repositoryName);
-  }
-
-  @Override
-  public String getRepositoryName() {
-    return repositoryName;
-  }
-
-  @Override
-  public Configuration getConfiguration() {
-    return getEntity();
-  }
 }

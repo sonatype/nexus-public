@@ -160,6 +160,18 @@ abstract class NpmRecipeSupport
   }
 
   /**
+   * Matcher for npm ping command.
+   */
+  static Builder pingMatcher() {
+    new Builder().matcher(
+        LogicMatchers.and(
+            new ActionMatcher(GET),
+            new LiteralMatcher('/-/ping')
+        )
+    )
+  }
+
+  /**
    * Matcher for npm package metadata.
    */
   static Builder packageMatcher(String ...httpMethod) {

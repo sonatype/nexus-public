@@ -20,8 +20,11 @@ import javax.ws.rs.core.Response.Status;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.goodies.testsupport.hamcrest.BeanMatchers;
+import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.SecuritySystem;
+import org.sonatype.nexus.security.config.AdminPasswordFileManager;
+import org.sonatype.nexus.security.internal.AdminPasswordFileManagerImpl;
 import org.sonatype.nexus.security.role.Role;
 import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.NoSuchUserManagerException;
@@ -34,6 +37,7 @@ import org.sonatype.nexus.security.user.UserStatus;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -60,6 +64,11 @@ public class UserApiResourceTest
   private SecuritySystem securitySystem;
 
   @Mock
+  private ApplicationDirectories applicationDirectories;
+
+  private AdminPasswordFileManager adminPasswordFileManager;
+
+  @Mock
   private UserManager userManager;
 
   @Rule
@@ -69,7 +78,9 @@ public class UserApiResourceTest
 
   @Before
   public void setup() throws Exception {
-    underTest = new UserApiResource(securitySystem);
+    when(applicationDirectories.getWorkDirectory()).thenReturn(util.createTempDir());
+    adminPasswordFileManager = new AdminPasswordFileManagerImpl(applicationDirectories);
+    underTest = new UserApiResource(securitySystem, adminPasswordFileManager);
 
     final User user = createUser();
     when(securitySystem.getUser(any(), any())).thenAnswer(i -> {
@@ -88,6 +99,11 @@ public class UserApiResourceTest
     when(securitySystem.listRoles(UserManager.DEFAULT_SOURCE))
         .thenReturn(Collections.singleton(new Role("nx-admin", null, null, null, true, null, null)));
     when(userManager.supportsWrite()).thenReturn(true);
+  }
+
+  @After
+  public void cleanup() {
+    adminPasswordFileManager.removeFile();
   }
 
   /*
@@ -293,6 +309,25 @@ public class UserApiResourceTest
     finally {
       verify(securitySystem, never()).changePassword(any(), any());
     }
+  }
+
+  @Test
+  public void testChangePassword_defaultAdminRemoval() throws Exception {
+    adminPasswordFileManager.writeFile("oldPassword");
+
+    underTest.changePassword("admin", "newPassword");
+
+    assertThat(adminPasswordFileManager.exists(), is(false));
+  }
+
+  @Test
+  public void testChangePassword_defaultAdminNotRemoved() throws Exception {
+    adminPasswordFileManager.writeFile("oldPassword");
+
+    underTest.changePassword("test", "test");
+
+    verify(securitySystem).changePassword("test", "test");
+    assertThat(adminPasswordFileManager.exists(), is(true));
   }
 
   private void expectMissingUser(final String userId) {

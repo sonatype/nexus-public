@@ -33,6 +33,7 @@ import org.sonatype.nexus.repository.types.GroupType;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import org.elasticsearch.search.SearchContextMissingException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -167,7 +168,7 @@ public class CleanupServiceImplTest
 
   @Test
   public void ignoreRepositoryWhenAttributesNull() throws Exception {
-    when(repository1.getConfiguration()).thenReturn(new Configuration());
+    when(repository1.getConfiguration()).thenReturn(mock(Configuration.class));
 
     underTest.cleanup(cancelledCheck);
 
@@ -231,13 +232,24 @@ public class CleanupServiceImplTest
     verify(cleanupMethod, times(3)).run(any(), any(), any());
   }
 
+  @Test
+  public void cleanupRetriedOnScrollTimeout() {
+    when(cleanupMethod.run(any(), any(), any()))
+        .thenThrow(new RuntimeException(new SearchContextMissingException(10L))).thenReturn(deletionProgress);
+
+    underTest.cleanup(cancelledCheck);
+
+    verify(cleanupMethod, times(2)).run(repository1, ImmutableList.of(component1, component2), cancelledCheck);
+    verify(cleanupMethod).run(repository2, ImmutableList.of(component3), cancelledCheck);
+  }
+
   private void setupRepository(final Repository repository, final String... policyName) {
-    Configuration repositoryConfig = new Configuration();
+    Configuration repositoryConfig = mock(Configuration.class);
     when(repository.getConfiguration()).thenReturn(repositoryConfig);
 
     ImmutableMap<String, Map<String, Object>> attributes = ImmutableMap
         .of("cleanup", ImmutableMap.of("policyName", newLinkedHashSet(asList(policyName))));
-    repositoryConfig.setAttributes(attributes);
+    when(repositoryConfig.getAttributes()).thenReturn(attributes);
 
     when(repository.getType()).thenReturn(type);
 

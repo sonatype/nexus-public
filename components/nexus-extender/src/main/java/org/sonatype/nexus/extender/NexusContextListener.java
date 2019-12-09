@@ -28,10 +28,12 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
+import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.app.ManagedLifecycle.Phase;
 import org.sonatype.nexus.common.app.ManagedLifecycleManager;
 
 import com.codahale.metrics.SharedMetricRegistries;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
@@ -95,7 +97,14 @@ public class NexusContextListener
    */
   public static final int NEXUS_PLUGIN_START_LEVEL = 200;
 
-  private static final Pattern INSTALL_MODE_FEATURE_FLAG_PATTERN = compile("featureFlag:(enabledByDefault:)?(.*)");
+  private static final Pattern INSTALL_MODE_FEATURE_FLAG_PATTERN = compile(
+      "(?:(?<edition>oss|pro):)?featureFlag:(?<enabled>enabledByDefault:)?(?<flag>.+)");
+
+  private static final String EDITION = "edition";
+
+  private static final String ENABLED = "enabled";
+
+  private static final String FLAG = "flag";
 
   private static final String NEXUS_LIFECYCLE_STARTUP_PHASE = "nexus.lifecycle.startupPhase";
 
@@ -323,8 +332,9 @@ public class NexusContextListener
       // next add any optional features that have been feature-flagged
       Repository flagsRepository = featuresService.getRepository("nexus-flags-feature");
       if (flagsRepository != null) {
+        String edition = injector.getInstance(ApplicationVersion.class).getEdition();
         for (Feature feature : flagsRepository.getFeatures()) {
-          if (isFeatureFlagEnabled(feature.getInstall())) {
+          if (isFeatureFlagEnabled(edition, feature.getInstall())) {
             if (featureNames.length() > 0) {
               featureNames.append(',');
             }
@@ -342,12 +352,21 @@ public class NexusContextListener
   /**
    * Is the given install flag enabled?
    */
-  private boolean isFeatureFlagEnabled(final String installMode) {
+  @VisibleForTesting
+  boolean isFeatureFlagEnabled(final String edition, final String installMode) {
     if (installMode != null) {
       // repurpose Karaf's installMode to pass along feature-flag details
       Matcher matcher = INSTALL_MODE_FEATURE_FLAG_PATTERN.matcher(installMode);
       if (matcher.matches()) {
-        return getBoolean(matcher.group(2), matcher.group(1) != null);
+        boolean enabled = getBoolean(matcher.group(FLAG), matcher.group(ENABLED) != null);
+        String expectedEdition = matcher.group(EDITION);
+        if (expectedEdition != null) {
+          enabled = enabled && expectedEdition.equalsIgnoreCase(edition);
+        }
+        return enabled;
+      }
+      else {
+        log.warn("Malformed feature flag: '{}'", installMode);
       }
     }
     return false;

@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.DefaultComponent;
@@ -66,6 +67,7 @@ public abstract class BrowseTestSupport
   protected Asset createAsset(final String assetName) {
     Asset asset = mock(Asset.class);
     when(asset.name()).thenReturn(assetName);
+    when(asset.blobRef()).thenReturn(mock(BlobRef.class));
     return asset;
   }
 

@@ -15,6 +15,8 @@ package org.sonatype.nexus.upgrade.plan
 import org.sonatype.goodies.common.ComponentSupport
 import org.sonatype.goodies.common.OID
 import org.sonatype.nexus.common.text.Plural
+import org.sonatype.nexus.upgrade.plan.DependencySource.DependsOnAware;
+import org.sonatype.nexus.upgrade.plan.DependencySource.UnresolvedDependencyAware;
 
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.ImmutableList
@@ -136,7 +138,7 @@ class DependencyResolver<T extends DependencySource>
       for (child in graph.getChildLabels(label)) {
         dependsOn.put(source, sources[child])
       }
-      if (source instanceof DependencySource.DependsOnAware) {
+      if (source instanceof DependsOnAware) {
         source.dependsOn = dependsOn.get(source)
       }
     }
@@ -144,7 +146,7 @@ class DependencyResolver<T extends DependencySource>
     // handle unresolved dependencies
     if (!unresolved.empty) {
       for (source in unresolved.keySet()) {
-        if (source instanceof DependencySource.UnresolvedDependencyAware) {
+        if (source instanceof UnresolvedDependencyAware) {
           source.unresolvedDependencies = unresolved.get(source)
         }
       }

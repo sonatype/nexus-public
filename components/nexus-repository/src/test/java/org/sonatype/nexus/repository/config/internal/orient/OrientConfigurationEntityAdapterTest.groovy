@@ -10,12 +10,11 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.config.internal
+package org.sonatype.nexus.repository.config.internal.orient
 
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.orient.HexRecordIdObfuscator
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule
-import org.sonatype.nexus.repository.config.Configuration
 import org.sonatype.nexus.repository.routing.internal.OrientRoutingRuleEntityAdapter
 import org.sonatype.nexus.security.PasswordHelper
 
@@ -30,9 +29,9 @@ import org.mockito.Mock
 import static org.mockito.Mockito.when
 
 /**
- * Tests for {@link ConfigurationEntityAdapter}.
+ * Tests for {@link OrientConfigurationEntityAdapter}.
  */
-class ConfigurationEntityAdapterTest
+class OrientConfigurationEntityAdapterTest
   extends TestSupport
 {
   @Rule
@@ -43,14 +42,14 @@ class ConfigurationEntityAdapterTest
 
   @Mock private OrientRoutingRuleEntityAdapter routingRuleEntityAdapter
 
-  private ConfigurationEntityAdapter underTest
+  private OrientConfigurationEntityAdapter underTest
 
   @Before
   void setUp() {
     when(passwordHelper.encrypt('s1mpl3')).thenReturn('******')
     when(passwordHelper.tryDecrypt('******')).thenReturn('s1mpl3')
 
-    underTest = new ConfigurationEntityAdapter(passwordHelper, routingRuleEntityAdapter)
+    underTest = new OrientConfigurationEntityAdapter(passwordHelper, routingRuleEntityAdapter)
     underTest.enableObfuscation(new HexRecordIdObfuscator())
   }
 
@@ -71,7 +70,7 @@ class ConfigurationEntityAdapterTest
     database.instance.connect().withCloseable { db ->
       underTest.register(db)
 
-      def config = new Configuration(repositoryName: 'bar', recipeName: 'foo')
+      def config = new OrientConfiguration(repositoryName: 'bar', recipeName: 'foo')
       config.attributes('baz').set('a', 'b')
 
       underTest.addEntity(db, config)
@@ -83,9 +82,9 @@ class ConfigurationEntityAdapterTest
     database.instance.connect().withCloseable { db ->
       underTest.register(db)
 
-      def config = new Configuration(repositoryName: 'bar', recipeName: 'foo', attributes: [:])
+      def config = new OrientConfiguration(repositoryName: 'bar', recipeName: 'foo', attributes: [:])
       underTest.addEntity(db, config)
-      def conflictingConfig = new Configuration(repositoryName: config.repositoryName.capitalize(),
+      def conflictingConfig = new OrientConfiguration(repositoryName: config.repositoryName.capitalize(),
           recipeName: config.recipeName, attributes: config.attributes)
       underTest.addEntity(db, conflictingConfig)
     }
@@ -96,7 +95,7 @@ class ConfigurationEntityAdapterTest
     database.instance.connect().withCloseable { db ->
       underTest.register(db)
 
-      def config = new Configuration(repositoryName: 'bar', recipeName: 'foo')
+      def config = new OrientConfiguration(repositoryName: 'bar', recipeName: 'foo')
       config.attributes('baz').set('password', 's1mpl3')
 
       def document = underTest.addEntity(db, config)
@@ -118,14 +117,14 @@ class ConfigurationEntityAdapterTest
     database.instance.acquire().withCloseable { db ->
       db.begin()
 
-      def config = new Configuration(repositoryName: 'bar', recipeName: 'foo')
+      def config = new OrientConfiguration(repositoryName: 'bar', recipeName: 'foo')
       config.attributes('group').set('memberNames', [] as Collection)
       underTest.addEntity(db, config)
 
       db.commit()
     }
 
-    Configuration config
+    OrientConfiguration config
     database.instance.acquire().withCloseable { db ->
       db.begin()
 

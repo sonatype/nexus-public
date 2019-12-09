@@ -12,35 +12,15 @@
  */
 package org.sonatype.nexus.repository.config.internal;
 
-import org.sonatype.nexus.common.entity.EntityCreatedEvent;
-import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.repository.config.Configuration;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Repository {@link Configuration} created event.
  *
  * @since 3.1
  */
-public class ConfigurationCreatedEvent
-    extends EntityCreatedEvent
-    implements ConfigurationEvent
+public interface ConfigurationCreatedEvent
+    extends ConfigurationEvent
 {
-  private final String repositoryName;
 
-  public ConfigurationCreatedEvent(final EntityMetadata metadata, final String repositoryName) {
-    super(metadata);
-    this.repositoryName = checkNotNull(repositoryName);
-  }
-
-  @Override
-  public String getRepositoryName() {
-    return repositoryName;
-  }
-
-  @Override
-  public Configuration getConfiguration() {
-    return getEntity();
-  }
 }

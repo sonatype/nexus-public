@@ -39,7 +39,7 @@ class RepositoryApiImplTest
 
   void 'Cannot validate a BlobStore that does not exist'() {
     when:
-      api.validateBlobStore(new Configuration(attributes: [storage: [blobStoreName: 'foo']]))
+      api.validateBlobStore(configWithAttributes([storage: [blobStoreName: 'foo']]))
 
     then:
       1 * blobStoreManager.browse() >> []
@@ -52,7 +52,7 @@ class RepositoryApiImplTest
       BlobStoreConfiguration configuration = new MockBlobStoreConfiguration(name: 'foo')
     
     when:
-      api.validateBlobStore(new Configuration(attributes: [storage: [blobStoreName: 'foo']]))
+      api.validateBlobStore(configWithAttributes([storage: [blobStoreName: 'foo']]))
 
     then:
       1 * blobStoreManager.browse() >> [blobStore]
@@ -61,7 +61,7 @@ class RepositoryApiImplTest
 
   void 'Group memberNames must be a Collection'() {
     when: 'Accidentally using a String instead of a Collection'
-      api.validateGroupMembers(new Configuration(attributes: [group:[memberNames: 'foo']]))
+      api.validateGroupMembers(configWithAttributes([group:[memberNames: 'foo']]))
 
     then: 'An exception is thrown during validation'
       thrown ClassCastException
@@ -69,7 +69,7 @@ class RepositoryApiImplTest
   
   void 'Cannot validate a group that contains non-existent members'() {
     when: 'Including a member that does not exist'
-      api.validateGroupMembers(new Configuration(attributes: [group:[memberNames: ['foo']]]))
+      api.validateGroupMembers(configWithAttributes([group:[memberNames: ['foo']]]))
 
     then: 'An exception is thrown during validation'
       1 * repositoryManager.browse() >> []
@@ -81,7 +81,7 @@ class RepositoryApiImplTest
      Repository repository = Mock()
 
     when:
-      api.validateGroupMembers(new Configuration(attributes: [group:[memberNames: ['foo']]]))
+      api.validateGroupMembers(configWithAttributes([group:[memberNames: ['foo']]]))
 
     then:
       1 * repositoryManager.browse() >> [repository]
@@ -90,8 +90,14 @@ class RepositoryApiImplTest
 
   void 'Non-group repositories pass group validation trivially'() {
     when:
-      api.validateGroupMembers(new Configuration(attributes: [:]))
+      api.validateGroupMembers(configWithAttributes([:]))
     then:
       true
+  }
+
+  private Configuration configWithAttributes(final Map attributes) {
+    Configuration config = Mock()
+    config.getAttributes() >> attributes
+    return config
   }
 }

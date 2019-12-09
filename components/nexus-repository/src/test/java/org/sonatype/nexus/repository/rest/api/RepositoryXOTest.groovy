@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.rest.api
 
+import org.sonatype.nexus.common.collect.NestedAttributesMap
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.config.Configuration
@@ -33,7 +34,7 @@ class RepositoryXOTest
         getFormat() >> format
         getType() >> type
         getUrl() >> url
-        getConfiguration() >> new Configuration(attributes: [(type.value): attributes])
+        getConfiguration() >> configuration(type.value, attributes)
       }
     when:
       def repositoryXO = RepositoryXO.fromRepository(repository)
@@ -54,6 +55,13 @@ class RepositoryXOTest
   private Format format(value) {
     Mock(Format) {
       getValue() >> value
+    }
+  }
+
+  private Configuration configuration(type, value) {
+    Mock(Configuration) {
+      attributes() >> [(type): value]
+      attributes(type) >> new NestedAttributesMap(type, value)
     }
   }
 }

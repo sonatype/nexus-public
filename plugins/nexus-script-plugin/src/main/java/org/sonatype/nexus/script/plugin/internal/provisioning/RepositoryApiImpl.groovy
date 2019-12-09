@@ -62,7 +62,7 @@ class RepositoryApiImpl
     checkNotNull(name)
     checkArgument(recipeName && recipeName.endsWith('-hosted'))
 
-    new Configuration(
+    newConfiguration(
         repositoryName: name,
         recipeName: recipeName,
         online: true,
@@ -89,7 +89,7 @@ class RepositoryApiImpl
     checkNotNull(name)
     checkArgument(recipeName && recipeName.endsWith('-proxy'))
 
-    new Configuration(
+    newConfiguration(
         repositoryName: name,
         recipeName: recipeName,
         online: true,
@@ -113,7 +113,7 @@ class RepositoryApiImpl
                 blobStoreName              : blobStoreName,
                 strictContentTypeValidation: strictContentTypeValidation
             ] as Map
-        ]
+        ] as Map
     )
   }
 
@@ -129,7 +129,7 @@ class RepositoryApiImpl
     checkNotNull(name)
     checkArgument(recipeName && recipeName.endsWith('-group'))
 
-    new Configuration(
+    newConfiguration(
         repositoryName: name,
         recipeName: recipeName,
         online: true,
@@ -140,8 +140,19 @@ class RepositoryApiImpl
             storage: [
                 blobStoreName: blobStoreName
             ] as Map
-        ]
+        ] as Map
     )
+  }
+
+  private Configuration newConfiguration(final Map map) {
+    Configuration config = repositoryManager.newConfiguration()
+    config.with {
+      repositoryName = map.repositoryName
+      recipeName = map.recipeName
+      online = map.online
+      attributes = map.attributes as Map
+    }
+    return config
   }
 
   @Nonnull
@@ -491,11 +502,11 @@ class RepositoryApiImpl
   private static Map configureMaven(final VersionPolicy versionPolicy = VersionPolicy.MIXED,
                                     final LayoutPolicy layoutPolicy = LayoutPolicy.STRICT)
   {
-    [versionPolicy: versionPolicy, layoutPolicy: layoutPolicy]
+    [versionPolicy: versionPolicy, layoutPolicy: layoutPolicy] as Map
   }
 
   private static Map configureDockerAttributes(Integer httpPort, Integer httpsPort, boolean v1Enabled, boolean forceBasicAuth) {
-    def docker = [:]
+    def docker = [:] as Map
     if (httpPort) {
       docker.httpPort = httpPort
     }

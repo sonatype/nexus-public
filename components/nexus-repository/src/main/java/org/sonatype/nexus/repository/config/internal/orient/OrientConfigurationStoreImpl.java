@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.config.internal;
+package org.sonatype.nexus.repository.config.internal.orient;
 
 import java.util.List;
 
@@ -19,13 +19,13 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.config.internal.ConfigurationStore;
 
 import com.google.common.collect.ImmutableList;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -41,21 +41,21 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
  *
  * @since 3.0
  */
-@FeatureFlag(name = "nexus.orient.store.config")
 @Named
 @ManagedLifecycle(phase = SCHEMAS)
 @Singleton
-public class ConfigurationStoreImpl
+public class OrientConfigurationStoreImpl
     extends StateGuardLifecycleSupport
     implements ConfigurationStore
 {
   private final Provider<DatabaseInstance> databaseInstance;
 
-  private final ConfigurationEntityAdapter entityAdapter;
+  private final OrientConfigurationEntityAdapter entityAdapter;
 
   @Inject
-  public ConfigurationStoreImpl(@Named(DatabaseInstanceNames.CONFIG) final Provider<DatabaseInstance> databaseInstance,
-                                final ConfigurationEntityAdapter entityAdapter)
+  public OrientConfigurationStoreImpl(
+      @Named(DatabaseInstanceNames.CONFIG) final Provider<DatabaseInstance> databaseInstance,
+      final OrientConfigurationEntityAdapter entityAdapter)
   {
     this.databaseInstance = checkNotNull(databaseInstance);
     this.entityAdapter = checkNotNull(entityAdapter);
@@ -79,7 +79,7 @@ public class ConfigurationStoreImpl
   public void create(final Configuration configuration) {
     checkNotNull(configuration);
 
-    inTxRetry(databaseInstance).run(db -> entityAdapter.addEntity(db, configuration));
+    inTxRetry(databaseInstance).run(db -> entityAdapter.addEntity(db, cast(configuration)));
   }
 
   @Override
@@ -87,7 +87,7 @@ public class ConfigurationStoreImpl
   public void update(final Configuration configuration) {
     checkNotNull(configuration);
 
-    inTxRetry(databaseInstance).run(db -> entityAdapter.editEntity(db, configuration));
+    inTxRetry(databaseInstance).run(db -> entityAdapter.editEntity(db, cast(configuration)));
   }
 
   @Override
@@ -95,6 +95,15 @@ public class ConfigurationStoreImpl
   public void delete(final Configuration configuration) {
     checkNotNull(configuration);
 
-    inTxRetry(databaseInstance).run(db -> entityAdapter.deleteEntity(db, configuration));
+    inTxRetry(databaseInstance).run(db -> entityAdapter.deleteEntity(db, cast(configuration)));
+  }
+
+  @Override
+  public Configuration newConfiguration() {
+    return new OrientConfiguration();
+  }
+
+  private OrientConfiguration cast(final Configuration configuration) {
+    return (OrientConfiguration) configuration;
   }
 }

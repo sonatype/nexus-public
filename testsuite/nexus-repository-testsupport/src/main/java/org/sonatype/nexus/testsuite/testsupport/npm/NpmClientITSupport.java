@@ -187,6 +187,15 @@ public abstract class NpmClientITSupport
     return null;
   }
 
+  protected String npmPing() {
+    List<String> results = npmCli.execNpm("ping").orElse(null);
+
+    if (results != null && results.size() == 1) {
+      return results.get(0);
+    }
+    return null;
+  }
+
   protected void npmLogout(final String repositoryUrl) {
     npmCli.execNpm("logout --registry=" + repositoryUrl);
   }

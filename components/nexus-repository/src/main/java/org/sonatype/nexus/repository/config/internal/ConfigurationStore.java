@@ -32,4 +32,11 @@ public interface ConfigurationStore
   void update(Configuration configuration);
 
   void delete(Configuration configuration);
+
+  /**
+   * Create a new {@link Configuration} instance.
+   *
+   * @since 3.next
+   */
+  Configuration newConfiguration();
 }

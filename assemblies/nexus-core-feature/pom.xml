@@ -76,13 +76,6 @@
 
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-blobstore-tasks</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-ssl-plugin</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
@@ -97,91 +90,7 @@
 
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-repository-golang</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-repository-httpbridge</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-repository-maven</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-repository-npm</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-repository-apt</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-repository-cocoapods</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-repository-conda</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-repository-pypi</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-repository-raw</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-restore-apt</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-restore-maven</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-restore-npm</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-restore-raw</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
     </dependency>
@@ -203,13 +112,6 @@
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-blobstore-s3</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-restore-pypi</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
     </dependency>

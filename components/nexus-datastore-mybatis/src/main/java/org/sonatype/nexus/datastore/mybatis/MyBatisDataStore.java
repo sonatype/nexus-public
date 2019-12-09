@@ -20,6 +20,7 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.nio.file.Path;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Map;
@@ -192,6 +193,22 @@ public class MyBatisDataStore
   @Override
   public Connection openConnection() throws SQLException {
     return dataSource.getConnection();
+  }
+
+  @Guarded(by = STARTED)
+  @Override
+  public void backup(final String location) throws SQLException {
+    try (Connection conn = openConnection()) {
+      if ("H2".equals(conn.getMetaData().getDatabaseProductName())) {
+        try (PreparedStatement backupStmt = conn.prepareStatement("BACKUP TO ?")) {
+          backupStmt.setString(1, location);
+          backupStmt.execute();
+        }
+      }
+      else {
+        throw new UnsupportedOperationException("The underlying database is not supported for backup.");
+      }
+    }
   }
 
   /**

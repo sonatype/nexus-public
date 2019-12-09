@@ -16,6 +16,7 @@ import java.util.Map;
 
 import javax.servlet.ServletContext;
 
+import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.app.ManagedLifecycleManager;
 import org.sonatype.nexus.common.guice.TimeTypeConverter;
 import org.sonatype.nexus.common.stateguard.StateGuardModule;
@@ -68,6 +69,7 @@ public class NexusContextModule
     // we will look these up later...
     requireBinding(GuiceFilter.class);
     requireBinding(BeanManager.class);
+    requireBinding(ApplicationVersion.class);
 
     bind(ServletContext.class).toInstance(servletContext);
     bind(ParameterKeys.PROPERTIES).toInstance(nexusProperties);

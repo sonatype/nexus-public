@@ -37,13 +37,14 @@ import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static com.google.common.collect.ImmutableMap.of;
 import static java.util.Collections.emptyMap;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -157,22 +158,24 @@ public class OrphanedBlobFinderTest
 
   @Test(expected = IllegalArgumentException.class)
   public void throwExceptionWhenRepositoryConfigurationAttributesNull() {
-    repository.getConfiguration().setAttributes(null);
+    Configuration config = repository.getConfiguration();
+    when(config.getAttributes()).thenReturn(null);
 
     underTest.detect(repository, orphanedBlobHandler);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void throwExceptionWhenRepositoryStorageConfigurationNull() {
-    repository.getConfiguration().setAttributes(emptyMap());
+    Configuration config = repository.getConfiguration();
+    when(config.getAttributes()).thenReturn(emptyMap());
 
     underTest.detect(repository, orphanedBlobHandler);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void throwExceptionWhenBlobStoreNameBlank() {
-    repository.getConfiguration()
-        .setAttributes(ImmutableMap.of("storage", ImmutableMap.of("blobStoreName", "")));
+    Configuration config = repository.getConfiguration();
+    when(config.getAttributes()).thenReturn(of("storage", of("blobStoreName", "")));
 
     underTest.detect(repository, orphanedBlobHandler);
   }
@@ -212,9 +215,10 @@ public class OrphanedBlobFinderTest
   }
 
   private void setupRepository(final Repository repository) {
-    Configuration repositoryConfiguration = new Configuration();
-    repositoryConfiguration
-        .setAttributes(ImmutableMap.of("storage", ImmutableMap.of("blobStoreName", BLOB_STORE_NAME)));
+    Configuration repositoryConfiguration = mock(Configuration.class);
+    when(repositoryConfiguration.getAttributes()).thenReturn(
+        of("storage", of("blobStoreName", BLOB_STORE_NAME))
+    );
     when(repository.getConfiguration()).thenReturn(repositoryConfiguration);
   }
 
@@ -229,7 +233,7 @@ public class OrphanedBlobFinderTest
 
     @Override
     public Map<String, String> getHeaders() {
-      return ImmutableMap.of("Bucket.repo-name", REPOSITORY_NAME, "BlobStore.blob-name", ASSET_NAME);
+      return of("Bucket.repo-name", REPOSITORY_NAME, "BlobStore.blob-name", ASSET_NAME);
     }
 
     @Override

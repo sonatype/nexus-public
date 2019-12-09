@@ -212,16 +212,17 @@ class RepositoryComponent
 
     initializeCleanupAttributes(repositoryXO)
 
-    return asRepository(repositoryManager.create(new Configuration(
-        repositoryName: repositoryXO.name,
-        recipeName: repositoryXO.recipe,
-        online: repositoryXO.online,
-        routingRuleId: StringUtils.isNotBlank(repositoryXO.routingRuleId) ? new DetachedEntityId(
-            repositoryXO.routingRuleId) : null,
-        attributes: repositoryXO.attributes
-    )))
+    def config = repositoryManager.newConfiguration()
+    config.with {
+      repositoryName = repositoryXO.name
+      recipeName = repositoryXO.recipe
+      online = repositoryXO.online
+      routingRuleId = StringUtils.isNotBlank(repositoryXO.routingRuleId) ? new DetachedEntityId(
+          repositoryXO.routingRuleId) : null
+      attributes = repositoryXO.attributes
+    }
+    return asRepository(repositoryManager.create(config))
   }
-
 
   @DirectMethod
   @Timed

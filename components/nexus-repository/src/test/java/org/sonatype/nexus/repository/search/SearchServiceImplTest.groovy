@@ -236,8 +236,8 @@ class SearchServiceImplTest
   protected Repository repository(String name) {
     Repository repository = new RepositoryImpl(eventManager, new HostedType(), new TestFormat('test'))
     repository.name = name
-    def configuration = new Configuration()
-    configuration.online = true
+    def configuration = mock(Configuration)
+    when(configuration.isOnline()).thenReturn(true)
     repository.configuration = configuration
     SearchFacet searchFacet = mock(SearchFacet)
     repository.attach(searchFacet)

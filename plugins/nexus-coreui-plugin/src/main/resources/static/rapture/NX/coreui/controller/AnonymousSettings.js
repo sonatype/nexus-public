@@ -47,9 +47,7 @@ Ext.define('NX.coreui.controller.AnonymousSettings', {
    * @override
    */
   init: function() {
-    var me = this;
-
-    me.getApplication().getFeaturesController().registerFeature({
+    this.getApplication().getFeaturesController().registerFeature({
       mode: 'admin',
       path: '/Security/Anonymous',
       text: NX.I18n.get('AnonymousSettings_Text'),
@@ -62,63 +60,37 @@ Ext.define('NX.coreui.controller.AnonymousSettings', {
       visible: function() {
         return NX.Permissions.check('nexus:settings:read');
       }
-    }, me);
+    }, this);
 
-    if (NX.State.getValue('reactFrontend', false)) {
-      me.listen({
-        controller: {
-          '#Refresh': {
-            refresh: function() {
-              var rootNode = document.getElementById('anonymous-settings-page');
-              window.ReactDOM.unmountComponentAtNode(rootNode);
-              window.ReactDOM.render(
-                  window.react.createElement(REACT_COMPONENTS.AnonymousSettings),
-                  rootNode
-              );
-            }
-          }
-        },
-        component: {
-          'nx-coreui-security-anonymous-settings': {
-            afterrender: function() {
-              window.ReactDOM.render(
-                  window.react.createElement(REACT_COMPONENTS.AnonymousSettings),
-                  document.getElementById('anonymous-settings-page')
-              );
-            }
-          }
+    this.listen({
+      controller: {
+        '#Refresh': {
+          refresh: this.loadRealmTypes
         }
-      });
-    }
-    else {
-      me.listen({
-        controller: {
-          '#Refresh': {
-            refresh: me.loadRealmTypes
-          }
-        },
-        component: {
-          'nx-coreui-security-anonymous-settings': {
-            beforerender: me.loadRealmTypes
-          }
+      },
+      component: {
+        'nx-coreui-security-anonymous-settings': {
+          beforerender: this.loadRealmTypes
         }
-      });
-    }
+      }
+    });
   },
 
   /**
    * @private
    */
   loadRealmTypes: function() {
-    var me = this,
-        panel = me.getPanel();
+    var panel = this.getPanel();
 
     if (panel) {
-      me.getStore('RealmType').load(function() {
-        // The form depends on this store, so load it after the store has loaded
-        var form = me.getForm();
-        if (form) {
-          form.load();
+      this.getRealmTypeStore().load({
+        scope: this,
+        callback: function() {
+          // The form depends on this store, so load it after the store has loaded
+          var form = this.getForm();
+          if (form) {
+            form.load();
+          }
         }
       });
     }
