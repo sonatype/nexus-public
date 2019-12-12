@@ -92,8 +92,8 @@
     <nexus2.version>2.14.15-01</nexus2.version>
 
     <!-- Define the node and npm versions used by the frontend-maven-plugin -->
-    <node.version>v10.15.3</node.version>
-    <npm.version>6.9.0</npm.version>
+    <node.version>v11.15.0</node.version>
+    <npm.version>6.7.0</npm.version>
 
     <!-- logging configuration used in logback config files to control test logging -->
     <test.log.level>INFO</test.log.level>
@@ -383,6 +383,13 @@
         <artifactId>nexus-rapture</artifactId>
         <version>3.21.0-SNAPSHOT</version>
         <classifier>sources</classifier>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-react-shared-components</artifactId>
+        <type>pom</type>
+        <version>3.20.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>

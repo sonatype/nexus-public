@@ -65,6 +65,7 @@
     <module>nexus-plugin-api</module>
     <module>nexus-quartz</module>
     <module>nexus-rapture</module>
+    <module>nexus-react-shared-components</module>
     <module>nexus-repository</module>
     <module>nexus-repository-content</module>
     <module>nexus-rest</module>

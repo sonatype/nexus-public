@@ -17,8 +17,9 @@
     "@fortawesome/react-fontawesome": "=0.1.4",
     "axios": "=0.19.0",
     "classnames": "=2.2.6",
-    "react": "=16.9.0",
-    "react-dom": "=16.9.0"
+    "nexus-react-shared-components": "file:../nexus-react-shared-components",
+    "react": "=16.11.0",
+    "react-dom": "=16.11.0"
   },
   "devDependencies": {
     "@babel/core": "=7.4.5",

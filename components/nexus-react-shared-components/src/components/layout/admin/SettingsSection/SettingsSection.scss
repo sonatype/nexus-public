@@ -10,9 +10,43 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+/**
+ * @since 3.next
+ */
+@import '../../../../styles/colors';
 
-.nxrm-anonymous-settings {
-  .nxrm-anonymous-settings-field {
-    width: 250px;
+.nxrm-settings-section {
+  background-color: $white;
+  border: solid 1px $light-gray;
+  padding: 12px;
+}
+
+.nxrm-settings-section-loading-mask {
+  align-items: center;
+  background-color: $transparent;
+  color: $white;
+  display: flex;
+  font-size: 1.5em;
+  justify-content: center;
+  position: absolute;
+}
+
+.nxrm-settings-section-field-wrapper {
+  display: block;
+  margin-bottom: 15px;
+
+  .nxrm-settings-section-field-wrapper-label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+}
+
+.nxrm-settings-section-footer {
+  display: flex;
+  margin-top: 10px;
+
+  & > .nxrm-button {
+    margin-right: 10px;
   }
 }

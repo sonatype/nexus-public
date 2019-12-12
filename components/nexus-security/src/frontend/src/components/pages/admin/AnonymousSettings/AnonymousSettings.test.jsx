@@ -12,13 +12,11 @@
  */
 import {mount, shallow} from 'enzyme';
 import React from 'react';
+import { act } from 'react-dom/test-utils';
 
 import Axios from 'axios';
 import AnonymousSettings from './AnonymousSettings';
-import Button from '../../../../components/widgets/Button/Button';
-import Checkbox from '../../../../components/widgets/Checkbox/Checkbox';
-import Select from '../../../../components/widgets/Select/Select';
-import Textfield from '../../../../components/widgets/Textfield/Textfield';
+import { Button, Checkbox, Textfield, Select } from 'nexus-react-shared-components';
 import UIStrings from '../../../../constants/UIStrings';
 
 const mockRealmTypes = [
@@ -50,9 +48,10 @@ jest.mock('../../../../interface/ExtJS');
 
 describe('AnonymousSettings', () => {
   // see https://github.com/airbnb/enzyme/issues/1587
-  const waitForDataFromApi = (wrapper) => Promise.resolve(wrapper)
+  const waitForDataFromApi = (wrapper) => act(() => Promise.resolve(wrapper)
       .then(() => wrapper.update())
-      .then(() => wrapper.update());
+      .then(() => wrapper.update())
+  );
 
   const assertDefaultValues = (wrapper) => {
     expect(wrapper.find(Checkbox)).toHaveProp('isChecked', mockAnonymousSettings.enabled);

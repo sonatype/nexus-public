@@ -1,4 +1,4 @@
-/**
+/*
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
  * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
@@ -10,9 +10,18 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import classNames from 'classnames';
+import React from 'react';
 
-.nxrm-anonymous-settings {
-  .nxrm-anonymous-settings-field {
-    width: 250px;
-  }
+import './ContentBody.scss';
+
+/**
+ * @since 3.next
+ */
+export default function ContentBody({children, className}) {
+  const classes = classNames('nxrm-content-body', className);
+
+  return <div className={classes}>
+    {children}
+  </div>;
 }

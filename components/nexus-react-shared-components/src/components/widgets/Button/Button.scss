@@ -11,8 +11,35 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-.nxrm-anonymous-settings {
-  .nxrm-anonymous-settings-field {
-    width: 250px;
+@import '../../../styles/colors';
+
+.nxrm-button {
+  background-color: $almost-white;
+  border: solid 1px $almost-black;
+  border-radius: 3px;
+  color: $almost-black;
+  font-family: inherit;
+  font-size: 1em;
+  height: 2em;
+  min-width: 76px;
+  opacity: 1;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    filter: brightness(0.9);
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.5;
+  }
+
+  &:focus, &:active {
+    border-color: $light-blue;
+  }
+
+  &.nxrm-button-primary {
+    background-color: $blue;
+    color: $white;
   }
 }
