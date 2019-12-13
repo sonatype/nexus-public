@@ -11,10 +11,41 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-@import '../../../../styles/Colors.scss';
+@import '../../../../styles/Colors';
 
-.nxrm-anonymous-settings {
-  .nxrm-anonymous-settings-field {
-    width: 250px;
+.nxrm-settings-section {
+  background-color: $white;
+  border: solid 1px $light-gray;
+  padding: 12px;
+}
+
+.nxrm-settings-section-loading-mask {
+  align-items: center;
+  background-color: $transparent;
+  color: $white;
+  display: flex;
+  font-size: 1.5em;
+  justify-content: center;
+  position: absolute;
+  width: calc(100% - 24px);
+}
+
+.nxrm-settings-section-field-wrapper {
+  display: block;
+  margin-bottom: 15px;
+
+  .nxrm-settings-section-field-wrapper-label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+}
+
+.nxrm-settings-section-footer {
+  display: flex;
+  margin-top: 10px;
+
+  & > .nxrm-button {
+    margin-right: 10px;
   }
 }

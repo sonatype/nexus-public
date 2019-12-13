@@ -10,8 +10,6 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import { UIStrings } from 'nexus-react-shared-components';
-
 export default {
   ANONYMOUS_SETTINGS: {
     ENABLED_CHECKBOX_LABEL: 'Access:',
@@ -24,5 +22,14 @@ export default {
       SAVE_ERROR: 'An error occurred while updating Anonymous settings, see console for more details'
     }
   },
-  ...UIStrings
+
+  SETTINGS: {
+    DISCARD_BUTTON_LABEL: 'Discard',
+    LOADING_MASK: 'Loading...',
+    SAVE_BUTTON_LABEL: 'Save'
+  },
+
+  ERROR: {
+    FIELD_REQUIRED: 'This field is required'
+  }
 };

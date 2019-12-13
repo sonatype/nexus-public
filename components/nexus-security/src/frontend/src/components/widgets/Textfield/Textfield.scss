@@ -11,10 +11,21 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-@import '../../../../styles/Colors.scss';
+@import '../../../styles/Colors';
 
-.nxrm-anonymous-settings {
-  .nxrm-anonymous-settings-field {
-    width: 250px;
+.nxrm-textfield {
+  border: solid 1px;
+  border-color: $gray $light-gray $light-gray;
+  font-size: 1em;
+  height: 2em;
+  padding-left: 0.4em;
+  width: 100%;
+
+  &.missing-required-value {
+    border-color: $red;
+  }
+
+  &:focus, &:active {
+    border-color: $light-blue;
   }
 }

@@ -20,7 +20,7 @@ module.exports = merge(common, {
   devtool: 'eval-source-map',
 
   output: {
-    filename: 'nexus-security-bundle.debug.js',
+    filename: 'nexus-security-bundle.debug.[hash].js',
     path: path.resolve(__dirname, 'target', 'classes', 'static')
   }
 });

@@ -10,13 +10,12 @@ exports[`AnonymousSettings renders correctly 1`] = `
     <Component
       labelText="Access:"
     >
-      <ForwardRef(NxCheckbox)
+      <Checkbox
         isChecked={false}
+        labelText="Allow anonymous users to access the server"
         name="enabled"
         onChange={[Function]}
-      >
-        Allow anonymous users to access the server
-      </ForwardRef(NxCheckbox)>
+      />
     </Component>
     <Component
       labelText="Username:"
@@ -40,19 +39,19 @@ exports[`AnonymousSettings renders correctly 1`] = `
       />
     </Component>
     <Component>
-      <ForwardRef(NxButton)
+      <Button
         disabled={true}
+        isPrimary={true}
         onClick={[Function]}
-        variant="primary"
       >
         Save
-      </ForwardRef(NxButton)>
-      <ForwardRef(NxButton)
+      </Button>
+      <Button
         disabled={true}
         onClick={[Function]}
       >
         Discard
-      </ForwardRef(NxButton)>
+      </Button>
     </Component>
   </SettingsSection>
 </ContentBody>

@@ -29,14 +29,6 @@
 
   <dependencies>
     <dependency>
-      <!-- This dependency is just to ensure that nexus-react-shared-components is built before any other react plugins -->
-      <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-react-shared-components</artifactId>
-      <type>pom</type>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>jsr305</artifactId>
     </dependency>

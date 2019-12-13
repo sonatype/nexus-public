@@ -37,12 +37,12 @@ public class UiUtilTest
   @Test
   public void getHashedFilename() throws Exception {
     Enumeration<URL> mockedResponse = enumeration(asList(
-        new File("/nexus-frontend-bundle.js").toURI().toURL()
+        new File("/nexus-frontend-bundle.hash_value.js").toURI().toURL()
     ));
-    when(space.findEntries("static", "nexus-frontend-bundle.js", true)).thenReturn(mockedResponse);
+    when(space.findEntries("static", "nexus-frontend-bundle.*.js", true)).thenReturn(mockedResponse);
 
-    String hashedFilename = UiUtil.getPathForFile("nexus-frontend-bundle.js", space);
+    String hashedFilename = UiUtil.getHashedFilename("nexus-frontend-bundle.js", space);
 
-    assertThat(hashedFilename, is("/nexus-frontend-bundle.js"));
+    assertThat(hashedFilename, is("/nexus-frontend-bundle.hash_value.js"));
   }
 }

@@ -11,10 +11,8 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-@import '../../../../styles/Colors.scss';
+@import '../../../../styles/Colors';
 
-.nxrm-anonymous-settings {
-  .nxrm-anonymous-settings-field {
-    width: 250px;
-  }
+.nxrm-content-body {
+  padding: 12px;
 }

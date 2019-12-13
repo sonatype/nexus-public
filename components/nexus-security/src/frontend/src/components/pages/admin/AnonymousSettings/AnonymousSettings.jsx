@@ -15,8 +15,13 @@ import React, {useState, useEffect} from 'react';
 import './AnonymousSettings.scss';
 
 import Axios from 'axios';
-import { Button, ContentBody, Checkbox, Textfield, Select, SettingsSection } from 'nexus-react-shared-components';
+import Button from '../../../../components/widgets/Button/Button';
+import Checkbox from '../../../../components/widgets/Checkbox/Checkbox';
+import ContentBody from '../../../../components/layout/common/ContentBody/ContentBody';
 import ExtJS from '../../../../interface/ExtJS';
+import Select from '../../../../components/widgets/Select/Select';
+import SettingsSection from '../../../../components/layout/admin/SettingsSection/SettingsSection';
+import Textfield from '../../../../components/widgets/Textfield/Textfield';
 import UIStrings from '../../../../constants/UIStrings';
 
 export default function AnonymousSettings() {
@@ -64,7 +69,7 @@ export default function AnonymousSettings() {
   const handleInputChange = (event) => {
     const target = event.target;
     const value = target.type === 'checkbox' ? target.checked : target.value;
-    const name = target.name || target.id;
+    const name = target.name;
     setAnonymousSettings({
       ...anonymousSettings,
       [name]: value
@@ -96,12 +101,11 @@ export default function AnonymousSettings() {
           labelText={UIStrings.ANONYMOUS_SETTINGS.ENABLED_CHECKBOX_LABEL}
       >
         <Checkbox
-            checkboxId='enabled'
+            name='enabled'
             isChecked={enabled}
             onChange={handleInputChange}
-        >
-          {UIStrings.ANONYMOUS_SETTINGS.ENABLED_CHECKBOX_DESCRIPTION}
-        </Checkbox>
+            labelText={UIStrings.ANONYMOUS_SETTINGS.ENABLED_CHECKBOX_DESCRIPTION}
+        />
       </SettingsSection.FieldWrapper>
       <SettingsSection.FieldWrapper
           labelText={UIStrings.ANONYMOUS_SETTINGS.USERNAME_TEXTFIELD_LABEL}
@@ -132,7 +136,7 @@ export default function AnonymousSettings() {
       </SettingsSection.FieldWrapper>
       <SettingsSection.Footer>
         <Button
-            variant='primary'
+            isPrimary={true}
             disabled={isPristine || !userId}
             onClick={handleSave}
         >
