@@ -51,7 +51,6 @@ import org.mockito.Mock;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
@@ -324,7 +323,7 @@ public class SimpleApiRepositoryAdapterTest
       final Function<AbstractApiRepository, CleanupPolicyAttributes> cleanupFn) throws Exception
   {
     AbstractApiRepository restRepository = underTest.adapt(repository);
-    assertThat(cleanupFn.apply(restRepository).getPolicyNames(), empty());
+    assertThat(cleanupFn.apply(restRepository), nullValue());
 
     NestedAttributesMap storage = repository.getConfiguration().attributes("cleanup");
     storage.set("policyName", Collections.singleton("policy-a"));

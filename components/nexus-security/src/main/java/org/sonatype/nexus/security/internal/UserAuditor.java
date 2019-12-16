@@ -62,7 +62,7 @@ public class UserAuditor
       data.setType(type(event.getClass()));
       data.setContext(user.getUserId());
 
-      Map<String, String> attributes = data.getAttributes();
+      Map<String, Object> attributes = data.getAttributes();
       attributes.put("id", user.getUserId());
       attributes.put("name", user.getName());
       attributes.put("email", user.getEmailAddress());

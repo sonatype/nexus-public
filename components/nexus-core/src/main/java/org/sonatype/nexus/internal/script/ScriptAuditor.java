@@ -59,7 +59,7 @@ public class ScriptAuditor
       data.setType(type(event.getClass()));
       data.setContext(script.getName());
 
-      Map<String, String> attributes = data.getAttributes();
+      Map<String, Object> attributes = data.getAttributes();
       attributes.put("name", script.getName());
       attributes.put("type", script.getType());
 

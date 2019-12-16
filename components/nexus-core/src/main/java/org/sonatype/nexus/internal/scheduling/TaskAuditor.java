@@ -70,7 +70,7 @@ public class TaskAuditor
       data.setType(type(event.getClass()));
       data.setContext(configuration.getTypeName());
 
-      Map<String, String> attributes = data.getAttributes();
+      Map<String, Object> attributes = data.getAttributes();
       // TaskInfo.{id/name/message} are all delegates to configuration
       attributes.put("schedule", string(task.getSchedule()));
       attributes.put("currentState", string(task.getCurrentState()));

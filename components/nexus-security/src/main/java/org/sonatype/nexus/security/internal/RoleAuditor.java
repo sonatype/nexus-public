@@ -59,7 +59,7 @@ public class RoleAuditor
       data.setType(type(event.getClass()));
       data.setContext(role.getRoleId());
 
-      Map<String, String> attributes = data.getAttributes();
+      Map<String, Object> attributes = data.getAttributes();
       attributes.put("id", role.getRoleId());
       attributes.put("name", role.getName());
       attributes.put("source", role.getSource());

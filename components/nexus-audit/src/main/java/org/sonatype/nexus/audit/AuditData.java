@@ -78,7 +78,7 @@ public class AuditData
   /**
    * Extensible attributes for the change.
    */
-  private Map<String, String> attributes = new LinkedHashMap<>();
+  private Map<String, Object> attributes = new LinkedHashMap<>();
 
   public String getDomain() {
     return domain;
@@ -128,14 +128,14 @@ public class AuditData
     this.initiator = initiator;
   }
 
-  public Map<String, String> getAttributes() {
+  public Map<String, Object> getAttributes() {
     return attributes;
   }
 
   /**
    * @since 3.5
    */
-  public void setAttributes(final Map<String, String> attributes) {
+  public void setAttributes(final Map<String, Object> attributes) {
     this.attributes = attributes;
   }
 

@@ -61,7 +61,7 @@ public class SslCertificateAuditor
       data.setDomain(DOMAIN);
       data.setType(type(event.getClass()));
 
-      Map<String, String> attributes = data.getAttributes();
+      Map<String, Object> attributes = data.getAttributes();
       attributes.put("alias", event.getAlias());
       attributes.put("type", certificate.getType());
 

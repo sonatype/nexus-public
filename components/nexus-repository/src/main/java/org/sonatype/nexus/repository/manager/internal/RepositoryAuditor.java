@@ -12,8 +12,10 @@
  */
 package org.sonatype.nexus.repository.manager.internal;
 
+import java.util.HashMap;
 import java.util.Map;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -30,7 +32,12 @@ import org.sonatype.nexus.repository.manager.RepositoryDeletedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryLoadedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryRestoredEvent;
 import org.sonatype.nexus.repository.manager.RepositoryUpdatedEvent;
+import org.sonatype.nexus.repository.rest.api.ApiRepositoryAdapter;
+import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 
@@ -47,7 +54,20 @@ public class RepositoryAuditor
 {
   public static final String DOMAIN = "repository";
 
-  public RepositoryAuditor() {
+  private ObjectMapper mapper = new ObjectMapper();
+
+  private final Map<String, ApiRepositoryAdapter> convertersByFormat;
+
+  private final ApiRepositoryAdapter defaultAdapter;
+
+  @Inject
+  public RepositoryAuditor(
+      final Map<String, ApiRepositoryAdapter> convertersByFormat,
+      @Named("default") final ApiRepositoryAdapter defaultAdapter)
+  {
+    this.convertersByFormat = convertersByFormat;
+    this.defaultAdapter = defaultAdapter;
+
     registerType(RepositoryCreatedEvent.class, CREATED_TYPE);
     registerType(RepositoryRestoredEvent.class, "restored");
     registerType(RepositoryUpdatedEvent.class, UPDATED_TYPE);
@@ -68,12 +88,45 @@ public class RepositoryAuditor
       data.setType(type(event.getClass()));
       data.setContext(repository.getName());
 
-      Map<String, String> attributes = data.getAttributes();
-      attributes.put("name", repository.getName());
-      attributes.put("type", repository.getType().getValue());
-      attributes.put("format", repository.getFormat().getValue());
+      if (event instanceof RepositoryCreatedEvent || event instanceof RepositoryUpdatedEvent) {
+        data.setAttributes(createFullAttributes(repository));
+      }
+      else {
+        data.setAttributes(createSimple(repository));
+      }
 
       record(data);
     }
+  }
+
+  private Map<String, Object> createFullAttributes(final Repository repository) {
+    try {
+      AbstractApiRepository apiObject = convert(repository);
+
+      ObjectWriter writer = mapper.writerFor(apiObject.getClass());
+
+      String json = writer.writeValueAsString(apiObject);
+
+      return mapper.readerFor(new TypeReference<Map<String, Object>>()
+      {
+      }).readValue(json);
+    }
+    catch (Exception e) {
+      log.error("Failed to convert repo object falling back to simple", e);
+      return createSimple(repository);
+    }
+  }
+
+  private Map<String, Object> createSimple(final Repository repository) {
+    Map<String, Object> attributes = new HashMap<>();
+    attributes.put("name", repository.getName());
+    attributes.put("type", repository.getType().getValue());
+    attributes.put("format", repository.getFormat().getValue());
+    return attributes;
+
+  }
+
+  private AbstractApiRepository convert(final Repository repository) {
+    return convertersByFormat.getOrDefault(repository.getFormat().getValue(), defaultAdapter).adapt(repository);
   }
 }

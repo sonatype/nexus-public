@@ -26,7 +26,7 @@ import org.sonatype.nexus.validation.ConstraintValidatorSupport;
  * @since 3.13
  */
 public class UrlStringValidator
-    extends ConstraintValidatorSupport<Url, String>
+    extends ConstraintValidatorSupport<UrlString, String>
 {
   private static final UrlValidator urlValidator = new UrlValidator();
 

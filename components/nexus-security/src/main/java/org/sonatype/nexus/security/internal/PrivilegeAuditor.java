@@ -60,7 +60,7 @@ public class PrivilegeAuditor
       data.setType(type(event.getClass()));
       data.setContext(privilege.getId());
 
-      Map<String, String> attributes = data.getAttributes();
+      Map<String, Object> attributes = data.getAttributes();
       attributes.put("id", privilege.getId());
       attributes.put("name", privilege.getName());
       attributes.put("type", privilege.getType());

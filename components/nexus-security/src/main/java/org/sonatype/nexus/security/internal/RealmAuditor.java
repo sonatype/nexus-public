@@ -50,7 +50,7 @@ public class RealmAuditor
       data.setType(CHANGED_TYPE);
       data.setContext(SYSTEM_CONTEXT);
 
-      Map<String, String> attributes = data.getAttributes();
+      Map<String, Object> attributes = data.getAttributes();
       attributes.put("realms", string(configuration.getRealmNames()));
 
       record(data);
