@@ -21,8 +21,6 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -49,6 +47,7 @@ import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserManager;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.security.user.UserSearchCriteria;
+import org.sonatype.nexus.validation.Validate;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang.StringUtils;
@@ -107,7 +106,8 @@ public class UserApiResource
   @POST
   @RequiresAuthentication
   @RequiresPermissions("nexus:users:create")
-  public ApiUser createUser(@NotNull @Valid final ApiCreateUser createUser) {
+  @Validate
+  public ApiUser createUser(final ApiCreateUser createUser) {
     if (Strings2.isBlank(createUser.getPassword())) {
       throw createWebException(Status.BAD_REQUEST, "A non-empty password is required.");
     }
@@ -126,7 +126,8 @@ public class UserApiResource
   @Path("{userId}")
   @RequiresAuthentication
   @RequiresPermissions("nexus:users:update")
-  public void updateUser(@PathParam("userId") final String userId, @NotNull @Valid final ApiUser apiUser) {
+  @Validate
+  public void updateUser(@PathParam("userId") final String userId, final ApiUser apiUser) {
     if (!userId.equals(apiUser.getUserId())) {
       log.debug("The path userId '{}' does not match the userId supplied in the body '{}'.", userId,
           apiUser.getUserId());
@@ -188,7 +189,8 @@ public class UserApiResource
   @RequiresPermissions("nexus:*")
   @Path("{userId}/change-password")
   @Consumes(MediaType.TEXT_PLAIN)
-  public void changePassword(@PathParam("userId") final String userId, @NotNull final String password) {
+  @Validate
+  public void changePassword(@PathParam("userId") final String userId, final String password) {
     if (StringUtils.isBlank(password)) {
       throw createWebException(Status.BAD_REQUEST, "Password must be supplied.");
     }

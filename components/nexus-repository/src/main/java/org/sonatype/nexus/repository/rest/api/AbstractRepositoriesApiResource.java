@@ -16,8 +16,6 @@ import java.util.StringJoiner;
 
 import javax.inject.Inject;
 import javax.validation.ConstraintViolationException;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -68,7 +66,7 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
   @POST
   @RequiresAuthentication
   @Validate
-  public Response createRepository(@NotNull @Valid final T request) {
+  public Response createRepository(final T request) {
     try {
       authorizingRepositoryManager.create(configurationAdapter.convert(request));
       return Response.status(Status.CREATED).build();
@@ -93,7 +91,7 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
   @RequiresAuthentication
   @Validate
   public Response updateRepository(
-      @NotNull @Valid final T request,
+      final T request,
       @PathParam("repositoryName") final String repositoryName)
   {
     try {

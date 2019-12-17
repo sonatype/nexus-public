@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.golang.rest;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.core.Response;
 
 import org.sonatype.nexus.repository.golang.rest.model.GolangProxyRepositoryApiRequest;
@@ -43,7 +41,7 @@ public interface GolangProxyRepositoriesApiResourceDoc
       @ApiResponse(code = 401, message = AUTHENTICATION_REQUIRED),
       @ApiResponse(code = 403, message = INSUFFICIENT_PERMISSIONS)
   })
-  Response createRepository(@Valid @NotNull final GolangProxyRepositoryApiRequest request);
+  Response createRepository(final GolangProxyRepositoryApiRequest request);
 
   @ApiOperation("Update a Go proxy repository")
   @ApiResponses(value = {
@@ -53,6 +51,6 @@ public interface GolangProxyRepositoriesApiResourceDoc
       @ApiResponse(code = 404, message = REPOSITORY_NOT_FOUND)
   })
   Response updateRepository(
-      @Valid @NotNull final GolangProxyRepositoryApiRequest request,
+      final GolangProxyRepositoryApiRequest request,
       @ApiParam(value = "Name of the repository to update") final String repositoryName);
 }

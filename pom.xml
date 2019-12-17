@@ -841,11 +841,12 @@
               <id>bcpkix-jdk15on</id>
               <id>bcpg-jdk15on</id>
               <id>directjngine</id>
+              <id>validation-api</id>
               <!--
               Need special wrapping/fragments
               -->
-              <id>javax.el</id>
-              <id>validation-api</id>
+              <id>jakarta.el</id>
+              <id>jakarta.validation-api</id>
               <id>paranamer</id>
               <id>httpcore</id>
               <id>httpclient</id>

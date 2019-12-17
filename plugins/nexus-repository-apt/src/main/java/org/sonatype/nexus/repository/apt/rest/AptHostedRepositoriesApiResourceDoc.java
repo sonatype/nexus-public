@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.apt.rest;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.core.Response;
 
 import io.swagger.annotations.Api;
@@ -41,7 +39,7 @@ public interface AptHostedRepositoriesApiResourceDoc
       @ApiResponse(code = 401, message = AUTHENTICATION_REQUIRED),
       @ApiResponse(code = 403, message = INSUFFICIENT_PERMISSIONS)
   })
-  Response createRepository(@Valid @NotNull final AptHostedRepositoryApiRequest request);
+  Response createRepository(final AptHostedRepositoryApiRequest request);
 
   @ApiOperation("Update APT hosted repository")
   @ApiResponses(value = {
@@ -51,6 +49,6 @@ public interface AptHostedRepositoriesApiResourceDoc
       @ApiResponse(code = 404, message = REPOSITORY_NOT_FOUND)
   })
   Response updateRepository(
-      @Valid @NotNull final AptHostedRepositoryApiRequest request,
+      final AptHostedRepositoryApiRequest request,
       @ApiParam(value = "Name of the repository to update") final String repositoryName);
 }
