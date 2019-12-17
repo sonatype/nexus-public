@@ -22,7 +22,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 /**
  * REST API model describing a proxy repository.
  *
- * @since 3.next
+ * @since 3.20
  */
 public class ProxyAttributes
 {

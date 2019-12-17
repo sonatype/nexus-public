@@ -26,7 +26,7 @@ import com.google.common.hash.HashCode;
 /**
  * Represents a session with a {@link BlobStore}.
  *
- * @since 3.next
+ * @since 3.20
  */
 public interface BlobSession<T extends Transaction>
     extends TransactionalSession<T>

@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -149,6 +150,21 @@ public class SelectorManagerImpl
   }
 
   @Override
+  public void create(
+      final String name,
+      final String type,
+      final String description,
+      final Map<String, String> attributes)
+  {
+    SelectorConfiguration selectorConfiguration = store.newSelectorConfiguration();
+    selectorConfiguration.setName(name);
+    selectorConfiguration.setType(type);
+    selectorConfiguration.setDescription(description);
+    selectorConfiguration.setAttributes(attributes);
+    store.create(selectorConfiguration);
+  }
+
+  @Override
   @Guarded(by = STARTED)
   public void update(final SelectorConfiguration configuration) {
     store.update(configuration);
@@ -234,6 +250,26 @@ public class SelectorManagerImpl
     }).filter(Objects::nonNull).filter(repositoryFormatOrNameMatcher(repositoryNames, formats)).map(this::getContentSelector).collect(toList());
 
     return browse().stream().filter(selector -> contentSelectorNames.contains(selector.getName())).collect(toList());
+  }
+
+  @Override
+  public SelectorConfiguration newSelectorConfiguration() {
+    return store.newSelectorConfiguration();
+  }
+
+  @Override
+  public SelectorConfiguration newSelectorConfiguration(
+      String name,
+      String type,
+      String description,
+      Map<String, ?> attributes)
+  {
+    SelectorConfiguration selectorConfiguration = store.newSelectorConfiguration();
+    selectorConfiguration.setName(name);
+    selectorConfiguration.setType(type);
+    selectorConfiguration.setDescription(description);
+    selectorConfiguration.setAttributes(attributes);
+    return selectorConfiguration;
   }
 
   private boolean matchesFormatOrRepository(final List<String> repositoryNames,

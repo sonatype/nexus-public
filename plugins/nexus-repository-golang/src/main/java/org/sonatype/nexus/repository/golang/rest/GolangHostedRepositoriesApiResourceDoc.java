@@ -32,7 +32,7 @@ import static org.sonatype.nexus.rest.ApiDocConstants.REPOSITORY_NOT_FOUND;
 import static org.sonatype.nexus.rest.ApiDocConstants.REPOSITORY_UPDATED;
 
 /**
- * @since 3.next
+ * @since 3.20
  */
 @Api(value = API_REPOSITORY_MANAGEMENT)
 public interface GolangHostedRepositoriesApiResourceDoc

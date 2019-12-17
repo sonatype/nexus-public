@@ -22,7 +22,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Support for {@link UiPluginDescriptor} implementations.
  *
- * @since 3.next
+ * @since 3.20
  */
 public abstract class UiPluginDescriptorSupport
   extends ComponentSupport

@@ -28,7 +28,7 @@ import org.apache.ibatis.annotations.Param;
 /**
  * Component {@link ContentDataAccess}.
  *
- * @since 3.next
+ * @since 3.20
  */
 @Expects(ContentRepositoryDAO.class)
 @SchemaTemplate("format")

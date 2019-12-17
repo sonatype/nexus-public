@@ -68,6 +68,9 @@ class NpmGroupRecipe
   ContentHeadersHandler contentHeadersHandler
 
   @Inject
+  NpmWhoamiHandler npmWhoamiHandler;
+
+  @Inject
   NpmGroupRecipe(@Named(GroupType.NAME) final Type type,
                  @Named(NpmFormat.NAME) final Format format)
   {
@@ -106,6 +109,12 @@ class NpmGroupRecipe
         .handler(unitOfWorkHandler)
         .handler(searchHandler)
         .create())
+
+    // GET /-/whoami
+    builder.route(whoamiMatcher()
+        .handler(timingHandler)
+        .handler(npmWhoamiHandler)
+        .create());
 
     // GET /packageName (npm install)
     builder.route(packageMatcher(GET, HEAD)

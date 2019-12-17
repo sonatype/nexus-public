@@ -24,7 +24,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 /**
  * REST API Model for viewing Data Stores.
  *
- * @since 3.next
+ * @since 3.20
  */
 public class DataStoreApiXO
 {

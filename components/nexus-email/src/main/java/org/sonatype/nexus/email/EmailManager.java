@@ -44,7 +44,7 @@ public interface EmailManager
 
   /**
    * Create a new and empty {@link EmailConfiguration}
-   * @since 3.next
+   * @since 3.20
    */
   EmailConfiguration newConfiguration();
 }

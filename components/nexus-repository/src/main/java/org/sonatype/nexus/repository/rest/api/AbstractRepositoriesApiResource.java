@@ -44,7 +44,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 
 /**
- * @since 3.next
+ * @since 3.20
  */
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)

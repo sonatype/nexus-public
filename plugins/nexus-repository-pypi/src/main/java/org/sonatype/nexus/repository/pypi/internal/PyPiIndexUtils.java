@@ -22,13 +22,11 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
@@ -48,6 +46,7 @@ import org.slf4j.LoggerFactory;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.valueOf;
 import static java.util.regex.Pattern.compile;
+import static java.util.stream.Collectors.toList;
 import static org.apache.http.client.utils.URLEncodedUtils.parse;
 
 /**
@@ -60,6 +59,15 @@ public final class PyPiIndexUtils
 
   private static final Logger log = LoggerFactory.getLogger(PyPiIndexUtils.class);
 
+  /**
+   * From PEP_053:
+   * A repository MAY include a data-requires-python attribute on a file link.
+   * This exposes the Requires-Python metadata field, specified in PEP 345, for the corresponding release.
+   * Where this is present, installer tools SHOULD ignore the download when installing
+   * to a Python version that doesn't satisfy the requirement.
+   */
+  private static final String PYPI_REQUIRES_PYTHON = "data-requires-python";
+
   public static final String ABSOLUTE_URL_PREFIX = "^https?://.*";
 
   public static final Pattern PATH_WITH_HOST_PREFIX = compile(
@@ -70,9 +78,9 @@ public final class PyPiIndexUtils
   /**
    * Returns a map (in original order of appearance) of the files and associated paths extracted from the index.
    */
-  static Map<String, String> extractLinksFromIndex(final InputStream in) throws IOException {
+  static List<PyPiLink> extractLinksFromIndex(final InputStream in) throws IOException {
     checkNotNull(in);
-    Map<String, String> results = new LinkedHashMap<>();
+    List<PyPiLink> results = new ArrayList<>();
     try (Reader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
       String html = CharStreams.toString(reader);
       Document document = Jsoup.parse(html);
@@ -80,9 +88,8 @@ public final class PyPiIndexUtils
       for (Element link : links) {
         String file = link.text().trim();
         String path = link.attr("href");
-        if (!results.containsKey(file)) {
-          results.put(file, path);
-        }
+        String requiresPython = link.attr(PYPI_REQUIRES_PYTHON);
+        results.add(new PyPiLink(file, path, requiresPython));
       }
     }
     return results;
@@ -91,37 +98,48 @@ public final class PyPiIndexUtils
   /**
    * Returns a string containing the HTML simple index page for the links, rendered in iteration order.
    */
-  static String buildIndexPage(final TemplateHelper helper, final String name, final Map<String, String> links) {
+  static String buildIndexPage(final TemplateHelper helper, final String name, final Collection<PyPiLink> links) {
     checkNotNull(helper);
     checkNotNull(name);
     checkNotNull(links);
     URL template = PyPiIndexUtils.class.getResource("pypi-index.vm");
     TemplateParameters params = helper.parameters();
     params.set("name", name);
-    params.set("assets", links.entrySet().stream()
-        .map((link) -> ImmutableMap.of(
-            "link", link.getValue(),
-            "file", link.getKey())
-        )
-        .collect(Collectors.toList()));
+    params.set("assets", links.stream().map(PyPiIndexUtils::indexLinkToMap).collect(toList()));
     return helper.render(template, params);
   }
 
   /**
    * Returns a string containing the HTML simple root index page for the links, rendered in iteration order.
    */
-  static String buildRootIndexPage(final TemplateHelper helper, final Map<String, String> links) {
+  static String buildRootIndexPage(final TemplateHelper helper, final Collection<PyPiLink> links) {
     checkNotNull(helper);
     checkNotNull(links);
     URL template = PyPiIndexUtils.class.getResource("pypi-root-index.vm");
     TemplateParameters params = helper.parameters();
-    params.set("assets", links.entrySet().stream().map((link) -> {
-      Map<String, String> data = new HashMap<>();
-      data.put("link", link.getValue());
-      data.put("name", link.getKey());
-      return data;
-    }).collect(Collectors.toList()));
+    params.set("assets", links.stream().map(PyPiIndexUtils::rootIndexLinkToMap).collect(toList()));
     return helper.render(template, params);
+  }
+
+  /**
+   * Convert a link to a map ready to be used for "pypi-index.vm".
+   */
+  static ImmutableMap<String, String> indexLinkToMap(final PyPiLink link) {
+    return ImmutableMap.of(
+        "link", link.getLink(),
+        "file", link.getFile(),
+        "data-requires-python", link.getDataRequiresPython()
+    );
+  }
+
+  /**
+   * Convert a link to a map ready to be used for "pypi-root-index.vm".
+   */
+  static ImmutableMap<String, String> rootIndexLinkToMap(final PyPiLink link) {
+    return ImmutableMap.of(
+        "link", link.getLink(),
+        "name", link.getFile()
+    );
   }
 
   /**
@@ -129,14 +147,14 @@ public final class PyPiIndexUtils
    * assumption based on email discussions with donald@stufft.io that there are no plans to have packages at any
    * location other than under the /packages directory.
    */
-  private static Map<String, String> makeLinksRelative(final Map<String, String> oldLinks,
+  private static List<PyPiLink> makeLinksRelative(final List<PyPiLink> oldLinks,
                                                        final Function<String, String> linkTranslator) {
     checkNotNull(oldLinks);
-    Map<String, String> newLinks = new LinkedHashMap<>();
-    for (Entry<String, String> oldLink : oldLinks.entrySet()) {
-      String newLink = linkTranslator.apply(oldLink.getValue());
+    List<PyPiLink> newLinks = new ArrayList<>();
+    for (PyPiLink oldLink : oldLinks) {
+      String newLink = linkTranslator.apply(oldLink.getLink());
       if (newLink != null) {
-        newLinks.put(oldLink.getKey(), newLink);
+        newLinks.add(new PyPiLink(oldLink.getFile(), newLink, oldLink.getDataRequiresPython()));
       }
     }
     return newLinks;
@@ -145,7 +163,7 @@ public final class PyPiIndexUtils
   /**
    * Rewrites an index page so that the links are all relative where possible.
    */
-  static Map<String, String> makeIndexRelative(final URI remoteUrl, final String name, final InputStream in)
+  static List<PyPiLink> makeIndexRelative(final URI remoteUrl, final String name, final InputStream in)
       throws IOException
   {
     return makePackageLinksRelative(remoteUrl, name, extractLinksFromIndex(in));
@@ -154,9 +172,9 @@ public final class PyPiIndexUtils
   /**
    * Rewrites an index page so that the links are all relative where possible.
    */
-  static Map<String, String> makePackageLinksRelative(final URI remoteUrl,
+  static List<PyPiLink> makePackageLinksRelative(final URI remoteUrl,
                                                       final String name,
-                                                      final Map<String, String> oldLinks)
+                                                      final List<PyPiLink> oldLinks)
   {
     return makeLinksRelative(oldLinks, link -> rewriteLink(remoteUrl, name, link));
   }
@@ -164,14 +182,14 @@ public final class PyPiIndexUtils
   /**
    * Rewrites a root index page from a stream so that the links are all relative where possible.
    */
-  static Map<String, String> makeRootIndexRelative(final InputStream in) throws IOException {
+  static List<PyPiLink> makeRootIndexRelative(final InputStream in) throws IOException {
     return makeRootIndexLinksRelative(extractLinksFromIndex(in));
   }
 
   /**
    * Rewrites a root index page so that the links are all relative where possible.
    */
-  static Map<String, String> makeRootIndexLinksRelative(final Map<String, String> oldLinks) {
+  static List<PyPiLink> makeRootIndexLinksRelative(final List<PyPiLink> oldLinks) {
     return makeLinksRelative(oldLinks, PyPiIndexUtils::maybeRewriteRootLink);
   }
 

@@ -15,7 +15,7 @@ package org.sonatype.nexus.rest;
 /**
  * Constants for REST API documentation.
  *
- * @since 3.next
+ * @since 3.20
  */
 public class ApiDocConstants
 {

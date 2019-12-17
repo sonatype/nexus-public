@@ -111,7 +111,7 @@ import static org.sonatype.nexus.scheduling.TaskState.RUNNING;
 @Singleton
 public class QuartzSchedulerSPI
     extends StateGuardLifecycleSupport
-    implements SchedulerSPI, EventAware
+    implements SchedulerSPI, EventAware, EventAware.Asynchronous
 {
   public static final String MISSING_TRIGGER_RECOVERY = ".missingTriggerRecovery";
 

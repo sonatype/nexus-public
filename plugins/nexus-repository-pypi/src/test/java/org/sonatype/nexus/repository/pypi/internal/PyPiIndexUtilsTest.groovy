@@ -23,24 +23,26 @@ class PyPiIndexUtilsTest
 {
   def 'Correctly extract links and filenames from an index page'() {
     when: 'A valid index page is parsed'
-      Map<String, String> links = getClass().getResourceAsStream('sample-index.html').withCloseable { input ->
+      List<PyPiLink> links = getClass().getResourceAsStream('sample-index.html').withCloseable { input ->
         PyPiIndexUtils.extractLinksFromIndex(input)
       }
     then: 'the links will be extracted'
       links == [
-          'sample-1.2.0.tar.bz2' : '/packages/sample-1.2.0.tar.bz2#md5=00c3db1c8ab5d10a2049fe384c8d53e5',
-          'sample-1.2.1-py2.py3-none-any.whl' : '/packages/sample-1.2.1-py2.py3-none-any.whl#md5=5c286195d47014fa0ba6e4e5b0801faf',
-          'sample-1.2.1.tar.gz' : '/packages/sample-1.2.1.tar.gz#md5=8c59858420df240b68e259ceae78a11d'
+          new PyPiLink('sample-1.2.0.tar.bz2', '/packages/sample-1.2.0.tar.bz2#md5=00c3db1c8ab5d10a2049fe384c8d53e5'),
+          new PyPiLink('sample-1.2.1-py2.py3-none-any.whl',
+              '/packages/sample-1.2.1-py2.py3-none-any.whl#md5=5c286195d47014fa0ba6e4e5b0801faf'),
+          new PyPiLink('sample-1.2.1.tar.gz', '/packages/sample-1.2.1.tar.gz#md5=8c59858420df240b68e259ceae78a11d',
+              '>=3.7')
       ]
   }
 
   def 'Correctly handle an empty index page'() {
     when: 'An empty index page is parsed'
-      Map<String, String> links = getClass().getResourceAsStream('sample-empty-index.html').withCloseable { input ->
+      List<PyPiLink> links = getClass().getResourceAsStream('sample-empty-index.html').withCloseable { input ->
         PyPiIndexUtils.extractLinksFromIndex(input)
       }
     then: 'an empty collection is returned'
-      links == [:]
+      links == []
   }
 
   @Unroll
@@ -48,9 +50,9 @@ class PyPiIndexUtilsTest
     given:
       def remoteUrl = new URI(remoteUri)
     when: 'Links are rewritten so that the packages directory is a relative link'
-      def links = PyPiIndexUtils.makePackageLinksRelative(remoteUrl, name, ['sample-1.2.0.tar.bz2': original])
+      def links = PyPiIndexUtils.makePackageLinksRelative(remoteUrl, name, [new PyPiLink('sample-1.2.0.tar.bz2', original)])
     then: 'the resulting links will be correct (relative to the index)'
-      links == ['sample-1.2.0.tar.bz2': expected]
+      links == [new PyPiLink('sample-1.2.0.tar.bz2', expected)]
 
     where:
      name              | remoteUri         | original                                                                       | expected
@@ -72,31 +74,31 @@ class PyPiIndexUtilsTest
 
   def 'Correctly extract links from a root index page'() {
     when: 'A valid index page is parsed'
-      Map<String, String> links = getClass().getResourceAsStream('pypi_index.htm').withCloseable { input ->
+      List<PyPiLink> links = getClass().getResourceAsStream('pypi_index.htm').withCloseable { input ->
         PyPiIndexUtils.extractLinksFromIndex(input)
       }
     then: 'the links will be extracted'
       links == [
-          '1and1' : '/simple/1and1/',
-          'ansible-shell' : '/simple/ansible-shell/',
-          'roleplay' : '/simple/roleplay/',
-          'tibl-cli' : '/simple/tibl-cli/',
-          'zzhfun' : '/simple/zzhfun/'
+          new PyPiLink('1and1', '/simple/1and1/'),
+          new PyPiLink('ansible-shell', '/simple/ansible-shell/'),
+          new PyPiLink('roleplay', '/simple/roleplay/'),
+          new PyPiLink('tibl-cli', '/simple/tibl-cli/'),
+          new PyPiLink('zzhfun', '/simple/zzhfun/'),
       ]
   }
 
   def 'Correctly rewrite links on a root index page'() {
     when: 'A valid index page is parsed'
-      Map<String, String> links = getClass().getResourceAsStream('pypi_index.htm').withCloseable { input ->
+      List<PyPiLink> links = getClass().getResourceAsStream('pypi_index.htm').withCloseable { input ->
         PyPiIndexUtils.makeRootIndexLinksRelative(PyPiIndexUtils.extractLinksFromIndex(input))
       }
     then: 'the links will be extracted'
       links == [
-          '1and1' : '1and1/',
-          'ansible-shell' : 'ansible-shell/',
-          'roleplay' : 'roleplay/',
-          'tibl-cli' : 'tibl-cli/',
-          'zzhfun' : 'zzhfun/'
+          new PyPiLink('1and1', '1and1/'),
+          new PyPiLink('ansible-shell', 'ansible-shell/'),
+          new PyPiLink('roleplay', 'roleplay/'),
+          new PyPiLink('tibl-cli', 'tibl-cli/'),
+          new PyPiLink('zzhfun', 'zzhfun/'),
       ]
   }
 }

@@ -16,7 +16,7 @@ package org.sonatype.nexus.common.app;
  * List of available feature flags
  * You can change it's values by editing ${data-dir}/nexus.properties configuration file.
  *
- * @since 3.next
+ * @since 3.20
  */
 public interface FeatureFlags
 {

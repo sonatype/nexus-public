@@ -24,7 +24,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 /**
  * Encapsulates the objects used to specify the configuration for an s3 blob store.
  *
- * @since 3.next
+ * @since 3.20
  */
 @JsonInclude(NON_NULL)
 public class S3BlobStoreApiBucketConfiguration

@@ -37,7 +37,7 @@ import static java.lang.String.format;
  * UUID_TYPE.MySQL = VARCHAR(36)
  * </pre>
  *
- * @since 3.next
+ * @since 3.20
  */
 enum PlaceholderTypes
 {

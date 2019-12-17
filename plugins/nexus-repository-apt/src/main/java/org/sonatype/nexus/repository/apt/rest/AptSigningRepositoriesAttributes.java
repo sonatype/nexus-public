@@ -18,7 +18,7 @@ import io.swagger.annotations.ApiModelProperty;
 import org.hibernate.validator.constraints.NotEmpty;
 
 /**
- * @since 3.next
+ * @since 3.20
  */
 public class AptSigningRepositoriesAttributes
 {

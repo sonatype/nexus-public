@@ -51,7 +51,7 @@ public interface UiPluginDescriptor
   String getConfigClassName();
 
   /**
-   * @since 3.next
+   * @since 3.20
    * @return a list of script files that should be included on the page
    */
   List<String> getScripts(final boolean isDebug);

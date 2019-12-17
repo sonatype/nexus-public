@@ -19,6 +19,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
@@ -269,7 +270,7 @@ public class PyPiProxyFacetImpl
 
   private Content putRootIndex(final Content content) throws IOException {
     try (InputStream inputStream = content.openInputStream()) {
-      Map<String, String> links = makeRootIndexRelative(inputStream);
+      List<PyPiLink> links = makeRootIndexRelative(inputStream);
       String indexPage = buildRootIndexPage(templateHelper, links);
       return storeHtmlPage(content, indexPage, ROOT_INDEX, INDEX_PATH_PREFIX);
     }
@@ -278,7 +279,7 @@ public class PyPiProxyFacetImpl
   private Content putIndex(final String name, final Content content) throws IOException {
     String html;
     try (InputStream inputStream = content.openInputStream()) {
-      Map<String, String> links = makeIndexRelative(getRemoteUrl(), name, inputStream);
+      List<PyPiLink> links = makeIndexRelative(getRemoteUrl(), name, inputStream);
       html = buildIndexPage(templateHelper, name.substring(name.indexOf('/') + 1, name.length() - 1), links);
     }
     return storeHtmlPage(content, html, INDEX, name);

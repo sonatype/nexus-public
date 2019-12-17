@@ -113,7 +113,7 @@ public class AssetBlob
    *    true to completely remove the blob files from the blob store
    *    false to do a soft delete for cleanup later (prefer this option for safety)
    *
-   * @since 3.next
+   * @since 3.20
    */
   void delete(final String reason, final boolean useHardDelete) {
     if (ingestedBlob != null) {

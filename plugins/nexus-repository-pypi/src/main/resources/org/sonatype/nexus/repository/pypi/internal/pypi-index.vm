@@ -15,8 +15,10 @@
   <meta name="api-version" value="2"/>
 </head>
 <body><h1>Links for ${name}</h1>
-  #foreach($asset in $assets)
-  <a href="${asset.get('link')}" rel="internal">${asset.get('file')}</a><br/>
-  #end
+    #foreach($asset in $assets)
+        #set($dataRequiresPython = ${asset.get('data-requires-python')})
+    <a href="${asset.get('link')}" rel="internal"#if( "$dataRequiresPython" != "" )
+       data-requires-python="$esc.html($dataRequiresPython)" #end>${asset.get('file')}</a><br/>
+    #end
 </body>
 </html>

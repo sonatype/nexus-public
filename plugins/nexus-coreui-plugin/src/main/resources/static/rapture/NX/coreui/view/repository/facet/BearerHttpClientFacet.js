@@ -15,7 +15,7 @@
 /**
  * Configuration specific to Http connections for npm repositories including bearer token support.
  *
- * @since 3.next
+ * @since 3.20
  */
 Ext.define('NX.coreui.view.repository.facet.BearerHttpClientFacet', {
   extend: 'NX.coreui.view.repository.facet.HttpClientFacet',

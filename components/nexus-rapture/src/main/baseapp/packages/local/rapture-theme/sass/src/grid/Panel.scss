@@ -92,5 +92,13 @@
         }
       }
     }
+
+    .title.alert {
+      color: rgb(207, 76, 53);
+
+      .icon:before {
+        content: "\f06a" !important;
+      }
+    }
   }
 }

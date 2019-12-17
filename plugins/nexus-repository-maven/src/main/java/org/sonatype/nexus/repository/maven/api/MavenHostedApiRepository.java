@@ -26,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * REST API model for a maven hosted repository.
  *
- * @since 3.next
+ * @since 3.20
  */
 @JsonIgnoreProperties(value = {"format", "type", "url"}, allowGetters = true)
 public class MavenHostedApiRepository

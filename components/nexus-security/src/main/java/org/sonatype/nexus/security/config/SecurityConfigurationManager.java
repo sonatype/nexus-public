@@ -58,7 +58,7 @@ public interface SecurityConfigurationManager
   /**
    * Create a new instance of {@link CUser} suitable for use with the underlying store
    *
-   * @since 3.next
+   * @since 3.20
    */
   CUser newUser();
 
@@ -107,7 +107,7 @@ public interface SecurityConfigurationManager
   /**
    * Create a new instance of {@link CRole} suitable for use with the underlying store
    *
-   * @since 3.next
+   * @since 3.20
    */
   CRole newRole();
 
@@ -166,7 +166,7 @@ public interface SecurityConfigurationManager
   /**
    * Create a new instance of {@link CUserRoleMapping} suitable for use with the underlying store
    *
-   * @since 3.next
+   * @since 3.20
    */
   CUserRoleMapping newUserRoleMapping();
 

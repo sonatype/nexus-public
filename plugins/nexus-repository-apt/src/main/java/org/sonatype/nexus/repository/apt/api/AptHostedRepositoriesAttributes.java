@@ -20,7 +20,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 /**
  * REST API model of apt-specific hosted configuration.
  *
- * @since 3.next
+ * @since 3.20
  */
 public class AptHostedRepositoriesAttributes
 {

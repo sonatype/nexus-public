@@ -68,7 +68,7 @@ public interface BlobStoreConfigurationStore
   /**
    * Create a new empty {@link BlobStoreConfiguration} suitable for use with this store
    *
-   * @since 3.next
+   * @since 3.20
    */
   BlobStoreConfiguration newConfiguration();
 }

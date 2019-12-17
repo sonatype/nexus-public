@@ -23,7 +23,7 @@ import org.sonatype.nexus.repository.view.Context;
 import static org.sonatype.nexus.repository.cocoapods.internal.CocoapodsFormat.removeInitialSlashFromPath;
 
 /**
- * @since 3.next
+ * @since 3.20
  */
 public class PodsUtils
 {

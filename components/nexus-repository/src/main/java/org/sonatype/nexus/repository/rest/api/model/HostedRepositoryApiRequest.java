@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * @since 3.next
+ * @since 3.20
  */
 @JsonIgnoreProperties({"type"})
 public class HostedRepositoryApiRequest

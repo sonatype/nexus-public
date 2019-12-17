@@ -17,6 +17,7 @@ import org.sonatype.goodies.testsupport.TestData
 import org.sonatype.nexus.repository.http.HttpStatus
 import org.sonatype.nexus.testsuite.testsupport.FormatClientSupport
 
+import groovy.util.slurpersupport.NodeChild
 import groovy.xml.XmlUtil
 import org.apache.http.HttpResponse
 import org.apache.http.client.methods.HttpPost
@@ -99,7 +100,8 @@ class PyPiClient
       Document document = Jsoup.parse(EntityUtils.toString(response.entity))
       Elements links = document.select("a[href]")
       return links.collect {
-        return new Link(url: it.attr('href'), name: it.text())
+        Map<String, String> attributes = it.attributes().collectEntries { [it.key, it.value] }
+        return new Link(url: it.attr('href'), name: it.text(), attributes: attributes)
       }
     }
     finally {
@@ -120,9 +122,9 @@ class PyPiClient
     try {
       assert status(response) == HttpStatus.OK
       def content = new XmlSlurper().parse(response.entity.content)
-      def links = content.depthFirst().findAll { it.name() == 'a' }
+      List<NodeChild> links = content.depthFirst().findAll { it.name() == 'a' }
       return links.collect {
-        return new Link(url: it.@href, name: it.text())
+        return new Link(url: it.@href, name: it.text(), attributes: it.attributes())
       }
     }
     finally {
@@ -258,6 +260,7 @@ class PyPiClient
 
     String name
 
+    Map<String, String> attributes
   }
 
   static class Result {

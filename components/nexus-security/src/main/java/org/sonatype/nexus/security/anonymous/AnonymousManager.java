@@ -29,7 +29,7 @@ public interface AnonymousManager
   /**
    * Provide a new instance of an AnonymousConfiguration.
    *
-   * @since 3.next
+   * @since 3.20
    */
   AnonymousConfiguration newConfiguration();
 

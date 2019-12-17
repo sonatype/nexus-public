@@ -28,7 +28,7 @@ public interface BlobStoreUtil {
 
   /**
    * Returns true if the file path is valid. The path is valid if all the folder names in the path are less than the given maximum.
-   * @since 3.next
+   * @since 3.20
    * @param filePath A file path
    * @param maxLength The max length
    * @return True if valid, false otherwise

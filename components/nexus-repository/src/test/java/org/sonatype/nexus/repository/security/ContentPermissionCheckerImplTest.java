@@ -20,6 +20,7 @@ import org.sonatype.nexus.repository.security.internal.ContentPermissionCheckerI
 import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.selector.JexlSelector;
+import org.sonatype.nexus.selector.OrientSelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.selector.VariableSource;
@@ -56,7 +57,7 @@ public class ContentPermissionCheckerImplTest
   public void setup() {
     impl = new ContentPermissionCheckerImpl(securityHelper, selectorManager);
 
-    config = new SelectorConfiguration();
+    config = new OrientSelectorConfiguration();
     config.setName("selector");
     config.setDescription("selector");
     config.setType(JexlSelector.TYPE);

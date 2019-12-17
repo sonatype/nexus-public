@@ -33,7 +33,7 @@ import static org.sonatype.nexus.rest.ApiDocConstants.UNKNOWN_S3_BLOB_STORE;
 /**
  * API documentation for operations provided by {@link S3BlobStoreApiResource}.
  *
- * @since 3.next
+ * @since 3.20
  */
 @Api(API_BLOB_STORE)
 public interface S3BlobStoreApiResourceDoc

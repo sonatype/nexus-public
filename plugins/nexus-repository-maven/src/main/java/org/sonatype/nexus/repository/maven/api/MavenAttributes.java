@@ -20,7 +20,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 /**
  * REST API model for describing maven specific repository properties.
  *
- * @since 3.next
+ * @since 3.20
  */
 public class MavenAttributes
 {

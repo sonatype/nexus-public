@@ -22,7 +22,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Common {@link RepositoryContent} data backed by the content data store.
  *
- * @since 3.next
+ * @since 3.20
  */
 public abstract class AbstractRepositoryContent
     implements RepositoryContent

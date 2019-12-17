@@ -19,7 +19,7 @@ import org.hibernate.validator.constraints.NotBlank;
 /**
  * Bearer Token authentication configuration
  *
- * @since 3.next
+ * @since 3.20
  */
 public class BearerTokenAuthenticationConfiguration
   extends AuthenticationConfiguration

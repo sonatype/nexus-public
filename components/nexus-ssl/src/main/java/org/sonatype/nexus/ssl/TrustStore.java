@@ -85,7 +85,7 @@ public interface TrustStore
   /**
    * Get the {@link KeyManager}'s
    *
-   * @since 3.next
+   * @since 3.20
    */
   KeyManager[] getKeyManagers();
 }

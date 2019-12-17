@@ -88,7 +88,8 @@ public class ContentSelectorsApiResource
   @RequiresPermissions("nexus:selectors:create")
   public void createContentSelector(@Valid final ContentSelectorApiCreateRequest request) {
     selectorFactory.validateSelector(CselSelector.TYPE, request.getExpression());
-    selectorManager.create(toSelectorConfiguration(request));
+    selectorManager.create(request.getName(), CselSelector.TYPE, request.getDescription(),
+        singletonMap(EXPRESSION, request.getExpression()));
   }
 
   @GET
@@ -141,14 +142,5 @@ public class ContentSelectorsApiResource
     response.setDescription(selectorConfiguration.getDescription());
     response.setExpression(selectorConfiguration.getAttributes().get(EXPRESSION));
     return response;
-  }
-
-  private static SelectorConfiguration toSelectorConfiguration(final ContentSelectorApiCreateRequest contentSelector) {
-    SelectorConfiguration selectorConfiguration = new SelectorConfiguration();
-    selectorConfiguration.setName(contentSelector.getName());
-    selectorConfiguration.setType(CselSelector.TYPE);
-    selectorConfiguration.setDescription(contentSelector.getDescription());
-    selectorConfiguration.setAttributes(singletonMap(EXPRESSION, contentSelector.getExpression()));
-    return selectorConfiguration;
   }
 }

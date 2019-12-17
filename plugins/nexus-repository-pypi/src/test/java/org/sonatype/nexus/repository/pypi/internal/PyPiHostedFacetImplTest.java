@@ -13,8 +13,10 @@
 package org.sonatype.nexus.repository.pypi.internal;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.template.TemplateHelper;
@@ -28,6 +30,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static java.util.stream.Collectors.toSet;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Matchers.any;
@@ -79,10 +82,9 @@ public class PyPiHostedFacetImplTest
     ));
     underTest.attach(repository);
 
-    Map<String, String> links = underTest.findAllLinks();
+    List<PyPiLink> links = underTest.findAllLinks();
 
-    Set<String> strings = links.keySet();
-    String[] result = strings.toArray(new String[0]);
+    String[] result = links.stream().map(PyPiLink::getFile).distinct().toArray(String[]::new);
     assertThat(result[0], is("0"));
     assertThat(result[1], is("a"));
     assertThat(result[2], is("z"));

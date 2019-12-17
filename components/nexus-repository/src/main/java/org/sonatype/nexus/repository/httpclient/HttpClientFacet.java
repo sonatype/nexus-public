@@ -35,7 +35,7 @@ public interface HttpClientFacet
   Header createBasicAuthHeader();
 
   /**
-   * @since 3.next
+   * @since 3.20
    */
   @Nullable
   String getBearerToken();

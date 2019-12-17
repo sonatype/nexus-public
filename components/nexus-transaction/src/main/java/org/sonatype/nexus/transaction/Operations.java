@@ -90,7 +90,7 @@ public class Operations<E extends Exception, B extends Operations<E, B>>
 
   /**
    * @see Transactional#reason()
-   * @since 3.next
+   * @since 3.20
    */
   public final B reason(final String reason) {
     return (B) copy(new TransactionalImpl(reason, spec.commitOn(), spec.retryOn(), spec.swallow()), throwing, store);

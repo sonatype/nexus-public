@@ -37,7 +37,7 @@ import java.lang.annotation.Target;
  * }
  * </pre>
  *
- * @since 3.next
+ * @since 3.20
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

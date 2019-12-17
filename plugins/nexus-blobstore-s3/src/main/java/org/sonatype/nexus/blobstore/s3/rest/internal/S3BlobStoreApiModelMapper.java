@@ -34,7 +34,7 @@ import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.*;
 /**
  * Transforms a {@link S3BlobStoreApiModel} to an {@link BlobStoreConfiguration}.
  *
- * @since 3.next
+ * @since 3.20
  */
 public final class S3BlobStoreApiModelMapper
 {

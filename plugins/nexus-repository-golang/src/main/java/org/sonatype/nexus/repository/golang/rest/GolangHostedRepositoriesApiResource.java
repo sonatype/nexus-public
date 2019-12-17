@@ -31,7 +31,7 @@ import static org.sonatype.nexus.repository.golang.rest.GolangHostedRepositories
 /**
  * REST resource for handling requests regarding hosted Golang repositories.
  *
- * @since 3.next
+ * @since 3.20
  */
 @FeatureFlag(name = FEATURE_GOLANG_HOSTED)
 @Named

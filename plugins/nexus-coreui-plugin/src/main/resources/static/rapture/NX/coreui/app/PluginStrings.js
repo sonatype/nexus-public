@@ -1019,6 +1019,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Metric_Health_Error_Header: 'Error',
     Metric_Health_Load_Mask: 'Loading&hellip;',
     Metric_Health_Refresh_Warning: 'Failed to refresh server status',
+    Metric_Health_Invalid_Response_Error: 'Unable to retrieve application health, this may be a result of an incorrectly configured proxy server',
+    Metric_Health_Empty_Text: '<div class="summary">No system status checks found</div>' +
+        '<div class="panel nx-subsection"><h3 class="title alert"><span class="icon"></span>What went wrong?</h3>' +
+        '<p>The most likely cause of missing system status checks is an incorrectly configured proxy server.</p></div>',
 
     // Admin -> Support -> Support Request
     SupportRequest_Text: 'Support Request',

@@ -17,7 +17,7 @@ import org.sonatype.nexus.security.realm.SecurityRealm;
 /**
  * REST API model of a security realm
  * 
- * @since 3.next
+ * @since 3.20
  */
 public class RealmApiXO
 {

@@ -25,7 +25,7 @@ import static org.sonatype.nexus.transaction.Transactional.DEFAULT_REASON;
  * <li>Tracks the reason given for this transaction for support purposes</li>
  * </ul>
  *
- * @since 3.next
+ * @since 3.20
  *
  * @see RetryController
  */

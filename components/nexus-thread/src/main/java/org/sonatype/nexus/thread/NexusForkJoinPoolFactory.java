@@ -15,7 +15,7 @@ package org.sonatype.nexus.thread;
 import java.util.concurrent.ForkJoinPool;
 
 /**
- * @since 3.next
+ * @since 3.20
  */
 public class NexusForkJoinPoolFactory
 {

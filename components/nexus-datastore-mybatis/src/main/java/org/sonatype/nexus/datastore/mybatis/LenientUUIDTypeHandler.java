@@ -31,7 +31,7 @@ import static java.util.UUID.fromString;
  *
  * This is only registered when MyBatis is using a database that's not H2 or PostgreSQL.
  *
- * @since 3.next
+ * @since 3.20
  */
 // not @Named because we register this manually
 class LenientUUIDTypeHandler

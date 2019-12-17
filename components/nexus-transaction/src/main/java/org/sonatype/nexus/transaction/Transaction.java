@@ -40,7 +40,7 @@ public interface Transaction
   /**
    * Notifies this transaction if it captures another {@link TransactionalStore} during a nested transaction.
    *
-   * @since 3.next
+   * @since 3.20
    */
   default void capture(TransactionalStore<?> store) {
     // do nothing by default
@@ -48,13 +48,13 @@ public interface Transaction
 
   /**
    * @see Transactional#reason()
-   * @since 3.next
+   * @since 3.20
    */
   void reason(String reason);
 
   /**
    * @see Transactional#reason()
-   * @since 3.next
+   * @since 3.20
    */
   String reason();
 }

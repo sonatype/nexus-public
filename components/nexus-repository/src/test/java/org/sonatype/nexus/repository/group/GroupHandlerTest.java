@@ -39,6 +39,8 @@ import static org.sonatype.nexus.repository.http.HttpResponses.notFound;
 import static org.sonatype.nexus.repository.http.HttpResponses.ok;
 import static org.sonatype.nexus.repository.http.HttpResponses.serviceUnavailable;
 import static org.sonatype.nexus.repository.http.HttpStatus.NOT_FOUND;
+import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.BYPASS_HTTP_ERRORS_HEADER_NAME;
+import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.BYPASS_HTTP_ERRORS_HEADER_VALUE;
 
 public class GroupHandlerTest
     extends TestSupport
@@ -128,6 +130,24 @@ public class GroupHandlerTest
     setupDispatch(forbidden1, ok);
 
     assertGetFirst(forbidden1);
+    verify(viewFacet1, times(2)).dispatch(request, context);
+    verify(viewFacet2, times(0)).dispatch(request, context);
+  }
+
+  @Test
+  public void returnsFirstOkOrFirstBypassHttpErrorsHeaderResponse() throws Exception {
+    Response forbidden = forbidden();
+    forbidden.getHeaders().set(BYPASS_HTTP_ERRORS_HEADER_NAME, BYPASS_HTTP_ERRORS_HEADER_VALUE);
+
+    Response ok = ok();
+
+    setupDispatch(forbidden, ok);
+    assertGetFirst(forbidden);
+    verify(viewFacet1, times(1)).dispatch(request, context);
+    verify(viewFacet2, times(0)).dispatch(request, context);
+
+    setupDispatch(ok, forbidden);
+    assertGetFirst(ok);
     verify(viewFacet1, times(2)).dispatch(request, context);
     verify(viewFacet2, times(0)).dispatch(request, context);
   }

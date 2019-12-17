@@ -22,7 +22,7 @@ import javax.annotation.Nullable;
 public interface RealmConfigurationStore
 {
   /**
-   * @since 3.next
+   * @since 3.20
    */
   RealmConfiguration newEntity();
 

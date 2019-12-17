@@ -45,7 +45,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * REST API for managing NXRM security realms
  * 
- * @since 3.next
+ * @since 3.20
  */
 @Path(RealmApiResource.RESOURCE_URL)
 @Produces(MediaType.APPLICATION_JSON)

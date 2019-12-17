@@ -19,7 +19,7 @@ import org.joda.time.DateTime;
 /**
  * Each asset represents a unique path to binary content in a repository.
  *
- * @since 3.next
+ * @since 3.20
  * @see Component
  */
 public interface Asset

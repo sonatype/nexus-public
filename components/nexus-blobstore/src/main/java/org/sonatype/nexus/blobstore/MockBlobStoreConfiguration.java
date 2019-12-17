@@ -32,7 +32,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * POJO {@link BlobStoreConfiguration} for tests only
  *
- * @since 3.next
+ * @since 3.20
  *
  */
 @VisibleForTesting

@@ -101,7 +101,7 @@ public interface BlobStoreManager
   /**
    * @return an empty {@link BlobStoreConfiguration} for use with this manager
    *
-   * @since 3.next
+   * @since 3.20
    */
   BlobStoreConfiguration newConfiguration();
 }

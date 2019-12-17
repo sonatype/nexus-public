@@ -24,7 +24,7 @@ import com.google.common.collect.Lists;
 /**
  * Orient specific Realm configuration.
  *
- * @since 3.next
+ * @since 3.20
  */
 class OrientRealmConfiguration
     extends AbstractEntity

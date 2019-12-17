@@ -28,7 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @since 3.next
+ * @since 3.20
  */
 public class DataStoreRule
     extends ExternalResource

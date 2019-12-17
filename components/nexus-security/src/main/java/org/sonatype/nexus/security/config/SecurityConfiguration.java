@@ -95,7 +95,7 @@ public interface SecurityConfiguration
   /**
    * Obtain an instance of {@link CUserRoleMapping} suitable for use with the underlying storage.
    *
-   * @since 3.next
+   * @since 3.20
    */
   CUserRoleMapping newUserRoleMapping();
 
@@ -147,13 +147,13 @@ public interface SecurityConfiguration
   /**
    * Obtain an instance of {@link CRole} suitable for use with the underlying storage.
    *
-   * @since 3.next
+   * @since 3.20
    */
   CRole newRole();
 
   /**
    *
-   * @since 3.next
+   * @since 3.20
    */
   default CRoleBuilder newRoleBuilder() {
     return new CRoleBuilder(newRole());

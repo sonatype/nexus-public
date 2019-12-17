@@ -90,12 +90,10 @@ class SelectorComponent
   @Validate(groups = [Create.class, Default.class])
   SelectorXO create(final @NotNull @Valid SelectorXO selectorXO) {
     selectorFactory.validateSelector(selectorXO.type, selectorXO.expression)
-    def configuration = new SelectorConfiguration(
-        name: selectorXO.name,
-        type: selectorXO.type,
-        description: selectorXO.description,
-        attributes: ['expression': selectorXO.expression]
-    )
+
+    def configuration = selectorManager.
+        newSelectorConfiguration(selectorXO.name, selectorXO.type, selectorXO.description,
+            ['expression': selectorXO.expression])
     selectorManager.create(configuration)
     return asSelector(configuration, securitySystem.listPrivileges())
   }

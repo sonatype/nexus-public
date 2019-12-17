@@ -28,7 +28,7 @@ import org.sonatype.nexus.repository.types.ProxyType;
 /**
  * Adapter to expose Apt specific properties for the repositories REST API.
  *
- * @since 3.next
+ * @since 3.20
  */
 @Named(AptFormat.NAME)
 public class AptApiRepositoryAdapter

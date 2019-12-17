@@ -30,7 +30,7 @@ import static org.joda.time.DateTimeZone.UTC;
 /**
  * MyBatis {@link TypeHandler} that maps Joda {@link DateTime} values to/from SQL.
  *
- * @since 3.next
+ * @since 3.20
  */
 // not @Named because we register this manually
 public class DateTimeTypeHandler

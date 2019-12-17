@@ -29,7 +29,7 @@ public interface HttpClientConfigurationStore
   void save(HttpClientConfiguration configuration);
 
   /**
-   * @since 3.next
+   * @since 3.20
    */
   HttpClientConfiguration newConfiguration();
 }

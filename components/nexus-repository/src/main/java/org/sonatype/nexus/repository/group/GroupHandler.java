@@ -36,6 +36,8 @@ import com.google.common.collect.Sets;
 import static java.util.Collections.unmodifiableSet;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
+import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.BYPASS_HTTP_ERRORS_HEADER_NAME;
+import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.BYPASS_HTTP_ERRORS_HEADER_VALUE;
 
 /**
  * Group handler.
@@ -195,6 +197,8 @@ public class GroupHandler
   }
 
   private boolean isValidResponse(final Response response) {
-    return response.getStatus().isSuccessful() || response.getAttributes().contains(USE_DISPATCHED_RESPONSE);
+    return response.getStatus().isSuccessful() ||
+        response.getAttributes().contains(USE_DISPATCHED_RESPONSE) ||
+        BYPASS_HTTP_ERRORS_HEADER_VALUE.equals(response.getHeaders().get(BYPASS_HTTP_ERRORS_HEADER_NAME));
   }
 }

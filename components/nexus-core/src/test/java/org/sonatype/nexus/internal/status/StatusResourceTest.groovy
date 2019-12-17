@@ -18,6 +18,8 @@ import org.sonatype.nexus.common.status.StatusHealthCheckException
 import org.sonatype.nexus.common.status.StatusHealthCheckStore
 import org.sonatype.nexus.orient.freeze.DatabaseFreezeService
 
+import com.codahale.metrics.health.HealthCheck.Result
+import com.codahale.metrics.health.HealthCheckRegistry
 import spock.lang.Specification
 
 class StatusResourceTest
@@ -27,7 +29,9 @@ class StatusResourceTest
 
   final DatabaseFreezeService databaseFreezeService = Mock()
 
-  final StatusResource statusResource = new StatusResource(statusHealthCheckStore, databaseFreezeService)
+  final HealthCheckRegistry registry = Mock()
+
+  final StatusResource statusResource = new StatusResource(statusHealthCheckStore, databaseFreezeService, registry)
 
   def "is available if server can execute read check"() {
     when:
@@ -72,5 +76,17 @@ class StatusResourceTest
       0 * statusHealthCheckStore.markHealthCheckTime()
       response.status == 503
 
+  }
+
+  def "returns the system status checks"() {
+    given:
+      def expectedStatusChecks = [:] as SortedMap<String, Result>
+      registry.runHealthChecks() >> expectedStatusChecks
+
+    when:
+      SortedMap<String, Result> systemStatusChecks = statusResource.systemStatusChecks
+
+    then:
+      systemStatusChecks == expectedStatusChecks
   }
 }

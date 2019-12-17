@@ -21,6 +21,7 @@ import java.util.Map;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
+import org.sonatype.nexus.selector.OrientSelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.selector.VariableSource;
 
@@ -98,6 +99,8 @@ public class ContentExpressionFunctionTest
 
     when(commandRequest.execute(any(Map.class))).thenReturn(Collections.singletonList(assetDocument));
     when(database.command(any(OCommandRequest.class))).thenReturn(commandRequest);
+
+    when(selectorManager.newSelectorConfiguration()).thenAnswer(invocation -> new OrientSelectorConfiguration());
 
     underTest = new ContentExpressionFunction(variableResolverAdapterManager, selectorManager, contentAuthHelper);
   }

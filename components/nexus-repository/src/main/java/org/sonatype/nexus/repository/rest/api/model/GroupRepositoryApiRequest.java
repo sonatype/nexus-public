@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
 
 /**
- * @since 3.next
+ * @since 3.20
  */
 @JsonIgnoreProperties({"type"})
 public class GroupRepositoryApiRequest

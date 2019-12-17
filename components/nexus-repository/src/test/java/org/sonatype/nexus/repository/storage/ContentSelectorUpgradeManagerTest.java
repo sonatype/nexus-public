@@ -19,6 +19,7 @@ import java.util.Map;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.selector.CselSelector;
 import org.sonatype.nexus.selector.JexlSelector;
+import org.sonatype.nexus.selector.OrientSelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorEvaluationException;
 import org.sonatype.nexus.selector.SelectorFactory;
@@ -92,7 +93,7 @@ public class ContentSelectorUpgradeManagerTest
     Map<String, Object> attributes = new HashMap<>();
     attributes.put("expression", expression);
 
-    SelectorConfiguration config = new SelectorConfiguration();
+    SelectorConfiguration config = new OrientSelectorConfiguration();
     config.setType(type);
     config.setAttributes(attributes);
 

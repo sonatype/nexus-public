@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Nexus {@link ForkJoinWorkerThreadFactory}.
- * @since 3.next
+ * @since 3.20
  */
 public class NexusForkJoinWorkerThreadFactory implements ForkJoinWorkerThreadFactory
 {

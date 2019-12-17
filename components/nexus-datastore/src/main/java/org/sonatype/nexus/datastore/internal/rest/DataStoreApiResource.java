@@ -50,7 +50,7 @@ import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 /**
  * REST API for manipulating Data Stores
  *
- * @since 3.next
+ * @since 3.20
  */
 @Named
 @Singleton

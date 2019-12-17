@@ -13,6 +13,7 @@
 package org.sonatype.nexus.selector;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -73,6 +74,11 @@ public interface SelectorManager
   void create(SelectorConfiguration configuration);
 
   /**
+   * @since 3.20
+   */
+  void create(String name, String type, String description, Map<String, String> attributes);
+
+  /**
    * Persist an existing selector configuration.
    */
   void update(SelectorConfiguration configuration);
@@ -99,4 +105,22 @@ public interface SelectorManager
    */
   void toSql(SelectorConfiguration selectorConfiguration, SelectorSqlBuilder sqlBuilder)
       throws SelectorEvaluationException;
+
+  /**
+   * @return new instance of SelectorConfiguration
+   *
+   * @since 3.20
+   */
+  SelectorConfiguration newSelectorConfiguration();
+
+  /**
+   * @return new instance of SelectorConfiguration
+   *
+   * @since 3.20
+   */
+  SelectorConfiguration newSelectorConfiguration(
+      String name,
+      String type,
+      String description,
+      Map<String, ?> attributes);
 }

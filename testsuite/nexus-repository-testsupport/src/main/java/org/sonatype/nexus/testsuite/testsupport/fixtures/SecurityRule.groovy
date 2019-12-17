@@ -12,10 +12,8 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.fixtures
 
-import groovy.transform.CompileStatic
-import groovy.util.logging.Slf4j
-import org.apache.shiro.authz.Permission
-import org.junit.rules.ExternalResource
+import javax.inject.Provider
+
 import org.sonatype.nexus.repository.security.RepositoryContentSelectorPrivilegeDescriptor
 import org.sonatype.nexus.security.SecuritySystem
 import org.sonatype.nexus.security.privilege.Privilege
@@ -27,7 +25,10 @@ import org.sonatype.nexus.selector.CselSelector
 import org.sonatype.nexus.selector.SelectorConfiguration
 import org.sonatype.nexus.selector.SelectorManager
 
-import javax.inject.Provider
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+import org.apache.shiro.authz.Permission
+import org.junit.rules.ExternalResource
 
 import static com.google.common.base.Preconditions.checkNotNull
 import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE
@@ -214,13 +215,8 @@ class SecurityRule
   }
 
   SelectorConfiguration createSelector(final String name, final String description, final String type, final String expression) {
-    def selectorConfiguration = new SelectorConfiguration([
-        name: name,
-        description: description,
-        type: type,
-        attributes: ['expression': expression]
-    ])
-
+    def selectorConfiguration =
+        selectorManagerProvider.get().newSelectorConfiguration(name, type, description, ['expression': expression])
     selectors << selectorConfiguration
     selectorManagerProvider.get().create(selectorConfiguration)
     selectorConfiguration

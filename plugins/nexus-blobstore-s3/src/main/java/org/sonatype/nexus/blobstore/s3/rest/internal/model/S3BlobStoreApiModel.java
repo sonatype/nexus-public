@@ -24,7 +24,7 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * Encapsulates the API payload for creating, reading and updating an S3 blob store.
  *
- * @since 3.next
+ * @since 3.20
  */
 public class S3BlobStoreApiModel
 {

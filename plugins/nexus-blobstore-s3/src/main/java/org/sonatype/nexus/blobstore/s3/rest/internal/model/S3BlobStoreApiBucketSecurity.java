@@ -22,7 +22,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 /**
  * Encapsulates the IAM settings to use for accessing an s3 blob store.
  *
- * @since 3.next
+ * @since 3.20
  */
 @JsonInclude(NON_NULL)
 public class S3BlobStoreApiBucketSecurity

@@ -18,7 +18,7 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.rest.api.HostedRepositoryApiRequestToConfigurationConverter;
 
 /**
- * @since 3.next
+ * @since 3.20
  */
 @Named
 public class AptHostedRepositoryApiRequestToConfigurationConverter

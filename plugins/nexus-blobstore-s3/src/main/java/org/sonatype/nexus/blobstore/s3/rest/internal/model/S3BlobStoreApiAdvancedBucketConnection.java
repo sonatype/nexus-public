@@ -23,7 +23,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
  * Encapsulates S3 endpoint url, signer type and whether path-style access should be enabled for the specified S3
  * endpoint url.
  *
- * @since 3.next
+ * @since 3.20
  */
 @JsonInclude(NON_NULL)
 public class S3BlobStoreApiAdvancedBucketConnection

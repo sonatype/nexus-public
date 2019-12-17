@@ -19,7 +19,7 @@ import static com.google.common.collect.Sets.newHashSet;
 import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 
 /**
- * @since 3.next
+ * @since 3.20
  */
 public class SecuritySourceUtil
 {

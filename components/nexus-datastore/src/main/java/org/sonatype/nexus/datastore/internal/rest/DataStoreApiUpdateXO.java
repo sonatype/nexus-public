@@ -20,7 +20,7 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * REST API model for updating Data Stores.
  *
- * @since 3.next
+ * @since 3.20
  */
 public class DataStoreApiUpdateXO
     extends DataStoreApiXO

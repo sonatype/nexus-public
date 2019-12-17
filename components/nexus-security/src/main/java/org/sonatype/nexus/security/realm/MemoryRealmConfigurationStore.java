@@ -56,7 +56,7 @@ public class MemoryRealmConfigurationStore
   }
 
   /**
-   * @since 3.next
+   * @since 3.20
    */
   private static class MemoryRealmConfiguration
       implements RealmConfiguration, Cloneable {

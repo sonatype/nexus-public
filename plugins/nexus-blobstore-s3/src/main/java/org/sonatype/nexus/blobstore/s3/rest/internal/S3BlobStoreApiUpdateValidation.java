@@ -34,7 +34,7 @@ import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.TYPE;
 /**
  * Performs validation checks on specified {@link S3BlobStoreApiModel} object containing updates to an S3 blob store.
  *
- * @since 3.next
+ * @since 3.20
  */
 @Named
 @Singleton

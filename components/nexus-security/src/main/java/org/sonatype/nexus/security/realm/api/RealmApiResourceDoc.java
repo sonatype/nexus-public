@@ -19,7 +19,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 
 /**
- * @since 3.next
+ * @since 3.20
  */
 @Api(value = "Security Management: Realms")
 public interface RealmApiResourceDoc

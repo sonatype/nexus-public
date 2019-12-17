@@ -15,7 +15,8 @@ package org.sonatype.nexus.repository.pypi.internal;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.LinkedHashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -108,7 +109,7 @@ public class PyPiHostedFacetImpl
 
   private Content createAndSaveRootIndex(final Bucket bucket) throws IOException {
     StorageTx tx = UnitOfWork.currentTx();
-    Map<String, String> links = findAllLinks();
+    List<PyPiLink> links = findAllLinks();
 
     Asset asset = createRootIndexAsset(bucket);
 
@@ -126,12 +127,12 @@ public class PyPiHostedFacetImpl
   }
 
   @Transactional
-  protected Map<String, String> findAllLinks() {
+  protected List<PyPiLink> findAllLinks() {
     StorageTx tx = UnitOfWork.currentTx();
-    Map<String, String> links = new TreeMap<>();
+    Map<String, PyPiLink> links = new TreeMap<>();
     Iterable<Component> components = tx.browseComponents(tx.findBucket(getRepository()));
-    components.forEach((component) -> links.put(component.name(), component.name() + "/"));
-    return links;
+    components.forEach((c) -> links.put(c.name(), new PyPiLink(c.name(), c.name() + "/")));
+    return new ArrayList<>(links.values());
   }
 
   @TransactionalStoreBlob
@@ -185,12 +186,14 @@ public class PyPiHostedFacetImpl
   }
 
   private String buildIndex(final String name, final StorageTx tx) {
-    Map<String, String> links = new LinkedHashMap<>();
+    List<PyPiLink> links = new ArrayList<>();
     for (Asset asset : findAssetsByComponentName(tx, getRepository(), name)) {
+      AttributesMap pypiAttributes = asset.attributes().child(PyPiFormat.NAME);
       String path = asset.name();
       String file = path.substring(path.lastIndexOf('/') + 1);
       String link = String.format("../../%s#md5=%s", path, asset.getChecksum(MD5));
-      links.put(file, link);
+      String dataRequiresPython = (String) pypiAttributes.get(PyPiAttributes.P_REQUIRES_PYTHON, "");
+      links.add(new PyPiLink(file, link, dataRequiresPython));
     }
 
     return PyPiIndexUtils.buildIndexPage(templateHelper, name, links);

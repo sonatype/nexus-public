@@ -10139,6 +10139,14 @@ fieldset.x-fieldset {
     vertical-align: middle;
 }
 
+.x-grid-empty .panel .title.alert {
+    color: #cf4c35;
+}
+
+.x-grid-empty .panel .title.alert .icon:before {
+    content: "\f06a" !important;
+}
+
 .nx-middle-align {
     /**
  * @class Ext.grid.column.Column
@@ -15256,15 +15264,4 @@ fieldset.x-fieldset {
 
 .nx-aboutwindow .summary {
     background-color: #f4f4f4;
-}
-
-.nx-aboutwindow .logo {
-    margin: 10px;
-}
-
-.nx-authenticate .message {
-    /**
- * @class NX.view.Authenticate
- */
-    margin-bottom: 10px;
 }

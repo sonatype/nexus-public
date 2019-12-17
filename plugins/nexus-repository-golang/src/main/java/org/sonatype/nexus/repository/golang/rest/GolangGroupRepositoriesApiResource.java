@@ -30,7 +30,7 @@ import static org.sonatype.nexus.repository.golang.rest.GolangGroupRepositoriesA
 /**
  * REST resource for handling requests regarding group Golang repositories.
  *
- * @since 3.next
+ * @since 3.20
  */
 @Named
 @Singleton
