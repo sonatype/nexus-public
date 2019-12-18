@@ -14,11 +14,8 @@ package org.sonatype.nexus.repository.storage;
 
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -48,10 +45,13 @@ import org.sonatype.nexus.selector.SelectorEvaluationException;
 import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.selector.SelectorSqlBuilder;
 
+import com.google.common.base.Equivalence;
+import com.google.common.base.Equivalence.Wrapper;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
+import static com.google.common.base.Equivalence.identity;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
@@ -203,11 +203,15 @@ public class BrowseNodeStoreImpl
 
     List<BrowseNode> results;
     if (repository.getType() instanceof GroupType) {
+      Equivalence<BrowseNode> browseNodeIdentity = Equivalence.equals()
+          .onResultOf(input -> repository.facet(GroupFacet.class).browseNodeIdentity().apply(input));
       // overlay member results, first-one-wins if there are any nodes with the same name
       results = members(repository)
           .map(m -> getByPath(m.getName(), path, maxNodes, assetFilter, filterParameters))
           .flatMap(List::stream)
-          .filter(distinctByName())
+          .map(browseNodeIdentity::wrap)
+          .distinct()
+          .map(Wrapper::get)
           .filter(node -> filter.test(node, repositoryName))
           .limit(maxNodes)
           .collect(toList());
@@ -221,16 +225,6 @@ public class BrowseNodeStoreImpl
     results.sort(getBrowseNodeComparator(format));
 
     return results;
-  }
-
-  /**
-   * Returns a filter that discards nodes which have the same name as an earlier node.
-   *
-   * Warning: this method is not thread-safe, so don't use it with a parallel stream
-   */
-  private static Predicate<BrowseNode> distinctByName() {
-    Set<String> names = new HashSet<>();
-    return node -> names.add(node.getName());
   }
 
   /**

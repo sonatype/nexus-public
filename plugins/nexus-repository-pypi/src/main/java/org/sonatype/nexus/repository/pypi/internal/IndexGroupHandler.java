@@ -42,6 +42,7 @@ import com.google.common.base.Suppliers;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.pypi.internal.AssetKind.INDEX;
 import static org.sonatype.nexus.repository.pypi.internal.AssetKind.ROOT_INDEX;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.extractLinksFromIndex;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.INDEX_PATH_PREFIX;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.name;
 
@@ -135,12 +136,8 @@ class IndexGroupHandler
     checkNotNull(results);
     Payload payload = checkNotNull(response.getPayload());
     try (InputStream in = payload.openInputStream()) {
-      List<PyPiLink> links = PyPiIndexUtils.extractLinksFromIndex(in);
-      for (PyPiLink link : links) {
-        if (!results.containsKey(link.getFile())) {
-          results.put(link.getFile(), link);
-        }
-      }
+      extractLinksFromIndex(in)
+          .forEach(link -> results.putIfAbsent(link.getFile().toLowerCase(), link));
     }
   }
 }
