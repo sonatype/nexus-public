@@ -79,6 +79,29 @@ public class BrowseNodeManager
   }
 
   /**
+   * Creates the browse nodes if they don't already exist.  This handles the case where a format creates contentless
+   * metadata without browse nodes and later updates the asset with content.
+   *
+   * @param repositoryName of the repository that the asset is stored in
+   * @param assetId        of the existing asset
+   * @param asset          that needs to be accessible from the browse nodes
+   */
+  public void maybeCreateFromUpdatedAsset(final String repositoryName, final EntityId assetId, final Asset asset) {
+    checkNotNull(assetId);
+
+    if (asset.blobRef() == null) {
+      log.trace("asset {} has no content, not creating browse node", assetId);
+    }
+    else if (browseNodeStore.assetNodeExists(assetId)) {
+      log.trace("browse node already exists for {} on update", assetId);
+    }
+    else {
+      log.trace("adding browse node for {} on update", assetId);
+      createFromAsset(repositoryName, asset);
+    }
+  }
+
+  /**
    * Creates the browse nodes used to access a collection of assets and their components (if they have one).
    *
    * @param repository storing the assets

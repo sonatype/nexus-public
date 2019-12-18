@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getFirst;
+import static com.google.common.collect.Iterables.isEmpty;
 import static com.google.common.collect.Lists.newArrayList;
 
 /**
@@ -330,6 +331,16 @@ public class BrowseNodeEntityAdapter
                 P_PARENT_PATH, node.getParentPath(),
                 P_NAME, node.getName())),
         null);
+  }
+
+  /**
+   * Returns true if an asset node for an asset with the given assetId exists.
+   */
+  public boolean assetNodeExists(final ODatabaseDocumentTx db, final EntityId assetId) {
+    Iterable<ODocument> documents =
+        db.command(new OCommandSQL(FIND_BY_ASSET)).execute(
+            ImmutableMap.of(P_ASSET_ID, recordIdentity(assetId)));
+    return !isEmpty(documents);
   }
 
   /**

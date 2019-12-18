@@ -146,6 +146,12 @@ public class BrowseNodeStoreImpl
 
   @Override
   @Guarded(by = STARTED)
+  public boolean assetNodeExists(final EntityId assetId) {
+    return inTx(databaseInstance).call(db -> entityAdapter.assetNodeExists(db, assetId));
+  }
+
+  @Override
+  @Guarded(by = STARTED)
   public void deleteComponentNode(EntityId componentId) {
     inTxRetry(databaseInstance).run(db -> entityAdapter.deleteComponentNode(db, componentId));
   }

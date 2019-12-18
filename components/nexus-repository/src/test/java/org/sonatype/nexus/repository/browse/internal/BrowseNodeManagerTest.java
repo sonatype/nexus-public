@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.common.entity.EntityId;
@@ -173,6 +174,55 @@ public class BrowseNodeManagerTest
     verifyNoMoreInteractions(browseNodeStore);
   }
 
+  @Test
+  public void maybeCreateFromUpdatedAssetSkipsAssetsWithoutBlobRef() {
+    List<BrowsePaths> assetPath = toBrowsePaths(singletonList("asset"));
+    Asset asset = createAsset("asset", "assetId", "otherFormat", null);
+    when(asset.blobRef()).thenReturn(null);
+
+    when(defaultBrowseNodeGenerator.computeAssetPaths(asset, null)).thenReturn(assetPath);
+    when(defaultBrowseNodeGenerator.computeComponentPaths(asset, null)).thenReturn(emptyList());
+
+    manager.maybeCreateFromUpdatedAsset(REPOSITORY_NAME, asset.getEntityMetadata().getId(), asset);
+
+    verifyNoMoreInteractions(browseNodeStore);
+  }
+
+  @Test
+  public void maybeCreateFromUpdatedAssetSkipsAssetsWithExistingBrowseNode() {
+    List<BrowsePaths> assetPath = toBrowsePaths(singletonList("asset"));
+    Asset asset = createAsset("asset", "assetId", "otherFormat", null);
+    EntityId assetId = asset.getEntityMetadata().getId();
+
+    when(browseNodeStore.assetNodeExists(assetId)).thenReturn(true);
+
+    when(defaultBrowseNodeGenerator.computeAssetPaths(asset, null)).thenReturn(assetPath);
+    when(defaultBrowseNodeGenerator.computeComponentPaths(asset, null)).thenReturn(emptyList());
+
+    manager.maybeCreateFromUpdatedAsset(REPOSITORY_NAME, assetId, asset);
+
+    verify(browseNodeStore).assetNodeExists(assetId);
+    verifyNoMoreInteractions(browseNodeStore);
+  }
+
+  @Test
+  public void maybeCreateFromUpdatedAssetCreatesForAssetWithContentAndNoExistingBrowseNode() {
+    List<BrowsePaths> assetPath = toBrowsePaths(singletonList("asset"));
+    Asset asset = createAsset("asset", "assetId", "otherFormat", null);
+    EntityId assetId = asset.getEntityMetadata().getId();
+
+    when(browseNodeStore.assetNodeExists(assetId)).thenReturn(false);
+
+    when(defaultBrowseNodeGenerator.computeAssetPaths(asset, null)).thenReturn(assetPath);
+    when(defaultBrowseNodeGenerator.computeComponentPaths(asset, null)).thenReturn(emptyList());
+
+    manager.maybeCreateFromUpdatedAsset(REPOSITORY_NAME, assetId, asset);
+
+    verify(browseNodeStore).assetNodeExists(assetId);
+    verify(browseNodeStore)
+        .createAssetNode(REPOSITORY_NAME, "otherFormat", toBrowsePaths(singletonList(asset.name())), asset);
+    verifyNoMoreInteractions(browseNodeStore);
+  }
 
   private Asset createAsset(final String assetName, final String assetId, final String format, final EntityId componentId) {
     EntityMetadata entityMetadata = mock(EntityMetadata.class);
@@ -182,6 +232,7 @@ public class BrowseNodeManagerTest
     when(asset.getEntityMetadata()).thenReturn(entityMetadata);
     when(asset.name()).thenReturn(assetName);
     when(asset.format()).thenReturn(format);
+    when(asset.blobRef()).thenReturn(mock(BlobRef.class));
 
     if (componentId != null) {
       when(asset.componentId()).thenReturn(componentId);

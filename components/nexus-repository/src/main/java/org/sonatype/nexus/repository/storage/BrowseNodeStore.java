@@ -35,6 +35,8 @@ public interface BrowseNodeStore
    */
   void createComponentNode(String repositoryName, String format, List<BrowsePaths> paths, Component component);
 
+  boolean assetNodeExists(EntityId assetId);
+
   /**
    * Deletes the asset's {@link BrowseNode}.
    */
