@@ -25,6 +25,7 @@ import org.sonatype.nexus.common.upgrade.Upgrades;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.orient.DatabaseUpgradeSupport;
+import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -61,6 +62,8 @@ public class PypiUpgrade_1_1
       "delete from browse_node where repository_name = ?";
 
   private static final String P_REPOSITORY_NAME = "repository_name";
+
+  private static final String BROWSE_NODE_CLASS = new OClassNameBuilder().type("browse_node").build();
 
   private static final String I_REPOSITORY_NAME = new OIndexNameBuilder()
       .type("bucket")
@@ -114,11 +117,14 @@ public class PypiUpgrade_1_1
               log.info(
                   "Deleted {} pypi index asset(s) in repository {}: ", deletes, repositoryName);
             }
-            // Deleting browse nodes
-            deletes = db.command(deleteBrowseNodesCommand).execute(repositoryName);
-            if (deletes > 0) {
-              log.info(
-                  "Deleted {} browse node(s) in repository {}", deletes, repositoryName);
+
+            if (db.getMetadata().getSchema().existsClass(BROWSE_NODE_CLASS)) {
+              // Deleting browse nodes
+              deletes = db.command(deleteBrowseNodesCommand).execute(repositoryName);
+              if (deletes > 0) {
+                log.info(
+                    "Deleted {} browse node(s) in repository {}", deletes, repositoryName);
+              }
             }
           }
         });
