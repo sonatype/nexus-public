@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.sonatype.nexus.testsuite</groupId>
     <artifactId>nexus-testsuite</artifactId>
-    <version>3.20.0-04</version>
+    <version>3.20.1-01</version>
   </parent>
 
   <artifactId>nexus-it-suite</artifactId>
