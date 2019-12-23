@@ -1013,6 +1013,17 @@ public class BrowseNodeEntityAdapterTest
     }
   }
 
+  @Test
+  public void assetExistsFindsAssetNode() throws Exception {
+    List<String> path = Splitter.on('/').omitEmptyStrings().splitToList(asset.name());
+
+    try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
+      underTest.createComponentNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(path.subList(0, 3)), component);
+      underTest.createAssetNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(path), asset);
+      assertThat(underTest.assetNodeExists(db, EntityHelper.id(asset)), is(true));
+    }
+  }
+
   private void createEntities(final ODatabaseDocumentTx db) {
     bucket = new Bucket();
     bucket.setRepositoryName(REPOSITORY_NAME);

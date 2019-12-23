@@ -26,6 +26,10 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>feature</packaging>
 
+  <properties>
+    <r.format.version>1.1.1</r.format.version>
+  </properties>
+
   <dependencies>
 
     <dependency>
@@ -86,6 +90,14 @@
 
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-repository-r</artifactId>
+      <version>${r.format.version}</version>
+      <classifier>features</classifier>
+      <type>xml</type>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-repository-raw</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
@@ -115,6 +127,14 @@
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-restore-pypi</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-restore-r</artifactId>
+      <version>${r.format.version}</version>
       <classifier>features</classifier>
       <type>xml</type>
     </dependency>

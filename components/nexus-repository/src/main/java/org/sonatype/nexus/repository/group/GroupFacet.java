@@ -13,9 +13,11 @@
 package org.sonatype.nexus.repository.group;
 
 import java.util.List;
+import java.util.function.Function;
 
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.storage.BrowseNode;
 
 /**
  * Group facet.
@@ -58,4 +60,12 @@ public interface GroupFacet
    */
   void invalidateGroupCaches();
 
+  /**
+   * Returns a function to apply to a browse node to determine distinctness
+   *
+   * @since 3.next
+   */
+  default Function<BrowseNode, String> browseNodeIdentity() {
+    return BrowseNode::getName;
+  }
 }

@@ -17,6 +17,7 @@ import javax.inject.Provider
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.datastore.DataStoreConfigurationManager
 import org.sonatype.nexus.datastore.DataStoreDescriptor
+import org.sonatype.nexus.datastore.DataStoreRestorer
 import org.sonatype.nexus.datastore.DataStoreSupport
 import org.sonatype.nexus.datastore.DataStoreUsageChecker
 import org.sonatype.nexus.datastore.api.DataStore
@@ -66,6 +67,9 @@ class DataStoreManagerImplTest
   DataStoreUsageChecker dataStoreUsageChecker
 
   @Mock
+  DataStoreRestorer restorer
+
+  @Mock
   BeanLocator beanLocator
 
   DataStoreManagerImpl underTest
@@ -85,6 +89,7 @@ class DataStoreManagerImplTest
         [test: prototypeTest, jdbc: prototypeJdbc],
         configurationManager,
         { -> dataStoreUsageChecker } as Provider,
+        restorer,
         beanLocator)
 
     underTest.start()
@@ -334,5 +339,10 @@ class DataStoreManagerImplTest
     expected.verify(store, times(1)).start()
 
     expected.verifyNoMoreInteractions()
+  }
+
+  @Test
+  void 'Restoring databases attempted'() {
+    verify(restorer).maybeRestore()
   }
 }

@@ -59,10 +59,7 @@ public class BrowseNodeEventHandler
   @Subscribe
   @AllowConcurrentEvents
   public void on(final AssetUpdatedEvent event) {
-    handle(event, e -> {
-      browseNodeManager.deleteAssetNode(e.getAssetId());
-      browseNodeManager.createFromAsset(e.getRepositoryName(), e.getAsset());
-    });
+    handle(event, e -> browseNodeManager.maybeCreateFromUpdatedAsset(e.getRepositoryName(), e.getAssetId(), e.getAsset()));
   }
 
   @Subscribe

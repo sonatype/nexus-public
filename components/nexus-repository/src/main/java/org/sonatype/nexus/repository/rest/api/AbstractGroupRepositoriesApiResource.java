@@ -17,8 +17,6 @@ import java.util.Set;
 
 import javax.inject.Inject;
 import javax.validation.ConstraintViolation;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -64,7 +62,7 @@ public abstract class AbstractGroupRepositoriesApiResource<T extends GroupReposi
   @POST
   @RequiresAuthentication
   @Validate
-  public Response createRepository(@NotNull @Valid final T request) {
+  public Response createRepository(final T request) {
     validateGroupMembers(request);
     return super.createRepository(request);
   }
@@ -74,7 +72,7 @@ public abstract class AbstractGroupRepositoriesApiResource<T extends GroupReposi
   @RequiresAuthentication
   @Validate
   public Response updateRepository(
-      @NotNull @Valid final T request,
+      final T request,
       @PathParam("repositoryName") final String repositoryName)
   {
     validateGroupMembers(request);

@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.storage;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -335,6 +336,7 @@ public class BrowseNodeStoreImplTest
     when(repository.getType()).thenReturn(new GroupType());
     when(repository.facet(GroupFacet.class)).thenReturn(groupFacet);
     when(groupFacet.leafMembers()).thenReturn(asList(memberA, memberB, memberC));
+    when(groupFacet.browseNodeIdentity()).thenReturn(browseNodeIdentity());
 
     when(browseNodeEntityAdapter.getByPath(db, MEMBER_A, queryPath, MAX_NODES, "", emptyMap()))
         .thenReturn(asList(node(MEMBER_A, "com"), node(MEMBER_A, "org")));
@@ -367,6 +369,7 @@ public class BrowseNodeStoreImplTest
     when(repository.getType()).thenReturn(new GroupType());
     when(repository.facet(GroupFacet.class)).thenReturn(groupFacet);
     when(groupFacet.leafMembers()).thenReturn(asList(memberA, memberB, memberC));
+    when(groupFacet.browseNodeIdentity()).thenReturn(browseNodeIdentity());
 
     when(browseNodeEntityAdapter.getByPath(db, MEMBER_A, queryPath, 1, "", emptyMap()))
         .thenReturn(asList(node(MEMBER_A, "com")));
@@ -465,6 +468,15 @@ public class BrowseNodeStoreImplTest
             node("1.2", false, false)));
 
     assertThat(versions(asList("org", "foo")), contains("2.0", "1.2", "1.10", "1.1", "1.0"));
+  }
+
+  /**
+   * Workaround due to mockito 1.9 not supporting {@code thenCallRealMethod()} on interface default methods
+   *
+   * Implementation should be the same as {@link GroupFacet#browseNodeIdentity()}
+   */
+  private Function<BrowseNode, String> browseNodeIdentity() {
+    return BrowseNode::getName;
   }
 
   private List<String> versions(List<String> queryPath) {

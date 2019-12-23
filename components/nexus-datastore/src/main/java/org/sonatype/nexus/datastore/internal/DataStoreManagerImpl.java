@@ -29,6 +29,7 @@ import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.datastore.DataStoreConfigurationManager;
 import org.sonatype.nexus.datastore.DataStoreDescriptor;
+import org.sonatype.nexus.datastore.DataStoreRestorer;
 import org.sonatype.nexus.datastore.DataStoreUsageChecker;
 import org.sonatype.nexus.datastore.api.ContentDataAccess;
 import org.sonatype.nexus.datastore.api.DataAccess;
@@ -87,12 +88,15 @@ public class DataStoreManagerImpl
 
   private final Map<String, DataStore<?>> dataStores = new ConcurrentHashMap<>();
 
+  private final DataStoreRestorer restorer;
+
   @Inject
   public DataStoreManagerImpl(@Named("${nexus.datastore.enabled:-false}") final boolean enabled,
                               final Map<String, DataStoreDescriptor> dataStoreDescriptors,
                               final Map<String, Provider<DataStore<?>>> dataStorePrototypes,
                               final DataStoreConfigurationManager configurationManager,
                               final Provider<DataStoreUsageChecker> usageChecker,
+                              final DataStoreRestorer restorer,
                               final BeanLocator beanLocator)
   {
     this.enabled = enabled;
@@ -102,11 +106,13 @@ public class DataStoreManagerImpl
     this.configurationManager = checkNotNull(configurationManager);
     this.usageChecker = checkNotNull(usageChecker);
     this.beanLocator = checkNotNull(beanLocator);
+    this.restorer = checkNotNull(restorer);
   }
 
   @Override
   protected void doStart() throws Exception {
     if (enabled) {
+      restorer.maybeRestore();
       configurationManager.load().forEach(this::tryRestore);
     }
   }

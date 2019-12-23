@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
@@ -41,6 +42,7 @@ import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.AssetCreatedEvent;
 import org.sonatype.nexus.repository.storage.AssetDeletedEvent;
 import org.sonatype.nexus.repository.storage.AssetEvent;
+import org.sonatype.nexus.repository.storage.BrowseNode;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
@@ -322,5 +324,13 @@ public class PyPiGroupFacet
       assets.formatAttributes().set(P_ASSET_KIND, INDEX);
     }
     return assets;
+  }
+
+  /**
+   * Changes default behavior to be distinct and ignore case
+   */
+  @Override
+  public Function<BrowseNode, String> browseNodeIdentity() {
+    return node -> node.getName().toLowerCase();
   }
 }

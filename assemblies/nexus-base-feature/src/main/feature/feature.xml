@@ -17,8 +17,8 @@
     <!--
     Wrappers that require use of fragments
     -->
-    <bundle>wrap:${mvn:javax.el}$overwrite=merge&amp;Fragment-Host=org.hibernate.validator</bundle>
-    <bundle>wrap:${mvn:validation-api}$overwrite=merge&amp;Fragment-Host=org.hibernate.validator</bundle>
+    <bundle>wrap:${mvn:jakarta.el}$overwrite=merge&amp;Fragment-Host=org.hibernate.validator</bundle>
+    <bundle>wrap:${mvn:jakarta.validation-api}$overwrite=merge&amp;Fragment-Host=org.hibernate.validator</bundle>
     <bundle>wrap:${mvn:paranamer}$overwrite=merge&amp;Fragment-Host=org.hibernate.validator</bundle>
     <bundle>wrap:${mvn:httpcore}$Bundle-SymbolicName=httpcore</bundle>
     <bundle>wrap:${mvn:httpclient}$Bundle-SymbolicName=httpclient&amp;Fragment-Host=httpcore</bundle>
@@ -43,7 +43,7 @@
     <!--
     Relax Swagger import constraints so we can use latest release of Guava, and make use of Reflections optional
     -->
-    <bundle>wrap:${mvn:swagger-core}$overwrite=merge&amp;Import-Package=com.google.common.*,*</bundle>
+    <bundle>wrap:${mvn:swagger-core}$overwrite=merge&amp;Import-Package=com.google.common.*,javax.validation.*,*</bundle>
     <bundle>wrap:${mvn:swagger-jaxrs}$overwrite=merge&amp;Import-Package=com.google.common.*,org.reflections.*;resolution:=optional,*</bundle>
 
     <!--
