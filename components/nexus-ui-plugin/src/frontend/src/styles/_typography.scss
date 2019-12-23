@@ -11,8 +11,6 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-.nxrm-anonymous-settings {
-  .nxrm-anonymous-settings-field {
-    width: 250px;
-  }
+@mixin nxrmFonts() {
+  font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }

@@ -11,11 +11,12 @@ exports[`AnonymousSettings renders correctly 1`] = `
       labelText="Access:"
     >
       <Checkbox
+        checkboxId="enabled"
         isChecked={false}
-        labelText="Allow anonymous users to access the server"
-        name="enabled"
         onChange={[Function]}
-      />
+      >
+        Allow anonymous users to access the server
+      </Checkbox>
     </Component>
     <Component
       labelText="Username:"
@@ -41,8 +42,8 @@ exports[`AnonymousSettings renders correctly 1`] = `
     <Component>
       <Button
         disabled={true}
-        isPrimary={true}
         onClick={[Function]}
+        variant="primary"
       >
         Save
       </Button>

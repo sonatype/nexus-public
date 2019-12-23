@@ -1,4 +1,4 @@
-/**
+/*
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
  * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
@@ -11,8 +11,24 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-.nxrm-anonymous-settings {
-  .nxrm-anonymous-settings-field {
-    width: 250px;
-  }
-}
+module.exports = {
+  presets: [
+    '@babel/preset-react',
+    [
+      '@babel/preset-env',
+      {
+        // see https://help.sonatype.com/repomanager3/system-requirements#SystemRequirements-WebBrowser
+        targets: 'last 1 Chrome version, last 1 Firefox version, Firefox ESR, last 1 Safari version, ie >= 11, last 1 Edge version'
+      }
+    ]
+  ],
+  plugins: [
+    ['@babel/plugin-proposal-class-properties'],
+    [
+      '@babel/plugin-transform-runtime',
+      {
+        regenerator: true
+      }
+    ]
+  ]
+};

@@ -11,8 +11,12 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-.nxrm-anonymous-settings {
-  .nxrm-anonymous-settings-field {
-    width: 250px;
-  }
-}
+$almost-black: rgba(51, 51, 51, 1);
+$almost-white: rgba(243, 243, 243, 1);
+$blue: rgba(10, 108, 184, 1);
+$light-blue: rgba(133, 190, 233, 1);
+$gray: rgba(194, 194, 194, 1);
+$light-gray: rgba(210, 210, 210, 1);
+$red: rgba(199, 0, 0, 1);
+$transparent: rgba(0, 0, 0, 0.5);
+$white: white;

@@ -1,4 +1,4 @@
-/**
+/*
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
  * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
@@ -10,9 +10,24 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import { shallow } from 'enzyme';
+import React from 'react';
 
-.nxrm-anonymous-settings {
-  .nxrm-anonymous-settings-field {
-    width: 250px;
-  }
-}
+import Checkbox from './Checkbox';
+
+describe('Checkbox', () => {
+  it('renders correctly', () => {
+    expect(shallow(<Checkbox isChecked={false} />)).toMatchSnapshot();
+  });
+
+  it('renders correctly with all props', () => {
+    expect(shallow(
+      <Checkbox
+        name='test-checkbox'
+        isChecked={true}
+        onChange={() => { }}
+        labelText='awesome checkbox'
+      />
+    )).toMatchSnapshot();
+  });
+});
