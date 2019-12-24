@@ -183,12 +183,19 @@ class SupportZipGeneratorImpl
 
     try {
       // prepare bundle sources
-      sources.each {
+      def preparedSources = sources.collect {
         log.debug 'Preparing bundle source: {}', it
-        it.prepare()
-      }
+        try {
+          it.prepare()
+          return it
+        }
+        catch (Exception e) {
+          log.error 'Failed to prepare source {}', it.class, e
+          return null
+        }
+      }.findAll()
 
-      return createZip(outputStream, sources, prefix, request.limitFileSizes, request.limitZipSize)
+      return createZip(outputStream, preparedSources, prefix, request.limitFileSizes, request.limitZipSize)
     }
     catch (Exception e) {
       log.error 'Failed to create support ZIP', e

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.internal.atlas
 
+import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 
 import org.sonatype.goodies.common.ByteSize
@@ -20,6 +21,7 @@ import org.sonatype.nexus.supportzip.GeneratedContentSourceSupport
 import org.sonatype.nexus.supportzip.SupportBundle
 import org.sonatype.nexus.supportzip.SupportBundleCustomizer
 import org.sonatype.nexus.supportzip.SupportZipGenerator
+import org.sonatype.nexus.supportzip.SupportZipGenerator.Request
 
 import groovy.transform.InheritConstructors
 import spock.lang.Specification
@@ -41,16 +43,24 @@ class SupportZipGeneratorImplTest
   def mockTaskLogCustomizer = Mock(SupportBundleCustomizer)
   def mockAuditLogCustomizer = Mock(SupportBundleCustomizer)
   def mockJmxCustomizer = Mock(SupportBundleCustomizer)
+  def throwExceptionCustomizer = Mock(SupportBundleCustomizer)
   def logContentSource = new TestGeneratedContentSourceSupport(LOG, 'log/nexus.log', OPTIONAL)
   def taskLogContentSource = new TestGeneratedContentSourceSupport(TASKLOG, 'log/tasks/task.log', OPTIONAL)
   def auditLogContentSource = new TestGeneratedContentSourceSupport(AUDITLOG, 'log/audit.log', OPTIONAL)
   def jmxContentSource = new TestGeneratedContentSourceSupport(JMX, 'info/jmx.json', OPTIONAL)
+  def throwExceptionSource = new GeneratedContentSourceSupport(JMX, 'info/jmx.json', OPTIONAL) {
+    @Override
+    protected void generate(final File file) throws Exception {
+      throw new RuntimeException('I fail to generate')
+    }
+  }
 
   def setup() {
       mockLogCustomizer.customize(_) >> { SupportBundle bundle -> bundle << logContentSource }
       mockTaskLogCustomizer.customize(_) >> { SupportBundle bundle -> bundle << taskLogContentSource }
       mockAuditLogCustomizer.customize(_) >> { SupportBundle bundle -> bundle << auditLogContentSource }
       mockJmxCustomizer.customize(_) >> { SupportBundle bundle -> bundle << jmxContentSource }
+      throwExceptionCustomizer.customize(_) >> { SupportBundle bundle -> bundle << throwExceptionSource }
   }
 
   def "Support zip is generated from requested sources"() {
@@ -120,6 +130,25 @@ class SupportZipGeneratorImplTest
 
     then:
       entries.find { it.name == 'prefix/truncated' } != null
+  }
+
+  def "Source failures will not block generation of support zip"() {
+    given:
+      def req = new Request(log: true, taskLog: true, jmx: true, limitFileSizes: true)
+      def out = new ByteArrayOutputStream()
+      jmxContentSource.contentSize = 1000
+      def generator = new SupportZipGeneratorImpl(downloadService, [mockJmxCustomizer, throwExceptionCustomizer],
+          ByteSize.bytes(1000000),
+          ByteSize.bytes(1000000))
+    when:
+      generator.generate(req, 'prefix', out)
+      def zip = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()))
+      List<ZipEntry> entries = []
+      for (def entry = zip.getNextEntry(); entry; entry = zip.getNextEntry()) {
+        entries << entry
+      }
+    then:
+      entries.find { it.name == 'prefix/info/jmx.json' && it.size == 1000 } != null
   }
 
   @InheritConstructors
