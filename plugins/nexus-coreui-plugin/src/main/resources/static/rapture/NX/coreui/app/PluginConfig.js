@@ -46,14 +46,14 @@ Ext.define('NX.coreui.app.PluginConfig', {
       id: 'NX.coreui.controller.AnonymousSettings',
       active: function() {
         return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin') &&
-            !NX.State.getValue('reactFrontend', true);
+            !NX.State.getValue('reactFrontend', false);
       }
     },
     {
       id: 'NX.coreui.controller.react.AnonymousSettingsController',
       active: function() {
         return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin') &&
-            NX.State.getValue('reactFrontend', true);
+            NX.State.getValue('reactFrontend', false);
       }
     },
     {
