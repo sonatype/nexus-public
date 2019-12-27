@@ -31,7 +31,7 @@ Ext.define('NX.coreui.controller.react.AnonymousSettingsController', {
   refs: [
     {
       ref: 'mainContainer',
-      selector: 'nx-coreui-react-main-container'
+      selector: '#security-anonymous-settings'
     }
   ],
 
@@ -54,6 +54,7 @@ Ext.define('NX.coreui.controller.react.AnonymousSettingsController', {
       description: NX.I18n.get('AnonymousSettings_Description'),
       view: {
         xtype: 'nx-coreui-react-main-container',
+        itemId: 'security-anonymous-settings',
         reactView: 'AnonymousSettings'
       },
       iconConfig: {
@@ -69,7 +70,9 @@ Ext.define('NX.coreui.controller.react.AnonymousSettingsController', {
   },
 
   refresh: function() {
-    this.getMainContainer().refresh();
+    if (this.getMainContainer()) {
+      this.getMainContainer().refresh();
+    }
   }
 
 });
