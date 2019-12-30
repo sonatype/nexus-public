@@ -13,10 +13,8 @@
 package org.sonatype.nexus.extender.modules;
 
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -53,7 +51,9 @@ public class FeatureFlaggedIndex
 
   private static final IndexedClassFinder GLOBAL_INDEX = new IndexedClassFinder(NAMED_INDEX, true);
 
-  private final Predicate<String> allowedFilter;
+  private static final Predicate<String> ALLOW_EVERYTHING = name -> true;
+
+  private final Predicate<String> allowed;
 
   /**
    * Filter out components in the given bundle whose feature-flag is currently disabled.
@@ -62,30 +62,34 @@ public class FeatureFlaggedIndex
     String featureFlaggedClasses = bundle.getHeaders().get("Feature-Flagged");
     if (!isNullOrEmpty(featureFlaggedClasses)) {
 
-      List<String> disabledPackages = new ArrayList<>();
-      Set<String> disabledComponents = new HashSet<>();
+      String[] classNames = featureFlaggedClasses.split(",");
+      Predicate<String> allowed = ALLOW_EVERYTHING;
 
-      boolean needsFiltering = false;
-      for (String clazzName : featureFlaggedClasses.split(",")) {
-        if (isFeatureFlagDisabled(bundle, clazzName)) {
-          int packageInfoIndex = clazzName.indexOf(PACKAGE_INFO);
-          if (packageInfoIndex > 0) {
-            disabledPackages.add(clazzName.substring(0, packageInfoIndex));
-            needsFiltering = true;
-          }
-          else {
-            disabledComponents.add(clazzName);
-            needsFiltering = true;
-          }
+      // first-pass: build filter at the package-level
+      for (String className : classNames) {
+        int packageInfoIndex = className.indexOf(PACKAGE_INFO);
+        if (packageInfoIndex > 0 && isFeatureFlagDisabled(bundle, className)) {
+          String packageName = className.substring(0, packageInfoIndex);
+          allowed = allowed.and(name -> !name.startsWith(packageName));
         }
       }
 
-      if (needsFiltering) {
-        Predicate<String> allowedFilter = clazzName -> !disabledComponents.contains(clazzName);
-        for (String packageName : disabledPackages) {
-          allowedFilter = allowedFilter.and(clazzName -> !clazzName.startsWith(packageName));
+      Set<String> disabledComponents = new HashSet<>();
+
+      // second-pass: find any disabled components that weren't already filtered out by their package
+      for (String className : classNames) {
+        if (!className.contains(PACKAGE_INFO) && allowed.test(className) && isFeatureFlagDisabled(bundle, className)) {
+          disabledComponents.add(className);
         }
-        return new FeatureFlaggedIndex(allowedFilter);
+      }
+
+      // combine package and component filters
+      if (!disabledComponents.isEmpty()) {
+        allowed = allowed.and(name -> !disabledComponents.contains(name));
+      }
+
+      if (allowed != ALLOW_EVERYTHING) { // NOSONAR
+        return new FeatureFlaggedIndex(allowed);
       }
     }
 
@@ -104,15 +108,15 @@ public class FeatureFlaggedIndex
     }
   }
 
-  private FeatureFlaggedIndex(final Predicate<String> allowedFilter) {
-    this.allowedFilter = checkNotNull(allowedFilter);
+  private FeatureFlaggedIndex(final Predicate<String> allowed) {
+    this.allowed = checkNotNull(allowed);
   }
 
   @Override
   public Enumeration<URL> findClasses(final ClassSpace space) {
     return asEnumeration(
         stream(GLOBAL_INDEX.indexedNames(space).spliterator(), false)
-            .filter(allowedFilter)
+            .filter(allowed)
             .map(name -> space.getResource(name.replace('.', '/') + ".class"))
             .filter(Objects::nonNull)
             .iterator());
