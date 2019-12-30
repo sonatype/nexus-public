@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.annotation.Nullable;
+import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
@@ -23,7 +24,6 @@ import javax.inject.Singleton;
 
 import com.sonatype.nexus.ssl.plugin.internal.keystore.KeyStoreManagerImpl;
 
-import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.Guarded;
@@ -47,10 +47,10 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
  * 
  * @since 3.1
  */
-@FeatureFlag(name = "nexus.orient.store.config")
 @Named(KeyStoreManagerImpl.NAME)
-@Singleton
+@Priority(Integer.MAX_VALUE)
 @ManagedLifecycle(phase = SCHEMAS)
+@Singleton
 public class OrientKeyStoreStorageManager
     extends StateGuardLifecycleSupport
     implements KeyStoreStorageManager

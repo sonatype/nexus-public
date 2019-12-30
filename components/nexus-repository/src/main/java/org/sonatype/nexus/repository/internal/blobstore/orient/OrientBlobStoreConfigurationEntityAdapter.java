@@ -21,7 +21,6 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
-import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.entity.EntityEvent;
 import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.orient.OClassNameBuilder;
@@ -30,9 +29,6 @@ import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 import org.sonatype.nexus.orient.entity.action.ReadEntityByPropertyAction;
 import org.sonatype.nexus.orient.entity.action.UpdateEntityByPropertyAction;
-import org.sonatype.nexus.repository.internal.blobstore.BlobStoreConfigurationCreatedEvent;
-import org.sonatype.nexus.repository.internal.blobstore.BlobStoreConfigurationDeletedEvent;
-import org.sonatype.nexus.repository.internal.blobstore.BlobStoreConfigurationUpdatedEvent;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.orientechnologies.orient.core.collate.OCaseInsensitiveCollate;
@@ -50,7 +46,6 @@ import static java.lang.String.format;
  *
  * since 3.0
  */
-@FeatureFlag(name = "nexus.orient.store.config")
 @Named
 @Singleton
 public class OrientBlobStoreConfigurationEntityAdapter
@@ -135,11 +130,11 @@ public class OrientBlobStoreConfigurationEntityAdapter
     log.trace("newEvent: eventKind: {}, name: {}, metadata: {}", eventKind, name, metadata);
     switch (eventKind) {
       case CREATE:
-        return new BlobStoreConfigurationCreatedEvent(metadata, name);
+        return new OrientBlobStoreConfigurationCreatedEvent(metadata, name);
       case UPDATE:
-        return new BlobStoreConfigurationUpdatedEvent(metadata, name);
+        return new OrientBlobStoreConfigurationUpdatedEvent(metadata, name);
       case DELETE:
-        return new BlobStoreConfigurationDeletedEvent(metadata, name);
+        return new OrientBlobStoreConfigurationDeletedEvent(metadata, name);
       default:
         return null;
     }

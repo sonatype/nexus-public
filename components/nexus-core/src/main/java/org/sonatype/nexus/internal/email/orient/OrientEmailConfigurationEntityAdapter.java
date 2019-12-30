@@ -17,13 +17,9 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.entity.EntityEvent;
 import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.email.EmailConfiguration;
-import org.sonatype.nexus.internal.email.EmailConfigurationCreatedEvent;
-import org.sonatype.nexus.internal.email.EmailConfigurationDeletedEvent;
-import org.sonatype.nexus.internal.email.EmailConfigurationUpdatedEvent;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.SingletonEntityAdapter;
@@ -40,7 +36,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 3.0
  */
-@FeatureFlag(name = "nexus.orient.store.config")
 @Named
 @Singleton
 public class OrientEmailConfigurationEntityAdapter
@@ -155,11 +150,11 @@ public class OrientEmailConfigurationEntityAdapter
     log.debug("Emitted {} event with metadata {}", eventKind, metadata);
     switch (eventKind) {
       case CREATE:
-        return new EmailConfigurationCreatedEvent(metadata);
+        return new OrientEmailConfigurationCreatedEvent(metadata);
       case UPDATE:
-        return new EmailConfigurationUpdatedEvent(metadata);
+        return new OrientEmailConfigurationUpdatedEvent(metadata);
       case DELETE:
-        return new EmailConfigurationDeletedEvent(metadata);
+        return new OrientEmailConfigurationDeletedEvent(metadata);
       default:
         return null;
     }

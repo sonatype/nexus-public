@@ -34,7 +34,6 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.Time;
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
-import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.log.ExceptionSummarizer;
 import org.sonatype.nexus.common.node.NodeAccess;
@@ -93,7 +92,6 @@ import static org.sonatype.nexus.scheduling.TaskDescriptorSupport.MULTINODE_KEY;
  *
  * @since 3.0
  */
-@FeatureFlag(name = "nexus.orient.store.config")
 @Named("orient")
 @ManagedLifecycle(phase = SCHEMAS)
 @Singleton

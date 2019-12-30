@@ -19,8 +19,8 @@ import org.sonatype.nexus.repository.routing.OrientRoutingRule
 import org.sonatype.nexus.repository.routing.RoutingMode
 import org.sonatype.nexus.repository.routing.RoutingRule
 import org.sonatype.nexus.repository.routing.RoutingRuleStore
-import org.sonatype.nexus.repository.routing.internal.OrientRoutingRuleEntityAdapter
-import org.sonatype.nexus.repository.routing.internal.OrientRoutingRuleStore
+import org.sonatype.nexus.repository.routing.internal.orient.OrientRoutingRuleEntityAdapter
+import org.sonatype.nexus.repository.routing.internal.orient.OrientRoutingRuleStore
 import org.sonatype.nexus.security.PasswordHelper
 
 import com.orientechnologies.orient.core.exception.OValidationException

@@ -20,7 +20,6 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.Time;
-import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.entity.EntityEvent;
 import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.httpclient.config.AuthenticationConfiguration;
@@ -50,7 +49,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  *
  * @since 3.0
  */
-@FeatureFlag(name = "nexus.orient.store.config")
 @Named
 @Singleton
 public class OrientHttpClientConfigurationEntityAdapter
@@ -137,11 +135,11 @@ public class OrientHttpClientConfigurationEntityAdapter
     log.debug("Emitted {} event with metadata {}", eventKind, metadata);
     switch (eventKind) {
       case CREATE:
-        return new HttpClientConfigurationCreatedEvent(metadata);
+        return new OrientHttpClientConfigurationCreatedEvent(metadata);
       case UPDATE:
-        return new HttpClientConfigurationUpdatedEvent(metadata);
+        return new OrientHttpClientConfigurationUpdatedEvent(metadata);
       case DELETE:
-        return new HttpClientConfigurationDeletedEvent(metadata);
+        return new OrientHttpClientConfigurationDeletedEvent(metadata);
       default:
         return null;
     }

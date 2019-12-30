@@ -20,7 +20,7 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItem;
 import org.sonatype.nexus.internal.capability.storage.orient.OrientCapabilityStorageItemCreatedEvent;
 import org.sonatype.nexus.internal.capability.storage.orient.OrientCapabilityStorageItemDeletedEvent;
-import org.sonatype.nexus.internal.capability.storage.orient.CapabilityStorageItemEntityAdapter;
+import org.sonatype.nexus.internal.capability.storage.orient.OrientCapabilityStorageItemEntityAdapter;
 import org.sonatype.nexus.internal.capability.storage.CapabilityStorageItemEvent;
 import org.sonatype.nexus.internal.capability.storage.orient.OrientCapabilityStorageItemUpdatedEvent;
 import org.sonatype.nexus.internal.capability.storage.orient.OrientCapabilityStorage;
@@ -68,7 +68,7 @@ public class OrientCapabilityStorageTest
 
     Orient.instance().addDbLifecycleListener(entityHook);
 
-    CapabilityStorageItemEntityAdapter entityAdapter = new CapabilityStorageItemEntityAdapter();
+    OrientCapabilityStorageItemEntityAdapter entityAdapter = new OrientCapabilityStorageItemEntityAdapter();
     entityAdapter.enableObfuscation(new HexRecordIdObfuscator());
     entityAdapter.enableEntityHook(entityHook);
 

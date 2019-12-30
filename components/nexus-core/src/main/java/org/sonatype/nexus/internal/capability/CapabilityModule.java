@@ -14,9 +14,6 @@ package org.sonatype.nexus.internal.capability;
 
 import javax.inject.Named;
 
-import org.sonatype.nexus.internal.capability.storage.CapabilityStorage;
-import org.sonatype.nexus.internal.capability.storage.orient.OrientCapabilityStorage;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 
@@ -29,11 +26,8 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 public class CapabilityModule
     extends AbstractModule
 {
-
   @Override
   protected void configure() {
-    bind(CapabilityStorage.class).to(OrientCapabilityStorage.class);
-
     install(new FactoryModuleBuilder().build(ActivationConditionHandlerFactory.class));
     install(new FactoryModuleBuilder().build(ValidityConditionHandlerFactory.class));
   }

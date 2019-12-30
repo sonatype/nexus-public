@@ -13,34 +13,14 @@
 package org.sonatype.nexus.repository.internal.blobstore;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
-import org.sonatype.nexus.common.entity.EntityDeletedEvent;
-import org.sonatype.nexus.common.entity.EntityMetadata;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * {@link BlobStoreConfiguration} deleted event.
+ * {@link BlobStoreConfiguration} event.
  *
  * @since 3.1
  */
-public class BlobStoreConfigurationDeletedEvent
-    extends EntityDeletedEvent
-    implements BlobStoreConfigurationEvent
+public interface BlobStoreConfigurationDeletedEvent
+    extends BlobStoreConfigurationEvent
 {
-  private final String name;
-
-  public BlobStoreConfigurationDeletedEvent(final EntityMetadata metadata, final String name) {
-    super(metadata);
-    this.name = checkNotNull(name);
-  }
-
-  @Override
-  public String getName() {
-    return name;
-  }
-
-  @Override
-  public BlobStoreConfiguration getConfiguration() {
-    return getEntity();
-  }
+  // nothing to add
 }

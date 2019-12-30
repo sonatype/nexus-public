@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.config.internal.orient;
 
 import java.util.List;
 
+import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
@@ -41,7 +42,8 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
  *
  * @since 3.0
  */
-@Named
+@Named("orient")
+@Priority(Integer.MAX_VALUE)
 @ManagedLifecycle(phase = SCHEMAS)
 @Singleton
 public class OrientConfigurationStoreImpl

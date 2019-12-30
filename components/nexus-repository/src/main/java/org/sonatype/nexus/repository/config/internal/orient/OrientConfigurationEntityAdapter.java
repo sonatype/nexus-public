@@ -31,7 +31,7 @@ import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.AttachedEntityId;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
-import org.sonatype.nexus.repository.routing.internal.OrientRoutingRuleEntityAdapter;
+import org.sonatype.nexus.repository.routing.internal.orient.OrientRoutingRuleEntityAdapter;
 import org.sonatype.nexus.security.PasswordHelper;
 
 import com.orientechnologies.orient.core.collate.OCaseInsensitiveCollate;
@@ -75,15 +75,15 @@ public class OrientConfigurationEntityAdapter
 
   private final PasswordHelper passwordHelper;
 
-  private final OrientRoutingRuleEntityAdapter orientRoutingRuleEntityAdapter;
+  private final OrientRoutingRuleEntityAdapter routingRuleEntityAdapter;
 
   @Inject
   public OrientConfigurationEntityAdapter(final PasswordHelper passwordHelper,
-                                          final OrientRoutingRuleEntityAdapter orientRoutingRuleEntityAdapter)
+                                          final OrientRoutingRuleEntityAdapter routingRuleEntityAdapter)
   {
     super(DB_CLASS);
     this.passwordHelper = checkNotNull(passwordHelper);
-    this.orientRoutingRuleEntityAdapter = checkNotNull(orientRoutingRuleEntityAdapter);
+    this.routingRuleEntityAdapter = checkNotNull(routingRuleEntityAdapter);
   }
 
   @Override
@@ -117,7 +117,7 @@ public class OrientConfigurationEntityAdapter
 
     ODocument routingRule = document.field(P_ROUTING_RULE_ID, OType.LINK);
     EntityId routingRuleId =
-        routingRule == null ? null : new AttachedEntityId(orientRoutingRuleEntityAdapter, routingRule.getIdentity());
+        routingRule == null ? null : new AttachedEntityId(routingRuleEntityAdapter, routingRule.getIdentity());
     entity.setRoutingRuleId(routingRuleId);
 
     entity.setRecipeName(recipeName);
@@ -143,7 +143,7 @@ public class OrientConfigurationEntityAdapter
     document.field(P_ATTRIBUTES, encrypt(attributes));
 
     document.field(P_ROUTING_RULE_ID, entity.getRoutingRuleId() != null ? getRecordIdObfuscator()
-        .decode(orientRoutingRuleEntityAdapter.getSchemaType(), entity.getRoutingRuleId().getValue()) : null);
+        .decode(routingRuleEntityAdapter.getSchemaType(), entity.getRoutingRuleId().getValue()) : null);
   }
 
   /**

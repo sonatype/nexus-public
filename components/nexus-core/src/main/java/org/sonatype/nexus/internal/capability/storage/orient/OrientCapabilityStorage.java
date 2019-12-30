@@ -14,6 +14,7 @@ package org.sonatype.nexus.internal.capability.storage.orient;
 
 import java.util.Map;
 
+import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
@@ -46,6 +47,7 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
  * @since 3.0
  */
 @Named("orient")
+@Priority(Integer.MAX_VALUE)
 @ManagedLifecycle(phase = SCHEMAS)
 @Singleton
 public class OrientCapabilityStorage
@@ -54,11 +56,11 @@ public class OrientCapabilityStorage
 {
   private final Provider<DatabaseInstance> databaseInstance;
 
-  private final CapabilityStorageItemEntityAdapter entityAdapter;
+  private final OrientCapabilityStorageItemEntityAdapter entityAdapter;
 
   @Inject
   public OrientCapabilityStorage(@Named(DatabaseInstanceNames.CONFIG) final Provider<DatabaseInstance> databaseInstance,
-                                 final CapabilityStorageItemEntityAdapter entityAdapter)
+                                 final OrientCapabilityStorageItemEntityAdapter entityAdapter)
   {
     this.databaseInstance = checkNotNull(databaseInstance);
     this.entityAdapter = checkNotNull(entityAdapter);

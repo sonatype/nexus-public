@@ -18,6 +18,7 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.upgrade.Checkpoints;
 import org.sonatype.nexus.orient.DatabaseCheckpointSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
@@ -27,6 +28,7 @@ import org.sonatype.nexus.orient.DatabaseInstance;
  * 
  * @since 3.1
  */
+@FeatureFlag(name = "nexus.orient.store.config")
 @Named
 @Singleton
 @Checkpoints(model = ConfigDatabase.NAME)
