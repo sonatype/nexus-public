@@ -34,7 +34,6 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
-import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.log.LastShutdownTimeService;
@@ -44,12 +43,6 @@ import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.common.thread.TcclBlock;
 import org.sonatype.nexus.orient.DatabaseStatusDelayedExecutor;
-import org.sonatype.nexus.quartz.internal.orient.JobCreatedEvent;
-import org.sonatype.nexus.quartz.internal.orient.JobDeletedEvent;
-import org.sonatype.nexus.quartz.internal.orient.JobUpdatedEvent;
-import org.sonatype.nexus.quartz.internal.orient.TriggerCreatedEvent;
-import org.sonatype.nexus.quartz.internal.orient.TriggerDeletedEvent;
-import org.sonatype.nexus.quartz.internal.orient.TriggerUpdatedEvent;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskFuture;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskInfo;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskJob;
@@ -68,7 +61,6 @@ import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.eventbus.Subscribe;
 import org.quartz.JobBuilder;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
@@ -111,7 +103,7 @@ import static org.sonatype.nexus.scheduling.TaskState.RUNNING;
 @Singleton
 public class QuartzSchedulerSPI
     extends StateGuardLifecycleSupport
-    implements SchedulerSPI, EventAware, EventAware.Asynchronous
+    implements SchedulerSPI
 {
   public static final String MISSING_TRIGGER_RECOVERY = ".missingTriggerRecovery";
 
@@ -900,92 +892,65 @@ public class QuartzSchedulerSPI
     };
   }
 
-  @Subscribe
-  public void on(JobCreatedEvent event) {
-    if (!event.isLocal() && isStarted()) {
-      JobDetail jobDetail = event.getJob().getValue();
+  public void remoteJobCreated(JobDetail jobDetail) {
+    // simulate signals Quartz would have sent
+    quartzScheduler.getSchedulerSignaler().signalSchedulingChange(0L);
+    quartzScheduler.notifySchedulerListenersJobAdded(jobDetail);
+  }
+
+  public void remoteJobUpdated(JobDetail jobDetail) throws SchedulerException {
+    updateJobListener(jobDetail);
+
+    // simulate signals Quartz would have sent
+    quartzScheduler.getSchedulerSignaler().signalSchedulingChange(0L);
+    quartzScheduler.notifySchedulerListenersJobAdded(jobDetail);
+  }
+
+  public void remoteJobDeleted(JobDetail jobDetail) throws SchedulerException {
+    // simulate signals Quartz would have sent
+    quartzScheduler.getSchedulerSignaler().signalSchedulingChange(0L);
+    quartzScheduler.notifySchedulerListenersJobDeleted(jobDetail.getKey());
+
+    removeJobListener(jobDetail.getKey());
+  }
+
+  public void remoteTriggerCreated(Trigger trigger) throws SchedulerException {
+    if (!isRunNow(trigger)) {
+
+      attachJobListener(jobStoreProvider.get().retrieveJob(trigger.getJobKey()), trigger);
+
+      // simulate signals Quartz would have sent
+      quartzScheduler.getSchedulerSignaler().signalSchedulingChange(getNextFireMillis(trigger));
+      quartzScheduler.notifySchedulerListenersSchduled(trigger);
+    }
+    else if (isLimitedToThisNode(trigger)) {
+      // special "run-now" task which was created on a different node to where it will run
+      // when this happens we ping the scheduler to make sure it runs as soon as possible
+      quartzScheduler.getSchedulerSignaler().signalSchedulingChange(0L);
+      quartzScheduler.notifySchedulerListenersSchduled(trigger);
+    }
+  }
+
+  public void remoteTriggerUpdated(Trigger trigger) throws SchedulerException {
+    if (!isRunNow(trigger)) {
+
+      updateJobListener(trigger);
+
+      // simulate signals Quartz would have sent
+      quartzScheduler.getSchedulerSignaler().signalSchedulingChange(getNextFireMillis(trigger));
+      quartzScheduler.notifySchedulerListenersUnscheduled(trigger.getKey());
+      quartzScheduler.notifySchedulerListenersSchduled(trigger);
+    }
+  }
+
+  public void remoteTriggerDeleted(Trigger trigger) throws SchedulerException {
+    if (!isRunNow(trigger)) {
 
       // simulate signals Quartz would have sent
       quartzScheduler.getSchedulerSignaler().signalSchedulingChange(0L);
-      quartzScheduler.notifySchedulerListenersJobAdded(jobDetail);
-    }
-  }
+      quartzScheduler.notifySchedulerListenersUnscheduled(trigger.getKey());
 
-  @Subscribe
-  public void on(JobUpdatedEvent event) throws SchedulerException {
-    if (!event.isLocal() && isStarted()) {
-      JobDetail jobDetail = event.getJob().getValue();
-
-      updateJobListener(jobDetail);
-
-      // simulate signals Quartz would have sent
-      quartzScheduler.getSchedulerSignaler().signalSchedulingChange(0L);
-      quartzScheduler.notifySchedulerListenersJobAdded(jobDetail);
-    }
-  }
-
-  @Subscribe
-  public void on(JobDeletedEvent event) throws SchedulerException {
-    if (!event.isLocal() && isStarted()) {
-      JobDetail jobDetail = event.getJob().getValue();
-
-      // simulate signals Quartz would have sent
-      quartzScheduler.getSchedulerSignaler().signalSchedulingChange(0L);
-      quartzScheduler.notifySchedulerListenersJobDeleted(jobDetail.getKey());
-
-      removeJobListener(jobDetail.getKey());
-    }
-  }
-
-  @Subscribe
-  public void on(TriggerCreatedEvent event) throws SchedulerException {
-    if (!event.isLocal() && isStarted()) {
-      Trigger trigger = event.getTrigger().getValue();
-      if (!isRunNow(trigger)) {
-
-        attachJobListener(jobStoreProvider.get().retrieveJob(trigger.getJobKey()), trigger);
-
-        // simulate signals Quartz would have sent
-        quartzScheduler.getSchedulerSignaler().signalSchedulingChange(getNextFireMillis(trigger));
-        quartzScheduler.notifySchedulerListenersSchduled(trigger);
-      }
-      else if (isLimitedToThisNode(trigger)) {
-        // special "run-now" task which was created on a different node to where it will run
-        // when this happens we ping the scheduler to make sure it runs as soon as possible
-        quartzScheduler.getSchedulerSignaler().signalSchedulingChange(0L);
-        quartzScheduler.notifySchedulerListenersSchduled(trigger);
-      }
-    }
-  }
-
-  @Subscribe
-  public void on(TriggerUpdatedEvent event) throws SchedulerException {
-    if (!event.isLocal() && isStarted()) {
-      Trigger trigger = event.getTrigger().getValue();
-      if (!isRunNow(trigger)) {
-
-        updateJobListener(trigger);
-
-        // simulate signals Quartz would have sent
-        quartzScheduler.getSchedulerSignaler().signalSchedulingChange(getNextFireMillis(trigger));
-        quartzScheduler.notifySchedulerListenersUnscheduled(trigger.getKey());
-        quartzScheduler.notifySchedulerListenersSchduled(trigger);
-      }
-    }
-  }
-
-  @Subscribe
-  public void on(TriggerDeletedEvent event) throws SchedulerException {
-    if (!event.isLocal() && isStarted()) {
-      Trigger trigger = event.getTrigger().getValue();
-      if (!isRunNow(trigger)) {
-
-        // simulate signals Quartz would have sent
-        quartzScheduler.getSchedulerSignaler().signalSchedulingChange(0L);
-        quartzScheduler.notifySchedulerListenersUnscheduled(trigger.getKey());
-
-        removeJobListener(trigger.getJobKey());
-      }
+      removeJobListener(trigger.getJobKey());
     }
   }
 

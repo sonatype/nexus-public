@@ -19,6 +19,7 @@ import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.common.log.LastShutdownTimeService
 import org.sonatype.nexus.common.node.NodeAccess
 import org.sonatype.nexus.orient.DatabaseStatusDelayedExecutor
+import org.sonatype.nexus.quartz.internal.orient.DistributedQuartzEventInspector
 import org.sonatype.nexus.quartz.internal.orient.JobCreatedEvent
 import org.sonatype.nexus.quartz.internal.orient.JobDeletedEvent
 import org.sonatype.nexus.quartz.internal.orient.JobDetailEntity
@@ -124,7 +125,6 @@ class QuartzSchedulerSPITest
     scheduler.start()
     underTest.start()
     underTest.states.current = STARTED
-    eventManager.register(underTest)
   }
 
   @After
@@ -158,6 +158,8 @@ class QuartzSchedulerSPITest
 
     def schedulerListener = mock(SchedulerListener)
     underTest.scheduler.getListenerManager().addSchedulerListener(schedulerListener)
+
+    eventManager.register(new DistributedQuartzEventInspector(underTest))
 
     // on(JobCreatedEvent)
 
@@ -203,6 +205,8 @@ class QuartzSchedulerSPITest
 
     def schedulerListener = mock(SchedulerListener)
     underTest.scheduler.getListenerManager().addSchedulerListener(schedulerListener)
+
+    eventManager.register(new DistributedQuartzEventInspector(underTest))
 
     // on(TriggerCreatedEvent)
 
