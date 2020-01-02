@@ -85,13 +85,13 @@
             <phase>generate-resources</phase>
           </execution>
           <execution>
-            <id>npm ci</id>
+            <id>npm install</id>
             <goals>
               <goal>npm</goal>
             </goals>
             <phase>generate-resources</phase>
             <configuration>
-              <arguments>ci</arguments>
+              <arguments>${npm.install}</arguments>
             </configuration>
           </execution>
           <execution>

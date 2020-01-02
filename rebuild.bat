@@ -21,13 +21,14 @@ copy private\assemblies\nexus-pro\target\sonatype-work\nexus3\etc\nexus.properti
 if not defined DOCKER_HOST (set docker="-Dno-docker=true")
 
 @REM allow user to specify custom thread count on the command line
+@REM The maven build defaults to using `npm ci`, force it to use `npm install` which is faster on dev machines
 if "%~1"=="-T" goto :customThreads
 
-call mvn clean install -DskipTests -T 4 %docker%
+call mvn clean install -Dnpm.install=install -DskipTests -T 4 %docker%
 goto :continue
 
 :customThreads
-call mvn clean install -DskipTests -T %~2 %docker%
+call mvn clean install -Dnpm.install=install -DskipTests -T %~2 %docker%
 
 :continue
 @REM Exit if maven did not build successfully
