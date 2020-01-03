@@ -502,7 +502,7 @@ class RepositoryApiImpl
   private static Map configureMaven(final VersionPolicy versionPolicy = VersionPolicy.MIXED,
                                     final LayoutPolicy layoutPolicy = LayoutPolicy.STRICT)
   {
-    [versionPolicy: versionPolicy, layoutPolicy: layoutPolicy] as Map
+    [versionPolicy: versionPolicy as String, layoutPolicy: layoutPolicy as String] as Map
   }
 
   private static Map configureDockerAttributes(Integer httpPort, Integer httpsPort, boolean v1Enabled, boolean forceBasicAuth) {

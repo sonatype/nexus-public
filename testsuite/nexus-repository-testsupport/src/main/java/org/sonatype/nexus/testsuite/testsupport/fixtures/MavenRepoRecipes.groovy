@@ -65,7 +65,7 @@ trait MavenRepoRecipes
 
   private Map configureMaven(final VersionPolicy versionPolicy = VersionPolicy.MIXED,
                              final LayoutPolicy layoutPolicy = LayoutPolicy.STRICT) {
-    [versionPolicy: versionPolicy, layoutPolicy: layoutPolicy] as Map
+    [versionPolicy: versionPolicy as String, layoutPolicy: layoutPolicy as String] as Map
   }
 
   abstract Repository createRepository(final Configuration configuration)
