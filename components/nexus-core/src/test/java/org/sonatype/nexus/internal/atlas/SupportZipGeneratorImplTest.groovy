@@ -44,6 +44,7 @@ class SupportZipGeneratorImplTest
   def mockAuditLogCustomizer = Mock(SupportBundleCustomizer)
   def mockJmxCustomizer = Mock(SupportBundleCustomizer)
   def throwExceptionCustomizer = Mock(SupportBundleCustomizer)
+  def throwExceptionInMiddleCustomizer = Mock(SupportBundleCustomizer)
   def logContentSource = new TestGeneratedContentSourceSupport(LOG, 'log/nexus.log', OPTIONAL)
   def taskLogContentSource = new TestGeneratedContentSourceSupport(TASKLOG, 'log/tasks/task.log', OPTIONAL)
   def auditLogContentSource = new TestGeneratedContentSourceSupport(AUDITLOG, 'log/audit.log', OPTIONAL)
@@ -54,6 +55,12 @@ class SupportZipGeneratorImplTest
       throw new RuntimeException('I fail to generate')
     }
   }
+  def throwExceptionGetContentSource = new TestGeneratedContentSourceSupport(JMX, 'info/jmx.json', OPTIONAL) {
+    @Override
+    InputStream getContent() throws Exception {
+      throw new IOException("Failed to get content.")
+    }
+  }
 
   def setup() {
       mockLogCustomizer.customize(_) >> { SupportBundle bundle -> bundle << logContentSource }
@@ -61,6 +68,13 @@ class SupportZipGeneratorImplTest
       mockAuditLogCustomizer.customize(_) >> { SupportBundle bundle -> bundle << auditLogContentSource }
       mockJmxCustomizer.customize(_) >> { SupportBundle bundle -> bundle << jmxContentSource }
       throwExceptionCustomizer.customize(_) >> { SupportBundle bundle -> bundle << throwExceptionSource }
+      throwExceptionInMiddleCustomizer.customize(_) >> { SupportBundle bundle ->
+        bundle.add(logContentSource)
+        bundle.add(throwExceptionGetContentSource)
+        bundle.add(taskLogContentSource)
+
+        return bundle
+      }
   }
 
   def "Support zip is generated from requested sources"() {
@@ -149,6 +163,26 @@ class SupportZipGeneratorImplTest
       }
     then:
       entries.find { it.name == 'prefix/info/jmx.json' && it.size == 1000 } != null
+  }
+
+  def "Source failures will not block other sources from being included"() {
+    given:
+      def req = new Request(log: true, taskLog: true, jmx: true, limitFileSizes: true)
+      def out = new ByteArrayOutputStream()
+      def generator = new SupportZipGeneratorImpl(downloadService, [throwExceptionInMiddleCustomizer],
+          ByteSize.bytes(1000000),
+          ByteSize.bytes(1000000))
+    when:
+      generator.generate(req, 'prefix', out)
+      def zip = new ZipInputStream(new ByteArrayInputStream(out.toByteArray()))
+      List<ZipEntry> entries = []
+      for (def entry = zip.getNextEntry(); entry; entry = zip.getNextEntry()) {
+        entries << entry
+      }
+    then:
+      entries.find { it.name == 'prefix/log/tasks/task.log' } != null
+      entries.find { it.name == 'prefix/info/jmx.json' } != null
+      entries.find { it.name == 'prefix/log/nexus.log' } != null
   }
 
   @InheritConstructors
