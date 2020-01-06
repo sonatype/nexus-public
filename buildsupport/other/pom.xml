@@ -333,6 +333,12 @@
         </exclusions>
       </dependency>
 
+      <dependency>
+        <groupId>org.keycloak</groupId>
+        <artifactId>keycloak-saml-servlet-filter-adapter</artifactId>
+        <version>7.0.1</version>
+      </dependency>
+
     </dependencies>
   </dependencyManagement>
 
