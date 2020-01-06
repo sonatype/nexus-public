@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.internal.datastore.task;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Optional;
@@ -19,6 +21,7 @@ import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.datastore.api.DataStoreManager;
 import org.sonatype.nexus.scheduling.Task;
@@ -37,9 +40,12 @@ public class H2BackupTask
 {
   private final DataStoreManager dataStoreManager;
 
+  private final ApplicationDirectories applicationDirectories;
+
   @Inject
-  public H2BackupTask(final DataStoreManager dataStoreManager) {
-    this.dataStoreManager = dataStoreManager;
+  public H2BackupTask(final DataStoreManager dataStoreManager, final ApplicationDirectories applicationDirectories) {
+    this.dataStoreManager = checkNotNull(dataStoreManager);
+    this.applicationDirectories = checkNotNull(applicationDirectories);
   }
 
   @Override
@@ -60,6 +66,7 @@ public class H2BackupTask
       throw new RuntimeException("Unable to locate datastore with name " + dataStoreName);
     }
 
+    location = handleRelative(location);
     location = interpolate(location);
 
     log.info("Starting backup of {} to {}", dataStoreName, location);
@@ -71,6 +78,16 @@ public class H2BackupTask
     log.info("Completed backup of {} in {} ms", dataStoreName, System.currentTimeMillis() - start);
 
     return null;
+  }
+
+  private String handleRelative(final String location) {
+    Path path = Paths.get(location);
+    if (path.isAbsolute()) {
+      return location;
+    }
+    else {
+      return applicationDirectories.getWorkDirectory().toPath().resolve(path).toString();
+    }
   }
 
   private static String interpolate(final String location) {

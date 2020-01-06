@@ -12,12 +12,14 @@
  */
 package org.sonatype.nexus.internal.datastore.task;
 
+import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.datastore.api.DataStoreManager;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
@@ -26,11 +28,13 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verify;
@@ -45,11 +49,17 @@ public class H2BackupTaskTest
   @Rule
   public ExpectedException thrown = ExpectedException.none();
 
+  @Rule
+  public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
   @Mock
   private DataStoreManager dataStoreManager;
 
   @Mock
   private DataStore<?> dataStore;
+
+  @Mock
+  private ApplicationDirectories applicationDirectories;
 
   private String testName = "config";
 
@@ -59,7 +69,7 @@ public class H2BackupTaskTest
   }
 
   @Test
-  public void testExecute() throws Exception {
+  public void testExecute_dateTime() throws Exception {
     String folder = "/foo/bar/{datetime}.zip";
     Date before = date();
     H2BackupTask task = createTask(testName, folder);
@@ -76,6 +86,23 @@ public class H2BackupTaskTest
 
     assertThat(before.compareTo(serialized), lessThanOrEqualTo(0));
     assertThat(serialized.compareTo(after), lessThanOrEqualTo(0));
+  }
+
+  @Test
+  public void testExecute_relativePath() throws Exception {
+    String folder = "foo/bar/backup.zip";
+    H2BackupTask task = createTask(testName, folder);
+
+    when(applicationDirectories.getWorkDirectory()).thenReturn(temporaryFolder.getRoot());
+
+    task.execute();
+
+    ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+    verify(dataStore).backup(captor.capture());
+
+    String backupPath = captor.getValue();
+
+    assertThat(backupPath, equalTo(new File(temporaryFolder.getRoot(), "foo/bar/backup.zip").getPath()));
   }
 
   @Test
@@ -109,7 +136,7 @@ public class H2BackupTaskTest
   }
 
   private H2BackupTask createTask(final String dataStoreName, final String location) {
-    H2BackupTask task = new H2BackupTask(dataStoreManager);
+    H2BackupTask task = new H2BackupTask(dataStoreManager, applicationDirectories);
     TaskConfiguration configuration = new TaskConfiguration();
     configuration.setString(H2BackupTaskDescriptor.LOCATION, location);
     configuration.setString(H2BackupTaskDescriptor.DATASTORE, dataStoreName);
