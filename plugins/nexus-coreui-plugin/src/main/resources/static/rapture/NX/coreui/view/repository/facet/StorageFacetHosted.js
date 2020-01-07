@@ -45,6 +45,7 @@ Ext.define('NX.coreui.view.repository.facet.StorageFacetHosted', {
       {
         xtype: 'fieldset',
         cls: 'nx-form-section',
+        itemId: 'writePolicyFieldset',
         title: NX.I18n.get('Repository_Facet_StorageFacetHosted_Title'),
 
         items: [

@@ -388,6 +388,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_StorageFacetHosted_Deployment_EmptyText: 'Select a policy',
     Repository_Facet_StorageFacetHosted_Deployment_AllowItem: 'Allow redeploy',
     Repository_Facet_StorageFacetHosted_Deployment_DisableItem: 'Disable redeploy',
+    Repository_Facet_StorageFacetHosted_Deployment_DisableLatestItem: 'Allow redeploy only on \'latest\' tag',
+    Repository_Facet_StorageFacetHosted_Deployment_DisableLatestItemHelpText: 'Allow redeploying the \'latest\' tag but defer to the Deployment Policy for all other tags',
     Repository_Facet_StorageFacetHosted_Deployment_ReadOnlyItem: 'Read-only',
     Repository_Facet_ProxyFacet_Remote_FieldLabel: 'Remote storage',
     Repository_Facet_ProxyFacet_Remote_HelpText: 'Location of the remote repository being proxied',
