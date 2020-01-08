@@ -16,11 +16,11 @@ import javax.inject.Provider
 
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
+import org.sonatype.nexus.common.app.FreezeService
 import org.sonatype.nexus.common.collect.NestedAttributesMap
 import org.sonatype.nexus.common.entity.EntityMetadata
 import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.common.node.NodeAccess
-import org.sonatype.nexus.orient.freeze.DatabaseFreezeService
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Recipe
 import org.sonatype.nexus.repository.Repository
@@ -88,7 +88,7 @@ class RepositoryManagerImplTest
   ConfigurationStore configurationStore
 
   @Mock
-  DatabaseFreezeService databaseFreezeService
+  FreezeService freezeService
 
   @Mock
   RepositoryFactory repositoryFactory
@@ -267,7 +267,7 @@ class RepositoryManagerImplTest
   private RepositoryManagerImpl initializeAndStartRepositoryManager(boolean skipDefaultRepositories) {
     repositoryManager = new RepositoryManagerImpl(eventManager, configurationStore, repositoryFactory,
         configurationFacetProvider, ImmutableMap.of(recipeName, recipe), securityContributor,
-        defaultRepositoriesContributorList, databaseFreezeService, skipDefaultRepositories, blobStoreManager,
+        defaultRepositoriesContributorList, freezeService, skipDefaultRepositories, blobStoreManager,
         groupMemberMappingCache, [])
 
     repositoryManager.doStart()
@@ -364,7 +364,7 @@ class RepositoryManagerImplTest
   void 'test delete checks unfrozen'() {
     repositoryManager = buildRepositoryManagerImpl(true)
     repositoryManager.delete("maven-central")
-    verify(databaseFreezeService).checkUnfrozen("Unable to delete repository when database is frozen.")
+    verify(freezeService).checkWritable("Unable to delete repository when database is frozen.")
   }
 
   @Test

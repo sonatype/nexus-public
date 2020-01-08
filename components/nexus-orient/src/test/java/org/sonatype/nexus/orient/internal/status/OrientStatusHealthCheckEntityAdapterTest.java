@@ -10,12 +10,12 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.status.orient;
+package org.sonatype.nexus.orient.internal.status;
 
 import java.util.Date;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.internal.status.orient.OrientStatusHealthCheckEntityAdapter.NodeHealthCheck;
+import org.sonatype.nexus.orient.internal.status.OrientStatusHealthCheckEntityAdapter.NodeHealthCheck;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;

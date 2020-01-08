@@ -10,19 +10,18 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.orient.internal.freeze
+package org.sonatype.nexus.internal.metrics
+
+import org.sonatype.nexus.common.app.FreezeRequest
+import org.sonatype.nexus.common.app.FreezeService
 
 import org.joda.time.DateTime
-import org.sonatype.nexus.orient.freeze.DatabaseFreezeService
-import org.sonatype.nexus.orient.freeze.FreezeRequest
-import org.sonatype.nexus.orient.freeze.FreezeRequest.InitiatorType
-
 import spock.lang.Specification
 
 class ReadOnlyMetricSetTest
     extends Specification {
 
-  DatabaseFreezeService databaseFreezeService = Mock()
+  FreezeService freezeService = Mock()
 
   def 'default metrics generated when no freeze service available'() {
     when:
@@ -39,14 +38,14 @@ class ReadOnlyMetricSetTest
 
   def 'false metrics generated when not in read only mode'() {
     when:
-      ReadOnlyMetricSet readOnlyMetricSet = new ReadOnlyMetricSet({ -> databaseFreezeService})
+      ReadOnlyMetricSet readOnlyMetricSet = new ReadOnlyMetricSet({ -> freezeService})
       def metrics = readOnlyMetricSet.metrics.collectEntries { name, metric ->
         [name, metric.value]
       }
 
     then:
-      1 * databaseFreezeService.isFrozen() >> false
-      2 * databaseFreezeService.getState() >> []
+      1 * freezeService.isFrozen() >> false
+      2 * freezeService.currentFreezeRequests() >> []
       metrics.enabled == false 
       metrics.pending == 0
       metrics.freezeTime == 0L
@@ -55,19 +54,19 @@ class ReadOnlyMetricSetTest
   def 'expected metrics generated when in read only mode'() {
     given:
       def freezeRequests = [
-        new FreezeRequest(InitiatorType.SYSTEM, "system initiator", new DateTime(1504111817165)),
-        new FreezeRequest(InitiatorType.USER_INITIATED, "user initiator", new DateTime(1504111817166))
+        new FreezeRequest('SYSTEM', "system initiator", new DateTime(1504111817165), null, null),
+        new FreezeRequest('USER', "user initiator", new DateTime(1504111817166), null, null)
       ]
 
     when:
-      ReadOnlyMetricSet readOnlyMetricSet = new ReadOnlyMetricSet({ -> databaseFreezeService})
+      ReadOnlyMetricSet readOnlyMetricSet = new ReadOnlyMetricSet({ -> freezeService})
       def metrics = readOnlyMetricSet.metrics.collectEntries { name, metric ->
         [name, metric.value]
       }
 
     then:
-      1 * databaseFreezeService.isFrozen() >> true
-      2 * databaseFreezeService.getState() >> freezeRequests
+      1 * freezeService.isFrozen() >> true
+      2 * freezeService.currentFreezeRequests() >> freezeRequests
       metrics.enabled == true 
       metrics.pending == 2
       metrics.freezeTime == 1504111817165

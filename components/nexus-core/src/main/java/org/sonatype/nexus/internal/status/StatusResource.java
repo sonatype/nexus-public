@@ -24,9 +24,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.app.FreezeService;
 import org.sonatype.nexus.common.log.ExceptionSummarizer;
-import org.sonatype.nexus.common.status.StatusHealthCheckStore;
-import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
 import org.sonatype.nexus.rest.Resource;
 
 import com.codahale.metrics.annotation.Timed;
@@ -37,9 +36,9 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.Response.Status.SERVICE_UNAVAILABLE;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.SERVICE_UNAVAILABLE;
 import static org.sonatype.nexus.common.log.ExceptionSummarizer.sameType;
 import static org.sonatype.nexus.common.log.ExceptionSummarizer.summarize;
 import static org.sonatype.nexus.common.log.ExceptionSummarizer.warn;
@@ -59,29 +58,24 @@ public class StatusResource
 {
   public static final String RESOURCE_URI = V1_API_PREFIX + "/status";
 
-  private final StatusHealthCheckStore statusHealthCheckStore;
-
-  private final DatabaseFreezeService databaseFreezeService;
+  private final FreezeService freezeService;
 
   private HealthCheckRegistry registry;
 
   private final ExceptionSummarizer exceptionSummarizer = summarize(sameType(), warn(log));
 
   @Inject
-  public StatusResource(final StatusHealthCheckStore statusHealthCheckStore,
-                        final DatabaseFreezeService databaseFreezeService,
-                        final HealthCheckRegistry registry)
-  {
-    this.statusHealthCheckStore = checkNotNull(statusHealthCheckStore);
-    this.databaseFreezeService = checkNotNull(databaseFreezeService);
+  public StatusResource(final FreezeService freezeService, final HealthCheckRegistry registry) {
+    this.freezeService = checkNotNull(freezeService);
     this.registry = checkNotNull(registry);
   }
 
   @GET
   @Timed
+  @Override
   public Response isAvailable() {
     try {
-      statusHealthCheckStore.checkReadHealth();
+      freezeService.checkReadable("Read check failed");
       return ok().build();
     }
     catch (Exception e) {
@@ -93,15 +87,16 @@ public class StatusResource
   @GET
   @Path("/writable")
   @Timed
+  @Override
   public Response isWritable() {
     try {
 
-      if (databaseFreezeService.isFrozen()) {
+      if (freezeService.isFrozen()) {
         log.info("Status health check failed because database is frozen");
         return status(SERVICE_UNAVAILABLE).build();
       }
 
-      statusHealthCheckStore.markHealthCheckTime();
+      freezeService.checkWritable("Write check failed");
       return ok().build();
     }
     catch (Exception e) {
@@ -118,6 +113,7 @@ public class StatusResource
   @Timed
   @RequiresAuthentication
   @RequiresPermissions("nexus:metrics:read")
+  @Override
   public SortedMap<String, Result> getSystemStatusChecks() {
     return registry.runHealthChecks();
   }

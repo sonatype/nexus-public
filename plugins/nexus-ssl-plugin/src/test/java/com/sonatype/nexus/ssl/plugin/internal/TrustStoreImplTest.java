@@ -16,14 +16,15 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.util.stream.Stream;
+
 import javax.net.ssl.SSLContext;
 
 import com.sonatype.nexus.ssl.plugin.internal.keystore.orient.OrientKeyStoreDataUpdatedEvent;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.common.app.FreezeService;
 import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
 import org.sonatype.nexus.ssl.KeyStoreManager;
 import org.sonatype.nexus.ssl.KeystoreException;
 
@@ -75,7 +76,7 @@ public class TrustStoreImplTest
   Exception frozenException;
 
   @Mock
-  DatabaseFreezeService databaseFreezeService;
+  FreezeService freezeService;
 
   @Mock
   EventManager eventManager;
@@ -88,7 +89,7 @@ public class TrustStoreImplTest
 
   @Before
   public void setUp() throws Exception {
-    underTest = new TrustStoreImpl(eventManager, keyStoreManager, databaseFreezeService);
+    underTest = new TrustStoreImpl(eventManager, keyStoreManager, freezeService);
 
     frozenException = mockOrientException(OModificationOperationProhibitedException.class);
 
@@ -101,12 +102,12 @@ public class TrustStoreImplTest
     underTest.importTrustCertificate(certificate, "test");
 
     verify(keyStoreManager).importTrustCertificate(certificate, "test");
-    verify(databaseFreezeService).checkUnfrozen("Unable to import a certificate while database is frozen.");
+    verify(freezeService).checkWritable("Unable to import a certificate while database is frozen.");
   }
 
   @Test
   public void importTrustCertificate_frozen() throws Exception {
-    doThrow(frozenException).when(databaseFreezeService).checkUnfrozen(anyString());
+    doThrow(frozenException).when(freezeService).checkWritable(anyString());
 
     try {
       underTest.importTrustCertificate(certificate, "test");
@@ -124,12 +125,12 @@ public class TrustStoreImplTest
     underTest.importTrustCertificate(CERT_IN_PEM_UNIX, "test");
 
     verify(keyStoreManager).importTrustCertificate(isA(Certificate.class), eq("test"));
-    verify(databaseFreezeService).checkUnfrozen("Unable to import a certificate while database is frozen.");
+    verify(freezeService).checkWritable("Unable to import a certificate while database is frozen.");
   }
 
   @Test
   public void importTrustCertificateStrings_frozen() throws Exception {
-    doThrow(frozenException).when(databaseFreezeService).checkUnfrozen(anyString());
+    doThrow(frozenException).when(freezeService).checkWritable(anyString());
 
     try {
       underTest.importTrustCertificate(CERT_IN_PEM_UNIX, "test");
@@ -150,7 +151,7 @@ public class TrustStoreImplTest
 
     assertNotNull(certAdded);
     verify(keyStoreManager).importTrustCertificate(certificate, "test");
-    verify(databaseFreezeService).checkUnfrozen("Unable to import a certificate while database is frozen.");
+    verify(freezeService).checkWritable("Unable to import a certificate while database is frozen.");
   }
 
   @Test
@@ -163,7 +164,7 @@ public class TrustStoreImplTest
 
     assertNotNull(certAdded);
     verify(keyStoreManager).importTrustCertificate(isA(Certificate.class), eq("test"));
-    verify(databaseFreezeService).checkUnfrozen("Unable to import a certificate while database is frozen.");
+    verify(freezeService).checkWritable("Unable to import a certificate while database is frozen.");
   }
 
   @Test
@@ -173,12 +174,12 @@ public class TrustStoreImplTest
     underTest.removeTrustCertificate("test");
 
     verify(keyStoreManager).removeTrustCertificate("test");
-    verify(databaseFreezeService).checkUnfrozen("Unable to remove a certificate while database is frozen.");
+    verify(freezeService).checkWritable("Unable to remove a certificate while database is frozen.");
   }
 
   @Test
   public void testDelete_frozen() throws KeystoreException {
-    doThrow(frozenException).when(databaseFreezeService).checkUnfrozen(anyString());
+    doThrow(frozenException).when(freezeService).checkWritable(anyString());
 
     try {
       underTest.removeTrustCertificate("test");
@@ -202,7 +203,7 @@ public class TrustStoreImplTest
     underTest.removeTrustCertificate("test");
 
     verify(keyStoreManager).removeTrustCertificate("test");
-    verify(databaseFreezeService).checkUnfrozen("Unable to remove a certificate while database is frozen.");
+    verify(freezeService).checkWritable("Unable to remove a certificate while database is frozen.");
   }
 
   @Test

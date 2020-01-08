@@ -10,10 +10,10 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.status.orient;
+package org.sonatype.nexus.orient.internal.status;
 
+import org.sonatype.nexus.common.app.NotReadableException;
 import org.sonatype.nexus.common.node.NodeAccess;
-import org.sonatype.nexus.common.status.StatusHealthCheckException;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 
 import com.google.common.collect.Iterators;
@@ -76,7 +76,7 @@ public class OrientStatusHealthCheckStoreImplTest
 
   @Test
   public void testHealthCheckMark() throws Exception {
-    store.markHealthCheckTime();
+    store.checkWritable("");
 
     try (ODatabaseDocumentTx instance = db.getInstance().connect()) {
       ORecordIteratorClass<ODocument> documents = instance.browseClass(entityAdapter.getTypeName());
@@ -85,7 +85,7 @@ public class OrientStatusHealthCheckStoreImplTest
     }
 
     // repeat the mark and ensure no new records were added
-    store.markHealthCheckTime();
+    store.checkWritable("");
     try (ODatabaseDocumentTx instance = db.getInstance().connect()) {
       ORecordIteratorClass<ODocument> documents = instance.browseClass(entityAdapter.getTypeName());
       assertThat(Iterators.size(documents), is(1));
@@ -95,15 +95,15 @@ public class OrientStatusHealthCheckStoreImplTest
   @Test
   public void testCheckReadHealth() throws Exception {
     // no record exists yet. this is ok
-    store.checkReadHealth();
+    store.checkReadable("");
 
     // add record to the database
-    store.markHealthCheckTime();
-    store.checkReadHealth();
+    store.checkWritable("");
+    store.checkReadable("");
 
     // stop database
     db.getServer().stopAbnormally();
-    thrown.expect(StatusHealthCheckException.class);
-    store.checkReadHealth();
+    thrown.expect(NotReadableException.class);
+    store.checkReadable("");
   }
 }

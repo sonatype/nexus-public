@@ -16,38 +16,43 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
-import org.sonatype.nexus.orient.freeze.ReadOnlyState;
+import org.sonatype.nexus.common.app.FreezeRequest;
+import org.sonatype.nexus.common.app.FreezeService;
 
-import static java.lang.String.format;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.text.Strings2.isBlank;
 
 /**
- * Health check that indicates if the database is currently frozen
+ * Health check that warns when the application is read-only.
  *
  * @since 3.16
  */
-@Named("Database Frozen")
+@Named("Read-Only Detector")
 @Singleton
-public class DatabaseHealthCheck
+public class ReadOnlyHealthCheck
     extends HealthCheckComponentSupport
 {
-  private final DatabaseFreezeService databaseFreezeService;
+  private final FreezeService freezeService;
 
   @Inject
-  public DatabaseHealthCheck(final DatabaseFreezeService databaseFreezeService) {
-    this.databaseFreezeService = databaseFreezeService;
+  public ReadOnlyHealthCheck(final FreezeService freezeService) {
+    this.freezeService = checkNotNull(freezeService);
   }
 
   @Override
   protected Result check() {
-    ReadOnlyState state = databaseFreezeService.getReadOnlyState();
-    return !state.isFrozen() ? Result.healthy() : Result.unhealthy(reason(state));
-
+    return freezeService.currentFreezeRequests().stream()
+        .findFirst()
+        .map(this::describe)
+        .map(Result::unhealthy)
+        .orElse(Result.healthy());
   }
 
-  private static String reason(final ReadOnlyState state) {
-    return format("Frozen: %s, System Initiated: %s, Summary Reason: %s", state.isFrozen(), state.isSystemInitiated(),
-        state.getSummaryReason());
+  private String describe(final FreezeRequest request) {
+    String description = "Made read-only by: " + request.frozenBy().orElse("SYSTEM");
+    if (!isBlank(request.reason())) {
+      description += ", reason: " + request.reason();
+    }
+    return description;
   }
-
 }

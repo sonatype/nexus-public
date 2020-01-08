@@ -18,10 +18,8 @@ import javax.inject.Singleton
 import javax.validation.Valid
 import javax.validation.constraints.NotNull
 
+import org.sonatype.nexus.common.app.FreezeService
 import org.sonatype.nexus.extdirect.DirectComponentSupport
-import org.sonatype.nexus.orient.freeze.DatabaseFreezeService
-import org.sonatype.nexus.orient.freeze.FreezeRequest.InitiatorType
-import org.sonatype.nexus.security.SecuritySystem
 import org.sonatype.nexus.validation.Validate
 
 import com.codahale.metrics.annotation.ExceptionMetered
@@ -32,27 +30,24 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication
 import org.apache.shiro.authz.annotation.RequiresPermissions
 
 /**
- * Component for freezing and releasing the database.
+ * Component for freezing and releasing the application.
  *
  * @since 3.2
  */
 @Named
 @Singleton
-@DirectAction(action = 'coreui_DatabaseFreeze')
-class DatabaseFreezeComponent
+@DirectAction(action = 'coreui_Freeze')
+class FreezeComponent
     extends DirectComponentSupport
 {
 
   @Inject
-  DatabaseFreezeService databaseFreezeService
-
-  @Inject
-  SecuritySystem securitySystem
+  FreezeService freezeService
 
   @DirectMethod
   @Timed
   @ExceptionMetered
-  DatabaseFreezeStatusXO read() {
+  FreezeStatusXO read() {
     return buildStatus()
   }
 
@@ -62,12 +57,12 @@ class DatabaseFreezeComponent
   @RequiresAuthentication
   @RequiresPermissions("nexus:*")
   @Validate
-  DatabaseFreezeStatusXO update(final @NotNull @Valid DatabaseFreezeStatusXO freezeDatabaseStatusXO) {
-    if (freezeDatabaseStatusXO.frozen) {
-      databaseFreezeService.requestFreeze(InitiatorType.USER_INITIATED,  securitySystem.currentUser().userId)
+  FreezeStatusXO update(final @NotNull @Valid FreezeStatusXO freezeStatusXO) {
+    if (freezeStatusXO.frozen) {
+      freezeService.requestFreeze('UI request')
     }
     else {
-      databaseFreezeService.releaseUserInitiatedIfPresent()
+      freezeService.cancelFreeze()
     }
     return buildStatus()
   }
@@ -78,14 +73,14 @@ class DatabaseFreezeComponent
   @RequiresAuthentication
   @RequiresPermissions("nexus:*")
   @Validate
-  DatabaseFreezeStatusXO forceRelease() {
-    databaseFreezeService.releaseAllRequests()
+  FreezeStatusXO forceRelease() {
+    freezeService.cancelAllFreezeRequests()
     return buildStatus()
   }
 
-  private DatabaseFreezeStatusXO buildStatus() {
-    return new DatabaseFreezeStatusXO(
-        frozen: databaseFreezeService.isFrozen()
+  private FreezeStatusXO buildStatus() {
+    return new FreezeStatusXO(
+        frozen: freezeService.isFrozen()
     )
   }
 }

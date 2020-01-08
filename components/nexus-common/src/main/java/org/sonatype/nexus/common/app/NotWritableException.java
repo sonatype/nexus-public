@@ -10,27 +10,23 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.status;
+package org.sonatype.nexus.common.app;
 
 /**
- * Store used for persisting a timestamp representing the most recent health check request received by the instance
+ * Thrown when the application is unable to accept writes.
  *
- * @since 3.15
+ * This may be because the application is frozen or the underlying storage is read-only.
+ *
+ * @since 3.next
  */
-public interface StatusHealthCheckStore
+public class NotWritableException
+    extends IllegalStateException
 {
-  /**
-   * Update the latest timestamp which represents the last health check request. In HA-C this time should be
-   * persisted per node.
-   */
-  void markHealthCheckTime() throws StatusHealthCheckException;
+  public NotWritableException(final String message) {
+    super(message);
+  }
 
-  /**
-   * Checks that db is readable.
-   *
-   * @throws StatusHealthCheckException if the db read check fails
-   *
-   * @since 3.16
-   */
-  void checkReadHealth() throws StatusHealthCheckException;
+  public NotWritableException(final String message, final Throwable cause) {
+    super(message, cause);
+  }
 }

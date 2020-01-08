@@ -12,13 +12,10 @@
  */
 package org.sonatype.nexus.coreui
 
-import org.sonatype.nexus.orient.freeze.FreezeRequest
-
 import groovy.transform.ToString
 
 @ToString(includePackage = false, includeNames = true)
-class DatabaseFreezeStatusXO
+class FreezeStatusXO
 {
   boolean frozen
-  List<FreezeRequest> freezeRequests
 }

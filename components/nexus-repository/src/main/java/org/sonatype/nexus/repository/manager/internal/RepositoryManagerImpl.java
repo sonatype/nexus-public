@@ -29,6 +29,7 @@ import javax.inject.Singleton;
 import javax.validation.ConstraintViolation;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.common.app.FreezeService;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.event.EventAware;
@@ -38,7 +39,6 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
-import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
 import org.sonatype.nexus.repository.Recipe;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
@@ -99,7 +99,7 @@ public class RepositoryManagerImpl
 
   public static final String CLEANUP_NAME_KEY = "policyName";
 
-  private final DatabaseFreezeService databaseFreezeService;
+  private final FreezeService freezeService;
 
   private final EventManager eventManager;
 
@@ -133,7 +133,7 @@ public class RepositoryManagerImpl
                                final Map<String, Recipe> recipes,
                                final RepositoryAdminSecurityContributor securityContributor,
                                final List<DefaultRepositoriesContributor> defaultRepositoriesContributors,
-                               final DatabaseFreezeService databaseFreezeService,
+                               final FreezeService freezeService,
                                @Named("${nexus.skipDefaultRepositories:-false}") final boolean skipDefaultRepositories,
                                final BlobStoreManager blobStoreManager,
                                final GroupMemberMappingCache groupMemberMappingCache,
@@ -146,7 +146,7 @@ public class RepositoryManagerImpl
     this.recipes = checkNotNull(recipes);
     this.securityContributor = checkNotNull(securityContributor);
     this.defaultRepositoriesContributors = checkNotNull(defaultRepositoriesContributors);
-    this.databaseFreezeService = checkNotNull(databaseFreezeService);
+    this.freezeService = checkNotNull(freezeService);
     this.skipDefaultRepositories = skipDefaultRepositories;
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.groupMemberMappingCache = checkNotNull(groupMemberMappingCache);
@@ -398,7 +398,7 @@ public class RepositoryManagerImpl
   @Guarded(by = STARTED)
   public void delete(final String name) throws Exception {
     checkNotNull(name);
-    databaseFreezeService.checkUnfrozen("Unable to delete repository when database is frozen.");
+    freezeService.checkWritable("Unable to delete repository when database is frozen.");
 
     log.info("Deleting repository: {}", name);
 

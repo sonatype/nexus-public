@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.orient.internal.rest;
+package org.sonatype.nexus.internal.rest;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -23,17 +23,20 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
-import org.sonatype.nexus.orient.freeze.ReadOnlyState;
+import org.sonatype.nexus.common.app.FreezeService;
+import org.sonatype.nexus.common.app.ReadOnlyState;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.security.SecurityHelper;
+import org.sonatype.nexus.security.privilege.ApplicationPermission;
 
+import org.apache.shiro.authz.Permission;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.apache.shiro.authz.annotation.RequiresUser;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Arrays.asList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static org.sonatype.nexus.orient.freeze.FreezeRequest.InitiatorType.USER_INITIATED;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 
 /**
@@ -41,28 +44,40 @@ import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
  */
 @Named
 @Singleton
-@Path(DatabaseFreezeResource.RESOURCE_URI)
+@Path(FreezeResource.RESOURCE_URI)
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
-public class DatabaseFreezeResource
+public class FreezeResource
     extends ComponentSupport
-    implements Resource, DatabaseFreezeResourceDoc
+    implements Resource, FreezeResourceDoc
 {
   public static final String RESOURCE_URI = V1_API_PREFIX + "/read-only";
 
-  private final DatabaseFreezeService freezeService;
+  private static final String ENABLE_READONLY_FAILED_MESSAGE = "Attempt to enable read-only failed";
+
+  private static final String RELESE_READONLY_FAILED_MESSAGE = "Attempt to release read-only failed";
+
+  private static final String FORCE_RELEASE_READONLY_FAILED_MESSAGE = "Attempt to force release read-only failed";
+
+  private static final Permission READ_SETTINGS_PERMISSION = new ApplicationPermission("settings", asList("read"));
+
+  private final FreezeService freezeService;
 
   private final SecurityHelper securityHelper;
+
   @Inject
-  public DatabaseFreezeResource(final DatabaseFreezeService freezeService, final SecurityHelper securityHelper) {
+  public FreezeResource(final FreezeService freezeService, final SecurityHelper securityHelper) {
     this.freezeService = checkNotNull(freezeService);
     this.securityHelper = checkNotNull(securityHelper);
   }
 
   @Override
+  @RequiresUser
   @GET
   public ReadOnlyState get() {
-    return freezeService.getReadOnlyState();
+    // provide extra detail when current user has access to settings
+    return new ReadOnlyState(freezeService.currentFreezeRequests(),
+        securityHelper.allPermitted(READ_SETTINGS_PERMISSION));
   }
 
   @Override
@@ -71,8 +86,12 @@ public class DatabaseFreezeResource
   @POST
   @Path("/freeze")
   public void freeze() {
-    if (freezeService.requestFreeze(USER_INITIATED, principalAsString()) == null) {
-      throw new WebApplicationException("Attempt to enable read-only failed", 404);
+    try {
+      freezeService.requestFreeze("REST request");
+    }
+    catch (Exception e) {
+      log.warn(ENABLE_READONLY_FAILED_MESSAGE, e);
+      throw new WebApplicationException(ENABLE_READONLY_FAILED_MESSAGE, 404);
     }
   }
 
@@ -82,9 +101,12 @@ public class DatabaseFreezeResource
   @POST
   @Path("/release")
   public void release() {
-    boolean success = freezeService.releaseUserInitiatedIfPresent();
-    if (!success) {
-      throw new WebApplicationException("Attempt to release read-only failed", 404);
+    try {
+      freezeService.cancelFreeze();
+    }
+    catch (Exception e) {
+      log.warn(RELESE_READONLY_FAILED_MESSAGE, e);
+      throw new WebApplicationException(RELESE_READONLY_FAILED_MESSAGE, 404);
     }
   }
 
@@ -94,16 +116,12 @@ public class DatabaseFreezeResource
   @POST
   @Path("/force-release")
   public void forceRelease() {
-    if (freezeService.releaseAllRequests().isEmpty()) {
-      throw new WebApplicationException("Attempt to force release read-only failed", 404);
+    try {
+      freezeService.cancelAllFreezeRequests();
     }
-  }
-
-  private String principalAsString() {
-    Object principal = securityHelper.subject().getPrincipal();
-    if (principal == null) {
-      throw new WebApplicationException("Unauthorized", 401);
+    catch (Exception e) {
+      log.warn(FORCE_RELEASE_READONLY_FAILED_MESSAGE, e);
+      throw new WebApplicationException(FORCE_RELEASE_READONLY_FAILED_MESSAGE, 404);
     }
-    return principal.toString();
   }
 }

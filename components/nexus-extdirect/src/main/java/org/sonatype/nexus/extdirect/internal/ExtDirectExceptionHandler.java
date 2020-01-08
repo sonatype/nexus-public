@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.extdirect.internal;
 
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -24,7 +25,6 @@ import javax.validation.ConstraintViolationException;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.extdirect.model.Response;
 
-import com.orientechnologies.common.exception.OException;
 import com.softwarementors.extjs.djn.api.RegisteredMethod;
 import org.apache.commons.collections.ListUtils;
 import org.apache.shiro.authz.UnauthenticatedException;
@@ -69,7 +69,9 @@ public class ExtDirectExceptionHandler
           method.getFullName(), method.getFullJavaMethodName(), e);
     }
 
-    if (e instanceof OException) {
+    if (e instanceof SQLException
+        || e.getClass().getName().contains("org.apache.ibatis")
+        || e.getClass().getName().contains("com.orientechnologies")) {
       return error(new Exception("A database error occurred"));
     }
 

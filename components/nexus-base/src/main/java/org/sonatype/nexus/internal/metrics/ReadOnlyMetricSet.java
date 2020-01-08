@@ -10,14 +10,15 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.orient.internal.freeze;
+package org.sonatype.nexus.internal.metrics;
 
 import java.util.Map;
 import java.util.Optional;
+
 import javax.inject.Provider;
 
-import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
-import org.sonatype.nexus.orient.freeze.FreezeRequest;
+import org.sonatype.nexus.common.app.FreezeRequest;
+import org.sonatype.nexus.common.app.FreezeService;
 
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Metric;
@@ -37,12 +38,12 @@ public class ReadOnlyMetricSet
 {
   private final Map<String,Metric> metrics;
 
-  public ReadOnlyMetricSet(final Provider<DatabaseFreezeService> databaseFreezeServiceProvider) {
-    checkNotNull(databaseFreezeServiceProvider);
+  public ReadOnlyMetricSet(final Provider<FreezeService> freezeServiceProvider) {
+    checkNotNull(freezeServiceProvider);
     this.metrics = ImmutableMap.of(
-        "enabled", enabled(databaseFreezeServiceProvider),
-        "pending", pending(databaseFreezeServiceProvider),
-        "freezeTime", freezeTime(databaseFreezeServiceProvider));
+        "enabled", enabled(freezeServiceProvider),
+        "pending", pending(freezeServiceProvider),
+        "freezeTime", freezeTime(freezeServiceProvider));
   }
 
   @Override
@@ -50,23 +51,23 @@ public class ReadOnlyMetricSet
     return metrics;
   }
 
-  private Metric enabled(final Provider<DatabaseFreezeService> databaseFreezeServiceProvider) {
-    return (Gauge<Boolean>) () -> Optional.ofNullable(databaseFreezeServiceProvider.get())
-        .map(DatabaseFreezeService::isFrozen)
+  private Metric enabled(final Provider<FreezeService> freezeServiceProvider) {
+    return (Gauge<Boolean>) () -> Optional.ofNullable(freezeServiceProvider.get())
+        .map(FreezeService::isFrozen)
         .orElse(false);
   }
 
-  private Metric pending(final Provider<DatabaseFreezeService> databaseFreezeServiceProvider) {
-    return (Gauge<Integer>) () -> Optional.ofNullable(databaseFreezeServiceProvider.get())
-        .map(databaseFreezeService -> databaseFreezeService.getState().size())
+  private Metric pending(final Provider<FreezeService> freezeServiceProvider) {
+    return (Gauge<Integer>) () -> Optional.ofNullable(freezeServiceProvider.get())
+        .map(freezeService -> freezeService.currentFreezeRequests().size())
         .orElse(0);
   }
 
-  private Metric freezeTime(final Provider<DatabaseFreezeService> databaseFreezeServiceProvider) {
-    return (Gauge<Long>) () -> Optional.ofNullable(databaseFreezeServiceProvider.get())
-        .map(databaseFreezeService -> {
-            Long val = databaseFreezeService.getState().stream()
-                .map(FreezeRequest::getTimestamp)
+  private Metric freezeTime(final Provider<FreezeService> freezeServiceProvider) {
+    return (Gauge<Long>) () -> Optional.ofNullable(freezeServiceProvider.get())
+        .map(freezeService -> {
+            Long val = freezeService.currentFreezeRequests().stream()
+                .map(FreezeRequest::frozenAt)
                 .min(DateTime::compareTo)
                 .map(DateTime::getMillis)
                 .orElse(0L);

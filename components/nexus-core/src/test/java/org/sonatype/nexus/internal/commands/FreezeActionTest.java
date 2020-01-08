@@ -12,13 +12,9 @@
  */
 package org.sonatype.nexus.internal.commands;
 
-import java.util.Arrays;
-
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.internal.commands.DatabaseFreezeAction.Mode;
-import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
-import org.sonatype.nexus.orient.freeze.FreezeRequest;
-import org.sonatype.nexus.orient.freeze.FreezeRequest.InitiatorType;
+import org.sonatype.nexus.common.app.FreezeService;
+import org.sonatype.nexus.internal.commands.FreezeAction.Mode;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -27,20 +23,19 @@ import org.mockito.Mock;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
-public class DatabaseFreezeActionTest
+public class FreezeActionTest
     extends TestSupport
 {
 
-  DatabaseFreezeAction underTest;
+  FreezeAction underTest;
 
   @Mock
-  DatabaseFreezeService databaseFreezeService;
+  FreezeService freezeService;
 
   @Before
   public void setUp() throws Exception {
-    underTest = new DatabaseFreezeAction(databaseFreezeService);
+    underTest = new FreezeAction(freezeService);
   }
 
   @Test
@@ -48,8 +43,8 @@ public class DatabaseFreezeActionTest
     // defaults to 'enable' (read: freeze)
     underTest.execute();
 
-    verify(databaseFreezeService).requestFreeze(isA(InitiatorType.class), isA(String.class));
-    verify(databaseFreezeService, never()).releaseRequest(isA(FreezeRequest.class));
+    verify(freezeService).requestFreeze(isA(String.class));
+    verify(freezeService, never()).cancelFreeze();
   }
 
   @Test
@@ -58,19 +53,7 @@ public class DatabaseFreezeActionTest
 
     underTest.execute();
 
-    verify(databaseFreezeService, never()).requestFreeze(isA(InitiatorType.class), isA(String.class));
-    verify(databaseFreezeService).releaseUserInitiatedIfPresent();
-  }
-
-  @Test
-  public void executeReleaseOnSystemTaskFails() throws Exception {
-    underTest.mode = Mode.release;
-
-    FreezeRequest request = new FreezeRequest(InitiatorType.SYSTEM, "DatabaseFreezeActionTest");
-    when(databaseFreezeService.getState()).thenReturn(Arrays.asList(request));
-    underTest.execute();
-
-    verify(databaseFreezeService, never()).requestFreeze(isA(InitiatorType.class), isA(String.class));
-    verify(databaseFreezeService, never()).releaseRequest(isA(FreezeRequest.class));
+    verify(freezeService, never()).requestFreeze(isA(String.class));
+    verify(freezeService).cancelFreeze();
   }
 }

@@ -17,27 +17,27 @@ import javax.inject.Singleton;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
 
-import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
+import org.sonatype.nexus.common.app.FrozenException;
 import org.sonatype.nexus.rest.ExceptionMapperSupport;
 
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.SERVICE_UNAVAILABLE;
 
 /**
- * {@link OModificationOperationProhibitedException} exception mapper.
+ * {@link FrozenException} mapper.
  *
- * This will handle exceptions generated when writes to orientdb fail due to being in read-only mode.
+ * Handles exceptions generated when writes fail due to NXRM being in read-only mode.
  *
- * @since 3.6.0
+ * @since 3.next
  */
 @Named
 @Singleton
 @Provider
-public class ReadOnlyExceptionMapper
-  extends ExceptionMapperSupport<OModificationOperationProhibitedException>
+public class FrozenExceptionMapper
+    extends ExceptionMapperSupport<FrozenException>
 {
   @Override
-  protected Response convert(final OModificationOperationProhibitedException exception, final String id) {
+  protected Response convert(final FrozenException exception, final String id) {
     return Response.serverError()
         .status(SERVICE_UNAVAILABLE)
         .entity(String.format("Nexus Repository Manager is in read-only mode: (ID %s)", id))

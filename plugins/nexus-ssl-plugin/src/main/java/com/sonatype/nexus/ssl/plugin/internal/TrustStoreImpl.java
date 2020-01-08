@@ -33,10 +33,11 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 import com.sonatype.nexus.ssl.plugin.internal.keystore.KeyStoreDataEvent;
+
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.app.FreezeService;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
 import org.sonatype.nexus.ssl.CertificateCreatedEvent;
 import org.sonatype.nexus.ssl.CertificateDeletedEvent;
 import org.sonatype.nexus.ssl.KeyStoreManager;
@@ -47,9 +48,8 @@ import com.google.common.base.Throwables;
 import com.google.common.eventbus.Subscribe;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.stream;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.ssl.CertificateUtil.calculateSha1;
 import static org.sonatype.nexus.ssl.CertificateUtil.decodePEMFormattedCertificate;
 
@@ -66,7 +66,7 @@ public class TrustStoreImpl
 {
   public static final SecureRandom DEFAULT_RANDOM = null;
 
-  private final DatabaseFreezeService databaseFreezeService;
+  private final FreezeService freezeService;
 
   private final EventManager eventManager;
 
@@ -83,11 +83,11 @@ public class TrustStoreImpl
   @Inject
   public TrustStoreImpl(final EventManager eventManager,
                         @Named("ssl") final KeyStoreManager keyStoreManager,
-                        final DatabaseFreezeService databaseFreezeService) throws Exception
+                        final FreezeService freezeService) throws Exception
   {
     this.eventManager = checkNotNull(eventManager);
     this.keyStoreManager = checkNotNull(keyStoreManager);
-    this.databaseFreezeService = checkNotNull(databaseFreezeService);
+    this.freezeService = checkNotNull(freezeService);
     this.keyManagers = getSystemKeyManagers();
     this.trustManagers = getTrustManagers();
   }
@@ -96,7 +96,8 @@ public class TrustStoreImpl
   public Certificate importTrustCertificate(final Certificate certificate, final String alias)
       throws KeystoreException
   {
-    databaseFreezeService.checkUnfrozen("Unable to import a certificate while database is frozen.");
+    freezeService.checkWritable("Unable to import a certificate while database is frozen.");
+
     keyStoreManager.importTrustCertificate(certificate, alias);
 
     eventManager.post(new CertificateCreatedEvent(alias, certificate));
@@ -130,7 +131,8 @@ public class TrustStoreImpl
 
   @Override
   public void removeTrustCertificate(final String alias) throws KeystoreException {
-    databaseFreezeService.checkUnfrozen("Unable to remove a certificate while database is frozen.");
+    freezeService.checkWritable("Unable to remove a certificate while database is frozen.");
+
     Certificate certificate = getTrustedCertificate(alias);
     keyStoreManager.removeTrustCertificate(alias);
     sslcontext = null;

@@ -19,9 +19,9 @@ import org.sonatype.nexus.blobstore.BlobStoreDescriptor
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
+import org.sonatype.nexus.common.app.FreezeService
 import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.common.node.NodeAccess
-import org.sonatype.nexus.orient.freeze.DatabaseFreezeService
 import org.sonatype.nexus.repository.manager.RepositoryManager
 
 import com.google.common.collect.Lists
@@ -68,7 +68,7 @@ class BlobStoreManagerImplTest
   Provider<BlobStore> provider
 
   @Mock
-  DatabaseFreezeService databaseFreezeService
+  FreezeService freezeService
 
   @Mock
   RepositoryManager repositoryManager
@@ -86,7 +86,7 @@ class BlobStoreManagerImplTest
 
   private BlobStoreManagerImpl newBlobStoreManager(Boolean provisionDefaults = null) {
     spy(new BlobStoreManagerImpl(eventManager, store, [test: descriptor, File: descriptor],
-        [test: provider, File: provider], databaseFreezeService, { -> repositoryManager } as Provider,
+        [test: provider, File: provider], freezeService, { -> repositoryManager } as Provider,
          nodeAccess, provisionDefaults))
   }
 
@@ -187,7 +187,7 @@ class BlobStoreManagerImplTest
     
     verify(blobStore).stop()
     verify(store).delete(configuration)
-    verify(databaseFreezeService).checkUnfrozen("Unable to delete a BlobStore while database is frozen.")
+    verify(freezeService).checkWritable("Unable to delete a BlobStore while database is frozen.")
   }
 
   @Test
@@ -223,7 +223,7 @@ class BlobStoreManagerImplTest
   void 'Can successfully create new blob stores concurrently'() {
     // avoid newBlobStoreManager method because it returns a spy that throws NPE accessing the stores field
     underTest = new BlobStoreManagerImpl(eventManager, store, [test: descriptor, File: descriptor],
-        [test: provider, File: provider], databaseFreezeService, { -> repositoryManager } as Provider, nodeAccess, true)
+        [test: provider, File: provider], freezeService, { -> repositoryManager } as Provider, nodeAccess, true)
 
     BlobStore blobStore = mock(BlobStore)
     when(provider.get()).thenReturn(blobStore)

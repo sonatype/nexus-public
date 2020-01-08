@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.status.orient;
+package org.sonatype.nexus.orient.internal.status;
 
 import java.util.Date;
 
@@ -21,14 +21,14 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.app.NotReadableException;
+import org.sonatype.nexus.common.app.NotWritableException;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
-import org.sonatype.nexus.common.status.StatusHealthCheckException;
-import org.sonatype.nexus.common.status.StatusHealthCheckStore;
-import org.sonatype.nexus.internal.status.orient.OrientStatusHealthCheckEntityAdapter.NodeHealthCheck;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
+import org.sonatype.nexus.orient.internal.status.OrientStatusHealthCheckEntityAdapter.NodeHealthCheck;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
@@ -38,7 +38,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;
 
 /**
- * Orient {@link StatusHealthCheckStore} implementation.
+ * Orient status health check store implementation.
  *
  * @since 3.15
  */
@@ -48,7 +48,6 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
 @Singleton
 public class OrientStatusHealthCheckStore
     extends StateGuardLifecycleSupport
-    implements StatusHealthCheckStore
 {
   private final Provider<DatabaseInstance> databaseInstance;
 
@@ -74,9 +73,8 @@ public class OrientStatusHealthCheckStore
     }
   }
 
-  @Override
   @Guarded(by = STARTED)
-  public void markHealthCheckTime() throws StatusHealthCheckException {
+  public void checkWritable(final String errorMessage) {
 
     String nodeId = nodeAccess.getId();
 
@@ -97,13 +95,12 @@ public class OrientStatusHealthCheckStore
       });
     }
     catch (Exception e) {
-      throw new StatusHealthCheckException("Unable to update health check time for node: " + nodeId, e);
+      throw new NotWritableException(errorMessage + ". Database not writable on node: " + nodeId, e);
     }
   }
 
-  @Override
   @Guarded(by = STARTED)
-  public void checkReadHealth() throws StatusHealthCheckException {
+  public void checkReadable(final String errorMessage) {
 
     String nodeId = nodeAccess.getId();
 
@@ -111,7 +108,7 @@ public class OrientStatusHealthCheckStore
       inTxRetry(databaseInstance).run(db -> entityAdapter.read(db, nodeId));
     }
     catch (Exception e) {
-      throw new StatusHealthCheckException("Unable to read health check time for node: " + nodeId, e);
+      throw new NotReadableException(errorMessage + ". Database not readable on node: " + nodeId, e);
     }
   }
 }

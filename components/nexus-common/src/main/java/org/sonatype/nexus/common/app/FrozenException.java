@@ -10,17 +10,21 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.status;
+package org.sonatype.nexus.common.app;
 
 /**
- * Checked {@link Exception} for {@link StatusHealthCheckStore} operations
+ * Thrown when something attempts to write while the application is frozen.
  *
- * @since 3.15
+ * @since 3.next
  */
-public class StatusHealthCheckException
-    extends Exception
+public class FrozenException
+    extends NotWritableException
 {
-  public StatusHealthCheckException(final String message, final Throwable cause) {
+  public FrozenException(final String message) {
+    super(message);
+  }
+
+  public FrozenException(final String message, final Throwable cause) {
     super(message, cause);
   }
 }

@@ -111,57 +111,57 @@ Ext.define('NX.coreui.controller.Nodes', {
     return model.get('friendlyName') || model.get('nodeIdentity');
   },
 
-  dbFrozen: false,
+  nxFrozen: false,
 
   load: function() {
     var me = this;
-    me.updateFreezeStatus(NX.State.getValue('db', {})['dbFrozen']);
+    me.updateFreezeStatus(NX.State.getValue('frozen'));
   },
 
   updateFreezeStatus: function(status) {
     var me = this;
-    me.dbFrozen = status;
+    me.nxFrozen = status;
 
     me.getToggleFreezeButton().setText(
-        me.dbFrozen ? NX.I18n.get('Nodes_Disable_read_only_mode') : NX.I18n.get('Nodes_Enable_read_only_mode'));
+        me.nxFrozen ? NX.I18n.get('Nodes_Disable_read_only_mode') : NX.I18n.get('Nodes_Enable_read_only_mode'));
 
-    if (NX.State.getValue('db', {})['dbFrozen'] !== me.dbFrozen) {
-      NX.State.setValue('db', { dbFrozen: me.dbFrozen });
+    if (NX.State.getValue('frozen') !== me.nxFrozen) {
+      NX.State.setValue('frozen', me.nxFrozen);
     }
   },
 
   toggleFreeze: function() {
     var me = this, dialogTitle, dialogDescription, yesButtonText;
 
-    var systemInitiated = NX.State.getValue('db', {})['system'];
+    var frozenManually = NX.State.getValue('frozenManually');
 
-    if (systemInitiated && me.dbFrozen) {
+    if (!frozenManually && me.nxFrozen) {
       dialogTitle = NX.I18n.get('Nodes_force_release_dialog');
       dialogDescription = NX.I18n.get('Nodes_force_release_warning')
           + ' ' + NX.I18n.get('Nodes_force_release_confirmation');
       yesButtonText = NX.I18n.get('Nodes_force_release');
     } else {
-      dialogTitle = me.dbFrozen ? NX.I18n.get('Nodes_Disable_read_only_mode_dialog') :
+      dialogTitle = me.nxFrozen ? NX.I18n.get('Nodes_Disable_read_only_mode_dialog') :
           NX.I18n.get('Nodes_Enable_read_only_mode_dialog');
-      dialogDescription = me.dbFrozen ? NX.I18n.get('Nodes_disable_read_only_mode_dialog_description') :
+      dialogDescription = me.nxFrozen ? NX.I18n.get('Nodes_disable_read_only_mode_dialog_description') :
           NX.I18n.get('Nodes_enable_read_only_mode_dialog_description');
-      yesButtonText = me.dbFrozen ? NX.I18n.get('Nodes_Disable_read_only_mode') :
+      yesButtonText = me.nxFrozen ? NX.I18n.get('Nodes_Disable_read_only_mode') :
           NX.I18n.get('Nodes_Enable_read_only_mode');
     }
 
     NX.Dialogs.askConfirmation(dialogTitle, dialogDescription, function() {
-      var settings = {frozen: !me.dbFrozen};
+      var settings = {frozen: !me.nxFrozen};
 
       me.getContent().getEl().mask(NX.I18n.get('Nodes_Toggling_read_only_mode'));
-      if (systemInitiated && me.dbFrozen) {
-        NX.direct.coreui_DatabaseFreeze.forceRelease(function(response) {
+      if (!frozenManually && me.nxFrozen) {
+        NX.direct.coreui_Freeze.forceRelease(function(response) {
           me.getContent().getEl().unmask();
           if (Ext.isObject(response) && response.success) {
             me.updateFreezeStatus(response.data.frozen);
           }
         });
       } else {
-        NX.direct.coreui_DatabaseFreeze.update(settings, function(response) {
+        NX.direct.coreui_Freeze.update(settings, function(response) {
           me.getContent().getEl().unmask();
           if (Ext.isObject(response) && response.success) {
             me.updateFreezeStatus(response.data.frozen);

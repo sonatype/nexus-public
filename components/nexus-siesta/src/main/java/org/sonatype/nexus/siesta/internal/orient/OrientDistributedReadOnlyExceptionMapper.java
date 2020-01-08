@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.siesta.internal;
+package org.sonatype.nexus.siesta.internal.orient;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -33,7 +33,7 @@ import static javax.ws.rs.core.Response.Status.SERVICE_UNAVAILABLE;
 @Named
 @Singleton
 @Provider
-public class DistributedReadOnlyExceptionMapper
+public class OrientDistributedReadOnlyExceptionMapper
   extends ExceptionMapperSupport<ODistributedException>
 {
   @Override
