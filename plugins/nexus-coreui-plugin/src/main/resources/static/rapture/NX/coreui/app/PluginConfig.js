@@ -50,13 +50,6 @@ Ext.define('NX.coreui.app.PluginConfig', {
       }
     },
     {
-      id: 'NX.coreui.controller.react.AnonymousSettingsController',
-      active: function() {
-        return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin') &&
-            NX.State.getValue('reactFrontend', true);
-      }
-    },
-    {
       id: 'NX.coreui.controller.BrowseableFormats',
       active: function () {
         return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
@@ -381,6 +374,13 @@ Ext.define('NX.coreui.app.PluginConfig', {
       id: 'NX.coreui.controller.RoutingRules',
       active: function() {
         return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
+      }
+    },
+    {
+      id: 'NX.coreui.controller.react.ReactViewController',
+      active: function() {
+        return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin') &&
+            NX.State.getValue('reactFrontend', true);
       }
     }
   ]

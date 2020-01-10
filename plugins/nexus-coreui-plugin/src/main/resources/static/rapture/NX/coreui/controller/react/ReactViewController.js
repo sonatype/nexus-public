@@ -10,23 +10,39 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import { UIStrings } from 'nexus-ui-plugin';
+/*global Ext, NX*/
 
-export default {
-  ...UIStrings,
-  ANONYMOUS_SETTINGS: {
-    MENU: {
-      text: 'Anonymous Access',
-      description: 'Configure anonymous access to server contents'
-    },
-    ENABLED_CHECKBOX_LABEL: 'Access:',
-    ENABLED_CHECKBOX_DESCRIPTION: 'Allow anonymous users to access the server',
-    USERNAME_TEXTFIELD_LABEL: 'Username:',
-    REALM_SELECT_LABEL: 'Realm:',
-    MESSAGES: {
-      LOAD_ERROR: 'An error occurred while loading Anonymous settings, see console for more details',
-      SAVE_SUCCESS: 'Anonymous security settings updated',
-      SAVE_ERROR: 'An error occurred while updating Anonymous settings, see console for more details'
+/**
+ * Anonymous Security Settings controller.
+ *
+ * @since 3.next
+ */
+Ext.define('NX.coreui.controller.react.ReactViewController', {
+  extend: 'NX.app.Controller',
+
+  views: [
+    'react.MainContainer'
+  ],
+
+  refs: [
+    {
+      ref: 'reactMainContainer',
+      selector: 'nx-coreui-react-main-container'
+    }
+  ],
+
+  listen: {
+    controller: {
+      '#Refresh': {
+        refresh: 'refresh'
+      }
+    }
+  },
+
+  refresh: function() {
+    if (this.getReactMainContainer()) {
+      this.getReactMainContainer().refresh();
     }
   }
-};
+
+});
