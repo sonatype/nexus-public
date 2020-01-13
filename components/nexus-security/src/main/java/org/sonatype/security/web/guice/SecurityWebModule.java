@@ -20,7 +20,6 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.servlet.Filter;
-import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
 
 import org.sonatype.security.authentication.FirstSuccessfulModularRealmAuthenticator;
@@ -166,7 +165,8 @@ public class SecurityWebModule
   private static final class FilterChainManagerProvider
       implements Provider<FilterChainManager>, Mediator<Named, Filter, FilterChainManager>
   {
-    private final FilterConfig filterConfig;
+    // org.apache.shiro.guice.web.ShiroWebModule has an inner class that shadows javax.servlet.FilterConfig
+    private final javax.servlet.FilterConfig filterConfig;
 
     private final BeanLocator beanLocator;
 
@@ -198,7 +198,7 @@ public class SecurityWebModule
    * Simple {@link FilterConfig} that delegates to the surrounding {@link ServletContext}.
    */
   private static final class SimpleFilterConfig
-      implements FilterConfig
+      implements javax.servlet.FilterConfig
   {
     private final String filterName;
 
