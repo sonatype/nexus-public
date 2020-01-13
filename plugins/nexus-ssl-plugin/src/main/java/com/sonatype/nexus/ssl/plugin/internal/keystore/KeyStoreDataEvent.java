@@ -12,12 +12,12 @@
  */
 package com.sonatype.nexus.ssl.plugin.internal.keystore;
 
-import com.sonatype.nexus.ssl.plugin.internal.keystore.orient.OrientKeyStoreData;
+import java.security.KeyStore;
 
 import org.sonatype.nexus.common.entity.EntityVersion;
 
 /**
- * Event for {@link OrientKeyStoreData} entity.
+ * Event sent out when {@link KeyStore} data changes.
  *
  * @since 3.1
  */

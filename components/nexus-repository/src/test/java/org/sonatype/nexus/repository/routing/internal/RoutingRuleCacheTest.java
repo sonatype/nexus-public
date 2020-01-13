@@ -26,6 +26,8 @@ import org.sonatype.nexus.repository.manager.internal.RepositoryImpl;
 import org.sonatype.nexus.repository.routing.OrientRoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
+import org.sonatype.nexus.repository.routing.internal.orient.OrientRoutingRuleDeletedEvent;
+import org.sonatype.nexus.repository.routing.internal.orient.OrientRoutingRuleUpdatedEvent;
 import org.sonatype.nexus.repository.types.ProxyType;
 
 import org.junit.Before;

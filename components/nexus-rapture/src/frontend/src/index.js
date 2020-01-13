@@ -14,9 +14,22 @@ import Axios from 'axios';
 import React from 'react';
 import ReactDOM from 'react-dom';
 
+import registerFeature from './registerFeature';
+
 Axios.defaults.xsrfCookieName = Axios.defaults.xsrfHeaderName = 'NX-ANTI-CSRF-TOKEN';
 
 window.axios = Axios;
 window.react = React;
 window.ReactDOM = ReactDOM;
 
+// Declare an inital (empty) array for plugin configurations
+window.plugins = [];
+
+// A function for the ExtJS codebase to call to register React plugins
+window.onStart = function() {
+  window.plugins.forEach((plugin) => {
+    if (plugin.features) {
+      plugin.features.forEach(registerFeature);
+    }
+  })
+};

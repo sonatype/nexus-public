@@ -13,34 +13,14 @@
 package org.sonatype.nexus.repository.internal.blobstore;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
-import org.sonatype.nexus.common.entity.EntityUpdatedEvent;
-import org.sonatype.nexus.common.entity.EntityMetadata;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * {@link BlobStoreConfiguration} updated event.
+ * {@link BlobStoreConfiguration} event.
  *
- * @since 3.14
+ * @since 3.1
  */
-public class BlobStoreConfigurationUpdatedEvent
-    extends EntityUpdatedEvent
-    implements BlobStoreConfigurationEvent
+public interface BlobStoreConfigurationUpdatedEvent
+    extends BlobStoreConfigurationEvent
 {
-  private final String name;
-
-  public BlobStoreConfigurationUpdatedEvent(final EntityMetadata metadata, final String name) {
-    super(metadata);
-    this.name = checkNotNull(name);
-  }
-
-  @Override
-  public String getName() {
-    return name;
-  }
-
-  @Override
-  public BlobStoreConfiguration getConfiguration() {
-    return getEntity();
-  }
+  // nothing to add
 }

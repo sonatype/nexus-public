@@ -15,13 +15,13 @@ package org.sonatype.nexus.repository.internal.blobstore.orient;
 import java.util.List;
 import java.util.Optional;
 
+import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
-import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
@@ -44,8 +44,8 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
  *
  * @since 3.0
  */
-@FeatureFlag(name = "nexus.orient.store.config")
-@Named
+@Named("orient")
+@Priority(Integer.MAX_VALUE)
 @ManagedLifecycle(phase = SCHEMAS)
 @Singleton
 public class OrientBlobStoreConfigurationStore

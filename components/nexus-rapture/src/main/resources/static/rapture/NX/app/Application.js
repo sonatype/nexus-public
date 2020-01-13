@@ -365,6 +365,9 @@ Ext.define('NX.app.Application', {
       }
     });
 
+    // Initialize react code
+    window.onStart();
+
     becomeReady = function () {
       // hide the loading mask after we have loaded
       Ext.get('loading').remove();

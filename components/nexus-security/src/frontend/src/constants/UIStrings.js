@@ -10,8 +10,15 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import { UIStrings } from 'nexus-ui-plugin';
+
 export default {
+  ...UIStrings,
   ANONYMOUS_SETTINGS: {
+    MENU: {
+      text: 'Anonymous Access',
+      description: 'Configure anonymous access to server contents'
+    },
     ENABLED_CHECKBOX_LABEL: 'Access:',
     ENABLED_CHECKBOX_DESCRIPTION: 'Allow anonymous users to access the server',
     USERNAME_TEXTFIELD_LABEL: 'Username:',
@@ -21,15 +28,5 @@ export default {
       SAVE_SUCCESS: 'Anonymous security settings updated',
       SAVE_ERROR: 'An error occurred while updating Anonymous settings, see console for more details'
     }
-  },
-
-  SETTINGS: {
-    DISCARD_BUTTON_LABEL: 'Discard',
-    LOADING_MASK: 'Loading...',
-    SAVE_BUTTON_LABEL: 'Save'
-  },
-
-  ERROR: {
-    FIELD_REQUIRED: 'This field is required'
   }
 };

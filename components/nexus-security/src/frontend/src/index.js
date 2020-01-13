@@ -11,6 +11,29 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import AnonymousSettings from './components/pages/admin/AnonymousSettings/AnonymousSettings';
+import UIStrings from './constants/UIStrings';
 
-window.REACT_COMPONENTS = window.REACT_COMPONENTS || {};
-window.REACT_COMPONENTS['AnonymousSettings'] = AnonymousSettings;
+window.plugins.push({
+  id: 'nexus-security-plugin',
+
+  features: [
+    {
+      mode: 'admin',
+      path: '/Security/Anonymous',
+      text: UIStrings.ANONYMOUS_SETTINGS.MENU.text,
+      description: UIStrings.ANONYMOUS_SETTINGS.MENU.description,
+      view: AnonymousSettings,
+      iconCls: 'x-fa fa-id-card',
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        featureFlags: [
+          {
+            key: 'reactFrontend',
+            defaultValue: true
+          }
+        ],
+        permissions: ['nexus:settings:read']
+      }
+    }
+  ]
+});

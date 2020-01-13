@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
  *
  * @since 3.17
  */
-@Named
+@Named("orient")
 @Singleton
 public class OrientScriptCleanupHandler
     extends ComponentSupport

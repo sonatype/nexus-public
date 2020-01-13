@@ -17,15 +17,11 @@ import java.util.List;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.entity.EntityEvent;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.SingletonEntityAdapter;
 import org.sonatype.nexus.security.realm.RealmConfiguration;
-import org.sonatype.nexus.security.realm.RealmConfigurationCreatedEvent;
-import org.sonatype.nexus.security.realm.RealmConfigurationDeletedEvent;
-import org.sonatype.nexus.security.realm.RealmConfigurationUpdatedEvent;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -36,7 +32,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  *
  * @since 3.0
  */
-@FeatureFlag(name = "nexus.orient.store.config")
 @Named
 @Singleton
 public class OrientRealmConfigurationEntityAdapter
@@ -80,11 +75,11 @@ public class OrientRealmConfigurationEntityAdapter
     log.debug("Emitted {} event with metadata {}", eventKind, metadata);
     switch (eventKind) {
       case CREATE:
-        return new RealmConfigurationCreatedEvent(metadata);
+        return new OrientRealmConfigurationCreatedEvent(metadata);
       case UPDATE:
-        return new RealmConfigurationUpdatedEvent(metadata);
+        return new OrientRealmConfigurationUpdatedEvent(metadata);
       case DELETE:
-        return new RealmConfigurationDeletedEvent(metadata);
+        return new OrientRealmConfigurationDeletedEvent(metadata);
       default:
         return null;
     }

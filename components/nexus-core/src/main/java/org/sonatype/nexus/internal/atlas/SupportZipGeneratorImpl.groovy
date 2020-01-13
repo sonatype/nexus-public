@@ -183,12 +183,19 @@ class SupportZipGeneratorImpl
 
     try {
       // prepare bundle sources
-      sources.each {
+      def preparedSources = sources.collect {
         log.debug 'Preparing bundle source: {}', it
-        it.prepare()
-      }
+        try {
+          it.prepare()
+          return it
+        }
+        catch (Exception e) {
+          log.error 'Failed to prepare source {}', it.class, e
+          return null
+        }
+      }.findAll()
 
-      return createZip(outputStream, sources, prefix, request.limitFileSizes, request.limitZipSize)
+      return createZip(outputStream, preparedSources, prefix, request.limitFileSizes, request.limitZipSize)
     }
     catch (Exception e) {
       log.error 'Failed to create support ZIP', e
@@ -304,32 +311,37 @@ class SupportZipGeneratorImpl
         log.debug 'Adding content entry: {} {} bytes', source, source.size
         def entry = addEntry source.path
 
-        source.content.withStream { InputStream input ->
-          // truncate content which is larger than maximum file size
-          if (limitFileSizes && source.size > maxContentSize) {
-            log.warn 'Truncating source contents; exceeds maximum included file size: {}', source.path
-            zip << TRUNCATED_TOKEN
-            truncated = true
-            input.skip(source.size - maxContentSize)
-          }
-
-          // write source content to the zip stream in chunks
-          byte[] buff = new byte[chunkSize]
-          int len
-          while ((len = input.read(buff)) != -1) {
-            // truncate content if max ZIP size reached
-            if (limitZipSize && stream.count + len > maxZipSize) {
-              log.warn 'Truncating source contents; max ZIP size reached: {}', source.path
+        try {
+          source.content.withStream { InputStream input ->
+            // truncate content which is larger than maximum file size
+            if (limitFileSizes && source.size > maxContentSize) {
+              log.warn 'Truncating source contents; exceeds maximum included file size: {}', source.path
               zip << TRUNCATED_TOKEN
               truncated = true
-              break
+              input.skip(source.size - maxContentSize)
             }
 
-            zip.write buff, 0, len
+            // write source content to the zip stream in chunks
+            byte[] buff = new byte[chunkSize]
+            int len
+            while ((len = input.read(buff)) != -1) {
+              // truncate content if max ZIP size reached
+              if (limitZipSize && stream.count + len > maxZipSize) {
+                log.warn 'Truncating source contents; max ZIP size reached: {}', source.path
+                zip << TRUNCATED_TOKEN
+                truncated = true
+                break
+              }
 
-            // flush so we can detect compressed size for partially written files
-            zip.flush()
+              zip.write buff, 0, len
+
+              // flush so we can detect compressed size for partially written files
+              zip.flush()
+            }
           }
+        }
+        catch (Exception e) { //NOSONAR - catching all exceptions so that a bad file of any sort won't cause us to stop
+          log.warn("Unable to include {} in bundle, moving onto next file.", source.path, e);
         }
 
         closeEntry entry

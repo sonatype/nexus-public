@@ -333,6 +333,29 @@
         </exclusions>
       </dependency>
 
+      <dependency>
+        <groupId>org.keycloak</groupId>
+        <artifactId>keycloak-saml-servlet-filter-adapter</artifactId>
+        <version>8.0.1</version>
+        <exclusions>
+          <!--
+          Exclude various legacy libraries in favour of more OSGi-friendly versions
+          -->
+          <exclusion>
+            <groupId>com.sun.activation</groupId>
+            <artifactId>jakarta.activation</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.xml.ws</groupId>
+            <artifactId>rt</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
     </dependencies>
   </dependencyManagement>
 

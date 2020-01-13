@@ -91,7 +91,7 @@ public class AuditRecorderImpl
       try {
         auditLogger.info(AUDIT_LOG_ONLY, new AuditDTO(data).toString());
 
-        eventManager.post(new AuditDataRecordedEvent(data.copy()));
+        eventManager.post(new AuditDataRecordedEvent(data));
       }
       catch (Exception e) {
         log.warn("Failed to record audit data", e);

@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.config.internal.orient
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.orient.HexRecordIdObfuscator
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule
-import org.sonatype.nexus.repository.routing.internal.OrientRoutingRuleEntityAdapter
+import org.sonatype.nexus.repository.routing.internal.orient.OrientRoutingRuleEntityAdapter
 import org.sonatype.nexus.security.PasswordHelper
 
 import com.google.common.collect.Iterables

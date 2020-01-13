@@ -35,6 +35,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreNotFoundException;
 import org.sonatype.nexus.blobstore.api.BlobStoreUpdatedEvent;
 import org.sonatype.nexus.blobstore.file.FileBlobStoreConfigurationBuilder;
+import org.sonatype.nexus.common.app.FreezeService;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventConsumer;
 import org.sonatype.nexus.common.event.EventHelper;
@@ -43,7 +44,6 @@ import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
-import org.sonatype.nexus.orient.freeze.DatabaseFreezeService;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -79,7 +79,7 @@ public class BlobStoreManagerImpl
 
   private final Map<String, Provider<BlobStore>> blobStorePrototypes;
 
-  private final DatabaseFreezeService databaseFreezeService;
+  private final FreezeService freezeService;
 
   private final BooleanSupplier provisionDefaults;
 
@@ -90,7 +90,7 @@ public class BlobStoreManagerImpl
                               final BlobStoreConfigurationStore store,
                               final Map<String, BlobStoreDescriptor> blobStoreDescriptors,
                               final Map<String, Provider<BlobStore>> blobStorePrototypes,
-                              final DatabaseFreezeService databaseFreezeService,
+                              final FreezeService freezeService,
                               final Provider<RepositoryManager> repositoryManagerProvider,
                               final NodeAccess nodeAccess,
                               @Nullable @Named("${nexus.blobstore.provisionDefaults}") final Boolean provisionDefaults)
@@ -99,7 +99,7 @@ public class BlobStoreManagerImpl
     this.store = checkNotNull(store);
     this.blobStoreDescriptors = checkNotNull(blobStoreDescriptors);
     this.blobStorePrototypes = checkNotNull(blobStorePrototypes);
-    this.databaseFreezeService = checkNotNull(databaseFreezeService);
+    this.freezeService = checkNotNull(freezeService);
     this.repositoryManagerProvider = checkNotNull(repositoryManagerProvider);
 
     if (provisionDefaults != null) {
@@ -293,7 +293,7 @@ public class BlobStoreManagerImpl
   @Guarded(by = STARTED)
   public void forceDelete(final String name) throws Exception {
     checkNotNull(name);
-    databaseFreezeService.checkUnfrozen("Unable to delete a BlobStore while database is frozen.");
+    freezeService.checkWritable("Unable to delete a BlobStore while database is frozen.");
 
     BlobStore blobStore = blobStore(name);
     log.debug("Deleting BlobStore: {}", name);

@@ -18,6 +18,7 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.orient.DatabaseExternalizer;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseManager;
@@ -44,6 +45,7 @@ public class ConfigDatabase
   /**
    * Shared {@code config} database instance provider.
    */
+  @FeatureFlag(name = "nexus.orient.store.config")
   @Named(NAME)
   @Singleton
   public static class ProviderImpl
@@ -65,6 +67,7 @@ public class ConfigDatabase
   /**
    * Includes export of the {@code config} database in support-zip.
    */
+  @FeatureFlag(name = "nexus.orient.store.config")
   @Named
   @Singleton
   public static class SupportBundleCustomizerImpl

@@ -22,7 +22,6 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.cleanup.internal.storage.orient.event.OrientCleanupPolicyCreatedEvent;
 import org.sonatype.nexus.cleanup.internal.storage.orient.event.OrientCleanupPolicyDeletedEvent;
 import org.sonatype.nexus.cleanup.internal.storage.orient.event.OrientCleanupPolicyUpdatedEvent;
-import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.entity.EntityEvent;
 import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.orient.OClassNameBuilder;
@@ -49,7 +48,6 @@ import static org.sonatype.nexus.cleanup.storage.CleanupPolicy.ALL_CLEANUP_POLIC
  *
  * @since 3.14
  */
-@FeatureFlag(name = "nexus.orient.store.config")
 @Named
 @Singleton
 public class OrientCleanupPolicyEntityAdapter

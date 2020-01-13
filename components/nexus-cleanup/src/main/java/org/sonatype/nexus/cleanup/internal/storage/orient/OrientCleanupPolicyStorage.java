@@ -14,6 +14,7 @@ package org.sonatype.nexus.cleanup.internal.storage.orient;
 
 import java.util.List;
 
+import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
@@ -21,7 +22,6 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
-import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
@@ -43,8 +43,8 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
  *
  * @since 3.14
  */
-@FeatureFlag(name = "nexus.orient.store.config")
 @Named("orient")
+@Priority(Integer.MAX_VALUE)
 @ManagedLifecycle(phase = SCHEMAS)
 @Singleton
 public class OrientCleanupPolicyStorage

@@ -31,7 +31,7 @@ public class ReactFrontendConfiguration
   private final boolean enabled;
 
   @Inject
-  public ReactFrontendConfiguration(@Named("${nexus.react.frontend.enabled:-false}") final boolean enabled) {
+  public ReactFrontendConfiguration(@Named("${nexus.react.frontend.enabled:-true}") final boolean enabled) {
     this.enabled = enabled;
   }
 

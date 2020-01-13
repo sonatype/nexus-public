@@ -17,7 +17,6 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.httpclient.HttpClientPlan;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 import org.sonatype.nexus.httpclient.config.HttpClientConfigurationChangedEvent;
-import org.sonatype.nexus.internal.httpclient.orient.HttpClientConfigurationEvent;
 
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.ConnectionConfig;

@@ -31,10 +31,8 @@ Ext.define('NX.coreui.view.react.MainContainer', {
   },
 
   initReactView: function() {
-    if (this.reactView) {
-      var reactElement = react.createElement(REACT_COMPONENTS[this.reactView]);
-      ReactDOM.render(reactElement, this.getEl().dom);
-    }
+    var reactElement = react.createElement(this.reactView);
+    ReactDOM.render(reactElement, this.getEl().dom);
   },
 
   destroyReactView: function() {

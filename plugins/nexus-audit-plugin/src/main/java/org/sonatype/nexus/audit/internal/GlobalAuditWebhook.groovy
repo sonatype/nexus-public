@@ -44,8 +44,7 @@ class GlobalAuditWebhook
   @AllowConcurrentEvents
   void on(final AuditDataRecordedEvent event) {
 
-    // use detached copy to avoid including EntityMetadata
-    def auditData = event.data.detach()
+    def auditData = event.data
     def payload = new AuditWebhookPayload(
         initiator: auditData.initiator,
         nodeId: auditData.nodeId

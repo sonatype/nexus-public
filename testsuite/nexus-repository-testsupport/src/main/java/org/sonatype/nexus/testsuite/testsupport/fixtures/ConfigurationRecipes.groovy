@@ -41,7 +41,8 @@ trait ConfigurationRecipes
                              final String recipeName,
                              final WritePolicy writePolicy = WritePolicy.ALLOW,
                              final boolean strictContentTypeValidation = true,
-                             final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME)
+                             final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
+                             final boolean latestPolicy = false)
   {
     checkNotNull(name)
     checkArgument(recipeName && recipeName.endsWith('-hosted'))
@@ -54,6 +55,7 @@ trait ConfigurationRecipes
             storage: [
                 blobStoreName: blobStoreName,
                 writePolicy  : writePolicy,
+                latestPolicy  : latestPolicy,
                 strictContentTypeValidation: strictContentTypeValidation
             ] as Map
         ] as Map

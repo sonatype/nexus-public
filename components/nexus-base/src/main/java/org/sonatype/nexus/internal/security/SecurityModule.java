@@ -16,16 +16,12 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.internal.security.anonymous.AnonymousConfigurationStore;
-import org.sonatype.nexus.internal.security.anonymous.orient.OrientAnonymousConfigurationStore;
-import org.sonatype.nexus.internal.security.realm.orient.OrientRealmConfigurationStore;
 import org.sonatype.nexus.security.FilterProviderSupport;
 import org.sonatype.nexus.security.anonymous.AnonymousFilter;
 import org.sonatype.nexus.security.authc.AntiCsrfFilter;
 import org.sonatype.nexus.security.authc.NexusAuthenticationFilter;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyAuthenticationFilter;
 import org.sonatype.nexus.security.authz.PermissionsFilter;
-import org.sonatype.nexus.security.realm.RealmConfigurationStore;
 
 import com.google.inject.AbstractModule;
 
@@ -52,9 +48,6 @@ public class SecurityModule
 
     // FIXME: This likely should be normalized with the auth-token bits
     bind(filterKey("authcApiKey")).toProvider(AuthcApiKeyFilterProvider.class);
-
-    bind(AnonymousConfigurationStore.class).to(OrientAnonymousConfigurationStore.class);
-    bind(RealmConfigurationStore.class).to(OrientRealmConfigurationStore.class);
   }
 
   // FIXME: Probably do not need provider here at all anymore

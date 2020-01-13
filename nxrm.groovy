@@ -364,6 +364,7 @@ def processCliOptions(args) {
     _ longOpt: 'no-restore', "Disable restore of backup (if enabled by config)"
     _ longOpt: 'random-password', "Enable generation of random password for admin user on initial start"
     _ longOpt: 'no-random-password', "Disable generation of random password (default)"
+    _ longOpt: 'npm-ci', "use `npm ci` for npm dependencies (defaults to install, but ci is faster on ci servers and does a clean install)"
 
     // general options
     d longOpt: 'dry-run', 'Dry run, don\'t actually execute anything'
@@ -653,7 +654,7 @@ def processMavenCommand() {
 
   // if tests are not built, don't care about changes on test projects
   if(buildOptions.tests == "-Dmaven.test.skip=true") {
-	  projects -= testProjects 
+    projects -= testProjects
   }
 
   // if there are no projects, then a full build is needed
@@ -682,6 +683,10 @@ def processMavenCommand() {
 
   if (cliOptions['no-docker']) {
     buildOptions.mavenCommand += ' -Dno-docker'
+  }
+
+  if (!cliOptions['npm-ci']) {
+    buildOptions.mavenCommand += ' -Dnpm.install=install'
   }
 
   buildOptions.mavenCommand += ' ' + positionalOptions.join(' ')

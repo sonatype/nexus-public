@@ -28,7 +28,7 @@ import org.eclipse.sisu.Priority;
  */
 @Named
 @Singleton
-@Priority(Integer.MAX_VALUE) // load early, no scripts to resolve only providing css/fonts
+@Priority(Integer.MAX_VALUE)
 public class UiPluginDescriptorImpl
     extends UiPluginDescriptorSupport
 {

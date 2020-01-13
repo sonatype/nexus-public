@@ -15,8 +15,6 @@ package org.sonatype.nexus.ui;
 import java.net.URL;
 import java.util.Enumeration;
 
-import javax.annotation.Nullable;
-
 import org.eclipse.sisu.space.ClassSpace;
 
 /**
@@ -25,21 +23,13 @@ import org.eclipse.sisu.space.ClassSpace;
 public class UiUtil
 {
   /**
-   * This method gets the hashed version of a file name from the class space for the current plugin.
-   *
-   * For example, nexus-frontend-bundle.js would lookup a file named nexus-frontend-bundle.{hash}.js and return that.
-   *
-   * @param unhashedFilename the filename without the hash included
-   * @param space the class space for the current plugin
-   * @return the hashed filename from the file system for the current plugin
-   * @return null if no matching file was found
+   * @param filename
+   * @param space
+   * @return the path to the requested file
    */
-  @Nullable
-  public static String getHashedFilename(final String unhashedFilename, final ClassSpace space) {
+  public static String getPathForFile(final String filename, final ClassSpace space) {
     for (
-        Enumeration<URL> e = space.findEntries("static",
-            unhashedFilename.substring(0, unhashedFilename.lastIndexOf('.')) + ".*" +
-                unhashedFilename.substring(unhashedFilename.lastIndexOf('.')), true);
+        Enumeration<URL> e = space.findEntries("static", filename, true);
         e.hasMoreElements();
     ) {
       URL url = e.nextElement();

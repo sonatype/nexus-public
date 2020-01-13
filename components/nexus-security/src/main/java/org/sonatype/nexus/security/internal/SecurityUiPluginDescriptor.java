@@ -46,10 +46,9 @@ public class SecurityUiPluginDescriptor
 
   @Inject
   public SecurityUiPluginDescriptor(final ClassSpace space) {
-
-    scripts = asList(UiUtil.getHashedFilename("nexus-security-bundle.js", space));
-    debugScripts = asList(UiUtil.getHashedFilename("nexus-security-bundle.debug.js", space));
-    styles = asList(UiUtil.getHashedFilename("nexus-security-bundle.css", space));
+    scripts = asList(UiUtil.getPathForFile("nexus-security-bundle.js", space));
+    debugScripts = asList(UiUtil.getPathForFile("nexus-security-bundle.debug.js", space));
+    styles = asList(UiUtil.getPathForFile("nexus-security-bundle.css", space));
   }
 
   @Override
