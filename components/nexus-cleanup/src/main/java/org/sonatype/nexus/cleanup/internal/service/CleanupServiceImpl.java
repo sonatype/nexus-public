@@ -42,6 +42,7 @@ import org.elasticsearch.search.SearchContextMissingException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.nonNull;
+import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 
 /**
  * @since 3.14
@@ -158,19 +159,21 @@ public class CleanupServiceImpl
 
       Set<String> policyNames = (Set<String>) attributes.get(CLEANUP_ATTRIBUTES_KEY).get(CLEANUP_NAME_KEY);
 
-      policyNames.forEach(policyName -> {
-        CleanupPolicy cleanupPolicy = cleanupPolicyStorage.get(policyName);
+      if (isNotEmpty(policyNames)) {
+        policyNames.forEach(policyName -> {
+          CleanupPolicy cleanupPolicy = cleanupPolicyStorage.get(policyName);
 
-        if (nonNull(cleanupPolicy)) {
-          log.debug("Cleanup policy '{}' found for repository {}", policyName, repository.getName());
+          if (nonNull(cleanupPolicy)) {
+            log.debug("Cleanup policy '{}' found for repository {}", policyName, repository.getName());
 
-          cleanupPolicies.add(cleanupPolicy);
-        }
-        else {
-          log.debug("Cleanup policy '{}' was associated to repository {} but did not exist in storage",
-              policyName, repository.getName());
-        }
-      });
+            cleanupPolicies.add(cleanupPolicy);
+          }
+          else {
+            log.debug("Cleanup policy '{}' was associated to repository {} but did not exist in storage",
+                policyName, repository.getName());
+          }
+        });
+      }
     }
 
     if (cleanupPolicies.isEmpty()) {
