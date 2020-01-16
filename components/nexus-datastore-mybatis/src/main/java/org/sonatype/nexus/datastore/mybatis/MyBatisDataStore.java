@@ -66,7 +66,6 @@ import org.apache.ibatis.session.defaults.DefaultSqlSessionFactory;
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
 import org.apache.ibatis.type.TypeAliasRegistry;
 import org.apache.ibatis.type.TypeHandler;
-import org.apache.ibatis.type.TypeHandlerRegistry;
 import org.eclipse.sisu.BeanEntry;
 import org.eclipse.sisu.Mediator;
 import org.eclipse.sisu.inject.BeanLocator;
@@ -101,11 +100,13 @@ import static org.sonatype.nexus.datastore.mybatis.PlaceholderTypes.configurePla
 public class MyBatisDataStore
     extends DataStoreSupport<MyBatisDataSession>
 {
-  private static final String REGISTERED_MESSAGE = "Registered {} with MyBatis";
+  private static final String REGISTERED_MESSAGE = "Registered {}";
 
   private static final Key<TypeHandler> TYPE_HANDLER_KEY = Key.get(TypeHandler.class);
 
-  private static final TypeHandlerMediator TYPE_HANDLER_MEDIATOR = new TypeHandlerMediator();
+  private static final TypeHandlerMediator CONFIG_TYPE_HANDLER_MEDIATOR = new TypeHandlerMediator(false);
+
+  private static final TypeHandlerMediator CONTENT_TYPE_HANDLER_MEDIATOR = new TypeHandlerMediator(true);
 
   private static final Splitter BY_LINE = onPattern("\\r?\\n").trimResults().omitEmptyStrings();
 
@@ -139,13 +140,23 @@ public class MyBatisDataStore
 
   @Override
   protected void doStart(final String storeName, final Map<String, String> attributes) throws Exception {
+    boolean isContentStore = !CONFIG_DATASTORE_NAME.equalsIgnoreCase(storeName);
 
     dataSource = new HikariDataSource(configureHikari(storeName, attributes));
     Environment environment = new Environment(storeName, new JdbcTransactionFactory(), dataSource);
     sessionFactory = new DefaultSqlSessionFactory(configureMyBatis(environment));
 
+    boolean lenient = configurePlaceholderTypes(sessionFactory.getConfiguration());
+    registerCommonTypeHandlers(lenient);
+
+    if (!isContentStore) {
+      register(new EntityInterceptor());
+    }
+
     if (beanLocator != null) {
-      beanLocator.watch(TYPE_HANDLER_KEY, TYPE_HANDLER_MEDIATOR, this);
+      // register the appropriate type handlers with the store
+      beanLocator.watch(TYPE_HANDLER_KEY,
+          isContentStore ? CONTENT_TYPE_HANDLER_MEDIATOR : CONFIG_TYPE_HANDLER_MEDIATOR, this);
     }
   }
 
@@ -252,6 +263,7 @@ public class MyBatisDataStore
     myBatisConfig.setEnvironment(environment);
     myBatisConfig.setDatabaseId(databaseId);
     myBatisConfig.setMapUnderscoreToCamelCase(true);
+    myBatisConfig.setReturnInstanceForEmptyRow(true);
     myBatisConfig.setObjectFactory(new DefaultObjectFactory()
     {
       @Override
@@ -269,31 +281,26 @@ public class MyBatisDataStore
       }
     });
 
-    boolean lenient = configurePlaceholderTypes(myBatisConfig, databaseId);
-    registerCommonTypeHandlers(myBatisConfig.getTypeHandlerRegistry(), lenient);
-
-    if (CONFIG_DATASTORE_NAME.equals(environment.getId())) {
-      myBatisConfig.addInterceptor(new EntityInterceptor());
-    }
-
     return myBatisConfig;
   }
 
   /**
    * Register common {@link TypeHandler}s that we know will be needed in the store.
    */
-  private void registerCommonTypeHandlers(final TypeHandlerRegistry handlerRegistry, final boolean lenient) {
+  private void registerCommonTypeHandlers(final boolean lenient) {
 
-    handlerRegistry.register(new AttributesTypeHandler());
-    handlerRegistry.register(new NestedAttributesMapTypeHandler());
-    handlerRegistry.register(new DateTimeTypeHandler());
+    register(new AttributesTypeHandler());
+    register(new NestedAttributesMapTypeHandler());
+    register(new DateTimeTypeHandler());
+    register(new ListTypeHandler());
+    register(new SetTypeHandler());
 
     TypeHandler<EntityUUID> entityIdHandler = new EntityUUIDTypeHandler(lenient);
-    handlerRegistry.register(EntityUUID.class, entityIdHandler);
-    handlerRegistry.register(EntityId.class, entityIdHandler);
+    register(EntityUUID.class, entityIdHandler);
+    register(EntityId.class, entityIdHandler);
     if (lenient) {
       // also support querying by UUID string when database may not have a UUID type
-      handlerRegistry.register(new LenientUUIDTypeHandler());
+      register(new LenientUUIDTypeHandler());
     }
   }
 
@@ -336,17 +343,16 @@ public class MyBatisDataStore
     TypeLiteral<?> resolvedType = TypeLiteral.get(accessType);
     for (Method method : accessType.getMethods()) {
       for (TypeLiteral<?> parameterType : resolvedType.getParameterTypes(method)) {
-        registerSimpleAlias(registry, parameterType);
+        registerSimpleAlias(registry, parameterType.getRawType());
       }
-      registerSimpleAlias(registry, resolvedType.getReturnType(method));
+      registerSimpleAlias(registry, resolvedType.getReturnType(method).getRawType());
     }
   }
 
   /**
    * Registers a simple package-less alias for the resolved type.
    */
-  private void registerSimpleAlias(final TypeAliasRegistry registry, final TypeLiteral<?> type) {
-    Class<?> clazz = type.getRawType();
+  private void registerSimpleAlias(final TypeAliasRegistry registry, final Class<?> clazz) {
     if (!clazz.isPrimitive() && !clazz.getName().startsWith("java.")) {
       try {
         registry.registerAlias(clazz);
@@ -368,7 +374,7 @@ public class MyBatisDataStore
     else {
       registerSimpleMapper(accessType);
     }
-    info(REGISTERED_MESSAGE, accessType);
+    info(REGISTERED_MESSAGE, accessType.getSimpleName());
   }
 
   /**
@@ -529,7 +535,7 @@ public class MyBatisDataStore
   @VisibleForTesting
   public void register(final Interceptor interceptor) {
     sessionFactory.getConfiguration().addInterceptor(interceptor);
-    info(REGISTERED_MESSAGE, interceptor.getClass());
+    info(REGISTERED_MESSAGE, interceptor.getClass().getSimpleName());
   }
 
   /**
@@ -537,8 +543,20 @@ public class MyBatisDataStore
    */
   @VisibleForTesting
   public void register(final TypeHandler<?> handler) {
-    sessionFactory.getConfiguration().getTypeHandlerRegistry().register(handler);
-    info(REGISTERED_MESSAGE, handler.getClass());
+    Configuration mybatisConfig = sessionFactory.getConfiguration();
+    registerSimpleAlias(mybatisConfig.getTypeAliasRegistry(), handler.getClass());
+    mybatisConfig.getTypeHandlerRegistry().register(handler);
+    info(REGISTERED_MESSAGE, handler.getClass().getSimpleName());
+  }
+
+  /**
+   * Registers the given {@link TypeHandler} for a specific type with MyBatis.
+   */
+  private <T> void register(final Class<T> type, final TypeHandler<? extends T> handler) {
+    Configuration mybatisConfig = sessionFactory.getConfiguration();
+    registerSimpleAlias(mybatisConfig.getTypeAliasRegistry(), handler.getClass());
+    mybatisConfig.getTypeHandlerRegistry().register(type, handler);
+    info(REGISTERED_MESSAGE, handler.getClass().getSimpleName() + " (" + type.getSimpleName() + ")");
   }
 
   /**
@@ -547,9 +565,17 @@ public class MyBatisDataStore
   static class TypeHandlerMediator
       implements Mediator<Named, TypeHandler, MyBatisDataStore>
   {
+    private final boolean isContentStore;
+
+    TypeHandlerMediator(final boolean isContentStore) {
+      this.isContentStore = isContentStore;
+    }
+
     @Override
     public void add(final BeanEntry<Named, TypeHandler> entry, final MyBatisDataStore store) {
-      store.register(entry.getValue());
+      if (isContentStore == entry.getValue() instanceof ContentTypeHandler<?>) {
+        store.register(entry.getValue());
+      }
     }
 
     @Override

@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.datastore.api;
 
+import java.util.Optional;
+
 /**
  * Generic {@link DataAccess} that only accesses one single entity.
  *
@@ -21,12 +23,17 @@ public interface SingletonDataAccess<E>
     extends DataAccess
 {
   /**
-   * Get current state of the entity.
+   * Get current state of the entity if set.
    */
-  E get();
+  Optional<E> get();
 
   /**
    * Set a new state for the entity.
    */
   void set(E entity);
+
+  /**
+   * Clears any set state.
+   */
+  void clear();
 }

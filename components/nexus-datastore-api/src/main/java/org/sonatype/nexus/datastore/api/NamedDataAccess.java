@@ -42,7 +42,7 @@ public interface NamedDataAccess<E extends HasName>
   /**
    * Update an existing entity.
    */
-  void update(E entity);
+  boolean update(E entity);
 
   /**
    * Delete the entity with the given name.
