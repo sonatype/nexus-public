@@ -17,8 +17,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.DirectoryNotEmptyException;
-import java.nio.file.Files;
 import java.nio.file.FileSystemException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
@@ -217,13 +217,17 @@ public class SimpleFileOperations
    * Removes the directory if and only if the directory is empty.
    */
   @Override
-  public boolean deleteEmptyDirectory(final Path directory) throws IOException {
+  public boolean deleteEmptyDirectory(final Path directory) {
     try {
       Files.deleteIfExists(directory);
       return true;
     }
     catch (DirectoryNotEmptyException e) {
       log.debug("Cannot remove non-empty directory {}", directory, e);
+      return false;
+    }
+    catch (IOException e) {
+      log.debug("Unable to remove directory {}", directory, e);
       return false;
     }
   }
