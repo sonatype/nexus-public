@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.crypto.internal;
 
+import java.nio.CharBuffer;
 import java.security.Security;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -68,19 +69,26 @@ public class MavenCipherImplTest
   @Test
   public void payloadDetection() throws Exception {
     assertThat(testSubject.isPasswordCipher(null), is(false));
-    assertThat(testSubject.isPasswordCipher(""), is(false));
-    assertThat(testSubject.isPasswordCipher("{}"), is(false));
-    assertThat(testSubject.isPasswordCipher("{ }"), is(false));
-    assertThat(testSubject.isPasswordCipher("{ {} }"), is(false));
-    assertThat(testSubject.isPasswordCipher(plaintext), is(false));
-    assertThat(testSubject.isPasswordCipher(plaintext_mixed), is(false));
-    assertThat(testSubject.isPasswordCipher(plaintext_spec_char_xtrabracket), is(false));
-    assertThat(testSubject.isPasswordCipher(plaintext_random), is(false));
-    assertThat(testSubject.isPasswordCipher(plaintext_special_char), is(false));
-    assertThat(testSubject.isPasswordCipher(plaintext_one_bracket), is(false));
-    assertThat(testSubject.isPasswordCipher(encrypted), is(true));
-    assertThat(testSubject.isPasswordCipher(plaintext_mixed_encrypted), is(true));
-    assertThat(testSubject.isPasswordCipher(plaintext_special_encrypted), is(true));
+    assertIsPasswordCipher("", false);
+    assertIsPasswordCipher("{}", false);
+    assertIsPasswordCipher("{ }", false);
+    assertIsPasswordCipher("{ {} }", false);
+    assertIsPasswordCipher(plaintext, false);
+    assertIsPasswordCipher(plaintext_mixed, false);
+    assertIsPasswordCipher(plaintext_spec_char_xtrabracket, false);
+    assertIsPasswordCipher(plaintext_random, false);
+    assertIsPasswordCipher(plaintext_special_char, false);
+    assertIsPasswordCipher(plaintext_one_bracket, false);
+    assertIsPasswordCipher(encrypted, true);
+    assertIsPasswordCipher(plaintext_mixed_encrypted, true);
+    assertIsPasswordCipher(plaintext_special_encrypted, true);
+  }
+
+  // test both string and char array equivalent
+  private void assertIsPasswordCipher(final String str, final boolean expected) {
+    assertThat(testSubject.isPasswordCipher(str), is(expected));
+    char[] chars = str.toCharArray();
+    assertThat(testSubject.isPasswordCipher(CharBuffer.wrap(chars)), is(expected));
   }
 
   @Test
@@ -145,14 +153,24 @@ public class MavenCipherImplTest
 
   @Test
   public void roundTrip() throws Exception {
-    String dec = testSubject.decrypt(testSubject.encrypt(plaintext, passPhrase), passPhrase);
-    assertThat(dec, equalTo(plaintext));
+    assertRoundTrip(plaintext);
   }
 
   @Test
   public void roundTrip_WithSpecialChars() throws Exception {
-    String dec = testSubject.decrypt(testSubject.encrypt(plaintext_random, passPhrase), passPhrase);
-    assertThat(dec, equalTo(plaintext_random));
+    assertRoundTrip(plaintext_random);
+  }
+
+  // test both string and char array equivalent
+  private void assertRoundTrip(final String expected) {
+    String actual = testSubject.decrypt(testSubject.encrypt(expected, passPhrase), passPhrase);
+    assertThat(actual, equalTo(expected));
+
+    char[] expectedChars = expected.toCharArray();
+    char[] actualChars = testSubject.decryptChars(
+        testSubject.encrypt(CharBuffer.wrap(expectedChars), passPhrase), passPhrase);
+
+    assertThat(actualChars, equalTo(expectedChars));
   }
 
   /**
@@ -177,5 +195,16 @@ public class MavenCipherImplTest
     String plaintext = "123321";
     String encrypted = "{eO8Yc66/I/IHaeg4CoF+/o5bwS5IIyfWcgsYhS0s9W8=}";
     assertThat(testSubject.decrypt(encrypted, passPhrase), equalTo(plaintext));
+  }
+
+  @Test
+  public void cipherMethodsAreFreeFromSideEffects() {
+    CharBuffer charBuffer = CharBuffer.wrap(plaintext_random);
+
+    assertThat(plaintext_random.contentEquals(charBuffer), is(true));
+    testSubject.isPasswordCipher(charBuffer);
+    assertThat(plaintext_random.contentEquals(charBuffer), is(true));
+    testSubject.encrypt(charBuffer, passPhrase);
+    assertThat(plaintext_random.contentEquals(charBuffer), is(true));
   }
 }

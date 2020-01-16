@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.security;
 
+import java.nio.CharBuffer;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -44,15 +46,6 @@ public class PasswordHelper
 
   @Nullable
   public String encrypt(@Nullable final String password) {
-    String encodedPassword = encrypt(password, phraseService.getPhrase(ENC));
-    if (encodedPassword != null && !encodedPassword.equals(password)) {
-      return phraseService.mark(encodedPassword);
-    }
-    return encodedPassword;
-  }
-
-  @Nullable
-  public String encrypt(@Nullable final String password, final String encoding) {
     if (password == null) {
       return null;
     }
@@ -61,19 +54,36 @@ public class PasswordHelper
       log.warn("Value appears to be already encrypted", log.isDebugEnabled() ? new IllegalArgumentException() : null);
       return password;
     }
-    return mavenCipher.encrypt(password, encoding);
+    String encodedPassword = mavenCipher.encrypt(password, phraseService.getPhrase(ENC));
+    if (encodedPassword != null && !encodedPassword.equals(password)) {
+      return phraseService.mark(encodedPassword);
+    }
+    return encodedPassword;
+  }
+
+  /**
+   * @since 3.next
+   */
+  @Nullable
+  public String encryptChars(@Nullable final char[] password) {
+    if (password == null) {
+      return null;
+    }
+    // check the input is not already encrypted
+    CharBuffer charBuffer = CharBuffer.wrap(password);
+    if (mavenCipher.isPasswordCipher(charBuffer)) {
+      log.warn("Value appears to be already encrypted", log.isDebugEnabled() ? new IllegalArgumentException() : null);
+      return new String(password);
+    }
+    String encodedPassword = mavenCipher.encrypt(charBuffer, phraseService.getPhrase(ENC));
+    if (encodedPassword != null && !encodedPassword.contentEquals(charBuffer)) {
+      return phraseService.mark(encodedPassword);
+    }
+    return encodedPassword;
   }
 
   @Nullable
   public String decrypt(@Nullable final String encodedPassword) {
-    if (phraseService.usesLegacyEncoding(encodedPassword)) {
-      return decrypt(encodedPassword, ENC);
-    }
-    return decrypt(encodedPassword, phraseService.getPhrase(ENC));
-  }
-
-  @Nullable
-  public String decrypt(@Nullable final String encodedPassword, final String encoding) {
     if (encodedPassword == null) {
       return null;
     }
@@ -82,7 +92,29 @@ public class PasswordHelper
       log.warn("Value appears to be already decrypted", log.isDebugEnabled() ? new IllegalArgumentException() : null);
       return encodedPassword;
     }
-    return mavenCipher.decrypt(encodedPassword, encoding);
+    if (phraseService.usesLegacyEncoding(encodedPassword)) {
+      return mavenCipher.decrypt(encodedPassword, ENC);
+    }
+    return mavenCipher.decrypt(encodedPassword, phraseService.getPhrase(ENC));
+  }
+
+  /**
+   * @since 3.next
+   */
+  @Nullable
+  public char[] decryptChars(@Nullable final String encodedPassword) {
+    if (encodedPassword == null) {
+      return null;
+    }
+    // check the input is encrypted
+    if (!mavenCipher.isPasswordCipher(encodedPassword)) {
+      log.warn("Value appears to be already decrypted", log.isDebugEnabled() ? new IllegalArgumentException() : null);
+      return encodedPassword.toCharArray();
+    }
+    if (phraseService.usesLegacyEncoding(encodedPassword)) {
+      return mavenCipher.decryptChars(encodedPassword, ENC);
+    }
+    return mavenCipher.decryptChars(encodedPassword, phraseService.getPhrase(ENC));
   }
 
   /**
@@ -91,13 +123,29 @@ public class PasswordHelper
    * @since 3.8
    */
   @Nullable
- public String tryDecrypt(@Nullable final String encodedPassword) {
-   try {
-     return decrypt(encodedPassword);
-   }
-   catch (RuntimeException e) {
-     log.warn("Failed to decrypt value, loading as plain text", log.isDebugEnabled() ? e : null);
-     return encodedPassword;
-   }
- }
+  public String tryDecrypt(@Nullable final String encodedPassword) {
+    try {
+      return decrypt(encodedPassword);
+    }
+    catch (RuntimeException e) {
+      log.warn("Failed to decrypt value, loading as plain text", log.isDebugEnabled() ? e : null);
+      return encodedPassword;
+    }
+  }
+
+  /**
+   * Attempt to decrypt the given input; returns the original input if it can't be decrypted.
+   *
+   * @since 3.next
+   */
+  @Nullable
+  public char[] tryDecryptChars(@Nullable final String encodedPassword) {
+    try {
+      return decryptChars(encodedPassword);
+    }
+    catch (RuntimeException e) {
+      log.warn("Failed to decrypt value, loading as plain text", log.isDebugEnabled() ? e : null);
+      return encodedPassword.toCharArray();
+    }
+  }
 }
