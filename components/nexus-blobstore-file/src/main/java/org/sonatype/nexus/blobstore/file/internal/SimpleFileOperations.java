@@ -226,5 +226,9 @@ public class SimpleFileOperations
       log.debug("Cannot remove non-empty directory {}", directory, e);
       return false;
     }
+    catch (FileSystemException e) {
+      log.debug("Cannot remove directory {}", directory, e);
+      return false;
+    }
   }
 }
