@@ -377,11 +377,13 @@ public class RepositoryManagerImpl
       store.update(configuration);
     }
 
+    Configuration oldConfiguration = repository.getConfiguration().copy();
+
     repository.stop();
     repository.update(configuration);
     repository.start();
 
-    eventManager.post(new RepositoryUpdatedEvent(repository));
+    eventManager.post(new RepositoryUpdatedEvent(repository, oldConfiguration));
 
     return repository;
   }
