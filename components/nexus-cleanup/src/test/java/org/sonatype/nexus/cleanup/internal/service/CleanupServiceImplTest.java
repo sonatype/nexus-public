@@ -40,9 +40,9 @@ import org.mockito.Mock;
 
 import static com.google.common.collect.Sets.newLinkedHashSet;
 import static java.util.Arrays.asList;
-import static java.util.Collections.singletonMap;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
+import static java.util.Collections.singletonMap;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -153,6 +153,16 @@ public class CleanupServiceImplTest
   @Test
   public void ignoreRepositoryWhenPolicyNull() throws Exception {
     when(cleanupPolicyStorage.get(POLICY_2_NAME)).thenReturn(null);
+
+    underTest.cleanup(cancelledCheck);
+
+    verify(cleanupMethod).run(repository1, ImmutableList.of(component1, component2), cancelledCheck);
+  }
+
+  @Test
+  public void ignoreRepositoryWhenPolicyNameNull() throws Exception {
+    setupRepository(repository2, new String[]{null});
+    when(cleanupPolicyStorage.get(null)).thenThrow(new NullPointerException());
 
     underTest.cleanup(cancelledCheck);
 
