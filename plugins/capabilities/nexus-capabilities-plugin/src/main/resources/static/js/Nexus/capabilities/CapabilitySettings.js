@@ -162,7 +162,7 @@ NX.define('Nexus.capabilities.CapabilitySettings', {
       }
       Ext.each(iterable, function (item) {
         if (item) {
-          if (item.requiresPermission) {
+          if (item.requiresPermission && !item.forceDisabled) {
             if (enabled) {
               item.enable();
             }
@@ -175,5 +175,4 @@ NX.define('Nexus.capabilities.CapabilitySettings', {
       });
     }
   }
-
 });

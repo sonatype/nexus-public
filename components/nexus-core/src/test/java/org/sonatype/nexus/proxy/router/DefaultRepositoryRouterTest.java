@@ -46,6 +46,7 @@ import org.sonatype.security.authentication.AuthenticationException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.ThreadContext;
+import org.codehaus.plexus.context.Context;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
 import org.junit.Test;
@@ -129,6 +130,13 @@ public class DefaultRepositoryRouterTest
     finally {
       super.tearDown();
     }
+  }
+
+  @Override
+  protected void customizeContext(final Context ctx) {
+    super.customizeContext(ctx);
+
+    ctx.put("defaultNexusItemAuthorizer.authorizeByPrivilegedTargets", "false");
   }
 
   protected boolean runWithSecurityDisabled() {

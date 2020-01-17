@@ -175,13 +175,6 @@ public class GenerateMetadataTask
           repository.getAttributesHandler().storeAttributes(item);
         }
       }
-      catch (IllegalAccessException e) {
-        String msg = String
-            .format("Yum metadata generation failed, createrepo path %s is using executable that is not allowed.",
-                yumRegistry.getCreaterepoPath());
-        LOG.error(msg, e);
-        throw new IOException("Yum metadata generation failed", e);
-      }
       catch (IOException e) {
         LOG.warn("Yum metadata generation failed", e);
         throw new IOException("Yum metadata generation failed", e);

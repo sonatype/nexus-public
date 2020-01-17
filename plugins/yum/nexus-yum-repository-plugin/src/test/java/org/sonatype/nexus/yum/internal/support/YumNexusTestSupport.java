@@ -164,7 +164,7 @@ public class YumNexusTestSupport
       @Override
       public void configure(final Binder binder) {
         binder.bind(CommandLineExecutor.class)
-            .toInstance(new CommandLineExecutor(applicationDirectories, "createrepo,mergerepo")
+            .toInstance(new CommandLineExecutor(applicationDirectories)
         {
           @Override
           public int exec(final String command, final String params) throws IOException {

@@ -15,6 +15,12 @@ package org.sonatype.nexus.formfields;
 public class StringTextFormField
     extends AbstractFormField<String>
 {
+  public StringTextFormField(String id, String label, String helpText, boolean required, String regexValidation,
+                             boolean enabled)
+  {
+    super(id, label, helpText, required, regexValidation, null, enabled);
+  }
+
   public StringTextFormField(String id, String label, String helpText, boolean required, String regexValidation) {
     super(id, label, helpText, required, regexValidation);
   }

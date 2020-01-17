@@ -75,7 +75,7 @@ NX.define('Nexus.capabilities.CapabilitySettingsFieldSet', {
         item;
 
     self.capabilityType = self.mediator().capabilityTypeStore.getTypeById(capabilityTypeId);
-
+    
     self.removeAll();
 
     if (self.capabilityType) {

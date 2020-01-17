@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -35,6 +36,8 @@ import org.sonatype.nexus.configuration.application.ApplicationConfiguration;
 import org.sonatype.nexus.configuration.model.CRepositoryTarget;
 import org.sonatype.nexus.configuration.model.CRepositoryTargetCoreConfiguration;
 import org.sonatype.nexus.configuration.validator.ApplicationConfigurationValidator;
+import org.sonatype.nexus.events.EventSubscriber;
+import org.sonatype.nexus.proxy.events.RepositoryRegistryEventRemove;
 import org.sonatype.nexus.proxy.events.TargetRegistryEventAdd;
 import org.sonatype.nexus.proxy.events.TargetRegistryEventRemove;
 import org.sonatype.nexus.proxy.registry.ContentClass;
@@ -42,6 +45,10 @@ import org.sonatype.nexus.proxy.registry.RepositoryTypeRegistry;
 import org.sonatype.nexus.proxy.repository.Repository;
 import org.sonatype.sisu.goodies.eventbus.EventBus;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.eventbus.AllowConcurrentEvents;
+import com.google.common.eventbus.Subscribe;
 import org.codehaus.plexus.util.StringUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -55,11 +62,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Named
 public class DefaultTargetRegistry
     extends AbstractLastingConfigurable<List<CRepositoryTarget>>
-    implements TargetRegistry
+    implements TargetRegistry, EventSubscriber
 {
   private final RepositoryTypeRegistry repositoryTypeRegistry;
 
   private final ApplicationConfigurationValidator validator;
+
+  private final Cache<String, TargetSet> targetResultCache;
 
   // a cache view of "live" targets, keyed by target ID
   // eagerly rebuilt on every configuration change
@@ -69,11 +78,14 @@ public class DefaultTargetRegistry
 
   @Inject
   public DefaultTargetRegistry(EventBus eventBus, ApplicationConfiguration applicationConfiguration,
-      RepositoryTypeRegistry repositoryTypeRegistry, ApplicationConfigurationValidator validator)
+      RepositoryTypeRegistry repositoryTypeRegistry, ApplicationConfigurationValidator validator,
+      @Named("${registry.targetResultCacheSize:-1000}") int targetResultCacheSize)
   {
     super("Repository Target Registry", eventBus, applicationConfiguration);
     this.repositoryTypeRegistry = checkNotNull(repositoryTypeRegistry);
     this.validator = checkNotNull(validator);
+
+    this.targetResultCache = CacheBuilder.newBuilder().maximumSize(targetResultCacheSize).softValues().build();
   }
 
   @Override
@@ -118,6 +130,9 @@ public class DefaultTargetRegistry
         }
       }
       targets = newView;
+
+      log.debug("Invalidating target result cache");
+      targetResultCache.invalidateAll();
     }
   }
 
@@ -223,6 +238,24 @@ public class DefaultTargetRegistry
 
   public TargetSet getTargetsForRepositoryPath(Repository repository, String path) {
     log.debug("Resolving targets for repository='{}' for path='{}'", repository.getId(), path);
+    try {
+      String targetResultKey = repository.getId() + ':' + path;
+      return targetResultCache.get(targetResultKey, () -> cacheTargetsForRepositoryPath(repository, path));
+    }
+    catch (ExecutionException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  @Subscribe
+  @AllowConcurrentEvents
+  public void on(final RepositoryRegistryEventRemove e) {
+    log.debug("Invalidating target result cache");
+    targetResultCache.invalidateAll();
+  }
+
+  private TargetSet cacheTargetsForRepositoryPath(Repository repository, String path) {
+    log.debug("Caching targets for repository='{}' for path='{}'", repository.getId(), path);
 
     final TargetSet result = new TargetSet();
     for (Target t : getRepositoryTargets()) {

@@ -27,6 +27,15 @@ public abstract class AbstractFormField<T>
 
   private T initialValue;
 
+  private boolean enabled = true;
+
+  public AbstractFormField(final String id, final String label, final String helpText, final boolean required,
+                           final String regexValidation, final T initialValue, final boolean enabled)
+  {
+    this(id, label, helpText, required, regexValidation, initialValue);
+    this.enabled = enabled;
+  }
+
   public AbstractFormField(final String id, final String label, final String helpText, final boolean required,
                            final String regexValidation, final T initialValue)
   {
@@ -96,5 +105,9 @@ public abstract class AbstractFormField<T>
 
   public void setInitialValue(T value) {
     this.initialValue = value;
+  }
+
+  public boolean isEnabled() {
+    return enabled;
   }
 }
