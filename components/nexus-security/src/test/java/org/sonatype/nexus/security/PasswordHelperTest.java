@@ -67,6 +67,8 @@ public class PasswordHelperTest
 
     assertThat(legacyPasswordHelper.encryptChars(null), is(nullValue()));
     assertThat(customPasswordHelper.encryptChars(null), is(nullValue()));
+    assertThat(legacyPasswordHelper.encryptChars(null, 0, -1), is(nullValue()));
+    assertThat(customPasswordHelper.encryptChars(null, 0, -1), is(nullValue()));
   }
 
   @Test
@@ -218,13 +220,15 @@ public class PasswordHelperTest
     }
   }
 
-  //test both string and char array equivalent
+  // test both string and char array equivalent
   private void assertEncrypt(final PasswordHelper underTest, final String plain, final Matcher<String> matcher) {
     assertThat(underTest.encrypt(plain), matcher);
     assertThat(underTest.encryptChars(plain.toCharArray()), matcher);
+    // also test that a slice of a char array can be encrypted
+    assertThat(underTest.encryptChars((">>" + plain + "<<").toCharArray(), 2, plain.length()), matcher);
   }
 
-  //test both string and char array equivalent
+  // test both string and char array equivalent
   private void assertDecrypt(final PasswordHelper underTest, final String encoded, final String expected) {
     assertThat(underTest.decrypt(encoded), is(expected));
     assertThat(underTest.decryptChars(encoded), is(expected.toCharArray()));

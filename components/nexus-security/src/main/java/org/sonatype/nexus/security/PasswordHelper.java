@@ -65,15 +65,23 @@ public class PasswordHelper
    * @since 3.next
    */
   @Nullable
-  public String encryptChars(@Nullable final char[] password) {
-    if (password == null) {
-      return null;
-    }
+  public String encryptChars(@Nullable final char[] chars) {
+    return chars != null ? encryptCharBuffer(CharBuffer.wrap(chars)) : null;
+  }
+
+  /**
+   * @since 3.next
+   */
+  @Nullable
+  public String encryptChars(@Nullable final char[] chars, final int offset, final int length) {
+    return chars != null ? encryptCharBuffer(CharBuffer.wrap(chars, offset, length)) : null;
+  }
+
+  private String encryptCharBuffer(final CharBuffer charBuffer) {
     // check the input is not already encrypted
-    CharBuffer charBuffer = CharBuffer.wrap(password);
     if (mavenCipher.isPasswordCipher(charBuffer)) {
       log.warn("Value appears to be already encrypted", log.isDebugEnabled() ? new IllegalArgumentException() : null);
-      return new String(password);
+      return charBuffer.toString();
     }
     String encodedPassword = mavenCipher.encrypt(charBuffer, phraseService.getPhrase(ENC));
     if (encodedPassword != null && !encodedPassword.contentEquals(charBuffer)) {
