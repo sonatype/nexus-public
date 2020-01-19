@@ -27,19 +27,33 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class ObjectInputStreamWithClassLoader
     extends ObjectInputStream
 {
-  private final ClassLoader loader;
+  @FunctionalInterface
+  public interface LoadingFunction
+  {
+    Class<?> loadClass(String name) throws ClassNotFoundException;
+  }
+
+  private final LoadingFunction classLoading;
+
+  public ObjectInputStreamWithClassLoader(final InputStream inputStream, final LoadingFunction classLoading)
+      throws IOException
+  {
+    super(inputStream);
+    this.classLoading = checkNotNull(classLoading);
+  }
 
   public ObjectInputStreamWithClassLoader(final InputStream inputStream, final ClassLoader loader)
       throws IOException
   {
     super(inputStream);
-    this.loader = checkNotNull(loader);
+    checkNotNull(loader);
+    this.classLoading = name -> Class.forName(name, false, loader);
   }
 
   @Override
   protected Class<?> resolveClass(final ObjectStreamClass classDesc)
-      throws IOException, ClassNotFoundException
+      throws ClassNotFoundException
   {
-    return Class.forName(classDesc.getName(), false, loader);
+    return classLoading.loadClass(classDesc.getName());
   }
 }
