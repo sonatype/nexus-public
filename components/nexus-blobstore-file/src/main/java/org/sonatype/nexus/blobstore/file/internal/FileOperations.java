@@ -112,7 +112,7 @@ public interface FileOperations
   /**
    * Returns true if the directory was empty and could be removed, false otherwise.
    */
-  boolean deleteEmptyDirectory(Path directory) throws IOException;
+  boolean deleteEmptyDirectory(Path directory);
 
   /**
    * @since 3.5

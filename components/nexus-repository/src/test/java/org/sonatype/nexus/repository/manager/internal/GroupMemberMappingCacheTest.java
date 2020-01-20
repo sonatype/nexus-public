@@ -141,7 +141,7 @@ public class GroupMemberMappingCacheTest
 
     when(repositoryManager.browse()).thenReturn(Arrays.asList(repo, repo2, group));
 
-    underTest.on(new RepositoryUpdatedEvent(group));
+    underTest.on(new RepositoryUpdatedEvent(group, null));
 
     groups = underTest.getGroups("repo2");
 
@@ -154,7 +154,7 @@ public class GroupMemberMappingCacheTest
 
     when(repositoryManager.browse()).thenReturn(Collections.emptyList());
 
-    underTest.on(new RepositoryUpdatedEvent(repo));
+    underTest.on(new RepositoryUpdatedEvent(repo, null));
 
     verify(repositoryManager, never()).browse();
   }

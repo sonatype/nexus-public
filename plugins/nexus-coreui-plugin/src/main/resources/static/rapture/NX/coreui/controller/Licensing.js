@@ -87,20 +87,28 @@ Ext.define('NX.coreui.controller.Licensing', {
   onAgree: function (button) {
     var me = this,
         win = button.up('window'),
-        form = win.licenseForm,
-        authToken = win.authToken;
+        form = win.licenseForm;
 
     win.close();
-    form.submit({
-      params: {
-        authToken: authToken
-      },
-      success: function () {
-        NX.Messages.success(NX.I18n.get('Licensing_Install_Success'));
-        me.getPanel().down('nx-settingsform').load(); //reload to pick up server changes
-        me.getPanel().down('nx-settingsform').show();
-      }
-    });
+
+    NX.Security.doWithAuthenticationToken(
+        NX.I18n.format('Licensing_Authentication_Validation', 'Installing'),
+        {
+          success: function (authToken) {
+            form.submit({
+              params: {
+                authToken: authToken
+              },
+              success: function () {
+                NX.Messages.success(NX.I18n.get('Licensing_Install_Success'));
+                me.getPanel().down('form').show();
+                me.getPanel().down('nx-settingsform').load(); //reload to pick up server changes
+                me.getPanel().down('nx-settingsform').show();
+              }
+            });
+          }
+        }
+    );
   },
 
   /**
@@ -131,14 +139,7 @@ Ext.define('NX.coreui.controller.Licensing', {
   install: function (button) {
     var me = this,
         form = button.up('form');
-    NX.Security.doWithAuthenticationToken(
-        NX.I18n.format('Licensing_Authentication_Validation', 'Installing'),
-        {
-          success: function (authToken) {
-            Ext.apply(me.showAgreementWindow(), { licenseForm: form, authToken: authToken });
-            me.getPanel().down('form').show();
-          }
-        }
-    );
+
+    Ext.apply(me.showAgreementWindow(), { licenseForm: form });
   }
 });

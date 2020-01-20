@@ -32,8 +32,9 @@ public class PlaceholderTypesTest
   @Test
   public void hasBuiltInDefaultsForH2() {
     Configuration config = new Configuration();
+    config.setDatabaseId("H2");
 
-    configurePlaceholderTypes(config, "H2");
+    configurePlaceholderTypes(config);
 
     assertThat(config.getVariables().get("UUID_TYPE"), is("UUID"));
     assertThat(config.getVariables().get("JSON_TYPE"), is("JSON"));
@@ -43,8 +44,9 @@ public class PlaceholderTypesTest
   @Test
   public void hasBuiltInDefaultsForPostgreSQL() {
     Configuration config = new Configuration();
+    config.setDatabaseId("PostgreSQL");
 
-    configurePlaceholderTypes(config, "PostgreSQL");
+    configurePlaceholderTypes(config);
 
     assertThat(config.getVariables().get("UUID_TYPE"), is("UUID"));
     assertThat(config.getVariables().get("JSON_TYPE"), is("JSONB"));
@@ -54,12 +56,13 @@ public class PlaceholderTypesTest
   @Test
   public void canSupplyTypesForOtherDatabases() {
     Configuration config = new Configuration();
+    config.setDatabaseId("MyDB");
 
     config.getVariables().setProperty("UUID_TYPE.MyDB", "CHARACTER VARYING (36)");
     config.getVariables().setProperty("JSON_TYPE.MyDB", "CLOB");
     config.getVariables().setProperty("BINARY_TYPE.MyDB", "BLOB");
 
-    configurePlaceholderTypes(config, "MyDB");
+    configurePlaceholderTypes(config);
 
     assertThat(config.getVariables().get("UUID_TYPE"), is("CHARACTER VARYING (36)"));
     assertThat(config.getVariables().get("JSON_TYPE"), is("CLOB"));
@@ -69,8 +72,9 @@ public class PlaceholderTypesTest
   @Test
   public void failOnMissingType() {
     Configuration config = new Configuration();
+    config.setDatabaseId("MyDB");
     try {
-      configurePlaceholderTypes(config, "MyDB");
+      configurePlaceholderTypes(config);
       fail("Expected IllegalArgumentException");
     }
     catch (IllegalArgumentException e) {
@@ -81,6 +85,8 @@ public class PlaceholderTypesTest
   @Test
   public void failOnInvalidTypes() {
     Configuration config = new Configuration();
+    config.setDatabaseId("MyDB");
+
     assertTypeIsInvalid(config, "1");
     assertTypeIsInvalid(config, "A1");
     assertTypeIsInvalid(config, "AA ");
@@ -115,7 +121,7 @@ public class PlaceholderTypesTest
   private void assertTypeIsInvalid(Configuration config, String type) {
     try {
       config.getVariables().setProperty("UUID_TYPE.MyDB", type);
-      configurePlaceholderTypes(config, "MyDB");
+      configurePlaceholderTypes(config);
       fail("Expected IllegalArgumentException");
     }
     catch (IllegalArgumentException e) {
@@ -127,6 +133,6 @@ public class PlaceholderTypesTest
     config.getVariables().setProperty("UUID_TYPE.MyDB", type);
     config.getVariables().setProperty("JSON_TYPE.MyDB", type);
     config.getVariables().setProperty("BINARY_TYPE.MyDB", type);
-    configurePlaceholderTypes(config, "MyDB");
+    configurePlaceholderTypes(config);
   }
 }

@@ -83,7 +83,7 @@ public class RepositoryOnlineConditionTest
     assertThat(underTest.isSatisfied(), is(true));
 
     when(configuration.isOnline()).thenReturn(false);
-    underTest.handle(new RepositoryUpdatedEvent(repository));
+    underTest.handle(new RepositoryUpdatedEvent(repository, null));
     assertThat(underTest.isSatisfied(), is(false));
 
     verifyEventManagerEvents(satisfied(underTest), unsatisfied(underTest));
@@ -97,10 +97,10 @@ public class RepositoryOnlineConditionTest
     assertThat(underTest.isSatisfied(), is(true));
 
     when(configuration.isOnline()).thenReturn(false);
-    underTest.handle(new RepositoryUpdatedEvent(repository));
+    underTest.handle(new RepositoryUpdatedEvent(repository, null));
 
     when(configuration.isOnline()).thenReturn(true);
-    underTest.handle(new RepositoryUpdatedEvent(repository));
+    underTest.handle(new RepositoryUpdatedEvent(repository, null));
     assertThat(underTest.isSatisfied(), is(true));
 
     verifyEventManagerEvents(satisfied(underTest), unsatisfied(underTest), satisfied(underTest));

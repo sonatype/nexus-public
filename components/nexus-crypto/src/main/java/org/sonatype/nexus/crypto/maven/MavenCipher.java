@@ -21,9 +21,14 @@ package org.sonatype.nexus.crypto.maven;
  */
 public interface MavenCipher
 {
-  String encrypt(String str, String passPhrase);
+  String encrypt(CharSequence str, String passPhrase);
 
   String decrypt(String str, String passPhrase);
 
-  boolean isPasswordCipher(String str);
+  boolean isPasswordCipher(CharSequence str);
+
+  /**
+   * @since 3.next
+   */
+  char[] decryptChars(String str, String passPhrase);
 }

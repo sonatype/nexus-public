@@ -12,7 +12,8 @@
  */
 package org.sonatype.nexus.crypto.internal;
 
-import java.nio.charset.StandardCharsets;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
@@ -23,10 +24,11 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.crypto.CryptoHelper;
 import org.sonatype.nexus.crypto.maven.MavenCipher;
 
-import com.google.common.base.Strings;
+import com.google.common.base.CharMatcher;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Default implementation of {@link MavenCipher}.
@@ -42,6 +44,10 @@ public class MavenCipherImpl
 
   private static final char SHIELD_END = '}';
 
+  private static final CharMatcher BEGIN_MATCHER = CharMatcher.is(SHIELD_BEGIN);
+
+  private static final CharMatcher END_MATCHER = CharMatcher.is(SHIELD_END);
+
   private static final int MIN_PAYLOAD_LENGTH = 32; // conservative estimate, given cipher implementation
 
   private static final Pattern BASE_64_REGEX = Pattern.compile("[A-Za-z0-9+/]*={0,2}");
@@ -53,29 +59,41 @@ public class MavenCipherImpl
     this.passwordCipher = new PasswordCipher(cryptoHelper);
   }
 
-  public String encrypt(final String str, final String passPhrase) {
+  @Override
+  public String encrypt(final CharSequence str, final String passPhrase) {
     checkNotNull(str);
     checkNotNull(passPhrase);
     return SHIELD_BEGIN + doEncrypt(str, passPhrase) + SHIELD_END;
   }
 
-  private String doEncrypt(final String str, final String passPhrase) {
-    return new String(passwordCipher.encrypt(str.getBytes(StandardCharsets.UTF_8), passPhrase), StandardCharsets.UTF_8);
+  private String doEncrypt(final CharSequence str, final String passPhrase) {
+    return new String(passwordCipher.encrypt(getBytesUTF8(str), passPhrase), UTF_8);
   }
 
+  @Override
   public String decrypt(final String str, final String passPhrase) {
     checkNotNull(str);
     checkNotNull(passPhrase);
-    String payload = peel(str);
-    checkArgument(payload != null, "Input string is not a password cipher");
-    return doDecrypt(payload, passPhrase);
+    return doDecrypt(peel(str), passPhrase).toString();
   }
 
-  private String doDecrypt(final String str, final String passPhrase) {
-    return new String(passwordCipher.decrypt(str.getBytes(StandardCharsets.UTF_8), passPhrase), StandardCharsets.UTF_8);
+  @Override
+  public char[] decryptChars(final String str, final String passPhrase) {
+    checkNotNull(str);
+    checkNotNull(passPhrase);
+    CharBuffer charBuffer = doDecrypt(peel(str), passPhrase);
+    char[] chars = new char[charBuffer.remaining()];
+    charBuffer.get(chars);
+    return chars;
   }
 
-  public boolean isPasswordCipher(final String str) {
+  private CharBuffer doDecrypt(final CharSequence str, final String passPhrase) {
+    checkArgument(str != null, "Input string is not a password cipher");
+    return UTF_8.decode(ByteBuffer.wrap(passwordCipher.decrypt(getBytesUTF8(str), passPhrase)));
+  }
+
+  @Override
+  public boolean isPasswordCipher(final CharSequence str) {
     return peel(str) != null;
   }
 
@@ -84,20 +102,32 @@ public class MavenCipherImpl
    * input is invalid.
    */
   @Nullable
-  private String peel(final String str) {
-    if (Strings.isNullOrEmpty(str)) {
+  private static CharSequence peel(final CharSequence str) {
+    if (str == null || str.length() == 0) {
       return null;
     }
-    int start = str.indexOf(SHIELD_BEGIN) + 1; // first character of the payload
-    int stop = str.lastIndexOf(SHIELD_END); // character immediately after payload
+    int start = BEGIN_MATCHER.indexIn(str) + 1; // first character of the payload
     if (start > 0) {
+      int stop = END_MATCHER.lastIndexIn(str); // character immediately after payload
       int payloadLength = stop - start;
       // is the payload a Base64 encoded string of enough length?
       if (payloadLength >= MIN_PAYLOAD_LENGTH && payloadLength % 4 == 0
           && BASE_64_REGEX.matcher(str).region(start, stop).matches()) {
-        return str.substring(start, stop);
+        return str.subSequence(start, stop);
       }
     }
     return null;
+  }
+
+  private static byte[] getBytesUTF8(final CharSequence str) {
+    if (str instanceof String) {
+      return ((String) str).getBytes(UTF_8);
+    }
+
+    // use NIO buffer to avoid copying contents into String
+    ByteBuffer byteBuffer = UTF_8.encode(CharBuffer.wrap(str));
+    byte[] bytes = new byte[byteBuffer.remaining()];
+    byteBuffer.get(bytes);
+    return bytes;
   }
 }

@@ -21,7 +21,7 @@ import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
 import org.sonatype.nexus.crypto.internal.MavenCipherImpl;
 
 import com.google.common.base.Throwables;
-import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -64,55 +64,65 @@ public class PasswordHelperTest
   public void testEncrypt_NullInput() throws Exception {
     assertThat(legacyPasswordHelper.encrypt(null), is(nullValue()));
     assertThat(customPasswordHelper.encrypt(null), is(nullValue()));
+
+    assertThat(legacyPasswordHelper.encryptChars(null), is(nullValue()));
+    assertThat(customPasswordHelper.encryptChars(null), is(nullValue()));
+    assertThat(legacyPasswordHelper.encryptChars(null, 0, -1), is(nullValue()));
+    assertThat(customPasswordHelper.encryptChars(null, 0, -1), is(nullValue()));
   }
 
   @Test
   public void testEncrypt_EmptyInput() throws Exception {
-    assertThat(legacyPasswordHelper.encrypt(""), allOf(startsWith("{"), endsWith("}")));
-    assertThat(customPasswordHelper.encrypt(""), allOf(startsWith("~{"), endsWith("}~")));
+    assertEncrypt(legacyPasswordHelper, "", allOf(startsWith("{"), endsWith("}")));
+    assertEncrypt(customPasswordHelper, "", allOf(startsWith("~{"), endsWith("}~")));
   }
 
   @Test
   public void testEncrypt_PlainInput() throws Exception {
-    assertThat(legacyPasswordHelper.encrypt("test"), allOf(startsWith("{"), endsWith("}")));
-    assertThat(customPasswordHelper.encrypt("test"), allOf(startsWith("~{"), endsWith("}~")));
+    assertEncrypt(legacyPasswordHelper, "test", allOf(startsWith("{"), endsWith("}")));
+    assertEncrypt(customPasswordHelper, "test", allOf(startsWith("~{"), endsWith("}~")));
   }
 
   @Test
   public void testEncrypt_AlreadyEncryptedInput() throws Exception {
-    assertThat(legacyPasswordHelper.encrypt("{X4bkkyyxOxkH+JFw6vVV3Gp0ONzT0aSzGOUCSSH+P5E=}"), is("{X4bkkyyxOxkH+JFw6vVV3Gp0ONzT0aSzGOUCSSH+P5E=}"));
-    assertThat(customPasswordHelper.encrypt("{X4bkkyyxOxkH+JFw6vVV3Gp0ONzT0aSzGOUCSSH+P5E=}"), is("{X4bkkyyxOxkH+JFw6vVV3Gp0ONzT0aSzGOUCSSH+P5E=}"));
+    assertEncrypt(legacyPasswordHelper, "{X4bkkyyxOxkH+JFw6vVV3Gp0ONzT0aSzGOUCSSH+P5E=}",
+        is("{X4bkkyyxOxkH+JFw6vVV3Gp0ONzT0aSzGOUCSSH+P5E=}"));
+    assertEncrypt(customPasswordHelper, "{X4bkkyyxOxkH+JFw6vVV3Gp0ONzT0aSzGOUCSSH+P5E=}",
+        is("{X4bkkyyxOxkH+JFw6vVV3Gp0ONzT0aSzGOUCSSH+P5E=}"));
   }
 
   @Test
   public void testEncrypt_StringIncludingShields() throws Exception {
     //check the resultant value is protected by braces and has been encrypted (not equal to the input string)
-    assertThat(legacyPasswordHelper.encrypt("{test}"), allOf(startsWith("{"), endsWith("}"), not("{test}")));
-    assertThat(customPasswordHelper.encrypt("{test}"), allOf(startsWith("~{"), endsWith("}~"), not("~{test}~")));
+    assertEncrypt(legacyPasswordHelper, "{test}", allOf(startsWith("{"), endsWith("}"), not("{test}")));
+    assertEncrypt(customPasswordHelper, "{test}", allOf(startsWith("~{"), endsWith("}~"), not("~{test}~")));
   }
 
   @Test
   public void testDecrypt_NullInput() throws Exception {
     assertThat(legacyPasswordHelper.decrypt(null), is(nullValue()));
     assertThat(customPasswordHelper.decrypt(null), is(nullValue()));
+
+    assertThat(legacyPasswordHelper.decryptChars(null), is(nullValue()));
+    assertThat(customPasswordHelper.decryptChars(null), is(nullValue()));
   }
 
   @Test
   public void testDecrypt_EmptyInput() throws Exception {
-    assertThat(legacyPasswordHelper.decrypt(""), is(""));
-    assertThat(customPasswordHelper.decrypt(""), is(""));
+    assertDecrypt(legacyPasswordHelper, "", "");
+    assertDecrypt(customPasswordHelper, "", "");
   }
 
   @Test
   public void testDecrypt_EncryptedInput() throws Exception {
-    assertThat(legacyPasswordHelper.decrypt("{X4bkkyyxOxkH+JFw6vVV3Gp0ONzT0aSzGOUCSSH+P5E=}"), is("test"));
-    assertThat(customPasswordHelper.decrypt("{X4bkkyyxOxkH+JFw6vVV3Gp0ONzT0aSzGOUCSSH+P5E=}"), is("test"));
+    assertDecrypt(legacyPasswordHelper, "{X4bkkyyxOxkH+JFw6vVV3Gp0ONzT0aSzGOUCSSH+P5E=}", "test");
+    assertDecrypt(customPasswordHelper, "{X4bkkyyxOxkH+JFw6vVV3Gp0ONzT0aSzGOUCSSH+P5E=}", "test");
   }
 
   @Test
   public void testDecrypt_AlreadyDecryptedInput() throws Exception {
-    assertThat(legacyPasswordHelper.decrypt("test"), is("test"));
-    assertThat(customPasswordHelper.decrypt("test"), is("test"));
+    assertDecrypt(legacyPasswordHelper, "test", "test");
+    assertDecrypt(customPasswordHelper, "test", "test");
   }
 
   @Test
@@ -127,8 +137,8 @@ public class PasswordHelperTest
         public void run() {
           for (int i = 0; i < 20; i++) {
             try {
-              MatcherAssert.assertThat(legacyPasswordHelper.decrypt(legacyPasswordHelper.encrypt(password)), is(password));
-              MatcherAssert.assertThat(customPasswordHelper.decrypt(customPasswordHelper.encrypt(password)), is(password));
+              assertDecrypt(legacyPasswordHelper, legacyPasswordHelper.encrypt(password), password);
+              assertDecrypt(customPasswordHelper, customPasswordHelper.encrypt(password), password);
             }
             catch (Throwable e) {
               error.compareAndSet(null, e);
@@ -162,7 +172,15 @@ public class PasswordHelperTest
       assertThat(e.getCause(), is(instanceOf(GeneralSecurityException.class)));
     }
 
-    assertThat(customPasswordHelper.decrypt(encodedPass), is(password));
+    try {
+      legacyPasswordHelper.decryptChars(encodedPass);
+      fail("Expected RuntimeException wrapping GeneralSecurityException");
+    }
+    catch (RuntimeException e) {
+      assertThat(e.getCause(), is(instanceOf(GeneralSecurityException.class)));
+    }
+
+    assertDecrypt(customPasswordHelper, encodedPass, password);
   }
 
   @Test
@@ -170,10 +188,10 @@ public class PasswordHelperTest
     String password = "clear-text-password";
     String encodedPass = legacyPasswordHelper.encrypt(password);
 
-    assertThat(legacyPasswordHelper.decrypt(encodedPass), is(password));
+    assertDecrypt(legacyPasswordHelper, encodedPass, password);
 
     // should still work by falling back to legacy pass-phrase
-    assertThat(customPasswordHelper.decrypt(encodedPass), is(password));
+    assertDecrypt(customPasswordHelper, encodedPass, password);
   }
 
   @Test
@@ -184,7 +202,7 @@ public class PasswordHelperTest
     String password = "clear-text-password";
     String encodedPass = underTest.encrypt(password);
 
-    assertThat(underTest.decrypt(encodedPass), is(password));
+    assertDecrypt(underTest, encodedPass, password);
   }
 
   @Test
@@ -200,5 +218,19 @@ public class PasswordHelperTest
     catch (RuntimeException e) {
       assertThat(e.getCause(), is(instanceOf(FileNotFoundException.class)));
     }
+  }
+
+  // test both string and char array equivalent
+  private void assertEncrypt(final PasswordHelper underTest, final String plain, final Matcher<String> matcher) {
+    assertThat(underTest.encrypt(plain), matcher);
+    assertThat(underTest.encryptChars(plain.toCharArray()), matcher);
+    // also test that a slice of a char array can be encrypted
+    assertThat(underTest.encryptChars((">>" + plain + "<<").toCharArray(), 2, plain.length()), matcher);
+  }
+
+  // test both string and char array equivalent
+  private void assertDecrypt(final PasswordHelper underTest, final String encoded, final String expected) {
+    assertThat(underTest.decrypt(encoded), is(expected));
+    assertThat(underTest.decryptChars(encoded), is(expected.toCharArray()));
   }
 }

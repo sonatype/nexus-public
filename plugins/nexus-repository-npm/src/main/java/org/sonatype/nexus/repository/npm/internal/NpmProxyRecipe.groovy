@@ -70,6 +70,9 @@ class NpmProxyRecipe
   Provider<PurgeUnusedFacet> purgeUnusedFacet
 
   @Inject
+  Provider<NpmProxyCacheInvalidatorFacetImpl> npmProxyCacheInvalidatorFacet
+
+  @Inject
   Provider<SingleAssetComponentMaintenance> singleAssetComponentMaintenanceProvider
 
   @Inject
@@ -110,6 +113,7 @@ class NpmProxyRecipe
     repository.attach(npmSearchFacet.get())
     repository.attach(singleAssetComponentMaintenanceProvider.get())
     repository.attach(purgeUnusedFacet.get())
+    repository.attach(npmProxyCacheInvalidatorFacet.get());
   }
 
   /**

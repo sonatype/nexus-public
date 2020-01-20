@@ -19,6 +19,8 @@ import org.sonatype.nexus.repository.rest.api.model.HostedRepositoryApiRequest;
 
 import com.google.common.collect.Sets;
 
+import static org.sonatype.nexus.repository.manager.internal.RepositoryManagerImpl.CLEANUP_ATTRIBUTES_KEY;
+import static org.sonatype.nexus.repository.manager.internal.RepositoryManagerImpl.CLEANUP_NAME_KEY;
 import static org.sonatype.nexus.repository.storage.StorageFacetConstants.BLOB_STORE_NAME;
 import static org.sonatype.nexus.repository.storage.StorageFacetConstants.STORAGE;
 import static org.sonatype.nexus.repository.storage.StorageFacetConstants.STRICT_CONTENT_TYPE_VALIDATION;
@@ -37,9 +39,10 @@ public class HostedRepositoryApiRequestToConfigurationConverter<T extends Hosted
     configuration.attributes(STORAGE)
         .set(STRICT_CONTENT_TYPE_VALIDATION, request.getStorage().getStrictContentTypeValidation());
     configuration.attributes(STORAGE).set(WRITE_POLICY, request.getStorage().getWritePolicy());
-    configuration.attributes("cleanup")
-        .set("policyName",
-            request.getCleanup() != null ? Sets.newHashSet(request.getCleanup().getPolicyNames()) : null);
+    if (request.getCleanup() != null) {
+      configuration.attributes(CLEANUP_ATTRIBUTES_KEY)
+          .set(CLEANUP_NAME_KEY, Sets.newHashSet(request.getCleanup().getPolicyNames()));
+    }
     return configuration;
   }
 }

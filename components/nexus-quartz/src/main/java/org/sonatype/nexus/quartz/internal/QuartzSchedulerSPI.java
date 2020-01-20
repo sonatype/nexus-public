@@ -189,18 +189,31 @@ public class QuartzSchedulerSPI
     }
 
     // re-attach listeners right after scheduler is available
-    delayedExecutor.execute(() -> {
-      final Optional<Date> lastShutdownTime = lastShutdownTimeService.estimateLastShutdownTime();
-      forEachNexusJob((Trigger trigger, JobDetail jobDetail) -> {
-        try {
-          updateLastRunStateInfo(jobDetail, lastShutdownTime);
-        }
-        catch (SchedulerException e) {
-          log.error("Error updating last run state for {}", jobDetail.getKey(), e);
-        }
-      });
+    reattachListeners();
+  }
 
-      forEachNexusJob((Trigger trigger, JobDetail jobDetail) -> {
+  private void reattachListeners() {
+    final Optional<Date> lastShutdownTime = lastShutdownTimeService.estimateLastShutdownTime();
+    forEachNexusJob((final Trigger trigger, final JobDetail jobDetail) -> {
+      try {
+        updateLastRunStateInfo(jobDetail, lastShutdownTime);
+      }
+      catch (SchedulerException e) {
+        log.error("Error updating last run state for {}", jobDetail.getKey(), e);
+      }
+    });
+
+    forEachNexusJob((final Trigger trigger, final JobDetail jobDetail) -> {
+      try {
+        stubJobListener(jobDetail);
+      }
+      catch (SchedulerException e) {
+        log.error("Error attaching job listener to {}", jobDetail.getKey(), e);
+      }
+    });
+
+    delayedExecutor.execute(() -> {
+      forEachNexusJob((final Trigger trigger, final JobDetail jobDetail) -> {
         try {
           attachJobListener(jobDetail, trigger);
         }
@@ -215,7 +228,7 @@ public class QuartzSchedulerSPI
     });
   }
 
-  private void forEachNexusJob(BiConsumer<Trigger, JobDetail> consumer) {
+  private void forEachNexusJob(final BiConsumer<Trigger, JobDetail> consumer) {
     try {
       for (Entry<Trigger, JobDetail> entry : getNexusJobs().entrySet()) {
         consumer.accept(entry.getKey(), entry.getValue());
@@ -256,7 +269,7 @@ public class QuartzSchedulerSPI
    *
    * @param nexusLastRunTime - approximate time at which the last instance of nexus was shutdown
    */
-  private void updateLastRunStateInfo(final JobDetail jobDetail, Optional<Date> nexusLastRunTime)
+  private void updateLastRunStateInfo(final JobDetail jobDetail, final Optional<Date> nexusLastRunTime)
       throws SchedulerException
   {
     Optional<Date> latestFireWrapper = scheduler.getTriggersOfJob(jobDetail.getKey()).stream()
@@ -390,6 +403,25 @@ public class QuartzSchedulerSPI
         this,
         new QuartzTaskInfo(eventManager, this, jobDetail.getKey(), taskState, future)
     );
+
+    scheduler.getListenerManager().addJobListener(listener, keyEquals(jobDetail.getKey()));
+
+    return listener;
+  }
+
+  /**
+   * Creates a stub of a {@link QuartzTaskJobListener} attached to the job with scheduling unset.
+   * See NEXUS-18983
+   */
+  private QuartzTaskJobListener stubJobListener(final JobDetail jobDetail) throws SchedulerException {
+    log.debug("Stubbing task-state: jobDetail={}", jobDetail);
+
+    TaskConfiguration taskConfiguration = configurationOf(jobDetail);
+    Schedule schedule = scheduleFactory.manual();
+    QuartzTaskState taskState = new QuartzTaskState(taskConfiguration, schedule, null);
+
+    QuartzTaskJobListener listener = new QuartzTaskJobListener(listenerName(jobDetail.getKey()), eventManager, this,
+        new QuartzTaskInfo(eventManager, this, jobDetail.getKey(), taskState, null));
 
     scheduler.getListenerManager().addJobListener(listener, keyEquals(jobDetail.getKey()));
 

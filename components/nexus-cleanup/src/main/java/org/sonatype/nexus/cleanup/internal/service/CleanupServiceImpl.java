@@ -13,8 +13,9 @@
 package org.sonatype.nexus.cleanup.internal.service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
@@ -37,6 +38,7 @@ import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
+import com.google.common.base.Predicates;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.elasticsearch.search.SearchContextMissingException;
 
@@ -153,25 +155,23 @@ public class CleanupServiceImpl
   private List<CleanupPolicy> findPolicies(final Repository repository) {
     List<CleanupPolicy> cleanupPolicies = new ArrayList<>();
 
-    Map<String, Map<String, Object>> attributes = repository.getConfiguration().getAttributes();
-    if (attributes != null && attributes.containsKey(CLEANUP_ATTRIBUTES_KEY)) {
+    Set<String> policyNames = Optional.ofNullable(repository.getConfiguration().getAttributes())
+        .map(attributes -> attributes.get(CLEANUP_ATTRIBUTES_KEY))
+        .map(cleanupAttr -> (Set<String>) cleanupAttr.get(CLEANUP_NAME_KEY)).orElseGet(Collections::emptySet);
 
-      Set<String> policyNames = (Set<String>) attributes.get(CLEANUP_ATTRIBUTES_KEY).get(CLEANUP_NAME_KEY);
+    policyNames.stream().filter(Predicates.notNull()).forEach(policyName -> {
+      CleanupPolicy cleanupPolicy = cleanupPolicyStorage.get(policyName);
 
-      policyNames.forEach(policyName -> {
-        CleanupPolicy cleanupPolicy = cleanupPolicyStorage.get(policyName);
+      if (nonNull(cleanupPolicy)) {
+        log.debug("Cleanup policy '{}' found for repository {}", policyName, repository.getName());
 
-        if (nonNull(cleanupPolicy)) {
-          log.debug("Cleanup policy '{}' found for repository {}", policyName, repository.getName());
-
-          cleanupPolicies.add(cleanupPolicy);
-        }
-        else {
-          log.debug("Cleanup policy '{}' was associated to repository {} but did not exist in storage",
-              policyName, repository.getName());
-        }
-      });
-    }
+        cleanupPolicies.add(cleanupPolicy);
+      }
+      else {
+        log.debug("Cleanup policy '{}' was associated to repository {} but did not exist in storage", policyName,
+            repository.getName());
+      }
+    });
 
     if (cleanupPolicies.isEmpty()) {
       log.debug("No cleanup policies found for repository {}", repository.getName());

@@ -13,6 +13,9 @@
 package org.sonatype.nexus.cleanup.internal.task;
 
 import java.util.Date;
+import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -21,8 +24,10 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
+import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.schedule.Cron;
+import org.sonatype.nexus.scheduling.schedule.Schedule;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -40,6 +45,9 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
 public class CleanupBootService
     extends LifecycleSupport
 {
+  @VisibleForTesting
+  static final String CRON = "0 0 1 * * ?";
+
   @VisibleForTesting
   static final String TASK_NAME = "Cleanup service";
 
@@ -60,17 +68,39 @@ public class CleanupBootService
       TaskConfiguration taskConfig = taskScheduler.createTaskConfigurationInstance(CleanupTaskDescriptor.TYPE_ID);
       taskConfig.setName(TASK_NAME);
       try {
-        Cron run1amEveryDay = taskScheduler.getScheduleFactory().cron(new Date(), "0 0 1 * * ?");
+        Cron run1amEveryDay = taskScheduler.getScheduleFactory().cron(new Date(), CRON);
         taskScheduler.scheduleTask(taskConfig, run1amEveryDay);
       }
       catch (RuntimeException e) {
         log.error("Problem scheduling cleanup task", e);
       }
     }
+    removeDuplicates();
+  }
+
+  private void removeDuplicates() {
+    List<TaskInfo> tasks = taskScheduler.listsTasks().stream().filter(isCleanupTask())
+        .filter(info -> TASK_NAME.equals(info.getConfiguration().getName())).filter(scheduleMatches())
+        .collect(Collectors.toList());
+
+    if (tasks.size() > 1) {
+      tasks.subList(1, tasks.size()).forEach(TaskInfo::remove);
+    }
   }
 
   private boolean doesTaskExist() {
-    return taskScheduler.listsTasks().stream()
-        .anyMatch(info -> CleanupTaskDescriptor.TYPE_ID.equals(info.getConfiguration().getTypeId()));
+    return taskScheduler.listsTasks().stream().anyMatch(isCleanupTask());
+  }
+
+  private static Predicate<TaskInfo> isCleanupTask() {
+    return info -> CleanupTaskDescriptor.TYPE_ID.equals(info.getConfiguration().getTypeId());
+  }
+
+  private Predicate<TaskInfo> scheduleMatches() {
+    Cron cron = taskScheduler.getScheduleFactory().cron(new Date(), CRON);
+    return taskInfo -> {
+      Schedule schedule = taskInfo.getSchedule();
+      return schedule instanceof Cron && cron.getCronExpression().equals(((Cron) schedule).getCronExpression());
+    };
   }
 }

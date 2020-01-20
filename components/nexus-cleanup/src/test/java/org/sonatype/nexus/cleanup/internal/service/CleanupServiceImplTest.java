@@ -42,6 +42,7 @@ import static com.google.common.collect.Sets.newLinkedHashSet;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
+import static java.util.Collections.singletonMap;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -65,7 +66,7 @@ public class CleanupServiceImplTest
   private RepositoryManager repositoryManager;
 
   @Mock
-  private Repository repository1, repository2;
+  private Repository repository1, repository2, repository3;
 
   @Mock
   private CleanupComponentBrowse browseService;
@@ -106,6 +107,7 @@ public class CleanupServiceImplTest
 
     setupRepository(repository1, POLICY_1_NAME);
     setupRepository(repository2, POLICY_2_NAME);
+    setupRepository(repository3, null);
 
     when(storageFacet.txSupplier()).thenReturn(() -> tx);
 
@@ -155,6 +157,25 @@ public class CleanupServiceImplTest
     underTest.cleanup(cancelledCheck);
 
     verify(cleanupMethod).run(repository1, ImmutableList.of(component1, component2), cancelledCheck);
+  }
+
+  @Test
+  public void ignoreRepositoryWhenPolicyNameNull() throws Exception {
+    setupRepository(repository2, new String[]{null});
+    when(cleanupPolicyStorage.get(null)).thenThrow(new NullPointerException());
+
+    underTest.cleanup(cancelledCheck);
+
+    verify(cleanupMethod).run(repository1, ImmutableList.of(component1, component2), cancelledCheck);
+  }
+
+  @Test
+  public void ignoreRepositoryWhenPolicyNameListIsNull() throws Exception {
+    when(repositoryManager.browse()).thenReturn(ImmutableList.of(repository3));
+
+    underTest.cleanup(cancelledCheck);
+
+    verify(cleanupMethod, never()).run(repository3, ImmutableList.of(component2), cancelledCheck);
   }
 
   @Test
@@ -248,7 +269,7 @@ public class CleanupServiceImplTest
     when(repository.getConfiguration()).thenReturn(repositoryConfig);
 
     ImmutableMap<String, Map<String, Object>> attributes = ImmutableMap
-        .of("cleanup", ImmutableMap.of("policyName", newLinkedHashSet(asList(policyName))));
+        .of("cleanup", singletonMap("policyName", policyName != null ? newLinkedHashSet(asList(policyName)) : null));
     when(repositoryConfig.getAttributes()).thenReturn(attributes);
 
     when(repository.getType()).thenReturn(type);

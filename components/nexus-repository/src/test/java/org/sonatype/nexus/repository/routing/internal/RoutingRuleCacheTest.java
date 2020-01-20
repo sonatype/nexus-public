@@ -69,7 +69,7 @@ public class RoutingRuleCacheTest
     assertNotNull(routingRuleCache.getRoutingRule(repository));
 
     // Clear the cache
-    routingRuleCache.handle(new RepositoryUpdatedEvent(repository));
+    routingRuleCache.handle(new RepositoryUpdatedEvent(repository, null));
 
     // update the assigned rule
     RoutingRule rule = mockRule("rule-b");

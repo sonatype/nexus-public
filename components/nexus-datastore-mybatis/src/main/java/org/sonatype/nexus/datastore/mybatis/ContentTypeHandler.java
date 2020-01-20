@@ -10,43 +10,20 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.datastore.api;
+package org.sonatype.nexus.datastore.mybatis;
 
-import java.util.Optional;
-
-import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.common.entity.HasEntityId;
+import org.apache.ibatis.type.BaseTypeHandler;
+import org.apache.ibatis.type.TypeHandler;
 
 /**
- * Generic CRUD {@link DataAccess} that accesses zero to many entities of the same type.
+ * Content-related MyBatis {@link TypeHandler}.
  *
- * @since 3.19
+ * This handler will be used by the content data store(s) rather than the config data store.
+ *
+ * @since 3.next
  */
-public interface IterableDataAccess<E extends HasEntityId>
-    extends DataAccess
+public abstract class ContentTypeHandler<T>
+    extends BaseTypeHandler<T>
 {
-  /**
-   * Browse existing entities.
-   */
-  Iterable<E> browse();
-
-  /**
-   * Create a new entity.
-   */
-  void create(E entity);
-
-  /**
-   * Retrieve the entity with the given id.
-   */
-  Optional<E> read(EntityId id);
-
-  /**
-   * Update an existing entity.
-   */
-  boolean update(E entity);
-
-  /**
-   * Delete the entity with the given id.
-   */
-  boolean delete(EntityId id);
+  // nothing to add
 }

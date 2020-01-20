@@ -108,7 +108,8 @@ configDefaults = [
     backup       : false,   // Backup sonatype-work disabled by default
     restore      : false,   // Restore backup of sonatype-work disabled by default
     builder      : '-T 1C', // default one thread per core
-    randomPassword: false
+    randomPassword: false,
+    npmInstall: 'ci' // default to using CI for slower, but more stable builds - change to install for faster but less stable build
 ]
 
 buildOptions = [
@@ -217,6 +218,7 @@ ConfigObject processRcConfigFile() {
   config.backup = assign('backup', 'no-backup', config.backup)
   config.restore = assign('restore', 'no-restore', config.restore)
   config.randomPassword = assign('random-password', 'no-random-password', config.randomPassword)
+  config.npmInstall = assign('npm-install', 'npm-ci', config.npmInstall)
 
   debug("config read from RC and merged with defaults: ${config}")
 
@@ -364,7 +366,8 @@ def processCliOptions(args) {
     _ longOpt: 'no-restore', "Disable restore of backup (if enabled by config)"
     _ longOpt: 'random-password', "Enable generation of random password for admin user on initial start"
     _ longOpt: 'no-random-password', "Disable generation of random password (default)"
-    _ longOpt: 'npm-ci', "use `npm ci` for npm dependencies (defaults to install, but ci is faster on ci servers and does a clean install)"
+    _ longOpt: 'npm-install', "use `npm install` for npm dependencies (this results in a faster, but less stable build)"
+    _ longOpt: 'npm-ci', "use `npm ci` for npm dependencies (this results in a slower, but more stable build and is the default)"
 
     // general options
     d longOpt: 'dry-run', 'Dry run, don\'t actually execute anything'
@@ -685,7 +688,7 @@ def processMavenCommand() {
     buildOptions.mavenCommand += ' -Dno-docker'
   }
 
-  if (!cliOptions['npm-ci']) {
+  if (rcConfig.npmInstall == 'install') {
     buildOptions.mavenCommand += ' -Dnpm.install=install'
   }
 
