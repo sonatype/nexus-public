@@ -538,7 +538,7 @@ public class ContentServlet
       response.setStatus(SC_PARTIAL_CONTENT);
       response.setHeader("Content-Length", String.valueOf(bodySize));
       response.setHeader("Content-Range",
-          range.lowerEndpoint() + "-" + range.upperEndpoint() + "/" + file.getLength());
+          "bytes " + range.lowerEndpoint() + "-" + range.upperEndpoint() + "/" + file.getLength());
       if (contentNeeded) {
         try (final InputStream in = file.getInputStream()) {
           in.skip(range.lowerEndpoint());
