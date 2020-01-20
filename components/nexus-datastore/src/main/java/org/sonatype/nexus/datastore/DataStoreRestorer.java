@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.datastore;
 
+import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
+
 /**
  * Restores DataStores from backup.
  *
@@ -19,5 +21,5 @@ package org.sonatype.nexus.datastore;
  */
 public interface DataStoreRestorer
 {
-  boolean maybeRestore();
+  boolean maybeRestore(DataStoreConfiguration dataStoreConfiguration);
 }

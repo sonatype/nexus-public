@@ -112,7 +112,6 @@ public class DataStoreManagerImpl
   @Override
   protected void doStart() throws Exception {
     if (enabled) {
-      restorer.maybeRestore();
       configurationManager.load().forEach(this::tryRestore);
     }
   }
@@ -157,6 +156,7 @@ public class DataStoreManagerImpl
 
   private void tryRestore(final DataStoreConfiguration configuration) {
     try {
+      restorer.maybeRestore(configuration);
       doCreate(configuration);
     }
     catch (Exception e) {

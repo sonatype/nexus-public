@@ -340,9 +340,4 @@ class DataStoreManagerImplTest
 
     expected.verifyNoMoreInteractions()
   }
-
-  @Test
-  void 'Restoring databases attempted'() {
-    verify(restorer).maybeRestore()
-  }
 }
