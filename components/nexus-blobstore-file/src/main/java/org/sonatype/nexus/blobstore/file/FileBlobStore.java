@@ -861,7 +861,8 @@ public class FileBlobStore
       Path contentPath = contentPath(getId());
       try {
         checkExists(contentPath, getId());
-        return new BufferedInputStream(fileOperations.openInputStream(contentPath));
+        return performanceLogger.maybeWrapForPerformanceLogging(
+            new BufferedInputStream(fileOperations.openInputStream(contentPath)));
       }
       catch (BlobStoreException e) {
         // In certain conditions its possible that a blob does not exist on disk at this point. In this case we need to

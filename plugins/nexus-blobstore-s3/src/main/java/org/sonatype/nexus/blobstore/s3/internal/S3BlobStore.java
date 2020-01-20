@@ -567,7 +567,7 @@ public class S3BlobStore
     @Override
     protected InputStream doGetInputStream() {
       S3Object object = s3.getObject(getConfiguredBucket(), contentPath(getId()));
-      return object.getObjectContent();
+      return performanceLogger.maybeWrapForPerformanceLogging(object.getObjectContent());
     }
   }
 

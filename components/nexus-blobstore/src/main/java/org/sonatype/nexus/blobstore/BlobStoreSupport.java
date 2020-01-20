@@ -58,6 +58,8 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
 
   private final Map<String, Timer> timers = new ConcurrentHashMap<>();
 
+  protected final PerformanceLogger performanceLogger = new PerformanceLogger();
+
   private MetricRegistry metricRegistry;
 
   protected final BlobIdLocationResolver blobIdLocationResolver;
@@ -118,12 +120,18 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
     checkArgument(headers.containsKey(CREATED_BY_HEADER), "Missing header: %s", CREATED_BY_HEADER);
 
     long start = System.nanoTime();
+    Blob blob = null;
     try {
-      return doCreate(blobData, headers, blobId);
+      blob = doCreate(blobData, headers, blobId);
     }
     finally {
-      updateTimer("create", System.nanoTime() - start);
+      long elapsed = System.nanoTime() - start;
+      updateTimer("create", elapsed);
+      if (blob != null) {
+        performanceLogger.logCreate(blob, elapsed);
+      }
     }
+    return blob;
   }
 
   protected abstract Blob doCreate(InputStream blobData, Map<String, String> headers, @Nullable BlobId blobId);
@@ -138,7 +146,9 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
       return doDelete(blobId, reason);
     }
     finally {
-      updateTimer("delete", System.nanoTime() - start);
+      long elapsed = System.nanoTime() - start;
+      updateTimer("delete", elapsed);
+      performanceLogger.logDelete(elapsed);
     }
   }
 
@@ -229,6 +239,7 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
   @Override
   public void init(BlobStoreConfiguration configuration) {
     this.blobStoreConfiguration = configuration;
+    this.performanceLogger.setBlobStoreName(configuration.getName());
     doInit(this.blobStoreConfiguration);
   }
 
