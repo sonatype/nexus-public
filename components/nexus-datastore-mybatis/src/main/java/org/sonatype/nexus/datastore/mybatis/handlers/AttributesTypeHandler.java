@@ -10,18 +10,26 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.datastore.mybatis;
+package org.sonatype.nexus.datastore.mybatis.handlers;
 
 import java.util.Map;
+
+import org.sonatype.nexus.datastore.mybatis.AbstractJsonTypeHandler;
 
 import org.apache.ibatis.type.TypeHandler;
 
 /**
- * MyBatis {@link TypeHandler} that maps a (possibly nested) attribute map to/from JSON strings.
+ * MyBatis {@link TypeHandler} that maps a (possibly nested) attribute map to/from JSON.
+ *
+ * Sensitive fields will be automatically encrypted at rest when persisting to the config store.
+ *
+ * @see org.sonatype.nexus.datastore.mybatis.SensitiveAttributes
+ *
+ * @since 3.19
  */
 // not @Named because we register this manually
 public class AttributesTypeHandler
-    extends JsonTypeHandler<Map<String, ?>>
+    extends AbstractJsonTypeHandler<Map<String, ?>>
 {
-  // nothing to add
+  // nothing to do
 }

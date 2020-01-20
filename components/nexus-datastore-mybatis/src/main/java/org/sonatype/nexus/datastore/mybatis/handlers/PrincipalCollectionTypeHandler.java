@@ -10,20 +10,22 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.datastore.mybatis;
 
-import org.apache.ibatis.type.BaseTypeHandler;
+package org.sonatype.nexus.datastore.mybatis.handlers;
+
+import org.sonatype.nexus.datastore.mybatis.AbstractSerializableTypeHandler;
+
 import org.apache.ibatis.type.TypeHandler;
+import org.apache.shiro.subject.PrincipalCollection;
 
 /**
- * Content-related MyBatis {@link TypeHandler}.
- *
- * This handler will be used by the content data store(s) rather than the config data store.
+ * MyBatis {@link TypeHandler} that serializes and encrypts {@link PrincipalCollection}s to/from SQL.
  *
  * @since 3.next
  */
-public abstract class ContentTypeHandler<T>
-    extends BaseTypeHandler<T>
+// not @Named because we register this manually
+public class PrincipalCollectionTypeHandler
+    extends AbstractSerializableTypeHandler<PrincipalCollection>
 {
   // nothing to add
 }

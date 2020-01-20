@@ -10,20 +10,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.datastore.mybatis;
-
-import java.util.Set;
+package org.sonatype.nexus.datastore.mybatis.handlers;
 
 import org.apache.ibatis.type.TypeHandler;
 
 /**
- * MyBatis {@link TypeHandler} that maps a list to/from JSON strings.
+ * Marker interface that identifies content-related MyBatis {@link TypeHandler}s.
+ *
+ * These handlers are only used by the content data store(s) rather than the config data store.
  *
  * @since 3.next
  */
-// not @Named because we register this manually
-public class SetTypeHandler
-    extends JsonTypeHandler<Set<?>>
+public interface ContentTypeHandler<T>
+    extends TypeHandler<T>
 {
   // nothing to add
 }

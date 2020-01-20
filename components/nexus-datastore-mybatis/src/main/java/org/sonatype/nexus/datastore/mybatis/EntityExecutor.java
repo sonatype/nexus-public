@@ -49,7 +49,7 @@ import static org.sonatype.nexus.datastore.mybatis.CombUUID.combUUID;
  *
  * @since 3.19
  */
-public class EntityExecutor
+final class EntityExecutor
     implements Executor
 {
   private static final Logger log = LoggerFactory.getLogger(EntityExecutor.class);

@@ -34,6 +34,11 @@
     </dependency>
 
     <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-crypto</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
     </dependency>
@@ -68,6 +73,23 @@
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <configuration>
+          <instructions>
+            <!--
+              1) ignore import of nexus-crypto internals, it's only used in UTs
+              2) add optional import so we can see AnonymousPrincipalCollection
+            -->
+            <Import-Package>
+              !org.sonatype.nexus.crypto.internal,
+              org.sonatype.nexus.security.anonymous;resolution:=optional,
+              *
+            </Import-Package>
+          </instructions>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.apache.karaf.tooling</groupId>
         <artifactId>karaf-maven-plugin</artifactId>

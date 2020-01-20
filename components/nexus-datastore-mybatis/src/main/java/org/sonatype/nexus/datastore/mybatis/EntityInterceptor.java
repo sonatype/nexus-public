@@ -25,7 +25,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 3.19
  */
-public class EntityInterceptor
+final class EntityInterceptor
     implements Interceptor
 {
   private final AtomicBoolean frozenMarker;

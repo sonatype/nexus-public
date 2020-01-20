@@ -34,7 +34,7 @@ import static java.lang.String.format;
  * {@code content-store-mybatis.xml} using keys in the form of {@code <placeholder_type>.<databaseId>}, for example:
  *
  * <pre>
- * UUID_TYPE.MySQL = VARCHAR(36)
+ * <property name="UUID_TYPE.MySQL" value="VARCHAR(36)"/>
  * </pre>
  *
  * @since 3.20
