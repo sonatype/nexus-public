@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -118,6 +119,8 @@ public class MyBatisDataStore
 
   private final Set<Class<?>> accessTypes = new HashSet<>();
 
+  private final AtomicBoolean frozenMarker = new AtomicBoolean();
+
   private final ApplicationDirectories directories;
 
   private final BeanLocator beanLocator;
@@ -149,9 +152,7 @@ public class MyBatisDataStore
     boolean lenient = configurePlaceholderTypes(sessionFactory.getConfiguration());
     registerCommonTypeHandlers(lenient);
 
-    if (!isContentStore) {
-      register(new EntityInterceptor());
-    }
+    register(new EntityInterceptor(frozenMarker));
 
     if (beanLocator != null) {
       // register the appropriate type handlers with the store
@@ -204,6 +205,21 @@ public class MyBatisDataStore
   @Override
   public Connection openConnection() throws SQLException {
     return dataSource.getConnection();
+  }
+
+  @Override
+  public void freeze() {
+    frozenMarker.set(true);
+  }
+
+  @Override
+  public void unfreeze() {
+    frozenMarker.set(false);
+  }
+
+  @Override
+  public boolean isFrozen() {
+    return frozenMarker.get();
   }
 
   @Guarded(by = STARTED)

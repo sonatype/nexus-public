@@ -48,6 +48,7 @@ import org.eclipse.sisu.inject.BeanLocator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.Iterables.any;
 import static java.lang.Integer.MAX_VALUE;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
@@ -118,7 +119,7 @@ public class DataStoreManagerImpl
 
   @Override
   protected void doStop() throws Exception {
-    for (DataStore<?> store : dataStores.values()) {
+    for (DataStore<?> store : browse()) {
       try {
         log.debug("Shutting down {}", store);
         store.shutdown();
@@ -284,6 +285,21 @@ public class DataStoreManagerImpl
     checkNotNull(storeName);
 
     return dataStores.containsKey(lower(storeName));
+  }
+
+  @Override
+  public void freeze() {
+    browse().forEach(DataStore::freeze);
+  }
+
+  @Override
+  public void unfreeze() {
+    browse().forEach(DataStore::unfreeze);
+  }
+
+  @Override
+  public boolean isFrozen() {
+    return any(browse(), DataStore::isFrozen);
   }
 
   /**

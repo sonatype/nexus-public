@@ -26,6 +26,7 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.app.Freezable;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventManager;
@@ -43,7 +44,6 @@ import org.sonatype.nexus.orient.freeze.ReadOnlyState;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.security.privilege.ApplicationPermission;
 
-import org.joda.time.DateTimeZone;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.Subscribe;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
@@ -51,10 +51,12 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration.ROLES;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import org.joda.time.DateTimeZone;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Lists.reverse;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.groupingBy;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.orient.freeze.FreezeRequest.InitiatorType.SYSTEM;
@@ -89,13 +91,16 @@ public class DatabaseFreezeServiceImpl
 
   private final SecurityHelper securityHelper;
 
+  private final List<Freezable> freezables;
+
   @Inject
   public DatabaseFreezeServiceImpl(final Set<Provider<DatabaseInstance>> providers,
                                    final EventManager eventManager,
                                    final DatabaseFrozenStateManager databaseFrozenStateManager,
                                    final Provider<OServer> server,
                                    final NodeAccess nodeAccess,
-                                   final SecurityHelper securityHelper)
+                                   final SecurityHelper securityHelper,
+                                   final List<Freezable> freezables)
   {
     this.providers = checkNotNull(providers);
     this.eventManager = checkNotNull(eventManager);
@@ -104,6 +109,7 @@ public class DatabaseFreezeServiceImpl
     distributedServerManagerProvider = () -> server.get().getDistributedManager();
     this.nodeAccess = checkNotNull(nodeAccess);
     this.securityHelper = securityHelper;
+    this.freezables = checkNotNull(freezables);
   }
 
   @Override
@@ -209,6 +215,7 @@ public class DatabaseFreezeServiceImpl
 
   @Override
   public synchronized void freezeLocalDatabases() {
+    freezables.forEach(this::tryFreeze);
     if (nodeAccess.isClustered()) {
       setServerRole(ROLES.REPLICA);
     } else {
@@ -222,6 +229,25 @@ public class DatabaseFreezeServiceImpl
       setServerRole(ROLES.MASTER);
     } else {
       forEachFreezableDatabase(databaseInstance -> databaseInstance.setFrozen(false));
+    }
+    reverse(freezables).forEach(this::tryUnfreeze);
+  }
+
+  private void tryFreeze(final Freezable freezable) {
+    try {
+      freezable.freeze();
+    }
+    catch (Exception e) {
+      log.warn("Problem freezing {}", freezable, e);
+    }
+  }
+
+  private void tryUnfreeze(final Freezable freezable) {
+    try {
+      freezable.unfreeze();
+    }
+    catch (Exception e) {
+      log.warn("Problem unfreezing {}", freezable, e);
     }
   }
 

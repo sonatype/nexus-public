@@ -35,6 +35,7 @@ import org.sonatype.nexus.orient.freeze.ReadOnlyState;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 import org.sonatype.nexus.security.SecurityHelper;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.util.OCallable;
@@ -151,7 +152,8 @@ public class DatabaseFreezeServiceImplTest
         databaseFrozenStateManager,
         () -> server,
         nodeAccess,
-        securityHelper);
+        securityHelper,
+        ImmutableList.of());
 
     when(server.getDistributedManager()).thenReturn(distributedServerManager);
 
@@ -259,7 +261,7 @@ public class DatabaseFreezeServiceImplTest
   public void onNodeMergedNoChange() {
     DatabaseFrozenStateManager mockManager = mock(DatabaseFrozenStateManager.class);
     underTest = new DatabaseFreezeServiceImpl(Collections.singleton(() -> databaseInstance), eventManager,
-        mockManager, () -> server, nodeAccess, securityHelper);
+        mockManager, () -> server, nodeAccess, securityHelper, ImmutableList.of());
 
     // verify we are in writable state
     verifyWriteFails(false);
@@ -286,7 +288,7 @@ public class DatabaseFreezeServiceImplTest
   public void onNodeMergedStateRequiresFreeze() {
     DatabaseFrozenStateManager mockManager = mock(DatabaseFrozenStateManager.class);
     underTest = new DatabaseFreezeServiceImpl(providerSet, eventManager,
-        mockManager, () -> server, nodeAccess, securityHelper);
+        mockManager, () -> server, nodeAccess, securityHelper, ImmutableList.of());
 
     // verify we start in writable state
     verifyWriteFails(false);
@@ -312,7 +314,7 @@ public class DatabaseFreezeServiceImplTest
   public void onNodeMergedStateRequiresRelease() {
     DatabaseFrozenStateManager mockManager = mock(DatabaseFrozenStateManager.class);
     underTest = new DatabaseFreezeServiceImpl(providerSet, eventManager,
-        mockManager, () -> server, nodeAccess, securityHelper);
+        mockManager, () -> server, nodeAccess, securityHelper, ImmutableList.of());
 
     underTest.freezeLocalDatabases();
     // verify we start in read-only state
@@ -336,7 +338,7 @@ public class DatabaseFreezeServiceImplTest
         () -> instance,
         () -> instance,
         () -> instance
-    ), eventManager, databaseFrozenStateManager, () -> server, nodeAccess, securityHelper);
+    ), eventManager, databaseFrozenStateManager, () -> server, nodeAccess, securityHelper, ImmutableList.of());
 
     when(instance.isFrozen())
         .thenReturn(true, true, true, false);
@@ -353,7 +355,7 @@ public class DatabaseFreezeServiceImplTest
         () -> instance,
         () -> instance,
         () -> instance
-    ), eventManager, databaseFrozenStateManager, () -> server, nodeAccess, securityHelper);
+    ), eventManager, databaseFrozenStateManager, () -> server, nodeAccess, securityHelper, ImmutableList.of());
 
     when(instance.isFrozen())
         .thenReturn(false, true, true, true);
@@ -487,7 +489,7 @@ public class DatabaseFreezeServiceImplTest
   @Test
   public void systemFreezeRequestDiscardedOnStartupWhenLocal() {
     underTest = new DatabaseFreezeServiceImpl(Collections.singleton(() -> databaseInstance), eventManager,
-        databaseFrozenStateManager, () -> server, nodeAccess, securityHelper);
+        databaseFrozenStateManager, () -> server, nodeAccess, securityHelper, ImmutableList.of());
 
     when(nodeAccess.isClustered()).thenReturn(false);
 
@@ -499,7 +501,7 @@ public class DatabaseFreezeServiceImplTest
   @Test
   public void userFreezeRequestAppliedOnStartupWhenLocal() {
     underTest = new DatabaseFreezeServiceImpl(Collections.singleton(() -> databaseInstance), eventManager,
-        databaseFrozenStateManager, () -> server, nodeAccess, securityHelper);
+        databaseFrozenStateManager, () -> server, nodeAccess, securityHelper, ImmutableList.of());
 
     when(nodeAccess.isClustered()).thenReturn(false);
 

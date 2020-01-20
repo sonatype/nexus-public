@@ -15,9 +15,11 @@ package org.sonatype.nexus.datastore.mybatis;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.common.app.FrozenException;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityUUID;
 import org.sonatype.nexus.common.entity.HasEntityId;
@@ -28,14 +30,18 @@ import org.apache.ibatis.executor.BatchResult;
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.mapping.BoundSql;
 import org.apache.ibatis.mapping.MappedStatement;
+import org.apache.ibatis.mapping.SqlCommandType;
 import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.transaction.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.apache.ibatis.mapping.SqlCommandType.INSERT;
+import static org.apache.ibatis.mapping.SqlCommandType.SELECT;
 import static org.sonatype.nexus.datastore.mybatis.CombUUID.combUUID;
 
 /**
@@ -46,18 +52,28 @@ import static org.sonatype.nexus.datastore.mybatis.CombUUID.combUUID;
 public class EntityExecutor
     implements Executor
 {
+  private static final Logger log = LoggerFactory.getLogger(EntityExecutor.class);
+
   private final Executor delegate;
+
+  private final AtomicBoolean frozen;
 
   @Nullable
   private List<HasEntityId> generatedEntityIds;
 
-  public EntityExecutor(final Executor delegate) {
+  public EntityExecutor(final Executor delegate, final AtomicBoolean frozen) {
     this.delegate = checkNotNull(delegate);
+    this.frozen = checkNotNull(frozen);
   }
 
   @Override
   public int update(final MappedStatement ms, final Object parameter) throws SQLException {
-    if (ms.getSqlCommandType() == INSERT && parameter instanceof HasEntityId) {
+    SqlCommandType commandType = ms.getSqlCommandType();
+    if (commandType != SELECT && frozen.get()) {
+      log.debug("Disallowing {} because the application is frozen", commandType);
+      throw new FrozenException(commandType + " is not allowed while the application is frozen");
+    }
+    if (commandType == INSERT && parameter instanceof HasEntityId) {
       generateEntityId((HasEntityId) parameter);
     }
     return delegate.update(ms, parameter);
