@@ -15,7 +15,7 @@
 /**
  * Anonymous Security Settings controller.
  *
- * @since 3.next
+ * @since 3.21
  */
 Ext.define('NX.coreui.controller.react.AnonymousSettingsController', {
   extend: 'NX.app.Controller',

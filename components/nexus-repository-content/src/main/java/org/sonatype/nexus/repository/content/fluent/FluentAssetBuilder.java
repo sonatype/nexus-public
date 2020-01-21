@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.content.Component;
 /**
  * Fluent API to create/find an asset; at this point we already know the asset path.
  *
- * @since 3.next
+ * @since 3.21
  */
 public interface FluentAssetBuilder
 {

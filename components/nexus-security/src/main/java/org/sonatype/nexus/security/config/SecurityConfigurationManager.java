@@ -143,7 +143,7 @@ public interface SecurityConfigurationManager
   /**
    * Create a new instance of {@link CRole} suitable for use with the underlying store
    *
-   * @since 3.next
+   * @since 3.21
    */
   CPrivilege newPrivilege();
 

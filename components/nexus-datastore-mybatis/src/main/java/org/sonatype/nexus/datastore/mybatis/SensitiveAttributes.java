@@ -32,7 +32,7 @@ import static org.sonatype.nexus.common.text.Strings2.isBlank;
  * <property name="sensitiveAttributes" value="passcode,token"/>
  * </pre>
  *
- * @since 3.next
+ * @since 3.21
  */
 final class SensitiveAttributes
 {

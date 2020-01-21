@@ -20,7 +20,7 @@ import './RequiredErrorMessage.scss';
 import UIStrings from '../../../constants/UIStrings';
 
 /**
- * @since 3.next
+ * @since 3.21
  */
 export default function RequiredErrorMessage({className}) {
   const classes = classNames('nxrm-required-error-message', className);

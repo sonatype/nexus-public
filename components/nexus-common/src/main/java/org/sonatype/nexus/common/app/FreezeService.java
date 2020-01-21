@@ -20,7 +20,7 @@ import static java.util.UUID.randomUUID;
 /**
  * Supports freezing the application, making it read-only.
  *
- * @since 3.next
+ * @since 3.21
  */
 public interface FreezeService
 {

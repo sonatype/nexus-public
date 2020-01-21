@@ -23,7 +23,7 @@ import org.apache.ibatis.type.TypeHandler;
 /**
  * Abstract {@link TypeHandler} that maps types directly to JSON without any additional behaviour/processing.
  *
- * @since 3.next
+ * @since 3.21
  */
 public abstract class AbstractRawJsonTypeHandler<T>
     extends AbstractJsonTypeHandler<T>

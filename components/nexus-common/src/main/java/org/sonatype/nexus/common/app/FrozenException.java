@@ -15,7 +15,7 @@ package org.sonatype.nexus.common.app;
 /**
  * Thrown when something attempts to write while the application is frozen.
  *
- * @since 3.next
+ * @since 3.21
  */
 public class FrozenException
     extends NotWritableException

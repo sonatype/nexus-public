@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.content.fluent;
 /**
  * Different ways content attributes can be updated.
  *
- * @since 3.next
+ * @since 3.21
  */
 public enum AttributeChange
 {

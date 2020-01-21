@@ -19,7 +19,7 @@ import static java.lang.String.format;
 /**
  * Summary object representing read-only state.
  *
- * @since 3.next
+ * @since 3.21
  */
 public class ReadOnlyState
 {

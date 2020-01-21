@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.view.Payload;
 /**
  * Fluent API for ingesting blobs.
  *
- * @since 3.next
+ * @since 3.21
  */
 public interface FluentBlobs
 {

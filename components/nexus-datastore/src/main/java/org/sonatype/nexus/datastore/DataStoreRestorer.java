@@ -17,7 +17,7 @@ import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
 /**
  * Restores DataStores from backup.
  *
- * @since 3.next
+ * @since 3.21
  */
 public interface DataStoreRestorer
 {

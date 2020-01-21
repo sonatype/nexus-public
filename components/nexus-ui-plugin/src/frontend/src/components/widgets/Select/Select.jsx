@@ -16,7 +16,7 @@ import React from 'react';
 import './Select.scss';
 
 /**
- * @since 3.next
+ * @since 3.21
  */
 export default function Select({children, className, ...rest}) {
   const classes = classNames('nxrm-select', className);

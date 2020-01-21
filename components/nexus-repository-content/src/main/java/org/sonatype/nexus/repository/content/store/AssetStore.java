@@ -26,7 +26,7 @@ import org.sonatype.nexus.transaction.Transactional;
 /**
  * {@link Asset} store.
  *
- * @since 3.next
+ * @since 3.21
  */
 public abstract class AssetStore<T extends AssetDAO>
     extends ContentStoreSupport<T>

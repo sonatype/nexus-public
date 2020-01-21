@@ -32,7 +32,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * A {@link Task} for backing up an embedded H2 datastore.
  *
- * @since 3.next
+ * @since 3.21
  */
 @Named
 public class H2BackupTask

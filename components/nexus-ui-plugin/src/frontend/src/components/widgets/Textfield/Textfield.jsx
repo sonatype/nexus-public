@@ -19,7 +19,7 @@ import './Textfield.scss';
 import RequiredErrorMessage from '../RequiredErrorMessage/RequiredErrorMessage';
 
 /**
- * @since 3.next
+ * @since 3.21
  */
 export default function Textfield({name, value, onChange, isRequired, className}) {
   const isMissingRequiredValue = isRequired && !value;

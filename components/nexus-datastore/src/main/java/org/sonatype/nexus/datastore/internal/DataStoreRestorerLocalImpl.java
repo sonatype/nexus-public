@@ -33,7 +33,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Default {@link DataStoreRestorer} implementation which restores databases found in zip archives in
  * the {@code restore-from-backup} directory;
  *
- * @since 3.next
+ * @since 3.21
  */
 @Named("default")
 @Singleton

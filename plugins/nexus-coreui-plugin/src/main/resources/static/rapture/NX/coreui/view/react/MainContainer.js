@@ -15,7 +15,7 @@
 /**
  * React Main Container
  *
- * @since 3.next
+ * @since 3.21
  */
 Ext.define('NX.coreui.view.react.MainContainer', {
   extend: 'Ext.Component',

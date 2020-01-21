@@ -38,7 +38,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
 /**
- * @since 3.next
+ * @since 3.21
  */
 public class DataStoreRestorerLocalImplTest
     extends TestSupport

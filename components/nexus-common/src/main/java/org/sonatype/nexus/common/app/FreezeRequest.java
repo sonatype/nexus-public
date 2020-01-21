@@ -24,7 +24,7 @@ import static java.util.Optional.ofNullable;
 /**
  * Request to freeze the application.
  *
- * @since 3.next
+ * @since 3.21
  */
 public class FreezeRequest
 {

@@ -34,7 +34,7 @@ public class RepositoryUpdatedEvent
   /**
    * The previous configuration of the Repository.
    *
-   * @since 3.next
+   * @since 3.21
    */
   public Configuration getOldConfiguration() {
     return oldConfiguration;

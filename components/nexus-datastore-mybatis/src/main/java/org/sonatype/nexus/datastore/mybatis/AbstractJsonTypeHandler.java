@@ -44,7 +44,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  *
  * Sub-classes can also choose to encrypt the entire JSON document at-rest with the database cipher.
  *
- * @since 3.next
+ * @since 3.21
  */
 @SuppressWarnings("unchecked")
 public abstract class AbstractJsonTypeHandler<T>

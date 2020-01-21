@@ -32,7 +32,7 @@ import org.eclipse.sisu.Typed;
  * Note this is different from nested password attributes which should be encrypted with
  * {@link PasswordHelper}, this is about encrypting the entire content of a database cell.
  *
- * @since 3.next
+ * @since 3.21
  */
 @Named("mybatis")
 @Singleton

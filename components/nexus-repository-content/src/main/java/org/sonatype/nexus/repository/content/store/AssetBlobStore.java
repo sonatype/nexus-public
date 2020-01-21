@@ -23,7 +23,7 @@ import org.sonatype.nexus.transaction.Transactional;
 /**
  * {@link AssetBlob} store.
  *
- * @since 3.next
+ * @since 3.21
  */
 public abstract class AssetBlobStore<T extends AssetBlobDAO>
     extends ContentStoreSupport<T>

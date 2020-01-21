@@ -27,7 +27,7 @@ import static org.sonatype.nexus.datastore.api.DataStore.access;
 /**
  * Support class for transactional domain stores backed by a content data store.
  *
- * @since 3.next
+ * @since 3.21
  */
 public abstract class ContentStoreSupport<T extends DataAccess>
     extends StateGuardLifecycleSupport

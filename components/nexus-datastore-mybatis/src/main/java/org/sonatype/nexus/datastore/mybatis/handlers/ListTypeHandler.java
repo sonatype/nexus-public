@@ -21,7 +21,7 @@ import org.apache.ibatis.type.TypeHandler;
 /**
  * MyBatis {@link TypeHandler} that maps a list to/from JSON without any additional behaviour/processing.
  *
- * @since 3.next
+ * @since 3.21
  */
 // not @Named because we register this manually
 public class ListTypeHandler

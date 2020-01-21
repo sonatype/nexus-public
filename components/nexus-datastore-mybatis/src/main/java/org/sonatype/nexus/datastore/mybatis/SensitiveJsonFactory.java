@@ -31,7 +31,7 @@ import static com.google.common.base.Predicates.alwaysFalse;
 /**
  * Supplies JSON parsers and generators that can encrypt/decrypt string values of sensitive attributes.
  *
- * @since 3.next
+ * @since 3.21
  */
 final class SensitiveJsonFactory
     extends JsonFactory

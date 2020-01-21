@@ -19,7 +19,7 @@ import org.apache.ibatis.type.TypeHandler;
  *
  * These handlers are only used by the content data store(s) rather than the config data store.
  *
- * @since 3.next
+ * @since 3.21
  */
 public interface ContentTypeHandler<T>
     extends TypeHandler<T>

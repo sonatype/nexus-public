@@ -23,7 +23,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * A utility to log how fast the input stream was read.
  *
- * @since 3.next
+ * @since 3.21
  */
 public class PerformanceLoggingInputStream
     extends FilterInputStream

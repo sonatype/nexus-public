@@ -26,7 +26,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * {@link JsonParser} wrapper that decrypts the values of sensitive attributes.
  *
- * @since 3.next
+ * @since 3.21
  */
 final class SensitiveJsonParser
     extends JsonParserDelegate

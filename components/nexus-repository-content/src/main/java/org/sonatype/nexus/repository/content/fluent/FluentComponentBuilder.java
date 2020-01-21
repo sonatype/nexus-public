@@ -17,7 +17,7 @@ import java.util.Optional;
 /**
  * Fluent API to create/find a component; at this point we already know the component name.
  *
- * @since 3.next
+ * @since 3.21
  */
 public interface FluentComponentBuilder
 {

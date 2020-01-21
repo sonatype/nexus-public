@@ -18,7 +18,7 @@ import './SettingsSection.scss';
 import UIStrings from '../../../../constants/UIStrings';
 
 /**
- * @since 3.next
+ * @since 3.21
  */
 export default class SettingsSection extends React.Component {
   state = {

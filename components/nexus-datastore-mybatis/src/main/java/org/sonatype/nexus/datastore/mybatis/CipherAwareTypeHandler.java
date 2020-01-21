@@ -22,7 +22,7 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * MyBatis {@link TypeHandler} that's aware of the database cipher.
  *
- * @since 3.next
+ * @since 3.21
  */
 abstract class CipherAwareTypeHandler<T>
     extends BaseTypeHandler<T>

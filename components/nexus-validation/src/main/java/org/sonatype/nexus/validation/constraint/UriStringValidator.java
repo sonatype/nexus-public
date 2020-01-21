@@ -24,7 +24,7 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 /**
  * Validates a URI.
  *
- * @since 3.next
+ * @since 3.21
  */
 public class UriStringValidator
     extends ConstraintValidatorSupport<UriString, String>

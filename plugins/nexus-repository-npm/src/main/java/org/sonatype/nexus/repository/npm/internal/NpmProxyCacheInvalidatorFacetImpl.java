@@ -30,7 +30,7 @@ import com.google.common.eventbus.Subscribe;
 /**
  * Handles invalidating NPM proxy cache when the URL for the repository changes.
  *
- * @since 3.next
+ * @since 3.21
  */
 @Named
 @Facet.Exposed

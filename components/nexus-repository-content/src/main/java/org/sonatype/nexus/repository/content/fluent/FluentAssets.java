@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.content.Asset;
 /**
  * Fluent API for assets.
  *
- * @since 3.next
+ * @since 3.21
  */
 public interface FluentAssets
 {

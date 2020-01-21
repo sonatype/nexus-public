@@ -69,21 +69,21 @@ public interface DataStore<S extends DataSession<?>>
   /**
    * Freezes the data store, disallowing writes.
    *
-   * @since 3.next
+   * @since 3.21
    */
   void freeze();
 
   /**
    * Unfreezes the data store, allowing writes.
    *
-   * @since 3.next
+   * @since 3.21
    */
   void unfreeze();
 
   /**
    * Is this data store currently frozen?
    *
-   * @since 3.next
+   * @since 3.21
    */
   boolean isFrozen();
 
@@ -92,7 +92,7 @@ public interface DataStore<S extends DataSession<?>>
    *
    * @throws UnsupportedOperationException if the underlying DataStore does not support backing up
    *
-   * @since 3.next
+   * @since 3.21
    */
   void backup(String location) throws Exception;
 

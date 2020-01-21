@@ -17,7 +17,7 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * Some kind of writable component that can be temporarily frozen.
  *
- * @since 3.next
+ * @since 3.21
  */
 public interface Freezable
 {

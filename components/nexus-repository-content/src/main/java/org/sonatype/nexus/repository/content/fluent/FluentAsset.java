@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.view.Payload;
 /**
  * Fluent API for a particular asset.
  *
- * @since 3.next
+ * @since 3.21
  */
 public interface FluentAsset
     extends Asset, FluentAttributes<FluentAsset>

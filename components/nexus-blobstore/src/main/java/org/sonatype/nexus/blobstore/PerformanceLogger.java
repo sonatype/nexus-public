@@ -24,7 +24,7 @@ import static java.lang.String.format;
 /**
  * Logs blob store performance statistics.
  *
- * @since 3.next
+ * @since 3.21
  */
 public class PerformanceLogger {
 

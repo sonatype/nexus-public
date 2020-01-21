@@ -28,7 +28,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * MyBatis {@link TypeHandler} that treats character arrays as passwords and encrypts them before persisting.
  *
- * @since 3.next
+ * @since 3.21
  */
 // not @Named because we register this manually
 public class PasswordCharacterArrayTypeHandler

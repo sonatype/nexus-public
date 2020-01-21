@@ -17,7 +17,7 @@ import React from 'react';
 import './Button.scss';
 
 /**
- * @since 3.next
+ * @since 3.21
  */
 export default function Button({variant, children, className, ...rest}) {
   const classes = classNames('nxrm-button', className, {

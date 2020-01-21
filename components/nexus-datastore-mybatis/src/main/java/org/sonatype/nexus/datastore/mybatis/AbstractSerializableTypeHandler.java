@@ -38,7 +38,7 @@ import static com.google.common.base.Preconditions.checkState;
  *
  * The resulting bytes are automatically encrypted at-rest with the database cipher.
  *
- * @since 3.next
+ * @since 3.21
  */
 public abstract class AbstractSerializableTypeHandler<T>
     extends CipherAwareTypeHandler<T>

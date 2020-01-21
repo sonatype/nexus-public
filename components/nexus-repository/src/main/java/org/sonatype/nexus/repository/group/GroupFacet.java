@@ -63,7 +63,7 @@ public interface GroupFacet
   /**
    * Returns a function to apply to a browse node to determine distinctness
    *
-   * @since 3.next
+   * @since 3.21
    */
   default Function<BrowseNode, String> browseNodeIdentity() {
     return BrowseNode::getName;
