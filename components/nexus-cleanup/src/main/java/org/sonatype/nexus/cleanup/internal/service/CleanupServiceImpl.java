@@ -13,10 +13,10 @@
 package org.sonatype.nexus.cleanup.internal.service;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 
@@ -155,9 +155,9 @@ public class CleanupServiceImpl
   private List<CleanupPolicy> findPolicies(final Repository repository) {
     List<CleanupPolicy> cleanupPolicies = new ArrayList<>();
 
-    Collection<String> policyNames = Optional.ofNullable(repository.getConfiguration().getAttributes())
+    Set<String> policyNames = Optional.ofNullable(repository.getConfiguration().getAttributes())
         .map(attributes -> attributes.get(CLEANUP_ATTRIBUTES_KEY))
-        .map(cleanupAttr -> (Collection<String>) cleanupAttr.get(CLEANUP_NAME_KEY)).orElseGet(Collections::emptySet);
+        .map(cleanupAttr -> (Set<String>) cleanupAttr.get(CLEANUP_NAME_KEY)).orElseGet(Collections::emptySet);
 
     policyNames.stream().filter(Predicates.notNull()).forEach(policyName -> {
       CleanupPolicy cleanupPolicy = cleanupPolicyStorage.get(policyName);

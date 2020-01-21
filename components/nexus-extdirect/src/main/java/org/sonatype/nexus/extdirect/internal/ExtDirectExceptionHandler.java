@@ -22,7 +22,6 @@ import javax.inject.Singleton;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 
-import org.sonatype.nexus.common.app.FrozenException;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.extdirect.model.Response;
 
@@ -73,11 +72,6 @@ public class ExtDirectExceptionHandler
     if (e instanceof SQLException
         || e.getClass().getName().contains("org.apache.ibatis")
         || e.getClass().getName().contains("com.orientechnologies")) {
-
-      if (e.getCause() instanceof FrozenException) {
-        return error(new Exception("Not allowed while database is frozen"));
-      }
-
       return error(new Exception("A database error occurred"));
     }
 

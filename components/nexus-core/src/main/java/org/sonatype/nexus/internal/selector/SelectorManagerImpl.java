@@ -139,12 +139,6 @@ public class SelectorManagerImpl
 
   @Override
   @Guarded(by = STARTED)
-  public SelectorConfiguration readByName(final String name) {
-    return store.getByName(name);
-  }
-
-  @Override
-  @Guarded(by = STARTED)
   public Optional<SelectorConfiguration> findByName(final String name) {
     return browse().stream().filter(selector -> StringUtils.equals(name, selector.getName())).findFirst();
   }

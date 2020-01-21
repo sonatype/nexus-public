@@ -160,15 +160,15 @@ public class DataSessionRule
       try {
         store.start();
 
-        typeHandlers.forEach(store::register);
-        interceptors.forEach(store::register);
-
         if (CONFIG_DATASTORE_NAME.equals(storeName)) {
           configAccessTypes.forEach(store::register);
         }
         else {
           contentAccessTypes.forEach(store::register);
         }
+
+        typeHandlers.forEach(store::register);
+        interceptors.forEach(store::register);
       }
       catch (Exception e) {
         log.warn("Problem starting {}", storeName, e);

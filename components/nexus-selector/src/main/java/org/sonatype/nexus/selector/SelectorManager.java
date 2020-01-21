@@ -59,23 +59,12 @@ public interface SelectorManager
 
   /**
    * Read content selector by id.
-   *
-   * @deprecated use {@link #readByName}
    */
-  @Deprecated
   @Nullable
   SelectorConfiguration read(EntityId entityId);
 
   /**
-   * Read content selector by name; unlike {@link #findByName} this will always read from the database.
-   *
-   * @since 3.21
-   */
-  @Nullable
-  SelectorConfiguration readByName(String name);
-
-  /**
-   * Find by name; this may use an intervening cache to avoid repeated reads from the database.
+   * Find by name
    */
   Optional<SelectorConfiguration> findByName(String name);
 

@@ -22,7 +22,7 @@ import com.google.inject.TypeLiteral;
 import org.eclipse.sisu.inject.TypeArguments;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.datastore.DataAccessHelper.access;
+import static org.sonatype.nexus.datastore.api.DataStore.access;
 
 /**
  * Support class for transactional domain stores backed by a content data store.

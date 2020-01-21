@@ -36,7 +36,7 @@ import static java.util.UUID.fromString;
  */
 // not @Named because we register this manually
 public class EntityUUIDTypeHandler
-    extends BaseTypeHandler<EntityId>
+    extends BaseTypeHandler<EntityUUID>
 {
   private final boolean lenient;
 
@@ -47,18 +47,11 @@ public class EntityUUIDTypeHandler
   @Override
   public void setNonNullParameter(final PreparedStatement ps,
                                   final int parameterIndex,
-                                  final EntityId parameter,
+                                  final EntityUUID parameter,
                                   final JdbcType jdbcType)
       throws SQLException
   {
-    UUID uuid;
-    if (parameter instanceof EntityUUID) {
-      uuid = ((EntityUUID) parameter).uuid();
-    }
-    else {
-      uuid = UUID.fromString(parameter.getValue());
-    }
-
+    UUID uuid = parameter.uuid();
     if (lenient) {
       ps.setString(parameterIndex, uuid.toString());
     }

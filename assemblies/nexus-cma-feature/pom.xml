@@ -19,7 +19,7 @@
   <parent>
     <groupId>org.sonatype.nexus.assemblies</groupId>
     <artifactId>nexus-assemblies</artifactId>
-    <version>3.21.0-05</version>
+    <version>3.22.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-cma-feature</artifactId>
@@ -27,9 +27,7 @@
   <packaging>feature</packaging>
 
   <properties>
-    <p2.format.version>1.0.2</p2.format.version>
-    <r.format.version>1.1.2</r.format.version>
-    <helm.format.version>1.0.2</helm.format.version>
+    <r.format.version>1.1.1</r.format.version>
   </properties>
 
   <dependencies>
@@ -71,14 +69,6 @@
 
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-repository-helm</artifactId>
-      <version>${helm.format.version}</version>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-repository-maven</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
@@ -94,14 +84,6 @@
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-repository-pypi</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-repository-p2</artifactId>
-      <version>${p2.format.version}</version>
       <classifier>features</classifier>
       <type>xml</type>
     </dependency>
@@ -130,14 +112,6 @@
 
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-restore-helm</artifactId>
-      <version>${helm.format.version}</version>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-restore-maven</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
@@ -153,14 +127,6 @@
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-restore-pypi</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-restore-p2</artifactId>
-      <version>${p2.format.version}</version>
       <classifier>features</classifier>
       <type>xml</type>
     </dependency>

@@ -131,7 +131,7 @@ public abstract class AbstractJsonTypeHandler<T>
    * Calls {@link #writeToPlainJson} before encrypting the contents.
    */
   protected final byte[] writeToEncryptedJson(final Object value) throws SQLException {
-    return BASE_64.encode(cipher().encrypt(writeToPlainJson(value)), true).getBytes(UTF_8);
+    return BASE_64.encode(cipher.encrypt(writeToPlainJson(value)), true).getBytes(UTF_8);
   }
 
   /**
@@ -142,16 +142,13 @@ public abstract class AbstractJsonTypeHandler<T>
     byte[] plain = json;
     if (json != null) {
       checkState(json.length >= 6 && json[0] == '\"', "Expected a Base64 JSON string");
-      plain = cipher().decrypt(BASE_64.decode(new String(json, 1, json.length - 2, UTF_8)));
+      plain = cipher.decrypt(BASE_64.decode(new String(json, 1, json.length - 2, UTF_8)));
     }
     return readFromPlainJson(plain);
   }
 
   @Override
-  public final void setNonNullParameter(
-      final PreparedStatement ps,
-      final int parameterIndex,
-      final T parameter,
+  public final void setNonNullParameter(final PreparedStatement ps, final int parameterIndex, final T parameter,
       final JdbcType jdbcType) throws SQLException
   {
     byte[] json = writeToJson(parameter);

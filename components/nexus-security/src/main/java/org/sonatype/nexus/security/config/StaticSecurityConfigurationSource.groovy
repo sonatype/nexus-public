@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.security.config
 
-import javax.annotation.Priority
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
@@ -32,7 +31,6 @@ import org.apache.shiro.authc.credential.PasswordService
  */
 @Named('static')
 @Singleton
-@Priority(Integer.MIN_VALUE)
 class StaticSecurityConfigurationSource
     implements SecurityConfigurationSource
 {

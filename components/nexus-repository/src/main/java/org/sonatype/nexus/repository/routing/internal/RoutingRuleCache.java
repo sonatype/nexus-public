@@ -28,6 +28,8 @@ import org.sonatype.nexus.repository.manager.RepositoryDeletedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryUpdatedEvent;
 import org.sonatype.nexus.repository.routing.RoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
+import org.sonatype.nexus.repository.routing.internal.orient.OrientRoutingRuleDeletedEvent;
+import org.sonatype.nexus.repository.routing.internal.orient.OrientRoutingRuleUpdatedEvent;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -120,8 +122,14 @@ public class RoutingRuleCache
 
   @AllowConcurrentEvents
   @Subscribe
-  public void handle(final RoutingRuleInvalidatedEvent event) {
-    routingRuleCache.invalidate(event.getRoutingRuleId());
+  public void handle(final OrientRoutingRuleDeletedEvent event) {
+    routingRuleCache.invalidate(event.getId());
+  }
+
+  @AllowConcurrentEvents
+  @Subscribe
+  public void handle(final OrientRoutingRuleUpdatedEvent event) {
+    routingRuleCache.invalidate(event.getId());
   }
 
   private static class RepositoryMappingCacheLoader

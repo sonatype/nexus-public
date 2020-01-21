@@ -13,7 +13,6 @@
 package org.sonatype.nexus.internal.httpclient;
 
 import javax.annotation.Nullable;
-import javax.annotation.Priority;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.validation.Valid;
@@ -36,7 +35,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Named("memory")
 @Singleton
-@Priority(Integer.MIN_VALUE)
 @VisibleForTesting
 public class MemoryHttpClientConfigurationStore
     extends ComponentSupport

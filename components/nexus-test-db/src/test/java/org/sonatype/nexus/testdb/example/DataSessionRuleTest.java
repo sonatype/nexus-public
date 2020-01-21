@@ -212,7 +212,7 @@ public class DataSessionRuleTest
           PreparedStatement statement = connection.prepareStatement("SELECT * FROM test_item;");
           ResultSet resultSet = statement.executeQuery()) {
         assertTrue("Expected at least one test_item", resultSet.next());
-        assertThat(resultSet.getString("properties").replaceAll(" *: *", ":"),
+        assertThat(resultSet.getString("properties"),
             allOf(containsString("\"sample\":\"data\""),
                 containsString("\"topSecretInfo\":\"{"),
                 not(containsString("\"topSecretInfo\":\"data\"")),

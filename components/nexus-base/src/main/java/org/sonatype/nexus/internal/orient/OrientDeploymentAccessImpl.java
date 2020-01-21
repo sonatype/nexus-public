@@ -19,7 +19,6 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.node.DeploymentAccess;
 import org.sonatype.nexus.common.node.NodeAccess;
@@ -43,7 +42,6 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
  *
  * @since 3.6.1
  */
-@FeatureFlag(name = "nexus.orient.store.config")
 @Named("orient")
 @Priority(Integer.MAX_VALUE)
 @ManagedLifecycle(phase = SCHEMAS)

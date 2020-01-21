@@ -58,7 +58,7 @@ class BlobStoreApiImpl
     def attributes = [s3: s3Config]
     def config = blobStoreManager.newConfiguration()
     config.setName(name)
-    config.setType('S3')
+    config.setType('Group')
     config.setAttributes(attributes)
     return blobStoreManager.create(config).blobStoreConfiguration
   }

@@ -47,15 +47,12 @@ public class EntityUUID
     if (o instanceof EntityUUID) {
       return id.equals(((EntityUUID) o).id);
     }
-    if (o instanceof EntityId) {
-      return getValue().equals(((EntityId) o).getValue());
-    }
     return false;
   }
 
   @Override
   public int hashCode() {
-    return getValue().hashCode();
+    return id.hashCode();
   }
 
   @Override

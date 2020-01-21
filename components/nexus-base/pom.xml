@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-components</artifactId>
-    <version>3.21.0-05</version>
+    <version>3.22.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-base</artifactId>
@@ -112,13 +112,6 @@
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-datastore-mybatis</artifactId>
-      <optional>true</optional>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-orient</artifactId>
     </dependency>
 
@@ -165,12 +158,6 @@
     <dependency>
       <groupId>org.sonatype.goodies</groupId>
       <artifactId>goodies-testsupport</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-test-db</artifactId>
       <scope>test</scope>
     </dependency>
 

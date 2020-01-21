@@ -139,7 +139,7 @@ public class SelectorComponentTest
 
   @Test
   public void testDelete_blobStoreInUse() {
-    when(mockSelectorManager.readByName(any())).thenReturn(mock(SelectorConfiguration.class));
+    when(mockSelectorManager.read(any())).thenReturn(mock(SelectorConfiguration.class));
     doThrow(new IllegalStateException("a message")).when(mockSelectorManager).delete(any());
 
     expectedException.expect(ConstraintViolationException.class);

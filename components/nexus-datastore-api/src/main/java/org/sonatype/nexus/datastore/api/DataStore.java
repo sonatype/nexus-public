@@ -17,6 +17,7 @@ import java.sql.SQLException;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
 import org.sonatype.nexus.transaction.TransactionalStore;
+import org.sonatype.nexus.transaction.UnitOfWork;
 
 /**
  * Each {@link DataStore} contains a number of {@link DataAccess} mappings accessible via {@link DataSession}s.
@@ -94,4 +95,11 @@ public interface DataStore<S extends DataSession<?>>
    * @since 3.21
    */
   void backup(String location) throws Exception;
+
+  /**
+   * {@link DataAccess} mapping for the given type; requires an open session.
+   */
+  static <D extends DataAccess> D access(Class<D> type) {
+    return UnitOfWork.<DataSession<?>> currentSession().access(type);
+  }
 }

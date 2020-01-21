@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.21.0-05</version>
+    <version>3.22.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-jruby</artifactId>
@@ -35,11 +35,11 @@
         <artifactId>jruby-complete</artifactId>
         <version>9.0.5.0</version>
       </dependency>
-
+      
       <dependency>
-        <groupId>org.snakeyaml</groupId>
-        <artifactId>snakeyaml-engine</artifactId>
-        <version>2.0.SONATYPE</version>
+	<groupId>org.yaml</groupId>
+	<artifactId>snakeyaml</artifactId>
+	<version>1.18</version>
       </dependency>
 
     </dependencies>
