@@ -14,7 +14,7 @@ package com.sonatype.nexus.docker.testsupport.conda;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 import com.sonatype.nexus.docker.testsupport.ContainerCommandLineITSupport;
 import com.sonatype.nexus.docker.testsupport.framework.DockerContainerConfig;
@@ -113,8 +113,7 @@ public class CondaCommandLineITSupport
    */
   public List<String> condaSearchPackages(final String name)
   {
-    return clearTerminalOutputHeader(condaExec("search " + name)).stream().filter(row -> row.startsWith(name)).collect(
-        Collectors.toList());
+    return clearTerminalOutputHeader(condaExec("search " + name));
   }
 
   /**
@@ -140,8 +139,11 @@ public class CondaCommandLineITSupport
    * Remove top header from the terminal output
    */
   private List<String> clearTerminalOutputHeader(final List<String> terminalOutput) {
-    String header = terminalOutput.stream().filter(row -> row.contains("Name")).findFirst().get();
-    int headerIndex = terminalOutput.indexOf(header);
+    Optional<String> header = terminalOutput.stream().filter(row -> row.contains("Name")).findFirst();
+    if (!header.isPresent()) {
+      return emptyList();
+    }
+    int headerIndex = terminalOutput.indexOf(header.get());
     return new ArrayList<>(terminalOutput.subList(headerIndex + 1, terminalOutput.size()));
   }
 }
