@@ -92,8 +92,8 @@
     <nexus2.version>2.14.15-01</nexus2.version>
 
     <!-- Define the node and npm versions used by the frontend-maven-plugin -->
-    <node.version>v11.15.0</node.version>
-    <npm.version>6.7.0</npm.version>
+    <node.version>v12.14.0</node.version>
+    <npm.version>6.13.4</npm.version>
     <npm.install>ci</npm.install>
 
     <!-- logging configuration used in logback config files to control test logging -->

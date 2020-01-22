@@ -13,48 +13,48 @@
 import {shallow} from 'enzyme';
 import React from 'react';
 
-import FieldErrorMessage from '../FieldErrorMessage/FieldErrorMessage';
-import Textfield from './Textfield';
+import Textarea from './Textarea';
+import FieldErrorMessage from "../FieldErrorMessage/FieldErrorMessage";
 
 describe('Textfield', () => {
-  const getTextField = (extraProps) => {
+  const getTextarea = (extraProps) => {
     let props = {
-      name: 'testTextfield',
+      name: 'test',
       value: 'val',
       onChange: () => {
       },
       ...extraProps
     };
-    return shallow(<Textfield {...props} />);
+    return shallow(<Textarea {...props} />);
   };
-
+  
   it('renders correctly', () => {
-    expect(getTextField()).toMatchSnapshot();
+    expect(shallow(<Textarea/>)).toMatchSnapshot();
   });
 
   it('hides the error message by default', () => {
-    const wrapper = getTextField();
+    const wrapper = getTextarea();
 
     expect(wrapper.containsMatchingElement(<FieldErrorMessage/>)).toBe(false);
-    expect(wrapper.find('input').hasClass('missing-required-value')).toBe(false);
+    expect(wrapper.find('textarea').hasClass('missing-required-value')).toBe(false);
   });
 
   it('hides the error message when the value is required and not empty', () => {
-    const wrapper = getTextField({
+    const wrapper = getTextarea({
       isRequired: true
     });
 
     expect(wrapper.containsMatchingElement(<FieldErrorMessage/>)).toBe(false);
-    expect(wrapper.find('input').hasClass('missing-required-value')).toBe(false);
+    expect(wrapper.find('textarea').hasClass('missing-required-value')).toBe(false);
   });
 
   it('shows the error message when the value is required but empty', () => {
-    const wrapper = getTextField({
+    const wrapper = getTextarea({
       isRequired: true,
       value: ''
     });
 
     expect(wrapper.containsMatchingElement(<FieldErrorMessage/>)).toBe(true);
-    expect(wrapper.find('input').hasClass('missing-required-value')).toBe(true);
+    expect(wrapper.find('textarea').hasClass('missing-required-value')).toBe(true);
   });
 });

@@ -16,25 +16,28 @@ import React from 'react';
 
 import './Textfield.scss';
 
-import RequiredErrorMessage from '../RequiredErrorMessage/RequiredErrorMessage';
+import FieldErrorMessage from '../FieldErrorMessage/FieldErrorMessage';
 
 /**
  * @since 3.21
  */
-export default function Textfield({name, value, onChange, isRequired, className}) {
+export default function Textfield({id, name, value, onChange, isRequired, className, isValid = true, validityMessage, ...attrs}) {
   const isMissingRequiredValue = isRequired && !value;
   const classes = classNames('nxrm-textfield', className, {
     'missing-required-value': isMissingRequiredValue
   });
   return <>
     <input
+        id={id || name}
         name={name}
         type='text'
+        required={isRequired}
         value={value}
         onChange={onChange}
         className={classes}
+        {...attrs}
     />
-    {isMissingRequiredValue ? <RequiredErrorMessage/> : null}
+    {isMissingRequiredValue ? <FieldErrorMessage/> : (!isValid ? <FieldErrorMessage message={validityMessage}/> : null)}
   </>;
 }
 

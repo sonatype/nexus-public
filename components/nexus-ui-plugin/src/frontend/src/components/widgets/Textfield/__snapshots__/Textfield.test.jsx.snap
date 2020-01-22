@@ -4,6 +4,7 @@ exports[`Textfield renders correctly 1`] = `
 <Fragment>
   <input
     className="nxrm-textfield"
+    id="testTextfield"
     name="testTextfield"
     onChange={[Function]}
     type="text"

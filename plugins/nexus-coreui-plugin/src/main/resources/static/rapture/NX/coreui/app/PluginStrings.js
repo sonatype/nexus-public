@@ -756,6 +756,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
     // Admin -> Security -> Anonymous
     AnonymousSettings_Text: 'Anonymous',
     AnonymousSettings_Description: 'Browse server contents without authenticating',
+    SamlConfiguration_Text: 'SAML Configuration',
+    SamlConfiguration_Description: 'SAML Identity Provider Configuration',
     Security_AnonymousSettings_Update_Error: 'You do not have permission to configure the anonymous user',
     Security_AnonymousSettings_Update_Success: 'Anonymous security settings $action',
     Security_AnonymousSettings_Allow_BoxLabel: 'Allow anonymous users to access the server',

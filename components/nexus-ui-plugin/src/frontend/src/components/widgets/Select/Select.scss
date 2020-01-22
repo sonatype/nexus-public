@@ -37,4 +37,8 @@
   &:focus, &:active {
     border-color: $light-blue;
   }
+
+  &.missing-required-value {
+    border-color: $red;
+  }
 }

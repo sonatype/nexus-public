@@ -11,30 +11,25 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import classNames from 'classnames';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {faExclamationCircle} from '@fortawesome/free-solid-svg-icons';
 import React from 'react';
 
-import './Select.scss';
-import FieldErrorMessage from "../FieldErrorMessage/FieldErrorMessage";
+import './Alert.scss';
+
 import PropTypes from "prop-types";
-import Textfield from "../Textfield/Textfield";
 
 /**
- * @since 3.21
+ * @since 3.next
  */
-export default function Select({isRequired, value, children, className, name, id, ...rest}) {
-  const isMissingRequiredValue = isRequired && !value;
-  const classes = classNames('nxrm-select', className, {
-    'missing-required-value': isMissingRequiredValue
-  });
-
-  return <>
-    <select id={id || name} name={name} required={isRequired} className={classes} value={value} {...rest}>
-      {children}
-    </select>
-    {isMissingRequiredValue ? <FieldErrorMessage/> : null}
-  </>;
+export default function Alert({type, children, className, ...attrs}) {
+  const classes = classNames('nxrm-alert', className, `nxrm-alert--${type}`);
+  return <div className={classes} role="alert" {...attrs}>
+    <FontAwesomeIcon icon={faExclamationCircle}/>
+    {children}
+  </div>;
 }
 
-Textfield.propTypes = {
-  isRequired: PropTypes.bool
-};
+Alert.propTypes = {
+  type: PropTypes.oneOf(['error', 'info']).isRequired
+}

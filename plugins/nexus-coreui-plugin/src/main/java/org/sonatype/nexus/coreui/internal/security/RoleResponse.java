@@ -1,4 +1,4 @@
-/**
+/*
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
  * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
@@ -10,29 +10,28 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+package org.sonatype.nexus.coreui.internal.security;
 
-$almost-black: rgba(51, 51, 51, 1);
-$almost-white: rgba(243, 243, 243, 1);
-$blue: rgba(10, 108, 184, 1);
-$light-blue: rgba(133, 190, 233, 1);
-$gray: rgba(194, 194, 194, 1);
-$light-gray: rgba(210, 210, 210, 1);
-$red: rgba(199, 0, 0, 1);
-$transparent: rgba(0, 0, 0, 0.5);
-$white: white;
+import org.sonatype.nexus.security.role.Role;
 
-// START: Colors converted from IQ Styles
-$nxrm-off-black: #070707;
-$nxrm-off-white: #fefefe;
-$nxrm-dark-blue: #006bbf;
+public class RoleResponse
+{
+  private String id;
 
-$nxrm-warn-color: #9d6800;
-$nxrm-warn-color-bg: #fcf8e3;
+  private String description;
 
-$nxrm-fail-color: #831d1d;
-$nxrm-fail-color-bg: #fce2e2;
+  public String getId() {
+    return id;
+  }
 
-$nxrm-fail-color-active: #5c0000;
-$nxrm-fail-color-disabled: #dd9595;
-$nxrm-fail-color-hover: #5d0000;
-// END: Colors converted from IQ Styles
+  public String getDescription() {
+    return description;
+  }
+
+  static RoleResponse fromRole(final Role role) {
+    RoleResponse response = new RoleResponse();
+    response.id = role.getRoleId();
+    response.description = role.getDescription();
+    return response;
+  }
+}

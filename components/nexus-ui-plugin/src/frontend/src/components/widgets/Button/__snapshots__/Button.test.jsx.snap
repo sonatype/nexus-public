@@ -10,6 +10,7 @@ exports[`Button allows for its style to be overriden 1`] = `
       "border": "none",
     }
   }
+  type="input"
 />
 `;
 
@@ -18,6 +19,7 @@ exports[`Button renders correctly 1`] = `
   className="nxrm-button"
   name="b1"
   onChange={[Function]}
+  type="input"
 />
 `;
 
@@ -27,6 +29,7 @@ exports[`Button renders correctly as a primary button 1`] = `
   isPrimary={true}
   name="b1"
   onChange={[Function]}
+  type="input"
 />
 `;
 
@@ -36,5 +39,6 @@ exports[`Button renders correctly when disabled 1`] = `
   disabled={true}
   name="b1"
   onChange={[Function]}
+  type="input"
 />
 `;

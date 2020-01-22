@@ -10,31 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import classNames from 'classnames';
+import {shallow} from 'enzyme';
 import React from 'react';
 
-import './Select.scss';
-import FieldErrorMessage from "../FieldErrorMessage/FieldErrorMessage";
-import PropTypes from "prop-types";
-import Textfield from "../Textfield/Textfield";
+import FieldErrorMessage from "./FieldErrorMessage";
 
-/**
- * @since 3.21
- */
-export default function Select({isRequired, value, children, className, name, id, ...rest}) {
-  const isMissingRequiredValue = isRequired && !value;
-  const classes = classNames('nxrm-select', className, {
-    'missing-required-value': isMissingRequiredValue
+describe('FieldErrorMessage', () => {
+  it('renders correctly', () => {
+    expect(shallow(<FieldErrorMessage/>)).toMatchSnapshot();
   });
 
-  return <>
-    <select id={id || name} name={name} required={isRequired} className={classes} value={value} {...rest}>
-      {children}
-    </select>
-    {isMissingRequiredValue ? <FieldErrorMessage/> : null}
-  </>;
-}
-
-Textfield.propTypes = {
-  isRequired: PropTypes.bool
-};
+  it('renders correctly with an error message', () => {
+    expect(shallow(<FieldErrorMessage message={"A custom error message"}/>)).toMatchSnapshot();
+  });
+});

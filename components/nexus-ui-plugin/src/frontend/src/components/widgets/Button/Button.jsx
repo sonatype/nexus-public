@@ -18,17 +18,22 @@ import './Button.scss';
 
 /**
  * @since 3.21
+ *
+ * The button component may be passed a variant value of primary to get the primary button styling (aka blue).
+ * Passing no variant will result in a normal button. Passing any other variant is not currently supported but a
+ * className will be passed to the underlying button element.
  */
-export default function Button({variant, children, className, ...rest}) {
+export default function Button({variant, children, className, type, ...rest}) {
   const classes = classNames('nxrm-button', className, {
     'nxrm-button-primary': variant === 'primary'
   });
-  return <button className={classes} {...rest}>
-    { children }
+
+  return <button className={classes} type={type || 'input'} {...rest}>
+    {children}
   </button>;
 }
 
 Button.propTypes = {
-  variant: PropTypes.string,
+  variant: PropTypes.oneOf(['primary']),
   style: PropTypes.object
 };

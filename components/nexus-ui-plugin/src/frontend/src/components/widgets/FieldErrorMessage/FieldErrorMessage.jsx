@@ -10,13 +10,22 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {shallow} from 'enzyme';
+import classNames from 'classnames';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {faExclamationCircle} from '@fortawesome/free-solid-svg-icons';
 import React from 'react';
 
-import RequiredErrorMessage from "./RequiredErrorMessage";
+import './FieldErrorMessage.scss';
 
-describe('RequiredErrorMessage', () => {
-  it('renders correctly', () => {
-    expect(shallow(<RequiredErrorMessage/>)).toMatchSnapshot();
-  });
-});
+import UIStrings from '../../../constants/UIStrings';
+
+/**
+ * @since 3.21
+ */
+export default function FieldErrorMessage({message, className}) {
+  const classes = classNames('nxrm-error-message', className);
+  return <span className={classes}>
+    <FontAwesomeIcon icon={faExclamationCircle}/>
+    <span className='nxrm-error-message-text' tabIndex="-1"> {message || UIStrings.ERROR.FIELD_REQUIRED} </span>
+  </span>;
+}
