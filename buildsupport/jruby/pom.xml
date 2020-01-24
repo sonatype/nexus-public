@@ -35,11 +35,11 @@
         <artifactId>jruby-complete</artifactId>
         <version>9.0.5.0</version>
       </dependency>
-      
+
       <dependency>
-	<groupId>org.yaml</groupId>
-	<artifactId>snakeyaml</artifactId>
-	<version>1.18</version>
+        <groupId>org.snakeyaml</groupId>
+        <artifactId>snakeyaml-engine</artifactId>
+        <version>2.0.SONATYPE</version>
       </dependency>
 
     </dependencies>
