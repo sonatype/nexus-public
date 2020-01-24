@@ -49,6 +49,7 @@ import org.sonatype.nexus.repository.view.handlers.ConditionalRequestHandler;
 import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler;
 import org.sonatype.nexus.repository.view.handlers.ExceptionHandler;
 import org.sonatype.nexus.repository.view.handlers.FormatHighAvailabilitySupportHandler;
+import org.sonatype.nexus.repository.view.handlers.HandlerContributor;
 import org.sonatype.nexus.repository.view.handlers.HighAvailabilitySupportChecker;
 import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler;
 import org.sonatype.nexus.repository.view.handlers.TimingHandler;
@@ -146,6 +147,9 @@ public class CocoapodsProxyRecipe
   LastDownloadedHandler lastDownloadedHandler;
 
   @Inject
+  HandlerContributor handlerContributor;
+
+  @Inject
   public CocoapodsProxyRecipe(@Named(ProxyType.NAME) Type type, @Named(CocoapodsFormat.NAME) Format format) {
     super(type, format);
   }
@@ -199,6 +203,7 @@ public class CocoapodsProxyRecipe
     if (assetKind != CDN_METADATA && assetKind != SPEC) {
       //current implementation of cocoapods client does not support even basic auth for work with CDN.
       route.handler(securityHandler);
+      route.handler(handlerContributor);
     }
     route.handler(highAvailabilitySupportHandler)
         .handler(routingHandler)

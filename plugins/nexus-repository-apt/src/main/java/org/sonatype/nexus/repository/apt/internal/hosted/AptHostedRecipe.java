@@ -43,6 +43,7 @@ import org.sonatype.nexus.repository.view.handlers.ConditionalRequestHandler;
 import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler;
 import org.sonatype.nexus.repository.view.handlers.ExceptionHandler;
 import org.sonatype.nexus.repository.view.handlers.FormatHighAvailabilitySupportHandler;
+import org.sonatype.nexus.repository.view.handlers.HandlerContributor;
 import org.sonatype.nexus.repository.view.handlers.HighAvailabilitySupportChecker;
 import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler;
 import org.sonatype.nexus.repository.view.handlers.TimingHandler;
@@ -131,6 +132,9 @@ public class AptHostedRecipe
   LastDownloadedHandler lastDownloadedHandler;
 
   @Inject
+  HandlerContributor handlerContributor;
+
+  @Inject
   public AptHostedRecipe(final HighAvailabilitySupportChecker highAvailabilitySupportChecker,
                          @Named(HostedType.NAME) final Type type,
                          @Named(AptFormat.NAME) final Format format)
@@ -161,6 +165,7 @@ public class AptHostedRecipe
         .handler(securityHandler)
         .handler(highAvailabilitySupportHandler)
         .handler(exceptionHandler)
+        .handler(handlerContributor)
         .handler(conditionalRequestHandler)
         .handler(partialFetchHandler)
         .handler(contentHeadersHandler)
