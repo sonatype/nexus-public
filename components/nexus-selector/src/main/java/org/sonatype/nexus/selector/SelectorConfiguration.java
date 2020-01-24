@@ -37,5 +37,5 @@ public interface SelectorConfiguration
 
   Map<String,String> getAttributes();
 
-  void setAttributes(Map<String, ? extends Object> attributes);
+  void setAttributes(Map<String, ?> attributes);
 }
