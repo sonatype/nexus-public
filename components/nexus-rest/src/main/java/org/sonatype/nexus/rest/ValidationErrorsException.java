@@ -21,8 +21,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Thrown when there are request validation errors.
  *
- * @since 3.0
  * @see ValidationErrorXO
+ * @since 3.0
  */
 public class ValidationErrorsException
     extends RuntimeException
@@ -34,6 +34,11 @@ public class ValidationErrorsException
   }
 
   public ValidationErrorsException(final String message) {
+    errors.add(new ValidationErrorXO(message));
+  }
+
+  public ValidationErrorsException(final String message, final Throwable e) {
+    super(e);
     errors.add(new ValidationErrorXO(message));
   }
 
