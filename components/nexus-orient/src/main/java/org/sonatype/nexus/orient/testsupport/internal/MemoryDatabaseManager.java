@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.orient.testsupport.internal;
 
+import javax.annotation.Priority;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -25,6 +26,7 @@ import org.sonatype.nexus.orient.DatabaseManagerSupport;
  */
 @Named("memory")
 @Singleton
+@Priority(Integer.MIN_VALUE)
 public class MemoryDatabaseManager
     extends DatabaseManagerSupport
 {
