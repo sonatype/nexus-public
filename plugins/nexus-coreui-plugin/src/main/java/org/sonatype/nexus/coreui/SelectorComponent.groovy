@@ -23,7 +23,6 @@ import javax.validation.Valid
 import javax.validation.constraints.NotNull
 import javax.validation.groups.Default
 
-import org.sonatype.nexus.common.entity.DetachedEntityId
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.repository.security.RepositoryContentSelectorPrivilegeDescriptor
 import org.sonatype.nexus.security.SecuritySystem
@@ -108,7 +107,7 @@ class SelectorComponent
   @Validate(groups = [Update.class, Default.class])
   SelectorXO update(final @NotNull @Valid SelectorXO selectorXO) {
     selectorFactory.validateSelector(selectorXO.type, selectorXO.expression)
-    selectorManager.update(selectorManager.read(new DetachedEntityId(selectorXO.id)).with {
+    selectorManager.update(selectorManager.readByName(selectorXO.name).with {
       description = selectorXO.description
       attributes = ['expression': selectorXO.expression]
       return it
@@ -124,9 +123,9 @@ class SelectorComponent
   @ExceptionMetered
   @RequiresPermissions('nexus:selectors:delete')
   @Validate
-  void remove(final @NotEmpty String id) {
+  void remove(final @NotEmpty String name) {
     try {
-      selectorManager.delete(selectorManager.read(new DetachedEntityId(id)))
+      selectorManager.delete(selectorManager.readByName(name))
     } catch (IllegalStateException e) {
       throw new ConstraintViolationException(e.getMessage(),
           Collections.<ConstraintViolation>singleton(constraintViolationFactory.createViolation('*', e.getMessage())))
@@ -148,7 +147,7 @@ class SelectorComponent
     def privileges = getPrivilegesUsingSelector(configuration, privilegeSet)
 
     return new SelectorXO(
-        id: configuration.entityMetadata.id.value,
+        id: configuration.name,
         name: configuration.name,
         type: configuration.type,
         description: configuration.description,
