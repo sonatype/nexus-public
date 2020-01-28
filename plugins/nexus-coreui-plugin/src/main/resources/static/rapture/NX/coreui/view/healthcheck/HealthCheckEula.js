@@ -55,7 +55,7 @@ Ext.define('NX.coreui.view.healthcheck.HealthCheckEula', {
         dock: 'bottom',
         ui: 'footer',
         items: [
-          { xtype: 'button', text: 'I Agree', action: 'agree', formBind: true, ui: 'nx-primary', handler: function () {
+          { xtype: 'button', text: 'I Accept', action: 'agree', formBind: true, ui: 'nx-primary', handler: function () {
             var win = this.up('window');
 
             win.close();
@@ -63,7 +63,7 @@ Ext.define('NX.coreui.view.healthcheck.HealthCheckEula', {
               win.acceptFn.call();
             }
           }},
-          { xtype: 'button', text: 'I Do Not Agree', handler: function () {
+          { xtype: 'button', text: 'I Do Not Accept', handler: function () {
             this.up('window').close();
           }},
           '->',
