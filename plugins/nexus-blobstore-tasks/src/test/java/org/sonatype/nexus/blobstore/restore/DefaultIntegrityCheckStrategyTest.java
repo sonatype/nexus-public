@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -42,6 +43,8 @@ import org.slf4j.Logger;
 
 import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.String.format;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -67,6 +70,10 @@ public class DefaultIntegrityCheckStrategyTest
 
   private static final Supplier<Boolean> NO_CANCEL = () -> false;
 
+  private static boolean checkFailed = false;
+
+  private static final Consumer<Asset> CHECK_FAILED_HANDLER = (asset) -> checkFailed = true;
+
   @Mock
   private Repository repository;
 
@@ -90,6 +97,8 @@ public class DefaultIntegrityCheckStrategyTest
   public void setup() throws Exception {
     defaultIntegrityCheckStrategy = spy(new TestIntegrityCheckFacet());
 
+    checkFailed = false;
+
     assets = new HashSet<>();
 
     BlobStoreConfiguration blobStoreConfiguration = mock(BlobStoreConfiguration.class);
@@ -112,10 +121,12 @@ public class DefaultIntegrityCheckStrategyTest
     // stub attribute load to fail
     when(blobStore.getBlobAttributes(new BlobId("blob"))).thenReturn(null);
 
-    defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL);
+    defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL, CHECK_FAILED_HANDLER);
 
     verify(defaultIntegrityCheckStrategy, never()).checkAsset(any(), any());
     verify(logger).error(BLOB_PROPERTIES_MISSING_FOR_ASSET, asset.name());
+
+    assertThat(checkFailed, is(true));
   }
 
   @Test
@@ -126,10 +137,12 @@ public class DefaultIntegrityCheckStrategyTest
     BlobAttributes blobAttributes = getMockBlobAttribues("name", "sha1", true);
     when(blobStore.getBlobAttributes(new BlobId("blob"))).thenReturn(blobAttributes);
 
-    defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL);
+    defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL, CHECK_FAILED_HANDLER);
 
     verify(defaultIntegrityCheckStrategy, never()).checkAsset(any(), any());
     verify(logger).warn(BLOB_PROPERTIES_MARKED_AS_DELETED, asset.name());
+
+    assertThat(checkFailed, is(true));
   }
 
   @Test
@@ -141,10 +154,12 @@ public class DefaultIntegrityCheckStrategyTest
     IllegalStateException ex = new IllegalStateException(format("Missing property: %s", P_BLOB_REF));
     when(asset.requireBlobRef()).thenThrow(ex);
 
-    defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL);
+    defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL, CHECK_FAILED_HANDLER);
 
     verify(defaultIntegrityCheckStrategy, never()).checkAsset(any(), any());
     verify(logger).error(ERROR_ACCESSING_BLOB, asset.toString(), ex.getMessage(), null);
+
+    assertThat(checkFailed, is(true));
   }
 
   @Test
@@ -156,10 +171,12 @@ public class DefaultIntegrityCheckStrategyTest
     NullPointerException ex = new NullPointerException(format("Missing property: %s", P_BLOB_REF));
     when(asset.requireBlobRef()).thenThrow(ex);
 
-    defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL);
+    defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL, CHECK_FAILED_HANDLER);
 
     verify(defaultIntegrityCheckStrategy, never()).checkAsset(any(), any());
     verify(logger).error(ERROR_PROCESSING_ASSET, asset.toString(), ex);
+
+    assertThat(checkFailed, is(true));
   }
 
   @Test
@@ -167,6 +184,8 @@ public class DefaultIntegrityCheckStrategyTest
     runTest("name", TEST_HASH1, "name", TEST_HASH1);
 
     verifyNoMoreInteractions(logger);
+
+    assertThat(checkFailed, is(false));
   }
 
   @Test
@@ -175,6 +194,8 @@ public class DefaultIntegrityCheckStrategyTest
 
     verify(logger, never()).error(eq(NAME_MISMATCH), anyString(), anyString());
     verify(logger).error(eq(ERROR_PROCESSING_ASSET_WITH_EX), any(), eq(ASSET_SHA1_MISSING), any());
+
+    assertThat(checkFailed, is(true));
   }
 
   @Test
@@ -183,6 +204,8 @@ public class DefaultIntegrityCheckStrategyTest
 
     verify(logger, never()).error(eq(NAME_MISMATCH), anyString(), anyString());
     verify(logger).error(eq(SHA1_MISMATCH), eq("name"), anyString(), anyString());
+
+    assertThat(checkFailed, is(true));
   }
 
   @Test
@@ -191,6 +214,8 @@ public class DefaultIntegrityCheckStrategyTest
 
     verify(logger, never()).error(eq(NAME_MISMATCH), anyString(), anyString());
     verify(logger).error(eq(ERROR_PROCESSING_ASSET_WITH_EX), any(), eq(ASSET_NAME_MISSING), any());
+
+    assertThat(checkFailed, is(true));
   }
 
   @Test
@@ -199,6 +224,8 @@ public class DefaultIntegrityCheckStrategyTest
 
     verify(logger, never()).error(eq(NAME_MISMATCH), anyString(), anyString());
     verify(logger).error(eq(ERROR_PROCESSING_ASSET_WITH_EX), any(), eq(BLOB_NAME_MISSING), any());
+
+    assertThat(checkFailed, is(true));
   }
 
   @Test
@@ -207,6 +234,8 @@ public class DefaultIntegrityCheckStrategyTest
 
     verify(logger).error(eq(NAME_MISMATCH), anyString(), anyString());
     verify(logger, never()).error(eq(SHA1_MISMATCH), anyString(), anyString(), anyString());
+
+    assertThat(checkFailed, is(true));
   }
 
   @Test
@@ -214,6 +243,8 @@ public class DefaultIntegrityCheckStrategyTest
     runTest("name", TEST_HASH1, "name", TEST_HASH1, () -> false, "name", getMockBlobWithoutData());
 
     verify(logger).error(eq(BLOB_DATA_MISSING_FOR_ASSET), anyString());
+
+    assertThat(checkFailed, is(true));
   }
 
   @Test
@@ -222,6 +253,8 @@ public class DefaultIntegrityCheckStrategyTest
 
     verify(logger).warn(eq(CANCEL_WARNING));
     verifyNoMoreInteractions(logger);
+
+    assertThat(checkFailed, is(false));
   }
 
   private void runTest(final String assetName, final HashCode assetHash, final String blobName, final HashCode blobHash)
@@ -252,7 +285,7 @@ public class DefaultIntegrityCheckStrategyTest
     when(blobStore.getBlobAttributes(any())).thenReturn(blobAttributes);
     when(blobStore.get(new BlobId(blobId))).thenReturn(mockBlob);
 
-    defaultIntegrityCheckStrategy.check(repository, blobStore, cancel);
+    defaultIntegrityCheckStrategy.check(repository, blobStore, cancel, CHECK_FAILED_HANDLER);
 
     verify(logger).info(startsWith("Checking integrity of assets"), anyString(), anyString());
 

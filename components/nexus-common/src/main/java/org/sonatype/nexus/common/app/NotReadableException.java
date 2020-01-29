@@ -17,7 +17,7 @@ package org.sonatype.nexus.common.app;
  *
  * This may be because the underlying storage is not accessible.
  *
- * @since 3.next
+ * @since 3.21
  */
 public class NotReadableException
     extends IllegalStateException

@@ -10,22 +10,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import classNames from 'classnames';
-import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
-import {faExclamationCircle} from '@fortawesome/free-solid-svg-icons';
-import React from 'react';
+package org.sonatype.nexus.datastore.mybatis.handlers;
 
-import './RequiredErrorMessage.scss';
-
-import UIStrings from '../../../constants/UIStrings';
+import org.apache.ibatis.type.TypeHandler;
 
 /**
- * @since 3.next
+ * Marker interface that identifies content-related MyBatis {@link TypeHandler}s.
+ *
+ * These handlers are only used by the content data store(s) rather than the config data store.
+ *
+ * @since 3.21
  */
-export default function RequiredErrorMessage({className}) {
-  const classes = classNames('nxrm-required-error-message', className);
-  return <span className={classes}>
-    <FontAwesomeIcon icon={faExclamationCircle}/>
-    <span className='nxrm-required-error-message-text' tabIndex="-1"> {UIStrings.ERROR.FIELD_REQUIRED} </span>
-  </span>;
+public interface ContentTypeHandler<T>
+    extends TypeHandler<T>
+{
+  // nothing to add
 }

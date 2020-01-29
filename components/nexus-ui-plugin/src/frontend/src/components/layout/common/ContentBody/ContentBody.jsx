@@ -16,7 +16,7 @@ import React from 'react';
 import './ContentBody.scss';
 
 /**
- * @since 3.next
+ * @since 3.21
  */
 export default function ContentBody({children, className}) {
   const classes = classNames('nxrm-content-body', className);

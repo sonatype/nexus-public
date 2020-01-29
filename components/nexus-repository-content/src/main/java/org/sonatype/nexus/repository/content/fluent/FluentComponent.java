@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.content.Component;
 /**
  * Fluent API for a particular component.
  *
- * @since 3.next
+ * @since 3.21
  */
 public interface FluentComponent
     extends Component, FluentAttributes<FluentComponent>

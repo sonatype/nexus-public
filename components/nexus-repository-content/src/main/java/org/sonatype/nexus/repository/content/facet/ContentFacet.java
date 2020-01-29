@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 /**
  * Repository {@link Facet} for content related metadata.
  *
- * @since 3.next
+ * @since 3.21
  */
 public interface ContentFacet
     extends Facet, RepositoryContent, FluentAttributes<ContentFacet>

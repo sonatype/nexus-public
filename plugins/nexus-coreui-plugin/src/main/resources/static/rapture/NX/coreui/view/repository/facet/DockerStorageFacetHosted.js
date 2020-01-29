@@ -15,7 +15,7 @@
 /**
  * Storage configuration for docker hosted repositories.
  *
- * @since 3.next
+ * @since 3.21
  */
 Ext.define('NX.coreui.view.repository.facet.DockerStorageFacetHosted', {
   extend: 'NX.coreui.view.repository.facet.StorageFacetHosted',

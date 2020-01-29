@@ -15,6 +15,7 @@ package org.sonatype.nexus.datastore.api;
 import java.util.Optional;
 
 import org.sonatype.goodies.lifecycle.Lifecycle;
+import org.sonatype.nexus.common.app.Freezable;
 
 /**
  * {@link DataStore} manager.
@@ -22,7 +23,7 @@ import org.sonatype.goodies.lifecycle.Lifecycle;
  * @since 3.19
  */
 public interface DataStoreManager
-    extends Lifecycle
+    extends Lifecycle, Freezable
 {
   String CONFIG_DATASTORE_NAME = "config";
 

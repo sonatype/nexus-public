@@ -36,7 +36,7 @@ import static org.sonatype.nexus.orient.freeze.FreezeRequest.InitiatorType.USER_
 /**
  * Orient implementation of common {@link FreezeService}.
  *
- * @since 3.next
+ * @since 3.21
  */
 @Named
 @Singleton

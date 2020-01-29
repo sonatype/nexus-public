@@ -104,6 +104,7 @@ public class BootstrapListener
       }
 
       selectDbFeature(properties);
+      adjustForMixedMode(properties);
 
       // pass bootstrap properties to embedded servlet listener
       servletContext.setAttribute("nexus.properties", properties);
@@ -237,6 +238,14 @@ public class BootstrapListener
     else {
       properties.setProperty(NEXUS_DB_FEATURE, "nexus-datastore-mybatis");
       properties.setProperty("nexus.datastore.enabled", "true");
+    }
+  }
+
+  private static void adjustForMixedMode(final Properties properties) {
+    // ie. storing config in JDBC, while storing content metadata in Orient
+    if (!parseBoolean(properties.getProperty("nexus.orient.store.config", "true"))) {
+      properties.setProperty("nexus.datastore.enabled", "true");
+      properties.setProperty("nexus.quartz.jobstore.jdbc", "true");
     }
   }
 

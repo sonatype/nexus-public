@@ -25,7 +25,7 @@ import org.sonatype.nexus.transaction.Transactional;
 /**
  * {@link Component} store.
  *
- * @since 3.next
+ * @since 3.21
  */
 public abstract class ComponentStore<T extends ComponentDAO>
     extends ContentStoreSupport<T>

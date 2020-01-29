@@ -14,13 +14,6 @@ package org.sonatype.nexus.repository.cocoapods.internal.proxy;
 
 import javax.inject.Provider;
 
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.Repository;
@@ -49,18 +42,26 @@ import org.sonatype.nexus.repository.view.handlers.ConditionalRequestHandler;
 import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler;
 import org.sonatype.nexus.repository.view.handlers.ExceptionHandler;
 import org.sonatype.nexus.repository.view.handlers.FormatHighAvailabilitySupportHandler;
+import org.sonatype.nexus.repository.view.handlers.HandlerContributor;
 import org.sonatype.nexus.repository.view.handlers.HighAvailabilitySupportChecker;
 import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler;
 import org.sonatype.nexus.repository.view.handlers.TimingHandler;
 
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.Matchers.any;
 import static org.sonatype.nexus.repository.view.Router.LOCAL_ATTRIBUTE_PREFIX;
 
 @RunWith(JUnitParamsRunner.class)
@@ -147,6 +148,9 @@ public class CocoapodsProxyRecipeTest
   private Provider<ConfigurableViewFacet> viewFacet;
 
   @Mock
+  private HandlerContributor handlerContributor;
+
+  @Mock
   HighAvailabilitySupportChecker highAvailabilitySupportChecker;
 
   @Mock
@@ -193,6 +197,7 @@ public class CocoapodsProxyRecipeTest
     underTest.purgeUnusedFacet = purgeUnusedFacet;
     underTest.highAvailabilitySupportHandler = highAvailabilitySupportHandler;
     underTest.highAvailabilitySupportChecker = highAvailabilitySupportChecker;
+    underTest.handlerContributor = handlerContributor;
 
     underTest.apply(repository);
     cocoapodsViewFacet.attach(repository);

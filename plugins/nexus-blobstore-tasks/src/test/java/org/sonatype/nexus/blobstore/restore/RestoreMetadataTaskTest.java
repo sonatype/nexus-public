@@ -31,8 +31,10 @@ import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
+import org.sonatype.nexus.repository.storage.BucketStore;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
@@ -113,6 +115,12 @@ public class RestoreMetadataTaskTest
   @Mock
   IntegrityCheckStrategy testIntegrityCheckStrategy;
 
+  @Mock
+  BucketStore bucketStore;
+
+  @Mock
+  MaintenanceService maintenanceService;
+
   Map<String, IntegrityCheckStrategy> integrityCheckStrategies;
 
   BlobId blobId;
@@ -127,8 +135,9 @@ public class RestoreMetadataTaskTest
     integrityCheckStrategies.put(Maven2Format.NAME, testIntegrityCheckStrategy);
     integrityCheckStrategies.put(DEFAULT_NAME, defaultIntegrityCheckStrategy);
 
-    underTest = new RestoreMetadataTask(blobStoreManager, repositoryManager,
-        ImmutableMap.of("maven2", restoreBlobStrategy), blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies);
+    underTest =
+        new RestoreMetadataTask(blobStoreManager, repositoryManager, ImmutableMap.of("maven2", restoreBlobStrategy),
+            blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies, bucketStore, maintenanceService);
 
     reset(integrityCheckStrategies); // reset this mock so we more easily verify calls
 
@@ -257,7 +266,7 @@ public class RestoreMetadataTaskTest
 
     underTest.execute();
 
-    verify(defaultIntegrityCheckStrategy).check(any(), any(), any());
+    verify(defaultIntegrityCheckStrategy).check(any(), any(), any(), any());
     verifyZeroInteractions(testIntegrityCheckStrategy);
   }
 
@@ -273,7 +282,7 @@ public class RestoreMetadataTaskTest
     underTest.execute();
 
     verifyZeroInteractions(defaultIntegrityCheckStrategy);
-    verify(testIntegrityCheckStrategy).check(eq(repository), eq(fileBlobStore), any());
+    verify(testIntegrityCheckStrategy).check(eq(repository), eq(fileBlobStore), any(), any());
   }
 
   @Test
@@ -320,8 +329,10 @@ public class RestoreMetadataTaskTest
     configuration.setBoolean(UNDELETE_BLOBS, true);
     configuration.setBoolean(INTEGRITY_CHECK, false);
 
-    RestoreMetadataTask underTest = new RestoreMetadataTask(blobStoreManager, repositoryManager,
-        ImmutableMap.of("maven2", restoreBlobStrategy), blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies) {
+    RestoreMetadataTask underTest =
+        new RestoreMetadataTask(blobStoreManager, repositoryManager, ImmutableMap.of("maven2", restoreBlobStrategy),
+            blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies, bucketStore, maintenanceService)
+        {
       @Override
       public boolean isCanceled() {
         return true;

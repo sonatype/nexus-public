@@ -18,7 +18,7 @@ import './SettingsSection.scss';
 import UIStrings from '../../../../constants/UIStrings';
 
 /**
- * @since 3.next
+ * @since 3.21
  */
 export default class SettingsSection extends React.Component {
   state = {
@@ -69,11 +69,13 @@ SettingsSection.propTypes = {
   isLoading: PropTypes.bool
 };
 
-SettingsSection.FieldWrapper = function({labelText, children}) {
+SettingsSection.FieldWrapper = function({labelText, descriptionText, children}) {
   const WrapperElement = labelText ? 'label' : 'div';
+  const fieldName = React.Children.only(children).props.name;
 
   return <WrapperElement className='nxrm-settings-section-field-wrapper'>
-    {labelText ? <span className='nxrm-settings-section-field-wrapper-label'>{labelText}</span> : null}
+    {labelText ? <label htmlFor={fieldName} className='nxrm-settings-section-field-wrapper-label'>{labelText}</label> : null}
+    {descriptionText ? <span className='nxrm-settings-section-field-wrapper-description'>{descriptionText}</span> : null}
     {children}
   </WrapperElement>;
 };

@@ -10,36 +10,22 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.datastore.mybatis;
+package org.sonatype.nexus.datastore.mybatis.handlers;
 
-import java.lang.reflect.Type;
-import java.sql.SQLException;
-import java.util.Map;
+import java.util.List;
 
-import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.datastore.mybatis.AbstractRawJsonTypeHandler;
 
 import org.apache.ibatis.type.TypeHandler;
 
 /**
- * MyBatis {@link TypeHandler} that maps a {@link NestedAttributesMap} to/from JSON strings.
+ * MyBatis {@link TypeHandler} that maps a list to/from JSON without any additional behaviour/processing.
+ *
+ * @since 3.21
  */
 // not @Named because we register this manually
-public class NestedAttributesMapTypeHandler
-    extends JsonTypeHandler<NestedAttributesMap>
+public class ListTypeHandler
+    extends AbstractRawJsonTypeHandler<List<?>>
 {
-  @Override
-  protected Type getJsonType() {
-    return Map.class;
-  }
-
-  @Override
-  protected byte[] writeToJson(final Object value) throws SQLException {
-    return super.writeToJson(((NestedAttributesMap) value).backing());
-  }
-
-  @Override
-  @SuppressWarnings("unchecked")
-  protected Object readFromJson(final byte[] json) throws SQLException {
-    return new NestedAttributesMap("attributes", (Map<String, Object>) super.readFromJson(json));
-  }
+  // nothing to add
 }

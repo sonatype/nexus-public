@@ -26,6 +26,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,11 +41,26 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityUUID;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.thread.TcclBlock;
+import org.sonatype.nexus.crypto.PbeCipherFactory.PbeCipher;
+import org.sonatype.nexus.crypto.internal.CryptoHelperImpl;
+import org.sonatype.nexus.crypto.internal.MavenCipherImpl;
 import org.sonatype.nexus.datastore.DataStoreSupport;
 import org.sonatype.nexus.datastore.api.DataAccess;
 import org.sonatype.nexus.datastore.api.DataStore;
 import org.sonatype.nexus.datastore.api.Expects;
 import org.sonatype.nexus.datastore.api.SchemaTemplate;
+import org.sonatype.nexus.datastore.mybatis.handlers.AttributesTypeHandler;
+import org.sonatype.nexus.datastore.mybatis.handlers.ContentTypeHandler;
+import org.sonatype.nexus.datastore.mybatis.handlers.DateTimeTypeHandler;
+import org.sonatype.nexus.datastore.mybatis.handlers.EntityUUIDTypeHandler;
+import org.sonatype.nexus.datastore.mybatis.handlers.LenientUUIDTypeHandler;
+import org.sonatype.nexus.datastore.mybatis.handlers.ListTypeHandler;
+import org.sonatype.nexus.datastore.mybatis.handlers.MapTypeHandler;
+import org.sonatype.nexus.datastore.mybatis.handlers.NestedAttributesMapTypeHandler;
+import org.sonatype.nexus.datastore.mybatis.handlers.PasswordCharacterArrayTypeHandler;
+import org.sonatype.nexus.datastore.mybatis.handlers.PrincipalCollectionTypeHandler;
+import org.sonatype.nexus.datastore.mybatis.handlers.SetTypeHandler;
+import org.sonatype.nexus.security.PasswordHelper;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
@@ -70,11 +87,12 @@ import org.eclipse.sisu.BeanEntry;
 import org.eclipse.sisu.Mediator;
 import org.eclipse.sisu.inject.BeanLocator;
 
-import static com.google.common.base.Charsets.UTF_8;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Splitter.onPattern;
 import static java.lang.String.format;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.newInputStream;
 import static java.util.Arrays.asList;
@@ -89,6 +107,8 @@ import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.AD
 import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.JDBC_URL;
 import static org.sonatype.nexus.datastore.mybatis.MyBatisDataStoreDescriptor.SCHEMA;
 import static org.sonatype.nexus.datastore.mybatis.PlaceholderTypes.configurePlaceholderTypes;
+import static org.sonatype.nexus.datastore.mybatis.SensitiveAttributes.buildSensitiveAttributeFilter;
+import static org.sonatype.nexus.security.PhraseService.LEGACY_PHRASE_SERVICE;
 
 /**
  * MyBatis {@link DataStore}.
@@ -118,6 +138,12 @@ public class MyBatisDataStore
 
   private final Set<Class<?>> accessTypes = new HashSet<>();
 
+  private final AtomicBoolean frozenMarker = new AtomicBoolean();
+
+  private final PbeCipher databaseCipher;
+
+  private final PasswordHelper passwordHelper;
+
   private final ApplicationDirectories directories;
 
   private final BeanLocator beanLocator;
@@ -126,14 +152,33 @@ public class MyBatisDataStore
 
   private SqlSessionFactory sessionFactory;
 
+  @Nullable
+  private Predicate<String> sensitiveAttributeFilter;
+
   @Inject
-  public MyBatisDataStore(final ApplicationDirectories directories, final BeanLocator beanLocator) {
+  public MyBatisDataStore(@Named("mybatis") final PbeCipher databaseCipher,
+                          final PasswordHelper passwordHelper,
+                          final ApplicationDirectories directories,
+                          final BeanLocator beanLocator)
+  {
+    checkState(databaseCipher instanceof MyBatisCipher);
+    this.databaseCipher = checkNotNull(databaseCipher);
+    this.passwordHelper = checkNotNull(passwordHelper);
     this.directories = checkNotNull(directories);
     this.beanLocator = checkNotNull(beanLocator);
   }
 
   @VisibleForTesting
   public MyBatisDataStore() {
+    try {
+      // use static configuration for testing
+      this.databaseCipher = new MyBatisCipher();
+      MavenCipherImpl passwordCipher = new MavenCipherImpl(new CryptoHelperImpl());
+      this.passwordHelper = new PasswordHelper(passwordCipher, LEGACY_PHRASE_SERVICE);
+    }
+    catch (Exception e) {
+      throw new IllegalStateException("Unexpected error during setup", e);
+    }
     this.directories = null;
     this.beanLocator = null;
   }
@@ -146,12 +191,7 @@ public class MyBatisDataStore
     Environment environment = new Environment(storeName, new JdbcTransactionFactory(), dataSource);
     sessionFactory = new DefaultSqlSessionFactory(configureMyBatis(environment));
 
-    boolean lenient = configurePlaceholderTypes(sessionFactory.getConfiguration());
-    registerCommonTypeHandlers(lenient);
-
-    if (!isContentStore) {
-      register(new EntityInterceptor());
-    }
+    registerCommonTypeHandlers(isContentStore);
 
     if (beanLocator != null) {
       // register the appropriate type handlers with the store
@@ -204,6 +244,21 @@ public class MyBatisDataStore
   @Override
   public Connection openConnection() throws SQLException {
     return dataSource.getConnection();
+  }
+
+  @Override
+  public void freeze() {
+    frozenMarker.set(true);
+  }
+
+  @Override
+  public void unfreeze() {
+    frozenMarker.set(false);
+  }
+
+  @Override
+  public boolean isFrozen() {
+    return frozenMarker.get();
   }
 
   @Guarded(by = STARTED)
@@ -285,16 +340,18 @@ public class MyBatisDataStore
   }
 
   /**
-   * Register common {@link TypeHandler}s that we know will be needed in the store.
+   * Register common {@link TypeHandler}s.
    */
-  private void registerCommonTypeHandlers(final boolean lenient) {
+  private void registerCommonTypeHandlers(boolean isContentStore) {
+    boolean lenient = configurePlaceholderTypes(sessionFactory.getConfiguration());
 
-    register(new AttributesTypeHandler());
-    register(new NestedAttributesMapTypeHandler());
-    register(new DateTimeTypeHandler());
+    // register raw/simple mappers first
     register(new ListTypeHandler());
     register(new SetTypeHandler());
+    register(new MapTypeHandler());
+    register(new DateTimeTypeHandler());
 
+    // mapping of entity ids needs some extra handling
     TypeHandler<EntityUUID> entityIdHandler = new EntityUUIDTypeHandler(lenient);
     register(EntityUUID.class, entityIdHandler);
     register(EntityId.class, entityIdHandler);
@@ -302,6 +359,26 @@ public class MyBatisDataStore
       // also support querying by UUID string when database may not have a UUID type
       register(new LenientUUIDTypeHandler());
     }
+
+    // generate new entity ids on-demand
+    register(new EntityInterceptor(frozenMarker));
+
+    if (!isContentStore) {
+
+      // security handlers that only exist in the config store
+      register(new PasswordCharacterArrayTypeHandler(passwordHelper));
+      register(new PrincipalCollectionTypeHandler());
+
+      // enable automatic encryption of sensitive JSON fields in the config store
+      sensitiveAttributeFilter = buildSensitiveAttributeFilter(sessionFactory.getConfiguration());
+    }
+
+    // finally register more complex mappers on top of the raw/simple mappers - this way we can have
+    // automatic encryption on by default while individual DAOs can choose to use the raw mapper(s)
+    // (for example if they handle encryption themselves outside of the persistence layer)
+
+    register(new AttributesTypeHandler());
+    register(new NestedAttributesMapTypeHandler());
   }
 
   /**
@@ -543,6 +620,12 @@ public class MyBatisDataStore
    */
   @VisibleForTesting
   public void register(final TypeHandler<?> handler) {
+    if (handler instanceof CipherAwareTypeHandler<?>) {
+      ((CipherAwareTypeHandler<?>) handler).setCipher(databaseCipher);
+    }
+    if (sensitiveAttributeFilter != null && handler instanceof AbstractJsonTypeHandler<?>) {
+      ((AbstractJsonTypeHandler<?>) handler).encryptSensitiveFields(passwordHelper, sensitiveAttributeFilter);
+    }
     Configuration mybatisConfig = sessionFactory.getConfiguration();
     registerSimpleAlias(mybatisConfig.getTypeAliasRegistry(), handler.getClass());
     mybatisConfig.getTypeHandlerRegistry().register(handler);
@@ -553,6 +636,7 @@ public class MyBatisDataStore
    * Registers the given {@link TypeHandler} for a specific type with MyBatis.
    */
   private <T> void register(final Class<T> type, final TypeHandler<? extends T> handler) {
+    // none of the handlers using this method extend CipherAwareTypeHandler...
     Configuration mybatisConfig = sessionFactory.getConfiguration();
     registerSimpleAlias(mybatisConfig.getTypeAliasRegistry(), handler.getClass());
     mybatisConfig.getTypeHandlerRegistry().register(type, handler);

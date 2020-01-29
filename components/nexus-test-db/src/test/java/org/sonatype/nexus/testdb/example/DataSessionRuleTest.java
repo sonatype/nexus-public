@@ -12,6 +12,10 @@
  */
 package org.sonatype.nexus.testdb.example;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.UUID;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -28,13 +32,17 @@ import org.apache.ibatis.plugin.Signature;
 import org.junit.Rule;
 import org.junit.Test;
 
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
@@ -179,5 +187,46 @@ public class DataSessionRuleTest
 
     assertThat(itemA.getId(), nullValue());
     assertThat(itemB.getId(), notNullValue()); // kept after delete
+  }
+
+  @Test
+  public void testSensitiveAttributesEncryptedAtRest() throws SQLException {
+    try (DataSession<?> session = sessionRule.openSession("config")) {
+      TestItemDAO dao = session.access(TestItemDAO.class);
+
+      assertThat(dao.browse(), emptyIterable());
+
+      TestItem itemA = new TestItem();
+      itemA.setVersion(1);
+      itemA.setEnabled(true);
+      itemA.setNotes("test-entity");
+      itemA.setProperties(ImmutableMap.of("sample", "data", "topSecretInfo", "data", "password", "123"));
+
+      dao.create(itemA);
+
+      session.getTransaction().commit();
+
+      assertThat(dao.read(itemA.getId()).get(), is(itemA));
+
+      try (Connection connection = sessionRule.openConnection("config");
+          PreparedStatement statement = connection.prepareStatement("SELECT * FROM test_item;");
+          ResultSet resultSet = statement.executeQuery()) {
+        assertTrue("Expected at least one test_item", resultSet.next());
+        assertThat(resultSet.getString("properties"),
+            allOf(containsString("\"sample\":\"data\""),
+                containsString("\"topSecretInfo\":\"{"),
+                not(containsString("\"topSecretInfo\":\"data\"")),
+                containsString("\"password\":\"{"),
+                not(containsString("\"password\":\"123\""))));
+      }
+
+      assertThat(dao.browse(), contains(itemA));
+
+      dao.delete(itemA.getId());
+
+      session.getTransaction().commit();
+
+      assertThat(dao.browse(), emptyIterable());
+    }
   }
 }

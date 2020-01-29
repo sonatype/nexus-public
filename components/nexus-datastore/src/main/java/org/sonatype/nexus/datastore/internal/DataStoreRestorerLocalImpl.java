@@ -25,6 +25,7 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.datastore.DataStoreRestorer;
+import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -32,7 +33,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Default {@link DataStoreRestorer} implementation which restores databases found in zip archives in
  * the {@code restore-from-backup} directory;
  *
- * @since 3.next
+ * @since 3.21
  */
 @Named("default")
 @Singleton
@@ -48,51 +49,65 @@ public class DataStoreRestorerLocalImpl
   }
 
   @Override
-  public boolean maybeRestore() {
+  public boolean maybeRestore(final DataStoreConfiguration dataStoreConfiguration) {
     File dbDirectory = getDbDirectory();
-    if (dbDirectory.exists()) {
-      log.debug("Database exists, skipping.");
-      return false;
-    }
-
     File restoreDirectory = getRestoreDirectory();
+
     if (!restoreDirectory.exists()) {
       log.debug("Restore directory does not exist, skipping.");
       return false;
     }
 
-    return doRestore(dbDirectory, restoreDirectory);
+    return doRestore(dbDirectory, restoreDirectory, dataStoreConfiguration);
   }
 
-  private boolean doRestore(final File dbDirectory, final File restoreDirectory) {
+  private boolean doRestore(
+      final File dbDirectory,
+      final File restoreDirectory,
+      final DataStoreConfiguration dataStoreConfiguration)
+  {
     if (!dbDirectory.exists() && !dbDirectory.mkdirs()) {
       log.error("Unable to restore from backup");
       throw new RuntimeException("Unable to create database directory: " + dbDirectory.getAbsolutePath());
     }
 
-    boolean restored = false;
+    String dataStoreFileName = dataStoreConfiguration.getName().concat(".mv.db");
     Path dbPath = dbDirectory.toPath();
-    for (File backup : restoreDirectory.listFiles((p, name) -> name.endsWith(".zip"))) {
-      log.info("Restoring from: {}", backup.getAbsolutePath());
-
-      restore(dbPath, backup);
-      restored = true;
+    if (dbPath.resolve(dataStoreFileName).toFile().exists()) {
+      log.debug("Data store '{}' exists, skipping.", dataStoreFileName);
+      return false;
     }
-    return restored;
+
+    File[] files = restoreDirectory.listFiles();
+    if (files == null) {
+      log.debug("Could not list files in restore directory '{}', skipping.", restoreDirectory.getAbsolutePath());
+      return false;
+    }
+
+    for (File backup : files) {
+      log.info("Checking for backup of '{}' in '{}'", dataStoreFileName, backup.getAbsolutePath());
+
+      if (restore(dbPath, backup, dataStoreFileName)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
-  private void restore(final Path dbDirectory, final File backupArchive) {
+  private boolean restore(final Path dbDirectory, final File backupArchive, final String dataStoreFileName) {
     try (ZipFile zip = new ZipFile(backupArchive)) {
-      zip.stream().forEach(entry -> {
+      return zip.stream().filter(entry -> entry.getName().equals(dataStoreFileName)).findFirst().map(entry -> {
         try {
           Files.copy(zip.getInputStream(entry), dbDirectory.resolve(entry.getName()));
           log.info("Restored {}", entry.getName());
+          return true;
         }
         catch (IOException e) {
           throw new RuntimeException(
               "Failed to extract " + entry.getName() + " from archive: " + backupArchive.getAbsolutePath(), e);
         }
-      });
+      }).orElse(false);
     }
     catch (IOException e) {
       throw new RuntimeException("Failed to open archive: " + backupArchive.getAbsolutePath(), e);

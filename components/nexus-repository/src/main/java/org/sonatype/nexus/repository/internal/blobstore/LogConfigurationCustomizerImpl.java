@@ -32,6 +32,7 @@ public class LogConfigurationCustomizerImpl
   @Override
   public void customize(final Configuration config) {
     config.setLoggerLevel("org.sonatype.nexus.blobstore", DEFAULT);
+    config.setLoggerLevel("org.sonatype.nexus.blobstore.iostat", DEFAULT);
     config.setLoggerLevel("org.sonatype.nexus.repository.internal.blobstore", DEFAULT);
   }
 }

@@ -136,7 +136,7 @@ public interface SecurityConfiguration
   /**
    * Obtain an instance of {@link CPrivilege} suitable for use with the underlying storage.
    *
-   * @since 3.next
+   * @since 3.21
    */
   CPrivilege newPrivilege();
 

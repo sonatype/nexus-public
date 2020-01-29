@@ -12,7 +12,7 @@
  */
 
 /**
- * @since 3.next
+ * @since 3.21
  */
 @FeatureFlag(name = "nexus.datastore.enabled")
 package org.sonatype.nexus.internal.datastore.task;

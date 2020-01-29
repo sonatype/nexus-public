@@ -14,7 +14,8 @@
   },
   "peerDependencies": {
     "react": "=16.11.0",
-    "react-dom": "=16.11.0"
+    "react-dom": "=16.11.0",
+    "xstate": "=4.7.5"
   },
   "devDependencies": {
     "@babel/cli": "=7.6.4",
@@ -30,7 +31,8 @@
     "react-scripts": "=3.2.0",
     "react-test-renderer": "=16.11.0",
     "react": "=16.11.0",
-    "react-dom": "=16.11.0"
+    "react-dom": "=16.11.0",
+    "xstate": "=4.7.5"
   },
   "scripts": {
     "build": "npm-run-all compile-js copy-scss copy-package-json",

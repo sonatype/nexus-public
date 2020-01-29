@@ -23,7 +23,7 @@ import org.sonatype.nexus.transaction.Transactional;
 /**
  * {@link ContentRepository} store.
  *
- * @since 3.next
+ * @since 3.21
  */
 public abstract class ContentRepositoryStore<T extends ContentRepositoryDAO>
     extends ContentStoreSupport<T>

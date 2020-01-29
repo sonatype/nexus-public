@@ -4,11 +4,11 @@ exports[`SettingsSection SettingsSection.FieldWrapper renders correctly with lab
 <label
   className="nxrm-settings-section-field-wrapper"
 >
-  <span
+  <label
     className="nxrm-settings-section-field-wrapper-label"
   >
     test label
-  </span>
+  </label>
   <input
     type="text"
   />

@@ -21,6 +21,7 @@ import java.util.zip.ZipOutputStream;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
+import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -29,7 +30,7 @@ import org.junit.rules.TemporaryFolder;
 import org.mockito.Mock;
 
 import static org.hamcrest.Matchers.arrayContaining;
-import static org.hamcrest.Matchers.emptyArray;
+import static org.hamcrest.Matchers.arrayWithSize;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -37,8 +38,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
 /**
- *
- * @since 3.next
+ * @since 3.21
  */
 public class DataStoreRestorerLocalImplTest
     extends TestSupport
@@ -49,6 +49,9 @@ public class DataStoreRestorerLocalImplTest
   @Mock
   private ApplicationDirectories directories;
 
+  @Mock
+  private DataStoreConfiguration dataStoreConfiguration;
+
   private DataStoreRestorerLocalImpl underTest;
 
   private File workDirectory;
@@ -57,6 +60,7 @@ public class DataStoreRestorerLocalImplTest
   public void setup() throws IOException {
     workDirectory = temporaryFolder.newFolder();
     when(directories.getWorkDirectory(any())).thenAnswer(i -> new File(workDirectory, (String) i.getArguments()[0]));
+    when(dataStoreConfiguration.getName()).thenReturn("foo");
 
     underTest = new DataStoreRestorerLocalImpl(directories);
   }
@@ -66,29 +70,31 @@ public class DataStoreRestorerLocalImplTest
     makeWorkDirectory("restore-from-backup");
     createBackup("foo");
 
-    assertTrue(underTest.maybeRestore());
+    assertTrue(underTest.maybeRestore(dataStoreConfiguration));
 
     // check no file was unzipped
     File dbDir = directories.getWorkDirectory("db");
-    assertThat(dbDir.list(), arrayContaining("foo"));
+    assertThat(dbDir.list(), arrayContaining("foo.mv.db"));
   }
 
   @Test
   public void testMaybeRestore_newInstall() {
-    assertFalse(underTest.maybeRestore());
+    when(dataStoreConfiguration.getName()).thenReturn("config");
+    assertFalse(underTest.maybeRestore(dataStoreConfiguration));
   }
 
   @Test
   public void testMaybeRestore_existingDb() throws IOException {
     makeWorkDirectory("db");
+    directories.getWorkDirectory("db/foo.mv.db").createNewFile();
     makeWorkDirectory("restore-from-backup");
     createBackup("foo");
 
-    assertFalse(underTest.maybeRestore());
+    assertFalse(underTest.maybeRestore(dataStoreConfiguration));
 
     // check no file was unzipped
     File dbDir = directories.getWorkDirectory("db");
-    assertThat(dbDir.listFiles(), emptyArray());
+    assertThat(dbDir.listFiles(), arrayWithSize(1));
   }
 
   private File makeWorkDirectory(final String path) throws IOException {
@@ -100,9 +106,9 @@ public class DataStoreRestorerLocalImplTest
   private void createBackup(final String name) throws FileNotFoundException, IOException {
     File restoreDirectory = makeWorkDirectory("restore-from-backup");
     restoreDirectory.mkdirs();
-    File zip = new File(restoreDirectory, name + ".zip");
+    File zip = new File(restoreDirectory, name);
     try (ZipOutputStream out = new ZipOutputStream(new FileOutputStream(zip))) {
-      ZipEntry entry = new ZipEntry(name);
+      ZipEntry entry = new ZipEntry(name.concat(".mv.db"));
       out.putNextEntry(entry);
       out.write(name.getBytes());
       out.closeEntry();

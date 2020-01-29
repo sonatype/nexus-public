@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 /**
- * @since 3.next
+ * @since 3.21
  */
 import PropTypes from 'prop-types';
 import React from 'react';

@@ -18,7 +18,7 @@ import static org.sonatype.nexus.repository.content.fluent.AttributeChange.SET;
 /**
  * Fluent API for repository content attributes.
  *
- * @since 3.next
+ * @since 3.21
  */
 public interface FluentAttributes<A extends FluentAttributes<A>>
 {

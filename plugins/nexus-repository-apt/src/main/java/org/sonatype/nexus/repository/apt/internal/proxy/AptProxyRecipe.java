@@ -44,10 +44,11 @@ import org.sonatype.nexus.repository.view.ConfigurableViewFacet;
 import org.sonatype.nexus.repository.view.Route;
 import org.sonatype.nexus.repository.view.Router;
 import org.sonatype.nexus.repository.view.ViewFacet;
-import org.sonatype.nexus.repository.view.handlers.FormatHighAvailabilitySupportHandler;
 import org.sonatype.nexus.repository.view.handlers.ConditionalRequestHandler;
 import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler;
 import org.sonatype.nexus.repository.view.handlers.ExceptionHandler;
+import org.sonatype.nexus.repository.view.handlers.FormatHighAvailabilitySupportHandler;
+import org.sonatype.nexus.repository.view.handlers.HandlerContributor;
 import org.sonatype.nexus.repository.view.handlers.HighAvailabilitySupportChecker;
 import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler;
 import org.sonatype.nexus.repository.view.handlers.TimingHandler;
@@ -145,6 +146,9 @@ public class AptProxyRecipe
   RoutingRuleHandler routingRuleHandler;
 
   @Inject
+  HandlerContributor handlerContributor;
+
+  @Inject
   public AptProxyRecipe(final HighAvailabilitySupportChecker highAvailabilitySupportChecker,
                         @Named(ProxyType.NAME) final Type type, @Named(AptFormat.NAME) final Format format)
   {
@@ -177,6 +181,7 @@ public class AptProxyRecipe
         .handler(highAvailabilitySupportHandler)
         .handler(routingRuleHandler)
         .handler(exceptionHandler)
+        .handler(handlerContributor)
         .handler(negativeCacheHandler)
         .handler(conditionalRequestHandler)
         .handler(partialFetchHandler)

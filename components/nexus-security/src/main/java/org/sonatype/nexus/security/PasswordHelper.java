@@ -62,7 +62,7 @@ public class PasswordHelper
   }
 
   /**
-   * @since 3.next
+   * @since 3.21
    */
   @Nullable
   public String encryptChars(@Nullable final char[] chars) {
@@ -70,7 +70,7 @@ public class PasswordHelper
   }
 
   /**
-   * @since 3.next
+   * @since 3.21
    */
   @Nullable
   public String encryptChars(@Nullable final char[] chars, final int offset, final int length) {
@@ -107,7 +107,7 @@ public class PasswordHelper
   }
 
   /**
-   * @since 3.next
+   * @since 3.21
    */
   @Nullable
   public char[] decryptChars(@Nullable final String encodedPassword) {
@@ -144,7 +144,7 @@ public class PasswordHelper
   /**
    * Attempt to decrypt the given input; returns the original input if it can't be decrypted.
    *
-   * @since 3.next
+   * @since 3.21
    */
   @Nullable
   public char[] tryDecryptChars(@Nullable final String encodedPassword) {

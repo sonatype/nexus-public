@@ -63,7 +63,7 @@ public interface RepositoryManager
   /**
    * Create a new {@link Configuration} instance.
    *
-   * @since 3.next
+   * @since 3.21
    */
   Configuration newConfiguration();
 }

@@ -10,20 +10,22 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.datastore.mybatis;
+import classNames from 'classnames';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {faExclamationCircle} from '@fortawesome/free-solid-svg-icons';
+import React from 'react';
 
-import java.util.Set;
+import './FieldErrorMessage.scss';
 
-import org.apache.ibatis.type.TypeHandler;
+import UIStrings from '../../../constants/UIStrings';
 
 /**
- * MyBatis {@link TypeHandler} that maps a list to/from JSON strings.
- *
- * @since 3.next
+ * @since 3.21
  */
-// not @Named because we register this manually
-public class SetTypeHandler
-    extends JsonTypeHandler<Set<?>>
-{
-  // nothing to add
+export default function FieldErrorMessage({message, className}) {
+  const classes = classNames('nxrm-error-message', className);
+  return <span className={classes}>
+    <FontAwesomeIcon icon={faExclamationCircle}/>
+    <span className='nxrm-error-message-text' tabIndex="-1"> {message || UIStrings.ERROR.FIELD_REQUIRED} </span>
+  </span>;
 }

@@ -28,7 +28,7 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE
 /**
  * Support class for transactional domain stores backed by the config data store.
  *
- * @since 3.next
+ * @since 3.21
  */
 public abstract class ConfigStoreSupport<T extends DataAccess>
     extends StateGuardLifecycleSupport

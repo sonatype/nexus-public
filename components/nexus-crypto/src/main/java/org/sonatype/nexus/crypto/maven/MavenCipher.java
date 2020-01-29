@@ -28,7 +28,7 @@ public interface MavenCipher
   boolean isPasswordCipher(CharSequence str);
 
   /**
-   * @since 3.next
+   * @since 3.21
    */
   char[] decryptChars(String str, String passPhrase);
 }

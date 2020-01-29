@@ -64,12 +64,35 @@ public interface DataStore<S extends DataSession<?>>
    */
   void shutdown() throws Exception;
 
+  // Note: we don't implement Freezable because data stores are prototype instances, not singleton components
+
+  /**
+   * Freezes the data store, disallowing writes.
+   *
+   * @since 3.21
+   */
+  void freeze();
+
+  /**
+   * Unfreezes the data store, allowing writes.
+   *
+   * @since 3.21
+   */
+  void unfreeze();
+
+  /**
+   * Is this data store currently frozen?
+   *
+   * @since 3.21
+   */
+  boolean isFrozen();
+
   /**
    * Backup this data store to the specified location.
    *
    * @throws UnsupportedOperationException if the underlying DataStore does not support backing up
    *
-   * @since 3.next
+   * @since 3.21
    */
   void backup(String location) throws Exception;
 

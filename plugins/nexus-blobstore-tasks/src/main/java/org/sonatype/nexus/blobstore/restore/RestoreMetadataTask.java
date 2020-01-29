@@ -31,7 +31,11 @@ import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.Bucket;
+import org.sonatype.nexus.repository.storage.BucketStore;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.scheduling.Cancelable;
 import org.sonatype.nexus.scheduling.TaskSupport;
@@ -69,13 +73,19 @@ public class RestoreMetadataTask
 
   private final IntegrityCheckStrategy defaultIntegrityCheckStrategy;
 
+  private final BucketStore bucketStore;
+
+  private final MaintenanceService maintenanceService;
+
   @Inject
   public RestoreMetadataTask(final BlobStoreManager blobStoreManager,
                              final RepositoryManager repositoryManager,
                              final Map<String, RestoreBlobStrategy> restoreBlobStrategies,
                              final BlobStoreUsageChecker blobStoreUsageChecker,
                              final DryRunPrefix dryRunPrefix,
-                             final Map<String, IntegrityCheckStrategy> integrityCheckStrategies)
+                             final Map<String, IntegrityCheckStrategy> integrityCheckStrategies,
+                             final BucketStore bucketStore,
+                             final MaintenanceService maintenanceService)
   {
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.repositoryManager = checkNotNull(repositoryManager);
@@ -84,6 +94,8 @@ public class RestoreMetadataTask
     this.dryRunPrefix = checkNotNull(dryRunPrefix);
     this.defaultIntegrityCheckStrategy = checkNotNull(integrityCheckStrategies.get(DEFAULT_NAME));
     this.integrityCheckStrategies = checkNotNull(integrityCheckStrategies);
+    this.bucketStore = checkNotNull(bucketStore);
+    this.maintenanceService = checkNotNull(maintenanceService);
   }
 
   @Override
@@ -190,8 +202,20 @@ public class RestoreMetadataTask
         .filter(r -> !(r.getType() instanceof GroupType))
         .forEach(repository -> integrityCheckStrategies
             .getOrDefault(repository.getFormat().getValue(), defaultIntegrityCheckStrategy)
-            .check(repository, blobStore, this::isCanceled)
+            .check(repository, blobStore, this::isCanceled, this::integrityCheckFailedHandler)
         );
+  }
+
+  protected void integrityCheckFailedHandler(final Asset asset) {
+    Bucket bucket = bucketStore.getById(asset.bucketId());
+    Repository repository = repositoryManager.get(bucket.getRepositoryName());
+
+    log.debug("Removing asset {} from repository {}, blob integrity check failed", asset.name(), repository.getName());
+
+    boolean dryRun = getConfiguration().getBoolean(DRY_RUN, false);
+    if (!dryRun) {
+      maintenanceService.deleteAsset(repository, asset);
+    }
   }
 
   private Optional<Context> buildContext(final String blobStoreName, final BlobStore blobStore, final BlobId blobId)

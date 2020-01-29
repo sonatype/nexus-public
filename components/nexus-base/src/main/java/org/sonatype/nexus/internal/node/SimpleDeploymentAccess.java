@@ -10,46 +10,56 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.scheduling.internal;
+package org.sonatype.nexus.internal.node;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.app.FeatureFlag;
-import org.sonatype.nexus.common.app.Freezable;
-import org.sonatype.nexus.common.event.EventAware;
-import org.sonatype.nexus.orient.freeze.DatabaseFreezeChangeEvent;
-
-import com.google.common.eventbus.Subscribe;
+import org.sonatype.nexus.common.node.DeploymentAccess;
+import org.sonatype.nexus.common.node.NodeAccess;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Map {@link DatabaseFreezeChangeEvent}s onto {@link Freezable} actions.
+ * Simple {@link DeploymentAccess} that just delegates to {@link NodeAccess} and doesn't allow aliases.
  *
- * @since 3.next
+ * @since 3.21
  */
-@FeatureFlag(name = "nexus.orient.store.config")
 @Named
 @Singleton
-public class DatabaseFreezeChangeEventInspector
-    implements EventAware
+public class SimpleDeploymentAccess
+    implements DeploymentAccess
 {
-  private final TaskActivation taskActivation;
+  private final NodeAccess nodeAccess;
 
   @Inject
-  public DatabaseFreezeChangeEventInspector(final TaskActivation taskActivation) {
-    this.taskActivation = checkNotNull(taskActivation);
+  public SimpleDeploymentAccess(final NodeAccess nodeAccess) {
+    this.nodeAccess = checkNotNull(nodeAccess);
   }
 
-  @Subscribe
-  public void on(final DatabaseFreezeChangeEvent event) {
-    if (event.isFrozen()) {
-      taskActivation.freeze();
-    }
-    else {
-      taskActivation.unfreeze();
-    }
+  @Override
+  public String getId() {
+    return nodeAccess.getId();
+  }
+
+  @Override
+  public String getAlias() {
+    return null; // alias is never set
+  }
+
+  @Override
+  public void setAlias(final String newAlias) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void start() {
+    // no-op
+  }
+
+  @Override
+  public void stop() {
+    // no-op
   }
 }

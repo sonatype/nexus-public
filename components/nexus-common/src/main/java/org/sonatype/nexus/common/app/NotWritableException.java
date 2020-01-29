@@ -17,7 +17,7 @@ package org.sonatype.nexus.common.app;
  *
  * This may be because the application is frozen or the underlying storage is read-only.
  *
- * @since 3.next
+ * @since 3.21
  */
 public class NotWritableException
     extends IllegalStateException

@@ -29,7 +29,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Event inspector that updates the local quartz instance based on remote events.
  *
- * @since 3.next
+ * @since 3.21
  */
 @Named
 @FeatureFlag(name = "nexus.clustered")

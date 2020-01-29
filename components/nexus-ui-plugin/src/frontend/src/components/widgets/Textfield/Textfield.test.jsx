@@ -13,7 +13,7 @@
 import {shallow} from 'enzyme';
 import React from 'react';
 
-import RequiredErrorMessage from '../RequiredErrorMessage/RequiredErrorMessage';
+import FieldErrorMessage from '../FieldErrorMessage/FieldErrorMessage';
 import Textfield from './Textfield';
 
 describe('Textfield', () => {
@@ -35,7 +35,7 @@ describe('Textfield', () => {
   it('hides the error message by default', () => {
     const wrapper = getTextField();
 
-    expect(wrapper.containsMatchingElement(<RequiredErrorMessage/>)).toBe(false);
+    expect(wrapper.containsMatchingElement(<FieldErrorMessage/>)).toBe(false);
     expect(wrapper.find('input').hasClass('missing-required-value')).toBe(false);
   });
 
@@ -44,7 +44,7 @@ describe('Textfield', () => {
       isRequired: true
     });
 
-    expect(wrapper.containsMatchingElement(<RequiredErrorMessage/>)).toBe(false);
+    expect(wrapper.containsMatchingElement(<FieldErrorMessage/>)).toBe(false);
     expect(wrapper.find('input').hasClass('missing-required-value')).toBe(false);
   });
 
@@ -54,7 +54,7 @@ describe('Textfield', () => {
       value: ''
     });
 
-    expect(wrapper.containsMatchingElement(<RequiredErrorMessage/>)).toBe(true);
+    expect(wrapper.containsMatchingElement(<FieldErrorMessage/>)).toBe(true);
     expect(wrapper.find('input').hasClass('missing-required-value')).toBe(true);
   });
 });

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.datastore.mybatis;
+package org.sonatype.nexus.datastore.mybatis.handlers;
 
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
@@ -20,6 +20,9 @@ import java.util.UUID;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.entity.EntityUUID;
+
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
@@ -27,50 +30,59 @@ import org.apache.ibatis.type.TypeHandler;
 import static java.util.UUID.fromString;
 
 /**
- * Lenient MyBatis {@link TypeHandler} that maps UUID values to/from SQL strings.
+ * MyBatis {@link TypeHandler} that maps UUID-backed {@link EntityId}s to/from SQL.
  *
- * This is only registered when MyBatis is using a database that's not H2 or PostgreSQL.
- *
- * @since 3.20
+ * @since 3.19
  */
 // not @Named because we register this manually
-class LenientUUIDTypeHandler
-    extends BaseTypeHandler<UUID>
+public class EntityUUIDTypeHandler
+    extends BaseTypeHandler<EntityUUID>
 {
+  private final boolean lenient;
+
+  public EntityUUIDTypeHandler(final boolean lenient) {
+    this.lenient = lenient; // pass UUIDs by string when we're being lenient
+  }
+
   @Override
   public void setNonNullParameter(final PreparedStatement ps,
                                   final int parameterIndex,
-                                  final UUID parameter,
+                                  final EntityUUID parameter,
                                   final JdbcType jdbcType)
       throws SQLException
   {
-    // always convert UUIDs to strings before they hit the database
-    ps.setString(parameterIndex, parameter.toString());
+    UUID uuid = parameter.uuid();
+    if (lenient) {
+      ps.setString(parameterIndex, uuid.toString());
+    }
+    else {
+      ps.setObject(parameterIndex, uuid);
+    }
   }
 
   @Override
-  public UUID getNullableResult(final ResultSet rs, final String columnName) throws SQLException {
-    return nullableUUID(rs.getObject(columnName));
+  public EntityUUID getNullableResult(final ResultSet rs, final String columnName) throws SQLException {
+    return nullableEntityUUID(rs.getObject(columnName));
   }
 
   @Override
-  public UUID getNullableResult(final ResultSet rs, final int columnIndex) throws SQLException {
-    return nullableUUID(rs.getObject(columnIndex));
+  public EntityUUID getNullableResult(final ResultSet rs, final int columnIndex) throws SQLException {
+    return nullableEntityUUID(rs.getObject(columnIndex));
   }
 
   @Override
-  public UUID getNullableResult(final CallableStatement cs, final int columnIndex) throws SQLException {
-    return nullableUUID(cs.getObject(columnIndex));
+  public EntityUUID getNullableResult(final CallableStatement cs, final int columnIndex) throws SQLException {
+    return nullableEntityUUID(cs.getObject(columnIndex));
   }
 
   @Nullable
-  private UUID nullableUUID(@Nullable final Object uuid) {
-    // expect strings but also accept UUIDs
-    if (uuid instanceof String) {
-      return fromString((String) uuid);
-    }
+  private EntityUUID nullableEntityUUID(@Nullable final Object uuid) {
+    // expect UUIDs but also accept strings
     if (uuid instanceof UUID) {
-      return (UUID) uuid;
+      return new EntityUUID((UUID) uuid);
+    }
+    if (uuid instanceof String) {
+      return new EntityUUID(fromString((String) uuid));
     }
     return null;
   }

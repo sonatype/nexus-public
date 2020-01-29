@@ -13,6 +13,7 @@
 package org.sonatype.nexus.blobstore.restore;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import javax.inject.Named;
@@ -78,14 +79,20 @@ public class DefaultIntegrityCheckStrategy
   static final String CANCEL_WARNING = "Cancelling blob integrity check";
 
   @Override
-  public void check(final Repository repository, final BlobStore blobStore, final Supplier<Boolean> isCancelled) {
+  public void check(
+      final Repository repository,
+      final BlobStore blobStore,
+      final Supplier<Boolean> isCancelled,
+      final Consumer<Asset> integrityCheckFailedHandler)
+  {
     log.info("Checking integrity of assets in repository '{}' with blob store '{}'", repository.getName(),
         blobStore.getBlobStoreConfiguration().getName());
     ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60);
     long processed = 0;
-    long failed = 0;
+    long failedCounter = 0;
 
     for (Asset asset : getAssets(repository)) {
+      boolean failed = false;
       try {
         if (isCancelled.get()) {
           log.warn(CANCEL_WARNING);
@@ -101,36 +108,42 @@ public class DefaultIntegrityCheckStrategy
 
         if (blobAttributes == null) {
           log.error(BLOB_PROPERTIES_MISSING_FOR_ASSET, asset.name());
-          failed++;
+          failed = true;
         }
         else if (blobAttributes.isDeleted()) {
           log.warn(BLOB_PROPERTIES_MARKED_AS_DELETED, asset.name());
-          failed++;
+          failed = true;
         }
         else if (!blobDataExists(blobStore.get(blobId))){
           log.error(BLOB_DATA_MISSING_FOR_ASSET, asset.name());
-          failed++;
+          failed = true;
         }
         else if (!checkAsset(blobAttributes, asset)) {
-          failed++;
+          failed = true;
         }
       }
       catch (IllegalStateException e) {
         // thrown by requireBlobRef
         log.error(ERROR_ACCESSING_BLOB, asset.toString(), e.getMessage(), log.isDebugEnabled() ? e : null);
-        failed++;
+        failed = true;
       }
       catch (IllegalArgumentException e) {
         // thrown by checkAsset inner methods
         log.error(ERROR_PROCESSING_ASSET_WITH_EX, asset.toString(), e.getMessage(), log.isDebugEnabled() ? e : null);
-        failed++;
+        failed = true;
       }
       catch (Exception e) {
         log.error(ERROR_PROCESSING_ASSET, asset.toString(), e);
-        failed++;
+        failed = true;
+      }
+      if (failed) {
+        failedCounter++;
+        if (integrityCheckFailedHandler != null) {
+          integrityCheckFailedHandler.accept(asset);
+        }
       }
       progressLogger
-          .info("Elapsed time: {}, processed: {}, failed integrity check: {}", progressLogger.getElapsed(), ++processed, failed);
+          .info("Elapsed time: {}, processed: {}, failed integrity check: {}", progressLogger.getElapsed(), ++processed, failedCounter);
     }
     progressLogger.flush();
   }

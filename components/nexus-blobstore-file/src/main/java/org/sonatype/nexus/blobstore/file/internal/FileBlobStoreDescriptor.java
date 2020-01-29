@@ -122,8 +122,7 @@ public class FileBlobStoreDescriptor
     }
     catch (IOException e) {
       throw new ValidationErrorsException(
-          format("Blob store could not be written because the base directory %s could not be written to",
-              applicationDirectories.getWorkDirectory(BASEDIR).getPath()));
+          format("Blob store could not be written because the path %s could not be written to", path), e);
     }
 
     if (!Files.isWritable(path)) {

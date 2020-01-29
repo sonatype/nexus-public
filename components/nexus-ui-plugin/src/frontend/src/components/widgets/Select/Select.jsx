@@ -14,14 +14,27 @@ import classNames from 'classnames';
 import React from 'react';
 
 import './Select.scss';
+import FieldErrorMessage from "../FieldErrorMessage/FieldErrorMessage";
+import PropTypes from "prop-types";
+import Textfield from "../Textfield/Textfield";
 
 /**
- * @since 3.next
+ * @since 3.21
  */
-export default function Select({children, className, ...rest}) {
-  const classes = classNames('nxrm-select', className);
+export default function Select({isRequired, value, children, className, name, id, ...rest}) {
+  const isMissingRequiredValue = isRequired && !value;
+  const classes = classNames('nxrm-select', className, {
+    'missing-required-value': isMissingRequiredValue
+  });
 
-  return <select className={classes} {...rest}>
-    {children}
-  </select>;
+  return <>
+    <select id={id || name} name={name} required={isRequired} className={classes} value={value} {...rest}>
+      {children}
+    </select>
+    {isMissingRequiredValue ? <FieldErrorMessage/> : null}
+  </>;
 }
+
+Textfield.propTypes = {
+  isRequired: PropTypes.bool
+};

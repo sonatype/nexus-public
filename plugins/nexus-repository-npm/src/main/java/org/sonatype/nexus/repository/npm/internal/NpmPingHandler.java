@@ -25,7 +25,7 @@ import org.sonatype.nexus.repository.view.payloads.StringPayload;
 import static org.sonatype.nexus.repository.view.ContentTypes.APPLICATION_JSON;
 
 /**
- * @since 3.next
+ * @since 3.21
  */
 @Named
 @Singleton
