@@ -55,8 +55,7 @@ public interface CertificateApiResourceDoc
 
   @ApiOperation("Add a certificate to the trust store.")
   @ApiResponses(value = {
-      @ApiResponse(code = SC_CREATED, message = "The certificate was successfully added.",
-          reference = "com.sonatype.nexus.ssl.plugin.internal.rest.ApiCertificate"),
+      @ApiResponse(code = SC_CREATED, message = "The certificate was successfully added.", response = ApiCertificate.class),
       @ApiResponse(code = SC_CONFLICT,
           message = "The certificate already exists in the system."),
       @ApiResponse(code = SC_FORBIDDEN, message = "Insufficient permissions to add certificate to the trust store.")})
