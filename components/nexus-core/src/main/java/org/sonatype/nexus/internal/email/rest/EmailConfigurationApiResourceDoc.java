@@ -50,7 +50,7 @@ public interface EmailConfigurationApiResourceDoc
 
   @ApiOperation("Send a test email to the email address provided in the request body")
   @ApiResponses(value = {
-      @ApiResponse(code = OK, message = "Validation was complete, look at the body to determine success"),
+      @ApiResponse(code = OK, message = "Validation was complete, look at the body to determine success", response = ApiEmailValidation.class),
       @ApiResponse(code = FORBIDDEN, message = "Insufficient permissions to verify the email configuration")
   })
   ApiEmailValidation testEmailConfiguration(
