@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.sonatype.nexus.repository.internal.blobstore.BlobStoreConfigurationDAO">
+
+  <insert id="createSchema">
+    CREATE TABLE IF NOT EXISTS blob_store_configuration (
+      id         ${UUID_TYPE} NOT NULL,
+      name       VARCHAR(256) NOT NULL,
+      type       VARCHAR(100) NOT NULL,
+      attributes ${JSON_TYPE} NOT NULL,
+
+      CONSTRAINT pk_blob_store_configuration_id PRIMARY KEY (id),
+      CONSTRAINT uk_blob_store_configuration_name UNIQUE (name)
+    );
+  </insert>
+
+  <select id="browse" resultType="BlobStoreConfigurationData">
+    SELECT * FROM blob_store_configuration;
+  </select>
+
+  <insert id="create" parameterType="BlobStoreConfigurationData">
+    INSERT INTO blob_store_configuration (id, name, type, attributes)
+        VALUES (#{id}, #{name}, #{type}, #{attributes});
+  </insert>
+
+  <select id="read" resultType="BlobStoreConfigurationData">
+    SELECT * FROM blob_store_configuration WHERE id = #{value}
+  </select>
+
+  <select id="readByName" resultType="BlobStoreConfigurationData">
+    SELECT * FROM blob_store_configuration WHERE name = #{value}
+  </select>
+
+  <update id="update" parameterType="BlobStoreConfigurationData">
+    UPDATE blob_store_configuration SET
+        type = #{type}, attributes = #{attributes}
+        <!-- can only rename if we have 'id' to find the record -->
+        <if test="id != null">, name = #{name}</if>
+        <!-- use 'name' to find record when 'id' is not available -->
+        WHERE <choose><when test="id != null">id = #{id}</when>
+              <otherwise>name = #{name}</otherwise></choose>;
+  </update>
+
+  <delete id="delete">
+    DELETE FROM blob_store_configuration WHERE id = #{value};
+  </delete>
+
+  <delete id="deleteByName">
+    DELETE FROM blob_store_configuration WHERE name = #{value};
+  </delete>
+
+  <select id="findCandidateParents" resultType="BlobStoreConfigurationData">
+    SELECT * FROM blob_store_configuration WHERE attributes LIKE CONCAT('%"group"%"members"%"', #{value}, '"%');
+  </select>
+
+  <select id="findCandidateParents" resultType="BlobStoreConfigurationData" databaseId="PostgreSQL">
+    SELECT * FROM blob_store_configuration WHERE attributes #&gt;'{group,members}' ?? #{value};
+  </select>
+
+</mapper>
