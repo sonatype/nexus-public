@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.sonatype.nexus.internal.security.anonymous.AnonymousConfigurationDAO">
+
+  <insert id="createSchema">
+    CREATE TABLE IF NOT EXISTS anonymous_configuration (
+      id         INT          NOT NULL CHECK (id = 1),
+      enabled    BOOLEAN      NOT NULL,
+      user_id    VARCHAR(200) NOT NULL,
+      realm_name VARCHAR(200) NOT NULL,
+
+      CONSTRAINT pk_anonymous_configuration_id PRIMARY KEY (id)
+    );
+  </insert>
+
+  <select id="get" resultType="AnonymousConfigurationData">
+    SELECT * FROM anonymous_configuration WHERE id = 1;
+  </select>
+
+  <insert id="set" parameterType="AnonymousConfigurationData">
+    MERGE INTO anonymous_configuration (id, enabled, user_id, realm_name)
+        VALUES (1, #{enabled}, #{userId}, #{realmName});
+  </insert>
+
+  <insert id="set" parameterType="AnonymousConfigurationData" databaseId="PostgreSQL">
+    INSERT INTO anonymous_configuration (id, enabled, user_id, realm_name)
+        VALUES (1, #{enabled}, #{userId}, #{realmName})
+    ON CONFLICT (id) DO UPDATE SET
+        enabled = #{enabled}, user_id = #{userId}, realm_name = #{realmName};
+  </insert>
+
+  <delete id="clear">
+    DELETE FROM anonymous_configuration WHERE id = 1;
+  </delete>
+
+</mapper>
