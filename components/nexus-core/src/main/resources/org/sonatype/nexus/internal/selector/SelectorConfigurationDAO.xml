@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+
+    Sonatype Nexus (TM) Open Source Version
+    Copyright (c) 2008-present Sonatype, Inc.
+    All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
+
+    This program and the accompanying materials are made available under the terms of the Eclipse Public License Version 1.0,
+    which accompanies this distribution and is available at http://www.eclipse.org/legal/epl-v10.html.
+
+    Sonatype Nexus (TM) Professional Version is available from Sonatype, Inc. "Sonatype" and "Sonatype Nexus" are trademarks
+    of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
+    Eclipse Foundation. All other trademarks are the property of their respective owners.
+
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.sonatype.nexus.internal.selector.SelectorConfigurationDAO">
+
+  <insert id="createSchema">
+    CREATE TABLE IF NOT EXISTS selector_configuration (
+      name        VARCHAR(200) NOT NULL,
+      type        VARCHAR(100) NOT NULL,
+      description VARCHAR(400) NULL,
+      attributes  ${JSON_TYPE} NOT NULL,
+
+      CONSTRAINT pk_selector_configuration_name PRIMARY KEY (name)
+    );
+  </insert>
+
+  <select id="browse" resultType="SelectorConfigurationData">
+    SELECT * FROM selector_configuration;
+  </select>
+
+  <insert id="create" parameterType="SelectorConfigurationData">
+    INSERT INTO selector_configuration (name, type, description, attributes)
+        VALUES (#{name}, #{type}, #{description}, #{attributes});
+  </insert>
+
+  <select id="read" resultType="SelectorConfigurationData">
+    SELECT * FROM selector_configuration WHERE name = #{value};
+  </select>
+
+  <update id="update" parameterType="SelectorConfigurationData">
+    UPDATE selector_configuration SET
+        type = #{type}, description = #{description}, attributes = #{attributes}
+        WHERE name = #{name};
+  </update>
+
+  <delete id="delete">
+    DELETE FROM selector_configuration WHERE name = #{value};
+  </delete>
+
+</mapper>
