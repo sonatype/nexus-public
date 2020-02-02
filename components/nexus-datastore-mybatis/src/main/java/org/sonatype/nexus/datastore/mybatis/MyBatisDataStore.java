@@ -321,6 +321,7 @@ public class MyBatisDataStore
     myBatisConfig.setDatabaseId(databaseId);
     myBatisConfig.setMapUnderscoreToCamelCase(true);
     myBatisConfig.setReturnInstanceForEmptyRow(true);
+    myBatisConfig.getTypeAliasRegistry().registerAlias(char[].class);
     myBatisConfig.setObjectFactory(new DefaultObjectFactory()
     {
       @Override
