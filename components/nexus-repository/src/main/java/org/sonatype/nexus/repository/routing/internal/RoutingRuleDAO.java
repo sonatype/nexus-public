@@ -10,26 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.routing.internal.orient;
+package org.sonatype.nexus.repository.routing.internal;
 
-import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.common.entity.EntityMetadata;
-import org.sonatype.nexus.common.entity.EntityUpdatedEvent;
-import org.sonatype.nexus.repository.routing.internal.RoutingRuleInvalidatedEvent;
+import org.sonatype.nexus.datastore.api.IterableDataAccess;
 
 /**
- * @since 3.17
+ * {@link RoutingRuleData} access.
+ *
+ * @since 3.21
  */
-public class OrientRoutingRuleUpdatedEvent
-    extends EntityUpdatedEvent
-    implements RoutingRuleInvalidatedEvent
+public interface RoutingRuleDAO
+    extends IterableDataAccess.WithName<RoutingRuleData>
 {
-  public OrientRoutingRuleUpdatedEvent(final EntityMetadata metadata) {
-    super(metadata);
-  }
-
-  @Override
-  public EntityId getRoutingRuleId() {
-    return getId();
-  }
+  // no additional behaviour
 }
