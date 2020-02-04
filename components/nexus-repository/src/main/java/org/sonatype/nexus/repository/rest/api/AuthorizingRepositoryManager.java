@@ -144,7 +144,7 @@ public class AuthorizingRepositoryManager
     }
   }
 
-  private Repository getEditableRepositoryOrThrow(@Nonnull final String name)
+  public Repository getEditableRepositoryOrThrow(@Nonnull final String name)
       throws RepositoryNotFoundException
   {
     Repository repository = repositoryManager.get(name);

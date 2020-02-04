@@ -84,6 +84,19 @@ public class RepositoriesApiResource
   }
 
   @Override
+  @GET
+  @Path("/{repositoryName}")
+  @RequiresAuthentication
+  public AbstractApiRepository getRepository(@PathParam("repositoryName") final String repositoryName) {
+    try {
+      return convert(authorizingRepositoryManager.getEditableRepositoryOrThrow(repositoryName));
+    } catch (RepositoryNotFoundException e) {
+      log.debug("Repository not found '{}'", repositoryName, e);
+      throw new WebApplicationMessageException(NOT_FOUND, "\"" + e.getMessage() + "\"", APPLICATION_JSON);
+    }
+  }
+
+  @Override
   @RequiresAuthentication
   @GET
   public List<AbstractApiRepository> getRepositories() {

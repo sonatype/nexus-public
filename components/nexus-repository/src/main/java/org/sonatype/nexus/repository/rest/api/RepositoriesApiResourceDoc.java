@@ -46,6 +46,13 @@ public interface RepositoriesApiResourceDoc
   Response deleteRepository(@ApiParam(value = "Name of the repository to delete") final String repositoryName)
       throws Exception;
 
+  @ApiOperation("Get repository")
+  @ApiResponses(value = {@ApiResponse(code = 200, message = "Repository returned", response = AbstractApiRepository.class),
+          @ApiResponse(code = 401, message = AUTHENTICATION_REQUIRED),
+          @ApiResponse(code = 403, message = INSUFFICIENT_PERMISSIONS),
+          @ApiResponse(code = 404, message = REPOSITORY_NOT_FOUND)})
+  AbstractApiRepository getRepository(@ApiParam(value = "Name of the repository to fetch") final String repositoryName) throws RepositoryNotFoundException;
+
   @ApiOperation("List repositories")
   @ApiResponses(value = {@ApiResponse(code = 200, message = "Repositories list returned"),
       @ApiResponse(code = 401, message = AUTHENTICATION_REQUIRED),
