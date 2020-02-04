@@ -27,7 +27,7 @@
   <packaging>feature</packaging>
 
   <properties>
-    <p2.format.version>1.0.1</p2.format.version>
+    <p2.format.version>1.0.2</p2.format.version>
     <r.format.version>1.1.2</r.format.version>
     <helm.format.version>1.0.2</helm.format.version>
   </properties>
