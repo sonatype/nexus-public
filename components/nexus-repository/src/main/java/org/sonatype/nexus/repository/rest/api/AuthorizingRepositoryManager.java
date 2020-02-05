@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.rest.api;
 
+import java.util.Collections;
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -91,6 +92,20 @@ public class AuthorizingRepositoryManager
   }
 
   /**
+   * Returns a specific repository which the user has an administrative read privilege to.
+   */
+  public Repository getRepository(@Nonnull final String name)
+          throws RepositoryNotFoundException
+  {
+    Repository repository = repositoryManager.get(name);
+    if (repository == null) {
+      throw new RepositoryNotFoundException();
+    }
+    repositoryPermissionChecker.userHasRepositoryAdminPermission(Collections.singletonList(repository), READ);
+    return repository;
+  }
+
+  /**
    * Returns the repositories which the user has an administrative read privilege.
    */
   public List<Repository> getRepositoriesWithAdmin() {
@@ -144,7 +159,7 @@ public class AuthorizingRepositoryManager
     }
   }
 
-  public Repository getEditableRepositoryOrThrow(@Nonnull final String name)
+  private Repository getEditableRepositoryOrThrow(@Nonnull final String name)
       throws RepositoryNotFoundException
   {
     Repository repository = repositoryManager.get(name);
