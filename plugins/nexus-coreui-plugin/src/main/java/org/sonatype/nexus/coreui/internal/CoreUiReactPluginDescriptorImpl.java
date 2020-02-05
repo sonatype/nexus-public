@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.security.internal;
+package org.sonatype.nexus.coreui.internal;
 
 import java.util.List;
 
@@ -28,14 +28,14 @@ import org.eclipse.sisu.space.ClassSpace;
 import static java.util.Arrays.asList;
 
 /**
- * Rapture {@link UiPluginDescriptor} for {@code nexus-coreui-plugin}.
+ * {@link UiPluginDescriptor} for {@code nexus-coreui-plugin} react code.
  *
- * @since 3.0
+ * @since 3.next
  */
 @Named
 @Singleton
 @Priority(Integer.MAX_VALUE - 100) // after nexus-rapture
-public class SecurityUiPluginDescriptor
+public class CoreUiReactPluginDescriptorImpl
     implements UiPluginDescriptor
 {
   private final List<String> scripts;
@@ -45,10 +45,10 @@ public class SecurityUiPluginDescriptor
   private final List<String> styles;
 
   @Inject
-  public SecurityUiPluginDescriptor(final ClassSpace space) {
-    scripts = asList(UiUtil.getPathForFile("nexus-security-bundle.js", space));
-    debugScripts = asList(UiUtil.getPathForFile("nexus-security-bundle.debug.js", space));
-    styles = asList(UiUtil.getPathForFile("nexus-security-bundle.css", space));
+  public CoreUiReactPluginDescriptorImpl(final ClassSpace space) {
+    scripts = asList(UiUtil.getPathForFile("nexus-coreui-bundle.js", space));
+    debugScripts = asList(UiUtil.getPathForFile("nexus-coreui-bundle.debug.js", space));
+    styles = asList(UiUtil.getPathForFile("nexus-coreui-bundle.css", space));
   }
 
   @Override

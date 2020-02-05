@@ -10,30 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import AnonymousSettings from './components/pages/admin/AnonymousSettings/AnonymousSettings';
-import UIStrings from './constants/UIStrings';
+const merge = require('webpack-merge');
+const path = require('path');
 
-window.plugins.push({
-  id: 'nexus-security-plugin',
+const common = require('./webpack.common');
 
-  features: [
-    {
-      mode: 'admin',
-      path: '/Security/Anonymous',
-      text: UIStrings.ANONYMOUS_SETTINGS.MENU.text,
-      description: UIStrings.ANONYMOUS_SETTINGS.MENU.description,
-      view: AnonymousSettings,
-      iconCls: 'x-fa fa-id-card',
-      visibility: {
-        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        featureFlags: [
-          {
-            key: 'reactFrontend',
-            defaultValue: true
-          }
-        ],
-        permissions: ['nexus:settings:read']
-      }
-    }
-  ]
+module.exports = merge(common, {
+  mode: 'development',
+  devtool: 'eval-source-map',
+
+  output: {
+    filename: 'nexus-coreui-bundle.debug.js',
+    path: path.resolve(__dirname, 'target', 'classes', 'static')
+  }
 });

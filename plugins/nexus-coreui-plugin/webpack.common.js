@@ -55,7 +55,7 @@ module.exports = {
       destination: path.resolve(__dirname, 'target/webpack-modules')
     }),
     new MiniCssExtractPlugin({
-      filename: 'nexus-security-bundle.css'
+      filename: 'nexus-coreui-bundle.css'
     })
   ],
   resolve: {
