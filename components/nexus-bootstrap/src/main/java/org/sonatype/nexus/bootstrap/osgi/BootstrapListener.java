@@ -104,7 +104,6 @@ public class BootstrapListener
       }
 
       selectDbFeature(properties);
-      adjustForMixedMode(properties);
 
       // pass bootstrap properties to embedded servlet listener
       servletContext.setAttribute("nexus.properties", properties);
@@ -241,12 +240,14 @@ public class BootstrapListener
     }
   }
 
-  private static void adjustForMixedMode(final Properties properties) {
+  private static boolean detectMixedMode(final Properties properties) {
     // ie. storing config in JDBC, while storing content metadata in Orient
     if (!parseBoolean(properties.getProperty("nexus.orient.store.config", "true"))) {
       properties.setProperty("nexus.datastore.enabled", "true");
       properties.setProperty("nexus.quartz.jobstore.jdbc", "true");
+      return true;
     }
+    return false;
   }
 
   private static void installNexusEdition(final BundleContext ctx, final Properties properties)
@@ -271,6 +272,13 @@ public class BootstrapListener
         }
         if (!featuresService.isInstalled(dbFeature)) {
           featureIds.add(dbFeature.getId());
+        }
+
+        if (detectMixedMode(properties)) {
+          Feature mybatisFeature = featuresService.getFeature("nexus-datastore-mybatis");
+          if (!featuresService.isInstalled(mybatisFeature)) {
+            featureIds.add(mybatisFeature.getId());
+          }
         }
 
         // edition might already be installed in the cache; if so then skip installation
