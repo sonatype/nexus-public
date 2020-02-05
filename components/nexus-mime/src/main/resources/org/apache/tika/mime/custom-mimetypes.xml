@@ -43,8 +43,8 @@
     one extra match added for this case.
 
     Examples:
-      http://repo1.maven.org/maven2/com/github/searls/jasmine-maven-plugin/2.2/jasmine-maven-plugin-2.2.pom
-      http://central.maven.org/maven2/org/jboss/weld/weld-core-parent/1.1.29.Final/weld-core-parent-1.1.29.Final.pom
+      https://repo1.maven.org/maven2/com/github/searls/jasmine-maven-plugin/2.2/jasmine-maven-plugin-2.2.pom
+      https://repo1.maven.org/maven2/org/jboss/weld/weld-core-parent/1.1.29.Final/weld-core-parent-1.1.29.Final.pom
 
     For more info see: https://issues.sonatype.org/browse/NEXUS-10087
   -->
