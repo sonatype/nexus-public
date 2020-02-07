@@ -344,6 +344,7 @@ public class MyBatisDataStore
   /**
    * Register common {@link TypeHandler}s.
    */
+  @SuppressWarnings("unchecked")
   private void registerCommonTypeHandlers(boolean isContentStore) {
     boolean lenient = configurePlaceholderTypes(sessionFactory.getConfiguration());
 
@@ -354,7 +355,7 @@ public class MyBatisDataStore
     register(new DateTimeTypeHandler());
 
     // mapping of entity ids needs some extra handling
-    TypeHandler<EntityUUID> entityIdHandler = new EntityUUIDTypeHandler(lenient);
+    TypeHandler entityIdHandler = new EntityUUIDTypeHandler(lenient);
     register(EntityUUID.class, entityIdHandler);
     register(EntityId.class, entityIdHandler);
     if (lenient) {
