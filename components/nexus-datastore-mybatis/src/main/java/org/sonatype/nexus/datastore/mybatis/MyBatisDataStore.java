@@ -52,6 +52,7 @@ import org.sonatype.nexus.datastore.api.SchemaTemplate;
 import org.sonatype.nexus.datastore.mybatis.handlers.AttributesTypeHandler;
 import org.sonatype.nexus.datastore.mybatis.handlers.ContentTypeHandler;
 import org.sonatype.nexus.datastore.mybatis.handlers.DateTimeTypeHandler;
+import org.sonatype.nexus.datastore.mybatis.handlers.EncryptedStringTypeHandler;
 import org.sonatype.nexus.datastore.mybatis.handlers.EntityUUIDTypeHandler;
 import org.sonatype.nexus.datastore.mybatis.handlers.LenientUUIDTypeHandler;
 import org.sonatype.nexus.datastore.mybatis.handlers.ListTypeHandler;
@@ -83,6 +84,7 @@ import org.apache.ibatis.session.defaults.DefaultSqlSessionFactory;
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
 import org.apache.ibatis.type.TypeAliasRegistry;
 import org.apache.ibatis.type.TypeHandler;
+import org.apache.ibatis.type.TypeHandlerRegistry;
 import org.eclipse.sisu.BeanEntry;
 import org.eclipse.sisu.Mediator;
 import org.eclipse.sisu.inject.BeanLocator;
@@ -319,6 +321,7 @@ public class MyBatisDataStore
     myBatisConfig.setDatabaseId(databaseId);
     myBatisConfig.setMapUnderscoreToCamelCase(true);
     myBatisConfig.setReturnInstanceForEmptyRow(true);
+    myBatisConfig.getTypeAliasRegistry().registerAlias(char[].class);
     myBatisConfig.setObjectFactory(new DefaultObjectFactory()
     {
       @Override
@@ -342,6 +345,7 @@ public class MyBatisDataStore
   /**
    * Register common {@link TypeHandler}s.
    */
+  @SuppressWarnings("unchecked")
   private void registerCommonTypeHandlers(boolean isContentStore) {
     boolean lenient = configurePlaceholderTypes(sessionFactory.getConfiguration());
 
@@ -352,7 +356,7 @@ public class MyBatisDataStore
     register(new DateTimeTypeHandler());
 
     // mapping of entity ids needs some extra handling
-    TypeHandler<EntityUUID> entityIdHandler = new EntityUUIDTypeHandler(lenient);
+    TypeHandler entityIdHandler = new EntityUUIDTypeHandler(lenient);
     register(EntityUUID.class, entityIdHandler);
     register(EntityId.class, entityIdHandler);
     if (lenient) {
@@ -368,6 +372,7 @@ public class MyBatisDataStore
       // security handlers that only exist in the config store
       register(new PasswordCharacterArrayTypeHandler(passwordHelper));
       register(new PrincipalCollectionTypeHandler());
+      registerDetached(new EncryptedStringTypeHandler()); // detached so it doesn't apply to all Strings
 
       // enable automatic encryption of sensitive JSON fields in the config store
       sensitiveAttributeFilter = buildSensitiveAttributeFilter(sessionFactory.getConfiguration());
@@ -620,6 +625,30 @@ public class MyBatisDataStore
    */
   @VisibleForTesting
   public void register(final TypeHandler<?> handler) {
+    prepare(handler).register(handler);
+    info(REGISTERED_MESSAGE, handler.getClass().getSimpleName());
+  }
+
+  /**
+   * Registers the given {@link TypeHandler} with MyBatis binding it to an explicit type.
+   */
+  private <T> void register(final Class<T> type, final TypeHandler<? extends T> handler) {
+    prepare(handler).register(type, handler);
+    info(REGISTERED_MESSAGE, handler.getClass().getSimpleName() + " (" + type.getSimpleName() + ")");
+  }
+
+  /**
+   * Registers the given {@link TypeHandler} with MyBatis without binding it to any type.
+   */
+  private <T> void registerDetached(final TypeHandler<? extends T> handler) {
+    prepare(handler).register(null, null, handler);
+    info(REGISTERED_MESSAGE, handler.getClass().getSimpleName() + " (detached)");
+  }
+
+  /**
+   * Prepare the {@link TypeHandler} for use with this datastore.
+   */
+  private TypeHandlerRegistry prepare(final TypeHandler<?> handler) {
     if (handler instanceof CipherAwareTypeHandler<?>) {
       ((CipherAwareTypeHandler<?>) handler).setCipher(databaseCipher);
     }
@@ -628,19 +657,7 @@ public class MyBatisDataStore
     }
     Configuration mybatisConfig = sessionFactory.getConfiguration();
     registerSimpleAlias(mybatisConfig.getTypeAliasRegistry(), handler.getClass());
-    mybatisConfig.getTypeHandlerRegistry().register(handler);
-    info(REGISTERED_MESSAGE, handler.getClass().getSimpleName());
-  }
-
-  /**
-   * Registers the given {@link TypeHandler} for a specific type with MyBatis.
-   */
-  private <T> void register(final Class<T> type, final TypeHandler<? extends T> handler) {
-    // none of the handlers using this method extend CipherAwareTypeHandler...
-    Configuration mybatisConfig = sessionFactory.getConfiguration();
-    registerSimpleAlias(mybatisConfig.getTypeAliasRegistry(), handler.getClass());
-    mybatisConfig.getTypeHandlerRegistry().register(type, handler);
-    info(REGISTERED_MESSAGE, handler.getClass().getSimpleName() + " (" + type.getSimpleName() + ")");
+    return mybatisConfig.getTypeHandlerRegistry();
   }
 
   /**

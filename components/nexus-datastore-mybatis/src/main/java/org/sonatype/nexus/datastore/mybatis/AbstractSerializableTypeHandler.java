@@ -31,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Abstract {@link TypeHandler} that supports serializing Java objects to the database.
@@ -93,12 +92,10 @@ public abstract class AbstractSerializableTypeHandler<T>
    * Serialize the Java object to bytes and then encrypt them using the database cipher.
    */
   private byte[] serialize(final T object) throws SQLException {
-    checkState(cipher != null, "Cipher has not been set");
-
     try (ByteArrayOutputStream buf = new ByteArrayOutputStream();
         ObjectOutputStream out = new ObjectOutputStream(buf)) {
       out.writeObject(object);
-      return cipher.encrypt(buf.toByteArray());
+      return cipher().encrypt(buf.toByteArray());
     }
     catch (IOException e) {
       throw new SQLException("Problem serializing: " + object.getClass().getName(), e);
@@ -114,9 +111,7 @@ public abstract class AbstractSerializableTypeHandler<T>
       return null;
     }
 
-    checkState(cipher != null, "Cipher has not been set");
-
-    byte[] decrypted = cipher.decrypt(bytes);
+    byte[] decrypted = cipher().decrypt(bytes);
     try (ByteArrayInputStream buf = new ByteArrayInputStream(decrypted);
         ObjectInputStream in = new ObjectInputStreamWithClassLoader(buf, classLoading)) {
       return (T) in.readObject();
