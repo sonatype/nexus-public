@@ -176,7 +176,7 @@ public class HttpClientManagerTest
       Builder builder;
 
       // not listed hostname, all as before
-      when(proxyRepository.getRemoteUrl()).thenReturn("http://repo1.central.org/maven2/");
+      when(proxyRepository.getRemoteUrl()).thenReturn("https://repo1.central.org/maven2/");
       builder = hc4Provider.prepareHttpClient(globalRemoteStorageContext);
       httpClientManager.configure(proxyRepository, globalRemoteStorageContext, builder);
       fieldEqualsReflection(builder.getRequestConfigBuilder(), "circularRedirectsAllowed", false);
@@ -216,7 +216,7 @@ public class HttpClientManagerTest
       Builder builder;
 
       // not listed hostname, all as before
-      when(proxyRepository.getRemoteUrl()).thenReturn("http://repo1.central.org/maven2/");
+      when(proxyRepository.getRemoteUrl()).thenReturn("https://repo1.central.org/maven2/");
       builder = hc4Provider.prepareHttpClient(globalRemoteStorageContext);
       httpClientManager.configure(proxyRepository, globalRemoteStorageContext, builder);
       fieldEqualsReflection(builder.getHttpClientBuilder(), "cookieStore", nullValue());

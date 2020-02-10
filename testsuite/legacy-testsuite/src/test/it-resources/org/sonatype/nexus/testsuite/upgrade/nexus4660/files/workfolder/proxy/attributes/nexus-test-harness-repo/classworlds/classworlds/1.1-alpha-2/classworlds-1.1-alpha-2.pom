@@ -10,7 +10,7 @@
   <lastTouched>1321635251693</lastTouched>
   <lastRequested>1321635335633</lastRequested>
   <expired>false</expired>
-  <remoteUrl>http://repo1.maven.org/maven2/classworlds/classworlds/1.1-alpha-2/classworlds-1.1-alpha-2.pom</remoteUrl>
+  <remoteUrl>https://repo1.maven.org/maven2/classworlds/classworlds/1.1-alpha-2/classworlds-1.1-alpha-2.pom</remoteUrl>
   <attributes>
     <entry>
       <string>digest.sha1</string>

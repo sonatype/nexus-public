@@ -14,6 +14,7 @@ package org.sonatype.nexus.integrationtests;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,13 @@ import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
+import org.apache.maven.settings.Activation;
+import org.apache.maven.settings.Profile;
+import org.apache.maven.settings.Repository;
+import org.apache.maven.settings.RepositoryPolicy;
+import org.apache.maven.settings.Settings;
+import org.apache.maven.settings.io.xpp3.SettingsXpp3Writer;
+import org.codehaus.plexus.util.WriterFactory;
 import org.junit.Assert;
 
 /**
@@ -64,6 +72,46 @@ public class MavenVerifierHelper
     options.add("-s " + mavenDeployment.getSettingsXmlFile().getAbsolutePath());
     verifier.setCliOptions(options);
     return verifier;
+  }
+
+  public static Verifier newDefaultVerifier(final File basedir) throws VerificationException, IOException {
+    final Verifier verifier = new Verifier(basedir.getAbsolutePath());
+    File settingsFile = writeSettingsFile(basedir);
+    verifier.addCliOption("-s");
+    verifier.addCliOption(settingsFile.getCanonicalPath());
+    return verifier;
+  }
+
+  private static File writeSettingsFile(File basedir) throws IOException {
+    File settingsFile = new File(basedir, "settings.xml");
+    if (settingsFile.exists()) {
+      return settingsFile;
+    }
+    Settings settings = createSettings();
+    settingsFile.getParentFile().mkdirs();
+    try ( Writer writer = WriterFactory.newXmlWriter(settingsFile) ) {
+      new SettingsXpp3Writer().write(writer, settings);
+    }
+    return settingsFile;
+  }
+
+  public static Settings createSettings() {
+    Settings settings = new Settings();
+    Profile profile = new Profile();
+    profile.setId("https-central");
+    Activation activation = new Activation();
+    activation.setActiveByDefault(true);
+    profile.setActivation(activation);
+    Repository repository = new Repository();
+    repository.setId("central");
+    repository.setUrl("https://repo1.maven.org/maven2");
+    RepositoryPolicy repositoryPolicy = new RepositoryPolicy();
+    repositoryPolicy.setEnabled(false);
+    repository.setSnapshots(repositoryPolicy);
+    profile.addRepository(repository);
+    profile.addPluginRepository(repository);
+    settings.addProfile(profile);
+    return settings;
   }
 
   /**

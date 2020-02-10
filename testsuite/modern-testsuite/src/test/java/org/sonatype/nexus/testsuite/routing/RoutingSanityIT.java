@@ -131,7 +131,7 @@ public class RoutingSanityIT
     // as-is, as it was received from remote). both should be equal on byte level.
     try (final InputStream nexusPrefixFile = getPrefixFileFrom(centralStatus.getPublishedUrl());
          final InputStream centralPrefixFile =
-             getPrefixFileFrom("http://repo1.maven.org/maven2/.meta/prefixes.txt");) {
+             getPrefixFileFrom("https://repo1.maven.org/maven2/.meta/prefixes.txt");) {
       ByteStreams.equal(new InputSupplier<InputStream>()
                         {
                           @Override
