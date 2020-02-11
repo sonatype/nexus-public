@@ -95,6 +95,7 @@
     <node.version>v12.14.0</node.version>
     <yarn.version>v1.22.0</yarn.version>
     <npm.install>install --frozen-lockfile</npm.install>
+    <npm.skipTests>false</npm.skipTests>
 
     <!-- logging configuration used in logback config files to control test logging -->
     <test.log.level>INFO</test.log.level>
@@ -1751,6 +1752,32 @@
           </plugins>
         </pluginManagement>
       </build>
+    </profile>
+
+    <profile>
+      <!-- Make the npm test executions aware of the skipTests property -->
+      <id>skipNpmTests-skipTests</id>
+      <activation>
+        <property>
+          <name>skipTests</name>
+        </property>
+      </activation>
+      <properties>
+        <npm.skipTests>true</npm.skipTests>
+      </properties>
+    </profile>
+
+    <profile>
+      <!-- Make the npm test executions aware of the maven.test.skip property -->
+      <id>skipNpmTests-maven.test.skip</id>
+      <activation>
+        <property>
+          <name>maven.test.skip</name>
+        </property>
+      </activation>
+      <properties>
+        <npm.skipTests>true</npm.skipTests>
+      </properties>
     </profile>
 
   </profiles>
