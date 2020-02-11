@@ -91,10 +91,10 @@
     <nexus.version>3.22.0-SNAPSHOT</nexus.version>
     <nexus2.version>2.14.15-01</nexus2.version>
 
-    <!-- Define the node and npm versions used by the frontend-maven-plugin -->
+    <!-- Define the node and yarn versions used by the frontend-maven-plugin -->
     <node.version>v12.14.0</node.version>
-    <npm.version>6.13.4</npm.version>
-    <npm.install>ci</npm.install>
+    <yarn.version>v1.22.0</yarn.version>
+    <npm.install>install --frozen-lockfile</npm.install>
 
     <!-- logging configuration used in logback config files to control test logging -->
     <test.log.level>INFO</test.log.level>

@@ -205,7 +205,7 @@
 
         <configuration>
           <nodeVersion>${node.version}</nodeVersion>
-          <npmVersion>${npm.version}</npmVersion>
+          <yarnVersion>${yarn.version}</yarnVersion>
           <workingDirectory>${project.basedir}</workingDirectory>
           <installDirectory>${project.build.directory}</installDirectory>
         </configuration>
@@ -214,14 +214,14 @@
           <execution>
             <id>install node and npm</id>
             <goals>
-              <goal>install-node-and-npm</goal>
+              <goal>install-node-and-yarn</goal>
             </goals>
             <phase>generate-resources</phase>
           </execution>
           <execution>
-            <id>npm install</id>
+            <id>yarn install</id>
             <goals>
-              <goal>npm</goal>
+              <goal>yarn</goal>
             </goals>
             <phase>generate-resources</phase>
             <configuration>
@@ -229,9 +229,9 @@
             </configuration>
           </execution>
           <execution>
-            <id>npm run build</id>
+            <id>yarn run build</id>
             <goals>
-              <goal>npm</goal>
+              <goal>yarn</goal>
             </goals>
             <phase>compile</phase>
             <configuration>

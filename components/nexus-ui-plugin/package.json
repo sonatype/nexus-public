@@ -23,12 +23,12 @@
     "cpx": "=1.5.0",
     "enzyme": "=3.10.0",
     "enzyme-adapter-react-16": "=1.15.1",
+    "jest": "=24.8.0",
     "jest-enzyme": "=7.1.1",
     "jest-junit": "=10.0.0",
     "node-sass": "=4.13.0",
     "npm-run-all": "=4.1.5",
     "prop-types": "=15.7.2",
-    "react-scripts": "=3.2.0",
     "react-test-renderer": "=16.11.0",
     "react": "=16.11.0",
     "react-dom": "=16.11.0",
@@ -41,6 +41,9 @@
     "watch-js": "babel src/frontend/src --out-dir dist --watch --verbose",
     "copy-scss": "cpx \"src/frontend/src/**/*.scss\" dist",
     "copy-package-json": "cpx package.json dist",
-    "test": "react-scripts test"
+    "test": "jest --config src/frontend/jest.config.js",
+    "test-coverage": "jest --config src/frontend/jest.config.js --coverage",
+    "test-watch": "jest --config src/frontend/jest.config.js --watch",
+    "test-watch-debug": "node --inspect-brk node_modules/.bin/jest --config src/frontend/jest.config.js --runInBand --watchAll"
   }
 }

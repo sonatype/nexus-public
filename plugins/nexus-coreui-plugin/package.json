@@ -1,12 +1,12 @@
 {
-  "name": "nexus-security",
+  "name": "nexus-coreui-plugin",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "build": "webpack --config webpack.prod.js && webpack --config webpack.dev.js",
     "test": "jest --config src/frontend/jest.config.js",
-    "test-coverage": "npm test -- --coverage",
-    "test-watch": "npm test -- --watch",
+    "test-coverage": "jest --config src/frontend/jest.config.js --coverage",
+    "test-watch": "jest --config src/frontend/jest.config.js --watch",
     "test-watch-debug": "node --inspect-brk node_modules/.bin/jest --config src/frontend/jest.config.js --runInBand --watchAll",
     "watch": "webpack --config webpack.dev.js  --watch"
   },
@@ -17,7 +17,7 @@
     "@fortawesome/react-fontawesome": "=0.1.4",
     "axios": "=0.19.0",
     "classnames": "=2.2.6",
-    "nexus-ui-plugin": "file:../../components/nexus-ui-plugin",
+    "nexus-ui-plugin": "0.1.0",
     "react": "=16.11.0",
     "react-dom": "=16.11.0"
   },

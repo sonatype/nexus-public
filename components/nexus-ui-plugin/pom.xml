@@ -68,7 +68,7 @@
 
         <configuration>
           <nodeVersion>${node.version}</nodeVersion>
-          <npmVersion>${npm.version}</npmVersion>
+          <yarnVersion>${yarn.version}</yarnVersion>
           <workingDirectory>${project.basedir}</workingDirectory>
           <installDirectory>${project.build.directory}</installDirectory>
           <environmentVariables>
@@ -78,16 +78,16 @@
 
         <executions>
           <execution>
-            <id>install node and npm</id>
+            <id>install node and yarn</id>
             <goals>
-              <goal>install-node-and-npm</goal>
+              <goal>install-node-and-yarn</goal>
             </goals>
             <phase>generate-resources</phase>
           </execution>
           <execution>
-            <id>npm install</id>
+            <id>yarn install</id>
             <goals>
-              <goal>npm</goal>
+              <goal>yarn</goal>
             </goals>
             <phase>generate-resources</phase>
             <configuration>
@@ -95,13 +95,13 @@
             </configuration>
           </execution>
           <execution>
-            <id>npm run build</id>
+            <id>yarn build</id>
             <goals>
-              <goal>npm</goal>
+              <goal>yarn</goal>
             </goals>
             <phase>compile</phase>
             <configuration>
-              <arguments>run build</arguments>
+              <arguments>build</arguments>
             </configuration>
           </execution>
         </executions>
@@ -139,7 +139,7 @@
                 </goals>
                 <phase>test</phase>
                 <configuration>
-                  <arguments>run test -- --reporters=jest-junit</arguments>
+                  <arguments>test -- --reporters=jest-junit</arguments>
                 </configuration>
               </execution>
             </executions>
