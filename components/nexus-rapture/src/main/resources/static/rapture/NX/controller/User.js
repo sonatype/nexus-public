@@ -170,15 +170,26 @@ Ext.define('NX.controller.User', {
       currentUser = null;
       authedUser = null;
     }).always(function() {
+      function showSignInWindow() {
+        me.showSignInWindow(options);
+      }
+
       if (authedUser) {
         NX.State.setUser(authedUser);
       }
       else if (currentUser) {
-        me.showAuthenticateWindow(message, Ext.apply(options || {}, {authenticateAction: me.authenticate}),
-            currentUser);
+        if (me.fireEvent('beforereauthenticate') !== false) {
+          me.showAuthenticateWindow(
+              message,
+              Ext.apply(options || {}, {authenticateAction: me.authenticate}),
+              currentUser
+          );
+        }
       }
       else {
-        me.showSignInWindow(options);
+        if (me.fireEvent('beforeauthenticate', showSignInWindow) !== false) {
+          showSignInWindow();
+        }
       }
     });
   },
@@ -217,9 +228,9 @@ Ext.define('NX.controller.User', {
     }).always(function() {
       if (token !== 'cancel') {
         if (!token) {
-          me.showAuthenticateWindow(message,
-              Ext.apply(options || {}, {authenticateAction: me.retrieveAuthenticationToken})
-          );
+          options = Ext.apply(options || {}, {authenticateAction: me.retrieveAuthenticationToken});
+
+          me.showAuthenticateWindow(message, options);
         }
         else {
           if (Ext.isFunction(options.success)) {
