@@ -48,6 +48,7 @@ import org.sonatype.nexus.blobstore.group.internal.WriteToFirstMemberFillPolicy;
 import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.common.stateguard.Transitions;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
@@ -61,6 +62,7 @@ import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.FAILED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.NEW;
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.SHUTDOWN;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STOPPED;
 
@@ -312,6 +314,17 @@ public class BlobStoreGroup
     return members.get().stream().map(BlobStore::isEmpty).reduce(true, Boolean::logicalAnd);
   }
 
+  /**
+   * Permanently stops this blob store regardless of the current state, disallowing restarts.
+   */
+  @Override
+  @Transitions(to = SHUTDOWN)
+  public void shutdown() throws Exception {
+    if (isStarted()) {
+      doStop();
+    }
+  }
+
   @Override
   public boolean exists(final BlobId blobId) {
     return members.get().stream()
@@ -319,7 +332,7 @@ public class BlobStoreGroup
   }
 
   @Override
-  @Guarded(by = {NEW, STOPPED, FAILED})
+  @Guarded(by = {NEW, STOPPED, FAILED, SHUTDOWN})
   public void remove() {
     // no-op
   }

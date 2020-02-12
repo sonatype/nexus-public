@@ -22,6 +22,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.common.app.FreezeService
 import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.common.node.NodeAccess
+import org.sonatype.nexus.common.stateguard.InvalidStateException
 import org.sonatype.nexus.repository.manager.RepositoryManager
 
 import com.google.common.collect.Lists
@@ -39,6 +40,7 @@ import static org.junit.Assert.fail
 import static org.mockito.ArgumentCaptor.forClass
 import static org.mockito.Matchers.any
 import static org.mockito.Mockito.doReturn
+import static org.mockito.Mockito.doThrow
 import static org.mockito.Mockito.mock
 import static org.mockito.Mockito.spy
 import static org.mockito.Mockito.times
@@ -185,7 +187,23 @@ class BlobStoreManagerImplTest
     
     underTest.delete(configuration.getName())
     
-    verify(blobStore).stop()
+    verify(blobStore).shutdown()
+    verify(store).delete(configuration)
+    verify(freezeService).checkWritable("Unable to delete a BlobStore while database is frozen.")
+  }
+
+  @Test
+  void 'Can delete an existing BlobStore in failed state'() {
+    BlobStoreConfiguration configuration = createConfig('test')
+    BlobStore blobStore = mock(BlobStore)
+    doReturn(blobStore).when(underTest).blobStore('test')
+    doThrow(InvalidStateException).when(blobStore).stop()
+    when(store.list()).thenReturn([configuration])
+    when(blobStore.getBlobStoreConfiguration()).thenReturn(configuration)
+
+    underTest.delete(configuration.getName())
+
+    verify(blobStore).shutdown()
     verify(store).delete(configuration)
     verify(freezeService).checkWritable("Unable to delete a BlobStore while database is frozen.")
   }

@@ -84,6 +84,7 @@ import static org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver.TEMPORA
 import static org.sonatype.nexus.blobstore.DirectPathLocationStrategy.DIRECT_PATH_ROOT;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.FAILED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.NEW;
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.SHUTDOWN;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STOPPED;
 import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
@@ -699,7 +700,7 @@ public class FileBlobStore
    * Delete files known to be part of the FileBlobStore implementation if the content directory is empty.
    */
   @Override
-  @Guarded(by = {NEW, STOPPED, FAILED})
+  @Guarded(by = {NEW, STOPPED, FAILED, SHUTDOWN})
   public void remove() {
     try {
       Path blobDir = getAbsoluteBlobDir();

@@ -297,7 +297,7 @@ public class BlobStoreManagerImpl
 
     BlobStore blobStore = blobStore(name);
     log.debug("Deleting BlobStore: {}", name);
-    blobStore.stop();
+    blobStore.shutdown();
     blobStore.remove();
     untrack(name);
     if (!EventHelper.isReplicating()) {

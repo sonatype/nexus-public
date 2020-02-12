@@ -33,6 +33,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.common.stateguard.Transitions;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
@@ -41,6 +42,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.SHUTDOWN;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 
 /**
@@ -277,5 +279,16 @@ public abstract class BlobStoreSupport<T extends AttributesLocation>
   @Override
   public boolean isEmpty() {
     return !getBlobIdStream().findAny().isPresent();
+  }
+
+  /**
+   * Permanently stops this blob store regardless of the current state, disallowing restarts.
+   */
+  @Override
+  @Transitions(to = SHUTDOWN)
+  public void shutdown() throws Exception {
+    if (isStarted()) {
+      doStop();
+    }
   }
 }
