@@ -46,7 +46,7 @@ public class CancelableHelper
   /**
    * Throws {@link TaskInterruptedException} if current task is canceled or interrupted.
    */
-  public static void checkCancellation() {
+  public static boolean checkCancellation() {
     Thread.yield();
     AtomicBoolean current = currentFlagHolder.get();
     if (current != null && current.get()) {
@@ -55,5 +55,6 @@ public class CancelableHelper
     if (Thread.interrupted()) {
       throw new TaskInterruptedException("Thread '" + Thread.currentThread().getName() + "' is interrupted", false);
     }
+    return true;
   }
 }

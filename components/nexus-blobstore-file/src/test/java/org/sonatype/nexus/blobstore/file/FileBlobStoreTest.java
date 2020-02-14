@@ -60,6 +60,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -248,7 +249,8 @@ public class FileBlobStoreTest
       "sha1 = cbd5bce1c926e6b55b6b4037ce691b8f9e5dea0f").getBytes(StandardCharsets.ISO_8859_1);
 
   @Test
-  public void testMaybeRebuildDeletedBlobIndex() throws Exception {
+  public void testDoCompact_RebuildMetadataNeeded() throws Exception {
+    when(fileOperations.delete(any())).thenReturn(true);
     when(nodeAccess.isOldestNode()).thenReturn(true);
     underTest.doStart();
 
@@ -256,30 +258,28 @@ public class FileBlobStoreTest
         deletedBlobStoreProperties);
 
     checkDeletionsIndex(true);
-
     setRebuildMetadataToTrue();
 
-    underTest.maybeRebuildDeletedBlobIndex();
+    underTest.doCompact(blobStoreUsageChecker);
 
-    checkDeletionsIndex(false);
+    checkDeletionsIndex(true);
+
+    verify(blobStoreUsageChecker, atLeastOnce()).test(any(), any(), any());
   }
 
-
   @Test
-  public void testMaybeRebuildDeletedBlobIndex_NotOldest() throws Exception {
+  public void testDoCompact_RebuildMetadataNeeded_NotOldestNode() throws Exception {
     when(nodeAccess.isOldestNode()).thenReturn(false);
     underTest.doStart();
 
-    write(fullPath.resolve("e27f83a9-dc18-4818-b4ca-ae8a9cb813c7.properties"),
-        deletedBlobStoreProperties);
-
     checkDeletionsIndex(true);
-
     setRebuildMetadataToTrue();
 
-    underTest.maybeRebuildDeletedBlobIndex();
+    underTest.doCompact(blobStoreUsageChecker);
 
     checkDeletionsIndex(true);
+
+    verify(blobStoreUsageChecker, never()).test(any(), any(), any());
   }
 
   @Test
