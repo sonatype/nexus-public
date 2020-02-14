@@ -10,9 +10,29 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-const NX = window.NX;
+import ExtJS from './ExtJS';
 
-export default {
-  showSuccessMessage: (text) => NX.Messages.success(text),
-  showErrorMessage: (text) => NX.Messages.error(text)
-}
+describe('ExtJS', () => {
+  describe('setDirtyStatus', () => {
+    it('sets the dirty status correctly', () => {
+      ExtJS.setDirtyStatus('key', true);
+
+      expect(window.dirty.includes('key')).toEqual(true);
+      expect(window.dirty.includes('key2')).toEqual(false);
+
+      ExtJS.setDirtyStatus('key2', true);
+
+      expect(window.dirty.includes('key')).toEqual(true);
+      expect(window.dirty.includes('key2')).toEqual(true);
+
+      ExtJS.setDirtyStatus('key', false);
+
+      expect(window.dirty.includes('key')).toEqual(false);
+      expect(window.dirty.includes('key2')).toEqual(true);
+
+      ExtJS.setDirtyStatus('key2', false);
+
+      expect(window.dirty).toEqual([]);
+    });
+  });
+});

@@ -29,6 +29,17 @@ const mockAnonymousSettings = {
   realmName: 'r2'
 };
 
+jest.mock('nexus-ui-plugin', () => {
+  return {
+    ...jest.requireActual('nexus-ui-plugin'),
+    ExtJS: {
+      showSuccessMessage: jest.fn(),
+      showErrorMessage: jest.fn(),
+      setDirtyStatus: jest.requireActual('nexus-ui-plugin').ExtJS.setDirtyStatus
+    }
+  }
+});
+
 jest.mock('axios', () => {  // Mock out parts of axios, has to be done in same scope as import statements
   return {
     ...jest.requireActual('axios'), // Use most functions from actual axios
@@ -44,8 +55,6 @@ jest.mock('axios', () => {  // Mock out parts of axios, has to be done in same s
   };
 });
 
-jest.mock('../../../../interface/ExtJS');
-
 describe('AnonymousSettings', () => {
   // see https://github.com/airbnb/enzyme/issues/1587
   const waitForDataFromApi = (wrapper) => act(() => Promise.resolve(wrapper)
@@ -58,6 +67,14 @@ describe('AnonymousSettings', () => {
     expect(wrapper.find(Textfield)).toHaveProp('value', mockAnonymousSettings.userId);
     expect(wrapper.find(Select)).toHaveProp('value', mockAnonymousSettings.realmName);
   };
+
+  beforeEach(() => {
+    window.dirty = [];
+  });
+
+  afterEach(() => {
+    window.dirty = [];
+  });
 
   it('renders correctly', () => {
     expect(shallow(<AnonymousSettings/>)).toMatchSnapshot();
@@ -147,5 +164,30 @@ describe('AnonymousSettings', () => {
     );
 
     expect(saveButton).toBeDisabled();
+  });
+
+  it('Sets the dirty flag appropriately', async () => {
+    // using mount because of bug preventing useEffect hook from being called when component is shallow rendered
+    // See https://github.com/airbnb/enzyme/issues/2086
+    const wrapper = mount(<AnonymousSettings/>);
+
+    await waitForDataFromApi(wrapper);
+
+    expect(window.dirty).toEqual([]);
+
+    wrapper.find(Select).simulate('change', {
+      target: {
+        name: 'userId',
+        value: 'test'
+      }
+    });
+
+    expect(window.dirty).toEqual(['AnonymousSettings']);
+
+    wrapper.findWhere(node =>
+        node.is(Button) && node.text() === UIStrings.SETTINGS.DISCARD_BUTTON_LABEL
+    ).simulate('click');
+
+    expect(window.dirty).toEqual([]);
   });
 });

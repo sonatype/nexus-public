@@ -13,6 +13,8 @@
 
 export { default as UIStrings } from './constants/UIStrings';
 
+export { default as ExtJS } from './interface/ExtJS';
+
 export { default as SettingsSection } from './components/layout/admin/SettingsSection/SettingsSection';
 export { default as ContentBody } from './components/layout/common/ContentBody/ContentBody';
 

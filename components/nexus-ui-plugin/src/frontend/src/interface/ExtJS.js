@@ -10,7 +10,41 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-export default {
-  showSuccessMessage: () => jest.fn(),
-  showErrorMessage: () => jest.fn()
+/*global Ext, NX*/
+
+/**
+ * @since 3.next
+ */
+export default class {
+  /**
+   * Open a success message notification
+   * @param text
+   */
+  static showSuccessMessage(text) {
+    NX.Messages.success(text)
+  }
+
+  /**
+   * Open an error message notification
+   * @param text
+   */
+  static showErrorMessage(text) {
+    NX.Messages.error(text);
+  }
+
+  /**
+   * Set the global dirty status to prevent accidental navigation
+   * @param key - a unique key for the view that is dirty
+   * @param isDirty - whether the view is dirty or not
+   */
+  static setDirtyStatus(key, isDirty) {
+    window.dirty = window.dirty || [];
+
+    if (isDirty) {
+      window.dirty.push(key)
+    }
+    else {
+      window.dirty = window.dirty.filter(it => it !== key)
+    }
+  }
 }
