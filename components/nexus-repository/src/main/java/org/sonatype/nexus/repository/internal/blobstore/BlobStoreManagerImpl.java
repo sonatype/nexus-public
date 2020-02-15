@@ -56,6 +56,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.util.Optional.empty;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.FAILED;
 
 /**
  * Default {@link BlobStoreManager} implementation.
@@ -278,7 +279,7 @@ public class BlobStoreManagerImpl
   }
 
   @Override
-  @Guarded(by = STARTED)
+  @Guarded(by = { STARTED, FAILED })
   public void delete(final String name) throws Exception {
     checkNotNull(name);
     if (!repositoryManagerProvider.get().isBlobstoreUsed(name)) {
@@ -290,7 +291,7 @@ public class BlobStoreManagerImpl
   }
 
   @Override
-  @Guarded(by = STARTED)
+  @Guarded(by = { STARTED, FAILED })
   public void forceDelete(final String name) throws Exception {
     checkNotNull(name);
     freezeService.checkWritable("Unable to delete a BlobStore while database is frozen.");
