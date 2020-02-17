@@ -10,19 +10,14 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext, NX*/
+package org.sonatype.nexus.coreui.internal.datastore
 
 /**
- * Datastore Source model.
- *
  * @since 3.19
  */
-Ext.define('NX.coreui.model.DatastoreSource', {
-  extend: 'Ext.data.Model',
-  fields: [
-    {name: 'id', type: 'string', sortType: 'asUCText'},
-    {name: 'name', type: 'string', sortType: 'asUCText'},
-    {name: 'isModifiable', type: 'boolean'},
-    {name: 'isEnabled', type: 'boolean'}
-  ]
-});
+class DataStoreXO
+{
+  String name
+
+  boolean isContentStore
+}

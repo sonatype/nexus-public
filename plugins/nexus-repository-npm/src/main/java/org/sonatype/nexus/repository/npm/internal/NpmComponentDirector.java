@@ -25,6 +25,7 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentDirector;
+import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
@@ -67,29 +68,44 @@ public class NpmComponentDirector
   }
 
   @Override
-  @Transactional
   public Component afterMove(final Component component, final Repository destination) {
-    destination.optionalFacet(NpmHostedFacet.class).ifPresent(f -> {
-      final StorageTx tx = UnitOfWork.currentTx();
-      tx.browseAssets(component).forEach(asset -> {
-        Blob blob = checkNotNull(tx.getBlob(asset.blobRef()));
-        final Map<String, Object> packageJson = npmPackageParser.parsePackageJson(blob::getInputStream);
-        final NpmPackageId packageId = NpmPackageId.parse((String) packageJson.get(P_NAME));
+    destination.optionalFacet(NpmHostedFacet.class).ifPresent(npmHostedFacet -> {
 
-        try {
-          final NestedAttributesMap updatedMetadata = createFullPackageMetadata(
-              new NestedAttributesMap("metadata", packageJson),
-              destination.getName(),
-              blob.getMetrics().getSha1Hash(),
-              destination,
-              extractNewestVersion);
-          f.putPackageRoot(packageId, null, updatedMetadata);
-        }
-        catch (IOException e) {
-          log.error("Failed to update package root, packageId: {}", packageId, e);
-        }
-      });
+      UnitOfWork.begin(destination.facet(StorageFacet.class).txSupplier());
+      try {
+        updatePackageRoot(npmHostedFacet, component, destination);
+      }
+      finally {
+        UnitOfWork.end();
+      }
+
     });
     return component;
+  }
+
+  @Transactional
+  protected void updatePackageRoot(final NpmHostedFacet npmHostedFacet,
+                                   final Component component,
+                                   final Repository destination)
+  {
+    final StorageTx tx = UnitOfWork.currentTx();
+    tx.browseAssets(component).forEach(asset -> {
+      Blob blob = checkNotNull(tx.getBlob(asset.blobRef()));
+      final Map<String, Object> packageJson = npmPackageParser.parsePackageJson(blob::getInputStream);
+      final NpmPackageId packageId = NpmPackageId.parse((String) packageJson.get(P_NAME));
+
+      try {
+        final NestedAttributesMap updatedMetadata = createFullPackageMetadata(
+            new NestedAttributesMap("metadata", packageJson),
+            destination.getName(),
+            blob.getMetrics().getSha1Hash(),
+            destination,
+            extractNewestVersion);
+        npmHostedFacet.putPackageRoot(packageId, null, updatedMetadata);
+      }
+      catch (IOException e) {
+        log.error("Failed to update package root, packageId: {}", packageId, e);
+      }
+    });
   }
 }

@@ -10,13 +10,4 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-
-/**
- * DataStore REST API
- *
- * @since 3.20
- */
-@FeatureFlag(name = "nexus.datastore.enabled")
-package org.sonatype.nexus.datastore.internal.rest;
-
-import org.sonatype.nexus.common.app.FeatureFlag;
+module.exports = {}; // used to replace imported CSS modules with empty objects in Jest tests

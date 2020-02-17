@@ -874,6 +874,7 @@ Ext.define('NX.controller.Menu', {
 
         // Reset the unsaved changes flag
         content.resetUnsavedChangesFlag();
+        window.dirty = [];
       }
     });
   },
@@ -885,7 +886,8 @@ Ext.define('NX.controller.Menu', {
    */
   hasDirt: function() {
     var dirty = false,
-      forms = Ext.ComponentQuery.query('form[settingsForm=true]');
+      forms = Ext.ComponentQuery.query('form[settingsForm=true]'),
+      reactDirty = window.dirty || [];
 
     // Check for dirty content
     if (forms.length !== 0) {
@@ -897,7 +899,7 @@ Ext.define('NX.controller.Menu', {
       });
     }
 
-    return dirty;
+    return dirty || reactDirty.length > 0;
   },
 
   /**

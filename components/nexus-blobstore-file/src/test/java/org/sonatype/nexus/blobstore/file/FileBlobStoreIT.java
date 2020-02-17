@@ -41,6 +41,7 @@ import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.io.DirectoryHelper;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.common.property.PropertiesFile;
 import org.sonatype.nexus.scheduling.internal.PeriodicJobServiceImpl;
 
 import com.google.common.collect.ImmutableMap;
@@ -126,6 +127,7 @@ public class FileBlobStoreIT
   @Before
   public void setUp() throws Exception {
     when(nodeAccess.getId()).thenReturn(UUID.randomUUID().toString());
+    when(nodeAccess.isOldestNode()).thenReturn(true);
     when(dryRunPrefix.get()).thenReturn("");
     ApplicationDirectories applicationDirectories = mock(ApplicationDirectories.class);
     blobStoreDirectory = util.createTempDir().toPath();
@@ -626,6 +628,50 @@ public class FileBlobStoreIT
 
     assertThat(Files.exists(bytesPath), is(false));
     assertThat(Files.exists(propertiesPath), is(false));
+  }
+
+  @Test
+  public void testCompactWithoutIndex() throws Exception {
+    byte[] content = new byte[TEST_DATA_LENGTH];
+    final Blob blob1 = underTest.create(new ByteArrayInputStream(content), TEST_HEADERS);
+    final Blob blob2 = underTest.create(new ByteArrayInputStream(content), TEST_HEADERS);
+    final Blob blob3 = underTest.create(new ByteArrayInputStream(content), TEST_HEADERS);
+    final Blob blob4 = underTest.create(new ByteArrayInputStream(content), TEST_HEADERS);
+
+    Path bytesPath1 = contentDirectory.resolve(blobIdResolver.getLocation(blob1.getId()) +
+        FileBlobStore.BLOB_CONTENT_SUFFIX);
+    Path bytesPath2 = contentDirectory.resolve(blobIdResolver.getLocation(blob2.getId()) +
+        FileBlobStore.BLOB_CONTENT_SUFFIX);
+    Path bytesPath3 = contentDirectory.resolve(blobIdResolver.getLocation(blob3.getId()) +
+        FileBlobStore.BLOB_CONTENT_SUFFIX);
+    Path bytesPath4 = contentDirectory.resolve(blobIdResolver.getLocation(blob4.getId()) +
+        FileBlobStore.BLOB_CONTENT_SUFFIX);
+
+    assertThat(bytesPath1.toFile().exists(), is(true));
+    assertThat(bytesPath2.toFile().exists(), is(true));
+    assertThat(bytesPath3.toFile().exists(), is(true));
+    assertThat(bytesPath4.toFile().exists(), is(true));
+
+    underTest.delete(blob1.getId(), "test");
+    underTest.delete(blob3.getId(), "test");
+    underTest.delete(blob4.getId(), "test");
+
+    assertThat(bytesPath1.toFile().exists(), is(true));
+    assertThat(bytesPath2.toFile().exists(), is(true));
+    assertThat(bytesPath3.toFile().exists(), is(true));
+    assertThat(bytesPath4.toFile().exists(), is(true));
+
+    PropertiesFile metadataPropertiesFile = new PropertiesFile(
+        underTest.getAbsoluteBlobDir().resolve(FileBlobStore.METADATA_FILENAME).toFile());
+    metadataPropertiesFile.setProperty(FileBlobStore.REBUILD_DELETED_BLOB_INDEX_KEY, "true");
+    metadataPropertiesFile.store();
+
+    underTest.compact();
+
+    assertThat(bytesPath1.toFile().exists(), is(false));
+    assertThat(bytesPath2.toFile().exists(), is(true));
+    assertThat(bytesPath3.toFile().exists(), is(false));
+    assertThat(bytesPath4.toFile().exists(), is(false));
   }
 
   private void verifyMoveOperations(Blob blob) throws IOException {

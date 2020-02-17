@@ -31,6 +31,7 @@ import org.codehaus.plexus.interpolation.StringSearchInterpolator;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.stream.Collectors.toMap;
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.SHUTDOWN;
 
 /**
  * Common support class for {@link DataStore}s.
@@ -127,7 +128,7 @@ public abstract class DataStoreSupport<S extends DataSession<?>>
    * Permanently stops this data store regardless of the current state, disallowing restarts.
    */
   @Override
-  @Transitions(to = "SHUTDOWN")
+  @Transitions(to = SHUTDOWN)
   public void shutdown() throws Exception {
     if (isStarted()) {
       doStop();

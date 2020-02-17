@@ -18,12 +18,15 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.FileStore;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -75,6 +78,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.cache.CacheLoader.from;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
 import static java.util.Arrays.stream;
 import static java.util.Optional.ofNullable;
@@ -84,6 +88,7 @@ import static org.sonatype.nexus.blobstore.DefaultBlobIdLocationResolver.TEMPORA
 import static org.sonatype.nexus.blobstore.DirectPathLocationStrategy.DIRECT_PATH_ROOT;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.FAILED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.NEW;
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.SHUTDOWN;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STOPPED;
 import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
@@ -474,7 +479,7 @@ public class FileBlobStore
       blobAttributes.store();
 
       // record blob for hard-deletion when the next compact task runs
-      deletedBlobIndex.add(blobId.toString().getBytes(StandardCharsets.UTF_8));
+      deletedBlobIndex.add(blobId.toString().getBytes(UTF_8));
       blob.markStale();
 
       return true;
@@ -535,31 +540,27 @@ public class FileBlobStore
   @Override
   protected void doCompact(@Nullable final BlobStoreUsageChecker inUseChecker) {
     try {
-      maybeRebuildDeletedBlobIndex();
+      PropertiesFile metadata = new PropertiesFile(getAbsoluteBlobDir().resolve(METADATA_FILENAME).toFile());
+      metadata.load();
+      boolean deletedBlobIndexRebuildRequired =
+          Boolean.parseBoolean(metadata.getProperty(REBUILD_DELETED_BLOB_INDEX_KEY, "false"));
 
-      log.info("Begin deleted blobs processing");
-      // only process each blob once (in-use blobs may be re-added to the index)
-      ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60);
-      for (int counter = 0, numBlobs = deletedBlobIndex.size(); counter < numBlobs; counter++) {
-        checkCancellation();
-        byte[] bytes = deletedBlobIndex.peek();
-        if (bytes == null) {
+      if (deletedBlobIndexRebuildRequired) {
+        //this is a multi node task, i.e. it will run on all nodes simultaneously, so make sure walking the blobstore
+        //is only done on one node
+        if (!nodeAccess.isOldestNode()) {
+          log.info("Skipping compact without deleted blob index on this node because this is not the oldest node.");
           return;
         }
-        deletedBlobIndex.remove();
-        BlobId blobId = new BlobId(new String(bytes, StandardCharsets.UTF_8));
-        FileBlob blob = liveBlobs.getIfPresent(blobId);
-        if (blob == null || blob.isStale()) {
-          maybeCompactBlob(inUseChecker, blobId);
-        }
-        else {
-          // still in use, so move it to end of the queue
-          deletedBlobIndex.add(bytes);
-        }
-        progressLogger.info("Elapsed time: {}, processed: {}/{}", progressLogger.getElapsed(),
-            counter + 1, numBlobs);
+
+        doCompactWithoutDeletedBlobIndex(inUseChecker);
+
+        metadata.remove(REBUILD_DELETED_BLOB_INDEX_KEY);
+        metadata.store();
       }
-      progressLogger.flush();
+      else {
+        doCompactWithDeletedBlobIndex(inUseChecker);
+      }
     }
     catch (BlobStoreException | TaskInterruptedException e) {
       throw e;
@@ -569,15 +570,15 @@ public class FileBlobStore
     }
   }
 
-  private void maybeCompactBlob(@Nullable final BlobStoreUsageChecker inUseChecker, final BlobId blobId)
-      throws IOException
+  private boolean maybeCompactBlob(@Nullable final BlobStoreUsageChecker inUseChecker, final BlobId blobId)
   {
     Optional<FileBlobAttributes> attributesOption = ofNullable((FileBlobAttributes) getBlobAttributes(blobId));
     if (!attributesOption.isPresent() || !undelete(inUseChecker, blobId, attributesOption.get(), false)) {
       // attributes file is missing or blob id not in use, so it's safe to delete the file
       log.debug("Hard deleting blob id: {}, in blob store: {}", blobId, blobStoreConfiguration.getName());
-      deleteHard(blobId);
+      return deleteHard(blobId);
     }
+    return false;
   }
 
   @Override
@@ -699,7 +700,7 @@ public class FileBlobStore
    * Delete files known to be part of the FileBlobStore implementation if the content directory is empty.
    */
   @Override
-  @Guarded(by = {NEW, STOPPED, FAILED})
+  @Guarded(by = {NEW, STOPPED, FAILED, SHUTDOWN})
   public void remove() {
     try {
       Path blobDir = getAbsoluteBlobDir();
@@ -759,56 +760,109 @@ public class FileBlobStore
     return configurationPath;
   }
 
-  @VisibleForTesting
-  void maybeRebuildDeletedBlobIndex() throws IOException {
-    PropertiesFile metadata = new PropertiesFile(getAbsoluteBlobDir().resolve(METADATA_FILENAME).toFile());
-    metadata.load();
-    String deletedBlobIndexRebuildRequired = metadata.getProperty(REBUILD_DELETED_BLOB_INDEX_KEY, "false");
-    if (Boolean.parseBoolean(deletedBlobIndexRebuildRequired)) {
-      Path deletedIndex = getAbsoluteBlobDir().resolve(getDeletionsFilename());
-
-      log.warn("Clearing deletions index file {} for rebuild", deletedIndex);
-      deletedBlobIndex.clear();
-
-      if (!nodeAccess.isOldestNode()) {
-        log.info("Skipping deletion index rebuild because this is not the oldest node.");
+  void doCompactWithDeletedBlobIndex(@Nullable final BlobStoreUsageChecker inUseChecker) throws IOException {
+    log.info("Begin deleted blobs processing");
+    // only process each blob once (in-use blobs may be re-added to the index)
+    ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60);
+    for (int counter = 0, numBlobs = deletedBlobIndex.size(); counter < numBlobs; counter++) {
+      checkCancellation();
+      byte[] bytes = deletedBlobIndex.peek();
+      if (bytes == null) {
         return;
       }
-
-      log.warn("Rebuilding deletions index file {}", deletedIndex);
-      ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60);
-      final AtomicInteger processed = new AtomicInteger();
-      int softDeletedBlobsFound = getBlobIdStream()
-          .map(this::getFileBlobAttributes)
-          .filter(Objects::nonNull)
-          .mapToInt(attributes -> {
-            try {
-              if (attributes.isDeleted()) {
-                String blobId = getBlobIdFromAttributeFilePath(new FileAttributesLocation(attributes.getPath()));
-                deletedBlobIndex.add(blobId.getBytes(StandardCharsets.UTF_8));
-                return 1;
-              }
-            }
-            catch (IOException e) {
-              log.warn("Failed to add blobId to index from attribute file {}", attributes.getPath(), e);
-            }
-            finally {
-              progressLogger.info("Elapsed time: {}, processed: {}, deleted: {}", progressLogger.getElapsed(),
-                  processed.incrementAndGet(), deletedBlobIndex.size());
-            }
-            return 0;
-          })
-          .sum();
-
-      progressLogger.flush();
-      log.warn("Elapsed time: {}, Added {} soft deleted blob(s) to index file {}", progressLogger.getElapsed(),
-          softDeletedBlobsFound, deletedIndex);
-
-      metadata.remove(REBUILD_DELETED_BLOB_INDEX_KEY);
-      metadata.store();
+      BlobId blobId = new BlobId(new String(bytes, UTF_8));
+      FileBlob blob = liveBlobs.getIfPresent(blobId);
+      if (blob == null || blob.isStale()) {
+        maybeCompactBlob(inUseChecker, blobId);
+        deletedBlobIndex.remove();
+      }
+      else {
+        // still in use, so move it to end of the queue
+        deletedBlobIndex.remove();
+        deletedBlobIndex.add(bytes);
+      }
+      progressLogger.info("Elapsed time: {}, processed: {}/{}", progressLogger.getElapsed(),
+          counter + 1, numBlobs);
     }
-    else {
-      log.info("Deletions index file rebuild not required");
+    progressLogger.flush();
+  }
+
+  @VisibleForTesting
+  void doCompactWithoutDeletedBlobIndex(@Nullable final BlobStoreUsageChecker inUseChecker) throws IOException {
+    log.info("Begin deleted blobs processing without deleted blob index");
+    //clear the deleted blob index ahead of time, so we won't lose deletes that may occur while the compact is being
+    //performed
+    deletedBlobIndex.clear();
+
+    ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60);
+    AtomicInteger count = new AtomicInteger(0);
+
+    //rather than using the blobId stream here, need to use a different means of walking the file tree, as
+    //we are deleting items on the way through, and apparently on *nix systems, deleting files that you are about to
+    //walk over causes a FileNotFoundException to be thrown and the walking stops.  Overridding the visitFileFailed
+    //method allows us to get past that
+    Files.walkFileTree(contentDir, EnumSet.of(FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<Path>(){
+      @Override
+      public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
+        try {
+          checkCancellation();
+        }
+        catch (TaskInterruptedException e) {
+          log.info("Cancel request received, terminating compact process.");
+          return FileVisitResult.TERMINATE;
+        }
+
+        if (!isNonTemporaryAttributeFile(file)) {
+          return FileVisitResult.CONTINUE;
+        }
+
+        FileBlobAttributes attributes =
+            getFileBlobAttributes(new BlobId(getBlobIdFromAttributeFilePath(new FileAttributesLocation(file))));
+
+        if (attributes != null && attributes.isDeleted()) {
+          compactByAttributes(attributes, inUseChecker, count, progressLogger);
+        }
+
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult visitFileFailed(final Path file, final IOException exc) throws IOException {
+        log.debug("Visit file failed {}, continuing to next.", file);
+        return FileVisitResult.CONTINUE;
+      }
+    });
+
+    //Do this check one final time, to preserve the functionality of throwing an exception when interrupted
+    checkCancellation();
+
+    progressLogger.flush();
+  }
+
+  private void compactByAttributes(
+      final FileBlobAttributes attributes,
+      final BlobStoreUsageChecker inUseChecker,
+      final AtomicInteger count,
+      final ProgressLogIntervalHelper progressLogger)
+  {
+    String blobId = getBlobIdFromAttributeFilePath(new FileAttributesLocation(attributes.getPath()));
+    FileBlob blob = liveBlobs.getIfPresent(blobId);
+    try {
+      if (blob == null || blob.isStale()) {
+        if (!maybeCompactBlob(inUseChecker, new BlobId(blobId))) {
+          deletedBlobIndex.add(blobId.getBytes(UTF_8));
+        }
+        else {
+          progressLogger.info("Elapsed time: {}, processed: {}", progressLogger.getElapsed(),
+              count.incrementAndGet());
+        }
+      }
+      else {
+        deletedBlobIndex.add(blobId.getBytes(UTF_8));
+      }
+    }
+    catch (IOException e) {
+      log.warn("Failed to add blobId to index from attribute file {}", blobId, e);
     }
   }
 

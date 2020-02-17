@@ -10,34 +10,8 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext, NX*/
+import { configure } from 'enzyme';
+import Adapter from 'enzyme-adapter-react-16';
+import "jest-enzyme";
 
-/**
- * Datastore Type store.
- *
- * @since 3.19
- */
-Ext.define('NX.coreui.store.DatastoreType', {
-  extend: 'Ext.data.Store',
-  model: 'NX.coreui.model.DatastoreType',
-
-  proxy: {
-    type: 'direct',
-    paramsAsHash: false,
-
-    api: {
-      read: 'NX.direct.coreui_Datastore.readTypes'
-    },
-
-    reader: {
-      type: 'json',
-      rootProperty: 'data',
-      successProperty: 'success'
-    }
-  },
-
-  sorters: { property: 'name', direction: 'ASC' },
-  filters: [
-    { property: 'isEnabled', value: true }
-  ]
-});
+configure({ adapter: new Adapter() });

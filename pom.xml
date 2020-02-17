@@ -91,10 +91,11 @@
     <nexus.version>3.22.0-SNAPSHOT</nexus.version>
     <nexus2.version>2.14.15-01</nexus2.version>
 
-    <!-- Define the node and npm versions used by the frontend-maven-plugin -->
+    <!-- Define the node and yarn versions used by the frontend-maven-plugin -->
     <node.version>v12.14.0</node.version>
-    <npm.version>6.13.4</npm.version>
-    <npm.install>ci</npm.install>
+    <yarn.version>v1.22.0</yarn.version>
+    <npm.install>install --frozen-lockfile</npm.install>
+    <npm.skipTests>false</npm.skipTests>
 
     <!-- logging configuration used in logback config files to control test logging -->
     <test.log.level>INFO</test.log.level>
@@ -1751,6 +1752,32 @@
           </plugins>
         </pluginManagement>
       </build>
+    </profile>
+
+    <profile>
+      <!-- Make the npm test executions aware of the skipTests property -->
+      <id>skipNpmTests-skipTests</id>
+      <activation>
+        <property>
+          <name>skipTests</name>
+        </property>
+      </activation>
+      <properties>
+        <npm.skipTests>true</npm.skipTests>
+      </properties>
+    </profile>
+
+    <profile>
+      <!-- Make the npm test executions aware of the maven.test.skip property -->
+      <id>skipNpmTests-maven.test.skip</id>
+      <activation>
+        <property>
+          <name>maven.test.skip</name>
+        </property>
+      </activation>
+      <properties>
+        <npm.skipTests>true</npm.skipTests>
+      </properties>
     </profile>
 
   </profiles>

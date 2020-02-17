@@ -32,4 +32,6 @@ class UserXO
    * True if the current user has general administrator privileges (ie. admin role).
    */
   boolean administrator
+
+  Set<String> authenticatedRealms
 }

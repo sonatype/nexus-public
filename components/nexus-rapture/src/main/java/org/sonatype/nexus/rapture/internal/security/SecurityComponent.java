@@ -146,6 +146,7 @@ public class SecurityComponent
     if (subject != null && subject.isAuthenticated()) {
       userXO = new UserXO();
       userXO.setAuthenticated(subject.isAuthenticated());
+      userXO.setAuthenticatedRealms(subject.getPrincipals().getRealmNames());
 
       // HACK: roles for the current user are not exposed to the UI.
       // HACK: but we need to know if user is admin or not for some things (like outreach)

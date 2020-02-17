@@ -15,8 +15,7 @@ import React, {useState, useEffect} from 'react';
 import './AnonymousSettings.scss';
 
 import Axios from 'axios';
-import { Button, ContentBody, Checkbox, Textfield, Select, SettingsSection } from 'nexus-ui-plugin';
-import ExtJS from '../../../../interface/ExtJS';
+import { ExtJS, Button, ContentBody, Checkbox, Textfield, Select, SettingsSection } from 'nexus-ui-plugin';
 import UIStrings from '../../../../constants/UIStrings';
 
 export default function AnonymousSettings() {
@@ -89,6 +88,8 @@ export default function AnonymousSettings() {
       (key) => pristineSettings[key] === anonymousSettings[key]
   );
   const {enabled, userId, realmName} = anonymousSettings;
+
+  ExtJS.setDirtyStatus('AnonymousSettings', !isPristine);
 
   return <ContentBody className='nxrm-anonymous-settings'>
     <SettingsSection isLoading={isLoading}>

@@ -271,4 +271,11 @@ public interface BlobStore
    * @since 3.17
    */
   boolean isEmpty();
+
+  /**
+   * Permanently stops this blob store.
+   *
+   * @since 3.next
+   */
+  void shutdown() throws Exception;
 }

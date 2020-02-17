@@ -10,36 +10,29 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.coreui
+import ExtJS from './ExtJS';
 
-import javax.validation.constraints.NotNull
-import javax.validation.constraints.Pattern
+describe('ExtJS', () => {
+  describe('setDirtyStatus', () => {
+    it('sets the dirty status correctly', () => {
+      ExtJS.setDirtyStatus('key', true);
 
-import org.sonatype.nexus.validation.constraint.NamePatternConstants
-import org.sonatype.nexus.validation.group.Create
+      expect(window.dirty.includes('key')).toEqual(true);
+      expect(window.dirty.includes('key2')).toEqual(false);
 
-import org.hibernate.validator.constraints.NotEmpty
+      ExtJS.setDirtyStatus('key2', true);
 
-/**
- * @since 3.19
- */
-class DataStoreXO
-{
-  @Pattern(regexp = NamePatternConstants.REGEX, message = NamePatternConstants.MESSAGE)
-  @NotEmpty
-  @UniqueDataStoreName(groups = Create)
-  String name
+      expect(window.dirty.includes('key')).toEqual(true);
+      expect(window.dirty.includes('key2')).toEqual(true);
 
-  @NotEmpty
-  String type
+      ExtJS.setDirtyStatus('key', false);
 
-  @NotEmpty
-  String source
+      expect(window.dirty.includes('key')).toEqual(false);
+      expect(window.dirty.includes('key2')).toEqual(true);
 
-  @NotNull
-  Map<String, String> attributes
+      ExtJS.setDirtyStatus('key2', false);
 
-  boolean inUse
-
-  boolean isContentStore
-}
+      expect(window.dirty).toEqual([]);
+    });
+  });
+});

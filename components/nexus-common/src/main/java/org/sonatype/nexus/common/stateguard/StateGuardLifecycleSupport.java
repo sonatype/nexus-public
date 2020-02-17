@@ -47,6 +47,8 @@ public class StateGuardLifecycleSupport
     public static final String STOPPED = "STOPPED";
 
     public static final String FAILED = "FAILED";
+
+    public static final String SHUTDOWN = "SHUTDOWN";
   }
 
   protected final StateGuard states = new StateGuard.Builder()
