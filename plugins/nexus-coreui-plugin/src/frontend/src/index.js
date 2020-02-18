@@ -23,7 +23,7 @@ window.plugins.push({
       text: UIStrings.ANONYMOUS_SETTINGS.MENU.text,
       description: UIStrings.ANONYMOUS_SETTINGS.MENU.description,
       view: AnonymousSettings,
-      iconCls: 'x-fa fa-id-card',
+      iconCls: 'x-fa fa-user',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         featureFlags: [
