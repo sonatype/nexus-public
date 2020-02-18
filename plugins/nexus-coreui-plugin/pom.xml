@@ -176,9 +176,9 @@
           </execution>
 
           <execution>
-            <id>npm-unit-test</id>
+            <id>js-unit-test</id>
             <goals>
-              <goal>npm</goal>
+              <goal>yarn</goal>
             </goals>
             <phase>test</phase>
             <configuration>
