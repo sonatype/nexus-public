@@ -43,7 +43,7 @@ public class CleanupPolicyAssetNamePatternValidator
       }
       catch (InvalidExpressionException e) { // NOSONAR
         context.disableDefaultConstraintViolation();
-        context.buildConstraintViolationWithTemplate(e.getMessage()).addConstraintViolation();
+        context.buildConstraintViolationWithTemplate(getEscapeHelper().stripJavaEl(e.getMessage())).addConstraintViolation();
         return false;
       }
     }

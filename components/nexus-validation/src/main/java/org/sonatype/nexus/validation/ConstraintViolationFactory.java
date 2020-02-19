@@ -117,7 +117,8 @@ public class ConstraintViolationFactory
       context.disableDefaultConstraintViolation();
 
       // build a custom property path
-      ConstraintViolationBuilder builder = context.buildConstraintViolationWithTemplate(bean.getMessage());
+      ConstraintViolationBuilder builder =
+          context.buildConstraintViolationWithTemplate(getEscapeHelper().stripJavaEl(bean.getMessage()));
       NodeBuilderCustomizableContext nodeBuilder = null;
       for (String part : bean.getPath().split("\\.")) {
         if (nodeBuilder == null) {
