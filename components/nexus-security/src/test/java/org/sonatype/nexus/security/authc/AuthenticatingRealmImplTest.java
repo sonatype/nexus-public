@@ -26,16 +26,20 @@ import org.sonatype.nexus.security.internal.AuthenticatingRealmImpl;
 import org.sonatype.nexus.security.internal.SecurityConfigurationManagerImpl;
 
 import com.google.common.hash.Hashing;
-import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
+import org.apache.shiro.authc.CredentialsException;
+import org.apache.shiro.authc.DisabledAccountException;
+import org.apache.shiro.authc.IncorrectCredentialsException;
+import org.apache.shiro.authc.UnknownAccountException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.authc.credential.PasswordService;
 import org.apache.shiro.realm.Realm;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.fail;
 
 public class AuthenticatingRealmImplTest
     extends AbstractSecurityTest
@@ -47,6 +51,9 @@ public class AuthenticatingRealmImplTest
   private PasswordService passwordService;
 
   private CUser testUser;
+
+  @Rule
+  public ExpectedException thrown = ExpectedException.none();
 
   @Override
   protected void setUp() throws Exception {
@@ -95,14 +102,8 @@ public class AuthenticatingRealmImplTest
 
     UsernamePasswordToken upToken = new UsernamePasswordToken("username", "badpassword");
 
-    try {
-      realm.getAuthenticationInfo(upToken);
-
-      fail("Authentication should have failed");
-    }
-    catch (AuthenticationException e) {
-      // good
-    }
+    thrown.expect(IncorrectCredentialsException.class);
+    realm.getAuthenticationInfo(upToken);
   }
 
   @Test
@@ -110,14 +111,8 @@ public class AuthenticatingRealmImplTest
     buildTestAuthenticationConfig(CUser.STATUS_DISABLED);
     UsernamePasswordToken upToken = new UsernamePasswordToken("username", "password");
 
-    try {
-      realm.getAuthenticationInfo(upToken);
-
-      fail("Authentication should have failed");
-    }
-    catch (AuthenticationException e) {
-      // good
-    }
+    thrown.expect(DisabledAccountException.class);
+    realm.getAuthenticationInfo(upToken);
   }
 
   @Test
@@ -143,6 +138,24 @@ public class AuthenticatingRealmImplTest
 
     assertThat(passwordService.passwordsMatch(password, hash), is(true));
     assertThat(passwordService.passwordsMatch(password, updatedUser.getPassword()), is(true));
+  }
+
+  @Test
+  public void testNoneExistentUser() throws Exception {
+    buildTestAuthenticationConfig(CUser.STATUS_ACTIVE);
+    UsernamePasswordToken upToken = new UsernamePasswordToken("non-existent-user", "password");
+
+    thrown.expect(UnknownAccountException.class);
+    realm.getAuthenticationInfo(upToken);
+  }
+
+  @Test
+  public void testEmptyPassword() throws Exception {
+    buildTestAuthenticationConfig(CUser.STATUS_ACTIVE);
+    UsernamePasswordToken upToken = new UsernamePasswordToken("username", (String) null);
+
+    thrown.expect(CredentialsException.class);
+    realm.getAuthenticationInfo(upToken);
   }
 
   private void buildTestAuthenticationConfig(final String status) throws Exception {

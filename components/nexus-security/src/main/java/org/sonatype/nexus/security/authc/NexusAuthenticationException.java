@@ -14,53 +14,27 @@ package org.sonatype.nexus.security.authc;
 
 import java.util.Set;
 
-import static java.util.Collections.emptySet;
+import org.apache.shiro.authc.AccountException;
 
 /**
- * An event fired when the an user is authorized.
+ * Exception with details about a failed authentication attempt.
  *
- * @since 3.0
+ * @since 3.next
  */
-public class AuthenticationEvent
+public class NexusAuthenticationException
+    extends AccountException
 {
-  private final String userId;
-
-  private final boolean successful;
-
   private final Set<AuthenticationFailureReason> authenticationFailureReasons;
 
-  public AuthenticationEvent(final String userId, final boolean successful) {
-    this(userId, successful, emptySet());
-  }
-
-  public AuthenticationEvent(
-      final String userId,
-      final boolean successful,
-      final Set<AuthenticationFailureReason> authenticationFailureReasons)
+  public NexusAuthenticationException(
+      final String cause,
+      final Set<AuthenticationFailureReason> authenticationFailureReason)
   {
-    this.userId = userId;
-    this.successful = successful;
-    this.authenticationFailureReasons = authenticationFailureReasons;
-  }
-
-  public String getUserId() {
-    return userId;
-  }
-
-  public boolean isSuccessful() {
-    return successful;
+    super(cause);
+    this.authenticationFailureReasons = authenticationFailureReason;
   }
 
   public Set<AuthenticationFailureReason> getAuthenticationFailureReasons() {
     return authenticationFailureReasons;
-  }
-
-  @Override
-  public String toString() {
-    return "AuthenticationEvent{" +
-        "userId='" + userId + '\'' +
-        ", successful=" + successful +
-        ", failureReasons=" + authenticationFailureReasons +
-        '}';
   }
 }

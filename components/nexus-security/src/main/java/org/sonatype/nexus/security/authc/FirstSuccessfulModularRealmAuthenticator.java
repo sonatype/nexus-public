@@ -13,10 +13,17 @@
 package org.sonatype.nexus.security.authc;
 
 import java.util.Collection;
+import java.util.EnumSet;
+import java.util.Set;
 
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
+import org.apache.shiro.authc.CredentialsException;
+import org.apache.shiro.authc.DisabledAccountException;
+import org.apache.shiro.authc.ExpiredCredentialsException;
+import org.apache.shiro.authc.IncorrectCredentialsException;
+import org.apache.shiro.authc.UnknownAccountException;
 import org.apache.shiro.authc.pam.ModularRealmAuthenticator;
 import org.apache.shiro.realm.Realm;
 import org.slf4j.Logger;
@@ -35,10 +42,13 @@ public class FirstSuccessfulModularRealmAuthenticator
   private static final Logger log = LoggerFactory.getLogger(FirstSuccessfulModularRealmAuthenticator.class);
 
   @Override
-  protected AuthenticationInfo doMultiRealmAuthentication(final Collection<Realm> realms,
-                                                          final AuthenticationToken token)
+  protected AuthenticationInfo doMultiRealmAuthentication(//NOSONAR need to distinguish the exceptions to obtain reason for failure
+      final Collection<Realm> realms,
+      final AuthenticationToken token)
   {
     log.trace("Iterating through [{}] realms for PAM authentication", realms.size());
+
+    Set<AuthenticationFailureReason> authenticationFailureReasons = EnumSet.noneOf(AuthenticationFailureReason.class);
 
     for (Realm realm : realms) {
       // check if the realm supports this token
@@ -53,8 +63,32 @@ public class FirstSuccessfulModularRealmAuthenticator
 
           log.trace("Realm [{}] returned null when authenticating token [{}]", realm, token);
         }
+        catch (DisabledAccountException e) {
+          logExceptionForRealm(e, realm);
+          authenticationFailureReasons.add(AuthenticationFailureReason.DISABLED_ACCOUNT);
+        }
+        catch (ExpiredCredentialsException e) {
+          logExceptionForRealm(e, realm);
+          authenticationFailureReasons.add(AuthenticationFailureReason.EXPIRED_CREDENTIALS);
+        }
+        catch (IncorrectCredentialsException e) {
+          logExceptionForRealm(e, realm);
+          authenticationFailureReasons.add(AuthenticationFailureReason.INCORRECT_CREDENTIALS);
+        }
+        catch (UnknownAccountException e) {
+          logExceptionForRealm(e, realm);
+          authenticationFailureReasons.add(AuthenticationFailureReason.USER_NOT_FOUND);
+        }
+        catch (CredentialsException e) {
+          logExceptionForRealm(e, realm);
+          authenticationFailureReasons.add(AuthenticationFailureReason.PASSWORD_EMPTY);
+        }
+        catch (AuthenticationException e) {
+          logExceptionForRealm(e, realm);
+          authenticationFailureReasons.add(AuthenticationFailureReason.UNKNOWN);
+        }
         catch (Throwable t) {
-          log.trace("Realm [{}] threw an exception during a multi-realm authentication attempt", realm, t);
+          logExceptionForRealm(t, realm);
         }
       }
       else {
@@ -62,8 +96,12 @@ public class FirstSuccessfulModularRealmAuthenticator
       }
     }
 
-    throw new AuthenticationException("Authentication token of type [" + token.getClass()
+    throw new NexusAuthenticationException("Authentication token of type [" + token.getClass()
         + "] could not be authenticated by any configured realms.  Please ensure that at least one realm can "
-        + "authenticate these tokens.");
+        + "authenticate these tokens.", authenticationFailureReasons);
+  }
+
+  private void logExceptionForRealm(Throwable t, Realm realm) {
+    log.trace("Realm [{}] threw an exception during a multi-realm authentication attempt", realm, t);
   }
 }

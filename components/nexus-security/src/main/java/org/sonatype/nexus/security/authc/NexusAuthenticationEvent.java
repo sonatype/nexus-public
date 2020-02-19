@@ -13,8 +13,11 @@
 package org.sonatype.nexus.security.authc;
 
 import java.util.Date;
+import java.util.Set;
 
 import org.sonatype.nexus.security.ClientInfo;
+
+import static java.util.Collections.emptySet;
 
 // FIXME: Sort out why we have 2 events: NexusAuthenticationEvent and AuthenticationEvent
 
@@ -29,10 +32,24 @@ public class NexusAuthenticationEvent
 
   private final Date date;
 
-  public NexusAuthenticationEvent(final ClientInfo info, final boolean successful) {
+  private final Set<AuthenticationFailureReason> authenticationFailureReasons;
+
+  public NexusAuthenticationEvent(
+      final ClientInfo info,
+      final boolean successful)
+  {
+    this(info, successful, emptySet());
+  }
+
+  public NexusAuthenticationEvent(
+      final ClientInfo info,
+      final boolean successful,
+      final Set<AuthenticationFailureReason> authenticationFailureReasons)
+  {
     this.clientInfo = info;
     this.successful = successful;
     this.date = new Date();
+    this.authenticationFailureReasons = authenticationFailureReasons;
   }
 
   public ClientInfo getClientInfo() {
@@ -45,5 +62,9 @@ public class NexusAuthenticationEvent
 
   public Date getEventDate() {
     return date;
+  }
+
+  public Set<AuthenticationFailureReason> getAuthenticationFailureReasons() {
+    return authenticationFailureReasons;
   }
 }

@@ -25,8 +25,10 @@ import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.apache.shiro.authc.AccountException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
+import org.apache.shiro.authc.CredentialsException;
 import org.apache.shiro.authc.DisabledAccountException;
 import org.apache.shiro.authc.SimpleAuthenticationInfo;
+import org.apache.shiro.authc.UnknownAccountException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.authc.credential.CredentialsMatcher;
 import org.apache.shiro.authc.credential.PasswordMatcher;
@@ -61,8 +63,9 @@ public class AuthenticatingRealmImpl
   private final PasswordService passwordService;
 
   @Inject
-  public AuthenticatingRealmImpl(final SecurityConfigurationManager configuration,
-                                 final PasswordService passwordService)
+  public AuthenticatingRealmImpl(
+      final SecurityConfigurationManager configuration,
+      final PasswordService passwordService)
   {
     this.configuration = configuration;
     this.passwordService = passwordService;
@@ -83,11 +86,11 @@ public class AuthenticatingRealmImpl
       user = configuration.readUser(upToken.getUsername());
     }
     catch (UserNotFoundException e) {
-      throw new AccountException("User '" + upToken.getUsername() + "' cannot be retrieved.", e);
+      throw new UnknownAccountException("User '" + upToken.getUsername() + "' cannot be retrieved.", e);
     }
 
     if (user.getPassword() == null) {
-      throw new AccountException("User '" + upToken.getUsername() + "' has no password, cannot authenticate.");
+      throw new CredentialsException("User '" + upToken.getUsername() + "' has no password, cannot authenticate.");
     }
 
     if (user.isActive()) {
@@ -126,7 +129,8 @@ public class AuthenticatingRealmImpl
           updated = true;
         }
         catch (ConcurrentModificationException e) {
-          logger.debug("Could not re-hash user '{}' password as user was concurrently being updated. Retrying...", user.getId());
+          logger.debug("Could not re-hash user '{}' password as user was concurrently being updated. Retrying...",
+              user.getId());
         }
       }
       while (!updated);
@@ -141,7 +145,7 @@ public class AuthenticatingRealmImpl
    * Checks to see if the credentials in token match the credentials stored on user
    *
    * @param token the username/password token containing the credentials to verify
-   * @param user object containing the stored credentials
+   * @param user  object containing the stored credentials
    * @return true if credentials match, false otherwise
    */
   private boolean isValidCredentials(final UsernamePasswordToken token, final CUser user) {
@@ -159,8 +163,7 @@ public class AuthenticatingRealmImpl
   }
 
   /**
-   * Checks to see if the specified user is a legacy user.
-   * A legacy user has an unsalted password.
+   * Checks to see if the specified user is a legacy user. A legacy user has an unsalted password.
    */
   private boolean hasLegacyPassword(final CUser user) {
     //Legacy users have a shorter, unsalted, SHA1 or MD5 based hash
@@ -172,7 +175,7 @@ public class AuthenticatingRealmImpl
   }
 
   /**
-   *  Exposed to support flushing authc cache for a specific user
+   * Exposed to support flushing authc cache for a specific user
    */
   protected void clearCache(final String userId) {
     clearCache(new SimplePrincipalCollection(userId, NAME));
