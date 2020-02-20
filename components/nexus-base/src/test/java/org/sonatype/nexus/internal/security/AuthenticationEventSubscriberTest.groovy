@@ -27,7 +27,7 @@ class AuthenticationEventSubscriberTest
 
   AuthenticationEventSubscriber authenticationEventSubscriber
 
-  EventManager eventManager;
+  EventManager eventManager
 
   ClientInfoProvider clientInfoProvider
 
@@ -63,7 +63,7 @@ class AuthenticationEventSubscriberTest
       authenticationEventSubscriber.on(authenticationEvent)
 
     then: 'it builds an appropriate nexus authentication event and fires it'
-      1 * eventManager.post({ nexusAuthenticationEvent = it })
+      1 * eventManager.post(_) >> { nexusAuthenticationEvent = it[0] }
       nexusAuthenticationEvent.getAuthenticationFailureReasons().isEmpty()
       nexusAuthenticationEvent.isSuccessful()
       nexusAuthenticationEvent.getClientInfo() == clientInfo
@@ -84,7 +84,7 @@ class AuthenticationEventSubscriberTest
       authenticationEventSubscriber.on(authenticationEvent)
 
     then: 'it builds an appropriate nexus authentication event and fires it'
-      1 * eventManager.post({ nexusAuthenticationEvent = it })
+      1 * eventManager.post(_) >> { nexusAuthenticationEvent = it[0] }
       nexusAuthenticationEvent.getAuthenticationFailureReasons().isEmpty()
       nexusAuthenticationEvent.isSuccessful()
       nexusAuthenticationEvent.getClientInfo().getUserid() == authenticationEvent.getUserId()
@@ -106,7 +106,7 @@ class AuthenticationEventSubscriberTest
       authenticationEventSubscriber.on(authenticationEvent)
 
     then: 'it builds an appropriate nexus authentication event and fires it'
-      1 * eventManager.post({ nexusAuthenticationEvent = it })
+      1 * eventManager.post(_) >> { nexusAuthenticationEvent = it[0] }
       nexusAuthenticationEvent.getAuthenticationFailureReasons().size() == 1
       !nexusAuthenticationEvent.isSuccessful()
       nexusAuthenticationEvent.getAuthenticationFailureReasons().
