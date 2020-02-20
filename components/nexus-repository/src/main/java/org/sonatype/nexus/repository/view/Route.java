@@ -28,6 +28,7 @@ import static com.google.common.base.Preconditions.checkState;
  * @since 3.0
  */
 public class Route
+    implements org.sonatype.nexus.repository.recipe.Route
 {
   private final Matcher matcher;
 
@@ -79,6 +80,22 @@ public class Route
 
     public Builder handler(final Handler handler) {
       checkNotNull(handler);
+      return addHandler(handler);
+    }
+
+    // maps the new bridge interface from repository-config onto the view API
+    public Builder handler(final org.sonatype.nexus.repository.recipe.Handler handler) {
+      checkNotNull(handler);
+      if (handler instanceof Handler) {
+        return addHandler((Handler) handler);
+      }
+      else {
+        // partial mock that can be ignored
+        return this;
+      }
+    }
+
+    private Builder addHandler(final Handler handler) {
       handlers.add(handler);
       return this;
     }

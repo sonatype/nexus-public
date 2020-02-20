@@ -21,7 +21,6 @@ import org.sonatype.nexus.common.upgrade.Upgrades;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.orient.DatabaseUpgradeSupport;
-import org.sonatype.nexus.repository.config.internal.orient.OrientConfigurationEntityAdapter;
 
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
@@ -38,6 +37,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class ConfigDatabaseUpgrade_1_7 // NOSONAR
     extends DatabaseUpgradeSupport
 {
+  private static final String DB_NAME = "repository";
+
   private static final String P_ROUTING_RULE_ID = "routingRuleId";
 
   private Provider<DatabaseInstance> configDatabaseInstance;
@@ -49,7 +50,7 @@ public class ConfigDatabaseUpgrade_1_7 // NOSONAR
 
   @Override
   public void apply() throws Exception {
-    withDatabaseAndClass(configDatabaseInstance, OrientConfigurationEntityAdapter.DB_NAME, (db, table) -> {
+    withDatabaseAndClass(configDatabaseInstance, DB_NAME, (db, table) -> {
       if (!table.existsProperty(P_ROUTING_RULE_ID)) {
         table.createProperty(P_ROUTING_RULE_ID, OType.LINK);
       }

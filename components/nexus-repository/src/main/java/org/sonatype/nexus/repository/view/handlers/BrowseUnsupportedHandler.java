@@ -47,7 +47,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Singleton
 public class BrowseUnsupportedHandler
     extends ComponentSupport
-    implements Handler
+    implements Handler, org.sonatype.nexus.repository.BrowseUnsupportedHandler
 {
   private static final String TEMPLATE_RESOURCE = "browseUnsupportedHtml.vm";
 
@@ -76,6 +76,7 @@ public class BrowseUnsupportedHandler
     return HttpResponses.ok(new StringPayload(html, "text/html"));
   }
 
+  @Override
   @Nonnull
   public Route getRoute() {
     return this.route;

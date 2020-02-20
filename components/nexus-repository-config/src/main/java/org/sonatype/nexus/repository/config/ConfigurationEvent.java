@@ -10,18 +10,21 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.view;
+package org.sonatype.nexus.repository.config;
 
-import javax.annotation.Nonnull;
+import org.sonatype.nexus.common.event.WithLocality;
 
 /**
- * View handler.
+ * Repository {@link Configuration} event.
  *
- * @since 3.0
+ * @since 3.1
  */
-public interface Handler
-    extends org.sonatype.nexus.repository.recipe.Handler
+public interface ConfigurationEvent
+    extends WithLocality
 {
-  @Nonnull
-  Response handle(@Nonnull Context context) throws Exception;
+  boolean isLocal();
+
+  String getRepositoryName();
+
+  Configuration getConfiguration();
 }

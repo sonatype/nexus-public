@@ -27,6 +27,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryDeletedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryUpdatedEvent;
 import org.sonatype.nexus.repository.routing.RoutingRule;
+import org.sonatype.nexus.repository.routing.RoutingRuleInvalidatedEvent;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 
 import com.google.common.cache.CacheBuilder;

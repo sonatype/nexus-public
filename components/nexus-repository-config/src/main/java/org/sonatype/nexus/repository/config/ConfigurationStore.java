@@ -10,18 +10,32 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.view;
+package org.sonatype.nexus.repository.config;
 
-import javax.annotation.Nonnull;
+import java.util.List;
+
+import org.sonatype.goodies.lifecycle.Lifecycle;
 
 /**
- * View handler.
+ * {@link Configuration} store.
  *
  * @since 3.0
  */
-public interface Handler
-    extends org.sonatype.nexus.repository.recipe.Handler
+public interface ConfigurationStore
+  extends Lifecycle
 {
-  @Nonnull
-  Response handle(@Nonnull Context context) throws Exception;
+  List<Configuration> list();
+
+  void create(Configuration configuration);
+
+  void update(Configuration configuration);
+
+  void delete(Configuration configuration);
+
+  /**
+   * Create a new {@link Configuration} instance.
+   *
+   * @since 3.21
+   */
+  Configuration newConfiguration();
 }

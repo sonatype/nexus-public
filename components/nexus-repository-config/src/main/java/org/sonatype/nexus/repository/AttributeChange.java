@@ -10,18 +10,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.view;
+package org.sonatype.nexus.repository;
 
-import javax.annotation.Nonnull;
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
 /**
- * View handler.
+ * A command that modifies a {@link Repository}'s attributes.
  *
  * @since 3.0
  */
-public interface Handler
-    extends org.sonatype.nexus.repository.recipe.Handler
+public interface AttributeChange
 {
-  @Nonnull
-  Response handle(@Nonnull Context context) throws Exception;
+  /**
+   * Operations must have no side effects as they may be retried by the transaction infrastructure.
+   */
+  void apply(NestedAttributesMap attributes);
 }

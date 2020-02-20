@@ -17,18 +17,15 @@ import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.entity.DetachedEntityMetadata;
 import org.sonatype.nexus.common.entity.DetachedEntityVersion;
 import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.RepositoryDeletedEvent;
 import org.sonatype.nexus.repository.manager.RepositoryUpdatedEvent;
-import org.sonatype.nexus.repository.manager.internal.RepositoryImpl;
 import org.sonatype.nexus.repository.routing.OrientRoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 import org.sonatype.nexus.repository.routing.internal.orient.OrientRoutingRuleDeletedEvent;
 import org.sonatype.nexus.repository.routing.internal.orient.OrientRoutingRuleUpdatedEvent;
-import org.sonatype.nexus.repository.types.ProxyType;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -203,10 +200,8 @@ public class RoutingRuleCacheTest
   }
 
   private Repository createRepository(final Configuration configuration) throws Exception {
-    RepositoryImpl repo = new RepositoryImpl(eventManager, new ProxyType(), new Format("maven2")
-    {
-    });
-    repo.init(configuration);
+    Repository repo = mock(Repository.class);
+    when(repo.getConfiguration()).thenReturn(configuration);
     return repo;
   }
 }

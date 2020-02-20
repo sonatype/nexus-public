@@ -10,18 +10,16 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.view;
-
-import javax.annotation.Nonnull;
+package org.sonatype.nexus.repository.recipe;
 
 /**
- * View handler.
+ * Handler configuration.
  *
- * @since 3.0
+ * This interface helps bridge to the view API which now lives in another module.
+ *
+ * @since 3.next
  */
 public interface Handler
-    extends org.sonatype.nexus.repository.recipe.Handler
 {
-  @Nonnull
-  Response handle(@Nonnull Context context) throws Exception;
+  // intentionally blank
 }

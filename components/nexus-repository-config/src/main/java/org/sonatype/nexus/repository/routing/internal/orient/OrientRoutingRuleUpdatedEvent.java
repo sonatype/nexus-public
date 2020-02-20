@@ -10,18 +10,26 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.view;
+package org.sonatype.nexus.repository.routing.internal.orient;
 
-import javax.annotation.Nonnull;
+import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.entity.EntityMetadata;
+import org.sonatype.nexus.common.entity.EntityUpdatedEvent;
+import org.sonatype.nexus.repository.routing.RoutingRuleInvalidatedEvent;
 
 /**
- * View handler.
- *
- * @since 3.0
+ * @since 3.17
  */
-public interface Handler
-    extends org.sonatype.nexus.repository.recipe.Handler
+public class OrientRoutingRuleUpdatedEvent
+    extends EntityUpdatedEvent
+    implements RoutingRuleInvalidatedEvent
 {
-  @Nonnull
-  Response handle(@Nonnull Context context) throws Exception;
+  public OrientRoutingRuleUpdatedEvent(final EntityMetadata metadata) {
+    super(metadata);
+  }
+
+  @Override
+  public EntityId getRoutingRuleId() {
+    return getId();
+  }
 }

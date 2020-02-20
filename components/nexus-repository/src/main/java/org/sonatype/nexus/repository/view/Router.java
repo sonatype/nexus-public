@@ -20,6 +20,7 @@ import javax.annotation.Nullable;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.recipe.RouterBuilder;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
@@ -156,6 +157,7 @@ public class Router
    * View {@link Router} builder.
    */
   public static class Builder
+      implements RouterBuilder
   {
     // TODO: Consider if we want to add route-ids so we can reference defined routes for re-use (maybe builder state only)?
     // TODO: Consider a set of default handlers, as here we have timingHandler on each route?
@@ -166,6 +168,23 @@ public class Router
 
     public Builder route(final Route route) {
       checkNotNull(route);
+      return addRoute(route);
+    }
+
+    @Override
+    // maps the new bridge interface from repository-config onto the view API
+    public Builder route(final org.sonatype.nexus.repository.recipe.Route route) {
+      checkNotNull(route);
+      if (route instanceof Route) {
+        return addRoute((Route) route);
+      }
+      else {
+        // partial mock that can be ignored
+        return this;
+      }
+    }
+
+    private Builder addRoute(final Route route) {
       routes.add(route);
       return this;
     }

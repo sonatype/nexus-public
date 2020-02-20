@@ -10,18 +10,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.view;
+package org.sonatype.nexus.repository.routing;
 
-import javax.annotation.Nonnull;
+import org.sonatype.nexus.repository.recipe.Handler;
 
 /**
- * View handler.
+ * A handler which validates that the request is allowed by the RoutingRule assigned to the repository.
  *
- * @since 3.0
+ * This interface helps bridge to the real implementation which now lives in another module.
+ *
+ * @since 3.next
  */
-public interface Handler
-    extends org.sonatype.nexus.repository.recipe.Handler
+public interface RoutingRuleHandler
+    extends Handler
 {
-  @Nonnull
-  Response handle(@Nonnull Context context) throws Exception;
+  // intentionally blank
 }
