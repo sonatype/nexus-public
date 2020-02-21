@@ -29,6 +29,10 @@
 @Grab(group = 'commons-io', module = 'commons-io', version = '2.6')
 @Grab(group = 'org.apache.maven', module = 'maven-model', version = '3.5.0')
 @Grab(group = 'org.rauschig', module = 'jarchivelib', version = '0.7.1')
+@Grab(group = 'com.google.guava', module = 'guava', version = '25.0-jre')
+
+import java.nio.file.Paths
+import java.time.ZonedDateTime
 
 import com.caseyscarborough.colorizer.Colorizer
 import org.ajoberstar.grgit.*
@@ -40,11 +44,13 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Reader
 import org.rauschig.jarchivelib.ArchiveFormat
 import org.rauschig.jarchivelib.ArchiverFactory
 import ch.qos.logback.classic.Logger
-import ch.qos.logback.classic.Logger
+import com.google.common.base.Stopwatch
 import java.nio.charset.StandardCharsets
 
 import static ch.qos.logback.classic.Level.*
 import static com.aestasit.infrastructure.ssh.DefaultSsh.*
+import static java.time.ZoneId.systemDefault
+import static java.time.format.DateTimeFormatter.ofPattern
 import static org.slf4j.Logger.ROOT_LOGGER_NAME as ROOT
 import static org.slf4j.LoggerFactory.getLogger
 
@@ -1110,10 +1116,12 @@ def sass() {
  * @param cmd a String with the entire command to execute
  * @return
  */
-def mvnw(cmd) {
+def mvnw(String cmd) {
+  def stopwatch = Stopwatch.createStarted()
   info("Running command: ./mvnw $cmd")
-
-  def process = new ProcessBuilder("unbuffer", "./mvnw", *cmd.split()).redirectErrorStream(true).start()
+  List<String> command = ["unbuffer", "./mvnw"]
+  command.addAll(cmd.split())
+  def process = new ProcessBuilder(command).redirectErrorStream(true).start()
   process.inputStream.eachLine {
     // print to console
     println it
@@ -1121,9 +1129,20 @@ def mvnw(cmd) {
     buildLog << it.replaceAll("\u001B\\[[;\\d]*m", "") + "\n"
   }
   process.waitFor()
+  stopwatch.stop()
+
+  if (System.getenv().containsKey('NXRM_STATS')) {
+    Paths.get(System.getProperty('user.home'), '.nxrm_build_times') <<
+        "${timestamp()},${stopwatch.elapsed().seconds},${command.tail().join(' ')}\n"
+  }
 
   info("Done")
   return process
+}
+
+def String timestamp() {
+  ZonedDateTime.now(systemDefault())
+      .format(ofPattern('uuuu.MM.dd.HH.mm.ss'))
 }
 
 // SCRIPT STARTS HERE
@@ -1167,7 +1186,7 @@ processBuilder()
 processMavenCommand()
 
 hr()
-info("-- nxrm.sh build script")
+info("-- nxrm.groovy build script")
 hr()
 info("Build mode   | $buildOptions.buildModeDesc")
 info("Goals/phases | $buildOptions.mavenGoalsAndPhasesDesc")
