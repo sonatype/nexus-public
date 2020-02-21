@@ -25,7 +25,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseNodeGenerator;
 import org.sonatype.nexus.repository.browse.BrowsePaths;
 import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.BrowseNodeStore;
+import org.sonatype.nexus.repository.storage.BrowseNodeCrudStore;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentStore;
 
@@ -43,7 +43,7 @@ public class BrowseNodeManager
 {
   private static final String DEFAULT_PATH_HANDLER = "default";
 
-  private final BrowseNodeStore browseNodeStore;
+  private final BrowseNodeCrudStore<EntityId, Asset, Component> browseNodeStore;
 
   private final ComponentStore componentStore;
 
@@ -52,9 +52,10 @@ public class BrowseNodeManager
   private final BrowseNodeGenerator defaultGenerator;
 
   @Inject
-  public BrowseNodeManager(final BrowseNodeStore browseNodeStore,
-                           final ComponentStore componentStore,
-                           final Map<String, BrowseNodeGenerator> pathGenerators)
+  public BrowseNodeManager(
+      final BrowseNodeCrudStore<EntityId, Asset, Component> browseNodeStore,
+      final ComponentStore componentStore,
+      final Map<String, BrowseNodeGenerator> pathGenerators)
   {
     this.browseNodeStore = checkNotNull(browseNodeStore);
     this.componentStore = checkNotNull(componentStore);

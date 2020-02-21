@@ -141,7 +141,8 @@ public class RepositoryBrowseResource
       pathSegments = asList(repositoryPath.split("/"));
     }
 
-    Iterable<BrowseNode> browseNodes = browseNodeStore.getByPath(repository, pathSegments, configuration.getMaxHtmlNodes());
+    Iterable<BrowseNode> browseNodes =
+        browseNodeStore.getByPath(repository.getName(), pathSegments, configuration.getMaxHtmlNodes());
 
     final boolean permitted = securityHelper.allPermitted(new RepositoryViewPermission(repository, BROWSE));
     final boolean hasChildren = browseNodes != null && !Iterables.isEmpty(browseNodes);

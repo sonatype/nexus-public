@@ -10,19 +10,21 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.storage;
+package org.sonatype.nexus.repository.browse.internal.orient;
 
-import java.util.List;
+import org.sonatype.nexus.repository.storage.BrowseNode;
+
+import com.orientechnologies.common.concur.ONeedRetryException;
 
 /**
- * Store providing access to the browse tree.
+ * {@link ONeedRetryException} thrown when we want to retry upserting a {@link BrowseNode} due to a collision.
  *
- * @since 3.7
+ * @since 3.14
  */
-public interface BrowseNodeStore
+class BrowseNodeCollisionException
+    extends ONeedRetryException
 {
-  /**
-   * Returns the {@link BrowseNode}s directly visible under the given path.
-   */
-  Iterable<BrowseNode> getByPath(String repositoryName, List<String> path, int maxNodes);
+  BrowseNodeCollisionException(final String message) {
+    super(message);
+  }
 }

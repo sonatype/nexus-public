@@ -35,7 +35,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
-import static org.sonatype.nexus.repository.storage.BrowseNodeEntityAdapter.P_NAME;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
 /**
  * Detects orphaned blobs (i.e. non-deleted blobs that exist in the blobstore but not the asset table)

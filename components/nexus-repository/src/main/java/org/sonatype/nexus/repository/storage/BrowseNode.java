@@ -12,160 +12,39 @@
  */
 package org.sonatype.nexus.repository.storage;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.common.entity.AbstractEntity;
 import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.repository.browse.BrowsePaths;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Represents a path segment in a tree hierarchy.
  *
  * @since 3.6
  */
-public class BrowseNode
-    extends AbstractEntity
+public interface BrowseNode
 {
-  private String repositoryName;
+  String getRepositoryName();
 
-  private String format;
-
-  private String path;
-
-  private String parentPath;
-
-  private String name;
-
-  private boolean leaf;
-
-  @Nullable
-  private EntityId componentId;
-
-  @Nullable
-  private EntityId assetId;
-
-  public String getRepositoryName() {
-    return require(repositoryName, BrowseNodeEntityAdapter.P_REPOSITORY_NAME);
-  }
-
-  public void setRepositoryName(final String repositoryName) {
-    this.repositoryName = checkNotNull(repositoryName);
-  }
-
-  public String getFormat() {
-    return require(format, BrowseNodeEntityAdapter.P_FORMAT);
-  }
-
-  public void setFormat(final String format) {
-    this.format = checkNotNull(format);
-  }
+  String getFormat();
 
   /**
    * @since 3.18
    */
-  public String getPath() {
-    return require(path, BrowseNodeEntityAdapter.P_PATH);
-  }
-
-  public void setPath(final String path) {
-    this.path = checkNotNull(path);
-  }
+  String getPath();
 
   /**
    * @since 3.7
    */
-  public String getParentPath() {
-    return require(parentPath, BrowseNodeEntityAdapter.P_PARENT_PATH);
-  }
-
-  /**
-   * @since 3.7
-   */
-  public void setParentPath(final String parentPath) {
-    this.parentPath = checkNotNull(parentPath);
-  }
-
-  /**
-   * @since 3.7
-   */
-  public String getName() {
-    return require(name, BrowseNodeEntityAdapter.P_NAME);
-  }
-
-  /**
-   * @since 3.7
-   */
-  public void setName(final String name) {
-    this.name = checkNotNull(name);
-  }
+  String getName();
 
   /**
    * @since 3.6.1
    */
-  public boolean isLeaf() {
-    return leaf;
-  }
-
-  /**
-   * @since 3.6.1
-   */
-  public void setLeaf(final boolean leaf) {
-    this.leaf = leaf;
-  }
+  boolean isLeaf();
 
   @Nullable
-  public EntityId getComponentId() {
-    return componentId;
-  }
-
-  public void setComponentId(final EntityId componentId) {
-    this.componentId = checkNotNull(componentId);
-  }
+  EntityId getComponentId();
 
   @Nullable
-  public EntityId getAssetId() {
-    return assetId;
-  }
-
-  public void setAssetId(final EntityId assetId) {
-    this.assetId = checkNotNull(assetId);
-  }
-
-  public void setPaths(List<BrowsePaths> paths) {
-    setParentPath(joinPath(
-        paths.subList(0, paths.size() - 1).stream().map(BrowsePaths::getBrowsePath).collect(Collectors.toList())));
-    setName(paths.get(paths.size() - 1).getBrowsePath());
-    setPath(paths.get(paths.size() - 1).getRequestPath());
-  }
-
-  private static String joinPath(final List<String> path) {
-    StringBuilder buf = new StringBuilder("/");
-    path.forEach(s -> buf.append(s).append("/"));
-    return buf.toString();
-  }
-
-  private <V> V require(final V value, final String name) {
-    checkState(value != null, "Missing property: %s", name);
-    return value;
-  }
-
-  @Override
-  public String toString() {
-    return "BrowseNode{" +
-        "repositoryName=" + repositoryName +
-        ", format=" + format +
-        ", parentPath=" + parentPath +
-        ", name=" + name +
-        ", path=" + path +
-        ", leaf=" + leaf +
-        ", componentId='" + componentId + '\'' +
-        ", assetId='" + assetId + '\'' +
-        '}';
-  }
+  EntityId getAssetId();
 }

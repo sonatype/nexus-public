@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.storage;
+package org.sonatype.nexus.repository.browse.internal.orient;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,6 +24,16 @@ import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
 import org.sonatype.nexus.repository.browse.BrowsePaths;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
+import org.sonatype.nexus.repository.storage.Bucket;
+import org.sonatype.nexus.repository.storage.BucketEntityAdapter;
+import org.sonatype.nexus.repository.storage.Component;
+import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
+import org.sonatype.nexus.repository.storage.ComponentFactory;
+import org.sonatype.nexus.repository.storage.DefaultBrowseNodeComparator;
+import org.sonatype.nexus.repository.storage.DefaultComponent;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.selector.SelectorManager;
 
@@ -39,10 +49,9 @@ import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptySet;
-import static org.sonatype.goodies.common.Time.seconds;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 
-public class BrowseNodeStoreLoadTest
+public class OrientBrowseNodeStoreImplLoadTest
     extends TestSupport
 {
   private static final String REPOSITORY_NAME = "test-repo";
@@ -60,13 +69,16 @@ public class BrowseNodeStoreLoadTest
   @Mock
   private SelectorManager selectorManager;
 
+  @Mock
+  private RepositoryManager repositoryManager;
+
   private Bucket bucket;
 
   private Component component;
 
   private List<Asset> assets = new ArrayList<>();
 
-  private BrowseNodeStoreImpl underTest;
+  private OrientBrowseNodeStoreImpl underTest;
 
   @Before
   public void setUp() throws Exception {
@@ -110,12 +122,13 @@ public class BrowseNodeStoreLoadTest
       bucketEntityAdapter.register(db);
     }
 
-    underTest = new BrowseNodeStoreImpl(
+    underTest = new OrientBrowseNodeStoreImpl(
         database.getInstanceProvider(),
         browseNodeEntityAdapter,
         securityHelper,
         selectorManager,
         configuration,
+        repositoryManager,
         new HashMap<>(),
         ImmutableMap.of(DefaultBrowseNodeComparator.NAME, new DefaultBrowseNodeComparator(new VersionComparator())));
 

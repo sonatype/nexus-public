@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.storage;
+package org.sonatype.nexus.repository.browse.internal.orient;
 
 import java.util.Arrays;
 import java.util.List;
@@ -27,7 +27,14 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
 import org.sonatype.nexus.repository.browse.BrowsePaths;
 import org.sonatype.nexus.repository.group.GroupFacet;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
+import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.BrowseNode;
+import org.sonatype.nexus.repository.storage.BrowseNodeComparator;
+import org.sonatype.nexus.repository.storage.BrowseNodeFilter;
+import org.sonatype.nexus.repository.storage.Component;
+import org.sonatype.nexus.repository.storage.DefaultBrowseNodeComparator;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.selector.CselSelector;
@@ -68,7 +75,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-public class BrowseNodeStoreImplTest
+public class OrientBrowseNodeStoreImplTest
     extends TestSupport
 {
   private static final String REPOSITORY_NAME = "test-repo";
@@ -110,6 +117,9 @@ public class BrowseNodeStoreImplTest
   private SelectorConfiguration jexl;
 
   @Mock
+  private RepositoryManager repositoryManager;
+
+  @Mock
   private Repository repository;
 
   @Mock
@@ -142,7 +152,7 @@ public class BrowseNodeStoreImplTest
   @Mock
   private BrowseNodeFilter browseNodeFilter;
 
-  private BrowseNodeStoreImpl underTest;
+  private OrientBrowseNodeStoreImpl underTest;
 
   @Before
   public void setUp() throws Exception {
@@ -158,6 +168,11 @@ public class BrowseNodeStoreImplTest
     when(memberB.getFormat()).thenReturn(format);
     when(memberC.getName()).thenReturn(MEMBER_C);
     when(memberC.getFormat()).thenReturn(format);
+
+    when(repositoryManager.get(MEMBER_A)).thenReturn(memberA);
+    when(repositoryManager.get(MEMBER_B)).thenReturn(memberB);
+    when(repositoryManager.get(MEMBER_C)).thenReturn(memberC);
+    when(repositoryManager.get(REPOSITORY_NAME)).thenReturn(repository);
 
     when(byGroup.getType()).thenReturn(CselSelector.TYPE);
     when(byGroup.getAttributes()).thenReturn(ImmutableMap.of("expression", "coordinate.groupId == \"org.sonatype\""));
@@ -179,12 +194,13 @@ public class BrowseNodeStoreImplTest
 
     when(browseNodeFilter.test(any(), any())).thenReturn(true);
 
-    underTest = new BrowseNodeStoreImpl(
+    underTest = new OrientBrowseNodeStoreImpl(
         () -> databaseInstance,
         browseNodeEntityAdapter,
         securityHelper,
         selectorManager,
         new BrowseNodeConfiguration(true, 1000, DELETE_PAGE_SIZE, 10_000, 10_000),
+        repositoryManager,
         ImmutableMap.of(FORMAT_NAME, browseNodeFilter),
         ImmutableMap.of(DefaultBrowseNodeComparator.NAME, new DefaultBrowseNodeComparator(new VersionComparator())));
 
@@ -232,7 +248,7 @@ public class BrowseNodeStoreImplTest
 
     when(securityHelper.anyPermitted(any())).thenReturn(true);
 
-    underTest.getByPath(repository, queryPath, MAX_NODES);
+    underTest.getByPath(REPOSITORY_NAME, queryPath, MAX_NODES);
 
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(browseNodeEntityAdapter).getByPath(db, REPOSITORY_NAME, queryPath, MAX_NODES, "", emptyMap());
@@ -246,7 +262,7 @@ public class BrowseNodeStoreImplTest
     when(securityHelper.anyPermitted(any())).thenReturn(false);
     when(selectorManager.browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME))).thenReturn(emptyList());
 
-    underTest.getByPath(repository, queryPath, MAX_NODES);
+    underTest.getByPath(REPOSITORY_NAME, queryPath, MAX_NODES);
 
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
@@ -260,7 +276,7 @@ public class BrowseNodeStoreImplTest
     when(securityHelper.anyPermitted(any())).thenReturn(false);
     when(selectorManager.browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME))).thenReturn(asList(byGroup));
 
-    underTest.getByPath(repository, queryPath, MAX_NODES);
+    underTest.getByPath(REPOSITORY_NAME, queryPath, MAX_NODES);
 
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
@@ -278,7 +294,7 @@ public class BrowseNodeStoreImplTest
     when(selectorManager.browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME)))
         .thenReturn(asList(byGroup, byVersion));
 
-    underTest.getByPath(repository, queryPath, MAX_NODES);
+    underTest.getByPath(REPOSITORY_NAME, queryPath, MAX_NODES);
 
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
@@ -298,7 +314,7 @@ public class BrowseNodeStoreImplTest
     when(selectorManager.browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME)))
         .thenReturn(asList(byGroup, jexl, byVersion));
 
-    underTest.getByPath(repository, queryPath, MAX_NODES);
+    underTest.getByPath(REPOSITORY_NAME, queryPath, MAX_NODES);
 
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
@@ -318,7 +334,7 @@ public class BrowseNodeStoreImplTest
     when(securityHelper.anyPermitted(any())).thenReturn(false);
     when(selectorManager.browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME))).thenReturn(asList(jexl));
 
-    underTest.getByPath(repository, queryPath, MAX_NODES);
+    underTest.getByPath(REPOSITORY_NAME, queryPath, MAX_NODES);
 
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
@@ -345,7 +361,7 @@ public class BrowseNodeStoreImplTest
     when(browseNodeEntityAdapter.getByPath(db, MEMBER_C, queryPath, MAX_NODES, "", emptyMap()))
         .thenReturn(asList(node(MEMBER_C, "com"), node(MEMBER_C, "javax")));
 
-    Iterable<BrowseNode> nodes = underTest.getByPath(repository, queryPath, MAX_NODES);
+    Iterable<BrowseNode> nodes = underTest.getByPath(REPOSITORY_NAME, queryPath, MAX_NODES);
 
     // check that duplicate nodes were removed, should follow a 'first-one-wins' approach
     assertThat(nodes, containsInAnyOrder(
@@ -378,7 +394,7 @@ public class BrowseNodeStoreImplTest
     when(browseNodeEntityAdapter.getByPath(db, MEMBER_C, queryPath, 1, "", emptyMap()))
         .thenReturn(asList(node(MEMBER_C, "com")));
 
-    Iterable<BrowseNode> nodes = underTest.getByPath(repository, queryPath, 1);
+    Iterable<BrowseNode> nodes = underTest.getByPath(REPOSITORY_NAME, queryPath, 1);
 
     // check that the limit was correctly applied to the merged results
     assertThat(nodes, containsInAnyOrder(
@@ -396,9 +412,9 @@ public class BrowseNodeStoreImplTest
 
     when(securityHelper.anyPermitted(any())).thenReturn(true);
     when(browseNodeEntityAdapter.getByPath(any(), any(), any(), anyInt(), any(), anyMap()))
-        .thenReturn(ImmutableList.of(new BrowseNode()));
+        .thenReturn(ImmutableList.of(new OrientBrowseNode()));
 
-    underTest.getByPath(repository, queryPath, MAX_NODES);
+    underTest.getByPath(REPOSITORY_NAME, queryPath, MAX_NODES);
 
     verify(browseNodeFilter).test(any(), eq(REPOSITORY_NAME));
   }
@@ -449,12 +465,13 @@ public class BrowseNodeStoreImplTest
 
   @Test
   public void alternateSorting() throws Exception {
-    underTest = new BrowseNodeStoreImpl(
+    underTest = new OrientBrowseNodeStoreImpl(
         () -> databaseInstance,
         browseNodeEntityAdapter,
         securityHelper,
         selectorManager,
         new BrowseNodeConfiguration(true, 1000, DELETE_PAGE_SIZE, 10_000, 10_000),
+        repositoryManager,
         ImmutableMap.of(FORMAT_NAME, browseNodeFilter),
         ImmutableMap.of(DefaultBrowseNodeComparator.NAME, new DefaultBrowseNodeComparator(new VersionComparator()), FORMAT_NAME, new TestComparator()));
 
@@ -479,21 +496,21 @@ public class BrowseNodeStoreImplTest
     return BrowseNode::getName;
   }
 
-  private List<String> versions(List<String> queryPath) {
-    return StreamSupport.stream(underTest.getByPath(repository, queryPath, MAX_NODES).spliterator(), false)
+  private List<String> versions(final List<String> queryPath) {
+    return StreamSupport.stream(underTest.getByPath(REPOSITORY_NAME, queryPath, MAX_NODES).spliterator(), false)
         .map(BrowseNode::getName).collect(toList());
   }
 
-  private static BrowseNode node(final String repositoryName, final String name) {
-    BrowseNode node = new BrowseNode();
+  private static OrientBrowseNode node(final String repositoryName, final String name) {
+    OrientBrowseNode node = new OrientBrowseNode();
     node.setRepositoryName(repositoryName);
     node.setParentPath("/");
     node.setName(name);
     return node;
   }
 
-  private static BrowseNode node(final String name, final boolean isAsset, final boolean isComponent ) {
-    BrowseNode node = new BrowseNode();
+  private static OrientBrowseNode node(final String name, final boolean isAsset, final boolean isComponent) {
+    OrientBrowseNode node = new OrientBrowseNode();
     node.setName(name);
     if (isAsset) {
       node.setAssetId(new DetachedEntityId(name));
@@ -506,7 +523,7 @@ public class BrowseNodeStoreImplTest
 
   private final class TestComparator implements BrowseNodeComparator {
     @Override
-    public int compare(BrowseNode o1, BrowseNode o2) {
+    public int compare(final BrowseNode o1, final BrowseNode o2) {
       return 0 - o1.getName().compareToIgnoreCase(o2.getName());
     }
   }

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.storage;
+package org.sonatype.nexus.repository.browse.internal.orient;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -35,7 +35,16 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
 import org.sonatype.nexus.repository.browse.BrowsePaths;
 import org.sonatype.nexus.repository.group.GroupFacet;
+import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
+import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.BrowseNode;
+import org.sonatype.nexus.repository.storage.BrowseNodeComparator;
+import org.sonatype.nexus.repository.storage.BrowseNodeCrudStore;
+import org.sonatype.nexus.repository.storage.BrowseNodeFilter;
+import org.sonatype.nexus.repository.storage.BrowseNodeStore;
+import org.sonatype.nexus.repository.storage.Component;
+import org.sonatype.nexus.repository.storage.DefaultBrowseNodeComparator;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.security.SecurityHelper;
@@ -51,7 +60,6 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
-import static com.google.common.base.Equivalence.identity;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
@@ -60,10 +68,10 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;
-import static org.sonatype.nexus.repository.storage.BrowseNodeEntityAdapter.AUTHZ_REPOSITORY_NAME;
-import static org.sonatype.nexus.repository.storage.BrowseNodeEntityAdapter.P_ASSET_ID;
-import static org.sonatype.nexus.repository.storage.BrowseNodeEntityAdapter.P_FORMAT;
-import static org.sonatype.nexus.repository.storage.BrowseNodeEntityAdapter.P_PATH;
+import static org.sonatype.nexus.repository.browse.internal.orient.BrowseNodeEntityAdapter.AUTHZ_REPOSITORY_NAME;
+import static org.sonatype.nexus.repository.browse.internal.orient.BrowseNodeEntityAdapter.P_ASSET_ID;
+import static org.sonatype.nexus.repository.browse.internal.orient.BrowseNodeEntityAdapter.P_FORMAT;
+import static org.sonatype.nexus.repository.browse.internal.orient.BrowseNodeEntityAdapter.P_PATH;
 
 /**
  * @since 3.7
@@ -72,9 +80,9 @@ import static org.sonatype.nexus.repository.storage.BrowseNodeEntityAdapter.P_PA
 @ManagedLifecycle(phase = SCHEMAS)
 @Priority(Integer.MIN_VALUE)
 @Named
-public class BrowseNodeStoreImpl
+public class OrientBrowseNodeStoreImpl
     extends StateGuardLifecycleSupport
-    implements BrowseNodeStore
+    implements BrowseNodeStore, BrowseNodeCrudStore<EntityId, Asset, Component>
 {
   private final Provider<DatabaseInstance> databaseInstance;
 
@@ -83,6 +91,8 @@ public class BrowseNodeStoreImpl
   private final SecurityHelper securityHelper;
 
   private final SelectorManager selectorManager;
+
+  private final RepositoryManager repositoryManager;
 
   private final Map<String, BrowseNodeFilter> browseNodeFilters;
 
@@ -93,13 +103,15 @@ public class BrowseNodeStoreImpl
   private final int deletePageSize;
 
   @Inject
-  public BrowseNodeStoreImpl(@Named("component") final Provider<DatabaseInstance> databaseInstance,
-                             final BrowseNodeEntityAdapter entityAdapter,
-                             final SecurityHelper securityHelper,
-                             final SelectorManager selectorManager,
-                             final BrowseNodeConfiguration configuration,
-                             final Map<String, BrowseNodeFilter> browseNodeFilters,
-                             final Map<String, BrowseNodeComparator> browseNodeComparators)
+  public OrientBrowseNodeStoreImpl(
+      @Named("component") final Provider<DatabaseInstance> databaseInstance,
+      final BrowseNodeEntityAdapter entityAdapter,
+      final SecurityHelper securityHelper,
+      final SelectorManager selectorManager,
+      final BrowseNodeConfiguration configuration,
+      final RepositoryManager repositoryManager,
+      final Map<String, BrowseNodeFilter> browseNodeFilters,
+      final Map<String, BrowseNodeComparator> browseNodeComparators)
   {
     this.databaseInstance = checkNotNull(databaseInstance);
     this.entityAdapter = checkNotNull(entityAdapter);
@@ -107,6 +119,7 @@ public class BrowseNodeStoreImpl
     this.selectorManager = checkNotNull(selectorManager);
     this.browseNodeFilters = checkNotNull(browseNodeFilters);
     this.browseNodeComparators = checkNotNull(browseNodeComparators);
+    this.repositoryManager = checkNotNull(repositoryManager);
     this.deletePageSize = configuration.getDeletePageSize();
     this.defaultBrowseNodeComparator = checkNotNull(browseNodeComparators.get(DefaultBrowseNodeComparator.NAME));
   }
@@ -152,7 +165,7 @@ public class BrowseNodeStoreImpl
 
   @Override
   @Guarded(by = STARTED)
-  public void deleteComponentNode(EntityId componentId) {
+  public void deleteComponentNode(final EntityId componentId) {
     inTxRetry(databaseInstance).run(db -> entityAdapter.deleteComponentNode(db, componentId));
   }
 
@@ -186,14 +199,11 @@ public class BrowseNodeStoreImpl
 
   @Override
   @Guarded(by = STARTED)
-  public Iterable<BrowseNode> getByPath(final Repository repository,
-                                        final List<String> path,
-                                        final int maxNodes)
-  {
-    List<SelectorConfiguration> selectors = emptyList();
-
-    String repositoryName = repository.getName();
+  public Iterable<BrowseNode> getByPath(final String repositoryName, final List<String> path, final int maxNodes) {
+    Repository repository = repositoryManager.get(repositoryName);
     String format = repository.getFormat().getValue();
+
+    List<SelectorConfiguration> selectors = emptyList();
     if (!hasBrowsePermission(repositoryName, format)) {
       // user doesn't have repository-wide access so need to apply content selection
       selectors = selectorManager.browseActive(asList(repositoryName), asList(format));
@@ -243,14 +253,15 @@ public class BrowseNodeStoreImpl
   /**
    * Returns the browse nodes directly visible under the path according to the given asset filter.
    */
-  private List<BrowseNode> getByPath(final String repositoryName,
-                                     final List<String> path,
-                                     final int maxNodes,
-                                     @Nullable final String assetFilter,
-                                     @Nullable final Map<String, Object> filterParameters)
+  private List<? extends BrowseNode> getByPath(
+      final String repositoryName,
+      final List<String> path,
+      final int maxNodes,
+      @Nullable final String assetFilter,
+      @Nullable final Map<String, Object> filterParameters)
   {
-    return inTx(databaseInstance).call(
-        db -> entityAdapter.getByPath(db, repositoryName, path, maxNodes, assetFilter, filterParameters));
+    return inTx(databaseInstance)
+        .call(db -> entityAdapter.getByPath(db, repositoryName, path, maxNodes, assetFilter, filterParameters));
   }
 
   /**
@@ -338,7 +349,7 @@ public class BrowseNodeStoreImpl
     }
   }
 
-  private Comparator<BrowseNode> getBrowseNodeComparator(String format) {
+  private Comparator<BrowseNode> getBrowseNodeComparator(final String format) {
     return browseNodeComparators.getOrDefault(format, defaultBrowseNodeComparator);
   }
 }

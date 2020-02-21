@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.storage;
+package org.sonatype.nexus.repository.browse.internal.orient;
 
 import java.util.HashMap;
 import java.util.List;
@@ -28,6 +28,11 @@ import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.AttachedEntityId;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 import org.sonatype.nexus.repository.browse.BrowsePaths;
+import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
+import org.sonatype.nexus.repository.storage.BrowseNode;
+import org.sonatype.nexus.repository.storage.Component;
+import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
 
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -51,7 +56,7 @@ import static com.google.common.collect.Lists.newArrayList;
 @Named
 @Singleton
 public class BrowseNodeEntityAdapter
-    extends IterableEntityAdapter<BrowseNode>
+    extends IterableEntityAdapter<OrientBrowseNode>
 {
   private static final String DB_CLASS = new OClassNameBuilder().type("browse_node").build();
 
@@ -154,12 +159,12 @@ public class BrowseNodeEntityAdapter
   }
 
   @Override
-  protected BrowseNode newEntity() {
-    return new BrowseNode();
+  protected OrientBrowseNode newEntity() {
+    return new OrientBrowseNode();
   }
 
   @Override
-  protected void readFields(final ODocument document, final BrowseNode entity) {
+  protected void readFields(final ODocument document, final OrientBrowseNode entity) {
     String repositoryName = document.field(P_REPOSITORY_NAME, OType.STRING);
     String format = document.field(P_FORMAT, OType.STRING);
     String path = document.field(P_PATH, OType.STRING);
@@ -184,7 +189,7 @@ public class BrowseNodeEntityAdapter
   }
 
   @Override
-  protected void writeFields(final ODocument document, final BrowseNode entity) throws Exception {
+  protected void writeFields(final ODocument document, final OrientBrowseNode entity) throws Exception {
     document.field(P_REPOSITORY_NAME, entity.getRepositoryName());
     document.field(P_FORMAT, entity.getFormat());
     document.field(P_PATH, entity.getPath());
@@ -201,7 +206,7 @@ public class BrowseNodeEntityAdapter
   }
 
   /**
-   * Associates a {@link BrowseNode} with the given {@link Component}.
+   * Associates a {@link OrientBrowseNode} with the given {@link Component}.
    */
   public void createComponentNode(final ODatabaseDocumentTx db,
                                   final String repositoryName,
@@ -213,7 +218,7 @@ public class BrowseNodeEntityAdapter
     maybeCreateParentNodes(db, repositoryName, format, paths.subList(0, paths.size() - 1));
 
     //now create the component node
-    BrowseNode node = newNode(repositoryName, format, paths);
+    OrientBrowseNode node = newNode(repositoryName, format, paths);
     ODocument document = findNodeRecord(db, node);
     if (document == null) {
       // complete the new entity before persisting
@@ -236,7 +241,7 @@ public class BrowseNodeEntityAdapter
   }
 
   /**
-   * Associates a {@link BrowseNode} with the given {@link Asset}.
+   * Associates a {@link OrientBrowseNode} with the given {@link Asset}.
    */
   public void createAssetNode(final ODatabaseDocumentTx db,
                               final String repositoryName,
@@ -248,7 +253,7 @@ public class BrowseNodeEntityAdapter
     maybeCreateParentNodes(db, repositoryName, format, paths.subList(0, paths.size() - 1));
 
     //now create the asset node
-    BrowseNode node = newNode(repositoryName, format, paths);
+    OrientBrowseNode node = newNode(repositoryName, format, paths);
     ODocument document = findNodeRecord(db, node);
     if (document == null) {
       // complete the new entity before persisting
@@ -286,7 +291,7 @@ public class BrowseNodeEntityAdapter
                                       final List<BrowsePaths> paths)
   {
     for (int i = paths.size() ; i > 0 ; i--) {
-      BrowseNode parentNode = newNode(repositoryName, format, paths.subList(0, i));
+      OrientBrowseNode parentNode = newNode(repositoryName, format, paths.subList(0, i));
       if (!parentNode.getPath().endsWith("/")) {
         parentNode.setPath(parentNode.getPath() + "/");
       }
@@ -309,8 +314,12 @@ public class BrowseNodeEntityAdapter
   /**
    * Creates a basic {@link BrowseNode} for the given repository and path.
    */
-  private static BrowseNode newNode(final String repositoryName, final String format, final List<BrowsePaths> paths) {
-    BrowseNode node = new BrowseNode();
+  private static OrientBrowseNode newNode(
+      final String repositoryName,
+      final String format,
+      final List<BrowsePaths> paths)
+  {
+    OrientBrowseNode node = new OrientBrowseNode();
     node.setRepositoryName(repositoryName);
     node.setFormat(format);
     node.setPaths(paths);
@@ -321,7 +330,7 @@ public class BrowseNodeEntityAdapter
    * Returns the {@link BrowseNode} with the same coordinates as the sample node; {@code null} if no such node exists.
    */
   @Nullable
-  private static ODocument findNodeRecord(final ODatabaseDocumentTx db, BrowseNode node) {
+  private static ODocument findNodeRecord(final ODatabaseDocumentTx db, final OrientBrowseNode node) {
     return getFirst(
         db.command(new OCommandSQL(FIND_BY_PARENT_PATH)).execute(
             ImmutableMap.of(
@@ -396,12 +405,13 @@ public class BrowseNodeEntityAdapter
   /**
    * Returns the {@link BrowseNode}s directly visible under the given path, according to the given asset filter.
    */
-  public List<BrowseNode> getByPath(final ODatabaseDocumentTx db,
-                                    final String repositoryName,
-                                    final List<String> path,
-                                    final int maxNodes,
-                                    final String assetFilter,
-                                    final Map<String, Object> filterParameters)
+  public List<OrientBrowseNode> getByPath(
+      final ODatabaseDocumentTx db,
+      final String repositoryName,
+      final List<String> path,
+      final int maxNodes,
+      final String assetFilter,
+      final Map<String, Object> filterParameters)
   {
     Map<String, Object> parameters = new HashMap<>(filterParameters);
     parameters.put(P_REPOSITORY_NAME, repositoryName);
@@ -412,7 +422,7 @@ public class BrowseNodeEntityAdapter
     String basePath = joinPath(path);
     parameters.put(BASE_PATH, basePath);
 
-    List<BrowseNode> children = newArrayList(transform(db.command(sql).execute(parameters)));
+    List<OrientBrowseNode> children = newArrayList(transform(db.command(sql).execute(parameters)));
 
     children.forEach(child -> {
       // STEP 2: check if the child has any children of its own, if not, it's a leaf
@@ -444,7 +454,7 @@ public class BrowseNodeEntityAdapter
   /**
    * take a string path and return the string at the previous level, i.e. "/foo/bar/com/" -> "/foo/bar/"
    */
-  private String previousParentPath(String parentPath) {
+  private String previousParentPath(final String parentPath) {
     //parentPath always ends with slash, pull it out for this check
     String withoutSlash = parentPath.substring(0, parentPath.length() - 1);
     //make sure to include the slash
@@ -454,7 +464,7 @@ public class BrowseNodeEntityAdapter
   /**
    * take a string path and return the string of the last segment, i.e. "/foo/bar/com/" -> "com"
    */
-  private String previousParentName(String parentPath) {
+  private String previousParentName(final String parentPath) {
     //parentPath always ends with slash, pull it out for this check
     String withoutSlash = parentPath.substring(0, parentPath.length() - 1);
 

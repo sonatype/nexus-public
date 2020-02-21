@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.storage;
+package org.sonatype.nexus.repository.browse.internal.orient;
 
 import java.util.HashMap;
 import java.util.List;
@@ -19,6 +19,14 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 import org.sonatype.nexus.repository.browse.BrowseTestSupport;
+import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
+import org.sonatype.nexus.repository.storage.Bucket;
+import org.sonatype.nexus.repository.storage.BucketEntityAdapter;
+import org.sonatype.nexus.repository.storage.Component;
+import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
+import org.sonatype.nexus.repository.storage.ComponentFactory;
+import org.sonatype.nexus.repository.storage.DefaultComponent;
 
 import com.google.common.base.Splitter;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
