@@ -68,7 +68,7 @@ public class ValidationModule
       factory.getValidator().validate(new Object()
       {
         // minimal token message
-        @NotNull(message = "${0}")
+        @NotNull(message = "{org.sonatype.nexus.validation.constraint.notnull}")
         String empty;
       });
 
