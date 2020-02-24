@@ -12,6 +12,8 @@
  */
 package org.apache.shiro.nexus;
 
+import java.util.Set;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
@@ -21,6 +23,8 @@ import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.security.UserIdMdcHelper;
 import org.sonatype.nexus.security.authc.AuthenticationEvent;
+import org.sonatype.nexus.security.authc.AuthenticationFailureReason;
+import org.sonatype.nexus.security.authc.NexusAuthenticationException;
 
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -31,6 +35,7 @@ import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.apache.shiro.web.mgt.WebSecurityManager;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.emptySet;
 import static org.sonatype.nexus.common.app.ManagedLifecycleManager.isShuttingDown;
 
 /**
@@ -57,8 +62,13 @@ public class NexusWebSecurityManager
   /**
    * Post {@link AuthenticationEvent}.
    */
-  private void post(final AuthenticationToken token, final boolean successful) {
-    eventManager.get().post(new AuthenticationEvent(token.getPrincipal().toString(), successful));
+  private void post(
+      final AuthenticationToken token,
+      final boolean successful,
+      final Set<AuthenticationFailureReason> authenticationFailureReasons)
+  {
+    eventManager.get()
+        .post(new AuthenticationEvent(token.getPrincipal().toString(), successful, authenticationFailureReasons));
   }
 
   /**
@@ -73,11 +83,15 @@ public class NexusWebSecurityManager
     try {
       subject = super.login(subject, token);
       UserIdMdcHelper.set(subject);
-      post(token, true);
+      post(token, true, emptySet());
       return subject;
     }
+    catch (NexusAuthenticationException e) {
+      post(token, false, e.getAuthenticationFailureReasons());
+      throw e;
+    }
     catch (AuthenticationException e) {
-      post(token, false);
+      post(token, false, emptySet());
       throw e;
     }
   }

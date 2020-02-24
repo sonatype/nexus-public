@@ -85,8 +85,13 @@ public class AnonymousFilter
       // fire an event if we haven't already seen this ClientInfo since the server started
       if (request instanceof HttpServletRequest) {
         String userId = manager.getConfiguration().getUserId();
-        ClientInfo clientInfo = new ClientInfo(userId, request.getRemoteAddr(),
-            ((HttpServletRequest) request).getHeader(HttpHeaders.USER_AGENT));
+        ClientInfo clientInfo = ClientInfo
+            .builder()
+            .userId(userId)
+            .remoteIP(request.getRemoteAddr())
+            .userAgent(((HttpServletRequest) request).getHeader(HttpHeaders.USER_AGENT))
+            .path(((HttpServletRequest) request).getServletPath())
+            .build();
         if (cache.add(clientInfo)) {
           log.trace("Tracking new anonymous access from: {}", clientInfo);
           eventManager.get().post(new AnonymousAccessEvent(clientInfo, new Date()));

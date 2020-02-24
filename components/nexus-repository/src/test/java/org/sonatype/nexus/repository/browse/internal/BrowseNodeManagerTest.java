@@ -27,7 +27,7 @@ import org.sonatype.nexus.repository.browse.BrowseNodeGenerator;
 import org.sonatype.nexus.repository.browse.BrowsePaths;
 import org.sonatype.nexus.repository.browse.BrowseTestSupport;
 import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.BrowseNodeStore;
+import org.sonatype.nexus.repository.storage.BrowseNodeCrudStore;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentStore;
 import org.sonatype.nexus.repository.storage.DefaultComponent;
@@ -56,7 +56,7 @@ public class BrowseNodeManagerTest
   private BrowseNodeManager manager;
 
   @Mock
-  private BrowseNodeStore browseNodeStore;
+  private BrowseNodeCrudStore<EntityId, Asset, Component> browseNodeStore;
 
   @Mock
   private ComponentStore componentStore;

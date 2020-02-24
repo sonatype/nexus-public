@@ -2422,6 +2422,18 @@
     margin-right: 5px;
 }
 
+.nx-feature-group .x-fa {
+    margin-top: 2px;
+    margin-right: 5px;
+    width: 32px;
+    text-align: center;
+}
+
+.nx-feature-group .x-fa-icon-text {
+    position: relative;
+    top: -2px;
+}
+
 .nx-feature-notfound {
     /**
  * @class NX.view.feature.NotFound

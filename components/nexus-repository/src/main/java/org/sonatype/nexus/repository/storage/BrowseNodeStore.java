@@ -14,46 +14,15 @@ package org.sonatype.nexus.repository.storage;
 
 import java.util.List;
 
-import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.browse.BrowsePaths;
-
 /**
- * Store providing access to the browse tree for assets & components.
+ * Store providing access to the browse tree.
  *
  * @since 3.7
  */
 public interface BrowseNodeStore
 {
   /**
-   * Creates a {@link BrowseNode} for the given asset.
-   */
-  void createAssetNode(String repositoryName, String format, List<BrowsePaths> paths, Asset asset);
-
-  /**
-   * Creates a {@link BrowseNode} for the given component.
-   */
-  void createComponentNode(String repositoryName, String format, List<BrowsePaths> paths, Component component);
-
-  boolean assetNodeExists(EntityId assetId);
-
-  /**
-   * Deletes the asset's {@link BrowseNode}.
-   */
-  void deleteAssetNode(EntityId assetId);
-
-  /**
-   * Deletes the component's {@link BrowseNode}.
-   */
-  void deleteComponentNode(EntityId componentId);
-
-  /**
-   * Deletes all {@link BrowseNode}s belonging to the given repository.
-   */
-  void deleteByRepository(String repositoryName);
-
-  /**
    * Returns the {@link BrowseNode}s directly visible under the given path.
    */
-  Iterable<BrowseNode> getByPath(Repository repository, List<String> path, int maxNodes);
+  Iterable<BrowseNode> getByPath(String repositoryName, List<String> path, int maxNodes);
 }

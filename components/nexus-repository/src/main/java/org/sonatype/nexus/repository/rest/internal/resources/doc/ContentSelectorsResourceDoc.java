@@ -57,7 +57,7 @@ public interface ContentSelectorsResourceDoc
 
   @ApiOperation("List Content Selectors")
   @ApiResponses({
-      @ApiResponse(code = OK, message = "successful operation"),
+      @ApiResponse(code = OK, message = "successful operation", response = ContentSelectorApiResponse.class, responseContainer = "List"),
       @ApiResponse(code = FORBIDDEN, message = "Insufficient permissions to read content selectors")
   })
   List<ContentSelectorApiResponse> getContentSelectors();
@@ -72,7 +72,7 @@ public interface ContentSelectorsResourceDoc
 
   @ApiOperation("Get a content selector by id")
   @ApiResponses({
-      @ApiResponse(code = OK, message = "successful operation"),
+      @ApiResponse(code = OK, message = "successful operation", response = ContentSelectorApiResponse.class),
       @ApiResponse(code = FORBIDDEN, message = "Insufficient permissions to read the content selector")
   })
   ContentSelectorApiResponse getContentSelector(

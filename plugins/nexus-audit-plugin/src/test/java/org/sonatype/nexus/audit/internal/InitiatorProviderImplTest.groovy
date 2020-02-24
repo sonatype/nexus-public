@@ -62,7 +62,7 @@ class InitiatorProviderImplTest
 
   @Test
   void 'prefer clientinfo when available'() {
-    ClientInfo clientInfo = new ClientInfo('foo', '1.2.3.4', 'bar')
+    ClientInfo clientInfo = ClientInfo.builder().userId('foo').remoteIP('1.2.3.4').userAgent('bar').build()
     when(clientInfoProvider.getCurrentThreadClientInfo()).thenReturn(clientInfo)
 
     def result = underTest.get()

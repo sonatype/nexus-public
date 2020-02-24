@@ -51,11 +51,13 @@ public class ClientInfoProviderImpl
   public ClientInfo getCurrentThreadClientInfo() {
     try {
       HttpServletRequest request = httpRequestProvider.get();
-      return new ClientInfo(
-          UserIdHelper.get(),
-          request.getRemoteAddr(),
-          request.getHeader(HttpHeaders.USER_AGENT)
-      );
+      return ClientInfo
+          .builder()
+          .userId(UserIdHelper.get())
+          .remoteIP(request.getRemoteAddr())
+          .userAgent(request.getHeader(HttpHeaders.USER_AGENT))
+          .path(request.getServletPath())
+          .build();
     }
     catch (ProvisionException | OutOfScopeException e) {
       // ignore; this happens when called out of scope of http request

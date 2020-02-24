@@ -12,6 +12,10 @@
  */
 package org.sonatype.nexus.security.authc;
 
+import java.util.Set;
+
+import static java.util.Collections.emptySet;
+
 /**
  * An event fired when the an user is authorized.
  *
@@ -23,9 +27,20 @@ public class AuthenticationEvent
 
   private final boolean successful;
 
+  private final Set<AuthenticationFailureReason> authenticationFailureReasons;
+
   public AuthenticationEvent(final String userId, final boolean successful) {
+    this(userId, successful, emptySet());
+  }
+
+  public AuthenticationEvent(
+      final String userId,
+      final boolean successful,
+      final Set<AuthenticationFailureReason> authenticationFailureReasons)
+  {
     this.userId = userId;
     this.successful = successful;
+    this.authenticationFailureReasons = authenticationFailureReasons;
   }
 
   public String getUserId() {
@@ -36,11 +51,16 @@ public class AuthenticationEvent
     return successful;
   }
 
+  public Set<AuthenticationFailureReason> getAuthenticationFailureReasons() {
+    return authenticationFailureReasons;
+  }
+
   @Override
   public String toString() {
-    return getClass().getSimpleName() + "{" +
+    return "AuthenticationEvent{" +
         "userId='" + userId + '\'' +
         ", successful=" + successful +
+        ", failureReasons=" + authenticationFailureReasons +
         '}';
   }
 }

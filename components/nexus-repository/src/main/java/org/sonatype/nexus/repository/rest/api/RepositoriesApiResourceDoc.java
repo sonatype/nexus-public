@@ -47,7 +47,7 @@ public interface RepositoriesApiResourceDoc
       throws Exception;
 
   @ApiOperation("List repositories")
-  @ApiResponses(value = {@ApiResponse(code = 200, message = "Repositories list returned"),
+  @ApiResponses(value = {@ApiResponse(code = 200, message = "Repositories list returned", response = AbstractApiRepository.class, responseContainer = "List"),
       @ApiResponse(code = 401, message = AUTHENTICATION_REQUIRED),
       @ApiResponse(code = 403, message = INSUFFICIENT_PERMISSIONS)})
   List<AbstractApiRepository> getRepositories();

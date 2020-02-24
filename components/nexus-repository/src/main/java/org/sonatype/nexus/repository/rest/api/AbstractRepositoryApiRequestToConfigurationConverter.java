@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.rest.api;
 import javax.inject.Inject;
 
 import org.sonatype.nexus.repository.config.Configuration;
-import org.sonatype.nexus.repository.config.internal.ConfigurationStore;
+import org.sonatype.nexus.repository.config.ConfigurationStore;
 import org.sonatype.nexus.repository.rest.api.model.AbstractRepositoryApiRequest;
 
 /**

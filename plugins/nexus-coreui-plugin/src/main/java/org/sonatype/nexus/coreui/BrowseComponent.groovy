@@ -71,7 +71,7 @@ class BrowseComponent
       pathSegments = path.split('/').collect EncodingUtil.&urlDecode
     }
 
-    return browseNodeStore.getByPath(repository, pathSegments, configuration.maxNodes).collect { browseNode ->
+    return browseNodeStore.getByPath(repository.name, pathSegments, configuration.maxNodes).collect { browseNode ->
       def encodedPath = EncodingUtil.urlEncode(browseNode.name)
       new BrowseNodeXO(
           id: isRoot(path) ? encodedPath : (path + '/' + encodedPath),

@@ -903,6 +903,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Ssl_SslCertificateDetailsForm_CertificateIssuedOn_FieldLabel: 'Issued on',
     Ssl_SslCertificateDetailsForm_CertificateValidUntil_FieldLabel: 'Valid until',
     Ssl_SslCertificateDetailsForm_CertificateFingerprint_FieldLabel: 'Fingerprint',
+    Ssl_SslCertificateDetailsForm_RetrievedUntrustedConnection_Html: '<b>This certificate was retrieved over an untrusted connection. Always verify the details before adding it.</b>',
 
     // Admin -> Support
     FeatureGroups_Support_Text: 'Support',

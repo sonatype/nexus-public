@@ -27,7 +27,7 @@ import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.config.Configuration
 import org.sonatype.nexus.repository.config.ConfigurationFacet
-import org.sonatype.nexus.repository.config.internal.ConfigurationStore
+import org.sonatype.nexus.repository.config.ConfigurationStore
 import org.sonatype.nexus.repository.group.GroupFacet
 import org.sonatype.nexus.repository.manager.DefaultRepositoriesContributor
 import org.sonatype.nexus.repository.manager.RepositoryMetadataUpdatedEvent

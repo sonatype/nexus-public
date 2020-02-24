@@ -102,7 +102,7 @@ public class DeleteFolderServiceImplTest
     when(repository.getName()).thenReturn("repo");
     when(repository.getFormat()).thenReturn(new Format("maven2") { });
     when(configuration.getMaxNodes()).thenReturn(1);
-    when(browseNodeStore.getByPath(repository, Arrays.asList("com", "sonatype"), 1)).thenReturn(browseNodes);
+    when(browseNodeStore.getByPath(repository.getName(), Arrays.asList("com", "sonatype"), 1)).thenReturn(browseNodes);
     when(variableResolverAdapterManager.get("maven2")).thenReturn(variableResolverAdapter);
     when(variableResolverAdapter.fromAsset(any(Asset.class))).thenReturn(variableSource);
     when(repository.facet(StorageFacet.class)).thenReturn(storageFacet);
@@ -183,9 +183,9 @@ public class DeleteFolderServiceImplTest
 
     DetachedEntityId assetEntityId = new DetachedEntityId(assetId);
 
-    BrowseNode browseNode = new BrowseNode();
-    browseNode.setLeaf(true);
-    browseNode.setAssetId(assetEntityId);
+    BrowseNode browseNode = mock(BrowseNode.class);
+    when(browseNode.isLeaf()).thenReturn(true);
+    when(browseNode.getAssetId()).thenReturn(assetEntityId);
 
     when(assetStore.getById(assetEntityId)).thenReturn(asset);
 
@@ -196,9 +196,9 @@ public class DeleteFolderServiceImplTest
 
   private BrowseNode mockComponentBrowseNode(final String componentId, final DateTime lastUpdated) {
     DetachedEntityId entityId = new DetachedEntityId(componentId);
-    BrowseNode browseNode = new BrowseNode();
-    browseNode.setLeaf(true);
-    browseNode.setComponentId(entityId);
+    BrowseNode browseNode = mock(BrowseNode.class);
+    when(browseNode.isLeaf()).thenReturn(true);
+    when(browseNode.getComponentId()).thenReturn(entityId);
 
     Component component = mock(Component.class);
     when(component.lastUpdated()).thenReturn(lastUpdated);
@@ -217,10 +217,10 @@ public class DeleteFolderServiceImplTest
     DetachedEntityId assetEntityId = new DetachedEntityId(assetId);
     DetachedEntityId componentEntityId = new DetachedEntityId(componentId);
 
-    BrowseNode browseNode = new BrowseNode();
-    browseNode.setLeaf(true);
-    browseNode.setAssetId(assetEntityId);
-    browseNode.setComponentId(componentEntityId);
+    BrowseNode browseNode = mock(BrowseNode.class);
+    when(browseNode.isLeaf()).thenReturn(true);
+    when(browseNode.getAssetId()).thenReturn(assetEntityId);
+    when(browseNode.getComponentId()).thenReturn(componentEntityId);
 
     when(assetStore.getById(assetEntityId)).thenReturn(asset);
     when(storageTx.browseAssets(component)).thenReturn(Collections.singletonList(asset));

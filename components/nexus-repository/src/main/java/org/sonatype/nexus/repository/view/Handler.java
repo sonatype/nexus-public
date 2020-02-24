@@ -20,6 +20,7 @@ import javax.annotation.Nonnull;
  * @since 3.0
  */
 public interface Handler
+    extends org.sonatype.nexus.repository.recipe.Handler
 {
   @Nonnull
   Response handle(@Nonnull Context context) throws Exception;

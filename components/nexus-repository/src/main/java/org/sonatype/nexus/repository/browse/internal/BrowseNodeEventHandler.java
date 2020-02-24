@@ -20,7 +20,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.WithLocality;
-import org.sonatype.nexus.repository.config.internal.ConfigurationDeletedEvent;
+import org.sonatype.nexus.repository.config.ConfigurationDeletedEvent;
 import org.sonatype.nexus.repository.storage.AssetCreatedEvent;
 import org.sonatype.nexus.repository.storage.AssetUpdatedEvent;
 import org.sonatype.nexus.repository.storage.AssetDeletedEvent;
