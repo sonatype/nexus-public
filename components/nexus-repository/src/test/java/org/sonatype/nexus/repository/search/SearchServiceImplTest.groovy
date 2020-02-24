@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.repository.search
 
+import java.util.AbstractMap.SimpleImmutableEntry
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 import javax.inject.Provider
@@ -105,6 +108,8 @@ class SearchServiceImplTest
   @Mock
   BulkProcessor bulkProcessor
 
+  ExecutorService executorService = Executors.newSingleThreadExecutor()
+
   AtomicBoolean cancelled = new AtomicBoolean(false)
 
   Settings settings = Settings.EMPTY
@@ -120,13 +125,15 @@ class SearchServiceImplTest
     when(client.settings()).thenReturn(settings)
 
     searchService = new SearchServiceImpl(clientProvider, repositoryManager, securityHelper, searchSubjectHelper,
-        indexSettingsContributors, eventManager, false, 1000, 0, 0, 3000)
-    searchService.bulkProcessor = bulkProcessor
+        indexSettingsContributors, eventManager, false, 1000, 0, 0, 3000, 1)
+    searchService.bulkProcessorToExecutors = new HashMap<>()
+    searchService.bulkProcessorToExecutors.put(0, new SimpleImmutableEntry<>(bulkProcessor, executorService))
   }
 
   @After
   void tearDown() {
     CancelableHelper.remove()
+    executorService.shutdown()
   }
 
   @Test
@@ -179,7 +186,7 @@ class SearchServiceImplTest
       when(builder.request()).thenReturn(request)
     })
 
-    searchService.bulkPut(repository,
+    def futures = searchService.bulkPut(repository,
         components.values(),
         { component -> inverse.get(component) },
         { component -> json }
@@ -188,6 +195,7 @@ class SearchServiceImplTest
     // Note: can't do a 'verify(bulkProcessor, times(requestCount)).add(any())' here,
     // because BulkProcessor#add is overloaded, each variant taking a single argument of the same supertype
     // mockito is unable to resolve the invoked method (fails with 'wanted, but not invoked error')
+    futures.forEach({it.get()})
     verify(bulkProcessor).flush()
   }
 
