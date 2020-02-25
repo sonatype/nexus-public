@@ -415,6 +415,12 @@
 
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-repository-view</artifactId>
+        <version>3.22.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-rest</artifactId>
         <version>3.22.0-SNAPSHOT</version>
       </dependency>

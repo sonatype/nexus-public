@@ -68,6 +68,7 @@
     <module>nexus-repository</module>
     <module>nexus-repository-config</module>
     <module>nexus-repository-content</module>
+    <module>nexus-repository-view</module>
     <module>nexus-rest</module>
     <module>nexus-rest-client</module>
     <module>nexus-rest-jackson2</module>

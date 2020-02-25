@@ -10,30 +10,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.storage;
+package org.sonatype.nexus.repository.view.handlers;
 
-import java.util.Map;
-
-import org.sonatype.nexus.blobstore.api.Blob;
-import org.sonatype.nexus.blobstore.api.BlobStore;
-import org.sonatype.nexus.common.hash.HashAlgorithm;
-
-import com.google.common.hash.HashCode;
+import org.sonatype.nexus.repository.view.Handler;
 
 /**
- * Blob handle that holds information for a temporary blob used in place of temporary files and streams. Instances must
- * be closed by the caller.
+ * Updates the asset last downloaded time
  *
- * @since 3.1
+ * This interface helps bridge to the real implementation which now lives in another module.
+ *
+ * @since 3.next
  */
-public class TempBlob
-    extends org.sonatype.nexus.repository.view.payloads.TempBlob
+public interface LastDownloadedHandler
+    extends Handler
 {
-  public TempBlob(final Blob blob,
-                  final Map<HashAlgorithm, HashCode> hashes,
-                  final boolean hashesVerified,
-                  final BlobStore blobStore)
-  {
-    super(blob, hashes, hashesVerified, blobStore);
-  }
+  // intentionally blank
 }

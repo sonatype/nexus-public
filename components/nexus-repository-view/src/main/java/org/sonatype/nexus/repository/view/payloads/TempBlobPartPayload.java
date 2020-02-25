@@ -17,7 +17,6 @@ import java.io.InputStream;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.view.PartPayload;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -97,8 +96,9 @@ public class TempBlobPartPayload
     return contentType;
   }
 
-  public TempBlob getTempBlob() {
-    return tempBlob;
+  @SuppressWarnings("unchecked")
+  public <T extends TempBlob> T getTempBlob() {
+    return (T) tempBlob;
   }
 
   @Override

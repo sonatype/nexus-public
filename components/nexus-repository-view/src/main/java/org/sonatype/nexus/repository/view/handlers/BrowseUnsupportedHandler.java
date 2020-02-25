@@ -25,7 +25,6 @@ import org.sonatype.nexus.common.template.TemplateParameters;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.http.HttpResponses;
-import org.sonatype.nexus.repository.security.SecurityHandler;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Matcher;
