@@ -20,6 +20,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
@@ -44,6 +45,7 @@ import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
  *
  * @since 3.21
  */
+@FeatureFlag(name = "nexus.datastore.enabled")
 @Named("mybatis")
 @Singleton
 public class ApiKeyStoreImpl
