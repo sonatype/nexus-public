@@ -17,7 +17,7 @@
  *
  * @since 3.17
  */
-Ext.define('NX.golang.view.repository.recipe.GolangHosted', {
+Ext.define('NX.coreui.view.repository.recipe.GolangHosted', {
   extend: 'NX.coreui.view.repository.RepositorySettingsForm',
   alias: 'widget.nx-coreui-repository-go-hosted',
   requires: [
