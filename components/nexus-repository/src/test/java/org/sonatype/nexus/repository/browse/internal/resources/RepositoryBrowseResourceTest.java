@@ -79,7 +79,7 @@ public class RepositoryBrowseResourceTest
   private TemplateHelper templateHelper;
 
   @Mock
-  private BrowseNodeStore browseNodeStore;
+  private BrowseNodeStore<EntityId> browseNodeStore;
 
   @Mock
   private RepositoryManager repositoryManager;
@@ -140,11 +140,11 @@ public class RepositoryBrowseResourceTest
     when(bucket.getRepositoryName()).thenReturn(REPOSITORY_NAME);
 
 
-    BrowseNode orgBrowseNode = browseNode("org");
+    BrowseNode<EntityId> orgBrowseNode = browseNode("org");
     when(browseNodeStore.getByPath(REPOSITORY_NAME, Collections.emptyList(), configuration.getMaxHtmlNodes()))
         .thenReturn(Collections.singleton(orgBrowseNode));
 
-    BrowseNode sonatypeBrowseNode = browseNode("sonatype");
+    BrowseNode<EntityId> sonatypeBrowseNode = browseNode("sonatype");
     when(browseNodeStore.getByPath(REPOSITORY_NAME, Collections.singletonList("org"), configuration.getMaxHtmlNodes()))
         .thenReturn(Collections.singleton(sonatypeBrowseNode));
     when(repositoryManager.get(REPOSITORY_NAME)).thenReturn(repository);
@@ -195,7 +195,7 @@ public class RepositoryBrowseResourceTest
 
   @Test
   public void validateAsset() throws Exception {
-    List<BrowseNode> nodes = asList(browseNode("a.txt", mock(EntityId.class), true));
+    List<BrowseNode<EntityId>> nodes = asList(browseNode("a.txt", mock(EntityId.class), true));
     when(asset.size()).thenReturn(1024L);
     when(asset.blobUpdated()).thenReturn(new DateTime(0));
     when(asset.name()).thenReturn("a1.txt");
@@ -230,7 +230,7 @@ public class RepositoryBrowseResourceTest
     when(groupRepository.optionalFacet(GroupFacet.class)).thenReturn(Optional.of(groupFacet));
     when(repositoryManager.get("group-repository")).thenReturn(groupRepository);
 
-    List<BrowseNode> nodes = asList(browseNode("a.txt", mock(EntityId.class), true));
+    List<BrowseNode<EntityId>> nodes = asList(browseNode("a.txt", mock(EntityId.class), true));
     when(asset.size()).thenReturn(1024L);
     when(asset.blobUpdated()).thenReturn(new DateTime(0));
     when(asset.name()).thenReturn("a1.txt");
@@ -339,7 +339,7 @@ public class RepositoryBrowseResourceTest
 
   @Test
   public void validateAssetFoldersAreTreatedLikeFolders() {
-    BrowseNode folderAsset = browseNode("folderAsset", mock(EntityId.class), false);
+    BrowseNode<EntityId> folderAsset = browseNode("folderAsset", mock(EntityId.class), false);
     when(browseNodeStore.getByPath(REPOSITORY_NAME, Collections.emptyList(), configuration.getMaxHtmlNodes()))
         .thenReturn(asList(folderAsset));
 
@@ -358,7 +358,7 @@ public class RepositoryBrowseResourceTest
 
   @Test
   public void validateAssetUriIsUrlEscapedToPreventXss() {
-    BrowseNode browseNode = browseNode("<img src=\"foo\">");
+    BrowseNode<EntityId> browseNode = browseNode("<img src=\"foo\">");
     when(browseNodeStore.getByPath(REPOSITORY_NAME, Collections.emptyList(), configuration.getMaxHtmlNodes()))
         .thenReturn(asList(browseNode));
 
@@ -374,16 +374,14 @@ public class RepositoryBrowseResourceTest
     assertThat(listItems.get(0).getResourceUri(), is("%3Cimg%20src%3D%22foo%22%3E/"));
   }
 
-  private BrowseNode browseNode(final String name) {
-    BrowseNode node = mock(BrowseNode.class);
-    when(node.getRepositoryName()).thenReturn(REPOSITORY_NAME);
+  private BrowseNode<EntityId> browseNode(final String name) {
+    BrowseNode<EntityId> node = mock(BrowseNode.class);
     when(node.getName()).thenReturn(name);
     return node;
   }
 
-  private BrowseNode browseNode(final String name, final EntityId assetId, final boolean leaf) {
-    BrowseNode node = mock(BrowseNode.class);
-    when(node.getRepositoryName()).thenReturn(REPOSITORY_NAME);
+  private BrowseNode<EntityId> browseNode(final String name, final EntityId assetId, final boolean leaf) {
+    BrowseNode<EntityId> node = mock(BrowseNode.class);
     when(node.getName()).thenReturn(name);
     when(node.getAssetId()).thenReturn(assetId);
     when(node.isLeaf()).thenReturn(leaf);

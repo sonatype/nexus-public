@@ -20,6 +20,6 @@ import java.util.Comparator;
  * @since 3.13
  */
 public interface BrowseNodeComparator
-    extends Comparator<BrowseNode>
+    extends Comparator<BrowseNode<?>>
 {
 }

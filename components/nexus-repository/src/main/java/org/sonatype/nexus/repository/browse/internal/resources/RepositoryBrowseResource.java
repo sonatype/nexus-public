@@ -85,7 +85,7 @@ public class RepositoryBrowseResource
 
   private final RepositoryManager repositoryManager;
 
-  private final BrowseNodeStore browseNodeStore;
+  private final BrowseNodeStore<EntityId> browseNodeStore;
 
   private final BrowseNodeConfiguration configuration;
 
@@ -100,12 +100,13 @@ public class RepositoryBrowseResource
   private final EscapeHelper escapeHelper = new EscapeHelper();
 
   @Inject
-  public RepositoryBrowseResource(final RepositoryManager repositoryManager,
-                                  final BrowseNodeStore browseNodeStore,
-                                  final BrowseNodeConfiguration configuration,
-                                  final BucketStore bucketStore,
-                                  final TemplateHelper templateHelper,
-                                  final SecurityHelper securityHelper)
+  public RepositoryBrowseResource(
+      final RepositoryManager repositoryManager,
+      final BrowseNodeStore<EntityId> browseNodeStore,
+      final BrowseNodeConfiguration configuration,
+      final BucketStore bucketStore,
+      final TemplateHelper templateHelper,
+      final SecurityHelper securityHelper)
   {
     this.repositoryManager = checkNotNull(repositoryManager);
     this.browseNodeStore = checkNotNull(browseNodeStore);
@@ -141,7 +142,7 @@ public class RepositoryBrowseResource
       pathSegments = asList(repositoryPath.split("/"));
     }
 
-    Iterable<BrowseNode> browseNodes =
+    Iterable<BrowseNode<EntityId>> browseNodes =
         browseNodeStore.getByPath(repository.getName(), pathSegments, configuration.getMaxHtmlNodes());
 
     final boolean permitted = securityHelper.allPermitted(new RepositoryViewPermission(repository, BROWSE));
@@ -171,15 +172,16 @@ public class RepositoryBrowseResource
     }
   }
 
-  private List<BrowseListItem> toListItems(final Iterable<BrowseNode> browseNodes,
-                                           final Repository repository,
-                                           final String path)
+  private List<BrowseListItem> toListItems(
+      final Iterable<BrowseNode<EntityId>> browseNodes,
+      final Repository repository,
+      final String path)
   {
     List<BrowseListItem> listItems = new ArrayList<>();
 
     if (browseNodes != null) {
       SimpleDateFormat format = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy");
-      for (BrowseNode browseNode : browseNodes) {
+      for (BrowseNode<EntityId> browseNode : browseNodes) {
         String size = null;
         String lastModified = null;
         String listItemPath;

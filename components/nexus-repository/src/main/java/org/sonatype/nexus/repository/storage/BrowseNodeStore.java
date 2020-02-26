@@ -19,10 +19,20 @@ import java.util.List;
  *
  * @since 3.7
  */
-public interface BrowseNodeStore
+public interface BrowseNodeStore<ID>
 {
   /**
    * Returns the {@link BrowseNode}s directly visible under the given path.
    */
-  Iterable<BrowseNode> getByPath(String repositoryName, List<String> path, int maxNodes);
+  Iterable<BrowseNode<ID>> getByPath(String repositoryName, List<String> path, int maxNodes);
+
+  /**
+   * Returns an external representation of the identifier.
+   */
+  String getValue(ID id);
+
+  /**
+   * Returns an internal representation of the serialized identifier.
+   */
+  ID fromValue(String value);
 }

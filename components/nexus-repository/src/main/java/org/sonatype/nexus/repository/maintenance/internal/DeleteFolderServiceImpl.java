@@ -54,7 +54,7 @@ public class DeleteFolderServiceImpl
     extends ComponentSupport
     implements DeleteFolderService
 {
-  private final BrowseNodeStore browseNodeStore;
+  private final BrowseNodeStore<EntityId> browseNodeStore;
 
   private final BrowseNodeConfiguration configuration;
 
@@ -68,7 +68,7 @@ public class DeleteFolderServiceImpl
 
   @Inject
   public DeleteFolderServiceImpl(
-      final BrowseNodeStore browseNodeStore,
+      final BrowseNodeStore<EntityId> browseNodeStore,
       final BrowseNodeConfiguration configuration,
       final AssetStore assetStore,
       final ContentPermissionChecker contentPermissionChecker,
@@ -98,11 +98,12 @@ public class DeleteFolderServiceImpl
     while (!cancelledCheck.getAsBoolean() && !paths.isEmpty()) {
       String basePath = paths.poll();
       List<String> path = Arrays.asList(basePath.split("/"));
-      Iterable<BrowseNode> nodes = browseNodeStore.getByPath(repository.getName(), path, configuration.getMaxNodes());
-      Iterator<BrowseNode> nodeIterator = nodes.iterator();
+      Iterable<BrowseNode<EntityId>> nodes =
+          browseNodeStore.getByPath(repository.getName(), path, configuration.getMaxNodes());
+      Iterator<BrowseNode<EntityId>> nodeIterator = nodes.iterator();
 
       while (!cancelledCheck.getAsBoolean() && nodeIterator.hasNext()) {
-        BrowseNode node = nodeIterator.next();
+        BrowseNode<EntityId> node = nodeIterator.next();
 
         if (!node.isLeaf()) {
           paths.offer(basePath + "/" + node.getName());
