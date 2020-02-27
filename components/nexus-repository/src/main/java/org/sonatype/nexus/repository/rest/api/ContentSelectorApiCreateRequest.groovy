@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.repository.rest.api
 
+import javax.validation.constraints.Pattern
+
+import org.sonatype.nexus.validation.constraint.NamePatternConstants
 
 import groovy.transform.CompileStatic
 import groovy.transform.EqualsAndHashCode
@@ -39,6 +42,7 @@ class ContentSelectorApiCreateRequest
     implements ValidatableContentSelectorRequest
 {
   @ApiModelProperty(value = NAME_DESCRIPTION)
+  @Pattern(regexp = NamePatternConstants.REGEX, message = NamePatternConstants.MESSAGE)
   @NotBlank
   String name
 

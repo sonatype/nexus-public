@@ -22,7 +22,8 @@ Ext.define('NX.coreui.view.selector.SelectorSettingsForm', {
   alias: 'widget.nx-coreui-selector-settings-form',
   requires: [
     'NX.Conditions',
-    'NX.I18n'
+    'NX.I18n',
+    'NX.util.Validator'
   ],
 
   api: {
@@ -60,7 +61,9 @@ Ext.define('NX.coreui.view.selector.SelectorSettingsForm', {
               name: 'name',
               itemId: 'name',
               fieldLabel: NX.I18n.get('Selector_SelectorSettingsForm_Name_FieldLabel'),
-              readOnly: true
+              readOnly: true,
+              vtype: 'nx-name',
+              transformRawValue: Ext.htmlDecode
             },
             {
               xtype: 'combo',
