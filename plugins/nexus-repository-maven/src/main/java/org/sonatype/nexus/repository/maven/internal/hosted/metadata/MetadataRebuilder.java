@@ -129,7 +129,7 @@ public class MetadataRebuilder
     }
   }
 
-  @Transactional
+  @TransactionalStoreBlob
   public boolean rebuildInTransaction(final Repository repository,
                                       final boolean update,
                                       final boolean rebuildChecksums,
