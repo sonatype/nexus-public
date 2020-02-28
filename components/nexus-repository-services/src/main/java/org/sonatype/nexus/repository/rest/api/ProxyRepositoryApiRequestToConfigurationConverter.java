@@ -70,17 +70,17 @@ public class ProxyRepositoryApiRequestToConfigurationConverter<T extends ProxyRe
       HttpClientConnectionAttributes connection = httpClient.getConnection();
       NestedAttributesMap connectionConfiguration = httpclientConfiguration.child("connection");
       convertConnection(connection, connectionConfiguration);
-      convertAuthentication(httpClient, connectionConfiguration);
+      convertAuthentication(httpClient, httpclientConfiguration);
     }
   }
 
   private void convertAuthentication(
       final HttpClientAttributes httpClient,
-      final NestedAttributesMap connectionConfiguration)
+      final NestedAttributesMap httpClientConfiguration)
   {
     HttpClientConnectionAuthenticationAttributes authentication = httpClient.getAuthentication();
     if (nonNull(authentication)) {
-      NestedAttributesMap authenticationConfiguration = connectionConfiguration.child("authentication");
+      NestedAttributesMap authenticationConfiguration = httpClientConfiguration.child("authentication");
       authenticationConfiguration.set("type", authentication.getType());
       authenticationConfiguration.set("username", authentication.getUsername());
       authenticationConfiguration.set("password", authentication.getPassword());
