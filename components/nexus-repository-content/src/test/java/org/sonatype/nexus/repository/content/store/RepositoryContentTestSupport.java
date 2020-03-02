@@ -25,6 +25,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityUUID;
+import org.sonatype.nexus.datastore.api.DataAccess;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
@@ -85,6 +86,14 @@ public class RepositoryContentTestSupport
   private List<AssetBlobData> assetBlobs;
 
   private List<AssetData> assets;
+
+  public RepositoryContentTestSupport() {
+    // do nothing
+  }
+
+  public RepositoryContentTestSupport(final Class<? extends DataAccess> accessType) {
+    sessionRule.access(accessType);
+  }
 
   protected List<ContentRepositoryData> generatedRepositories() {
     return unmodifiableList(repositories);
