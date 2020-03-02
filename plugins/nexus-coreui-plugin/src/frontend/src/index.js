@@ -11,6 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import AnonymousSettings from './components/pages/admin/AnonymousSettings/AnonymousSettings';
+import SystemInformation from './components/pages/admin/SystemInformation/SystemInformation';
 import UIStrings from './constants/UIStrings';
 
 window.plugins.push({
@@ -33,6 +34,23 @@ window.plugins.push({
           }
         ],
         permissions: ['nexus:settings:read']
+      }
+    },
+    {
+      mode: 'admin',
+      path: '/Support/SystemInformation',
+      text: UIStrings.SYSTEM_INFORMATION.MENU.text,
+      view: SystemInformation,
+      iconCls: 'x-fa fa-globe',
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        featureFlags: [
+          {
+            key: 'reactFrontend',
+            defaultValue: true
+          }
+        ],
+        permissions: ['nexus:atlas:read']
       }
     }
   ]

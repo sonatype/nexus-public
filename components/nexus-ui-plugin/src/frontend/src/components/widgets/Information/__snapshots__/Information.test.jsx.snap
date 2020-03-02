@@ -1,0 +1,118 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`FieldErrorMessage renders boolean values correctly 1`] = `
+<Information
+  information={
+    Object {
+      "boolean": false,
+    }
+  }
+>
+  <table
+    className="nxrm-information"
+  >
+    <tbody>
+      <InformationRow
+        key="boolean"
+      >
+        <tr
+          className="nxrm-information--row"
+        >
+          <InformationName>
+            <td
+              className="nxrm-information--name"
+            >
+              boolean
+            </td>
+          </InformationName>
+          <InformationValue>
+            <td
+              className="nxrm-information--value"
+            >
+              false
+            </td>
+          </InformationValue>
+        </tr>
+      </InformationRow>
+    </tbody>
+  </table>
+</Information>
+`;
+
+exports[`FieldErrorMessage renders numeric values correctly 1`] = `
+<Information
+  information={
+    Object {
+      "numeric": 0,
+    }
+  }
+>
+  <table
+    className="nxrm-information"
+  >
+    <tbody>
+      <InformationRow
+        key="numeric"
+      >
+        <tr
+          className="nxrm-information--row"
+        >
+          <InformationName>
+            <td
+              className="nxrm-information--name"
+            >
+              numeric
+            </td>
+          </InformationName>
+          <InformationValue>
+            <td
+              className="nxrm-information--value"
+            >
+              0
+            </td>
+          </InformationValue>
+        </tr>
+      </InformationRow>
+    </tbody>
+  </table>
+</Information>
+`;
+
+exports[`FieldErrorMessage renders text values correctly 1`] = `
+<Information
+  information={
+    Object {
+      "text": "test",
+    }
+  }
+>
+  <table
+    className="nxrm-information"
+  >
+    <tbody>
+      <InformationRow
+        key="text"
+      >
+        <tr
+          className="nxrm-information--row"
+        >
+          <InformationName>
+            <td
+              className="nxrm-information--name"
+            >
+              text
+            </td>
+          </InformationName>
+          <InformationValue>
+            <td
+              className="nxrm-information--value"
+            >
+              test
+            </td>
+          </InformationValue>
+        </tr>
+      </InformationRow>
+    </tbody>
+  </table>
+</Information>
+`;

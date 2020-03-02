@@ -11,10 +11,12 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 /**
- * @since 3.21
+ * @since 3.next
  */
 @import '../../../../styles/colors';
 
-.nxrm-content-body {
-  padding: 1em;
+.nxrm-breadcrumb--actions {
+  background: $white;
+  border-bottom: solid 1px $light-gray;
+  padding: 0 0.5em 0.5em 0.5em;
 }

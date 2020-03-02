@@ -14,6 +14,7 @@ import { UIStrings } from 'nexus-ui-plugin';
 
 export default {
   ...UIStrings,
+
   ANONYMOUS_SETTINGS: {
     MENU: {
       text: 'Anonymous Access',
@@ -27,6 +28,15 @@ export default {
       LOAD_ERROR: 'An error occurred while loading Anonymous settings, see console for more details',
       SAVE_SUCCESS: 'Anonymous security settings updated',
       SAVE_ERROR: 'An error occurred while updating Anonymous settings, see console for more details'
+    }
+  },
+
+  SYSTEM_INFORMATION: {
+    MENU: {
+      text: 'System Information'
+    },
+    ACTIONS: {
+      download: 'Download as JSON'
     }
   }
 };
