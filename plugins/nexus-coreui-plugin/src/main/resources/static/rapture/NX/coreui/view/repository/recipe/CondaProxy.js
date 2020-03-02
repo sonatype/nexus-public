@@ -17,7 +17,7 @@
  *
  * @since 3.19
  */
-Ext.define('NX.conda.view.repository.recipe.CondaProxy', {
+Ext.define('NX.coreui.view.repository.recipe.CondaProxy', {
   extend: 'NX.coreui.view.repository.RepositorySettingsForm',
   alias: 'widget.nx-coreui-repository-conda-proxy',
   requires: [

@@ -197,45 +197,72 @@ public class MavenFacetImpl
 
   @Nullable
   @Override
-  @TransactionalTouchBlob
   public Content get(final MavenPath path) throws IOException {
     log.debug("GET {} : {}", getRepository().getName(), path.getPath());
 
-    final StorageTx tx = UnitOfWork.currentTx();
+    AssetAndBlob assetAndBlob = getAssetAndBlob(path);
+    if (assetAndBlob == null) {
+      return null;
+    }
 
+    Asset asset = assetAndBlob.asset;
+    Blob blob = assetAndBlob.blob;
+
+    if (needsRebuild(path, asset)) {
+      assetAndBlob = rebuildMetadata(asset, path);
+      asset = assetAndBlob.asset;
+      blob = assetAndBlob.blob;
+    }
+
+    return asset == null ? null : toContent(asset, blob);
+  }
+
+  // Gets both the asset and it's blob in a single transaction, optimizing the common case where a rebuild is not necessary.
+  @Nullable
+  @TransactionalTouchBlob
+  protected AssetAndBlob getAssetAndBlob(MavenPath path) {
+    final StorageTx tx = UnitOfWork.currentTx();
     Asset asset = findAsset(tx, tx.findBucket(getRepository()), path);
     if (asset == null) {
       return null;
     }
 
-    if (path.getFileName().equals(METADATA_FILENAME)) {
-      asset = maybeRebuildMetadata(tx, asset, path);
+    Blob blob = null;
+    if (!needsRebuild(path, asset)) {
+      blob = tx.requireBlob(asset.requireBlobRef());
     }
 
-    return asset == null ? null : toContent(asset, tx.requireBlob(asset.requireBlobRef()));
+    return new AssetAndBlob(asset, blob);
+  }
+
+  @TransactionalStoreBlob
+  protected AssetAndBlob rebuildMetadata(final Asset asset, final MavenPath path)
+      throws IOException
+  {
+    final StorageTx tx = UnitOfWork.currentTx();
+
+    removeRebuildFlag(asset);
+    Blob metadataBlob = tx.requireBlob(asset.requireBlobRef());
+    Metadata metadata = MavenModels.readMetadata(metadataBlob.getInputStream());
+    metadataRebuilder.rebuildInTransaction(
+        getRepository(),
+        false,
+        false,
+        metadata.getGroupId(),
+        metadata.getArtifactId(),
+        metadata.getVersion()
+    );
+
+    Asset foundAsset = findAsset(tx, tx.findBucket(getRepository()), path);
+    Blob foundBlob = tx.requireBlob(foundAsset.requireBlobRef());
+
+    return new AssetAndBlob(foundAsset, foundBlob);
   }
 
   // rebuild the metadata if it has been marked for rebuild (except for proxy repos)
-  @Nullable
-  private Asset maybeRebuildMetadata(final StorageTx tx, final Asset asset, final MavenPath path)
-      throws IOException
-  {
-    if (requiresRebuild(asset) && !(getRepository().getType() instanceof ProxyType)) {
-      removeRebuildFlag(asset);
-      Blob metadataBlob = tx.requireBlob(asset.requireBlobRef());
-      Metadata metadata = MavenModels.readMetadata(metadataBlob.getInputStream());
-      metadataRebuilder.rebuildInTransaction(
-          getRepository(),
-          false,
-          false,
-          metadata.getGroupId(),
-          metadata.getArtifactId(),
-          metadata.getVersion()
-      );
-
-      return findAsset(tx, tx.findBucket(getRepository()), path);
-    }
-    return asset;
+  private boolean needsRebuild(final MavenPath path, final Asset asset) {
+    return path.getFileName().equals(METADATA_FILENAME) && requiresRebuild(asset) &&
+        !(getRepository().getType() instanceof ProxyType);
   }
 
   private Content toContent(final Asset asset, final Blob blob) {
@@ -483,7 +510,7 @@ public class MavenFacetImpl
     }
 
     putAssetPayload(tx, asset, assetBlob, contentAttributes);
-    
+
     tx.saveAsset(asset);
 
     return asset;
@@ -551,6 +578,19 @@ public class MavenFacetImpl
     }
     else {
       return AssetKind.OTHER.name();
+    }
+  }
+
+  /**
+   * Data structure that holds both an asset and it's associated blob.
+   */
+  protected static final class AssetAndBlob {
+    public final Asset asset;
+    public final Blob blob;
+
+    public AssetAndBlob(final Asset asset, final Blob blob) {
+      this.asset = asset;
+      this.blob = blob;
     }
   }
 }

@@ -14,19 +14,13 @@ package org.sonatype.nexus.repository.storage;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.common.entity.EntityId;
-
 /**
  * Represents a path segment in a tree hierarchy.
  *
  * @since 3.6
  */
-public interface BrowseNode
+public interface BrowseNode<ID>
 {
-  String getRepositoryName();
-
-  String getFormat();
-
   /**
    * @since 3.18
    */
@@ -43,8 +37,8 @@ public interface BrowseNode
   boolean isLeaf();
 
   @Nullable
-  EntityId getComponentId();
+  ID getComponentId();
 
   @Nullable
-  EntityId getAssetId();
+  ID getAssetId();
 }

@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.search;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.Future;
 
 import javax.annotation.Nullable;
 
@@ -58,16 +59,19 @@ public interface SearchService
   /**
    * Operation used for bulk updating of component index.
    *
+   * The update is done on a separate dedicated thread.
+   *
    * @param repository the source repository
    * @param components an {@link Iterable} of components to index
    * @param identifierProducer a function producing an identifier for a component (never returning null)
    * @param jsonDocumentProducer a function producing a json document for the component (never returning null)
    *
    * @since 3.4
+   * @return A list of Future objects for tracking each update.
    */
-  <T> void bulkPut(Repository repository, Iterable<T> components,
-                   Function<T, String> identifierProducer,
-                   Function<T, String> jsonDocumentProducer);
+  <T> List<Future<Void>> bulkPut(Repository repository, Iterable<T> components,
+                                 Function<T, String> identifierProducer,
+                                 Function<T, String> jsonDocumentProducer);
 
   /**
    * Removes data with given identifier from index of given repository.

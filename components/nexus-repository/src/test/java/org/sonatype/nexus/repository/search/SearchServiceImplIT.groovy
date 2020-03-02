@@ -117,7 +117,7 @@ class SearchServiceImplIT
     ClientProvider clientProvider = new ClientProvider(nodeProvider)
 
     searchService = new SearchServiceImpl(clientProvider, repositoryManager, securityHelper, searchSubjectHelper,
-        ImmutableList.of(), eventManager, false, 1000, 1, 0, CALM_TIMEOUT)
+        ImmutableList.of(), eventManager, false, 1000, 1, 0, CALM_TIMEOUT, 1)
 
     when(repositoryConfig.isOnline()).thenReturn(true)
     when(testFormat.getValue()).thenReturn('test-format')

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.view.handlers;
+package org.sonatype.nexus.repository.storage;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -20,12 +20,8 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.entity.EntityHelper;
-import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.AssetManager;
-import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
-import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
@@ -49,7 +45,7 @@ import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
 @Singleton
 public class LastDownloadedHandler
     extends ComponentSupport
-    implements Handler
+    implements org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler
 {
   private final AssetManager assetManager;
 

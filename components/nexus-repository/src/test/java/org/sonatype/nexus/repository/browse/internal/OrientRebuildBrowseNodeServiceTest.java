@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.browse.internal;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.function.BooleanSupplier;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
@@ -25,11 +26,13 @@ import org.sonatype.nexus.orient.entity.AttachedEntityHelper;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
+import org.sonatype.nexus.repository.browse.RebuildBrowseNodeFailedException;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetStore;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.BucketStore;
+import org.sonatype.nexus.scheduling.TaskInterruptedException;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -38,11 +41,14 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -52,14 +58,14 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.I_BUCKET_COMPONENT_NAME;
 
-public class RebuildBrowseNodesTaskTest
+public class OrientRebuildBrowseNodeServiceTest
     extends TestSupport
 {
   static final String REPOSITORY_NAME = "repository-name";
 
   private static final int REBUILD_PAGE_SIZE = 2;
 
-  private RebuildBrowseNodesTask underTest;
+  private OrientRebuildBrowseNodeService underTest;
 
   @Mock
   private AssetStore assetStore;
@@ -93,6 +99,9 @@ public class RebuildBrowseNodesTaskTest
   @Mock
   private OIndexCursor cursor;
 
+  @Rule
+  public final ExpectedException thrown = ExpectedException.none();
+
   @Before
   public void setUp() {
     when(repository.getName()).thenReturn(REPOSITORY_NAME);
@@ -105,7 +114,7 @@ public class RebuildBrowseNodesTaskTest
     when(assetStore.getIndex(I_BUCKET_COMPONENT_NAME)).thenReturn(bucketComponentIndex);
     when(bucketComponentIndex.cursor()).thenReturn(cursor);
 
-    underTest = new RebuildBrowseNodesTask(
+    underTest = new OrientRebuildBrowseNodeService(
         assetStore,
         bucketStore,
         browseNodeManager,
@@ -114,7 +123,7 @@ public class RebuildBrowseNodesTaskTest
   }
 
   @Test
-  public void executeWithOfflineRepository() {
+  public void executeWithOfflineRepository() throws Exception {
     ORID bucketId = AttachedEntityHelper.id(bucket);
 
     Asset asset1 = createMockAsset("#1:1");
@@ -134,7 +143,7 @@ public class RebuildBrowseNodesTaskTest
     when(assetStore.getById(EntityHelper.id(asset2))).thenReturn(asset2);
     when(assetStore.getById(EntityHelper.id(asset3))).thenReturn(asset3);
 
-    underTest.execute(repository);
+    underTest.rebuild(repository, () -> false);
 
     verify(assetStore, times(2)).getNextPage(any(), eq(REBUILD_PAGE_SIZE));
 
@@ -142,10 +151,10 @@ public class RebuildBrowseNodesTaskTest
   }
 
   @Test
-  public void executeTruncatesNodesForNoAssets() {
+  public void executeTruncatesNodesForNoAssets() throws RebuildBrowseNodeFailedException {
     when(assetStore.countAssets(any())).thenReturn(0L);
 
-    underTest.execute(repository);
+    underTest.rebuild(repository, () -> false);
 
     verify(browseNodeManager).deleteByRepository(repository.getName());
     verify(assetStore).countAssets(any());
@@ -154,7 +163,7 @@ public class RebuildBrowseNodesTaskTest
   }
 
   @Test
-  public void executeProcessesAllAssetsInPages() {
+  public void executeProcessesAllAssetsInPages() throws RebuildBrowseNodeFailedException {
     ORID bucketId = AttachedEntityHelper.id(bucket);
 
     Asset asset1 = createMockAsset("#1:1");
@@ -174,12 +183,45 @@ public class RebuildBrowseNodesTaskTest
     when(assetStore.getById(EntityHelper.id(asset2))).thenReturn(asset2);
     when(assetStore.getById(EntityHelper.id(asset3))).thenReturn(asset3);
 
-    underTest.execute(repository);
+    underTest.rebuild(repository, () -> false);
 
     verify(assetStore, times(3)).getNextPage(any(), eq(REBUILD_PAGE_SIZE));
 
     verify(browseNodeManager).createFromAssets(eq(repository), eq(asList(asset1, asset2)));
     verify(browseNodeManager).createFromAssets(eq(repository), eq(asList(asset3)));
+  }
+
+  @Test
+  public void executionCanCancelDuringTheProcess() throws Exception {
+    ORID bucketId = AttachedEntityHelper.id(bucket);
+
+    Asset asset1 = createMockAsset("#1:1");
+    Asset asset2 = createMockAsset("#1:2");
+    Asset asset3 = createMockAsset("#2:1");
+
+    List<Entry<Object, EntityId>> page1 = asList(
+        createIndexEntry(bucketId, EntityHelper.id(asset1)),
+        createIndexEntry(bucketId, EntityHelper.id(asset2)));
+    List<Entry<Object, EntityId>> page2 = asList(
+        createIndexEntry(bucketId, EntityHelper.id(asset3)));
+    List<Entry<Object, EntityId>> page3 = emptyList();
+
+    when(assetStore.countAssets(any())).thenReturn(3L);
+    when(assetStore.getNextPage(any(), eq(REBUILD_PAGE_SIZE))).thenReturn(page1, page2, page3);
+    when(assetStore.getById(EntityHelper.id(asset1))).thenReturn(asset1);
+    when(assetStore.getById(EntityHelper.id(asset2))).thenReturn(asset2);
+    when(assetStore.getById(EntityHelper.id(asset3))).thenReturn(asset3);
+
+    BooleanSupplier mockCancel = mock(BooleanSupplier.class);
+    when(mockCancel.getAsBoolean()).thenReturn(false).thenReturn(true);
+
+    thrown.expect(RebuildBrowseNodeFailedException.class);
+    thrown.expectCause(instanceOf(TaskInterruptedException.class));
+
+    underTest.rebuild(repository, mockCancel);
+
+    verify(assetStore, times(1)).getNextPage(any(), eq(REBUILD_PAGE_SIZE));
+
   }
 
   private Asset createMockAsset(final String id) {

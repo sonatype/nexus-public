@@ -59,15 +59,19 @@ public class ContentAuthPluginScript
 
   private final RepositoryManager repositoryManager;
 
+  private final boolean contentAuthSleep;
+
   public ContentAuthPluginScript(final Subject subject,
                                  final ContentPermissionChecker contentPermissionChecker,
                                  final VariableResolverAdapterManager variableResolverAdapterManager,
-                                 final RepositoryManager repositoryManager)
+                                 final RepositoryManager repositoryManager,
+                                 final boolean contentAuthSleep)
   {
     this.subject = checkNotNull(subject);
     this.contentPermissionChecker = checkNotNull(contentPermissionChecker);
     this.variableResolverAdapterManager = checkNotNull(variableResolverAdapterManager);
     this.repositoryManager = checkNotNull(repositoryManager);
+    this.contentAuthSleep = contentAuthSleep;
   }
 
   @Override
@@ -95,11 +99,13 @@ public class ContentAuthPluginScript
     }
     finally {
       threadState.clear();
-      try {
-        TimeUnit.MILLISECONDS.sleep(1);
-      }
-      catch (InterruptedException e) {
-        log.error("Thread.sleep interruped", e);
+      if (contentAuthSleep) {
+        try {
+          TimeUnit.MILLISECONDS.sleep(1);
+        }
+        catch (InterruptedException e) {
+          log.error("Thread.sleep interruped", e);
+        }
       }
     }
   }

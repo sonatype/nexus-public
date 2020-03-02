@@ -15,15 +15,22 @@ package org.sonatype.nexus.repository.search;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -44,6 +51,7 @@ import org.sonatype.nexus.repository.search.SearchSubjectHelper.SubjectRegistrat
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.repository.selector.internal.ContentAuthPluginScriptFactory;
 import org.sonatype.nexus.security.SecurityHelper;
+import org.sonatype.nexus.thread.NexusThreadFactory;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
@@ -56,7 +64,9 @@ import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.validate.query.QueryExplanation;
 import org.elasticsearch.action.admin.indices.validate.query.ValidateQueryResponse;
 import org.elasticsearch.action.bulk.BulkProcessor;
+import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
+import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.ClearScrollRequest;
 import org.elasticsearch.action.search.ClearScrollResponse;
@@ -83,7 +93,11 @@ import org.elasticsearch.search.profile.ProfileShardResult;
 import org.elasticsearch.search.sort.SortBuilder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.unmodifiableMap;
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
+import static java.util.stream.Collectors.toList;
 import static org.elasticsearch.index.query.QueryBuilders.idsQuery;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
@@ -127,15 +141,15 @@ public class SearchServiceImpl
 
   private final ConcurrentMap<String, String> repositoryNameMapping;
 
-  private final BulkIndexUpdateListener updateListener;
+  private final List<BulkIndexUpdateListener> updateListeners;
 
   private final boolean profile;
 
   private final boolean periodicFlush;
 
-  private BulkProcessor bulkProcessor;
-
   private final AtomicLong updateCount = new AtomicLong();
+
+  private Map<Integer, Entry<BulkProcessor, ExecutorService>> bulkProcessorToExecutors;
 
   /**
    * @param client source for a {@link Client}
@@ -149,20 +163,27 @@ public class SearchServiceImpl
    * @param concurrentRequests how many bulk requests to execute concurrently (default: 1; 0 means execute synchronously)
    * @param flushInterval how long to wait in milliseconds between flushing bulk requests (default: 0, instantaneous)
    * @param calmTimeout timeout in ms to wait for a calm period
+   * @param batchingThreads This is the number of threads 'n' batching up index updates into 'n' BulkProcessors.
+   *                        That is, the number of independent batches to accumulate index updates in.
    */
+  @SuppressWarnings("squid:S00107")
   @Inject
-  public SearchServiceImpl(final Provider<Client> client, //NOSONAR
-                           final RepositoryManager repositoryManager,
-                           final SecurityHelper securityHelper,
-                           final SearchSubjectHelper searchSubjectHelper,
-                           final List<IndexSettingsContributor> indexSettingsContributors,
-                           final EventManager eventManager,
-                           @Named("${nexus.elasticsearch.profile:-false}") final boolean profile,
-                           @Named("${nexus.elasticsearch.bulkCapacity:-1000}") final int bulkCapacity,
-                           @Named("${nexus.elasticsearch.concurrentRequests:-1}") final int concurrentRequests,
-                           @Named("${nexus.elasticsearch.flushInterval:-0}") final int flushInterval,
-                           @Named("${nexus.elasticsearch.calmTimeout:-3000}") final int calmTimeout)
+  public SearchServiceImpl(
+      final Provider<Client> client, //NOSONAR
+      final RepositoryManager repositoryManager,
+      final SecurityHelper securityHelper,
+      final SearchSubjectHelper searchSubjectHelper,
+      final List<IndexSettingsContributor> indexSettingsContributors,
+      final EventManager eventManager,
+      @Named("${nexus.elasticsearch.profile:-false}") final boolean profile,
+      @Named("${nexus.elasticsearch.bulkCapacity:-1000}") final int bulkCapacity,
+      @Named("${nexus.elasticsearch.concurrentRequests:-1}") final int concurrentRequests,
+      @Named("${nexus.elasticsearch.flushInterval:-0}") final int flushInterval,
+      @Named("${nexus.elasticsearch.calmTimeout:-3000}") final int calmTimeout,
+      @Named("${nexus.elasticsearch.batching.threads.count:-1}") final int batchingThreads)
   {
+    checkState(batchingThreads > 0,
+        "'nexus.elasticsearch.batching.threads.count' must be positive.");
     this.client = checkNotNull(client);
     this.repositoryManager = checkNotNull(repositoryManager);
     this.securityHelper = checkNotNull(securityHelper);
@@ -171,23 +192,43 @@ public class SearchServiceImpl
     this.eventManager = eventManager;
     this.calmTimeout = calmTimeout;
     this.repositoryNameMapping = Maps.newConcurrentMap();
-    this.updateListener = new BulkIndexUpdateListener();
+    this.updateListeners = new ArrayList<>();
     this.profile = profile;
     this.periodicFlush = flushInterval > 0;
+    createBulkProcessorsAndExecutors(bulkCapacity, concurrentRequests, flushInterval, batchingThreads);
+  }
 
-    this.bulkProcessor = BulkProcessor
-        .builder(client.get(), updateListener)
-        .setBulkActions(bulkCapacity)
-        .setBulkSize(new ByteSizeValue(-1)) // turn off automatic flush based on size in bytes
-        .setConcurrentRequests(concurrentRequests)
-        .setFlushInterval(periodicFlush ? TimeValue.timeValueMillis(flushInterval) : null)
-        .build();
+  private void createBulkProcessorsAndExecutors(
+      final int bulkCapacity,
+      final int concurrentRequests,
+      final int flushInterval,
+      final int batchingThreads)
+  {
+    Map<Integer, Entry<BulkProcessor, ExecutorService>> bulkProcessorAndThreadPools = new HashMap<>();
+    for (int count = 0; count < batchingThreads; ++count) {
+      final BulkIndexUpdateListener updateListener = new BulkIndexUpdateListener();
+      updateListeners.add(updateListener);
+      bulkProcessorAndThreadPools.put(count, new SimpleImmutableEntry<>(BulkProcessor
+          .builder(this.client.get(), updateListener)
+          .setBulkActions(bulkCapacity)
+          .setBulkSize(new ByteSizeValue(-1)) // turn off automatic flush based on size in bytes
+          .setConcurrentRequests(concurrentRequests)
+          .setFlushInterval(periodicFlush ? TimeValue.timeValueMillis(flushInterval) : null)
+          .build(), createThreadPool(count)));
+    }
+    this.bulkProcessorToExecutors = unmodifiableMap(bulkProcessorAndThreadPools);
+  }
+
+  private ExecutorService createThreadPool(final int id)
+  {
+    return newSingleThreadExecutor(
+        new NexusThreadFactory("search-service-impl " + id, "search-service " + id));
   }
 
   @Override
   public void flush(final boolean fsync) {
     log.debug("Flushing index requests");
-    bulkProcessor.flush();
+    flushBulkProcessors();
 
     if (fsync) {
       try {
@@ -199,9 +240,23 @@ public class SearchServiceImpl
     }
   }
 
+  private List<Future<Void>> flushBulkProcessors() {
+    return bulkProcessorToExecutors
+        .values()
+        .stream()
+        .map(this::flushBulkProcessor)
+        .collect(toList());
+  }
+
+  private Future<Void> flushBulkProcessor(final Entry<BulkProcessor, ExecutorService> bulkProcessorExecutorPair) {
+    final ExecutorService executorService = bulkProcessorExecutorPair.getValue();
+    final BulkProcessor bulkProcessor = bulkProcessorExecutorPair.getKey();
+    return executorService.submit(new BulkProcessorFlusher(bulkProcessor));
+  }
+
   @Override
   public boolean isCalmPeriod() {
-    if (updateListener.inflightRequestCount() > 0) {
+    if (isUpdateInFlight()) {
       return false;
     }
 
@@ -214,6 +269,13 @@ public class SearchServiceImpl
     }
 
     return true;
+  }
+
+  private boolean isUpdateInFlight() {
+    return updateListeners
+        .stream()
+        .map(BulkIndexUpdateListener::inflightRequestCount)
+        .anyMatch(inflight -> inflight > 0);
   }
 
   @Override
@@ -317,7 +379,9 @@ public class SearchServiceImpl
   }
 
   private void deleteIndex(final String indexName) {
-    bulkProcessor.flush(); // make sure dangling requests don't resurrect this index
+    // make sure dangling requests don't resurrect this index
+    flushBulkProcessors();
+
     IndicesAdminClient indices = indicesAdminClient();
     if (indices.prepareExists(indexName).execute().actionGet().isExists()) {
       indices.prepareDelete(indexName).execute().actionGet();
@@ -362,15 +426,20 @@ public class SearchServiceImpl
   }
 
   @Override
-  public <T> void bulkPut(final Repository repository, final Iterable<T> components,
-                          final Function<T, String> identifierProducer,
-                          final Function<T, String> jsonDocumentProducer) {
+  public <T> List<Future<Void>> bulkPut(final Repository repository, final Iterable<T> components,
+                                        final Function<T, String> identifierProducer,
+                                        final Function<T, String> jsonDocumentProducer) {
     checkNotNull(repository);
     checkNotNull(components);
     String indexName = repositoryNameMapping.get(repository.getName());
     if (indexName == null) {
-      return;
+      return emptyList();
     }
+
+    final Entry<BulkProcessor, ExecutorService> bulkProcessorToExecutorPair = pickABulkProcessor();
+    final BulkProcessor bulkProcessor = bulkProcessorToExecutorPair.getKey();
+    final ExecutorService executorService = bulkProcessorToExecutorPair.getValue();
+    final List<Future<Void>> futures = new ArrayList<>();
 
     components.forEach(component -> {
       checkCancellation();
@@ -378,18 +447,23 @@ public class SearchServiceImpl
       String json = jsonDocumentProducer.apply(component);
       if (json != null) {
         updateCount.getAndIncrement();
+
         log.debug("Bulk adding to index document {} from {}: {}", identifier, repository, json);
-        bulkProcessor.add(
-            client.get()
-                .prepareIndex(indexName, TYPE, identifier)
-                .setSource(json).request()
-        );
+        futures.add(executorService.submit(
+            new BulkProcessorUpdater<>(bulkProcessor, createIndexRequest(indexName, identifier, json))));
       }
     });
 
     if (!periodicFlush) {
-      bulkProcessor.flush();
+      futures.add(executorService.submit(new BulkProcessorFlusher(bulkProcessor)));
     }
+    return futures;
+  }
+
+  private IndexRequest createIndexRequest(final String indexName, final String identifier, final String json) {
+    return client.get()
+        .prepareIndex(indexName, TYPE, identifier)
+        .setSource(json).request();
   }
 
   @Override
@@ -419,6 +493,9 @@ public class SearchServiceImpl
   public void bulkDelete(@Nullable final Repository repository, final Iterable<String> identifiers) {
     checkNotNull(identifiers);
 
+    final Entry<BulkProcessor, ExecutorService> bulkProcessorToExecutorPair = pickABulkProcessor();
+    final BulkProcessor bulkProcessor = bulkProcessorToExecutorPair.getKey();
+    final ExecutorService executorService = bulkProcessorToExecutorPair.getValue();
     if (repository != null) {
       String indexName = repositoryNameMapping.get(repository.getName());
       if (indexName == null) {
@@ -427,7 +504,8 @@ public class SearchServiceImpl
 
       identifiers.forEach(id -> {
         log.debug("Bulk removing from index document {} from {}", id, repository);
-        bulkProcessor.add(client.get().prepareDelete(indexName, TYPE, id).request());
+        final DeleteRequest deleteRequest = client.get().prepareDelete(indexName, TYPE, id).request();
+        executorService.submit(new BulkProcessorUpdater<>(bulkProcessor, deleteRequest));  //NOSONAR
       });
     }
     else {
@@ -447,14 +525,24 @@ public class SearchServiceImpl
 
         toDelete.getHits().forEach(hit -> {
           log.debug("Bulk removing from index document {} from {}", hit.getId(), hit.index());
-          bulkProcessor.add(client.get().prepareDelete(hit.index(), TYPE, hit.getId()).request());
+          final DeleteRequest request = client.get().prepareDelete(hit.index(), TYPE, hit.getId()).request();
+          executorService.submit(new BulkProcessorUpdater<>(bulkProcessor, request)); //NOSONAR
         });
       });
     }
 
     if (!periodicFlush) {
-      bulkProcessor.flush();
+      executorService.submit(new BulkProcessorFlusher(bulkProcessor)); //NOSONAR
     }
+  }
+
+  private Entry<BulkProcessor, ExecutorService> pickABulkProcessor() {
+    final int numberOfBulkProcessors = bulkProcessorToExecutors.size();
+    if (numberOfBulkProcessors > 1) {
+      final int index = ThreadLocalRandom.current().nextInt(numberOfBulkProcessors);
+      return bulkProcessorToExecutors.get(index);
+    }
+    return bulkProcessorToExecutors.get(0);
   }
 
   /**

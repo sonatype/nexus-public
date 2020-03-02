@@ -18,7 +18,6 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.view.Context;
-import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Response;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -32,7 +31,7 @@ import com.google.common.annotations.VisibleForTesting;
 @Singleton
 public class SecurityHandler
     extends ComponentSupport
-    implements Handler
+    implements org.sonatype.nexus.repository.view.handlers.SecurityHandler
 {
   @VisibleForTesting
   static final String AUTHORIZED_KEY = "security.authorized";

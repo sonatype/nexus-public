@@ -26,6 +26,7 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
+import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
@@ -82,7 +83,7 @@ import static org.sonatype.nexus.repository.browse.internal.orient.BrowseNodeEnt
 @Named
 public class OrientBrowseNodeStoreImpl
     extends StateGuardLifecycleSupport
-    implements BrowseNodeStore, BrowseNodeCrudStore<EntityId, Asset, Component>
+    implements BrowseNodeStore<EntityId>, BrowseNodeCrudStore<EntityId, Asset, Component>
 {
   private final Provider<DatabaseInstance> databaseInstance;
 
@@ -199,7 +200,11 @@ public class OrientBrowseNodeStoreImpl
 
   @Override
   @Guarded(by = STARTED)
-  public Iterable<BrowseNode> getByPath(final String repositoryName, final List<String> path, final int maxNodes) {
+  public Iterable<BrowseNode<EntityId>> getByPath(
+      final String repositoryName,
+      final List<String> path,
+      final int maxNodes)
+  {
     Repository repository = repositoryManager.get(repositoryName);
     String format = repository.getFormat().getValue();
 
@@ -217,9 +222,9 @@ public class OrientBrowseNodeStoreImpl
 
     BrowseNodeFilter filter = browseNodeFilters.getOrDefault(repository.getFormat().getValue(), (node, name) -> true);
 
-    List<BrowseNode> results;
+    List<BrowseNode<EntityId>> results;
     if (repository.getType() instanceof GroupType) {
-      Equivalence<BrowseNode> browseNodeIdentity = Equivalence.equals()
+      Equivalence<OrientBrowseNode> browseNodeIdentity = Equivalence.equals()
           .onResultOf(input -> repository.facet(GroupFacet.class).browseNodeIdentity().apply(input));
       // overlay member results, first-one-wins if there are any nodes with the same name
       results = members(repository)
@@ -228,13 +233,13 @@ public class OrientBrowseNodeStoreImpl
           .map(browseNodeIdentity::wrap)
           .distinct()
           .map(Wrapper::get)
-          .filter(node -> filter.test(node, repositoryName))
+          .filter(node -> filter.test(node, repositoryName.equals(node.getRepositoryName())))
           .limit(maxNodes)
           .collect(toList());
     }
     else {
       results = getByPath(repository.getName(), path, maxNodes, assetFilter, filterParameters).stream()
-          .filter(node -> filter.test(node, repositoryName))
+          .filter(node -> filter.test(node, repositoryName.equals(node.getRepositoryName())))
           .collect(toList());
     }
 
@@ -253,7 +258,7 @@ public class OrientBrowseNodeStoreImpl
   /**
    * Returns the browse nodes directly visible under the path according to the given asset filter.
    */
-  private List<? extends BrowseNode> getByPath(
+  private List<OrientBrowseNode> getByPath(
       final String repositoryName,
       final List<String> path,
       final int maxNodes,
@@ -349,7 +354,17 @@ public class OrientBrowseNodeStoreImpl
     }
   }
 
-  private Comparator<BrowseNode> getBrowseNodeComparator(final String format) {
+  private Comparator<BrowseNode<?>> getBrowseNodeComparator(final String format) {
     return browseNodeComparators.getOrDefault(format, defaultBrowseNodeComparator);
+  }
+
+  @Override
+  public String getValue(final EntityId id) {
+    return id == null ? null : id.getValue();
+  }
+
+  @Override
+  public EntityId fromValue(final String value) {
+    return value == null ? null : EntityHelper.id(value);
   }
 }

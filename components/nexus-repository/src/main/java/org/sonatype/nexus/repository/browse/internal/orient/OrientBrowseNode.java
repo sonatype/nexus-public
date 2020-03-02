@@ -32,7 +32,7 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class OrientBrowseNode
     extends AbstractEntity
-    implements BrowseNode
+    implements BrowseNode<EntityId>
 {
   private String repositoryName;
 
@@ -52,7 +52,6 @@ public class OrientBrowseNode
   @Nullable
   private EntityId assetId;
 
-  @Override
   public String getRepositoryName() {
     return require(repositoryName, BrowseNodeEntityAdapter.P_REPOSITORY_NAME);
   }
@@ -61,7 +60,6 @@ public class OrientBrowseNode
     this.repositoryName = checkNotNull(repositoryName);
   }
 
-  @Override
   public String getFormat() {
     return require(format, BrowseNodeEntityAdapter.P_FORMAT);
   }

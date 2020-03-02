@@ -17,7 +17,7 @@
  *
  * @since 3.17
  */
-Ext.define('NX.golang.view.repository.recipe.GolangGroup', {
+Ext.define('NX.coreui.view.repository.recipe.GolangGroup', {
   extend: 'NX.coreui.view.repository.RepositorySettingsForm',
   alias: 'widget.nx-coreui-repository-go-group',
   requires: [

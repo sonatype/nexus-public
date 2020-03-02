@@ -17,7 +17,7 @@
  *
  * @since 3.17
  */
-Ext.define('NX.golang.view.repository.recipe.GolangProxy', {
+Ext.define('NX.coreui.view.repository.recipe.GolangProxy', {
     extend: 'NX.coreui.view.repository.RepositorySettingsForm',
     alias: 'widget.nx-coreui-repository-go-proxy',
     requires: [

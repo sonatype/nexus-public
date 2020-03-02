@@ -361,7 +361,7 @@ public class OrientBrowseNodeStoreImplTest
     when(browseNodeEntityAdapter.getByPath(db, MEMBER_C, queryPath, MAX_NODES, "", emptyMap()))
         .thenReturn(asList(node(MEMBER_C, "com"), node(MEMBER_C, "javax")));
 
-    Iterable<BrowseNode> nodes = underTest.getByPath(REPOSITORY_NAME, queryPath, MAX_NODES);
+    Iterable<BrowseNode<EntityId>> nodes = underTest.getByPath(REPOSITORY_NAME, queryPath, MAX_NODES);
 
     // check that duplicate nodes were removed, should follow a 'first-one-wins' approach
     assertThat(nodes, containsInAnyOrder(
@@ -394,7 +394,7 @@ public class OrientBrowseNodeStoreImplTest
     when(browseNodeEntityAdapter.getByPath(db, MEMBER_C, queryPath, 1, "", emptyMap()))
         .thenReturn(asList(node(MEMBER_C, "com")));
 
-    Iterable<BrowseNode> nodes = underTest.getByPath(REPOSITORY_NAME, queryPath, 1);
+    Iterable<BrowseNode<EntityId>> nodes = underTest.getByPath(REPOSITORY_NAME, queryPath, 1);
 
     // check that the limit was correctly applied to the merged results
     assertThat(nodes, containsInAnyOrder(
@@ -412,11 +412,11 @@ public class OrientBrowseNodeStoreImplTest
 
     when(securityHelper.anyPermitted(any())).thenReturn(true);
     when(browseNodeEntityAdapter.getByPath(any(), any(), any(), anyInt(), any(), anyMap()))
-        .thenReturn(ImmutableList.of(new OrientBrowseNode()));
+        .thenReturn(ImmutableList.of(node(REPOSITORY_NAME, "foo")));
 
     underTest.getByPath(REPOSITORY_NAME, queryPath, MAX_NODES);
 
-    verify(browseNodeFilter).test(any(), eq(REPOSITORY_NAME));
+    verify(browseNodeFilter).test(any(), eq(true));
   }
 
   @Test
@@ -511,6 +511,7 @@ public class OrientBrowseNodeStoreImplTest
 
   private static OrientBrowseNode node(final String name, final boolean isAsset, final boolean isComponent) {
     OrientBrowseNode node = new OrientBrowseNode();
+    node.setRepositoryName(REPOSITORY_NAME);
     node.setName(name);
     if (isAsset) {
       node.setAssetId(new DetachedEntityId(name));

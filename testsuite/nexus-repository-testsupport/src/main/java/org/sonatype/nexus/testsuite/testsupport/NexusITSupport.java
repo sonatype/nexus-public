@@ -12,10 +12,12 @@
  */
 package org.sonatype.nexus.testsuite.testsupport;
 
+import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.net.URI;
 import java.net.URL;
 import java.security.KeyStore;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +29,8 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.net.ssl.SSLContext;
 import javax.ws.rs.client.Client;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriBuilder;
 
 import org.sonatype.nexus.pax.exam.NexusPaxExamSupport;
@@ -38,7 +42,9 @@ import org.sonatype.nexus.rest.client.RestClientConfiguration.Customizer;
 import org.sonatype.nexus.rest.client.RestClientFactory;
 import org.sonatype.nexus.testsuite.testsupport.rest.TestSuiteObjectMapperResolver;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
@@ -49,6 +55,8 @@ import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
@@ -58,6 +66,7 @@ import org.apache.http.cookie.CookieOrigin;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
@@ -370,5 +379,29 @@ public abstract class NexusITSupport
       resteasyClientBuilder.providerFactory(providerFactory);
       RegisterBuiltin.register(providerFactory);
     };
+  }
+
+  /**
+   * Preform a get request
+   * @param baseUrl (nexusUrl in most tests)
+   * @param path to the resource
+   * @return the response object
+   */
+  protected Response get(final URL baseUrl, final String path) throws Exception {
+    HttpGet request = new HttpGet();
+    request.setURI(UriBuilder.fromUri(baseUrl.toURI()).path(path).build());
+
+    try (CloseableHttpClient client = clientBuilder().build()) {
+      try (CloseableHttpResponse response = client.execute(request)) {
+        ResponseBuilder responseBuilder = Response.status(response.getStatusLine().getStatusCode());
+        Arrays.stream(response.getAllHeaders()).forEach(h -> responseBuilder.header(h.getName(), h.getValue()));
+
+        HttpEntity entity = response.getEntity();
+        if (entity != null) {
+          responseBuilder.entity(new ByteArrayInputStream(IOUtils.toByteArray(entity.getContent())));
+        }
+        return responseBuilder.build();
+      }
+    }
   }
 }

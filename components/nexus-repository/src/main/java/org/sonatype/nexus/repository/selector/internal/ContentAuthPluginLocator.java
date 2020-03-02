@@ -39,10 +39,11 @@ public class ContentAuthPluginLocator
   public ContentAuthPluginLocator(final ContentPermissionChecker contentPermissionChecker,
                                   final VariableResolverAdapterManager variableResolverAdapterManager,
                                   final SearchSubjectHelper searchSubjectHelper,
-                                  final RepositoryManager repositoryManager)
+                                  final RepositoryManager repositoryManager,
+                                  @Named("${nexus.elasticsearch.contentAuthSleep:-true") final Boolean contentAuthSleep)
   {
     ContentAuthPlugin.setDependencies(contentPermissionChecker, variableResolverAdapterManager,
-        searchSubjectHelper, repositoryManager);
+        searchSubjectHelper, repositoryManager, contentAuthSleep);
   }
 
   @Override

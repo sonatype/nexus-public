@@ -18,6 +18,7 @@ import * as xstate from 'xstate';
 import registerFeature from './registerFeature';
 
 Axios.defaults.xsrfCookieName = Axios.defaults.xsrfHeaderName = 'NX-ANTI-CSRF-TOKEN';
+Axios.defaults.baseURL = NX.app.baseUrl;
 
 window.axios = Axios;
 window.react = React;

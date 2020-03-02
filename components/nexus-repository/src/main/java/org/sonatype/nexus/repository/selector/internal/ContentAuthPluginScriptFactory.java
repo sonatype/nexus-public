@@ -42,7 +42,8 @@ public class ContentAuthPluginScriptFactory
         subject,
         ContentAuthPlugin.getContentPermissionChecker(),
         ContentAuthPlugin.getVariableResolverAdapterManager(),
-        ContentAuthPlugin.getRepositoryManager());
+        ContentAuthPlugin.getRepositoryManager(),
+        ContentAuthPlugin.getContentAuthSleep());
   }
 
   @Override
