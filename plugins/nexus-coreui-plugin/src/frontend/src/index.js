@@ -44,12 +44,6 @@ window.plugins.push({
       iconCls: 'x-fa fa-globe',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        featureFlags: [
-          {
-            key: 'reactFrontend',
-            defaultValue: true
-          }
-        ],
         permissions: ['nexus:atlas:read']
       }
     }
