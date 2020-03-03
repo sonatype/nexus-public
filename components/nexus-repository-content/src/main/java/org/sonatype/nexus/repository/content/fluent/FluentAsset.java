@@ -14,8 +14,8 @@ package org.sonatype.nexus.repository.content.fluent;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.repository.content.Asset;
-import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.view.Payload;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 /**
  * Fluent API for a particular asset.

@@ -44,6 +44,9 @@ class PyPiGroupRecipe
   Provider<PyPiGroupFacet> groupFacet
 
   @Inject
+  Provider<PyPiBrowseNodeFacet> browseNodeFacet
+
+  @Inject
   GroupHandler standardGroupHandler
 
   @Inject
@@ -64,6 +67,7 @@ class PyPiGroupRecipe
     repository.attach(securityFacet.get())
     repository.attach(configure(viewFacet.get()))
     repository.attach(attributesFacet.get())
+    repository.attach(browseNodeFacet.get())
   }
 
   /**

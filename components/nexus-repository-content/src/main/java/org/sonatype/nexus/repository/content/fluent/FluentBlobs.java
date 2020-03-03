@@ -15,8 +15,8 @@ package org.sonatype.nexus.repository.content.fluent;
 import java.io.InputStream;
 
 import org.sonatype.nexus.common.hash.HashAlgorithm;
-import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.view.Payload;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 /**
  * Fluent API for ingesting blobs.

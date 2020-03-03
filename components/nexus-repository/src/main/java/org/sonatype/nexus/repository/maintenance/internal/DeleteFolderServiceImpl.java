@@ -33,6 +33,7 @@ import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetStore;
+import org.sonatype.nexus.repository.storage.AssetVariableResolver;
 import org.sonatype.nexus.repository.storage.BrowseNode;
 import org.sonatype.nexus.repository.storage.BrowseNodeStore;
 import org.sonatype.nexus.repository.storage.ComponentMaintenance;
@@ -160,8 +161,9 @@ public class DeleteFolderServiceImpl
   }
 
   private boolean canDeleteAsset(final Repository repository, final Asset asset) {
+    AssetVariableResolver assetVariableResolver = variableResolverAdapterManager.get(repository.getFormat().getValue());
     return contentPermissionChecker
         .isPermitted(repository.getName(), repository.getFormat().getValue(), BreadActions.DELETE,
-            variableResolverAdapterManager.get(repository.getFormat().getValue()).fromAsset(asset));
+            assetVariableResolver.fromAsset(asset));
   }
 }

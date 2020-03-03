@@ -32,10 +32,10 @@ import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositorySelector;
-import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
+import org.sonatype.nexus.repository.storage.AssetVariableResolver;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.BucketStore;
 import org.sonatype.nexus.repository.storage.Component;
@@ -474,12 +474,12 @@ public class BrowseServiceImplTest
     when(groupRepository.facet(GroupFacet.class)).thenReturn(groupFacet);
     when(storageTx.findComponent(new DetachedEntityId(componentOneORID.toString()))).thenReturn(componentOne);
     when(repositoryManager.findContainingGroups(mavenReleases.getName())).thenReturn(Collections.singletonList("group-repository"));
-    VariableResolverAdapter variableResolverAdapter = mock(VariableResolverAdapter.class);
-    when(variableResolverAdapterManager.get(componentOne.format())).thenReturn(variableResolverAdapter);
+    AssetVariableResolver assetVariableResolver = mock(AssetVariableResolver.class);
+    when(variableResolverAdapterManager.get(componentOne.format())).thenReturn(assetVariableResolver);
     VariableSource variableSourceOne = createVariableSource(assetOne);
     VariableSource variableSourceTwo = createVariableSource(assetTwo);
-    when(variableResolverAdapter.fromAsset(assetOne)).thenReturn(variableSourceOne);
-    when(variableResolverAdapter.fromAsset(assetTwo)).thenReturn(variableSourceTwo);
+    when(assetVariableResolver.fromAsset(assetOne)).thenReturn(variableSourceOne);
+    when(assetVariableResolver.fromAsset(assetTwo)).thenReturn(variableSourceTwo);
     when(storageTx.browseAssets(componentOne)).thenReturn(Arrays.asList(assetOne, assetTwo));
     when(contentPermissionChecker
         .isPermitted(eq(Stream.of(mavenReleases.getName(), "group-repository").collect(Collectors.toSet())), any(),

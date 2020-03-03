@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.browse.internal.orient;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
@@ -32,6 +33,7 @@ import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.BrowseNode;
 import org.sonatype.nexus.repository.storage.BrowseNodeComparator;
+import org.sonatype.nexus.repository.storage.BrowseNodeFacet;
 import org.sonatype.nexus.repository.storage.BrowseNodeFilter;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.DefaultBrowseNodeComparator;
@@ -133,6 +135,9 @@ public class OrientBrowseNodeStoreImplTest
 
   @Mock
   private GroupFacet groupFacet;
+
+  @Mock
+  private BrowseNodeFacet browseNodeFacet;
 
   @Mock
   private Format format;
@@ -352,7 +357,8 @@ public class OrientBrowseNodeStoreImplTest
     when(repository.getType()).thenReturn(new GroupType());
     when(repository.facet(GroupFacet.class)).thenReturn(groupFacet);
     when(groupFacet.leafMembers()).thenReturn(asList(memberA, memberB, memberC));
-    when(groupFacet.browseNodeIdentity()).thenReturn(browseNodeIdentity());
+    when(repository.optionalFacet(BrowseNodeFacet.class)).thenReturn(Optional.of(browseNodeFacet));
+    when(browseNodeFacet.browseNodeIdentity()).thenReturn(browseNodeIdentity());
 
     when(browseNodeEntityAdapter.getByPath(db, MEMBER_A, queryPath, MAX_NODES, "", emptyMap()))
         .thenReturn(asList(node(MEMBER_A, "com"), node(MEMBER_A, "org")));
@@ -385,7 +391,8 @@ public class OrientBrowseNodeStoreImplTest
     when(repository.getType()).thenReturn(new GroupType());
     when(repository.facet(GroupFacet.class)).thenReturn(groupFacet);
     when(groupFacet.leafMembers()).thenReturn(asList(memberA, memberB, memberC));
-    when(groupFacet.browseNodeIdentity()).thenReturn(browseNodeIdentity());
+    when(repository.optionalFacet(BrowseNodeFacet.class)).thenReturn(Optional.of(browseNodeFacet));
+    when(browseNodeFacet.browseNodeIdentity()).thenReturn(browseNodeIdentity());
 
     when(browseNodeEntityAdapter.getByPath(db, MEMBER_A, queryPath, 1, "", emptyMap()))
         .thenReturn(asList(node(MEMBER_A, "com")));

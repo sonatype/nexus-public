@@ -20,16 +20,9 @@ import org.sonatype.nexus.blobstore.api.BlobRef;
  * @since 3.2
  */
 public class MissingBlobException
-    extends IllegalStateException
+    extends org.sonatype.nexus.repository.MissingBlobException
 {
-  private final BlobRef blobRef;
-
   public MissingBlobException(final BlobRef blobRef) {
-    super(String.format("Blob %s exists in metadata, but is missing from the blobstore", blobRef));
-    this.blobRef = blobRef;
-  }
-
-  public BlobRef getBlobRef() {
-    return blobRef;
+    super(blobRef);
   }
 }

@@ -16,6 +16,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -42,6 +43,7 @@ import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.BrowseNode;
 import org.sonatype.nexus.repository.storage.BrowseNodeComparator;
 import org.sonatype.nexus.repository.storage.BrowseNodeCrudStore;
+import org.sonatype.nexus.repository.storage.BrowseNodeFacet;
 import org.sonatype.nexus.repository.storage.BrowseNodeFilter;
 import org.sonatype.nexus.repository.storage.BrowseNodeStore;
 import org.sonatype.nexus.repository.storage.Component;
@@ -224,8 +226,16 @@ public class OrientBrowseNodeStoreImpl
 
     List<BrowseNode<EntityId>> results;
     if (repository.getType() instanceof GroupType) {
-      Equivalence<OrientBrowseNode> browseNodeIdentity = Equivalence.equals()
-          .onResultOf(input -> repository.facet(GroupFacet.class).browseNodeIdentity().apply(input));
+      Equivalence<OrientBrowseNode> browseNodeIdentity;
+      Optional<BrowseNodeFacet> browseNodeFacet = repository.optionalFacet(BrowseNodeFacet.class);
+      if (browseNodeFacet.isPresent()) {
+        browseNodeIdentity = Equivalence.equals()
+            .onResultOf(input -> browseNodeFacet.get().browseNodeIdentity().apply(input));
+      }
+      else {
+        browseNodeIdentity = Equivalence.equals().onResultOf(BrowseNode::getName);
+      }
+
       // overlay member results, first-one-wins if there are any nodes with the same name
       results = members(repository)
           .map(m -> getByPath(m.getName(), path, maxNodes, assetFilter, filterParameters))

@@ -40,6 +40,11 @@
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-repository-services</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-repository-view</artifactId>
     </dependency>
 
@@ -233,6 +238,23 @@
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <configuration>
+          <instructions>
+            <!--
+            Merge split packages and re-export the merged result.
+            -->
+            <Export-Package>
+              org.sonatype.nexus.repository.cache;-split-package:=merge-first,
+              org.sonatype.nexus.repository.view;-split-package:=merge-first,
+              {local-packages}
+            </Export-Package>
+          </instructions>
+        </configuration>
+      </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>

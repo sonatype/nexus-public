@@ -22,9 +22,9 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.security.RepositorySelector;
-import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
+import org.sonatype.nexus.repository.storage.AssetVariableResolver;
 import org.sonatype.nexus.repository.storage.BucketEntityAdapter;
 import org.sonatype.nexus.selector.JexlSelector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
@@ -144,8 +144,8 @@ public class ContentExpressionFunction
                                       final String jexlExpression,
                                       final String format)
   {
-    VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(format);
-    VariableSource variableSource = variableResolverAdapter.fromDocument(asset);
+    AssetVariableResolver assetVariableResolver = variableResolverAdapterManager.get(format);
+    VariableSource variableSource = assetVariableResolver.fromDocument(asset);
 
     SelectorConfiguration selectorConfiguration = selectorManager.newSelectorConfiguration();
 

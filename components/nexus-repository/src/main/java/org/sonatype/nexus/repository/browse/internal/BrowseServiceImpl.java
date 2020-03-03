@@ -41,10 +41,10 @@ import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositorySelector;
-import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
+import org.sonatype.nexus.repository.storage.AssetVariableResolver;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.BucketStore;
 import org.sonatype.nexus.repository.storage.Component;
@@ -188,14 +188,14 @@ public class BrowseServiceImpl
     //'repository' context
     Set<String> repoNames = new HashSet<>(repositoryManager.findContainingGroups(repository.getName()));
     repoNames.add(repository.getName());
-    VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(component.format());
+    AssetVariableResolver assetVariableResolver = variableResolverAdapterManager.get(component.format());
     List<Asset> assets = StreamSupport.stream(storageTx.browseAssets(component).spliterator(), false)
         .filter(
             (Asset asset) -> contentPermissionChecker.isPermitted(
                 repoNames,
                 asset.format(),
                 BreadActions.BROWSE,
-                variableResolverAdapter.fromAsset(asset))
+                assetVariableResolver.fromAsset(asset))
         ).collect(Collectors.toList());
     return new BrowseResult<>(assets.size(), assets);
   }

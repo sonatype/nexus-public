@@ -24,10 +24,10 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
-import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetStore;
+import org.sonatype.nexus.repository.storage.AssetVariableResolver;
 import org.sonatype.nexus.repository.storage.BrowseNode;
 import org.sonatype.nexus.repository.storage.BrowseNodeStore;
 import org.sonatype.nexus.repository.storage.Component;
@@ -84,7 +84,7 @@ public class DeleteFolderServiceImplTest
   VariableResolverAdapterManager variableResolverAdapterManager;
 
   @Mock
-  VariableResolverAdapter variableResolverAdapter;
+  AssetVariableResolver assetVariableResolver;
 
   @Mock
   VariableSource variableSource;
@@ -103,8 +103,8 @@ public class DeleteFolderServiceImplTest
     when(repository.getFormat()).thenReturn(new Format("maven2") { });
     when(configuration.getMaxNodes()).thenReturn(1);
     when(browseNodeStore.getByPath(repository.getName(), Arrays.asList("com", "sonatype"), 1)).thenReturn(browseNodes);
-    when(variableResolverAdapterManager.get("maven2")).thenReturn(variableResolverAdapter);
-    when(variableResolverAdapter.fromAsset(any(Asset.class))).thenReturn(variableSource);
+    when(variableResolverAdapterManager.get("maven2")).thenReturn(assetVariableResolver);
+    when(assetVariableResolver.fromAsset(any(Asset.class))).thenReturn(variableSource);
     when(repository.facet(StorageFacet.class)).thenReturn(storageFacet);
     when(storageFacet.txSupplier()).thenReturn(Suppliers.ofInstance(storageTx));
     when(securityHelper.isPermitted(new RepositoryViewPermission(repository, BreadActions.DELETE)))

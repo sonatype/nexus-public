@@ -38,9 +38,9 @@ import org.sonatype.nexus.repository.browse.BrowseService;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
-import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.AssetVariableResolver;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.BucketStore;
 import org.sonatype.nexus.repository.storage.Component;
@@ -97,7 +97,7 @@ public class ComponentComponentTest
   VariableResolverAdapterManager variableResolverAdapterManager;
 
   @Mock
-  VariableResolverAdapter variableResolverAdapter;
+  AssetVariableResolver assetVariableResolver;
 
   @Mock
   StorageFacet storageFacet;
@@ -146,7 +146,7 @@ public class ComponentComponentTest
     when(repository.getFormat()).thenReturn(new Format("testFormat") { });
     when(repository.facet(ComponentMaintenance.class)).thenReturn(componentMaintenance);
     when(repository.facet(StorageFacet.class)).thenReturn(storageFacet);
-    when(variableResolverAdapterManager.get("testFormat")).thenReturn(variableResolverAdapter);
+    when(variableResolverAdapterManager.get("testFormat")).thenReturn(assetVariableResolver);
     when(storageFacet.txSupplier()).thenReturn(Suppliers.ofInstance(storageTx));
     when(componentFinders.get(any(String.class))).thenReturn(defaultComponentFinder);
   }
@@ -158,7 +158,7 @@ public class ComponentComponentTest
     Component component = makeTestComponent(format);
     Asset asset = mock(Asset.class);
     VariableSource variableSource = mock(VariableSource.class);
-    when(variableResolverAdapter.fromAsset(asset)).thenReturn(variableSource);
+    when(assetVariableResolver.fromAsset(asset)).thenReturn(variableSource);
     when(storageTx.findComponent(any(EntityId.class))).thenReturn(component);
     when(storageTx.browseAssets(component)).thenReturn(Collections.singletonList(asset));
     when(contentPermissionChecker.isPermitted(repositoryName, format, BreadActions.DELETE, variableSource))
@@ -183,8 +183,8 @@ public class ComponentComponentTest
     VariableSource variableSource = mock(VariableSource.class);
     Asset asset2 = mock(Asset.class);
     VariableSource variableSource2 = mock(VariableSource.class);
-    when(variableResolverAdapter.fromAsset(asset)).thenReturn(variableSource);
-    when(variableResolverAdapter.fromAsset(asset2)).thenReturn(variableSource2);
+    when(assetVariableResolver.fromAsset(asset)).thenReturn(variableSource);
+    when(assetVariableResolver.fromAsset(asset2)).thenReturn(variableSource2);
     when(storageTx.findComponent(any(EntityId.class))).thenReturn(component);
     when(storageTx.browseAssets(component)).thenReturn(Arrays.asList(asset, asset2));
     when(contentPermissionChecker.isPermitted(repositoryName, format, BreadActions.DELETE, variableSource))
@@ -210,7 +210,7 @@ public class ComponentComponentTest
     VariableSource variableSource = mock(VariableSource.class);
     Bucket bucket = mock(Bucket.class);
     when(maintenanceService.deleteAsset(repository, asset)).thenReturn(Collections.singleton("assetname"));
-    when(variableResolverAdapter.fromAsset(asset)).thenReturn(variableSource);
+    when(assetVariableResolver.fromAsset(asset)).thenReturn(variableSource);
     when(storageTx.findBucket(repository)).thenReturn(bucket);
     when(storageTx.findAsset(new DetachedEntityId("testAssetId"), bucket)).thenReturn(asset);
     assertThat(underTest.deleteAsset("testAssetId", "testRepositoryName"), contains("assetname"));
@@ -235,7 +235,7 @@ public class ComponentComponentTest
     when(entityMetadata.getId()).thenReturn(new DetachedEntityId("someid"));
     when(storageTx.findComponent(eq(new DetachedEntityId("someid")))).thenReturn(component);
     when(storageTx.browseAssets(component)).thenReturn(Arrays.asList(asset));
-    when(variableResolverAdapter.fromAsset(asset)).thenReturn(variableSource);
+    when(assetVariableResolver.fromAsset(asset)).thenReturn(variableSource);
     ComponentXO componentXO = underTest.readComponent("someid", "testRepositoryName");
 
     assertThat(componentXO, is(notNullValue()));
