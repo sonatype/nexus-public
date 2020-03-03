@@ -53,7 +53,9 @@ public class NexusAuthenticationEventAuditor
   @Subscribe
   @AllowConcurrentEvents
   public void on(final NexusAuthenticationEvent event) {
-    if (isRecording() && isAuditableAuthenticationEvent(event)) {
+    Set<AuthenticationFailureReason> failureReasonsToLog = getFailureReasonsToLog(event);
+
+    if (isRecording() && !failureReasonsToLog.isEmpty()) {
       AuditData auditData = new AuditData();
 
       auditData.setType("authentication");
@@ -61,7 +63,7 @@ public class NexusAuthenticationEventAuditor
       auditData.setTimestamp(event.getEventDate());
 
       Map<String, Object> attributes = auditData.getAttributes();
-      attributes.put("failureReasons", event.getAuthenticationFailureReasons());
+      attributes.put("failureReasons", failureReasonsToLog);
       attributes.put("wasSuccessful", event.isSuccessful());
 
       if (event.getClientInfo() != null) {
@@ -76,7 +78,7 @@ public class NexusAuthenticationEventAuditor
     }
   }
 
-  private boolean isAuditableAuthenticationEvent(NexusAuthenticationEvent event) {
-    return !Sets.intersection(event.getAuthenticationFailureReasons(), AUDITABLE_FAILURE_REASONS).isEmpty();
+  private Set<AuthenticationFailureReason> getFailureReasonsToLog(NexusAuthenticationEvent event) {
+    return Sets.intersection(event.getAuthenticationFailureReasons(), AUDITABLE_FAILURE_REASONS);
   }
 }
