@@ -53,6 +53,16 @@ public abstract class ContainerCommandLineITSupport
   }
 
   /**
+   * @param dockerContainerConfig {@link DockerContainerConfig}
+   * @param commands              to be run for docker container
+   * @see ContainerCommandLineITSupport#ContainerCommandLineITSupport(DockerContainerConfig)
+   */
+  protected ContainerCommandLineITSupport(DockerContainerConfig dockerContainerConfig, final String commands) {
+    dockerContainerClient = new DockerContainerClient(dockerContainerConfig);
+    dockerContainerClient.run(commands);
+  }
+
+  /**
    * Constructor that creates the {@link DockerContainerClient} to be used as the
    * underlying client to run commands on. It additionally runs the {@link #init()} method
    * to allow implementers to assure that certain setup would have been done before allowing
@@ -64,6 +74,7 @@ public abstract class ContainerCommandLineITSupport
     dockerContainerClient = new DockerContainerClient(dockerContainerConfig);
     dockerContainerClient.run();
   }
+
 
   @Override
   public void init() {

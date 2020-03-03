@@ -73,6 +73,8 @@ public class DockerContainerClient
 
   private final String image;
 
+  private final List<String> env;
+
   private final HostConfig hostConfig;
 
   private ContainerInfo startedContainer;
@@ -94,6 +96,7 @@ public class DockerContainerClient
   public DockerContainerClient(DockerContainerConfig dockerContainerConfig) {
     this.dockerClient = dockerContainerConfig.getDockerClientBuilder().build();
     this.image = dockerContainerConfig.getImage();
+    this.env = dockerContainerConfig.getEnv();
     this.hostConfig = dockerContainerConfig.getHostConfigBuilder().build();
 
     logDockerInfo();
@@ -293,6 +296,7 @@ public class DockerContainerClient
                   .hostConfig(hostConfig)
                   .exposedPorts(hostConfig.portBindings().keySet())
                   .image(image)
+                  .env(env)
                   .cmd(cmd(commands))
                   .build());
 
