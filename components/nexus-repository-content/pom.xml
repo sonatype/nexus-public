@@ -45,7 +45,7 @@
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-repository-view</artifactId>
+      <artifactId>nexus-repository</artifactId>
     </dependency>
 
     <dependency>
