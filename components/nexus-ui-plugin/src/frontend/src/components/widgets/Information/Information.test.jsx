@@ -10,8 +10,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {shallow, mount} from 'enzyme';
 import React from 'react';
+import {render} from '@testing-library/react';
+import '@testing-library/jest-dom/extend-expect';
 
 import Information from "./Information";
 
@@ -20,32 +21,32 @@ describe('FieldErrorMessage', () => {
     const info = {
       'boolean': false
     };
-    const wrapper = mount(<Information information={info}/>);
+    const {container, getByText} = render(<Information information={info}/>);
 
-    expect(wrapper.find('.nxrm-information--value').text()).toBe('false');
+    expect(getByText('false')).toBeInTheDocument();
 
-    expect(wrapper).toMatchSnapshot();
+    expect(container).toMatchSnapshot();
   });
 
   it('renders numeric values correctly', () => {
     const info = {
       'numeric': 0
     };
-    const wrapper = mount(<Information information={info}/>);
+    const {container, getByText} = render(<Information information={info}/>);
 
-    expect(wrapper.find('.nxrm-information--value').text()).toBe('0');
+    expect(getByText('0')).toBeInTheDocument();
 
-    expect(wrapper).toMatchSnapshot();
+    expect(container).toMatchSnapshot();
   });
 
   it('renders text values correctly', () => {
     const info = {
       'text': 'test'
     };
-    const wrapper = mount(<Information information={info}/>);
+    const {container, getByText} = render(<Information information={info}/>);
 
-    expect(wrapper.find('.nxrm-information--value').text()).toBe('test');
+    expect(getByText('test')).toBeInTheDocument();
 
-    expect(wrapper).toMatchSnapshot();
+    expect(container).toMatchSnapshot();
   });
 });

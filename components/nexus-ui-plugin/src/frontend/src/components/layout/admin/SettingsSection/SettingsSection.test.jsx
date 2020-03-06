@@ -10,53 +10,59 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {shallow} from 'enzyme';
 import React from 'react';
+import {render} from '@testing-library/react';
+import '@testing-library/jest-dom/extend-expect';
 
 import SettingsSection from './SettingsSection';
 
 describe('SettingsSection', () => {
   it('renders correctly', () => {
-    expect(shallow(
+    const {container} = render(
         <SettingsSection>
           <span>test</span>
         </SettingsSection>
-    )).toMatchSnapshot();
+    );
+    expect(container).toMatchSnapshot();
   });
 
   it('renders correctly while isLoading', () => {
-    expect(shallow(
+    const {container} = render(
         <SettingsSection isLoading={true}>
           <span>test</span>
         </SettingsSection>
-    )).toMatchSnapshot();
+    );
+    expect(container).toMatchSnapshot();
   });
 
   describe('SettingsSection.FieldWrapper', () => {
     it('renders correctly without label', () => {
-      expect(shallow(
+      const {container} = render(
           <SettingsSection.FieldWrapper>
-            <input type='text'/>
+            <input type="text"/>
           </SettingsSection.FieldWrapper>
-      )).toMatchSnapshot();
+      );
+      expect(container).toMatchSnapshot();
     });
 
     it('renders correctly with label', () => {
-      expect(shallow(
-          <SettingsSection.FieldWrapper labelText='test label'>
-            <input type='text'/>
+      const {container} = render(
+          <SettingsSection.FieldWrapper labelText="test-label">
+            <input type="text"/>
           </SettingsSection.FieldWrapper>
-      )).toMatchSnapshot();
+      );
+      expect(container).toMatchSnapshot();
     });
   });
 
   describe('SettingsSection.Footer', () => {
     it('renders correctly', () => {
-      expect(shallow(
+      const {container} = render(
           <SettingsSection.Footer>
             <button>test</button>
           </SettingsSection.Footer>
-      )).toMatchSnapshot();
+      );
+      expect(container).toMatchSnapshot();
     });
   });
 });

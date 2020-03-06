@@ -10,14 +10,11 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {mount, shallow} from 'enzyme';
 import React from 'react';
-import { act } from 'react-dom/test-utils';
+import {render, wait} from '@testing-library/react';
+import '@testing-library/jest-dom/extend-expect';
 
-import Axios from 'axios';
 import SystemInformation from './SystemInformation';
-import { Button, Checkbox, Textfield, Select } from 'nexus-ui-plugin';
-import UIStrings from '../../../../constants/UIStrings';
 
 jest.mock('axios', () => {  // Mock response from axios
   return {
@@ -74,17 +71,11 @@ jest.mock('axios', () => {  // Mock response from axios
 });
 
 describe('SystemInformation', () => {
-  // see https://github.com/airbnb/enzyme/issues/1587
-  const waitForDataFromApi = (wrapper) => act(() => Promise.resolve(wrapper)
-      .then(() => wrapper.update())
-      .then(() => wrapper.update())
-  );
-
   it('renders correctly', async () => {
-    const wrapper = mount(<SystemInformation/>);
+    const {container, queryByText} = render(<SystemInformation/>);
 
-    await waitForDataFromApi(wrapper);
+    await wait(() => expect(container).toContainElement(queryByText('system-filestores')));
 
-    expect(wrapper).toMatchSnapshot();
+    expect(container).toMatchSnapshot();
   });
 });

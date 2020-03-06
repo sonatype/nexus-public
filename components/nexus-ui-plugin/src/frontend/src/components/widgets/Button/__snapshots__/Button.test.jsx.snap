@@ -1,44 +1,42 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Button allows for its style to be overriden 1`] = `
-<button
-  className="nxrm-button"
-  name="b1"
-  onChange={[Function]}
-  style={
-    Object {
-      "border": "none",
-    }
-  }
-  type="input"
-/>
+<div>
+  <button
+    class="nxrm-button"
+    name="b1"
+    type="input"
+  />
+</div>
 `;
 
 exports[`Button renders correctly 1`] = `
-<button
-  className="nxrm-button"
-  name="b1"
-  onChange={[Function]}
-  type="input"
-/>
+<div>
+  <button
+    class="nxrm-button"
+    name="b1"
+    type="input"
+  />
+</div>
 `;
 
 exports[`Button renders correctly as a primary button 1`] = `
-<button
-  className="nxrm-button"
-  isPrimary={true}
-  name="b1"
-  onChange={[Function]}
-  type="input"
-/>
+<div>
+  <button
+    class="nxrm-button nxrm-button-primary"
+    name="b1"
+    type="input"
+  />
+</div>
 `;
 
 exports[`Button renders correctly when disabled 1`] = `
-<button
-  className="nxrm-button"
-  disabled={true}
-  name="b1"
-  onChange={[Function]}
-  type="input"
-/>
+<div>
+  <button
+    class="nxrm-button"
+    disabled=""
+    name="b1"
+    type="input"
+  />
+</div>
 `;

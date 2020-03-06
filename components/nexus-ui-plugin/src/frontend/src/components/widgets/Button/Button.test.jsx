@@ -10,36 +10,38 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {shallow} from 'enzyme';
 import React from 'react';
+import {render} from '@testing-library/react';
+import '@testing-library/jest-dom/extend-expect';
 
 import Button from './Button';
 
 describe('Button', () => {
-  const getButton = (extraProps) => {
+  const renderButton = (extraProps) => {
     let props = {
       name: 'b1',
       onChange: () => {
       },
       ...extraProps
     };
-    return shallow(<Button {...props} />);
+    let {container} = render(<Button {...props} />);
+    return container;
   };
 
   it('renders correctly', () => {
-    expect(getButton()).toMatchSnapshot();
+    expect(renderButton()).toMatchSnapshot();
   });
 
   it('renders correctly as a primary button', () => {
-    expect(getButton({isPrimary: true})).toMatchSnapshot();
+    expect(renderButton({variant: 'primary'})).toMatchSnapshot();
   });
 
   it('renders correctly when disabled', () => {
-    expect(getButton({disabled: true})).toMatchSnapshot();
+    expect(renderButton({disabled: true})).toMatchSnapshot();
   });
 
   it('allows for its style to be overriden', () => {
-    expect(getButton({
+    expect(renderButton({
       style: {
         border: 'none'
       }

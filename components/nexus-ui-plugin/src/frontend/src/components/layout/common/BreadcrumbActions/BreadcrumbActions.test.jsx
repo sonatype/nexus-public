@@ -10,8 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import { configure } from 'enzyme';
-import Adapter from 'enzyme-adapter-react-16';
-import "jest-enzyme";
+import React from 'react';
+import {render} from '@testing-library/react';
+import '@testing-library/jest-dom/extend-expect';
 
-configure({ adapter: new Adapter() })
+import BreadcrumbActions from './BreadcrumbActions';
+
+describe('BreadcrumbActions', () => {
+  it('renders correctly', () => {
+    const {container} = render(
+        <BreadcrumbActions><span>action</span></BreadcrumbActions>
+    );
+    expect(container).toMatchSnapshot();
+  });
+});

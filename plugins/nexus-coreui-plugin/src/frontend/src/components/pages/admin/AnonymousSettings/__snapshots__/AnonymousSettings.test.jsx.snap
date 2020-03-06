@@ -1,59 +1,94 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`AnonymousSettings renders correctly 1`] = `
-<ContentBody
-  className="nxrm-anonymous-settings"
->
-  <SettingsSection
-    isLoading={true}
+<div>
+  <div
+    class="nxrm-content-body nxrm-anonymous-settings"
   >
-    <Component
-      labelText="Access:"
+    <div
+      class="nxrm-settings-section"
     >
-      <Checkbox
-        checkboxId="enabled"
-        isChecked={false}
-        onChange={[Function]}
+      <label
+        class="nxrm-settings-section-field-wrapper"
       >
-        Allow anonymous users to access the server
-      </Checkbox>
-    </Component>
-    <Component
-      labelText="Username:"
-    >
-      <Textfield
-        className="nxrm-anonymous-settings-field"
-        isRequired={false}
-        name="userId"
-        onChange={[Function]}
-        value=""
-      />
-    </Component>
-    <Component
-      labelText="Realm:"
-    >
-      <Select
-        className="nxrm-anonymous-settings-field"
-        name="realmName"
-        onChange={[Function]}
-        value=""
-      />
-    </Component>
-    <Component>
-      <Button
-        disabled={true}
-        onClick={[Function]}
-        variant="primary"
+        <label
+          class="nxrm-settings-section-field-wrapper-label"
+        >
+          Access:
+        </label>
+        <label>
+          <input
+            class="nxrm-checkbox"
+            id="enabled"
+            name="enabled"
+            type="checkbox"
+          />
+          Allow anonymous users to access the server
+        </label>
+      </label>
+      <label
+        class="nxrm-settings-section-field-wrapper"
       >
-        Save
-      </Button>
-      <Button
-        disabled={true}
-        onClick={[Function]}
+        <label
+          class="nxrm-settings-section-field-wrapper-label"
+          for="userId"
+        >
+          Username:
+        </label>
+        <input
+          class="nxrm-textfield nxrm-anonymous-settings-field"
+          id="userId"
+          name="userId"
+          required=""
+          type="text"
+          value="testUser"
+        />
+      </label>
+      <label
+        class="nxrm-settings-section-field-wrapper"
       >
-        Discard
-      </Button>
-    </Component>
-  </SettingsSection>
-</ContentBody>
+        <label
+          class="nxrm-settings-section-field-wrapper-label"
+          for="realmName"
+        >
+          Realm:
+        </label>
+        <select
+          class="nxrm-select nxrm-anonymous-settings-field"
+          id="realmName"
+          name="realmName"
+        >
+          <option
+            value="r1"
+          >
+            Realm One
+          </option>
+          <option
+            value="r2"
+          >
+            Realm Two
+          </option>
+        </select>
+      </label>
+      <div
+        class="nxrm-settings-section-footer"
+      >
+        <button
+          class="nxrm-button nxrm-button-primary"
+          disabled=""
+          type="input"
+        >
+          Save
+        </button>
+        <button
+          class="nxrm-button"
+          disabled=""
+          type="input"
+        >
+          Discard
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 `;

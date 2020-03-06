@@ -10,18 +10,20 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {shallow} from 'enzyme';
 import React from 'react';
+import {render} from '@testing-library/react';
+import '@testing-library/jest-dom/extend-expect';
 
 import Select from "./Select";
 
 describe('Select', () => {
   it('renders correctly', () => {
-    expect(shallow(
+    const {container} = render(
         <Select>
           <option value="1">1</option>
           <option value="2">2</option>
         </Select>
-    )).toMatchSnapshot();
+    );
+    expect(container).toMatchSnapshot();
   });
 });

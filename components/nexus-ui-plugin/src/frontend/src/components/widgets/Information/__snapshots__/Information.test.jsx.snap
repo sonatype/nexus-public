@@ -1,118 +1,76 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`FieldErrorMessage renders boolean values correctly 1`] = `
-<Information
-  information={
-    Object {
-      "boolean": false,
-    }
-  }
->
+<div>
   <table
-    className="nxrm-information"
+    class="nxrm-information"
   >
     <tbody>
-      <InformationRow
-        key="boolean"
+      <tr
+        class="nxrm-information--row"
       >
-        <tr
-          className="nxrm-information--row"
+        <td
+          class="nxrm-information--name"
         >
-          <InformationName>
-            <td
-              className="nxrm-information--name"
-            >
-              boolean
-            </td>
-          </InformationName>
-          <InformationValue>
-            <td
-              className="nxrm-information--value"
-            >
-              false
-            </td>
-          </InformationValue>
-        </tr>
-      </InformationRow>
+          boolean
+        </td>
+        <td
+          class="nxrm-information--value"
+        >
+          false
+        </td>
+      </tr>
     </tbody>
   </table>
-</Information>
+</div>
 `;
 
 exports[`FieldErrorMessage renders numeric values correctly 1`] = `
-<Information
-  information={
-    Object {
-      "numeric": 0,
-    }
-  }
->
+<div>
   <table
-    className="nxrm-information"
+    class="nxrm-information"
   >
     <tbody>
-      <InformationRow
-        key="numeric"
+      <tr
+        class="nxrm-information--row"
       >
-        <tr
-          className="nxrm-information--row"
+        <td
+          class="nxrm-information--name"
         >
-          <InformationName>
-            <td
-              className="nxrm-information--name"
-            >
-              numeric
-            </td>
-          </InformationName>
-          <InformationValue>
-            <td
-              className="nxrm-information--value"
-            >
-              0
-            </td>
-          </InformationValue>
-        </tr>
-      </InformationRow>
+          numeric
+        </td>
+        <td
+          class="nxrm-information--value"
+        >
+          0
+        </td>
+      </tr>
     </tbody>
   </table>
-</Information>
+</div>
 `;
 
 exports[`FieldErrorMessage renders text values correctly 1`] = `
-<Information
-  information={
-    Object {
-      "text": "test",
-    }
-  }
->
+<div>
   <table
-    className="nxrm-information"
+    class="nxrm-information"
   >
     <tbody>
-      <InformationRow
-        key="text"
+      <tr
+        class="nxrm-information--row"
       >
-        <tr
-          className="nxrm-information--row"
+        <td
+          class="nxrm-information--name"
         >
-          <InformationName>
-            <td
-              className="nxrm-information--name"
-            >
-              text
-            </td>
-          </InformationName>
-          <InformationValue>
-            <td
-              className="nxrm-information--value"
-            >
-              test
-            </td>
-          </InformationValue>
-        </tr>
-      </InformationRow>
+          text
+        </td>
+        <td
+          class="nxrm-information--value"
+        >
+          test
+        </td>
+      </tr>
     </tbody>
   </table>
-</Information>
+</div>
 `;
