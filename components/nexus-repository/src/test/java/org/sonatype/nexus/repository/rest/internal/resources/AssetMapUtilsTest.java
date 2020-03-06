@@ -20,7 +20,7 @@ import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.repository.rest.SearchUtils;
+import org.sonatype.nexus.repository.rest.cma.SearchUtils;
 
 import org.junit.Before;
 import org.junit.Test;

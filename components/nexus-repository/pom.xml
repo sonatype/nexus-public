@@ -248,6 +248,7 @@
             -->
             <Export-Package>
               org.sonatype.nexus.repository.cache;-split-package:=merge-first,
+              org.sonatype.nexus.repository.upload;-split-package:=merge-first,
               org.sonatype.nexus.repository.view;-split-package:=merge-first,
               {local-packages}
             </Export-Package>

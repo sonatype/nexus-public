@@ -242,7 +242,8 @@
             Instead we'll merge this with the other CMA types in nexus-repository and re-export it.
             -->
             <_exportcontents>
-              org.sonatype.nexus.repository.cache;split=true;mandatory:=split,*
+              org.sonatype.nexus.repository.cache;split=true;mandatory:=split,
+              org.sonatype.nexus.repository.upload;split=true;mandatory:=split,*
             </_exportcontents>
           </instructions>
         </configuration>
