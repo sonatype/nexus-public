@@ -178,10 +178,29 @@ Ext.define('NX.ext.form.field.ItemSelector', {
    * @override
    */
   setValue: function(value) {
-    this.callParent(arguments);
+    if (this.valueAsString) {
+      if (Array.isArray(value)) {
+        this.callParent(arguments);
+      }
+      else {
+        this.callParent(value ? [value.split(',')] : undefined);
+      }
+    }
+    else {
+      this.callParent(arguments);
+    }
 
     // HACK: force original value to reset, to prevent always dirty forms when store has not loaded when form initially sets values.
     this.resetOriginalValue();
+  },
+
+  getValue: function() {
+    if (this.valueAsString) {
+      return this.callParent().toString();
+    }
+    else {
+      return this.callParent();
+    }
   },
 
   // HACK: avoid exceptions when the store is reloaded

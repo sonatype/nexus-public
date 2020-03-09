@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -24,6 +25,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
 import org.sonatype.nexus.repository.storage.Bucket;
@@ -118,11 +120,13 @@ public class RebuildBrowseNodesManager
         }).collect(toList());
       });
 
-      for (Bucket bucket : buckets) {
+      String repositoryNames = buckets.stream().map(Bucket::getRepositoryName).collect(Collectors.joining(","));
+
+      if (!Strings2.isEmpty(repositoryNames)) {
         boolean existingTask = taskScheduler.findAndSubmit(RebuildBrowseNodesTaskDescriptor.TYPE_ID,
-            ImmutableMap.of(RebuildBrowseNodesTaskDescriptor.REPOSITORY_NAME_FIELD_ID, bucket.getRepositoryName()));
+            ImmutableMap.of(RebuildBrowseNodesTaskDescriptor.REPOSITORY_NAME_FIELD_ID, repositoryNames));
         if (!existingTask) {
-          launchNewTask(bucket.getRepositoryName());
+          launchNewTask(repositoryNames);
         }
       }
     }
@@ -132,11 +136,11 @@ public class RebuildBrowseNodesManager
     log.debug("scheduling rebuild browse nodes tasks took {} ms", sw.elapsed(TimeUnit.MILLISECONDS));
   }
 
-  private void launchNewTask(final String repositoryName) {
+  private void launchNewTask(final String repositoryNames) {
     TaskConfiguration configuration = taskScheduler
         .createTaskConfigurationInstance(RebuildBrowseNodesTaskDescriptor.TYPE_ID);
-    configuration.setString(RebuildBrowseNodesTaskDescriptor.REPOSITORY_NAME_FIELD_ID, repositoryName);
-    configuration.setName("Rebuild repository browse tree - (" + repositoryName + ")");
+    configuration.setString(RebuildBrowseNodesTaskDescriptor.REPOSITORY_NAME_FIELD_ID, repositoryNames);
+    configuration.setName("Rebuild repository browse tree - (" + repositoryNames + ")");
     taskScheduler.submit(configuration);
   }
 
