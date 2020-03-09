@@ -36,14 +36,13 @@ public class ContentAuthPlugin
   private static VariableResolverAdapterManager variableResolverAdapterManager;
   private static SearchSubjectHelper searchSubjectHelper;
   private static RepositoryManager repositoryManager;
-  private static Boolean contentAuthSleep;
+  private static boolean contentAuthSleep;
 
   public ContentAuthPlugin() {
     checkNotNull(contentPermissionChecker);
     checkNotNull(variableResolverAdapterManager);
     checkNotNull(searchSubjectHelper);
     checkNotNull(repositoryManager);
-    checkNotNull(contentAuthSleep);
   }
 
   @Override
@@ -64,13 +63,13 @@ public class ContentAuthPlugin
                                      final VariableResolverAdapterManager variableResolverAdapterManager,
                                      final SearchSubjectHelper searchSubjectHelper,
                                      final RepositoryManager repositoryManager,
-                                     final Boolean contentAuthSleep)
+                                     final boolean contentAuthSleep)
   {
     ContentAuthPlugin.contentPermissionChecker = checkNotNull(contentPermissionChecker);
     ContentAuthPlugin.variableResolverAdapterManager = checkNotNull(variableResolverAdapterManager);
     ContentAuthPlugin.searchSubjectHelper = checkNotNull(searchSubjectHelper);
     ContentAuthPlugin.repositoryManager = checkNotNull(repositoryManager);
-    ContentAuthPlugin.contentAuthSleep = checkNotNull(contentAuthSleep);
+    ContentAuthPlugin.contentAuthSleep = contentAuthSleep;
   }
 
   public static ContentPermissionChecker getContentPermissionChecker() {

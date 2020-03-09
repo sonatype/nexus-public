@@ -17,9 +17,9 @@ import java.util.Map;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.repository.security.VariableResolverAdapter;
-import org.sonatype.nexus.repository.security.VariableResolverAdapterSupport;
 import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.AssetVariableResolver;
+import org.sonatype.nexus.repository.storage.AssetVariableResolverSupport;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.selector.VariableSourceBuilder;
 
@@ -34,8 +34,8 @@ import org.elasticsearch.search.lookup.SourceLookup;
 @Named(SimpleVariableResolverAdapter.NAME)
 @Singleton
 public class SimpleVariableResolverAdapter
-    extends VariableResolverAdapterSupport
-    implements VariableResolverAdapter
+    extends AssetVariableResolverSupport
+    implements AssetVariableResolver
 {
   static final String NAME = "simple";
 

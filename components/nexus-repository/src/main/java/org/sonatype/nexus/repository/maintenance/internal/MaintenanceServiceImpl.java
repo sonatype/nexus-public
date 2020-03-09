@@ -25,9 +25,9 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
-import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.AssetVariableResolver;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentMaintenance;
 import org.sonatype.nexus.repository.storage.StorageFacet;
@@ -116,12 +116,12 @@ public class MaintenanceServiceImpl
   public boolean canDeleteComponent(final Repository repository, final Component component) {
     boolean canDeleteComponent = true;
     String repositoryFormat = repository.getFormat().toString();
-    VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(repositoryFormat);
+    AssetVariableResolver assetVariableResolver = variableResolverAdapterManager.get(repositoryFormat);
 
     try (StorageTx storageTx = repository.facet(StorageFacet.class).txSupplier().get()) {
       storageTx.begin();
       for (Asset asset : storageTx.browseAssets(component)) {
-        if (!canDeleteAssetInRepository(repository, repositoryFormat, variableResolverAdapter, asset)) {
+        if (!canDeleteAssetInRepository(repository, repositoryFormat, assetVariableResolver, asset)) {
           canDeleteComponent = false;
           break;
         }
@@ -142,10 +142,10 @@ public class MaintenanceServiceImpl
 
   private boolean canDeleteAssetInRepository(final Repository repository,
                                              final String repositoryFormat,
-                                             final VariableResolverAdapter variableResolverAdapter, final Asset asset)
+                                             final AssetVariableResolver assetVariableResolver, final Asset asset)
   {
     return contentPermissionChecker.isPermitted(repository.getName(), repositoryFormat, BreadActions.DELETE,
-        variableResolverAdapter.fromAsset(asset));
+        assetVariableResolver.fromAsset(asset));
   }
 
   @Override

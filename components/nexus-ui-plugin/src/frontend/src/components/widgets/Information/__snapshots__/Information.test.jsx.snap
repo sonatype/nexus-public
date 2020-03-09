@@ -1,0 +1,76 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`FieldErrorMessage renders boolean values correctly 1`] = `
+<div>
+  <table
+    class="nxrm-information"
+  >
+    <tbody>
+      <tr
+        class="nxrm-information--row"
+      >
+        <td
+          class="nxrm-information--name"
+        >
+          boolean
+        </td>
+        <td
+          class="nxrm-information--value"
+        >
+          false
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+`;
+
+exports[`FieldErrorMessage renders numeric values correctly 1`] = `
+<div>
+  <table
+    class="nxrm-information"
+  >
+    <tbody>
+      <tr
+        class="nxrm-information--row"
+      >
+        <td
+          class="nxrm-information--name"
+        >
+          numeric
+        </td>
+        <td
+          class="nxrm-information--value"
+        >
+          0
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+`;
+
+exports[`FieldErrorMessage renders text values correctly 1`] = `
+<div>
+  <table
+    class="nxrm-information"
+  >
+    <tbody>
+      <tr
+        class="nxrm-information--row"
+      >
+        <td
+          class="nxrm-information--name"
+        >
+          text
+        </td>
+        <td
+          class="nxrm-information--value"
+        >
+          test
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+`;

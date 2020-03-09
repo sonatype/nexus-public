@@ -383,15 +383,35 @@ public abstract class NexusITSupport
 
   /**
    * Preform a get request
+   *
    * @param baseUrl (nexusUrl in most tests)
-   * @param path to the resource
+   * @param path    to the resource
    * @return the response object
    */
   protected Response get(final URL baseUrl, final String path) throws Exception {
+    return get(baseUrl, path, null, true);
+  }
+
+  /**
+   * Preform a get request
+   *
+   * @param baseUrl               (nexusUrl in most tests)
+   * @param path                  to the resource
+   * @param headers               {@link Header}s
+   * @param useDefaultCredentials use {@link NexusITSupport#clientBuilder(URL, boolean)} for using credentials
+   * @return the response object
+   */
+  protected Response get(final URL baseUrl,
+                         final String path,
+                         final Header[] headers,
+                         final boolean useDefaultCredentials) throws Exception
+  {
     HttpGet request = new HttpGet();
     request.setURI(UriBuilder.fromUri(baseUrl.toURI()).path(path).build());
+    request.setHeaders(headers);
 
-    try (CloseableHttpClient client = clientBuilder().build()) {
+    try (CloseableHttpClient client = clientBuilder(nexusUrl, useDefaultCredentials).build()) {
+
       try (CloseableHttpResponse response = client.execute(request)) {
         ResponseBuilder responseBuilder = Response.status(response.getStatusLine().getStatusCode());
         Arrays.stream(response.getAllHeaders()).forEach(h -> responseBuilder.header(h.getName(), h.getValue()));

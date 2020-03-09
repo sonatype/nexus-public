@@ -24,7 +24,7 @@ import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.extdirect.model.LimitedPagedResponse
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters
 import org.sonatype.nexus.rapture.UiSettingsManager
-import org.sonatype.nexus.repository.rest.SearchUtils
+import org.sonatype.nexus.repository.rest.cma.SearchUtils
 import org.sonatype.nexus.repository.search.SearchFilter
 import org.sonatype.nexus.repository.search.SearchResultComponent
 import org.sonatype.nexus.repository.search.SearchResultsGenerator

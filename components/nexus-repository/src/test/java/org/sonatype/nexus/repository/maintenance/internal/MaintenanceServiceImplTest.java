@@ -23,9 +23,9 @@ import org.sonatype.nexus.repository.MissingFacetException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
-import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.AssetVariableResolver;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentMaintenance;
 import org.sonatype.nexus.repository.storage.StorageFacet;
@@ -71,7 +71,7 @@ public class MaintenanceServiceImplTest
   Repository mavenGroup;
 
   @Mock
-  VariableResolverAdapter variableResolverAdapter;
+  AssetVariableResolver assetVariableResolver;
 
   @Mock
   Asset assetOne;
@@ -138,8 +138,8 @@ public class MaintenanceServiceImplTest
   }
 
   private void setupVariableResolvers() {
-    when(variableResolverAdapterManager.get("maven2")).thenReturn(variableResolverAdapter);
-    when(variableResolverAdapter.fromAsset(assetOne)).thenReturn(variableSource);
+    when(variableResolverAdapterManager.get("maven2")).thenReturn(assetVariableResolver);
+    when(assetVariableResolver.fromAsset(assetOne)).thenReturn(variableSource);
   }
 
   private void setupRepositoryGroup() {

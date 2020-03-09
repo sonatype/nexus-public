@@ -1,9 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Select renders correctly 1`] = `
-<Fragment>
+<div>
   <select
-    className="nxrm-select"
+    class="nxrm-select"
   >
     <option
       value="1"
@@ -16,5 +16,5 @@ exports[`Select renders correctly 1`] = `
       2
     </option>
   </select>
-</Fragment>
+</div>
 `;

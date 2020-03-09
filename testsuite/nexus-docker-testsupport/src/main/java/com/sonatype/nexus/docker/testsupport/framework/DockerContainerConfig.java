@@ -12,12 +12,16 @@
  */
 package com.sonatype.nexus.docker.testsupport.framework;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.spotify.docker.client.DefaultDockerClient;
 import com.spotify.docker.client.exceptions.DockerCertificateException;
 import com.spotify.docker.client.messages.HostConfig;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.spotify.docker.client.messages.PortBinding.randomPort;
+import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.Collections.singletonList;
 import static java.util.Objects.isNull;
@@ -39,8 +43,9 @@ public class DockerContainerConfig
 
   private static final String LATEST_TAG = "latest";
 
-
   private String image;
+
+  private List<String> env;
 
   private HostConfig.Builder hostConfigBuilder;
 
@@ -48,6 +53,7 @@ public class DockerContainerConfig
 
   private DockerContainerConfig(Builder builder) {
     this.image = imageTag(builder.image);
+    this.env = builder.env;
     this.hostConfigBuilder = builder.hostConfigBuilder;
     this.dockerClientBuilder = builder.dockerClientBuilder;
   }
@@ -72,6 +78,8 @@ public class DockerContainerConfig
   {
     private String image;
 
+    private List<String> env = new ArrayList<>();
+
     private HostConfig.Builder hostConfigBuilder;
 
     private DefaultDockerClient.Builder dockerClientBuilder;
@@ -95,6 +103,11 @@ public class DockerContainerConfig
 
     public Builder image(String image) {
       this.image = image;
+      return this;
+    }
+
+    public Builder env(String... env) {
+      this.env.addAll(asList(env));
       return this;
     }
 
@@ -130,6 +143,10 @@ public class DockerContainerConfig
 
   public String getImage() {
     return image;
+  }
+
+  public List<String> getEnv() {
+    return env;
   }
 
   public HostConfig.Builder getHostConfigBuilder() {

@@ -1,71 +1,72 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`SettingsSection SettingsSection.FieldWrapper renders correctly with label 1`] = `
-<label
-  className="nxrm-settings-section-field-wrapper"
->
+<div>
   <label
-    className="nxrm-settings-section-field-wrapper-label"
+    class="nxrm-settings-section-field-wrapper"
   >
-    test label
+    <label
+      class="nxrm-settings-section-field-wrapper-label"
+    >
+      test-label
+    </label>
+    <input
+      type="text"
+    />
   </label>
-  <input
-    type="text"
-  />
-</label>
+</div>
 `;
 
 exports[`SettingsSection SettingsSection.FieldWrapper renders correctly without label 1`] = `
-<div
-  className="nxrm-settings-section-field-wrapper"
->
-  <input
-    type="text"
-  />
+<div>
+  <div
+    class="nxrm-settings-section-field-wrapper"
+  >
+    <input
+      type="text"
+    />
+  </div>
 </div>
 `;
 
 exports[`SettingsSection SettingsSection.Footer renders correctly 1`] = `
-<div
-  className="nxrm-settings-section-footer"
->
-  <button>
-    test
-  </button>
+<div>
+  <div
+    class="nxrm-settings-section-footer"
+  >
+    <button>
+      test
+    </button>
+  </div>
 </div>
 `;
 
 exports[`SettingsSection renders correctly 1`] = `
-<Fragment>
+<div>
   <div
-    className="nxrm-settings-section"
+    class="nxrm-settings-section"
   >
     <span>
       test
     </span>
   </div>
-</Fragment>
+</div>
 `;
 
 exports[`SettingsSection renders correctly while isLoading 1`] = `
-<Fragment>
+<div>
   <span
-    className="nxrm-settings-section-loading-mask"
-    style={
-      Object {
-        "height": 0,
-        "width": 0,
-      }
-    }
+    class="nxrm-settings-section-loading-mask"
+    style="height: 0px; width: 0px;"
   >
     Loading...
   </span>
   <div
-    className="nxrm-settings-section"
+    class="nxrm-settings-section"
   >
     <span>
       test
     </span>
   </div>
-</Fragment>
+</div>
 `;

@@ -1,0 +1,13 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`BreadcrumbActions renders correctly 1`] = `
+<div>
+  <div
+    class="nxrm-breadcrumb--actions"
+  >
+    <span>
+      action
+    </span>
+  </div>
+</div>
+`;

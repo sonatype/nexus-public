@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ContentBody renders correctly 1`] = `
+<div>
+  <div
+    class="nxrm-content-body test"
+  >
+    body
+  </div>
+</div>
+`;

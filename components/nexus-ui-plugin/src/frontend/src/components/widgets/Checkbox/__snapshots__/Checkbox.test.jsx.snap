@@ -1,22 +1,24 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Checkbox renders correctly 1`] = `
-<label>
-  <input
-    checked={false}
-    className="nxrm-checkbox"
-    type="checkbox"
-  />
-</label>
+<div>
+  <label>
+    <input
+      class="nxrm-checkbox"
+      type="checkbox"
+    />
+  </label>
+</div>
 `;
 
 exports[`Checkbox renders correctly with all props 1`] = `
-<label>
-  <input
-    checked={true}
-    className="nxrm-checkbox"
-    onChange={[Function]}
-    type="checkbox"
-  />
-</label>
+<div>
+  <label>
+    <input
+      checked=""
+      class="nxrm-checkbox"
+      type="checkbox"
+    />
+  </label>
+</div>
 `;

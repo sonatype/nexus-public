@@ -18,7 +18,7 @@ package org.sonatype.nexus.repository.storage;
  * @since 3.0
  */
 public class RetryDeniedException
-    extends RuntimeException
+    extends org.sonatype.nexus.transaction.RetryDeniedException
 {
   public RetryDeniedException(final String message, final Throwable cause) {
     super(message, cause);

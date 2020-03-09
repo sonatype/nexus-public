@@ -10,51 +10,39 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {shallow} from 'enzyme';
 import React from 'react';
+import {render} from '@testing-library/react';
+import '@testing-library/jest-dom/extend-expect'; 
 
-import FieldErrorMessage from '../FieldErrorMessage/FieldErrorMessage';
 import Textfield from './Textfield';
+import UIStrings from "../../../constants/UIStrings";
 
 describe('Textfield', () => {
-  const getTextField = (extraProps) => {
-    let props = {
-      name: 'testTextfield',
-      value: 'val',
-      onChange: () => {
-      },
-      ...extraProps
-    };
-    return shallow(<Textfield {...props} />);
-  };
+  it('renders correctly without an error message', () => {
+    const {container, queryByText} = render(<Textfield />);
 
-  it('renders correctly', () => {
-    expect(getTextField()).toMatchSnapshot();
+    expect(queryByText(UIStrings.ERROR.FIELD_REQUIRED)).not.toBeInTheDocument();
+
+    expect(container).toMatchSnapshot();
   });
 
-  it('hides the error message by default', () => {
-    const wrapper = getTextField();
+  it('renders with an error message', () => {
+    const {container, queryByText} = render(<Textfield isRequired />);
 
-    expect(wrapper.containsMatchingElement(<FieldErrorMessage/>)).toBe(false);
-    expect(wrapper.find('input').hasClass('missing-required-value')).toBe(false);
+    expect(queryByText(UIStrings.ERROR.FIELD_REQUIRED)).toBeInTheDocument();
+
+    expect(container).toMatchSnapshot();
   });
 
   it('hides the error message when the value is required and not empty', () => {
-    const wrapper = getTextField({
-      isRequired: true
-    });
+    const {queryByText} = render(<Textfield isRequired value="value" onChange={() =>{}}/>);
 
-    expect(wrapper.containsMatchingElement(<FieldErrorMessage/>)).toBe(false);
-    expect(wrapper.find('input').hasClass('missing-required-value')).toBe(false);
+    expect(queryByText(UIStrings.ERROR.FIELD_REQUIRED)).not.toBeInTheDocument();
   });
 
   it('shows the error message when the value is required but empty', () => {
-    const wrapper = getTextField({
-      isRequired: true,
-      value: ''
-    });
+    const {queryByText} = render(<Textfield isRequired value="" onChange={() =>{}}/>);
 
-    expect(wrapper.containsMatchingElement(<FieldErrorMessage/>)).toBe(true);
-    expect(wrapper.find('input').hasClass('missing-required-value')).toBe(true);
+    expect(queryByText(UIStrings.ERROR.FIELD_REQUIRED)).toBeInTheDocument();
   });
 });

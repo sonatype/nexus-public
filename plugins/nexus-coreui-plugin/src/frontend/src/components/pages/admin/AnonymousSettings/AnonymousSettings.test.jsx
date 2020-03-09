@@ -10,13 +10,13 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {mount, shallow} from 'enzyme';
 import React from 'react';
 import { act } from 'react-dom/test-utils';
+import {fireEvent, render, wait} from '@testing-library/react';
+import '@testing-library/jest-dom/extend-expect';
 
 import Axios from 'axios';
 import AnonymousSettings from './AnonymousSettings';
-import { Button, Checkbox, Textfield, Select } from 'nexus-ui-plugin';
 import UIStrings from '../../../../constants/UIStrings';
 
 const mockRealmTypes = [
@@ -56,18 +56,6 @@ jest.mock('axios', () => {  // Mock out parts of axios, has to be done in same s
 });
 
 describe('AnonymousSettings', () => {
-  // see https://github.com/airbnb/enzyme/issues/1587
-  const waitForDataFromApi = (wrapper) => act(() => Promise.resolve(wrapper)
-      .then(() => wrapper.update())
-      .then(() => wrapper.update())
-  );
-
-  const assertDefaultValues = (wrapper) => {
-    expect(wrapper.find(Checkbox)).toHaveProp('isChecked', mockAnonymousSettings.enabled);
-    expect(wrapper.find(Textfield)).toHaveProp('value', mockAnonymousSettings.userId);
-    expect(wrapper.find(Select)).toHaveProp('value', mockAnonymousSettings.realmName);
-  };
-
   beforeEach(() => {
     window.dirty = [];
   });
@@ -76,117 +64,119 @@ describe('AnonymousSettings', () => {
     window.dirty = [];
   });
 
-  it('renders correctly', () => {
-    expect(shallow(<AnonymousSettings/>)).toMatchSnapshot();
+  const renderView = async (view) => {
+    var selectors;
+    await act(async () => {
+      let {container, getByText, getByLabelText, queryByText} = render(view);
+
+      selectors = {
+        container,
+        loadingMask: () => queryByText(UIStrings.SETTINGS.LOADING_MASK),
+        enabledField: () => getByLabelText(UIStrings.ANONYMOUS_SETTINGS.ENABLED_CHECKBOX_DESCRIPTION),
+        userIdField: () => getByLabelText(UIStrings.ANONYMOUS_SETTINGS.USERNAME_TEXTFIELD_LABEL),
+        realmField: () => getByLabelText(UIStrings.ANONYMOUS_SETTINGS.REALM_SELECT_LABEL),
+        saveButton: () => getByText(UIStrings.SETTINGS.SAVE_BUTTON_LABEL),
+        discardButton: () => getByText(UIStrings.SETTINGS.DISCARD_BUTTON_LABEL)
+      }
+    });
+    return selectors;
+  }
+
+  it('renders correctly', async () => {
+    let {container, loadingMask} = await renderView(<AnonymousSettings/>);
+
+    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+
+    expect(container).toMatchSnapshot();
   });
 
   it('fetches the values of fields from the API and updates them as expected', async () => {
-    // using mount because of bug preventing useEffect hook from being called when component is shallow rendered
-    // See https://github.com/airbnb/enzyme/issues/2086
-    const wrapper = mount(<AnonymousSettings/>);
+    let {
+      loadingMask, enabledField, userIdField, realmField, saveButton, discardButton
+    } = await renderView(<AnonymousSettings/>);
 
-    await waitForDataFromApi(wrapper);
+    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
 
     expect(Axios.get).toHaveBeenCalledTimes(2);
-    assertDefaultValues(wrapper);
+    expect(enabledField()).toBeChecked();
+    expect(userIdField()).toHaveValue('testUser');
+    expect(realmField()).toHaveValue('r2');
+    expect(saveButton()).toBeDisabled();
+    expect(discardButton()).toBeDisabled();
   });
 
   it('Sends changes to the API on save', async () => {
-    // using mount because of bug preventing useEffect hook from being called when component is shallow rendered
-    // See https://github.com/airbnb/enzyme/issues/2086
-    const wrapper = mount(<AnonymousSettings/>);
+    let {
+      loadingMask, enabledField, userIdField, realmField, saveButton, discardButton
+    } = await renderView(<AnonymousSettings/>);
 
-    await waitForDataFromApi(wrapper);
+    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
 
-    expect(Axios.get).toHaveBeenCalledTimes(2);
+    fireEvent.click(enabledField());
+    await wait(() => expect(enabledField()).not.toBeChecked());
+
+    fireEvent.change(userIdField(), {target: {value: 'changed-username'}});
+    await wait(() => expect(userIdField()).toHaveValue());
+
+    fireEvent.change(realmField(), {target: {value: 'r1'}});
+    await wait(() => expect(realmField()).toHaveValue('r1'));
+
+    expect(saveButton()).toBeEnabled();
+    expect(discardButton()).toBeEnabled();
+
     expect(Axios.put).toHaveBeenCalledTimes(0);
 
-    wrapper.find(Textfield).simulate('change', {
-      target: {
-        type: 'text',
-        name: 'userId',
-        value: 'changed-username'
-      }
-    });
-
-    wrapper.findWhere(node =>
-        node.is(Button) && node.text() === UIStrings.SETTINGS.SAVE_BUTTON_LABEL
-    ).simulate('click');
+    await act(async () => fireEvent.click(saveButton()));
 
     expect(Axios.put).toHaveBeenCalledTimes(1);
     expect(Axios.put).toHaveBeenCalledWith(
         '/service/rest/internal/ui/anonymous-settings',
         {
-          ...mockAnonymousSettings,
-          userId: 'changed-username'
+          enabled: false,
+          userId: 'changed-username',
+          realmName: 'r1'
         }
     );
+
+    expect(saveButton()).not.toBeEnabled();
+    expect(discardButton()).not.toBeEnabled();
   });
 
-  it('Sends nothing to the API on discard', async () => {
-    // using mount because of bug preventing useEffect hook from being called when component is shallow rendered
-    // See https://github.com/airbnb/enzyme/issues/2086
-    const wrapper = mount(<AnonymousSettings/>);
+  it('Resets the form on discard', async () => {
+    let {
+      loadingMask, userIdField, saveButton, discardButton
+    } = await renderView(<AnonymousSettings/>);
 
-    await waitForDataFromApi(wrapper);
+    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
 
-    wrapper.find(Select).simulate('change', {
-      target: {
-        name: 'realmName',
-        value: 'r2'
-      }
-    });
+    fireEvent.change(userIdField(), {target: {value: ''}})
+    await wait(() => expect(userIdField()).toHaveValue(''));
 
-    wrapper.findWhere(node =>
-        node.is(Button) && node.text() === UIStrings.SETTINGS.DISCARD_BUTTON_LABEL
-    ).simulate('click');
+    expect(saveButton()).not.toBeEnabled();
+    expect(discardButton()).toBeEnabled();
 
-    expect(Axios.put).toHaveBeenCalledTimes(0);
-    assertDefaultValues(wrapper);
-  });
+    fireEvent.click(discardButton());
 
-  it('Does not allow the user to save if the required username is empty', async () => {
-    // using mount because of bug preventing useEffect hook from being called when component is shallow rendered
-    // See https://github.com/airbnb/enzyme/issues/2086
-    const wrapper = mount(<AnonymousSettings/>);
-
-    await waitForDataFromApi(wrapper);
-
-    wrapper.find(Select).simulate('change', {
-      target: {
-        name: 'userId',
-        value: ''
-      }
-    });
-
-    const saveButton = wrapper.findWhere(node =>
-        node.is(Button) && node.text() === UIStrings.SETTINGS.SAVE_BUTTON_LABEL
-    );
-
-    expect(saveButton).toBeDisabled();
+    expect(userIdField()).toHaveValue('testUser');
+    expect(saveButton()).not.toBeEnabled();
+    expect(discardButton()).not.toBeEnabled();
   });
 
   it('Sets the dirty flag appropriately', async () => {
-    // using mount because of bug preventing useEffect hook from being called when component is shallow rendered
-    // See https://github.com/airbnb/enzyme/issues/2086
-    const wrapper = mount(<AnonymousSettings/>);
+    let {
+      loadingMask, userIdField, discardButton
+    } = await renderView(<AnonymousSettings/>);
 
-    await waitForDataFromApi(wrapper);
+    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
 
     expect(window.dirty).toEqual([]);
 
-    wrapper.find(Select).simulate('change', {
-      target: {
-        name: 'userId',
-        value: 'test'
-      }
-    });
+    fireEvent.change(userIdField(), {target: {value: 'anonymous'}})
+    await wait(() => expect(userIdField()).toHaveValue('anonymous'));
 
     expect(window.dirty).toEqual(['AnonymousSettings']);
 
-    wrapper.findWhere(node =>
-        node.is(Button) && node.text() === UIStrings.SETTINGS.DISCARD_BUTTON_LABEL
-    ).simulate('click');
+    fireEvent.click(discardButton());
 
     expect(window.dirty).toEqual([]);
   });

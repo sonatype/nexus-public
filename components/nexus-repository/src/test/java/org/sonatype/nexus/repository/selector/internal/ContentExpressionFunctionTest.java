@@ -19,8 +19,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
+import org.sonatype.nexus.repository.storage.AssetVariableResolver;
 import org.sonatype.nexus.selector.OrientSelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.selector.VariableSource;
@@ -57,7 +57,7 @@ public class ContentExpressionFunctionTest
   VariableSource variableSource;
 
   @Mock
-  VariableResolverAdapter variableResolverAdapter;
+  AssetVariableResolver assetVariableResolver;
 
   @Mock
   VariableResolverAdapterManager variableResolverAdapterManager;
@@ -84,8 +84,8 @@ public class ContentExpressionFunctionTest
 
   @Before
   public void setup() {
-    when(variableResolverAdapterManager.get(FORMAT)).thenReturn(variableResolverAdapter);
-    when(variableResolverAdapter.fromDocument(assetDocument)).thenReturn(variableSource);
+    when(variableResolverAdapterManager.get(FORMAT)).thenReturn(assetVariableResolver);
+    when(assetVariableResolver.fromDocument(assetDocument)).thenReturn(variableSource);
 
     when(bucketDocument.getRecord()).thenReturn(bucketDocument);
     when(bucketDocument.field("repository_name", String.class)).thenReturn(REPOSITORY_NAME);
