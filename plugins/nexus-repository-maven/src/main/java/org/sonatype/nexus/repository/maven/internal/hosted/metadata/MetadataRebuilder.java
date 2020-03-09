@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.maven.internal.hosted.metadata;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -67,6 +66,8 @@ import org.codehaus.plexus.util.xml.Xpp3Dom;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
+import static java.util.Collections.emptySet;
+import static java.util.Objects.nonNull;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
@@ -270,7 +271,7 @@ public class MetadataRebuilder
     }
 
     if (rebuild) {
-      return Collections.emptySet();
+      return emptySet();
     } else {
       return deletedPaths;
     }
@@ -295,7 +296,13 @@ public class MetadataRebuilder
     private final Map<String, Object> sqlParams;
 
     private final String sql;
-    
+
+    private final String groupId;
+
+    private final String artifactId;
+
+    private final String baseVersion;
+
     private final boolean rebuildChecksums;
 
     private final int bufferSize;
@@ -318,6 +325,9 @@ public class MetadataRebuilder
       this.metadataBuilder = new MetadataBuilder();
       this.metadataUpdater = new MetadataUpdater(update, repository);
       this.sqlParams = Maps.newHashMap();
+      this.groupId = groupId;
+      this.artifactId = artifactId;
+      this.baseVersion = baseVersion;
       this.sql = buildSql(groupId, artifactId, baseVersion);
       this.rebuildChecksums = rebuildChecksums;
       this.bufferSize = bufferSize;
@@ -403,7 +413,17 @@ public class MetadataRebuilder
       String currentGroupId = null;
 
       try {
-        for (ODocument doc : browseGAVs()) {
+        Iterable<ODocument> gavDocs = browseGAVs();
+
+        if (Iterables.isEmpty(gavDocs) && nonNull(groupId)) {
+          metadataBuilder.onEnterGroupId(groupId);
+          if (nonNull(artifactId) && nonNull(baseVersion)) {
+            rebuildMetadataInner(groupId, artifactId, emptySet(), failures);
+          }
+          rebuildMetadataExitGroup(groupId, failures);
+        }
+
+        for (ODocument doc : gavDocs) {
           checkCancellation();
           final String groupId = doc.field("groupId", OType.STRING);
           final String artifactId = doc.field("artifactId", OType.STRING);
@@ -585,11 +605,7 @@ public class MetadataRebuilder
      */
     private Xpp3Dom parse(final MavenPath mavenPath, final InputStream is) {
       try {
-        Xpp3Dom dom = MavenModels.parseDom(is);
-        if (dom == null) {
-          log.debug("Could not parse POM: {} @ {}", repository.getName(), mavenPath.getPath());
-        }
-        return dom;
+        return MavenModels.parseDom(is);
       }
       catch (IOException e) {
         log.warn("Could not parse POM: {} @ {}", repository.getName(), mavenPath.getPath(), e);

@@ -61,7 +61,8 @@ public class RebuildMaven2MetadataTask
         getConfiguration().getString(GROUPID_FIELD_ID),
         getConfiguration().getString(ARTIFACTID_FIELD_ID),
         getConfiguration().getString(BASEVERSION_FIELD_ID),
-        getConfiguration().getBoolean(REBUILD_CHECKSUMS, false)
+        getConfiguration().getBoolean(REBUILD_CHECKSUMS, false),
+        false
     );
   }
 
