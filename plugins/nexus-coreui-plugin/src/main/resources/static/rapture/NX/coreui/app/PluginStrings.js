@@ -1347,6 +1347,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
         '</div> '
     ,
     Task_TaskScheduleManual_HelpText: 'Without recurrence, this service can only be run manually.',
+    Task_Script_Creation_Disabled: 'Script Task creation is disabled by default for security reasons.',
 
     // Authentication section
     System_AuthenticationSettings_Username_FieldLabel: 'Username',

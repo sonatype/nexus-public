@@ -18,6 +18,7 @@ import javax.inject.Singleton
 import javax.validation.Valid
 import javax.validation.constraints.NotNull
 import javax.ws.rs.Consumes
+import javax.ws.rs.ForbiddenException
 import javax.ws.rs.NotFoundException
 import javax.ws.rs.Path
 import javax.ws.rs.PathParam
@@ -35,6 +36,7 @@ import org.sonatype.nexus.script.ScriptManager
 import org.sonatype.nexus.script.ScriptResultXO
 import org.sonatype.nexus.script.ScriptRunEvent
 import org.sonatype.nexus.script.ScriptXO
+import org.sonatype.nexus.script.plugin.internal.ScriptingDisabledException
 import org.sonatype.nexus.script.plugin.internal.security.ScriptPermission
 import org.sonatype.nexus.security.BreadActions
 import org.sonatype.nexus.security.SecurityHelper
@@ -107,27 +109,45 @@ class ScriptResource
   @ApiOperation('Update stored script by name')
   @ApiResponses([
       @ApiResponse(code = 204, message = 'Script was updated'),
-      @ApiResponse(code = 404, message = 'No script with the specified name')
+      @ApiResponse(code = 404, message = 'No script with the specified name'),
+      @ApiResponse(code = 410, message = 'Script updating is disabled')
+
   ])
   void edit(@PathParam('name') final String name, @NotNull @Valid final ScriptXO scriptXO) {
     securityHelper.ensurePermitted(scriptPermission(name, BreadActions.EDIT))
     checkArgument(name == scriptXO.name, "Path parameter: $name does not match data name: ${scriptXO.name}")
     findOr404(name)
     log.debug('Updating Script named: {}', name)
-    scriptManager.update(name, scriptXO.content)
+    try {
+      scriptManager.update(name, scriptXO.content)
+    }
+    catch (ScriptingDisabledException e) {
+      log.debug('Failed to update script {}, creating and updating scripts is disabled', name, e)
+      throw new WebApplicationException(
+          Response.status(Response.Status.GONE).entity(new ScriptResultXO(name, e.message)).build()
+      )
+    }
   }
 
   @Override
   @Timed
   @ExceptionMetered
   @ApiOperation('Add a new script')
-  @ApiResponses(
-      @ApiResponse(code = 204, message = 'Script was added')
-  )
+  @ApiResponses([
+      @ApiResponse(code = 204, message = 'Script was added'),
+      @ApiResponse(code = 410, message = 'Script creation is disabled')
+  ])
   void add(@NotNull @Valid final ScriptXO scriptXO) {
     securityHelper.ensurePermitted(scriptPermission(ALL, BreadActions.ADD))
     log.debug('Adding Script named: {}', scriptXO.name)
-    scriptManager.create(scriptXO.name, scriptXO.content, scriptXO.type)
+    try {
+      scriptManager.create(scriptXO.name, scriptXO.content, scriptXO.type)
+    } catch(ScriptingDisabledException e){
+      log.debug('Failed to create script {}, creating and updating scripts is disabled', scriptXO.name, e)
+      throw new WebApplicationException(
+          Response.status(Response.Status.GONE).entity(new ScriptResultXO(scriptXO.name, e.message)).build()
+      )
+    }
   }
 
   @Override
