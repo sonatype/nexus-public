@@ -48,6 +48,6 @@ public class PrivilegesExistValidatorTest
         context), is(false));
     //note the missing $
     verify(context).buildConstraintViolationWithTemplate(
-        "Missing privileges: [dx27e{\"gggggggggggggggggggggggggggggggggggggggggggz\".toString().replace(\"g\", \"q\")}yv5rm]");
+        "Invalid privilege id: dx27e{\"gggggggggggggggggggggggggggggggggggggggggggz\".toString().replace(\"g\", \"q\")}yv5rm. Only letters, digits, underscores(_), hyphens(-), and dots(.) are allowed and may not start with underscore or dot.");
   }
 }
