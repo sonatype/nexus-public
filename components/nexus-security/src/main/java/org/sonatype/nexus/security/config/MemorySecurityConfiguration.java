@@ -85,6 +85,11 @@ public class MemorySecurityConfiguration
   }
 
   @Override
+  public void addRoleMapping(final String userId, final Set<String> roles, final String source) {
+    // No op
+  }
+
+  @Override
   public CUser newUser() {
     return new MemoryCUser();
   }
