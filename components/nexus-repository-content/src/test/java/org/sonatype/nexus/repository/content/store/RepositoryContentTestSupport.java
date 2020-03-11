@@ -149,7 +149,7 @@ public class RepositoryContentTestSupport
       for (int i = 0, maxSegments = random.nextInt(10); i < maxSegments; i++) {
         buf.append('/').append(toHexString(random.nextInt()));
       }
-      uniquePaths.add(buf.toString());
+      uniquePaths.add(buf.substring(1));
       buf.setLength(0);
     }
     paths = ImmutableList.copyOf(uniquePaths);

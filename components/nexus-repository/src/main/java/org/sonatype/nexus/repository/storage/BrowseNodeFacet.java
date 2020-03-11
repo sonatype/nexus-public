@@ -28,7 +28,7 @@ public interface BrowseNodeFacet
   /**
    * Returns a function to apply to a browse node to determine distinctness
    */
-  default Function<BrowseNode, String> browseNodeIdentity() {
+  default Function<BrowseNode<?>, String> browseNodeIdentity() {
     return BrowseNode::getName;
   }
 }

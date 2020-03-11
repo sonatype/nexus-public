@@ -36,7 +36,7 @@ public class PyPiBrowseNodeFacet
    * Changes default behavior to be distinct and ignore case
    */
   @Override
-  public Function<BrowseNode, String> browseNodeIdentity() {
+  public Function<BrowseNode<?>, String> browseNodeIdentity() {
     return node -> node.getName().toLowerCase();
   }
 }
