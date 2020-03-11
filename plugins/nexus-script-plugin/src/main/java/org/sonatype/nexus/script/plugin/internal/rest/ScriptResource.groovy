@@ -26,12 +26,14 @@ import javax.ws.rs.WebApplicationException
 import javax.ws.rs.core.Response
 
 import org.sonatype.goodies.common.ComponentSupport
+import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.common.script.ScriptService
 import org.sonatype.nexus.rest.Resource
 import org.sonatype.nexus.script.Script
 import org.sonatype.nexus.script.ScriptClient
 import org.sonatype.nexus.script.ScriptManager
 import org.sonatype.nexus.script.ScriptResultXO
+import org.sonatype.nexus.script.ScriptRunEvent
 import org.sonatype.nexus.script.ScriptXO
 import org.sonatype.nexus.script.plugin.internal.security.ScriptPermission
 import org.sonatype.nexus.security.BreadActions
@@ -74,6 +76,9 @@ class ScriptResource
 
   @Inject
   ScriptService scriptService
+
+  @Inject
+  EventManager eventManager
 
   @Override
   @Timed
@@ -162,6 +167,7 @@ class ScriptResource
               scriptName: script.name
           ]
       )
+      eventManager.post(new ScriptRunEvent(script))
     }
     catch (e) {
       log.error('Exception in script execution for script named: {}', name, e)
