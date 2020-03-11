@@ -240,7 +240,7 @@ public class MetadataRebuilderTest
     new MetadataRebuilder(10, 20).rebuild(repository, true, false, null, null, null);
 
     // ensure second metadata read occurs
-    verify(content, times(2)).openInputStream();
+    verify(content, times(4)).openInputStream();
 
     // verify metadata errors are logged
     ArgumentCaptor<LoggingEvent> logCaptor = ArgumentCaptor.forClass(LoggingEvent.class);

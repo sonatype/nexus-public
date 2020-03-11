@@ -224,10 +224,18 @@ public class MetadataBuilder
   public Maven2Metadata onExitBaseVersion() {
     checkState(baseVersion != null);
     log.debug("<- GAbV: {}:{}:{}", groupId, artifactId, baseVersion);
-    if (!baseVersion.endsWith(Constants.SNAPSHOT_VERSION_SUFFIX) || latestVersionCoordinates == null) {
+    if (!baseVersion.endsWith(Constants.SNAPSHOT_VERSION_SUFFIX)) {
       // release version does not have version-level metadata
       log.debug("Not a snapshot or nothing to generate: {}:{}:{}", groupId, artifactId, baseVersion);
       return null;
+    }
+    //this would be the case where unique timestamp snapshots are disabled
+    else if (latestVersionCoordinates == null) {
+      return Maven2Metadata.newNonUniqueVersionLevel(
+          groupId,
+          artifactId,
+          baseVersion
+      );
     }
     final List<Snapshot> snapshots = new ArrayList<>();
     for (VersionCoordinates versionCoordinates : latestVersionCoordinatesMap.values()) {

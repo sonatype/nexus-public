@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.maven.internal.hosted.metadata;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -208,22 +209,23 @@ public class Maven2Metadata
 
   public static class Snapshots
   {
-    private final long snapshotTimestamp;
+    private final Long snapshotTimestamp;
 
     private final int snapshotBuildNumber;
 
     private final List<Snapshot> snapshots;
 
-    private Snapshots(final long snapshotTimestamp,
+    private Snapshots(@Nullable final Long snapshotTimestamp,
                       final int snapshotBuildNumber,
-                      final List<Snapshot> snapshots)
+                      @Nullable final List<Snapshot> snapshots)
     {
       this.snapshotTimestamp = snapshotTimestamp;
       this.snapshotBuildNumber = snapshotBuildNumber;
-      this.snapshots = ImmutableList.copyOf(snapshots);
+      this.snapshots = snapshots != null ? ImmutableList.copyOf(snapshots) : Collections.emptyList();
     }
 
-    public long getSnapshotTimestamp() {
+    @Nullable
+    public Long getSnapshotTimestamp() {
       return snapshotTimestamp;
     }
 
@@ -383,5 +385,16 @@ public class Maven2Metadata
     }
     final Snapshots snaps = new Snapshots(snapshotTimestamp, snapshotBuildNumber, ss);
     return new Maven2Metadata(Level.BASEVERSION, lastUpdated, groupId, artifactId, version, null, null, snaps);
+  }
+
+  public static Maven2Metadata newNonUniqueVersionLevel(final String groupId,
+                                                        final String artifactId,
+                                                        final String version)
+  {
+    checkNotNull(groupId);
+    checkNotNull(artifactId);
+    checkNotNull(version);
+    final Snapshots snaps = new Snapshots(null, 1, null);
+    return new Maven2Metadata(Level.BASEVERSION, DateTime.now(), groupId, artifactId, version, null, null, snaps);
   }
 }
