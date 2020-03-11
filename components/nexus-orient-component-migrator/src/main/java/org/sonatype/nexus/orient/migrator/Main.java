@@ -52,11 +52,9 @@ public class Main
     try (ODatabaseDocumentTx componentDb = new ODatabaseDocumentTx(args[0])) {
       componentDb.open("admin", "admin");
       try (HikariDataSource targetDb = new HikariDataSource(hikariConfig)) {
-        ContentMigrator migrator = new ContentMigrator(componentDb, targetDb.getConnection());
+        ContentMigrator migrator = new ContentMigrator(componentDb, targetDb.getConnection(), false);
 
-        migrator.extractRepositories();
-        migrator.extractComponents();
-        migrator.extractAssets();
+       migrator.extractAll();
       }
     }
   }
