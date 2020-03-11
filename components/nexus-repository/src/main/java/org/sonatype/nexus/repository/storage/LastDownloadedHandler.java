@@ -41,7 +41,7 @@ import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
  *
  * @since 3.15
  */
-@Named
+@Named("default")
 @Singleton
 public class LastDownloadedHandler
     extends ComponentSupport
