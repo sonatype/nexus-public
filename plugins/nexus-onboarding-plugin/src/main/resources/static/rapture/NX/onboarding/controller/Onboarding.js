@@ -107,12 +107,17 @@ Ext.define('NX.onboarding.controller.Onboarding', {
     }
   },
 
-  itemsLoaded: function (store, records) {
+  itemsLoaded: function (store, records, successful) {
     var me = this;
     me.registerStep('NX.onboarding.step.OnboardingStartStep');
-    records.forEach(function(record) {
-      me.registerStep('NX.onboarding.step.' + record.get('type') + 'Step');
-    });
+    if (successful && Array.isArray(records)) {
+      records.forEach(function(record) {
+        me.registerStep('NX.onboarding.step.' + record.get('type') + 'Step');
+      });
+    }
+    else {
+      NX.Messages.error(NX.I18n.get('Onboarding_LoadStepsError'));
+    }
     me.registerStep('NX.onboarding.step.OnboardingCompleteStep');
 
     Ext.widget('nx-onboarding-modal');
