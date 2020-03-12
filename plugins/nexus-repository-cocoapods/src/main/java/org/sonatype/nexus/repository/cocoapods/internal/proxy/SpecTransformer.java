@@ -21,6 +21,7 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.apache.commons.lang.CharUtils;
 import org.sonatype.nexus.repository.cocoapods.internal.pod.PodPathProvider;
 import org.sonatype.nexus.repository.cocoapods.internal.pod.git.GitRepoUriParser;
 
@@ -82,7 +83,7 @@ public class SpecTransformer
     }
 
     final String name = jsonSpec.get(POD_NAME_FIELD).asText();
-    final String version = jsonSpec.get(POD_VERSION_FIELD).asText();
+    final String version = removeNonPrintableCharacters(jsonSpec.get(POD_VERSION_FIELD).asText());
 
     URI sourceUri = buidProxiedUri(jsonSpec.get(SOURCE_NODE_NAME), name, version, repoUri);
 
@@ -91,6 +92,13 @@ public class SpecTransformer
 
     jsonSpec.set(SOURCE_NODE_NAME, sourceNode);
     return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonSpec);
+  }
+
+  private String removeNonPrintableCharacters(String text) {
+
+    return text.chars().filter(ch->CharUtils.isAsciiPrintable((char) ch))
+      .mapToObj(ch-> (char) ch)
+      .collect(StringBuilder::new,StringBuilder::append,StringBuilder::append).toString();
   }
 
   private URI buidProxiedUri(final JsonNode sourceNode, String name, String version, final URI repoUri)
