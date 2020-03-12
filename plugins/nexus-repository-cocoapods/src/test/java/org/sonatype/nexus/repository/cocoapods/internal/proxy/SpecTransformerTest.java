@@ -168,7 +168,7 @@ public class SpecTransformerTest
   public void gitHubToProxiedSpecVersionIncludeNonPrintableCharactersTest() throws Exception {
     String spec = "{\n" +
       "  \"name\": \"Realm\",\n" +
-      "  \"version\": \"0.92.3\\n\\t\\r" + '\u00a9' + '\u007f' + "\",\n" +
+      "  \"version\": \"\\t0.92\\r.3\\n" + '\u00a9' + '\u007f' + "\",\n" +
       "  \"source\": {\n" +
       "    \"git\": \"https://github.com/realm/realm-cocoa.git\",\n" +
       "    \"tag\": \"v0.92.3\"\n" +
