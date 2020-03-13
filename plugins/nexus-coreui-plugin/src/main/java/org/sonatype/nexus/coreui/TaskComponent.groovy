@@ -162,6 +162,9 @@ class TaskComponent
   TaskXO update(final @NotNull @Valid TaskXO taskXO) {
     TaskInfo task = scheduler.getTaskById(taskXO.id)
     validateState(task)
+    if (task.typeId == 'script') {
+      validateScriptUpdate(task, taskXO)
+    }
     Schedule schedule = asSchedule(taskXO)
     task.configuration.enabled = taskXO.enabled
     task.configuration.name = taskXO.name
@@ -392,6 +395,16 @@ class TaskComponent
     if (externalTaskState.state.running) {
       throw new IllegalStateException(
           'Task can not be edited while it is being executed or it is in line to be executed')
+    }
+  }
+
+  @PackageScope
+  void validateScriptUpdate(final TaskInfo task, final TaskXO update) {
+    String originalSource = task.configuration.getString("source")
+    String updateSource = update.properties.get("source")
+
+    if (!allowCreation && !originalSource.equals(updateSource)) {
+      throw new IllegalStateException('Script source updates are not allowed')
     }
   }
 

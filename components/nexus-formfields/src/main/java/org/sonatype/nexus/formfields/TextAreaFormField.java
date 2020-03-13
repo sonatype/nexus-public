@@ -20,6 +20,11 @@ package org.sonatype.nexus.formfields;
 public class TextAreaFormField
     extends AbstractFormField<String>
 {
+  public TextAreaFormField(String id, String label, String helpText, boolean required, String regexValidation, boolean readOnly) {
+    super(id, label, helpText, required, regexValidation);
+    this.setReadOnly(readOnly);
+  }
+
   public TextAreaFormField(String id, String label, String helpText, boolean required, String regexValidation) {
     super(id, label, helpText, required, regexValidation);
   }

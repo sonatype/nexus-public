@@ -84,7 +84,9 @@ public class ScriptTaskDescriptor
             SOURCE,
             messages.sourceLabel(),
             messages.sourceHelpText(),
-            FormField.MANDATORY
+            FormField.MANDATORY,
+            null,
+            !allowCreation
         ),
         nodeAccess.isClustered() ? newMultinodeFormField() : null);
   }
