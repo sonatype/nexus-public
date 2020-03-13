@@ -23,6 +23,8 @@ public final class NamePatternConstants
   // components/nexus-rapture/src/main/resources/static/rapture/NX/util/Validator.js
   public static final String REGEX = "^[a-zA-Z0-9\\-]{1}[a-zA-Z0-9_\\-\\.]*$";
 
+  public static final String REGEX_WITH_WILDCARDS = "^[a-zA-Z0-9\\-]{1}[a-zA-Z0-9_\\-\\*\\.]*$";
+
   public static final String MESSAGE = "{org.sonatype.nexus.validation.constraint.name}";
   
   private NamePatternConstants() {}
