@@ -14,6 +14,7 @@ package org.sonatype.nexus.testsuite.testsupport.fixtures
 
 import javax.inject.Provider
 
+import org.sonatype.nexus.common.app.BaseUrlHolder
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.config.Configuration
 import org.sonatype.nexus.repository.manager.RepositoryManager
@@ -57,9 +58,22 @@ class RepositoryRule
   @Override
   Repository createRepository(final Configuration configuration) {
     log.debug 'Creating and tracking new Repository: {}', configuration.repositoryName
-    Repository repository = repositoryManagerProvider.get().create(configuration)
-    repositories << repository
-    return repository
+
+    boolean baseUrlSet = BaseUrlHolder.isSet()
+
+    try {
+      if (!baseUrlSet) {
+        BaseUrlHolder.set('http://localhost:1234')
+      }
+      Repository repository = repositoryManagerProvider.get().create(configuration)
+      repositories << repository
+      return repository
+    }
+    finally {
+      if (!baseUrlSet) {
+        BaseUrlHolder.unset()
+      }
+    }
   }
 
   /**

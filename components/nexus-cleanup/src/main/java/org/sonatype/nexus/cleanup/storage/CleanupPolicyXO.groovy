@@ -16,6 +16,7 @@ import javax.validation.Valid
 import javax.validation.constraints.Pattern
 
 import org.sonatype.nexus.cleanup.storage.config.UniqueCleanupPolicyName
+import org.sonatype.nexus.repository.FormatExists
 import org.sonatype.nexus.validation.group.Create
 
 import groovy.transform.ToString
@@ -44,6 +45,7 @@ class CleanupPolicyXO
   String name
 
   @NotBlank
+  @FormatExists
   String format
 
   @NotBlank

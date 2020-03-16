@@ -43,7 +43,7 @@ public class BrowseNodeManager
 {
   private static final String DEFAULT_PATH_HANDLER = "default";
 
-  private final BrowseNodeCrudStore<EntityId, Asset, Component> browseNodeStore;
+  private final BrowseNodeCrudStore<Asset, Component> browseNodeStore;
 
   private final ComponentStore componentStore;
 
@@ -53,7 +53,7 @@ public class BrowseNodeManager
 
   @Inject
   public BrowseNodeManager(
-      final BrowseNodeCrudStore<EntityId, Asset, Component> browseNodeStore,
+      final BrowseNodeCrudStore<Asset, Component> browseNodeStore,
       final ComponentStore componentStore,
       final Map<String, BrowseNodeGenerator> pathGenerators)
   {
@@ -93,7 +93,7 @@ public class BrowseNodeManager
     if (asset.blobRef() == null) {
       log.trace("asset {} has no content, not creating browse node", assetId);
     }
-    else if (browseNodeStore.assetNodeExists(assetId)) {
+    else if (browseNodeStore.assetNodeExists(asset)) {
       log.trace("browse node already exists for {} on update", assetId);
     }
     else {
@@ -150,15 +150,15 @@ public class BrowseNodeManager
   /**
    * Deletes the asset's browse node.
    */
-  public void deleteAssetNode(final EntityId assetId) {
-    browseNodeStore.deleteAssetNode(assetId);
+  public void deleteAssetNode(final Asset asset) {
+    browseNodeStore.deleteAssetNode(asset);
   }
 
   /**
    * Deletes the component's browse node.
    */
-  public void deleteComponentNode(final EntityId componentId) {
-    browseNodeStore.deleteComponentNode(componentId);
+  public void deleteComponentNode(final Component component) {
+    browseNodeStore.deleteComponentNode(component);
   }
 
   /**

@@ -62,14 +62,13 @@ public final class MavenModels
    * Parses input into {@link Xpp3Dom}, returns {@code null} if input not parsable. Passed in {@link InputStream} is
    * closed always on return.
    */
-  @Nullable
   public static Xpp3Dom parseDom(final InputStream is) throws IOException {
     try (InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
       return Xpp3DomBuilder.build(reader);
     }
     catch (XmlPullParserException e) {
       log.debug("Could not parse XML into Xpp3Dom", e);
-      return null;
+      throw new IOException("Could not parse XML into Xpp3Dom", e);
     }
   }
 

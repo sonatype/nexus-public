@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.browse.internal;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 
@@ -61,6 +62,9 @@ public class RebuildBrowseNodesManagerTest
     extends BrowseTestSupport
 {
   private static final String REPOSITORY_NAME = "repo";
+
+  private static final String REPOSITORY2_NAME = "repo2";
+
   @Rule
   public DatabaseInstanceRule databaseInstanceRule = DatabaseInstanceRule.inMemory("test");
 
@@ -74,6 +78,8 @@ public class RebuildBrowseNodesManagerTest
 
   private Bucket bucket;
 
+  private Bucket bucket2;
+
   private BrowseNodeEntityAdapter browseNodeEntityAdapter;
 
   @Mock
@@ -84,6 +90,9 @@ public class RebuildBrowseNodesManagerTest
 
   @Mock
   private Repository repository;
+
+  @Mock
+  private Repository repository2;
 
   @Mock
   private TaskSchedulerImpl taskScheduler;
@@ -106,14 +115,17 @@ public class RebuildBrowseNodesManagerTest
   @Before
   public void configure() throws Exception {
     when(configuration.isAutomaticRebuildEnabled()).thenReturn(true);
-    when(repositoryManager.browse()).thenReturn(Collections.singleton(repository));
+    when(repositoryManager.browse()).thenReturn(Arrays.asList(repository, repository2));
     when(repository.getName()).thenReturn(REPOSITORY_NAME);
+    when(repository2.getName()).thenReturn(REPOSITORY2_NAME);
 
     initializeDatabase();
 
     bucket = createBucket(REPOSITORY_NAME);
+    bucket2 = createBucket(REPOSITORY2_NAME);
 
     bucketEntityAdapter.addEntity(databaseInstanceRule.getInstance().acquire(), bucket);
+    bucketEntityAdapter.addEntity(databaseInstanceRule.getInstance().acquire(), bucket2);
   }
 
   private void initializeDatabase() throws Exception {
@@ -224,6 +236,26 @@ public class RebuildBrowseNodesManagerTest
 
     underTest.doStart();
     assertThat(taskConfiguration.getString(REPOSITORY_NAME_FIELD_ID), is(REPOSITORY_NAME));
+    verify(taskScheduler).createTaskConfigurationInstance(RebuildBrowseNodesTaskDescriptor.TYPE_ID);
+    verify(taskScheduler).submit(taskConfiguration);
+  }
+
+  @Test
+  public void doStartIncludesMultipleRepositories() throws Exception {
+    TaskConfiguration taskConfiguration = new TaskConfiguration();
+    Asset asset = createAsset("asset", "maven2", bucket);
+    Asset asset2 = createAsset("asset", "maven2", bucket2);
+
+    try (ODatabaseDocumentTx db = databaseInstanceRule.getInstance().acquire()) {
+      assetEntityAdapter.addEntity(db, asset);
+      assetEntityAdapter.addEntity(db, asset2);
+    }
+
+    when(taskScheduler.createTaskConfigurationInstance(RebuildBrowseNodesTaskDescriptor.TYPE_ID))
+        .thenReturn(taskConfiguration);
+
+    underTest.doStart();
+    assertThat(taskConfiguration.getString(REPOSITORY_NAME_FIELD_ID), is(REPOSITORY_NAME + "," + REPOSITORY2_NAME));
     verify(taskScheduler).createTaskConfigurationInstance(RebuildBrowseNodesTaskDescriptor.TYPE_ID);
     verify(taskScheduler).submit(taskConfiguration);
   }

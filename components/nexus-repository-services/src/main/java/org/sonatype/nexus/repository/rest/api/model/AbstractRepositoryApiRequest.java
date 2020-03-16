@@ -13,6 +13,9 @@
 package org.sonatype.nexus.repository.rest.api.model;
 
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+
+import org.sonatype.nexus.validation.constraint.NamePatternConstants;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -25,6 +28,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 public abstract class AbstractRepositoryApiRequest
 {
   @ApiModelProperty(value = "A unique identifier for this repository", example = "internal", required = true)
+  @Pattern(regexp = NamePatternConstants.REGEX, message = NamePatternConstants.MESSAGE)
   @NotEmpty
   protected String name;
 

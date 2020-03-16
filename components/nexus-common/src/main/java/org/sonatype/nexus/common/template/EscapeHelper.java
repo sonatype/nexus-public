@@ -78,7 +78,7 @@ public class EscapeHelper
    */
   public String stripJavaEl(final String value) {
     if (value != null) {
-      return value.replaceAll("\\$+\\{", "{");
+      return value.replaceAll("\\$+\\{", "{").replaceAll("\\$+\\\\A\\{", "{");
     }
     return null;
   }

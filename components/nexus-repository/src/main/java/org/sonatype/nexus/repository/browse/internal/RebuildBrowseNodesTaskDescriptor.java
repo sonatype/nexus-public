@@ -17,7 +17,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.node.NodeAccess;
-import org.sonatype.nexus.formfields.RepositoryCombobox;
+import org.sonatype.nexus.formfields.ItemselectFormField;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
@@ -36,10 +36,12 @@ public class RebuildBrowseNodesTaskDescriptor
   public static final String REPOSITORY_NAME_FIELD_ID = "repositoryName";
 
   @Inject
-  public RebuildBrowseNodesTaskDescriptor(final NodeAccess nodeAccess) {
+  public RebuildBrowseNodesTaskDescriptor(final NodeAccess nodeAccess, final GroupType groupType) {
     super(TYPE_ID, RebuildBrowseNodesTask.class, "Repair - Rebuild repository browse", VISIBLE, EXPOSED,
-        new RepositoryCombobox(REPOSITORY_NAME_FIELD_ID, "Repository", "Select the repository to rebuild browse tree",
-            true).excludingAnyOfTypes(GroupType.NAME).includeAnEntryForAllRepositories(),
+        new ItemselectFormField(REPOSITORY_NAME_FIELD_ID, "Repository", "Select the repository(ies) to rebuild browse tree",
+            true).withStoreApi("coreui_Repository.readReferencesAddingEntryForAll").withIdMapping("name")
+            .withButtons("up", "add", "remove", "down").withFromTitle("Available").withToTitle("Selected")
+            .withStoreFilter("type", "!" + groupType.getValue()).withValueAsString(true),
         nodeAccess.isClustered() ? newLimitNodeFormField() : null);
   }
 }

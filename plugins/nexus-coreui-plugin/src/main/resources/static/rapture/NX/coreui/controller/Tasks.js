@@ -226,10 +226,20 @@ Ext.define('NX.coreui.controller.Tasks', {
         type: 'vbox',
         align: 'stretch'
       },
-      items: {
-        xtype: 'nx-coreui-task-selecttype',
-        flex: 1
-      }
+      items: [
+        {
+          xtype: 'panel',
+          ui: 'nx-drilldown-message',
+          cls: 'nx-drilldown-info',
+          iconCls: NX.Icons.cls('drilldown-info', 'x16'),
+          title: NX.I18n.format('Task_Script_Creation_Disabled'),
+          hidden: NX.State.getValue('allowScriptCreation'),
+        },
+        {
+          xtype: 'nx-coreui-task-selecttype',
+          flex: 1
+        }
+      ]
     }));
   },
 

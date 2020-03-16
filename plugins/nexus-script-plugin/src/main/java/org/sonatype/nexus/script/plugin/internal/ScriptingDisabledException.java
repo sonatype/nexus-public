@@ -10,25 +10,16 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.storage;
-
-import java.util.function.Function;
-
-import org.sonatype.nexus.repository.Facet;
+package org.sonatype.nexus.script.plugin.internal;
 
 /**
- * Optional BrowseNode facet; used to customize legacy browse-node behaviour.
+ * An action on a script has been attempted when scripting is disabled.
  *
  * @since 3.next
  */
-@Facet.Exposed
-public interface BrowseNodeFacet
-    extends Facet
+public class ScriptingDisabledException extends RuntimeException
 {
-  /**
-   * Returns a function to apply to a browse node to determine distinctness
-   */
-  default Function<BrowseNode<?>, String> browseNodeIdentity() {
-    return BrowseNode::getName;
+  public ScriptingDisabledException(final String message) {
+    super(message);
   }
 }

@@ -40,6 +40,7 @@ Ext.define('NX.coreui.view.formfield.factory.FormfieldTextAreaFactory', {
       itemCls: formField.required ? 'required-field' : '',
       helpText: formField.helpText,
       allowBlank: !formField.required,
+      readOnly: formField.readOnly,
       regex: formField.regexValidation ? new RegExp(formField.regexValidation) : null,
       grow: true,
       growMax: 320

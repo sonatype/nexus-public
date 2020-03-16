@@ -106,6 +106,13 @@ public class MavenHostedFacetImpl
     final boolean update = !Strings.isNullOrEmpty(groupId)
         || !Strings.isNullOrEmpty(artifactId)
         || !Strings.isNullOrEmpty(baseVersion);
+    rebuildMetadata(groupId, artifactId, baseVersion, rebuildChecksums, update);
+  }
+
+  @Override
+  public void rebuildMetadata(@Nullable final String groupId, @Nullable final String artifactId,
+                              @Nullable final String baseVersion, final boolean rebuildChecksums, final boolean update)
+  {
     log.debug("Rebuilding Maven2 hosted repository metadata: repository={}, update={}, g={}, a={}, bV={}",
         getRepository().getName(), update, groupId, artifactId, baseVersion);
     metadataRebuilder.rebuild(getRepository(), update, rebuildChecksums, groupId, artifactId, baseVersion);

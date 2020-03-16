@@ -55,13 +55,11 @@ public class DatastoreBrowseNode
   }
 
   public DatastoreBrowseNode(
-      final int repositoryId,
       final String format,
       final Integer parentId,
       final String path,
       final String name)
   {
-    this.repositoryId = repositoryId;
     this.format = format;
     this.parentId = parentId;
     this.path = path;

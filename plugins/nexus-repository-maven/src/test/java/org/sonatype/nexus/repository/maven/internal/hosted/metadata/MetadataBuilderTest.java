@@ -150,4 +150,38 @@ public class MetadataBuilderTest
     assertThat(gmd.getGroupId(), nullValue());
     assertThat(gmd.getPlugins(), hasSize(1));
   }
+
+  @Test
+  public void nonUniqueSnapshot() {
+    testSubject.onEnterGroupId("group");
+    testSubject.onEnterArtifactId("artifact");
+    testSubject.onEnterBaseVersion("1.0-SNAPSHOT");
+    testSubject.addArtifactVersion(
+        mavenPathParser.parsePath("/group/artifact/1.0-SNAPSHOT/artifact-1.0-SNAPSHOT.pom"));
+    testSubject.addPlugin("prefix", "artifact", "name");
+    final Maven2Metadata vmd = testSubject.onExitBaseVersion();
+    assertThat(vmd, notNullValue());
+    assertThat(vmd.getGroupId(), equalTo("group"));
+    assertThat(vmd.getArtifactId(), equalTo("artifact"));
+    assertThat(vmd.getVersion(), equalTo("1.0-SNAPSHOT"));
+    assertThat(vmd.getSnapshots(), notNullValue());
+    assertThat(vmd.getSnapshots().getSnapshotTimestamp(), nullValue());
+    assertThat(vmd.getSnapshots().getSnapshotBuildNumber(), equalTo(1));
+    assertThat(vmd.getSnapshots().getSnapshots(), hasSize(0));
+
+    final Maven2Metadata amd = testSubject.onExitArtifactId();
+    assertThat(amd, notNullValue());
+    assertThat(amd.getGroupId(), equalTo("group"));
+    assertThat(amd.getArtifactId(), equalTo("artifact"));
+    assertThat(amd.getBaseVersions(), notNullValue());
+    assertThat(amd.getBaseVersions().getVersions(), hasSize(1));
+    assertThat(amd.getBaseVersions().getLatest(), equalTo("1.0-SNAPSHOT"));
+    assertThat(amd.getBaseVersions().getRelease(), nullValue());
+    assertThat(amd.getBaseVersions().getVersions(), contains("1.0-SNAPSHOT"));
+
+    final Maven2Metadata gmd = testSubject.onExitGroupId();
+    assertThat(gmd, notNullValue());
+    assertThat(gmd.getGroupId(), nullValue());
+    assertThat(gmd.getPlugins(), hasSize(1));
+  }
 }

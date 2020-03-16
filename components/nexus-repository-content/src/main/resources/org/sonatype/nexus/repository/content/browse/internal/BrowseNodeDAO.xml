@@ -126,14 +126,14 @@
      WHERE <include refid="browseNodeMatch"/>;
   </select>
 
-  <insert id="createNode" useGeneratedKeys="true" keyColumn="browse_node_id" keyProperty="id">
+  <insert id="createNode" useGeneratedKeys="true" keyColumn="browse_node_id" keyProperty="node.id">
     INSERT INTO ${format}_browse_node (repository_id, format, parent_id, path, name)
-    VALUES (#{repositoryId}, #{format}, #{parentId}, #{path}, #{name});
+    VALUES (#{repository.repositoryId}, #{node.format}, #{node.parentId}, #{node.path}, #{node.name});
   </insert>
 
-  <insert id="createNode" useGeneratedKeys="true" keyColumn="browse_node_id" keyProperty="id" databaseId="PostgreSQL">
+  <insert id="createNode" useGeneratedKeys="true" keyColumn="browse_node_id" keyProperty="node.id" databaseId="PostgreSQL">
     INSERT INTO ${format}_browse_node (repository_id, format, parent_id, path, name)
-    VALUES (#{repositoryId}, #{format}, #{parentId}, #{path}, #{name})
+    VALUES (#{repository.repositoryId}, #{node.format}, #{node.parentId}, #{node.path}, #{node.name})
            ON CONFLICT ON CONSTRAINT uk_${format}_browse_node_repository_path
            DO UPDATE SET name = #{name} RETURNING browse_node_id;
   </insert>

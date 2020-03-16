@@ -75,6 +75,9 @@ Ext.define('NX.coreui.view.formfield.factory.FormfieldItemselectFactory', {
     if (attributes['toTitle']) {
       itemConfig.toTitle = attributes['toTitle'];
     }
+    if (attributes['valueAsString']) {
+      itemConfig.valueAsString = attributes['valueAsString'];
+    }
 
     if (formField['storeApi']) {
       if (formField['storeFilters']) {

@@ -63,21 +63,36 @@ public class ContentMigrator
 
   private final Connection targetConnection;
 
+  private final boolean extractBrowseNodes;
+
   private final Set<String> formats = new HashSet<>();
 
   private final Map<String, String> repositoryFormats = new HashMap<>();
 
   private final Map<ORID, Integer> bucketRepositoryIds = new HashMap<>();
 
+  private final Map<String, ORID> repositoryNameToId = new HashMap<>();
+
   private final String databaseId;
 
   public ContentMigrator(final ODatabaseDocumentTx componentDb,
-                         final Connection targetConnection) throws SQLException
+                         final Connection targetConnection, final boolean extractBrowseNodes) throws SQLException
   {
     this.componentDb = componentDb;
     this.targetConnection = targetConnection;
+    this.extractBrowseNodes = extractBrowseNodes;
 
     databaseId = targetConnection.getMetaData().getDatabaseProductName();
+  }
+
+  public void extractAll() throws SQLException, IOException { // NOSONAR
+    extractRepositories();
+    extractComponents();
+    extractAssets();
+    if (extractBrowseNodes) {
+      extractBrowseNodes();
+    }
+    cleanup();
   }
 
   /**
@@ -87,6 +102,8 @@ public class ContentMigrator
 
     for (ODocument bucket : componentDb.browseClass("bucket")) {
       String repositoryName = bucket.field("repository_name", OType.STRING);
+
+      repositoryNameToId.put(repositoryName, bucket.getIdentity());
 
       ODocument result = new OSQLSynchQuery<ODocument>(
           "SELECT format FROM asset WHERE bucket = :bucket LIMIT 1").runFirst(bucket);
@@ -126,7 +143,7 @@ public class ContentMigrator
 
         executeBatch(repositoryStatements);
 
-        log.info("Migrating " + repositoryCount + " repositories spanning " + formats + " formats");
+        log.info("Migrating {} repositories spanning {} formats", repositoryCount, formats);
 
         extractBucketRepositoryIds();
       }
@@ -167,7 +184,7 @@ public class ContentMigrator
         if (++componentCount % BATCH_SIZE == 0) {
           executeBatch(componentStatements);
 
-          log.info("...migrating " + componentCount + '/' + expectedComponentCount + " components");
+          log.info("...migrating {}/{} components", componentCount, expectedComponentCount);
 
           // force clear as we won't revisit these records and it keeps memory use down
           ((OAbstractPaginatedStorage) componentDb.getStorage()).getReadCache().clear();
@@ -176,7 +193,7 @@ public class ContentMigrator
 
       executeBatch(componentStatements);
 
-      log.info("Migrated " + componentCount + " components");
+      log.info("Migrated {} components", componentCount);
     }
     finally {
       closeBatch(componentStatements);
@@ -189,9 +206,10 @@ public class ContentMigrator
   public void extractAssets() throws SQLException, IOException { // NOSONAR
 
     addRidColumns("asset");
+    addColumn("asset", "component_rid");
 
     Map<String, PreparedStatement> assetStatements = prepareBatch(
-        "asset", "repository_id", "component_id", "asset_blob_id", "path", "last_downloaded", "attributes", "rid");
+        "asset", "repository_id", "component_id", "asset_blob_id", "path", "last_downloaded", "attributes", "rid", "component_rid");
 
     Map<String, PreparedStatement> assetBlobStatements = prepareBatch(
         "asset_blob", "blob_ref", "blob_size", "content_type", "blob_created", "created_by", "created_by_ip");
@@ -225,13 +243,13 @@ public class ContentMigrator
         }
 
         insert(assetStatements.get(format), bucketRepositoryIds.get(bucket.getIdentity()),
-            null, assetBlobId, normalizePath(name), lastDownloaded, json(attributes), component);
+            null, assetBlobId, normalizePath(name), lastDownloaded, json(attributes), asset, component);
 
         if (++assetCount % BATCH_SIZE == 0) {
           executeBatch(assetBlobStatements);
           executeBatch(assetStatements);
 
-          log.info("...migrating " + assetCount + '/' + expectedAssetCount + " assets");
+          log.info("...migrating {}/{} assets", assetCount, expectedAssetCount);
 
           // force clear as we won't revisit these records and it keeps memory use down
           ((OAbstractPaginatedStorage) componentDb.getStorage()).getReadCache().clear();
@@ -241,7 +259,7 @@ public class ContentMigrator
       executeBatch(assetBlobStatements);
       executeBatch(assetStatements);
 
-      log.info("Migrated " + assetCount + " assets");
+      log.info("Migrated {} assets", assetCount);
     }
     finally {
       closeBatch(assetBlobStatements);
@@ -251,11 +269,123 @@ public class ContentMigrator
     log.info("Linking assets to components (this may take a while)");
 
     linkAssetsToComponents();
+  }
 
-    log.info("Removing temporary rid columns");
+  public void extractBrowseNodes() throws SQLException {
+    addColumn("browse_node", "asset_rid", true);
+    addColumn("browse_node", "component_rid", true);
+    // for matching parent_id
+    addColumn("browse_node", "parent_path", false);
+    addColumn("browse_node", "parent_parent_path", false);
+    addColumn("browse_node", "parent_name", false);
+
+    createBrowseNodeParentIndex();
+
+    Map<String, PreparedStatement> browseNodeStatements = prepareBatch(
+        "browse_node", "repository_id", "format", "path", "name", "asset_rid", "component_rid", "parent_path", "parent_parent_path", "parent_name");
+
+    try {
+      int browseNodeCount = 0;
+
+      long expectedBrowseNodeCount = componentDb.countClass("browse_node");
+      for (ODocument browseNode : componentDb.browseClass("browse_node")) {
+        String format = normalizeFormat(browseNode.field("format", OType.STRING));
+        String repositoryName = browseNode.field("repository_name", OType.STRING);
+
+        if (repositoryName != null) {
+          ORID rid = repositoryNameToId.get(repositoryName);
+          int repositoryId = bucketRepositoryIds.get(rid);
+
+          String path = browseNode.field("path", OType.STRING);
+          String name = browseNode.field("name", OType.STRING);
+
+          String parentPath = browseNode.field("parent_path", OType.STRING);
+
+          String parentParentPath = null;
+          String parentName = null;
+
+          if (!parentPath.equals("/")) {
+            // remove trailing slash
+            String parentPathMatch = parentPath.substring(0, parentPath.length() - 1);
+
+            int lastSlash = parentPathMatch.lastIndexOf('/');
+            parentParentPath = parentPathMatch.substring(0, lastSlash + 1);
+            parentName = parentPathMatch.substring(lastSlash + 1);
+          }
+
+          OIdentifiable asset = browseNode.field("asset_id", OType.LINK);
+          OIdentifiable component = browseNode.field("component_id", OType.LINK);
+
+          insert(browseNodeStatements.get(format), repositoryId, format, path, name, asset, component,
+              parentPath, parentParentPath, parentName);
+
+          if (++browseNodeCount % BATCH_SIZE == 0) {
+            executeBatch(browseNodeStatements);
+
+            log.info("...migrating {}/{} browse nodes", browseNodeCount, expectedBrowseNodeCount);
+
+            // force clear as we won't revisit these records and it keeps memory use down
+            ((OAbstractPaginatedStorage) componentDb.getStorage()).getReadCache().clear();
+          }
+        }
+      }
+
+      executeBatch(browseNodeStatements);
+
+      log.info("Migrated {} browse nodes", browseNodeCount);
+    }
+    finally {
+      closeBatch(browseNodeStatements);
+    }
+
+    log.info("Linking browse nodes to assets (this may take a while)");
+
+    linkBrowseNodesToAssets();
+
+    log.info("Linking browse nodes to components (this may take a while)");
+
+    linkBrowseNodesToComponents();
+
+    log.info("Linking browse nodes to their parents (this may take a while)");
+
+    linkBrowseNodesToParent();
+
+    dropBrowseNodeParentIndex();
+  }
+
+  private void createBrowseNodeParentIndex() throws SQLException {
+    try (Statement stmt = targetConnection.createStatement()) {
+      for (String format : formats) {
+        String formatTable = format + '_' + "browse_node";
+        stmt.addBatch("CREATE INDEX IF NOT EXISTS idx_" + formatTable + "_repository_id_parent_path_name ON " + formatTable + "(repository_id, parent_path, name);");
+      }
+      stmt.executeBatch();
+    }
+  }
+
+  private void dropBrowseNodeParentIndex() throws SQLException {
+    try (Statement stmt = targetConnection.createStatement()) {
+      for (String format : formats) {
+        String formatTable = format + '_' + "browse_node";
+        stmt.addBatch("DROP INDEX IF EXISTS idx_" + formatTable + "_repository_id_parent_path_name;");
+      }
+      stmt.executeBatch();
+    }
+  }
+
+  public void cleanup() throws SQLException {
+    log.info("Removing temporary rid columns (this may take a while)");
 
     dropRidColumns("component");
     dropRidColumns("asset");
+
+    if (extractBrowseNodes) {
+      dropColumn("browse_node", "asset_rid");
+      dropColumn("browse_node", "component_rid");
+      dropColumn("browse_node", "parent_path");
+      dropColumn("browse_node", "parent_parent_path");
+      dropColumn("browse_node", "parent_name");
+    }
 
     log.info("Done");
   }
@@ -284,6 +414,9 @@ public class ContentMigrator
    * Naive mapping that just prepends a slash to the existing asset name to get its path.
    */
   private static String normalizePath(final String path) {
+    if (path.isEmpty()) {
+      return path;
+    }
     return path.charAt(0) == '/' ? path : '/' + path;
   }
 
@@ -314,11 +447,35 @@ public class ContentMigrator
    * Adds a new column to record Orient record-ids in the migrated data.
    */
   private void addRidColumns(final String table) throws SQLException {
+    addColumn(table, "rid");
+  }
+
+  /**
+   * Adds a new varchar column with index.
+   */
+  private void addColumn(final String table, final String var) throws SQLException {
+    addColumn(table, var, true);
+  }
+
+  /**
+   * Adds a new varchar column with optional index.
+   */
+  private void addColumn(final String table, final String var, boolean createIndex) throws SQLException {
     try (Statement stmt = targetConnection.createStatement()) {
       for (String format : formats) {
         String formatTable = format + '_' + table;
-        stmt.addBatch("ALTER TABLE " + formatTable + " ADD COLUMN IF NOT EXISTS rid VARCHAR;");
-        stmt.addBatch("CREATE INDEX IF NOT EXISTS idx_" + formatTable + "_rid ON " + formatTable + "(rid);");
+        stmt.addBatch("ALTER TABLE " + formatTable + " ADD COLUMN IF NOT EXISTS " + var + " VARCHAR;");
+        if (createIndex) {
+          if ("PostgreSQL".equals(databaseId)) {
+            stmt.addBatch(
+                "CREATE INDEX IF NOT EXISTS idx_" + formatTable + "_" + var + " ON " + formatTable + " USING HASH (" +
+                    var + ");");
+          }
+          else {
+            stmt.addBatch(
+                "CREATE INDEX IF NOT EXISTS idx_" + formatTable + "_" + var + " ON " + formatTable + "(" + var + ");");
+          }
+        }
       }
       stmt.executeBatch();
     }
@@ -328,11 +485,18 @@ public class ContentMigrator
    * Removes Orient record-ids from the newly migrated data.
    */
   private void dropRidColumns(final String table) throws SQLException {
+    dropColumn(table, "rid");
+  }
+
+  /**
+   * Removes Orient record-ids from the newly migrated data.
+   */
+  private void dropColumn(final String table, final String var) throws SQLException {
     try (Statement stmt = targetConnection.createStatement()) {
       for (String format : formats) {
         String formatTable = format + '_' + table;
-        stmt.addBatch("DROP INDEX IF EXISTS idx_" + formatTable + "_rid;");
-        stmt.addBatch("ALTER TABLE " + formatTable + " DROP COLUMN IF EXISTS rid;");
+        stmt.addBatch("DROP INDEX IF EXISTS idx_" + formatTable + "_" + var + ";");
+        stmt.addBatch("ALTER TABLE " + formatTable + " DROP COLUMN IF EXISTS " + var + ";");
       }
       stmt.executeBatch();
     }
@@ -361,11 +525,70 @@ public class ContentMigrator
       for (String format : formats) {
         if ("H2".equals(databaseId)) {
           stmt.addBatch("MERGE INTO " + format + "_asset AS A USING " + format + "_component AS C"
-              + " ON A.rid = C.rid WHEN MATCHED THEN UPDATE SET A.component_id = C.component_id;");
+              + " ON A.component_rid = C.rid WHEN MATCHED THEN UPDATE SET A.component_id = C.component_id;");
         }
         else {
           stmt.addBatch("UPDATE " + format + "_asset AS A SET component_id = C.component_id FROM "
-              + format + "_component AS C WHERE A.rid = C.rid;");
+              + format + "_component AS C WHERE A.component_rid = C.rid;");
+        }
+      }
+      stmt.executeBatch();
+    }
+  }
+
+  /**
+   * Populates {@code browse_node.asset_id} by joining the asset and browse_node tables on the original Orient record-id.
+   */
+  private void linkBrowseNodesToAssets() throws SQLException {
+    try (Statement stmt = targetConnection.createStatement()) {
+      for (String format : formats) {
+        if ("H2".equals(databaseId)) {
+          stmt.addBatch("MERGE INTO " + format + "_browse_node AS N USING " + format + "_asset AS A"
+              + " ON N.asset_rid = A.rid WHEN MATCHED THEN UPDATE SET N.asset_id = A.asset_id;");
+        }
+        else {
+          stmt.addBatch("UPDATE " + format + "_browse_node AS N SET asset_id = A.asset_id FROM "
+              + format + "_asset AS A WHERE N.asset_rid = A.rid;");
+        }
+      }
+      stmt.executeBatch();
+    }
+  }
+
+  /**
+   * Populates {@code browse_node.component_id} by joining the component and browse_node tables on the original Orient record-id.
+   */
+  private void linkBrowseNodesToComponents() throws SQLException {
+    try (Statement stmt = targetConnection.createStatement()) {
+      for (String format : formats) {
+        if ("H2".equals(databaseId)) {
+          stmt.addBatch("MERGE INTO " + format + "_browse_node AS N USING " + format + "_component AS C"
+              + " ON N.asset_rid = C.rid WHEN MATCHED THEN UPDATE SET N.component_id = C.component_id;");
+        }
+        else {
+          stmt.addBatch("UPDATE " + format + "_browse_node AS N SET component_id = C.component_id FROM "
+              + format + "_component AS C WHERE N.component_rid = C.rid;");
+        }
+      }
+      stmt.executeBatch();
+    }
+  }
+
+  /**
+   * Populates {@code browse_node.parent_id} by joining the browse_node table to it's parent using path and parent_path
+   */
+  private void linkBrowseNodesToParent() throws SQLException {
+    try (Statement stmt = targetConnection.createStatement()) {
+      for (String format : formats) {
+        if ("H2".equals(databaseId)) {
+          stmt.addBatch("UPDATE " + format + "_browse_node AS N SET parent_id = (SELECT P.browse_node_id FROM " + format
+              + "_browse_node AS P WHERE N.repository_id = P.repository_id AND N.parent_parent_path = P.parent_path"
+              + " AND N.parent_name = P.name);");
+        }
+        else {
+          stmt.addBatch("UPDATE " + format + "_browse_node AS N set parent_id ="
+              + " (SELECT browse_node_id FROM " + format + "_browse_node AS P WHERE"
+              + " N.repository_id = P.repository_id AND N.parent_parent_path = P.parent_path AND N.parent_name = P.name)");
         }
       }
       stmt.executeBatch();

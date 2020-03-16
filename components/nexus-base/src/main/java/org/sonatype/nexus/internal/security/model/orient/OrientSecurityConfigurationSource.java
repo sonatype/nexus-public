@@ -38,7 +38,6 @@ import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
 import org.sonatype.nexus.security.role.DuplicateRoleException;
 import org.sonatype.nexus.security.role.NoSuchRoleException;
 import org.sonatype.nexus.security.user.NoSuchRoleMappingException;
-import org.sonatype.nexus.security.user.UserManager;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 
 import com.google.common.collect.ImmutableList;
@@ -51,6 +50,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTx;
 import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetry;
+import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 
 /**
  * Default {@link SecurityConfigurationSource} implementation using OrientDB as store.
@@ -216,8 +216,13 @@ public class OrientSecurityConfigurationSource
 
       inTxRetry(databaseInstance).run(db -> {
         userEntityAdapter.addEntity(db, (OrientCUser) user);
-        addUserRoleMapping(mapping(user.getId(), roles));
+        addUserRoleMapping(mapping(user.getId(), roles, DEFAULT_SOURCE));
       });
+    }
+
+    @Override
+    public void addRoleMapping(final String userId, final Set<String> roles, final String source) {
+      inTxRetry(databaseInstance).run(db -> addUserRoleMapping(mapping(userId, roles, source)));
     }
 
     @Override
@@ -247,7 +252,7 @@ public class OrientSecurityConfigurationSource
         inTxRetry(databaseInstance).throwing(UserNotFoundException.class).run(db -> {
           updateUser(user);
 
-          CUserRoleMapping mapping = userRoleMappingEntityAdapter.read(db, user.getId(), UserManager.DEFAULT_SOURCE);
+          CUserRoleMapping mapping = userRoleMappingEntityAdapter.read(db, user.getId(), DEFAULT_SOURCE);
           if (mapping == null) {
             addUserRoleMapping(mapping(user.getId(), roles));
           }
@@ -275,7 +280,7 @@ public class OrientSecurityConfigurationSource
       try {
         return inTxRetry(databaseInstance).call(db -> {
           if (userEntityAdapter.delete(db, id)) {
-            removeUserRoleMapping(id, UserManager.DEFAULT_SOURCE);
+            removeUserRoleMapping(id, DEFAULT_SOURCE);
             return true;
           }
           return false;
@@ -448,9 +453,13 @@ public class OrientSecurityConfigurationSource
     //
 
     private OrientCUserRoleMapping mapping(final String userId, final Set<String> roles) {
+      return mapping(userId, roles, DEFAULT_SOURCE);
+    }
+
+    private OrientCUserRoleMapping mapping(final String userId, final Set<String> roles, String source) {
       OrientCUserRoleMapping mapping = new OrientCUserRoleMapping();
       mapping.setUserId(userId);
-      mapping.setSource(UserManager.DEFAULT_SOURCE);
+      mapping.setSource(source);
       mapping.setRoles(roles);
       return mapping;
     }

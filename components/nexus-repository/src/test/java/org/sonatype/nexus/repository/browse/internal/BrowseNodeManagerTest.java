@@ -56,7 +56,7 @@ public class BrowseNodeManagerTest
   private BrowseNodeManager manager;
 
   @Mock
-  private BrowseNodeCrudStore<EntityId, Asset, Component> browseNodeStore;
+  private BrowseNodeCrudStore<Asset, Component> browseNodeStore;
 
   @Mock
   private ComponentStore componentStore;
@@ -194,14 +194,14 @@ public class BrowseNodeManagerTest
     Asset asset = createAsset("asset", "assetId", "otherFormat", null);
     EntityId assetId = asset.getEntityMetadata().getId();
 
-    when(browseNodeStore.assetNodeExists(assetId)).thenReturn(true);
+    when(browseNodeStore.assetNodeExists(asset)).thenReturn(true);
 
     when(defaultBrowseNodeGenerator.computeAssetPaths(asset, null)).thenReturn(assetPath);
     when(defaultBrowseNodeGenerator.computeComponentPaths(asset, null)).thenReturn(emptyList());
 
     manager.maybeCreateFromUpdatedAsset(REPOSITORY_NAME, assetId, asset);
 
-    verify(browseNodeStore).assetNodeExists(assetId);
+    verify(browseNodeStore).assetNodeExists(asset);
     verifyNoMoreInteractions(browseNodeStore);
   }
 
@@ -211,14 +211,14 @@ public class BrowseNodeManagerTest
     Asset asset = createAsset("asset", "assetId", "otherFormat", null);
     EntityId assetId = asset.getEntityMetadata().getId();
 
-    when(browseNodeStore.assetNodeExists(assetId)).thenReturn(false);
+    when(browseNodeStore.assetNodeExists(asset)).thenReturn(false);
 
     when(defaultBrowseNodeGenerator.computeAssetPaths(asset, null)).thenReturn(assetPath);
     when(defaultBrowseNodeGenerator.computeComponentPaths(asset, null)).thenReturn(emptyList());
 
     manager.maybeCreateFromUpdatedAsset(REPOSITORY_NAME, assetId, asset);
 
-    verify(browseNodeStore).assetNodeExists(assetId);
+    verify(browseNodeStore).assetNodeExists(asset);
     verify(browseNodeStore)
         .createAssetNode(REPOSITORY_NAME, "otherFormat", toBrowsePaths(singletonList(asset.name())), asset);
     verifyNoMoreInteractions(browseNodeStore);

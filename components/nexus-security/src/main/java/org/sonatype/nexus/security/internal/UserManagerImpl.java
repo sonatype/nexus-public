@@ -127,7 +127,7 @@ public class UserManagerImpl
     return user;
   }
 
-  protected RoleIdentifier toRole(String roleId) {
+  protected RoleIdentifier toRole(final String roleId, final String source) {
     if (roleId == null) {
       return null;
     }
@@ -135,7 +135,7 @@ public class UserManagerImpl
     try {
       CRole role = configuration.readRole(roleId);
 
-      return new RoleIdentifier(DEFAULT_SOURCE, role.getId());
+      return new RoleIdentifier(source, role.getId());
     }
     catch (NoSuchRoleException e) {
       return null;
@@ -235,7 +235,7 @@ public class UserManagerImpl
       CUserRoleMapping roleMapping = configuration.readUserRoleMapping(userId, source);
       if (roleMapping != null) {
         for (String roleId : roleMapping.getRoles()) {
-          RoleIdentifier role = toRole(roleId);
+          RoleIdentifier role = toRole(roleId, DEFAULT_SOURCE);
           if (role != null) {
             roles.add(role);
           }

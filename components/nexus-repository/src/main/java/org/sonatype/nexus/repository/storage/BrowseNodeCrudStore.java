@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.browse.BrowsePaths;
  *
  * @since 3.7
  */
-public interface BrowseNodeCrudStore<ID, ASSET, COMPONENT>
+public interface BrowseNodeCrudStore<ASSET, COMPONENT>
 {
   /**
    * Creates a {@link BrowseNode} for the given asset.
@@ -33,17 +33,17 @@ public interface BrowseNodeCrudStore<ID, ASSET, COMPONENT>
    */
   void createComponentNode(String repositoryName, String format, List<BrowsePaths> paths, COMPONENT component);
 
-  boolean assetNodeExists(ID assetId);
+  boolean assetNodeExists(ASSET asset);
 
   /**
    * Deletes the asset's {@link BrowseNode}.
    */
-  void deleteAssetNode(ID assetId);
+  void deleteAssetNode(ASSET asset);
 
   /**
    * Deletes the component's {@link BrowseNode}.
    */
-  void deleteComponentNode(ID componentId);
+  void deleteComponentNode(COMPONENT component);
 
   /**
    * Deletes all {@link BrowseNode}s belonging to the given repository.

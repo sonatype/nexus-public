@@ -327,9 +327,8 @@ public class BrowseNodeDAOTest
   }
 
   private int createNode(final Integer parentId, final String path, final String name) {
-    DatastoreBrowseNode node = new DatastoreBrowseNode(((ContentRepositoryData) contentRepository).repositoryId,
-        "maven2", parentId, path, name);
-    run(dao -> dao.createNode(node));
+    DatastoreBrowseNode node = new DatastoreBrowseNode("maven2", parentId, path, name);
+    run(dao -> dao.createNode(contentRepository, node));
     return node.getId();
   }
 

@@ -85,7 +85,7 @@ import static org.sonatype.nexus.repository.browse.internal.orient.BrowseNodeEnt
 @Named
 public class OrientBrowseNodeStoreImpl
     extends StateGuardLifecycleSupport
-    implements BrowseNodeStore<EntityId>, BrowseNodeCrudStore<EntityId, Asset, Component>
+    implements BrowseNodeStore<EntityId>, BrowseNodeCrudStore<Asset, Component>
 {
   private final Provider<DatabaseInstance> databaseInstance;
 
@@ -162,19 +162,22 @@ public class OrientBrowseNodeStoreImpl
 
   @Override
   @Guarded(by = STARTED)
-  public boolean assetNodeExists(final EntityId assetId) {
+  public boolean assetNodeExists(final Asset asset) {
+    EntityId assetId = EntityHelper.id(asset);
     return inTx(databaseInstance).call(db -> entityAdapter.assetNodeExists(db, assetId));
   }
 
   @Override
   @Guarded(by = STARTED)
-  public void deleteComponentNode(final EntityId componentId) {
+  public void deleteComponentNode(final Component component) {
+    EntityId componentId = EntityHelper.id(component);
     inTxRetry(databaseInstance).run(db -> entityAdapter.deleteComponentNode(db, componentId));
   }
 
   @Override
   @Guarded(by = STARTED)
-  public void deleteAssetNode(final EntityId assetId) {
+  public void deleteAssetNode(final Asset asset) {
+    EntityId assetId = EntityHelper.id(asset);
     inTxRetry(databaseInstance).run(db -> entityAdapter.deleteAssetNode(db, assetId));
   }
 

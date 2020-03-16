@@ -22,8 +22,8 @@ import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.WithLocality;
 import org.sonatype.nexus.repository.config.ConfigurationDeletedEvent;
 import org.sonatype.nexus.repository.storage.AssetCreatedEvent;
-import org.sonatype.nexus.repository.storage.AssetUpdatedEvent;
 import org.sonatype.nexus.repository.storage.AssetDeletedEvent;
+import org.sonatype.nexus.repository.storage.AssetUpdatedEvent;
 import org.sonatype.nexus.repository.storage.ComponentDeletedEvent;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
@@ -64,12 +64,12 @@ public class BrowseNodeEventHandler
 
   @Subscribe
   public void on(final AssetDeletedEvent event) {
-    handle(event, e -> browseNodeManager.deleteAssetNode(e.getAssetId()));
+    handle(event, e -> browseNodeManager.deleteAssetNode(e.getAsset()));
   }
 
   @Subscribe
   public void on(final ComponentDeletedEvent event) {
-    handle(event, e -> browseNodeManager.deleteComponentNode(e.getComponentId()));
+    handle(event, e -> browseNodeManager.deleteComponentNode(e.getComponent()));
   }
 
   @Subscribe

@@ -119,4 +119,48 @@ public class ItemselectFormField
   public void setToTitle(final String title) {
     getAttributes().put("toTitle", title);
   }
+
+  public void setValueAsString(final boolean valueAsString) {
+    getAttributes().put("valueAsString", valueAsString);
+  }
+
+  public ItemselectFormField withStoreApi(final String storeApi) {
+    this.storeApi = storeApi;
+    return this;
+  }
+
+  public ItemselectFormField withIdMapping(final String idMapping) {
+    this.idMapping = idMapping;
+    return this;
+  }
+
+  public ItemselectFormField withNameMapping(final String nameMapping) {
+    this.nameMapping = nameMapping;
+    return this;
+  }
+
+  public ItemselectFormField withStoreFilter(final String property, final String value) {
+    storeFilters.put(property, value);
+    return this;
+  }
+
+  public ItemselectFormField withButtons(final String... buttons) {
+    getAttributes().put("buttons", buttons);
+    return this;
+  }
+
+  public ItemselectFormField withFromTitle(final String title) {
+    getAttributes().put("fromTitle", title);
+    return this;
+  }
+
+  public ItemselectFormField withToTitle(final String title) {
+    getAttributes().put("toTitle", title);
+    return this;
+  }
+
+  public ItemselectFormField withValueAsString(final boolean valueAsString) {
+    getAttributes().put("valueAsString", valueAsString);
+    return this;
+  }
 }

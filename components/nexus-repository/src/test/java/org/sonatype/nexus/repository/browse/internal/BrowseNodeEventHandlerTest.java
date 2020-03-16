@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.browse.internal;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.config.ConfigurationDeletedEvent;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetCreatedEvent;
@@ -70,15 +69,15 @@ public class BrowseNodeEventHandlerTest
 
   @Test
   public void onAssetDeleted() {
-    EntityId assetId = mock(EntityId.class);
+    Asset asset = mock(Asset.class);
 
     AssetDeletedEvent event = mock(AssetDeletedEvent.class);
-    when(event.getAssetId()).thenReturn(assetId);
+    when(event.getAsset()).thenReturn(asset);
     when(event.isLocal()).thenReturn(true);
 
     handler.on(event);
 
-    verify(browseNodeManager).deleteAssetNode(assetId);
+    verify(browseNodeManager).deleteAssetNode(asset);
   }
 
   @Test

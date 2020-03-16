@@ -240,7 +240,7 @@ public class MetadataRebuilderTest
     new MetadataRebuilder(10, 20).rebuild(repository, true, false, null, null, null);
 
     // ensure second metadata read occurs
-    verify(content, times(2)).openInputStream();
+    verify(content, times(4)).openInputStream();
 
     // verify metadata errors are logged
     ArgumentCaptor<LoggingEvent> logCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
@@ -268,24 +268,10 @@ public class MetadataRebuilderTest
     Iterable iterable = mock(Iterable.class);
     Iterator iterator = mock(Iterator.class);
 
+    final int[] iteratorCounter = {0};
     when(iterable.iterator()).thenReturn(iterator);
-    when(iterator.hasNext()).thenAnswer(new Answer<Boolean>() {
-      int counter = 0;
-
-      @Override
-      public Boolean answer(final InvocationOnMock invocation) {
-        return counter++ < numItems;
-      }
-    });
-
-    when(iterator.next()).thenAnswer(new Answer() {
-      int counter = 0;
-
-      @Override
-      public Object answer(final InvocationOnMock invocation) throws Throwable {
-        return returnItems[counter++];
-      }
-    });
+    when(iterator.hasNext()).thenAnswer((Answer<Boolean>) invocation -> iteratorCounter[0] < numItems);
+    when(iterator.next()).thenAnswer((Answer<?>) invocation -> returnItems[iteratorCounter[0]++]);
 
     return iterable;
   }

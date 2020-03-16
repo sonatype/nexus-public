@@ -223,12 +223,16 @@ public class SecurityConfigurationImpl
   public void addUser(final CUser user, final Set<String> roles) {
     checkNotNull(user);
     checkNotNull(roles);
-
     addUser(user);
+    addRoleMapping(user.getId(), roles, DEFAULT_SOURCE);
+  }
 
+  @Transactional
+  @Override
+  public void addRoleMapping(final String userId, final Set<String> roles, String source){
     CUserRoleMappingData mapping = new CUserRoleMappingData();
-    mapping.setUserId(user.getId());
-    mapping.setSource(DEFAULT_SOURCE);
+    mapping.setUserId(userId);
+    mapping.setSource(source);
     mapping.setRoles(roles);
     userRoleMappingDAO().create(mapping);
   }

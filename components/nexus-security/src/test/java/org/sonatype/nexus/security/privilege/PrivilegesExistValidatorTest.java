@@ -12,7 +12,10 @@
  */
 package org.sonatype.nexus.security.privilege;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.validation.ConstraintValidatorContext;
 
@@ -20,6 +23,7 @@ import org.sonatype.nexus.security.SecuritySystem;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -32,9 +36,11 @@ public class PrivilegesExistValidatorTest
 {
   private PrivilegesExistValidator underTest;
 
+  private SecuritySystem securitySystem;
+
   @Before
   public void setup() {
-    SecuritySystem securitySystem = mock(SecuritySystem.class);
+    securitySystem = mock(SecuritySystem.class);
     when(securitySystem.listPrivileges()).thenReturn(Collections.emptySet());
     underTest = new PrivilegesExistValidator(securitySystem);
   }
@@ -48,6 +54,21 @@ public class PrivilegesExistValidatorTest
         context), is(false));
     //note the missing $
     verify(context).buildConstraintViolationWithTemplate(
-        "Missing privileges: [dx27e{\"gggggggggggggggggggggggggggggggggggggggggggz\".toString().replace(\"g\", \"q\")}yv5rm]");
+        "Invalid privilege id: dx27e{\"gggggggggggggggggggggggggggggggggggggggggggz\".toString().replace(\"g\", \"q\")}yv5rm. Only letters, digits, underscores(_), hyphens(-), dots(.), and asterisks(*) are allowed and may not start with underscore or dot.");
+  }
+
+  @Test
+  public void isValid_allows_wildcards() {
+    Set<Privilege> validPrivileges = new HashSet<>();
+    Privilege privilege = mock(Privilege.class);
+    when(privilege.getId()).thenReturn("nx-repository-admin-maven2-maven-public-*");
+    validPrivileges.add(privilege);
+    when(securitySystem.listPrivileges()).thenReturn(validPrivileges);
+    ConstraintValidatorContext context = mock(ConstraintValidatorContext.class);
+    when(context.buildConstraintViolationWithTemplate(any()))
+        .thenReturn(mock(ConstraintValidatorContext.ConstraintViolationBuilder.class));
+    assertThat(underTest.isValid(Collections
+            .singleton("nx-repository-admin-maven2-maven-public-*"),
+        context), is(true));
   }
 }

@@ -10,25 +10,28 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.storage;
+package org.sonatype.nexus.repository.pypi.tasks;
 
-import java.util.function.Function;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-import org.sonatype.nexus.repository.Facet;
+import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 /**
- * Optional BrowseNode facet; used to customize legacy browse-node behaviour.
+ * Task descriptor for {@link PyPiDeleteLegacyProxyAssetsTask}.
  *
  * @since 3.next
  */
-@Facet.Exposed
-public interface BrowseNodeFacet
-    extends Facet
+@Named
+@Singleton
+public class PyPiDeleteLegacyProxyAssetsTaskDescriptor
+    extends TaskDescriptorSupport
 {
-  /**
-   * Returns a function to apply to a browse node to determine distinctness
-   */
-  default Function<BrowseNode<?>, String> browseNodeIdentity() {
-    return BrowseNode::getName;
+  public static final String TASK_NAME = "PyPi - Delete legacy proxy assets";
+
+  public static final String TYPE_ID = "repository.pypi.delete-legacy-proxy-assets";
+
+  public PyPiDeleteLegacyProxyAssetsTaskDescriptor() {
+    super(TYPE_ID, PyPiDeleteLegacyProxyAssetsTask.class, TASK_NAME, VISIBLE, EXPOSED);
   }
 }

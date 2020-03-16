@@ -29,6 +29,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
+import static java.util.Arrays.asList;
+import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.toList;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -93,6 +97,16 @@ public abstract class RepositoryTaskSupport
     checkArgument(!Strings.isNullOrEmpty(repositoryName));
     if (ALL_REPOSITORIES.equals(repositoryName)) {
       return Iterables.filter(repositoryManager.browse(), this::appliesTo);
+    }
+    else if (repositoryName.contains(",")) {
+      String[] repositoryNames = repositoryName.split(",");
+
+      if (asList(repositoryNames).contains(ALL_REPOSITORIES)) {
+        return Iterables.filter(repositoryManager.browse(), this::appliesTo);
+      }
+      else {
+        return stream(repositoryNames).map(repositoryManager::get).filter(this::appliesTo).collect(toList());
+      }
     }
     else {
       Repository repository = repositoryManager.get(repositoryName);

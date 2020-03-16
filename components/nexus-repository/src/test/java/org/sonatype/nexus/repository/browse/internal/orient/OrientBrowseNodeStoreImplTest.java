@@ -21,7 +21,9 @@ import java.util.stream.StreamSupport;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.app.VersionComparator;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
+import org.sonatype.nexus.common.entity.Entity;
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
@@ -164,6 +166,9 @@ public class OrientBrowseNodeStoreImplTest
     when(databaseInstance.acquire()).thenReturn(db);
     when(databaseInstance.connect()).thenReturn(db);
 
+    mockEntity(asset, assetId);
+    mockEntity(component, componentId);
+
     when(format.getValue()).thenReturn(FORMAT_NAME);
     when(repository.getName()).thenReturn(REPOSITORY_NAME);
     when(repository.getFormat()).thenReturn(format);
@@ -228,8 +233,8 @@ public class OrientBrowseNodeStoreImplTest
 
     underTest.createComponentNode(REPOSITORY_NAME, "aformat", componentPath, component);
     underTest.createAssetNode(REPOSITORY_NAME, "aformat", assetPath, asset);
-    underTest.deleteAssetNode(assetId);
-    underTest.deleteComponentNode(componentId);
+    underTest.deleteAssetNode(asset);
+    underTest.deleteComponentNode(component);
 
     verify(browseNodeEntityAdapter).createComponentNode(db, REPOSITORY_NAME, "aformat", componentPath, component);
     verify(browseNodeEntityAdapter).createAssetNode(db, REPOSITORY_NAME, "aformat", assetPath, asset);
@@ -499,7 +504,7 @@ public class OrientBrowseNodeStoreImplTest
    *
    * Implementation should be the same as {@link GroupFacet#browseNodeIdentity()}
    */
-  private Function<BrowseNode, String> browseNodeIdentity() {
+  private Function<BrowseNode<?>, String> browseNodeIdentity() {
     return BrowseNode::getName;
   }
 
@@ -527,6 +532,12 @@ public class OrientBrowseNodeStoreImplTest
       node.setComponentId(new DetachedEntityId(name + "c"));
     }
     return node;
+  }
+
+  private static void mockEntity(final Entity entity, final EntityId entityId) {
+    EntityMetadata metadata = mock(EntityMetadata.class);
+    when(metadata.getId()).thenReturn(entityId);
+    when(entity.getEntityMetadata()).thenReturn(metadata);
   }
 
   private final class TestComparator implements BrowseNodeComparator {

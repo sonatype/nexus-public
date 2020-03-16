@@ -64,6 +64,7 @@ import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.apache.maven.model.Model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.nonNull;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_ARTIFACT_ID;
@@ -254,7 +255,7 @@ public class MavenFacetImpl
     );
 
     Asset foundAsset = findAsset(tx, tx.findBucket(getRepository()), path);
-    Blob foundBlob = tx.requireBlob(foundAsset.requireBlobRef());
+    Blob foundBlob = nonNull(foundAsset) ? tx.requireBlob(foundAsset.requireBlobRef()) : null;
 
     return new AssetAndBlob(foundAsset, foundBlob);
   }

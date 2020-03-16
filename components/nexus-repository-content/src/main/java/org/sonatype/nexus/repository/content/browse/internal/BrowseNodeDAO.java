@@ -37,11 +37,11 @@ public interface BrowseNodeDAO
   boolean assetNodeExists(@Param("asset") Asset asset);
 
   /**
-   * Creates a node or returns the existing node
+   * Creates a node updating the passed node with the generated ID. (Upsert may be used when supported.)
    *
    * NOTE: Asset and Component ID are not set.
    */
-  void createNode(DatastoreBrowseNode node);
+  void createNode(@Param("repository") ContentRepository repository, @Param("node") DatastoreBrowseNode node);
 
   /**
    * Attempt to remove a browse node by its identifier.

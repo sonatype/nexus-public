@@ -129,7 +129,7 @@ public abstract class NexusITSupport
 
         editConfigurationFileExtend(SYSTEM_PROPERTIES_FILE, "nexus.loadAsOSS", "true"),
         editConfigurationFileExtend(SYSTEM_PROPERTIES_FILE, "nexus.security.randompassword", "false"),
-
+        editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.scripts.allowCreation", "true"),
         // install common test-support features
         nexusFeature("org.sonatype.nexus.testsuite", "nexus-repository-testsupport"),
         wrappedBundle(maven("com.jayway.awaitility", "awaitility").versionAsInProject())

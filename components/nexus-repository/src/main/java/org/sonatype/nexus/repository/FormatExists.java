@@ -10,25 +10,33 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.storage;
+package org.sonatype.nexus.repository;
 
-import java.util.function.Function;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-import org.sonatype.nexus.repository.Facet;
+import javax.validation.Constraint;
+import javax.validation.Payload;
+
+import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Optional BrowseNode facet; used to customize legacy browse-node behaviour.
+ * Validate format exists in NXRM or "*".
  *
  * @since 3.next
  */
-@Facet.Exposed
-public interface BrowseNodeFacet
-    extends Facet
+@Target({FIELD, METHOD, PARAMETER, ANNOTATION_TYPE})
+@Retention(RUNTIME)
+@Constraint(validatedBy = FormatExistsValidator.class)
+public @interface FormatExists
 {
-  /**
-   * Returns a function to apply to a browse node to determine distinctness
-   */
-  default Function<BrowseNode<?>, String> browseNodeIdentity() {
-    return BrowseNode::getName;
-  }
+  String message() default "Format not recognized";
+
+  Class<?>[] groups() default {};
+
+  Class<? extends Payload>[] payload() default {};
 }
