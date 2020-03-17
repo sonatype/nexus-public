@@ -409,7 +409,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     }
     else if ('folder' === node.get('type')) {
       var folderInfoPanel = me.getComponentFolderInfo();
-      folderInfoPanel.setTitle(Ext.util.Format.htmlEncode(decodeURI(node.getId())));
+      folderInfoPanel.setTitle(me.buildPathString(node));
       folderInfoPanel.setIconCls(me.mixins.componentUtils.getIconForAsset(node).get('cls'));
       folderInfoPanel.show();
 
@@ -510,7 +510,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     var path = '';
     //node.parentNode check will skip the trees root node (labeld Root and hidden)
     while (node != null && node.parentNode != null) {
-      path = node.get('text') + '/' + path;
+      path = path ? (node.get('text') + '/' + path) : node.get('text');
       node = node.parentNode;
     }
 
@@ -722,7 +722,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
           NX.I18n.get('FolderInfo_Delete_Title'),
           NX.I18n.format('FolderInfo_Delete_Text', Ext.htmlEncode(model.folderName)),
           function() {
-            NX.direct.coreui_Component.deleteFolder(model.path, model.repositoryName,
+            NX.direct.coreui_Component.deleteFolder(decodeURIComponent(model.path), model.repositoryName,
                 function(response) {
                   if (Ext.isObject(response) && response.success) {
                     NX.Messages.success(NX.I18n.format('FolderInfo_Delete_Success'));
