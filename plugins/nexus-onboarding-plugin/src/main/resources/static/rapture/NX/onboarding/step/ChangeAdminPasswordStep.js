@@ -54,7 +54,7 @@ Ext.define('NX.onboarding.step.ChangeAdminPasswordStep', {
       success: function(){
         me.moveNext();
       },
-      failure: function() {
+      failure: function (response) {
         NX.Messages.error(response.statusText);
       }
     });
