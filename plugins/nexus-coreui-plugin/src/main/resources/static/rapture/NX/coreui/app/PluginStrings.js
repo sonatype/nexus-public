@@ -1347,7 +1347,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
         '</div> '
     ,
     Task_TaskScheduleManual_HelpText: 'Without recurrence, this service can only be run manually.',
-    Task_Script_Creation_Disabled: 'Script Task creation is disabled by default for security reasons.',
+    Task_Script_Creation_Disabled: '<i>Admin - Execute script</i> task creation is disabled. ' +
+         '<a href="https://links.sonatype.com/products/nxrm3/disabled-groovy-scripting">More information</a>',
 
     // Authentication section
     System_AuthenticationSettings_Username_FieldLabel: 'Username',
