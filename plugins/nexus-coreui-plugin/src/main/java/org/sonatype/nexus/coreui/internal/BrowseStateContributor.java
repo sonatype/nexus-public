@@ -17,6 +17,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -28,6 +30,8 @@ import org.sonatype.nexus.repository.browse.internal.RebuildBrowseNodesTaskDescr
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.TaskState;
+
+import com.google.common.base.Suppliers;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.RepositoryTaskSupport.ALL_REPOSITORIES;
@@ -42,19 +46,30 @@ public class BrowseStateContributor
 
   private final TaskScheduler taskScheduler;
 
+  private final Supplier<Set<String>> rebuildingRepositoriesCache;
+
+  private static final long DEFAULT_REBUILDING_REPOSITORIES_CACHE_TTL = 60;
+
   @Inject
-  public BrowseStateContributor(final BrowseNodeConfiguration browseNodeConfiguration,
-                                final TaskScheduler taskScheduler)
+  public BrowseStateContributor(
+      final BrowseNodeConfiguration browseNodeConfiguration,
+      final TaskScheduler taskScheduler,
+      @Named("${nexus.coreui.state.rebuildingRepositoryTasksCacheTTL:-60}") long rebuildingRepositoriesCacheTTL)
   {
     this.browseNodeConfiguration = checkNotNull(browseNodeConfiguration);
     this.taskScheduler = checkNotNull(taskScheduler);
+    if (rebuildingRepositoriesCacheTTL < 0) {
+      rebuildingRepositoriesCacheTTL = DEFAULT_REBUILDING_REPOSITORIES_CACHE_TTL;
+    }
+    rebuildingRepositoriesCache = Suppliers
+        .memoizeWithExpiration(this::getRepositoryNamesForRunningTasks, Math.abs(rebuildingRepositoriesCacheTTL),
+            TimeUnit.SECONDS);
   }
 
   @Override
   public Map<String, Object> getState() {
     Map<String, Object> state = new HashMap<>();
-
-    state.put("rebuildingRepositories", getRepositoryNamesForRunningTasks());
+    state.put("rebuildingRepositories", rebuildingRepositoriesCache.get());
     state.put("browseTreeMaxNodes", browseNodeConfiguration.getMaxNodes());
 
     return state;
