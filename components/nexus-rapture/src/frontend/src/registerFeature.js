@@ -44,28 +44,35 @@ export default function registerFeature(feature) {
     },
     iconCls: feature.iconCls,
     visible: function () {
-      var isActive = true;
+      var isVisible = true;
+      const visibility = feature.visibility;
 
-      if (!feature.visibility) {
+      if (!visibility) {
         console.warn('feature is active due to no visibility configuration defined', feature);
-        return isActive;
+        return isVisible;
       }
 
-      if (feature.visibility.bundle) {
-        isActive = isActive && NX.app.Application.bundleActive(feature.visibility.bundle);
+      if (visibility.bundle) {
+        isVisible = NX.app.Application.bundleActive(visibility.bundle)
+        console.debug("bundleActive="+isVisible, visibility.bundle);
       }
 
-      if (isActive && feature.visibility.featureFlags) {
-        isActive = Ext.Array.every(feature.visibility.featureFlags, function(featureFlag) {
-          return NX.State.getValue(featureFlag.key, featureFlag.defaultValue);
-        });
+      if (isVisible && visibility.featureFlags) {
+        isVisible = visibility.featureFlags.every(featureFlag => NX.State.getValue(featureFlag.key, featureFlag.defaultValue));
+        console.debug("featureFlagsActive="+isVisible, visibility.featureFlags);
       }
 
-      if (isActive && feature.visibility.permissions) {
-        isActive = feature.visibility.permissions.every((permission) => NX.Permissions.check(permission));
+      if (isVisible && visibility.permissions) {
+        isVisible = visibility.permissions.every((permission) => NX.Permissions.check(permission));
+        console.debug("permissionCheck="+isVisible, visibility.permissions);
       }
 
-      return isActive;
+      if (isVisible && visibility.editions) {
+        isVisible = visibility.editions.every((edition) =>  NX.State.getEdition() === edition);
+        console.debug("editionCheck="+isVisible, visibility.editions);
+      }
+
+      return isVisible;
     }
   }, reactViewController);
 }
