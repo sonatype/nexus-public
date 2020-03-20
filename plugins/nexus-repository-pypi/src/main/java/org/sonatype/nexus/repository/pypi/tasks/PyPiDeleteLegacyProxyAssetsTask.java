@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.pypi.tasks;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -23,6 +24,7 @@ import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
+import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
@@ -36,7 +38,9 @@ import static com.google.common.collect.Streams.stream;
 import static org.sonatype.nexus.repository.pypi.upgrade.PyPiUpgrade_1_2.MARKER_FILE;
 
 /**
- * NEXUS-22770: Delete PyPi proxy assets whose names start with "packages/".
+ * NEXUS-22770: Delete PyPi proxy assets which don't match the standardized path
+ * (<code>/packages/{name}/{version}/{name}-{version}.{ext}</code>) as well as package metadata which has been
+ * re-written.
  *
  * @since 3.next
  */
@@ -48,6 +52,9 @@ public class PyPiDeleteLegacyProxyAssetsTask
   private final Path markerFile;
 
   private final RepositoryManager repositoryManager;
+
+  private final Pattern packagePattern =
+      Pattern.compile("packages\\/(?<name>[^/]+)\\/(?<version>[^/]+)\\/\\k<name>-\\k<version>\\.[^/]+");
 
   @Inject
   public PyPiDeleteLegacyProxyAssetsTask(
@@ -82,7 +89,7 @@ public class PyPiDeleteLegacyProxyAssetsTask
       Bucket bucket = tx.findBucket(repository);
       stream(tx.browseAssets(bucket))
           .peek(a -> log.debug("Evaluating asset: {}", a.name()))
-          .filter(a -> a.name().startsWith("packages/"))
+          .filter(this::isInvalidPath)
           .forEach(a -> {
             CancelableHelper.checkCancellation();
             log.info("Deleting asset: {}", a.name());
@@ -95,5 +102,12 @@ public class PyPiDeleteLegacyProxyAssetsTask
   @Override
   public String getMessage() {
     return "Delete legacy PyPi proxy package assets whose names start with 'packages/'";
+  }
+
+  private boolean isInvalidPath(final Asset asset) {
+    if ("simple/".equals(asset.name())) {
+      return false;
+    }
+    return !packagePattern.matcher(asset.name()).matches();
   }
 }

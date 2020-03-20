@@ -13,6 +13,8 @@
 package org.sonatype.nexus.repository.pypi.tasks;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
@@ -33,7 +35,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -64,7 +66,8 @@ public class PyPiDeleteLegacyProxyAssetsTaskTest
     underTest = new PyPiDeleteLegacyProxyAssetsTask(directories, repositoryManager);
 
     pyPiProxy =
-        mockRepository(new PyPiFormat(), new ProxyType(), mockAsset("simple/foo"), mockAsset("packages/foo/bar"));
+        mockRepository(new PyPiFormat(), new ProxyType(), mockAsset("simple/"), mockAsset("simple/foo"),
+            mockAsset("packages/00/01/02/foo-123.whl"), mockAsset("packages/foo/123/foo-123.whl"));
     pyPiHosted = mockRepository(new PyPiFormat(), new HostedType());
     otherProxy = mockRepository(mock(Format.class), new ProxyType());
 
@@ -84,9 +87,10 @@ public class PyPiDeleteLegacyProxyAssetsTaskTest
 
     ArgumentCaptor<Asset> assetCaptor = ArgumentCaptor.forClass(Asset.class);
 
-    verify(tx).deleteAsset(assetCaptor.capture());
+    verify(tx, times(2)).deleteAsset(assetCaptor.capture());
 
-    assertThat(assetCaptor.getValue().name(), is("packages/foo/bar"));
+    List<String> assetNames = assetCaptor.getAllValues().stream().map(Asset::name).collect(Collectors.toList());
+    assertThat(assetNames, containsInAnyOrder("simple/foo", "packages/00/01/02/foo-123.whl"));
 
     verify(tx).commit();
   }

@@ -47,29 +47,17 @@ class PyPiIndexUtilsTest
 
   @Unroll
   def 'Correctly rewrite links on an index page, skipping over unprocessable ones'() {
-    given:
-      def remoteUrl = new URI(remoteUri)
     when: 'Links are rewritten so that the packages directory is a relative link'
-      def links = PyPiIndexUtils.makePackageLinksRelative(remoteUrl, name, [new PyPiLink('sample-1.2.0.tar.bz2', original)])
+      def links = PyPiIndexUtils.makePackageLinksNexusPaths('sample', [new PyPiLink('sample-1.2.0.tar.bz2', original, '3.7')])
     then: 'the resulting links will be correct (relative to the index)'
-      links == [new PyPiLink('sample-1.2.0.tar.bz2', expected)]
+      links == [new PyPiLink('sample-1.2.0.tar.bz2', expected, '3.7')]
 
     where:
-     name              | remoteUri         | original                                                                       | expected
-      // handle relative path with back references
-      'simple/sample/' | 'http://pypi.org' | '../../packages/sample-1.2.0.tar.bz2#md5=00e5'                                 | '../../packages/sample-1.2.0.tar.bz2#md5=00e5'
-      // handle relative path
-      'simple/sample/' | 'http://pypi.org' | 'packages/sample-1.2.1-py2.py3-none-any.whl#md5=5caf'                          | '../../simple/sample/packages/sample-1.2.1-py2.py3-none-any.whl#md5=5caf'
-      // handle absolute path
-      'simple/sample/' | 'http://pypi.org' | '/packages/sample-1.2.1-py2.py3-none-any.whl#md5=5caf'                         | '../../packages/sample-1.2.1-py2.py3-none-any.whl#md5=5caf'
-      // allows longer path
-      'simple/sample/' | 'http://pypi.org' | 'http://example.com/pkgs/dir1/dir2/sample-1.2.1-py2.py3-none-any.whl#md5=5caf' | '../../example.com/http/pkgs/dir1/dir2/sample-1.2.1-py2.py3-none-any.whl#md5=5caf'
-      // handles https
-      'simple/sample/' | 'http://pypi.org' | 'https://example.com/test'                                                     | '../../example.com/https/test'
-      // Includes query and fragment
-      'simple/sample/' | 'http://pypi.org' | 'http://example.com/test.whl?foo=bar#md5=af99'                                 | '../../example.com/http/test.whl?foo=bar#md5=af99'
-      // double proxying with port
-      'simple/sample/' | 'http://localhost:8081/repository/pypi-proxy/' | '../../pypi.org/https/test.whl?foo=bar#md5=af99'  | '../../localhost/8081/http/pypi.org/https/test.whl?foo=bar#md5=af99'
+     original                                       | expected
+      // link without a hash
+     '../../packages/sample-1.2.0.tar.bz'            | '../../packages/sample/1.2.0/sample-1.2.0.tar.bz2'
+      // link with a hash
+     '../../packages/sample-1.2.0.tar.bz2#md5=00e5' | '../../packages/sample/1.2.0/sample-1.2.0.tar.bz2#md5=00e5'
   }
 
   def 'Correctly extract links from a root index page'() {
