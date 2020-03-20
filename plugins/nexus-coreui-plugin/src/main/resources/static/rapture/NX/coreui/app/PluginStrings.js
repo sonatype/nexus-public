@@ -999,12 +999,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
         '<div class="panel nx-subsection"><h3 class="title alert"><span class="icon"></span>What went wrong?</h3>' +
         '<p>The most likely cause of missing system status checks is an incorrectly configured proxy server.</p></div>',
 
-    // Admin -> Support -> Support Request
-    SupportRequest_Text: 'Support Request',
-    SupportRequest_Description: 'Submit a support request to Sonatype',
-    Support_SupportRequest_HelpText: '<p>Please include a complete description of your problem and steps to allow us to reproduce the problem (if available).</p><p>Attaching a <a href="#admin/support/supportzip">support ZIP</a> to your request will help our engineers give you a faster response.</p>',
-    Support_SupportRequest_Submit_Button: 'Submit request',
-
     // Admin -> Support -> Support ZIP
     SupportZip_Title: 'Support ZIP',
     SupportZip_Description: 'Creates a ZIP file containing useful support information about your server',

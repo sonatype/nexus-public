@@ -13,6 +13,7 @@
 import AnonymousSettings from './components/pages/admin/AnonymousSettings/AnonymousSettings';
 import SystemInformation from './components/pages/admin/SystemInformation/SystemInformation';
 import UIStrings from './constants/UIStrings';
+import SupportRequest from "./components/pages/admin/SupportRequest/SupportRequest";
 
 window.plugins.push({
   id: 'nexus-coreui-plugin',
@@ -45,6 +46,19 @@ window.plugins.push({
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         permissions: ['nexus:atlas:read']
+      }
+    },
+    {
+      mode: 'admin',
+      path: '/Support/SupportRequest',
+      text: UIStrings.SUPPORT_REQUEST.MENU.text,
+      description: UIStrings.SUPPORT_REQUEST.MENU.description,
+      view: SupportRequest,
+      iconCls: 'x-fa fa-user-circle-o',
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        permissions: ['nexus:atlas:create'],
+        editions: ['PRO']
       }
     }
   ]

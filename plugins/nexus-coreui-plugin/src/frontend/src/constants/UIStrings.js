@@ -11,6 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import { UIStrings } from 'nexus-ui-plugin';
+import React from 'react';
 
 export default {
   ...UIStrings,
@@ -38,5 +39,17 @@ export default {
     ACTIONS: {
       download: 'Download as JSON'
     }
+  },
+
+  SUPPORT_REQUEST: {
+    MENU: {
+      text: 'Support Request',
+      description: 'Submit a support request to Sonatype'
+    },
+    ACTIONS: {
+      submitRequest: 'Submit Request'
+    },
+    DESCRIPTION: `Please include a complete description of your problem and steps to allow us to reproduce the problem (if available).`,
+    ATTACH_SUPPORT_ZIP: `Attaching a support ZIP to your request will help our engineers give you a faster response.`
   }
 };
