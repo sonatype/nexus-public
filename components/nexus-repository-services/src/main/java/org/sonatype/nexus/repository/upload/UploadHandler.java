@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.upload;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -87,5 +88,27 @@ public interface UploadHandler
    */
   default ValidatingComponentUpload getValidatingComponentUpload(final ComponentUpload componentUpload) {
     return new ValidatingComponentUpload(getDefinition(), componentUpload);
+  }
+
+  /**
+   * Import a file and its attributes into a repository.
+   *
+   * @since 3.next
+   *
+   * @param repository the {@link Repository} to import the file into
+   * @param content the {@link File} to add to the repository
+   * @param attributes the attributes {@link File} to associate with the added asset
+   * @param path the path of the content relative to the base import directory
+   * @throws IOException
+   */
+  default void handle(
+      final Repository repository,
+      final File content,
+      final File attributes,
+      final String path)
+      throws IOException
+  {
+    throw new UnsupportedOperationException(
+        "Import not supported for " + repository.getFormat().getValue() + " format.");
   }
 }

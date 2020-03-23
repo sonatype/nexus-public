@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.upload.internal;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -117,6 +118,15 @@ public class UploadManagerImpl
 
     UploadHandler handler = uploadHandlers.get(format);
     return handler != null ? handler.getDefinition() : null;
+  }
+
+  @Override
+  public void handle(
+      final Repository repository, final File content, final File attributes, final String path) throws IOException
+  {
+    UploadHandler uploadHandler = getUploadHandler(repository);
+
+    uploadHandler.handle(repository, content, attributes, path);
   }
 
   private ComponentUpload create(final Repository repository, final HttpServletRequest request)
