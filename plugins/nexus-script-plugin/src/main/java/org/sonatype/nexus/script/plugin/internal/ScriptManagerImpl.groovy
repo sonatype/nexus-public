@@ -108,7 +108,7 @@ class ScriptManagerImpl
 
   void validateCreationIsAllowed() {
     if(!allowCreation){
-      throw new ScriptingDisabledException("Creating/Updating of scripts has been disabled")
+      throw new ScriptingDisabledException('Creating and updating scripts is disabled')
     }
   }
 }

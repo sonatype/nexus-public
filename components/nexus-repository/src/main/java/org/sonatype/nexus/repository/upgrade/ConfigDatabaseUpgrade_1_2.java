@@ -231,7 +231,7 @@ public class ConfigDatabaseUpgrade_1_2 // NOSONAR
     String name = document.field(P_NAME, String.class);
 
     if (modifier == 0) {
-      log.debug("BlobStore {} name will not be updated");
+      log.debug("BlobStore {} name will not be updated", name);
       return null;
     }
 

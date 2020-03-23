@@ -147,18 +147,7 @@ public class PyPiRecipeSupportTest
     exception.expect(RuntimeException.class);
 
     when(request.getAction()).thenReturn(HttpMethods.GET);
-    when(request.getPath()).thenReturn("/packages/foo/bar.tar.gz");
-
-    underTest.dispatch(repository, request, null);
-  }
-
-  @Test
-  public void routingForPackagesVariant() throws Exception {
-    exception.expectMessage("packages");
-    exception.expect(RuntimeException.class);
-
-    when(request.getAction()).thenReturn(HttpMethods.GET);
-    when(request.getPath()).thenReturn("/foo/bar.tar.gz");
+    when(request.getPath()).thenReturn("/packages/bar/1/bar-1.tar.gz");
 
     underTest.dispatch(repository, request, null);
   }

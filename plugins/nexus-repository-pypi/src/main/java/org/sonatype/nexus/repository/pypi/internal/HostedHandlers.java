@@ -59,7 +59,6 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiConstants.FIELD_CO
 import static org.sonatype.nexus.repository.pypi.internal.PyPiConstants.GPG_SIGNATURE;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiDataUtils.HASH_ALGORITHMS;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.name;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.packagesPath;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.path;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiSearchUtils.buildSearchResponse;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiSearchUtils.parseSearchRequest;
@@ -109,7 +108,7 @@ public final class HostedHandlers
    */
   final Handler getPackage = context -> {
     State state = context.getAttributes().require(TokenMatcher.State.class);
-    Content content = context.getRepository().facet(PyPiHostedFacet.class).getPackage(packagesPath(path(state)));
+    Content content = context.getRepository().facet(PyPiHostedFacet.class).getPackage(path(state));
     if (content != null) {
       return HttpResponses.ok(content);
     }

@@ -1132,8 +1132,12 @@ def mvnw(String cmd) {
   stopwatch.stop()
 
   if (System.getenv().containsKey('NXRM_STATS')) {
+    def nxrmAndArgs = ['nxrm.groovy']
+    nxrmAndArgs.addAll(args as List<String>)
+    def (nxrmCmd, elapsed, exitValue, mvnwCmd) = [nxrmAndArgs.join(' '), stopwatch.elapsed().seconds,
+                                                  process.exitValue(), command.tail().join(' ')]
     Paths.get(System.getProperty('user.home'), '.nxrm_build_times') <<
-        "${timestamp()},${stopwatch.elapsed().seconds},${command.tail().join(' ')}\n"
+        "${timestamp()}\t${elapsed}\t${exitValue}\t${nxrmCmd}\t${mvnwCmd}\n"
   }
 
   info("Done")

@@ -57,7 +57,8 @@ Ext.define('NX.onboarding.controller.Onboarding', {
       },
       controller: {
         '#State': {
-          changed: me.stateChanged
+          changed: me.stateChanged,
+          userAuthenticated: me.stateChanged
         }
       },
       store: {
@@ -82,7 +83,9 @@ Ext.define('NX.onboarding.controller.Onboarding', {
   },
 
   stateChanged: function() {
-    if (NX.State.getValue('onboarding.required') && NX.State.getUser()) {
+    var isOnboardingRequired = NX.State.getValue('onboarding.required'),
+        user = NX.State.getUser();
+    if (isOnboardingRequired && user && user['administrator']) {
       this.loadItems();
     }
   },
@@ -107,12 +110,17 @@ Ext.define('NX.onboarding.controller.Onboarding', {
     }
   },
 
-  itemsLoaded: function (store, records) {
+  itemsLoaded: function (store, records, successful) {
     var me = this;
     me.registerStep('NX.onboarding.step.OnboardingStartStep');
-    records.forEach(function(record) {
-      me.registerStep('NX.onboarding.step.' + record.get('type') + 'Step');
-    });
+    if (successful && Array.isArray(records)) {
+      records.forEach(function(record) {
+        me.registerStep('NX.onboarding.step.' + record.get('type') + 'Step');
+      });
+    }
+    else {
+      NX.Messages.error(NX.I18n.get('Onboarding_LoadStepsError'));
+    }
     me.registerStep('NX.onboarding.step.OnboardingCompleteStep');
 
     Ext.widget('nx-onboarding-modal');

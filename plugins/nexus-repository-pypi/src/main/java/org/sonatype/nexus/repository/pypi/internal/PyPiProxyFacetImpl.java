@@ -15,14 +15,14 @@ package org.sonatype.nexus.repository.pypi.internal;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.regex.Matcher;
+import java.util.Optional;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -47,20 +47,23 @@ import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.Request;
+import org.sonatype.nexus.repository.view.Response;
+import org.sonatype.nexus.repository.view.ViewFacet;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
+import org.sonatype.nexus.repository.view.payloads.BytesPayload;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
+import com.google.common.base.Throwables;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.InputStreamEntity;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.Integer.parseInt;
-import static java.nio.charset.Charset.defaultCharset;
-import static org.apache.http.client.utils.URLEncodedUtils.parse;
+import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.pypi.internal.AssetKind.INDEX;
+import static org.sonatype.nexus.repository.pypi.internal.AssetKind.PACKAGE;
 import static org.sonatype.nexus.repository.pypi.internal.AssetKind.ROOT_INDEX;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_NAME;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_SUMMARY;
@@ -74,10 +77,9 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiDataUtils.toConten
 import static org.sonatype.nexus.repository.pypi.internal.PyPiFileUtils.extractFilenameFromPath;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiFileUtils.extractNameFromFilename;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiFileUtils.extractVersionFromFilename;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.PATH_WITH_HOST_PREFIX;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.buildIndexPage;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.buildRootIndexPage;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.makeIndexRelative;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.makeIndexLinksNexusPaths;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.makeRootIndexRelative;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiInfoUtils.extractMetadata;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.INDEX_PATH_PREFIX;
@@ -87,6 +89,7 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.matcherS
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.name;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.path;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
+import static org.sonatype.nexus.repository.view.ContentTypes.TEXT_HTML;
 
 /**
  * PyPI {@link ProxyFacet} implementation.
@@ -116,7 +119,7 @@ public class PyPiProxyFacetImpl
       case ROOT_INDEX:
         return getAsset(INDEX_PATH_PREFIX);
       case INDEX:
-        return getAsset(indexPath(name(state)));
+        return rewriteIndex(name(state));
       case PACKAGE:
         return getAsset(path(state));
       default:
@@ -135,7 +138,9 @@ public class PyPiProxyFacetImpl
       case ROOT_INDEX:
         return putRootIndex(content);
       case INDEX:
-        return putIndex(indexPath(name(state)), content);
+        String name = name(state);
+        putIndex(indexPath(name), content);
+        return rewriteIndex(name);
       case PACKAGE:
         return putPackage(path(state), content);
       default:
@@ -152,12 +157,97 @@ public class PyPiProxyFacetImpl
 
   @Override
   protected String getUrl(@Nonnull final Context context) {
-    String url = context.getRequest().getPath();
-    return url.substring(1);
+    AssetKind assetKind = context.getAttributes().require(AssetKind.class);
+
+    if (PACKAGE == assetKind) {
+      return getPackageUrl(context);
+    }
+    return context.getRequest().getPath().substring(1);
+  }
+
+  /**
+   * Retrieves the remote URL for a package using the package's simple index.
+   */
+  private String getPackageUrl(final Context context) {
+    String packageName = PyPiPathUtils.packageNameFromPath(context.getRequest().getPath());
+    String filename = PyPiFileUtils.extractFilenameFromPath(context.getRequest().getPath());
+
+    PyPiLink link =
+        getExistingPackageLink(packageName, filename).orElseGet(() -> cachePackageRootMetadataAndRetrieveLink(context, packageName, filename));
+    if (link == null) {
+      throw new NonResolvablePackageException(
+          "Unable to find reference for " + filename + " in package " + packageName);
+    }
+
+    URI remoteUrl = getRemoteUrl();
+    if (!remoteUrl.getPath().endsWith("/")) {
+      remoteUrl = URI.create(remoteUrl.toString() + "/");
+    }
+    remoteUrl = remoteUrl.resolve(indexPath(packageName));
+
+    return remoteUrl.resolve(link.getLink()).toString();
+  }
+
+  /**
+   * Retrieve the remote package index then attempt to find the matching upstream link.
+   */
+  private PyPiLink cachePackageRootMetadataAndRetrieveLink(
+      final Context context,
+      final String packageName,
+      final String filename)
+  {
+    try {
+      cachePackageIndex(packageName, context);
+      return getExistingPackageLink(packageName, filename).orElse(null);
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  /**
+   * Using a cached index asset attempt to retrieve the link for a given package.
+   */
+  private Optional<PyPiLink> getExistingPackageLink(final String packageName, final String filename) {
+    Content index = getAsset(indexPath(packageName));
+
+    if (index == null) {
+      return Optional.empty();
+    }
+
+    String rootFilename = filename.endsWith(".asc") ? filename.substring(0, filename.length() - 4) : filename;
+
+    try (InputStream in = index.openInputStream()) {
+      return PyPiIndexUtils.extractLinksFromIndex(in).stream().filter(link -> rootFilename.equals(link.getFile()))
+          .findFirst();
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  /**
+   * Attempt to cache the index for the given package.
+   */
+  private void cachePackageIndex(final String packageName, final Context context) throws IOException {
+    try {
+      Request getRequest = new Request.Builder().action(GET).path('/'+indexPath(packageName)).build();
+      Response response = getRepository().facet(ViewFacet.class).dispatch(getRequest, context);
+      if (response.getPayload() == null) {
+        throw new IOException("Could not retrieve package " + packageName);
+      }
+    }
+    catch (IOException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
+      throw new IOException(e);
+    }
   }
 
   @Override
-  protected HttpRequestBase buildFetchHttpRequest(URI uri, Context context) {
+  protected HttpRequestBase buildFetchHttpRequest(final URI uri, final Context context) {
     Request request = context.getRequest();
     // If we're doing a search operation, we have to proxy the content of the XML-RPC POST request to the PyPI server...
     if (isSearchRequest(request)) {
@@ -172,35 +262,7 @@ public class PyPiProxyFacetImpl
         throw new RuntimeException(e);
       }
     }
-    return super.buildFetchHttpRequest(maybeRewriteUri(uri, context), context); // URI needs to be replaced here
-  }
-
-  /**
-   * Rewrites the uri when host, port and scheme information is embedded in the path
-   */
-  private URI maybeRewriteUri(URI uri, final Context context) {
-    Matcher matcher = PATH_WITH_HOST_PREFIX.matcher(context.getRequest().getPath());
-    if (matcher.matches()) {
-      try {
-        URI remoteUrl = getRemoteUrl().getPath().endsWith("/") ? getRemoteUrl() : getRemoteUrl().resolve("/");
-        return new URIBuilder()
-            .setPath(remoteUrl.resolve(matcher.group("path").substring(1)).getPath())
-            .addParameters(parse(uri, defaultCharset()))
-            .setPort(port(matcher.group("port")))
-            .setScheme(matcher.group("scheme"))
-            .setHost(matcher.group("host"))
-            .setFragment(uri.getFragment())
-            .build();
-      }
-      catch (URISyntaxException e) {
-        log.error("Error parsing URI for path {}", context.getRequest().getPath(), e);
-      }
-    }
-    return uri;
-  }
-
-  private int port(final String port) {
-    return port == null ? -1 : parseInt(port);
+    return super.buildFetchHttpRequest(uri, context); // URI needs to be replaced here
   }
 
   @TransactionalTouchBlob
@@ -279,10 +341,27 @@ public class PyPiProxyFacetImpl
   private Content putIndex(final String name, final Content content) throws IOException {
     String html;
     try (InputStream inputStream = content.openInputStream()) {
-      List<PyPiLink> links = makeIndexRelative(getRemoteUrl(), name, inputStream);
-      html = buildIndexPage(templateHelper, name.substring(name.indexOf('/') + 1, name.length() - 1), links);
+      html = IOUtils.toString(inputStream);
     }
     return storeHtmlPage(content, html, INDEX, name);
+  }
+
+  private Content rewriteIndex(final String name) throws IOException {
+    Content content = getAsset(indexPath(name));
+
+    if (content == null) {
+      return null;
+    }
+
+    String html;
+    try (InputStream inputStream = content.openInputStream()) {
+      List<PyPiLink> links = makeIndexLinksNexusPaths(name, inputStream);
+      html = buildIndexPage(templateHelper, name.substring(name.indexOf('/') + 1, name.length() - 1), links);
+    }
+
+    Content newContent = new Content(new BytesPayload(html.getBytes(), TEXT_HTML));
+    content.getAttributes().forEach(e -> newContent.getAttributes().set(e.getKey(), e.getValue()));
+    return newContent;
   }
 
   private Content storeHtmlPage(final Content content,
@@ -344,5 +423,20 @@ public class PyPiProxyFacetImpl
   protected CacheController getCacheController(@Nonnull final Context context) {
     AssetKind assetKind = context.getAttributes().require(AssetKind.class);
     return cacheControllerHolder.require(assetKind.getCacheType());
+  }
+
+  /**
+   * Internal exception thrown when resolving of tarball name to package version using package metadata fails.
+   *
+   * @see #retrievePackageVersionTx(NpmPackageId, String)
+   * @see #getUrl(Context)
+   * @see #fetch(Context, Content)
+   */
+  private static class NonResolvablePackageException
+      extends RuntimeException
+  {
+    public NonResolvablePackageException(final String message) {
+      super(message);
+    }
   }
 }

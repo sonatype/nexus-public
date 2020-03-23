@@ -81,22 +81,24 @@ class NpmClient
   NestedAttributesMap createDeployablePackage(
       String pName,
       String pVersion,
+      String pScope = null,
       String username = 'admin',
       String description = 'Simple package for testing',
       List<String> keywords = ['test', 'simple'],
       String author = 'Tamas Cservenak <tamas@cservenak.net> (http://cstamas.org/)')
   {
     String tarballName = "${pName}-${pVersion}.tgz"
+    String scopedName = pScope ? "${pScope}/${pName}" : pName
 
     NestedAttributesMap packageRoot = createPackage()
-    packageRoot.set('name', pName)
+    packageRoot.set('name', scopedName)
     packageRoot.set('version', pVersion)
     packageRoot.set('description', description)
     packageRoot.set('maintainers', getMaintainers(username))
     packageRoot.set('nullField', null)
 
     Map<String, Object> pkgJson = [
-        name: pName,
+        name: scopedName,
         version: pVersion,
         description: description,
         main: 'index.js',
@@ -116,7 +118,7 @@ class NpmClient
     packageRoot.child('dist-tags').set('latest', pVersion)
     NestedAttributesMap versions = packageRoot.child('versions')
     NestedAttributesMap version = versions.child(pVersion)
-    version.set('name', pName)
+    version.set('name', scopedName)
     version.set('version', pVersion)
     version.set('maintainers', getMaintainers(username))
     NestedAttributesMap npmUser = version.child('_npmUser')

@@ -51,7 +51,7 @@ public class RemoveSnapshotsTask
   @Override
   protected void execute(final Repository repository) {
     if (hasBeenProcessed(repository)) {
-      log.debug("Skipping repository '{}'; it has already been processed");
+      log.debug("Skipping repository '{}'; it has already been processed", repository.getName());
       return;
     }
 

@@ -52,7 +52,7 @@ public class BrowseStateContributorTest
   @Before
   public void setup() {
     when(browseNodeConfiguration.getMaxNodes()).thenReturn(10);
-    underTest = new BrowseStateContributor(browseNodeConfiguration, taskScheduler);
+    underTest = new BrowseStateContributor(browseNodeConfiguration, taskScheduler, 60);
   }
 
   @Test

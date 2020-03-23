@@ -13,6 +13,8 @@
 package org.sonatype.nexus.repository.pypi.internal;
 
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.view.Context;
@@ -31,6 +33,9 @@ public final class PyPiPathUtils
   public static final String INDEX_PATH_PREFIX = "simple/";
 
   public static final String PACKAGE_PATH_PREFIX = "packages/";
+
+  private static final Pattern PACKAGE_PATTERN = Pattern.compile("\\/?packages\\/(?<packageName>[^/]+)\\/.*");
+
   /**
    * Returns whether or not the request is a PyPI search request.
    */
@@ -83,6 +88,18 @@ public final class PyPiPathUtils
     String pkg = String.join("/", parts);
 
     return pkg.startsWith("packages/") ? pkg : PACKAGE_PATH_PREFIX + pkg;
+  }
+
+  /**
+   * Extract the package name from a path known to be structured like
+   * <code>packages/{packageName}/{packageName}-{version}.{ext}</code>
+   */
+  static String packageNameFromPath(final String path) {
+    Matcher m = PACKAGE_PATTERN.matcher(path);
+    if (m.matches()) {
+      return m.group("packageName");
+    }
+    return null;
   }
 
   /**

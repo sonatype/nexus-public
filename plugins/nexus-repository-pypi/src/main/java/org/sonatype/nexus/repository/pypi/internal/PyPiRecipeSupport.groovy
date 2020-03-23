@@ -145,7 +145,7 @@ abstract class PyPiRecipeSupport
     new Builder().matcher(
         LogicMatchers.and(
             new ActionMatcher(GET, HEAD),
-            new TokenMatcher('/{path:.+}')
+            new TokenMatcher('/{path:packages\\/[^/].+\\/[^/]+\\/[^/]+}')
         ))
   }
 

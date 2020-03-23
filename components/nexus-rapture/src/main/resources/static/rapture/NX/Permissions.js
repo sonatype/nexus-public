@@ -96,6 +96,8 @@ Ext.define('NX.Permissions', {
     var me = this,
         hasPermission = false;
 
+    expectedPermission = expectedPermission.toLowerCase();
+
     //<if assert>
     NX.Assert.assert(expectedPermission.search('undefined') === -1, 'Invalid permission check:', expectedPermission);
     //</if>

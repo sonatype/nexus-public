@@ -95,7 +95,7 @@ public class SecurityConfigurationCleanerImpl
         concurrentlyUpdated = false;
         CUserRoleMapping currentMapping = configuration.getUserRoleMapping(mapping.getUserId(), mapping.getSource());
         if (currentMapping != null && currentMapping.getRoles().contains(roleId)) {
-          log.debug("removing ref to role {} from user {}", currentMapping.getUserId());
+          log.debug("removing ref to role {} from user {}", roleId, currentMapping.getUserId());
           currentMapping.removeRole(roleId);
           try {
             configuration.updateUserRoleMapping(currentMapping);
