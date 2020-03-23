@@ -62,6 +62,18 @@ Ext.define('NX.coreui.view.task.TaskSettingsForm', {
         helpText: NX.I18n.get('Task_TaskSettingsForm_Email_HelpText'),
         allowBlank: true
       },
+      {
+        xtype: 'combo',
+        name: 'notificationCondition',
+        fieldLabel: NX.I18n.get('Task_TaskSettingsForm_NotificationCondition_FieldLabel'),
+        helpText: NX.I18n.get('Task_TaskSettingsForm_NotificationCondition_HelpText'),
+        editable: false,
+        store: [
+          ['FAILURE', NX.I18n.get('Task_TaskSettingsForm_NotificationCondition_FailureItem')],
+          ['SUCCESS_FAILURE', NX.I18n.get('Task_TaskSettingsForm_NotificationCondition_SuccessFailureItem')]
+        ],
+        value: 'FAILURE'
+      },
       { xtype: 'nx-coreui-formfield-settingsfieldset' },
       { xtype: 'nx-coreui-task-schedulefieldset' }
     ];
@@ -91,6 +103,7 @@ Ext.define('NX.coreui.view.task.TaskSettingsForm', {
         enabled: values.enabled ? true : false,
         name: values.name,
         alertEmail: values.alertEmail,
+        notificationCondition: values.notificationCondition,
         schedule: values.schedule
       };
 

@@ -99,6 +99,12 @@ public interface TaskInfo
   }
 
   /**
+   * Returns the result object last returned by the task.
+   */
+  @Nullable
+  Object getLastResult();
+
+  /**
    * Removes (with canceling if runs) the task.
    *
    * Returns {@code true} if it's guaranteed that the task is removed from scheduler, and no future executions of

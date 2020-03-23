@@ -68,6 +68,8 @@ public class QuartzTaskInfo
 
   private volatile boolean removed;
 
+  private Object lastResult;
+
   public QuartzTaskInfo(final EventManager eventManager,
                         final QuartzSchedulerSPI scheduler,
                         final JobKey jobKey,
@@ -199,6 +201,15 @@ public class QuartzTaskInfo
     else {
       return new CurrentStateImpl(state, taskState.getNextExecutionTime(), taskFuture);
     }
+  }
+
+  @Nullable
+  public Object getLastResult() {
+    return lastResult;
+  }
+
+  public void setLastResult(final Object result) {
+    this.lastResult = result;
   }
 
   @Override
