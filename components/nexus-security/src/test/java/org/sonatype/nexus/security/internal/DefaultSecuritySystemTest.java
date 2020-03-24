@@ -25,7 +25,9 @@ import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.authz.MockAuthorizationManagerB;
 import org.sonatype.nexus.security.role.Role;
 import org.sonatype.nexus.security.role.RoleIdentifier;
+import org.sonatype.nexus.security.user.NoSuchUserManagerException;
 import org.sonatype.nexus.security.user.User;
+import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.security.user.UserStatus;
 
 import com.google.inject.AbstractModule;
@@ -40,7 +42,9 @@ import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.subject.Subject;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
@@ -59,6 +63,9 @@ public class DefaultSecuritySystemTest
 {
   @Mock
   EventManager eventManager;
+
+  @Rule
+  public ExpectedException expectedException = ExpectedException.none();
 
   @Override
   protected void customizeModules(List<Module> modules) {
@@ -231,6 +238,22 @@ public class DefaultSecuritySystemTest
     if (!foundExpiredEvent) {
       fail("UserPrincipalsExpired event was not fired");
     }
+  }
+
+  @Test
+  public void testChangePassword_AfterUserLogin() throws UserNotFoundException, NoSuchUserManagerException {
+    expectedException.expect(AuthorizationException.class);
+    expectedException.expectMessage("jcoder is not permitted to change the password for fakeuser");
+
+    SecuritySystem securitySystem = this.getSecuritySystem();
+    Subject subject = securitySystem.getSubject();
+    subject.login(new UsernamePasswordToken("jcoder", "jcoder"));
+
+    // change my own
+    securitySystem.changePassword("jcoder", "newpassword");
+
+    // change another user's password
+    securitySystem.changePassword("fakeuser", "newpassword");
   }
 
   private User createUser(String name, UserStatus status) {
