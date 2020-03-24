@@ -10,37 +10,33 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.security.anonymous;
+package org.sonatype.nexus.plugins.defaultrole.internal;
 
-import javax.annotation.Nullable;
+import java.util.Map;
 
-import org.apache.shiro.subject.PrincipalCollection;
-import org.apache.shiro.subject.Subject;
+import org.sonatype.nexus.capability.CapabilityConfigurationSupport;
 
 /**
- * Anonymous helpers.
+ * Simple configuration for {@link DefaultRoleCapability} containing a single roleId.
  *
- * @since 3.0
+ * @since 3.next
  */
-public class AnonymousHelper
+public class DefaultRoleCapabilityConfiguration
+    extends CapabilityConfigurationSupport
 {
-  private AnonymousHelper() {
-    // empty
+  public static final String P_ROLE = "role";
+
+  private String role;
+
+  public DefaultRoleCapabilityConfiguration(final Map<String, String> properties) {
+    role = properties.get(P_ROLE);
   }
 
-  /**
-   * Check given given subject is anonymous.
-   */
-  public static boolean isAnonymous(@Nullable final Subject subject) {
-    return subject != null && subject.getPrincipals() instanceof AnonymousPrincipalCollection;
+  public String getRole() {
+    return role;
   }
 
-  /**
-   * Check given principals represent anonymous.
-   *
-   * @since 3.next
-   */
-  public static boolean isAnonymous(@Nullable final PrincipalCollection principals) {
-    return principals instanceof AnonymousPrincipalCollection;
+  public void setRole(final String role) {
+    this.role = role;
   }
 }

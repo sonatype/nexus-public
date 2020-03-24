@@ -51,6 +51,7 @@
     <module>nexus-ssl-plugin</module>
     <module>nexus-task-log-cleanup</module>
     <module>nexus-onboarding-plugin</module>
+    <module>nexus-default-role-plugin</module>
   </modules>
 
   <dependencyManagement>
@@ -413,6 +414,22 @@
       <dependency>
         <groupId>org.sonatype.nexus.plugins</groupId>
         <artifactId>nexus-onboarding-plugin</artifactId>
+        <version>3.22.0-SNAPSHOT</version>
+        <classifier>features</classifier>
+        <type>xml</type>
+      </dependency>
+	  
+	  <!-- default-role plugin -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-default-role-plugin</artifactId>
+        <version>3.22.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-default-role-plugin</artifactId>
         <version>3.22.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
