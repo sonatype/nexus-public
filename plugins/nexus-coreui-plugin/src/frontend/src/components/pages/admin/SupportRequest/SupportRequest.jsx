@@ -18,27 +18,26 @@ import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faExternalLinkAlt} from "@fortawesome/free-solid-svg-icons";
 
 export default function SupportRequest() {
+  return <ContentBody className='nxrm-support-request'>
+    <SupportRequestSection/>
+  </ContentBody>
+}
 
-  function SupportRequestSection() {
-    return <Section>
-      <p>
-        {UIStrings.SUPPORT_REQUEST.DESCRIPTION}
-      </p>
-      <p>
-        <a href="#admin/support/supportzip">{UIStrings.SUPPORT_REQUEST.ATTACH_SUPPORT_ZIP}</a>
-      </p>
-      <Button variant="primary" onClick={() => openSupportRequestPage()}>
-        <FontAwesomeIcon icon={faExternalLinkAlt} pull="left"/>
-        {UIStrings.SUPPORT_REQUEST.ACTIONS.submitRequest}
-      </Button>
-    </Section>
-  }
-
+function SupportRequestSection() {
   function openSupportRequestPage() {
     window.open('https://links.sonatype.com/products/nexus/pro/support-request', '_blank');
   }
 
-  return <ContentBody className='nxrm-support-request'>
-    <SupportRequestSection/>
-  </ContentBody>
+  return <Section>
+    <p>
+      {UIStrings.SUPPORT_REQUEST.DESCRIPTION}
+    </p>
+    <p>
+      <a href="#admin/support/supportzip">{UIStrings.SUPPORT_REQUEST.ATTACH_SUPPORT_ZIP}</a>
+    </p>
+    <Button variant="primary" onClick={() => openSupportRequestPage()}>
+      <FontAwesomeIcon icon={faExternalLinkAlt} pull="left"/>
+      {UIStrings.SUPPORT_REQUEST.ACTIONS.submitRequest}
+    </Button>
+  </Section>
 }
