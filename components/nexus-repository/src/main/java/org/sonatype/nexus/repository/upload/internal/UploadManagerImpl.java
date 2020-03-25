@@ -87,6 +87,10 @@ public class UploadManagerImpl
     checkNotNull(repository);
     checkNotNull(request);
 
+    if (!repository.getConfiguration().isOnline()) {
+      throw new ValidationErrorsException("Repository offline");
+    }
+
     UploadHandler uploadHandler = getUploadHandler(repository);
     ComponentUpload upload = create(repository, request);
     logUploadDetails(upload, repository);

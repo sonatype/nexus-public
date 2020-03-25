@@ -193,6 +193,11 @@ Ext.define('NX.coreui.controller.UploadComponent', {
           filterFn: function(item) {
             return item.get('versionPolicy') == null || item.get('versionPolicy') !== 'SNAPSHOT';
           }
+        }, {
+          property: 'status',
+          filterFn: function(item) {
+            return item.get('status') == null || item.get('status').online !== false;
+          }
         }]);
         repoStore.load(function () {
             // Load the asset upload page
