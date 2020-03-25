@@ -13,7 +13,7 @@
 /*global Ext, NX*/
 
 /**
- * @since 3.22
+ * @since 3.next
  */
 export default class {
   /**

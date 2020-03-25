@@ -33,7 +33,7 @@ import com.google.common.eventbus.Subscribe;
 /**
  * Writes to the audit log for fired {@link NexusAuthenticationEvent}
  *
- * @since 3.22
+ * @since 3.next
  */
 @Named
 @Singleton

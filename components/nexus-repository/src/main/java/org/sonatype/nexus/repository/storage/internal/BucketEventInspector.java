@@ -30,7 +30,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Triggers {@link RepositoryMetadataUpdatedEvent}s in response to {@link BucketUpdatedEvent}s.
  *
- * @since 3.22
+ * @since 3.next
  */
 @Named
 @Singleton

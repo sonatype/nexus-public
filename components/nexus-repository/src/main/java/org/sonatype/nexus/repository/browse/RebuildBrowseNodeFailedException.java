@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.browse;
 /**
  * For when rebuilding of browse nodes fails.
  *
- * @since 3.22
+ * @since 3.next
  */
 public class RebuildBrowseNodeFailedException
     extends Exception

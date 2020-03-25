@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Realm that adds the specified role to all authenticated users
  *
- * @since 3.22
+ * @since 3.next
  */
 @Named(DefaultRoleRealm.NAME)
 @Singleton

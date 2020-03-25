@@ -40,7 +40,6 @@ import org.sonatype.nexus.repository.maven.internal.Attributes;
 import org.sonatype.nexus.repository.maven.internal.Constants;
 import org.sonatype.nexus.repository.maven.internal.DigestExtractor;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
-import org.sonatype.nexus.repository.maven.internal.MavenFacetImpl;
 import org.sonatype.nexus.repository.maven.internal.MavenFacetUtils;
 import org.sonatype.nexus.repository.maven.internal.MavenModels;
 import org.sonatype.nexus.repository.storage.Asset;
@@ -131,14 +130,7 @@ public class MetadataRebuilder
     }
   }
 
-  /**
-   * Performs the {@link #rebuild} in an existing transactional context; ie. a {@link UnitOfWork} already exists.
-   *
-   * Don't put any {@link Transactional} annotation on this method because it will keep the transaction active
-   * for the _entire_ duration of any request including those that rebuild the entire repository, which would
-   * lead to excessive memory consumption. Callers may be annotated with {@link Transactional} as long as they
-   * only rebuild a limited subset of the repository, such as {@link MavenFacetImpl#rebuildMetadata}.
-   */
+  @TransactionalStoreBlob
   public boolean rebuildInTransaction(final Repository repository,
                                       final boolean update,
                                       final boolean rebuildChecksums,

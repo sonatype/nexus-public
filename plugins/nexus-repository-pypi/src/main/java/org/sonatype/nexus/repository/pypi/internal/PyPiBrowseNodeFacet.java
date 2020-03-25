@@ -24,7 +24,7 @@ import org.sonatype.nexus.repository.storage.BrowseNodeFacet;
 /**
  * PyPi customization of {@link BrowseNodeFacet}.
  *
- * @since 3.22
+ * @since 3.next
  */
 @Named
 @Facet.Exposed

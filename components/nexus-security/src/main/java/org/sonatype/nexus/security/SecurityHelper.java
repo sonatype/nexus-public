@@ -219,7 +219,7 @@ public class SecurityHelper
    * Check whether the nexus allow everything permission is permitted. That is to say a check will be done to see if
    * the permission `nexus:*` was set on the current {@link #subject()}
    *
-   * @since 3.22
+   * @since 3.next
    */
   public boolean isAllPermitted() {
     return isPermitted(new WildcardPermission2("nexus:*"))[0];

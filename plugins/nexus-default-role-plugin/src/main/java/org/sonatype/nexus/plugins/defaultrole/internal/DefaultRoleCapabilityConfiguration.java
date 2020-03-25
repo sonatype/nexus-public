@@ -19,7 +19,7 @@ import org.sonatype.nexus.capability.CapabilityConfigurationSupport;
 /**
  * Simple configuration for {@link DefaultRoleCapability} containing a single roleId.
  *
- * @since 3.22
+ * @since 3.next
  */
 public class DefaultRoleCapabilityConfiguration
     extends CapabilityConfigurationSupport

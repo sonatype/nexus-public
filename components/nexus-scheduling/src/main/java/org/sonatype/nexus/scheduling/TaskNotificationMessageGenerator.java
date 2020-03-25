@@ -15,7 +15,7 @@ package org.sonatype.nexus.scheduling;
 /**
  * Generates notification messages for tasks.
  *
- * @since 3.22
+ * @since 3.next
  */
 public interface TaskNotificationMessageGenerator {
 

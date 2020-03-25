@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.Repository;
 /**
  * Service for rebuilding browse node data.
  *
- * @since 3.22
+ * @since 3.next
  */
 public interface RebuildBrowseNodeService
 {

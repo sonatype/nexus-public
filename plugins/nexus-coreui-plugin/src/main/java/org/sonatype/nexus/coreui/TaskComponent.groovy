@@ -56,7 +56,6 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication
 import org.apache.shiro.authz.annotation.RequiresPermissions
 import org.hibernate.validator.constraints.NotEmpty
 
-import static com.google.common.base.Preconditions.checkState
 import static org.sonatype.nexus.repository.date.TimeZoneUtils.shiftMonthDay
 import static org.sonatype.nexus.repository.date.TimeZoneUtils.shiftWeekDay
 import static org.sonatype.nexus.scheduling.TaskState.CANCELED
@@ -137,8 +136,6 @@ class TaskComponent
     Schedule schedule = asSchedule(taskXO)
 
     TaskConfiguration config = scheduler.createTaskConfigurationInstance(taskXO.typeId)
-    checkState(config.isExposed(), 'This task is not allowed to be created')
-
     taskXO.properties.each { key, value ->
       config.setString(key, value)
     }

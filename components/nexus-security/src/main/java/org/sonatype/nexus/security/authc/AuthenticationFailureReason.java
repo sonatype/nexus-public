@@ -15,7 +15,7 @@ package org.sonatype.nexus.security.authc;
 /**
  * The reason why an authentication attempt failed.
  *
- * @since 3.22
+ * @since 3.next
  */
 public enum AuthenticationFailureReason
 {

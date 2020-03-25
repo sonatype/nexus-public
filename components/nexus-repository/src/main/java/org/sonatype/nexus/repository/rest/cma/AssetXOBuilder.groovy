@@ -30,7 +30,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 /**
  * Builds asset transfer objects for REST APIs.
  *
- * @since 3.22
+ * @since 3.next
  */
 @CompileStatic
 @Builder(builderStrategy = ExternalStrategy, forClass = AssetXO)

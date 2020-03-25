@@ -30,7 +30,7 @@ import org.sonatype.nexus.orient.DatabaseUpgradeSupport;
  * Create a marker file that will trigger a task to compensate for the change
  * in proxy asset names by deleting all PyPi proxy assets that start with "packages/".
  *
- * @since 3.22
+ * @since 3.next
  */
 @Named
 @Singleton

@@ -20,7 +20,7 @@ import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 /**
  * Task descriptor for {@link PyPiDeleteLegacyProxyAssetsTask}.
  *
- * @since 3.22
+ * @since 3.next
  */
 @Named
 @Singleton

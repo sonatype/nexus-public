@@ -16,7 +16,7 @@ import React from 'react';
 import './BreadcrumbActions.scss';
 
 /**
- * @since 3.22
+ * @since 3.next
  */
 export default function BreadcrumbActions({children}) {
   return <div className="nxrm-breadcrumb--actions">{children}</div>;

@@ -26,9 +26,6 @@ import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Response;
 
-import static org.sonatype.nexus.repository.http.HttpMethods.GET;
-import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
-
 /**
  * Maven version policy handler.
  *
@@ -50,10 +47,6 @@ public class VersionPolicyHandler
   @Nonnull
   @Override
   public Response handle(@Nonnull final Context context) throws Exception {
-    String httpMethod = context.getRequest().getAction();
-    if (GET.equals(httpMethod) || HEAD.equals(httpMethod)) {
-      return context.proceed();
-    }
     final MavenPath path = context.getAttributes().require(MavenPath.class);
     final MavenFacet mavenFacet = context.getRepository().facet(MavenFacet.class);
     final VersionPolicy versionPolicy = mavenFacet.getVersionPolicy();

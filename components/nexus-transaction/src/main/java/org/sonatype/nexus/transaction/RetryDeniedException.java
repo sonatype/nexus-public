@@ -15,7 +15,7 @@ package org.sonatype.nexus.transaction;
 /**
  * {@link Transaction}s can throw this from {@link Transaction#allowRetry} to implicitly deny further retries.
  *
- * @since 3.22
+ * @since 3.next
  */
 public class RetryDeniedException
     extends RuntimeException

@@ -25,7 +25,7 @@ import org.apache.ibatis.annotations.Param;
 /**
  * DAO to support tree browsing of assets & components
  *
- * @since 3.22
+ * @since 3.next
  */
 @SchemaTemplate("format")
 public interface BrowseNodeDAO

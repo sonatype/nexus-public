@@ -87,8 +87,6 @@ public class TaskConfiguration
 
   static final String RECOVERABLE_KEY = ".recoverable";
 
-  static final String EXPOSED_KEY = ".exposed";
-
   private final Map<String, String> configuration;
 
   public TaskConfiguration() {
@@ -183,14 +181,6 @@ public class TaskConfiguration
 
   public void setVisible(final boolean visible) {
     setBoolean(VISIBLE_KEY, visible);
-  }
-
-  public boolean isExposed() {
-    return getBoolean(EXPOSED_KEY, true);
-  }
-
-  public void setExposed(final boolean exposed) {
-    setBoolean(EXPOSED_KEY, exposed);
   }
 
   @Nullable

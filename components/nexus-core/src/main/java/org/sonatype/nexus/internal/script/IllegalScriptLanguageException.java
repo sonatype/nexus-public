@@ -15,7 +15,7 @@ package org.sonatype.nexus.internal.script;
 /**
  * A scripting language that is not supported has been attempted.
  *
- * @since 3.22
+ * @since 3.next
  */
 public class IllegalScriptLanguageException
     extends RuntimeException

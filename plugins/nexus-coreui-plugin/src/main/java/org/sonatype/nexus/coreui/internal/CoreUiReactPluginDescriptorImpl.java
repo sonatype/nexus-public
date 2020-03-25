@@ -30,7 +30,7 @@ import static java.util.Arrays.asList;
 /**
  * {@link UiPluginDescriptor} for {@code nexus-coreui-plugin} react code.
  *
- * @since 3.22
+ * @since 3.next
  */
 @Named
 @Singleton

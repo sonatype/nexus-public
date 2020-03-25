@@ -15,7 +15,7 @@ package org.sonatype.nexus.scheduling;
 /**
  * Alert conditions for task completion.
  *
- * @since 3.22
+ * @since 3.next
  */
 public enum TaskNotificationCondition
 {

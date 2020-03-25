@@ -20,7 +20,7 @@ import './Alert.scss';
 import PropTypes from "prop-types";
 
 /**
- * @since 3.22
+ * @since 3.next
  */
 export default function Alert({type, children, className, ...attrs}) {
   const classes = classNames('nxrm-alert', className, `nxrm-alert--${type}`);

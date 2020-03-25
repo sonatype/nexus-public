@@ -15,7 +15,7 @@ package org.sonatype.nexus.script;
 /**
  * Emitted when a {@link Script} is run.
  *
- * @since 3.22
+ * @since 3.next
  */
 public class ScriptRunEvent
     extends ScriptEvent

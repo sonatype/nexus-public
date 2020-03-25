@@ -35,7 +35,7 @@ import static org.sonatype.nexus.repository.pypi.upgrade.PyPiUpgrade_1_2.MARKER_
  * Instantiates the legacy pypi proxy asset deletion task based on the existence of a marker
  * file created by the upgrade {@link PyPiUpgrade_1_2}.
  *
- * @since 3.22
+ * @since 3.next
  */
 @Named
 @Singleton

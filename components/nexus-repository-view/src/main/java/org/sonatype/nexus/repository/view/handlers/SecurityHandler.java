@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.view.Handler;
  *
  * This interface helps bridge to the real implementation which now lives in another module.
  *
- * @since 3.22
+ * @since 3.next
  */
 public interface SecurityHandler
     extends Handler

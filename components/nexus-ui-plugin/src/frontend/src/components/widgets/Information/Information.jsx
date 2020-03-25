@@ -17,7 +17,7 @@ import PropTypes from 'prop-types';
 import './Information.scss';
 
 /**
- * @since 3.22
+ * @since 3.next
  */
 export default function Information({information}) {
   return <table className="nxrm-information">

@@ -1759,14 +1759,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
 
       Done_Mask: 'Confirming',
       Done_Message: 'Upgrade done'
-    },
-
-    'NX.coreui.view.ldap.LdapSystemPasswordModal': {
-      Title: 'LDAP Server system password',
-      Password_FieldLabel: 'Password',
-      Password_HelpText: 'The password to bind with',
-      Button_OK: 'OK',
-      Button_Cancel: 'Cancel'
     }
   }
 }, function(self) {

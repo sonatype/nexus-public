@@ -55,7 +55,7 @@ public interface MavenHostedFacet
    *                           missing or incorrect
    * @param update      whether to update or replace metadata
    *
-   * @since 3.22
+   * @since 3.next
    */
   void rebuildMetadata(@Nullable String groupId,
                        @Nullable String artifactId,
