@@ -38,7 +38,7 @@ public class AnonymousHelper
   /**
    * Check given principals represent anonymous.
    *
-   * @since 3.next
+   * @since 3.22
    */
   public static boolean isAnonymous(@Nullable final PrincipalCollection principals) {
     return principals instanceof AnonymousPrincipalCollection;

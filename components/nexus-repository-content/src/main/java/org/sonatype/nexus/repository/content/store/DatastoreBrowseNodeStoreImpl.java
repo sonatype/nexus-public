@@ -68,7 +68,7 @@ import static java.util.stream.Collectors.toList;
 /**
  * A Datastore backed implementation of component/asset tree browsing.
  *
- * @since 3.next
+ * @since 3.22
  */
 @Named
 @Singleton

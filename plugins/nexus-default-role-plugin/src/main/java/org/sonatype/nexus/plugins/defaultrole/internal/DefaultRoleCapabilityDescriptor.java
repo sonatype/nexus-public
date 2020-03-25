@@ -31,7 +31,7 @@ import static org.sonatype.nexus.plugins.defaultrole.internal.DefaultRoleCapabil
 /**
  * Descriptor of the {@link DefaultRoleCapability} for UI configuration
  *
- * @since 3.next
+ * @since 3.22
  */
 @Named(DefaultRoleCapabilityDescriptor.TYPE_ID)
 @Singleton

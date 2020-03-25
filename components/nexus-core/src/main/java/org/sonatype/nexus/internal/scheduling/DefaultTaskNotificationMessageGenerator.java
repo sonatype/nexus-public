@@ -34,7 +34,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Generates notification messages for tasks with no class specific generator.
  *
- * @since 3.next
+ * @since 3.22
  */
 @Singleton
 @Named(DefaultTaskNotificationMessageGenerator.ID)

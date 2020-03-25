@@ -29,7 +29,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Capability that allows selecting a role to apply to all authorized users
  *
- * @since 3.next
+ * @since 3.22
  */
 @Named(DefaultRoleCapabilityDescriptor.TYPE_ID)
 public class DefaultRoleCapability

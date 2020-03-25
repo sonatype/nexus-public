@@ -19,7 +19,7 @@ import './Textarea.scss';
 import FieldErrorMessage from '../FieldErrorMessage/FieldErrorMessage';
 
 /**
- * @since 3.next
+ * @since 3.22
  */
 export default function Textarea({isRequired, value, className, name, id, ...attrs}) {
   const isMissingRequiredValue = isRequired && !value;

@@ -26,7 +26,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * {@link FormatExists} validator.
  *
- * @since 3.next
+ * @since 3.22
  */
 @Named
 public class FormatExistsValidator

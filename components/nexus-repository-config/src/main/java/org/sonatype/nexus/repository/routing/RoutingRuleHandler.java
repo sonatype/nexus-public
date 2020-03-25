@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.recipe.Handler;
  *
  * This interface helps bridge to the real implementation which now lives in another module.
  *
- * @since 3.next
+ * @since 3.22
  */
 public interface RoutingRuleHandler
     extends Handler

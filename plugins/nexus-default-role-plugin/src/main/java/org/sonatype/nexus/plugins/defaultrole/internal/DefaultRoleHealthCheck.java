@@ -29,7 +29,7 @@ import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 /**
  * Will throw up a health check error when the default role in the realm isn't available
  *
- * @since 3.next
+ * @since 3.22
  */
 @Named("DefaultRoleRealm")
 @Singleton
