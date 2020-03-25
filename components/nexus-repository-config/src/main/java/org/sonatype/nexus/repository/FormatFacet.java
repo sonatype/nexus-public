@@ -17,7 +17,7 @@ import javax.annotation.Nullable;
 /**
  * Facet to retrieve the format, or subformat of a repository
  *
- * @since 3.next
+ * @since 3.22
  */
 @Facet.Exposed
 public interface FormatFacet

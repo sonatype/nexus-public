@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 /**
  * Adapts persisted assets to variable resolvers.
  *
- * @since 3.next
+ * @since 3.22
  */
 public abstract class AssetVariableResolverSupport
     extends VariableResolverAdapterSupport

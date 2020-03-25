@@ -93,7 +93,7 @@ public interface UploadHandler
   /**
    * Import a file and its attributes into a repository.
    *
-   * @since 3.next
+   * @since 3.22
    *
    * @param repository the {@link Repository} to import the file into
    * @param content the {@link File} to add to the repository

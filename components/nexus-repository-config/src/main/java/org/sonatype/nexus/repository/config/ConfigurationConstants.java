@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.config;
 /**
  * Repository configuration constants.
  *
- * @since 3.next
+ * @since 3.22
  */
 public interface ConfigurationConstants
 {

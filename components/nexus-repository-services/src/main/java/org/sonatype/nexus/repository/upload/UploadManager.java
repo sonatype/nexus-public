@@ -53,7 +53,7 @@ public interface UploadManager
    * Import a file and its attributes into a repository.  Will fail if the repository format does not have an
    * available handler.
    *
-   * @since 3.next
+   * @since 3.22
    *
    * @param repository the {@link Repository} to add the file to
    * @param content the {@link File} to add to the repository

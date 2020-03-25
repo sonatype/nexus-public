@@ -55,7 +55,7 @@ public interface SecurityConfiguration
 
   /**
    * Adds role mapping for a user idetified by the id given, and for the given source.
-   * @since 3.next
+   * @since 3.22
    */
   void addRoleMapping(String userId, Set<String> roles, String source);
 

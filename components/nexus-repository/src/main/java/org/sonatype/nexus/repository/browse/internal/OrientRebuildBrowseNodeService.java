@@ -51,7 +51,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Rebuild browse node service for the Orient based browse node implementation.
  *
- * @since 3.next
+ * @since 3.22
  */
 @Named
 @Priority(Integer.MAX_VALUE)

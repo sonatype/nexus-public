@@ -17,7 +17,7 @@ package org.sonatype.nexus.repository.recipe;
  *
  * This interface helps bridge to the view API which now lives in another module.
  *
- * @since 3.next
+ * @since 3.22
  */
 public interface Route
 {

@@ -16,7 +16,7 @@ import React from 'react';
 import './Section.scss';
 
 /**
- * @since 3.next
+ * @since 3.22
  */
 export default function Section({children}) {
   return <div className="nxrm-section">{children}</div>;
