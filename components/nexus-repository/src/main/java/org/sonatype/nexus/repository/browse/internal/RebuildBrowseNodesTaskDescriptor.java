@@ -35,11 +35,13 @@ public class RebuildBrowseNodesTaskDescriptor
 
   public static final String REPOSITORY_NAME_FIELD_ID = "repositoryName";
 
+  public static final String TASK_NAME = "Repair - Rebuild repository browse";
+
   @Inject
   public RebuildBrowseNodesTaskDescriptor(final NodeAccess nodeAccess, final GroupType groupType) {
-    super(TYPE_ID, RebuildBrowseNodesTask.class, "Repair - Rebuild repository browse", VISIBLE, EXPOSED,
+    super(TYPE_ID, RebuildBrowseNodesTask.class, TASK_NAME, VISIBLE, EXPOSED,
         new ItemselectFormField(REPOSITORY_NAME_FIELD_ID, "Repository", "Select the repository(ies) to rebuild browse tree",
-            true).withStoreApi("coreui_Repository.readReferencesAddingEntryForAll").withIdMapping("name")
+            true).withStoreApi("coreui_Repository.readReferencesAddingEntryForAll")
             .withButtons("up", "add", "remove", "down").withFromTitle("Available").withToTitle("Selected")
             .withStoreFilter("type", "!" + groupType.getValue()).withValueAsString(true),
         nodeAccess.isClustered() ? newLimitNodeFormField() : null);
