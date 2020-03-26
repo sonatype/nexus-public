@@ -64,6 +64,7 @@ import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.apache.maven.model.Model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.Boolean.TRUE;
 import static java.util.Objects.nonNull;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
@@ -105,6 +106,8 @@ public class MavenFacetImpl
     extends FacetSupport
     implements MavenFacet
 {
+  private static final ThreadLocal<Boolean> rebuilding = new ThreadLocal<>();
+
   private final Map<String, MavenPathParser> mavenPathParsers;
 
   @VisibleForTesting
@@ -245,14 +248,22 @@ public class MavenFacetImpl
     removeRebuildFlag(asset);
     Blob metadataBlob = tx.requireBlob(asset.requireBlobRef());
     Metadata metadata = MavenModels.readMetadata(metadataBlob.getInputStream());
-    metadataRebuilder.rebuildInTransaction(
-        getRepository(),
-        false,
-        false,
-        metadata.getGroupId(),
-        metadata.getArtifactId(),
-        metadata.getVersion()
-    );
+
+    // avoid triggering nested rebuilds as the rebuilder will already do that if necessary
+    rebuilding.set(TRUE);
+    try {
+      metadataRebuilder.rebuildInTransaction(
+          getRepository(),
+          false,
+          false,
+          metadata.getGroupId(),
+          metadata.getArtifactId(),
+          metadata.getVersion()
+      );
+    }
+    finally {
+      rebuilding.remove();
+    }
 
     Asset foundAsset = findAsset(tx, tx.findBucket(getRepository()), path);
     Blob foundBlob = nonNull(foundAsset) ? tx.requireBlob(foundAsset.requireBlobRef()) : null;
@@ -260,10 +271,12 @@ public class MavenFacetImpl
     return new AssetAndBlob(foundAsset, foundBlob);
   }
 
-  // rebuild the metadata if it has been marked for rebuild (except for proxy repos)
+  // rebuild metadata if we're not already rebuilding and it has been marked for rebuild (except for proxy repos)
   private boolean needsRebuild(final MavenPath path, final Asset asset) {
-    return path.getFileName().equals(METADATA_FILENAME) && requiresRebuild(asset) &&
-        !(getRepository().getType() instanceof ProxyType);
+    return !TRUE.equals(rebuilding.get())
+        && path.getFileName().equals(METADATA_FILENAME)
+        && !(getRepository().getType() instanceof ProxyType)
+        && requiresRebuild(asset);
   }
 
   private Content toContent(final Asset asset, final Blob blob) {
