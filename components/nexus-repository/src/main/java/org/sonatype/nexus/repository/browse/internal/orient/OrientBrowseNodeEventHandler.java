@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.browse.internal;
+package org.sonatype.nexus.repository.browse.internal.orient;
 
 import java.util.function.Consumer;
 
@@ -40,13 +40,13 @@ import static org.sonatype.nexus.orient.ReplicationModeOverrides.dontWaitForRepl
  */
 @Singleton
 @Named
-public class BrowseNodeEventHandler
+public class OrientBrowseNodeEventHandler
     implements EventAware, EventAware.Asynchronous
 {
-  private final BrowseNodeManager browseNodeManager;
+  private final OrientBrowseNodeManager browseNodeManager;
 
   @Inject
-  public BrowseNodeEventHandler(final BrowseNodeManager browseNodeManager) {
+  public OrientBrowseNodeEventHandler(final OrientBrowseNodeManager browseNodeManager) {
     this.browseNodeManager = checkNotNull(browseNodeManager);
   }
 

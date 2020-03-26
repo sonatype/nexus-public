@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.browse.internal;
+package org.sonatype.nexus.repository.browse.internal.orient;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.config.ConfigurationDeletedEvent;
@@ -28,19 +28,19 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class BrowseNodeEventHandlerTest
+public class OrientBrowseNodeEventHandlerTest
     extends TestSupport
 {
   private static final String REPOSITORY_NAME = "maven2repsoitory";
 
-  private BrowseNodeEventHandler handler;
+  private OrientBrowseNodeEventHandler handler;
 
   @Mock
-  private BrowseNodeManager browseNodeManager;
+  private OrientBrowseNodeManager browseNodeManager;
 
   @Before
   public void setup() {
-    handler = new BrowseNodeEventHandler(browseNodeManager);
+    handler = new OrientBrowseNodeEventHandler(browseNodeManager);
   }
 
   @Test

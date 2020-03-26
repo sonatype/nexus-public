@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.browse.internal;
+package org.sonatype.nexus.repository.browse.internal.orient;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,7 +67,7 @@ public class OrientRebuildBrowseNodeService
 
   private final BucketStore bucketStore;
 
-  private final BrowseNodeManager browseNodeManager;
+  private final OrientBrowseNodeManager browseNodeManager;
 
   private final int rebuildPageSize;
 
@@ -75,7 +75,7 @@ public class OrientRebuildBrowseNodeService
   public OrientRebuildBrowseNodeService(
       final AssetStore assetStore,
       final BucketStore bucketStore,
-      final BrowseNodeManager browseNodeManager,
+      final OrientBrowseNodeManager browseNodeManager,
       final BrowseNodeConfiguration configuration)
   {
     this.assetStore = checkNotNull(assetStore);

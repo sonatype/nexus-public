@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.browse.internal;
+package org.sonatype.nexus.repository.browse.internal.orient;
 
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +26,8 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseNodeGenerator;
 import org.sonatype.nexus.repository.browse.BrowsePaths;
 import org.sonatype.nexus.repository.browse.BrowseTestSupport;
+import org.sonatype.nexus.repository.browse.internal.DefaultBrowseNodeGenerator;
+import org.sonatype.nexus.repository.browse.internal.orient.OrientBrowseNodeManager;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.BrowseNodeCrudStore;
 import org.sonatype.nexus.repository.storage.Component;
@@ -44,7 +46,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-public class BrowseNodeManagerTest
+public class OrientBrowseNodeManagerTest
     extends BrowseTestSupport
 {
   private static final String DEFAULT = "default";
@@ -53,7 +55,7 @@ public class BrowseNodeManagerTest
 
   private static final String REPOSITORY_NAME = "repository";
 
-  private BrowseNodeManager manager;
+  private OrientBrowseNodeManager manager;
 
   @Mock
   private BrowseNodeCrudStore<Asset, Component> browseNodeStore;
@@ -76,7 +78,7 @@ public class BrowseNodeManagerTest
     generators.put(DEFAULT, defaultBrowseNodeGenerator);
     generators.put(MAVEN_2, maven2BrowseNodeGenerator);
 
-    manager = new BrowseNodeManager(browseNodeStore, componentStore, generators);
+    manager = new OrientBrowseNodeManager(browseNodeStore, componentStore, generators);
 
     when(repository.getName()).thenReturn(REPOSITORY_NAME);
   }
