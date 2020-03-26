@@ -42,7 +42,6 @@ import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.common.thread.TcclBlock;
-import org.sonatype.nexus.orient.DatabaseStatusDelayedExecutor;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskFuture;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskInfo;
 import org.sonatype.nexus.quartz.internal.task.QuartzTaskJob;
@@ -58,6 +57,7 @@ import org.sonatype.nexus.scheduling.schedule.Now;
 import org.sonatype.nexus.scheduling.schedule.Schedule;
 import org.sonatype.nexus.scheduling.schedule.ScheduleFactory;
 import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
+import org.sonatype.nexus.thread.DatabaseStatusDelayedExecutor;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;

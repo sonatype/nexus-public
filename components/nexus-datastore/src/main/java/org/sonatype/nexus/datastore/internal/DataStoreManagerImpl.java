@@ -48,7 +48,6 @@ import org.eclipse.sisu.inject.BeanLocator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.Iterables.any;
 import static java.lang.Integer.MAX_VALUE;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
@@ -90,6 +89,8 @@ public class DataStoreManagerImpl
   private final Map<String, DataStore<?>> dataStores = new ConcurrentHashMap<>();
 
   private final DataStoreRestorer restorer;
+
+  private volatile boolean frozen;
 
   @Inject
   public DataStoreManagerImpl(@Named("${nexus.datastore.enabled:-false}") final boolean enabled,
@@ -183,11 +184,17 @@ public class DataStoreManagerImpl
     beanLocator.watch(DATA_ACCESS_KEY,
         isContentStore(storeName) ? CONTENT_DATA_ACCESS_MEDIATOR : CONFIG_DATA_ACCESS_MEDIATOR, store);
 
-    // check someone hasn't just created the same store; if our store is a duplicate then stop it
-    if (dataStores.putIfAbsent(lower(storeName), store) != null) {
-      log.debug("Stopping duplicate {}", store);
-      store.stop();
-      throw new IllegalStateException("Duplicate request to create " + storeName + " data store");
+    synchronized (dataStores) {
+      if (frozen) {
+        store.freeze(); // mark as frozen before making store visible to other components
+      }
+
+      // check someone hasn't just created the same store; if our store is a duplicate then stop it
+      if (dataStores.putIfAbsent(lower(storeName), store) != null) {
+        log.debug("Stopping duplicate {}", store);
+        store.stop();
+        throw new IllegalStateException("Duplicate request to create " + storeName + " data store");
+      }
     }
 
     log.debug("Started {}", store);
@@ -289,17 +296,23 @@ public class DataStoreManagerImpl
 
   @Override
   public void freeze() {
-    browse().forEach(DataStore::freeze);
+    synchronized (dataStores) {
+      frozen = true;
+      browse().forEach(DataStore::freeze);
+    }
   }
 
   @Override
   public void unfreeze() {
-    browse().forEach(DataStore::unfreeze);
+    synchronized (dataStores) {
+      frozen = false;
+      browse().forEach(DataStore::unfreeze);
+    }
   }
 
   @Override
   public boolean isFrozen() {
-    return any(browse(), DataStore::isFrozen);
+    return frozen;
   }
 
   /**

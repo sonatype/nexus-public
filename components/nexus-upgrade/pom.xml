@@ -41,6 +41,7 @@
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-orient</artifactId>
+      <optional>true</optional>
     </dependency>
 
     <dependency>

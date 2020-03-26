@@ -62,6 +62,24 @@
 
     <!-- bundles and sub-features belonging to nexus-core-feature -->
 
+    <!--
+    Must be first in list; can be removed once everything uses the new content API
+    -->
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-repository</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-repository-content</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-cleanup</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-core</artifactId>

@@ -19,7 +19,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.RegexpQueryBuilder;
 
-import static org.sonatype.nexus.cleanup.internal.search.elasticsearch.RegexCriteriaValidator.validate;
+import static org.sonatype.nexus.cleanup.storage.config.RegexCriteriaValidator.validate;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REGEX_KEY;
 
 /**

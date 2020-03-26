@@ -46,9 +46,11 @@ import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 
 /**
+ * CMA-backed {@link UploadManager}.
+ *
  * @since 3.7
  */
-@Named
+@Named("default")
 @Singleton
 public class UploadManagerImpl
     extends ComponentSupport

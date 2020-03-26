@@ -20,7 +20,6 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.lifecycle.Lifecycles;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
-import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseManager;
 import org.sonatype.nexus.orient.DatabaseServer;
@@ -43,26 +42,22 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
  */
 @Named
 @ManagedLifecycle(phase = STORAGE)
-@Priority(Integer.MAX_VALUE) // make sure this starts first
+@Priority(Integer.MAX_VALUE - 1) // make sure this starts just after NodeAccessBooter
 @Singleton
 public class OrientBootstrap
     extends StateGuardLifecycleSupport
 {
-  private final NodeAccess nodeAccess;
-
   private final Provider<DatabaseServer> databaseServer;
 
   private final Provider<DatabaseManager> databaseManager;
 
   @Inject
-  public OrientBootstrap(final NodeAccess nodeAccess,
-                         final Provider<DatabaseServer> databaseServer,
+  public OrientBootstrap(final Provider<DatabaseServer> databaseServer,
                          final Provider<DatabaseManager> databaseManager,
                          final Iterable<OCompression> managedCompressions,
                          final Iterable<OSQLFunctionAbstract> functions,
                          final Iterable<ORecordConflictStrategy> conflictStrategies)
   {
-    this.nodeAccess = checkNotNull(nodeAccess);
     this.databaseServer = checkNotNull(databaseServer);
     this.databaseManager = checkNotNull(databaseManager);
     registerCompressions(checkNotNull(managedCompressions));
@@ -73,20 +68,14 @@ public class OrientBootstrap
 
   @Override
   protected void doStart() throws Exception {
-    nodeAccess.start();
-
     databaseServer.get().start();
-
     Lifecycles.start(databaseManager.get());
   }
 
   @Override
   protected void doStop() throws Exception {
     Lifecycles.stop(databaseManager.get());
-
     databaseServer.get().stop();
-
-    nodeAccess.stop();
   }
 
   private void registerCompressions(final Iterable<OCompression> compressions) {

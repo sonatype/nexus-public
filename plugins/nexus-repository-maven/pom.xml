@@ -47,6 +47,12 @@
     </dependency>
 
     <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-cleanup</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-model</artifactId>
     </dependency>
@@ -79,11 +85,6 @@
     <dependency>
       <groupId>org.apache.maven.archetype</groupId>
       <artifactId>archetype-catalog</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-cleanup</artifactId>
     </dependency>
 
     <dependency>

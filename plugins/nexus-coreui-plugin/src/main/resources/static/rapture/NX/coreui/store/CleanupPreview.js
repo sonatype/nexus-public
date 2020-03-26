@@ -25,7 +25,7 @@ Ext.define('NX.coreui.store.CleanupPreview', {
     type: 'direct',
 
     api: {
-      read: 'NX.direct.cleanup_CleanupPolicy.previewCleanup'
+      read: 'NX.direct.cleanup_CleanupPreview.previewCleanup'
     },
 
     reader: {

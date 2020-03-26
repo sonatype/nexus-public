@@ -48,6 +48,13 @@
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-cleanup</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-rapture</artifactId>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
@@ -72,11 +79,6 @@
       <groupId>net.javacrumbs.json-unit</groupId>
       <artifactId>json-unit</artifactId>
       <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-rapture</artifactId>
     </dependency>
 
     <dependency>

@@ -53,6 +53,7 @@
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-repository</artifactId>
+      <optional>true</optional>
       <scope>provided</scope>
     </dependency>
 

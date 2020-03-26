@@ -38,11 +38,6 @@
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-audit</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-orient</artifactId>
       <scope>provided</scope>
     </dependency>
 
@@ -67,6 +62,7 @@
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-webhooks</artifactId>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
