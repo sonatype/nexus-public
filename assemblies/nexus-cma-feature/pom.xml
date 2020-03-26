@@ -27,6 +27,7 @@
   <packaging>feature</packaging>
 
   <properties>
+    <conan.format.version>1.0.0</conan.format.version>
     <p2.format.version>1.0.2</p2.format.version>
     <r.format.version>1.1.2</r.format.version>
     <helm.format.version>1.0.3</helm.format.version>
@@ -51,6 +52,14 @@
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-repository-cocoapods</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-repository-conan</artifactId>
+      <version>${conan.format.version}</version>
       <classifier>features</classifier>
       <type>xml</type>
     </dependency>
