@@ -197,7 +197,7 @@
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-cleanup-config</artifactId>
-        <version>3.22.0-SNAPSHOT</version>
+        <version>3.23.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
