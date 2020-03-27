@@ -1073,6 +1073,7 @@ def runNxrm() {
     processBuilder.environment().put('DIRECT_MAX_MEM', rcConfig.directMaxMem)
     processBuilder.environment().put('JAVA_DEBUG_PORT', Integer.toString(rcConfig.javaDebugPort))
     processBuilder.environment().put('EXTRA_JAVA_OPTS', rcConfig.vmOptions)
+    processBuilder.environment().put('NEXUS_RESOURCE_DIRS', evaluate(new File('buildsupport/scripts/nexusresourcedirs.groovy')))
 
     def process = processBuilder.start()
     process.inputStream.eachLine {
