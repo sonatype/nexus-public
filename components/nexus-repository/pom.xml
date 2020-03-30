@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-components</artifactId>
-    <version>3.22.0-SNAPSHOT</version>
+    <version>3.23.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-repository</artifactId>
@@ -244,14 +244,24 @@
         <configuration>
           <instructions>
             <!--
-            Merge split packages and re-export the merged result.
+            To maintain binary compatibility these packages had to be split between nexus-repository
+            and nexus-repository-services / nexus-repository-view. They will be merged at runtime by
+            making all those modules fragments of nexus-repository-content.
             -->
-            <Export-Package>
-              org.sonatype.nexus.repository.cache;-split-package:=merge-first,
-              org.sonatype.nexus.repository.upload;-split-package:=merge-first,
-              org.sonatype.nexus.repository.view;-split-package:=merge-first,
-              {local-packages}
-            </Export-Package>
+            <Fragment-Host>org.sonatype.nexus.repository-content</Fragment-Host>
+            <!--
+            Only include local content of these split packages; do the merging at runtime instead.
+            -->
+            <_exportcontents>
+              org.sonatype.nexus.repository.cache;-split-package:=first,
+              org.sonatype.nexus.repository.upload;-split-package:=first,
+              org.sonatype.nexus.repository.view;-split-package:=first,
+              *
+            </_exportcontents>
+            <!--
+            Only resolve this fragment when orient support is deployed.
+            -->
+            <Require-Bundle>org.sonatype.nexus.orient</Require-Bundle>
           </instructions>
         </configuration>
       </plugin>

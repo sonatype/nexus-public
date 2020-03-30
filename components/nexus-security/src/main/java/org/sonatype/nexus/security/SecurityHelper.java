@@ -19,6 +19,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.security.authz.WildcardPermission2;
 
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.AuthorizationException;
@@ -212,5 +213,15 @@ public class SecurityHelper
    */
   public boolean[] isPermitted(final Permission... permissions) {
     return isPermitted(subject(), permissions);
+  }
+
+  /**
+   * Check whether the nexus allow everything permission is permitted. That is to say a check will be done to see if
+   * the permission `nexus:*` was set on the current {@link #subject()}
+   *
+   * @since 3.22
+   */
+  public boolean isAllPermitted() {
+    return isPermitted(new WildcardPermission2("nexus:*"))[0];
   }
 }

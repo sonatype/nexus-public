@@ -64,6 +64,10 @@ public class ExtDirectExceptionHandler
       }
     }
 
+    if (e instanceof FrozenException || e.getCause() instanceof FrozenException) {
+      return error(new Exception("Nexus Repository Manager is in read-only mode"));
+    }
+
     // exception logging for all non-suppressed exceptions
     if (!isSuppressedException(e)) {
       log.error("Failed to invoke action method: {}, java-method: {}",
@@ -73,11 +77,6 @@ public class ExtDirectExceptionHandler
     if (e instanceof SQLException
         || e.getClass().getName().contains("org.apache.ibatis")
         || e.getClass().getName().contains("com.orientechnologies")) {
-
-      if (e.getCause() instanceof FrozenException) {
-        return error(new Exception("Not allowed while database is frozen"));
-      }
-
       return error(new Exception("A database error occurred"));
     }
 

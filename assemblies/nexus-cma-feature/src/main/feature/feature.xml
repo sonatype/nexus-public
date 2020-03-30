@@ -18,6 +18,7 @@
     <feature>nexus-blobstore-tasks</feature>
     <feature>nexus-repository-apt</feature>
     <feature>nexus-repository-cocoapods</feature>
+    <feature>nexus-repository-conan</feature>
     <feature>nexus-repository-conda</feature>
     <feature>nexus-repository-golang</feature>
     <feature>nexus-repository-helm</feature>

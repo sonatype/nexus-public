@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.security.internal;
 
 import java.util.Map;
 
+import javax.annotation.Priority;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -32,6 +33,7 @@ import org.elasticsearch.search.lookup.SourceLookup;
  * @since 3.1
  */
 @Named(SimpleVariableResolverAdapter.NAME)
+@Priority(Integer.MAX_VALUE)
 @Singleton
 public class SimpleVariableResolverAdapter
     extends AssetVariableResolverSupport

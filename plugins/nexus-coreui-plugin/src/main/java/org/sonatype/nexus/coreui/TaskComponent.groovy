@@ -140,6 +140,7 @@ class TaskComponent
       config.setString(key, value)
     }
     config.setAlertEmail(taskXO.alertEmail)
+    config.setNotificationCondition(taskXO.notificationCondition)
     config.setName(taskXO.name)
     config.setEnabled(taskXO.enabled)
 
@@ -172,6 +173,7 @@ class TaskComponent
       task.configuration.setString(key, value)
     }
     task.configuration.setAlertEmail(taskXO.alertEmail)
+    task.configuration.setNotificationCondition(taskXO.notificationCondition)
     task.configuration.setName(taskXO.name)
 
     task = scheduleTask { scheduler.scheduleTask(task.configuration, schedule) }
@@ -318,6 +320,7 @@ class TaskComponent
         runnable: state.waiting,
         stoppable: state.running,
         alertEmail: task.configuration.alertEmail,
+        notificationCondition: task.configuration.notificationCondition,
         properties: task.configuration.asMap()
     )
     def schedule = task.schedule

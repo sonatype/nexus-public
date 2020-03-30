@@ -180,6 +180,7 @@ class TasksResourceTest
     String typeId
     String message
     String triggerSource
+    Object lastResult
 
     CurrentState currentState
     TaskConfiguration configuration

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.upload;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 
@@ -47,4 +48,18 @@ public interface UploadManager
    * @return the assets created by the operation
    */
   UploadResponse handle(Repository repository, HttpServletRequest request) throws IOException;
+
+  /**
+   * Import a file and its attributes into a repository.  Will fail if the repository format does not have an
+   * available handler.
+   *
+   * @since 3.22
+   *
+   * @param repository the {@link Repository} to add the file to
+   * @param content the {@link File} to add to the repository
+   * @param attributes the attributes {@link File} to associate with the added asset
+   * @param path the path of the content relative to the base import directory
+   * @throws IOException
+   */
+  void handle(Repository repository, File content, File attributes, String path) throws IOException;
 }

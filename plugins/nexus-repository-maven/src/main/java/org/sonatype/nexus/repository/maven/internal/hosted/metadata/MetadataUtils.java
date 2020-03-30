@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.maven.internal.hosted.metadata;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Map;
-import java.util.Objects;
 
 import javax.annotation.Nullable;
 
@@ -82,7 +81,7 @@ public final class MetadataUtils
    * True if content is available for a given path, false otherwise
    */
   public static boolean exists(final Repository repository, final MavenPath mavenPath) throws IOException {
-    return repository.facet(MavenFacet.class).get(mavenPath) != null;
+    return repository.facet(MavenFacet.class).exists(mavenPath);
   }
 
   /**

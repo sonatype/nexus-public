@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.plugins</groupId>
     <artifactId>nexus-plugins</artifactId>
-    <version>3.22.0-SNAPSHOT</version>
+    <version>3.23.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-repository-httpbridge</artifactId>
@@ -36,7 +36,7 @@
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-repository</artifactId>
+      <artifactId>nexus-repository-view</artifactId>
       <scope>provided</scope>
     </dependency>
 

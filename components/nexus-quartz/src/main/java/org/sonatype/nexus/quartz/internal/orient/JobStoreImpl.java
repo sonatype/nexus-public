@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
@@ -107,6 +108,8 @@ public class JobStoreImpl
 
   private static final String NODE_ID = "node.identity";
 
+  private final ReentrantReadWriteLock storeLock = new ReentrantReadWriteLock();
+
   private final Provider<DatabaseInstance> databaseInstance;
 
   private final JobDetailEntityAdapter jobDetailEntityAdapter;
@@ -188,36 +191,57 @@ public class JobStoreImpl
     T execute(ODatabaseDocumentTx db) throws JobPersistenceException;
   }
 
-  private final Object monitor = new Object();
-
   /**
-   * Execute operation within transaction and propagate/translate exceptions.
+   * Execute read operation within transaction and propagate/translate exceptions.
    */
-  private <T> T execute(final Operation<T> operation) throws JobPersistenceException {
+  private <T> T executeRead(final Operation<T> operation) throws JobPersistenceException {
+    storeLock.readLock().lock();
     try {
-      synchronized (monitor) {
-        return inTx(databaseInstance)
-            .retryOn(ONeedRetryException.class, ORecordNotFoundException.class)
-            .throwing(JobPersistenceException.class)
-            .call(operation::execute);
-      }
+      return inTx(databaseInstance)
+          .retryOn(ONeedRetryException.class, ORecordNotFoundException.class)
+          .throwing(JobPersistenceException.class)
+          .call(operation::execute);
     }
     catch (Exception e) {
       log.warn("Execution failed", e);
       Throwables.propagateIfPossible(e, JobPersistenceException.class);
       throw new JobPersistenceException(e.toString(), e);
     }
+    finally {
+      storeLock.readLock().unlock();
+    }
   }
 
   /**
-   * Execute operation and propagate exceptions.
+   * Execute write operation within transaction and propagate/translate exceptions.
+   */
+  private <T> T executeWrite(final Operation<T> operation) throws JobPersistenceException {
+    storeLock.writeLock().lock();
+    try {
+      return inTx(databaseInstance)
+          .retryOn(ONeedRetryException.class, ORecordNotFoundException.class)
+          .throwing(JobPersistenceException.class)
+          .call(operation::execute);
+    }
+    catch (Exception e) {
+      log.warn("Execution failed", e);
+      Throwables.propagateIfPossible(e, JobPersistenceException.class);
+      throw new JobPersistenceException(e.toString(), e);
+    }
+    finally {
+      storeLock.writeLock().unlock();
+    }
+  }
+
+  /**
+   * Execute write operation and propagate exceptions.
    *
    * Most {@link JobStore} declares throwing {@link JobPersistenceException}.
    * This is used for the few places that do not confirm, but can produce exceptions.
    */
-  private <T> T executeAndPropagate(final Operation<T> operation) {
+  private <T> T executeWriteAndPropagate(final Operation<T> operation) {
     try {
-      return execute(operation);
+      return executeWrite(operation);
     }
     catch (JobPersistenceException e) {
       throw new RuntimeException(e);
@@ -254,7 +278,7 @@ public class JobStoreImpl
    */
   @Override
   public void schedulerStarted() throws SchedulerException {
-    execute(
+    executeWrite(
         db -> {
           // check state of local triggers
           for (TriggerEntity triggerEntity : local(triggerEntityAdapter.browse(db))) {
@@ -322,7 +346,7 @@ public class JobStoreImpl
 
   @Override
   public void clearAllSchedulingData() throws JobPersistenceException {
-    execute(db -> {
+    executeWrite(db -> {
       jobDetailEntityAdapter.deleteAll(db);
       triggerEntityAdapter.deleteAll(db);
       calendarEntityAdapter.deleteAll(db);
@@ -336,7 +360,7 @@ public class JobStoreImpl
 
   @Override
   public void storeJob(final JobDetail jobDetail, final boolean replaceExisting) throws JobPersistenceException {
-    execute(db -> {
+    executeWrite(db -> {
       storeJob(db, jobDetail, replaceExisting);
       return null;
     });
@@ -368,7 +392,7 @@ public class JobStoreImpl
   @Override
   public boolean removeJob(final JobKey jobKey) throws JobPersistenceException {
     log.debug("Remove job: {}", jobKey);
-    return execute(db -> removeJob(db, jobKey));
+    return executeWrite(db -> removeJob(db, jobKey));
   }
 
   private boolean removeJob(final ODatabaseDocumentTx db, final JobKey jobKey) throws JobPersistenceException {
@@ -380,7 +404,7 @@ public class JobStoreImpl
   @Override
   public boolean removeJobs(final List<JobKey> jobKeys) throws JobPersistenceException {
     log.debug("Remove jobs: {}", jobKeys);
-    return execute(db -> {
+    return executeWrite(db -> {
       boolean allDeleted = true;
       for (JobKey key : jobKeys) {
         allDeleted = removeJob(db, key) && allDeleted;
@@ -392,7 +416,7 @@ public class JobStoreImpl
   @Override
   @Nullable
   public JobDetail retrieveJob(final JobKey jobKey) throws JobPersistenceException {
-    return execute(db -> {
+    return executeRead(db -> {
       JobDetailEntity entity = jobDetailEntityAdapter.readByKey(db, jobKey);
       return entity != null ? entity.getValue() : null;
     });
@@ -400,17 +424,17 @@ public class JobStoreImpl
 
   @Override
   public boolean checkExists(final JobKey jobKey) throws JobPersistenceException {
-    return execute(db -> jobDetailEntityAdapter.existsByKey(db, jobKey));
+    return executeRead(db -> jobDetailEntityAdapter.existsByKey(db, jobKey));
   }
 
   @Override
   public int getNumberOfJobs() throws JobPersistenceException {
-    return execute(db -> jobDetailEntityAdapter.countI(db));
+    return executeRead(db -> jobDetailEntityAdapter.countI(db));
   }
 
   @Override
   public List<String> getJobGroupNames() throws JobPersistenceException {
-    return execute(db -> {
+    return executeRead(db -> {
       ArrayList<String> result = new ArrayList<>();
       for (JobDetailEntity entity : jobDetailEntityAdapter.browse(db)) {
         result.add(entity.getGroup());
@@ -421,7 +445,7 @@ public class JobStoreImpl
 
   @Override
   public Set<JobKey> getJobKeys(final GroupMatcher<JobKey> matcher) throws JobPersistenceException {
-    return execute(db -> getJobKeys(db, matcher));
+    return executeRead(db -> getJobKeys(db, matcher));
   }
 
   private Set<JobKey> getJobKeys(final ODatabaseDocumentTx db, final GroupMatcher<JobKey> matcher)
@@ -439,7 +463,7 @@ public class JobStoreImpl
 
   @Override
   public void pauseJob(final JobKey jobKey) throws JobPersistenceException {
-    execute(db -> {
+    executeWrite(db -> {
       pauseJob(db, jobKey);
       return null;
     });
@@ -457,7 +481,7 @@ public class JobStoreImpl
   public Collection<String> pauseJobs(final GroupMatcher<JobKey> matcher) throws JobPersistenceException {
     log.debug("Pause jobs: {}", matcher);
 
-    return execute(db -> {
+    return executeWrite(db -> {
       Set<String> groups = new HashSet<>();
       for (JobKey jobKey : getJobKeys(db, matcher)) {
         groups.add(jobKey.getGroup());
@@ -474,7 +498,7 @@ public class JobStoreImpl
 
   @Override
   public void resumeJob(final JobKey jobKey) throws JobPersistenceException {
-    execute(db -> {
+    executeWrite(db -> {
       resumeJob(db, jobKey);
       return null;
     });
@@ -492,7 +516,7 @@ public class JobStoreImpl
   public Collection<String> resumeJobs(final GroupMatcher<JobKey> matcher) throws JobPersistenceException {
     log.debug("Resume jobs: {}", matcher);
 
-    return execute(db -> {
+    return executeWrite(db -> {
       Set<String> groups = new HashSet<>();
       for (JobKey jobKey : getJobKeys(db, matcher)) {
         groups.add(jobKey.getGroup());
@@ -511,7 +535,7 @@ public class JobStoreImpl
   public void storeJobAndTrigger(final JobDetail jobDetail, final OperableTrigger trigger)
       throws JobPersistenceException
   {
-    execute(db -> {
+    executeWrite(db -> {
       storeJob(db, jobDetail, false);
       storeTrigger(db, trigger, false);
       return null;
@@ -523,7 +547,7 @@ public class JobStoreImpl
                                    final boolean replace)
       throws JobPersistenceException
   {
-    execute(db -> {
+    executeWrite(db -> {
       for (Entry<JobDetail, Set<? extends Trigger>> entry : jobsAndTriggers.entrySet()) {
         JobDetail jobDetail = entry.getKey();
         storeJob(db, jobDetail, replace);
@@ -545,7 +569,7 @@ public class JobStoreImpl
   public void storeTrigger(final OperableTrigger trigger, final boolean replaceExisting)
       throws JobPersistenceException
   {
-    execute(db -> {
+    executeWrite(db -> {
       storeTrigger(db, trigger, replaceExisting);
       return null;
     });
@@ -584,7 +608,7 @@ public class JobStoreImpl
   @Override
   public boolean removeTrigger(final TriggerKey triggerKey) throws JobPersistenceException {
     log.debug("Remove trigger: {}", triggerKey);
-    return execute(db -> removeTrigger(db, triggerKey));
+    return executeWrite(db -> removeTrigger(db, triggerKey));
   }
 
   private boolean removeTrigger(final ODatabaseDocumentTx db, final TriggerKey triggerKey)
@@ -631,7 +655,7 @@ public class JobStoreImpl
   public boolean removeTriggers(final List<TriggerKey> triggerKeys) throws JobPersistenceException {
     log.debug("Remove triggers: {}", triggerKeys);
 
-    return execute(db -> {
+    return executeWrite(db -> {
       boolean allDeleted = true;
       for (TriggerKey key : triggerKeys) {
         allDeleted = removeTrigger(db, key) && allDeleted;
@@ -651,7 +675,7 @@ public class JobStoreImpl
       trigger.getJobDataMap().put(NODE_ID, nodeAccess.getId());
     }
 
-    return execute(db -> {
+    return executeWrite(db -> {
       TriggerEntity entity = triggerEntityAdapter.readByKey(db, triggerKey);
       if (entity != null) {
         // if entity exists, ensure trigger is associate with the same job
@@ -674,7 +698,7 @@ public class JobStoreImpl
   @Override
   @Nullable
   public OperableTrigger retrieveTrigger(final TriggerKey triggerKey) throws JobPersistenceException {
-    return execute(db -> {
+    return executeRead(db -> {
       TriggerEntity entity = triggerEntityAdapter.readByKey(db, triggerKey);
       return entity != null ? entity.getValue() : null;
     });
@@ -682,17 +706,17 @@ public class JobStoreImpl
 
   @Override
   public boolean checkExists(final TriggerKey triggerKey) throws JobPersistenceException {
-    return execute(db -> triggerEntityAdapter.existsByKey(db, triggerKey));
+    return executeRead(db -> triggerEntityAdapter.existsByKey(db, triggerKey));
   }
 
   @Override
   public int getNumberOfTriggers() throws JobPersistenceException {
-    return execute(db -> triggerEntityAdapter.countI(db));
+    return executeRead(db -> triggerEntityAdapter.countI(db));
   }
 
   @Override
   public Set<TriggerKey> getTriggerKeys(final GroupMatcher<TriggerKey> matcher) throws JobPersistenceException {
-    return execute(db -> getTriggerKeys(db, matcher));
+    return executeRead(db -> getTriggerKeys(db, matcher));
   }
 
   /**
@@ -725,12 +749,12 @@ public class JobStoreImpl
 
   @Override
   public List<String> getTriggerGroupNames() throws JobPersistenceException {
-    return execute(db -> ImmutableList.copyOf(getTriggerGroups(db, GroupMatcher.anyGroup())));
+    return executeRead(db -> ImmutableList.copyOf(getTriggerGroups(db, GroupMatcher.anyGroup())));
   }
 
   @Override
   public List<OperableTrigger> getTriggersForJob(final JobKey jobKey) throws JobPersistenceException {
-    return execute(db -> getTriggersForJob(db, jobKey));
+    return executeRead(db -> getTriggersForJob(db, jobKey));
   }
 
   private List<OperableTrigger> getTriggersForJob(final ODatabaseDocumentTx db, final JobKey jobKey) {
@@ -743,7 +767,7 @@ public class JobStoreImpl
 
   @Override
   public TriggerState getTriggerState(final TriggerKey triggerKey) throws JobPersistenceException {
-    return execute(db -> {
+    return executeRead(db -> {
       TriggerEntity entity = triggerEntityAdapter.readByKey(db, triggerKey);
       if (entity == null) {
         return TriggerState.NONE;
@@ -772,7 +796,7 @@ public class JobStoreImpl
 
   @Override
   public void pauseTrigger(final TriggerKey triggerKey) throws JobPersistenceException {
-    execute(db -> {
+    executeWrite(db -> {
       pauseTrigger(db, triggerKey);
       return null;
     });
@@ -810,7 +834,7 @@ public class JobStoreImpl
   public Collection<String> pauseTriggers(final GroupMatcher<TriggerKey> matcher) throws JobPersistenceException {
     log.debug("Pause triggers: {}", matcher);
 
-    return execute(db -> {
+    return executeWrite(db -> {
       Set<String> groups = new HashSet<>();
       for (TriggerKey triggerKey : getTriggerKeys(db, matcher)) {
         groups.add(triggerKey.getGroup());
@@ -829,7 +853,7 @@ public class JobStoreImpl
   public void pauseAll() throws JobPersistenceException {
     log.debug("Pause all");
 
-    execute(db -> {
+    executeWrite(db -> {
       for (TriggerKey triggerKey : getTriggerKeys(db, GroupMatcher.<TriggerKey>anyGroup())) {
         pauseTrigger(db, triggerKey);
       }
@@ -839,7 +863,7 @@ public class JobStoreImpl
 
   @Override
   public void resumeTrigger(final TriggerKey triggerKey) throws JobPersistenceException {
-    execute(db -> {
+    executeWrite(db -> {
       resumeTrigger(db, triggerKey);
       return null;
     });
@@ -869,7 +893,7 @@ public class JobStoreImpl
   public Collection<String> resumeTriggers(final GroupMatcher<TriggerKey> matcher) throws JobPersistenceException {
     log.debug("Resume triggers: {}", matcher);
 
-    return execute(db -> {
+    return executeWrite(db -> {
       Set<String> groups = getTriggerGroups(db, matcher);
       for (String group : groups) {
         for (TriggerKey triggerKey : getTriggerKeys(db, GroupMatcher.triggerGroupEquals(group))) {
@@ -884,7 +908,7 @@ public class JobStoreImpl
   public void resumeAll() throws JobPersistenceException {
     log.debug("Resume all");
 
-    execute(db -> {
+    executeWrite(db -> {
       for (TriggerKey triggerKey : getTriggerKeys(db, GroupMatcher.<TriggerKey>anyGroup())) {
         resumeTrigger(db, triggerKey);
       }
@@ -894,7 +918,7 @@ public class JobStoreImpl
 
   @Override
   public Set<String> getPausedTriggerGroups() throws JobPersistenceException {
-    return execute(
+    return executeRead(
         db -> {
           Set<String> pausedGroups = new HashSet<>();
           Set<String> groups = getTriggerGroups(db, GroupMatcher.anyGroup());
@@ -916,12 +940,11 @@ public class JobStoreImpl
                                                    final long timeWindow)
       throws JobPersistenceException
   {
+    storeLock.writeLock().lock();
     try {
-      synchronized (monitor) {
-        return inTx(databaseInstance)
-            .retryOn(ONeedRetryException.class, ORecordNotFoundException.class)
-            .call(db -> doAcquireNextTriggers(db, noLaterThan, maxCount, timeWindow));
-      }
+      return inTx(databaseInstance)
+          .retryOn(ONeedRetryException.class, ORecordNotFoundException.class)
+          .call(db -> doAcquireNextTriggers(db, noLaterThan, maxCount, timeWindow));
     }
     catch (RuntimeException e) {
       acquireNextTriggersSummarizer.log("Problem acquiring next triggers", e);
@@ -933,11 +956,14 @@ public class JobStoreImpl
       }
       throw new JobPersistenceException(e.toString(), e);
     }
+    finally {
+      storeLock.writeLock().unlock();
+    }
   }
 
   @Override
   public void resetTriggerFromErrorState(final TriggerKey triggerKey) throws JobPersistenceException {
-    execute(db -> {
+    executeWrite(db -> {
       TriggerEntity.State newState = WAITING;
 
       if (isTriggerGroupPaused(db, triggerKey.getGroup())) {
@@ -1087,7 +1113,7 @@ public class JobStoreImpl
   public void releaseAcquiredTrigger(final OperableTrigger trigger) {
     log.debug("Release acquired trigger: {}", trigger);
 
-    executeAndPropagate(db -> {
+    executeWriteAndPropagate(db -> {
       TriggerEntity entity = triggerEntityAdapter.readByKey(db, trigger.getKey());
 
       // update state to WAITING if the current state is ACQUIRED
@@ -1104,7 +1130,7 @@ public class JobStoreImpl
   public List<TriggerFiredResult> triggersFired(final List<OperableTrigger> triggers) throws JobPersistenceException {
     log.debug("Triggers fired: {}", triggers);
 
-    return execute(db -> {
+    return executeWrite(db -> {
       List<TriggerFiredResult> results = new ArrayList<>();
 
       for (OperableTrigger trigger : triggers) {
@@ -1245,7 +1271,7 @@ public class JobStoreImpl
   {
     log.debug("Triggered job complete: trigger={}, jobDetail={}, instruction={}", trigger, jobDetail, instruction);
 
-    executeAndPropagate(db -> {
+    executeWriteAndPropagate(db -> {
 
       // back from quartz; save job-data-map if needed
       if (jobDetail.getJobDataMap().isDirty() && jobDetail.isPersistJobDataAfterExecution()) {
@@ -1421,7 +1447,7 @@ public class JobStoreImpl
     log.debug("Store calendar: name={}, calendar={}, replaceExisting={}, updateTriggers={}",
         name, calendar, replaceExisting, updateTriggers);
 
-    execute(db -> {
+    executeWrite(db -> {
       CalendarEntity entity = calendarEntityAdapter.readByName(db, name);
       if (entity == null) {
         // no existing entity, add new one
@@ -1452,13 +1478,13 @@ public class JobStoreImpl
   public boolean removeCalendar(final String name) throws JobPersistenceException {
     log.debug("Remove calendar: {}", name);
 
-    return execute(db -> calendarEntityAdapter.deleteByName(db, name));
+    return executeWrite(db -> calendarEntityAdapter.deleteByName(db, name));
   }
 
   @Override
   @Nullable
   public Calendar retrieveCalendar(final String name) throws JobPersistenceException {
-    return execute(db -> {
+    return executeRead(db -> {
       CalendarEntity entity = calendarEntityAdapter.readByName(db, name);
       return entity != null ? entity.getValue() : null;
     });
@@ -1466,12 +1492,12 @@ public class JobStoreImpl
 
   @Override
   public int getNumberOfCalendars() throws JobPersistenceException {
-    return execute(db -> calendarEntityAdapter.countI(db));
+    return executeRead(db -> calendarEntityAdapter.countI(db));
   }
 
   @Override
   public List<String> getCalendarNames() throws JobPersistenceException {
-    return execute(db -> calendarEntityAdapter.browseNames(db));
+    return executeRead(db -> calendarEntityAdapter.browseNames(db));
   }
 
   /**

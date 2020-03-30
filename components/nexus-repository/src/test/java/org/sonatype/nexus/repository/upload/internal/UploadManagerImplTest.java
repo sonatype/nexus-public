@@ -24,6 +24,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.rest.cma.ComponentUploadExtension;
 import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.types.GroupType;
@@ -75,6 +76,9 @@ public class UploadManagerImplTest extends TestSupport
   UploadDefinition uploadB;
 
   @Mock
+  Configuration configuration;
+
+  @Mock
   Repository repository;
 
   @Mock
@@ -104,6 +108,8 @@ public class UploadManagerImplTest extends TestSupport
     {
     });
     when(repository.getType()).thenReturn(new HostedType());
+    when(repository.getConfiguration()).thenReturn(configuration);
+    when(configuration.isOnline()).thenReturn(true);
 
     Map<String, UploadHandler> handlers = new HashMap<>();
     handlers.put("a", handlerA);
@@ -181,6 +187,12 @@ public class UploadManagerImplTest extends TestSupport
     when(repository.getType()).thenReturn(new VirtualType());
     expectExceptionOnUpload(repository,
         "Uploading components to a 'virtual' type repository is unsupported, must be 'hosted'");
+  }
+
+  @Test
+  public void testHandle_offlineRepository() throws IOException {
+    when(configuration.isOnline()).thenReturn(false);
+    expectExceptionOnUpload(repository, "Repository offline");
   }
 
   private void expectExceptionOnUpload(final Repository repository, final String message) throws IOException {

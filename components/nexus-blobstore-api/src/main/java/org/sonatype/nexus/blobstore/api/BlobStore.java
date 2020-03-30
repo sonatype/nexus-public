@@ -275,7 +275,7 @@ public interface BlobStore
   /**
    * Permanently stops this blob store.
    *
-   * @since 3.next
+   * @since 3.22
    */
   void shutdown() throws Exception;
 }

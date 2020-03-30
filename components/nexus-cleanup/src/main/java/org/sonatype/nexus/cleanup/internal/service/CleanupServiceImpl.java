@@ -26,7 +26,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.cleanup.internal.method.CleanupMethod;
-import org.sonatype.nexus.cleanup.service.CleanupComponentBrowse;
+import org.sonatype.nexus.cleanup.preview.CleanupComponentBrowse;
 import org.sonatype.nexus.cleanup.service.CleanupService;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;

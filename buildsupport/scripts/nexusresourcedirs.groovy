@@ -28,27 +28,27 @@ def dirs = []
 roots.split(',').each { root ->
   def dir = new File(root)
   if (dir.exists()) {
-    dir.eachDirRecurse {
+    def excludedDirs = ['.git', 'node_modules', 'assemblies', 'java', 'dist', 'jenkins', 'test', 'target', 'testsuite', 'frontend', 'baseapp']
+    dir.traverse(
+        type: groovy.io.FileType.DIRECTORIES,
+        preDir: { (it.name in excludedDirs || it.name.startsWith('.') || it.path ==~ /.*resources\/(?!static).*$/) ? groovy.io.FileVisitResult.SKIP_SUBTREE : null }
+    ) {
       if (it.path.endsWith('src/main/resources/static')) {
         dirs << it.parentFile.canonicalPath
-      }
-      else if (it.path.endsWith('src/test/ft-resources')) {
-        dirs << it.canonicalPath
+        return groovy.io.FileVisitResult.SKIP_SUBTREE
       }
     }
   }
 }
 
-// use the original source first, but if the file is derived it will only be available in the target/classes/static dirs
+// derived files live in target/classes/static dirs
 roots.split(',').each { root ->
-  def dir = new File(root)
-  if (dir.exists()) {
-    dir.eachDirRecurse {
-      if (it.path.endsWith('target/classes/static')) {
-        dirs << it.parentFile.canonicalPath
-      }
-    }
-  }
+  dirs << new File('./components/nexus-ui-plugin/target/classes').canonicalPath
+  dirs << new File('./components/nexus-rapture/target/classes').canonicalPath
+  dirs << new File('./plugins/nexus-coreui-plugin/target/classes').canonicalPath
+  dirs << new File('./private/plugins/nexus-proui-plugin/target/classes').canonicalPath
 }
 
 println dirs.join(',')
+
+return dirs.join(',')

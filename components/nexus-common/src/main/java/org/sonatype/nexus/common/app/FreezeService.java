@@ -116,6 +116,15 @@ public interface FreezeService
   boolean isFrozen();
 
   /**
+   * @return Is the application frozen by user request?
+   *
+   * @since 3.next
+   */
+  default boolean isFrozenByUser() {
+    return currentFreezeRequests().stream().anyMatch(FreezeRequest::isUserRequest);
+  }
+
+  /**
    * @return The currently active freeze requests, if any exist
    */
   List<FreezeRequest> currentFreezeRequests();

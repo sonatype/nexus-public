@@ -19,7 +19,7 @@ import org.apache.shiro.authc.AccountException;
 /**
  * Exception with details about a failed authentication attempt.
  *
- * @since 3.next
+ * @since 3.22
  */
 public class NexusAuthenticationException
     extends AccountException

@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository;
 
 /**
- * @since 3.next
+ * @since 3.22
  */
 public abstract class FormatFacetSupport
   extends FacetSupport

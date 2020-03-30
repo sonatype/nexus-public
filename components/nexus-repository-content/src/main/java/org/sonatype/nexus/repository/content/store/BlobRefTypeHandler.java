@@ -22,13 +22,13 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.datastore.mybatis.handlers.ContentTypeHandler;
 
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
-import org.apache.ibatis.type.TypeHandler;
 
 /**
- * MyBatis {@link TypeHandler} that maps {@link BlobRef}s to/from SQL.
+ * MyBatis {@link ContentTypeHandler} that maps {@link BlobRef}s to/from SQL.
  *
  * @since 3.20
  */
@@ -36,6 +36,7 @@ import org.apache.ibatis.type.TypeHandler;
 @Singleton
 public class BlobRefTypeHandler
     extends BaseTypeHandler<BlobRef>
+    implements ContentTypeHandler<BlobRef>
 {
   @Override
   public void setNonNullParameter(final PreparedStatement ps,

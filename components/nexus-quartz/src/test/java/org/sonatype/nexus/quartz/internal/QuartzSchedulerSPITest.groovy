@@ -18,7 +18,6 @@ import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.common.log.LastShutdownTimeService
 import org.sonatype.nexus.common.node.NodeAccess
-import org.sonatype.nexus.orient.DatabaseStatusDelayedExecutor
 import org.sonatype.nexus.quartz.internal.orient.DistributedQuartzEventInspector
 import org.sonatype.nexus.quartz.internal.orient.JobCreatedEvent
 import org.sonatype.nexus.quartz.internal.orient.JobDeletedEvent
@@ -41,6 +40,7 @@ import org.sonatype.nexus.scheduling.schedule.Manual
 import org.sonatype.nexus.scheduling.schedule.Now
 import org.sonatype.nexus.scheduling.schedule.Schedule
 import org.sonatype.nexus.testcommon.event.SimpleEventManager
+import org.sonatype.nexus.thread.DatabaseStatusDelayedExecutor
 
 import com.google.common.collect.Lists
 import org.joda.time.DateTime

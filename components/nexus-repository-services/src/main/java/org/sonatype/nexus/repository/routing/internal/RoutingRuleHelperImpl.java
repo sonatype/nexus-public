@@ -53,7 +53,7 @@ public class RoutingRuleHelperImpl
 
   private final RepositoryPermissionChecker repositoryPermissionChecker;
 
-  private volatile Iterable<Permission> repositoryAddPermissions;
+  private volatile List<Permission> repositoryAddPermissions;
 
   @Inject
   public RoutingRuleHelperImpl(
@@ -96,14 +96,17 @@ public class RoutingRuleHelperImpl
 
   @Override
   public void ensureUserHasPermissionToRead() {
-    repositoryPermissionChecker.ensureUserHasAnyPermissionOrAdminAccess(
-        getRepositoryAddPermissions(),
-        READ,
-        repositoryManager.browse()
-    );
+    List<Permission> permissions = getRepositoryAddPermissions();
+    if (!permissions.isEmpty()) { // avoid log-spam when we start NXRM with no recipes
+      repositoryPermissionChecker.ensureUserHasAnyPermissionOrAdminAccess(
+          permissions,
+          READ,
+          repositoryManager.browse()
+      );
+    }
   }
 
-  private Iterable<Permission> getRepositoryAddPermissions() {
+  private List<Permission> getRepositoryAddPermissions() {
     if (null == repositoryAddPermissions) {
       repositoryAddPermissions = repositoryManager.getAllSupportedRecipes().stream()
           .filter(r -> r.getType().getValue().equals(ProxyType.NAME))

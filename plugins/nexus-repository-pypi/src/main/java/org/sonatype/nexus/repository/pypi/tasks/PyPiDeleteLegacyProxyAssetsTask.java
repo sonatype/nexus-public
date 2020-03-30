@@ -42,7 +42,7 @@ import static org.sonatype.nexus.repository.pypi.upgrade.PyPiUpgrade_1_2.MARKER_
  * (<code>/packages/{name}/{version}/{name}-{version}.{ext}</code>) as well as package metadata which has been
  * re-written.
  *
- * @since 3.next
+ * @since 3.22
  */
 @Named
 public class PyPiDeleteLegacyProxyAssetsTask

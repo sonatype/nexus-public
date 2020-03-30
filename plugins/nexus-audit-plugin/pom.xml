@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.sonatype.nexus.plugins</groupId>
     <artifactId>nexus-plugins</artifactId>
-    <version>3.22.0-SNAPSHOT</version>
+    <version>3.23.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-audit-plugin</artifactId>
@@ -38,11 +38,6 @@
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-audit</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-orient</artifactId>
       <scope>provided</scope>
     </dependency>
 
@@ -67,6 +62,7 @@
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-webhooks</artifactId>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>

@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-components</artifactId>
-    <version>3.22.0-SNAPSHOT</version>
+    <version>3.23.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-repository-services</artifactId>
@@ -71,11 +71,6 @@
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-validation</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-orient</artifactId>
     </dependency>
 
     <dependency>
@@ -238,13 +233,10 @@
         <configuration>
           <instructions>
             <!--
-            Add mandatory 'split' attribute to stop people importing this partial CMA-free package.
-            Instead we'll merge this with the other CMA types in nexus-repository and re-export it.
+            Merge at runtime with nexus-repository-content to fix a split-package issue with
+            nexus-repository. This instruction can be removed once nexus-repository is gone.
             -->
-            <_exportcontents>
-              org.sonatype.nexus.repository.cache;split=true;mandatory:=split,
-              org.sonatype.nexus.repository.upload;split=true;mandatory:=split,*
-            </_exportcontents>
+            <Fragment-Host>org.sonatype.nexus.repository-content</Fragment-Host>
           </instructions>
         </configuration>
       </plugin>

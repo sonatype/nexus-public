@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.upload.internal;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -45,9 +46,11 @@ import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 
 /**
+ * CMA-backed {@link UploadManager}.
+ *
  * @since 3.7
  */
-@Named
+@Named("default")
 @Singleton
 public class UploadManagerImpl
     extends ComponentSupport
@@ -86,6 +89,10 @@ public class UploadManagerImpl
     checkNotNull(repository);
     checkNotNull(request);
 
+    if (!repository.getConfiguration().isOnline()) {
+      throw new ValidationErrorsException("Repository offline");
+    }
+
     UploadHandler uploadHandler = getUploadHandler(repository);
     ComponentUpload upload = create(repository, request);
     logUploadDetails(upload, repository);
@@ -117,6 +124,15 @@ public class UploadManagerImpl
 
     UploadHandler handler = uploadHandlers.get(format);
     return handler != null ? handler.getDefinition() : null;
+  }
+
+  @Override
+  public void handle(
+      final Repository repository, final File content, final File attributes, final String path) throws IOException
+  {
+    UploadHandler uploadHandler = getUploadHandler(repository);
+
+    uploadHandler.handle(repository, content, attributes, path);
   }
 
   private ComponentUpload create(final Repository repository, final HttpServletRequest request)

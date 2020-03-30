@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.Facet;
 /**
  * Optional BrowseNode facet; used to customize legacy browse-node behaviour.
  *
- * @since 3.next
+ * @since 3.22
  */
 @Facet.Exposed
 public interface BrowseNodeFacet

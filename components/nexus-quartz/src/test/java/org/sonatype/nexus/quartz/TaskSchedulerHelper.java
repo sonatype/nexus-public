@@ -27,12 +27,12 @@ import org.sonatype.nexus.common.log.LastShutdownTimeService;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.common.stateguard.StateGuardModule;
 import org.sonatype.nexus.orient.DatabaseInstance;
-import org.sonatype.nexus.orient.DatabaseStatusDelayedExecutor;
 import org.sonatype.nexus.quartz.internal.QuartzSchedulerProvider;
 import org.sonatype.nexus.quartz.internal.orient.JobStoreImpl;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.spi.SchedulerSPI;
 import org.sonatype.nexus.testcommon.event.SimpleEventManager;
+import org.sonatype.nexus.thread.DatabaseStatusDelayedExecutor;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Guice;

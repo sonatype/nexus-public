@@ -77,6 +77,8 @@ public class TaskConfiguration
 
   static final String ALERT_EMAIL_KEY = ".alertEmail";
 
+  static final String NOTIFICATION_CONDITION_KEY = ".notificationCondition";
+
   static final String CREATED_KEY = ".created";
 
   static final String UPDATED_KEY = ".updated";
@@ -177,7 +179,6 @@ public class TaskConfiguration
     return getBoolean(VISIBLE_KEY, true);
   }
 
-
   public void setVisible(final boolean visible) {
     setBoolean(VISIBLE_KEY, visible);
   }
@@ -189,6 +190,14 @@ public class TaskConfiguration
 
   public void setAlertEmail(final String email) {
     setString(ALERT_EMAIL_KEY, email);
+  }
+
+  public TaskNotificationCondition getNotificationCondition() {
+    return TaskNotificationCondition.valueOf(getString(NOTIFICATION_CONDITION_KEY, TaskNotificationCondition.DEFAULT.name()));
+  }
+
+  public void setNotificationCondition(final TaskNotificationCondition condition) {
+    setString(NOTIFICATION_CONDITION_KEY, condition.name());
   }
 
   @Nullable

@@ -31,7 +31,9 @@ import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.common.text.Strings2;
+import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.security.SecuritySystem;
+import org.sonatype.nexus.security.UserIdHelper;
 import org.sonatype.nexus.security.UserPrincipalsExpired;
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
 import org.sonatype.nexus.security.anonymous.AnonymousManager;
@@ -50,11 +52,11 @@ import org.sonatype.nexus.security.user.User;
 import org.sonatype.nexus.security.user.UserManager;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.security.user.UserSearchCriteria;
-import org.sonatype.nexus.security.user.UserStatus;
 
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.realm.Realm;
 import org.apache.shiro.subject.PrincipalCollection;
@@ -62,6 +64,7 @@ import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.LifecycleUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SECURITY;
 
 /**
@@ -88,13 +91,16 @@ public class DefaultSecuritySystem
 
   private final Map<String, UserManager> userManagers;
 
+  private final SecurityHelper securityHelper;
+
   @Inject
   public DefaultSecuritySystem(final EventManager eventManager,
                                final RealmSecurityManager realmSecurityManager,
                                final RealmManager realmManager,
                                final AnonymousManager anonymousManager,
                                final Map<String, AuthorizationManager> authorizationManagers,
-                               final Map<String, UserManager> userManagers)
+                               final Map<String, UserManager> userManagers,
+                               final SecurityHelper securityHelper)
   {
     this.eventManager = checkNotNull(eventManager);
     this.realmSecurityManager = checkNotNull(realmSecurityManager);
@@ -102,6 +108,7 @@ public class DefaultSecuritySystem
     this.anonymousManager = checkNotNull(anonymousManager);
     this.authorizationManagers = checkNotNull(authorizationManagers);
     this.userManagers = checkNotNull(userManagers);
+    this.securityHelper = checkNotNull(securityHelper);
   }
 
   // TODO: Sort out better lifecycle management for dependent components
@@ -528,6 +535,9 @@ public class DefaultSecuritySystem
 
   @Override
   public void changePassword(String userId, String newPassword, boolean clearCache) throws UserNotFoundException {
+    // NEXUS-23237 check required permissions first
+    requirePermissionToChangeUserPassword(userId);
+
     User user = getUser(userId);
 
     try {
@@ -542,6 +552,17 @@ public class DefaultSecuritySystem
 
     // Post event containing the userId for which the password has been changed
     eventManager.post(new UserPasswordChanged(userId, clearCache));
+  }
+
+  public void requirePermissionToChangeUserPassword(final String userId) {
+    if (!isPermittedToChangeUserPassword(userId)) {
+      throw new AuthorizationException(
+          format("%s is not permitted to change the password for %s", UserIdHelper.get(), userId));
+    }
+  }
+
+  public boolean isPermittedToChangeUserPassword(final String userId) {
+    return UserIdHelper.get().equals(userId) || securityHelper.isAllPermitted();
   }
 
   private Collection<UserManager> getUserManagers() {

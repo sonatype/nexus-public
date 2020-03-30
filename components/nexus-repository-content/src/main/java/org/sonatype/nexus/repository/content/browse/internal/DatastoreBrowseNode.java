@@ -23,7 +23,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
- * @since 3.next
+ * @since 3.22
  */
 public class DatastoreBrowseNode
     implements BrowseNode<Integer>

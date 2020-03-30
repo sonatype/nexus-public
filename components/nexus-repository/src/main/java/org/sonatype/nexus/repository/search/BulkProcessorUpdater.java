@@ -29,7 +29,7 @@ import org.elasticsearch.action.bulk.BulkProcessor;
  * This is achieved by using a single thread pool in {@link SearchServiceImpl} to run instances of this Runnable which
  * are created in {@link SearchServiceImpl}.
  *
- * @since 3.next
+ * @since 3.22
  */
 public class BulkProcessorUpdater<T extends ActionRequest<T>>
     extends ComponentSupport
