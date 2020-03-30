@@ -176,6 +176,7 @@ public class QuartzTaskJobListener
     );
 
     taskInfo.setLastResult(context.getResult());
+    taskInfo.getContext().put("duration_ms", runDuration);
 
     // fire events
     switch (endState) {

@@ -13,6 +13,8 @@
 package org.sonatype.nexus.quartz.internal.task;
 
 import java.util.Date;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.Nullable;
 
@@ -69,6 +71,8 @@ public class QuartzTaskInfo
   private volatile boolean removed;
 
   private Object lastResult;
+
+  private final Map<String,Object> context = new ConcurrentHashMap<>();
 
   public QuartzTaskInfo(final EventManager eventManager,
                         final QuartzSchedulerSPI scheduler,
@@ -290,6 +294,11 @@ public class QuartzTaskInfo
         ", taskFuture=" + taskFuture +
         ", removed=" + removed +
         '}';
+  }
+
+  @Override
+  public Map<String, Object> getContext() {
+    return context;
   }
 
   /**
