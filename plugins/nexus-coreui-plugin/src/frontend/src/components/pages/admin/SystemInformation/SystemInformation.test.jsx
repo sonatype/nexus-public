@@ -74,6 +74,8 @@ describe('SystemInformation', () => {
   it('renders correctly', async () => {
     const {container, queryByText} = render(<SystemInformation/>);
 
+    expect(container).toMatchSnapshot();
+
     await wait(() => expect(container).toContainElement(queryByText('system-filestores')));
 
     expect(container).toMatchSnapshot();

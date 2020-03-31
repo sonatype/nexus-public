@@ -16,16 +16,22 @@ import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import {faDownload} from '@fortawesome/free-solid-svg-icons';
 
 import Axios from 'axios';
-import {BreadcrumbActions, Button, ContentBody, Information, Section, Utils} from 'nexus-ui-plugin';
+import {BreadcrumbActions, Button, ContentBody, Section, Utils} from 'nexus-ui-plugin';
 import UIStrings from '../../../../constants/UIStrings';
+
+import SystemInformationBody from "./SystemInformationBody";
 
 import './SystemInformation.scss';
 
 const INITIAL_VALUE = {};
 
+/**
+ * @since 3.next
+ */
 export default function SystemInformation() {
   const [systemInformation, setSystemInformation] = useState(INITIAL_VALUE);
   const isLoaded = systemInformation !== INITIAL_VALUE;
+  const isLoading = !isLoaded;
 
   useEffect(() => {
     if (isLoaded) {
@@ -44,81 +50,12 @@ export default function SystemInformation() {
   return <>
     <BreadcrumbActions>
       <Button variant="primary" onClick={() => downloadSystemInformation()} disabled={!isLoaded}>
-        <FontAwesomeIcon icon={faDownload} pull="left" />
+        <FontAwesomeIcon icon={faDownload} pull="left"/>
         {UIStrings.SYSTEM_INFORMATION.ACTIONS.download}
       </Button>
     </BreadcrumbActions>
-    {isLoaded ?
-        <ContentBody className="nxrm-system-information">
-          <SystemInformationSection
-              sectionName="nexus-status"
-              information={systemInformation['nexus-status']}
-          />
-          <SystemInformationSection
-              sectionName="nexus-node"
-              information={systemInformation['nexus-node']}
-          />
-          <SystemInformationSection
-              sectionName="nexus-configuration"
-              information={systemInformation['nexus-configuration']}
-          />
-          <SystemInformationSection
-              sectionName="nexus-properties"
-              information={systemInformation['nexus-properties']}
-          />
-          <SystemInformationSection
-              sectionName="nexus-license"
-              information={systemInformation['nexus-license']}
-          />
-          <NestedSystemInformationSection
-              sectionName="nexus-bundles"
-              sectionInformation={systemInformation['nexus-bundles']}
-          />
-          <SystemInformationSection
-              sectionName="system-time"
-              information={systemInformation['system-time']}
-          />
-          <SystemInformationSection
-              sectionName="system-properties"
-              information={systemInformation['system-properties']}
-          />
-          <SystemInformationSection
-              sectionName="system-environment"
-              information={systemInformation['system-environment']}
-          />
-          <SystemInformationSection
-              sectionName="system-runtime"
-              information={systemInformation['system-runtime']}
-          />
-          <NestedSystemInformationSection
-              sectionName="system-network"
-              sectionInformation={systemInformation['system-network']}
-          />
-          <NestedSystemInformationSection
-              sectionName="system-filestores"
-              sectionInformation={systemInformation['system-filestores']}
-          />
-        </ContentBody> :
-        null
-    }
+    <ContentBody className="nxrm-system-information">
+      {isLoading ? <Section>{UIStrings.LOADING}</Section> : <SystemInformationBody systemInformation={systemInformation} />}
+    </ContentBody>
   </>;
-}
-
-function SystemInformationSection({sectionName, information}) {
-  return <Section>
-    <h2>{sectionName}</h2>
-    <Information information={information} />
-  </Section>;
-}
-
-function NestedSystemInformationSection({sectionName, sectionInformation}) {
-  return <Section>
-    <h2>{sectionName}</h2>
-    {Object.entries(sectionInformation).map(([nestedName, nestedInformation]) =>
-        <div key={nestedName}>
-          <h3>{nestedName}</h3>
-          <Information information={nestedInformation} />
-        </div>
-    )}
-  </Section>;
 }

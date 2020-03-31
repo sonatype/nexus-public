@@ -1,4 +1,4 @@
-/**
+/*
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
  * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
@@ -10,12 +10,23 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/**
- * @since 3.21
- */
-@import '../../../../styles/colors';
+import React from 'react';
 
-.nxrm-content-body {
-  border-top: solid 1px $light-gray;
-  padding: 1em;
+import {Information, Section} from 'nexus-ui-plugin';
+
+/**
+ * @since 3.next
+ * @param sectionName - the name of the nested section to display
+ * @param sectionInformation - system information that has objects as the value instead of simple strings
+ */
+export default function NestedSystemInformationSection({sectionName, sectionInformation}) {
+  return <Section>
+    <h2>{sectionName}</h2>
+    {Object.entries(sectionInformation).map(([nestedName, nestedInformation]) =>
+        <div key={nestedName}>
+          <h3>{nestedName}</h3>
+          <Information information={nestedInformation}/>
+        </div>
+    )}
+  </Section>;
 }
