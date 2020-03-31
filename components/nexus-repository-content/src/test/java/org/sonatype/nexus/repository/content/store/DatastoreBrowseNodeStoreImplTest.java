@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ForkJoinPool;
@@ -55,19 +56,19 @@ import org.sonatype.nexus.repository.storage.DefaultBrowseNodeComparator;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.selector.SelectorManager;
-import org.sonatype.nexus.transaction.Operation;
-import org.sonatype.nexus.transaction.Transactional;
-import org.sonatype.nexus.transaction.VoidOperation;
+import org.sonatype.nexus.transaction.TransactionModule;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.TypeLiteral;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 
@@ -125,10 +126,6 @@ public class DatastoreBrowseNodeStoreImplTest
 
   @Before
   public void setup() throws Exception {
-    underTest = new TestDatastoreBrowseNodeStoreImpl(sessionRule, securityHelper, selectorManager,
-        new BrowseNodeConfiguration(true, 1000, DELETE_PAGE_SIZE, 10_000, 10_000), repositoryManager,
-        ImmutableMap.of(FORMAT_NAME, contentRepositoryStores), ImmutableMap.of(FORMAT_NAME, browseNodeFilter),
-        ImmutableMap.of(DefaultBrowseNodeComparator.NAME, new DefaultBrowseNodeComparator(new VersionComparator())));
 
     generateRandomRepositories(2);
     generateRandomNamespaces(100);
@@ -137,19 +134,39 @@ public class DatastoreBrowseNodeStoreImplTest
     generateRandomVersions(100);
     generateRandomContent(50, 100);
 
-    mockRepository(repository, REPOSITORY_NAME, FORMAT_NAME, 0);
+    BrowseNodeConfiguration browseNodeConfiguration =
+        new BrowseNodeConfiguration(true, 1000, DELETE_PAGE_SIZE, 10_000, 10_000);
 
+    mockRepository(repository, REPOSITORY_NAME, FORMAT_NAME, 0);
     mockRepository(repositoryGroup, GROUP_REPOSITORY_NAME, FORMAT_NAME, 1);
     when(repositoryGroup.optionalFacet(BrowseNodeFacet.class)).thenReturn(Optional.empty());
     when(repositoryGroup.getType()).thenReturn(new GroupType());
     GroupFacet groupFacet = mock(GroupFacet.class);
     when(groupFacet.allMembers()).thenReturn(Arrays.asList(repositoryGroup, repository));
     when(repositoryGroup.facet(GroupFacet.class)).thenReturn(groupFacet);
-
-    underTest.start();
-
     when(securityHelper.anyPermitted(any())).thenReturn(true);
     when(browseNodeFilter.test(any(), any())).thenReturn(true);
+
+    underTest = Guice.createInjector(new TransactionModule(), new AbstractModule()
+    {
+      @Override
+      protected void configure() {
+        bind(DataSessionSupplier.class).toInstance(sessionRule);
+        bind(SecurityHelper.class).toInstance(securityHelper);
+        bind(SelectorManager.class).toInstance(selectorManager);
+        bind(BrowseNodeConfiguration.class).toInstance(browseNodeConfiguration);
+        bind(RepositoryManager.class).toInstance(repositoryManager);
+        bind(new TypeLiteral<Map<String, ContentRepositoryStore<? extends ContentRepositoryDAO>>>() { })
+            .toInstance(ImmutableMap.of(FORMAT_NAME, contentRepositoryStores));
+        bind(new TypeLiteral<Map<String, BrowseNodeFilter>>() { })
+            .toInstance(ImmutableMap.of(FORMAT_NAME, browseNodeFilter));
+        bind(new TypeLiteral<Map<String, BrowseNodeComparator>>() { })
+            .toInstance(ImmutableMap
+                .of(DefaultBrowseNodeComparator.NAME, new DefaultBrowseNodeComparator(new VersionComparator())));
+      }
+    }).getInstance(TestDatastoreBrowseNodeStoreImpl.class);
+
+    underTest.start();
   }
 
   @After
@@ -160,30 +177,27 @@ public class DatastoreBrowseNodeStoreImplTest
   @Test
   public void testAssetNodeExists() {
     Asset asset = generatedAssets().get(0);
-    assertFalse(call(() -> underTest.assetNodeExists(asset)));
+    assertFalse(underTest.assetNodeExists(asset));
 
-    run(() -> underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), asset));
+    underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), asset);
 
-    assertTrue(call(() -> underTest.assetNodeExists(asset)));
+    assertTrue(underTest.assetNodeExists(asset));
   }
 
   @Test
   public void testCreateAssetNode() {
     Asset asset = generatedAssets().get(0);
-    run(() -> underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"),
-        asset));
+    underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), asset);
 
-    assertTrue(call(() -> underTest.assetNodeExists(asset)));
+    assertTrue(underTest.assetNodeExists(asset));
   }
 
   @Test
   public void testCreateComponentNode() {
     Component component = generatedComponents().get(0);
-    run(() -> underTest.createComponentNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"),
-        component));
+    underTest.createComponentNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), component);
 
-    Iterable<BrowseNode<Integer>> nodes =
-        call(() -> underTest.getByPath(REPOSITORY_NAME, Collections.singletonList("org"), 1));
+    Iterable<BrowseNode<Integer>> nodes = underTest.getByPath(REPOSITORY_NAME, Collections.singletonList("org"), 1);
     BrowseNode<Integer> node = Iterables.getFirst(nodes, null);
 
     assertThat(node, isBrowseNodeWith(generatedRepositories().get(0), 1, "org/foo", "foo", null, component, true));
@@ -192,32 +206,30 @@ public class DatastoreBrowseNodeStoreImplTest
   @Test
   public void testDeleteAssetNode() {
     Asset asset = generatedAssets().get(0);
-    run(() -> underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), asset));
+    underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), asset);
 
-    run(() -> underTest.deleteAssetNode(asset));
-    assertFalse(call(() -> underTest.assetNodeExists(asset)));
+    underTest.deleteAssetNode(asset);
+    assertFalse(underTest.assetNodeExists(asset));
   }
 
   @Test
   public void testDeleteAssetNode_whenNotExist() {
     Asset asset = generatedAssets().get(0);
-    run(() -> underTest.deleteAssetNode(asset));
+    underTest.deleteAssetNode(asset);
   }
 
   @Test
   public void testDeleteAssetNode_whenComponentAlsoLinked() {
     Asset asset = generatedAssets().get(0);
     Component component = generatedComponents().get(0);
-    run(() -> {
-      underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), asset);
-      underTest.createComponentNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), component);
-    });
 
-    run(() -> underTest.deleteAssetNode(asset));
-    assertFalse(call(() -> underTest.assetNodeExists(asset)));
+    underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), asset);
+    underTest.createComponentNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), component);
 
-    Iterator<BrowseNode<Integer>> iter =
-        call(() -> underTest.getByPath(REPOSITORY_NAME, Arrays.asList("org"), 1)).iterator();
+    underTest.deleteAssetNode(asset);
+    assertFalse(underTest.assetNodeExists(asset));
+
+    Iterator<BrowseNode<Integer>> iter = underTest.getByPath(REPOSITORY_NAME, Arrays.asList("org"), 1).iterator();
     assertTrue(iter.hasNext());
 
     DatastoreBrowseNode node = (DatastoreBrowseNode) iter.next();
@@ -228,16 +240,16 @@ public class DatastoreBrowseNodeStoreImplTest
   @Test
   public void testDeleteComponentNode() {
     Component component = generatedComponents().get(0);
-    run(() -> underTest.createComponentNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), component));
+    underTest.createComponentNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), component);
 
-    run(() -> underTest.deleteComponentNode(component));
+    underTest.deleteComponentNode(component);
     assertFalse(componentNodeExists(component, createBrowsePaths("org", "foo")));
   }
 
   @Test
   public void testDeleteComponentNode_whenNotExist() {
     Component component = generatedComponents().get(0);
-    run(() -> underTest.deleteComponentNode(component));
+    underTest.deleteComponentNode(component);
     // basically this shouldn't error
   }
 
@@ -245,16 +257,15 @@ public class DatastoreBrowseNodeStoreImplTest
   public void testDeleteComponentNode_whenAssetAlsoLinked() {
     Asset asset = generatedAssets().get(0);
     Component component = generatedComponents().get(0);
-    run(() -> {
-      underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), asset);
-      underTest.createComponentNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), component);
-    });
 
-    run(() -> underTest.deleteComponentNode(component));
+    underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), asset);
+    underTest.createComponentNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), component);
+
+    underTest.deleteComponentNode(component);
     assertFalse(componentNodeExists(component, createBrowsePaths("org", "foo")));
 
     Iterator<BrowseNode<Integer>> iter =
-        call(() -> underTest.getByPath(REPOSITORY_NAME, Arrays.asList("org"), 1)).iterator();
+        underTest.getByPath(REPOSITORY_NAME, Collections.singletonList("org"), 1).iterator();
     assertTrue(iter.hasNext());
 
     DatastoreBrowseNode node = (DatastoreBrowseNode) iter.next();
@@ -262,45 +273,31 @@ public class DatastoreBrowseNodeStoreImplTest
     assertThat(node.getComponentId(), nullValue());
   }
 
-  @Ignore("NEXUS-23076")
   @Test
-  public void testDeleteNodeConcurrency() {
+  public void testDeleteNodeConcurrency() throws Exception {
     populateFullRepository();
 
     ForkJoinPool pool = new ForkJoinPool(Runtime.getRuntime().availableProcessors());
 
-    pool.submit(() -> generatedAssets().stream().forEach(asset -> pool.submit(() -> delete(asset))));
-    pool.submit(() -> generatedComponents().stream().forEach(component -> pool.submit(() -> delete(component))));
+    pool.submit(() -> generatedAssets().forEach(asset -> pool.submit(() -> delete(asset))));
+    pool.submit(() -> generatedComponents().forEach(component -> pool.submit(() -> delete(component))));
 
     pool.awaitQuiescence(10, TimeUnit.SECONDS);
-    dumpDb("C:/tmp/concurrency.sql");
-    assertRepositoryEmpty(generatedRepositories().get(0).repositoryId);
-  }
 
-  private void delete(final Component component) {
-    try {
-      Transactional.operation.withDb(() -> sessionRule.openSession("content")).retryOn(RuntimeException.class)
-          .run(() -> underTest.deleteComponentNode(component));
-    }
-    catch (Exception e) {
-      e.printStackTrace();
-    }
-  }
-
-  private void delete(final Asset asset) {
-    try {
-      Transactional.operation.withDb(() -> sessionRule.openSession("content")).retryOn(RuntimeException.class)
-          .run(() -> underTest.deleteAssetNode(asset));
-    }
-    catch (Exception e) {
-      e.printStackTrace();
-    }
+    assertRepositoryEmpty(
+        generatedRepositories()
+            .stream()
+            .filter(contentRepositoryData -> contentRepositoryData.repositoryId == 1)
+            .findFirst()
+            .orElseThrow(() -> new NoSuchElementException("Repository with id 1 does not exist"))
+            .repositoryId
+    );
   }
 
   @Test
   public void testDeleteByRepository() {
     populateFullRepository();
-    run(() -> underTest.deleteByRepository(REPOSITORY_NAME));
+    underTest.deleteByRepository(REPOSITORY_NAME);
     assertRepositoryEmpty(generatedRepositories().get(0).repositoryId);
   }
 
@@ -309,14 +306,12 @@ public class DatastoreBrowseNodeStoreImplTest
     Asset asset = generatedAssets().get(0);
     Component component = generatedComponents().get(0);
     Asset asset2 = generatedAssets().get(1);
-    run(() -> {
-      underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), asset);
-      underTest.createComponentNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "bar"), component);
-      underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "bar", "foo"), asset2);
-    });
 
-    Iterable<BrowseNode<Integer>> it =
-        call(() -> underTest.getByPath(REPOSITORY_NAME, Arrays.asList("org"), 1000));
+    underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), asset);
+    underTest.createComponentNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "bar"), component);
+    underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "bar", "foo"), asset2);
+
+    Iterable<BrowseNode<Integer>> it = underTest.getByPath(REPOSITORY_NAME, Collections.singletonList("org"), 1000);
 
     List<BrowseNode<Integer>> nodes = StreamSupport.stream(it.spliterator(), false).collect(Collectors.toList());
 
@@ -332,14 +327,13 @@ public class DatastoreBrowseNodeStoreImplTest
     Asset asset = generatedAssets().get(0);
     Component component = generatedComponents().get(0);
     Asset asset2 = generatedAssets().get(1);
-    run(() -> {
-      underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), asset);
-      underTest.createAssetNode(GROUP_REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "bar", "foo"), asset2);
-      underTest.createComponentNode(GROUP_REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "bar"), component);
-    });
+
+    underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), asset);
+    underTest.createAssetNode(GROUP_REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "bar", "foo"), asset2);
+    underTest.createComponentNode(GROUP_REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "bar"), component);
 
     Iterable<BrowseNode<Integer>> it =
-        call(() -> underTest.getByPath(GROUP_REPOSITORY_NAME, Arrays.asList("org"), 1000));
+        underTest.getByPath(GROUP_REPOSITORY_NAME, Collections.singletonList("org"), 1000);
 
     List<BrowseNode<Integer>> nodes = StreamSupport.stream(it.spliterator(), false).collect(Collectors.toList());
 
@@ -359,10 +353,9 @@ public class DatastoreBrowseNodeStoreImplTest
   public void testGetByPath_groupRepository_identity() {
     Asset asset = generatedAssets().get(0);
     Asset asset2 = generatedAssets().get(1);
-    run(() -> {
-      underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), asset);
-      underTest.createAssetNode(GROUP_REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), asset2);
-    });
+
+    underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), asset);
+    underTest.createAssetNode(GROUP_REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), asset2);
 
     BrowseNodeFacet browseNodeFacet = mock(BrowseNodeFacet.class);
     Function<BrowseNode<?>, String> fn = mock(Function.class);
@@ -370,7 +363,7 @@ public class DatastoreBrowseNodeStoreImplTest
     when(repositoryGroup.optionalFacet(BrowseNodeFacet.class)).thenReturn(Optional.of(browseNodeFacet));
 
     Iterable<BrowseNode<Integer>> it =
-        call(() -> underTest.getByPath(GROUP_REPOSITORY_NAME, Arrays.asList("org"), 1000));
+        underTest.getByPath(GROUP_REPOSITORY_NAME, Collections.singletonList("org"), 1000);
     List<BrowseNode<Integer>> nodes = StreamSupport.stream(it.spliterator(), false).collect(Collectors.toList());
 
     verify(fn, times(5)).apply(any(BrowseNode.class));
@@ -385,11 +378,11 @@ public class DatastoreBrowseNodeStoreImplTest
   @Test
   public void testGetByPath_queryLimit() {
     Asset asset = generatedAssets().get(0);
-    run(() -> underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), asset));
+    underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), asset);
     Component component = generatedComponents().get(0);
-    run(() -> underTest.createComponentNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "bar"), component));
+    underTest.createComponentNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "bar"), component);
 
-    Iterable<BrowseNode<Integer>> it = call(() -> underTest.getByPath(REPOSITORY_NAME, Arrays.asList("org"), 1));
+    Iterable<BrowseNode<Integer>> it = underTest.getByPath(REPOSITORY_NAME, Collections.singletonList("org"), 1);
 
     List<BrowseNode<Integer>> nodes = StreamSupport.stream(it.spliterator(), false).collect(Collectors.toList());
 
@@ -402,11 +395,11 @@ public class DatastoreBrowseNodeStoreImplTest
   @Test
   public void testGetByPath_atRoot() {
     Asset asset = generatedAssets().get(0);
-    run(() -> underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org"), asset));
+    underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org"), asset);
     Component component = generatedComponents().get(0);
-    run(() -> underTest.createComponentNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("com"), component));
+    underTest.createComponentNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("com"), component);
 
-    Iterable<BrowseNode<Integer>> it = call(() -> underTest.getByPath(REPOSITORY_NAME, Arrays.asList(), 1000));
+    Iterable<BrowseNode<Integer>> it = underTest.getByPath(REPOSITORY_NAME, Collections.emptyList(), 1000);
 
     List<BrowseNode<Integer>> nodes = StreamSupport.stream(it.spliterator(), false).collect(Collectors.toList());
 
@@ -426,16 +419,24 @@ public class DatastoreBrowseNodeStoreImplTest
     });
 
     Asset asset = generatedAssets().get(0);
-    run(() -> underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), asset));
+    underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), asset);
     Component component = generatedComponents().get(0);
-    run(() -> underTest.createComponentNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "bar"), component));
+    underTest.createComponentNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "bar"), component);
 
-    Iterable<BrowseNode<Integer>> it = call(() -> underTest.getByPath(REPOSITORY_NAME, Arrays.asList("org"), 1000));
+    Iterable<BrowseNode<Integer>> it = underTest.getByPath(REPOSITORY_NAME, Collections.singletonList("org"), 1000);
 
     List<BrowseNode<Integer>> nodes = StreamSupport.stream(it.spliterator(), false).collect(Collectors.toList());
 
     assertThat(nodes, hasSize(1));
     assertThat(nodes.get(0), isBrowseNodeWith(generatedRepositories().get(0), 1, "org/foo", "foo", asset, null, true));
+  }
+
+  private void delete(final Component component) {
+    underTest.deleteComponentNode(component);
+  }
+
+  private void delete(final Asset asset) {
+    underTest.deleteAssetNode(asset);
   }
 
   private void populateFullRepository() {
@@ -447,10 +448,8 @@ public class DatastoreBrowseNodeStoreImplTest
       Component component = components.next();
       List<BrowsePaths> paths = createBrowsePaths(asset.path().split("/"));
 
-      run(() -> {
-        underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, paths, asset);
-        underTest.createComponentNode(REPOSITORY_NAME, FORMAT_NAME, paths, component);
-      });
+      underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, paths, asset);
+      underTest.createComponentNode(REPOSITORY_NAME, FORMAT_NAME, paths, component);
     }
   }
 
@@ -463,18 +462,10 @@ public class DatastoreBrowseNodeStoreImplTest
     return browsePaths;
   }
 
-  private <E> void run(final VoidOperation<RuntimeException> runnable) {
-    Transactional.operation.withDb(() -> sessionRule.openSession("content")).run(runnable);
-  }
-
-  private <T> T call(final Operation<T, RuntimeException> supplier) {
-    return Transactional.operation.withDb(() -> sessionRule.openSession("content")).call(supplier);
-  }
-
   private boolean componentNodeExists(final Component component, final List<BrowsePaths> browsePaths) {
     String requestPath = browsePaths.get(browsePaths.size() - 2).getRequestPath();
     Iterable<BrowseNode<Integer>> iter =
-        call(() -> underTest.getByPath(REPOSITORY_NAME, Arrays.asList(requestPath.split("/")), 100));
+        underTest.getByPath(REPOSITORY_NAME, Arrays.asList(requestPath.split("/")), 100);
 
     Integer componentId = ((ComponentData) component).componentId;
     for (BrowseNode<Integer> node : iter) {
@@ -515,7 +506,8 @@ public class DatastoreBrowseNodeStoreImplTest
   private int getNodeId(final ContentRepository repository, final String path) {
     try (Connection conn = sessionRule.openConnection("content")) {
       try (PreparedStatement statement =
-          conn.prepareStatement("SELECT browse_node_id FROM test_browse_node WHERE repository_id = ? AND path = ?")) {
+               conn.prepareStatement(
+                   "SELECT browse_node_id FROM test_browse_node WHERE repository_id = ? AND path = ?")) {
         statement.setInt(1, ((ContentRepositoryData) repository).repositoryId);
         statement.setString(2, path);
         try (ResultSet rs = statement.executeQuery()) {
@@ -535,7 +527,7 @@ public class DatastoreBrowseNodeStoreImplTest
     try (Connection conn = sessionRule.openConnection("content")) {
       int rowCount;
       try (PreparedStatement statement =
-          conn.prepareStatement("SELECT count(*) as row_count FROM test_browse_node WHERE repository_id = ?")) {
+               conn.prepareStatement("SELECT count(*) as row_count FROM test_browse_node WHERE repository_id = ?")) {
         statement.setInt(1, repositoryId);
         try (ResultSet rs = statement.executeQuery()) {
           if (!rs.first()) {
@@ -560,25 +552,6 @@ public class DatastoreBrowseNodeStoreImplTest
     }
     catch (SQLException e) {
       throw new RuntimeException(e);
-    }
-  }
-
-  private static class TestDatastoreBrowseNodeStoreImpl
-      extends DatastoreBrowseNodeStoreImpl<TestBrowseNodeDAO>
-  {
-
-    public TestDatastoreBrowseNodeStoreImpl(
-        final DataSessionSupplier sessionSupplier,
-        final SecurityHelper securityHelper,
-        final SelectorManager selectorManager,
-        final BrowseNodeConfiguration configuration,
-        final RepositoryManager repositoryManager,
-        final Map<String, ContentRepositoryStore<? extends ContentRepositoryDAO>> contentRepositoryStores,
-        final Map<String, BrowseNodeFilter> browseNodeFilters,
-        final Map<String, BrowseNodeComparator> browseNodeComparators)
-    {
-      super(sessionSupplier, securityHelper, selectorManager, configuration, repositoryManager, contentRepositoryStores,
-          browseNodeFilters, browseNodeComparators);
     }
   }
 

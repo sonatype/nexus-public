@@ -174,8 +174,8 @@
 
   <delete id="maybeDeleteAssetNode">
     DELETE FROM ${format}_browse_node B
-     WHERE ${asset.assetId} IS NOT NULL
-       AND asset_id = ${asset.assetId}
+     WHERE #{asset.assetId} IS NOT NULL
+       AND asset_id = #{asset.assetId}
        AND component_id IS NULL
        AND <include refid="isLeaf"/>;
   </delete>

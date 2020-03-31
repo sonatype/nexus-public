@@ -16,9 +16,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -167,7 +165,7 @@ public class DatastoreBrowseNodeStoreImpl<T extends BrowseNodeDAO>
   @Override
   public void deleteAssetNode(final Asset asset) {
     checkNotNull(asset);
-    Optional<DatastoreBrowseNode> browseNode = tx(() -> dao().findBrowseNodeByAssetId(asset));
+    Optional<DatastoreBrowseNode> browseNode = findBrowseNodeByAssetId(asset);
 
     browseNode.ifPresent(node -> {
       log.trace("Removing asset from browse node: {}", node);
@@ -184,7 +182,7 @@ public class DatastoreBrowseNodeStoreImpl<T extends BrowseNodeDAO>
   @Override
   public void deleteComponentNode(final Component component) {
     checkNotNull(component);
-    Optional<DatastoreBrowseNode> browseNode = tx(() -> dao().findBrowseNodeByComponentId(component));
+    Optional<DatastoreBrowseNode> browseNode = findBrowseNodeByComponentId(component);
 
     browseNode.ifPresent(node -> {
       log.trace("Removing component from browse node: {}", node);
@@ -199,11 +197,21 @@ public class DatastoreBrowseNodeStoreImpl<T extends BrowseNodeDAO>
     });
   }
 
+  @Transactional
+  protected Optional<DatastoreBrowseNode> findBrowseNodeByComponentId(Component component){
+    return dao().findBrowseNodeByComponentId(component);
+  }
+
+  @Transactional
+  protected Optional<DatastoreBrowseNode> findBrowseNodeByAssetId(Asset asset){
+    return dao().findBrowseNodeByAssetId(asset);
+  }
+
   /**
    * Returns true if {@code deleteFn} was successful, false otherwise.
    */
   @Transactional(retryOn = RetryUnlinkException.class)
-  private boolean maybeDeleteOrUnlink(
+  protected boolean maybeDeleteOrUnlink(
       final Predicate<BrowseNodeDAO> deleteFn,
       final Predicate<BrowseNodeDAO> unlinkFn)
   {
@@ -221,13 +229,13 @@ public class DatastoreBrowseNodeStoreImpl<T extends BrowseNodeDAO>
   }
 
   @Transactional
-  private <X> X call(final Function<BrowseNodeDAO, X> callable) {
-    return callable.apply(dao());
+  protected Optional<Integer> getParentBrowseNodeId(final Integer nodeId){
+    return dao().getParentBrowseNodeId(nodeId);
   }
 
   @Transactional
-  private <R> R tx(final Supplier<R> supplier) {
-    return supplier.get();
+  protected boolean tryDeleteNode(final Integer browseNodeId) {
+    return dao().deleteBrowseNode(browseNodeId);
   }
 
   @Override
@@ -252,7 +260,7 @@ public class DatastoreBrowseNodeStoreImpl<T extends BrowseNodeDAO>
   }
 
   @Transactional
-  private int deleteRepositoryNodes(final ContentRepository repository) {
+  protected int deleteRepositoryNodes(final ContentRepository repository) {
     return dao().deleteRepository(repository, deletePageSize);
   }
 
@@ -308,6 +316,8 @@ public class DatastoreBrowseNodeStoreImpl<T extends BrowseNodeDAO>
     return results;
   }
 
+
+
   private Equivalence<DatastoreBrowseNode> getIdentity(final Repository repository) {
     Optional<BrowseNodeFacet> browseNodeFacet = repository.optionalFacet(BrowseNodeFacet.class);
     if (browseNodeFacet.isPresent()) {
@@ -354,9 +364,8 @@ public class DatastoreBrowseNodeStoreImpl<T extends BrowseNodeDAO>
     return Optional.ofNullable(parentId);
   }
 
-  @Transactional
   private void maybeDeleteParents(final Integer nodeId) {
-    Optional<Integer> parentId = dao().getParentBrowseNodeId(nodeId);
+    Optional<Integer> parentId = getParentBrowseNodeId(nodeId);
     try {
       log.trace("Removing parent {}", nodeId);
       tryDeleteNode(nodeId);
@@ -366,10 +375,6 @@ public class DatastoreBrowseNodeStoreImpl<T extends BrowseNodeDAO>
       return;
     }
     parentId.ifPresent(this::maybeDeleteParents);
-  }
-
-  private void tryDeleteNode(final Integer browseNodeId) {
-    dao().deleteBrowseNode(browseNodeId);
   }
 
   /**
