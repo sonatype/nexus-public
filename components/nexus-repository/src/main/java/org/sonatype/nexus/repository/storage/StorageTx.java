@@ -253,6 +253,20 @@ public interface StorageTx
                           @Nullable final String version,
                           final Repository repository);
 
+
+  /**
+   * Gets the number of assets matching the given where clause that are grouped by columns.
+   */
+  long countGroupedAssets(@Nullable String whereClause,
+                          @Nullable Map<String, Object> parameters,
+                          @Nullable Iterable<Repository> repositories,
+                          String querySuffix);
+
+  /**
+   * Gets the number of assets matching the given {@link Query} clause grouped by a column
+   */
+  long countGroupedAssets(Query query, @Nullable Iterable<Repository> repositories);
+
   /**
    * Check for the existence of an asset with {@code name} in {@code repository}.
    *

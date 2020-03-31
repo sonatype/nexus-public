@@ -38,6 +38,7 @@ import org.joda.time.DateTime;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.isEmpty;
+import static org.apache.commons.lang3.StringUtils.containsIgnoreCase;
 import static org.sonatype.nexus.common.text.Strings2.isBlank;
 
 /**
@@ -194,7 +195,7 @@ public abstract class MetadataNodeEntityAdapter<T extends MetadataNode<?>>
     }
 
     log.debug("Finding {}s with query: {}, parameters: {}", getTypeName(), query, parameters);
-    
+
     if (async) {
       return transform(OrientAsyncHelper.asyncIterable(db, query, parameters));
     }
@@ -218,6 +219,29 @@ public abstract class MetadataNodeEntityAdapter<T extends MetadataNode<?>>
     }
 
     log.debug("Counting {}s with query: {}, parameters: {}", getTypeName(), query, parameters);
+    List<ODocument> results = db.command(new OCommandSQL(query)).execute(parameters);
+    return results.get(0).field("count");
+  }
+
+  long countGroupByQuery(final ODatabaseDocumentTx db,
+                         @Nullable final String whereClause,
+                         @Nullable final Map<String, Object> parameters,
+                         @Nullable final Iterable<Bucket> buckets,
+                         final String querySuffix)
+  {
+    checkNotNull(querySuffix);
+    checkState(containsIgnoreCase(querySuffix, "group by"));
+
+    String query = buildQuery(true, whereClause, buckets, querySuffix);
+
+    if (isBlank(query)) {
+      log.debug("Skipped counting {}s as query is empty, parameters: {}", getTypeName(), parameters);
+      return 0;
+    }
+
+    query = "select count(*) from (" + buildQuery(true, whereClause, buckets, querySuffix) + ")";
+
+    log.debug("Counting {}s with grouped by query: {}, parameters: {}", getTypeName(), query, parameters);
     List<ODocument> results = db.command(new OCommandSQL(query)).execute(parameters);
     return results.get(0).field("count");
   }

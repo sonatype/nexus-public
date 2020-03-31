@@ -90,6 +90,15 @@ public class MetadataNodeEntityAdapterTest
     }
   }
 
+
+  @Test
+  public void emptyBucketsCountGroupByQuery() throws Exception {
+    buckets.clear();
+    try (ODatabaseDocumentTx db = database.getInstance().connect()) {
+      assertThat(underTest.countGroupByQuery(db, null, null, buckets, "group by name"), is(0L));
+    }
+  }
+
   private Bucket makeBucket(final String id) {
     Bucket bucket = mock(Bucket.class);
     ORID orid = mock(ORID.class);
