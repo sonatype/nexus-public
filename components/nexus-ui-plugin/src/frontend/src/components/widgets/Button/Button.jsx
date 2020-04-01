@@ -10,30 +10,21 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import React from 'react';
+
+import NxButton from "@sonatype/react-shared-components/components/NxButton/NxButton";
 
 import './Button.scss';
 
 /**
  * @since 3.21
  *
- * The button component may be passed a variant value of primary to get the primary button styling (aka blue).
- * Passing no variant will result in a normal button. Passing any other variant is not currently supported but a
- * className will be passed to the underlying button element.
+ * The button component may be passed a variant value of "primary" (blue). No variant will be a gray color.
  */
-export default function Button({variant, children, className, type, ...rest}) {
-  const classes = classNames('nxrm-button', className, {
-    'nxrm-button-primary': variant === 'primary'
-  });
-
-  return <button className={classes} type={type || 'input'} {...rest}>
+export default function Button({type, children, ...rest}) {
+  return <NxButton type={type || 'input'} {...rest}>
     {children}
-  </button>;
+  </NxButton>;
 }
 
-Button.propTypes = {
-  variant: PropTypes.oneOf(['primary']),
-  style: PropTypes.object
-};
+Button.propTypes = NxButton.propTypes;

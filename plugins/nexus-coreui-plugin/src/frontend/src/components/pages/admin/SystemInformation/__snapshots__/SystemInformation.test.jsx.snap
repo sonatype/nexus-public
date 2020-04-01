@@ -6,7 +6,7 @@ exports[`SystemInformation renders correctly 1`] = `
     class="nxrm-breadcrumb--actions"
   >
     <button
-      class="nxrm-button nxrm-button-primary"
+      class="nx-btn nx-btn--primary"
       disabled=""
       type="input"
     >
@@ -46,7 +46,7 @@ exports[`SystemInformation renders correctly 2`] = `
     class="nxrm-breadcrumb--actions"
   >
     <button
-      class="nxrm-button nxrm-button-primary"
+      class="nx-btn nx-btn--primary"
       type="input"
     >
       <svg

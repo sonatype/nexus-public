@@ -19,7 +19,7 @@ exports[`SystemInformation renders correctly 1`] = `
         </a>
       </p>
       <button
-        class="nxrm-button nxrm-button-primary"
+        class="nx-btn nx-btn--primary"
         type="input"
       >
         <svg

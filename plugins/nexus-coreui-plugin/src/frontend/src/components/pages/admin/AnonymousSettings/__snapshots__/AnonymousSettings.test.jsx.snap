@@ -16,14 +16,38 @@ exports[`AnonymousSettings renders correctly 1`] = `
         >
           Access:
         </label>
-        <label>
+        <label
+          class="nx-checkbox tm-checked"
+        >
           <input
-            class="nxrm-checkbox"
+            class="nx-checkbox__input"
             id="enabled"
-            name="enabled"
             type="checkbox"
           />
-          Allow anonymous users to access the server
+          <span
+            class="nx-checkbox__box"
+          >
+            <svg
+              aria-hidden="true"
+              class="svg-inline--fa fa-check fa-w-16 "
+              data-icon="check"
+              data-prefix="fas"
+              focusable="false"
+              role="img"
+              viewBox="0 0 512 512"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
+                fill="currentColor"
+              />
+            </svg>
+          </span>
+          <span
+            class="nx-checkbox__content"
+          >
+            Allow anonymous users to access the server
+          </span>
         </label>
       </label>
       <label
@@ -74,14 +98,14 @@ exports[`AnonymousSettings renders correctly 1`] = `
         class="nxrm-settings-section-footer"
       >
         <button
-          class="nxrm-button nxrm-button-primary"
+          class="nx-btn nx-btn--primary"
           disabled=""
           type="input"
         >
           Save
         </button>
         <button
-          class="nxrm-button"
+          class="nx-btn"
           disabled=""
           type="input"
         >

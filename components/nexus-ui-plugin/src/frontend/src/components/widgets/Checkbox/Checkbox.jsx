@@ -13,27 +13,8 @@
 /**
  * @since 3.21
  */
-import PropTypes from 'prop-types';
 import React from 'react';
 
-import './Checkbox.scss';
+import NxCheckbox from "@sonatype/react-shared-components/components/NxCheckbox/NxCheckbox";
 
-export default function Checkbox({ checkboxId, isChecked, onChange, children }) {
-  return <label>
-    <input
-      name={checkboxId}
-      id={checkboxId}
-      type='checkbox'
-      checked={isChecked}
-      onChange={onChange}
-      className='nxrm-checkbox'
-    />
-    {children}
-  </label>;
-}
-
-Checkbox.propTypes = {
-  name: PropTypes.string,
-  isChecked: PropTypes.bool,
-  onChange: PropTypes.func
-};
+export default NxCheckbox;
