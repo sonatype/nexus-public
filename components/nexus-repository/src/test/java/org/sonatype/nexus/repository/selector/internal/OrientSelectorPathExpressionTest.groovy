@@ -27,6 +27,7 @@ import org.sonatype.nexus.repository.storage.ComponentEntityAdapter
 import org.sonatype.nexus.repository.storage.ComponentFactory
 import org.sonatype.nexus.repository.storage.DefaultComponent
 import org.sonatype.nexus.selector.JexlSelector
+import org.sonatype.nexus.selector.OrientCselToSql
 import org.sonatype.nexus.selector.SelectorFactory
 import org.sonatype.nexus.selector.SelectorSqlBuilder
 import org.sonatype.nexus.validation.ConstraintViolationFactory
@@ -45,7 +46,7 @@ import static org.junit.Assert.assertThat
 import static org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule.inFilesystem
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES
 
-class SelectorPathExpressionTest
+class OrientSelectorPathExpressionTest
     extends TestSupport
 {
   private static final String REPOSITORY_NAME = 'test-repo'
@@ -72,7 +73,7 @@ class SelectorPathExpressionTest
 
   @Before
   void setUp() throws Exception {
-    selectorFactory = new SelectorFactory(violationFactory)
+    selectorFactory = new SelectorFactory(violationFactory, new OrientCselToSql())
 
     ComponentFactory componentFactory = new ComponentFactory(emptySet())
 
@@ -118,8 +119,9 @@ class SelectorPathExpressionTest
 
     builder.propertyAlias('format', 'format')
     builder.propertyAlias('path', 'name')
-    builder.propertyPrefix('attributes.' + FORMAT_NAME + '.')
-    builder.parameterPrefix('p')
+    builder.propertyPrefix("attributes.${FORMAT_NAME}.")
+    builder.parameterPrefix(':')
+    builder.parameterNamePrefix('p')
 
     selectorFactory.createSelector('csel', expression).toSql(builder)
 

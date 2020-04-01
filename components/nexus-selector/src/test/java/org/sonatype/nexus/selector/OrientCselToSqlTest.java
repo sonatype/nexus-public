@@ -13,20 +13,26 @@
 package org.sonatype.nexus.selector;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-
 import org.apache.commons.jexl3.JexlException;
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
-import static org.sonatype.nexus.selector.CselToSql.transformCselToSql;
 
-public class CselToSqlTest
+public class OrientCselToSqlTest
     extends TestSupport
 {
   private static final String FORMAT = "maven2";
 
   private JexlEngine engine = new JexlEngine();
+
+  private OrientCselToSql cselToOrientSql;
+
+  @Before
+  public void setup() {
+    cselToOrientSql = new OrientCselToSql();
+  }
 
   @Test
   public void buildWhereClauseHandlesEqualsConversion() throws Exception {
@@ -54,9 +60,11 @@ public class CselToSqlTest
 
   @Test
   public void buildWhereClauseHandlesNotEqualsConversion_properSpacing() throws Exception {
-    SelectorSqlBuilder builder = toSql("path != \"something\" && format != \"maven2\" && path == \"test\"", FORMAT, "a", "");
+    SelectorSqlBuilder builder =
+        toSql("path != \"something\" && format != \"maven2\" && path == \"test\"", FORMAT, "a", "");
 
-    assertThat(builder.getQueryString(), is("(name is null or name <> :a0) and (format is null or format <> :a1) and name = :a2"));
+    assertThat(builder.getQueryString(),
+        is("(name is null or name <> :a0) and (format is null or format <> :a1) and name = :a2"));
     assertThat(builder.getQueryParameters().get("a0"), is("something"));
     assertThat(builder.getQueryParameters().get("a1"), is("maven2"));
     assertThat(builder.getQueryParameters().get("a2"), is("test"));
@@ -144,17 +152,19 @@ public class CselToSqlTest
     assertThat(builder.getQueryParameters().get("a1"), is("bar/foo"));
   }
 
-  private SelectorSqlBuilder toSql(final String expression,
-                                   final String format,
-                                   final String parameterPrefix,
-                                   final String assetPrefix)
+  private SelectorSqlBuilder toSql(
+      final String expression,
+      final String format,
+      final String parameterPrefix,
+      final String assetPrefix)
   {
     SelectorSqlBuilder builder = new SelectorSqlBuilder();
     builder.propertyAlias("format", assetPrefix + "format");
     builder.propertyAlias("path", assetPrefix + "name");
     builder.propertyPrefix(assetPrefix + "attributes." + format + ".");
-    builder.parameterPrefix(parameterPrefix);
-    transformCselToSql(engine.buildExpression(expression).getSyntaxTree(), builder);
+    builder.parameterPrefix(":");
+    builder.parameterNamePrefix(parameterPrefix);
+    cselToOrientSql.transformCselToSql(engine.buildExpression(expression).getSyntaxTree(), builder);
     return builder;
   }
 }

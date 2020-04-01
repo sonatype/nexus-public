@@ -42,6 +42,7 @@ import org.sonatype.nexus.repository.storage.DefaultBrowseNodeComparator;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.selector.CselSelector;
+import org.sonatype.nexus.selector.OrientCselToSql;
 import org.sonatype.nexus.selector.JexlSelector;
 import org.sonatype.nexus.selector.Selector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
@@ -191,7 +192,7 @@ public class OrientBrowseNodeStoreImplTest
     when(jexl.getType()).thenReturn(JexlSelector.TYPE);
 
     ConstraintViolationFactory violationFactory = mock(ConstraintViolationFactory.class);
-    SelectorFactory selectorFactory = new SelectorFactory(violationFactory);
+    SelectorFactory selectorFactory = new SelectorFactory(violationFactory, new OrientCselToSql());
 
     doAnswer(invocation -> {
       SelectorConfiguration config = (SelectorConfiguration) invocation.getArguments()[0];

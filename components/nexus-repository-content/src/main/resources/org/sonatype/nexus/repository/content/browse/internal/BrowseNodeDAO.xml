@@ -78,34 +78,6 @@
      WHERE component_id = #{component.componentId};
   </select>
 
-  <select id="findChildren" resultMap="datastoreBrowseNode">
-    <choose>
-      <when test="path != null">
-        SELECT B.*,
-               L.parent_id IS NULL as leaf
-          FROM ${format}_browse_node B
-     LEFT JOIN (SELECT DISTINCT parent_id
-                  FROM ${format}_browse_node) L
-            ON B.browse_node_id = L.parent_id
-         WHERE B.parent_id = (SELECT browse_node_id
-                                FROM ${format}_browse_node
-                               WHERE <include refid="browseNodeMatch"/>)
-          LIMIT #{maxNodes};
-      </when>
-      <otherwise>
-        SELECT B.*,
-               L.parent_id IS NULL as leaf
-          FROM ${format}_browse_node B
-     LEFT JOIN (SELECT DISTINCT parent_id
-                  FROM ${format}_browse_node) L
-            ON B.browse_node_id = L.parent_id
-         WHERE B.parent_id IS NULL
-           AND B.repository_id = #{repository.repositoryId}
-         LIMIT #{maxNodes};
-      </otherwise>
-    </choose>
-  </select>
-
   <select id="findDeepestNode" resultMap="datastoreBrowseNode">
     SELECT *
       FROM ${format}_browse_node

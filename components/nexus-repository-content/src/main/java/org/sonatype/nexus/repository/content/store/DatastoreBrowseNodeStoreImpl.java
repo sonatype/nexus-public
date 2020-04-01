@@ -12,14 +12,16 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -39,6 +41,7 @@ import org.sonatype.nexus.repository.content.browse.internal.DatastoreBrowseNode
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
+import org.sonatype.nexus.repository.selector.DatastoreContentAuthHelper;
 import org.sonatype.nexus.repository.storage.BrowseNode;
 import org.sonatype.nexus.repository.storage.BrowseNodeComparator;
 import org.sonatype.nexus.repository.storage.BrowseNodeCrudStore;
@@ -49,8 +52,12 @@ import org.sonatype.nexus.repository.storage.DefaultBrowseNodeComparator;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.security.SecurityHelper;
+import org.sonatype.nexus.selector.CselSelector;
+import org.sonatype.nexus.selector.JexlSelector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
+import org.sonatype.nexus.selector.SelectorEvaluationException;
 import org.sonatype.nexus.selector.SelectorManager;
+import org.sonatype.nexus.selector.SelectorSqlBuilder;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.common.base.Equivalence;
@@ -59,9 +66,14 @@ import org.apache.ibatis.exceptions.PersistenceException;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.join;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Stream.of;
+import static java.util.stream.StreamSupport.stream;
+import static org.sonatype.nexus.repository.content.browse.internal.BrowseNodeDAOQueryBuilder.WHERE_PARAMS;
 
 /**
  * A Datastore backed implementation of component/asset tree browsing.
@@ -90,6 +102,8 @@ public class DatastoreBrowseNodeStoreImpl<T extends BrowseNodeDAO>
 
   private final SelectorManager selectorManager;
 
+  private final DatastoreContentAuthHelper contentAuthHelper;
+
   @Inject
   public DatastoreBrowseNodeStoreImpl(
       final DataSessionSupplier sessionSupplier,
@@ -97,6 +111,7 @@ public class DatastoreBrowseNodeStoreImpl<T extends BrowseNodeDAO>
       final SelectorManager selectorManager,
       final BrowseNodeConfiguration configuration,
       final RepositoryManager repositoryManager,
+      final DatastoreContentAuthHelper contentAuthHelper,
       final Map<String, ContentRepositoryStore<? extends ContentRepositoryDAO>> contentRepositoryStores,
       final Map<String, BrowseNodeFilter> browseNodeFilters,
       final Map<String, BrowseNodeComparator> browseNodeComparators)
@@ -107,6 +122,7 @@ public class DatastoreBrowseNodeStoreImpl<T extends BrowseNodeDAO>
     this.browseNodeFilters = checkNotNull(browseNodeFilters);
     this.browseNodeComparators = checkNotNull(browseNodeComparators);
     this.repositoryManager = checkNotNull(repositoryManager);
+    this.contentAuthHelper = checkNotNull(contentAuthHelper);
     this.contentRepositoryStores = checkNotNull(contentRepositoryStores);
     this.deletePageSize = checkNotNull(configuration).getDeletePageSize();
     this.defaultBrowseNodeComparator = checkNotNull(browseNodeComparators.get(DefaultBrowseNodeComparator.NAME));
@@ -266,18 +282,16 @@ public class DatastoreBrowseNodeStoreImpl<T extends BrowseNodeDAO>
 
   @Transactional
   @Override
-  public Iterable<BrowseNode<Integer>> getByPath(
+  public List<BrowseNode<Integer>> getByPath(
       final String repositoryName,
       final List<String> path,
       final int maxNodes)
   {
-    List<SelectorConfiguration> selectors = emptyList();
-
-    Repository repository = repositoryManager.get(repositoryName);
-    ContentRepository contentRepository = getContentRepository(repository);
-    int repositoryId = getContentRepositoryId(contentRepository);
-
+    Repository repository = checkNotNull(repositoryManager.get(repositoryName));
     String format = repository.getFormat().getValue();
+    int repositoryId = getContentRepositoryId(getContentRepository(repository));
+
+    List<SelectorConfiguration> selectors = emptyList();
     if (!hasBrowsePermission(repositoryName, format)) {
       // user doesn't have repository-wide access so need to apply content selection
       selectors = selectorManager.browseActive(asList(repositoryName), asList(format));
@@ -286,29 +300,29 @@ public class DatastoreBrowseNodeStoreImpl<T extends BrowseNodeDAO>
       }
     }
 
-    String pathString = path.isEmpty() ? null : path.stream().collect(Collectors.joining("/"));
-
     BrowseNodeFilter filter = browseNodeFilters.getOrDefault(repository.getFormat().getValue(), (node, name) -> true);
 
+    String[] repositories = repositoryStream(repository)
+        .map(Repository::getName)
+        .collect(toList())
+        .toArray(new String[]{});
+
+    String pathString = path.isEmpty() ? null : join("/", path);
+
+    //We must do jexl matching in java, so if there is a jexl selector, filter for both jexl and csel selectors
     List<BrowseNode<Integer>> results;
-    if (repository.getType() instanceof GroupType) {
-      Equivalence<DatastoreBrowseNode> browseNodeIdentity = getIdentity(repository);
-      // overlay member results, first-one-wins if there are any nodes with the same name
-      results = members(repository)
-          .map(r -> dao().findChildren(getContentRepository(r), pathString, maxNodes)) // XXX NEXUS-22586 assetFilter & filterParameters
-          .flatMap(iter -> StreamSupport.stream(iter.spliterator(), false))
-          .map(browseNodeIdentity::wrap)
-          .distinct()
-          .map(Wrapper::get)
-          .filter(node -> filter.test(node, node.getRepositoryId() == repositoryId))
-          .limit(maxNodes)
-          .collect(toList());
-    }
-    else {
-      results = StreamSupport
-          .stream(dao().findChildren(contentRepository, pathString, maxNodes).spliterator(), false)
-          .filter(node -> filter.test(node, node.getRepositoryId() == repositoryId))
-          .collect(toList());
+    if (selectors.stream().anyMatch(this::isJexl)) {
+      results = fetchPermittedNodes(repository, maxNodes,
+          cr -> dao().findChildren(cr, pathString, maxNodes, emptyList(), emptyMap()),
+          bn -> contentAuthHelper.checkPathPermissions(bn.getPath(), bn.getFormat(), repositories) &&  filter.test(bn, bn.getRepositoryId() == repositoryId));
+    } else {
+      Map<String, Object> cselParams = new HashMap<>();
+      List<String> cselSelectors = parseCselSelectors(selectors, cselParams);
+
+      results = fetchPermittedNodes(repository, maxNodes,
+          cr -> dao().findChildren(cr, pathString, maxNodes, cselSelectors, cselParams),
+          node -> filter.test(node, node.getRepositoryId() == repositoryId)
+      );
     }
 
     results.sort(getBrowseNodeComparator(format));
@@ -316,9 +330,86 @@ public class DatastoreBrowseNodeStoreImpl<T extends BrowseNodeDAO>
     return results;
   }
 
+  private List<BrowseNode<Integer>> fetchPermittedNodes(final Repository repository,
+                                               final long maxNodes,
+                                               Function<ContentRepository, Iterable<DatastoreBrowseNode>> findChildren,
+                                               Predicate<DatastoreBrowseNode> filterNodePredicate) {
+    Stream<DatastoreBrowseNode> nodeStream;
+    if (repository.getType() instanceof GroupType) {
+      Equivalence<BrowseNode<Integer>> browseNodeIdentity = getIdentity(repository);
 
+      // overlay member results, first-one-wins if there are any nodes with the same name
+      nodeStream = members(repository)
+          .map(this::getContentRepository)
+          .map(findChildren)
+          .flatMap(iter -> stream(iter.spliterator(), false))
+          .map(browseNodeIdentity::wrap)
+          .distinct()
+          .map(Wrapper::get);
+    }
+    else {
+      nodeStream = of(repository)
+          .map(this::getContentRepository)
+          .map(findChildren)
+          .flatMap(iter -> stream(iter.spliterator(), false));
+    }
 
-  private Equivalence<DatastoreBrowseNode> getIdentity(final Repository repository) {
+    return nodeStream
+        .filter(filterNodePredicate)
+        .limit(maxNodes)
+        .collect(toList());
+  }
+
+  private Stream<Repository> repositoryStream(final Repository repository) {
+    return isGroup(repository) ? members(repository) : of(repository);
+  }
+
+  private boolean isGroup(final Repository repository) {
+    return repository.getType() instanceof GroupType;
+  }
+
+  private boolean isJexl(final SelectorConfiguration selectorConfiguration) {
+    return JexlSelector.TYPE.equals(selectorConfiguration.getType());
+  }
+
+  /**
+   * Parses each {@link CselSelector} configuration into a SQL string and populates the selectorParameters
+   */
+  private List<String> parseCselSelectors(
+      final List<SelectorConfiguration> cselSelectors,
+      final Map<String, Object> selectorParameters)
+  {
+    SelectorSqlBuilder sqlBuilder = new SelectorSqlBuilder()
+        .propertyAlias("path", "path")
+        .propertyAlias("format", "format")
+        .parameterPrefix("#{" + WHERE_PARAMS + ".")
+        .parameterSuffix("}")
+        .propertyPrefix("B.");
+
+    List<String> contentSelectors = new ArrayList<>(cselSelectors.size());
+    int cselCount = 0;
+
+    for (SelectorConfiguration selector : cselSelectors) {
+        try {
+          sqlBuilder.parameterNamePrefix("s" + cselCount++ + "p");
+
+          selectorManager.toSql(selector, sqlBuilder);
+
+          contentSelectors.add(sqlBuilder.getQueryString());
+          selectorParameters.putAll(sqlBuilder.getQueryParameters());
+        }
+        catch (SelectorEvaluationException e) {
+          log.warn("Problem evaluating selector {} as SQL", selector.getName(), e);
+        }
+        finally {
+          sqlBuilder.clearQueryString();
+        }
+    }
+
+    return contentSelectors;
+  }
+
+  private Equivalence<BrowseNode<Integer>> getIdentity(final Repository repository) {
     Optional<BrowseNodeFacet> browseNodeFacet = repository.optionalFacet(BrowseNodeFacet.class);
     if (browseNodeFacet.isPresent()) {
       return Equivalence.equals().onResultOf(input -> browseNodeFacet.get().browseNodeIdentity().apply(input));

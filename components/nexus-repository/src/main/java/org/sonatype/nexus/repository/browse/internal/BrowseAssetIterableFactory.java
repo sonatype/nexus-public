@@ -20,7 +20,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.repository.selector.internal.ContentAuthHelper;
+import org.sonatype.nexus.repository.selector.internal.OrientContentAuthHelper;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -29,7 +29,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * A factory for creating an {@code asset} browsing {@link Iterable<ODocument>} using the injected
- * {@link ContentAuthHelper} and {@code pageSize}.
+ * {@link OrientContentAuthHelper} and {@code pageSize}.
  *
  * @since 3.17
  */
@@ -38,12 +38,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class BrowseAssetIterableFactory
     extends ComponentSupport
 {
-  private final ContentAuthHelper contentAuthHelper;
+  private final OrientContentAuthHelper contentAuthHelper;
 
   private final int pageSize;
 
   @Inject
-  public BrowseAssetIterableFactory(final ContentAuthHelper contentAuthHelper,
+  public BrowseAssetIterableFactory(final OrientContentAuthHelper contentAuthHelper,
                                     @Named("${nexus.asset.browse.pageSize:-5000}") final int pageSize)
   {
     this.contentAuthHelper = checkNotNull(contentAuthHelper);

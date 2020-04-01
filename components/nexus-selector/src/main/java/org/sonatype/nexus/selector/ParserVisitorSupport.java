@@ -93,7 +93,7 @@ import org.slf4j.LoggerFactory;
  *
  * @since 3.16
  */
-abstract class ParserVisitorSupport
+public abstract class ParserVisitorSupport
     extends ParserVisitor
 {
   protected static final int LEFT = 0;

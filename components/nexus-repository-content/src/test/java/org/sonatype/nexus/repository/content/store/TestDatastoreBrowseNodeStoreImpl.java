@@ -21,6 +21,7 @@ import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
 import org.sonatype.nexus.repository.content.browse.internal.TestBrowseNodeDAO;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.selector.DatastoreContentAuthHelper;
 import org.sonatype.nexus.repository.storage.BrowseNodeComparator;
 import org.sonatype.nexus.repository.storage.BrowseNodeFilter;
 import org.sonatype.nexus.security.SecurityHelper;
@@ -42,11 +43,12 @@ public class TestDatastoreBrowseNodeStoreImpl
       final SelectorManager selectorManager,
       final BrowseNodeConfiguration configuration,
       final RepositoryManager repositoryManager,
+      final DatastoreContentAuthHelper contentAuthHelper,
       final Map<String, ContentRepositoryStore<? extends ContentRepositoryDAO>> contentRepositoryStores,
       final Map<String, BrowseNodeFilter> browseNodeFilters,
       final Map<String, BrowseNodeComparator> browseNodeComparators)
   {
-    super(sessionSupplier, securityHelper, selectorManager, configuration, repositoryManager, contentRepositoryStores,
+    super(sessionSupplier, securityHelper, selectorManager, configuration, repositoryManager, contentAuthHelper, contentRepositoryStores,
         browseNodeFilters, browseNodeComparators);
   }
 }

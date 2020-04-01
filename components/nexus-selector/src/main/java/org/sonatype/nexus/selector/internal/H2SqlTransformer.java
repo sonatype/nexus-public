@@ -10,22 +10,25 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.selector;
+package org.sonatype.nexus.selector.internal;
 
-import org.apache.commons.jexl3.parser.ASTJexlScript;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-/**
- * Walks the {@link ASTJexlScript} script, transforming CSEL expressions and populating the {@link SelectorSqlBuilder} builder.
- *
- * @since 3.next
- */
-public interface CselToSql
+import org.sonatype.nexus.selector.SelectorSqlBuilder;
+
+import org.apache.commons.jexl3.parser.ASTERNode;
+
+@Named("H2")
+@Singleton
+public class H2SqlTransformer
+    extends DatastoreSqlTransformer
 {
   /**
-   * Transforms the given CSEL expression (in script form) to SQL for use in a 'where' clause.
-   *
-   * @param script the CSEL script to transform
-   * @param builder the SQL builder to use
+   * Transform `a =~ "regex"` into the equivalent of `a matches "regex"` for H2
    */
-  void transformCselToSql(final ASTJexlScript script, final SelectorSqlBuilder builder);
+  @Override
+  protected Object visit(final ASTERNode node, final Object data) {
+    return transformOperator(node, "regexp", (SelectorSqlBuilder) data);
+  }
 }

@@ -28,7 +28,6 @@ import java.util.Optional;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.sonatype.nexus.common.app.VersionComparator;
@@ -48,6 +47,7 @@ import org.sonatype.nexus.repository.content.browse.internal.DatastoreBrowseNode
 import org.sonatype.nexus.repository.content.browse.internal.TestBrowseNodeDAO;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.selector.DatastoreContentAuthHelper;
 import org.sonatype.nexus.repository.storage.BrowseNode;
 import org.sonatype.nexus.repository.storage.BrowseNodeComparator;
 import org.sonatype.nexus.repository.storage.BrowseNodeFacet;
@@ -55,7 +55,12 @@ import org.sonatype.nexus.repository.storage.BrowseNodeFilter;
 import org.sonatype.nexus.repository.storage.DefaultBrowseNodeComparator;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.security.SecurityHelper;
+import org.sonatype.nexus.selector.CselSelector;
+import org.sonatype.nexus.selector.JexlSelector;
+import org.sonatype.nexus.selector.SelectorConfiguration;
+import org.sonatype.nexus.selector.SelectorEvaluationException;
 import org.sonatype.nexus.selector.SelectorManager;
+import org.sonatype.nexus.selector.SelectorSqlBuilder;
 import org.sonatype.nexus.transaction.TransactionModule;
 
 import com.google.common.base.Joiner;
@@ -72,6 +77,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static java.util.stream.Collectors.toList;
+import static org.codehaus.groovy.runtime.InvokerHelper.asList;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
@@ -80,7 +87,10 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -89,7 +99,7 @@ import static org.mockito.Mockito.withSettings;
 public class DatastoreBrowseNodeStoreImplTest
     extends RepositoryContentTestSupport
 {
-  private static final String FORMAT_NAME = "maven2";
+  private static final String FORMAT_NAME = "test";
 
   private static final String REPOSITORY_NAME = "maven-central";
 
@@ -116,9 +126,14 @@ public class DatastoreBrowseNodeStoreImplTest
   private SelectorManager selectorManager;
 
   @Mock
+  private DatastoreContentAuthHelper contentAuthHelper;
+
+  @Mock
   private ContentRepositoryStore<? extends ContentRepositoryDAO> contentRepositoryStores;
 
   private DatastoreBrowseNodeStoreImpl<TestBrowseNodeDAO> underTest;
+
+  private String databaseId;
 
   public DatastoreBrowseNodeStoreImplTest() {
     super(TestBrowseNodeDAO.class);
@@ -126,7 +141,6 @@ public class DatastoreBrowseNodeStoreImplTest
 
   @Before
   public void setup() throws Exception {
-
     generateRandomRepositories(2);
     generateRandomNamespaces(100);
     generateRandomNames(100);
@@ -144,6 +158,9 @@ public class DatastoreBrowseNodeStoreImplTest
     GroupFacet groupFacet = mock(GroupFacet.class);
     when(groupFacet.allMembers()).thenReturn(Arrays.asList(repositoryGroup, repository));
     when(repositoryGroup.facet(GroupFacet.class)).thenReturn(groupFacet);
+
+    when(contentAuthHelper.checkPathPermissionsJexlOnly(any(), any(), any())).thenReturn(true);
+
     when(securityHelper.anyPermitted(any())).thenReturn(true);
     when(browseNodeFilter.test(any(), any())).thenReturn(true);
 
@@ -156,6 +173,7 @@ public class DatastoreBrowseNodeStoreImplTest
         bind(SelectorManager.class).toInstance(selectorManager);
         bind(BrowseNodeConfiguration.class).toInstance(browseNodeConfiguration);
         bind(RepositoryManager.class).toInstance(repositoryManager);
+        bind(DatastoreContentAuthHelper.class).toInstance(contentAuthHelper);
         bind(new TypeLiteral<Map<String, ContentRepositoryStore<? extends ContentRepositoryDAO>>>() { })
             .toInstance(ImmutableMap.of(FORMAT_NAME, contentRepositoryStores));
         bind(new TypeLiteral<Map<String, BrowseNodeFilter>>() { })
@@ -167,6 +185,10 @@ public class DatastoreBrowseNodeStoreImplTest
     }).getInstance(TestDatastoreBrowseNodeStoreImpl.class);
 
     underTest.start();
+
+    try (Connection connection = sessionRule.openConnection("content")) {
+      databaseId = connection.getMetaData().getDatabaseProductName();
+    }
   }
 
   @After
@@ -313,7 +335,7 @@ public class DatastoreBrowseNodeStoreImplTest
 
     Iterable<BrowseNode<Integer>> it = underTest.getByPath(REPOSITORY_NAME, Collections.singletonList("org"), 1000);
 
-    List<BrowseNode<Integer>> nodes = StreamSupport.stream(it.spliterator(), false).collect(Collectors.toList());
+    List<BrowseNode<Integer>> nodes = StreamSupport.stream(it.spliterator(), false).collect(toList());
 
     assertThat(nodes, hasSize(2));
     assertThat(nodes.get(0),
@@ -335,7 +357,7 @@ public class DatastoreBrowseNodeStoreImplTest
     Iterable<BrowseNode<Integer>> it =
         underTest.getByPath(GROUP_REPOSITORY_NAME, Collections.singletonList("org"), 1000);
 
-    List<BrowseNode<Integer>> nodes = StreamSupport.stream(it.spliterator(), false).collect(Collectors.toList());
+    List<BrowseNode<Integer>> nodes = StreamSupport.stream(it.spliterator(), false).collect(toList());
 
     ContentRepository repository = generatedRepositories().get(0);
     ContentRepository groupRepository = generatedRepositories().get(1);
@@ -362,9 +384,8 @@ public class DatastoreBrowseNodeStoreImplTest
     when(browseNodeFacet.browseNodeIdentity()).thenReturn(fn);
     when(repositoryGroup.optionalFacet(BrowseNodeFacet.class)).thenReturn(Optional.of(browseNodeFacet));
 
-    Iterable<BrowseNode<Integer>> it =
-        underTest.getByPath(GROUP_REPOSITORY_NAME, Collections.singletonList("org"), 1000);
-    List<BrowseNode<Integer>> nodes = StreamSupport.stream(it.spliterator(), false).collect(Collectors.toList());
+    Iterable<BrowseNode<Integer>> it = underTest.getByPath(GROUP_REPOSITORY_NAME, Collections.singletonList("org"), 1000);
+    List<BrowseNode<Integer>> nodes = StreamSupport.stream(it.spliterator(), false).collect(toList());
 
     verify(fn, times(5)).apply(any(BrowseNode.class));
 
@@ -384,7 +405,7 @@ public class DatastoreBrowseNodeStoreImplTest
 
     Iterable<BrowseNode<Integer>> it = underTest.getByPath(REPOSITORY_NAME, Collections.singletonList("org"), 1);
 
-    List<BrowseNode<Integer>> nodes = StreamSupport.stream(it.spliterator(), false).collect(Collectors.toList());
+    List<BrowseNode<Integer>> nodes = StreamSupport.stream(it.spliterator(), false).collect(toList());
 
     ContentRepository repository = generatedRepositories().get(0);
     assertThat(nodes, hasSize(1));
@@ -401,7 +422,7 @@ public class DatastoreBrowseNodeStoreImplTest
 
     Iterable<BrowseNode<Integer>> it = underTest.getByPath(REPOSITORY_NAME, Collections.emptyList(), 1000);
 
-    List<BrowseNode<Integer>> nodes = StreamSupport.stream(it.spliterator(), false).collect(Collectors.toList());
+    List<BrowseNode<Integer>> nodes = StreamSupport.stream(it.spliterator(), false).collect(toList());
 
     ContentRepository repository = generatedRepositories().get(0);
     assertThat(nodes, hasSize(2));
@@ -425,7 +446,7 @@ public class DatastoreBrowseNodeStoreImplTest
 
     Iterable<BrowseNode<Integer>> it = underTest.getByPath(REPOSITORY_NAME, Collections.singletonList("org"), 1000);
 
-    List<BrowseNode<Integer>> nodes = StreamSupport.stream(it.spliterator(), false).collect(Collectors.toList());
+    List<BrowseNode<Integer>> nodes = StreamSupport.stream(it.spliterator(), false).collect(toList());
 
     assertThat(nodes, hasSize(1));
     assertThat(nodes.get(0), isBrowseNodeWith(generatedRepositories().get(0), 1, "org/foo", "foo", asset, null, true));
@@ -437,6 +458,118 @@ public class DatastoreBrowseNodeStoreImplTest
 
   private void delete(final Asset asset) {
     underTest.deleteAssetNode(asset);
+  }
+
+  @Test
+  public void testGetByPath_cselContentSelector() throws SelectorEvaluationException {
+    when(securityHelper.anyPermitted(any())).thenReturn(false);
+
+    Asset orgAsset = generatedAssets().get(0);
+    underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), orgAsset);
+    Component orgComponent = generatedComponents().get(0);
+    underTest.createComponentNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "bar"), orgComponent);
+
+    Asset comAsset = generatedAssets().get(1);
+    underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("com", "foo"), comAsset);
+    Component comComponent = generatedComponents().get(1);
+    underTest.createComponentNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("com", "bar"), comComponent);
+
+    Asset sunAsset = generatedAssets().get(2);
+    underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("sun", "foo"), sunAsset);
+    Component sunComponent = generatedComponents().get(2);
+    underTest.createComponentNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("sun", "bar"), sunComponent);
+
+    SelectorConfiguration fooSelector = mock(SelectorConfiguration.class);
+    when(fooSelector.getType()).thenReturn(CselSelector.TYPE);
+
+    SelectorConfiguration sunSelector = mock(SelectorConfiguration.class);
+    when(sunSelector.getType()).thenReturn(CselSelector.TYPE);
+
+    when(selectorManager.browseActive(eq(asList(REPOSITORY_NAME)), eq(asList(FORMAT_NAME)))).thenReturn(Arrays.asList(sunSelector, fooSelector));
+
+    doAnswer(invocationOnMock -> {
+      SelectorSqlBuilder builder = (SelectorSqlBuilder) invocationOnMock.getArguments()[1];
+      builder.appendProperty("path");
+      builder.appendOperator(getRegexOperator());
+      builder.appendLiteral(".*foo.*");
+      return null;
+    }).when(selectorManager).toSql(eq(fooSelector), any());
+
+    doAnswer(invocationOnMock -> {
+      SelectorSqlBuilder builder = (SelectorSqlBuilder) invocationOnMock.getArguments()[1];
+      builder.appendProperty("path");
+      builder.appendOperator(getRegexOperator());
+      builder.appendLiteral(".*sun.*");
+      return null;
+    }).when(selectorManager).toSql(eq(sunSelector), any());
+
+    Iterable<BrowseNode<Integer>> it = underTest.getByPath(REPOSITORY_NAME, asList("org"), 1000);
+
+    List<BrowseNode<Integer>> nodes = StreamSupport.stream(it.spliterator(), false).collect(toList());
+
+    assertThat(nodes, hasSize(1));
+    assertThat(nodes.get(0), isBrowseNodeWith(generatedRepositories().get(0), 1, "org/foo", "foo", orgAsset, null, true));
+  }
+
+  @Test
+  public void testGetByPath_jexl_and_Csel_ContentSelector() throws SelectorEvaluationException {
+    when(securityHelper.anyPermitted(any())).thenReturn(false);
+
+    Asset fooAsset = generatedAssets().get(0);
+    underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), fooAsset);
+    Component fooComponent = generatedComponents().get(0);
+    underTest.createComponentNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "foo"), fooComponent);
+
+    Asset barAsset = generatedAssets().get(1);
+    underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "bar"), barAsset);
+    Component barComponent = generatedComponents().get(1);
+    underTest.createComponentNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "bar"), barComponent);
+
+    Asset biffAsset = generatedAssets().get(2);
+    underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "biff"), biffAsset);
+    Component biffComponent = generatedComponents().get(2);
+    underTest.createComponentNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "biff"), biffComponent);
+
+    Asset bazAsset = generatedAssets().get(3);
+    underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "baz"), bazAsset);
+    Component bazComponent = generatedComponents().get(3);
+    underTest.createComponentNode(REPOSITORY_NAME, FORMAT_NAME, createBrowsePaths("org", "baz"), bazComponent);
+
+    SelectorConfiguration cselSelector = mock(SelectorConfiguration.class);
+    when(cselSelector.getType()).thenReturn(CselSelector.TYPE);
+
+    SelectorConfiguration jexlSelector = mock(SelectorConfiguration.class);
+    when(jexlSelector.getType()).thenReturn(JexlSelector.TYPE);
+
+    when(contentAuthHelper.checkPathPermissions(any(), any(), any())).thenReturn(false);
+    when(contentAuthHelper.checkPathPermissions(eq("org/bar"), any(), any())).thenReturn(true);
+    when(contentAuthHelper.checkPathPermissions(eq("org/baz"), any(), any())).thenReturn(true);
+    when(contentAuthHelper.checkPathPermissions(eq("org/foo"), any(), any())).thenReturn(true);
+
+    when(selectorManager.browseActive(eq(asList(REPOSITORY_NAME)), eq(asList(FORMAT_NAME)))).thenReturn(Arrays.asList(cselSelector, jexlSelector));
+
+
+    Iterable<BrowseNode<Integer>> it = underTest.getByPath(REPOSITORY_NAME, asList("org"), 2);
+
+    List<BrowseNode<Integer>> nodes = StreamSupport.stream(it.spliterator(), false).collect(toList());
+
+    verify(selectorManager, never()).toSql(any(), any());
+
+    assertThat(nodes, hasSize(2));
+    assertThat(nodes.get(0), isBrowseNodeWith(generatedRepositories().get(0), 1, "org/bar", "bar", barAsset, barComponent, true));
+    assertThat(nodes.get(1), isBrowseNodeWith(generatedRepositories().get(0), 1, "org/foo", "foo", fooAsset, fooComponent, true));
+
+  }
+
+  private String getRegexOperator() {
+    switch (databaseId) {
+      case "H2":
+        return "regexp";
+      case "PostgreSQL":
+        return "~";
+      default:
+        throw new IllegalStateException("Failed to handle databaseId");
+    }
   }
 
   private void populateFullRepository() {
@@ -484,6 +617,8 @@ public class DatastoreBrowseNodeStoreImplTest
       final int repositoryIndex)
   {
     when(repositoryManager.get(name)).thenReturn(repository);
+
+    when(repository.optionalFacet(BrowseNodeFacet.class)).thenReturn(Optional.empty());
 
     Format format = mock(Format.class);
     when(format.getValue()).thenReturn(formatName);

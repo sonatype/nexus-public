@@ -37,10 +37,10 @@ public class ContentAuth
 {
   public static final String NAME = "contentAuth";
 
-  private final ContentAuthHelper contentAuthHelper;
+  private final OrientContentAuthHelper contentAuthHelper;
 
   @Inject
-  public ContentAuth(final ContentAuthHelper contentAuthHelper)
+  public ContentAuth(final OrientContentAuthHelper contentAuthHelper)
   {
     super(NAME, 3, 4);
     this.contentAuthHelper = checkNotNull(contentAuthHelper);

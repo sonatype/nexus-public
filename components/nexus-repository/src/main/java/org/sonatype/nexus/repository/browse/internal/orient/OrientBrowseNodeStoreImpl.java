@@ -321,6 +321,7 @@ public class OrientBrowseNodeStoreImpl
     SelectorSqlBuilder sqlBuilder = new SelectorSqlBuilder()
         .propertyAlias("path", P_PATH)
         .propertyAlias("format", P_FORMAT)
+        .parameterPrefix(":")
         .propertyPrefix(P_ASSET_ID + ".attributes." + format + ".");
 
     int cselCount = 0;
@@ -328,7 +329,7 @@ public class OrientBrowseNodeStoreImpl
     for (SelectorConfiguration selector : selectors) {
       if (CselSelector.TYPE.equals(selector.getType())) {
         try {
-          sqlBuilder.parameterPrefix("s" + cselCount + "p");
+          sqlBuilder.parameterNamePrefix("s" + cselCount + "p");
 
           selectorManager.toSql(selector, sqlBuilder);
 

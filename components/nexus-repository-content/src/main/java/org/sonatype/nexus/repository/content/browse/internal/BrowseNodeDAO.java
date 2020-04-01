@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.content.browse.internal;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.sonatype.nexus.datastore.api.ContentDataAccess;
@@ -21,6 +23,10 @@ import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.ContentRepository;
 
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.ResultMap;
+import org.apache.ibatis.annotations.SelectProvider;
+
+import static org.sonatype.nexus.repository.content.browse.internal.BrowseNodeDAOQueryBuilder.WHERE_PARAMS;
 
 /**
  * DAO to support tree browsing of assets & components
@@ -56,10 +62,14 @@ public interface BrowseNodeDAO
   /**
    * Find the direct children of a browse node.
    */
+  @SelectProvider(type = BrowseNodeDAOQueryBuilder.class, method = "findChildrenQuery")
+  @ResultMap("datastoreBrowseNode")
   Iterable<DatastoreBrowseNode> findChildren(
       @Param("repository") ContentRepository repository,
       @Param("path") String path,
-      @Param("maxNodes") int maxNodes);
+      @Param("maxNodes") int maxNodes,
+      @Param("contentSelectors") List<String> contentSelectors,
+      @Param(WHERE_PARAMS) Map<String, Object> whereParams);
 
   /**
    * Find the deepest node in the given paths.

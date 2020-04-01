@@ -35,7 +35,7 @@ import static org.sonatype.nexus.selector.LeadingSlashScriptTransformer.trimLead
  *
  * @since 3.16
  */
-class JexlEngine
+public class JexlEngine
     extends Engine
 {
   // this stops JEXL from using expensive new Throwable().getStackTrace() to find caller info
@@ -43,7 +43,7 @@ class JexlEngine
 
   private static final Pattern JEXL_CONDENSED_INFO_HEADER = compile("Selector@\\d+(?::\\d+)?(?:![\\d+,\\d+]:)? *");
 
-  JexlEngine() {
+  public JexlEngine() {
     super(new JexlBuilder().uberspect(new SandboxJexlUberspect()));
   }
 

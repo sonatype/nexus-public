@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.selector;
 
-import static org.sonatype.nexus.selector.CselToSql.transformCselToSql;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Subset of JEXL selectors that can also be represented as SQL.
@@ -24,12 +24,16 @@ public class CselSelector
 {
   public static final String TYPE = "csel";
 
-  public CselSelector(final JexlExpression expression) {
+  private final CselToSql cselToSql;
+
+  public CselSelector(final CselToSql cselToSql, final JexlExpression expression) {
     super(expression);
+    this.cselToSql = checkNotNull(cselToSql);
+
   }
 
   @Override
   public void toSql(final SelectorSqlBuilder sqlBuilder) {
-    transformCselToSql(expression.getSyntaxTree(), sqlBuilder);
+    cselToSql.transformCselToSql(expression.getSyntaxTree(), sqlBuilder);
   }
 }

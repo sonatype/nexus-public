@@ -13,10 +13,15 @@
 package org.sonatype.nexus.repository.content.store;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.repository.content.Asset;
@@ -33,12 +38,16 @@ import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
 import org.junit.Test;
 
+import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
 import static org.hamcrest.Matchers.arrayWithSize;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.sonatype.nexus.repository.content.browse.internal.BrowseNodeDAOQueryBuilder.WHERE_PARAMS;
 
 public class BrowseNodeDAOTest
     extends RepositoryContentTestSupport
@@ -117,7 +126,7 @@ public class BrowseNodeDAOTest
     createNode(parentId, "foo/foo", "foo");
 
     DatastoreBrowseNode[] children =
-        Iterables.toArray(call(dao -> dao.findChildren(contentRepository, "foo", 100)), DatastoreBrowseNode.class);
+        Iterables.toArray(call(dao -> dao.findChildren(contentRepository, "foo", 100, null, null)), DatastoreBrowseNode.class);
     assertThat(children, arrayWithSize(2));
 
     assertThat(children,
@@ -132,13 +141,34 @@ public class BrowseNodeDAOTest
     createNode(null, "foo", "foo");
 
     DatastoreBrowseNode[] children =
-        Iterables.toArray(call(dao -> dao.findChildren(contentRepository, null, 100)), DatastoreBrowseNode.class);
+        Iterables.toArray(call(dao -> dao.findChildren(contentRepository, null, 100, null, null)), DatastoreBrowseNode.class);
     assertThat(children, arrayWithSize(2));
 
     assertThat(children,
         arrayContainingInAnyOrder(
             Arrays.asList(isBrowseNodeWith(contentRepository, null, "foo", "foo", null, null),
                 isBrowseNodeWith(contentRepository, null, "bar", "bar", null, null))));
+  }
+
+
+  @Test
+  public void testFindChildren_withWhereClause() {
+    final int dogParent = createNode(null, "dog", "woof");
+    createNode(dogParent, "dog/woof", "woof");
+    createNode(dogParent, "dog/bark", "bark");
+    createNode(dogParent, "dog/ruff", "ruff");
+
+    Map<String, Object> parameters = new HashMap<>();
+    parameters.put("regex", "'.*f$'");
+
+    List<DatastoreBrowseNode> children = stream(dao -> dao.findChildren(contentRepository, "dog", 100, Arrays.asList(" path regexp ${" + WHERE_PARAMS + ".regex}"), parameters))
+        .collect(toList());
+
+    Matcher<DatastoreBrowseNode> woofDog = isBrowseNodeWith(contentRepository, dogParent, "dog/woof", "woof", null, null);
+    Matcher<DatastoreBrowseNode> ruffDog = isBrowseNodeWith(contentRepository, dogParent, "dog/ruff", "ruff", null, null);
+
+    assertThat(children.size(), equalTo(2));
+    assertThat(children, containsInAnyOrder(woofDog, ruffDog));
   }
 
   @Test
@@ -330,6 +360,15 @@ public class BrowseNodeDAOTest
     DatastoreBrowseNode node = new DatastoreBrowseNode("maven2", parentId, path, name);
     run(dao -> dao.createNode(contentRepository, node));
     return node.getId();
+  }
+
+  private <T> Stream<T> stream(final Function<BrowseNodeDAO, Iterable<T>> fn) {
+    try (DataSession<?> session = sessionRule.openSession("content")) {
+      BrowseNodeDAO dao = session.access(TestBrowseNodeDAO.class);
+      Iterable<T> retVal = fn.apply(dao);
+      session.getTransaction().commit();
+      return StreamSupport.stream(retVal.spliterator(), false);
+    }
   }
 
   private <T> T call(final Function<BrowseNodeDAO, T> fn) {
