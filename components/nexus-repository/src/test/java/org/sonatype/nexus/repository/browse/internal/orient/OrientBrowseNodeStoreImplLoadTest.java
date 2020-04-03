@@ -119,6 +119,8 @@ public class OrientBrowseNodeStoreImplLoadTest
         assetEntityAdapter.addEntity(db, assets.get(i));
       }
 
+      browseNodeEntityAdapter.register(db); // registration of the schema is now done outside of the store
+
       bucketEntityAdapter.register(db);
     }
 

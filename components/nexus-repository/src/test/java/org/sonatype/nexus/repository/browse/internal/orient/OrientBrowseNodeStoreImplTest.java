@@ -216,8 +216,6 @@ public class OrientBrowseNodeStoreImplTest
         ImmutableMap.of(DefaultBrowseNodeComparator.NAME, new DefaultBrowseNodeComparator(new VersionComparator())));
 
     underTest.start();
-
-    verify(browseNodeEntityAdapter).register(db);
   }
 
   @After

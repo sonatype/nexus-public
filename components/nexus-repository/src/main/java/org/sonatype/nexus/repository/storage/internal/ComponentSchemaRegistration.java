@@ -20,6 +20,7 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.orient.DatabaseInstance;
+import org.sonatype.nexus.repository.browse.internal.orient.BrowseNodeEntityAdapter;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.storage.BucketEntityAdapter;
 import org.sonatype.nexus.repository.storage.ComponentDatabase;
@@ -49,17 +50,21 @@ public class ComponentSchemaRegistration
 
   private final AssetEntityAdapter assetEntityAdapter;
 
+  private final BrowseNodeEntityAdapter browseNodeEntityAdapter;
+
   @Inject
   public ComponentSchemaRegistration(@Named(ComponentDatabase.NAME) final Provider<DatabaseInstance> databaseInstance,
                                      final BucketEntityAdapter bucketEntityAdapter,
                                      final ComponentEntityAdapter componentEntityAdapter,
-                                     final AssetEntityAdapter assetEntityAdapter)
+                                     final AssetEntityAdapter assetEntityAdapter,
+                                     final BrowseNodeEntityAdapter browseNodeEntityAdapter)
   {
     this.databaseInstance = checkNotNull(databaseInstance);
 
     this.bucketEntityAdapter = checkNotNull(bucketEntityAdapter);
     this.componentEntityAdapter = checkNotNull(componentEntityAdapter);
     this.assetEntityAdapter = checkNotNull(assetEntityAdapter);
+    this.browseNodeEntityAdapter = checkNotNull(browseNodeEntityAdapter);
   }
 
   @Override
@@ -68,6 +73,7 @@ public class ComponentSchemaRegistration
       bucketEntityAdapter.register(db);
       componentEntityAdapter.register(db);
       assetEntityAdapter.register(db);
+      browseNodeEntityAdapter.register(db);
     }
   }
 }
