@@ -21,7 +21,9 @@ import javax.annotation.Nullable;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenHostedFacet;
+import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.internal.MavenComponentMaintenanceFacet;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentMaintenance;
@@ -31,9 +33,11 @@ import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_ARTIFACT_ID;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_GROUP_ID;
+import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
 
 /**
  * maven format specific hosted {@link ComponentMaintenance}.
@@ -65,7 +69,15 @@ public class MavenHostedComponentMaintenanceFacet
 
       DeletionProgress batchProgress = deleteComponentBatch(entityIds, cancelledCheck);
 
-      getRepository().facet(MavenHostedFacet.class).deleteMetadata(gavs);
+      Set<MavenPath> versionPaths = gavs.stream().map(gav -> metadataPath(gav[0], gav[1], gav[2])).collect(toSet());
+      getRepository().facet(MavenFacet.class).maybeDeleteOrFlagToRebuildMetadata(versionPaths);
+
+      Set<MavenPath> artifactIdPaths = gavs.stream().map(gav -> metadataPath(gav[0], gav[1], null)).collect(toSet());
+      getRepository().facet(MavenFacet.class).maybeDeleteOrFlagToRebuildMetadata(artifactIdPaths);
+
+      Set<MavenPath> groupPaths = gavs.stream().map(gav -> metadataPath(gav[0], null, null)).collect(toSet());
+      getRepository().facet(MavenFacet.class).maybeDeleteOrFlagToRebuildMetadata(groupPaths);
+
       return batchProgress;
     }
     catch (Exception ex) {
@@ -94,10 +106,5 @@ public class MavenHostedComponentMaintenanceFacet
       };
     }
     return null; //NOSONAR
-  }
-
-  @Override
-  public void after() {
-    getRepository().facet(MavenHostedFacet.class).rebuildMetadata(null, null, null, true);
   }
 }

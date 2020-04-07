@@ -51,6 +51,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 
 import static java.lang.String.format;
@@ -61,10 +62,10 @@ import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.cache.CacheInfo.CACHE;
 import static org.sonatype.nexus.repository.cache.CacheInfo.CACHE_TOKEN;
@@ -75,6 +76,7 @@ import static org.sonatype.nexus.repository.maven.internal.Attributes.P_ARTIFACT
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_GROUP_ID;
 import static org.sonatype.nexus.repository.maven.internal.PurgeUnusedSnapshotsFacetImplTest.TestData.testData;
+import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
 import static org.sonatype.nexus.repository.storage.Asset.CHECKSUM;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_COMPONENT;
@@ -177,15 +179,7 @@ public class PurgeUnusedSnapshotsFacetImplTest
 
     assertQueries();
 
-    // ensure metadata is either deleted or marked for rebuild
-    for (String path : METADATA_PATHS) {
-      Asset metadataAsset = storageTx
-          .findAssetWithProperty(P_NAME, maven2MavenPathParser.parsePath(path).getPath(), bucket);
-      Boolean isMarkedForRebuild = metadataAsset.formatAttributes().get("forceRebuild", Boolean.class);
-      assertThat("metadata should have been marked for rebuild or deleted",
-          ((isMarkedForRebuild != null && isMarkedForRebuild) ||
-              verify(mavenFacet).delete(maven2MavenPathParser.parsePath(path))));
-    }
+    assertAllMetadataDeletedOrFlaggedToRebuild();
   }
 
   @Test
@@ -198,7 +192,7 @@ public class PurgeUnusedSnapshotsFacetImplTest
 
     purgeUnusedSnapshotsFacet.deleteUnusedSnapshotComponents(taskOlderThan);
 
-    assertAllMetadataDeleted();
+    assertAllMetadataDeletedOrFlaggedToRebuild();
   }
 
   // Mock the four pages of components. Each OCommandRequest is a page.
@@ -239,58 +233,30 @@ public class PurgeUnusedSnapshotsFacetImplTest
     assertThat(components.get(4).name(), equalTo("biz"));
   }
 
-  private void assertAllMetadataDeleted() throws Exception {
-    verify(mavenFacet).delete(maven2MavenPathParser.parsePath("my/company/foo/1.0-SNAPSHOT/maven-metadata.xml"),
-        maven2MavenPathParser.parsePath("my/company/foo/1.0-SNAPSHOT/maven-metadata.xml.sha1"),
-        maven2MavenPathParser.parsePath("my/company/foo/1.0-SNAPSHOT/maven-metadata.xml.md5"));
+  private void assertAllMetadataDeletedOrFlaggedToRebuild() throws Exception {
+    InOrder inOrder = inOrder(mavenFacet);
 
-    verify(mavenFacet).delete(maven2MavenPathParser.parsePath("my/company/bar/2.0-SNAPSHOT/maven-metadata.xml"),
-        maven2MavenPathParser.parsePath("my/company/bar/2.0-SNAPSHOT/maven-metadata.xml.sha1"),
-        maven2MavenPathParser.parsePath("my/company/bar/2.0-SNAPSHOT/maven-metadata.xml.md5"));
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("my.company", "foo", "1.0-SNAPSHOT"));
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("my.company", "foo", null));
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("my.company", null, null));
 
-    verify(mavenFacet).delete(maven2MavenPathParser.parsePath("this/company/baz/3.0-SNAPSHOT/maven-metadata.xml"),
-        maven2MavenPathParser.parsePath("this/company/baz/3.0-SNAPSHOT/maven-metadata.xml.sha1"),
-        maven2MavenPathParser.parsePath("this/company/baz/3.0-SNAPSHOT/maven-metadata.xml.md5"));
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("my.company", "bar", "2.0-SNAPSHOT"));
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("my.company", "bar", null));
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("my.company", null, null));
 
-    verify(mavenFacet).delete(maven2MavenPathParser.parsePath("my/company/foo/0.1-SNAPSHOT/maven-metadata.xml"),
-        maven2MavenPathParser.parsePath("my/company/foo/0.1-SNAPSHOT/maven-metadata.xml.sha1"),
-        maven2MavenPathParser.parsePath("my/company/foo/0.1-SNAPSHOT/maven-metadata.xml.md5"));
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("this.company", "baz", "3.0-SNAPSHOT"));
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("this.company", "baz", null));
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("this.company", null, null));
 
-    verify(mavenFacet).delete(maven2MavenPathParser.parsePath("your/company/biz/1.0-SNAPSHOT/maven-metadata.xml"),
-        maven2MavenPathParser.parsePath("your/company/biz/1.0-SNAPSHOT/maven-metadata.xml.sha1"),
-        maven2MavenPathParser.parsePath("your/company/biz/1.0-SNAPSHOT/maven-metadata.xml.md5"));
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("my.company", "foo", "0.1-SNAPSHOT"));
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("my.company", "foo", null));
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("my.company", null, null));
 
-    //twice for the 1.0 and 0.1 versions
-    verify(mavenFacet, times(2)).delete(maven2MavenPathParser.parsePath("my/company/foo/maven-metadata.xml"),
-        maven2MavenPathParser.parsePath("my/company/foo/maven-metadata.xml.sha1"),
-        maven2MavenPathParser.parsePath("my/company/foo/maven-metadata.xml.md5"));
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("your.company", "biz", "1.0-SNAPSHOT"));
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("your.company", "biz", null));
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("your.company", null, null));
 
-    //three times for foo-1.0 bar-2.0 and foo-0.1
-    verify(mavenFacet, times(3)).delete(maven2MavenPathParser.parsePath("my/company/maven-metadata.xml"),
-        maven2MavenPathParser.parsePath("my/company/maven-metadata.xml.sha1"),
-        maven2MavenPathParser.parsePath("my/company/maven-metadata.xml.md5"));
-
-    verify(mavenFacet).delete(maven2MavenPathParser.parsePath("my/company/bar/maven-metadata.xml"),
-        maven2MavenPathParser.parsePath("my/company/bar/maven-metadata.xml.sha1"),
-        maven2MavenPathParser.parsePath("my/company/bar/maven-metadata.xml.md5"));
-
-    verify(mavenFacet).delete(maven2MavenPathParser.parsePath("this/company/baz/maven-metadata.xml"),
-        maven2MavenPathParser.parsePath("this/company/baz/maven-metadata.xml.sha1"),
-        maven2MavenPathParser.parsePath("this/company/baz/maven-metadata.xml.md5"));
-
-    verify(mavenFacet).delete(maven2MavenPathParser.parsePath("this/company/maven-metadata.xml"),
-        maven2MavenPathParser.parsePath("this/company/maven-metadata.xml.sha1"),
-        maven2MavenPathParser.parsePath("this/company/maven-metadata.xml.md5"));
-
-    verify(mavenFacet).delete(maven2MavenPathParser.parsePath("your/company/biz/maven-metadata.xml"),
-        maven2MavenPathParser.parsePath("your/company/biz/maven-metadata.xml.sha1"),
-        maven2MavenPathParser.parsePath("your/company/biz/maven-metadata.xml.md5"));
-
-    verify(mavenFacet).delete(maven2MavenPathParser.parsePath("your/company/maven-metadata.xml"),
-        maven2MavenPathParser.parsePath("your/company/maven-metadata.xml.sha1"),
-        maven2MavenPathParser.parsePath("your/company/maven-metadata.xml.md5"));
-
-    verifyNoMoreInteractions(mavenFacet);
+    inOrder.verifyNoMoreInteractions();
   }
 
   private void assertQueries() {
