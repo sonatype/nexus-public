@@ -10,19 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+package org.sonatype.nexus.coreui
+
+import javax.validation.constraints.NotEmpty
+
 /**
- * @since 3.22
+ * @since 3.next
  */
-export default class Utils {
-  static urlFromPath(path) {
-    return NX.app.baseUrl + path;
-  }
+class UserAccountPasswordXO {
+  @NotEmpty
+  String authToken
 
-  static isBlank(str) {
-    return (!str || /^\s*$/.test(str));
-  }
-
-  static notBlank(str) {
-    return !Utils.isBlank(str);
-  }
+  @NotEmpty
+  String password
 }

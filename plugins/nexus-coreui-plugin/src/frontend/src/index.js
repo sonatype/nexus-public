@@ -14,6 +14,7 @@ import AnonymousSettings from './components/pages/admin/AnonymousSettings/Anonym
 import SystemInformation from './components/pages/admin/SystemInformation/SystemInformation';
 import UIStrings from './constants/UIStrings';
 import SupportRequest from "./components/pages/admin/SupportRequest/SupportRequest";
+import UserAccount from "./components/pages/admin/UserAccount/UserAccount";
 
 window.plugins.push({
   id: 'nexus-coreui-plugin',
@@ -60,6 +61,18 @@ window.plugins.push({
         permissions: ['nexus:atlas:create'],
         editions: ['PRO']
       }
-    }
+    },
+    {
+      mode: 'user',
+      path: '/Account',
+      text: UIStrings.USER_ACCOUNT.MENU.text,
+      description: UIStrings.USER_ACCOUNT.MENU.description,
+      view: UserAccount,
+      iconCls: 'x-fa fa-user',
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        requiresUser: true,
+      }
+    },
   ]
 });

@@ -10,19 +10,21 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/**
- * @since 3.22
- */
-export default class Utils {
-  static urlFromPath(path) {
-    return NX.app.baseUrl + path;
-  }
+import React from 'react';
+import {useMachine} from '@xstate/react';
+import UserAccountSettings from './UserAccountSettings';
+import PasswordChangeForm from "./PasswordChangeForm";
+import {ContentBody} from 'nexus-ui-plugin';
 
-  static isBlank(str) {
-    return (!str || /^\s*$/.test(str));
-  }
+import './UserAccount.scss';
+import UserAccountMachine from "./UserAccountMachine";
 
-  static notBlank(str) {
-    return !Utils.isBlank(str);
-  }
+export default function UserAccount() {
+  const [current,, userAccountService] = useMachine(UserAccountMachine, {devTools: true});
+
+  return <ContentBody className='nxrm-user-account'>
+    <UserAccountSettings service={userAccountService}/>
+
+    <PasswordChangeForm userId={current.context.data.userId}/>
+  </ContentBody>;
 }

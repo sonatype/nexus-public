@@ -47,4 +47,19 @@ export default class {
       window.dirty = window.dirty.filter(it => it !== key)
     }
   }
+
+  /**
+   * Create a Promise that will fetch an authentication token using the
+   * username and password supplied
+   * @param username
+   * @param password
+   * @returns {Promise}
+   */
+  static fetchAuthenticationToken(username, password) {
+    const b64u = NX.util.Base64.encode(username);
+    const b64p = NX.util.Base64.encode(password);
+    return new Promise((resolve, reject) => {
+      NX.direct.rapture_Security.authenticationToken(b64u, b64p, resolve);
+    });
+  }
 }

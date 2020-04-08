@@ -1364,18 +1364,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     System_HttpRequestSettings_Attempts_FieldLabel: 'Connection/Socket retry attempts',
     System_HttpRequestSettings_Attempts_HelpText: 'Total retries if the initial connection attempt suffers a timeout',
 
-    // User -> Account
-    Users_Text: 'Account',
-    Users_Description: 'Manage your account',
-    User_UserAccount_Update_Success: 'User account settings $action',
-    User_UserAccount_Update_Error: 'External users cannot be updated',
-    User_UserAccount_ID_FieldLabel: 'ID',
-    User_UserAccount_ID_HelpText: 'This is used as your username.',
-    User_UserAccount_First_FieldLabel: 'First name',
-    User_UserAccount_Last_FieldLabel: 'Last Name',
-    User_UserAccount_Email_FieldLabel: 'Email',
-    User_UserAccount_Password_Button: 'Change password',
-
     // User -> NuGet Api Key
     NuGetApiKey_Text: 'NuGet API Key',
     NuGetApiKey_Description: 'Configure credentials for NuGet repositories',
