@@ -663,7 +663,7 @@ public class S3BlobStore
     try {
       return blobAttributes.load();
     } catch (IOException ioe) {
-      log.debug("Unable to load attributes {} during existence check, exception: {}", blobAttributes, ioe);
+      log.debug("Unable to load attributes {} during existence check, exception", blobAttributes, ioe);
       return false;
     }
   }

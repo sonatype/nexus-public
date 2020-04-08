@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.SAXParser;
@@ -177,6 +178,8 @@ public final class PyPiSearchUtils
     factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
     SearchResponseHandler handler = new SearchResponseHandler();
     SAXParser parser = factory.newSAXParser();
+    parser.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+    parser.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
     parser.parse(in, handler);
     return handler.getResults();
   }

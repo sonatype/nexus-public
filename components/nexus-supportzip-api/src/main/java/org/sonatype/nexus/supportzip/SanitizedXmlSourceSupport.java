@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringReader;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.Transformer;
@@ -79,6 +80,9 @@ public class SanitizedXmlSourceSupport
         parserFactory.setNamespaceAware(true);
 
         SAXParser parser = parserFactory.newSAXParser();
+        parser.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+        parser.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+
         XMLReader reader = parser.getXMLReader();
         reader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", false);
         reader.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
