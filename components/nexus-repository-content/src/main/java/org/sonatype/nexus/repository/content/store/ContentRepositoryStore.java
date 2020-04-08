@@ -15,21 +15,31 @@ package org.sonatype.nexus.repository.content.store;
 import java.util.Collection;
 import java.util.Optional;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.ContentRepository;
 import org.sonatype.nexus.transaction.Transactional;
+
+import com.google.inject.assistedinject.Assisted;
 
 /**
  * {@link ContentRepository} store.
  *
  * @since 3.21
  */
-public abstract class ContentRepositoryStore<T extends ContentRepositoryDAO>
+@Named
+public class ContentRepositoryStore<T extends ContentRepositoryDAO>
     extends ContentStoreSupport<T>
 {
-  public ContentRepositoryStore(final DataSessionSupplier sessionSupplier, final String storeName) {
-    super(sessionSupplier, storeName);
+  @Inject
+  public ContentRepositoryStore(final DataSessionSupplier sessionSupplier,
+                                @Assisted final String contentStoreName,
+                                @Assisted final Class<T> daoClass)
+  {
+    super(sessionSupplier, contentStoreName, daoClass);
   }
 
   /**
@@ -67,7 +77,7 @@ public abstract class ContentRepositoryStore<T extends ContentRepositoryDAO>
    * @param contentRepository the content repository to update
    */
   @Transactional
-  public void updateContentRepositoryAttributes(final ContentRepositoryData contentRepository) {
+  public void updateContentRepositoryAttributes(final ContentRepository contentRepository) {
     dao().updateContentRepositoryAttributes(contentRepository);
   }
 

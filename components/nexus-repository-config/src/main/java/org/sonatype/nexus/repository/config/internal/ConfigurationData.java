@@ -81,6 +81,11 @@ public class ConfigurationData
   }
 
   @Override
+  public EntityId getRepositoryId() {
+    return getId(); // alias repositoryId to id
+  }
+
+  @Override
   public String getName() {
     return name;
   }

@@ -44,7 +44,9 @@ import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.ContentRepository;
 import org.sonatype.nexus.repository.content.browse.internal.DatastoreBrowseNode;
+import org.sonatype.nexus.repository.content.browse.internal.DatastoreBrowseNodeStoreImpl;
 import org.sonatype.nexus.repository.content.browse.internal.TestBrowseNodeDAO;
+import org.sonatype.nexus.repository.content.browse.internal.TestDatastoreBrowseNodeStoreImpl;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.selector.DatastoreContentAuthHelper;
@@ -97,7 +99,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
 
 public class DatastoreBrowseNodeStoreImplTest
-    extends RepositoryContentTestSupport
+    extends ExampleContentTestSupport
 {
   private static final String FORMAT_NAME = "test";
 

@@ -50,7 +50,7 @@ import static org.junit.Assert.assertTrue;
 import static org.sonatype.nexus.repository.content.browse.internal.BrowseNodeDAOQueryBuilder.WHERE_PARAMS;
 
 public class BrowseNodeDAOTest
-    extends RepositoryContentTestSupport
+    extends ExampleContentTestSupport
 {
   private ContentRepository contentRepository;
 

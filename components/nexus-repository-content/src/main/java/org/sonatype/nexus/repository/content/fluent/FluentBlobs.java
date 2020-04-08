@@ -14,6 +14,8 @@ package org.sonatype.nexus.repository.content.fluent;
 
 import java.io.InputStream;
 
+import javax.annotation.Nullable;
+
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
@@ -28,7 +30,7 @@ public interface FluentBlobs
   /**
    * Ingests the given stream as a temporary blob with the requested hashes.
    */
-  TempBlob ingest(InputStream in, HashAlgorithm... hashing);
+  TempBlob ingest(InputStream in, @Nullable String contentType, HashAlgorithm... hashing);
 
   /**
    * Ingests the given payload as a temporary blob with the requested hashes.

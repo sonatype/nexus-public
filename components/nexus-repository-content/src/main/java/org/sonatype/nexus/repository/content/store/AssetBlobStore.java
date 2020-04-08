@@ -15,21 +15,31 @@ package org.sonatype.nexus.repository.content.store;
 import java.util.Collection;
 import java.util.Optional;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.transaction.Transactional;
+
+import com.google.inject.assistedinject.Assisted;
 
 /**
  * {@link AssetBlob} store.
  *
  * @since 3.21
  */
-public abstract class AssetBlobStore<T extends AssetBlobDAO>
+@Named
+public class AssetBlobStore<T extends AssetBlobDAO>
     extends ContentStoreSupport<T>
 {
-  public AssetBlobStore(final DataSessionSupplier sessionSupplier, final String storeName) {
-    super(sessionSupplier, storeName);
+  @Inject
+  public AssetBlobStore(final DataSessionSupplier sessionSupplier,
+                        @Assisted final String contentStoreName,
+                        @Assisted final Class<T> daoClass)
+  {
+    super(sessionSupplier, contentStoreName, daoClass);
   }
 
   /**

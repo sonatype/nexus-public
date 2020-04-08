@@ -40,7 +40,7 @@
         USING (asset_blob_id) WHERE ${format}_asset.asset_blob_id IS NULL LIMIT 100;
   </select>
 
-  <insert id="createAssetBlob" useGeneratedKeys="true" keyProperty="assetBlobId">
+  <insert id="createAssetBlob" useGeneratedKeys="true" keyProperty="assetBlobId" parameterType="AssetBlobData">
     INSERT INTO ${format}_asset_blob (blob_ref, blob_size, content_type, blob_created, created_by, created_by_ip)
         VALUES (#{blobRef}, #{blobSize}, #{contentType}, #{blobCreated}, #{createdBy}, #{createdByIp});
   </insert>

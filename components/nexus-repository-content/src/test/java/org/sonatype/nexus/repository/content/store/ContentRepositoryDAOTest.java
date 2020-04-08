@@ -18,6 +18,7 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityUUID;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.repository.content.ContentRepository;
+import org.sonatype.nexus.repository.content.store.example.TestContentRepositoryDAO;
 
 import org.apache.ibatis.exceptions.PersistenceException;
 import org.joda.time.DateTime;
@@ -36,7 +37,7 @@ import static org.junit.Assert.fail;
  * Test {@link ContentRepositoryDAO}.
  */
 public class ContentRepositoryDAOTest
-    extends RepositoryContentTestSupport
+    extends ExampleContentTestSupport
 {
   @Test
   public void testCrudOperations() throws InterruptedException {
@@ -118,7 +119,7 @@ public class ContentRepositoryDAOTest
       DateTime oldCreated = tempResult.created();
       DateTime oldLastUpdated = tempResult.lastUpdated();
 
-      contentRepository1.attributes().child("custom-section-1").set("custom-key-1", "more-test-values-1");
+      contentRepository1.attributes("custom-section-1").set("custom-key-1", "more-test-values-1");
       dao.updateContentRepositoryAttributes(contentRepository1);
 
       tempResult = dao.readContentRepository(configRepositoryId1).get();
@@ -133,7 +134,7 @@ public class ContentRepositoryDAOTest
       oldLastUpdated = tempResult.lastUpdated();
 
       contentRepository2.repositoryId = null; // check a 'detached' entity with no internal id can be updated
-      contentRepository2.attributes().child("custom-section-2").set("custom-key-2", "more-test-values-2");
+      contentRepository2.attributes("custom-section-2").set("custom-key-2", "more-test-values-2");
       dao.updateContentRepositoryAttributes(contentRepository2);
 
       tempResult = dao.readContentRepository(configRepositoryId2).get();
@@ -159,7 +160,7 @@ public class ContentRepositoryDAOTest
       DateTime oldCreated = tempResult.created();
       DateTime oldLastUpdated = tempResult.lastUpdated();
 
-      contentRepository1.attributes().child("custom-section-1").set("custom-key-1", "more-test-values-again");
+      contentRepository1.attributes("custom-section-1").set("custom-key-1", "more-test-values-again");
       dao.updateContentRepositoryAttributes(contentRepository1);
 
       tempResult = dao.readContentRepository(configRepositoryId1).get();

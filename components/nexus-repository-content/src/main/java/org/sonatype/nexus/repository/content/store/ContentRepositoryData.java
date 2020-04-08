@@ -35,6 +35,11 @@ public class ContentRepositoryData
     return configRepositoryId;
   }
 
+  @Override
+  public Integer contentRepositoryId() {
+    return repositoryId;
+  }
+
   // MyBatis setters + validation
 
   /**

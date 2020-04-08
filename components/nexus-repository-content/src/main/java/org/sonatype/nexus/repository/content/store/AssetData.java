@@ -21,6 +21,7 @@ import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -36,6 +37,7 @@ public class AssetData
     extends AbstractRepositoryContent
     implements Asset, ContinuationAware
 {
+  @VisibleForTesting
   Integer assetId; // NOSONAR: internal id
 
   private String path;

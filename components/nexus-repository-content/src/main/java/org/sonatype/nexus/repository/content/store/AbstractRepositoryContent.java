@@ -12,9 +12,12 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import java.util.HashMap;
+
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.content.RepositoryContent;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -27,9 +30,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public abstract class AbstractRepositoryContent
     implements RepositoryContent
 {
+  @VisibleForTesting
   Integer repositoryId; // NOSONAR: internal repository id
 
-  private NestedAttributesMap attributes;
+  private NestedAttributesMap attributes = new NestedAttributesMap("attributes", new HashMap<>());
 
   private DateTime created;
 

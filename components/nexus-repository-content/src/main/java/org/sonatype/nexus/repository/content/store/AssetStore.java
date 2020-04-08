@@ -16,23 +16,33 @@ import java.util.Collection;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
+import javax.inject.Inject;
+import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
+import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.transaction.Transactional;
+
+import com.google.inject.assistedinject.Assisted;
 
 /**
  * {@link Asset} store.
  *
  * @since 3.21
  */
-public abstract class AssetStore<T extends AssetDAO>
+@Named
+public class AssetStore<T extends AssetDAO>
     extends ContentStoreSupport<T>
 {
-  public AssetStore(final DataSessionSupplier sessionSupplier, final String storeName) {
-    super(sessionSupplier, storeName);
+  @Inject
+  public AssetStore(final DataSessionSupplier sessionSupplier,
+                    @Assisted final String contentStoreName,
+                    @Assisted final Class<T> daoClass)
+  {
+    super(sessionSupplier, contentStoreName, daoClass);
   }
 
   /**
@@ -60,7 +70,7 @@ public abstract class AssetStore<T extends AssetDAO>
    * @return collection of assets
    */
   @Transactional
-  public Collection<Asset> browseComponentAssets(final ComponentData component) {
+  public Collection<Asset> browseComponentAssets(final Component component) {
     return dao().browseComponentAssets(component);
   }
 
@@ -92,7 +102,7 @@ public abstract class AssetStore<T extends AssetDAO>
    * @param asset the asset to update
    */
   @Transactional
-  public void updateAssetAttributes(final AssetData asset) {
+  public void updateAssetAttributes(final Asset asset) {
     dao().updateAssetAttributes(asset);
   }
 
@@ -102,7 +112,7 @@ public abstract class AssetStore<T extends AssetDAO>
    * @param asset the asset to update
    */
   @Transactional
-  public void updateAssetBlobLink(final AssetData asset) {
+  public void updateAssetBlobLink(final Asset asset) {
     dao().updateAssetBlobLink(asset);
   }
 
@@ -112,20 +122,31 @@ public abstract class AssetStore<T extends AssetDAO>
    * @param asset the asset to update
    */
   @Transactional
-  public void markAsDownloaded(final AssetData asset) {
+  public void markAsDownloaded(final Asset asset) {
     dao().markAsDownloaded(asset);
   }
 
   /**
    * Deletes an asset from the content data store.
    *
+   * @param asset the asset to delete
+   * @return {@code true} if the asset was deleted
+   */
+  @Transactional
+  public boolean deleteAsset(final Asset asset) {
+    return dao().deleteAsset(asset);
+  }
+
+  /**
+   * Deletes the asset located at the given path in the content data store.
+   *
    * @param repositoryId the repository containing the asset
    * @param path the path of the asset
    * @return {@code true} if the asset was deleted
    */
   @Transactional
-  public boolean deleteAsset(final int repositoryId, final String path) {
-    return dao().deleteAsset(repositoryId, path);
+  public boolean deletePath(final int repositoryId, final String path) {
+    return dao().deletePath(repositoryId, path);
   }
 
   /**

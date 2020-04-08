@@ -32,6 +32,11 @@ import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.ContentRepository;
 import org.sonatype.nexus.repository.content.RepositoryContent;
+import org.sonatype.nexus.repository.content.store.example.TestAssetBlobDAO;
+import org.sonatype.nexus.repository.content.store.example.TestAssetDAO;
+import org.sonatype.nexus.repository.content.store.example.TestAssetData;
+import org.sonatype.nexus.repository.content.store.example.TestComponentDAO;
+import org.sonatype.nexus.repository.content.store.example.TestContentRepositoryDAO;
 import org.sonatype.nexus.testdb.DataSessionRule;
 
 import com.google.common.collect.ImmutableList;
@@ -58,7 +63,7 @@ import static org.sonatype.nexus.datastore.mybatis.CombUUID.combUUID;
 /**
  * Support for {@link RepositoryContent} tests.
  */
-public class RepositoryContentTestSupport
+public class ExampleContentTestSupport
     extends TestSupport
 {
   @Rule
@@ -87,11 +92,11 @@ public class RepositoryContentTestSupport
 
   private List<AssetData> assets;
 
-  public RepositoryContentTestSupport() {
+  public ExampleContentTestSupport() {
     // do nothing
   }
 
-  public RepositoryContentTestSupport(final Class<? extends DataAccess> accessType) {
+  public ExampleContentTestSupport(final Class<? extends DataAccess> accessType) {
     sessionRule.access(accessType);
   }
 
@@ -226,8 +231,8 @@ public class RepositoryContentTestSupport
     return component;
   }
 
-  protected AssetData randomAsset(final int repositoryId) {
-    AssetData asset = new AssetData();
+  protected TestAssetData randomAsset(final int repositoryId) {
+    TestAssetData asset = new TestAssetData();
     asset.setRepositoryId(repositoryId);
     asset.setPath(paths.get(random.nextInt(paths.size())));
     asset.setAttributes(newAttributes("asset"));

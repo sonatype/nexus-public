@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 
 import javax.annotation.Nullable;
 
@@ -239,6 +240,14 @@ public class AttributesMap
       log.trace("Set: {}={} ({})", key, value, value.getClass().getName());
     }
     return replaced;
+  }
+
+  /**
+   * Compute new value for keyed attribute based on current value.
+   */
+  @Nullable
+  public Object compute(final String key, final Function<Object, ? extends Object> function) {
+    return set(key, function.apply(get(key)));
   }
 
   /**

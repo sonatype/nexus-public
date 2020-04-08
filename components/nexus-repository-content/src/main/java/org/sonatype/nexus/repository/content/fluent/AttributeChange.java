@@ -25,22 +25,22 @@ public enum AttributeChange
   SET,
 
   /**
+   * Removes the attribute under the key.
+   */
+  REMOVE,
+
+  /**
    * Appends a value to the attribute list under the key.
    */
   APPEND,
 
   /**
-   * Prepends a value to an attribute list under the key.
+   * Prepends a value to the attribute list under the key.
    */
   PREPEND,
 
   /**
    * Merges a value with the attribute map under the key.
    */
-  MERGE,
-
-  /**
-   * Removes the attribute under the key.
-   */
-  REMOVE
+  MERGE
 }

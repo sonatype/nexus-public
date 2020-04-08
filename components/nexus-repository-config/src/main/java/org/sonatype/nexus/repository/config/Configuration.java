@@ -37,6 +37,11 @@ public interface Configuration
     SENSITIVE_FIELD_NAMES.add(sensitiveFieldName);
   }
 
+  /**
+   * @since 3.next
+   */
+  EntityId getRepositoryId();
+
   String getRepositoryName();
 
   void setRepositoryName(String repositoryName);

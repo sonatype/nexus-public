@@ -84,7 +84,7 @@
     ORDER BY asset_id LIMIT #{limit};
   </select>
 
-  <select id="browseComponentAssets" resultMap="assetResult">
+  <select id="browseComponentAssets" resultMap="assetResult" parameterType="ComponentData">
     <choose>
       <when test="componentId != null">
         SELECT * FROM ${format}_asset WHERE component_id = #{componentId};
@@ -96,7 +96,7 @@
     </choose>
   </select>
 
-  <insert id="createAsset" useGeneratedKeys="true" keyProperty="assetId">
+  <insert id="createAsset" useGeneratedKeys="true" keyProperty="assetId" parameterType="AssetData">
     INSERT INTO ${format}_asset (repository_id, path, component_id, asset_blob_id, last_downloaded, attributes)
         VALUES (#{repositoryId}, #{path}, #{componentId}, #{assetBlobId}, #{lastDownloaded}, #{attributes});
   </insert>
@@ -105,22 +105,26 @@
     SELECT * FROM ${format}_asset WHERE <include refid="assetPathMatch"/>;
   </select>
 
-  <update id="updateAssetAttributes">
+  <update id="updateAssetAttributes" parameterType="AssetData">
     UPDATE ${format}_asset SET attributes = #{attributes}, last_updated = CURRENT_TIMESTAMP
         WHERE <include refid="assetMatch"/> AND attributes != #{attributes};
   </update>
 
-  <update id="updateAssetBlobLink">
+  <update id="updateAssetBlobLink" parameterType="AssetData">
     UPDATE ${format}_asset SET asset_blob_id = #{assetBlobId}, last_updated = CURRENT_TIMESTAMP
         WHERE <include refid="assetMatch"/> AND asset_blob_id IS DISTINCT FROM #{assetBlobId};
   </update>
 
-  <update id="markAsDownloaded">
+  <update id="markAsDownloaded" parameterType="AssetData">
     UPDATE ${format}_asset SET last_downloaded = CURRENT_TIMESTAMP, last_updated = CURRENT_TIMESTAMP
         WHERE <include refid="assetMatch"/>;
   </update>
 
-  <delete id="deleteAsset">
+  <delete id="deleteAsset" parameterType="AssetData">
+    DELETE FROM ${format}_asset WHERE <include refid="assetMatch"/>;
+  </delete>
+
+  <delete id="deletePath">
     DELETE FROM ${format}_asset WHERE <include refid="assetPathMatch"/>;
   </delete>
 

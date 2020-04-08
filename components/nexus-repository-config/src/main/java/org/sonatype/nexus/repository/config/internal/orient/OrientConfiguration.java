@@ -72,6 +72,11 @@ public class OrientConfiguration
     // empty
   }
 
+  @Override
+  public EntityId getRepositoryId() {
+    return getEntityMetadata().getId();
+  }
+
   public String getRepositoryName() {
     return repositoryName;
   }

@@ -10,13 +10,21 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.store;
+package org.sonatype.nexus.repository.content.store.example;
+
+import javax.inject.Named;
+
+import org.sonatype.nexus.repository.content.store.FormatStoreModule;
 
 /**
- * Test format.
+ * Plain store module for a plain format that uses standard stores with the format's DAOs.
  */
-public interface TestAssetBlobDAO
-    extends AssetBlobDAO
+@Named("plain")
+public class PlainStoreModule
+    extends FormatStoreModule<TestContentRepositoryDAO,
+                              TestComponentDAO,
+                              TestAssetDAO,
+                              TestAssetBlobDAO>
 {
-  // nothing to add
+  // nothing to add...
 }

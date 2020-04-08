@@ -109,10 +109,18 @@ public interface ComponentDAO
    *
    * @param component the component to update
    */
-  void updateComponentAttributes(ComponentData component);
+  void updateComponentAttributes(Component component);
 
   /**
    * Deletes a component from the content data store.
+   *
+   * @param component the component to delete
+   * @return {@code true} if the component was deleted
+   */
+  boolean deleteComponent(Component component);
+
+  /**
+   * Deletes the component located at the given coordinate in the content data store.
    *
    * @param repositoryId the repository containing the component
    * @param namespace the namespace of the component
@@ -120,10 +128,10 @@ public interface ComponentDAO
    * @param version the version of the component
    * @return {@code true} if the component was deleted
    */
-  boolean deleteComponent(@Param("repositoryId") int repositoryId,
-                          @Param("namespace") String namespace,
-                          @Param("name") String name,
-                          @Param("version") String version);
+  boolean deleteCoordinate(@Param("repositoryId") int repositoryId,
+                           @Param("namespace") String namespace,
+                           @Param("name") String name,
+                           @Param("version") String version);
 
   /**
    * Deletes all components in the given repository from the content data store.

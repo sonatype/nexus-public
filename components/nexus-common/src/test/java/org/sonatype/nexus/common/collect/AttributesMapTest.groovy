@@ -120,4 +120,22 @@ class AttributesMapTest
     assert underTest.get('foo', Date.class) == testDate
     assert underTest.get('bar', Date.class) == testDate
   }
+
+  @Test
+  void 'compute'() {
+    def result
+
+    result = underTest.compute('foo', { v -> v ? v + 1 : 1 })
+    assert result == null
+    assert underTest.get('foo') == 1
+    result = underTest.compute('foo', { v -> v ? v + 1 : 1 })
+    assert result == 1
+    assert underTest.get('foo') == 2
+    result = underTest.compute('foo', { v -> v ? v + 1 : 1 })
+    assert result == 2
+    assert underTest.get('foo') == 3
+    result = underTest.compute('foo', { v -> v ? v + 1 : 1 })
+    assert result == 3
+    assert underTest.get('foo') == 4
+  }
 }

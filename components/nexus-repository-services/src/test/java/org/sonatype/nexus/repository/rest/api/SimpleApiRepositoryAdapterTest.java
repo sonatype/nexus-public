@@ -345,6 +345,11 @@ public class SimpleApiRepositoryAdapterTest
     private Map<String, Map<String, Object>> attributes;
 
     @Override
+    public EntityId getRepositoryId() {
+      throw new UnsupportedOperationException("not required here");
+    }
+
+    @Override
     public String getRepositoryName() {
       return repositoryName;
     }

@@ -10,13 +10,15 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.store;
+package org.sonatype.nexus.repository.content.store.example;
+
+import org.sonatype.nexus.repository.content.store.AssetBlobDAO;
 
 /**
  * Test format.
  */
-public interface TestContentRepositoryDAO
-    extends ContentRepositoryDAO
+public interface TestAssetBlobDAO
+    extends AssetBlobDAO
 {
   // nothing to add
 }

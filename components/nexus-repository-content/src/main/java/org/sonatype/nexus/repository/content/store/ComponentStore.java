@@ -16,22 +16,31 @@ import java.util.Collection;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
+import javax.inject.Inject;
+import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.transaction.Transactional;
 
+import com.google.inject.assistedinject.Assisted;
+
 /**
  * {@link Component} store.
  *
  * @since 3.21
  */
-public abstract class ComponentStore<T extends ComponentDAO>
+@Named
+public class ComponentStore<T extends ComponentDAO>
     extends ContentStoreSupport<T>
 {
-  public ComponentStore(final DataSessionSupplier sessionSupplier, final String storeName) {
-    super(sessionSupplier, storeName);
+  @Inject
+  public ComponentStore(final DataSessionSupplier sessionSupplier,
+                        @Assisted final String contentStoreName,
+                        @Assisted final Class<T> daoClass)
+  {
+    super(sessionSupplier, contentStoreName, daoClass);
   }
 
   /**
@@ -126,12 +135,25 @@ public abstract class ComponentStore<T extends ComponentDAO>
    * @param component the component to update
    */
   @Transactional
-  public void updateComponentAttributes(final ComponentData component) {
+  public void updateComponentAttributes(final Component component) {
     dao().updateComponentAttributes(component);
   }
 
   /**
    * Deletes a component from the content data store.
+   *
+   * @param component the component to delete
+   * @return {@code true} if the component was deleted
+   */
+  @Transactional
+  public boolean deleteComponent(final Component component)
+  {
+    return dao().deleteComponent(component);
+  }
+
+
+  /**
+   * Deletes the component located at the given coordinate in the content data store.
    *
    * @param repositoryId the repository containing the component
    * @param namespace the namespace of the component
@@ -140,12 +162,12 @@ public abstract class ComponentStore<T extends ComponentDAO>
    * @return {@code true} if the component was deleted
    */
   @Transactional
-  public boolean deleteComponent(final int repositoryId,
-                                 final String namespace,
-                                 final String name,
-                                 final String version)
+  public boolean deleteCoordinate(final int repositoryId,
+                                  final String namespace,
+                                  final String name,
+                                  final String version)
   {
-    return dao().deleteComponent(repositoryId, namespace, name, version);
+    return dao().deleteCoordinate(repositoryId, namespace, name, version);
   }
 
   /**

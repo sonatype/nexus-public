@@ -43,5 +43,5 @@ public interface FluentAsset
   /**
    * Deletes this asset.
    */
-  void delete();
+  boolean delete();
 }

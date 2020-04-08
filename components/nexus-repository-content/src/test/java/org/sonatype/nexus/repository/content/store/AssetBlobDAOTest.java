@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.content.store;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.repository.content.AssetBlob;
+import org.sonatype.nexus.repository.content.store.example.TestAssetBlobDAO;
 
 import org.apache.ibatis.exceptions.PersistenceException;
 import org.junit.Test;
@@ -33,7 +34,7 @@ import static org.junit.Assert.fail;
  * Test {@link AssetBlobDAO}.
  */
 public class AssetBlobDAOTest
-    extends RepositoryContentTestSupport
+    extends ExampleContentTestSupport
 {
   @Test
   public void testCrudOperations() {

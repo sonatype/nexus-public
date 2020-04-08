@@ -26,4 +26,9 @@ public interface ContentRepository
    * Identity of the associated repository entity in the config store.
    */
   EntityId configRepositoryId();
+
+  /**
+   * Identity of the associated repository entity in the content store.
+   */
+  Integer contentRepositoryId();
 }

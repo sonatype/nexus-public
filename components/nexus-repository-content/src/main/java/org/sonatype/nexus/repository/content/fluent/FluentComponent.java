@@ -32,5 +32,5 @@ public interface FluentComponent
   /**
    * Deletes this component.
    */
-  void delete();
+  boolean delete();
 }

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.store;
+package org.sonatype.nexus.repository.content.browse.internal;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -36,8 +36,9 @@ import org.sonatype.nexus.repository.browse.BrowsePaths;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.ContentRepository;
-import org.sonatype.nexus.repository.content.browse.internal.BrowseNodeDAO;
-import org.sonatype.nexus.repository.content.browse.internal.DatastoreBrowseNode;
+import org.sonatype.nexus.repository.content.store.ContentRepositoryDAO;
+import org.sonatype.nexus.repository.content.store.ContentRepositoryStore;
+import org.sonatype.nexus.repository.content.store.ContentStoreSupport;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
@@ -289,7 +290,7 @@ public class DatastoreBrowseNodeStoreImpl<T extends BrowseNodeDAO>
   {
     Repository repository = checkNotNull(repositoryManager.get(repositoryName));
     String format = repository.getFormat().getValue();
-    int repositoryId = getContentRepositoryId(getContentRepository(repository));
+    int repositoryId = getContentRepository(repository).contentRepositoryId();
 
     List<SelectorConfiguration> selectors = emptyList();
     if (!hasBrowsePermission(repositoryName, format)) {
@@ -495,11 +496,6 @@ public class DatastoreBrowseNodeStoreImpl<T extends BrowseNodeDAO>
 
   private ContentRepository getContentRepository(final String repositoryName) {
     return getContentRepository(repositoryManager.get(repositoryName));
-  }
-
-  private static int getContentRepositoryId(final ContentRepository contentRepository) {
-    // TODO How should the Content store's ID for the repository be retrieved?
-    return ((ContentRepositoryData) contentRepository).repositoryId;
   }
 
   private static class RetryUnlinkException

@@ -39,10 +39,18 @@ public abstract class ConfigStoreSupport<T extends DataAccess>
   private final Class<T> daoClass;
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
-  public ConfigStoreSupport(final DataSessionSupplier sessionSupplier) {
+  protected ConfigStoreSupport(final DataSessionSupplier sessionSupplier) {
     this.sessionSupplier = checkNotNull(sessionSupplier);
+
+    // use generic type information to discover the DAO class from the concrete implementation
     TypeLiteral<?> superType = TypeLiteral.get(getClass()).getSupertype(ConfigStoreSupport.class);
     this.daoClass = (Class) TypeArguments.get(superType, 0).getRawType();
+  }
+
+  // alternative constructor that overrides discovery of the DAO class
+  protected ConfigStoreSupport(final DataSessionSupplier sessionSupplier, final Class<T> daoClass) {
+    this.sessionSupplier = checkNotNull(sessionSupplier);
+    this.daoClass = checkNotNull(daoClass);
   }
 
   protected T dao() {
