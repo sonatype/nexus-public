@@ -48,7 +48,8 @@ Ext.define('NX.coreui.controller.LdapServers', {
     'ldap.LdapServerUserAndGroupLoginCredentials',
     'ldap.LdapServerUserAndGroupMappingTestResults',
     'ldap.LdapServerConnectionAdd',
-    'ldap.LdapServerUserAndGroupAdd'
+    'ldap.LdapServerUserAndGroupAdd',
+    'ldap.LdapSystemPasswordModal'
   ],
   refs: [
     { ref: 'main', selector: 'nx-main' },
@@ -155,6 +156,9 @@ Ext.define('NX.coreui.controller.LdapServers', {
         },
         'nx-coreui-ldapserver-userandgroup-login-credentials button[action=verifylogin]': {
           click: me.verifyLogin
+        },
+        'nx-coreui-ldapserver-systempassword-modal button[action=ok]': {
+          click: me.ldapSystemPasswordCollected
         }
       }
     });
@@ -414,12 +418,46 @@ Ext.define('NX.coreui.controller.LdapServers', {
 
   /**
    * @private
+   * Update the ldap system password in the form so it will be used in requests
+   */
+  ldapSystemPasswordCollected: function(button) {
+    const modal = button.up('nx-coreui-ldapserver-systempassword-modal'),
+        ldapSystemPassword = modal.down('nx-password').getValue();
+
+    modal.close();
+
+    if (modal.onSuccess) {
+      modal.onSuccess.call(this, ldapSystemPassword);
+    }
+  },
+
+  /**
+   * @private
    * Verify LDAP user mapping.
    */
   verifyUserMapping: function() {
-    var me = this,
+    const me = this,
+        values = me.getValues();
+
+    //all options except anonymous (none) require a password, so throw up the dialog if not set in form
+    if (values.authScheme !== 'none' && !values.authPassword) {
+      Ext.create('NX.coreui.view.ldap.LdapSystemPasswordModal', {
+        onSuccess: me.doVerifyUserMapping
+      });
+    }
+    else {
+      me.doVerifyUserMapping();
+    }
+  },
+
+  doVerifyUserMapping: function(ldapSystemPassword) {
+    const me = this,
         values = me.getValues(),
         url = values.protocol + '://' + values.host + ':' + values.port;
+
+    if (ldapSystemPassword) {
+      values.authPassword = ldapSystemPassword;
+    }
 
     me.getMain().getEl().mask(NX.I18n.format('LdapServers_VerifyMapping_Mask', url));
 
@@ -435,8 +473,28 @@ Ext.define('NX.coreui.controller.LdapServers', {
   /**
    * @private
    */
-  showLoginCredentialsWindow: function(button) {
-    Ext.widget('nx-coreui-ldapserver-userandgroup-login-credentials');
+  showLoginCredentialsWindow: function() {
+    const me = this,
+        values = me.getValues();
+
+    //all options except anonymous (none) require a password, so throw up the dialog if not set in form
+    if (values.authScheme !== 'none' && !values.authPassword) {
+      Ext.create('NX.coreui.view.ldap.LdapSystemPasswordModal', {
+        onSuccess: me.doShowLoginCredentialsWindow
+      });
+    }
+    else {
+      me.doShowLoginCredentialsWindow();
+    }
+  },
+
+  /**
+   * @private
+   */
+  doShowLoginCredentialsWindow: function(ldapSystemPassword) {
+    Ext.widget('nx-coreui-ldapserver-userandgroup-login-credentials', {
+      ldapSystemPassword: ldapSystemPassword
+    });
   },
 
   /**
@@ -446,11 +504,16 @@ Ext.define('NX.coreui.controller.LdapServers', {
   verifyLogin: function(button) {
     var win = button.up('window'),
         form = button.up('form'),
+        cmp = button.up('nx-coreui-ldapserver-userandgroup-login-credentials'),
         loginValues = form.getForm().getFieldValues(),
         userName = NX.util.Base64.encode(loginValues.username),
         userPass = NX.util.Base64.encode(loginValues.password),
         values = this.getValues(),
         url = values.protocol + '://' + values.host + ':' + values.port;
+
+    if (cmp.ldapSystemPassword) {
+      values.authPassword = cmp.ldapSystemPassword;
+    }
 
     form.getEl().mask(NX.I18n.format('LdapServers_VerifyLogin_Mask', url));
 
