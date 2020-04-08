@@ -128,11 +128,11 @@ public class UploadManagerImpl
 
   @Override
   public void handle(
-      final Repository repository, final File content, final File attributes, final String path) throws IOException
+      final Repository repository, final File content, final String path) throws IOException
   {
     UploadHandler uploadHandler = getUploadHandler(repository);
 
-    uploadHandler.handle(repository, content, attributes, path);
+    uploadHandler.handle(repository, content, path);
   }
 
   private ComponentUpload create(final Repository repository, final HttpServletRequest request)

@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.raw;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -25,7 +24,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -47,7 +45,6 @@ import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.payloads.StreamPayload;
-import org.sonatype.nexus.repository.view.payloads.StreamPayload.InputStreamSupplier;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.collect.Lists;
@@ -128,7 +125,6 @@ public class RawUploadHandler
   public void handle(
       final Repository repository,
       final File content,
-      final File attributes,
       final String path)
       throws IOException
   {
@@ -136,15 +132,9 @@ public class RawUploadHandler
 
     ensurePermitted(repository.getName(), RawFormat.NAME, path, emptyMap());
 
-    UnitOfWork.begin(repository.facet(StorageFacet.class).txSupplier());
-    try {
-      Path contentPath = content.toPath();
-      facet.put(path, new StreamPayload(() -> new FileInputStream(content), Files.size(contentPath),
-          Files.probeContentType(contentPath)));
-    }
-    finally {
-      UnitOfWork.end();
-    }
+    Path contentPath = content.toPath();
+    facet.put(path, new StreamPayload(() -> new FileInputStream(content), Files.size(contentPath),
+        Files.probeContentType(contentPath)));
   }
 
   private String normalizePath(final String path) {

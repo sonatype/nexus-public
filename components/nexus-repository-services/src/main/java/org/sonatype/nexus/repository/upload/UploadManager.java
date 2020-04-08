@@ -57,9 +57,8 @@ public interface UploadManager
    *
    * @param repository the {@link Repository} to add the file to
    * @param content the {@link File} to add to the repository
-   * @param attributes the attributes {@link File} to associate with the added asset
    * @param path the path of the content relative to the base import directory
    * @throws IOException
    */
-  void handle(Repository repository, File content, File attributes, String path) throws IOException;
+  void handle(Repository repository, File content, String path) throws IOException;
 }
