@@ -40,4 +40,11 @@ public class EscapeHelperTest
     String result = underTest.stripJavaEl(test);
     assertThat(result, is("{badstuffinhere}"));
   }
+
+  @Test
+  public void testStripJavaEl_bugged_interpolator() {
+    String test = "$\\A{badstuffinhere}";
+    String result = underTest.stripJavaEl(test);
+    assertThat(result, is("{badstuffinhere}"));
+  }
 }

@@ -19,7 +19,7 @@
   <parent>
     <groupId>org.sonatype.nexus.assemblies</groupId>
     <artifactId>nexus-assemblies</artifactId>
-    <version>3.21.0-05</version>
+    <version>3.21.2-03</version>
   </parent>
 
   <artifactId>nexus-cma-feature</artifactId>
@@ -29,7 +29,7 @@
   <properties>
     <p2.format.version>1.0.2</p2.format.version>
     <r.format.version>1.1.2</r.format.version>
-    <helm.format.version>1.0.2</helm.format.version>
+    <helm.format.version>1.0.3</helm.format.version>
   </properties>
 
   <dependencies>

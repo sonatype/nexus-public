@@ -901,6 +901,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Ssl_SslCertificateDetailsForm_CertificateIssuedOn_FieldLabel: 'Issued on',
     Ssl_SslCertificateDetailsForm_CertificateValidUntil_FieldLabel: 'Valid until',
     Ssl_SslCertificateDetailsForm_CertificateFingerprint_FieldLabel: 'Fingerprint',
+    Ssl_SslCertificateDetailsForm_RetrievedUntrustedConnection_Html: '<b>This certificate was retrieved over an untrusted connection. Always verify the details before adding it.</b>',
 
     // Admin -> Support
     FeatureGroups_Support_Text: 'Support',
@@ -1344,6 +1345,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
         '</div> '
     ,
     Task_TaskScheduleManual_HelpText: 'Without recurrence, this service can only be run manually.',
+    Task_Script_Creation_Disabled: '<i>Admin - Execute script</i> task creation is disabled. ' +
+         '<a href="https://links.sonatype.com/products/nxrm3/disabled-groovy-scripting">More information</a>',
 
     // Authentication section
     System_AuthenticationSettings_Username_FieldLabel: 'Username',

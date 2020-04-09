@@ -51,6 +51,10 @@ class ScriptManagerImpl
   @Inject
   ScriptStore scriptStore
 
+  @Inject
+  @Named('${nexus.scripts.allowCreation:-false}')
+  boolean allowCreation
+
   @Override
   @Guarded(by = STARTED)
   Iterable<Script> browse() {
@@ -66,6 +70,8 @@ class ScriptManagerImpl
   @Override
   @Guarded(by = STARTED)
   Script create(final String name, final String content, final String type) {
+    validateCreationIsAllowed()
+
     Script script = scriptStore.newScript()
     script.name = name
     script.content = content
@@ -78,6 +84,8 @@ class ScriptManagerImpl
   @Override
   @Guarded(by = STARTED)
   Script update(final String name, final String content) {
+    validateCreationIsAllowed()
+
     Script script = scriptStore.get(name)
     if (script == null) {
       return null
@@ -98,4 +106,9 @@ class ScriptManagerImpl
     }
   }
 
+  void validateCreationIsAllowed() {
+    if(!allowCreation){
+      throw new ScriptingDisabledException('Creating and updating scripts is disabled')
+    }
+  }
 }

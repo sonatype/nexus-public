@@ -24,7 +24,8 @@ Ext.define('NX.coreui.view.cleanuppolicy.CleanupPolicySettingsForm', {
   alias: 'widget.nx-coreui-cleanuppolicy-settings-form',
   requires: [
     'NX.Conditions',
-    'NX.I18n'
+    'NX.I18n',
+    'NX.util.Validator'
   ],
 
   api: {

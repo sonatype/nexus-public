@@ -27,6 +27,7 @@ import javax.validation.groups.Default
 
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
+import org.sonatype.nexus.rapture.StateContributor
 import org.sonatype.nexus.scheduling.TaskConfiguration
 import org.sonatype.nexus.scheduling.TaskInfo
 import org.sonatype.nexus.scheduling.TaskScheduler
@@ -55,8 +56,8 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication
 import org.apache.shiro.authz.annotation.RequiresPermissions
 import org.hibernate.validator.constraints.NotEmpty
 
-import static org.sonatype.nexus.repository.date.TimeZoneUtils.shiftWeekDay
 import static org.sonatype.nexus.repository.date.TimeZoneUtils.shiftMonthDay
+import static org.sonatype.nexus.repository.date.TimeZoneUtils.shiftWeekDay
 import static org.sonatype.nexus.scheduling.TaskState.CANCELED
 import static org.sonatype.nexus.scheduling.TaskState.FAILED
 import static org.sonatype.nexus.scheduling.TaskState.INTERRUPTED
@@ -72,12 +73,22 @@ import static org.sonatype.nexus.scheduling.TaskState.OK
 @DirectAction(action = 'coreui_Task')
 class TaskComponent
     extends DirectComponentSupport
+  implements StateContributor
 {
   @Inject
   TaskScheduler scheduler
 
   @Inject
   Provider<Validator> validatorProvider
+
+  @Inject
+  @Named('${nexus.scripts.allowCreation:-false}')
+  boolean allowCreation
+
+  @Override
+  Map<String, Object> getState() {
+    return ['allowScriptCreation': allowCreation]
+  }
 
   /**
    * Retrieve a list of scheduled tasks.
@@ -151,6 +162,9 @@ class TaskComponent
   TaskXO update(final @NotNull @Valid TaskXO taskXO) {
     TaskInfo task = scheduler.getTaskById(taskXO.id)
     validateState(task)
+    if (task.typeId == 'script') {
+      validateScriptUpdate(task, taskXO)
+    }
     Schedule schedule = asSchedule(taskXO)
     task.configuration.enabled = taskXO.enabled
     task.configuration.name = taskXO.name
@@ -381,6 +395,16 @@ class TaskComponent
     if (externalTaskState.state.running) {
       throw new IllegalStateException(
           'Task can not be edited while it is being executed or it is in line to be executed')
+    }
+  }
+
+  @PackageScope
+  void validateScriptUpdate(final TaskInfo task, final TaskXO update) {
+    String originalSource = task.configuration.getString("source")
+    String updateSource = update.properties.get("source")
+
+    if (!allowCreation && !originalSource.equals(updateSource)) {
+      throw new IllegalStateException('Script source updates are not allowed')
     }
   }
 

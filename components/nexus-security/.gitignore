@@ -1,7 +1,0 @@
-# dependencies
-/node_modules
-
-# testing
-coverage/
-
-npm-debug.log*

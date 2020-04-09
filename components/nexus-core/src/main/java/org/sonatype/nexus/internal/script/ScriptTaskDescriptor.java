@@ -68,12 +68,12 @@ public class ScriptTaskDescriptor
   // TODO: this task may expose a lot of potential for misuse, and may need to be optional enabled by system property
 
   @Inject
-  public ScriptTaskDescriptor(final NodeAccess nodeAccess) {
+  public ScriptTaskDescriptor(final NodeAccess nodeAccess, @Named("${nexus.scripts.allowCreation:-false}") boolean allowCreation) {
     super(TYPE_ID,
         ScriptTask.class,
         messages.name(),
         VISIBLE,
-        EXPOSED,
+        isExposed(allowCreation),
         new StringTextFormField(
             LANGUAGE,
             messages.languageLabel(),
@@ -84,8 +84,18 @@ public class ScriptTaskDescriptor
             SOURCE,
             messages.sourceLabel(),
             messages.sourceHelpText(),
-            FormField.MANDATORY
+            FormField.MANDATORY,
+            null,
+            !allowCreation
         ),
         nodeAccess.isClustered() ? newMultinodeFormField() : null);
+  }
+
+  /**
+   * If the allowCreation flag is false we don't want this task exposed to user, but still want
+   * existing scripts runnable
+   */
+  private static boolean isExposed(boolean allowCreation){
+    return allowCreation;
   }
 }
