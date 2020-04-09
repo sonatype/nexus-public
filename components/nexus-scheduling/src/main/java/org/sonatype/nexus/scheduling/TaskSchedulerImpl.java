@@ -113,6 +113,7 @@ public class TaskSchedulerImpl
     config.setName(descriptor.getName());
     config.setVisible(descriptor.isVisible());
     config.setRecoverable(descriptor.isRecoverable());
+    config.setExposed(descriptor.isExposed());
 
     return config;
   }
