@@ -109,4 +109,12 @@ public interface UploadHandler
     throw new UnsupportedOperationException(
         "Import not supported for " + repository.getFormat().getValue() + " format.");
   }
+
+  /**
+   * Denote if the format is supported using the export/import task
+   * @since 3.next
+   */
+  default boolean supportsExportImport() {
+    return false;
+  }
 }

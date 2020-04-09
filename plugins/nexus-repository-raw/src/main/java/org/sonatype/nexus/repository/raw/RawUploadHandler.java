@@ -171,4 +171,9 @@ public class RawUploadHandler
   public ContentPermissionChecker contentPermissionChecker() {
     return contentPermissionChecker;
   }
+
+  @Override
+  public boolean supportsExportImport() {
+    return true;
+  }
 }
