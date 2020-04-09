@@ -52,6 +52,7 @@
     <module>nexus-task-log-cleanup</module>
     <module>nexus-onboarding-plugin</module>
     <module>nexus-default-role-plugin</module>
+    <module>nexus-example-content</module>
   </modules>
 
   <dependencyManagement>
@@ -430,6 +431,22 @@
       <dependency>
         <groupId>org.sonatype.nexus.plugins</groupId>
         <artifactId>nexus-default-role-plugin</artifactId>
+        <version>3.23.0-SNAPSHOT</version>
+        <classifier>features</classifier>
+        <type>xml</type>
+      </dependency>
+
+      <!-- example content plugin -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-example-content</artifactId>
+        <version>3.23.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-example-content</artifactId>
         <version>3.23.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>
