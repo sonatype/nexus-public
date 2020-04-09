@@ -103,7 +103,7 @@ public class FeatureFlaggedIndex
       return !getBoolean(flag.name(), flag.enabledByDefault());
     }
     catch (Exception | LinkageError e) {
-      log.warn("Problem checking feature-flag for {}", clazzName, e);
+      log.debug("Cannot determine feature-flag for {}; assuming false", clazzName, e);
       return false;
     }
   }
