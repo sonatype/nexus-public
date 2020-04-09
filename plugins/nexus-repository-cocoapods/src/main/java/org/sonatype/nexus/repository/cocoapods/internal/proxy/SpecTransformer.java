@@ -82,7 +82,7 @@ public class SpecTransformer
       throw new InvalidSpecFileException("Spec file without Source");
     }
 
-    final String name = jsonSpec.get(POD_NAME_FIELD).asText();
+    final String name = removeNonPrintableCharacters(jsonSpec.get(POD_NAME_FIELD).asText());
     final String version = removeNonPrintableCharacters(jsonSpec.get(POD_VERSION_FIELD).asText());
 
     URI sourceUri = buidProxiedUri(jsonSpec.get(SOURCE_NODE_NAME), name, version, repoUri);
