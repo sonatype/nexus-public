@@ -16,7 +16,9 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.net.URL;
 import java.nio.file.Path;
 import java.sql.Connection;
@@ -168,6 +170,8 @@ public class MyBatisDataStore
     this.passwordHelper = checkNotNull(passwordHelper);
     this.directories = checkNotNull(directories);
     this.beanLocator = checkNotNull(beanLocator);
+
+    useMyBatisClassLoaderForEntityProxies();
   }
 
   @VisibleForTesting
@@ -687,6 +691,39 @@ public class MyBatisDataStore
     @Override
     public void remove(final BeanEntry<Named, TypeHandler> entry, final MyBatisDataStore store) {
       // unregistration of custom type handlers is not supported
+    }
+  }
+
+  /**
+   * Force use of MyBatis {@link ClassLoader} when generating entity proxies.
+   */
+  private void useMyBatisClassLoaderForEntityProxies() {
+
+    // MyBatis uses an embedded copy of Javassist to generate proxies for lazy entities
+    // which by default uses the entity classloader. Unfortunately the proxies also want
+    // to see the Javassist proxy package which is embedded in MyBatis but not exported.
+
+    // To workaround this visibility issue we need to set a custom 'ClassLoaderProvider'
+    // that always returns the MyBatis classloader. This can see the embedded Javassist
+    // code as well as the entity (thanks to MyBatis having "DynamicImport-Package:*")
+
+    // This isn't as clean as it could be because we can't refer directly to these types.
+    // Instead we need to use reflection and a JDK proxy to create and set our provider.
+
+    try {
+      ClassLoader myBatisLoader = Configuration.class.getClassLoader();
+
+      String proxyFactoryName = "org.apache.ibatis.javassist.util.proxy.ProxyFactory";
+      Class<?> proxyFactoryClass = myBatisLoader.loadClass(proxyFactoryName);
+      String classLoaderProviderName = proxyFactoryName + "$ClassLoaderProvider";
+      Class<?>[] classLoaderProviderApi = { myBatisLoader.loadClass(classLoaderProviderName) };
+      Field classLoaderProviderField = proxyFactoryClass.getField("classLoaderProvider");
+
+      classLoaderProviderField.set(null, Proxy.newProxyInstance(myBatisLoader,
+          classLoaderProviderApi, (proxy, method, args) -> myBatisLoader));
+    }
+    catch (Exception | LinkageError e) {
+      log.warn("Problem applying MyBatis proxy workaround", e);
     }
   }
 }
