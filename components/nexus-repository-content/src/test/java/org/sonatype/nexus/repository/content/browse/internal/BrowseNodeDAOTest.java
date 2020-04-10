@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.store;
+package org.sonatype.nexus.repository.content.browse.internal;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -27,9 +27,8 @@ import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.ContentRepository;
-import org.sonatype.nexus.repository.content.browse.internal.BrowseNodeDAO;
-import org.sonatype.nexus.repository.content.browse.internal.DatastoreBrowseNode;
-import org.sonatype.nexus.repository.content.browse.internal.TestBrowseNodeDAO;
+import org.sonatype.nexus.repository.content.store.ExampleContentTestSupport;
+import org.sonatype.nexus.repository.content.store.InternalIds;
 
 import com.google.common.collect.Iterables;
 import org.hamcrest.Description;
@@ -38,6 +37,7 @@ import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
 import org.junit.Test;
 
+import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
 import static org.hamcrest.Matchers.arrayWithSize;
@@ -63,22 +63,22 @@ public class BrowseNodeDAOTest
     generateRandomRepositories(1);
     generateRandomNamespaces(1);
     generateRandomNames(1);
-    generateRandomPaths(1);
+    generateRandomPaths(2);
     generateRandomVersions(1);
-    generateRandomContent(1, 1);
+    generateRandomContent(1, 2);
 
     contentRepository = generatedRepositories().get(0);
   }
 
   @Test
   public void testAssetNodeExists() {
-    Asset asset = generatedAssets().get(0);
-    createNode("foo", "foo", asset, null);
+    Asset asset1 = generatedAssets().get(0);
+    createNode("foo", "foo", asset1, null);
 
-    assertTrue(call(dao -> dao.assetNodeExists(asset)));
+    assertTrue(call(dao -> dao.assetNodeExists(asset1)));
 
-    ((AssetData) asset).assetId = Integer.MAX_VALUE;
-    assertFalse(call(dao -> dao.assetNodeExists(asset)));
+    Asset asset2 = generatedAssets().get(1);
+    assertFalse(call(dao -> dao.assetNodeExists(asset2)));
   }
 
   @Test
@@ -396,9 +396,9 @@ public class BrowseNodeDAOTest
       final Asset asset,
       final Component component)
   {
-    Integer assetId = Optional.ofNullable((AssetData) asset).map(a -> a.assetId).orElse(null);
-    Integer componentId = Optional.ofNullable((ComponentData) component).map(c -> c.componentId).orElse(null);
-    Integer repositoryId = ((ContentRepositoryData) contentRepository).repositoryId;
+    Integer assetId = ofNullable(asset).map(InternalIds::internalAssetId).orElse(null);
+    Integer componentId = ofNullable(component).map(InternalIds::internalComponentId).orElse(null);
+    Integer repositoryId = contentRepository.contentRepositoryId();
 
     return new TypeSafeMatcher<DatastoreBrowseNode>()
     {

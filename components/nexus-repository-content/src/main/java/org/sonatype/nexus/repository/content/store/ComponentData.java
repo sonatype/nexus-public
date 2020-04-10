@@ -15,8 +15,6 @@ package org.sonatype.nexus.repository.content.store;
 import org.sonatype.nexus.common.entity.ContinuationAware;
 import org.sonatype.nexus.repository.content.Component;
 
-import com.google.common.annotations.VisibleForTesting;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -28,7 +26,6 @@ public class ComponentData
     extends AbstractRepositoryContent
     implements Component, ContinuationAware
 {
-  @VisibleForTesting
   Integer componentId; // NOSONAR: internal id
 
   private String namespace;

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.store;
+package org.sonatype.nexus.repository.content.browse.internal;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -43,10 +43,11 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.ContentRepository;
-import org.sonatype.nexus.repository.content.browse.internal.DatastoreBrowseNode;
-import org.sonatype.nexus.repository.content.browse.internal.DatastoreBrowseNodeStoreImpl;
-import org.sonatype.nexus.repository.content.browse.internal.TestBrowseNodeDAO;
-import org.sonatype.nexus.repository.content.browse.internal.TestDatastoreBrowseNodeStoreImpl;
+import org.sonatype.nexus.repository.content.store.ContentRepositoryDAO;
+import org.sonatype.nexus.repository.content.store.ContentRepositoryData;
+import org.sonatype.nexus.repository.content.store.ContentRepositoryStore;
+import org.sonatype.nexus.repository.content.store.ExampleContentTestSupport;
+import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.selector.DatastoreContentAuthHelper;
@@ -79,6 +80,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 import static org.codehaus.groovy.runtime.InvokerHelper.asList;
 import static org.hamcrest.Matchers.hasSize;
@@ -97,6 +99,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
+import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetId;
+import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
 
 public class DatastoreBrowseNodeStoreImplTest
     extends ExampleContentTestSupport
@@ -258,7 +262,7 @@ public class DatastoreBrowseNodeStoreImplTest
 
     DatastoreBrowseNode node = (DatastoreBrowseNode) iter.next();
     assertThat(node.getAssetId(), nullValue());
-    assertThat(node.getComponentId(), is(((ComponentData) component).componentId));
+    assertThat(node.getComponentId(), is(internalComponentId(component)));
   }
 
   @Test
@@ -293,7 +297,7 @@ public class DatastoreBrowseNodeStoreImplTest
     assertTrue(iter.hasNext());
 
     DatastoreBrowseNode node = (DatastoreBrowseNode) iter.next();
-    assertThat(node.getAssetId(), is(((AssetData) asset).assetId));
+    assertThat(node.getAssetId(), is(internalAssetId(asset)));
     assertThat(node.getComponentId(), nullValue());
   }
 
@@ -311,10 +315,10 @@ public class DatastoreBrowseNodeStoreImplTest
     assertRepositoryEmpty(
         generatedRepositories()
             .stream()
-            .filter(contentRepositoryData -> contentRepositoryData.repositoryId == 1)
+            .filter(repo -> repo.contentRepositoryId() == 1)
             .findFirst()
             .orElseThrow(() -> new NoSuchElementException("Repository with id 1 does not exist"))
-            .repositoryId
+            .contentRepositoryId()
     );
   }
 
@@ -322,7 +326,7 @@ public class DatastoreBrowseNodeStoreImplTest
   public void testDeleteByRepository() {
     populateFullRepository();
     underTest.deleteByRepository(REPOSITORY_NAME);
-    assertRepositoryEmpty(generatedRepositories().get(0).repositoryId);
+    assertRepositoryEmpty(generatedRepositories().get(0).contentRepositoryId());
   }
 
   @Test
@@ -602,7 +606,7 @@ public class DatastoreBrowseNodeStoreImplTest
     Iterable<BrowseNode<Integer>> iter =
         underTest.getByPath(REPOSITORY_NAME, Arrays.asList(requestPath.split("/")), 100);
 
-    Integer componentId = ((ComponentData) component).componentId;
+    int componentId = internalComponentId(component);
     for (BrowseNode<Integer> node : iter) {
       if (Objects.equals(node.getComponentId(), componentId)) {
         return true;
@@ -645,7 +649,7 @@ public class DatastoreBrowseNodeStoreImplTest
       try (PreparedStatement statement =
                conn.prepareStatement(
                    "SELECT browse_node_id FROM test_browse_node WHERE repository_id = ? AND path = ?")) {
-        statement.setInt(1, ((ContentRepositoryData) repository).repositoryId);
+        statement.setInt(1, repository.contentRepositoryId());
         statement.setString(2, path);
         try (ResultSet rs = statement.executeQuery()) {
           if (!rs.first()) {
@@ -701,9 +705,9 @@ public class DatastoreBrowseNodeStoreImplTest
       final Component component,
       final boolean isLeaf)
   {
-    Integer assetId = Optional.ofNullable((AssetData) asset).map(a -> a.assetId).orElse(null);
-    Integer componentId = Optional.ofNullable((ComponentData) component).map(c -> c.componentId).orElse(null);
-    Integer repositoryId = ((ContentRepositoryData) contentRepository).repositoryId;
+    Integer assetId = ofNullable(asset).map(InternalIds::internalAssetId).orElse(null);
+    Integer componentId = ofNullable(component).map(InternalIds::internalComponentId).orElse(null);
+    Integer repositoryId = contentRepository.contentRepositoryId();
 
     return new TypeSafeMatcher<BrowseNode<Integer>>()
     {

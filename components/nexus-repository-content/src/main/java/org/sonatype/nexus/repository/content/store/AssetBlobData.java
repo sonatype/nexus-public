@@ -19,7 +19,6 @@ import javax.annotation.Nullable;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.repository.content.AssetBlob;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -33,7 +32,6 @@ import static java.util.Optional.ofNullable;
 public class AssetBlobData
     implements AssetBlob
 {
-  @VisibleForTesting
   Integer assetBlobId; // NOSONAR: internal id
 
   private BlobRef blobRef;
