@@ -28,6 +28,7 @@ import org.mockito.Mock;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -79,7 +80,12 @@ public class ReindexNpmRepositoryManagerTest
   public void exceptionDoesNotPreventStartup() {
     when(repositoryManager.browse()).thenThrow(new RuntimeException("exception"));
 
-    underTest.doStart();
+    try {
+      underTest.doStart();
+    }
+    catch (Exception e) {
+      fail("expected startup to catch exceptions");
+    }
   }
 
   @Test

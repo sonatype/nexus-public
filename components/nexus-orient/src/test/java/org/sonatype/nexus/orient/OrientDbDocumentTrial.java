@@ -82,6 +82,7 @@ public class OrientDbDocumentTrial
       //log("Person count: {}", db.countClass("Person"));
 
       ODocument doc = createPerson(db);
+      assertThat(doc, notNullValue());
       log("Document: {}", doc);
       log("Document size: {}", doc.getSize());
       log("Document (default) JSON: {}", doc.toJSON());
@@ -105,6 +106,7 @@ public class OrientDbDocumentTrial
     }
   }
 
+  @SuppressWarnings("java:S2699") //sonar wants assertions, but this test is not run in CI
   @Test
   public void globalPool() throws Exception {
     // first ensure the database is created, and close the connection
@@ -122,6 +124,7 @@ public class OrientDbDocumentTrial
   public void recordIdEncoding() throws Exception {
     try (ODatabaseDocumentTx db = createDatabase()) {
       ODocument doc = createPerson(db);
+      assertThat(doc, notNullValue());
       log("New Document: {}", doc);
 
       ORID rid = doc.getIdentity();
@@ -171,6 +174,7 @@ public class OrientDbDocumentTrial
     }
   }
 
+  @SuppressWarnings("java:S2699") //sonar wants assertions, but this test is not run in CI
   @Test
   public void schema() throws Exception {
     try (ODatabaseDocumentTx db = createDatabase()) {

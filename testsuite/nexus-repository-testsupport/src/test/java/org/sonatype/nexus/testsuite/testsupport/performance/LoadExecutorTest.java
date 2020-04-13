@@ -51,6 +51,7 @@ public class LoadExecutorTest
     new LoadExecutor(tasks, 1, 10).callTasks();
   }
 
+  @SuppressWarnings("java:S2699") // sonar wants assertions, but in this case seems best to let an exception bubble up
   @Test
   public void noFailureTestDoesActuallyStop() throws Exception {
     final List<Callable<?>> tasks = new ArrayList<>();

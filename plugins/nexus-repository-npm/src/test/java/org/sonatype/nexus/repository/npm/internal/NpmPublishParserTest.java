@@ -205,13 +205,11 @@ public class NpmPublishParserTest
 
   @Test
   public void correctlyHandleExpectedISO_8859_1Content() throws Exception {
-    try (InputStream in = new ByteArrayInputStream("{\"name\":\"foo\",\"author\":\"bé\"}".getBytes(ISO_8859_1))) {
-      try (InputStreamReader reader = new InputStreamReader(in, ISO_8859_1)) {
-        try (JsonParser jsonParser = jsonFactory.createParser(reader)) {
+    try (InputStream in = new ByteArrayInputStream("{\"name\":\"foo\",\"author\":\"bé\"}".getBytes(ISO_8859_1));
+         InputStreamReader reader = new InputStreamReader(in, ISO_8859_1);
+         JsonParser jsonParser = jsonFactory.createParser(reader)) {
           NpmPublishParser underTest = new NpmPublishParser(jsonParser, storageFacet, HASH_ALGORITHMS);
-          underTest.parse(NO_USER);
-        }
-      }
+          assertThat(underTest.parse(NO_USER), notNullValue());
     }
   }
 

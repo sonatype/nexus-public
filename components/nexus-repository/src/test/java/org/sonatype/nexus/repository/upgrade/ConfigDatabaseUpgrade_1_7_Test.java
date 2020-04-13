@@ -80,6 +80,7 @@ public class ConfigDatabaseUpgrade_1_7_Test
     }
   }
 
+  @SuppressWarnings("java:S2699") // sonar wants assertions, but seems best to let an exception bubble up
   @Test
   public void testWithoutExistingDb() throws Exception {
     underTest.apply();

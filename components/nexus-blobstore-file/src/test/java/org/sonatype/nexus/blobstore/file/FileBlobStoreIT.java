@@ -361,7 +361,7 @@ public class FileBlobStoreIT
     await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS)
         .until(() -> underTest.getMetrics().getBlobCount(), is(initialBlobCount + 1));
 
-    underTest.deleteHard(blob.getId());
+    assertThat(underTest.deleteHard(blob.getId()), equalTo(true));
 
     await().atMost(METRICS_FLUSH_TIMEOUT, SECONDS)
         .until(() -> underTest.getMetrics().getBlobCount(), is(initialBlobCount));

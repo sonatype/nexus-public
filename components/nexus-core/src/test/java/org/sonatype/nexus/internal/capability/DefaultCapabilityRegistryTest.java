@@ -487,7 +487,7 @@ public class DefaultCapabilityRegistryTest
 
     iterator.next();
     underTest.add(CAPABILITY_TYPE, true, "note3", null);
-    iterator.next();
+    assertThat(iterator.next(), notNullValue());
   }
 
   /**

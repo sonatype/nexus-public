@@ -267,6 +267,7 @@ public class ComponentsResourceTest
     return repositoryItemXOID;
   }
 
+  @SuppressWarnings("java:S2699") // sonar wants assertions, but best to let possible exceptions bubble up
   @Test
   public void uploadComponent() throws Exception {
     HttpServletRequest request = mock(HttpServletRequest.class);

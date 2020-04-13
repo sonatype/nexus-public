@@ -331,6 +331,7 @@ public class KeyStoreManagerImplTest
   /**
    * Verifies removing an certificate by an alias that does not exist, does NOT throw an Exception.
    */
+  @SuppressWarnings("java:S2699") // sonar expects assertions, but best to let this exception bubble up
   @Test
   public void testRemoveCertificateDoesNotExist() throws Exception {
     // nothing much to do here, just call and expect it not to fail

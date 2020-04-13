@@ -79,7 +79,12 @@ public class SecurityFacetSupportTest
   public void testEnsurePermitted_permitted() throws Exception {
     when(contentPermissionChecker.isPermitted(eq("SecurityFacetSupportTest"), eq("test"), eq(READ), any()))
         .thenReturn(true);
-    testSecurityFacetSupport.ensurePermitted(request);
+    try {
+      testSecurityFacetSupport.ensurePermitted(request);
+    }
+    catch (Exception e) {
+      fail("permitted action should have been permitted");
+    }
   }
 
   @Test

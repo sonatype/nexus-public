@@ -321,6 +321,7 @@ public class TransactionalTest
     verifyNoMoreInteractions(session, tx);
   }
 
+  @SuppressWarnings("java:S2699") // sonar expects assertions, but best to let this exception bubble up
   @Test
   public void testCanSeeTransactionInsideTransactional() {
     methods.canSeeTransactionInsideTransactional();

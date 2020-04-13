@@ -75,7 +75,12 @@ public class CondaSecurityFacetTest
   public void testEnsurePermittedPermitted() {
     when(contentPermissionChecker.isPermitted(eq(CONDA_SECURITY_FACET_TEST), eq(CondaFormat.NAME), eq(READ), any()))
         .thenReturn(true);
-    condaSecurityFacet.ensurePermitted(request);
+    try {
+      condaSecurityFacet.ensurePermitted(request);
+    }
+    catch (AuthorizationException e) {
+      fail("expected operation to be permitted");
+    }
   }
 
   @Test

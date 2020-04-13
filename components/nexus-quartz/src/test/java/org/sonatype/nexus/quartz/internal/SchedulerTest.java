@@ -47,9 +47,11 @@ import org.quartz.TriggerKey;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.quartz.simpl.SimpleJobFactory;
 
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.quartz.JobBuilder.newJob;
@@ -538,6 +540,7 @@ public class SchedulerTest
     barrier.await(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
     Thread jobThread = (Thread) scheduler.getContext().get(JOB_THREAD);
+    assertThat(jobThread, notNullValue());
     jobThread.join(TimeUnit.SECONDS.toMillis(TEST_TIMEOUT_SECONDS));
   }
 

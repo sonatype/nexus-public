@@ -26,6 +26,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
+import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertThat;
+
 /**
  * Trials of using OrientDB backup and restore functions.
  */
@@ -68,7 +71,7 @@ public class BackupRestoreTrial
   @Test
   public void backupDatabase() throws Exception {
     try (ODatabaseDocumentTx db = createDatabase("test")) {
-      ODocument doc = createPerson(db);
+      assertThat(createPerson(db), notNullValue());
 
       // Backup makes ZIP files
       File file = File.createTempFile("export-", ".zip", util.getTmpDir());

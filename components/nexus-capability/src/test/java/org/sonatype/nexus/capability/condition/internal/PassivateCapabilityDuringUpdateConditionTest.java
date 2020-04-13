@@ -26,6 +26,8 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -109,7 +111,10 @@ public class PassivateCapabilityDuringUpdateConditionTest
    */
   @Test
   public void bindAfterContextualization() {
-    new PassivateCapabilityDuringUpdateCondition(eventManager).setContext(reference.context()).bind();
+    assertThat(
+        new PassivateCapabilityDuringUpdateCondition(eventManager).setContext(reference.context()).bind(),
+        notNullValue()
+    );
   }
 
   /**

@@ -71,9 +71,12 @@ public class MavenSecurityFacetTest
         .isPermitted(eq("MavenSecurityFacetTest"), eq(Maven2Format.NAME), eq(BreadActions.READ), any()))
         .thenReturn(true);
 
-    mavenSecurityFacet.ensurePermitted(request);
-
-    //validation is no AuthorizationException is thrown
+    try {
+      mavenSecurityFacet.ensurePermitted(request);
+    }
+    catch (AuthorizationException e) {
+      fail("expected permitted operation to succeed");
+    }
   }
 
   @Test

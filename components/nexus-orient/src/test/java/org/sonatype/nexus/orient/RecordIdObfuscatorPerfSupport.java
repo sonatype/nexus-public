@@ -58,6 +58,7 @@ public abstract class RecordIdObfuscatorPerfSupport
 
   protected abstract RecordIdObfuscator createTestSubject() throws Exception;
 
+  @SuppressWarnings("java:S2699") //sonar wants assertions, but adding an assertion would affect the time to run
   @Test
   @PerfTest(invocations = 100000)
   public void encodeAndDecode() throws Exception {

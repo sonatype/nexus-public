@@ -29,6 +29,7 @@ public class ExpectsTest
   @Rule
   public DataSessionRule sessionRule = new DataSessionRule().access(TestExpectsDAO.class);
 
+  @SuppressWarnings("java:S2699") // sonar expects assertions, but best to let this exception bubble up
   @Test
   public void testExpectedAccessTypesRegisteredFirst() {
     try (DataSession<?> session = sessionRule.openSession("config")) {

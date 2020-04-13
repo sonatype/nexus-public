@@ -353,6 +353,7 @@ public class DefaultCapabilityReferenceTest
   /**
    * Calling update does not forwards to capability if properties are same.
    */
+  @SuppressWarnings("java:S2699") //sonar wants an assertion, but we're asserting by throwing an exception
   @Test
   public void updateIsNotForwardedToCapabilityIfSameProperties() throws Exception {
     final HashMap<String, String> properties = new HashMap<String, String>();

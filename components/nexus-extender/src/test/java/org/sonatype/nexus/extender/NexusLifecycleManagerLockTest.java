@@ -38,6 +38,8 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
 import static com.google.inject.name.Names.named;
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.assertThat;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 
 /**
@@ -82,8 +84,14 @@ public class NexusLifecycleManagerLockTest
 
     // register new Bundle-backed injector - this eventually calls NexusLifecycleManager.sync()
     // which tries to acquire the lifecycle lock while we're still holding onto the locator lock
-    locator.add(new InjectorBindings(
-        Guice.createInjector(binder -> binder.bind(BundleContext.class).toInstance(bundleContext))));
+    assertThat(
+        locator.add(
+            new InjectorBindings(
+                Guice.createInjector(binder -> binder.bind(BundleContext.class).toInstance(bundleContext))
+            )
+        ),
+        equalTo(true)
+    );
 
     // if we reach here without encountering a deadlock then the test has passed
   }

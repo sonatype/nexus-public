@@ -30,6 +30,7 @@ import org.mockito.internal.stubbing.answers.Returns;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -91,7 +92,12 @@ public class DefaultComponentMaintenanceImplTest
 
     defaultComponentMaintenance.attach(repository);
 
-    defaultComponentMaintenance.deleteComponents(new ArrayList<>(), () -> false, 1);
+    try {
+      defaultComponentMaintenance.deleteComponents(new ArrayList<>(), () -> false, 1);
+    }
+    catch (Exception e) {
+      fail("expected exception in after to be caught");
+    }
   }
 
   @Test

@@ -37,6 +37,9 @@ import org.apache.shiro.subject.Subject;
 import org.junit.Assert;
 import org.junit.Test;
 
+import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertThat;
+
 /**
  * Tests adding, updating, searching, authc, and authz a user that has an empty role (a role that does not contain any
  * other role or permission).
@@ -53,18 +56,18 @@ public class EmptyRoleTest
     Role emptyRole = this.buildEmptyRole();
 
     // this should work fine
-    authManager.addRole(emptyRole);
+    assertThat(authManager.addRole(emptyRole), notNullValue());
 
     // now create a user and add it to the user
     User user = this.buildTestUser();
     user.setRoles(Collections.singleton(new RoleIdentifier(emptyRole.getSource(), emptyRole.getRoleId())));
 
     // create the user, this user only has an empty role
-    securitySystem.addUser(user, "test123");
+    assertThat(securitySystem.addUser(user, "test123"), notNullValue());
 
     Set<RoleIdentifier> emptyRoleSet = Collections.emptySet();
     user.setRoles(emptyRoleSet);
-    securitySystem.updateUser(user);
+    assertThat(securitySystem.updateUser(user), notNullValue());
 
     // delete the empty role
     authManager.deleteRole(emptyRole.getRoleId());

@@ -27,6 +27,7 @@ import org.mockito.Mock;
 import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -76,7 +77,12 @@ public class AntiCsrfHelperTest
     underTest.requireValidToken(httpServletRequest, null);
 
     when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT)).thenReturn(CLIENT_UA);
-    underTest.requireValidToken(httpServletRequest, null);
+    try {
+      underTest.requireValidToken(httpServletRequest, null);
+    }
+    catch (Exception e) {
+      fail("expected requiring a valid token to succeed");
+    }
   }
 
   /*
@@ -87,7 +93,12 @@ public class AntiCsrfHelperTest
     when(httpServletRequest.getHeader(HttpHeaders.USER_AGENT)).thenReturn(BROWSER_UA);
     when(httpServletRequest.getCookies())
         .thenReturn(new Cookie[] { new Cookie(AntiCsrfHelper.ANTI_CSRF_TOKEN_NAME, "a-value") });
-    underTest.requireValidToken(httpServletRequest, "a-value");
+    try {
+      underTest.requireValidToken(httpServletRequest, "a-value");
+    }
+    catch (Exception e) {
+      fail("expected requiring a valid token to succeed");
+    }
   }
 
   /*

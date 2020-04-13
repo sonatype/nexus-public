@@ -70,7 +70,13 @@ public class RawSecurityFacetTest
   public void testEnsurePermitted_permitted() throws Exception {
     when(contentPermissionChecker.isPermitted(eq("RawSecurityFacetTest"), eq("raw"), eq(READ), any()))
         .thenReturn(true);
-    rawSecurityFacet.ensurePermitted(request);
+
+    try {
+      rawSecurityFacet.ensurePermitted(request);
+    }
+    catch (AuthorizationException e) {
+      fail("expected permitted operation to succeed");
+    }
   }
 
   @Test
