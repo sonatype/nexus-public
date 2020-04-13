@@ -17,7 +17,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
-import org.sonatype.nexus.repository.selector.internal.ContentAuthHelper;
+import org.sonatype.nexus.repository.selector.internal.OrientContentAuthHelper;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -58,7 +58,7 @@ public class BrowseAssetIteratorTest {
 
   private long assetPositionId = 1;
 
-  private ContentAuthHelper contentAuthHelper = mock(ContentAuthHelper.class);
+  private OrientContentAuthHelper contentAuthHelper = mock(OrientContentAuthHelper.class);
 
   private ODatabaseDocumentTx db;
 

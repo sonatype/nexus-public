@@ -60,7 +60,9 @@ import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static java.lang.String.format;
+import static org.apache.commons.lang3.StringUtils.containsIgnoreCase;
 import static org.sonatype.nexus.common.entity.EntityHelper.id;
 import static org.sonatype.nexus.repository.proxy.ProxyFacetSupport.isDownloading;
 import static org.sonatype.nexus.repository.storage.Asset.CHECKSUM;
@@ -390,6 +392,24 @@ public class StorageTxImpl
   @Guarded(by = ACTIVE)
   public long countAssets(final Query query, @Nullable final Iterable<Repository> repositories) {
     return countAssets(query.getWhere(), query.getParameters(), repositories, query.getQuerySuffix());
+  }
+
+  @Override
+  @Guarded(by = ACTIVE)
+  public long countGroupedAssets(@Nullable String whereClause,
+                                 @Nullable Map<String, Object> parameters,
+                                 @Nullable Iterable<Repository> repositories,
+                                 String querySuffix)
+  {
+    checkNotNull(querySuffix);
+    checkState(containsIgnoreCase(querySuffix, "group by"));
+    return assetEntityAdapter.countGroupByQuery(db, whereClause, parameters, bucketsOf(repositories), querySuffix);
+  }
+
+  @Override
+  @Guarded(by = ACTIVE)
+  public long countGroupedAssets(final Query query, @Nullable final Iterable<Repository> repositories) {
+    return countGroupedAssets(query.getWhere(), query.getParameters(), repositories, query.getQuerySuffix());
   }
 
   @Override

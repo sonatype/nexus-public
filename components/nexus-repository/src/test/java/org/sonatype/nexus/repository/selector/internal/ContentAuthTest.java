@@ -38,7 +38,7 @@ public class ContentAuthTest
   private static final String FORMAT = "format";
 
   @Mock
-  ContentAuthHelper contentAuthHelper;
+  OrientContentAuthHelper contentAuthHelper;
 
   ContentAuth underTest;
 

@@ -65,14 +65,14 @@ public class UserPrincipalsHelper
         throw new UserNotFoundException(userId, e.getMessage(), e);
       }
       catch (final UserNotFoundTransientException e) {
-        log.debug("Ignoring transient user error: {}", e);
+        log.debug("Ignoring transient user error", e);
         return UserStatus.disabled;
       }
       catch (final UserNotFoundException e) {
         throw e; // pass back original cause unchanged
       }
       catch (final RuntimeException e) {
-        log.debug("Ignoring transient user error: {}", e);
+        log.debug("Ignoring transient user error", e);
         return UserStatus.disabled;
       }
     }

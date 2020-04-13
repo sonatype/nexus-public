@@ -77,7 +77,7 @@
     SELECT version FROM ${format}_component WHERE <include refid="componentNamespaceMatch"/> AND name = #{name};
   </select>
 
-  <insert id="createComponent" useGeneratedKeys="true" keyProperty="componentId">
+  <insert id="createComponent" useGeneratedKeys="true" keyProperty="componentId" parameterType="ComponentData">
     INSERT INTO ${format}_component (repository_id, namespace, name, version, attributes)
         VALUES (#{repositoryId}, #{namespace}, #{name}, #{version}, #{attributes});
   </insert>
@@ -86,12 +86,16 @@
     SELECT * FROM ${format}_component WHERE <include refid="componentCoordinateMatch"/>;
   </select>
 
-  <update id="updateComponentAttributes">
+  <update id="updateComponentAttributes" parameterType="ComponentData">
     UPDATE ${format}_component SET attributes = #{attributes}, last_updated = CURRENT_TIMESTAMP
         WHERE <include refid="componentMatch"/> AND attributes != #{attributes};
   </update>
 
-  <delete id="deleteComponent">
+  <delete id="deleteComponent" parameterType="ComponentData">
+    DELETE FROM ${format}_component WHERE <include refid="componentMatch"/>;
+  </delete>
+
+  <delete id="deleteCoordinate">
     DELETE FROM ${format}_component WHERE <include refid="componentCoordinateMatch"/>;
   </delete>
 

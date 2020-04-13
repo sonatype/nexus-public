@@ -295,7 +295,7 @@ public class NpmGroupFacet
                                                             final MissingAssetBlobException e) throws IOException
   {
     if (log.isTraceEnabled()) {
-      log.info("Missing blob {} containing cached metadata {}, deleting asset and triggering rebuild. Exception {}",
+      log.info("Missing blob {} containing cached metadata {}, deleting asset and triggering rebuild.",
           e.getBlobRef(), e.getAsset(), e);
     }
     else {

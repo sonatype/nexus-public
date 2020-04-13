@@ -54,7 +54,7 @@ public class PlaceholderUploadManager
   }
 
   @Override
-  public void handle(final Repository repository, final File content, final File attributes, final String path)
+  public void handle(final Repository repository, final File content, final String path)
       throws IOException
   {
     throw new UnsupportedOperationException();

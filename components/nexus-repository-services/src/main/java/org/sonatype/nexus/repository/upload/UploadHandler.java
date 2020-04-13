@@ -97,18 +97,24 @@ public interface UploadHandler
    *
    * @param repository the {@link Repository} to import the file into
    * @param content the {@link File} to add to the repository
-   * @param attributes the attributes {@link File} to associate with the added asset
    * @param path the path of the content relative to the base import directory
    * @throws IOException
    */
   default void handle(
       final Repository repository,
       final File content,
-      final File attributes,
       final String path)
       throws IOException
   {
     throw new UnsupportedOperationException(
         "Import not supported for " + repository.getFormat().getValue() + " format.");
+  }
+
+  /**
+   * Denote if the format is supported using the export/import task
+   * @since 3.next
+   */
+  default boolean supportsExportImport() {
+    return false;
   }
 }

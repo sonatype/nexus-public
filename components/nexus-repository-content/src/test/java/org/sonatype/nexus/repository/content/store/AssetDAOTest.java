@@ -20,6 +20,11 @@ import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.repository.content.Asset;
+import org.sonatype.nexus.repository.content.store.example.TestAssetBlobDAO;
+import org.sonatype.nexus.repository.content.store.example.TestAssetDAO;
+import org.sonatype.nexus.repository.content.store.example.TestAssetData;
+import org.sonatype.nexus.repository.content.store.example.TestComponentDAO;
+import org.sonatype.nexus.repository.content.store.example.TestContentRepositoryDAO;
 
 import org.apache.ibatis.exceptions.PersistenceException;
 import org.hamcrest.collection.IsIterableContainingInAnyOrder;
@@ -43,7 +48,7 @@ import static org.junit.Assert.fail;
  * Test {@link AssetDAO}.
  */
 public class AssetDAOTest
-    extends RepositoryContentTestSupport
+    extends ExampleContentTestSupport
 {
   private ContentRepositoryData contentRepository;
 
@@ -143,7 +148,7 @@ public class AssetDAOTest
       DateTime oldCreated = tempResult.created();
       DateTime oldLastUpdated = tempResult.lastUpdated();
 
-      asset1.attributes().child("custom-section-1").set("custom-key-1", "more-test-values-1");
+      asset1.attributes("custom-section-1").set("custom-key-1", "more-test-values-1");
       dao.updateAssetAttributes(asset1);
 
       tempResult = dao.readAsset(repositoryId, path1).get();
@@ -158,7 +163,7 @@ public class AssetDAOTest
       oldLastUpdated = tempResult.lastUpdated();
 
       asset2.assetId = null; // check a 'detached' entity with no internal id can be updated
-      asset2.attributes().child("custom-section-2").set("custom-key-2", "more-test-values-2");
+      asset2.attributes("custom-section-2").set("custom-key-2", "more-test-values-2");
       dao.updateAssetAttributes(asset2);
 
       tempResult = dao.readAsset(repositoryId, path2).get();
@@ -184,7 +189,7 @@ public class AssetDAOTest
       DateTime oldCreated = tempResult.created();
       DateTime oldLastUpdated = tempResult.lastUpdated();
 
-      asset1.attributes().child("custom-section-1").set("custom-key-1", "more-test-values-again");
+      asset1.attributes("custom-section-1").set("custom-key-1", "more-test-values-again");
       dao.updateAssetAttributes(asset1);
 
       tempResult = dao.readAsset(repositoryId, path1).get();
@@ -214,7 +219,7 @@ public class AssetDAOTest
     try (DataSession<?> session = sessionRule.openSession("content")) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
-      assertTrue(dao.deleteAsset(repositoryId, path1));
+      assertTrue(dao.deleteAsset(asset1));
 
       assertThat(dao.browseAssets(repositoryId, 10, null), contains(allOf(samePath(asset2), sameAttributes(asset2))));
 
@@ -222,7 +227,7 @@ public class AssetDAOTest
 
       assertThat(dao.browseAssets(repositoryId, 10, null), emptyIterable());
 
-      assertFalse(dao.deleteAsset(repositoryId, "test-path"));
+      assertFalse(dao.deletePath(repositoryId, "test-path"));
     }
   }
 
@@ -478,7 +483,7 @@ public class AssetDAOTest
         generatedAssets().stream()
             // ignore generated assets without components
             .filter(asset -> asset.component().isPresent())
-            .map(RepositoryContentTestSupport::samePath)
+            .map(ExampleContentTestSupport::samePath)
             .collect(toList())));
 
     // check assets under a 'detached' entity with no internal id can still be browsed
@@ -515,11 +520,44 @@ public class AssetDAOTest
             generatedAssets()
                 .subList(page * 10, (page + 1) * 10)
                 .stream()
-                .map(RepositoryContentTestSupport::samePath)
+                .map(ExampleContentTestSupport::samePath)
                 .collect(toList())));
 
         assets = dao.browseAssets(repositoryId, 10, assets.nextContinuationToken());
       }
+    }
+  }
+
+  @Test
+  public void testFlaggedBrowsing() {
+
+    TestAssetData asset1 = randomAsset(repositoryId);
+    TestAssetData asset2 = randomAsset(repositoryId);
+
+    try (DataSession<?> session = sessionRule.openSession("content")) {
+      TestAssetDAO dao = session.access(TestAssetDAO.class);
+
+      dao.addTestSchema();
+
+      dao.createAsset(asset1);
+      dao.createAsset(asset2);
+
+      assertThat(dao.browseFlaggedAssets(repositoryId, 10, null), emptyIterable());
+
+      asset2.setTestFlag(true);
+      dao.updateAssetFlag(asset2);
+
+      assertThat(dao.browseFlaggedAssets(repositoryId, 10, null),
+          contains(allOf(samePath(asset2), sameAttributes(asset2))));
+
+      asset1.setTestFlag(true);
+      dao.updateAssetFlag(asset1);
+
+      asset2.setTestFlag(false);
+      dao.updateAssetFlag(asset2);
+
+      assertThat(dao.browseFlaggedAssets(repositoryId, 10, null),
+          contains(allOf(samePath(asset1), sameAttributes(asset1))));
     }
   }
 }

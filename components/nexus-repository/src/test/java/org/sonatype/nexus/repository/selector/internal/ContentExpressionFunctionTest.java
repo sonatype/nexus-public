@@ -78,7 +78,7 @@ public class ContentExpressionFunctionTest
   private SelectorManager selectorManager;
 
   @Mock
-  private ContentAuthHelper contentAuthHelper;
+  private OrientContentAuthHelper contentAuthHelper;
 
   ContentExpressionFunction underTest;
 

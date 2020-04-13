@@ -20,6 +20,8 @@ export default {
     SAVE_BUTTON_LABEL: 'Save'
   },
 
+  LOADING: 'Loading...',
+
   ERROR: {
     FIELD_REQUIRED: 'This field is required'
   }

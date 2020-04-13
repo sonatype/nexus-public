@@ -43,7 +43,6 @@ Ext.define('NX.coreui.controller.Users', {
     'Role'
   ],
   views: [
-    'user.UserAccount',
     'user.UserAdd',
     'user.UserChangePassword',
     'user.UserFeature',
@@ -100,20 +99,6 @@ Ext.define('NX.coreui.controller.Users', {
         },
         weight: 30
       },
-      {
-        mode: 'user',
-        path: '/Account',
-        text: NX.I18n.get('Users_Text'),
-        description: NX.I18n.get('Users_Description'),
-        view: {xtype: 'nx-coreui-user-account'},
-        iconConfig: {
-          file: 'user.png',
-          variants: ['x16', 'x32']
-        },
-        visible: function() {
-          return NX.Security.hasUser();
-        }
-      }
     ];
 
     me.callParent();

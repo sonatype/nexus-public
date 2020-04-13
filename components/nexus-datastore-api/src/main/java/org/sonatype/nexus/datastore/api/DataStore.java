@@ -94,4 +94,12 @@ public interface DataStore<S extends DataSession<?>>
    * @since 3.21
    */
   void backup(String location) throws Exception;
+
+  /**
+   * Returns the database Id of the database backing this datastore.
+   *
+   * @since 3.next
+   * @return The database ID of the underlying database
+   */
+  String getDatabaseId();
 }

@@ -99,6 +99,11 @@ public class DataStoreSupportTest
     public void backup(final String location) throws SQLException {
       // do nothing
     }
+
+    @Override
+    public String getDatabaseId() {
+      return "testDatabaseId";
+    }
   }
 
   private DataStoreSupport<?> underTest;

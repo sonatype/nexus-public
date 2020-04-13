@@ -48,6 +48,7 @@ import org.sonatype.nexus.repository.storage.BrowseNodeFilter;
 import org.sonatype.nexus.repository.storage.BrowseNodeStore;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.DefaultBrowseNodeComparator;
+import org.sonatype.nexus.repository.storage.internal.ComponentSchemaRegistration;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.security.SecurityHelper;
@@ -60,7 +61,6 @@ import org.sonatype.nexus.selector.SelectorSqlBuilder;
 import com.google.common.base.Equivalence;
 import com.google.common.base.Equivalence.Wrapper;
 import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -77,11 +77,17 @@ import static org.sonatype.nexus.repository.browse.internal.orient.BrowseNodeEnt
 import static org.sonatype.nexus.repository.browse.internal.orient.BrowseNodeEntityAdapter.P_PATH;
 
 /**
+ * Orient implementation of {@link BrowseNodeStore}.
+ *
+ * Note that this store does not register the browse-node schema because that needs to be registered
+ * after the component and asset schemas. To guarantee ordering, registration of all those schemas is
+ * done by {@link ComponentSchemaRegistration}.
+ *
  * @since 3.7
  */
 @Singleton
 @ManagedLifecycle(phase = SCHEMAS)
-@Priority(Integer.MIN_VALUE)
+@Priority(Integer.MAX_VALUE) // make sure this implementation appears above the datastore one in mixed-mode
 @Named
 public class OrientBrowseNodeStoreImpl
     extends StateGuardLifecycleSupport
@@ -125,13 +131,6 @@ public class OrientBrowseNodeStoreImpl
     this.repositoryManager = checkNotNull(repositoryManager);
     this.deletePageSize = configuration.getDeletePageSize();
     this.defaultBrowseNodeComparator = checkNotNull(browseNodeComparators.get(DefaultBrowseNodeComparator.NAME));
-  }
-
-  @Override
-  protected void doStart() throws Exception {
-    try (ODatabaseDocumentTx db = databaseInstance.get().connect()) {
-      entityAdapter.register(db);
-    }
   }
 
   @Override
@@ -321,6 +320,7 @@ public class OrientBrowseNodeStoreImpl
     SelectorSqlBuilder sqlBuilder = new SelectorSqlBuilder()
         .propertyAlias("path", P_PATH)
         .propertyAlias("format", P_FORMAT)
+        .parameterPrefix(":")
         .propertyPrefix(P_ASSET_ID + ".attributes." + format + ".");
 
     int cselCount = 0;
@@ -328,7 +328,7 @@ public class OrientBrowseNodeStoreImpl
     for (SelectorConfiguration selector : selectors) {
       if (CselSelector.TYPE.equals(selector.getType())) {
         try {
-          sqlBuilder.parameterPrefix("s" + cselCount + "p");
+          sqlBuilder.parameterNamePrefix("s" + cselCount + "p");
 
           selectorManager.toSql(selector, sqlBuilder);
 

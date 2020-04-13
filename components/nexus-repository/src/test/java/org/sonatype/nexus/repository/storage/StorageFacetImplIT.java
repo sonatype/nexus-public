@@ -32,6 +32,7 @@ import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.attributes.internal.AttributesFacetImpl;
+import org.sonatype.nexus.repository.browse.internal.orient.BrowseNodeEntityAdapter;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.search.SearchFacet;
@@ -117,7 +118,8 @@ public class StorageFacetImplIT
         database.getInstanceProvider(),
         bucketEntityAdapter,
         componentEntityAdapter,
-        assetEntityAdapter);
+        assetEntityAdapter,
+        mock(BrowseNodeEntityAdapter.class));
 
     schemaRegistration.start();
 
@@ -814,7 +816,8 @@ public class StorageFacetImplIT
         database.getInstanceProvider(),
         otherBucketEntityAdapter,
         otherComponentEntityAdapter,
-        otherAssetEntityAdapter);
+        otherAssetEntityAdapter,
+        mock(BrowseNodeEntityAdapter.class));
 
     otherSchemaRegistration.start();
 

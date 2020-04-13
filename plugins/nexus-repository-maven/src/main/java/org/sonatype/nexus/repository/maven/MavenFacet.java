@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.maven;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Map;
 
 import javax.annotation.Nonnull;
@@ -24,6 +25,7 @@ import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
+import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
@@ -90,4 +92,16 @@ public interface MavenFacet
    * @return true if it exists
    */
   boolean exists(final MavenPath path);
+
+  /**
+   * @since 3.next
+   * @param path to the maven component that might need metadata rebuilt or deleted
+   */
+  void maybeDeleteOrFlagToRebuildMetadata(final Bucket bucket, final MavenPath path) throws IOException;
+
+  /**
+   * @since 3.next
+   * @param paths to the maven components that might need metadata rebuilt or deleted
+   */
+  void maybeDeleteOrFlagToRebuildMetadata(final Collection<MavenPath> paths) throws IOException;
 }

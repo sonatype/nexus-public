@@ -56,7 +56,7 @@ public interface ContentRepositoryDAO
    *
    * @param contentRepository the content repository to update
    */
-  void updateContentRepositoryAttributes(ContentRepositoryData contentRepository);
+  void updateContentRepositoryAttributes(ContentRepository contentRepository);
 
   /**
    * Deletes a content repository from the content data store based on its config identity.

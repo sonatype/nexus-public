@@ -17,4 +17,12 @@ export default class Utils {
   static urlFromPath(path) {
     return NX.app.baseUrl + path;
   }
+
+  static isBlank(str) {
+    return (!str || /^\s*$/.test(str));
+  }
+
+  static notBlank(str) {
+    return !Utils.isBlank(str);
+  }
 }

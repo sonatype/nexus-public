@@ -43,9 +43,13 @@ public class SelectorFactory
 
   private final ConstraintViolationFactory constraintViolationFactory;
 
+  private final CselToSql cselToSql;
+
   @Inject
-  public SelectorFactory(final ConstraintViolationFactory constraintViolationFactory) {
+  public SelectorFactory(final ConstraintViolationFactory constraintViolationFactory,
+                         final CselToSql cselToSql) {
     this.constraintViolationFactory = checkNotNull(constraintViolationFactory);
+    this.cselToSql = checkNotNull(cselToSql);
   }
 
   /**
@@ -85,7 +89,7 @@ public class SelectorFactory
       case JexlSelector.TYPE:
         return new JexlSelector(jexlEngine.buildExpression(expression));
       case CselSelector.TYPE:
-        return new CselSelector(jexlEngine.buildExpression(expression));
+        return new CselSelector(cselToSql, jexlEngine.buildExpression(expression));
       default:
         throw new IllegalArgumentException("Unknown selector type: " + type);
     }

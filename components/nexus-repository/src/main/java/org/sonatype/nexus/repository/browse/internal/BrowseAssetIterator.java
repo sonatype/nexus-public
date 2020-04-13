@@ -24,7 +24,7 @@ import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.repository.selector.internal.ContentAuthHelper;
+import org.sonatype.nexus.repository.selector.internal.OrientContentAuthHelper;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -64,7 +64,7 @@ public class BrowseAssetIterator
 
   private final Queue<ODocument> queue;
 
-  private final ContentAuthHelper contentAuthHelper;
+  private final OrientContentAuthHelper contentAuthHelper;
 
   private final ODatabaseDocumentTx db;
 
@@ -80,7 +80,7 @@ public class BrowseAssetIterator
 
   private boolean hasBrowsedClass = false;
 
-  BrowseAssetIterator(final ContentAuthHelper contentAuthHelper,
+  BrowseAssetIterator(final OrientContentAuthHelper contentAuthHelper,
                       final ODatabaseDocumentTx db,
                       @Nullable final String rid,
                       final String repositoryName,

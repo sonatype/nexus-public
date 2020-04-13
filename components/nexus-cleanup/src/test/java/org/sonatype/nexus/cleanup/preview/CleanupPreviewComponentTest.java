@@ -138,7 +138,7 @@ public class CleanupPreviewComponentTest
 
     when(emptyParameters.getFilter("cleanupPolicy")).thenReturn(null);
 
-    underTest.previewCleanup(emptyParameters);
+    assertThat(underTest.previewCleanup(emptyParameters), is(nullValue()));
   }
 
   @Test
@@ -148,7 +148,7 @@ public class CleanupPreviewComponentTest
     when(emptyParameters.getFilter("cleanupPolicy")).thenReturn("policy");
     when(emptyParameters.getSort()).thenReturn(null);
 
-    underTest.previewCleanup(emptyParameters);
+    assertThat(underTest.previewCleanup(emptyParameters), is(nullValue()));
   }
 
   @Test

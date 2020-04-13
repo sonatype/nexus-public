@@ -18,6 +18,8 @@ import java.util.List;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.store.example.TestComponentDAO;
+import org.sonatype.nexus.repository.content.store.example.TestContentRepositoryDAO;
 
 import org.apache.ibatis.exceptions.PersistenceException;
 import org.hamcrest.collection.IsIterableContainingInAnyOrder;
@@ -40,7 +42,7 @@ import static org.junit.Assert.fail;
  * Test {@link ComponentDAO}.
  */
 public class ComponentDAOTest
-    extends RepositoryContentTestSupport
+    extends ExampleContentTestSupport
 {
   private ContentRepositoryData contentRepository;
 
@@ -156,7 +158,7 @@ public class ComponentDAOTest
       DateTime oldCreated = tempResult.created();
       DateTime oldLastUpdated = tempResult.lastUpdated();
 
-      component1.attributes().child("custom-section-1").set("custom-key-1", "more-test-values-1");
+      component1.attributes("custom-section-1").set("custom-key-1", "more-test-values-1");
       dao.updateComponentAttributes(component1);
 
       tempResult = dao.readComponent(repositoryId, namespace1, name1, version1).get();
@@ -171,7 +173,7 @@ public class ComponentDAOTest
       oldLastUpdated = tempResult.lastUpdated();
 
       component2.componentId = null; // check a 'detached' entity with no internal id can be updated
-      component2.attributes().child("custom-section-2").set("custom-key-2", "more-test-values-2");
+      component2.attributes("custom-section-2").set("custom-key-2", "more-test-values-2");
       dao.updateComponentAttributes(component2);
 
       tempResult = dao.readComponent(repositoryId, namespace2, name2, version2).get();
@@ -197,7 +199,7 @@ public class ComponentDAOTest
       DateTime oldCreated = tempResult.created();
       DateTime oldLastUpdated = tempResult.lastUpdated();
 
-      component1.attributes().child("custom-section-1").set("custom-key-1", "more-test-values-again");
+      component1.attributes("custom-section-1").set("custom-key-1", "more-test-values-again");
       dao.updateComponentAttributes(component1);
 
       tempResult = dao.readComponent(repositoryId, namespace1, name1, version1).get();
@@ -227,7 +229,7 @@ public class ComponentDAOTest
     try (DataSession<?> session = sessionRule.openSession("content")) {
       ComponentDAO dao = session.access(TestComponentDAO.class);
 
-      assertTrue(dao.deleteComponent(repositoryId, namespace1, name1, version1));
+      assertTrue(dao.deleteComponent(component1));
 
       assertThat(dao.browseComponents(repositoryId, 10, null),
           contains(allOf(sameCoordinates(component2), sameAttributes(component2))));
@@ -236,7 +238,7 @@ public class ComponentDAOTest
 
       assertThat(dao.browseComponents(repositoryId, 10, null), emptyIterable());
 
-      assertFalse(dao.deleteComponent(repositoryId, "test-namespace", "test-name", "test-version"));
+      assertFalse(dao.deleteCoordinate(repositoryId, "test-namespace", "test-name", "test-version"));
     }
   }
 
@@ -268,7 +270,7 @@ public class ComponentDAOTest
     // (use hamcrest class directly as javac picks the wrong static varargs method)
     assertThat(browsedComponents, new IsIterableContainingInAnyOrder<>(
         generatedComponents().stream()
-        .map(RepositoryContentTestSupport::sameCoordinates)
+        .map(ExampleContentTestSupport::sameCoordinates)
         .collect(toList())));
   }
 
@@ -295,7 +297,7 @@ public class ComponentDAOTest
             generatedComponents()
                 .subList(page * 10, (page + 1) * 10)
                 .stream()
-                .map(RepositoryContentTestSupport::sameCoordinates)
+                .map(ExampleContentTestSupport::sameCoordinates)
                 .collect(toList())));
 
         components = dao.browseComponents(repositoryId, 10, components.nextContinuationToken());

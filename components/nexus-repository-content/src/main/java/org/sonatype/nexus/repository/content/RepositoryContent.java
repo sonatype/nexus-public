@@ -29,6 +29,13 @@ public interface RepositoryContent
   NestedAttributesMap attributes();
 
   /**
+   * Shortcut to content sub-attributes.
+   */
+  default NestedAttributesMap attributes(String key) {
+    return attributes().child(key);
+  }
+
+  /**
    * When the metadata was first created.
    */
   DateTime created();

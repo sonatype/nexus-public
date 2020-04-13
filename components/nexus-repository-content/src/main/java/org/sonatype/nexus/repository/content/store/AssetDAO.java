@@ -23,6 +23,7 @@ import org.sonatype.nexus.datastore.api.Expects;
 import org.sonatype.nexus.datastore.api.SchemaTemplate;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
+import org.sonatype.nexus.repository.content.Component;
 
 import org.apache.ibatis.annotations.Param;
 
@@ -56,7 +57,7 @@ public interface AssetDAO
    * @param component the component to browse
    * @return collection of assets
    */
-  Collection<Asset> browseComponentAssets(ComponentData component);
+  Collection<Asset> browseComponentAssets(Component component);
 
   /**
    * Creates the given asset in the content data store.
@@ -79,30 +80,38 @@ public interface AssetDAO
    *
    * @param asset the asset to update
    */
-  void updateAssetAttributes(AssetData asset);
+  void updateAssetAttributes(Asset asset);
 
   /**
    * Updates the link between the given asset and its {@link AssetBlob} in the content data store.
    *
    * @param asset the asset to update
    */
-  void updateAssetBlobLink(AssetData asset);
+  void updateAssetBlobLink(Asset asset);
 
   /**
    * Updates the last downloaded time of the given asset in the content data store.
    *
    * @param asset the asset to update
    */
-  void markAsDownloaded(AssetData asset);
+  void markAsDownloaded(Asset asset);
 
   /**
    * Deletes an asset from the content data store.
+   *
+   * @param asset the asset to delete
+   * @return {@code true} if the asset was deleted
+   */
+  boolean deleteAsset(Asset asset);
+
+  /**
+   * Deletes the asset located at the given path in the content data store.
    *
    * @param repositoryId the repository containing the asset
    * @param path the path of the asset
    * @return {@code true} if the asset was deleted
    */
-  boolean deleteAsset(@Param("repositoryId") int repositoryId, @Param("path") String path);
+  boolean deletePath(@Param("repositoryId") int repositoryId, @Param("path") String path);
 
   /**
    * Deletes all assets in the given repository from the content data store.

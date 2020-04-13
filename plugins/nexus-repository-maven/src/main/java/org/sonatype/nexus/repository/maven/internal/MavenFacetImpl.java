@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.maven.internal;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Map;
 
 import javax.annotation.Nonnull;
@@ -43,6 +44,7 @@ import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
+import org.sonatype.nexus.repository.storage.Query.Builder;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.storage.TempBlob;
@@ -65,24 +67,23 @@ import org.apache.maven.model.Model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Boolean.TRUE;
+import static java.util.Collections.singletonList;
 import static java.util.Objects.nonNull;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.*;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.P_ARTIFACT_ID;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.P_CLASSIFIER;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.P_EXTENSION;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.P_GROUP_ID;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.P_PACKAGING;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.P_POM_DESCRIPTION;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.P_POM_NAME;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.P_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Constants.METADATA_FILENAME;
+import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.deleteWithHashes;
 import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.findAsset;
 import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.findComponent;
+import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.addRebuildFlag;
 import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.removeRebuildFlag;
 import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.requiresRebuild;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
+import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
+import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
+import static org.sonatype.nexus.repository.storage.Query.builder;
 
 /**
  * A {@link MavenFacet} that persists Maven artifacts and metadata to a {@link StorageFacet}.
@@ -107,6 +108,8 @@ public class MavenFacetImpl
     implements MavenFacet
 {
   private static final ThreadLocal<Boolean> rebuilding = new ThreadLocal<>();
+
+  private static final String ATTR_MAVEN_BASE_VERSION = P_ATTRIBUTES + "." + Maven2Format.NAME + "." + P_BASE_VERSION;
 
   private final Map<String, MavenPathParser> mavenPathParsers;
 
@@ -556,6 +559,50 @@ public class MavenFacetImpl
       }
     }
     return result;
+  }
+
+  @Override
+  @TransactionalDeleteBlob
+  public void maybeDeleteOrFlagToRebuildMetadata(final Bucket bucket, final MavenPath path) throws IOException {
+    final StorageTx tx = UnitOfWork.currentTx();
+    final Asset metadata = findAsset(tx, bucket, path);
+    if (metadata != null) {
+      final Builder query = builder();
+      final NestedAttributesMap mavenAttrs = metadata.attributes().child(Maven2Format.NAME);
+      final String groupId = mavenAttrs.get(P_GROUP, String.class);
+      final String artifactId = mavenAttrs.get(P_NAME, String.class);
+      final String baseVersion = mavenAttrs.get(P_BASE_VERSION, String.class);
+
+      if (isNotEmpty(groupId)) {
+        query.where(P_GROUP).eq(groupId);
+      }
+      if (isNotEmpty(artifactId)) {
+        query.and(P_NAME).eq(artifactId);
+      }
+      if (isNotEmpty(baseVersion)) {
+        query.and(ATTR_MAVEN_BASE_VERSION).eq(baseVersion);
+      }
+
+      long count = tx.countComponents(query.build(), singletonList(getRepository()));
+      if (count == 0) {
+        deleteWithHashes(this, path);
+      }
+      else {
+        addRebuildFlag(metadata);
+        tx.saveAsset(metadata);
+      }
+    }
+  }
+
+  @Override
+  @TransactionalDeleteBlob
+  public void maybeDeleteOrFlagToRebuildMetadata(final Collection<MavenPath> paths) throws IOException {
+    final StorageTx tx = UnitOfWork.currentTx();
+    final Bucket bucket = tx.findBucket(getRepository());
+
+    for (MavenPath path : paths) {
+      maybeDeleteOrFlagToRebuildMetadata(bucket, path);
+    }
   }
 
   private boolean deleteArtifact(final MavenPath path, final StorageTx tx) {

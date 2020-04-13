@@ -28,8 +28,9 @@ describe('Checkbox', () => {
             name='test-checkbox'
             isChecked={true}
             onChange={() => {}}
-            labelText='awesome checkbox'
-        />
+        >
+          awesome checkbox
+        </Checkbox>
     );
     expect(container).toMatchSnapshot();
   });

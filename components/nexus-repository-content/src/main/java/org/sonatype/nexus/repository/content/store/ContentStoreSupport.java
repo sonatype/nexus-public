@@ -35,16 +35,28 @@ public abstract class ContentStoreSupport<T extends DataAccess>
 {
   private final DataSessionSupplier sessionSupplier;
 
-  private final String storeName;
+  private final String contentStoreName;
 
   private final Class<T> daoClass;
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
-  public ContentStoreSupport(final DataSessionSupplier sessionSupplier, final String storeName) {
+  protected ContentStoreSupport(final DataSessionSupplier sessionSupplier, final String contentStoreName) {
     this.sessionSupplier = checkNotNull(sessionSupplier);
-    this.storeName = checkNotNull(storeName);
+    this.contentStoreName = checkNotNull(contentStoreName);
+
+    // use generic type information to discover the DAO class from the concrete implementation
     TypeLiteral<?> superType = TypeLiteral.get(getClass()).getSupertype(ContentStoreSupport.class);
     this.daoClass = (Class) TypeArguments.get(superType, 0).getRawType();
+  }
+
+  // alternative constructor that overrides discovery of the DAO class
+  protected ContentStoreSupport(final DataSessionSupplier sessionSupplier,
+                                final String contentStoreName,
+                                final Class<T> daoClass)
+  {
+    this.sessionSupplier = checkNotNull(sessionSupplier);
+    this.contentStoreName = checkNotNull(contentStoreName);
+    this.daoClass = checkNotNull(daoClass);
   }
 
   protected T dao() {
@@ -53,6 +65,6 @@ public abstract class ContentStoreSupport<T extends DataAccess>
 
   @Override
   public DataSession<?> openSession() {
-    return sessionSupplier.openSession(storeName);
+    return sessionSupplier.openSession(contentStoreName);
   }
 }

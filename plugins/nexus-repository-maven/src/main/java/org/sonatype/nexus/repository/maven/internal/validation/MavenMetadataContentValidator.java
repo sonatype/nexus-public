@@ -53,7 +53,7 @@ public class MavenMetadataContentValidator
       }
     }
     catch (IOException e) {
-      log.warn("Unable to read maven-metadata.xml at path {} caused by {}", path, e );
+      log.warn("Unable to read maven-metadata.xml at path {}", path, e );
       
       throw new InvalidContentException("Unable to read maven-metadata.xml reason: " + e.getMessage());
     }

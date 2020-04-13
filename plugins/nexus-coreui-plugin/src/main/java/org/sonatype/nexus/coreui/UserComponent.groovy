@@ -124,25 +124,6 @@ class UserComponent
   }
 
   /**
-   * Retrieves user account (logged in user info).
-   * @return current logged in user account.
-   */
-  @DirectMethod
-  @Timed
-  @ExceptionMetered
-  @RequiresUser
-  UserAccountXO readAccount() {
-    User user = securitySystem.currentUser()
-    return new UserAccountXO(
-        userId: user.userId,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.emailAddress,
-        external: user.source != DEFAULT_SOURCE
-    )
-  }
-
-  /**
    * Creates a user.
    * @param userXO to be created
    * @return created user
@@ -223,28 +204,6 @@ class UserComponent
             : null
     )
     return convert(securitySystem.getUser(userRoleMappingsXO.userId, userRoleMappingsXO.realm))
-  }
-
-  /**
-   * Update user account (logged in user info).
-   * @param userAccountXO to be updated
-   * @return current logged in user account
-   */
-  @DirectMethod
-  @Timed
-  @ExceptionMetered
-  @RequiresUser
-  @RequiresAuthentication
-  @Validate
-  UserAccountXO updateAccount(@NotNull @Valid final UserAccountXO userAccountXO) {
-    User user = securitySystem.currentUser().with {
-      firstName = userAccountXO.firstName
-      lastName = userAccountXO.lastName
-      emailAddress = userAccountXO.email
-      return it
-    }
-    securitySystem.updateUser(user)
-    return readAccount()
   }
 
   /**

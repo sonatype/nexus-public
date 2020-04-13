@@ -71,12 +71,12 @@ public class ContentExpressionFunction
 
   private final SelectorManager selectorManager;
 
-  private final ContentAuthHelper contentAuthHelper;
+  private final OrientContentAuthHelper contentAuthHelper;
 
   @Inject
   public ContentExpressionFunction(final VariableResolverAdapterManager variableResolverAdapterManager,
                                    final SelectorManager selectorManager,
-                                   final ContentAuthHelper contentAuthHelper)
+                                   final OrientContentAuthHelper contentAuthHelper)
   {
     super(NAME, 4, 4);
     this.variableResolverAdapterManager = checkNotNull(variableResolverAdapterManager);

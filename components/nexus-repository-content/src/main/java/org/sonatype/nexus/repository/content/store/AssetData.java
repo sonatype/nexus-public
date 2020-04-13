@@ -41,13 +41,13 @@ public class AssetData
   private String path;
 
   @Nullable
-  private Integer componentId;
+  Integer componentId; // NOSONAR: internal id
 
   @Nullable
   private Component component;
 
   @Nullable
-  private Integer assetBlobId;
+  Integer assetBlobId; // NOSONAR: internal id
 
   @Nullable
   private AssetBlob assetBlob;

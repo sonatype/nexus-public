@@ -51,5 +51,30 @@ export default {
     },
     DESCRIPTION: `Please include a complete description of your problem and steps to allow us to reproduce the problem (if available).`,
     ATTACH_SUPPORT_ZIP: `Attaching a support ZIP to your request will help our engineers give you a faster response.`
-  }
+  },
+
+  USER_ACCOUNT: {
+    MENU: {
+      text: 'Account',
+      description: 'Manage your account',
+    },
+    ACTIONS: {
+      changePassword: 'Change password',
+      discardChangePassword: 'Discard password change',
+    },
+    MESSAGES: {
+      LOAD_ERROR: 'An error occurred while loading User Account, see console for more details',
+      UPDATE_SUCCESS: 'User account settings updated',
+      UPDATE_ERROR: 'An error occurred while updating user account settings',
+      PASSWORD_NO_MATCH_ERROR: 'Passwords do not match',
+      PASSWORD_MUST_DIFFER_ERROR: 'New password must be different',
+    },
+    ID_FIELD_LABEL: 'Username',
+    FIRST_FIELD_LABEL: 'First Name',
+    LAST_FIELD_LABEL: 'Last Name',
+    EMAIL_FIELD_LABEL: 'Email',
+    PASSWORD_CURRENT_FIELD_LABEL: 'Current Password',
+    PASSWORD_NEW_FIELD_LABEL: 'New Password',
+    PASSWORD_NEW_CONFIRM_FIELD_LABEL: 'New Password (Confirm)',
+  },
 };

@@ -12,190 +12,20 @@
  */
 package org.sonatype.nexus.selector;
 
-import org.apache.commons.jexl3.JexlException;
-import org.apache.commons.jexl3.parser.ASTAndNode;
-import org.apache.commons.jexl3.parser.ASTEQNode;
-import org.apache.commons.jexl3.parser.ASTERNode;
-import org.apache.commons.jexl3.parser.ASTIdentifier;
-import org.apache.commons.jexl3.parser.ASTIdentifierAccess;
 import org.apache.commons.jexl3.parser.ASTJexlScript;
-import org.apache.commons.jexl3.parser.ASTNENode;
-import org.apache.commons.jexl3.parser.ASTOrNode;
-import org.apache.commons.jexl3.parser.ASTReference;
-import org.apache.commons.jexl3.parser.ASTReferenceExpression;
-import org.apache.commons.jexl3.parser.ASTSWNode;
-import org.apache.commons.jexl3.parser.ASTStringLiteral;
-import org.apache.commons.jexl3.parser.JexlNode;
 
 /**
- * Walks the script, transforming CSEL expressions into SQL clauses.
+ * Walks the {@link ASTJexlScript} script, transforming CSEL expressions and populating the {@link SelectorSqlBuilder} builder.
  *
- * @since 3.16
+ * @since 3.next
  */
-class CselToSql
-    extends ParserVisitorSupport
+public interface CselToSql
 {
-  private static final CselToSql INSTANCE = new CselToSql();
-
   /**
    * Transforms the given CSEL expression (in script form) to SQL for use in a 'where' clause.
    *
    * @param script the CSEL script to transform
    * @param builder the SQL builder to use
    */
-  public static void transformCselToSql(final ASTJexlScript script, final SelectorSqlBuilder builder) {
-    script.childrenAccept(INSTANCE, builder);
-  }
-
-  private CselToSql() {
-    // utility class
-  }
-
-  @Override
-  protected Object doVisit(final JexlNode node, final Object data) {
-    throw new JexlException(node, "Expression not supported in CSEL selector");
-  }
-
-  /**
-   * Transform `a || b` into `a or b`
-   */
-  @Override
-  protected Object visit(final ASTOrNode node, final Object data) {
-    return transformOperator(node, "or", (SelectorSqlBuilder) data);
-  }
-
-  /**
-   * Transform `a && b` into `a and b`
-   */
-  @Override
-  protected Object visit(final ASTAndNode node, final Object data) {
-    return transformOperator(node, "and", (SelectorSqlBuilder) data);
-  }
-
-  /**
-   * Transform `a == b` into `a = b`
-   */
-  @Override
-  protected Object visit(final ASTEQNode node, final Object data) {
-    return transformOperator(node, "=", (SelectorSqlBuilder) data);
-  }
-
-  /**
-   * Transform `a =~ "regex"` into `a matches "regex"`
-   */
-  @Override
-  protected Object visit(final ASTERNode node, final Object data) {
-    return transformOperator(node, "matches", (SelectorSqlBuilder) data);
-  }
-
-  /**
-   * Transform `a =^ "something"` into `a like "something%"`
-   */
-  @Override
-  protected Object visit(final ASTSWNode node, final Object data) {
-    JexlNode leftChild = node.jjtGetChild(LEFT);
-    JexlNode rightChild = node.jjtGetChild(RIGHT);
-    if (rightChild instanceof ASTStringLiteral) {
-      transformStartsWithOperator(leftChild, rightChild, (SelectorSqlBuilder) data);
-    }
-    else {
-      transformStartsWithOperator(rightChild, leftChild, (SelectorSqlBuilder) data);
-    }
-    return data;
-  }
-
-  /**
-   * Transform `a != b` into `(a is null or a <> b)`
-   */
-  @Override
-  protected Object visit(final ASTNENode node, final Object data) {
-    JexlNode leftChild = node.jjtGetChild(LEFT);
-    JexlNode rightChild = node.jjtGetChild(RIGHT);
-    if (rightChild instanceof ASTStringLiteral) {
-      transformNotEqualsOperator(leftChild, rightChild, (SelectorSqlBuilder) data);
-    }
-    else {
-      transformNotEqualsOperator(rightChild, leftChild, (SelectorSqlBuilder) data);
-    }
-    return data;
-  }
-
-  /**
-   * Apply `( expression )`
-   */
-  @Override
-  protected Object visit(final ASTReferenceExpression node, final Object data) {
-    ((SelectorSqlBuilder) data).appendExpression(() -> node.childrenAccept(this, data));
-    return data;
-  }
-
-  /**
-   * Store string literals as parameters.
-   */
-  @Override
-  protected Object visit(final ASTStringLiteral node, final Object data) {
-    ((SelectorSqlBuilder) data).appendLiteral(node.getLiteral());
-    return data;
-  }
-
-  /**
-   * Transform identifiers into asset fields.
-   */
-  @Override
-  protected Object visit(final ASTIdentifier node, final Object data) {
-    ((SelectorSqlBuilder) data).appendProperty(node.getName());
-    return data;
-  }
-
-  /**
-   * Transform dotted references into format-specific attributes.
-   */
-  @Override
-  protected Object visit(final ASTReference node, final Object data) {
-    ASTIdentifierAccess subRef = (ASTIdentifierAccess) node.jjtGetChild(RIGHT);
-    ((SelectorSqlBuilder) data).appendProperty(subRef.getName());
-    return data;
-  }
-
-  private SelectorSqlBuilder transformOperator(final JexlNode node,
-                                               final String operator,
-                                               final SelectorSqlBuilder builder)
-  {
-    JexlNode leftChild = node.jjtGetChild(LEFT);
-    JexlNode rightChild = node.jjtGetChild(RIGHT);
-    leftChild.jjtAccept(this, builder);
-    builder.appendOperator(operator);
-    rightChild.jjtAccept(this, builder);
-    return builder;
-  }
-
-  private SelectorSqlBuilder transformStartsWithOperator(final JexlNode node,
-                                                         final JexlNode literal,
-                                                         final SelectorSqlBuilder builder)
-  {
-    if (!(literal instanceof ASTStringLiteral)) {
-      throw new JexlException(node, "Expected string literal");
-    }
-    node.jjtAccept(this, builder);
-    builder.appendOperator("like");
-    builder.appendLiteral(((ASTStringLiteral) literal).getLiteral() + '%');
-    return builder;
-  }
-
-  private SelectorSqlBuilder transformNotEqualsOperator(final JexlNode node,
-                                                        final JexlNode literal,
-                                                        final SelectorSqlBuilder builder)
-  {
-    if (!(literal instanceof ASTStringLiteral)) {
-      throw new JexlException(node, "Expected string literal");
-    }
-    builder.appendExpression(() -> {
-      node.jjtAccept(this, builder);
-      builder.appendOperator("is null or");
-      node.jjtAccept(this, builder);
-      builder.appendOperator("<>");
-      literal.jjtAccept(this, builder);
-    });
-    return builder;
-  }
+  void transformCselToSql(final ASTJexlScript script, final SelectorSqlBuilder builder);
 }

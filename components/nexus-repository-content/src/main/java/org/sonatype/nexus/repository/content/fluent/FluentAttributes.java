@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.content.fluent;
 
+import javax.annotation.Nullable;
+
 import static org.sonatype.nexus.repository.content.fluent.AttributeChange.REMOVE;
 import static org.sonatype.nexus.repository.content.fluent.AttributeChange.SET;
 
@@ -25,7 +27,7 @@ public interface FluentAttributes<A extends FluentAttributes<A>>
   /**
    * Sets the given attribute, overwriting any existing value.
    */
-  default A attributes(String key, Object value) {
+  default A withAttribute(String key, Object value) {
     return attributes(SET, key, value);
   }
 
@@ -33,11 +35,11 @@ public interface FluentAttributes<A extends FluentAttributes<A>>
    * Removes the given attribute from the current attributes.
    */
   default A withoutAttribute(String key) {
-    return attributes(REMOVE, key);
+    return attributes(REMOVE, key, null);
   }
 
   /**
    * Applies the given change to the current attributes.
    */
-  A attributes(AttributeChange change, String key, Object... value);
+  A attributes(AttributeChange change, String key, @Nullable Object value);
 }

@@ -19,6 +19,11 @@
   background-color: $white;
   border: solid 1px $light-gray;
   padding: 12px;
+  margin-bottom: 1em;
+}
+
+.nxrm-content-body > .nxrm-settings-section:last-child {
+  margin-bottom: 0;
 }
 
 .nxrm-settings-section-loading-mask {
@@ -51,7 +56,7 @@
   display: flex;
   margin-top: 10px;
 
-  & > .nxrm-button {
+  & > .nx-btn {
     margin-right: 10px;
   }
 }

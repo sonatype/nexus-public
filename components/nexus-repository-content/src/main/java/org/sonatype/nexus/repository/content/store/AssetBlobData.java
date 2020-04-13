@@ -92,7 +92,7 @@ public class AssetBlobData
   /**
    * Sets the reference to the blob.
    */
-  void setBlobRef(final BlobRef blobRef) {
+  public void setBlobRef(final BlobRef blobRef) {
     this.blobRef = checkNotNull(blobRef);
   }
 

@@ -72,6 +72,10 @@ export default function registerFeature(feature) {
         console.debug("editionCheck="+isVisible, visibility.editions);
       }
 
+      if (isVisible && visibility.requiresUser) {
+        isVisible = NX.Security.hasUser();
+      }
+
       return isVisible;
     }
   }, reactViewController);

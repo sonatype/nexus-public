@@ -48,7 +48,7 @@
     SELECT * FROM ${format}_content_repository ORDER BY repository_id;
   </select>
 
-  <insert id="createContentRepository" useGeneratedKeys="true" keyProperty="repositoryId">
+  <insert id="createContentRepository" useGeneratedKeys="true" keyProperty="repositoryId" parameterType="ContentRepositoryData">
     INSERT INTO ${format}_content_repository (config_repository_id, attributes) VALUES (#{configRepositoryId}, #{attributes});
   </insert>
 
@@ -56,7 +56,7 @@
     SELECT * FROM ${format}_content_repository WHERE config_repository_id = #{configRepositoryId};
   </select>
 
-  <update id="updateContentRepositoryAttributes">
+  <update id="updateContentRepositoryAttributes" parameterType="ContentRepositoryData">
     UPDATE ${format}_content_repository SET attributes = #{attributes}, last_updated = CURRENT_TIMESTAMP
         WHERE <include refid="repositoryMatch"/> AND attributes != #{attributes};
   </update>
