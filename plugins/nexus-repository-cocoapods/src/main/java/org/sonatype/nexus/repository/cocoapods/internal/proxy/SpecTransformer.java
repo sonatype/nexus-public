@@ -21,7 +21,6 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.apache.commons.lang.CharUtils;
 import org.sonatype.nexus.repository.cocoapods.internal.pod.PodPathProvider;
 import org.sonatype.nexus.repository.cocoapods.internal.pod.git.GitRepoUriParser;
 
