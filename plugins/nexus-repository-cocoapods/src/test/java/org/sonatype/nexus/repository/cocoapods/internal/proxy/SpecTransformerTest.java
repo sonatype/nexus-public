@@ -162,4 +162,21 @@ public class SpecTransformerTest
 
     new SpecTransformer(podPathProvider).toProxiedSpec(spec, repoUri);
   }
+
+
+  @Test
+  public void gitHubToProxiedSpecVersionIncludeNonPrintableCharactersTest() throws Exception {
+    String spec = "{\n" +
+      "  \"name\": \"\\tRealm\\n\",\n" +
+      "  \"version\": \"\\t0.92\\r.3\\n" + '\u00a9' + '\u007f' + "\",\n" +
+      "  \"source\": {\n" +
+      "    \"git\": \"https://github.com/realm/realm-cocoa.git\",\n" +
+      "    \"tag\": \"v0.92.3\"\n" +
+      "  }\n" +
+      "}";
+
+    URI repoUri = URI.create("http://repouri/");
+
+    new SpecTransformer(podPathProvider).toProxiedSpec(spec, repoUri);
+  }
 }
