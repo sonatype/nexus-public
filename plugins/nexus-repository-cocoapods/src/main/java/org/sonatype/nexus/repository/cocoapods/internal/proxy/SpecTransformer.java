@@ -82,8 +82,8 @@ public class SpecTransformer
       throw new InvalidSpecFileException("Spec file without Source");
     }
 
-    final String name = removeNonPrintableCharacters(jsonSpec.get(POD_NAME_FIELD).asText());
-    final String version = removeNonPrintableCharacters(jsonSpec.get(POD_VERSION_FIELD).asText());
+    final String name = jsonSpec.get(POD_NAME_FIELD).asText();
+    final String version = jsonSpec.get(POD_VERSION_FIELD).asText().trim();
 
     URI sourceUri = buidProxiedUri(jsonSpec.get(SOURCE_NODE_NAME), name, version, repoUri);
 
@@ -92,13 +92,6 @@ public class SpecTransformer
 
     jsonSpec.set(SOURCE_NODE_NAME, sourceNode);
     return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonSpec);
-  }
-
-  private String removeNonPrintableCharacters(String text) {
-
-    return text.chars().filter(ch->CharUtils.isAsciiPrintable((char) ch))
-      .mapToObj(ch-> (char) ch)
-      .collect(StringBuilder::new,StringBuilder::append,StringBuilder::append).toString();
   }
 
   private URI buidProxiedUri(final JsonNode sourceNode, String name, String version, final URI repoUri)

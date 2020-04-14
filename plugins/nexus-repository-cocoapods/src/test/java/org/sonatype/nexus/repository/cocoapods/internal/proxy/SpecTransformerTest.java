@@ -167,8 +167,8 @@ public class SpecTransformerTest
   @Test
   public void gitHubToProxiedSpecVersionIncludeNonPrintableCharactersTest() throws Exception {
     String spec = "{\n" +
-      "  \"name\": \"\\tRealm\\n\",\n" +
-      "  \"version\": \"\\t0.92\\r.3\\n" + '\u00a9' + '\u007f' + "\",\n" +
+      "  \"name\": \"Realm\",\n" +
+      "  \"version\": \"0.92.3\\n\",\n" +
       "  \"source\": {\n" +
       "    \"git\": \"https://github.com/realm/realm-cocoa.git\",\n" +
       "    \"tag\": \"v0.92.3\"\n" +
@@ -178,7 +178,6 @@ public class SpecTransformerTest
     URI repoUri = URI.create("http://repouri/");
 
     String res = new SpecTransformer(podPathProvider).toProxiedSpec(spec, repoUri);
-
     assertThat(res.contains("/Realm/0.92.3/"), is(true));
   }
 }
