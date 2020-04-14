@@ -177,6 +177,8 @@ public class SpecTransformerTest
 
     URI repoUri = URI.create("http://repouri/");
 
-    new SpecTransformer(podPathProvider).toProxiedSpec(spec, repoUri);
+    String res = new SpecTransformer(podPathProvider).toProxiedSpec(spec, repoUri);
+
+    assertThat(res.contains("/Realm/0.92.3/"), is(true));
   }
 }
