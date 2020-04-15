@@ -25,7 +25,7 @@ import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenHostedFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
-import org.sonatype.nexus.repository.maven.internal.MavenFacetUtils;
+import org.sonatype.nexus.repository.maven.internal.orient.MavenFacetUtils;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
@@ -33,7 +33,7 @@ import org.sonatype.nexus.repository.view.Response;
 
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
-import static org.sonatype.nexus.repository.maven.internal.MavenFacetUtils.getHashAlgorithmFromContent;
+import static org.sonatype.nexus.repository.maven.internal.orient.MavenFacetUtils.getHashAlgorithmFromContent;
 
 /**
  * Maven hosted archetype catalog handler.

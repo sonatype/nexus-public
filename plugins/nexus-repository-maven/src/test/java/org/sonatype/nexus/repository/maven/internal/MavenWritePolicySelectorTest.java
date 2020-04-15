@@ -16,6 +16,7 @@ import java.util.HashMap;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.repository.maven.internal.orient.MavenWritePolicySelector;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.WritePolicy;
 

@@ -10,14 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.maven.internal.hosted;
+@FeatureFlag(name = "nexus.orient.store.content")
+package org.sonatype.nexus.repository.maven.internal.orient;
 
-import java.io.IOException;
-
-import org.sonatype.nexus.repository.maven.MavenIndexFacet;
-
-public interface MavenHostedIndexFacet
-    extends MavenIndexFacet
-{
-  void publishIndex() throws IOException;
-}
+import org.sonatype.nexus.common.app.FeatureFlag;
