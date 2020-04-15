@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -29,6 +30,7 @@ import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.FacetSupport;
+import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.maven.LayoutPolicy;
@@ -298,7 +300,13 @@ public class MavenFacetImpl
     try (TempBlob tempBlob = storageFacet.createTempBlob(payload, HashType.ALGORITHMS)) {
       if (path.getFileName().equals(METADATA_FILENAME) && mavenMetadataValidationEnabled) {
         log.debug("Validating maven-metadata.xml before storing");
-        metadataValidator.validate(path.getPath(), tempBlob.get());
+        try {
+          metadataValidator.validate(path.getPath(), tempBlob.get());
+        }
+        catch (InvalidContentException e) {
+          log.warn(e.toString());
+          return Optional.ofNullable(get(path)).orElseThrow(() -> e);
+        }
       }
       return doPut(path, payload, tempBlob);
     }
