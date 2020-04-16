@@ -54,20 +54,24 @@ public class QuartzSchedulerProvider
 
   private final int threadPoolSize;
 
+  private final int threadPriority;
+
   private volatile Scheduler scheduler;
 
   @Inject
   public QuartzSchedulerProvider(final NodeAccess nodeAccess,
                                  final Provider<JobStore> jobStore,
                                  final JobFactory jobFactory,
-                                 @Named("${nexus.quartz.poolSize:-20}") final int threadPoolSize)
+                                 @Named("${nexus.quartz.poolSize:-20}") final int threadPoolSize,
+                                 @Named("${nexus.quartz.taskThreadPriority:-5}") final int threadPriority)
   {
     this.nodeAccess = checkNotNull(nodeAccess);
     this.jobStore = checkNotNull(jobStore);
     this.jobFactory = checkNotNull(jobFactory);
     checkArgument(threadPoolSize > 0, "Invalid thread-pool size: %s", threadPoolSize);
     this.threadPoolSize = threadPoolSize;
-    log.info("Thread-pool size: {}", threadPoolSize);
+    this.threadPriority = threadPriority;
+    log.info("Thread-pool size: {}, Thread-pool priority: {}", threadPoolSize, threadPriority);
   }
 
   @Override
@@ -109,7 +113,7 @@ public class QuartzSchedulerProvider
       DirectSchedulerFactory.getInstance().createScheduler(
           SCHEDULER_NAME,
           nodeAccess.getId(), // instance-id
-          new QuartzThreadPool(threadPoolSize),
+          new QuartzThreadPool(threadPoolSize, threadPriority),
           threadExecutor,
           jobStore.get(),
           null, // scheduler plugin-map

@@ -110,7 +110,7 @@ class QuartzSchedulerSPITest
     def provider = mock(Provider)
     jobStore = mock(JobStore)
     when(provider.get()).thenReturn(jobStore)
-    scheduler = new QuartzSchedulerProvider(nodeAccess, provider, mock(JobFactory), 1);
+    scheduler = new QuartzSchedulerProvider(nodeAccess, provider, mock(JobFactory), 1, 5);
     eventManager = new SimpleEventManager()
 
     def lastShutdownTimeService = mock(LastShutdownTimeService)

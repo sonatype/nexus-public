@@ -57,8 +57,10 @@ public class QuartzThreadPool
 
   private String instanceName;
 
-  public QuartzThreadPool(final int poolSize) {
+  public QuartzThreadPool(final int poolSize, final int threadPriority) {
     checkArgument(poolSize > 0, "Pool size must be greater than zero");
+    checkArgument(threadPriority >= Thread.MIN_PRIORITY && threadPriority <= Thread.MAX_PRIORITY, String
+        .format("Thread priority value must be an int between %s and %s", Thread.MIN_PRIORITY, Thread.MAX_PRIORITY));
 
     this.threadPoolExecutor = new ThreadPoolExecutor(
         poolSize, // core-size
@@ -66,7 +68,7 @@ public class QuartzThreadPool
         0L, // keep-alive
         TimeUnit.MILLISECONDS,
         new SynchronousQueue<>(), // no queuing
-        new NexusThreadFactory("quartz", "nx-tasks"),
+        new NexusThreadFactory("quartz", "nx-tasks", threadPriority),
         new AbortPolicy());
 
     // wrapper for Shiro integration
