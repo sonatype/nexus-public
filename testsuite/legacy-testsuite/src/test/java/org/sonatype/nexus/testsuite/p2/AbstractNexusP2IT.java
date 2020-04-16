@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.Map;
 
 import org.sonatype.nexus.integrationtests.AbstractNexusIntegrationTest;
+import org.sonatype.nexus.integrationtests.MavenVerifierHelper;
 import org.sonatype.nexus.integrationtests.TestContainer;
 
 import org.apache.commons.io.FileUtils;
@@ -65,7 +66,7 @@ public abstract class AbstractNexusP2IT
 
       final File basedir = ResourceExtractor.extractResourcePath(getClass(), "/run-p2", testDir, false);
 
-      final Verifier verifier = new Verifier(basedir.getAbsolutePath());
+      final Verifier verifier = MavenVerifierHelper.newDefaultVerifier(basedir);
 
       verifier.setLocalRepo(new File(TestContainer.getBasedir(), "target/maven/fake-repo").getAbsolutePath());
 

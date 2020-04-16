@@ -149,20 +149,8 @@ public class LdapUserAndGroupConfigTestPlexusResource
     connInfo.setProtocol(dto.getProtocol());
     connInfo.setSearchBase(dto.getSearchBase());
     connInfo.setSystemUsername(dto.getSystemUsername());
+    connInfo.setSystemPassword(dto.getSystemPassword());
     connInfo.setRealm(dto.getRealm());
-
-    // TODO: this is duplicated until the UI can send both objects in
-    // check if the request was sent with a password other then the FAKE one
-    // if we get the fake one we need to grab the real password from the configuration.
-    // if its something different we can update it.
-    if (FAKE_PASSWORD.equals(dto.getSystemPassword())) {
-      if (this.getConfiguration().readConnectionInfo() != null) {
-        connInfo.setSystemPassword(this.getConfiguration().readConnectionInfo().getSystemPassword());
-      }
-    }
-    else {
-      connInfo.setSystemPassword(dto.getSystemPassword());
-    }
 
     return connInfo;
   }

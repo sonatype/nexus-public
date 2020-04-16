@@ -183,7 +183,7 @@ public class NexusScraperTest
       + "</repository-metadata>";
 
   final static String PROXY_META_REPOSITORY_METADATA_XML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-      + "<repository-metadata>\n" + "  <version>1.0.0</version>\n" + "  <url>http://repo1.maven.org/maven2/</url>\n"
+      + "<repository-metadata>\n" + "  <version>1.0.0</version>\n" + "  <url>https://repo1.maven.org/maven2/</url>\n"
       + "  <id>central</id>\n" + "  <name>Central</name>\n" + "  <layout>maven2</layout>\n"
       + "  <policy>release</policy>\n"
       + "  <localUrl>http://localhost:${port}/nexus/content/repositories/central</localUrl>\n"

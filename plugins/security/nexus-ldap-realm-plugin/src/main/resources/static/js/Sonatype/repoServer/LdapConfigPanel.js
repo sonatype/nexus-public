@@ -587,27 +587,37 @@ define('Sonatype/repoServer/LdapConfigPanel', function() {
 
   Ext.extend(Sonatype.repoServer.LdapConfigPanel, Ext.Panel, {
     authSchemeSelectHandler : function( combo, record, index ){
+      function disableField(field) {
+        field.allowBlank = true;
+        field.clearInvalid();
+        field.disable();
+      }
+      function enableField(field, required) {
+        if (required) {
+          field.allowBlank = false;
+        }
+        field.enable();
+      }
+
       if ( combo.getValue() == 'simple' ){
-        this.find('name', 'realm' )[0].disable();
-        this.find('name', 'systemUsername' )[0].enable();
-        this.find('name', 'systemPassword' )[0].enable();
+        disableField(this.find('name', 'realm' )[0]);
+        enableField(this.find('name', 'systemUsername' )[0], true);
+        enableField(this.find('name', 'systemPassword' )[0], true);
       }
       else if ( combo.getValue() == 'none' ){
-        this.find('name', 'realm' )[0].disable();
-        this.find('name', 'systemUsername' )[0].disable();
-        this.find('name', 'systemUsername' )[0].setValue( '' );
-        this.find('name', 'systemPassword' )[0].disable();
-        this.find('name', 'systemPassword' )[0].setValue( '' );
+        disableField(this.find('name', 'realm' )[0]);
+        disableField(this.find('name', 'systemUsername' )[0]);
+        disableField(this.find('name', 'systemPassword' )[0]);
       }
       else if ( combo.getValue() == 'DIGEST-MD5' ){
-        this.find('name', 'realm' )[0].enable();
-        this.find('name', 'systemUsername' )[0].enable();
-        this.find('name', 'systemPassword' )[0].enable();
+        enableField(this.find('name', 'realm' )[0]);
+        enableField(this.find('name', 'systemUsername' )[0], true);
+        enableField(this.find('name', 'systemPassword' )[0], true);
       }
       else if ( combo.getValue() == 'CRAM-MD5' ){
-        this.find('name', 'realm' )[0].enable();
-        this.find('name', 'systemUsername' )[0].enable();
-        this.find('name', 'systemPassword' )[0].enable();
+        enableField(this.find('name', 'realm' )[0]);
+        enableField(this.find('name', 'systemUsername' )[0], true);
+        enableField(this.find('name', 'systemPassword' )[0], true);
       }
     },
 
@@ -777,12 +787,16 @@ define('Sonatype/repoServer/LdapConfigPanel', function() {
     },
 
     afterLayoutHandler : function(){
+      var me = this;
 
       // invoke form data load
       this.formPanel.getForm().doAction( 'sonatypeLoad', {
         url: this.servicePath.connectionInfo,
         method: 'GET',
-        fpanel: this.formPanel
+        fpanel: this.formPanel,
+        success: function() {
+          me.authSchemeSelectHandler(me.find('name', 'authScheme' )[0]);
+        }
       } );
       this.formPanel.getForm().doAction( 'sonatypeLoad', {
         url: this.servicePath.userAndGroupConfig,
