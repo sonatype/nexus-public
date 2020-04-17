@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.fluent;
 
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
@@ -25,6 +26,13 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 public interface FluentAsset
     extends Asset, FluentAttributes<FluentAsset>
 {
+  /**
+   * The repository containing this asset.
+   *
+   * @since 3.next
+   */
+  Repository repository();
+
   /**
    * Converts a temporary blob into a permanent blob and attaches it to this asset.
    */

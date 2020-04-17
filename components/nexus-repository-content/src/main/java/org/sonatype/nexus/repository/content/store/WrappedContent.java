@@ -10,40 +10,16 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.fluent;
+package org.sonatype.nexus.repository.content.store;
 
-import java.util.Collection;
-
-import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.RepositoryContent;
 
 /**
- * Fluent API for a particular component.
+ * {@link RepositoryContent} wrapper where the 'real' instance is wrapped behind an interface.
  *
- * @since 3.21
+ * @since 3.next
  */
-public interface FluentComponent
-    extends Component, FluentAttributes<FluentComponent>
+public interface WrappedContent<T extends RepositoryContent>
 {
-  /**
-   * The repository containing this component.
-   *
-   * @since 3.next
-   */
-  Repository repository();
-
-  /**
-   * Start building an asset for this component, beginning with its path.
-   */
-  FluentAssetBuilder asset(String path);
-
-  /**
-   * List the assets under this component; returns an immutable collection.
-   */
-  Collection<FluentAsset> assets();
-
-  /**
-   * Deletes this component.
-   */
-  boolean delete();
+  T unwrap();
 }

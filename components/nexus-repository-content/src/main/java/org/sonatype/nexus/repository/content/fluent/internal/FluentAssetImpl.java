@@ -20,6 +20,7 @@ import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.MissingBlobException;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
@@ -28,6 +29,7 @@ import org.sonatype.nexus.repository.content.fluent.AttributeChange;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.store.AssetBlobData;
 import org.sonatype.nexus.repository.content.store.AssetData;
+import org.sonatype.nexus.repository.content.store.WrappedContent;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.BlobPayload;
@@ -50,7 +52,7 @@ import static org.sonatype.nexus.repository.storage.Bucket.REPO_NAME_HEADER;
  * @since 3.next
  */
 public class FluentAssetImpl
-    implements FluentAsset
+    implements FluentAsset, WrappedContent<Asset>
 {
   private final ContentFacetSupport facet;
 
@@ -59,6 +61,11 @@ public class FluentAssetImpl
   public FluentAssetImpl(final ContentFacetSupport facet, final Asset asset)  {
     this.facet = checkNotNull(facet);
     this.asset = checkNotNull(asset);
+  }
+
+  @Override
+  public Repository repository() {
+    return facet.repository();
   }
 
   @Override
@@ -138,6 +145,11 @@ public class FluentAssetImpl
   @Override
   public boolean delete() {
     return facet.assetStore().deleteAsset(asset);
+  }
+
+  @Override
+  public Asset unwrap() {
+    return asset;
   }
 
   private AssetBlobData createAssetBlob(final BlobRef blobRef, final Blob blob) {
