@@ -26,6 +26,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.repository.upload.UploadResponse;
+import org.sonatype.nexus.repository.view.Content;
 
 /**
  * Placeholder {@link UploadManager} when CMA is not deployed.
@@ -54,7 +55,7 @@ public class PlaceholderUploadManager
   }
 
   @Override
-  public void handle(final Repository repository, final File content, final String path)
+  public Content handle(final Repository repository, final File content, final String path)
       throws IOException
   {
     throw new UnsupportedOperationException();

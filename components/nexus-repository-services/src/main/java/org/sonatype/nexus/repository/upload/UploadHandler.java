@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
+import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.selector.VariableSource;
@@ -100,7 +101,7 @@ public interface UploadHandler
    * @param path the path of the content relative to the base import directory
    * @throws IOException
    */
-  default void handle(
+  default Content handle(
       final Repository repository,
       final File content,
       final String path)

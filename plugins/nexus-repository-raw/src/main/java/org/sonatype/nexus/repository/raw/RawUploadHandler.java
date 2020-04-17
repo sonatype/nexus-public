@@ -122,7 +122,7 @@ public class RawUploadHandler
   }
 
   @Override
-  public void handle(
+  public Content handle(
       final Repository repository,
       final File content,
       final String path)
@@ -133,7 +133,7 @@ public class RawUploadHandler
     ensurePermitted(repository.getName(), RawFormat.NAME, path, emptyMap());
 
     Path contentPath = content.toPath();
-    facet.put(path, new StreamPayload(() -> new FileInputStream(content), Files.size(contentPath),
+    return facet.put(path, new StreamPayload(() -> new FileInputStream(content), Files.size(contentPath),
         Files.probeContentType(contentPath)));
   }
 
