@@ -12,43 +12,41 @@
  */
 package org.sonatype.nexus.repository.content.fluent.internal;
 
+import java.util.Collection;
+
 import org.sonatype.nexus.common.entity.Continuation;
-import org.sonatype.nexus.repository.content.Asset;
-import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
-import org.sonatype.nexus.repository.content.fluent.FluentAsset;
-import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
-import org.sonatype.nexus.repository.content.fluent.FluentAssets;
+
+import com.google.common.base.Function;
+import com.google.common.collect.ForwardingCollection;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Collections2.transform;
 
 /**
- * {@link FluentAssets} implementation.
+ * Fluent {@link Continuation}s.
  *
  * @since 3.next
  */
-public class FluentAssetsImpl
-    implements FluentAssets
+public class FluentContinuation<E, T>
+    extends ForwardingCollection<E>
+    implements Continuation<E>
 {
-  private final ContentFacetSupport facet;
+  private final Continuation<T> continuation;
 
-  public FluentAssetsImpl(final ContentFacetSupport facet) {
-    this.facet = checkNotNull(facet);
+  private final Collection<E> fluentCollection;
+
+  public FluentContinuation(final Continuation<T> continuation, final Function<T, E> toFluent) {
+    this.continuation = checkNotNull(continuation);
+    this.fluentCollection = transform(continuation, toFluent);
   }
 
   @Override
-  public FluentAssetBuilder path(final String path) {
-    return new FluentAssetBuilderImpl(facet, path);
+  protected Collection<E> delegate() {
+    return fluentCollection;
   }
 
   @Override
-  public FluentAsset with(final Asset asset) {
-    return new FluentAssetImpl(facet, asset);
-  }
-
-  @Override
-  public Continuation<FluentAsset> browse(final int limit, final String continuationToken) {
-    return new FluentContinuation<>(
-        facet.assetStore().browseAssets(facet.contentRepositoryId(), limit, continuationToken),
-        this::with);
+  public String nextContinuationToken() {
+    return continuation.nextContinuationToken();
   }
 }

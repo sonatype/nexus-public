@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.content.fluent.internal;
 import java.util.Collection;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
-import org.sonatype.nexus.datastore.mybatis.ContinuationArrayList;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.AttributeChange;
@@ -25,6 +24,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Collections2.transform;
 
 /**
  * {@link FluentComponent} implementation.
@@ -82,8 +82,7 @@ public class FluentComponentImpl
 
   @Override
   public Collection<FluentAsset> assets() {
-    return new ContinuationArrayList(
-        /* facet.assetStore().browseComponentAssets(component) */);
+    return transform(facet.assetStore().browseComponentAssets(component), asset -> new FluentAssetImpl(facet, asset));
   }
 
   @Override
