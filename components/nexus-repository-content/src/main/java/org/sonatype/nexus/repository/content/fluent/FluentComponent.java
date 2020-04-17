@@ -25,6 +25,11 @@ public interface FluentComponent
     extends Component, FluentAttributes<FluentComponent>
 {
   /**
+   * Start building an asset for this component, beginning with its path.
+   */
+  FluentAssetBuilder asset(String path);
+
+  /**
    * List the assets under this component; returns an immutable collection.
    */
   Collection<FluentAsset> assets();

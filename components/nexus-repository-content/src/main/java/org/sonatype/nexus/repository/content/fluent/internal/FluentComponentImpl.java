@@ -19,6 +19,7 @@ import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.AttributeChange;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 
 import org.joda.time.DateTime;
@@ -78,6 +79,11 @@ public class FluentComponentImpl
     FluentAttributesHelper.apply(component, change, key, value);
     facet.componentStore().updateComponentAttributes(component);
     return this;
+  }
+
+  @Override
+  public FluentAssetBuilder asset(final String path) {
+    return new FluentAssetBuilderImpl(facet, path).component(this);
   }
 
   @Override
