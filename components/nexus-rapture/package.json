@@ -1,5 +1,6 @@
 {
   "name": "nexus-rapture",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "build": "webpack --config webpack.prod.js && webpack --config webpack.dev.js",
