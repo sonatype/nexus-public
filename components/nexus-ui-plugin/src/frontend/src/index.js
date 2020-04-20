@@ -11,6 +11,8 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
+import './styles/_nx-overrides.scss';
+
 export { default as UIStrings } from './constants/UIStrings';
 
 export { default as ExtJS } from './interface/ExtJS';
