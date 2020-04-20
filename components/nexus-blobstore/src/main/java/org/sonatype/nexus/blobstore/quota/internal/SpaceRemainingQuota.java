@@ -23,6 +23,7 @@ import org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.text.UnitFormatter.formatStorage;
 import static java.lang.String.format;
 
 /**
@@ -57,8 +58,8 @@ public class SpaceRemainingQuota
     String name = blobStore.getBlobStoreConfiguration().getName();
     String msg = format("Blob store %s is limited to having %s available space, and has %s space remaining",
         name,
-        convertBytesToSI(limit),
-        convertBytesToSI(availableSpace));
+        formatStorage(limit),
+        formatStorage(availableSpace));
 
     return new BlobStoreQuotaResult(!isUnlimited && availableSpace < limit, name, msg);
   }
