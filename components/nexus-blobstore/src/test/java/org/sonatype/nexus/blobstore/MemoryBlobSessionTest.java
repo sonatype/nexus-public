@@ -33,6 +33,7 @@ import org.mockito.invocation.InvocationOnMock;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -186,12 +187,20 @@ public class MemoryBlobSessionTest
       session.delete(EXISTING_BLOB_ID);
       session.getTransaction().commit();
     }
+    catch (Throwable t) {
+      //explictly having an assertion pleases sonar
+      fail("transaction commit not reached");
+    }
 
     // now make even accessing the store config fail badly
     when(blobStore.getBlobStoreConfiguration()).thenThrow(new Error("Simulated config error"));
     try (BlobSession<?> session = new MemoryBlobSession(blobStore)) {
       session.delete(EXISTING_BLOB_ID);
       session.getTransaction().commit();
+    }
+    catch (Throwable t) {
+      //explictly having an assertion pleases sonar
+      fail("transaction commit not reached");
     }
   }
 
@@ -203,12 +212,20 @@ public class MemoryBlobSessionTest
       session.create(blobData, headers);
       session.getTransaction().rollback();
     }
+    catch (Throwable t) {
+      //explictly having an assertion pleases sonar
+      fail("rollback may have failed");
+    }
 
     // now make even accessing the store config fail badly
     when(blobStore.getBlobStoreConfiguration()).thenThrow(new Error("Simulated config error"));
     try (BlobSession<?> session = new MemoryBlobSession(blobStore)) {
       session.create(blobData, headers);
       session.getTransaction().rollback();
+    }
+    catch (Throwable t) {
+      //explictly having an assertion pleases sonar
+      fail("rollback may have failed");
     }
   }
 

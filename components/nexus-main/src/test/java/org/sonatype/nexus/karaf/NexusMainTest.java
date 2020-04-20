@@ -40,11 +40,13 @@ public class NexusMainTest
   @Rule
   public final SystemErrRule systemErrRule = new SystemErrRule().enableLog();
 
+  @SuppressWarnings("java:S2699") //sonar wants assertions, but none seem worthwhile here
   @Test
   public void doNotExitWhenGreaterVersion() throws Exception {
     requireMinimumJavaVersion();
   }
 
+  @SuppressWarnings("java:S2699") //sonar wants assertions, but none seem worthwhile here
   @Test
   public void doNotExitWhenExactVersion() throws Exception {
     setVersion(NexusMain.MINIMUM_JAVA_VERSION.toString());
@@ -59,11 +61,13 @@ public class NexusMainTest
     requireMinimumJavaVersion();
   }
 
+  @SuppressWarnings("java:S2699") //sonar wants assertions, but none seem worthwhile here
   @Test
   public void doNotExitWhenWrongVersionButCheckDisabled() throws Exception {
     runDisabledVmCheckWithVersion(LOWER);
   }
 
+  @SuppressWarnings("java:S2699") //sonar wants assertions, but none seem worthwhile here
   @Test
   public void doNotExitWhenVmCheckDisabledAndInvalidVersion() throws Exception {
     runDisabledVmCheckWithVersion(INVALID);

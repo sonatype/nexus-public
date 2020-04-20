@@ -142,6 +142,7 @@ public class OrientBrowseNodeStoreImplLoadTest
     underTest.stop();
   }
 
+  @SuppressWarnings("java:S2699") // sonar wants assertions, but in this case seems best to let an exception bubble up
   @Test
   public void exercisePathContentionBetweenAssets() throws Exception {
     ConcurrentRunner runner = new ConcurrentRunner(1, 30);
@@ -163,6 +164,7 @@ public class OrientBrowseNodeStoreImplLoadTest
     runner.go();
   }
 
+  @SuppressWarnings("java:S2699") // sonar wants assertions, but in this case seems best to let an exception bubble up
   @Test
   public void exercisePathContentionBetweenAssetAndComponent() throws Exception {
     ConcurrentRunner runner = new ConcurrentRunner(1, 30);

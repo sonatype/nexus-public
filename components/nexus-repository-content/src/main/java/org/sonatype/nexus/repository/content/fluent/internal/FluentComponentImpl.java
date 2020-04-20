@@ -15,16 +15,19 @@ package org.sonatype.nexus.repository.content.fluent.internal;
 import java.util.Collection;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
-import org.sonatype.nexus.datastore.mybatis.ContinuationArrayList;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.AttributeChange;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.store.WrappedContent;
 
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Collections2.transform;
 
 /**
  * {@link FluentComponent} implementation.
@@ -32,7 +35,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.next
  */
 public class FluentComponentImpl
-    implements FluentComponent
+    implements FluentComponent, WrappedContent<Component>
 {
   private final ContentFacetSupport facet;
 
@@ -41,6 +44,11 @@ public class FluentComponentImpl
   public FluentComponentImpl(final ContentFacetSupport facet, final Component component) {
     this.facet = checkNotNull(facet);
     this.component = checkNotNull(component);
+  }
+
+  @Override
+  public Repository repository() {
+    return facet.repository();
   }
 
   @Override
@@ -81,13 +89,22 @@ public class FluentComponentImpl
   }
 
   @Override
+  public FluentAssetBuilder asset(final String path) {
+    return new FluentAssetBuilderImpl(facet, path).component(this);
+  }
+
+  @Override
   public Collection<FluentAsset> assets() {
-    return new ContinuationArrayList(
-        /* facet.assetStore().browseComponentAssets(component) */);
+    return transform(facet.assetStore().browseComponentAssets(component), asset -> new FluentAssetImpl(facet, asset));
   }
 
   @Override
   public boolean delete() {
     return facet.componentStore().deleteComponent(component);
+  }
+
+  @Override
+  public Component unwrap() {
+    return component;
   }
 }

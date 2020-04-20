@@ -37,11 +37,11 @@ public class InternalIds
   }
 
   public static int internalRepositoryId(final RepositoryContent content) {
-    return checkInternalId(((AbstractRepositoryContent) content).repositoryId);
+    return checkInternalId(((AbstractRepositoryContent) unwrap(content)).repositoryId);
   }
 
   public static int internalComponentId(final Component component) {
-    return checkInternalId(((ComponentData) component).componentId);
+    return checkInternalId(((ComponentData) unwrap(component)).componentId);
   }
 
   public static int internalAssetBlobId(final AssetBlob assetBlob) {
@@ -49,19 +49,23 @@ public class InternalIds
   }
 
   public static int internalAssetId(final Asset asset) {
-    return checkInternalId(((AssetData) asset).assetId);
+    return checkInternalId(((AssetData) unwrap(asset)).assetId);
   }
 
   public static OptionalInt internalComponentId(final Asset asset) {
-    return ofNullable(((AssetData) asset).componentId).map(OptionalInt::of).orElse(empty());
+    return ofNullable(((AssetData) unwrap(asset)).componentId).map(OptionalInt::of).orElse(empty());
   }
 
   public static OptionalInt internalAssetBlobId(final Asset asset) {
-    return ofNullable(((AssetData) asset).assetBlobId).map(OptionalInt::of).orElse(empty());
+    return ofNullable(((AssetData) unwrap(asset)).assetBlobId).map(OptionalInt::of).orElse(empty());
   }
 
   private static int checkInternalId(final Integer internalId) {
     checkState(internalId != null, "Entity does not have an internal id; is it detached?");
     return internalId;
+  }
+
+  private static RepositoryContent unwrap(final RepositoryContent content) {
+    return content instanceof WrappedContent<?> ? ((WrappedContent<?>) content).unwrap() : content;
   }
 }

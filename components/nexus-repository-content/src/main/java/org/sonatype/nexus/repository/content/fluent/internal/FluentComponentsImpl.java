@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.content.fluent.internal;
 import java.util.Collection;
 
 import org.sonatype.nexus.common.entity.Continuation;
-import org.sonatype.nexus.datastore.mybatis.ContinuationArrayList;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
@@ -50,8 +49,9 @@ public class FluentComponentsImpl
 
   @Override
   public Continuation<FluentComponent> browse(final int limit, final String continuationToken) {
-    return new ContinuationArrayList(
-        /* facet.componentStore().browseComponents(limit, limit, continuationToken) */);
+    return new FluentContinuation<>(
+        facet.componentStore().browseComponents(limit, limit, continuationToken),
+        this::with);
   }
 
   @Override

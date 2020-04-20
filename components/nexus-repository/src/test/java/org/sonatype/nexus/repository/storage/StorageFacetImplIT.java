@@ -539,10 +539,10 @@ public class StorageFacetImplIT
 
   @Test
   public void noDuplicateComponent() throws Exception {
-    createComponent(null, "name", null);
-    createComponent("group", "name", null);
-    createComponent(null, "name", "1");
-    createComponent("group", "name", "1");
+    assertThat(createComponent(null, "name", null), notNullValue());
+    assertThat(createComponent("group", "name", null), notNullValue());
+    assertThat(createComponent(null, "name", "1"), notNullValue());
+    assertThat(createComponent("group", "name", "1"), notNullValue());
   }
 
   @Test(expected = ORecordDuplicatedException.class)
@@ -602,8 +602,8 @@ public class StorageFacetImplIT
   @Test
   public void noDuplicateAsset() throws Exception {
     Component component = createComponent("group", "name", "1");
-    createAsset(component, "name");
-    createAsset(null, "name");
+    assertThat(createAsset(component, "name"), notNullValue());
+    assertThat(createAsset(null, "name"), notNullValue());
   }
 
   @Test(expected = ORecordDuplicatedException.class)
@@ -766,7 +766,7 @@ public class StorageFacetImplIT
       tx.saveComponent(component);
 
       // Correct use of attached entity ids prevent an exception being thrown by this line
-      tx.browseAssets(component);
+      assertThat(tx.browseAssets(component), notNullValue());
     }
   }
 

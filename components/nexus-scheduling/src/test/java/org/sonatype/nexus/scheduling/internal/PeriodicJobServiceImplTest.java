@@ -48,6 +48,7 @@ public class PeriodicJobServiceImplTest
     }
   }
 
+  @SuppressWarnings("java:S2699") // sonar doesn't detect awaitility assertions https://jira.sonarsource.com/browse/SONARJAVA-3334
   @Test
   public void numberIncrementingTask() throws Exception {
     service.startUsing();

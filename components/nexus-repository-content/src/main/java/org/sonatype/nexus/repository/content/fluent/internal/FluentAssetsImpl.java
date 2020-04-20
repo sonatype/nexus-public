@@ -13,7 +13,6 @@
 package org.sonatype.nexus.repository.content.fluent.internal;
 
 import org.sonatype.nexus.common.entity.Continuation;
-import org.sonatype.nexus.datastore.mybatis.ContinuationArrayList;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
@@ -48,7 +47,8 @@ public class FluentAssetsImpl
 
   @Override
   public Continuation<FluentAsset> browse(final int limit, final String continuationToken) {
-    return new ContinuationArrayList(
-        /* facet.assetStore().browseAssets(facet.contentRepositoryId(), limit, continuationToken) */);
+    return new FluentContinuation<>(
+        facet.assetStore().browseAssets(facet.contentRepositoryId(), limit, continuationToken),
+        this::with);
   }
 }

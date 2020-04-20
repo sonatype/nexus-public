@@ -36,6 +36,7 @@ import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 
@@ -126,7 +127,7 @@ public class MavenValidatingComponentUploadTest
     componentUpload.getAssetUploads().add(assetUpload);
 
     MavenValidatingComponentUpload validated = new MavenValidatingComponentUpload(uploadDefinition, componentUpload);
-    validated.getComponentUpload();
+    assertThat(validated.getComponentUpload(), notNullValue());
   }
 
 

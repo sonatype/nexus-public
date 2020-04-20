@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.orient.transaction;
 
+import javax.annotation.Priority;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -28,6 +29,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
  * @since 3.17
  */
 @Named("orient")
+@Priority(Integer.MAX_VALUE)
 @Singleton
 public class OrientScriptCleanupHandler
     extends ComponentSupport

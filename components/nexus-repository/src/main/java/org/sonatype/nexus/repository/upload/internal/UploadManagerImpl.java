@@ -37,6 +37,7 @@ import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadHandler;
 import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.repository.upload.UploadResponse;
+import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import org.apache.commons.fileupload.FileUploadException;
@@ -127,12 +128,12 @@ public class UploadManagerImpl
   }
 
   @Override
-  public void handle(
+  public Content handle(
       final Repository repository, final File content, final String path) throws IOException
   {
     UploadHandler uploadHandler = getUploadHandler(repository);
 
-    uploadHandler.handle(repository, content, path);
+    return uploadHandler.handle(repository, content, path);
   }
 
   private ComponentUpload create(final Repository repository, final HttpServletRequest request)

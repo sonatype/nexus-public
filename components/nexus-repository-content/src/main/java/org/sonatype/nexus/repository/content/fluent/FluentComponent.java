@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.content.fluent;
 
 import java.util.Collection;
 
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Component;
 
 /**
@@ -24,6 +25,18 @@ import org.sonatype.nexus.repository.content.Component;
 public interface FluentComponent
     extends Component, FluentAttributes<FluentComponent>
 {
+  /**
+   * The repository containing this component.
+   *
+   * @since 3.next
+   */
+  Repository repository();
+
+  /**
+   * Start building an asset for this component, beginning with its path.
+   */
+  FluentAssetBuilder asset(String path);
+
   /**
    * List the assets under this component; returns an immutable collection.
    */

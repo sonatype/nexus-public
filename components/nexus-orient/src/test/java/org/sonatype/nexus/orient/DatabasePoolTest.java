@@ -90,6 +90,7 @@ public class DatabasePoolTest
     }
   }
 
+  @SuppressWarnings("java:S2699") // sonar doesn't detect awaitility assertions https://jira.sonarsource.com/browse/SONARJAVA-3334
   @Test
   public void exceedingConnectionLimitBlocks() throws Exception {
     int numWorkers = 20;
@@ -117,6 +118,7 @@ public class DatabasePoolTest
     }
   }
 
+  @SuppressWarnings("java:S2699") // sonar doesn't detect awaitility assertions https://jira.sonarsource.com/browse/SONARJAVA-3334
   @Test
   public void exceedingPerCoreConnectionLimitBlocks() throws Exception {
     int numWorkers = NUM_CORES * 8; // set high to try and hit all (hashed) partitions

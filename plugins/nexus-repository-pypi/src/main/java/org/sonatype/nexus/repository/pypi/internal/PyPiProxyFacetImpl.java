@@ -128,6 +128,17 @@ public class PyPiProxyFacetImpl
   }
 
   @Override
+  @Nullable
+  protected Content fetch(final Context context, Content stale) throws IOException {
+    try {
+      return super.fetch(context, stale);
+    } catch (NonResolvablePackageException ex) {
+      log.error("Failed to resolve package {}", ex.getMessage());
+      return null;
+    }
+  }
+
+  @Override
   protected Content store(final Context context, final Content content) throws IOException {
     AssetKind assetKind = context.getAttributes().require(AssetKind.class);
     if (assetKind.equals(AssetKind.SEARCH)) {
@@ -197,7 +208,7 @@ public class PyPiProxyFacetImpl
       final String filename)
   {
     try {
-      cachePackageIndex(packageName, context);
+      tryCachingPackageIndex(packageName, context);
       return getExistingPackageLink(packageName, filename).orElse(null);
     }
     catch (IOException e) {
@@ -229,12 +240,12 @@ public class PyPiProxyFacetImpl
   /**
    * Attempt to cache the index for the given package.
    */
-  private void cachePackageIndex(final String packageName, final Context context) throws IOException {
+  private void tryCachingPackageIndex(final String packageName, final Context context) throws IOException {
     try {
       Request getRequest = new Request.Builder().action(GET).path('/'+indexPath(packageName)).build();
       Response response = getRepository().facet(ViewFacet.class).dispatch(getRequest, context);
-      if (response.getPayload() == null) {
-        throw new IOException("Could not retrieve package " + packageName);
+      if (!response.getStatus().isSuccessful()) {
+        log.debug("Could not retrieve package {}", packageName);
       }
     }
     catch (IOException e) {

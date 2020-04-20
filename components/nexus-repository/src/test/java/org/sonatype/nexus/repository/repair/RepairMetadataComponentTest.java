@@ -33,6 +33,7 @@ import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -106,7 +107,12 @@ public class RepairMetadataComponentTest
 
     when(repository.getFormat()).thenReturn(new Format("wrong") { });
 
-    underTest.repairRepository(repository);
+    try {
+      underTest.repairRepository(repository);
+    }
+    catch (Exception e) {
+      fail("repair should not have been attempted");
+    }
   }
 
   @Test
@@ -121,7 +127,12 @@ public class RepairMetadataComponentTest
 
     when(repository.getType()).thenReturn(new ProxyType());
 
-    underTest.repairRepository(repository);
+    try {
+      underTest.repairRepository(repository);
+    }
+    catch (Exception e) {
+      fail("repair should not have been attempted");
+    }
   }
 
   @Test(expected = UnsupportedOperationException.class)

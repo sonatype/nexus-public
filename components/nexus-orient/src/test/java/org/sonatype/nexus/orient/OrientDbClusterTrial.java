@@ -50,6 +50,7 @@ public class OrientDbClusterTrial
     }
   }
 
+  @SuppressWarnings("java:S2699") //sonar wants assertions, but this test is not run in CI
   @Test
   public void maxClusters() throws Exception {
     log(" * Create database");
@@ -113,6 +114,7 @@ public class OrientDbClusterTrial
     }
   }
 
+  @SuppressWarnings("java:S2699") //sonar wants assertions, but this test is not run in CI
   @Test
   public void clusterReUse() throws Exception {
     log(" * Create database");

@@ -62,11 +62,13 @@ public class RawHostedIT
     rawClient = rawClient(repos.createRawHosted(HOSTED_REPO));
   }
 
+  @SuppressWarnings("java:S2699") // sonar isn't detecting nested assertions
   @Test
   public void uploadAndDownload() throws Exception {
     uploadAndDownload(rawClient, TEST_CONTENT);
   }
 
+  @SuppressWarnings("java:S2699") // sonar isn't detecting nested assertions
   @Test
   public void redeploy() throws Exception {
     uploadAndDownload(rawClient, TEST_CONTENT);

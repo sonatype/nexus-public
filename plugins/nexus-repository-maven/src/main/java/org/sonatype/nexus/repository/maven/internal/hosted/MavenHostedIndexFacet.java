@@ -14,45 +14,10 @@ package org.sonatype.nexus.repository.maven.internal.hosted;
 
 import java.io.IOException;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-
 import org.sonatype.nexus.repository.maven.MavenIndexFacet;
-import org.sonatype.nexus.repository.maven.internal.MavenIndexFacetSupport;
-import org.sonatype.nexus.repository.maven.internal.MavenIndexPublisher;
-import org.sonatype.nexus.repository.maven.internal.filter.DuplicateDetectionStrategyProvider;
-import org.sonatype.nexus.repository.maven.internal.filter.DuplicateDetectionStrategy;
-import org.sonatype.nexus.repository.storage.StorageFacet;
-import org.sonatype.nexus.transaction.UnitOfWork;
 
-import org.apache.maven.index.reader.Record;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-
-/**
- * Hosted implementation of {@link MavenIndexFacet}.
- *
- * @since 3.0
- */
-@Named
-public class MavenHostedIndexFacet
-    extends MavenIndexFacetSupport
+public interface MavenHostedIndexFacet
+    extends MavenIndexFacet
 {
-  private final DuplicateDetectionStrategyProvider duplicateDetectionStrategyProvider;
-
-  @Inject
-  public MavenHostedIndexFacet(final DuplicateDetectionStrategyProvider duplicateDetectionStrategyProvider) {
-    this.duplicateDetectionStrategyProvider = checkNotNull(duplicateDetectionStrategyProvider);
-  }
-
-  @Override
-  public void publishIndex() throws IOException {
-    UnitOfWork.begin(getRepository().facet(StorageFacet.class).txSupplier());
-    try (DuplicateDetectionStrategy<Record> strategy = duplicateDetectionStrategyProvider.get()) {
-      MavenIndexPublisher.publishHostedIndex(getRepository(), strategy);
-    }
-    finally {
-      UnitOfWork.end();
-    }
-  }
+  void publishIndex() throws IOException;
 }

@@ -28,6 +28,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
+import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertThat;
+
 /**
  * Trials of using OrientDB export and import functions.
  */
@@ -70,7 +73,7 @@ public class ExportImportTrial
   @Test
   public void backupDatabase() throws Exception {
     try (ODatabaseDocumentTx db = createDatabase("test")) {
-      ODocument doc = createPerson(db);
+      assertThat(createPerson(db), notNullValue());
 
       // Backup makes ZIP files
       File file = File.createTempFile("export-", ".zip", util.getTmpDir());
@@ -94,7 +97,7 @@ public class ExportImportTrial
     File file;
 
     try (ODatabaseDocumentTx db = createDatabase("test")) {
-      createPerson(db);
+      assertThat(createPerson(db), notNullValue());
 
       file = File.createTempFile("export-", ".gz", util.getTmpDir());
       log("Exporting to: {}", file);

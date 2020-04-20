@@ -51,6 +51,7 @@ public class OrientDbEmbeddedTrial
   /**
    * Tests configuring the server w/o xml but configuring the JAXB objects directly.
    */
+  @SuppressWarnings("java:S2699") //sonar wants assertions, but this test is not run in CI
   @Test
   public void embeddedServerProgrammatic() throws Exception {
     File homeDir = util.createTempDir("orientdb-home").getCanonicalFile();

@@ -70,7 +70,12 @@ public class GolangSecurityFacetTest
   public void testEnsurePermitted_permitted() throws Exception {
     when(contentPermissionChecker.isPermitted(eq("GoSecurityFacetTest"), eq("go"), eq(READ), any()))
         .thenReturn(true);
-    golangSecurityFacet.ensurePermitted(request);
+    try {
+      golangSecurityFacet.ensurePermitted(request);
+    }
+    catch (AuthorizationException e) {
+      fail("expected permitted operation to succeed");
+    }
   }
 
   @Test

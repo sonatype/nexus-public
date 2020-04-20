@@ -20,6 +20,7 @@ import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.view.Content;
 
 /**
  * @since 3.7
@@ -60,5 +61,5 @@ public interface UploadManager
    * @param path the path of the content relative to the base import directory
    * @throws IOException
    */
-  void handle(Repository repository, File content, String path) throws IOException;
+  Content handle(Repository repository, File content, String path) throws IOException;
 }

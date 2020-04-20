@@ -40,6 +40,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -205,7 +206,12 @@ public class SecurityConfigurationManagerImplTest
     role.addRole("role1");
     role.addPrivilege("priv1");
 
-    manager.createRole(role);
+    try {
+      manager.createRole(role);
+    }
+    catch (Exception e) {
+      fail("expected role creation to succeed");
+    }
   }
 
   @Test(expected = ReadonlyRoleException.class)
