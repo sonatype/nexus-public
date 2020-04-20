@@ -10,17 +10,16 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.raw.internal;
+package org.sonatype.nexus.content.raw.internal.recipe;
 
 import javax.annotation.Nonnull;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.content.raw.RawContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpResponses;
-import org.sonatype.nexus.repository.raw.RawContentFacet;
-import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Payload;
@@ -36,7 +35,7 @@ import static org.sonatype.nexus.repository.http.HttpMethods.PUT;
 /**
  * Raw content hosted handler.
  *
- * @since 3.0
+ * @since 3.next
  */
 @Named
 @Singleton
@@ -47,37 +46,33 @@ public class RawContentHandler
   @Nonnull
   @Override
   public Response handle(@Nonnull final Context context) throws Exception {
-    String name = contentName(context);
+    String path = contentPath(context);
     String method = context.getRequest().getAction();
 
     Repository repository = context.getRepository();
-    log.debug("{} repository '{}' content-name: {}", method, repository.getName(), name);
+    log.debug("{} repository '{}' content-path: {}", method, repository.getName(), path);
 
     RawContentFacet storage = repository.facet(RawContentFacet.class);
 
     switch (method) {
       case HEAD:
       case GET: {
-        Content content = storage.get(name);
-        if (content == null) {
-          return HttpResponses.notFound(name);
-        }
-        return HttpResponses.ok(content);
+        return storage.get(path).map(HttpResponses::ok)
+            .orElseGet(() -> HttpResponses.notFound(path));
       }
 
       case PUT: {
         Payload content = context.getRequest().getPayload();
-
-        storage.put(name, content);
+        storage.put(path, content);
         return HttpResponses.created();
       }
 
       case DELETE: {
-        boolean deleted = storage.delete(name);
-        if (!deleted) {
-          return HttpResponses.notFound(name);
+        boolean deleted = storage.delete(path);
+        if (deleted) {
+          return HttpResponses.noContent();
         }
-        return HttpResponses.noContent();
+        return HttpResponses.notFound(path);
       }
 
       default:
@@ -86,14 +81,14 @@ public class RawContentHandler
   }
 
   /**
-   * Pull the parsed content name/path out of the context.
+   * Pull the parsed content path out of the context.
    */
   @Nonnull
-  private String contentName(final Context context) {
+  private String contentPath(final Context context) {
     TokenMatcher.State state = context.getAttributes().require(TokenMatcher.State.class);
-    String name = state.getTokens().get("name");
-    checkState(name != null, "Missing token: name");
+    String path = state.getTokens().get("path");
+    checkState(path != null, "Missing token: path");
 
-    return name;
+    return path;
   }
 }

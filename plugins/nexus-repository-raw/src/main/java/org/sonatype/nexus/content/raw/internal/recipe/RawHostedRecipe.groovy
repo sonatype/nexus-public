@@ -10,39 +10,24 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.raw.internal
+package org.sonatype.nexus.content.raw.internal.recipe
 
 import javax.annotation.Nonnull
 import javax.inject.Inject
 import javax.inject.Named
-import javax.inject.Provider
 import javax.inject.Singleton
 
 import org.sonatype.nexus.repository.Format
-import org.sonatype.nexus.repository.RecipeSupport
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
-import org.sonatype.nexus.repository.attributes.AttributesFacet
 import org.sonatype.nexus.repository.http.HttpHandlers
 import org.sonatype.nexus.repository.http.HttpMethods
-import org.sonatype.nexus.repository.http.PartialFetchHandler
-import org.sonatype.nexus.repository.search.SearchFacet
-import org.sonatype.nexus.repository.security.SecurityHandler
-import org.sonatype.nexus.repository.storage.SingleAssetComponentMaintenance
-import org.sonatype.nexus.repository.storage.StorageFacet
-import org.sonatype.nexus.repository.storage.UnitOfWorkHandler
+import org.sonatype.nexus.repository.raw.internal.RawFormat
 import org.sonatype.nexus.repository.types.HostedType
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
 import org.sonatype.nexus.repository.view.Route
 import org.sonatype.nexus.repository.view.Router
 import org.sonatype.nexus.repository.view.ViewFacet
-import org.sonatype.nexus.repository.view.handlers.ConditionalRequestHandler
-import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler
-import org.sonatype.nexus.repository.view.handlers.ExceptionHandler
-import org.sonatype.nexus.repository.view.handlers.IndexHtmlForwardHandler
-import org.sonatype.nexus.repository.view.handlers.HandlerContributor
-import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler
-import org.sonatype.nexus.repository.view.handlers.TimingHandler
 import org.sonatype.nexus.repository.view.matchers.ActionMatcher
 import org.sonatype.nexus.repository.view.matchers.SuffixMatcher
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher
@@ -52,68 +37,14 @@ import static org.sonatype.nexus.repository.view.matchers.logic.LogicMatchers.an
 /**
  * Raw hosted repository recipe.
  *
- * @since 3.0
+ * @since 3.next
  */
 @Named(RawHostedRecipe.NAME)
 @Singleton
 class RawHostedRecipe
-    extends RecipeSupport
+    extends RawRecipeSupport
 {
   public static final String NAME = 'raw-hosted'
-
-  @Inject
-  Provider<RawSecurityFacet> securityFacet
-
-  @Inject
-  Provider<ConfigurableViewFacet> viewFacet
-
-  @Inject
-  Provider<RawContentFacetImpl> rawContentFacet
-
-  @Inject
-  Provider<StorageFacet> storageFacet
-
-  @Inject
-  Provider<AttributesFacet> attributesFacet
-
-  @Inject
-  Provider<SingleAssetComponentMaintenance> componentMaintenance
-
-  @Inject
-  Provider<SearchFacet> searchFacet
-
-  @Inject
-  ExceptionHandler exceptionHandler
-
-  @Inject
-  TimingHandler timingHandler
-
-  @Inject
-  IndexHtmlForwardHandler indexHtmlForwardHandler
-
-  @Inject
-  SecurityHandler securityHandler
-
-  @Inject
-  PartialFetchHandler partialFetchHandler
-
-  @Inject
-  UnitOfWorkHandler unitOfWorkHandler
-
-  @Inject
-  RawContentHandler rawContentHandler
-
-  @Inject
-  ConditionalRequestHandler conditionalRequestHandler
-
-  @Inject
-  ContentHeadersHandler contentHeadersHandler
-
-  @Inject
-  LastDownloadedHandler lastDownloadedHandler
-
-  @Inject
-  HandlerContributor handlerContributor
 
   @Inject
   RawHostedRecipe(@Named(HostedType.NAME) final Type type,
@@ -126,11 +57,7 @@ class RawHostedRecipe
   void apply(@Nonnull final Repository repository) throws Exception {
     repository.attach(securityFacet.get())
     repository.attach(configure(viewFacet.get()))
-    repository.attach(rawContentFacet.get())
-    repository.attach(storageFacet.get())
-    repository.attach(attributesFacet.get())
-    repository.attach(componentMaintenance.get())
-    repository.attach(searchFacet.get())
+    repository.attach(contentFacet.get())
   }
 
   /**
@@ -150,7 +77,7 @@ class RawHostedRecipe
     )
 
     builder.route(new Route.Builder()
-        .matcher(new TokenMatcher('/{name:.+}'))
+        .matcher(new TokenMatcher('{path:/.+}'))
         .handler(timingHandler)
         .handler(securityHandler)
         .handler(exceptionHandler)
@@ -158,9 +85,8 @@ class RawHostedRecipe
         .handler(conditionalRequestHandler)
         .handler(partialFetchHandler)
         .handler(contentHeadersHandler)
-        .handler(unitOfWorkHandler)
         .handler(lastDownloadedHandler)
-        .handler(rawContentHandler)
+        .handler(contentHandler)
         .create())
 
     builder.defaultHandlers(HttpHandlers.badRequest())

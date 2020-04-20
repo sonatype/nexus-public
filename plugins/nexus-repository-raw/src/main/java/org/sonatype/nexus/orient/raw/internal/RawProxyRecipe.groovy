@@ -10,9 +10,10 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.raw.internal
+package org.sonatype.nexus.orient.raw.internal
 
 import javax.annotation.Nonnull
+import javax.annotation.Priority
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Provider
@@ -29,6 +30,8 @@ import org.sonatype.nexus.repository.http.PartialFetchHandler
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet
 import org.sonatype.nexus.repository.proxy.ProxyHandler
 import org.sonatype.nexus.repository.purge.PurgeUnusedFacet
+import org.sonatype.nexus.repository.raw.internal.RawFormat
+import org.sonatype.nexus.repository.raw.internal.RawSecurityFacet
 import org.sonatype.nexus.repository.routing.RoutingRuleHandler
 import org.sonatype.nexus.repository.search.SearchFacet
 import org.sonatype.nexus.repository.security.SecurityHandler
@@ -56,6 +59,7 @@ import static org.sonatype.nexus.repository.http.HttpHandlers.notFound
  * @since 3.0
  */
 @Named(RawProxyRecipe.NAME)
+@Priority(Integer.MAX_VALUE)
 @Singleton
 class RawProxyRecipe
     extends RecipeSupport
