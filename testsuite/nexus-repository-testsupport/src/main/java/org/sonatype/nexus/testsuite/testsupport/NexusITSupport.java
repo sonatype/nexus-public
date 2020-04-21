@@ -35,11 +35,15 @@ import javax.ws.rs.core.UriBuilder;
 
 import org.sonatype.nexus.pax.exam.NexusPaxExamSupport;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.search.SearchService;
 import org.sonatype.nexus.repository.tools.DeadBlobFinder;
 import org.sonatype.nexus.repository.tools.DeadBlobResult;
 import org.sonatype.nexus.rest.client.RestClientConfiguration;
 import org.sonatype.nexus.rest.client.RestClientConfiguration.Customizer;
 import org.sonatype.nexus.rest.client.RestClientFactory;
+import org.sonatype.nexus.security.SecuritySystem;
+import org.sonatype.nexus.selector.SelectorManager;
+import org.sonatype.nexus.testsuite.testsupport.fixtures.SecurityRule;
 import org.sonatype.nexus.testsuite.testsupport.rest.TestSuiteObjectMapperResolver;
 
 import org.apache.commons.io.IOUtils;
@@ -102,18 +106,29 @@ public abstract class NexusITSupport
 
   @Inject
   private PoolingHttpClientConnectionManager connectionManager;
-  
+
   @Inject
   private RepositoryManager repositoryManager;
-  
-  @Inject 
+
+  @Inject
   private DeadBlobFinder deadBlobFinder;
 
   @Inject
   protected RestClientFactory restClientFactory;
 
   @Inject
+  protected SearchService searchService;
+
+  @Inject
   private TestSuiteObjectMapperResolver testSuiteObjectMapperResolver;
+
+  @Inject
+  private SecuritySystem securitySystem;
+
+  @Inject
+  private SelectorManager selectorManager;
+
+  protected SecurityRule securityRule = new SecurityRule(() -> securitySystem, () -> selectorManager);
 
   @Configuration
   public static Option[] configureNexus() {
@@ -154,7 +169,7 @@ public abstract class NexusITSupport
     // streaming out the response to the client. An HTTP client considers a response done when the content length has
     // been reached at which point the client/test can continue while NX still has to release the upstream connection
     // (cf. ResponseEntityProxy which releases a connection after the last byte has been handed out to the client).
-    // So allow for some delay when checking the connection pool. 
+    // So allow for some delay when checking the connection pool.
     waitFor(() -> connectionManager.getTotalStats().getLeased() == 0, 3 * 1000);
   }
 
@@ -173,7 +188,7 @@ public abstract class NexusITSupport
             .map(repository -> deadBlobFinder.find(repository, shouldIgnoreMissingBlobRefs()))
             .flatMap(Collection::stream)
             .collect(Collectors.groupingBy(DeadBlobResult::getRepositoryName));
-    
+
     if (!badRepos.isEmpty()) {
       log.error("Detected dead blobs: {}", badRepos);
       throw new IllegalStateException("Dead blobs detected!");
@@ -289,7 +304,7 @@ public abstract class NexusITSupport
    * @return our session cookie; {@code null} if it doesn't exist
    */
   @Nullable
-  protected Cookie getSessionCookie(CookieStore cookieStore) {
+  protected Cookie getSessionCookie(final CookieStore cookieStore) {
     for (Cookie cookie : cookieStore.getCookies()) {
       if (DEFAULT_SESSION_COOKIE_NAME.equals(cookie.getName())) {
         return cookie;
@@ -302,7 +317,7 @@ public abstract class NexusITSupport
    * @return the header containing our session cookie; {@code null} if it doesn't exist
    */
   @Nullable
-  protected Header getSessionCookieHeader(@Nonnull Header[] headers) {
+  protected Header getSessionCookieHeader(@Nonnull final Header[] headers) {
     for (Header header : headers) {
       if (header.getValue().startsWith(DEFAULT_SESSION_COOKIE_NAME + "=")) {
         return header;
@@ -315,7 +330,7 @@ public abstract class NexusITSupport
    * @return the header containing the anti-csrf token cookie; {@code null} if it doesn't exist
    */
   @Nullable
-  protected Header getAntiCsrfTokenHeader(@Nonnull Header[] headers) {
+  protected Header getAntiCsrfTokenHeader(@Nonnull final Header[] headers) {
     for (Header header : headers) {
       if (header.getValue().startsWith("NX-ANTI-CSRF-TOKEN=")) {
         return header;
@@ -423,5 +438,16 @@ public abstract class NexusITSupport
         return responseBuilder.build();
       }
     }
+  }
+
+  /**
+   * Waits for indexing to finish and makes sure any updates are available to search.
+   *
+   * General flow is component/asset events -> bulk index requests -> search indexing.
+   */
+  protected void waitForSearch() throws Exception {
+    waitFor(eventManager::isCalmPeriod);
+    searchService.flush(false); // no need for full fsync here
+    waitFor(searchService::isCalmPeriod);
   }
 }
