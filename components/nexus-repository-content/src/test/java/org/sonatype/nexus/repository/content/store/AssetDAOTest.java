@@ -533,6 +533,7 @@ public class AssetDAOTest
 
     TestAssetData asset1 = randomAsset(repositoryId);
     TestAssetData asset2 = randomAsset(repositoryId);
+    asset2.setPath(asset1.path() + "/2"); // make sure paths are different
 
     try (DataSession<?> session = sessionRule.openSession("content")) {
       TestAssetDAO dao = session.access(TestAssetDAO.class);
