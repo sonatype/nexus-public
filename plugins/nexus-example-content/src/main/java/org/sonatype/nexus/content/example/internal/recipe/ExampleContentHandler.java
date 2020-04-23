@@ -47,36 +47,36 @@ public class ExampleContentHandler
   @Override
   public Response handle(final Context context) throws Exception {
 
-    String name = contentName(context);
+    String path = contentPath(context);
     String method = context.getRequest().getAction();
     Repository repository = context.getRepository();
 
-    log.debug("{} repository '{}' content-name: {}", method, repository.getName(), name);
+    log.debug("{} repository '{}' content-path: {}", method, repository.getName(), path);
 
     ExampleContentFacet storage = repository.facet(ExampleContentFacet.class);
 
     switch (method) {
       case HEAD:
       case GET: {
-        Optional<Payload> content = storage.get(name);
+        Optional<Payload> content = storage.get(path);
         if (content.isPresent()) {
           return HttpResponses.ok(content.get());
         }
-        return HttpResponses.notFound(name);
+        return HttpResponses.notFound(path);
       }
 
       case PUT: {
         Payload content = context.getRequest().getPayload();
-        storage.put(name, content);
+        storage.put(path, content);
         return HttpResponses.created();
       }
 
       case DELETE: {
-        boolean deleted = storage.delete(name);
+        boolean deleted = storage.delete(path);
         if (deleted) {
           return HttpResponses.noContent();
         }
-        return HttpResponses.notFound(name);
+        return HttpResponses.notFound(path);
       }
 
       default:
@@ -85,12 +85,12 @@ public class ExampleContentHandler
   }
 
   /**
-   * Pull the parsed content name/path out of the context.
+   * Pull the parsed content path out of the context.
    */
-  private static String contentName(final Context context) {
+  private static String contentPath(final Context context) {
     TokenMatcher.State state = context.getAttributes().require(TokenMatcher.State.class);
-    String name = state.getTokens().get("name");
-    checkState(name != null, "Missing token: name");
-    return name;
+    String path = state.getTokens().get("path");
+    checkState(path != null, "Missing token: path");
+    return path;
   }
 }
