@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.storage.capability;
+package org.sonatype.nexus.repository.capability;
 
 import java.util.List;
 import java.util.Map;
@@ -33,6 +33,7 @@ import com.google.common.collect.ImmutableList;
 import static org.sonatype.nexus.capability.Tag.categoryTag;
 import static org.sonatype.nexus.capability.Tag.tags;
 import static org.sonatype.nexus.formfields.FormField.MANDATORY;
+import static org.sonatype.nexus.repository.capability.GlobalRepositorySettings.DEFAULT_LAST_DOWNLOADED_INTERVAL;
 
 /**
  * {@link StorageSettingsCapabilityDescriptor} descriptor.
@@ -74,7 +75,7 @@ public class StorageSettingsCapabilityDescriptor
             messages.lastDownloadedIntervalLabel(),
             MANDATORY
         )
-        .withInitialValue(StorageSettingsCapabilityConfiguration.DEFAULT_LAST_DOWNLOADED_INTERVAL.getStandardHours())
+        .withInitialValue(DEFAULT_LAST_DOWNLOADED_INTERVAL.getStandardHours())
         .withMinimumValue(1)
     );
   }

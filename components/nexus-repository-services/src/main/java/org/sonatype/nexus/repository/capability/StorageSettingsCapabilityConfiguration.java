@@ -10,17 +10,15 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.storage.capability;
+package org.sonatype.nexus.repository.capability;
 
 import java.util.Map;
 
 import org.sonatype.nexus.capability.CapabilityConfigurationSupport;
 
 import org.hibernate.validator.constraints.NotBlank;
-import org.joda.time.Duration;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.joda.time.Duration.standardHours;
 
 /**
  * {@link StorageSettingsCapability} configuration.
@@ -31,8 +29,6 @@ public class StorageSettingsCapabilityConfiguration
     extends CapabilityConfigurationSupport
 {
   public static final String LAST_DOWNLOADED_INTERVAL = "lastDownloadedInterval";
-
-  public static final Duration DEFAULT_LAST_DOWNLOADED_INTERVAL = standardHours(12);
 
   @NotBlank
   private String lastDownloadedInterval;

@@ -10,47 +10,40 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.storage;
+package org.sonatype.nexus.repository.capability;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.repository.capability.GlobalRepositorySettings;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.joda.time.Duration;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static org.joda.time.Duration.standardHours;
 
 /**
- * Responsible for altering the runtime behaviour of assets
+ * Global repository settings.
  *
- * @since 3.16
+ * @since 3.next
  */
 @Named
 @Singleton
-public class AssetManager
+public class GlobalRepositorySettings
     extends ComponentSupport
 {
-  private final GlobalRepositorySettings globalSettings;
+  public static final Duration DEFAULT_LAST_DOWNLOADED_INTERVAL = standardHours(12);
 
-  @Inject
-  public AssetManager(final GlobalRepositorySettings globalSettings) {
-    this.globalSettings = checkNotNull(globalSettings);
-  }
+  private Duration lastDownloadedInterval = DEFAULT_LAST_DOWNLOADED_INTERVAL;
 
   public void setLastDownloadedInterval(final Duration lastDownloadedInterval) {
-    globalSettings.setLastDownloadedInterval(lastDownloadedInterval);
+    if (lastDownloadedInterval.getStandardHours() < 1) {
+      log.warn("A lastDownloaded interval of {} seconds has been configured, a value less than"
+          + " 1 hour is not recommended for performance reasons", lastDownloadedInterval.getStandardSeconds());
+    }
+    this.lastDownloadedInterval = lastDownloadedInterval;
   }
 
-  @VisibleForTesting
   public Duration getLastDownloadedInterval() {
-    return globalSettings.getLastDownloadedInterval();
-  }
-
-  public boolean maybeUpdateLastDownloaded(final Asset asset) {
-    return asset.markAsDownloaded(getLastDownloadedInterval());
+    return lastDownloadedInterval;
   }
 }

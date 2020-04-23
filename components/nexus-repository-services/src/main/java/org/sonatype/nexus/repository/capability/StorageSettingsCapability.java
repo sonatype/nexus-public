@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.storage.capability;
+package org.sonatype.nexus.repository.capability;
 
 import java.util.Map;
 
@@ -18,14 +18,13 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.capability.CapabilitySupport;
-import org.sonatype.nexus.repository.storage.AssetManager;
 
 import org.joda.time.Duration;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Integer.parseInt;
 import static org.joda.time.Duration.standardHours;
-import static org.sonatype.nexus.repository.storage.capability.StorageSettingsCapabilityConfiguration.DEFAULT_LAST_DOWNLOADED_INTERVAL;
+import static org.sonatype.nexus.repository.capability.GlobalRepositorySettings.DEFAULT_LAST_DOWNLOADED_INTERVAL;
 
 /**
  * Storage settings capability.
@@ -36,11 +35,11 @@ import static org.sonatype.nexus.repository.storage.capability.StorageSettingsCa
 public class StorageSettingsCapability
     extends CapabilitySupport<StorageSettingsCapabilityConfiguration>
 {
-  private final AssetManager assetManager;
+  private final GlobalRepositorySettings globalSettings;
 
   @Inject
-  public StorageSettingsCapability(final AssetManager assetManager) {
-    this.assetManager = checkNotNull(assetManager);
+  public StorageSettingsCapability(final GlobalRepositorySettings globalSettings) {
+    this.globalSettings = checkNotNull(globalSettings);
   }
 
   @Override
@@ -67,13 +66,13 @@ public class StorageSettingsCapability
 
   private void configureDownloadedInterval(final StorageSettingsCapabilityConfiguration config) {
     log.info("Using configured value of {} hours for LastDownloaded interval", config.getLastDownloadedInterval());
-    assetManager.setLastDownloadedInterval(parseAsHours(config.getLastDownloadedInterval()));
+    globalSettings.setLastDownloadedInterval(parseAsHours(config.getLastDownloadedInterval()));
   }
 
   private void resetDownloadedInterval() {
     log.info("Reverting back to {} hours for LastDownloaded interval",
         DEFAULT_LAST_DOWNLOADED_INTERVAL.getStandardHours());
-    assetManager.setLastDownloadedInterval(DEFAULT_LAST_DOWNLOADED_INTERVAL);
+    globalSettings.setLastDownloadedInterval(DEFAULT_LAST_DOWNLOADED_INTERVAL);
   }
 
   private Duration parseAsHours(final String hours) {

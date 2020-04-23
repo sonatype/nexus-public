@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.storage;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.repository.capability.GlobalRepositorySettings;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -24,7 +25,7 @@ import static org.joda.time.Duration.standardHours;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.goodies.common.Time.hours;
-import static org.sonatype.nexus.repository.storage.capability.StorageSettingsCapabilityConfiguration.DEFAULT_LAST_DOWNLOADED_INTERVAL;
+import static org.sonatype.nexus.repository.capability.GlobalRepositorySettings.DEFAULT_LAST_DOWNLOADED_INTERVAL;
 
 public class AssetManagerTest
     extends TestSupport
@@ -36,7 +37,7 @@ public class AssetManagerTest
 
   @Before
   public void setUp() throws Exception {
-    underTest = new AssetManager();
+    underTest = new AssetManager(new GlobalRepositorySettings());
   }
 
   @Test
