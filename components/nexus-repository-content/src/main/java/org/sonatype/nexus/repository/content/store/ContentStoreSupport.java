@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.datastore.api.DataAccess;
 import org.sonatype.nexus.datastore.api.DataSession;
@@ -33,6 +34,9 @@ public abstract class ContentStoreSupport<T extends DataAccess>
     extends StateGuardLifecycleSupport
     implements TransactionalStore<DataSession<?>>
 {
+  private static final int DELETE_BATCH_SIZE_DEFAULT =
+      SystemPropertiesHelper.getInteger("nexus.content.deleteBatchSize", 1000);
+
   private final DataSessionSupplier sessionSupplier;
 
   private final String contentStoreName;
@@ -61,6 +65,10 @@ public abstract class ContentStoreSupport<T extends DataAccess>
 
   protected T dao() {
     return access(daoClass);
+  }
+
+  protected int deleteBatchSize() {
+    return DELETE_BATCH_SIZE_DEFAULT;
   }
 
   @Override

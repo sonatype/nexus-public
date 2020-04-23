@@ -418,6 +418,8 @@ public class RepositoryManagerImpl
     untrack(repository);
 
     eventManager.post(new RepositoryDeletedEvent(repository));
+
+    log.info("Deleted repository: {}", name);
   }
 
   /**

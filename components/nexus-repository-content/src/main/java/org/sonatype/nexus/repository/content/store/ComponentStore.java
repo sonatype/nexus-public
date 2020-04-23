@@ -22,7 +22,9 @@ import javax.inject.Named;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.transaction.Transaction;
 import org.sonatype.nexus.transaction.Transactional;
+import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.inject.assistedinject.Assisted;
 
@@ -178,6 +180,15 @@ public class ComponentStore<T extends ComponentDAO>
    */
   @Transactional
   public boolean deleteComponents(final int repositoryId) {
-    return dao().deleteComponents(repositoryId);
+    log.debug("Deleting all components in repository {}", repositoryId);
+    Transaction tx = UnitOfWork.currentTx();
+    boolean deleted = false;
+    while (dao().deleteComponents(repositoryId, deleteBatchSize())) {
+      tx.commit();
+      deleted = true;
+      tx.begin();
+    }
+    log.debug("Deleted all components in repository {}", repositoryId);
+    return deleted;
   }
 }

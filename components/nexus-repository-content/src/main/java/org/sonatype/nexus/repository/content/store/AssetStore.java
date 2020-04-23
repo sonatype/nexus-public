@@ -24,7 +24,9 @@ import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.transaction.Transaction;
 import org.sonatype.nexus.transaction.Transactional;
+import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.inject.assistedinject.Assisted;
 
@@ -157,6 +159,15 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public boolean deleteAssets(final int repositoryId) {
-    return dao().deleteAssets(repositoryId);
+    log.debug("Deleting all assets in repository {}", repositoryId);
+    Transaction tx = UnitOfWork.currentTx();
+    boolean deleted = false;
+    while (dao().deleteAssets(repositoryId, deleteBatchSize())) {
+      tx.commit();
+      deleted = true;
+      tx.begin();
+    }
+    log.debug("Deleted all assets in repository {}", repositoryId);
+    return deleted;
   }
 }

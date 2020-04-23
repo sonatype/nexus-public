@@ -129,7 +129,7 @@
   </delete>
 
   <delete id="deleteAssets">
-    DELETE FROM ${format}_asset WHERE repository_id = #{repositoryId};
+    DELETE FROM ${format}_asset WHERE repository_id = #{repositoryId}<if test="limit gt 0"> LIMIT #{limit}</if>;
   </delete>
 
 </mapper>

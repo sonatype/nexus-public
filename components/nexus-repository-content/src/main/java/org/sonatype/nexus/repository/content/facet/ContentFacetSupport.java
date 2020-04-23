@@ -43,6 +43,7 @@ import org.sonatype.nexus.repository.content.store.ContentRepositoryStore;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.security.ClientInfo;
 import org.sonatype.nexus.security.ClientInfoProvider;
+import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.TransactionalStore;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -167,8 +168,11 @@ public abstract class ContentFacetSupport
   }
 
   @Override
+  @Transactional
   protected void doDelete() throws Exception {
     if (configRepositoryId != null) {
+      assetStore.deleteAssets(contentRepositoryId);
+      componentStore.deleteComponents(contentRepositoryId);
       contentRepositoryStore.deleteContentRepository(configRepositoryId);
     }
   }

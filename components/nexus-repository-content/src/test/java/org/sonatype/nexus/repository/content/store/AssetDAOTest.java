@@ -66,6 +66,9 @@ public class AssetDAOTest
 
     repositoryId = contentRepository.repositoryId;
 
+    generateRandomNamespaces(100);
+    generateRandomNames(100);
+    generateRandomVersions(100);
     generateRandomPaths(100);
   }
 
@@ -223,7 +226,7 @@ public class AssetDAOTest
 
       assertThat(dao.browseAssets(repositoryId, 10, null), contains(allOf(samePath(asset2), sameAttributes(asset2))));
 
-      assertTrue(dao.deleteAssets(repositoryId));
+      assertTrue(dao.deleteAssets(repositoryId, 0));
 
       assertThat(dao.browseAssets(repositoryId, 10, null), emptyIterable());
 
@@ -455,10 +458,6 @@ public class AssetDAOTest
   @Test
   public void testBrowseComponentAssets() {
 
-    generateRandomNamespaces(100);
-    generateRandomNames(100);
-    generateRandomVersions(100);
-
     // scatter components and assets
     generateRandomRepositories(10);
     generateRandomContent(10, 100);
@@ -559,6 +558,38 @@ public class AssetDAOTest
 
       assertThat(dao.browseFlaggedAssets(repositoryId, 10, null),
           contains(allOf(samePath(asset1), sameAttributes(asset1))));
+    }
+  }
+
+  @Test
+  public void testDeleteAllAssets() {
+
+    // scatter components and assets
+    generateRandomRepositories(1);
+    generateRandomContent(100, 100);
+
+    repositoryId = generatedRepositories().get(0).contentRepositoryId();
+
+    try (DataSession<?> session = sessionRule.openSession("content")) {
+      AssetDAO dao = session.access(TestAssetDAO.class);
+
+      assertThat(dao.browseAssets(repositoryId, 100, null).size(), is(100));
+
+      dao.deleteAssets(repositoryId, 20);
+
+      assertThat(dao.browseAssets(repositoryId, 100, null).size(), is(80));
+
+      dao.deleteAssets(repositoryId, 10);
+
+      assertThat(dao.browseAssets(repositoryId, 100, null).size(), is(70));
+
+      dao.deleteAssets(repositoryId, 0);
+
+      assertThat(dao.browseAssets(repositoryId, 100, null).size(), is(0));
+
+      dao.deleteAssets(repositoryId, -1);
+
+      assertThat(dao.browseAssets(repositoryId, 100, null).size(), is(0));
     }
   }
 }
