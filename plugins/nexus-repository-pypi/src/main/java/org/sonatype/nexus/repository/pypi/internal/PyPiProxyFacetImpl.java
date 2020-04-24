@@ -79,8 +79,10 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiFileUtils.extractN
 import static org.sonatype.nexus.repository.pypi.internal.PyPiFileUtils.extractVersionFromFilename;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.buildIndexPage;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.buildRootIndexPage;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.extractLinksFromIndex;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.makeIndexLinksNexusPaths;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.makeRootIndexRelative;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.validateIndexLinks;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiInfoUtils.extractMetadata;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.INDEX_PATH_PREFIX;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.indexPath;
@@ -150,8 +152,7 @@ public class PyPiProxyFacetImpl
         return putRootIndex(content);
       case INDEX:
         String name = name(state);
-        putIndex(indexPath(name), content);
-        return rewriteIndex(name);
+        return putIndex(name, content);
       case PACKAGE:
         return putPackage(path(state), content);
       default:
@@ -351,10 +352,21 @@ public class PyPiProxyFacetImpl
 
   private Content putIndex(final String name, final Content content) throws IOException {
     String html;
+    String path = indexPath(name);
     try (InputStream inputStream = content.openInputStream()) {
       html = IOUtils.toString(inputStream);
+
+      if (!validateIndexLinks(name, extractLinksFromIndex(html))) {
+        return null;
+      }
+      makeIndexLinksNexusPaths(name, inputStream);
+
+      storeHtmlPage(content, html, INDEX, path);
+      return rewriteIndex(name);
     }
-    return storeHtmlPage(content, html, INDEX, name);
+    catch (Exception e) {
+      throw new IOException(e);
+    }
   }
 
   private Content rewriteIndex(final String name) throws IOException {
@@ -368,11 +380,19 @@ public class PyPiProxyFacetImpl
     try (InputStream inputStream = content.openInputStream()) {
       List<PyPiLink> links = makeIndexLinksNexusPaths(name, inputStream);
       html = buildIndexPage(templateHelper, name.substring(name.indexOf('/') + 1, name.length() - 1), links);
+      Content newContent = new Content(new BytesPayload(html.getBytes(), TEXT_HTML));
+      content.getAttributes().forEach(e -> newContent.getAttributes().set(e.getKey(), e.getValue()));
+      return newContent;
     }
-
-    Content newContent = new Content(new BytesPayload(html.getBytes(), TEXT_HTML));
-    content.getAttributes().forEach(e -> newContent.getAttributes().set(e.getKey(), e.getValue()));
-    return newContent;
+    catch (Exception e) {
+      if (log.isDebugEnabled()) {
+        log.warn("An error occurred re-writing the index for package {}", name, e);
+      }
+      else {
+        log.warn("An error occurred re-writing the index for package {}", name);
+      }
+      return null;
+    }
   }
 
   private Content storeHtmlPage(final Content content,

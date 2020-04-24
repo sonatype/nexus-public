@@ -22,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -67,17 +68,24 @@ public final class PyPiIndexUtils
    */
   static List<PyPiLink> extractLinksFromIndex(final InputStream in) throws IOException {
     checkNotNull(in);
-    List<PyPiLink> results = new ArrayList<>();
     try (Reader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
-      String html = CharStreams.toString(reader);
-      Document document = Jsoup.parse(html);
-      Elements links = document.select("a[href]");
-      for (Element link : links) {
-        String file = link.text().trim();
-        String path = link.attr("href");
-        String requiresPython = link.attr(PYPI_REQUIRES_PYTHON);
-        results.add(new PyPiLink(file, path, requiresPython));
-      }
+      return extractLinksFromIndex(CharStreams.toString(reader));
+    }
+  }
+
+  /**
+   * Returns a map (in original order of appearance) of the files and associated paths extracted from the index.
+   */
+  static List<PyPiLink> extractLinksFromIndex(final String html) {
+    checkNotNull(html);
+    List<PyPiLink> results = new ArrayList<>();
+    Document document = Jsoup.parse(html);
+    Elements links = document.select("a[href]");
+    for (Element link : links) {
+      String file = link.text().trim();
+      String path = link.attr("href");
+      String requiresPython = link.attr(PYPI_REQUIRES_PYTHON);
+      results.add(new PyPiLink(file, path, requiresPython));
     }
     return results;
   }
@@ -147,6 +155,10 @@ public final class PyPiIndexUtils
       }
     }
     return newLinks;
+  }
+
+  static boolean validateIndexLinks(final String packageName, final List<PyPiLink> links) {
+    return links.stream().map(PyPiLink::getFile).filter(Objects::nonNull).anyMatch(file -> file.startsWith(packageName));
   }
 
   /**
