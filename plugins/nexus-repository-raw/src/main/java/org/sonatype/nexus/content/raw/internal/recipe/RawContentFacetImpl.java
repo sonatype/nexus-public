@@ -23,8 +23,8 @@ import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
+import org.sonatype.nexus.repository.raw.RawCoordinatesHelper;
 import org.sonatype.nexus.repository.raw.internal.RawFormat;
-import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
@@ -51,7 +51,15 @@ public class RawContentFacetImpl
   @Override
   public Payload put(final String path, final Payload content) throws IOException {
     try (TempBlob blob = blobs().ingest(content)){
-      return assets().path(path).getOrCreate().attach(blob).download();
+      return assets()
+          .path(path)
+          .component(components()
+              .name(path)
+              .namespace(RawCoordinatesHelper.getGroup(path))
+              .getOrCreate())
+          .getOrCreate()
+          .attach(blob)
+          .download();
     }
   }
 

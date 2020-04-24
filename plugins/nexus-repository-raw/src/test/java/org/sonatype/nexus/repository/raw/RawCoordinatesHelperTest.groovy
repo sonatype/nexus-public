@@ -10,28 +10,32 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.raw;
+package org.sonatype.nexus.repository.raw
+
+import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
- * Helper methods for extracting component/asset coordinates for raw artifacts.
- *
- * @since 3.0
+ * {@link RawCoordinatesHelper} tests.
  */
-public class RawCoordinatesHelper
+class RawCoordinatesHelperTest
+    extends Specification
 {
-  public static String getGroup(String path) {
-    StringBuilder group = new StringBuilder();
-    int i = path.lastIndexOf('/');
-    if (!path.startsWith("/") || i == 0) {
-      group.append("/");
-    }
-    if (i != -1) {
-      group.append(path, 0, i);
-    }
-    return group.toString();
-  }
+  @Unroll
+  def 'group of #path is #expectedGroup'() {
+    when: 'we get the group of a path'
+      def group = RawCoordinatesHelper.getGroup(path)
 
-  private RawCoordinatesHelper() {
-    // Don't instantiate
+    then: 'the group is as expected'
+      group == expectedGroup
+
+    where:
+      path                           || expectedGroup
+      '/foo/bar'                     || '/foo'
+      'foo/bar'                      || '/foo'
+      'foobar.txt'                   || '/'
+      '/foobar.txt'                  || '/'
+      '/some/long/involved/path.txt' || '/some/long/involved'
+      'some/long/involved/path.txt'  || '/some/long/involved'
   }
 }
