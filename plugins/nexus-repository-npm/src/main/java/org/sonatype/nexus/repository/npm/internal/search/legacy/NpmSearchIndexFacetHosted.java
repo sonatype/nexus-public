@@ -27,7 +27,7 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.repository.npm.internal.NpmFacetUtils;
+import org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmJsonUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageId;

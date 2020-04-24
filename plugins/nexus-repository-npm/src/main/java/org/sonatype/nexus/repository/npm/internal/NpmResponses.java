@@ -58,12 +58,12 @@ public final class NpmResponses
   }
 
   @Nonnull
-  static Response ok(@Nonnull final Payload payload) {
+  public static Response ok(@Nonnull final Payload payload) {
     return HttpResponses.ok(checkNotNull(payload));
   }
 
   @Nonnull
-  static Response notFound(@Nullable final String message) {
+  public static Response notFound(@Nullable final String message) {
     return new Response.Builder()
         .status(Status.failure(NOT_FOUND, "Not Found"))
         .payload(statusPayload(false, message))
@@ -84,7 +84,7 @@ public final class NpmResponses
   }
 
   @Nonnull
-  static Response badRequest(@Nullable final String message) {
+  public static Response badRequest(@Nullable final String message) {
     return new Response.Builder()
         .status(Status.failure(BAD_REQUEST))
         .payload(statusPayload(false, message))
@@ -92,7 +92,7 @@ public final class NpmResponses
   }
 
   @Nonnull
-  static Response badCredentials(@Nullable final String message) {
+  public static Response badCredentials(@Nullable final String message) {
     return new Response.Builder()
         .status(Status.failure(UNAUTHORIZED))
         .payload(statusPayload(false, message))

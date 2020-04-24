@@ -32,7 +32,7 @@ public class NpmProxyCacheInvalidatorFacetImplTest
     extends TestSupport
 {
   @Mock
-  private NpmProxyFacetImpl npmProxyFacet;
+  private NpmProxyFacet npmProxyFacet;
 
   private NpmProxyCacheInvalidatorFacetImpl underTest = new NpmProxyCacheInvalidatorFacetImpl();
 
@@ -58,8 +58,8 @@ public class NpmProxyCacheInvalidatorFacetImplTest
 
     when(repository.getConfiguration()).thenReturn(configuration);
 
-    Optional<NpmProxyFacetImpl> facet = Optional.of(npmProxyFacet);
-    when(repository.optionalFacet(NpmProxyFacetImpl.class)).thenReturn(facet);
+    Optional<NpmProxyFacet> facet = Optional.of(npmProxyFacet);
+    when(repository.optionalFacet(NpmProxyFacet.class)).thenReturn(facet);
 
     return repository;
   }

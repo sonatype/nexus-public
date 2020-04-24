@@ -19,20 +19,18 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 
-import org.sonatype.nexus.repository.npm.NpmFacet;
-
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
-import org.sonatype.nexus.blobstore.restore.internal.NpmRestoreBlobStrategy;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.npm.repair.NpmRepairPackageRootComponent;
+import org.sonatype.nexus.repository.npm.orient.NpmFacet;
+import org.sonatype.nexus.repository.npm.repair.orient.NpmRepairPackageRootComponent;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;

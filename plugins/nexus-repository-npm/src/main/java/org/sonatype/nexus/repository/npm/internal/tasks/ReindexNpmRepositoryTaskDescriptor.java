@@ -20,10 +20,11 @@ import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchFacet;
 
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.formfields.RepositoryCombobox;
+import org.sonatype.nexus.repository.npm.internal.tasks.orient.OrientReindexNpmRepositoryTask;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 /**
- * Task descriptor for {@link ReindexNpmRepositoryTask}.
+ * Task descriptor for {@link OrientReindexNpmRepositoryTask}.
  *
  * @since 3.7
  */
@@ -39,7 +40,7 @@ public class ReindexNpmRepositoryTaskDescriptor
   @Inject
   public ReindexNpmRepositoryTaskDescriptor(final NodeAccess nodeAccess) {
     super(TYPE_ID,
-        ReindexNpmRepositoryTask.class,
+        OrientReindexNpmRepositoryTask.class,
         "Repair - Reconcile npm /-/v1/search metadata",
         VISIBLE,
         EXPOSED,

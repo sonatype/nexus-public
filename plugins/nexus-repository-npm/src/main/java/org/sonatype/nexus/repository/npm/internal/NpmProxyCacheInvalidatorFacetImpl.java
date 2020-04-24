@@ -42,7 +42,7 @@ public class NpmProxyCacheInvalidatorFacetImpl
   protected void on(final RepositoryUpdatedEvent event) {
     final Repository repository = event.getRepository();
 
-    repository.optionalFacet(NpmProxyFacetImpl.class).ifPresent(npm -> {
+    repository.optionalFacet(NpmProxyFacet.class).ifPresent(npm -> {
       if (!Objects.equals(getRemoteUrl(repository.getConfiguration()), getRemoteUrl(event.getOldConfiguration()))) {
         npm.invalidateProxyCaches();
       }
