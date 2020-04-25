@@ -506,6 +506,8 @@ public class AssetDAOTest
     generateRandomRepositories(1);
     generateRandomContent(1, 1000);
 
+    repositoryId = generatedRepositories().get(0).repositoryId;
+
     try (DataSession<?> session = sessionRule.openSession("content")) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
@@ -523,7 +525,11 @@ public class AssetDAOTest
                 .collect(toList())));
 
         assets = dao.browseAssets(repositoryId, 10, assets.nextContinuationToken());
+
+        page++;
       }
+
+      assertThat(page, is(100));
     }
   }
 

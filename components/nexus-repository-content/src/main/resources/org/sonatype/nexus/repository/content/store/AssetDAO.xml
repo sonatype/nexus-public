@@ -132,4 +132,11 @@
     DELETE FROM ${format}_asset WHERE repository_id = #{repositoryId}<if test="limit gt 0"> LIMIT #{limit}</if>;
   </delete>
 
+  <delete id="deleteAssets" databaseId="PostgreSQL">
+    DELETE FROM ${format}_asset WHERE
+        <if test="limit gt 0"> asset_id IN (SELECT asset_id FROM ${format}_asset WHERE </if>
+        repository_id = #{repositoryId}
+        <if test="limit gt 0"> LIMIT #{limit})</if>;
+  </delete>
+
 </mapper>

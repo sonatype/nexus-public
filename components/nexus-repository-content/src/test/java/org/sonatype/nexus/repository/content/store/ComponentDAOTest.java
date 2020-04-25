@@ -284,6 +284,8 @@ public class ComponentDAOTest
     generateRandomRepositories(1);
     generateRandomContent(1000, 1000);
 
+    repositoryId = generatedRepositories().get(0).repositoryId;
+
     try (DataSession<?> session = sessionRule.openSession("content")) {
       ComponentDAO dao = session.access(TestComponentDAO.class);
 
@@ -301,7 +303,11 @@ public class ComponentDAOTest
                 .collect(toList())));
 
         components = dao.browseComponents(repositoryId, 10, components.nextContinuationToken());
+
+        page++;
       }
+
+      assertThat(page, is(100));
     }
   }
   @Test

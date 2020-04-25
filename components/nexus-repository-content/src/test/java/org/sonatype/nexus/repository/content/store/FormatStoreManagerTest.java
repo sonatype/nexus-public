@@ -176,6 +176,7 @@ public class FormatStoreManagerTest
     // add our bespoke schema for testing purposes
     try (DataSession<?> session = sessionRule.openSession("content")) {
       session.access(TestAssetDAO.class).addTestSchema();
+      session.getTransaction().commit();
     }
 
     ContentRepositoryStore<?> contentRepositoryStore = underTest.contentRepositoryStore("content");

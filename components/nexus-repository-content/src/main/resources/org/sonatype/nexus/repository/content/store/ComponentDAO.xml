@@ -103,4 +103,11 @@
     DELETE FROM ${format}_component WHERE repository_id = #{repositoryId}<if test="limit gt 0"> LIMIT #{limit}</if>;
   </delete>
 
+  <delete id="deleteComponents" databaseId="PostgreSQL">
+    DELETE FROM ${format}_component WHERE
+        <if test="limit gt 0"> component_id IN (SELECT component_id FROM ${format}_component WHERE </if>
+        repository_id = #{repositoryId}
+        <if test="limit gt 0"> LIMIT #{limit})</if>;
+  </delete>
+
 </mapper>
