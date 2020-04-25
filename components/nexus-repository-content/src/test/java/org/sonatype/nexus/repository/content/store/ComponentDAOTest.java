@@ -148,7 +148,7 @@ public class ComponentDAOTest
 
     // UPDATE
 
-    Thread.sleep(2); // make sure any new last updated times will be different
+    Thread.sleep(2); // NOSONAR make sure any new last updated times will be different
 
     // must use a new session as CURRENT_TIMESTAMP (used for last_updated) is fixed once used inside a session
 
@@ -189,7 +189,7 @@ public class ComponentDAOTest
 
     // UPDATE AGAIN
 
-    Thread.sleep(2); // make sure any new last updated times will be different
+    Thread.sleep(2); // NOSONAR make sure any new last updated times will be different
 
     // must use a new session as CURRENT_TIMESTAMP (used for last_updated) is fixed once used inside a session
 

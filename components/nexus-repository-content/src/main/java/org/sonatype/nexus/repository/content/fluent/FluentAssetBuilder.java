@@ -24,6 +24,13 @@ import org.sonatype.nexus.repository.content.Component;
 public interface FluentAssetBuilder
 {
   /**
+   * Continue building the asset using the given kind.
+   *
+   * @since 3.next
+   */
+  FluentAssetBuilder kind(String kind);
+
+  /**
    * Continue building the asset using the given owning component.
    */
   FluentAssetBuilder component(Component component);

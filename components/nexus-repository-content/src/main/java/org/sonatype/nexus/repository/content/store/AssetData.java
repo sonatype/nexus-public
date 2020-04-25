@@ -41,6 +41,8 @@ public class AssetData
 
   private String path;
 
+  private String kind;
+
   @Nullable
   Integer componentId; // NOSONAR: internal id
 
@@ -61,6 +63,11 @@ public class AssetData
   @Override
   public String path() {
     return path;
+  }
+
+  @Override
+  public String kind() {
+    return kind;
   }
 
   @Override
@@ -92,6 +99,15 @@ public class AssetData
    */
   public void setPath(final String path) {
     this.path = checkNotNull(path);
+  }
+
+  /**
+   * Sets the asset kind.
+   *
+   * @since 3.next
+   */
+  public void setKind(final String kind) {
+    this.kind = checkNotNull(kind);
   }
 
   /**

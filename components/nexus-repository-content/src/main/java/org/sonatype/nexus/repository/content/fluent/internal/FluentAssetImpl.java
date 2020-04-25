@@ -74,6 +74,11 @@ public class FluentAssetImpl
   }
 
   @Override
+  public String kind() {
+    return asset.kind();
+  }
+
+  @Override
   public Optional<Component> component() {
     return asset.component();
   }
