@@ -14,6 +14,7 @@ package org.sonatype.nexus.httpclient.config;
 
 import javax.annotation.Nullable;
 
+import org.apache.http.client.AuthenticationStrategy;
 import org.apache.http.client.RedirectStrategy;
 
 /**
@@ -42,6 +43,11 @@ public interface HttpClientConfiguration
   RedirectStrategy getRedirectStrategy();
 
   void setRedirectStrategy(@Nullable final RedirectStrategy redirectStrategy);
+
+  @Nullable
+  AuthenticationStrategy getAuthenticationStrategy();
+
+  void setAuthenticationStrategy(@Nullable final AuthenticationStrategy authenticationStrategy);
 
   HttpClientConfiguration copy();
 }

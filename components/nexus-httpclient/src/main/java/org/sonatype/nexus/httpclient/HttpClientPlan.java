@@ -106,7 +106,7 @@ public class HttpClientPlan
 
   /**
    * Get the user agent without a suffix.
-   * 
+   *
    * @since 3.1
    */
   @Nullable
@@ -138,7 +138,7 @@ public class HttpClientPlan
 
   /**
    * Get the full user agent, including suffix.
-   * 
+   *
    * @since 3.1
    */
   @Nullable

@@ -25,6 +25,7 @@ import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 import org.sonatype.nexus.httpclient.config.ProxyConfiguration;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.http.client.AuthenticationStrategy;
 import org.apache.http.client.RedirectStrategy;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -87,6 +88,10 @@ public class MemoryHttpClientConfigurationStore
     @Nullable
     private AuthenticationConfiguration authentication;
 
+    @Valid
+    @Nullable
+    private AuthenticationStrategy authenticationStrategy;
+
     @Nullable
     public ConnectionConfiguration getConnection() {
       return connection;
@@ -121,6 +126,19 @@ public class MemoryHttpClientConfigurationStore
 
     public void setRedirectStrategy(@Nullable final RedirectStrategy redirectStrategy) {
       this.redirectStrategy = redirectStrategy;
+    }
+
+    @Nullable
+    @Override
+    public AuthenticationStrategy getAuthenticationStrategy() {
+      return authenticationStrategy;
+    }
+
+    @Override
+    public void setAuthenticationStrategy(
+        @Nullable final AuthenticationStrategy authenticationStrategy)
+    {
+      this.authenticationStrategy = authenticationStrategy;
     }
 
     public MemoryHttpClientConfiguration copy() {

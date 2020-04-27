@@ -22,6 +22,7 @@ import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 import org.sonatype.nexus.httpclient.config.ProxyConfiguration;
 import org.sonatype.nexus.internal.httpclient.AuthenticationConfigurationDeserializer;
 
+import org.apache.http.client.AuthenticationStrategy;
 import org.apache.http.client.RedirectStrategy;
 
 /**
@@ -54,6 +55,10 @@ public class OrientHttpClientConfiguration
   @Nullable
   private AuthenticationConfiguration authentication;
 
+  @Valid
+  @Nullable
+  private AuthenticationStrategy authenticationStrategy;
+
   @Nullable
   public ConnectionConfiguration getConnection() {
     return connection;
@@ -79,6 +84,19 @@ public class OrientHttpClientConfiguration
 
   public void setAuthentication(@Nullable final AuthenticationConfiguration authentication) {
     this.authentication = authentication;
+  }
+
+  @Nullable
+  @Override
+  public AuthenticationStrategy getAuthenticationStrategy() {
+    return authenticationStrategy;
+  }
+
+  @Override
+  public void setAuthenticationStrategy(
+      @Nullable final AuthenticationStrategy authenticationStrategy)
+  {
+    this.authenticationStrategy = authenticationStrategy;
   }
 
   @Nullable
