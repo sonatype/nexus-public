@@ -10,27 +10,31 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.elasticsearch.internal;
+package org.sonatype.nexus.repository.npm.internal;
 
-import java.util.Collection;
+import javax.annotation.Nonnull;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-import org.elasticsearch.Version;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.node.Node;
-import org.elasticsearch.node.internal.InternalSettingsPreparer;
-import org.elasticsearch.plugins.Plugin;
+import org.sonatype.nexus.repository.view.Context;
+import org.sonatype.nexus.repository.view.Handler;
+import org.sonatype.nexus.repository.view.Response;
 
 /**
- * Custom {@link org.elasticsearch.node.Node} implementation to allow {@link Plugin} classes to be passed into the
- * constructor.
+ * Handle 'npm audit' cmd.
  *
- * @since 3.1
+ * @since 3.next
  */
-public class PluginUsingNode
-    extends Node
+@Named
+@Singleton
+public class NpmAuditHandler
+    implements Handler
 {
-  public PluginUsingNode(final Settings preparedSettings, Collection<Class<? extends Plugin>> plugins) {
-    super(InternalSettingsPreparer.prepareEnvironment(preparedSettings, null), Version.CURRENT, plugins);
+  @Nonnull
+  @Override
+  public Response handle(@Nonnull final Context context) throws Exception
+  {
+    NpmAuditFacet npmAuditFacet = context.getRepository().facet(NpmAuditFacet.class);
+    return NpmResponses.ok(npmAuditFacet.audit(context.getRequest().getPayload()));
   }
 }
-

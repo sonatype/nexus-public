@@ -10,27 +10,18 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.elasticsearch.internal;
+package org.sonatype.nexus.repository.npm.internal.audit.exceptions;
 
-import java.util.Collection;
-
-import org.elasticsearch.Version;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.node.Node;
-import org.elasticsearch.node.internal.InternalSettingsPreparer;
-import org.elasticsearch.plugins.Plugin;
+import static org.sonatype.nexus.repository.npm.internal.audit.model.NpmAuditError.PARSING_ISSUE;
 
 /**
- * Custom {@link org.elasticsearch.node.Node} implementation to allow {@link Plugin} classes to be passed into the
- * constructor.
+ * Thrown when package-lock parsing went wrong.
  *
- * @since 3.1
+ * @since 3.next
  */
-public class PluginUsingNode
-    extends Node
+public class PackageLockParsingException extends Exception
 {
-  public PluginUsingNode(final Settings preparedSettings, Collection<Class<? extends Plugin>> plugins) {
-    super(InternalSettingsPreparer.prepareEnvironment(preparedSettings, null), Version.CURRENT, plugins);
+  public PackageLockParsingException() {
+    super(PARSING_ISSUE.getMessage());
   }
 }
-

@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.npm
 
+import java.nio.charset.StandardCharsets
+import java.util.zip.GZIPOutputStream
 
 import org.sonatype.goodies.testsupport.TestData
 import org.sonatype.nexus.common.collect.NestedAttributesMap
@@ -24,6 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.BinaryNode
 import com.google.common.collect.Maps
 import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
@@ -31,6 +34,7 @@ import org.apache.http.HttpResponse
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpDelete
 import org.apache.http.client.methods.HttpGet
+import org.apache.http.client.methods.HttpPost
 import org.apache.http.client.methods.HttpPut
 import org.apache.http.client.protocol.HttpClientContext
 import org.apache.http.entity.ByteArrayEntity
@@ -353,7 +357,14 @@ class NpmClient
         username,
         password
     )
+
     return response
+  }
+
+  void authenticate(final String username, final String password, final String email) {
+    login(username, password, email).withCloseable { response ->
+      apiToken = new JsonSlurper().parse(response.entity.content).token
+    }
   }
 
   void logout(final String token) {
@@ -439,6 +450,23 @@ class NpmClient
     assert status(response) == stat
   }
 
+  void audit(final String packageLock) {
+      HttpResponse response = post(
+          resolve("-/npm/v1/security/audits"),
+          gzip(packageLock))
+      EntityUtils.consume(response.entity)
+      assert status(response) == OK
+  }
+
+  private byte[] gzip(final String str) throws IOException {
+    ByteArrayOutputStream obj = new ByteArrayOutputStream()
+    GZIPOutputStream gzip = new GZIPOutputStream(obj)
+    gzip.write(str.getBytes(StandardCharsets.UTF_8))
+    gzip.flush()
+    gzip.close()
+    return obj.toByteArray()
+  }
+
   private CloseableHttpResponse put(URI uri, String entity, String username = null, String password = null) {
     HttpPut put = new HttpPut(uri)
     put.setEntity(new ByteArrayEntity(entity.bytes, ContentType.TEXT_PLAIN))
@@ -450,6 +478,21 @@ class NpmClient
     }
     else {
       return execute(put)
+    }
+  }
+
+  private CloseableHttpResponse post(URI uri, byte[] entity, String username = null, String password = null, ContentType contentType = null)
+  {
+    HttpPost post = new HttpPost(uri)
+    post.setEntity(new ByteArrayEntity(entity, contentType))
+    if (apiToken) {
+      post.setHeader("authorization", "Bearer $apiToken")
+    }
+    if (username && password) {
+      return execute(post, username, password)
+    }
+    else {
+      return execute(post)
     }
   }
 

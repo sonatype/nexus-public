@@ -10,27 +10,29 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.elasticsearch.internal;
-
-import java.util.Collection;
-
-import org.elasticsearch.Version;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.node.Node;
-import org.elasticsearch.node.internal.InternalSettingsPreparer;
-import org.elasticsearch.plugins.Plugin;
+package org.sonatype.nexus.repository.npm.internal.audit.model;
 
 /**
- * Custom {@link org.elasticsearch.node.Node} implementation to allow {@link Plugin} classes to be passed into the
- * constructor.
+ * Enum of error codes and error messages for npm audit
  *
- * @since 3.1
+ * @since 3.next
  */
-public class PluginUsingNode
-    extends Node
+public enum NpmAuditError
 {
-  public PluginUsingNode(final Settings preparedSettings, Collection<Class<? extends Plugin>> plugins) {
-    super(InternalSettingsPreparer.prepareEnvironment(preparedSettings, null), Version.CURRENT, plugins);
+  ABSENT_PARSING_FILE("Neither npm-shrinkwrap.json nor package-lock.json found"),
+  PARSING_ISSUE("Can't parse npm-shrinkwrap.json or package-lock.json"),
+  COMPONENT_NOT_FOUND("Component wasn't found in package-lock.json"),
+  SERVER_INTERNAL_ERROR("Server error"),
+  TIMEOUT_ERROR("Waiting for results too long"),
+  INTERRUPT_ERROR("Interrupt error");
+
+  private final String message;
+
+  NpmAuditError(final String message) {
+    this.message = message;
+  }
+
+  public String getMessage() {
+    return message;
   }
 }
-
