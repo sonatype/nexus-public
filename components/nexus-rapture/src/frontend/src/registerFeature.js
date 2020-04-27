@@ -57,6 +57,11 @@ export default function registerFeature(feature) {
         console.debug("bundleActive="+isVisible, visibility.bundle);
       }
 
+      if (isVisible && visibility.licenseValid) {
+        isVisible = visibility.licenseValid.every(licenseValid => NX.State.getValue(licenseValid.key, licenseValid.defaultValue)['licenseValid']);
+        console.debug("licenseValid="+isVisible, visibility.licenseValid);
+      }
+
       if (isVisible && visibility.featureFlags) {
         isVisible = visibility.featureFlags.every(featureFlag => NX.State.getValue(featureFlag.key, featureFlag.defaultValue));
         console.debug("featureFlagsActive="+isVisible, visibility.featureFlags);

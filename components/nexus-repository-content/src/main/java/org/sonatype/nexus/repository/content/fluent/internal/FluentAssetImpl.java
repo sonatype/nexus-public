@@ -18,6 +18,7 @@ import java.util.Optional;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.MissingBlobException;
 import org.sonatype.nexus.repository.Repository;
@@ -31,7 +32,6 @@ import org.sonatype.nexus.repository.content.store.AssetBlobData;
 import org.sonatype.nexus.repository.content.store.AssetData;
 import org.sonatype.nexus.repository.content.store.WrappedContent;
 import org.sonatype.nexus.repository.view.Content;
-import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.BlobPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
@@ -71,6 +71,11 @@ public class FluentAssetImpl
   @Override
   public String path() {
     return asset.path();
+  }
+
+  @Override
+  public String kind() {
+    return asset.kind();
   }
 
   @Override
@@ -129,7 +134,7 @@ public class FluentAssetImpl
   }
 
   @Override
-  public Payload download() {
+  public Content download() {
     AssetBlob assetBlob = asset.blob()
         .orElseThrow(() -> new IllegalStateException("No blob attached to " + asset.path()));
 
@@ -139,7 +144,17 @@ public class FluentAssetImpl
       throw new MissingBlobException(blobRef);
     }
 
-    return new Content(new BlobPayload(blob, assetBlob.contentType()));
+    Content content = new Content(new BlobPayload(blob, assetBlob.contentType()));
+
+    AttributesMap contentAttributes = content.getAttributes();
+    contentAttributes.set(Asset.class, this);
+
+    return content;
+  }
+
+  @Override
+  public void markAsDownloaded() {
+    facet.assetStore().markAsDownloaded(asset);
   }
 
   @Override

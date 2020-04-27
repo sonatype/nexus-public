@@ -42,7 +42,8 @@ public class FluentAssetsImpl
 
   @Override
   public FluentAsset with(final Asset asset) {
-    return new FluentAssetImpl(facet, asset);
+    return asset instanceof FluentAsset ? (FluentAsset) asset
+        : new FluentAssetImpl(facet, asset);
   }
 
   @Override

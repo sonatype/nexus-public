@@ -18,6 +18,7 @@ import java.util.List;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.store.example.TestAssetDAO;
 import org.sonatype.nexus.repository.content.store.example.TestComponentDAO;
 import org.sonatype.nexus.repository.content.store.example.TestContentRepositoryDAO;
 
@@ -63,6 +64,7 @@ public class ComponentDAOTest
     generateRandomNamespaces(100);
     generateRandomNames(100);
     generateRandomVersions(100);
+    generateRandomPaths(100);
   }
 
   @Test
@@ -146,7 +148,7 @@ public class ComponentDAOTest
 
     // UPDATE
 
-    Thread.sleep(2); // make sure any new last updated times will be different
+    Thread.sleep(2); // NOSONAR make sure any new last updated times will be different
 
     // must use a new session as CURRENT_TIMESTAMP (used for last_updated) is fixed once used inside a session
 
@@ -187,7 +189,7 @@ public class ComponentDAOTest
 
     // UPDATE AGAIN
 
-    Thread.sleep(2); // make sure any new last updated times will be different
+    Thread.sleep(2); // NOSONAR make sure any new last updated times will be different
 
     // must use a new session as CURRENT_TIMESTAMP (used for last_updated) is fixed once used inside a session
 
@@ -234,7 +236,7 @@ public class ComponentDAOTest
       assertThat(dao.browseComponents(repositoryId, 10, null),
           contains(allOf(sameCoordinates(component2), sameAttributes(component2))));
 
-      assertTrue(dao.deleteComponents(repositoryId));
+      assertTrue(dao.deleteComponents(repositoryId, 0));
 
       assertThat(dao.browseComponents(repositoryId, 10, null), emptyIterable());
 
@@ -244,8 +246,6 @@ public class ComponentDAOTest
 
   @Test
   public void testBrowseComponentCoordinates() {
-
-    generateRandomPaths(100);
 
     // scatter components and assets
     generateRandomRepositories(10);
@@ -284,6 +284,8 @@ public class ComponentDAOTest
     generateRandomRepositories(1);
     generateRandomContent(1000, 1000);
 
+    repositoryId = generatedRepositories().get(0).repositoryId;
+
     try (DataSession<?> session = sessionRule.openSession("content")) {
       ComponentDAO dao = session.access(TestComponentDAO.class);
 
@@ -301,7 +303,45 @@ public class ComponentDAOTest
                 .collect(toList())));
 
         components = dao.browseComponents(repositoryId, 10, components.nextContinuationToken());
+
+        page++;
       }
+
+      assertThat(page, is(100));
+    }
+  }
+  @Test
+  public void testDeleteAllComponents() {
+
+    // scatter components and assets
+    generateRandomRepositories(1);
+    generateRandomContent(100, 100);
+
+    repositoryId = generatedRepositories().get(0).contentRepositoryId();
+
+    try (DataSession<?> session = sessionRule.openSession("content")) {
+      ComponentDAO dao = session.access(TestComponentDAO.class);
+
+      assertThat(dao.browseComponents(repositoryId, 100, null).size(), is(100));
+
+      // must delete assets before we start deleting their components
+      session.access(TestAssetDAO.class).deleteAssets(repositoryId, 100);
+
+      dao.deleteComponents(repositoryId, 20);
+
+      assertThat(dao.browseComponents(repositoryId, 100, null).size(), is(80));
+
+      dao.deleteComponents(repositoryId, 10);
+
+      assertThat(dao.browseComponents(repositoryId, 100, null).size(), is(70));
+
+      dao.deleteComponents(repositoryId, 0);
+
+      assertThat(dao.browseComponents(repositoryId, 100, null).size(), is(0));
+
+      dao.deleteComponents(repositoryId, -1);
+
+      assertThat(dao.browseComponents(repositoryId, 100, null).size(), is(0));
     }
   }
 }

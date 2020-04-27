@@ -21,12 +21,12 @@ public class RawCoordinatesHelper
 {
   public static String getGroup(String path) {
     StringBuilder group = new StringBuilder();
-    if (!path.startsWith("/")) {
+    int i = path.lastIndexOf('/');
+    if (!path.startsWith("/") || i == 0) {
       group.append("/");
     }
-    int i = path.lastIndexOf("/");
     if (i != -1) {
-      group.append(path.substring(0, i));
+      group.append(path, 0, i);
     }
     return group.toString();
   }

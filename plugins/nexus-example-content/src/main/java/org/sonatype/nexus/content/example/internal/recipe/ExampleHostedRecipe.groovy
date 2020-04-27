@@ -76,7 +76,7 @@ class ExampleHostedRecipe
     )
 
     builder.route(new Route.Builder()
-        .matcher(new TokenMatcher('/{name:.+}'))
+        .matcher(new TokenMatcher('{path:/.+}'))
         .handler(timingHandler)
         .handler(securityHandler)
         .handler(exceptionHandler)

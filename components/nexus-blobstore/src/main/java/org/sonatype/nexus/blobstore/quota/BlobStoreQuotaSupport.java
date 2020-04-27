@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.blobstore.quota;
 
-import java.util.Locale;
-
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
@@ -38,46 +36,11 @@ public abstract class BlobStoreQuotaSupport
     extends ComponentSupport
     implements BlobStoreQuota
 {
-  //Must be in ascending order of exponent
-  private enum SIPrefix
-  {
-    BYTE("B", pow(10, 0)),
-    KILO("KB", pow(10, 3)),
-    MEGA("MB", pow(10, 6)),
-    GIGA("GB", pow(10, 9)),
-    TERA("TB", pow(10, 12)),
-    PETA("PB", pow(10, 15)),
-    EXA("EB", pow(10, 18));
-
-    final String name;
-
-    final double value;
-
-    SIPrefix(final String name, final double value) {
-      this.name = name;
-      this.value = value;
-    }
-  }
-
   public static final String ROOT_KEY = "blobStoreQuotaConfig";
 
   public static final String TYPE_KEY = "quotaType";
 
   public static final String LIMIT_KEY = "quotaLimitBytes";
-
-  public static String convertBytesToSI(final long bytes) {
-    SIPrefix prefix;
-
-    if (bytes == 0) {
-      prefix = SIPrefix.BYTE;
-    }
-    else {
-      double exponent = floor(log10(abs(bytes)));
-      prefix = SIPrefix.values()[(int) exponent / 3];
-    }
-
-    return format(Locale.ENGLISH, "%.2f %s", bytes / prefix.value, prefix.name);
-  }
 
   public static Runnable createQuotaCheckJob(final BlobStore blobStore,
                                              final BlobStoreQuotaService quotaService,

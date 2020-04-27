@@ -21,7 +21,7 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.FacetSupport;
-import org.sonatype.nexus.repository.npm.internal.NpmFacetUtils;
+import org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetManager;
 import org.sonatype.nexus.repository.storage.Bucket;
@@ -35,9 +35,9 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 
 import org.joda.time.DateTime;
 
-import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.findRepositoryRootAsset;
-import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.saveRepositoryRoot;
-import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.toContent;
+import static org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils.findRepositoryRootAsset;
+import static org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils.saveRepositoryRoot;
+import static org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils.toContent;
 
 /**
  * npm search index facet for repository types that do their own caching of index document (currently all except

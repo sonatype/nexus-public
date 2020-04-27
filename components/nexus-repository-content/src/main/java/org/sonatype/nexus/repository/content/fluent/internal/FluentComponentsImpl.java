@@ -44,7 +44,8 @@ public class FluentComponentsImpl
 
   @Override
   public FluentComponent with(final Component component) {
-    return new FluentComponentImpl(facet, component);
+    return component instanceof FluentComponent ? (FluentComponent) component
+        : new FluentComponentImpl(facet, component);
   }
 
   @Override

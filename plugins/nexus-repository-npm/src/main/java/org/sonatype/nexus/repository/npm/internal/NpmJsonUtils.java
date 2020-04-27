@@ -68,7 +68,7 @@ public final class NpmJsonUtils
    * Parses JSON content into map.
    */
   @Nonnull
-  static NestedAttributesMap parse(final Supplier<InputStream> streamSupplier) throws IOException {
+  public static NestedAttributesMap parse(final Supplier<InputStream> streamSupplier) throws IOException {
     try {
       final Map<String, Object> backing =
           mapper.<Map<String, Object>>readValue(streamSupplier.get(), rawMapJsonTypeRef);
@@ -92,7 +92,7 @@ public final class NpmJsonUtils
   /**
    * Serializes input map as JSON into given {@link Writer}.
    */
-  static void serialize(final Writer out, final NestedAttributesMap packageRoot) {
+  public static void serialize(final Writer out, final NestedAttributesMap packageRoot) {
     try {
       mapper.writeValue(out, packageRoot.backing());
     }
@@ -106,7 +106,7 @@ public final class NpmJsonUtils
    * Serializes input map as JSON into byte array.
    */
   @Nonnull
-  static byte[] bytes(final NestedAttributesMap packageRoot) {
+  public static byte[] bytes(final NestedAttributesMap packageRoot) {
     final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     final OutputStreamWriter writer = new OutputStreamWriter(byteArrayOutputStream, StandardCharsets.UTF_8);
     serialize(writer, packageRoot);

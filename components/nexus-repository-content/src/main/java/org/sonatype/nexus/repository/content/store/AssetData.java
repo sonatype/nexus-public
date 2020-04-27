@@ -24,8 +24,9 @@ import org.sonatype.nexus.repository.content.Component;
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 import static java.util.Optional.ofNullable;
+import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetBlobId;
+import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
 
 /**
  * {@link Asset} data backed by the content data store.
@@ -39,6 +40,8 @@ public class AssetData
   Integer assetId; // NOSONAR: internal id
 
   private String path;
+
+  private String kind;
 
   @Nullable
   Integer componentId; // NOSONAR: internal id
@@ -60,6 +63,11 @@ public class AssetData
   @Override
   public String path() {
     return path;
+  }
+
+  @Override
+  public String kind() {
+    return kind;
   }
 
   @Override
@@ -94,13 +102,20 @@ public class AssetData
   }
 
   /**
+   * Sets the asset kind.
+   *
+   * @since 3.next
+   */
+  public void setKind(final String kind) {
+    this.kind = checkNotNull(kind);
+  }
+
+  /**
    * Sets the (optional) owning component.
    */
   public void setComponent(@Nullable final Component component) {
     if (component != null) {
-      ComponentData componentData = (ComponentData) component;
-      checkState(componentData.componentId != null, "Add Component to content store before attaching it to Asset");
-      this.componentId = componentData.componentId;
+      this.componentId = internalComponentId(component);
     }
     else {
       this.componentId = null;
@@ -113,9 +128,7 @@ public class AssetData
    */
   public void setAssetBlob(@Nullable final AssetBlob assetBlob) {
     if (assetBlob != null) {
-      AssetBlobData assetBlobData = (AssetBlobData) assetBlob;
-      checkState(assetBlobData.assetBlobId != null, "Add AssetBlob to content store before attaching it to Asset");
-      this.assetBlobId = assetBlobData.assetBlobId;
+      this.assetBlobId = internalAssetBlobId(assetBlob);
     }
     else {
       this.assetBlobId = null;

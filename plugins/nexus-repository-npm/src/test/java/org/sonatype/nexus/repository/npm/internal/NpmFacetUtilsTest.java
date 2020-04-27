@@ -16,24 +16,21 @@ import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils;
 import org.sonatype.nexus.repository.view.Content;
-import org.sonatype.nexus.repository.view.ContentTypes;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import org.apache.commons.io.IOUtils;
-import org.hamcrest.core.StringContains;
 import org.junit.Test;
 import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.rapture.PasswordPlaceholder.is;
 import static org.sonatype.nexus.repository.view.ContentTypes.APPLICATION_JSON;
 
 public class NpmFacetUtilsTest

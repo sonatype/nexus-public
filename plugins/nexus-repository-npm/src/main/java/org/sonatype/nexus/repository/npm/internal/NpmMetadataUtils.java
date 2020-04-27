@@ -47,19 +47,19 @@ public final class NpmMetadataUtils
   }
 
   @VisibleForTesting
-  static final DateTimeFormatter NPM_TIMESTAMP_FORMAT = ISODateTimeFormat.dateTime().withZone(DateTimeZone.UTC);
+  public static final DateTimeFormatter NPM_TIMESTAMP_FORMAT = ISODateTimeFormat.dateTime().withZone(DateTimeZone.UTC);
 
-  static final String NAME = "name";
+  public static final String NAME = "name";
 
-  static final String DIST_TAGS = "dist-tags";
+  public static final String DIST_TAGS = "dist-tags";
 
-  static final String VERSIONS = "versions";
+  public static final String VERSIONS = "versions";
 
-  static final String VERSION = "version";
+  public static final String VERSION = "version";
 
-  static final String DEPRECATED = "deprecated";
+  public static final String DEPRECATED = "deprecated";
 
-  static final String TIME = "time";
+  public static final String TIME = "time";
 
   private static final String MODIFIED = "modified";
 
@@ -67,13 +67,13 @@ public final class NpmMetadataUtils
 
   static final String LATEST = "latest";
 
-  static final String DIST = "dist";
+  public static final String DIST = "dist";
 
-  static final String TARBALL = "tarball";
+  public static final String TARBALL = "tarball";
 
-  static final String META_ID = "_id";
+  public static final String META_ID = "_id";
 
-  static final String META_REV = "_rev";
+  public static final String META_REV = "_rev";
 
   public static final String META_UPDATED = "_updated";
 
@@ -91,7 +91,7 @@ public final class NpmMetadataUtils
    * Extracts the tarball filename from tarball "url-ish" strings.
    */
   @Nonnull
-  static String extractTarballName(final String tarballUrl) {
+  public static String extractTarballName(final String tarballUrl) {
     int idx = tarballUrl.lastIndexOf('/');
     if (idx != -1) {
       return tarballUrl.substring(idx + 1);
@@ -107,7 +107,7 @@ public final class NpmMetadataUtils
    * @since 3.7
    */
   @Nullable
-  static String extractTarballName(final NestedAttributesMap packageMetadata) {
+  public static String extractTarballName(final NestedAttributesMap packageMetadata) {
     String version = packageMetadata.child(DIST_TAGS).get(LATEST, String.class);
     if (version == null) {
       return null;
@@ -123,7 +123,7 @@ public final class NpmMetadataUtils
    * Selects and returns version metadata object based on tarball name.
    */
   @Nullable
-  static NestedAttributesMap selectVersionByTarballName(
+  public static NestedAttributesMap selectVersionByTarballName(
       final NestedAttributesMap packageRoot,
       final String tarballName)
   {
@@ -142,7 +142,7 @@ public final class NpmMetadataUtils
   /**
    * Maintains the time fields of npm package root. Sets created time if it doesn't exist, updates the modified time.
    */
-  static DateTime maintainTime(final NestedAttributesMap packageRoot) {
+  public static DateTime maintainTime(final NestedAttributesMap packageRoot) {
     final NestedAttributesMap time = packageRoot.child(TIME);
     final DateTime now = DateTime.now();
     final String nowString = NPM_TIMESTAMP_FORMAT.print(now);
@@ -174,7 +174,7 @@ public final class NpmMetadataUtils
   /**
    * Rewrites dist/tarball entry URLs to point back to this Nexus instance and given repository.
    */
-  static void rewriteTarballUrl(final String repositoryName, final NestedAttributesMap packageRoot) {
+  public static void rewriteTarballUrl(final String repositoryName, final NestedAttributesMap packageRoot) {
     if (BaseUrlHolder.isSet()) {
       NestedAttributesMap versions = packageRoot.child(VERSIONS);
       for (String v : versions.keys()) {
@@ -244,7 +244,7 @@ public final class NpmMetadataUtils
    * unmodified. This method does not care about anything else, unlike {@link #merge(String, List)} does.
    */
   @Nonnull
-  static NestedAttributesMap overlay(final NestedAttributesMap recessive, final NestedAttributesMap dominant) {
+  public static NestedAttributesMap overlay(final NestedAttributesMap recessive, final NestedAttributesMap dominant) {
     overlay(recessive.backing(), dominant.backing(), true);
     return recessive;
   }

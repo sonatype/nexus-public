@@ -25,7 +25,7 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.npm.internal.NpmFacetUtils;
+import org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmFormat;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
@@ -62,7 +62,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.orient.testsupport.OrientExceptionMocker.mockOrientException;
-import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.REPOSITORY_ROOT_ASSET;
+import static org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils.REPOSITORY_ROOT_ASSET;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
 public class NpmSearchIndexFacetCachingTest

@@ -35,7 +35,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.REPOSITORY_ROOT_ASSET;
+import static org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils.REPOSITORY_ROOT_ASSET;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
 public class NpmSearchIndexFacetGroupTest

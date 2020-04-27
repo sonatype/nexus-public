@@ -12,8 +12,12 @@
  */
 package org.sonatype.nexus.repository.maven.internal.orient;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -57,6 +61,7 @@ import org.sonatype.nexus.repository.upload.ValidatingComponentUpload;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.Payload;
+import org.sonatype.nexus.repository.view.payloads.StreamPayload;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlobPartPayload;
 import org.sonatype.nexus.rest.ValidationErrorsException;
@@ -373,14 +378,16 @@ public class MavenUploadHandler
 
   private Map<String, String> toMap(final Coordinates coordinates) {
     Map<String, String> map = new HashMap<>();
-    map.put("groupId", coordinates.getGroupId());
-    map.put("artifactId", coordinates.getArtifactId());
-    map.put("version", coordinates.getVersion());
-    if (coordinates.getClassifier() != null) {
-      map.put("classifier", coordinates.getClassifier());
-    }
-    if (coordinates.getExtension() != null) {
-      map.put("extension", coordinates.getExtension());
+    if (coordinates != null) {
+      map.put("groupId", coordinates.getGroupId());
+      map.put("artifactId", coordinates.getArtifactId());
+      map.put("version", coordinates.getVersion());
+      if (coordinates.getClassifier() != null) {
+        map.put("classifier", coordinates.getClassifier());
+      }
+      if (coordinates.getExtension() != null) {
+        map.put("extension", coordinates.getExtension());
+      }
     }
     return map;
   }
@@ -472,5 +479,34 @@ public class MavenUploadHandler
     public UploadResponse uploadResponse() {
       return new UploadResponse(content, assetPaths);
     }
+  }
+
+  @Override
+  public Content handle(
+      final Repository repository,
+      final File content,
+      final String path)
+      throws IOException
+  {
+    MavenPath mavenPath = parser.parsePath(path);
+
+    ensurePermitted(repository.getName(), Maven2Format.NAME, mavenPath.getPath(), toMap(mavenPath.getCoordinates()));
+
+    if (mavenPath.getHashType() != null) {
+      log.debug("skipping hash file {}", mavenPath);
+      return null;
+    }
+
+    Path contentPath = content.toPath();
+    Payload payload = new StreamPayload(() -> new FileInputStream(content), content.length(), Files.probeContentType(contentPath));
+    MavenFacet mavenFacet = repository.facet(MavenFacet.class);
+    Content asset = mavenFacet.put(mavenPath, payload);
+    putChecksumFiles(mavenFacet, mavenPath, asset);
+    return asset;
+  }
+
+  @Override
+  public boolean supportsExportImport() {
+    return true;
   }
 }

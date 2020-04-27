@@ -24,5 +24,6 @@
     <feature>nexus-blobstore-s3</feature>
     <feature>nexus-onboarding-plugin</feature>
     <feature>nexus-default-role-plugin</feature>
+    <feature>nexus-repository-raw</feature>
   </feature>
 </features>

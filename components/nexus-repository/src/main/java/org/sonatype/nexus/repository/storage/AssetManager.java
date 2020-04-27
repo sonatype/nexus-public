@@ -17,11 +17,12 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.repository.capability.GlobalRepositorySettings;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.joda.time.Duration;
 
-import static org.sonatype.nexus.repository.storage.capability.StorageSettingsCapabilityConfiguration.DEFAULT_LAST_DOWNLOADED_INTERVAL;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Responsible for altering the runtime behaviour of assets
@@ -33,27 +34,23 @@ import static org.sonatype.nexus.repository.storage.capability.StorageSettingsCa
 public class AssetManager
     extends ComponentSupport
 {
-  private Duration lastDownloadedInterval;
+  private final GlobalRepositorySettings globalSettings;
 
   @Inject
-  public AssetManager() {
-    this.lastDownloadedInterval = DEFAULT_LAST_DOWNLOADED_INTERVAL;
+  public AssetManager(final GlobalRepositorySettings globalSettings) {
+    this.globalSettings = checkNotNull(globalSettings);
   }
 
   public void setLastDownloadedInterval(final Duration lastDownloadedInterval) {
-    if (lastDownloadedInterval.getStandardHours() < 1) {
-      log.warn("A lastDownloaded interval of {} seconds has been configured, a value less than"
-          + " 1 hour is not recommended for performance reasons", lastDownloadedInterval.getStandardSeconds());
-    }
-    this.lastDownloadedInterval = lastDownloadedInterval;
+    globalSettings.setLastDownloadedInterval(lastDownloadedInterval);
   }
 
   @VisibleForTesting
   public Duration getLastDownloadedInterval() {
-    return lastDownloadedInterval;
+    return globalSettings.getLastDownloadedInterval();
   }
 
   public boolean maybeUpdateLastDownloaded(final Asset asset) {
-    return asset.markAsDownloaded(lastDownloadedInterval);
+    return asset.markAsDownloaded(getLastDownloadedInterval());
   }
 }

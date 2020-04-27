@@ -35,11 +35,19 @@ public class FluentAssetBuilderImpl
 
   private final String path;
 
+  private String kind = "";
+
   private Component component;
 
   public FluentAssetBuilderImpl(final ContentFacetSupport facet, final String path) {
     this.facet = checkNotNull(facet);
     this.path = checkNotNull(path);
+  }
+
+  @Override
+  public FluentAssetBuilder kind(final String kind) {
+    this.kind = checkNotNull(kind);
+    return this;
   }
 
   @Override
@@ -66,6 +74,7 @@ public class FluentAssetBuilderImpl
     AssetData asset = new AssetData();
     asset.setRepositoryId(facet.contentRepositoryId());
     asset.setPath(path);
+    asset.setKind(kind);
     asset.setComponent(component);
 
     facet.assetStore().createAsset(asset);

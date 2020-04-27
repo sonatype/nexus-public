@@ -17,7 +17,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.repository.npm.internal.NpmFacetUtils;
+import org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmFormat;
 
 import org.sonatype.goodies.common.ComponentSupport;

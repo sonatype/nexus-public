@@ -26,7 +26,6 @@ import javax.inject.Inject;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.search.SearchService;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageFacet;
@@ -93,9 +92,6 @@ public abstract class GenericRepositoryITSupport<RR extends RepositoryRule>
 
   @Inject
   protected RepositoryManager repositoryManager;
-
-  @Inject
-  protected SearchService searchService;
 
   @Inject
   protected ApiKeyStore keyStore;
@@ -214,17 +210,6 @@ public abstract class GenericRepositoryITSupport<RR extends RepositoryRule>
     else {
       log.info("{} realm already configured.", realmName);
     }
-  }
-
-  /**
-   * Waits for indexing to finish and makes sure any updates are available to search.
-   *
-   * General flow is component/asset events -> bulk index requests -> search indexing.
-   */
-  protected void waitForSearch() throws Exception {
-    waitFor(eventManager::isCalmPeriod);
-    searchService.flush(false); // no need for full fsync here
-    waitFor(searchService::isCalmPeriod);
   }
 
   protected void maybeCreateUser(final String username, final String password, final String role)

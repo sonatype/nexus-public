@@ -29,7 +29,7 @@ import static com.fasterxml.jackson.core.JsonGenerator.Feature.AUTO_CLOSE_TARGET
 import static com.fasterxml.jackson.databind.SerializationFeature.FLUSH_AFTER_WRITE_VALUE;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.nonNull;
-import static org.sonatype.nexus.repository.npm.internal.NpmFacetUtils.errorInputStream;
+import static org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils.errorInputStream;
 import static org.sonatype.nexus.repository.view.ContentTypes.APPLICATION_JSON;
 
 /**

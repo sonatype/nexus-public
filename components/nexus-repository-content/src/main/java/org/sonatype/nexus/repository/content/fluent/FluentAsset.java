@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.content.fluent;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
-import org.sonatype.nexus.repository.view.Payload;
+import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 /**
@@ -46,7 +46,12 @@ public interface FluentAsset
   /**
    * Downloads this asset.
    */
-  Payload download();
+  Content download();
+
+  /**
+   * Mark this asset as recently downloaded by a user action.
+   */
+  void markAsDownloaded();
 
   /**
    * Deletes this asset.

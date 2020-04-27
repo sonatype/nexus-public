@@ -117,7 +117,8 @@ public interface AssetDAO
    * Deletes all assets in the given repository from the content data store.
    *
    * @param repositoryId the repository containing the assets
+   * @param limit when positive limits the number of assets deleted per-call
    * @return {@code true} if any assets were deleted
    */
-  boolean deleteAssets(@Param("repositoryId") int repositoryId);
+  boolean deleteAssets(@Param("repositoryId") int repositoryId, @Param("limit") int limit);
 }

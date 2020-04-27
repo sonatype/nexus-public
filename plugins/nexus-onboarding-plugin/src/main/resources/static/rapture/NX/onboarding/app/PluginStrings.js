@@ -45,11 +45,16 @@ Ext.define('NX.onboarding.app.PluginStrings', {
     },
     'NX.onboarding.view.ConfigureAnonymousAccessScreen': {
       Title: 'Configure Anonymous Access',
-      Description: '<p>Enabling anonymous access will allow unauthenticated downloads, browsing, and ' +
-      'searching of repository content by default. Permissions for unauthenticated users can be changed by ' +
-      'editing the roles assigned to the <b>anonymous</b> user.<br><br>' +
+      Description: '<p><b>Enable anonymous access</b> means that by default, users can search, browse and download  ' +
+      'components from repositories without credentials. Please <b>consider the security implications for your ' +
+      ' organization.</b>' +
+      '<br>' +
+      '<p><b>Disable anonymous access</b> should be chosen with care, as it <b>will require credentials for all</b> ' +
+      'users and/or build tools.'+
+      '<br><br>' +
       '<a href="https://links.sonatype.com/products/nexus/anonymous-access/docs" target="_blank" rel="noopener">More information <span class="x-fa fa-external-link"></a></p>',
-      Label: 'Enable anonymous access'
+      Enable_Label: 'Enable anonymous access',
+      Disable_Label: 'Disable anonymous access'
     }
   }
 }, function(obj) {

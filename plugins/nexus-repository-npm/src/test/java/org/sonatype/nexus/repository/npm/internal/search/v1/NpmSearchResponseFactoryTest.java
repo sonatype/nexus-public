@@ -15,12 +15,7 @@ package org.sonatype.nexus.repository.npm.internal.search.v1;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchHitExtractor;
-import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchResponse;
-import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchResponseFactory;
-import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchResponseObject;
-import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchResponsePackage;
-
+import org.sonatype.nexus.repository.npm.internal.search.v1.orient.NpmSearchHitExtractor;
 import org.sonatype.goodies.testsupport.TestSupport;
 
 import org.elasticsearch.search.SearchHit;

@@ -31,6 +31,13 @@ public interface Asset
   String path();
 
   /**
+   * The kind of asset.
+   *
+   * @since 3.next
+   */
+  String kind();
+
+  /**
    * Assets may be grouped together under a logical coordinate, represented by a {@link Component}.
    */
   Optional<Component> component();

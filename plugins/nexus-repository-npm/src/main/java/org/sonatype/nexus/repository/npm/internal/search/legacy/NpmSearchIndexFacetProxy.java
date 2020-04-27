@@ -18,10 +18,9 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Named;
 
-import org.sonatype.nexus.repository.npm.internal.NpmFacetUtils;
-import org.sonatype.nexus.repository.npm.internal.NpmProxyFacetImpl.ProxyTarget;
-
 import org.sonatype.nexus.repository.FacetSupport;
+import org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils;
+import org.sonatype.nexus.repository.npm.internal.NpmProxyFacet.ProxyTarget;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;

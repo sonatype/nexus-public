@@ -235,6 +235,7 @@ public class ExampleContentTestSupport
     TestAssetData asset = new TestAssetData();
     asset.setRepositoryId(repositoryId);
     asset.setPath(paths.get(random.nextInt(paths.size())));
+    asset.setKind("test");
     asset.setAttributes(newAttributes("asset"));
     return asset;
   }
@@ -274,6 +275,10 @@ public class ExampleContentTestSupport
 
   static Matcher<Asset> samePath(final Asset expected) {
     return new FieldMatcher<>(expected, Asset::path);
+  }
+
+  static Matcher<Asset> sameKind(final Asset expected) {
+    return new FieldMatcher<>(expected, Asset::kind);
   }
 
   static Matcher<Asset> sameBlob(final Asset expected) {

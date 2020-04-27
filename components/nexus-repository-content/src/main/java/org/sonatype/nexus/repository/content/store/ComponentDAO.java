@@ -137,7 +137,8 @@ public interface ComponentDAO
    * Deletes all components in the given repository from the content data store.
    *
    * @param repositoryId the repository containing the components
+   * @param limit when positive limits the number of components deleted per-call
    * @return {@code true} if any components were deleted
    */
-  boolean deleteComponents(@Param("repositoryId") int repositoryId);
+  boolean deleteComponents(@Param("repositoryId") int repositoryId, @Param("limit") int limit);
 }

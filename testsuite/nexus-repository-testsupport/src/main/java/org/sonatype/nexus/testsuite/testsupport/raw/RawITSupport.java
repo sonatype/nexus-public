@@ -20,7 +20,7 @@ import javax.inject.Inject;
 import org.sonatype.nexus.common.log.LogManager;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpStatus;
-import org.sonatype.nexus.repository.raw.RawContentFacet;
+import org.sonatype.nexus.orient.raw.RawContentFacet;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.testsuite.testsupport.RepositoryITSupport;

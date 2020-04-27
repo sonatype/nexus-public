@@ -27,10 +27,10 @@ import com.google.common.hash.HashCode;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 
+import static org.sonatype.nexus.repository.capability.GlobalRepositorySettings.DEFAULT_LAST_DOWNLOADED_INTERVAL;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_BLOB_REF;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_CONTENT_TYPE;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_SIZE;
-import static org.sonatype.nexus.repository.storage.capability.StorageSettingsCapabilityConfiguration.DEFAULT_LAST_DOWNLOADED_INTERVAL;
 
 /**
  * Metadata about a file, which may or may not belong to a component.

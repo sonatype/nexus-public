@@ -43,13 +43,26 @@ Ext.define('NX.onboarding.view.ConfigureAnonymousAccessScreen', {
         },
         items: [
           {
-            xtype: 'checkbox',
-            name: 'enabled',
-            itemId: 'anonymousEnabled',
-            value: false,
-            boxLabel: NX.I18n.render(me, 'Label')
-          }
-        ]
+            xtype: 'radiogroup',
+            allowBlank: false,
+            columns: 1,
+            items: [
+              {
+                xtype: 'radio',
+                checked: false,
+                boxLabel: NX.I18n.render(me, 'Enable_Label'),
+                name: 'configureAnonymous',
+                itemId: 'anonymousEnabled'
+              },
+              {
+                xtype: 'radio',
+                boxLabel: NX.I18n.render(me, 'Disable_Label'),
+                checked: false,
+                name: 'configureAnonymous',
+                itemId: 'anonymousDisabled'
+              }
+            ]
+          }]
       }]
     });
 

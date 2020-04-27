@@ -128,6 +128,7 @@ public class FormatStoreManagerTest
     asset.setRepositoryId(repository.repositoryId);
     asset.setComponent(component);
     asset.setPath("/path/to/asset");
+    asset.setKind("test");
     assetStore.createAsset(asset);
 
     AssetBlobData assetBlob = new AssetBlobData();
@@ -176,6 +177,7 @@ public class FormatStoreManagerTest
     // add our bespoke schema for testing purposes
     try (DataSession<?> session = sessionRule.openSession("content")) {
       session.access(TestAssetDAO.class).addTestSchema();
+      session.getTransaction().commit();
     }
 
     ContentRepositoryStore<?> contentRepositoryStore = underTest.contentRepositoryStore("content");
@@ -190,6 +192,7 @@ public class FormatStoreManagerTest
     asset.setAttributes(new NestedAttributesMap("attributes", new HashMap<>()));
     asset.setRepositoryId(repository.repositoryId);
     asset.setPath("/path/to/asset");
+    asset.setKind("test");
     assetStore.createAsset(asset);
 
     assertThat(assetStore.browseFlaggedAssets(repository.repositoryId, 10, null), is(emptyIterable()));

@@ -21,6 +21,7 @@ import javax.annotation.Nullable;
 import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.npm.internal.orient.NpmHostedFacet;
 import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexFacet;
 import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchFacet;
 import org.sonatype.nexus.repository.view.Content;
@@ -52,7 +53,7 @@ public final class NpmHandlers
 
   private static final Logger log = LoggerFactory.getLogger(NpmHandlers.class);
 
-  static final String T_PACKAGE_NAME = "packageName";
+  public static final String T_PACKAGE_NAME = "packageName";
 
   static final String T_PACKAGE_VERSION = "packageVersion";
 
@@ -71,7 +72,7 @@ public final class NpmHandlers
   static final String T_TOKEN = "token";
 
   @Nonnull
-  static NpmPackageId packageId(final TokenMatcher.State state) {
+  public static NpmPackageId packageId(final TokenMatcher.State state) {
     checkNotNull(state);
     String packageName = state.getTokens().get(T_PACKAGE_NAME);
     checkNotNull(packageName);
@@ -86,7 +87,7 @@ public final class NpmHandlers
   }
 
   @Nonnull
-  static String tarballName(final TokenMatcher.State state) {
+  public static String tarballName(final TokenMatcher.State state) {
     checkNotNull(state);
     String tarballName = state.getTokens().get(T_TARBALL_NAME);
     checkNotNull(tarballName);
@@ -94,7 +95,7 @@ public final class NpmHandlers
   }
 
   @Nullable
-  static DateTime indexSince(final Parameters parameters) {
+  public static DateTime indexSince(final Parameters parameters) {
     // npm "incremental" index support: tells when it did last updated index
     // GET /-/all/since?stale=update_after&startkey=1441712501000
     if (parameters != null && "update_after".equals(parameters.get("stale"))) {
