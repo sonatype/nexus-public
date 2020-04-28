@@ -18,6 +18,7 @@ import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.content.raw.RawContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
@@ -27,6 +28,11 @@ import org.sonatype.nexus.repository.raw.RawCoordinatesHelper;
 import org.sonatype.nexus.repository.raw.internal.RawFormat;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
+
+import com.google.common.collect.ImmutableList;
+
+import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
+import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 
 /**
  * A {@link RawContentFacet} that persists to a {@link ContentFacet}.
@@ -38,6 +44,8 @@ public class RawContentFacetImpl
     extends ContentFacetSupport
     implements RawContentFacet
 {
+  private static final Iterable<HashAlgorithm> HASHING = ImmutableList.of(MD5, SHA1);
+
   @Inject
   public RawContentFacetImpl(@Named(RawFormat.NAME) final FormatStoreManager formatStoreManager) {
     super(formatStoreManager);
@@ -50,7 +58,7 @@ public class RawContentFacetImpl
 
   @Override
   public Payload put(final String path, final Payload content) throws IOException {
-    try (TempBlob blob = blobs().ingest(content)){
+    try (TempBlob blob = blobs().ingest(content, HASHING)){
       return assets()
           .path(path)
           .component(components()

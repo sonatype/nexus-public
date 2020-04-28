@@ -12,11 +12,16 @@
  */
 package org.sonatype.nexus.repository.content.fluent;
 
+import java.util.Map;
+
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
+
+import com.google.common.hash.HashCode;
 
 /**
  * Fluent API for a particular asset.
@@ -41,7 +46,7 @@ public interface FluentAsset
   /**
    * Attaches an existing blob to this asset.
    */
-  FluentAsset attach(Blob blob);
+  FluentAsset attach(Blob blob, Map<HashAlgorithm, HashCode> checksums);
 
   /**
    * Downloads this asset.

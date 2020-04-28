@@ -25,6 +25,7 @@
       blob_ref      VARCHAR NOT NULL,
       blob_size     BIGINT NOT NULL,
       content_type  VARCHAR NOT NULL,
+      checksums     ${JSON_TYPE} NOT NULL,
       blob_created  TIMESTAMP NOT NULL,
       created_by    VARCHAR,
       created_by_ip VARCHAR,
@@ -41,8 +42,8 @@
   </select>
 
   <insert id="createAssetBlob" useGeneratedKeys="true" keyProperty="assetBlobId" parameterType="AssetBlobData">
-    INSERT INTO ${format}_asset_blob (blob_ref, blob_size, content_type, blob_created, created_by, created_by_ip)
-        VALUES (#{blobRef}, #{blobSize}, #{contentType}, #{blobCreated}, #{createdBy}, #{createdByIp});
+    INSERT INTO ${format}_asset_blob (blob_ref, blob_size, content_type, checksums, blob_created, created_by, created_by_ip)
+        VALUES (#{blobRef}, #{blobSize}, #{contentType}, #{checksums}, #{blobCreated}, #{createdBy}, #{createdByIp});
   </insert>
 
   <select id="readAssetBlob" resultType="AssetBlobData">

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -40,6 +41,8 @@ public class AssetBlobData
 
   private String contentType;
 
+  private Map<String, String> checksums;
+
   private DateTime blobCreated;
 
   @Nullable
@@ -63,6 +66,11 @@ public class AssetBlobData
   @Override
   public String contentType() {
     return contentType;
+  }
+
+  @Override
+  public Map<String, String> checksums() {
+    return checksums;
   }
 
   @Override
@@ -108,6 +116,15 @@ public class AssetBlobData
    */
   public void setContentType(final String contentType) {
     this.contentType = checkNotNull(contentType);
+  }
+
+  /**
+   * Sets the checksums for the blob.
+   *
+   * @since 3.next
+   */
+  public void setChecksums(final Map<String, String> checksums) {
+    this.checksums = checkNotNull(checksums);
   }
 
   /**

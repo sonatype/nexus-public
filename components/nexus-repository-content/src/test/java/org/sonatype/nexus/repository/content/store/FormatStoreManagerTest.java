@@ -36,6 +36,7 @@ import org.sonatype.nexus.transaction.TransactionModule;
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -135,6 +136,7 @@ public class FormatStoreManagerTest
     assetBlob.setBlobRef(new BlobRef("local", "default", "testBlob"));
     assetBlob.setBlobSize(0);
     assetBlob.setContentType("text/plain");
+    assetBlob.setChecksums(ImmutableMap.of());
     assetBlob.setBlobCreated(now(UTC));
     assetBlobStore.createAssetBlob(assetBlob);
 

@@ -245,6 +245,7 @@ public class ExampleContentTestSupport
     assetBlob.setBlobRef(new BlobRef("test-node", "test-store", randomUUID().toString()));
     assetBlob.setBlobSize(random.nextInt(1024 * 1024));
     assetBlob.setContentType("text/plain");
+    assetBlob.setChecksums(ImmutableMap.of());
     assetBlob.setBlobCreated(now(UTC));
     return assetBlob;
   }

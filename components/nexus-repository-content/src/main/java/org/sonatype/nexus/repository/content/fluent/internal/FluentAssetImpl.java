@@ -20,6 +20,7 @@ import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.MissingBlobException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
@@ -37,9 +38,11 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
+import com.google.common.hash.HashCode;
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
@@ -117,15 +120,15 @@ public class FluentAssetImpl
 
   @Override
   public FluentAsset attach(final TempBlob tempBlob) {
-    return attach(makePermanent(tempBlob));
+    return attach(makePermanent(tempBlob), tempBlob.getHashes());
   }
 
   @Override
-  public FluentAsset attach(final Blob blob) {
+  public FluentAsset attach(final Blob blob, final Map<HashAlgorithm, HashCode> checksums) {
 
     BlobRef blobRef = blobRef(blob);
     AssetBlob assetBlob = facet.assetBlobStore().readAssetBlob(blobRef)
-        .orElseGet(() -> createAssetBlob(blobRef, blob));
+        .orElseGet(() -> createAssetBlob(blobRef, blob, checksums));
 
     ((AssetData) asset).setAssetBlob(assetBlob);
     facet.assetStore().updateAssetBlobLink(asset);
@@ -167,7 +170,10 @@ public class FluentAssetImpl
     return asset;
   }
 
-  private AssetBlobData createAssetBlob(final BlobRef blobRef, final Blob blob) {
+  private AssetBlobData createAssetBlob(final BlobRef blobRef,
+                                        final Blob blob,
+                                        final Map<HashAlgorithm, HashCode> checksums)
+  {
     BlobMetrics metrics = blob.getMetrics();
     Map<String, String> headers = blob.getHeaders();
 
@@ -175,6 +181,12 @@ public class FluentAssetImpl
     assetBlob.setBlobRef(blobRef);
     assetBlob.setBlobSize(metrics.getContentSize());
     assetBlob.setContentType(headers.get(CONTENT_TYPE_HEADER));
+
+    assetBlob.setChecksums(checksums.entrySet().stream().collect(
+        toImmutableMap(
+            e -> e.getKey().name(),
+            e -> e.getValue().toString())));
+
     assetBlob.setBlobCreated(metrics.getCreationTime());
     assetBlob.setCreatedBy(headers.get(CREATED_BY_HEADER));
     assetBlob.setCreatedByIp(headers.get(CREATED_BY_IP_HEADER));

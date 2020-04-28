@@ -28,12 +28,12 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 public interface FluentBlobs
 {
   /**
-   * Ingests the given stream as a temporary blob with the requested hashes.
+   * Ingests the given stream as a temporary blob with the requested hashing.
    */
-  TempBlob ingest(InputStream in, @Nullable String contentType, HashAlgorithm... hashing);
+  TempBlob ingest(InputStream in, @Nullable String contentType, Iterable<HashAlgorithm> hashing);
 
   /**
-   * Ingests the given payload as a temporary blob with the requested hashes.
+   * Ingests the given payload as a temporary blob with the requested hashing.
    */
-  TempBlob ingest(Payload payload, HashAlgorithm... hashing);
+  TempBlob ingest(Payload payload, Iterable<HashAlgorithm> hashing);
 }

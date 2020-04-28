@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content;
 
+import java.util.Map;
 import java.util.Optional;
 
 import org.sonatype.nexus.blobstore.api.Blob;
@@ -43,6 +44,13 @@ public interface AssetBlob
    * Content-type of the blob.
    */
   String contentType();
+
+  /**
+   * Checksums for the blob.
+   *
+   * @since 3.next
+   */
+  Map<String, String> checksums();
 
   /**
    * When the blob was created.

@@ -33,7 +33,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Arrays.asList;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
@@ -58,7 +57,10 @@ public class FluentBlobsImpl
   }
 
   @Override
-  public TempBlob ingest(final InputStream in, @Nullable final String contentType, final HashAlgorithm... hashing) {
+  public TempBlob ingest(final InputStream in,
+                         @Nullable final String contentType,
+                         final Iterable<HashAlgorithm> hashing)
+  {
     Optional<ClientInfo> clientInfo = facet.clientInfo();
 
     Builder<String, String> tempHeaders = ImmutableMap.builder();
@@ -69,14 +71,14 @@ public class FluentBlobsImpl
     tempHeaders.put(CREATED_BY_IP_HEADER, clientInfo.map(ClientInfo::getRemoteIP).orElse("system"));
     tempHeaders.put(CONTENT_TYPE_HEADER, ofNullable(contentType).orElse(APPLICATION_OCTET_STREAM));
 
-    MultiHashingInputStream hashingStream = new MultiHashingInputStream(asList(hashing), in);
+    MultiHashingInputStream hashingStream = new MultiHashingInputStream(hashing, in);
     Blob blob = facet.blobStore().create(hashingStream, tempHeaders.build());
 
     return new TempBlob(blob, hashingStream.hashes(), true, facet.blobStore());
   }
 
   @Override
-  public TempBlob ingest(final Payload payload, final HashAlgorithm... hashing) {
+  public TempBlob ingest(final Payload payload, final Iterable<HashAlgorithm> hashing) {
     if (payload instanceof TempBlobPartPayload) {
       return ((TempBlobPartPayload) payload).getTempBlob();
     }
