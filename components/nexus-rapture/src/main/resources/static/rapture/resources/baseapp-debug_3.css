@@ -1,4 +1,96 @@
 
+.nx-searchbox input::-webkit-input-placeholder {
+    
+    
+    color: #777;
+}
+
+.nx-searchbox input::-moz-placeholder {
+    
+    
+    color: #777;
+}
+
+.nx-searchbox input:-ms-input-placeholder {
+    
+    
+    color: #777;
+}
+
+.nx-searchbox .x-form-trigger-wrap {
+    border-color: #ddd;
+    border-radius: 3px;
+    height: 24px;
+    overflow: hidden;
+}
+
+.nx-searchbox .x-form-trigger {
+    background-image: none;
+}
+
+.nx-searchbox:hover .nx-form-fa-times-circle-trigger,
+.nx-searchbox .x-form-trigger-wrap-focus .nx-form-fa-times-circle-trigger {
+    background-image: url(images/form/fa-times-circle-trigger.png);
+}
+
+.nx-searchbox:hover .nx-form-fa-minus-circle-trigger,
+.nx-searchbox .x-form-trigger-wrap-focus .nx-form-fa-minus-circle-trigger {
+    background-image: url(images/form/fa-minus-circle-trigger.png);
+}
+
+[id^=nx-coreui-logging-feature] [id^=roweditor] .x-form-item:first-child .x-form-display-field {
+    text-overflow: clip;
+}
+
+.nx-filterbox .nx-searchbox-icon {
+    /**
+ * @class NX.ext.grid.plugin.FilterBox
+ */
+    color: grey;
+    padding-left: 3px;
+}
+
+.nx-search-tip {
+    /**
+ * @class NX.ext.plugin.SearchBoxTip
+ */
+    background-color: #fff;
+    box-shadow: 2px 2px 5px 1px rgba(0, 0, 0, 0.3);
+    border: none;
+    margin-top: 2px;
+}
+
+.nx-search-tip .x-tip-body-default {
+    color: #444;
+}
+
+.nx-search-tip .footer {
+    display: block;
+    font-size: 0.9em;
+    padding: 2px 0 0 0;
+    text-align: right;
+    width: 100%;
+}
+
+.nx-search-tip b {
+    font-size: 1.2em;
+}
+
+.nx-search-tip i {
+    font-size: 0.8em;
+}
+
+.nx-aboutwindow .x-window {
+    /**
+ * @class NX.view.AboutWindow
+ */
+    padding: 0;
+}
+
+.nx-aboutwindow .summary {
+    background-color: #f4f4f4;
+}
+
 .nx-aboutwindow .logo {
     margin: 10px;
 }
@@ -154,7 +246,7 @@
 }
 
 .x-btn-nx-mode-medium {
-    border-color: #333;
+    border-color: #cacaca;
 }
 
 .x-btn-button-nx-mode-medium {
@@ -268,12 +360,12 @@
 }
 
 .x-keyboard-mode .x-btn-focus.x-btn-nx-mode-medium {
-    border-color: #96caee;
+    border-color: #070707;
     background-image: none;
     background-color: #ddd;
-    -webkit-box-shadow: #dfdfdf 0 1px 0px 0 inset, #dfdfdf 0 -1px 0px 0 inset, #dfdfdf -1px 0 0px 0 inset, #dfdfdf 1px 0 0px 0 inset;
-    -moz-box-shadow: #dfdfdf 0 1px 0px 0 inset, #dfdfdf 0 -1px 0px 0 inset, #dfdfdf -1px 0 0px 0 inset, #dfdfdf 1px 0 0px 0 inset;
-    box-shadow: #dfdfdf 0 1px 0px 0 inset, #dfdfdf 0 -1px 0px 0 inset, #dfdfdf -1px 0 0px 0 inset, #dfdfdf 1px 0 0px 0 inset;
+    -webkit-box-shadow: #191919 0 1px 0px 0 inset, #191919 0 -1px 0px 0 inset, #191919 -1px 0 0px 0 inset, #191919 1px 0 0px 0 inset;
+    -moz-box-shadow: #191919 0 1px 0px 0 inset, #191919 0 -1px 0px 0 inset, #191919 -1px 0 0px 0 inset, #191919 1px 0 0px 0 inset;
+    box-shadow: #191919 0 1px 0px 0 inset, #191919 0 -1px 0px 0 inset, #191919 -1px 0 0px 0 inset, #191919 1px 0 0px 0 inset;
 }
 
 .x-btn-nx-mode-medium .x-btn-arrow-el {
@@ -286,10 +378,11 @@
 }
 
 .x-keyboard-mode .x-btn-nx-mode-medium.x-arrow-focus .x-btn-arrow-el {
-    border: 1px solid #dfdfdf;
+    border: 1px solid #191919;
 }
 
 .x-btn-over.x-btn-nx-mode-medium {
+    border-color: #575757;
     background-image: none;
     background-color: #29b473;
 }
@@ -303,13 +396,14 @@
     background-image: -o-linear-gradient(top, #3ebc81, #29b473 50%, #27ab6d 51%, #29b473);
     background-image: -ms-linear-gradient(top, #3ebc81, #29b473 50%, #27ab6d 51%, #29b473);
     background-image: linear-gradient(top, #3ebc81, #29b473 50%, #27ab6d 51%, #29b473);
-    -webkit-box-shadow: #dedede 0 1px 0px 0 inset, #dedede 0 -1px 0px 0 inset, #dedede -1px 0 0px 0 inset, #dedede 1px 0 0px 0 inset;
-    -moz-box-shadow: #dedede 0 1px 0px 0 inset, #dedede 0 -1px 0px 0 inset, #dedede -1px 0 0px 0 inset, #dedede 1px 0 0px 0 inset;
-    box-shadow: #dedede 0 1px 0px 0 inset, #dedede 0 -1px 0px 0 inset, #dedede -1px 0 0px 0 inset, #dedede 1px 0 0px 0 inset;
+    -webkit-box-shadow: #575757 0 1px 0px 0 inset, #575757 0 -1px 0px 0 inset, #575757 -1px 0 0px 0 inset, #575757 1px 0 0px 0 inset;
+    -moz-box-shadow: #575757 0 1px 0px 0 inset, #575757 0 -1px 0px 0 inset, #575757 -1px 0 0px 0 inset, #575757 1px 0 0px 0 inset;
+    box-shadow: #575757 0 1px 0px 0 inset, #575757 0 -1px 0px 0 inset, #575757 -1px 0 0px 0 inset, #575757 1px 0 0px 0 inset;
 }
 
 .x-btn.x-btn-menu-active.x-btn-nx-mode-medium,
 .x-btn.x-btn-pressed.x-btn-nx-mode-medium {
+    border-color: #575757;
     background-image: none;
     background-color: #29b473;
 }
@@ -324,9 +418,9 @@
     background-image: -o-linear-gradient(top, #29b473, #27ab6d 50%, #29b473 51%, #3ebc81);
     background-image: -ms-linear-gradient(top, #29b473, #27ab6d 50%, #29b473 51%, #3ebc81);
     background-image: linear-gradient(top, #29b473, #27ab6d 50%, #29b473 51%, #3ebc81);
-    -webkit-box-shadow: #dadada 0 1px 0px 0 inset, #dadada 0 -1px 0px 0 inset, #dadada -1px 0 0px 0 inset, #dadada 1px 0 0px 0 inset;
-    -moz-box-shadow: #dadada 0 1px 0px 0 inset, #dadada 0 -1px 0px 0 inset, #dadada -1px 0 0px 0 inset, #dadada 1px 0 0px 0 inset;
-    box-shadow: #dadada 0 1px 0px 0 inset, #dadada 0 -1px 0px 0 inset, #dadada -1px 0 0px 0 inset, #dadada 1px 0 0px 0 inset;
+    -webkit-box-shadow: #545454 0 1px 0px 0 inset, #545454 0 -1px 0px 0 inset, #545454 -1px 0 0px 0 inset, #545454 1px 0 0px 0 inset;
+    -moz-box-shadow: #545454 0 1px 0px 0 inset, #545454 0 -1px 0px 0 inset, #545454 -1px 0 0px 0 inset, #545454 1px 0 0px 0 inset;
+    box-shadow: #545454 0 1px 0px 0 inset, #545454 0 -1px 0px 0 inset, #545454 -1px 0 0px 0 inset, #545454 1px 0 0px 0 inset;
 }
 
 .x-btn.x-btn-disabled.x-btn-nx-mode-medium {
@@ -471,8 +565,8 @@
 }
 
 .x-btn-disabled.x-btn-nx-mode-medium {
-    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
-    opacity: 0.5;
+    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=65)";
+    opacity: 0.65;
 }
 
 .x-nbr .x-segmented-button-item-horizontal.x-btn-nx-mode-medium.x-segmented-button-first {
@@ -556,18 +650,18 @@
 
 .x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-nx-mode-medium:after {
     border-width: 1px;
-    border-color: #dfdfdf;
+    border-color: #191919;
 }
 
 .x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-over.x-btn-nx-mode-medium:after {
     border-width: 1px;
-    border-color: #dedede;
+    border-color: #575757;
 }
 
 .x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-menu-active.x-btn-nx-mode-medium:after,
 .x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-pressed.x-btn-nx-mode-medium:after {
     border-width: 1px;
-    border-color: #dadada;
+    border-color: #545454;
 }
 
 .x-button-nx-mode-medium-cell > .x-grid-cell-inner {
@@ -794,7 +888,7 @@
 }
 
 .x-btn-nx-header-medium {
-    border-color: #333;
+    border-color: #cacaca;
 }
 
 .x-btn-button-nx-header-medium {
@@ -908,12 +1002,12 @@
 }
 
 .x-keyboard-mode .x-btn-focus.x-btn-nx-header-medium {
-    border-color: #96caee;
+    border-color: #070707;
     background-image: none;
     background-color: transparent;
-    -webkit-box-shadow: #dfdfdf 0 1px 0px 0 inset, #dfdfdf 0 -1px 0px 0 inset, #dfdfdf -1px 0 0px 0 inset, #dfdfdf 1px 0 0px 0 inset;
-    -moz-box-shadow: #dfdfdf 0 1px 0px 0 inset, #dfdfdf 0 -1px 0px 0 inset, #dfdfdf -1px 0 0px 0 inset, #dfdfdf 1px 0 0px 0 inset;
-    box-shadow: #dfdfdf 0 1px 0px 0 inset, #dfdfdf 0 -1px 0px 0 inset, #dfdfdf -1px 0 0px 0 inset, #dfdfdf 1px 0 0px 0 inset;
+    -webkit-box-shadow: #191919 0 1px 0px 0 inset, #191919 0 -1px 0px 0 inset, #191919 -1px 0 0px 0 inset, #191919 1px 0 0px 0 inset;
+    -moz-box-shadow: #191919 0 1px 0px 0 inset, #191919 0 -1px 0px 0 inset, #191919 -1px 0 0px 0 inset, #191919 1px 0 0px 0 inset;
+    box-shadow: #191919 0 1px 0px 0 inset, #191919 0 -1px 0px 0 inset, #191919 -1px 0 0px 0 inset, #191919 1px 0 0px 0 inset;
 }
 
 .x-btn-nx-header-medium .x-btn-arrow-el {
@@ -926,10 +1020,11 @@
 }
 
 .x-keyboard-mode .x-btn-nx-header-medium.x-arrow-focus .x-btn-arrow-el {
-    border: 1px solid #dfdfdf;
+    border: 1px solid #191919;
 }
 
 .x-btn-over.x-btn-nx-header-medium {
+    border-color: #575757;
     background-image: none;
     background-color: #29b473;
 }
@@ -943,13 +1038,14 @@
     background-image: -o-linear-gradient(top, #3ebc81, #29b473 50%, #27ab6d 51%, #29b473);
     background-image: -ms-linear-gradient(top, #3ebc81, #29b473 50%, #27ab6d 51%, #29b473);
     background-image: linear-gradient(top, #3ebc81, #29b473 50%, #27ab6d 51%, #29b473);
-    -webkit-box-shadow: #dedede 0 1px 0px 0 inset, #dedede 0 -1px 0px 0 inset, #dedede -1px 0 0px 0 inset, #dedede 1px 0 0px 0 inset;
-    -moz-box-shadow: #dedede 0 1px 0px 0 inset, #dedede 0 -1px 0px 0 inset, #dedede -1px 0 0px 0 inset, #dedede 1px 0 0px 0 inset;
-    box-shadow: #dedede 0 1px 0px 0 inset, #dedede 0 -1px 0px 0 inset, #dedede -1px 0 0px 0 inset, #dedede 1px 0 0px 0 inset;
+    -webkit-box-shadow: #575757 0 1px 0px 0 inset, #575757 0 -1px 0px 0 inset, #575757 -1px 0 0px 0 inset, #575757 1px 0 0px 0 inset;
+    -moz-box-shadow: #575757 0 1px 0px 0 inset, #575757 0 -1px 0px 0 inset, #575757 -1px 0 0px 0 inset, #575757 1px 0 0px 0 inset;
+    box-shadow: #575757 0 1px 0px 0 inset, #575757 0 -1px 0px 0 inset, #575757 -1px 0 0px 0 inset, #575757 1px 0 0px 0 inset;
 }
 
 .x-btn.x-btn-menu-active.x-btn-nx-header-medium,
 .x-btn.x-btn-pressed.x-btn-nx-header-medium {
+    border-color: #575757;
     background-image: none;
     background-color: #29b473;
 }
@@ -964,9 +1060,9 @@
     background-image: -o-linear-gradient(top, #29b473, #27ab6d 50%, #29b473 51%, #3ebc81);
     background-image: -ms-linear-gradient(top, #29b473, #27ab6d 50%, #29b473 51%, #3ebc81);
     background-image: linear-gradient(top, #29b473, #27ab6d 50%, #29b473 51%, #3ebc81);
-    -webkit-box-shadow: #dadada 0 1px 0px 0 inset, #dadada 0 -1px 0px 0 inset, #dadada -1px 0 0px 0 inset, #dadada 1px 0 0px 0 inset;
-    -moz-box-shadow: #dadada 0 1px 0px 0 inset, #dadada 0 -1px 0px 0 inset, #dadada -1px 0 0px 0 inset, #dadada 1px 0 0px 0 inset;
-    box-shadow: #dadada 0 1px 0px 0 inset, #dadada 0 -1px 0px 0 inset, #dadada -1px 0 0px 0 inset, #dadada 1px 0 0px 0 inset;
+    -webkit-box-shadow: #545454 0 1px 0px 0 inset, #545454 0 -1px 0px 0 inset, #545454 -1px 0 0px 0 inset, #545454 1px 0 0px 0 inset;
+    -moz-box-shadow: #545454 0 1px 0px 0 inset, #545454 0 -1px 0px 0 inset, #545454 -1px 0 0px 0 inset, #545454 1px 0 0px 0 inset;
+    box-shadow: #545454 0 1px 0px 0 inset, #545454 0 -1px 0px 0 inset, #545454 -1px 0 0px 0 inset, #545454 1px 0 0px 0 inset;
 }
 
 .x-btn.x-btn-disabled.x-btn-nx-header-medium {
@@ -1111,8 +1207,8 @@
 }
 
 .x-btn-disabled.x-btn-nx-header-medium {
-    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
-    opacity: 0.5;
+    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=65)";
+    opacity: 0.65;
 }
 
 .x-nbr .x-segmented-button-item-horizontal.x-btn-nx-header-medium.x-segmented-button-first {
@@ -1196,18 +1292,18 @@
 
 .x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-nx-header-medium:after {
     border-width: 1px;
-    border-color: #dfdfdf;
+    border-color: #191919;
 }
 
 .x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-over.x-btn-nx-header-medium:after {
     border-width: 1px;
-    border-color: #dedede;
+    border-color: #575757;
 }
 
 .x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-menu-active.x-btn-nx-header-medium:after,
 .x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-pressed.x-btn-nx-header-medium:after {
     border-width: 1px;
-    border-color: #dadada;
+    border-color: #545454;
 }
 
 .x-button-nx-header-medium-cell > .x-grid-cell-inner {
@@ -3645,7 +3741,7 @@
 .x-btn-icon-el-nx-drilldown-large {
     font-size: 32px;
     height: 32px;
-    color: #fff;
+    color: #575757;
     line-height: 32px;
 }
 
@@ -3660,7 +3756,7 @@
 }
 
 .x-ie8 .x-btn-icon-el-nx-drilldown-large.x-btn-glyph {
-    color: #fff;
+    color: #575757;
 }
 
 .x-btn-text.x-btn-icon-left > .x-btn-icon-el-nx-drilldown-large {
@@ -3725,9 +3821,9 @@
 .x-keyboard-mode .x-btn-focus.x-btn-nx-drilldown-large {
     background-image: none;
     background-color: transparent;
-    -webkit-box-shadow: #dfdfdf 0 1px 0px 0 inset, #dfdfdf 0 -1px 0px 0 inset, #dfdfdf -1px 0 0px 0 inset, #dfdfdf 1px 0 0px 0 inset;
-    -moz-box-shadow: #dfdfdf 0 1px 0px 0 inset, #dfdfdf 0 -1px 0px 0 inset, #dfdfdf -1px 0 0px 0 inset, #dfdfdf 1px 0 0px 0 inset;
-    box-shadow: #dfdfdf 0 1px 0px 0 inset, #dfdfdf 0 -1px 0px 0 inset, #dfdfdf -1px 0 0px 0 inset, #dfdfdf 1px 0 0px 0 inset;
+    -webkit-box-shadow: #191919 0 1px 0px 0 inset, #191919 0 -1px 0px 0 inset, #191919 -1px 0 0px 0 inset, #191919 1px 0 0px 0 inset;
+    -moz-box-shadow: #191919 0 1px 0px 0 inset, #191919 0 -1px 0px 0 inset, #191919 -1px 0 0px 0 inset, #191919 1px 0 0px 0 inset;
+    box-shadow: #191919 0 1px 0px 0 inset, #191919 0 -1px 0px 0 inset, #191919 -1px 0 0px 0 inset, #191919 1px 0 0px 0 inset;
 }
 
 .x-keyboard-mode .x-btn-focus.x-btn-nx-drilldown-large .x-btn-inner {
@@ -3744,7 +3840,7 @@
 }
 
 .x-keyboard-mode .x-btn-nx-drilldown-large.x-arrow-focus .x-btn-arrow-el {
-    border: 1px solid #dfdfdf;
+    border: 1px solid #191919;
 }
 
 .x-btn-over.x-btn-nx-drilldown-large {
@@ -3759,9 +3855,9 @@
 .x-keyboard-mode .x-btn-focus.x-btn-over.x-btn-nx-drilldown-large {
     background-image: none;
     background-color: transparent;
-    -webkit-box-shadow: #dedede 0 1px 0px 0 inset, #dedede 0 -1px 0px 0 inset, #dedede -1px 0 0px 0 inset, #dedede 1px 0 0px 0 inset;
-    -moz-box-shadow: #dedede 0 1px 0px 0 inset, #dedede 0 -1px 0px 0 inset, #dedede -1px 0 0px 0 inset, #dedede 1px 0 0px 0 inset;
-    box-shadow: #dedede 0 1px 0px 0 inset, #dedede 0 -1px 0px 0 inset, #dedede -1px 0 0px 0 inset, #dedede 1px 0 0px 0 inset;
+    -webkit-box-shadow: #575757 0 1px 0px 0 inset, #575757 0 -1px 0px 0 inset, #575757 -1px 0 0px 0 inset, #575757 1px 0 0px 0 inset;
+    -moz-box-shadow: #575757 0 1px 0px 0 inset, #575757 0 -1px 0px 0 inset, #575757 -1px 0 0px 0 inset, #575757 1px 0 0px 0 inset;
+    box-shadow: #575757 0 1px 0px 0 inset, #575757 0 -1px 0px 0 inset, #575757 -1px 0 0px 0 inset, #575757 1px 0 0px 0 inset;
 }
 
 .x-btn.x-btn-menu-active.x-btn-nx-drilldown-large,
@@ -3779,9 +3875,9 @@
 .x-keyboard-mode .x-btn-focus.x-btn-pressed.x-btn-nx-drilldown-large {
     background-image: none;
     background-color: transparent;
-    -webkit-box-shadow: #dadada 0 1px 0px 0 inset, #dadada 0 -1px 0px 0 inset, #dadada -1px 0 0px 0 inset, #dadada 1px 0 0px 0 inset;
-    -moz-box-shadow: #dadada 0 1px 0px 0 inset, #dadada 0 -1px 0px 0 inset, #dadada -1px 0 0px 0 inset, #dadada 1px 0 0px 0 inset;
-    box-shadow: #dadada 0 1px 0px 0 inset, #dadada 0 -1px 0px 0 inset, #dadada -1px 0 0px 0 inset, #dadada 1px 0 0px 0 inset;
+    -webkit-box-shadow: #545454 0 1px 0px 0 inset, #545454 0 -1px 0px 0 inset, #545454 -1px 0 0px 0 inset, #545454 1px 0 0px 0 inset;
+    -moz-box-shadow: #545454 0 1px 0px 0 inset, #545454 0 -1px 0px 0 inset, #545454 -1px 0 0px 0 inset, #545454 1px 0 0px 0 inset;
+    box-shadow: #545454 0 1px 0px 0 inset, #545454 0 -1px 0px 0 inset, #545454 -1px 0 0px 0 inset, #545454 1px 0 0px 0 inset;
 }
 
 .x-btn.x-btn-disabled.x-btn-nx-drilldown-large {
@@ -4010,18 +4106,18 @@
 
 .x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-nx-drilldown-large:after {
     border-width: 1px;
-    border-color: #dfdfdf;
+    border-color: #191919;
 }
 
 .x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-over.x-btn-nx-drilldown-large:after {
     border-width: 1px;
-    border-color: #dedede;
+    border-color: #575757;
 }
 
 .x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-menu-active.x-btn-nx-drilldown-large:after,
 .x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-pressed.x-btn-nx-drilldown-large:after {
     border-width: 1px;
-    border-color: #dadada;
+    border-color: #545454;
 }
 
 .x-button-nx-drilldown-large-cell > .x-grid-cell-inner {
@@ -4165,7 +4261,7 @@
 .x-btn-icon-el-nx-drilldown-medium {
     font-size: 24px;
     height: 24px;
-    color: #fff;
+    color: #575757;
     line-height: 24px;
 }
 
@@ -4180,7 +4276,7 @@
 }
 
 .x-ie8 .x-btn-icon-el-nx-drilldown-medium.x-btn-glyph {
-    color: #fff;
+    color: #575757;
 }
 
 .x-btn-text.x-btn-icon-left > .x-btn-icon-el-nx-drilldown-medium {
@@ -4245,9 +4341,9 @@
 .x-keyboard-mode .x-btn-focus.x-btn-nx-drilldown-medium {
     background-image: none;
     background-color: transparent;
-    -webkit-box-shadow: #dfdfdf 0 1px 0px 0 inset, #dfdfdf 0 -1px 0px 0 inset, #dfdfdf -1px 0 0px 0 inset, #dfdfdf 1px 0 0px 0 inset;
-    -moz-box-shadow: #dfdfdf 0 1px 0px 0 inset, #dfdfdf 0 -1px 0px 0 inset, #dfdfdf -1px 0 0px 0 inset, #dfdfdf 1px 0 0px 0 inset;
-    box-shadow: #dfdfdf 0 1px 0px 0 inset, #dfdfdf 0 -1px 0px 0 inset, #dfdfdf -1px 0 0px 0 inset, #dfdfdf 1px 0 0px 0 inset;
+    -webkit-box-shadow: #191919 0 1px 0px 0 inset, #191919 0 -1px 0px 0 inset, #191919 -1px 0 0px 0 inset, #191919 1px 0 0px 0 inset;
+    -moz-box-shadow: #191919 0 1px 0px 0 inset, #191919 0 -1px 0px 0 inset, #191919 -1px 0 0px 0 inset, #191919 1px 0 0px 0 inset;
+    box-shadow: #191919 0 1px 0px 0 inset, #191919 0 -1px 0px 0 inset, #191919 -1px 0 0px 0 inset, #191919 1px 0 0px 0 inset;
 }
 
 .x-keyboard-mode .x-btn-focus.x-btn-nx-drilldown-medium .x-btn-inner {
@@ -4264,7 +4360,7 @@
 }
 
 .x-keyboard-mode .x-btn-nx-drilldown-medium.x-arrow-focus .x-btn-arrow-el {
-    border: 1px solid #dfdfdf;
+    border: 1px solid #191919;
 }
 
 .x-btn-over.x-btn-nx-drilldown-medium {
@@ -4279,9 +4375,9 @@
 .x-keyboard-mode .x-btn-focus.x-btn-over.x-btn-nx-drilldown-medium {
     background-image: none;
     background-color: transparent;
-    -webkit-box-shadow: #dedede 0 1px 0px 0 inset, #dedede 0 -1px 0px 0 inset, #dedede -1px 0 0px 0 inset, #dedede 1px 0 0px 0 inset;
-    -moz-box-shadow: #dedede 0 1px 0px 0 inset, #dedede 0 -1px 0px 0 inset, #dedede -1px 0 0px 0 inset, #dedede 1px 0 0px 0 inset;
-    box-shadow: #dedede 0 1px 0px 0 inset, #dedede 0 -1px 0px 0 inset, #dedede -1px 0 0px 0 inset, #dedede 1px 0 0px 0 inset;
+    -webkit-box-shadow: #575757 0 1px 0px 0 inset, #575757 0 -1px 0px 0 inset, #575757 -1px 0 0px 0 inset, #575757 1px 0 0px 0 inset;
+    -moz-box-shadow: #575757 0 1px 0px 0 inset, #575757 0 -1px 0px 0 inset, #575757 -1px 0 0px 0 inset, #575757 1px 0 0px 0 inset;
+    box-shadow: #575757 0 1px 0px 0 inset, #575757 0 -1px 0px 0 inset, #575757 -1px 0 0px 0 inset, #575757 1px 0 0px 0 inset;
 }
 
 .x-btn.x-btn-menu-active.x-btn-nx-drilldown-medium,
@@ -4299,9 +4395,9 @@
 .x-keyboard-mode .x-btn-focus.x-btn-pressed.x-btn-nx-drilldown-medium {
     background-image: none;
     background-color: transparent;
-    -webkit-box-shadow: #dadada 0 1px 0px 0 inset, #dadada 0 -1px 0px 0 inset, #dadada -1px 0 0px 0 inset, #dadada 1px 0 0px 0 inset;
-    -moz-box-shadow: #dadada 0 1px 0px 0 inset, #dadada 0 -1px 0px 0 inset, #dadada -1px 0 0px 0 inset, #dadada 1px 0 0px 0 inset;
-    box-shadow: #dadada 0 1px 0px 0 inset, #dadada 0 -1px 0px 0 inset, #dadada -1px 0 0px 0 inset, #dadada 1px 0 0px 0 inset;
+    -webkit-box-shadow: #545454 0 1px 0px 0 inset, #545454 0 -1px 0px 0 inset, #545454 -1px 0 0px 0 inset, #545454 1px 0 0px 0 inset;
+    -moz-box-shadow: #545454 0 1px 0px 0 inset, #545454 0 -1px 0px 0 inset, #545454 -1px 0 0px 0 inset, #545454 1px 0 0px 0 inset;
+    box-shadow: #545454 0 1px 0px 0 inset, #545454 0 -1px 0px 0 inset, #545454 -1px 0 0px 0 inset, #545454 1px 0 0px 0 inset;
 }
 
 .x-btn.x-btn-disabled.x-btn-nx-drilldown-medium {
@@ -4530,18 +4626,18 @@
 
 .x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-nx-drilldown-medium:after {
     border-width: 1px;
-    border-color: #dfdfdf;
+    border-color: #191919;
 }
 
 .x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-over.x-btn-nx-drilldown-medium:after {
     border-width: 1px;
-    border-color: #dedede;
+    border-color: #575757;
 }
 
 .x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-menu-active.x-btn-nx-drilldown-medium:after,
 .x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-pressed.x-btn-nx-drilldown-medium:after {
     border-width: 1px;
-    border-color: #dadada;
+    border-color: #545454;
 }
 
 .x-button-nx-drilldown-medium-cell > .x-grid-cell-inner {
