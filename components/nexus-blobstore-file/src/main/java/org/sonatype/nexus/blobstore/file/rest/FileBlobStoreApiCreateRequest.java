@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.blobstore.file.rest;
 
+import javax.validation.constraints.NotEmpty;
+
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 
 /**
@@ -20,6 +22,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 public class FileBlobStoreApiCreateRequest
     extends FileBlobStoreApiModel
 {
+  @NotEmpty(message = "Name is required")
   private String name;
 
   public String getName() {
