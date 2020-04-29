@@ -12,17 +12,20 @@
 @include extjs-button-small-ui(
   $ui: 'default',
 
-  $background-color: $iq-grey-100,
-  $background-color-over: $iq-grey-100,
-  $background-color-focus: $iq-grey-100,
-  $background-color-pressed: $iq-grey-100,
-  $background-color-disabled: $iq-grey-100,
+  $background-gradient: $color-white $color-light-gainsboro,
+  $background-gradient-over: $color-light-gray $color-silver,
+  $background-gradient-focus: $color-white $color-light-gainsboro,
+  $background-gradient-pressed: $color-suva-gray $color-gray,
+  $background-gradient-disabled: $color-white $color-light-gainsboro,
 
-  $background-gradient: $iq-grey-100 $iq-grey-100,
-  $background-gradient-over: $iq-grey-100 $iq-grey-100,
-  $background-gradient-focus: $iq-grey-100 $iq-grey-100,
-  $background-gradient-pressed: $iq-grey-100 $iq-grey-100,
-  $background-gradient-disabled: $iq-grey-100 $iq-grey-100
+  $color: $color-night-rider,
+  $color-over: $color-night-rider,
+  $color-focus: $color-night-rider,
+  $color-pressed: $color-white,
+  $color-disabled: $color-dark-gray,
+
+  $glyph-color: $color-night-rider,
+  $glyph-opacity: 1
 );
 
 /**
@@ -32,17 +35,31 @@
 @include extjs-button-small-ui(
   $ui: 'nx-plain',
 
-  $background-color: $iq-grey-100,
-  $background-color-over: $iq-grey-100,
-  $background-color-focus: $iq-grey-100,
-  $background-color-pressed: $iq-grey-100,
-  $background-color-disabled: $iq-grey-100,
+  $border-color: $color-gainsboro,
+  $border-color-over: $color-gainsboro,
+  $border-color-pressed: $color-gainsboro,
+  $border-color-disabled: $color-gainsboro,
 
-  $background-gradient: $iq-grey-100 $iq-grey-100,
-  $background-gradient-over: $iq-grey-100 $iq-grey-100,
-  $background-gradient-focus: $iq-grey-100 $iq-grey-100,
-  $background-gradient-pressed: $iq-grey-100 $iq-grey-100,
-  $background-gradient-disabled: $iq-grey-100 $iq-grey-100
+  $background-color: $color-white,
+  $background-color-over: $color-light-gray,
+  $background-color-focus: $color-white,
+  $background-color-pressed: $color-suva-gray,
+  $background-color-disabled: $color-white,
+
+  $background-gradient: $color-white $color-light-gainsboro,
+  $background-gradient-over: $color-light-gray $color-silver,
+  $background-gradient-focus: $color-white $color-light-gainsboro,
+  $background-gradient-pressed: $color-suva-gray $color-gray,
+  $background-gradient-disabled: $color-white $color-light-gainsboro,
+
+  $color: $color-night-rider,
+  $color-over: $color-night-rider,
+  $color-focus: $color-night-rider,
+  $color-pressed: $color-white,
+  $color-disabled: $color-dark-gray,
+
+  $glyph-color: $color-night-rider,
+  $glyph-opacity: 1
 );
 
 /**
@@ -52,24 +69,17 @@
 @include extjs-button-small-ui(
   $ui: 'nx-primary',
 
-  $background-color: $iq-blue-500,
-  $background-color-over: $iq-blue-500,
-  $background-color-focus: $iq-blue-500,
-  $background-color-pressed: $iq-blue-700,
-  $background-color-disabled: $iq-blue-500,
+  $background-color: $color-denim,
+  $background-color-over: $color-dark-denim,
+  $background-color-focus: $color-denim,
+  $background-color-pressed: $color-dark-cerulean,
+  $background-color-disabled: $color-denim,
 
-  $background-gradient: $iq-blue-500 $iq-blue-500,
-  $background-gradient-over: $iq-blue-500 $iq-blue-500,
-  $background-gradient-focus: $iq-blue-700 $iq-blue-700,
-  $background-gradient-pressed: $iq-blue-700 $iq-blue-700,
-  $background-gradient-disabled: $iq-blue-500 $iq-blue-500,
-
-  $border-color: $iq-blue-500,
-  $border-color-over: $iq-blue-700,
-  $border-color-pressed: $iq-blue-700,
-  $border-color-disabled: $iq-blue-500,
-
-  $color: $nx-blue-100
+  $background-gradient: $color-denim $color-light-cobalt,
+  $background-gradient-over: $color-dark-denim $color-smalt,
+  $background-gradient-focus: $color-denim $color-light-cobalt,
+  $background-gradient-pressed: $color-dark-cerulean $color-prussian-blue,
+  $background-gradient-disabled: $color-denim $color-light-cobalt
 );
 
 /**
@@ -79,24 +89,17 @@
 @include extjs-button-small-ui(
   $ui: 'nx-danger',
 
-  $background-color: $iq-red-700,
-  $background-color-over: $iq-red-700,
-  $background-color-focus: $iq-red-700,
-  $background-color-pressed: $iq-red-700,
-  $background-color-disabled: $iq-red-700,
+  $background-color: $color-light-cerise,
+  $background-color-over: $color-old-rose,
+  $background-color-focus: $color-light-cerise,
+  $background-color-pressed: $color-shiraz,
+  $background-color-disabled: $color-light-cerise,
 
-  $background-gradient: $iq-red-700 $iq-red-700,
-  $background-gradient-over: $iq-red-700 $iq-red-700,
-  $background-gradient-focus: $iq-red-700 $iq-red-700,
-  $background-gradient-pressed: $iq-red-700 $iq-red-700,
-  $background-gradient-disabled: $iq-red-700 $iq-red-700,
-
-  $border-color: $iq-red-800,
-  $border-color-over: $iq-red-900,
-  $border-color-pressed: $iq-red-900,
-  $border-color-disabled: $iq-red-800,
-
-  $color: $nx-blue-100
+  $background-gradient: $color-light-cerise $color-brick-red,
+  $background-gradient-over: $color-old-rose $color-fire-brick,
+  $background-gradient-focus: $color-light-cerise $color-brick-red,
+  $background-gradient-pressed: $color-shiraz $color-falu-red,
+  $background-gradient-disabled: $color-light-cerise $color-brick-red
 );
 
 /**

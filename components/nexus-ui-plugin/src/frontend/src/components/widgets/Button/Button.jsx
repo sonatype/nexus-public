@@ -21,8 +21,10 @@ import './Button.scss';
  *
  * The button component may be passed a variant value of "primary" (blue). No variant will be a gray color.
  */
-export default function Button({type, ...rest}) {
-  return <NxButton type={type || 'input'} {...rest} />;
+export default function Button({type, children, ...rest}) {
+  return <NxButton type={type || 'input'} {...rest}>
+    {children}
+  </NxButton>;
 }
 
 Button.propTypes = NxButton.propTypes;

@@ -3129,7 +3129,7 @@ the height of a multi-line element */
 }
 
 .x-btn-default-small {
-    border-color: #cacaca;
+    border-color: #333;
 }
 
 .x-btn-button-default-small {
@@ -3143,7 +3143,7 @@ the height of a multi-line element */
 
 .x-btn-inner-default-small {
     font: normal 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    color: #575757;
+    color: #fff;
     padding: 0 5px;
     max-width: 100%;
 }
@@ -3165,7 +3165,7 @@ the height of a multi-line element */
 .x-btn-icon-el-default-small {
     font-size: 16px;
     height: 16px;
-    color: #575757;
+    color: #fff;
     line-height: 16px;
 }
 
@@ -3180,7 +3180,7 @@ the height of a multi-line element */
 }
 
 .x-ie8 .x-btn-icon-el-default-small.x-btn-glyph {
-    color: #575757;
+    color: #fff;
 }
 
 .x-btn-text.x-btn-icon-left > .x-btn-icon-el-default-small {
@@ -3243,7 +3243,7 @@ the height of a multi-line element */
 }
 
 .x-keyboard-mode .x-btn-focus.x-btn-default-small {
-    border-color: #070707;
+    border-color: #96caee;
     background-image: none;
     background-color: #606060;
     background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #707070), color-stop(50%, #606060), color-stop(51%, #5b5b5b), color-stop(0%, #606060));
@@ -3252,13 +3252,9 @@ the height of a multi-line element */
     background-image: -o-linear-gradient(top, #707070, #606060 50%, #5b5b5b 51%, #606060);
     background-image: -ms-linear-gradient(top, #707070, #606060 50%, #5b5b5b 51%, #606060);
     background-image: linear-gradient(top, #707070, #606060 50%, #5b5b5b 51%, #606060);
-    -webkit-box-shadow: #191919 0 1px 0px 0 inset, #191919 0 -1px 0px 0 inset, #191919 -1px 0 0px 0 inset, #191919 1px 0 0px 0 inset;
-    -moz-box-shadow: #191919 0 1px 0px 0 inset, #191919 0 -1px 0px 0 inset, #191919 -1px 0 0px 0 inset, #191919 1px 0 0px 0 inset;
-    box-shadow: #191919 0 1px 0px 0 inset, #191919 0 -1px 0px 0 inset, #191919 -1px 0 0px 0 inset, #191919 1px 0 0px 0 inset;
-}
-
-.x-keyboard-mode .x-btn-focus.x-btn-default-small .x-btn-inner {
-    color: #070707;
+    -webkit-box-shadow: #dfdfdf 0 1px 0px 0 inset, #dfdfdf 0 -1px 0px 0 inset, #dfdfdf -1px 0 0px 0 inset, #dfdfdf 1px 0 0px 0 inset;
+    -moz-box-shadow: #dfdfdf 0 1px 0px 0 inset, #dfdfdf 0 -1px 0px 0 inset, #dfdfdf -1px 0 0px 0 inset, #dfdfdf 1px 0 0px 0 inset;
+    box-shadow: #dfdfdf 0 1px 0px 0 inset, #dfdfdf 0 -1px 0px 0 inset, #dfdfdf -1px 0 0px 0 inset, #dfdfdf 1px 0 0px 0 inset;
 }
 
 .x-btn-default-small .x-btn-arrow-el {
@@ -3271,11 +3267,10 @@ the height of a multi-line element */
 }
 
 .x-keyboard-mode .x-btn-default-small.x-arrow-focus .x-btn-arrow-el {
-    border: 1px solid #191919;
+    border: 1px solid #dfdfdf;
 }
 
 .x-btn-over.x-btn-default-small {
-    border-color: #575757;
     background-image: none;
     background-color: #585858;
     background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #696969), color-stop(50%, #585858), color-stop(51%, #545454), color-stop(0%, #585858));
@@ -3287,14 +3282,13 @@ the height of a multi-line element */
 }
 
 .x-keyboard-mode .x-btn-focus.x-btn-over.x-btn-default-small {
-    -webkit-box-shadow: #575757 0 1px 0px 0 inset, #575757 0 -1px 0px 0 inset, #575757 -1px 0 0px 0 inset, #575757 1px 0 0px 0 inset;
-    -moz-box-shadow: #575757 0 1px 0px 0 inset, #575757 0 -1px 0px 0 inset, #575757 -1px 0 0px 0 inset, #575757 1px 0 0px 0 inset;
-    box-shadow: #575757 0 1px 0px 0 inset, #575757 0 -1px 0px 0 inset, #575757 -1px 0 0px 0 inset, #575757 1px 0 0px 0 inset;
+    -webkit-box-shadow: #dedede 0 1px 0px 0 inset, #dedede 0 -1px 0px 0 inset, #dedede -1px 0 0px 0 inset, #dedede 1px 0 0px 0 inset;
+    -moz-box-shadow: #dedede 0 1px 0px 0 inset, #dedede 0 -1px 0px 0 inset, #dedede -1px 0 0px 0 inset, #dedede 1px 0 0px 0 inset;
+    box-shadow: #dedede 0 1px 0px 0 inset, #dedede 0 -1px 0px 0 inset, #dedede -1px 0 0px 0 inset, #dedede 1px 0 0px 0 inset;
 }
 
 .x-btn.x-btn-menu-active.x-btn-default-small,
 .x-btn.x-btn-pressed.x-btn-default-small {
-    border-color: #575757;
     background-image: none;
     background-color: #484848;
     background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #484848), color-stop(50%, #444), color-stop(51%, #484848), color-stop(0%, #5a5a5a));
@@ -3307,9 +3301,9 @@ the height of a multi-line element */
 
 .x-keyboard-mode .x-btn-focus.x-btn-menu-active.x-btn-default-small,
 .x-keyboard-mode .x-btn-focus.x-btn-pressed.x-btn-default-small {
-    -webkit-box-shadow: #545454 0 1px 0px 0 inset, #545454 0 -1px 0px 0 inset, #545454 -1px 0 0px 0 inset, #545454 1px 0 0px 0 inset;
-    -moz-box-shadow: #545454 0 1px 0px 0 inset, #545454 0 -1px 0px 0 inset, #545454 -1px 0 0px 0 inset, #545454 1px 0 0px 0 inset;
-    box-shadow: #545454 0 1px 0px 0 inset, #545454 0 -1px 0px 0 inset, #545454 -1px 0 0px 0 inset, #545454 1px 0 0px 0 inset;
+    -webkit-box-shadow: #dadada 0 1px 0px 0 inset, #dadada 0 -1px 0px 0 inset, #dadada -1px 0 0px 0 inset, #dadada 1px 0 0px 0 inset;
+    -moz-box-shadow: #dadada 0 1px 0px 0 inset, #dadada 0 -1px 0px 0 inset, #dadada -1px 0 0px 0 inset, #dadada 1px 0 0px 0 inset;
+    box-shadow: #dadada 0 1px 0px 0 inset, #dadada 0 -1px 0px 0 inset, #dadada -1px 0 0px 0 inset, #dadada 1px 0 0px 0 inset;
 }
 
 .x-btn.x-btn-disabled.x-btn-default-small {
@@ -3460,8 +3454,8 @@ the height of a multi-line element */
 }
 
 .x-btn-disabled.x-btn-default-small {
-    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=65)";
-    opacity: 0.65;
+    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
+    opacity: 0.5;
 }
 
 .x-nbr .x-segmented-button-item-horizontal.x-btn-default-small.x-segmented-button-first {
@@ -3545,18 +3539,18 @@ the height of a multi-line element */
 
 .x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-default-small:after {
     border-width: 1px;
-    border-color: #191919;
+    border-color: #dfdfdf;
 }
 
 .x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-over.x-btn-default-small:after {
     border-width: 1px;
-    border-color: #575757;
+    border-color: #dedede;
 }
 
 .x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-menu-active.x-btn-default-small:after,
 .x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-pressed.x-btn-default-small:after {
     border-width: 1px;
-    border-color: #545454;
+    border-color: #dadada;
 }
 
 .x-button-default-small-cell > .x-grid-cell-inner {
@@ -3683,7 +3677,7 @@ the height of a multi-line element */
 }
 
 .x-btn-default-medium {
-    border-color: #cacaca;
+    border-color: #333;
 }
 
 .x-btn-button-default-medium {
@@ -3697,7 +3691,7 @@ the height of a multi-line element */
 
 .x-btn-inner-default-medium {
     font: normal 14px/18px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    color: #575757;
+    color: #fff;
     padding: 0 8px;
     max-width: 100%;
 }
@@ -3719,7 +3713,7 @@ the height of a multi-line element */
 .x-btn-icon-el-default-medium {
     font-size: 24px;
     height: 24px;
-    color: #575757;
+    color: #fff;
     line-height: 24px;
 }
 
@@ -3734,7 +3728,7 @@ the height of a multi-line element */
 }
 
 .x-ie8 .x-btn-icon-el-default-medium.x-btn-glyph {
-    color: #575757;
+    color: #fff;
 }
 
 .x-btn-text.x-btn-icon-left > .x-btn-icon-el-default-medium {
@@ -3797,7 +3791,7 @@ the height of a multi-line element */
 }
 
 .x-keyboard-mode .x-btn-focus.x-btn-default-medium {
-    border-color: #070707;
+    border-color: #96caee;
     background-image: none;
     background-color: #606060;
     background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #707070), color-stop(50%, #606060), color-stop(51%, #5b5b5b), color-stop(0%, #606060));
@@ -3806,13 +3800,9 @@ the height of a multi-line element */
     background-image: -o-linear-gradient(top, #707070, #606060 50%, #5b5b5b 51%, #606060);
     background-image: -ms-linear-gradient(top, #707070, #606060 50%, #5b5b5b 51%, #606060);
     background-image: linear-gradient(top, #707070, #606060 50%, #5b5b5b 51%, #606060);
-    -webkit-box-shadow: #191919 0 1px 0px 0 inset, #191919 0 -1px 0px 0 inset, #191919 -1px 0 0px 0 inset, #191919 1px 0 0px 0 inset;
-    -moz-box-shadow: #191919 0 1px 0px 0 inset, #191919 0 -1px 0px 0 inset, #191919 -1px 0 0px 0 inset, #191919 1px 0 0px 0 inset;
-    box-shadow: #191919 0 1px 0px 0 inset, #191919 0 -1px 0px 0 inset, #191919 -1px 0 0px 0 inset, #191919 1px 0 0px 0 inset;
-}
-
-.x-keyboard-mode .x-btn-focus.x-btn-default-medium .x-btn-inner {
-    color: #070707;
+    -webkit-box-shadow: #dfdfdf 0 1px 0px 0 inset, #dfdfdf 0 -1px 0px 0 inset, #dfdfdf -1px 0 0px 0 inset, #dfdfdf 1px 0 0px 0 inset;
+    -moz-box-shadow: #dfdfdf 0 1px 0px 0 inset, #dfdfdf 0 -1px 0px 0 inset, #dfdfdf -1px 0 0px 0 inset, #dfdfdf 1px 0 0px 0 inset;
+    box-shadow: #dfdfdf 0 1px 0px 0 inset, #dfdfdf 0 -1px 0px 0 inset, #dfdfdf -1px 0 0px 0 inset, #dfdfdf 1px 0 0px 0 inset;
 }
 
 .x-btn-default-medium .x-btn-arrow-el {
@@ -3825,11 +3815,10 @@ the height of a multi-line element */
 }
 
 .x-keyboard-mode .x-btn-default-medium.x-arrow-focus .x-btn-arrow-el {
-    border: 1px solid #191919;
+    border: 1px solid #dfdfdf;
 }
 
 .x-btn-over.x-btn-default-medium {
-    border-color: #575757;
     background-image: none;
     background-color: #585858;
     background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #696969), color-stop(50%, #585858), color-stop(51%, #545454), color-stop(0%, #585858));
@@ -3841,14 +3830,13 @@ the height of a multi-line element */
 }
 
 .x-keyboard-mode .x-btn-focus.x-btn-over.x-btn-default-medium {
-    -webkit-box-shadow: #575757 0 1px 0px 0 inset, #575757 0 -1px 0px 0 inset, #575757 -1px 0 0px 0 inset, #575757 1px 0 0px 0 inset;
-    -moz-box-shadow: #575757 0 1px 0px 0 inset, #575757 0 -1px 0px 0 inset, #575757 -1px 0 0px 0 inset, #575757 1px 0 0px 0 inset;
-    box-shadow: #575757 0 1px 0px 0 inset, #575757 0 -1px 0px 0 inset, #575757 -1px 0 0px 0 inset, #575757 1px 0 0px 0 inset;
+    -webkit-box-shadow: #dedede 0 1px 0px 0 inset, #dedede 0 -1px 0px 0 inset, #dedede -1px 0 0px 0 inset, #dedede 1px 0 0px 0 inset;
+    -moz-box-shadow: #dedede 0 1px 0px 0 inset, #dedede 0 -1px 0px 0 inset, #dedede -1px 0 0px 0 inset, #dedede 1px 0 0px 0 inset;
+    box-shadow: #dedede 0 1px 0px 0 inset, #dedede 0 -1px 0px 0 inset, #dedede -1px 0 0px 0 inset, #dedede 1px 0 0px 0 inset;
 }
 
 .x-btn.x-btn-menu-active.x-btn-default-medium,
 .x-btn.x-btn-pressed.x-btn-default-medium {
-    border-color: #575757;
     background-image: none;
     background-color: #484848;
     background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #484848), color-stop(50%, #444), color-stop(51%, #484848), color-stop(0%, #5a5a5a));
@@ -3861,9 +3849,9 @@ the height of a multi-line element */
 
 .x-keyboard-mode .x-btn-focus.x-btn-menu-active.x-btn-default-medium,
 .x-keyboard-mode .x-btn-focus.x-btn-pressed.x-btn-default-medium {
-    -webkit-box-shadow: #545454 0 1px 0px 0 inset, #545454 0 -1px 0px 0 inset, #545454 -1px 0 0px 0 inset, #545454 1px 0 0px 0 inset;
-    -moz-box-shadow: #545454 0 1px 0px 0 inset, #545454 0 -1px 0px 0 inset, #545454 -1px 0 0px 0 inset, #545454 1px 0 0px 0 inset;
-    box-shadow: #545454 0 1px 0px 0 inset, #545454 0 -1px 0px 0 inset, #545454 -1px 0 0px 0 inset, #545454 1px 0 0px 0 inset;
+    -webkit-box-shadow: #dadada 0 1px 0px 0 inset, #dadada 0 -1px 0px 0 inset, #dadada -1px 0 0px 0 inset, #dadada 1px 0 0px 0 inset;
+    -moz-box-shadow: #dadada 0 1px 0px 0 inset, #dadada 0 -1px 0px 0 inset, #dadada -1px 0 0px 0 inset, #dadada 1px 0 0px 0 inset;
+    box-shadow: #dadada 0 1px 0px 0 inset, #dadada 0 -1px 0px 0 inset, #dadada -1px 0 0px 0 inset, #dadada 1px 0 0px 0 inset;
 }
 
 .x-btn.x-btn-disabled.x-btn-default-medium {
@@ -4014,8 +4002,8 @@ the height of a multi-line element */
 }
 
 .x-btn-disabled.x-btn-default-medium {
-    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=65)";
-    opacity: 0.65;
+    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
+    opacity: 0.5;
 }
 
 .x-nbr .x-segmented-button-item-horizontal.x-btn-default-medium.x-segmented-button-first {
@@ -4099,18 +4087,18 @@ the height of a multi-line element */
 
 .x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-default-medium:after {
     border-width: 1px;
-    border-color: #191919;
+    border-color: #dfdfdf;
 }
 
 .x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-over.x-btn-default-medium:after {
     border-width: 1px;
-    border-color: #575757;
+    border-color: #dedede;
 }
 
 .x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-menu-active.x-btn-default-medium:after,
 .x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-pressed.x-btn-default-medium:after {
     border-width: 1px;
-    border-color: #545454;
+    border-color: #dadada;
 }
 
 .x-button-default-medium-cell > .x-grid-cell-inner {
@@ -4237,7 +4225,7 @@ the height of a multi-line element */
 }
 
 .x-btn-default-large {
-    border-color: #cacaca;
+    border-color: #333;
 }
 
 .x-btn-button-default-large {
@@ -4251,7 +4239,7 @@ the height of a multi-line element */
 
 .x-btn-inner-default-large {
     font: bold 16px/20px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    color: #575757;
+    color: #fff;
     padding: 0 10px;
     max-width: 100%;
 }
@@ -4273,7 +4261,7 @@ the height of a multi-line element */
 .x-btn-icon-el-default-large {
     font-size: 32px;
     height: 32px;
-    color: #575757;
+    color: #fff;
     line-height: 32px;
 }
 
@@ -4288,7 +4276,7 @@ the height of a multi-line element */
 }
 
 .x-ie8 .x-btn-icon-el-default-large.x-btn-glyph {
-    color: #575757;
+    color: #fff;
 }
 
 .x-btn-text.x-btn-icon-left > .x-btn-icon-el-default-large {
@@ -4351,7 +4339,7 @@ the height of a multi-line element */
 }
 
 .x-keyboard-mode .x-btn-focus.x-btn-default-large {
-    border-color: #070707;
+    border-color: #96caee;
     background-image: none;
     background-color: #606060;
     background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #707070), color-stop(50%, #606060), color-stop(51%, #5b5b5b), color-stop(0%, #606060));
@@ -4360,13 +4348,9 @@ the height of a multi-line element */
     background-image: -o-linear-gradient(top, #707070, #606060 50%, #5b5b5b 51%, #606060);
     background-image: -ms-linear-gradient(top, #707070, #606060 50%, #5b5b5b 51%, #606060);
     background-image: linear-gradient(top, #707070, #606060 50%, #5b5b5b 51%, #606060);
-    -webkit-box-shadow: #191919 0 1px 0px 0 inset, #191919 0 -1px 0px 0 inset, #191919 -1px 0 0px 0 inset, #191919 1px 0 0px 0 inset;
-    -moz-box-shadow: #191919 0 1px 0px 0 inset, #191919 0 -1px 0px 0 inset, #191919 -1px 0 0px 0 inset, #191919 1px 0 0px 0 inset;
-    box-shadow: #191919 0 1px 0px 0 inset, #191919 0 -1px 0px 0 inset, #191919 -1px 0 0px 0 inset, #191919 1px 0 0px 0 inset;
-}
-
-.x-keyboard-mode .x-btn-focus.x-btn-default-large .x-btn-inner {
-    color: #070707;
+    -webkit-box-shadow: #dfdfdf 0 1px 0px 0 inset, #dfdfdf 0 -1px 0px 0 inset, #dfdfdf -1px 0 0px 0 inset, #dfdfdf 1px 0 0px 0 inset;
+    -moz-box-shadow: #dfdfdf 0 1px 0px 0 inset, #dfdfdf 0 -1px 0px 0 inset, #dfdfdf -1px 0 0px 0 inset, #dfdfdf 1px 0 0px 0 inset;
+    box-shadow: #dfdfdf 0 1px 0px 0 inset, #dfdfdf 0 -1px 0px 0 inset, #dfdfdf -1px 0 0px 0 inset, #dfdfdf 1px 0 0px 0 inset;
 }
 
 .x-btn-default-large .x-btn-arrow-el {
@@ -4379,11 +4363,10 @@ the height of a multi-line element */
 }
 
 .x-keyboard-mode .x-btn-default-large.x-arrow-focus .x-btn-arrow-el {
-    border: 1px solid #191919;
+    border: 1px solid #dfdfdf;
 }
 
 .x-btn-over.x-btn-default-large {
-    border-color: #575757;
     background-image: none;
     background-color: #585858;
     background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #696969), color-stop(50%, #585858), color-stop(51%, #545454), color-stop(0%, #585858));
@@ -4395,14 +4378,13 @@ the height of a multi-line element */
 }
 
 .x-keyboard-mode .x-btn-focus.x-btn-over.x-btn-default-large {
-    -webkit-box-shadow: #575757 0 1px 0px 0 inset, #575757 0 -1px 0px 0 inset, #575757 -1px 0 0px 0 inset, #575757 1px 0 0px 0 inset;
-    -moz-box-shadow: #575757 0 1px 0px 0 inset, #575757 0 -1px 0px 0 inset, #575757 -1px 0 0px 0 inset, #575757 1px 0 0px 0 inset;
-    box-shadow: #575757 0 1px 0px 0 inset, #575757 0 -1px 0px 0 inset, #575757 -1px 0 0px 0 inset, #575757 1px 0 0px 0 inset;
+    -webkit-box-shadow: #dedede 0 1px 0px 0 inset, #dedede 0 -1px 0px 0 inset, #dedede -1px 0 0px 0 inset, #dedede 1px 0 0px 0 inset;
+    -moz-box-shadow: #dedede 0 1px 0px 0 inset, #dedede 0 -1px 0px 0 inset, #dedede -1px 0 0px 0 inset, #dedede 1px 0 0px 0 inset;
+    box-shadow: #dedede 0 1px 0px 0 inset, #dedede 0 -1px 0px 0 inset, #dedede -1px 0 0px 0 inset, #dedede 1px 0 0px 0 inset;
 }
 
 .x-btn.x-btn-menu-active.x-btn-default-large,
 .x-btn.x-btn-pressed.x-btn-default-large {
-    border-color: #575757;
     background-image: none;
     background-color: #484848;
     background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #484848), color-stop(50%, #444), color-stop(51%, #484848), color-stop(0%, #5a5a5a));
@@ -4415,9 +4397,9 @@ the height of a multi-line element */
 
 .x-keyboard-mode .x-btn-focus.x-btn-menu-active.x-btn-default-large,
 .x-keyboard-mode .x-btn-focus.x-btn-pressed.x-btn-default-large {
-    -webkit-box-shadow: #545454 0 1px 0px 0 inset, #545454 0 -1px 0px 0 inset, #545454 -1px 0 0px 0 inset, #545454 1px 0 0px 0 inset;
-    -moz-box-shadow: #545454 0 1px 0px 0 inset, #545454 0 -1px 0px 0 inset, #545454 -1px 0 0px 0 inset, #545454 1px 0 0px 0 inset;
-    box-shadow: #545454 0 1px 0px 0 inset, #545454 0 -1px 0px 0 inset, #545454 -1px 0 0px 0 inset, #545454 1px 0 0px 0 inset;
+    -webkit-box-shadow: #dadada 0 1px 0px 0 inset, #dadada 0 -1px 0px 0 inset, #dadada -1px 0 0px 0 inset, #dadada 1px 0 0px 0 inset;
+    -moz-box-shadow: #dadada 0 1px 0px 0 inset, #dadada 0 -1px 0px 0 inset, #dadada -1px 0 0px 0 inset, #dadada 1px 0 0px 0 inset;
+    box-shadow: #dadada 0 1px 0px 0 inset, #dadada 0 -1px 0px 0 inset, #dadada -1px 0 0px 0 inset, #dadada 1px 0 0px 0 inset;
 }
 
 .x-btn.x-btn-disabled.x-btn-default-large {
@@ -4568,8 +4550,8 @@ the height of a multi-line element */
 }
 
 .x-btn-disabled.x-btn-default-large {
-    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=65)";
-    opacity: 0.65;
+    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
+    opacity: 0.5;
 }
 
 .x-nbr .x-segmented-button-item-horizontal.x-btn-default-large.x-segmented-button-first {
@@ -4653,18 +4635,18 @@ the height of a multi-line element */
 
 .x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-default-large:after {
     border-width: 1px;
-    border-color: #191919;
+    border-color: #dfdfdf;
 }
 
 .x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-over.x-btn-default-large:after {
     border-width: 1px;
-    border-color: #575757;
+    border-color: #dedede;
 }
 
 .x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-menu-active.x-btn-default-large:after,
 .x-keyboard-mode .x-nbr .x-segmented-button-item.x-btn-focus.x-btn-pressed.x-btn-default-large:after {
     border-width: 1px;
-    border-color: #545454;
+    border-color: #dadada;
 }
 
 .x-button-default-large-cell > .x-grid-cell-inner {
@@ -4687,12 +4669,12 @@ the height of a multi-line element */
     border-style: solid;
     background-image: none;
     background-color: #f5f5f5;
-    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #f5f5f5), color-stop(0%, #f5f5f5));
-    background-image: -webkit-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -moz-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -o-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -ms-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: linear-gradient(top, #f5f5f5, #f5f5f5);
+    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #fff), color-stop(0%, #e6e6e6));
+    background-image: -webkit-linear-gradient(top, #fff, #e6e6e6);
+    background-image: -moz-linear-gradient(top, #fff, #e6e6e6);
+    background-image: -o-linear-gradient(top, #fff, #e6e6e6);
+    background-image: -ms-linear-gradient(top, #fff, #e6e6e6);
+    background-image: linear-gradient(top, #fff, #e6e6e6);
 }
 
 .x-btn-default-toolbar-small-mc {
@@ -4791,7 +4773,7 @@ the height of a multi-line element */
 }
 
 .x-btn-default-toolbar-small {
-    border-color: #cacaca;
+    border-color: #e1e1e1;
 }
 
 .x-btn-button-default-toolbar-small {
@@ -4805,7 +4787,7 @@ the height of a multi-line element */
 
 .x-btn-inner-default-toolbar-small {
     font: normal 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    color: #575757;
+    color: #333;
     padding: 0 5px;
     max-width: 100%;
 }
@@ -4827,7 +4809,7 @@ the height of a multi-line element */
 .x-btn-icon-el-default-toolbar-small {
     font-size: 16px;
     height: 16px;
-    color: #575757;
+    color: #333;
     line-height: 16px;
 }
 
@@ -4842,7 +4824,7 @@ the height of a multi-line element */
 }
 
 .x-ie8 .x-btn-icon-el-default-toolbar-small.x-btn-glyph {
-    color: #575757;
+    color: #333;
 }
 
 .x-btn-text.x-btn-icon-left > .x-btn-icon-el-default-toolbar-small {
@@ -4905,22 +4887,18 @@ the height of a multi-line element */
 }
 
 .x-keyboard-mode .x-btn-focus.x-btn-default-toolbar-small {
-    border-color: #070707;
+    border-color: #96caee;
     background-image: none;
     background-color: #f5f5f5;
-    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #f5f5f5), color-stop(0%, #f5f5f5));
-    background-image: -webkit-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -moz-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -o-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -ms-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: linear-gradient(top, #f5f5f5, #f5f5f5);
+    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #fff), color-stop(0%, #e6e6e6));
+    background-image: -webkit-linear-gradient(top, #fff, #e6e6e6);
+    background-image: -moz-linear-gradient(top, #fff, #e6e6e6);
+    background-image: -o-linear-gradient(top, #fff, #e6e6e6);
+    background-image: -ms-linear-gradient(top, #fff, #e6e6e6);
+    background-image: linear-gradient(top, #fff, #e6e6e6);
     -webkit-box-shadow: #676767 0 1px 0px 0 inset, #676767 0 -1px 0px 0 inset, #676767 -1px 0 0px 0 inset, #676767 1px 0 0px 0 inset;
     -moz-box-shadow: #676767 0 1px 0px 0 inset, #676767 0 -1px 0px 0 inset, #676767 -1px 0 0px 0 inset, #676767 1px 0 0px 0 inset;
     box-shadow: #676767 0 1px 0px 0 inset, #676767 0 -1px 0px 0 inset, #676767 -1px 0 0px 0 inset, #676767 1px 0 0px 0 inset;
-}
-
-.x-keyboard-mode .x-btn-focus.x-btn-default-toolbar-small .x-btn-inner {
-    color: #070707;
 }
 
 .x-btn-default-toolbar-small .x-btn-arrow-el {
@@ -4937,19 +4915,15 @@ the height of a multi-line element */
 }
 
 .x-btn-over.x-btn-default-toolbar-small {
-    border-color: #575757;
+    border-color: #d8d8d8;
     background-image: none;
     background-color: #ececec;
-    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #f5f5f5), color-stop(0%, #f5f5f5));
-    background-image: -webkit-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -moz-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -o-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -ms-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: linear-gradient(top, #f5f5f5, #f5f5f5);
-}
-
-.x-btn-over.x-btn-default-toolbar-small .x-btn-inner {
-    color: #070707;
+    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #cbcbcb), color-stop(0%, #b8b8b8));
+    background-image: -webkit-linear-gradient(top, #cbcbcb, #b8b8b8);
+    background-image: -moz-linear-gradient(top, #cbcbcb, #b8b8b8);
+    background-image: -o-linear-gradient(top, #cbcbcb, #b8b8b8);
+    background-image: -ms-linear-gradient(top, #cbcbcb, #b8b8b8);
+    background-image: linear-gradient(top, #cbcbcb, #b8b8b8);
 }
 
 .x-keyboard-mode .x-btn-focus.x-btn-over.x-btn-default-toolbar-small {
@@ -4960,20 +4934,20 @@ the height of a multi-line element */
 
 .x-btn.x-btn-menu-active.x-btn-default-toolbar-small,
 .x-btn.x-btn-pressed.x-btn-default-toolbar-small {
-    border-color: #575757;
+    border-color: #cfcfcf;
     background-image: none;
     background-color: #e2e2e2;
-    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #f5f5f5), color-stop(0%, #f5f5f5));
-    background-image: -webkit-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -moz-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -o-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -ms-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: linear-gradient(top, #f5f5f5, #f5f5f5);
+    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #919191), color-stop(0%, grey));
+    background-image: -webkit-linear-gradient(top, #919191, grey);
+    background-image: -moz-linear-gradient(top, #919191, grey);
+    background-image: -o-linear-gradient(top, #919191, grey);
+    background-image: -ms-linear-gradient(top, #919191, grey);
+    background-image: linear-gradient(top, #919191, grey);
 }
 
 .x-btn.x-btn-menu-active.x-btn-default-toolbar-small .x-btn-inner,
 .x-btn.x-btn-pressed.x-btn-default-toolbar-small .x-btn-inner {
-    color: #070707;
+    color: #fff;
 }
 
 .x-keyboard-mode .x-btn-focus.x-btn-menu-active.x-btn-default-toolbar-small,
@@ -4986,12 +4960,12 @@ the height of a multi-line element */
 .x-btn.x-btn-disabled.x-btn-default-toolbar-small {
     background-image: none;
     background-color: #f5f5f5;
-    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #f5f5f5), color-stop(0%, #f5f5f5));
-    background-image: -webkit-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -moz-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -o-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -ms-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: linear-gradient(top, #f5f5f5, #f5f5f5);
+    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #fff), color-stop(0%, #e6e6e6));
+    background-image: -webkit-linear-gradient(top, #fff, #e6e6e6);
+    background-image: -moz-linear-gradient(top, #fff, #e6e6e6);
+    background-image: -o-linear-gradient(top, #fff, #e6e6e6);
+    background-image: -ms-linear-gradient(top, #fff, #e6e6e6);
+    background-image: linear-gradient(top, #fff, #e6e6e6);
 }
 
 .x-keyboard-mode .x-btn-focus .x-btn-default-toolbar-small-tl,
@@ -5131,8 +5105,8 @@ the height of a multi-line element */
 }
 
 .x-btn-disabled.x-btn-default-toolbar-small {
-    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=65)";
-    opacity: 0.65;
+    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
+    opacity: 0.5;
 }
 
 .x-nbr .x-segmented-button-item-horizontal.x-btn-default-toolbar-small.x-segmented-button-first {
@@ -5250,12 +5224,12 @@ the height of a multi-line element */
     border-style: solid;
     background-image: none;
     background-color: #f5f5f5;
-    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #f5f5f5), color-stop(0%, #f5f5f5));
-    background-image: -webkit-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -moz-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -o-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -ms-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: linear-gradient(top, #f5f5f5, #f5f5f5);
+    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #fff), color-stop(0%, #e6e6e6));
+    background-image: -webkit-linear-gradient(top, #fff, #e6e6e6);
+    background-image: -moz-linear-gradient(top, #fff, #e6e6e6);
+    background-image: -o-linear-gradient(top, #fff, #e6e6e6);
+    background-image: -ms-linear-gradient(top, #fff, #e6e6e6);
+    background-image: linear-gradient(top, #fff, #e6e6e6);
 }
 
 .x-btn-default-toolbar-medium-mc {
@@ -5354,7 +5328,7 @@ the height of a multi-line element */
 }
 
 .x-btn-default-toolbar-medium {
-    border-color: #cacaca;
+    border-color: #e1e1e1;
 }
 
 .x-btn-button-default-toolbar-medium {
@@ -5368,7 +5342,7 @@ the height of a multi-line element */
 
 .x-btn-inner-default-toolbar-medium {
     font: normal 14px/18px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    color: #575757;
+    color: #333;
     padding: 0 8px;
     max-width: 100%;
 }
@@ -5390,7 +5364,7 @@ the height of a multi-line element */
 .x-btn-icon-el-default-toolbar-medium {
     font-size: 24px;
     height: 24px;
-    color: #575757;
+    color: #333;
     line-height: 24px;
 }
 
@@ -5405,7 +5379,7 @@ the height of a multi-line element */
 }
 
 .x-ie8 .x-btn-icon-el-default-toolbar-medium.x-btn-glyph {
-    color: #575757;
+    color: #333;
 }
 
 .x-btn-text.x-btn-icon-left > .x-btn-icon-el-default-toolbar-medium {
@@ -5468,22 +5442,18 @@ the height of a multi-line element */
 }
 
 .x-keyboard-mode .x-btn-focus.x-btn-default-toolbar-medium {
-    border-color: #070707;
+    border-color: #96caee;
     background-image: none;
     background-color: #f5f5f5;
-    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #f5f5f5), color-stop(0%, #f5f5f5));
-    background-image: -webkit-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -moz-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -o-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -ms-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: linear-gradient(top, #f5f5f5, #f5f5f5);
+    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #fff), color-stop(0%, #e6e6e6));
+    background-image: -webkit-linear-gradient(top, #fff, #e6e6e6);
+    background-image: -moz-linear-gradient(top, #fff, #e6e6e6);
+    background-image: -o-linear-gradient(top, #fff, #e6e6e6);
+    background-image: -ms-linear-gradient(top, #fff, #e6e6e6);
+    background-image: linear-gradient(top, #fff, #e6e6e6);
     -webkit-box-shadow: #676767 0 1px 0px 0 inset, #676767 0 -1px 0px 0 inset, #676767 -1px 0 0px 0 inset, #676767 1px 0 0px 0 inset;
     -moz-box-shadow: #676767 0 1px 0px 0 inset, #676767 0 -1px 0px 0 inset, #676767 -1px 0 0px 0 inset, #676767 1px 0 0px 0 inset;
     box-shadow: #676767 0 1px 0px 0 inset, #676767 0 -1px 0px 0 inset, #676767 -1px 0 0px 0 inset, #676767 1px 0 0px 0 inset;
-}
-
-.x-keyboard-mode .x-btn-focus.x-btn-default-toolbar-medium .x-btn-inner {
-    color: #070707;
 }
 
 .x-btn-default-toolbar-medium .x-btn-arrow-el {
@@ -5500,19 +5470,15 @@ the height of a multi-line element */
 }
 
 .x-btn-over.x-btn-default-toolbar-medium {
-    border-color: #575757;
+    border-color: #d8d8d8;
     background-image: none;
     background-color: #ececec;
-    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #f5f5f5), color-stop(0%, #f5f5f5));
-    background-image: -webkit-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -moz-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -o-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -ms-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: linear-gradient(top, #f5f5f5, #f5f5f5);
-}
-
-.x-btn-over.x-btn-default-toolbar-medium .x-btn-inner {
-    color: #070707;
+    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #cbcbcb), color-stop(0%, #b8b8b8));
+    background-image: -webkit-linear-gradient(top, #cbcbcb, #b8b8b8);
+    background-image: -moz-linear-gradient(top, #cbcbcb, #b8b8b8);
+    background-image: -o-linear-gradient(top, #cbcbcb, #b8b8b8);
+    background-image: -ms-linear-gradient(top, #cbcbcb, #b8b8b8);
+    background-image: linear-gradient(top, #cbcbcb, #b8b8b8);
 }
 
 .x-keyboard-mode .x-btn-focus.x-btn-over.x-btn-default-toolbar-medium {
@@ -5523,20 +5489,20 @@ the height of a multi-line element */
 
 .x-btn.x-btn-menu-active.x-btn-default-toolbar-medium,
 .x-btn.x-btn-pressed.x-btn-default-toolbar-medium {
-    border-color: #575757;
+    border-color: #cfcfcf;
     background-image: none;
     background-color: #e2e2e2;
-    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #f5f5f5), color-stop(0%, #f5f5f5));
-    background-image: -webkit-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -moz-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -o-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -ms-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: linear-gradient(top, #f5f5f5, #f5f5f5);
+    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #919191), color-stop(0%, grey));
+    background-image: -webkit-linear-gradient(top, #919191, grey);
+    background-image: -moz-linear-gradient(top, #919191, grey);
+    background-image: -o-linear-gradient(top, #919191, grey);
+    background-image: -ms-linear-gradient(top, #919191, grey);
+    background-image: linear-gradient(top, #919191, grey);
 }
 
 .x-btn.x-btn-menu-active.x-btn-default-toolbar-medium .x-btn-inner,
 .x-btn.x-btn-pressed.x-btn-default-toolbar-medium .x-btn-inner {
-    color: #070707;
+    color: #fff;
 }
 
 .x-keyboard-mode .x-btn-focus.x-btn-menu-active.x-btn-default-toolbar-medium,
@@ -5549,12 +5515,12 @@ the height of a multi-line element */
 .x-btn.x-btn-disabled.x-btn-default-toolbar-medium {
     background-image: none;
     background-color: #f5f5f5;
-    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #f5f5f5), color-stop(0%, #f5f5f5));
-    background-image: -webkit-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -moz-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -o-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -ms-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: linear-gradient(top, #f5f5f5, #f5f5f5);
+    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #fff), color-stop(0%, #e6e6e6));
+    background-image: -webkit-linear-gradient(top, #fff, #e6e6e6);
+    background-image: -moz-linear-gradient(top, #fff, #e6e6e6);
+    background-image: -o-linear-gradient(top, #fff, #e6e6e6);
+    background-image: -ms-linear-gradient(top, #fff, #e6e6e6);
+    background-image: linear-gradient(top, #fff, #e6e6e6);
 }
 
 .x-keyboard-mode .x-btn-focus .x-btn-default-toolbar-medium-tl,
@@ -5694,8 +5660,8 @@ the height of a multi-line element */
 }
 
 .x-btn-disabled.x-btn-default-toolbar-medium {
-    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=65)";
-    opacity: 0.65;
+    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
+    opacity: 0.5;
 }
 
 .x-nbr .x-segmented-button-item-horizontal.x-btn-default-toolbar-medium.x-segmented-button-first {
@@ -5813,12 +5779,12 @@ the height of a multi-line element */
     border-style: solid;
     background-image: none;
     background-color: #f5f5f5;
-    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #f5f5f5), color-stop(0%, #f5f5f5));
-    background-image: -webkit-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -moz-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -o-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -ms-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: linear-gradient(top, #f5f5f5, #f5f5f5);
+    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #fff), color-stop(0%, #e6e6e6));
+    background-image: -webkit-linear-gradient(top, #fff, #e6e6e6);
+    background-image: -moz-linear-gradient(top, #fff, #e6e6e6);
+    background-image: -o-linear-gradient(top, #fff, #e6e6e6);
+    background-image: -ms-linear-gradient(top, #fff, #e6e6e6);
+    background-image: linear-gradient(top, #fff, #e6e6e6);
 }
 
 .x-btn-default-toolbar-large-mc {
@@ -5917,7 +5883,7 @@ the height of a multi-line element */
 }
 
 .x-btn-default-toolbar-large {
-    border-color: #cacaca;
+    border-color: #e1e1e1;
 }
 
 .x-btn-button-default-toolbar-large {
@@ -5931,7 +5897,7 @@ the height of a multi-line element */
 
 .x-btn-inner-default-toolbar-large {
     font: bold 16px/20px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    color: #575757;
+    color: #333;
     padding: 0 10px;
     max-width: 100%;
 }
@@ -5953,7 +5919,7 @@ the height of a multi-line element */
 .x-btn-icon-el-default-toolbar-large {
     font-size: 32px;
     height: 32px;
-    color: #575757;
+    color: #333;
     line-height: 32px;
 }
 
@@ -5968,7 +5934,7 @@ the height of a multi-line element */
 }
 
 .x-ie8 .x-btn-icon-el-default-toolbar-large.x-btn-glyph {
-    color: #575757;
+    color: #333;
 }
 
 .x-btn-text.x-btn-icon-left > .x-btn-icon-el-default-toolbar-large {
@@ -6031,22 +5997,18 @@ the height of a multi-line element */
 }
 
 .x-keyboard-mode .x-btn-focus.x-btn-default-toolbar-large {
-    border-color: #070707;
+    border-color: #96caee;
     background-image: none;
     background-color: #f5f5f5;
-    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #f5f5f5), color-stop(0%, #f5f5f5));
-    background-image: -webkit-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -moz-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -o-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -ms-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: linear-gradient(top, #f5f5f5, #f5f5f5);
+    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #fff), color-stop(0%, #e6e6e6));
+    background-image: -webkit-linear-gradient(top, #fff, #e6e6e6);
+    background-image: -moz-linear-gradient(top, #fff, #e6e6e6);
+    background-image: -o-linear-gradient(top, #fff, #e6e6e6);
+    background-image: -ms-linear-gradient(top, #fff, #e6e6e6);
+    background-image: linear-gradient(top, #fff, #e6e6e6);
     -webkit-box-shadow: #676767 0 1px 0px 0 inset, #676767 0 -1px 0px 0 inset, #676767 -1px 0 0px 0 inset, #676767 1px 0 0px 0 inset;
     -moz-box-shadow: #676767 0 1px 0px 0 inset, #676767 0 -1px 0px 0 inset, #676767 -1px 0 0px 0 inset, #676767 1px 0 0px 0 inset;
     box-shadow: #676767 0 1px 0px 0 inset, #676767 0 -1px 0px 0 inset, #676767 -1px 0 0px 0 inset, #676767 1px 0 0px 0 inset;
-}
-
-.x-keyboard-mode .x-btn-focus.x-btn-default-toolbar-large .x-btn-inner {
-    color: #070707;
 }
 
 .x-btn-default-toolbar-large .x-btn-arrow-el {
@@ -6063,19 +6025,15 @@ the height of a multi-line element */
 }
 
 .x-btn-over.x-btn-default-toolbar-large {
-    border-color: #575757;
+    border-color: #d8d8d8;
     background-image: none;
     background-color: #ececec;
-    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #f5f5f5), color-stop(0%, #f5f5f5));
-    background-image: -webkit-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -moz-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -o-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -ms-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: linear-gradient(top, #f5f5f5, #f5f5f5);
-}
-
-.x-btn-over.x-btn-default-toolbar-large .x-btn-inner {
-    color: #070707;
+    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #cbcbcb), color-stop(0%, #b8b8b8));
+    background-image: -webkit-linear-gradient(top, #cbcbcb, #b8b8b8);
+    background-image: -moz-linear-gradient(top, #cbcbcb, #b8b8b8);
+    background-image: -o-linear-gradient(top, #cbcbcb, #b8b8b8);
+    background-image: -ms-linear-gradient(top, #cbcbcb, #b8b8b8);
+    background-image: linear-gradient(top, #cbcbcb, #b8b8b8);
 }
 
 .x-keyboard-mode .x-btn-focus.x-btn-over.x-btn-default-toolbar-large {
@@ -6086,20 +6044,20 @@ the height of a multi-line element */
 
 .x-btn.x-btn-menu-active.x-btn-default-toolbar-large,
 .x-btn.x-btn-pressed.x-btn-default-toolbar-large {
-    border-color: #575757;
+    border-color: #cfcfcf;
     background-image: none;
     background-color: #e2e2e2;
-    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #f5f5f5), color-stop(0%, #f5f5f5));
-    background-image: -webkit-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -moz-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -o-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -ms-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: linear-gradient(top, #f5f5f5, #f5f5f5);
+    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #919191), color-stop(0%, grey));
+    background-image: -webkit-linear-gradient(top, #919191, grey);
+    background-image: -moz-linear-gradient(top, #919191, grey);
+    background-image: -o-linear-gradient(top, #919191, grey);
+    background-image: -ms-linear-gradient(top, #919191, grey);
+    background-image: linear-gradient(top, #919191, grey);
 }
 
 .x-btn.x-btn-menu-active.x-btn-default-toolbar-large .x-btn-inner,
 .x-btn.x-btn-pressed.x-btn-default-toolbar-large .x-btn-inner {
-    color: #070707;
+    color: #fff;
 }
 
 .x-keyboard-mode .x-btn-focus.x-btn-menu-active.x-btn-default-toolbar-large,
@@ -6112,12 +6070,12 @@ the height of a multi-line element */
 .x-btn.x-btn-disabled.x-btn-default-toolbar-large {
     background-image: none;
     background-color: #f5f5f5;
-    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #f5f5f5), color-stop(0%, #f5f5f5));
-    background-image: -webkit-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -moz-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -o-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -ms-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: linear-gradient(top, #f5f5f5, #f5f5f5);
+    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #fff), color-stop(0%, #e6e6e6));
+    background-image: -webkit-linear-gradient(top, #fff, #e6e6e6);
+    background-image: -moz-linear-gradient(top, #fff, #e6e6e6);
+    background-image: -o-linear-gradient(top, #fff, #e6e6e6);
+    background-image: -ms-linear-gradient(top, #fff, #e6e6e6);
+    background-image: linear-gradient(top, #fff, #e6e6e6);
 }
 
 .x-keyboard-mode .x-btn-focus .x-btn-default-toolbar-large-tl,
@@ -6257,8 +6215,8 @@ the height of a multi-line element */
 }
 
 .x-btn-disabled.x-btn-default-toolbar-large {
-    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=65)";
-    opacity: 0.65;
+    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
+    opacity: 0.5;
 }
 
 .x-nbr .x-segmented-button-item-horizontal.x-btn-default-toolbar-large.x-segmented-button-first {
@@ -12018,7 +11976,7 @@ a.x-color-picker-item:hover {
 }
 
 .x-btn-grid-cell-small {
-    border-color: #cacaca;
+    border-color: #333;
 }
 
 .x-btn-button-grid-cell-small {
@@ -12032,7 +11990,7 @@ a.x-color-picker-item:hover {
 
 .x-btn-inner-grid-cell-small {
     font: normal 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    color: #575757;
+    color: #fff;
     padding: 0 5px;
     max-width: 100%;
 }
@@ -12054,7 +12012,7 @@ a.x-color-picker-item:hover {
 .x-btn-icon-el-grid-cell-small {
     font-size: 16px;
     height: 16px;
-    color: #575757;
+    color: #fff;
     line-height: 16px;
 }
 
@@ -12069,7 +12027,7 @@ a.x-color-picker-item:hover {
 }
 
 .x-ie8 .x-btn-icon-el-grid-cell-small.x-btn-glyph {
-    color: #575757;
+    color: #fff;
 }
 
 .x-btn-text.x-btn-icon-left > .x-btn-icon-el-grid-cell-small {
@@ -12152,7 +12110,7 @@ a.x-color-picker-item:hover {
 }
 
 .x-btn-over.x-btn-grid-cell-small {
-    border-color: #bababa;
+    border-color: #2f2f2f;
     background-image: none;
     background-color: #585858;
     background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #696969), color-stop(50%, #585858), color-stop(51%, #545454), color-stop(0%, #585858));
@@ -12165,7 +12123,7 @@ a.x-color-picker-item:hover {
 
 .x-btn.x-btn-menu-active.x-btn-grid-cell-small,
 .x-btn.x-btn-pressed.x-btn-grid-cell-small {
-    border-color: #989898;
+    border-color: #262626;
     background-image: none;
     background-color: #484848;
     background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #484848), color-stop(50%, #444), color-stop(51%, #484848), color-stop(0%, #5a5a5a));
@@ -12324,8 +12282,8 @@ a.x-color-picker-item:hover {
 }
 
 .x-btn-disabled.x-btn-grid-cell-small {
-    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=65)";
-    opacity: 0.65;
+    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
+    opacity: 0.5;
 }
 
 .x-nbr .x-segmented-button-item-horizontal.x-btn-grid-cell-small.x-segmented-button-first {
@@ -15588,7 +15546,7 @@ div.x-border-layout-ct {
 
 .x-btn-inner-plain-toolbar-small {
     font: normal 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    color: #575757;
+    color: #333;
     padding: 0 5px;
     max-width: 100%;
 }
@@ -15610,7 +15568,7 @@ div.x-border-layout-ct {
 .x-btn-icon-el-plain-toolbar-small {
     font-size: 16px;
     height: 16px;
-    color: #575757;
+    color: #333;
     line-height: 16px;
 }
 
@@ -15625,7 +15583,7 @@ div.x-border-layout-ct {
 }
 
 .x-ie8 .x-btn-icon-el-plain-toolbar-small.x-btn-glyph {
-    color: #575757;
+    color: #333;
 }
 
 .x-btn-text.x-btn-icon-left > .x-btn-icon-el-plain-toolbar-small {
@@ -15695,10 +15653,6 @@ div.x-border-layout-ct {
     box-shadow: #676767 0 1px 0px 0 inset, #676767 0 -1px 0px 0 inset, #676767 -1px 0 0px 0 inset, #676767 1px 0 0px 0 inset;
 }
 
-.x-keyboard-mode .x-btn-focus.x-btn-plain-toolbar-small .x-btn-inner {
-    color: #070707;
-}
-
 .x-btn-plain-toolbar-small .x-btn-arrow-el {
     position: absolute;
     top: 0;
@@ -15713,19 +15667,15 @@ div.x-border-layout-ct {
 }
 
 .x-btn-over.x-btn-plain-toolbar-small {
-    border-color: #575757;
+    border-color: #d8d8d8;
     background-image: none;
     background-color: #ececec;
-    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #f5f5f5), color-stop(0%, #f5f5f5));
-    background-image: -webkit-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -moz-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -o-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -ms-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: linear-gradient(top, #f5f5f5, #f5f5f5);
-}
-
-.x-btn-over.x-btn-plain-toolbar-small .x-btn-inner {
-    color: #070707;
+    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #cbcbcb), color-stop(0%, #b8b8b8));
+    background-image: -webkit-linear-gradient(top, #cbcbcb, #b8b8b8);
+    background-image: -moz-linear-gradient(top, #cbcbcb, #b8b8b8);
+    background-image: -o-linear-gradient(top, #cbcbcb, #b8b8b8);
+    background-image: -ms-linear-gradient(top, #cbcbcb, #b8b8b8);
+    background-image: linear-gradient(top, #cbcbcb, #b8b8b8);
 }
 
 .x-keyboard-mode .x-btn-focus.x-btn-over.x-btn-plain-toolbar-small {
@@ -15736,20 +15686,20 @@ div.x-border-layout-ct {
 
 .x-btn.x-btn-menu-active.x-btn-plain-toolbar-small,
 .x-btn.x-btn-pressed.x-btn-plain-toolbar-small {
-    border-color: #575757;
+    border-color: #cfcfcf;
     background-image: none;
     background-color: #e2e2e2;
-    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #f5f5f5), color-stop(0%, #f5f5f5));
-    background-image: -webkit-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -moz-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -o-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: -ms-linear-gradient(top, #f5f5f5, #f5f5f5);
-    background-image: linear-gradient(top, #f5f5f5, #f5f5f5);
+    background-image: -webkit-gradient(linear, top, bottom, color-stop(0%, #919191), color-stop(0%, grey));
+    background-image: -webkit-linear-gradient(top, #919191, grey);
+    background-image: -moz-linear-gradient(top, #919191, grey);
+    background-image: -o-linear-gradient(top, #919191, grey);
+    background-image: -ms-linear-gradient(top, #919191, grey);
+    background-image: linear-gradient(top, #919191, grey);
 }
 
 .x-btn.x-btn-menu-active.x-btn-plain-toolbar-small .x-btn-inner,
 .x-btn.x-btn-pressed.x-btn-plain-toolbar-small .x-btn-inner {
-    color: #070707;
+    color: #fff;
 }
 
 .x-keyboard-mode .x-btn-focus.x-btn-menu-active.x-btn-plain-toolbar-small,
@@ -15819,4 +15769,26 @@ div.x-border-layout-ct {
 .x-keyboard-mode .x-btn-focus.x-btn-over .x-btn-plain-toolbar-small-mc {
     background-color: #ececec;
     background-image: url(images/btn/btn-plain-toolbar-small-focus-over-fbg.gif);
+}
+
+.x-btn.x-btn-menu-active .x-btn-plain-toolbar-small-tl,
+.x-btn.x-btn-menu-active .x-btn-plain-toolbar-small-bl,
+.x-btn.x-btn-menu-active .x-btn-plain-toolbar-small-tr,
+.x-btn.x-btn-menu-active .x-btn-plain-toolbar-small-br,
+.x-btn.x-btn-menu-active .x-btn-plain-toolbar-small-tc,
+.x-btn.x-btn-menu-active .x-btn-plain-toolbar-small-bc,
+.x-btn.x-btn-pressed .x-btn-plain-toolbar-small-tl,
+.x-btn.x-btn-pressed .x-btn-plain-toolbar-small-bl,
+.x-btn.x-btn-pressed .x-btn-plain-toolbar-small-tr,
+.x-btn.x-btn-pressed .x-btn-plain-toolbar-small-br,
+.x-btn.x-btn-pressed .x-btn-plain-toolbar-small-tc,
+.x-btn.x-btn-pressed .x-btn-plain-toolbar-small-bc {
+    background-image: url(images/btn/btn-plain-toolbar-small-pressed-corners.gif);
+}
+
+.x-btn.x-btn-menu-active .x-btn-plain-toolbar-small-ml,
+.x-btn.x-btn-menu-active .x-btn-plain-toolbar-small-mr,
+.x-btn.x-btn-pressed .x-btn-plain-toolbar-small-ml,
+.x-btn.x-btn-pressed .x-btn-plain-toolbar-small-mr {
+    background-image: url(images/btn/btn-plain-toolbar-small-pressed-sides.gif);
 }

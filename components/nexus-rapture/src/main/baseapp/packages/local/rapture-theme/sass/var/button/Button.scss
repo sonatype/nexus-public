@@ -2,17 +2,17 @@
  * @class Ext.button.Button
  */
 
-$button-default-color: $iq-grey-700;
-$button-default-color-over: $iq-grey-700;
-$button-default-color-focus: $iq-grey-900;
-$button-default-color-pressed: $iq-grey-700;
-$button-default-color-disabled: $iq-grey-700;
+$button-default-color: $color-white;
+$button-default-color-over: $color-white;
+$button-default-color-focus: $color-white;
+$button-default-color-pressed: $color-white;
+$button-default-color-disabled: $color-white;
 
-$button-default-border-color: $iq-grey-400;
-$button-default-border-color-over: $iq-grey-700;
-$button-default-border-color-focus: $iq-grey-900;
-$button-default-border-color-pressed: $iq-grey-700;
-$button-default-border-color-disabled: $iq-grey-400;
+$button-default-border-color: $color-night-rider;
+$button-default-border-color-over: $color-night-rider;
+$button-default-border-color-focus: $color-cornflower;
+$button-default-border-color-pressed: $color-night-rider;
+$button-default-border-color-disabled: $color-night-rider;
 
 $button-small-font-size: $font-size-body;
 $button-small-font-size-over: $font-size-body;
@@ -32,32 +32,24 @@ $button-medium-font-weight-focus: $font-weight-body;
 $button-medium-font-weight-pressed: $font-weight-body;
 $button-medium-font-weight-disabled: $font-weight-body;
 
-$button-default-glyph-color: $iq-grey-700;
+$button-default-glyph-color: $color-white;
 $button-default-glyph-opacity: 1;
 
-$button-toolbar-color: $iq-grey-700;
-$button-toolbar-color-over: $iq-grey-900;
-$button-toolbar-color-focus: $iq-grey-900;
-$button-toolbar-color-pressed: $iq-grey-900;
-$button-toolbar-color-disabled: $iq-grey-700;
+$button-toolbar-color: $color-night-rider;
+$button-toolbar-color-over: $color-night-rider;
+$button-toolbar-color-focus: $color-night-rider;
+$button-toolbar-color-pressed: $color-white;
+$button-toolbar-color-disabled: $color-night-rider;
 
-$button-toolbar-border-color: $iq-grey-400;
-$button-toolbar-border-color-over: $iq-grey-700;
-$button-toolbar-border-color-focus: $iq-grey-900;
-$button-toolbar-border-color-pressed: $iq-grey-700;
-$button-toolbar-border-color-disabled: $iq-grey-400;
+$button-toolbar-border-color-focus: $color-cornflower;
 
-$button-toolbar-glyph-color: $iq-grey-700;
-$button-toolbar-glyph-color-disabled: $iq-grey-700;
-
+$button-toolbar-glyph-color: $color-night-rider;
 $button-toolbar-glyph-opacity: 1;
 
-$button-toolbar-opacity-disabled: .65;
+$button-disabled-opacity: 0.5;
 
-$button-opacity-disabled: .65;
-
-$button-toolbar-background-gradient: $iq-grey-100 $iq-grey-100;
-$button-toolbar-background-gradient-over: $iq-grey-100 $iq-grey-100;
-$button-toolbar-background-gradient-focus: $iq-grey-100 $iq-grey-100;
-$button-toolbar-background-gradient-pressed: $iq-grey-100 $iq-grey-100;
-$button-toolbar-background-gradient-disabled: $iq-grey-100 $iq-grey-100;
+$button-toolbar-background-gradient: $color-white $color-light-gainsboro;
+$button-toolbar-background-gradient-over: $color-light-gray $color-silver;
+$button-toolbar-background-gradient-focus: $color-white $color-light-gainsboro;
+$button-toolbar-background-gradient-pressed: $color-suva-gray $color-gray;
+$button-toolbar-background-gradient-disabled: $color-white $color-light-gainsboro;
