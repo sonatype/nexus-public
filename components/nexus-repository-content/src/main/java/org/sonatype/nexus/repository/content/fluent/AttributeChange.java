@@ -40,7 +40,7 @@ public enum AttributeChange
   PREPEND,
 
   /**
-   * Merges a value with the attribute map under the key.
+   * Overlays a value onto the attribute map under the key.
    */
-  MERGE
+  OVERLAY
 }

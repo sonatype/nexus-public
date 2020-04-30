@@ -23,6 +23,8 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.MissingBlobException;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.cache.CacheController;
+import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
@@ -47,6 +49,12 @@ import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_IP_HEADER;
+import static org.sonatype.nexus.repository.cache.CacheInfo.CACHE;
+import static org.sonatype.nexus.repository.cache.CacheInfo.CACHE_TOKEN;
+import static org.sonatype.nexus.repository.cache.CacheInfo.INVALIDATED;
+import static org.sonatype.nexus.repository.content.fluent.AttributeChange.OVERLAY;
+import static org.sonatype.nexus.repository.content.fluent.AttributeChange.SET;
+import static org.sonatype.nexus.repository.content.fluent.internal.FluentAttributesHelper.applyAttributeChange;
 import static org.sonatype.nexus.repository.storage.Bucket.REPO_NAME_HEADER;
 
 /**
@@ -61,7 +69,7 @@ public class FluentAssetImpl
 
   private Asset asset;
 
-  public FluentAssetImpl(final ContentFacetSupport facet, final Asset asset)  {
+  public FluentAssetImpl(final ContentFacetSupport facet, final Asset asset) {
     this.facet = checkNotNull(facet);
     this.asset = checkNotNull(asset);
   }
@@ -113,9 +121,10 @@ public class FluentAssetImpl
 
   @Override
   public FluentAsset attributes(final AttributeChange change, final String key, final Object value) {
-    FluentAttributesHelper.apply(asset, change, key, value);
-    facet.assetStore().updateAssetAttributes(asset);
-    return null;
+    if (applyAttributeChange(asset, change, key, value)) {
+      facet.assetStore().updateAssetAttributes(asset);
+    }
+    return this;
   }
 
   @Override
@@ -156,8 +165,25 @@ public class FluentAssetImpl
   }
 
   @Override
-  public void markAsDownloaded() {
+  public FluentAsset markAsDownloaded() {
     facet.assetStore().markAsDownloaded(asset);
+    return this;
+  }
+
+  @Override
+  public FluentAsset markAsCached(final CacheInfo cacheInfo) {
+    return attributes(SET, CACHE, cacheInfo.toMap());
+  }
+
+  @Override
+  public FluentAsset markAsStale() {
+    return attributes(OVERLAY, CACHE, ImmutableMap.of(CACHE_TOKEN, INVALIDATED));
+  }
+
+  @Override
+  public boolean isStale(final CacheController cacheController) {
+    CacheInfo cacheInfo = CacheInfo.fromMap(attributes(CACHE));
+    return cacheInfo != null && cacheController.isStale(cacheInfo);
   }
 
   @Override

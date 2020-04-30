@@ -12,9 +12,11 @@
  */
 package org.sonatype.nexus.repository.content.fluent.internal;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 
 import javax.annotation.Nullable;
 
@@ -41,38 +43,41 @@ public class FluentAttributesHelper
   /**
    * Apply a change request to the {@link RepositoryContent}'s attributes.
    */
-  public static void apply(final RepositoryContent content,
-                           final AttributeChange change,
-                           final String key,
-                           @Nullable final Object value)
+  public static boolean applyAttributeChange(final RepositoryContent content,
+                                             final AttributeChange change,
+                                             final String key,
+                                             @Nullable final Object value)
   {
-    apply(content.attributes(), change, key, value);
+    return applyAttributeChange(content.attributes(), change, key, value);
   }
 
   /**
    * Apply a change request to the given {@link AttributesMap}.
    */
-  public static void apply(final AttributesMap attributes,
-                           final AttributeChange change,
-                           final String key,
-                           @Nullable final Object value)
+  public static boolean applyAttributeChange(final AttributesMap attributes,
+                                             final AttributeChange change,
+                                             final String key,
+                                             @Nullable final Object value)
   {
     switch (change) {
       case SET:
-        attributes.set(key, checkNotNull(value));
-        break;
+        return !value.equals(attributes.set(key, checkNotNull(value)));
       case REMOVE:
-        attributes.remove(key); // value is ignored
-        break;
+        return attributes.remove(key) != null; // value is ignored
       case APPEND:
         attributes.compute(key, v -> append(v, checkNotNull(value)));
-        break;
+        return true;
       case PREPEND:
         attributes.compute(key, v -> prepend(v, checkNotNull(value)));
-        break;
-      case MERGE:
-        attributes.compute(key, v -> merge(v, checkNotNull(value)));
-        break;
+        return true;
+      case OVERLAY:
+        Object oldMap = attributes.get(key);
+        Object newMap = overlay(oldMap, checkNotNull(value));
+        if (!newMap.equals(oldMap)) {
+          attributes.set(key, newMap);
+          return true;
+        }
+        return false;
       default:
         throw new IllegalArgumentException("Unknown request");
     }
@@ -109,28 +114,31 @@ public class FluentAttributesHelper
   }
 
   /**
-   * Attempts to merge a map value with an attribute map.
+   * Attempts to overlay a map value onto an attribute map.
    *
    * @throws IllegalArgumentException if either the value or attribute is not a map
    */
-  private static Object merge(final Object map, final Object value) {
-    checkArgument(value instanceof Map<?, ?>, "Conflict: cannot merge '%s' with '%s'", value, map);
+  private static Object overlay(final Object map, final Object value) {
+    checkArgument(value instanceof Map<?, ?>, "Conflict: cannot overlay '%s' onto '%s'", value, map);
     if (map == null) {
       return value;
     }
-    checkArgument(map instanceof Map<?, ?>, "Conflict: cannot merge '%s' with '%s'", value, map);
+    checkArgument(map instanceof Map<?, ?>, "Conflict: cannot overlay '%s' onto '%s'", value, map);
     @SuppressWarnings("unchecked")
-    Map<Object, Object> mergeInto = (Map<Object, Object>) map; // perform in-place merge
+    Map<Object, Object> resultMap = (Map<Object, Object>) map;
     for (Entry<?, ?> entry : ((Map<?, ?>) value).entrySet()) {
-      Object oldValue = mergeInto.get(entry.getKey());
+      Object oldValue = resultMap.get(entry.getKey());
       Object newValue = entry.getValue();
-      if (oldValue == null) {
-        mergeInto.put(entry.getKey(), newValue);
+      if (oldValue instanceof Map && !oldValue.equals(newValue)) {
+        newValue = overlay(oldValue, newValue);
       }
-      else if (!oldValue.equals(newValue)) {
-        merge(oldValue, newValue);
+      if (!Objects.equals(oldValue, newValue)) {
+        if (resultMap == map) {
+          resultMap = new HashMap<>(resultMap); // only make shallow copy when necessary
+        }
+        resultMap.put(entry.getKey(), newValue);
       }
     }
-    return map;
+    return resultMap;
   }
 }

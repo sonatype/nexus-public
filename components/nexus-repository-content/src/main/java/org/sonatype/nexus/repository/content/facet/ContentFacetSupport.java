@@ -32,7 +32,6 @@ import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.fluent.FluentBlobs;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentAssetsImpl;
-import org.sonatype.nexus.repository.content.fluent.internal.FluentAttributesHelper;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentBlobsImpl;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentComponentsImpl;
 import org.sonatype.nexus.repository.content.store.AssetBlobStore;
@@ -57,6 +56,7 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.CONTENT_DATASTOR
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.BLOB_STORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.DATA_STORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
+import static org.sonatype.nexus.repository.content.fluent.internal.FluentAttributesHelper.applyAttributeChange;
 
 /**
  * {@link ContentFacet} support.
@@ -205,8 +205,9 @@ public abstract class ContentFacetSupport
   @Override
   public final ContentFacet attributes(final AttributeChange change, final String key, final Object value) {
     ContentRepository contentRepository = contentRepository();
-    FluentAttributesHelper.apply(contentRepository, change, key, value);
-    contentRepositoryStore.updateContentRepositoryAttributes(contentRepository);
+    if (applyAttributeChange(contentRepository, change, key, value)) {
+      contentRepositoryStore.updateContentRepositoryAttributes(contentRepository);
+    }
     return this;
   }
 

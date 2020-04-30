@@ -27,13 +27,16 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.sonatype.nexus.repository.content.fluent.AttributeChange.APPEND;
-import static org.sonatype.nexus.repository.content.fluent.AttributeChange.MERGE;
+import static org.sonatype.nexus.repository.content.fluent.AttributeChange.OVERLAY;
 import static org.sonatype.nexus.repository.content.fluent.AttributeChange.PREPEND;
 import static org.sonatype.nexus.repository.content.fluent.AttributeChange.REMOVE;
 import static org.sonatype.nexus.repository.content.fluent.AttributeChange.SET;
+import static org.sonatype.nexus.repository.content.fluent.internal.FluentAttributesHelper.applyAttributeChange;
 
 /**
  * Test {@link FluentAttributesHelper}.
@@ -56,27 +59,28 @@ public class FluentAttributesHelperTest
   public void testSimpleChanges() {
     assertThat(attributes.get("myvalue"), is(nullValue()));
 
-    FluentAttributesHelper.apply(attributes, SET, "myvalue", 1);
+    assertTrue(applyAttributeChange(attributes, SET, "myvalue", 1));
+    assertFalse(applyAttributeChange(attributes, SET, "myvalue", 1));
 
-    FluentAttributesHelper.apply(attributes, REMOVE, "myvalue", null);
-
+    assertTrue(applyAttributeChange(attributes, REMOVE, "myvalue", null));
+    assertFalse(applyAttributeChange(attributes, REMOVE, "myvalue", null));
   }
 
   @Test
   public void testListChanges() {
     assertThat(attributes.get("mylist"), is(nullValue()));
 
-    FluentAttributesHelper.apply(attributes, APPEND, "mylist", 2);
+    assertTrue(applyAttributeChange(attributes, APPEND, "mylist", 2));
     assertThat((List<?>) attributes.get("mylist"), contains(2));
 
-    FluentAttributesHelper.apply(attributes, PREPEND, "mylist", 3);
+    assertTrue(applyAttributeChange(attributes, PREPEND, "mylist", 3));
     assertThat((List<?>) attributes.get("mylist"), contains(3, 2));
 
-    FluentAttributesHelper.apply(attributes, APPEND, "mylist", 1);
+    assertTrue(applyAttributeChange(attributes, APPEND, "mylist", 1));
     assertThat((List<?>) attributes.get("mylist"), contains(3, 2, 1));
 
     try {
-      FluentAttributesHelper.apply(attributes, APPEND, "notalist", 1);
+      applyAttributeChange(attributes, APPEND, "notalist", 1);
       fail("Expected IllegalArgumentException");
     }
     catch (IllegalArgumentException e) {
@@ -84,7 +88,7 @@ public class FluentAttributesHelperTest
     }
 
     try {
-      FluentAttributesHelper.apply(attributes, PREPEND, "notalist", 1);
+      applyAttributeChange(attributes, PREPEND, "notalist", 1);
       fail("Expected IllegalArgumentException");
     }
     catch (IllegalArgumentException e) {
@@ -164,37 +168,34 @@ public class FluentAttributesHelperTest
         + "}",
         Map.class);
 
-    FluentAttributesHelper.apply(attributes, MERGE, "mymap", overlay1);
+    assertTrue(applyAttributeChange(attributes, OVERLAY, "mymap", overlay1));
     assertThat((Map<?, ?>) attributes.get("mymap"), is(overlay1));
+    assertFalse(applyAttributeChange(attributes, OVERLAY, "mymap", overlay1));
 
-    FluentAttributesHelper.apply(attributes, MERGE, "mymap", overlay2);
+    assertTrue(applyAttributeChange(attributes, OVERLAY, "mymap", overlay2));
     assertThat((Map<?, ?>) attributes.get("mymap"), is(expected));
+    assertFalse(applyAttributeChange(attributes, OVERLAY, "mymap", overlay2));
 
     try {
-      // cannot merge non-map value
-      FluentAttributesHelper.apply(attributes, MERGE, "mymap", "text");
+      // cannot overlay map attribute with non-map value
+      applyAttributeChange(attributes, OVERLAY, "mymap", "text");
       fail("Expected IllegalArgumentException");
     }
     catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), containsString("Conflict: cannot merge "));
+      assertThat(e.getMessage(), containsString("Conflict: cannot overlay "));
     }
 
+    // can overlay existing entry with a different value
+    assertTrue(applyAttributeChange(attributes, OVERLAY, "mymap", overlay3));
+    assertFalse(applyAttributeChange(attributes, OVERLAY, "mymap", overlay3));
+
     try {
-      // cannot overwrite existing entry with a different value
-      FluentAttributesHelper.apply(attributes, MERGE, "mymap", overlay3);
+      // cannot overlay onto non-map attribute
+      applyAttributeChange(attributes, OVERLAY, "notamap", overlay1);
       fail("Expected IllegalArgumentException");
     }
     catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), containsString("Conflict: cannot merge "));
-    }
-
-    try {
-      // cannot merge into non-map attribute
-      FluentAttributesHelper.apply(attributes, MERGE, "notamap", overlay1);
-      fail("Expected IllegalArgumentException");
-    }
-    catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), containsString("Conflict: cannot merge "));
+      assertThat(e.getMessage(), containsString("Conflict: cannot overlay "));
     }
   }
 
@@ -202,7 +203,7 @@ public class FluentAttributesHelperTest
   public void testNullsNotAllowed() {
 
     try {
-      FluentAttributesHelper.apply(attributes, null, "myvalue", 1);
+      applyAttributeChange(attributes, null, "myvalue", 1);
       fail("Expected NullPointerException");
     }
     catch (NullPointerException e) {
@@ -210,7 +211,7 @@ public class FluentAttributesHelperTest
     }
 
     try {
-      FluentAttributesHelper.apply(attributes, SET, null, 1);
+      applyAttributeChange(attributes, SET, null, 1);
       fail("Expected NullPointerException");
     }
     catch (NullPointerException e) {
@@ -218,7 +219,7 @@ public class FluentAttributesHelperTest
     }
 
     try {
-      FluentAttributesHelper.apply(attributes, SET, "myvalue", null);
+      applyAttributeChange(attributes, SET, "myvalue", null);
       fail("Expected NullPointerException");
     }
     catch (NullPointerException e) {
@@ -226,21 +227,21 @@ public class FluentAttributesHelperTest
     }
 
     try {
-      FluentAttributesHelper.apply(attributes, APPEND, "mylist", null);
+      applyAttributeChange(attributes, APPEND, "mylist", null);
     }
     catch (NullPointerException e) {
       // expected
     }
 
     try {
-      FluentAttributesHelper.apply(attributes, PREPEND, "mylist", null);
+      applyAttributeChange(attributes, PREPEND, "mylist", null);
     }
     catch (NullPointerException e) {
       // expected
     }
 
     try {
-      FluentAttributesHelper.apply(attributes, MERGE, "mymap", null);
+      applyAttributeChange(attributes, OVERLAY, "mymap", null);
     }
     catch (NullPointerException e) {
       // expected

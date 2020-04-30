@@ -13,10 +13,14 @@
 package org.sonatype.nexus.repository.cache;
 
 import java.util.Date;
+import java.util.Map;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.common.collect.AttributesMap;
+
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -87,6 +91,29 @@ public class CacheInfo
    */
   public boolean isInvalidated() {
     return INVALIDATED.equals(cacheToken);
+  }
+
+  /**
+   * @since 3.next
+   */
+  public Map<String, String> toMap() {
+    return ImmutableMap.of(CACHE_TOKEN, cacheToken, LAST_VERIFIED, lastVerified.toString());
+  }
+
+  /**
+   * @since 3.next
+   */
+  @Nullable
+  public static CacheInfo fromMap(final Map<String, String> map) {
+    return map != null ? new CacheInfo(new DateTime(map.get(LAST_VERIFIED)), map.get(CACHE_TOKEN)) : null;
+  }
+
+  /**
+   * @since 3.next
+   */
+  @Nullable
+  public static CacheInfo fromMap(final AttributesMap map) {
+    return map != null ? new CacheInfo(new DateTime(map.get(LAST_VERIFIED)), map.get(CACHE_TOKEN, String.class)) : null;
   }
 
   @Override

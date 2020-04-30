@@ -17,6 +17,8 @@ import java.util.Map;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.cache.CacheController;
+import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
@@ -56,7 +58,28 @@ public interface FluentAsset
   /**
    * Mark this asset as recently downloaded by a user action.
    */
-  void markAsDownloaded();
+  FluentAsset markAsDownloaded();
+
+  /**
+   * Mark this generated/proxied asset as recently cached.
+   *
+   * @since 3.next
+   */
+  FluentAsset markAsCached(CacheInfo cachInfo);
+
+  /**
+   * Mark this generated/proxied asset as stale.
+   *
+   * @since 3.next
+   */
+  FluentAsset markAsStale();
+
+  /**
+   * Is this generated/proxied asset stale?
+   *
+   * @since 3.next
+   */
+  boolean isStale(CacheController cacheController);
 
   /**
    * Deletes this asset.
