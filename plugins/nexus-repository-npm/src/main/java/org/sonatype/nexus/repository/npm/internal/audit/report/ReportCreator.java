@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.npm.internal.audit.report;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +67,11 @@ public class ReportCreator
     int index = 1;
     for (Entry<AuditComponent, List<Vulnerability>> entry : report.getAuditComponents().entrySet()) {
       AuditComponent component = entry.getKey();
-      for (Vulnerability vulnerability : entry.getValue()) {
+      List<Vulnerability> vulnerabilities = entry.getValue();
+      // from the critical issues to the lowest ones
+      vulnerabilities.sort(Comparator.comparing(Vulnerability::getSeverity,
+          Comparator.comparingInt(v -> v.getSeverityRange().getMinimum())).reversed());
+      for (Vulnerability vulnerability : vulnerabilities) {
         List<Resolve> resolvesForOneComponent =
             packageLock.createResolve(index, component.getName(), component.getVersion());
         if (resolvesForOneComponent.isEmpty()) {
