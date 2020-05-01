@@ -33,10 +33,10 @@ public class PyPiSearchMappings
     implements SearchMappings
 {
   private static final List<SearchMapping> MAPPINGS = ImmutableList.of(
-      new SearchMapping("pypi.classifiers", "assets.attributes.pypi.classifiers", "PyPi classifiers"),
-      new SearchMapping("pypi.description", "assets.attributes.pypi.description", "PyPi description"),
-      new SearchMapping("pypi.keywords", "assets.attributes.pypi.keywords", "PyPi keywords"),
-      new SearchMapping("pypi.summary", "assets.attributes.pypi.summary", "PyPi summary")
+      new SearchMapping("pypi.classifiers", "assets.attributes.pypi.classifiers", "PyPI classifiers"),
+      new SearchMapping("pypi.description", "assets.attributes.pypi.description", "PyPI description"),
+      new SearchMapping("pypi.keywords", "assets.attributes.pypi.keywords", "PyPI keywords"),
+      new SearchMapping("pypi.summary", "assets.attributes.pypi.summary", "PyPI summary")
   );
 
   @Override
