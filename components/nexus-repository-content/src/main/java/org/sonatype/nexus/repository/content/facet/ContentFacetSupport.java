@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.facet;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import javax.inject.Inject;
@@ -46,7 +47,6 @@ import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.TransactionalStore;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -193,12 +193,12 @@ public abstract class ContentFacetSupport
   }
 
   @Override
-  public final DateTime created() {
+  public final LocalDateTime created() {
     return contentRepository().created();
   }
 
   @Override
-  public final DateTime lastUpdated() {
+  public final LocalDateTime lastUpdated() {
     return contentRepository().lastUpdated();
   }
 

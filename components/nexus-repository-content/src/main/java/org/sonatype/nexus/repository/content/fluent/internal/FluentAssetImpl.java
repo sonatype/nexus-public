@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.fluent.internal;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 
@@ -41,7 +42,6 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.hash.HashCode;
-import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
@@ -49,6 +49,7 @@ import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_IP_HEADER;
+import static org.sonatype.nexus.common.time.DateHelper.toLocalDateTime;
 import static org.sonatype.nexus.repository.cache.CacheInfo.CACHE;
 import static org.sonatype.nexus.repository.cache.CacheInfo.CACHE_TOKEN;
 import static org.sonatype.nexus.repository.cache.CacheInfo.INVALIDATED;
@@ -100,7 +101,7 @@ public class FluentAssetImpl
   }
 
   @Override
-  public Optional<DateTime> lastDownloaded() {
+  public Optional<LocalDateTime> lastDownloaded() {
     return asset.lastDownloaded();
   }
 
@@ -110,12 +111,12 @@ public class FluentAssetImpl
   }
 
   @Override
-  public DateTime created() {
+  public LocalDateTime created() {
     return asset.created();
   }
 
   @Override
-  public DateTime lastUpdated() {
+  public LocalDateTime lastUpdated() {
     return asset.lastUpdated();
   }
 
@@ -213,7 +214,7 @@ public class FluentAssetImpl
             e -> e.getKey().name(),
             e -> e.getValue().toString())));
 
-    assetBlob.setBlobCreated(metrics.getCreationTime());
+    assetBlob.setBlobCreated(toLocalDateTime(metrics.getCreationTime()));
     assetBlob.setCreatedBy(headers.get(CREATED_BY_HEADER));
     assetBlob.setCreatedByIp(headers.get(CREATED_BY_IP_HEADER));
 

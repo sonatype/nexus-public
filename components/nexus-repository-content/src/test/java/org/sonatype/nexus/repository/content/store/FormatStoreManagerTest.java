@@ -19,6 +19,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityUUID;
+import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.datastore.api.ContentDataAccess;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
@@ -50,8 +51,6 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isA;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.joda.time.DateTime.now;
-import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertThat;
 import static org.sonatype.nexus.datastore.mybatis.CombUUID.combUUID;
 
@@ -137,7 +136,7 @@ public class FormatStoreManagerTest
     assetBlob.setBlobSize(0);
     assetBlob.setContentType("text/plain");
     assetBlob.setChecksums(ImmutableMap.of());
-    assetBlob.setBlobCreated(now(UTC));
+    assetBlob.setBlobCreated(UTC.now());
     assetBlobStore.createAssetBlob(assetBlob);
 
     asset.setAssetBlob(assetBlob);

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -29,7 +30,6 @@ import org.sonatype.nexus.repository.content.store.example.TestContentRepository
 import org.apache.ibatis.exceptions.PersistenceException;
 import org.hamcrest.collection.IsIterableContainingInAnyOrder;
 import org.hamcrest.collection.IsIterableContainingInOrder;
-import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -153,8 +153,8 @@ public class AssetDAOTest
 
       tempResult = dao.readAsset(repositoryId, path1).get();
 
-      DateTime oldCreated = tempResult.created();
-      DateTime oldLastUpdated = tempResult.lastUpdated();
+      LocalDateTime oldCreated = tempResult.created();
+      LocalDateTime oldLastUpdated = tempResult.lastUpdated();
 
       asset1.attributes("custom-section-1").set("custom-key-1", "more-test-values-1");
       dao.updateAssetAttributes(asset1);
@@ -196,8 +196,8 @@ public class AssetDAOTest
 
       tempResult = dao.readAsset(repositoryId, path1).get();
 
-      DateTime oldCreated = tempResult.created();
-      DateTime oldLastUpdated = tempResult.lastUpdated();
+      LocalDateTime oldCreated = tempResult.created();
+      LocalDateTime oldLastUpdated = tempResult.lastUpdated();
 
       asset1.attributes("custom-section-1").set("custom-key-1", "more-test-values-again");
       dao.updateAssetAttributes(asset1);
@@ -266,8 +266,8 @@ public class AssetDAOTest
 
       tempResult = dao.readAsset(repositoryId, path).get();
 
-      DateTime oldCreated = tempResult.created();
-      DateTime oldLastUpdated = tempResult.lastUpdated();
+      LocalDateTime oldCreated = tempResult.created();
+      LocalDateTime oldLastUpdated = tempResult.lastUpdated();
       assertFalse(tempResult.lastDownloaded().isPresent());
 
       dao.markAsDownloaded(asset);
@@ -290,9 +290,9 @@ public class AssetDAOTest
 
       tempResult = dao.readAsset(repositoryId, path).get();
 
-      DateTime oldCreated = tempResult.created();
-      DateTime oldLastUpdated = tempResult.lastUpdated();
-      DateTime oldLastDownloaded = tempResult.lastDownloaded().get();
+      LocalDateTime oldCreated = tempResult.created();
+      LocalDateTime oldLastUpdated = tempResult.lastUpdated();
+      LocalDateTime oldLastDownloaded = tempResult.lastDownloaded().get();
 
       dao.markAsDownloaded(asset);
 
@@ -337,8 +337,8 @@ public class AssetDAOTest
 
       tempResult = dao.readAsset(repositoryId, path).get();
 
-      DateTime oldCreated = tempResult.created();
-      DateTime oldLastUpdated = tempResult.lastUpdated();
+      LocalDateTime oldCreated = tempResult.created();
+      LocalDateTime oldLastUpdated = tempResult.lastUpdated();
       assertFalse(tempResult.blob().isPresent());
 
       asset.setAssetBlob(assetBlob1);
@@ -365,8 +365,8 @@ public class AssetDAOTest
 
       tempResult = dao.readAsset(repositoryId, path).get();
 
-      DateTime oldCreated = tempResult.created();
-      DateTime oldLastUpdated = tempResult.lastUpdated();
+      LocalDateTime oldCreated = tempResult.created();
+      LocalDateTime oldLastUpdated = tempResult.lastUpdated();
       assertThat(tempResult.blob().get(), sameBlob(assetBlob1));
 
       asset.setAssetBlob(assetBlob2);
@@ -393,8 +393,8 @@ public class AssetDAOTest
 
       tempResult = dao.readAsset(repositoryId, path).get();
 
-      DateTime oldCreated = tempResult.created();
-      DateTime oldLastUpdated = tempResult.lastUpdated();
+      LocalDateTime oldCreated = tempResult.created();
+      LocalDateTime oldLastUpdated = tempResult.lastUpdated();
       assertThat(tempResult.blob().get(), sameBlob(assetBlob2));
 
       asset.setAssetBlob(assetBlob2);
@@ -421,8 +421,8 @@ public class AssetDAOTest
 
       tempResult = dao.readAsset(repositoryId, path).get();
 
-      DateTime oldCreated = tempResult.created();
-      DateTime oldLastUpdated = tempResult.lastUpdated();
+      LocalDateTime oldCreated = tempResult.created();
+      LocalDateTime oldLastUpdated = tempResult.lastUpdated();
       assertThat(tempResult.blob().get(), sameBlob(assetBlob2));
 
       asset.setAssetBlob(null);
@@ -447,8 +447,8 @@ public class AssetDAOTest
 
       tempResult = dao.readAsset(repositoryId, path).get();
 
-      DateTime oldCreated = tempResult.created();
-      DateTime oldLastUpdated = tempResult.lastUpdated();
+      LocalDateTime oldCreated = tempResult.created();
+      LocalDateTime oldLastUpdated = tempResult.lastUpdated();
       assertFalse(tempResult.blob().isPresent());
 
       asset.setAssetBlob(null);

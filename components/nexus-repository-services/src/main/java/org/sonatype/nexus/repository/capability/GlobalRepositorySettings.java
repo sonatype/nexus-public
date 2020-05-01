@@ -12,14 +12,12 @@
  */
 package org.sonatype.nexus.repository.capability;
 
+import java.time.Duration;
+
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-
-import org.joda.time.Duration;
-
-import static org.joda.time.Duration.standardHours;
 
 /**
  * Global repository settings.
@@ -31,14 +29,14 @@ import static org.joda.time.Duration.standardHours;
 public class GlobalRepositorySettings
     extends ComponentSupport
 {
-  public static final Duration DEFAULT_LAST_DOWNLOADED_INTERVAL = standardHours(12);
+  public static final Duration DEFAULT_LAST_DOWNLOADED_INTERVAL = Duration.ofHours(12);
 
   private Duration lastDownloadedInterval = DEFAULT_LAST_DOWNLOADED_INTERVAL;
 
   public void setLastDownloadedInterval(final Duration lastDownloadedInterval) {
-    if (lastDownloadedInterval.getStandardHours() < 1) {
+    if (lastDownloadedInterval.toHours() < 1) {
       log.warn("A lastDownloaded interval of {} seconds has been configured, a value less than"
-          + " 1 hour is not recommended for performance reasons", lastDownloadedInterval.getStandardSeconds());
+          + " 1 hour is not recommended for performance reasons", lastDownloadedInterval.getSeconds());
     }
     this.lastDownloadedInterval = lastDownloadedInterval;
   }

@@ -10,38 +10,22 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content;
+package org.sonatype.nexus.common.time;
 
 import java.time.LocalDateTime;
-
-import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import java.time.ZoneOffset;
 
 /**
- * Metadata common to all repository content.
- *
- * @since 3.20
+ * UTC related helper methods.
+ * 
+ * @since 3.next
  */
-public interface RepositoryContent
-{
-  /**
-   * Schemaless content attributes.
-   */
-  NestedAttributesMap attributes();
-
-  /**
-   * Shortcut to content sub-attributes.
-   */
-  default NestedAttributesMap attributes(String key) {
-    return attributes().child(key);
+public class UTC {
+  private UTC() {
+    // empty
   }
 
-  /**
-   * When the metadata was first created.
-   */
-  LocalDateTime created();
-
-  /**
-   * When the metadata was last updated.
-   */
-  LocalDateTime lastUpdated();
+  public static LocalDateTime now() {
+    return LocalDateTime.now(ZoneOffset.UTC);
+  }
 }

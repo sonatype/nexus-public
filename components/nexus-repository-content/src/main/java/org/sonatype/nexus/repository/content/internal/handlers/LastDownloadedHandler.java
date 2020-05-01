@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.internal.handlers;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -21,6 +22,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
+import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.repository.capability.GlobalRepositorySettings;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
@@ -28,8 +30,6 @@ import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.Status;
-
-import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
@@ -85,8 +85,8 @@ public class LastDownloadedHandler
     }
   }
 
-  private boolean isNextUpdateInFuture(Optional<DateTime> lastTime) {
-    return lastTime.isPresent() && lastTime.get().plus(globalSettings.getLastDownloadedInterval()).isAfterNow();
+  private boolean isNextUpdateInFuture(Optional<LocalDateTime> lastTime) {
+    return lastTime.isPresent() && lastTime.get().plus(globalSettings.getLastDownloadedInterval()).isAfter(UTC.now());
   }
 
   private boolean isSuccessfulRequestWithContent(final Context context, final Response response) {

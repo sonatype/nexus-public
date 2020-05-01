@@ -25,7 +25,7 @@ import static org.joda.time.Duration.standardHours;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.goodies.common.Time.hours;
-import static org.sonatype.nexus.repository.capability.GlobalRepositorySettings.DEFAULT_LAST_DOWNLOADED_INTERVAL;
+import static org.sonatype.nexus.repository.storage.AssetManager.DEFAULT_LAST_DOWNLOADED_INTERVAL;
 
 public class AssetManagerTest
     extends TestSupport

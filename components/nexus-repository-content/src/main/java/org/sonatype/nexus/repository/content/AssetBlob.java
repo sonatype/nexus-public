@@ -12,13 +12,12 @@
  */
 package org.sonatype.nexus.repository.content;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobRef;
-
-import org.joda.time.DateTime;
 
 /**
  * Details of the {@link Blob} containing the binary content of an {@link Asset}.
@@ -55,7 +54,7 @@ public interface AssetBlob
   /**
    * When the blob was created.
    */
-  DateTime blobCreated();
+  LocalDateTime blobCreated();
 
   /**
    * The user that triggered creation of this blob; empty if it was an internal request.

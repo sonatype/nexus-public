@@ -23,6 +23,8 @@ import com.google.common.annotations.VisibleForTesting;
 import org.joda.time.Duration;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.time.DateHelper.toJavaDuration;
+import static org.sonatype.nexus.common.time.DateHelper.toJodaDuration;
 
 /**
  * Responsible for altering the runtime behaviour of assets
@@ -34,6 +36,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class AssetManager
     extends ComponentSupport
 {
+  public static final Duration DEFAULT_LAST_DOWNLOADED_INTERVAL =
+      toJodaDuration(GlobalRepositorySettings.DEFAULT_LAST_DOWNLOADED_INTERVAL);
+
   private final GlobalRepositorySettings globalSettings;
 
   @Inject
@@ -42,12 +47,12 @@ public class AssetManager
   }
 
   public void setLastDownloadedInterval(final Duration lastDownloadedInterval) {
-    globalSettings.setLastDownloadedInterval(lastDownloadedInterval);
+    globalSettings.setLastDownloadedInterval(toJavaDuration(lastDownloadedInterval));
   }
 
   @VisibleForTesting
   public Duration getLastDownloadedInterval() {
-    return globalSettings.getLastDownloadedInterval();
+    return toJodaDuration(globalSettings.getLastDownloadedInterval());
   }
 
   public boolean maybeUpdateLastDownloaded(final Asset asset) {

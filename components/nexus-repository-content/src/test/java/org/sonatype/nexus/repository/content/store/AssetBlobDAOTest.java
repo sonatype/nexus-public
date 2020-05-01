@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.store;
 
 import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.store.example.TestAssetBlobDAO;
@@ -23,8 +24,6 @@ import org.junit.Test;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.emptyIterable;
-import static org.joda.time.DateTime.now;
-import static org.joda.time.DateTimeZone.UTC;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -74,7 +73,7 @@ public class AssetBlobDAOTest
       duplicate.setBlobRef(assetBlob1.blobRef());
       duplicate.setBlobSize(1234);
       duplicate.setContentType("text/html");
-      duplicate.setBlobCreated(now(UTC));
+      duplicate.setBlobCreated(UTC.now());
       dao.createAssetBlob(duplicate);
 
       session.getTransaction().commit();
