@@ -1081,7 +1081,6 @@
               <exclude>**/nexus-ssl/**/org/sonatype/nexus/ssl/keystore/internal/geronimo/**</exclude>
               <exclude>**/nexus-repository-apt/**/org/sonatype/nexus/repository/apt/internal/org/apache/commons/compress/archivers/ar/ArArchiveInputStream.java</exclude>
 
-              <!--LICENSE_CHECK_EXCLUDES_PLACEHOLDER-->
             </excludes>
           </configuration>
         </plugin>
