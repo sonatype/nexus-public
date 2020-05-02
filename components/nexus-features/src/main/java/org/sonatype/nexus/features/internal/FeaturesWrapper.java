@@ -164,7 +164,7 @@ public class FeaturesWrapper
         break;
       case "java.lang.String, java.lang.String":
       case "java.lang.String, java.lang.String, java.util.EnumSet":
-        bundles = featuresResolver().resolve((String) args[0], (String) args[1]);
+        bundles = featuresResolver().resolve(args[0] + "/" + args[1]);
         break;
       case "org.apache.karaf.features.Feature, java.util.EnumSet":
         bundles = featuresResolver().resolve((Feature) args[0]);

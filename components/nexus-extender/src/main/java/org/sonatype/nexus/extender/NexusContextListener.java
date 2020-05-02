@@ -338,7 +338,7 @@ public class NexusContextListener
             if (featureNames.length() > 0) {
               featureNames.append(',');
             }
-            featureNames.append(feature.getId());
+            featureNames.append(feature.getName());
           }
         }
       }
