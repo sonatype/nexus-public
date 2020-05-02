@@ -22,99 +22,71 @@
     <version>3.24.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>nexus-cma-feature</artifactId>
+  <artifactId>nexus-cma-community</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>feature</packaging>
+
+  <properties>
+    <p2.format.version>1.0.3</p2.format.version>
+    <r.format.version>1.1.3</r.format.version>
+    <helm.format.version>1.0.4</helm.format.version>
+    <conan.format.version>1.0.2</conan.format.version>
+  </properties>
 
   <dependencies>
 
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-blobstore-tasks</artifactId>
+      <artifactId>nexus-repository-conan</artifactId>
+      <version>${conan.format.version}</version>
       <classifier>features</classifier>
       <type>xml</type>
     </dependency>
 
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-repository-apt</artifactId>
+      <artifactId>nexus-repository-helm</artifactId>
+      <version>${helm.format.version}</version>
       <classifier>features</classifier>
       <type>xml</type>
     </dependency>
 
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-repository-cocoapods</artifactId>
+      <artifactId>nexus-repository-p2</artifactId>
+      <version>${p2.format.version}</version>
       <classifier>features</classifier>
       <type>xml</type>
     </dependency>
 
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-repository-conda</artifactId>
+      <artifactId>nexus-repository-r</artifactId>
+      <version>${r.format.version}</version>
       <classifier>features</classifier>
       <type>xml</type>
     </dependency>
 
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-repository-golang</artifactId>
+      <artifactId>nexus-restore-helm</artifactId>
+      <version>${helm.format.version}</version>
       <classifier>features</classifier>
       <type>xml</type>
     </dependency>
 
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-repository-maven</artifactId>
+      <artifactId>nexus-restore-p2</artifactId>
+      <version>${p2.format.version}</version>
       <classifier>features</classifier>
       <type>xml</type>
     </dependency>
 
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-repository-npm</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-repository-pypi</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-restore-apt</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-restore-maven</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-restore-npm</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-restore-pypi</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-restore-raw</artifactId>
+      <artifactId>nexus-restore-r</artifactId>
+      <version>${r.format.version}</version>
       <classifier>features</classifier>
       <type>xml</type>
     </dependency>
