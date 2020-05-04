@@ -41,6 +41,7 @@ import org.apache.shiro.authz.annotation.RequiresUser;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 
 /**
  * User resource.
@@ -138,6 +139,7 @@ public class UserResource
     xo.setFirstName(user.getFirstName());
     xo.setLastName(user.getLastName());
     xo.setEmail(user.getEmailAddress());
+    xo.setExternal(!DEFAULT_SOURCE.equals(user.getSource()));
     return xo;
   }
 

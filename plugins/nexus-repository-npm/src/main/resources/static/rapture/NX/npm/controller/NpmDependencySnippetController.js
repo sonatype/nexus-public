@@ -39,7 +39,7 @@ Ext.define('NX.npm.controller.NpmDependencySnippetController', {
 
     return [
       {
-        displayName: 'Npm',
+        displayName: 'npm',
         description: 'Install runtime dependency',
         snippetText: 'npm install ' + dependencyName + '@' + version
       },

@@ -12,9 +12,8 @@
  */
 package org.sonatype.nexus.repository.content;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
-
-import org.joda.time.DateTime;
 
 /**
  * Each asset represents a unique path to binary content in a repository.
@@ -50,5 +49,5 @@ public interface Asset
   /**
    * If/when this asset was last downloaded.
    */
-  Optional<DateTime> lastDownloaded();
+  Optional<LocalDateTime> lastDownloaded();
 }

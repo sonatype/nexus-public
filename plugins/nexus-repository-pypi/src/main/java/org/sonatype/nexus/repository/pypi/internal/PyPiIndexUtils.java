@@ -22,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -158,7 +159,13 @@ public final class PyPiIndexUtils
   }
 
   static boolean validateIndexLinks(final String packageName, final List<PyPiLink> links) {
-    return links.stream().map(PyPiLink::getFile).filter(Objects::nonNull).anyMatch(file -> file.startsWith(packageName));
+    // PEP 503 - Normalized names
+    Function<String, String> normalize = name -> name.replaceAll("[-_.]+", "-").toLowerCase(Locale.ENGLISH);
+
+    String normalizedPackageName = normalize.apply(packageName);
+
+    return links.stream().map(PyPiLink::getFile).filter(Objects::nonNull).map(normalize)
+        .anyMatch(file -> file.startsWith(normalizedPackageName));
   }
 
   /**

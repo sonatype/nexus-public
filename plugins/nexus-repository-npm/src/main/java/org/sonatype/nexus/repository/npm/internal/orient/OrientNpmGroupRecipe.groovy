@@ -25,6 +25,7 @@ import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.group.GroupHandler
 import org.sonatype.nexus.repository.http.HttpHandlers
 import org.sonatype.nexus.repository.npm.internal.NpmFormat
+import org.sonatype.nexus.repository.npm.internal.NpmGroupAuditHandler
 import org.sonatype.nexus.repository.npm.internal.NpmHandlers
 import org.sonatype.nexus.repository.npm.internal.NpmPingHandler
 import org.sonatype.nexus.repository.npm.internal.NpmWhoamiHandler
@@ -32,6 +33,7 @@ import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexFa
 import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchGroupHandler
 import org.sonatype.nexus.repository.types.GroupType
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
+import org.sonatype.nexus.repository.view.Handler
 import org.sonatype.nexus.repository.view.Router
 import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler
 
@@ -78,6 +80,9 @@ class OrientNpmGroupRecipe
   NpmPingHandler pingHandler
 
   @Inject
+  NpmGroupAuditHandler npmGroupAuditHandler
+
+  @Inject
   OrientNpmGroupRecipe(@Named(GroupType.NAME) final Type type,
                        @Named(NpmFormat.NAME) final Format format)
   {
@@ -93,6 +98,8 @@ class OrientNpmGroupRecipe
     repository.attach(tokenFacet.get())
     repository.attach(npmSearchIndexFacet.get())
     repository.attach(npmFacet.get())
+    repository.attach(npmAuditFacetProvider.get())
+    repository.attach(npmAuditTarballFacetProvider.get())
     repository.attach(configure(viewFacet.get()))
   }
 
@@ -127,6 +134,15 @@ class OrientNpmGroupRecipe
     builder.route(pingMatcher()
         .handler(timingHandler)
         .handler(pingHandler)
+        .create())
+
+    // POST /-/npm/v1/security/audits
+    builder.route(auditMatcher()
+        .handler(auditAnalyticsHandler ?: { context -> context.proceed() } as Handler)
+        .handler(timingHandler)
+        .handler(unitOfWorkHandler)
+        .handler(auditErrorHandler)
+        .handler(npmGroupAuditHandler)
         .create())
 
     // GET /packageName (npm install)

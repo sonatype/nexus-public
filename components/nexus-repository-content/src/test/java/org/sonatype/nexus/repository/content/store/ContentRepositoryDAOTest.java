@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import org.sonatype.nexus.common.entity.EntityId;
@@ -21,7 +22,6 @@ import org.sonatype.nexus.repository.content.ContentRepository;
 import org.sonatype.nexus.repository.content.store.example.TestContentRepositoryDAO;
 
 import org.apache.ibatis.exceptions.PersistenceException;
-import org.joda.time.DateTime;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.allOf;
@@ -116,8 +116,8 @@ public class ContentRepositoryDAOTest
 
       tempResult = dao.readContentRepository(configRepositoryId1).get();
 
-      DateTime oldCreated = tempResult.created();
-      DateTime oldLastUpdated = tempResult.lastUpdated();
+      LocalDateTime oldCreated = tempResult.created();
+      LocalDateTime oldLastUpdated = tempResult.lastUpdated();
 
       contentRepository1.attributes("custom-section-1").set("custom-key-1", "more-test-values-1");
       dao.updateContentRepositoryAttributes(contentRepository1);
@@ -157,8 +157,8 @@ public class ContentRepositoryDAOTest
 
       tempResult = dao.readContentRepository(configRepositoryId1).get();
 
-      DateTime oldCreated = tempResult.created();
-      DateTime oldLastUpdated = tempResult.lastUpdated();
+      LocalDateTime oldCreated = tempResult.created();
+      LocalDateTime oldLastUpdated = tempResult.lastUpdated();
 
       contentRepository1.attributes("custom-section-1").set("custom-key-1", "more-test-values-again");
       dao.updateContentRepositoryAttributes(contentRepository1);

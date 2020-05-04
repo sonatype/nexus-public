@@ -160,6 +160,15 @@ public abstract class NpmClientITSupport
     assertThat(results.stream().anyMatch(s -> s.contains("+ " + name + "@" + version)), is(true));
   }
 
+  protected void configurePackageJson(
+      final String directory,
+      final String npmComponentName,
+      final String npmComponentVersion)
+  {
+    npmCli.updatePackageJson(directory, npmComponentName, npmComponentVersion);
+    npmCli.updatePackageLockJson(directory, npmComponentName, npmComponentVersion);
+  }
+
   protected void configurePackageJson(final String directory,
                                       final String name,
                                       final String version,
@@ -208,10 +217,24 @@ public abstract class NpmClientITSupport
     assertThat(items.size(), is(1));
   }
 
+  protected void verifyComponentNotExists(
+      final String repositoryName,
+      final String name,
+      final String version) throws Exception
+  {
+    List<Map<String, Object>> items = searchForComponent(repositoryName, name, version);
+    assertThat(items.size(), is(0));
+  }
+
   protected void verifyInstalled(final List<String> results, final String packageName) {
     assertThat(results.size(), is(greaterThan(0)));
     assertThat(results.stream().anyMatch(s -> s.contains("+ " + packageName)), is(true));
     assertThat(results.stream().anyMatch(s -> s.contains("added 1 package")), is(true));
+  }
+
+  protected void verifyAudit(final List<String> results, String verifyText) {
+    assertThat(results.size(), is(greaterThan(0)));
+    assertThat(results.stream().anyMatch(s -> s.contains(verifyText)), is(true));
   }
 
   protected void verifyUpdated(final List<String> results, final String packageName) {

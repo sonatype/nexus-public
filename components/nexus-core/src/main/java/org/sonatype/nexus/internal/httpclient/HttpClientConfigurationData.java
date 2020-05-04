@@ -20,6 +20,7 @@ import org.sonatype.nexus.httpclient.config.ConnectionConfiguration;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 import org.sonatype.nexus.httpclient.config.ProxyConfiguration;
 
+import org.apache.http.client.AuthenticationStrategy;
 import org.apache.http.client.RedirectStrategy;
 
 /**
@@ -41,6 +42,10 @@ public class HttpClientConfigurationData
   @Valid
   @Nullable
   private RedirectStrategy redirectStrategy;
+
+  @Valid
+  @Nullable
+  private AuthenticationStrategy authenticationStrategy;
 
   /**
    * @see AuthenticationConfigurationDeserializer
@@ -93,6 +98,19 @@ public class HttpClientConfigurationData
     this.redirectStrategy = redirectStrategy;
   }
 
+  @Nullable
+  @Override
+  public AuthenticationStrategy getAuthenticationStrategy() {
+    return authenticationStrategy;
+  }
+
+  @Override
+  public void setAuthenticationStrategy(
+      @Nullable final AuthenticationStrategy authenticationStrategy)
+  {
+    this.authenticationStrategy = authenticationStrategy;
+  }
+
   @Override
   public HttpClientConfigurationData copy() {
     try {
@@ -109,6 +127,10 @@ public class HttpClientConfigurationData
       if (redirectStrategy != null) {
         // no real cloning/copying needed, as we are allowed to use a singleton instance
         copy.redirectStrategy = redirectStrategy;
+      }
+      if (authenticationStrategy != null) {
+        // no real cloning/copying needed, as we are allowed to use a singleton instance
+        copy.authenticationStrategy = authenticationStrategy;
       }
       return copy;
     }

@@ -41,6 +41,7 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.NTCredentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.AuthenticationStrategy;
 import org.apache.http.client.RedirectStrategy;
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.impl.client.StandardHttpRequestRetryHandler;
@@ -124,6 +125,18 @@ public class ConfigurationCustomizer
     }
     if (configuration.getRedirectStrategy() != null) {
       apply(configuration.getRedirectStrategy(), plan);
+    }
+    if (configuration.getAuthenticationStrategy() != null) {
+      apply(configuration.getAuthenticationStrategy(), plan);
+    }
+  }
+
+  /**
+   * Apply selected AuthenticationStrategy to plan.
+   */
+  private void apply(final AuthenticationStrategy authenticationStrategy, final HttpClientPlan plan) {
+    if (authenticationStrategy != null) {
+      plan.getClient().setTargetAuthenticationStrategy(authenticationStrategy);
     }
   }
 

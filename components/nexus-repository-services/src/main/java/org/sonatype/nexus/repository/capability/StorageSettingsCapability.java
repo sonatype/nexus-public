@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.capability;
 
+import java.time.Duration;
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -19,11 +20,9 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.capability.CapabilitySupport;
 
-import org.joda.time.Duration;
-
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.Integer.parseInt;
-import static org.joda.time.Duration.standardHours;
+import static java.lang.Long.parseLong;
+import static java.time.Duration.ofHours;
 import static org.sonatype.nexus.repository.capability.GlobalRepositorySettings.DEFAULT_LAST_DOWNLOADED_INTERVAL;
 
 /**
@@ -71,11 +70,11 @@ public class StorageSettingsCapability
 
   private void resetDownloadedInterval() {
     log.info("Reverting back to {} hours for LastDownloaded interval",
-        DEFAULT_LAST_DOWNLOADED_INTERVAL.getStandardHours());
+        DEFAULT_LAST_DOWNLOADED_INTERVAL.toHours());
     globalSettings.setLastDownloadedInterval(DEFAULT_LAST_DOWNLOADED_INTERVAL);
   }
 
   private Duration parseAsHours(final String hours) {
-    return standardHours(parseInt(hours));
+    return ofHours(parseLong(hours));
   }
 }

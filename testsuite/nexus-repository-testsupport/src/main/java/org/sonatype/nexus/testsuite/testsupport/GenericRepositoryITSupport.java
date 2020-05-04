@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 
+import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
@@ -51,6 +52,7 @@ import org.sonatype.nexus.testsuite.testsupport.cocoapods.CocoapodsClient;
 import org.sonatype.nexus.testsuite.testsupport.cocoapods.CocoapodsClientFactory;
 import org.sonatype.nexus.testsuite.testsupport.conda.CondaClient;
 import org.sonatype.nexus.testsuite.testsupport.conda.CondaClientFactory;
+import org.sonatype.nexus.testsuite.testsupport.fixtures.BlobStoreRule;
 import org.sonatype.nexus.testsuite.testsupport.fixtures.RepositoryRule;
 import org.sonatype.nexus.testsuite.testsupport.golang.GolangClient;
 import org.sonatype.nexus.testsuite.testsupport.npm.NpmClient;
@@ -65,6 +67,7 @@ import org.apache.http.util.EntityUtils;
 import org.hamcrest.MatcherAssert;
 import org.joda.time.DateTime;
 import org.junit.Rule;
+import org.junit.rules.RuleChain;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.newArrayList;
@@ -105,8 +108,15 @@ public abstract class GenericRepositoryITSupport<RR extends RepositoryRule>
   @Inject
   protected SelectorManager selectorManager;
 
+  @Inject
+  protected BlobStoreManager blobStoreManager;
+
+  protected BlobStoreRule blobstoreRule = new BlobStoreRule(() -> blobStoreManager);
+
+  protected RR repos = createRepositoryRule();
+
   @Rule
-  public RR repos = createRepositoryRule();
+  public RuleChain ruleChain = RuleChain.outerRule(blobstoreRule).around(repos);
 
   protected abstract RR createRepositoryRule();
 
@@ -129,7 +139,7 @@ public abstract class GenericRepositoryITSupport<RR extends RepositoryRule>
     );
   }
 
-  protected NpmClient createNpmClient(final Repository repository, URL overrideNexusUrl) throws Exception {
+  protected NpmClient createNpmClient(final Repository repository, final URL overrideNexusUrl) throws Exception {
     return createNpmClient(resolveUrl(overrideNexusUrl, SLASH_REPO_SLASH + repository.getName() + "/"));
   }
 

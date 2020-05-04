@@ -22,6 +22,7 @@ const initialContext = {
     firstName: '',
     lastName: '',
     email: '',
+    external: true,
   },
   pristineData: {},
   isPristine: true,

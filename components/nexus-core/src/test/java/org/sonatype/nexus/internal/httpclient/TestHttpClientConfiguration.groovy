@@ -17,6 +17,7 @@ import org.sonatype.nexus.httpclient.config.ConnectionConfiguration
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration
 import org.sonatype.nexus.httpclient.config.ProxyConfiguration
 
+import org.apache.http.client.AuthenticationStrategy
 import org.apache.http.client.RedirectStrategy
 
 class TestHttpClientConfiguration
@@ -29,6 +30,8 @@ class TestHttpClientConfiguration
   RedirectStrategy redirectStrategy
 
   AuthenticationConfiguration authentication;
+
+  AuthenticationStrategy authenticationStrategy;
 
   TestHttpClientConfiguration copy() {
     return this

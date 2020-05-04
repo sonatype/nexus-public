@@ -249,17 +249,25 @@ public class HttpClientFacetImpl
   }
 
   private void createHttpClient() {
-    // construct http client delegate
-    HttpClientConfiguration delegateConfig = httpClientManager.newConfiguration();
-    delegateConfig.setConnection(config.connection);
-    delegateConfig.setAuthentication(config.authentication);
-    delegateConfig.setRedirectStrategy(getRedirectStrategy());
+    HttpClientConfiguration delegateConfig = getHttpClientConfiguration(httpClientManager, config);
     CloseableHttpClient delegate = httpClientManager.create(new ConfigurationCustomizer(delegateConfig));
 
     boolean online = getRepository().getConfiguration().isOnline();
     // wrap delegate with auto-block aware client
     httpClient = new BlockingHttpClient(delegate, config, this, online, getAutoBlockConfiguration());
     log.debug("Created HTTP client: {}", httpClient);
+  }
+
+  protected HttpClientConfiguration getHttpClientConfiguration(
+      final HttpClientManager httpClientManager,
+      final Config config)
+  {
+    // construct http client delegate
+    HttpClientConfiguration delegateConfig = httpClientManager.newConfiguration();
+    delegateConfig.setConnection(config.connection);
+    delegateConfig.setAuthentication(config.authentication);
+    delegateConfig.setRedirectStrategy(getRedirectStrategy());
+    return delegateConfig;
   }
 
   private AutoBlockConfiguration getAutoBlockConfiguration() {
@@ -272,7 +280,7 @@ public class HttpClientFacetImpl
     return config;
   }
 
-  private RedirectStrategy getRedirectStrategy() {
+  protected RedirectStrategy getRedirectStrategy() {
     return this.redirectStrategy.get(getRepository().getFormat().getValue());
   }
 

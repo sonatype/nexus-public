@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.fluent.internal;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 
@@ -20,8 +21,11 @@ import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.MissingBlobException;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.cache.CacheController;
+import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
@@ -37,13 +41,21 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
-import org.joda.time.DateTime;
+import com.google.common.hash.HashCode;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_IP_HEADER;
+import static org.sonatype.nexus.common.time.DateHelper.toLocalDateTime;
+import static org.sonatype.nexus.repository.cache.CacheInfo.CACHE;
+import static org.sonatype.nexus.repository.cache.CacheInfo.CACHE_TOKEN;
+import static org.sonatype.nexus.repository.cache.CacheInfo.INVALIDATED;
+import static org.sonatype.nexus.repository.content.fluent.AttributeChange.OVERLAY;
+import static org.sonatype.nexus.repository.content.fluent.AttributeChange.SET;
+import static org.sonatype.nexus.repository.content.fluent.internal.FluentAttributesHelper.applyAttributeChange;
 import static org.sonatype.nexus.repository.storage.Bucket.REPO_NAME_HEADER;
 
 /**
@@ -58,7 +70,7 @@ public class FluentAssetImpl
 
   private Asset asset;
 
-  public FluentAssetImpl(final ContentFacetSupport facet, final Asset asset)  {
+  public FluentAssetImpl(final ContentFacetSupport facet, final Asset asset) {
     this.facet = checkNotNull(facet);
     this.asset = checkNotNull(asset);
   }
@@ -89,7 +101,7 @@ public class FluentAssetImpl
   }
 
   @Override
-  public Optional<DateTime> lastDownloaded() {
+  public Optional<LocalDateTime> lastDownloaded() {
     return asset.lastDownloaded();
   }
 
@@ -99,33 +111,34 @@ public class FluentAssetImpl
   }
 
   @Override
-  public DateTime created() {
+  public LocalDateTime created() {
     return asset.created();
   }
 
   @Override
-  public DateTime lastUpdated() {
+  public LocalDateTime lastUpdated() {
     return asset.lastUpdated();
   }
 
   @Override
   public FluentAsset attributes(final AttributeChange change, final String key, final Object value) {
-    FluentAttributesHelper.apply(asset, change, key, value);
-    facet.assetStore().updateAssetAttributes(asset);
-    return null;
+    if (applyAttributeChange(asset, change, key, value)) {
+      facet.assetStore().updateAssetAttributes(asset);
+    }
+    return this;
   }
 
   @Override
   public FluentAsset attach(final TempBlob tempBlob) {
-    return attach(makePermanent(tempBlob));
+    return attach(makePermanent(tempBlob), tempBlob.getHashes());
   }
 
   @Override
-  public FluentAsset attach(final Blob blob) {
+  public FluentAsset attach(final Blob blob, final Map<HashAlgorithm, HashCode> checksums) {
 
     BlobRef blobRef = blobRef(blob);
     AssetBlob assetBlob = facet.assetBlobStore().readAssetBlob(blobRef)
-        .orElseGet(() -> createAssetBlob(blobRef, blob));
+        .orElseGet(() -> createAssetBlob(blobRef, blob, checksums));
 
     ((AssetData) asset).setAssetBlob(assetBlob);
     facet.assetStore().updateAssetBlobLink(asset);
@@ -153,8 +166,25 @@ public class FluentAssetImpl
   }
 
   @Override
-  public void markAsDownloaded() {
+  public FluentAsset markAsDownloaded() {
     facet.assetStore().markAsDownloaded(asset);
+    return this;
+  }
+
+  @Override
+  public FluentAsset markAsCached(final CacheInfo cacheInfo) {
+    return attributes(SET, CACHE, cacheInfo.toMap());
+  }
+
+  @Override
+  public FluentAsset markAsStale() {
+    return attributes(OVERLAY, CACHE, ImmutableMap.of(CACHE_TOKEN, INVALIDATED));
+  }
+
+  @Override
+  public boolean isStale(final CacheController cacheController) {
+    CacheInfo cacheInfo = CacheInfo.fromMap(attributes(CACHE));
+    return cacheInfo != null && cacheController.isStale(cacheInfo);
   }
 
   @Override
@@ -167,7 +197,10 @@ public class FluentAssetImpl
     return asset;
   }
 
-  private AssetBlobData createAssetBlob(final BlobRef blobRef, final Blob blob) {
+  private AssetBlobData createAssetBlob(final BlobRef blobRef,
+                                        final Blob blob,
+                                        final Map<HashAlgorithm, HashCode> checksums)
+  {
     BlobMetrics metrics = blob.getMetrics();
     Map<String, String> headers = blob.getHeaders();
 
@@ -175,7 +208,13 @@ public class FluentAssetImpl
     assetBlob.setBlobRef(blobRef);
     assetBlob.setBlobSize(metrics.getContentSize());
     assetBlob.setContentType(headers.get(CONTENT_TYPE_HEADER));
-    assetBlob.setBlobCreated(metrics.getCreationTime());
+
+    assetBlob.setChecksums(checksums.entrySet().stream().collect(
+        toImmutableMap(
+            e -> e.getKey().name(),
+            e -> e.getValue().toString())));
+
+    assetBlob.setBlobCreated(toLocalDateTime(metrics.getCreationTime()));
     assetBlob.setCreatedBy(headers.get(CREATED_BY_HEADER));
     assetBlob.setCreatedByIp(headers.get(CREATED_BY_IP_HEADER));
 

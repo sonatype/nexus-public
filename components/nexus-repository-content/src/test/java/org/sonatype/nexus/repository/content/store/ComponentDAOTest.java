@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,7 +26,6 @@ import org.sonatype.nexus.repository.content.store.example.TestContentRepository
 import org.apache.ibatis.exceptions.PersistenceException;
 import org.hamcrest.collection.IsIterableContainingInAnyOrder;
 import org.hamcrest.collection.IsIterableContainingInOrder;
-import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -157,8 +157,8 @@ public class ComponentDAOTest
 
       tempResult = dao.readComponent(repositoryId, namespace1, name1, version1).get();
 
-      DateTime oldCreated = tempResult.created();
-      DateTime oldLastUpdated = tempResult.lastUpdated();
+      LocalDateTime oldCreated = tempResult.created();
+      LocalDateTime oldLastUpdated = tempResult.lastUpdated();
 
       component1.attributes("custom-section-1").set("custom-key-1", "more-test-values-1");
       dao.updateComponentAttributes(component1);
@@ -198,8 +198,8 @@ public class ComponentDAOTest
 
       tempResult = dao.readComponent(repositoryId, namespace1, name1, version1).get();
 
-      DateTime oldCreated = tempResult.created();
-      DateTime oldLastUpdated = tempResult.lastUpdated();
+      LocalDateTime oldCreated = tempResult.created();
+      LocalDateTime oldLastUpdated = tempResult.lastUpdated();
 
       component1.attributes("custom-section-1").set("custom-key-1", "more-test-values-again");
       dao.updateComponentAttributes(component1);

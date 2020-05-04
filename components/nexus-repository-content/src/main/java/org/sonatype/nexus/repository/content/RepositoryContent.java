@@ -12,9 +12,9 @@
  */
 package org.sonatype.nexus.repository.content;
 
-import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import java.time.LocalDateTime;
 
-import org.joda.time.DateTime;
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
 /**
  * Metadata common to all repository content.
@@ -38,10 +38,10 @@ public interface RepositoryContent
   /**
    * When the metadata was first created.
    */
-  DateTime created();
+  LocalDateTime created();
 
   /**
    * When the metadata was last updated.
    */
-  DateTime lastUpdated();
+  LocalDateTime lastUpdated();
 }

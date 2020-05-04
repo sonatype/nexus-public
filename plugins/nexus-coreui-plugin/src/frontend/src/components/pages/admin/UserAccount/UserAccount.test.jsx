@@ -24,6 +24,15 @@ const mockUserAccount = {
   firstName: 'User',
   lastName: 'Admin',
   email: 'admin@example.com',
+  external: false
+};
+
+const mockExternalUserAccount = {
+  userId: 'externalUser',
+  firstName: 'External',
+  lastName: 'User',
+  email: 'externalUser@saml.com',
+  external: true
 };
 
 jest.mock('nexus-ui-plugin', () => {
@@ -86,6 +95,27 @@ describe('UserAccount', () => {
     expect(container).toMatchSnapshot();
   });
 
+  it('renders correctly for an external user', async () => {
+    Axios.get.mockImplementationOnce(() => Promise.resolve({data: mockExternalUserAccount}));
+
+    let {
+      container, loadingMask, userIdField, firstNameField, lastNameField, emailField,
+      saveButton, discardButton
+    } = await renderView(<UserAccount/>);
+
+    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+
+    expect(userIdField().hasAttribute('readonly','true')).toBe(true);
+    expect(firstNameField().hasAttribute('readonly','true')).toBe(true);
+    expect(lastNameField().hasAttribute('readonly','true')).toBe(true);
+    expect(emailField().hasAttribute('readonly','true')).toBe(true);
+
+    expect(saveButton()).toBeDisabled();
+    expect(discardButton()).toBeDisabled();
+
+    expect(container).toMatchSnapshot('externalUser');
+  });
+
   it('fetches the values of fields from the API and updates them as expected', async () => {
     let {
       loadingMask, userIdField, firstNameField, lastNameField, emailField,
@@ -128,6 +158,7 @@ describe('UserAccount', () => {
           firstName: 'User',
           lastName: 'FooBar',
           userId: 'admin',
+          external: false
         }
     );
 

@@ -107,7 +107,7 @@
     INSERT INTO ${format}_browse_node (repository_id, format, parent_id, path, name)
     VALUES (#{repository.repositoryId}, #{node.format}, #{node.parentId}, #{node.path}, #{node.name})
            ON CONFLICT ON CONSTRAINT uk_${format}_browse_node_repository_path
-           DO UPDATE SET name = #{name} RETURNING browse_node_id;
+           DO UPDATE SET name = #{node.name} RETURNING browse_node_id;
   </insert>
 
   <update id="linkAsset">

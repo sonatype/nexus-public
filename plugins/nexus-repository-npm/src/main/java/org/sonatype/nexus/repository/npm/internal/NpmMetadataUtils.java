@@ -221,7 +221,17 @@ public final class NpmMetadataUtils
    */
   public static String createRepositoryPath(final String name, final String version) {
     NpmPackageId packageId = NpmPackageId.parse(name);
-    return String.format("%s/-/%s-%s.tgz", packageId.id(), packageId.name(), version);
+    String tarballName = createTarballName(packageId.name(), version);
+    return String.format("%s/-/%s", packageId.id(), tarballName);
+  }
+
+  /**
+   * Create a tarball name.
+   *
+   * @since 3.next
+   */
+  public static String createTarballName(final String name, final String version) {
+    return String.format("%s-%s.tgz", name, version);
   }
 
   /**

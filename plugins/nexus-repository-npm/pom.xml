@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.plugins</groupId>
     <artifactId>nexus-plugins</artifactId>
-    <version>3.23.0-SNAPSHOT</version>
+    <version>3.24.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-repository-npm</artifactId>
@@ -93,7 +93,7 @@
       <classifier>tests</classifier>
       <scope>test</scope>
     </dependency>
-  
+
   </dependencies>
 
   <build>

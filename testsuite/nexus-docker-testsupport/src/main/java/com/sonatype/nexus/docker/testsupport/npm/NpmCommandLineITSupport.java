@@ -70,7 +70,7 @@ public class NpmCommandLineITSupport
   public NpmCommandLineITSupport(DockerContainerConfig dockerContainerConfig) {
     super(dockerContainerConfig);
   }
-  
+
   public Optional<List<String>> execNpm(final String s) {
     return exec(CMD_NPM + s);
   }
@@ -86,6 +86,22 @@ public class NpmCommandLineITSupport
 
   public List<String> install(final String packageName) {
     return execNpm("install " + packageName).orElse(emptyList());
+  }
+
+  public List<String> audit() {
+    return execNpm("audit").orElse(emptyList());
+  }
+
+  public List<String> audit(String dir) {
+    return execNpm("audit --prefix " + dir).orElse(emptyList());
+  }
+
+  public List<String> auditFix() {
+    return execNpm("audit fix").orElse(emptyList());
+  }
+
+  public List<String> auditFix(String dir) {
+    return execNpm("audit fix --prefix " + dir).orElse(emptyList());
   }
 
   public List<String> publish(final String location) {
@@ -132,6 +148,40 @@ public class NpmCommandLineITSupport
         "| sed 's/${name}/%s/g'" +
         "| sed 's/${version}/%s/g'" +
         " > %s", maintainers, packageJsonTemplate, publishConfig, name, version, packageJson);
+
+    exec(sedCommand);
+  }
+
+  public void updatePackageJson(
+      final String directory,
+      final String npmComponentName,
+      final String npmComponentVersion)
+  {
+    String packageJsonTemplate = directory + "/package-template.json";
+    String packageJson = directory + "/package.json";
+
+    updatePackageJson(packageJsonTemplate, packageJson, npmComponentName, npmComponentVersion);
+  }
+
+  public void updatePackageLockJson(
+      final String directory,
+      final String npmComponentName,
+      final String npmComponentVersion)
+  {
+    String packageJsonTemplate = directory + "/package-lock-template.json";
+    String packageJson = directory + "/package-lock.json";
+
+    updatePackageJson(packageJsonTemplate, packageJson, npmComponentName, npmComponentVersion);
+  }
+
+  private void updatePackageJson(
+      final String inputFileName,
+      final String outputFileName,
+      final String npmComponentName,
+      final String npmComponentVersion)
+  {
+    String sedCommand = format("sed 's/${componentName}/%s/g' %s | sed 's/${componentVersion}/%s/g' > %s",
+        npmComponentName, inputFileName, npmComponentVersion, outputFileName);
 
     exec(sedCommand);
   }

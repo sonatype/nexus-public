@@ -652,7 +652,7 @@ public class DatastoreBrowseNodeStoreImplTest
         statement.setInt(1, repository.contentRepositoryId());
         statement.setString(2, path);
         try (ResultSet rs = statement.executeQuery()) {
-          if (!rs.first()) {
+          if (!rs.next()) {
             fail("No results found for path: " + path + " in repository=" + repository);
           }
           return rs.getInt(1);
@@ -671,7 +671,7 @@ public class DatastoreBrowseNodeStoreImplTest
                conn.prepareStatement("SELECT count(*) as row_count FROM test_browse_node WHERE repository_id = ?")) {
         statement.setInt(1, repositoryId);
         try (ResultSet rs = statement.executeQuery()) {
-          if (!rs.first()) {
+          if (!rs.next()) {
             fail("Query failed for repository=" + repositoryId);
           }
           rowCount = rs.getInt("row_count");

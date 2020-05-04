@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.fluent.internal;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
@@ -24,10 +25,9 @@ import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.store.WrappedContent;
 
-import org.joda.time.DateTime;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Collections2.transform;
+import static org.sonatype.nexus.repository.content.fluent.internal.FluentAttributesHelper.applyAttributeChange;
 
 /**
  * {@link FluentComponent} implementation.
@@ -72,19 +72,20 @@ public class FluentComponentImpl
   }
 
   @Override
-  public DateTime created() {
+  public LocalDateTime created() {
     return component.created();
   }
 
   @Override
-  public DateTime lastUpdated() {
+  public LocalDateTime lastUpdated() {
     return component.lastUpdated();
   }
 
   @Override
   public FluentComponent attributes(final AttributeChange change, final String key, final Object value) {
-    FluentAttributesHelper.apply(component, change, key, value);
-    facet.componentStore().updateComponentAttributes(component);
+    if (applyAttributeChange(component, change, key, value)) {
+      facet.componentStore().updateComponentAttributes(component);
+    }
     return this;
   }
 

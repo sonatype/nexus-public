@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.browse.internal;
 
+import java.sql.Connection;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -37,6 +38,7 @@ import org.hamcrest.TypeSafeMatcher;
 import org.junit.Before;
 import org.junit.Test;
 
+import static java.util.Arrays.asList;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
@@ -54,12 +56,14 @@ public class BrowseNodeDAOTest
 {
   private ContentRepository contentRepository;
 
+  private String databaseId;
+
   public BrowseNodeDAOTest() {
     super(TestBrowseNodeDAO.class);
   }
 
   @Before
-  public void setup() {
+  public void setup() throws Exception {
     generateRandomRepositories(1);
     generateRandomNamespaces(1);
     generateRandomNames(1);
@@ -68,6 +72,21 @@ public class BrowseNodeDAOTest
     generateRandomContent(1, 2);
 
     contentRepository = generatedRepositories().get(0);
+
+    try (Connection connection = sessionRule.openConnection("content")) {
+      databaseId = connection.getMetaData().getDatabaseProductName();
+    }
+  }
+
+  private String getRegexOperator() {
+    switch (databaseId) {
+      case "H2":
+        return "regexp";
+      case "PostgreSQL":
+        return "~";
+      default:
+        throw new IllegalStateException("Failed to handle databaseId");
+    }
   }
 
   @Test
@@ -161,7 +180,10 @@ public class BrowseNodeDAOTest
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("regex", "'.*f$'");
 
-    List<DatastoreBrowseNode> children = stream(dao -> dao.findChildren(contentRepository, "dog", 100, Arrays.asList(" path regexp ${" + WHERE_PARAMS + ".regex}"), parameters))
+    List<DatastoreBrowseNode> children = stream(dao -> dao
+        .findChildren(contentRepository, "dog", 100,
+            asList(" path " + getRegexOperator() + " ${" + WHERE_PARAMS + ".regex}"),
+            parameters))
         .collect(toList());
 
     Matcher<DatastoreBrowseNode> woofDog = isBrowseNodeWith(contentRepository, dogParent, "dog/woof", "woof", null, null);

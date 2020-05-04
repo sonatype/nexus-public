@@ -25,6 +25,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityUUID;
+import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.datastore.api.DataAccess;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.repository.content.Asset;
@@ -56,8 +57,6 @@ import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
-import static org.joda.time.DateTime.now;
-import static org.joda.time.DateTimeZone.UTC;
 import static org.sonatype.nexus.datastore.mybatis.CombUUID.combUUID;
 
 /**
@@ -245,7 +244,8 @@ public class ExampleContentTestSupport
     assetBlob.setBlobRef(new BlobRef("test-node", "test-store", randomUUID().toString()));
     assetBlob.setBlobSize(random.nextInt(1024 * 1024));
     assetBlob.setContentType("text/plain");
-    assetBlob.setBlobCreated(now(UTC));
+    assetBlob.setChecksums(ImmutableMap.of());
+    assetBlob.setBlobCreated(UTC.now());
     return assetBlob;
   }
 

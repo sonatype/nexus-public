@@ -17,11 +17,12 @@ import UIStrings from '../../../../constants/UIStrings';
 
 export default function UserAccountSettings({service}) {
   const [current, send] = useService(service);
-  const userId = useUserAccountMachine('userId', service, true);
-  const firstName = useUserAccountMachine('firstName', service);
-  const lastName = useUserAccountMachine('lastName', service);
-  const email = useUserAccountMachine('email', service);
   const context = current.context;
+  const isReadOnly = context.data.external;
+  const userId = useUserAccountMachine('userId', service, true);
+  const firstName = useUserAccountMachine('firstName', service, isReadOnly);
+  const lastName = useUserAccountMachine('lastName', service, isReadOnly);
+  const email = useUserAccountMachine('email', service, isReadOnly);
   const isLoading = current.matches('loading') || current.matches('saving');
   const isPristine = context.isPristine;
   const isInvalid = !context.isValid;
@@ -61,22 +62,22 @@ export default function UserAccountSettings({service}) {
     {error}
 
     <SettingsSection.FieldWrapper labelText={UIStrings.USER_ACCOUNT.ID_FIELD_LABEL}>
-      <Textfield {...userId} />
+      <Textfield  disabled={isReadOnly} {...userId} />
     </SettingsSection.FieldWrapper>
     <SettingsSection.FieldWrapper labelText={UIStrings.USER_ACCOUNT.FIRST_FIELD_LABEL}>
-      <Textfield {...firstName} />
+      <Textfield disabled={isReadOnly} {...firstName} />
     </SettingsSection.FieldWrapper>
     <SettingsSection.FieldWrapper labelText={UIStrings.USER_ACCOUNT.LAST_FIELD_LABEL}>
-      <Textfield {...lastName} />
+      <Textfield disabled={isReadOnly} {...lastName} />
     </SettingsSection.FieldWrapper>
     <SettingsSection.FieldWrapper labelText={UIStrings.USER_ACCOUNT.EMAIL_FIELD_LABEL}>
-      <Textfield {...email} />
+      <Textfield disabled={isReadOnly} {...email} />
     </SettingsSection.FieldWrapper>
     <SettingsSection.Footer>
-      <Button variant='primary' disabled={isPristine || isInvalid} onClick={handleSave}>
+      <Button variant='primary' disabled={isReadOnly || isPristine || isInvalid} onClick={handleSave}>
         {UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
       </Button>
-      <Button disabled={isPristine} onClick={handleDiscard}>
+      <Button disabled={isReadOnly || isPristine} onClick={handleDiscard}>
         {UIStrings.SETTINGS.DISCARD_BUTTON_LABEL}
       </Button>
     </SettingsSection.Footer>

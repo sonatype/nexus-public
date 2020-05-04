@@ -24,6 +24,8 @@ import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.cache.NegativeCacheFacet
 import org.sonatype.nexus.repository.http.HttpHandlers
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet
+import org.sonatype.nexus.repository.npm.internal.NpmAuditErrorHandler
+import org.sonatype.nexus.repository.npm.internal.NpmAuditHandler
 import org.sonatype.nexus.repository.npm.internal.NpmFormat
 import org.sonatype.nexus.repository.npm.internal.NpmHandlers
 import org.sonatype.nexus.repository.npm.internal.NpmNegativeCacheHandler
@@ -40,13 +42,13 @@ import org.sonatype.nexus.repository.storage.SingleAssetComponentMaintenance
 import org.sonatype.nexus.repository.types.ProxyType
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
 import org.sonatype.nexus.repository.view.Context
+import org.sonatype.nexus.repository.view.Handler
 import org.sonatype.nexus.repository.view.Router
 import org.sonatype.nexus.repository.view.ViewFacet
 import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler
 
 import static org.sonatype.nexus.repository.http.HttpMethods.GET
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD
-
 /**
  * npm proxy repository recipe.
  *
@@ -100,6 +102,12 @@ class OrientNpmProxyRecipe
   NpmPingHandler pingHandler
 
   @Inject
+  NpmAuditHandler auditHandler
+
+  @Inject
+  NpmAuditErrorHandler auditErrorHandler
+
+  @Inject
   OrientNpmProxyRecipe(@Named(ProxyType.NAME) final Type type,
                        @Named(NpmFormat.NAME) final Format format)
   {
@@ -122,6 +130,8 @@ class OrientNpmProxyRecipe
     repository.attach(npmSearchFacet.get())
     repository.attach(singleAssetComponentMaintenanceProvider.get())
     repository.attach(purgeUnusedFacet.get())
+    repository.attach(npmAuditFacetProvider.get())
+    repository.attach(npmAuditTarballFacetProvider.get())
     repository.attach(npmProxyCacheInvalidatorFacet.get());
   }
 
@@ -172,6 +182,15 @@ class OrientNpmProxyRecipe
     builder.route(pingMatcher()
         .handler(timingHandler)
         .handler(pingHandler)
+        .create())
+
+    // POST /-/npm/v1/security/audits
+    builder.route(auditMatcher()
+        .handler(auditAnalyticsHandler ?: { context -> context.proceed() } as Handler)
+        .handler(timingHandler)
+        .handler(unitOfWorkHandler)
+        .handler(auditErrorHandler)
+        .handler(auditHandler)
         .create())
 
     // GET /packageName (npm install)

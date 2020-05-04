@@ -1,0 +1,86 @@
+{
+  "actions": [
+    {
+      "isMajor": false,
+      "action": "install",
+      "resolves": [
+        {
+          "id": 1,
+          "path": "marked",
+          "dev": false,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "module": "marked",
+      "target": "0.0.0",
+      "depth": 1
+    },
+    {
+      "isMajor": false,
+      "action": "install",
+      "resolves": [
+        {
+          "id": 2,
+          "path": "lodash",
+          "dev": false,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "module": "lodash",
+      "target": "0.0.1",
+      "depth": 1
+    }
+  ],
+  "advisories": {
+    "1": {
+      "findings": [
+        {
+          "version": "0.6.3",
+          "paths": [
+            "marked"
+          ]
+        }
+      ],
+      "id": 1,
+      "title": "marked",
+      "module_name": "marked",
+      "patched_versions": "0.0.0",
+      "overview": "marked",
+      "severity": "critical",
+      "url": "marked"
+    },
+    "2": {
+      "findings": [
+        {
+          "version": "2.4.2",
+          "paths": [
+            "lodash"
+          ]
+        }
+      ],
+      "id": 2,
+      "title": "lodash",
+      "module_name": "lodash",
+      "patched_versions": "0.0.1",
+      "overview": "lodash",
+      "severity": "high",
+      "url": "lodash"
+    }
+  },
+  "muted": [],
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 1,
+      "critical": 1
+    },
+    "dependencies": 3,
+    "devDependencies": 0,
+    "optionalDependencies": 0,
+    "totalDependencies": 3
+  }
+}

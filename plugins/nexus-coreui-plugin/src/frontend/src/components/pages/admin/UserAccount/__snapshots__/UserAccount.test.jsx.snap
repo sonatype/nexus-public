@@ -259,3 +259,110 @@ exports[`UserAccount renders correctly 1`] = `
   </div>
 </div>
 `;
+
+exports[`UserAccount renders correctly for an external user: externalUser 1`] = `
+<div>
+  <div
+    class="nxrm-content-body nxrm-user-account"
+  >
+    <div
+      class="nxrm-settings-section"
+    >
+      <label
+        class="nxrm-settings-section-field-wrapper"
+      >
+        <label
+          class="nxrm-settings-section-field-wrapper-label"
+          for="userId"
+        >
+          Username
+        </label>
+        <input
+          class="nxrm-textfield"
+          disabled=""
+          id="userId"
+          name="userId"
+          readonly=""
+          type="text"
+          value="externalUser"
+        />
+      </label>
+      <label
+        class="nxrm-settings-section-field-wrapper"
+      >
+        <label
+          class="nxrm-settings-section-field-wrapper-label"
+          for="firstName"
+        >
+          First Name
+        </label>
+        <input
+          class="nxrm-textfield"
+          disabled=""
+          id="firstName"
+          name="firstName"
+          readonly=""
+          type="text"
+          value="External"
+        />
+      </label>
+      <label
+        class="nxrm-settings-section-field-wrapper"
+      >
+        <label
+          class="nxrm-settings-section-field-wrapper-label"
+          for="lastName"
+        >
+          Last Name
+        </label>
+        <input
+          class="nxrm-textfield"
+          disabled=""
+          id="lastName"
+          name="lastName"
+          readonly=""
+          type="text"
+          value="User"
+        />
+      </label>
+      <label
+        class="nxrm-settings-section-field-wrapper"
+      >
+        <label
+          class="nxrm-settings-section-field-wrapper-label"
+          for="email"
+        >
+          Email
+        </label>
+        <input
+          class="nxrm-textfield"
+          disabled=""
+          id="email"
+          name="email"
+          readonly=""
+          type="text"
+          value="externalUser@saml.com"
+        />
+      </label>
+      <div
+        class="nxrm-settings-section-footer"
+      >
+        <button
+          class="nx-btn nx-btn--primary"
+          disabled=""
+          type="input"
+        >
+          Save
+        </button>
+        <button
+          class="nx-btn"
+          disabled=""
+          type="input"
+        >
+          Discard
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+`;

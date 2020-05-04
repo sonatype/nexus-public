@@ -18,12 +18,17 @@ import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.content.example.ExampleContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
+
+import com.google.common.collect.ImmutableList;
+
+import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
 
 /**
  * Provides persistent content for an 'example' format.
@@ -35,6 +40,8 @@ public class ExampleContentFacetImpl
     extends ContentFacetSupport
     implements ExampleContentFacet
 {
+  private static final Iterable<HashAlgorithm> HASHING = ImmutableList.of(SHA256);
+
   @Inject
   public ExampleContentFacetImpl(@Named(ExampleFormat.NAME) final FormatStoreManager formatStoreManager) {
     super(formatStoreManager);
@@ -47,7 +54,7 @@ public class ExampleContentFacetImpl
 
   @Override
   public Payload put(final String path, final Payload content) throws IOException {
-    try (TempBlob blob = blobs().ingest(content)) {
+    try (TempBlob blob = blobs().ingest(content, HASHING)) {
       return assets().path(path).getOrCreate().attach(blob).download();
     }
   }

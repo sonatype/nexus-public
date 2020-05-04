@@ -12,14 +12,14 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.repository.content.AssetBlob;
-
-import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Optional.ofNullable;
@@ -40,7 +40,9 @@ public class AssetBlobData
 
   private String contentType;
 
-  private DateTime blobCreated;
+  private Map<String, String> checksums;
+
+  private LocalDateTime blobCreated;
 
   @Nullable
   private String createdBy;
@@ -66,7 +68,12 @@ public class AssetBlobData
   }
 
   @Override
-  public DateTime blobCreated() {
+  public Map<String, String> checksums() {
+    return checksums;
+  }
+
+  @Override
+  public LocalDateTime blobCreated() {
     return blobCreated;
   }
 
@@ -111,9 +118,18 @@ public class AssetBlobData
   }
 
   /**
+   * Sets the checksums for the blob.
+   *
+   * @since 3.next
+   */
+  public void setChecksums(final Map<String, String> checksums) {
+    this.checksums = checkNotNull(checksums);
+  }
+
+  /**
    * Sets when the blob was created.
    */
-  public void setBlobCreated(final DateTime blobCreated) {
+  public void setBlobCreated(final LocalDateTime blobCreated) {
     this.blobCreated = checkNotNull(blobCreated);
   }
 

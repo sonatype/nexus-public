@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.facet;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import javax.inject.Inject;
@@ -32,7 +33,6 @@ import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.fluent.FluentBlobs;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentAssetsImpl;
-import org.sonatype.nexus.repository.content.fluent.internal.FluentAttributesHelper;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentBlobsImpl;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentComponentsImpl;
 import org.sonatype.nexus.repository.content.store.AssetBlobStore;
@@ -47,7 +47,6 @@ import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.TransactionalStore;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -57,6 +56,7 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.CONTENT_DATASTOR
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.BLOB_STORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.DATA_STORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
+import static org.sonatype.nexus.repository.content.fluent.internal.FluentAttributesHelper.applyAttributeChange;
 
 /**
  * {@link ContentFacet} support.
@@ -193,20 +193,21 @@ public abstract class ContentFacetSupport
   }
 
   @Override
-  public final DateTime created() {
+  public final LocalDateTime created() {
     return contentRepository().created();
   }
 
   @Override
-  public final DateTime lastUpdated() {
+  public final LocalDateTime lastUpdated() {
     return contentRepository().lastUpdated();
   }
 
   @Override
   public final ContentFacet attributes(final AttributeChange change, final String key, final Object value) {
     ContentRepository contentRepository = contentRepository();
-    FluentAttributesHelper.apply(contentRepository, change, key, value);
-    contentRepositoryStore.updateContentRepositoryAttributes(contentRepository);
+    if (applyAttributeChange(contentRepository, change, key, value)) {
+      contentRepositoryStore.updateContentRepositoryAttributes(contentRepository);
+    }
     return this;
   }
 

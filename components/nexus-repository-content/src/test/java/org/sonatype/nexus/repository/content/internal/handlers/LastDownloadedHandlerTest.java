@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.content.internal.handlers;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
+import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.capability.GlobalRepositorySettings;
 import org.sonatype.nexus.repository.content.Asset;
@@ -29,12 +30,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static java.time.Duration.ofDays;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.joda.time.DateTime.now;
-import static org.joda.time.Duration.standardDays;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -121,8 +121,8 @@ public class LastDownloadedHandlerTest
 
   @Test
   public void shouldUpdateIfNotRecentlyChanged() throws Exception {
-    when(asset.lastDownloaded()).thenReturn(of(now().minusDays(2)));
-    when(globalSettings.getLastDownloadedInterval()).thenReturn(standardDays(1));
+    when(asset.lastDownloaded()).thenReturn(of(UTC.now().minusDays(2)));
+    when(globalSettings.getLastDownloadedInterval()).thenReturn(ofDays(1));
 
     Response handledResponse = underTest.handle(context);
 
@@ -133,8 +133,8 @@ public class LastDownloadedHandlerTest
 
   @Test
   public void shouldNotUpdateIfRecentlyChanged() throws Exception {
-    when(asset.lastDownloaded()).thenReturn(of(now()));
-    when(globalSettings.getLastDownloadedInterval()).thenReturn(standardDays(1));
+    when(asset.lastDownloaded()).thenReturn(of(UTC.now()));
+    when(globalSettings.getLastDownloadedInterval()).thenReturn(ofDays(1));
 
     testNoExceptionThrownAndVerifySaveNotCalled();
   }

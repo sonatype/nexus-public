@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -20,8 +21,6 @@ import org.sonatype.nexus.common.entity.ContinuationAware;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
-
-import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Optional.ofNullable;
@@ -56,7 +55,7 @@ public class AssetData
   private AssetBlob assetBlob;
 
   @Nullable
-  private DateTime lastDownloaded;
+  private LocalDateTime lastDownloaded;
 
   // Asset API
 
@@ -81,7 +80,7 @@ public class AssetData
   }
 
   @Override
-  public Optional<DateTime> lastDownloaded() {
+  public Optional<LocalDateTime> lastDownloaded() {
     return ofNullable(lastDownloaded);
   }
 
@@ -139,7 +138,7 @@ public class AssetData
   /**
    * Sets the (optional) last downloaded time.
    */
-  public void setLastDownloaded(@Nullable final DateTime lastDownloaded) {
+  public void setLastDownloaded(@Nullable final LocalDateTime lastDownloaded) {
     this.lastDownloaded = lastDownloaded;
   }
 

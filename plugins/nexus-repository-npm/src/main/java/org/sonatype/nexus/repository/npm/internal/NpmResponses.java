@@ -22,13 +22,16 @@ import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.Status;
 import org.sonatype.nexus.repository.view.payloads.BytesPayload;
+import org.sonatype.nexus.repository.view.payloads.StringPayload;
 
 import com.google.common.collect.Maps;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.System.lineSeparator;
 import static org.sonatype.nexus.repository.http.HttpStatus.BAD_REQUEST;
 import static org.sonatype.nexus.repository.http.HttpStatus.NOT_FOUND;
 import static org.sonatype.nexus.repository.http.HttpStatus.UNAUTHORIZED;
+import static org.sonatype.nexus.repository.view.ContentTypes.APPLICATION_JSON;
 
 /**
  * npm response utility, that sends status messages along with JSON, as npm CLI expects.
@@ -37,6 +40,8 @@ import static org.sonatype.nexus.repository.http.HttpStatus.UNAUTHORIZED;
  */
 public final class NpmResponses
 {
+  private static final String DELIMITER = "==================================================================";
+
   private NpmResponses() {
     // nop
   }
@@ -96,6 +101,19 @@ public final class NpmResponses
     return new Response.Builder()
         .status(Status.failure(UNAUTHORIZED))
         .payload(statusPayload(false, message))
+        .build();
+  }
+
+  @Nonnull
+  static Response npmErrorAuditResponse(
+      final int statusCode,
+      @Nonnull final String message)
+  {
+    String newLineDelimiter = String.format("%s%s", lineSeparator(), DELIMITER);
+    String errorMsg = String.format("%s%s%s%s", newLineDelimiter, lineSeparator(), message, newLineDelimiter);
+    return new Response.Builder()
+        .status(Status.failure(statusCode))
+        .payload(new StringPayload(errorMsg, APPLICATION_JSON))
         .build();
   }
 }
