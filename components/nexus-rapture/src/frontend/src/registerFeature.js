@@ -25,6 +25,14 @@
  *       key: 'featureFlagName',
  *       defaultValue: true // the value the feature flag is set to by default (optional)
  *     }],
+ *     licenseValid: [{ // optional
+ *       key: 'stateWithLicenseFlagName',
+ *       defaultValue: false // the value the license validity is set to by default (optional)
+ *     }],
+ *     statesEnabled: [{ // optional
+ *       key: 'stateWithEnabledFlagName',
+ *       defaultValue: false // the value the state enablement is set to by default (optional)
+ *     }],
  *     permissions: ['optional array of permission strings', 'nexus:settings:read']
  *   }
  * }
@@ -65,6 +73,11 @@ export default function registerFeature(feature) {
       if (isVisible && visibility.featureFlags) {
         isVisible = visibility.featureFlags.every(featureFlag => NX.State.getValue(featureFlag.key, featureFlag.defaultValue));
         console.debug("featureFlagsActive="+isVisible, visibility.featureFlags);
+      }
+
+      if (isVisible && visibility.statesEnabled) {
+        isVisible = visibility.statesEnabled.every(state => NX.State.getValue(state.key, state.defaultValue)['enabled']);
+        console.debug("statesEnabled="+isVisible, visibility.statesEnabled);
       }
 
       if (isVisible && visibility.permissions) {

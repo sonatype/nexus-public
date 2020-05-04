@@ -33,3 +33,7 @@ export { default as Textfield } from './components/widgets/Textfield/Textfield';
 export { default as Checkbox } from './components/widgets/Checkbox/Checkbox';
 export { default as Select } from './components/widgets/Select/Select';
 
+// Direct RSC exports
+export {
+  NxFontAwesomeIcon,
+} from '@sonatype/react-shared-components';

@@ -62,4 +62,26 @@ export default class {
       NX.direct.rapture_Security.authenticationToken(b64u, b64p, resolve);
     });
   }
+
+  /**
+   * Prompt the user to re-authenticate to fetch an authentication token
+   * @param message prompt shown to user
+   * @returns {Promise}
+   */
+  static requestAuthenticationToken(message) {
+    return new Promise((resolve, reject) => {
+      NX.Security.doWithAuthenticationToken(
+          message,
+          {
+            success: function(authToken) {
+              return resolve(authToken)
+            },
+            default: function() {
+              return reject()
+            }
+          }
+      );
+    });
+  }
+
 }
