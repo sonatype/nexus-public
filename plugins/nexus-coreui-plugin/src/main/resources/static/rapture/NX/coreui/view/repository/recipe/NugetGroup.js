@@ -22,7 +22,7 @@ Ext.define('NX.coreui.view.repository.recipe.NugetGroup', {
   alias: 'widget.nx-coreui-repository-nuget-group',
   requires: [
     'NX.coreui.view.repository.facet.StorageFacet',
-    'NX.coreui.view.repository.facet.GroupFacet'
+    'NX.coreui.view.repository.facet.NugetGroupFacet'
   ],
 
   /**
@@ -33,7 +33,7 @@ Ext.define('NX.coreui.view.repository.recipe.NugetGroup', {
 
     me.items = [
       { xtype: 'nx-coreui-repository-storage-facet'},
-      { xtype: 'nx-coreui-repository-group-facet', format: 'nuget' }
+      { xtype: 'nx-coreui-repository-nuget-group-facet', format: 'nuget'}
     ];
 
     me.callParent();

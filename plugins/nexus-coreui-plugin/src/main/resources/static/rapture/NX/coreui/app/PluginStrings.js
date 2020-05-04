@@ -362,6 +362,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_AptSigningFacet_Passphrase_FieldLabel: 'Passphrase',
     Repository_Facet_CondaFacet_Title: 'Conda Settings',
     Repository_Facet_GroupFacet_Title: 'Group',
+    Repository_Facet_NugetGroupFacet_NugetGroupValidationLabel: '<span style="color: red; ">Group repositories cannot include a mix of NuGet v2 and v3 members. You cannot add <b>{0}</b> ({1}) because the group contains <b>{2}</b> ({3}).</span>',
     Repository_Facet_HttpClientFacet_Title: 'HTTP',
     Repository_Facet_Maven2Facet_Title: 'Maven 2',
     Repository_Facet_NegativeCacheFacet_Title: 'Negative Cache',
