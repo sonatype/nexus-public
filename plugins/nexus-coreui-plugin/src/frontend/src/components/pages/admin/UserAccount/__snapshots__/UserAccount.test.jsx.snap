@@ -124,7 +124,7 @@ exports[`UserAccount renders correctly 1`] = `
         >
           <svg
             aria-hidden="true"
-            class="svg-inline--fa fa-exclamation-circle fa-w-16 "
+            class="svg-inline--fa fa-exclamation-circle fa-w-16 nx-icon"
             data-icon="exclamation-circle"
             data-prefix="fas"
             focusable="false"
@@ -169,7 +169,7 @@ exports[`UserAccount renders correctly 1`] = `
         >
           <svg
             aria-hidden="true"
-            class="svg-inline--fa fa-exclamation-circle fa-w-16 "
+            class="svg-inline--fa fa-exclamation-circle fa-w-16 nx-icon"
             data-icon="exclamation-circle"
             data-prefix="fas"
             focusable="false"
@@ -214,7 +214,7 @@ exports[`UserAccount renders correctly 1`] = `
         >
           <svg
             aria-hidden="true"
-            class="svg-inline--fa fa-exclamation-circle fa-w-16 "
+            class="svg-inline--fa fa-exclamation-circle fa-w-16 nx-icon"
             data-icon="exclamation-circle"
             data-prefix="fas"
             focusable="false"

@@ -12,9 +12,8 @@
  */
 import React from 'react';
 import UIStrings from '../../../../constants/UIStrings';
-import {Button, ContentBody, Section} from 'nexus-ui-plugin';
+import {Button, ContentBody, NxFontAwesomeIcon, Section} from 'nexus-ui-plugin';
 import './SupportRequest.scss';
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faExternalLinkAlt} from "@fortawesome/free-solid-svg-icons";
 
 export default function SupportRequest() {
@@ -36,8 +35,8 @@ function SupportRequestSection() {
       <a href="#admin/support/supportzip">{UIStrings.SUPPORT_REQUEST.ATTACH_SUPPORT_ZIP}</a>
     </p>
     <Button variant="primary" onClick={() => openSupportRequestPage()}>
-      <FontAwesomeIcon icon={faExternalLinkAlt} pull="left"/>
-      {UIStrings.SUPPORT_REQUEST.ACTIONS.submitRequest}
+      <NxFontAwesomeIcon icon={faExternalLinkAlt}/>
+      <span>{UIStrings.SUPPORT_REQUEST.ACTIONS.submitRequest}</span>
     </Button>
   </Section>
 }

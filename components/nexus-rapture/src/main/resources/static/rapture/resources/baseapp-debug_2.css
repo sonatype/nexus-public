@@ -293,7 +293,7 @@
 }
 
 .x-btn-inner-plain-toolbar-medium {
-    font: normal 14px/18px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 14px/18px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #575757;
     padding: 0 8px;
     max-width: 100%;
@@ -3159,7 +3159,7 @@
 }
 
 .x-btn-inner-default-small {
-    font: normal 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #575757;
     padding: 0 5px;
     max-width: 100%;
@@ -3729,7 +3729,7 @@
 }
 
 .x-btn-inner-nx-plain-small {
-    font: normal 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #575757;
     padding: 0 5px;
     max-width: 100%;
@@ -4299,7 +4299,7 @@
 }
 
 .x-btn-inner-nx-primary-small {
-    font: normal 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #fefefe;
     padding: 0 5px;
     max-width: 100%;
@@ -4864,7 +4864,7 @@
 }
 
 .x-btn-inner-nx-danger-small {
-    font: normal 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #fefefe;
     padding: 0 5px;
     max-width: 100%;
@@ -5429,7 +5429,7 @@
 }
 
 .x-btn-inner-nx-warning-small {
-    font: normal 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #575757;
     padding: 0 5px;
     max-width: 100%;
@@ -5999,7 +5999,7 @@
 }
 
 .x-btn-inner-nx-success-small {
-    font: normal 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #575757;
     padding: 0 5px;
     max-width: 100%;
@@ -6448,6 +6448,11 @@
 .x-btn-warning-small .x-btn-glyph,
 .x-btn-success-small .x-btn-glyph {
     font-size: 13px;
+}
+
+.x-btn-nx-primary-small .x-btn-glyph,
+.x-btn-nx-primary-medium .x-btn-glyph {
+    color: #fefefe;
 }
 
 .x-panel-nx-inset {
@@ -15210,13 +15215,4 @@ fieldset.x-fieldset {
 
 .nx-searchbox .has-icon {
     width: 100%;
-}
-
-.nx-searchbox .has-icon input {
-    display: inline-block;
-    width: calc(100% - 16px);
-}
-
-.nx-searchbox input {
-    color: #000;
 }

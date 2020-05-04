@@ -3142,7 +3142,7 @@ the height of a multi-line element */
 }
 
 .x-btn-inner-default-small {
-    font: normal 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #575757;
     padding: 0 5px;
     max-width: 100%;
@@ -3696,7 +3696,7 @@ the height of a multi-line element */
 }
 
 .x-btn-inner-default-medium {
-    font: normal 14px/18px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 14px/18px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #575757;
     padding: 0 8px;
     max-width: 100%;
@@ -4804,7 +4804,7 @@ the height of a multi-line element */
 }
 
 .x-btn-inner-default-toolbar-small {
-    font: normal 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #575757;
     padding: 0 5px;
     max-width: 100%;
@@ -5367,7 +5367,7 @@ the height of a multi-line element */
 }
 
 .x-btn-inner-default-toolbar-medium {
-    font: normal 14px/18px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 14px/18px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #575757;
     padding: 0 8px;
     max-width: 100%;
@@ -12031,7 +12031,7 @@ a.x-color-picker-item:hover {
 }
 
 .x-btn-inner-grid-cell-small {
-    font: normal 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #575757;
     padding: 0 5px;
     max-width: 100%;
@@ -15587,7 +15587,7 @@ div.x-border-layout-ct {
 }
 
 .x-btn-inner-plain-toolbar-small {
-    font: normal 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #575757;
     padding: 0 5px;
     max-width: 100%;
