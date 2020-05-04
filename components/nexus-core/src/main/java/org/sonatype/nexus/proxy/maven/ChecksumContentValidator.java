@@ -53,12 +53,30 @@ public class ChecksumContentValidator
 
   public static final String SUFFIX_SHA1 = ".sha1";
 
+  public static final String SUFFIX_SHA256 = ".sha256";
+
+  public static final String SUFFIX_SHA512 = ".sha512";
+
   /**
    * Key of item attribute that holds contents of remote .sha1 file. The attribute is not present if the item does
    * not
    * have corresponding .sha1 file
    */
   public static final String ATTR_REMOTE_SHA1 = "remote.sha1";
+
+  /**
+   * Key of item attribute that holds contents of remote .sha256 file. The attribute is not present if the item does
+   * not
+   * have corresponding .sha256 file
+   */
+  public static final String ATTR_REMOTE_SHA256 = "remote.sha256";
+
+  /**
+   * Key of item attribute that holds contents of remote .sha512 file. The attribute is not present if the item does
+   * not
+   * have corresponding .sha512 file
+   */
+  public static final String ATTR_REMOTE_SHA512 = "remote.sha512";
 
   /**
    * Key of item attribute that holds contents of remote .md5 file. The attribute is not present if the item does not
@@ -152,7 +170,8 @@ public class ChecksumContentValidator
   }
 
   private boolean isChecksum(String path) {
-    return path.endsWith(SUFFIX_SHA1) || path.endsWith(SUFFIX_MD5);
+    return path.endsWith(SUFFIX_SHA1) || path.endsWith(SUFFIX_SHA256) || path.endsWith(SUFFIX_SHA512) ||
+        path.endsWith(SUFFIX_MD5);
   }
 
   public static RemoteHashResponse doRetrieveSHA1(ProxyRepository proxy, ResourceStoreRequest hashRequest,
@@ -161,6 +180,24 @@ public class ChecksumContentValidator
   {
     return doRetrieveChecksumItem(proxy, hashRequest, artifact, DigestCalculatingInspector.DIGEST_SHA1_KEY,
         ATTR_REMOTE_SHA1);
+  }
+
+  public static RemoteHashResponse doRetrieveSHA256(
+      ProxyRepository proxy, ResourceStoreRequest hashRequest,
+      StorageItem artifact)
+      throws LocalStorageException, ItemNotFoundException
+  {
+    return doRetrieveChecksumItem(proxy, hashRequest, artifact, DigestCalculatingInspector.DIGEST_SHA256_KEY,
+        ATTR_REMOTE_SHA256);
+  }
+
+  public static RemoteHashResponse doRetrieveSHA512(
+      ProxyRepository proxy, ResourceStoreRequest hashRequest,
+      StorageItem artifact)
+      throws LocalStorageException, ItemNotFoundException
+  {
+    return doRetrieveChecksumItem(proxy, hashRequest, artifact, DigestCalculatingInspector.DIGEST_SHA512_KEY,
+        ATTR_REMOTE_SHA512);
   }
 
   public static RemoteHashResponse doRetrieveMD5(ProxyRepository proxy, ResourceStoreRequest hashRequest,
@@ -226,6 +263,28 @@ public class ChecksumContentValidator
   {
     try {
       doStoreChechsumItem(proxy, artifact, ATTR_REMOTE_SHA1, MUtils.readDigestFromFileItem(hash));
+    }
+    catch (IOException e) {
+      throw new LocalStorageException(e);
+    }
+  }
+
+  public static void doStoreSHA256(ProxyRepository proxy, StorageItem artifact, StorageFileItem hash)
+      throws LocalStorageException
+  {
+    try {
+      doStoreChechsumItem(proxy, artifact, ATTR_REMOTE_SHA256, MUtils.readDigestFromFileItem(hash));
+    }
+    catch (IOException e) {
+      throw new LocalStorageException(e);
+    }
+  }
+
+  public static void doStoreSHA512(ProxyRepository proxy, StorageItem artifact, StorageFileItem hash)
+      throws LocalStorageException
+  {
+    try {
+      doStoreChechsumItem(proxy, artifact, ATTR_REMOTE_SHA512, MUtils.readDigestFromFileItem(hash));
     }
     catch (IOException e) {
       throw new LocalStorageException(e);

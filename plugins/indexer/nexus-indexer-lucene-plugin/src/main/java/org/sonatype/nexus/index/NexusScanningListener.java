@@ -105,6 +105,9 @@ public class NexusScanningListener
   public void artifactDiscovered(final ArtifactContext ac) {
     TaskUtil.checkInterruption();
     final String uinfo = ac.getArtifactInfo().getUinfo();
+    if (ac.getArtifactInfo().fextension.endsWith(".sha256") || ac.getArtifactInfo().fextension.endsWith(".sha512")) {
+      return; // skip sha256 and sha512 files, as those shouldn't be marked as artifacts
+    }
     if (!processedUinfos.add(uinfo)) {
       return; // skip individual snapshots, this skips like unique timestamped snapshots as indexer uses baseVersion
     }

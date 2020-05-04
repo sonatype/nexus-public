@@ -51,6 +51,16 @@ public class DigestCalculatingInspector
    */
   public static String DIGEST_SHA1_KEY = StorageFileItem.DIGEST_SHA1_KEY;
 
+  /**
+   * The digest sha256 key.
+   */
+  public static String DIGEST_SHA256_KEY = StorageFileItem.DIGEST_SHA256_KEY;
+
+  /**
+   * The digest sha512 key.
+   */
+  public static String DIGEST_SHA512_KEY = StorageFileItem.DIGEST_SHA512_KEY;
+
   @Override
   public boolean isHandled(final StorageItem item) {
     if (item instanceof StorageFileItem) {
@@ -76,9 +86,15 @@ public class DigestCalculatingInspector
       final ChecksummingContentLocator sha1cl =
           new ChecksummingContentLocator(file.getContentLocator(), MessageDigest.getInstance("SHA1"),
               StorageFileItem.DIGEST_SHA1_KEY, item.getItemContext());
+      final ChecksummingContentLocator sha256cl =
+          new ChecksummingContentLocator(sha1cl, MessageDigest.getInstance("SHA-256"),
+              StorageFileItem.DIGEST_SHA256_KEY, item.getItemContext());
+      final ChecksummingContentLocator sha512cl =
+          new ChecksummingContentLocator(sha256cl, MessageDigest.getInstance("SHA-512"),
+              StorageFileItem.DIGEST_SHA512_KEY, item.getItemContext());
       // md5 is deprecated but still calculated
-      ChecksummingContentLocator md5cl =
-          new ChecksummingContentLocator(sha1cl, MessageDigest.getInstance("MD5"),
+      final ChecksummingContentLocator md5cl =
+          new ChecksummingContentLocator(sha512cl, MessageDigest.getInstance("MD5"),
               StorageFileItem.DIGEST_MD5_KEY, item.getItemContext());
       try (final InputStream is = md5cl.getContent()) {
         StreamSupport.copy(is, nullOutputStream(), StreamSupport.BUFFER_SIZE);
@@ -95,6 +111,10 @@ public class DigestCalculatingInspector
       item.getRepositoryItemAttributes().put(DIGEST_SHA1_KEY,
           String.valueOf(item.getItemContext().get(StorageFileItem.DIGEST_SHA1_KEY)));
       // do this one "blindly"
+      item.getRepositoryItemAttributes().put(DIGEST_SHA256_KEY,
+          String.valueOf(item.getItemContext().get(StorageFileItem.DIGEST_SHA256_KEY)));
+      item.getRepositoryItemAttributes().put(DIGEST_SHA512_KEY,
+          String.valueOf(item.getItemContext().get(StorageFileItem.DIGEST_SHA512_KEY)));
       item.getRepositoryItemAttributes().put(DIGEST_MD5_KEY,
           String.valueOf(item.getItemContext().get(StorageFileItem.DIGEST_MD5_KEY)));
       // we did our job, those were in context

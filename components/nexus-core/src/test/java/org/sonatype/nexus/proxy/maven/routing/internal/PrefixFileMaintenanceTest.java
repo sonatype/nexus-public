@@ -169,22 +169,23 @@ public class PrefixFileMaintenanceTest
 
     {
       final List<String> entries = getEntriesOf(mavenRepository);
-      assertThat(entries, hasSize(5));
+      assertThat(entries, hasSize(7));
       assertThat(
           entries,
-          containsInAnyOrder("/archetype-catalog.xml", "/archetype-catalog.xml.sha1", "/archetype-catalog.xml.md5",
-              "/org/apache", "/org/sonatype"));
+          containsInAnyOrder("/archetype-catalog.xml", "/archetype-catalog.xml.sha1", "/archetype-catalog.xml.sha256",
+              "/archetype-catalog.xml.sha512", "/archetype-catalog.xml.md5", "/org/apache", "/org/sonatype"));
     }
 
     addSomeContent(mavenRepository, PATHS2);
 
     {
       final List<String> entries = getEntriesOf(mavenRepository);
-      assertThat(entries, hasSize(6));
+      assertThat(entries, hasSize(8));
       assertThat(
           entries,
-          containsInAnyOrder("/archetype-catalog.xml", "/archetype-catalog.xml.sha1", "/archetype-catalog.xml.md5",
-              "/com/sonatype", "/org/apache", "/org/sonatype"));
+          containsInAnyOrder("/archetype-catalog.xml", "/archetype-catalog.xml.sha1", "/archetype-catalog.xml.sha256",
+              "/archetype-catalog.xml.sha512", "/archetype-catalog.xml.md5", "/com/sonatype", "/org/apache",
+              "/org/sonatype"));
     }
 
     // PATHS3 contains full paths, but prefix list contains "/org/sonatype" and nothing will emit event carrying
@@ -194,11 +195,12 @@ public class PrefixFileMaintenanceTest
 
     {
       final List<String> entries = getEntriesOf(mavenRepository);
-      assertThat(entries, hasSize(6));
+      assertThat(entries, hasSize(8));
       assertThat(
           entries,
-          containsInAnyOrder("/archetype-catalog.xml", "/archetype-catalog.xml.sha1", "/archetype-catalog.xml.md5",
-              "/com/sonatype", "/org/apache", "/org/sonatype"));
+          containsInAnyOrder("/archetype-catalog.xml", "/archetype-catalog.xml.sha1", "/archetype-catalog.xml.sha256",
+              "/archetype-catalog.xml.sha512", "/archetype-catalog.xml.md5", "/com/sonatype", "/org/apache",
+              "/org/sonatype"));
     }
 
     // by deleting given folder, we will get the needed result.
@@ -207,11 +209,11 @@ public class PrefixFileMaintenanceTest
 
     {
       final List<String> entries = getEntriesOf(mavenRepository);
-      assertThat(entries, hasSize(5));
+      assertThat(entries, hasSize(7));
       assertThat(
           entries,
-          containsInAnyOrder("/archetype-catalog.xml", "/archetype-catalog.xml.sha1", "/archetype-catalog.xml.md5",
-              "/com/sonatype", "/org/apache"));
+          containsInAnyOrder("/archetype-catalog.xml", "/archetype-catalog.xml.sha1", "/archetype-catalog.xml.sha256",
+              "/archetype-catalog.xml.sha512", "/archetype-catalog.xml.md5", "/com/sonatype", "/org/apache"));
     }
 
     // by deleting a parent of the given folder, we will also get the needed result.
@@ -220,11 +222,11 @@ public class PrefixFileMaintenanceTest
 
     {
       final List<String> entries = getEntriesOf(mavenRepository);
-      assertThat(entries, hasSize(4));
+      assertThat(entries, hasSize(6));
       assertThat(
           entries,
-          containsInAnyOrder("/archetype-catalog.xml", "/archetype-catalog.xml.sha1", "/archetype-catalog.xml.md5",
-              "/org/apache"));
+          containsInAnyOrder("/archetype-catalog.xml", "/archetype-catalog.xml.sha1", "/archetype-catalog.xml.sha256",
+              "/archetype-catalog.xml.sha512", "/archetype-catalog.xml.md5", "/org/apache"));
     }
   }
 }

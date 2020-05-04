@@ -111,6 +111,32 @@ public class DigesterUtils
   }
 
   /**
+   * Calculates a SHA256 digest for a stream.
+   */
+  public static String getSha256Digest(InputStream is) {
+    try {
+      return getDigest("SHA-256", is);
+    }
+    catch (NoSuchAlgorithmException e) {
+      // will not happen
+      return null;
+    }
+  }
+
+  /**
+   * Calculates a SHA512 digest for a stream.
+   */
+  public static String getSha512Digest(InputStream is) {
+    try {
+      return getDigest("SHA-512", is);
+    }
+    catch (NoSuchAlgorithmException e) {
+      // will not happen
+      return null;
+    }
+  }
+
+  /**
    * Calculates a SHA1 digest for a file.
    */
   public static String getSha1Digest(File file) {
@@ -173,5 +199,11 @@ public class DigesterUtils
     return getSha1Digest(new ByteArrayInputStream(byteArray));
   }
 
+  public static String getSha256Digest(byte[] byteArray) {
+    return getSha256Digest(new ByteArrayInputStream(byteArray));
+  }
 
+  public static String getSha512Digest(byte[] byteArray) {
+    return getSha512Digest(new ByteArrayInputStream(byteArray));
+  }
 }

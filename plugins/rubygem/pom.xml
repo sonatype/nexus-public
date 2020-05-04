@@ -50,6 +50,12 @@
       </dependency>
 
       <dependency>
+        <groupId>org.jruby.joni</groupId>
+        <artifactId>joni</artifactId>
+        <version>2.1.15.SONATYPE</version>
+      </dependency>
+
+      <dependency>
         <groupId>rubygems</groupId>
         <artifactId>maven-tools</artifactId>
         <version>1.0.5</version>
