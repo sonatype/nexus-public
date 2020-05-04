@@ -123,27 +123,21 @@ public class FluentAssetImpl
   @Override
   public FluentAsset attributes(final AttributeChange change, final String key, final Object value) {
     if (applyAttributeChange(asset, change, key, value)) {
-      facet.assetStore().updateAssetAttributes(asset);
+      facet.stores().assetStore.updateAssetAttributes(asset);
     }
     return this;
   }
 
   @Override
   public FluentAsset attach(final TempBlob tempBlob) {
-    return attach(makePermanent(tempBlob), tempBlob.getHashes());
+    facet.checkAttachAllowed(asset);
+    return doAttach(makePermanent(tempBlob), tempBlob.getHashes());
   }
 
   @Override
   public FluentAsset attach(final Blob blob, final Map<HashAlgorithm, HashCode> checksums) {
-
-    BlobRef blobRef = blobRef(blob);
-    AssetBlob assetBlob = facet.assetBlobStore().readAssetBlob(blobRef)
-        .orElseGet(() -> createAssetBlob(blobRef, blob, checksums));
-
-    ((AssetData) asset).setAssetBlob(assetBlob);
-    facet.assetStore().updateAssetBlobLink(asset);
-
-    return this;
+    facet.checkAttachAllowed(asset);
+    return doAttach(blob, checksums);
   }
 
   @Override
@@ -152,7 +146,7 @@ public class FluentAssetImpl
         .orElseThrow(() -> new IllegalStateException("No blob attached to " + asset.path()));
 
     BlobRef blobRef = assetBlob.blobRef();
-    Blob blob = facet.blobStore().get(blobRef.getBlobId());
+    Blob blob = facet.stores().blobStore.get(blobRef.getBlobId());
     if (blob == null) {
       throw new MissingBlobException(blobRef);
     }
@@ -167,7 +161,7 @@ public class FluentAssetImpl
 
   @Override
   public FluentAsset markAsDownloaded() {
-    facet.assetStore().markAsDownloaded(asset);
+    facet.stores().assetStore.markAsDownloaded(asset);
     return this;
   }
 
@@ -189,7 +183,8 @@ public class FluentAssetImpl
 
   @Override
   public boolean delete() {
-    return facet.assetStore().deleteAsset(asset);
+    facet.checkDeleteAllowed(asset);
+    return facet.stores().assetStore.deleteAsset(asset);
   }
 
   @Override
@@ -218,13 +213,13 @@ public class FluentAssetImpl
     assetBlob.setCreatedBy(headers.get(CREATED_BY_HEADER));
     assetBlob.setCreatedByIp(headers.get(CREATED_BY_IP_HEADER));
 
-    facet.assetBlobStore().createAssetBlob(assetBlob);
+    facet.stores().assetBlobStore.createAssetBlob(assetBlob);
 
     return assetBlob;
   }
 
   private BlobRef blobRef(final Blob blob) {
-    return new BlobRef(facet.nodeName(), facet.blobStoreName(), blob.getId().asUniqueString());
+    return new BlobRef(facet.nodeName(), facet.stores().blobStoreName, blob.getId().asUniqueString());
   }
 
   private Blob makePermanent(final TempBlob tempBlob) {
@@ -237,6 +232,18 @@ public class FluentAssetImpl
     headers.put(CREATED_BY_IP_HEADER, tempHeaders.get(CREATED_BY_IP_HEADER));
     headers.put(CONTENT_TYPE_HEADER, tempHeaders.get(CONTENT_TYPE_HEADER));
 
-    return facet.blobStore().copy(tempBlob.getBlob().getId(), headers.build());
+    return facet.stores().blobStore.copy(tempBlob.getBlob().getId(), headers.build());
+  }
+
+  private FluentAsset doAttach(final Blob blob, final Map<HashAlgorithm, HashCode> checksums) {
+
+    BlobRef blobRef = blobRef(blob);
+    AssetBlob assetBlob = facet.stores().assetBlobStore.readAssetBlob(blobRef)
+        .orElseGet(() -> createAssetBlob(blobRef, blob, checksums));
+
+    ((AssetData) asset).setAssetBlob(assetBlob);
+    facet.stores().assetStore.updateAssetBlobLink(asset);
+
+    return this;
   }
 }

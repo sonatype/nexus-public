@@ -97,7 +97,7 @@ public abstract class NexusITSupport
   private PoolingHttpClientConnectionManager connectionManager;
   
   @Inject
-  private RepositoryManager repositoryManager;
+  protected RepositoryManager repositoryManager;
   
   @Inject
   protected RestClientFactory restClientFactory;

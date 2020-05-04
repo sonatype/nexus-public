@@ -55,7 +55,12 @@
     <dependency>
       <groupId>org.sonatype.nexus.testsuite</groupId>
       <artifactId>nexus-repository-content-testsupport</artifactId>
-      <version>3.24.0-SNAPSHOT</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-repository-content</artifactId>
       <scope>test</scope>
     </dependency>
 
@@ -104,6 +109,7 @@
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-test-common</artifactId>
+      <scope>test</scope>
     </dependency>
 
     <dependency>

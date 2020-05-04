@@ -14,9 +14,23 @@ package org.sonatype.nexus.content.testsuite;
 
 import org.sonatype.nexus.content.testsupport.raw.RawClient;
 import org.sonatype.nexus.content.testsupport.raw.RawITSupport;
+import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.http.HttpStatus;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.entity.FileEntity;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
+
+import static org.apache.http.entity.ContentType.TEXT_PLAIN;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.WRITE_POLICY;
+import static org.sonatype.nexus.repository.content.facet.WritePolicy.ALLOW_ONCE;
+import static org.sonatype.nexus.repository.content.facet.WritePolicy.DENY;
 
 public class RawHostedIT
     extends RawITSupport
@@ -41,5 +55,48 @@ public class RawHostedIT
   public void redeploy() throws Exception {
     uploadAndDownload(rawClient, TEST_CONTENT);
     uploadAndDownload(rawClient, TEST_CONTENT);
+  }
+
+  @Test
+  public void canDisallowDeploy() throws Exception {
+    rawClient = rawClient(repos.createRawHosted(HOSTED_REPO + "-no-deploy", DENY));
+
+    HttpEntity testEntity = new FileEntity(resolveTestFile(TEST_CONTENT), TEXT_PLAIN);
+
+    HttpResponse response = rawClient.put(TEST_CONTENT, testEntity);
+    MatcherAssert.assertThat(response.getStatusLine().getStatusCode(), Matchers.is(HttpStatus.BAD_REQUEST));
+    assertThat(response.getStatusLine().getReasonPhrase(), Matchers.containsString("is read-only"));
+  }
+
+  @Test
+  public void canDisallowDelete() throws Exception {
+    rawClient = rawClient(repos.createRawHosted(HOSTED_REPO + "-no-delete"));
+
+    HttpEntity testEntity = new FileEntity(resolveTestFile(TEST_CONTENT), TEXT_PLAIN);
+
+    HttpResponse response = rawClient.put(TEST_CONTENT, testEntity);
+    MatcherAssert.assertThat(response.getStatusLine().getStatusCode(), Matchers.is(HttpStatus.CREATED));
+
+    Configuration hostedConfig = repositoryManager.get(HOSTED_REPO + "-no-delete").getConfiguration().copy();
+    hostedConfig.attributes(STORAGE).set(WRITE_POLICY, DENY);
+    repositoryManager.update(hostedConfig);
+
+    response = rawClient.delete(TEST_CONTENT);
+    MatcherAssert.assertThat(response.getStatusLine().getStatusCode(), Matchers.is(HttpStatus.BAD_REQUEST));
+    assertThat(response.getStatusLine().getReasonPhrase(), Matchers.containsString("cannot be deleted"));
+  }
+
+  @Test
+  public void canDisallowRedeploy() throws Exception {
+    rawClient = rawClient(repos.createRawHosted(HOSTED_REPO + "-no-redeploy", ALLOW_ONCE));
+
+    HttpEntity testEntity = new FileEntity(resolveTestFile(TEST_CONTENT), TEXT_PLAIN);
+
+    HttpResponse response = rawClient.put(TEST_CONTENT, testEntity);
+    MatcherAssert.assertThat(response.getStatusLine().getStatusCode(), Matchers.is(HttpStatus.CREATED));
+
+    response = rawClient.put(TEST_CONTENT, testEntity);
+    MatcherAssert.assertThat(response.getStatusLine().getStatusCode(), Matchers.is(HttpStatus.BAD_REQUEST));
+    assertThat(response.getStatusLine().getReasonPhrase(), Matchers.containsString("cannot be updated"));
   }
 }

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.content.testsupport.fixtures;
+package org.sonatype.nexus.repository.content.facet;
 
 /**
  * Write policy.
@@ -25,12 +25,14 @@ public enum WritePolicy
    * Asset can be unlinked from a blob (blob can be deleted).
    */
   ALLOW,
+
   /**
    * Asset can be linked with a blob.
    * Asset cannot be re-linked with another blob.
    * Asset can be unlinked from a blob (blob can be deleted).
    */
   ALLOW_ONCE,
+
   /**
    * Asset cannot be linked with a blob.
    * Asset cannot be re-linked with another blob.

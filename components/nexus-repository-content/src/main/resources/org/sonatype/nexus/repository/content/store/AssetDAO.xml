@@ -42,7 +42,7 @@
          REFERENCES ${format}_asset_blob (asset_blob_id)
     );
 
-    CREATE INDEX idx_${format}_asset_kind ON ${format}_asset (kind);
+    CREATE INDEX IF NOT EXISTS idx_${format}_asset_kind ON ${format}_asset (kind);
     --
   </insert>
 
