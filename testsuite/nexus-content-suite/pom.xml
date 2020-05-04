@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.sonatype.nexus.testsuite</groupId>
     <artifactId>nexus-testsuite</artifactId>
-    <version>3.23.0-02</version>
+    <version>3.23.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-content-suite</artifactId>
@@ -55,7 +55,7 @@
     <dependency>
       <groupId>org.sonatype.nexus.testsuite</groupId>
       <artifactId>nexus-repository-content-testsupport</artifactId>
-      <version>3.23.0-02</version>
+      <version>3.23.0-SNAPSHOT</version>
       <scope>test</scope>
     </dependency>
 
