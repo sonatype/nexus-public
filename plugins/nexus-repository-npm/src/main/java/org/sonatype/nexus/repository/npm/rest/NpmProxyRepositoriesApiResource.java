@@ -58,7 +58,7 @@ public class NpmProxyRepositoriesApiResource
     super(authorizingRepositoryManager, configurationAdapter);
   }
 
-  @ApiOperation("Create Maven proxy repository")
+  @ApiOperation("Create npm proxy repository")
   @ApiResponses(value = {
       @ApiResponse(code = 201, message = REPOSITORY_CREATED),
       @ApiResponse(code = 401, message = AUTHENTICATION_REQUIRED),
