@@ -72,7 +72,7 @@ public class NpmProxyRepositoriesApiResource
     return super.createRepository(request);
   }
 
-  @ApiOperation("Update Maven proxy repository")
+  @ApiOperation("Update npm proxy repository")
   @ApiResponses(value = {
       @ApiResponse(code = 204, message = REPOSITORY_UPDATED),
       @ApiResponse(code = 401, message = AUTHENTICATION_REQUIRED),
