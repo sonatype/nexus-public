@@ -20,7 +20,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.repository.rest.internal.resources.ComponentsResource;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.swagger.ParameterContributor;
@@ -30,6 +29,7 @@ import io.swagger.models.HttpMethod;
 import io.swagger.models.parameters.FormParameter;
 
 import static io.swagger.models.HttpMethod.POST;
+import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 
 /**
  * @since 3.8
@@ -41,7 +41,7 @@ public class ComponentUploadParameterContributor
 {
   private static final List<HttpMethod> HTTP_METHODS = ImmutableList.of(POST);
 
-  private static final List<String> PATHS = ImmutableList.of(ComponentsResource.RESOURCE_URI);
+  private static final List<String> PATHS = ImmutableList.of(V1_API_PREFIX + "/components");
 
   @Inject
   public ComponentUploadParameterContributor(final UploadManager uploadManager) {

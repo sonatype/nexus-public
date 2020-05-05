@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.upload.internal;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.sonatype.nexus.repository.storage.TempBlob;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 /**
  * @since 3.16

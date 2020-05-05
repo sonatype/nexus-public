@@ -12,31 +12,20 @@
  */
 package org.sonatype.nexus.repository.upload;
 
-import java.util.Collection;
-import java.util.List;
+import java.io.InputStream;
 
-import org.sonatype.nexus.repository.view.Content;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import org.sonatype.nexus.common.hash.HashAlgorithm;
+import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.view.Payload;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 /**
- * The asset paths that were uploaded.
+ * Factory for creating {@link TempBlob}
  *
- * @since 3.10
+ * @since 3.next
  */
-public class UploadResponse
-{
-  private final List<String> assetPaths;
+public interface TempBlobFactory {
+  TempBlob create(Repository repository, InputStream inputStream, Iterable<HashAlgorithm> hashAlgorithms);
 
-  public UploadResponse(final List<String> assetPaths) {
-    this.assetPaths = checkNotNull(assetPaths);
-  }
-
-  public UploadResponse(final Collection<Content> contents, final List<String> assetPaths) {
-    this(assetPaths);
-  }
-
-  public List<String> getAssetPaths() {
-    return assetPaths;
-  }
+  TempBlob create(Repository repository, Payload payload, Iterable<HashAlgorithm> hashAlgorithms);
 }

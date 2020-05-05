@@ -29,7 +29,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.storage.StorageFacet;
+import org.sonatype.nexus.repository.upload.TempBlobFactory;
 import org.sonatype.nexus.repository.upload.internal.BlobStoreMultipartForm.TempBlobFormField;
 import org.sonatype.nexus.security.authc.AntiCsrfHelper;
 
@@ -43,6 +43,7 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 
 /**
@@ -57,14 +58,17 @@ public class UploadComponentMultipartHelper
 {
   private final AntiCsrfHelper antiCsrfHelper;
 
+  private final TempBlobFactory tempBlobFactory;
+
   @Inject
-  public UploadComponentMultipartHelper(final AntiCsrfHelper antiCsrfHelper) {
+  public UploadComponentMultipartHelper(final AntiCsrfHelper antiCsrfHelper, final TempBlobFactory tempBlobFactory) {
     this.antiCsrfHelper = antiCsrfHelper;
+    this.tempBlobFactory = checkNotNull(tempBlobFactory);
   }
 
   /**
    * Parse a multipart-form submission creating file uploads in the blob store of the repository. Reminder, callers must
-   * call {@link close} on {@code TempBlobs} returned from this method.
+   * call {@code close} on {@code TempBlobs} returned from this method.
    */
   public BlobStoreMultipartForm parse(final Repository repository, final HttpServletRequest request)
       throws FileUploadException
@@ -141,9 +145,8 @@ public class UploadComponentMultipartHelper
         if (!item.isFormField() || assetPattern.test(item.getFieldName())) {
           // Don't use getName() here to prevent an InvalidFileNameException.
           String fileName = (String) field.get(item);
-          StorageFacet storage = repository.facet(StorageFacet.class);
           multipartForm.putFile(item.getFieldName(), new TempBlobFormField(item.getFieldName(), fileName,
-              storage.createTempBlob(in, HashAlgorithm.ALL_HASH_ALGORITHMS.values())));
+              tempBlobFactory.create(repository, in, HashAlgorithm.ALL_HASH_ALGORITHMS.values())));
         }
         else {
           multipartForm.putFormField(item.getFieldName(), IOUtils.toString(in, getCharSet(item.getContentType())));
