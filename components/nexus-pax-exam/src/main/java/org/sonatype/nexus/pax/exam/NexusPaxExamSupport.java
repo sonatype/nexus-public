@@ -313,8 +313,15 @@ public abstract class NexusPaxExamSupport
   /**
    * @return Function that returns {@code true} when all tasks have stopped; otherwise {@code false}
    */
+  public static Callable<Boolean> tasksDone(TaskScheduler taskScheduler, int initialTaskCount) {
+    return () -> taskScheduler.getExecutedTaskCount() > initialTaskCount && taskScheduler.getRunningTaskCount() == 0;
+  }
+
+  /**
+   * @return Function that returns {@code true} when all tasks have stopped; otherwise {@code false}
+   */
   public static Callable<Boolean> tasksDone(TaskScheduler taskScheduler) {
-    return () -> taskScheduler.getExecutedTaskCount() > 0 && taskScheduler.getRunningTaskCount() == 0;
+    return tasksDone(taskScheduler, 0);
   }
 
   // -------------------------------------------------------------------------
