@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.content.testsuite;
 
+import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.content.testsupport.raw.RawClient;
 import org.sonatype.nexus.content.testsupport.raw.RawITSupport;
 import org.sonatype.nexus.repository.config.Configuration;
@@ -24,6 +25,7 @@ import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import static org.apache.http.entity.ContentType.TEXT_PLAIN;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -32,6 +34,7 @@ import static org.sonatype.nexus.repository.config.ConfigurationConstants.WRITE_
 import static org.sonatype.nexus.repository.content.facet.WritePolicy.ALLOW_ONCE;
 import static org.sonatype.nexus.repository.content.facet.WritePolicy.DENY;
 
+@Category(SQLTestGroup.class)
 public class RawHostedIT
     extends RawITSupport
 {

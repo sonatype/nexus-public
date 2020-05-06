@@ -14,6 +14,7 @@ package org.sonatype.nexus.content.testsuite;
 
 import java.io.File;
 
+import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.content.testsupport.raw.RawClient;
 import org.sonatype.nexus.content.testsupport.raw.RawITSupport;
 
@@ -21,6 +22,7 @@ import com.google.common.io.Files;
 import org.apache.http.HttpResponse;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import static org.apache.http.entity.ContentType.TEXT_PLAIN;
 import static org.hamcrest.core.Is.is;
@@ -29,6 +31,7 @@ import static org.sonatype.nexus.content.testsupport.FormatClientSupport.bytes;
 import static org.sonatype.nexus.content.testsupport.FormatClientSupport.status;
 import static org.sonatype.nexus.repository.http.HttpStatus.NOT_FOUND;
 
+@Category(SQLTestGroup.class)
 public class RawGroupIT
     extends RawITSupport
 {

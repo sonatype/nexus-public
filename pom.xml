@@ -1379,6 +1379,30 @@
       </build>
     </profile>
 
+    <profile>
+      <id>h2-integration-tests</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration combine.children="override">
+              <groups>org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup</groups>
+              <excludedGroups>org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,org.sonatype.goodies.testsupport.group.Unstable,org.sonatype.goodies.testsupport.group.Perf,org.sonatype.goodies.testsupport.group.External</excludedGroups>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration combine.children="override">
+              <groups>org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup</groups>
+              <excludedGroups>org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,org.sonatype.goodies.testsupport.group.Unstable,org.sonatype.goodies.testsupport.group.Perf,org.sonatype.goodies.testsupport.group.External</excludedGroups>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
     <!--
     Includes building of testsuite modules when the sources are present and tests aren't skipped.
     -->
