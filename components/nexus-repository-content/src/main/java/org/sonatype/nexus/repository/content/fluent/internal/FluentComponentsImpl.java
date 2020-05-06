@@ -51,7 +51,7 @@ public class FluentComponentsImpl
   @Override
   public Continuation<FluentComponent> browse(final int limit, final String continuationToken) {
     return new FluentContinuation<>(
-        facet.stores().componentStore.browseComponents(limit, limit, continuationToken),
+        facet.stores().componentStore.browseComponents(facet.contentRepositoryId(), limit, continuationToken),
         this::with);
   }
 
