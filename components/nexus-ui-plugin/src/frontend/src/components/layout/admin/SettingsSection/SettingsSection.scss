@@ -36,27 +36,11 @@
   position: absolute;
 }
 
-.nxrm-settings-section-field-wrapper {
-  display: block;
-  margin-bottom: 15px;
-
-  .nxrm-settings-section-field-wrapper-label {
-    display: block;
-    font-weight: bold;
-    margin-bottom: 4px;
-  }
-  .nxrm-settings-section-field-wrapper-description {
-    display: block;
-    margin-bottom: 2px;
-    font-size: 10px;
-  }
-}
-
 .nxrm-settings-section-footer {
   display: flex;
   margin-top: 10px;
 
-  & > .nx-btn {
-    margin-right: 10px;
+  > :first-child {
+    margin-left: 0;
   }
 }

@@ -19,3 +19,13 @@
   border-top: solid 1px $light-gray;
   padding: 1em;
 }
+
+// RSC Overrides
+
+.nxrm-content-body > .nxrm-section:first-child {
+  margin-top: 0;
+}
+
+.nxrm-content-body > .nxrm-section:last-child {
+  margin-bottom: 0;
+}

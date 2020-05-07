@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SectionActions renders correctly 1`] = `
+<div>
+  <div
+    class="nxrm-section-actions nx-tile__actions"
+  >
+    actions
+  </div>
+</div>
+`;

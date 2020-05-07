@@ -10,17 +10,22 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+package org.sonatype.nexus.coreui.internal.log;
 
-import NxButton from "@sonatype/react-shared-components/components/NxButton/NxButton";
+import org.sonatype.nexus.common.log.LoggerLevel;
 
 /**
- * @since 3.21
- *
- * The button component may be passed a variant value of "primary" (blue). No variant will be a gray color.
+ * @since 3.next
  */
-export default function Button({type, ...rest}) {
-  return <NxButton type={type || 'input'} {...rest} />;
-}
+public class UpdateLoggingConfigurationRequest
+{
+  private LoggerLevel level;
 
-Button.propTypes = NxButton.propTypes;
+  public LoggerLevel getLevel() {
+    return level;
+  }
+
+  public void setLevel(final LoggerLevel level) {
+    this.level = level;
+  }
+}

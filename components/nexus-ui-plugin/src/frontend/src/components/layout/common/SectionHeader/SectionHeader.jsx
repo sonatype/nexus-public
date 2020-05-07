@@ -11,16 +11,13 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-
-import NxButton from "@sonatype/react-shared-components/components/NxButton/NxButton";
+import classNames from 'classnames';
 
 /**
- * @since 3.21
+ * @since 3.next
  *
- * The button component may be passed a variant value of "primary" (blue). No variant will be a gray color.
+ * This component must be used within a Section component.
  */
-export default function Button({type, ...rest}) {
-  return <NxButton type={type || 'input'} {...rest} />;
+export default function SectionHeader({className, children, ...rest}) {
+  return <div className={classNames("nxrm-section-header", "nx-tile-header", className)} {...rest}>{children}</div>;
 }
-
-Button.propTypes = NxButton.propTypes;

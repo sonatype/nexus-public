@@ -16,6 +16,24 @@
   Style overrides for the react-shared-components. Once we've fully converted to React we should remove these overrides.
 */
 
+@import "colors";
+
+.nx-tile {
+  border-color: $light-gray !important;
+}
+
+.nx-filter-input {
+  .nx-filter-input__add-on {
+    padding: 2px !important;
+    height: 24px !important;
+    box-sizing: border-box !important;
+  }
+  .nx-filter-text-input {
+    height: 24px !important;
+    box-sizing: border-box !important;
+  }
+}
+
 .x-body .nx-btn {
   height: 24px;
   min-width: 75px;

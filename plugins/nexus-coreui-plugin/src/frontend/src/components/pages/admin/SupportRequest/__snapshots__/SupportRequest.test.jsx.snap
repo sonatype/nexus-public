@@ -6,7 +6,7 @@ exports[`SystemInformation renders correctly 1`] = `
     class="nxrm-content-body nxrm-support-request"
   >
     <div
-      class="nxrm-section"
+      class="nxrm-section nx-tile"
     >
       <p>
         Please include a complete description of your problem and steps to allow us to reproduce the problem (if available).

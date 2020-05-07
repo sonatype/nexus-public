@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SectionHeader renders correctly 1`] = `
+<div>
+  <div
+    class="nxrm-section-header nx-tile-header"
+  >
+    header
+  </div>
+</div>
+`;

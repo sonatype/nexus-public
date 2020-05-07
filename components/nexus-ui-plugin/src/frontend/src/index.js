@@ -23,17 +23,34 @@ export { default as SettingsSection } from './components/layout/admin/SettingsSe
 export { default as BreadcrumbActions } from './components/layout/common/BreadcrumbActions/BreadcrumbActions';
 export { default as ContentBody } from './components/layout/common/ContentBody/ContentBody';
 export { default as Section } from './components/layout/common/Section/Section';
+export { default as SectionActions } from './components/layout/common/SectionActions/SectionActions';
+export { default as SectionFooter } from './components/layout/common/SectionFooter/SectionFooter';
+export { default as SectionHeader } from './components/layout/common/SectionHeader/SectionHeader';
+export { default as MasterDetail } from './components/layout/common/MasterDetail/MasterDetail';
+export { default as Master } from './components/layout/common/MasterDetail/Master';
+export { default as Detail } from './components/layout/common/MasterDetail/Detail';
 
 export { default as Alert } from './components/widgets/Alert/Alert';
 export { default as Button } from './components/widgets/Button/Button';
+export { default as Checkbox } from './components/widgets/Checkbox/Checkbox';
 export { default as FieldErrorMessage } from './components/widgets/FieldErrorMessage/FieldErrorMessage';
+export { default as FieldWrapper } from './components/widgets/FieldWrapper/FieldWrapper';
 export { default as Information } from './components/widgets/Information/Information';
+export { default as Select } from './components/widgets/Select/Select';
 export { default as Textarea } from './components/widgets/Textarea/Textarea';
 export { default as Textfield } from './components/widgets/Textfield/Textfield';
-export { default as Checkbox } from './components/widgets/Checkbox/Checkbox';
-export { default as Select } from './components/widgets/Select/Select';
 
 // Direct RSC exports
 export {
+  NxErrorAlert,
+  NxFilterInput,
   NxFontAwesomeIcon,
+  NxLoadingSpinner,
+  NxLoadWrapper,
+  NxSubmitMask,
+  NxTable,
+  NxTableBody,
+  NxTableCell,
+  NxTableHead,
+  NxTableRow
 } from '@sonatype/react-shared-components';

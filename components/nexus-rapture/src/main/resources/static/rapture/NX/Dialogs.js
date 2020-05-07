@@ -100,6 +100,11 @@ Ext.define('NX.Dialogs', {
             onYesFn.call(options.scope);
           }
         }
+        else {
+          if (Ext.isDefined(options.onNoFn)) {
+            options.onNoFn.call(options.scope);
+          }
+        }
       }
     });
   }

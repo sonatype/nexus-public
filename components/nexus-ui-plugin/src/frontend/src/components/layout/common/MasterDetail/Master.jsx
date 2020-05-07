@@ -10,21 +10,15 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext, NX*/
+import React from 'react';
+
+import ExtJS from "../../../../interface/ExtJS";
 
 /**
- * Capability feature panel.
- *
- * @since 3.0
+ * @since 3.next
  */
-Ext.define('NX.coreui.view.logging.LoggerFeature', {
-  extend: 'NX.view.drilldown.Drilldown',
-  alias: 'widget.nx-coreui-logging-feature',
-  requires: [
-    'NX.I18n'
-  ],
+export default function Master({children, ...attrs}) {
+  ExtJS.setBreadcrumbs();
 
-  iconName: 'logger-default',
-
-  detail: { xtype: 'nx-coreui-logger-list' }
-});
+  return <>{React.Children.map(children, (child) => React.cloneElement(child, attrs))}</>;
+}

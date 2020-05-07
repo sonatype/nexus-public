@@ -12,15 +12,15 @@
  */
 import React from 'react';
 
-import NxButton from "@sonatype/react-shared-components/components/NxButton/NxButton";
+import ExtJS from "../../../../interface/ExtJS";
 
 /**
- * @since 3.21
- *
- * The button component may be passed a variant value of "primary" (blue). No variant will be a gray color.
+ * @since 3.next
  */
-export default function Button({type, ...rest}) {
-  return <NxButton type={type || 'input'} {...rest} />;
-}
+export default function Detail({children, editBreadcrumb, createBreadcrumb, itemId, ...attrs}) {
+  ExtJS.setBreadcrumbs([{
+    itemName: itemId ? editBreadcrumb(itemId) : createBreadcrumb
+  }]);
 
-Button.propTypes = NxButton.propTypes;
+  return <>{React.Children.map(children, (child) => React.cloneElement(child, {...attrs, itemId}))}</>;
+}

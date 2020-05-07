@@ -12,6 +12,8 @@
  */
 /*global Ext, NX*/
 
+import {useEffect, useState} from 'react';
+
 /**
  * @since 3.22
  */
@@ -40,12 +42,115 @@ export default class {
   static setDirtyStatus(key, isDirty) {
     window.dirty = window.dirty || [];
 
-    if (isDirty) {
-      window.dirty.push(key)
+    if (isDirty && window.dirty.indexOf(key) === -1) {
+      window.dirty.push(key);
     }
     else {
-      window.dirty = window.dirty.filter(it => it !== key)
+      window.dirty = window.dirty.filter(it => it !== key);
     }
+  }
+
+  /**
+   * @return {location: {pathname: string }}
+   */
+  static useHistory({basePath}) {
+    const [path, setPath] = useState(Ext.History.getToken());
+
+    useEffect(() => {
+      Ext.History.on('change', setPath);
+      return () => Ext.History.un('change', setPath);
+    });
+
+    return {
+      location: {
+        pathname: path.replace(basePath, '')
+      }
+    };
+  }
+
+  /**
+   * Set the breadcrumbs to show. If the items argument is not provided we'll show the "root" breadcrumb.
+   * @param items [{itemName}]
+   */
+  static setBreadcrumbs(items = []) {
+    const content = Ext.ComponentQuery.query('#feature-content')[0];
+    const breadcrumb = content.down('#breadcrumb');
+
+    if (!items.length) {
+      // If we're on the root page we should show the root breadcrumbs
+      content.showRoot();
+    }
+    else {
+      // If we have items, then we need to display breadcrumbs to allow the user to go back
+      const breadcrumbs = [
+        {
+          xtype: 'container',
+          itemId: 'nx-feature-icon',
+          width: 32,
+          height: 32,
+          cls: content.currentIcon,
+          ariaRole: 'presentation'
+        },
+        {
+          xtype: 'button',
+          itemId: 'nx-feature-name',
+          scale: 'large',
+          ui: 'nx-drilldown',
+          text: content.currentTitle,
+          handler: function() {
+            const menuController = Ext.getApplication().getController('NX.controller.Menu');
+            const path = menuController.currentSelectedPath.slice(1).toLowerCase();
+            const currentPath = Ext.History.getToken();
+            if (path === currentPath) {
+              const refreshController = Ext.getApplication().getController('NX.controller.Refresh');
+              refreshController.refresh();
+            }
+            else {
+              Ext.History.add(path);
+            }
+          }
+        }
+      ];
+      items.forEach(item => {
+        if (item.itemName) {
+          breadcrumbs.push({
+            xtype: 'label',
+            cls: 'nx-breadcrumb-separator',
+            text: '/',
+            ariaRole: 'presentation',
+            tabIndex: -1
+          });
+
+          breadcrumbs.push({
+            xtype: 'button',
+            scale: 'medium',
+            ui: 'nx-drilldown',
+            text: Ext.htmlEncode(item.itemName),
+            disabled: !item.itemPath,
+            handler: function() {
+              Ext.History.add(item.itemPath);
+            }
+          })
+        }
+      });
+
+      breadcrumb.removeAll();
+      breadcrumb.add(breadcrumbs);
+    }
+  }
+
+  static requestConfirmation({title, message, yesButtonText = 'Yes', noButtonText = 'No'}) {
+    const options = {
+      buttonText: {
+        yes: yesButtonText,
+        no: noButtonText
+      }
+    };
+
+    return new Promise((resolve, reject) => NX.Dialogs.askConfirmation(title, message, resolve, {
+      ...options,
+      onNoFn: reject
+    }));
   }
 
   /**

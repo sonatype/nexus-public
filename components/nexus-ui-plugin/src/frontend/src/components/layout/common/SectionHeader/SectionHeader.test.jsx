@@ -1,4 +1,4 @@
-/**
+/*
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
  * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
@@ -10,18 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/**
- * @since 3.22
- */
-@import '../../../../styles/colors';
+import React from 'react';
+import {render} from '@testing-library/react';
+import '@testing-library/jest-dom/extend-expect';
 
-.nxrm-section {
-  background-color: $white;
-  border: solid 1px $light-gray;
-  padding: 1em;
-  margin-bottom: 1em;
-}
+import SectionHeader from './SectionHeader';
 
-.nxrm-content-body > .nxrm-section:last-child {
-  margin-bottom: 0;
-}
+describe('SectionHeader', () => {
+  it('renders correctly', () => {
+    const {container} = render(
+        <SectionHeader>header</SectionHeader>
+    );
+    expect(container).toMatchSnapshot();
+  });
+});

@@ -35,6 +35,7 @@
     "babel-polyfill": "=6.26.0",
     "copy-modules-webpack-plugin": "=2.0.4",
     "css-loader": "=3.0.0",
+    "file-loader": "=6.0.0",
     "jest": "=24.8.0",
     "jest-junit": "=7.0.0",
     "mini-css-extract-plugin": "=0.7.0",

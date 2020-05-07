@@ -32,4 +32,10 @@ class LoggerXO
 
   @NotNull
   LoggerLevel level
+
+  boolean override
+
+  static LoggerXO fromEntry(Map.Entry<String, LoggerLevel> entry) {
+    return new LoggerXO(name: entry.getKey(), level: entry.getValue());
+  }
 }

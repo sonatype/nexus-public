@@ -376,6 +376,9 @@ Ext.define('NX.app.Application', {
       // mark app as ready
       me.logInfo('Ready');
       me.ready = true;
+
+      // Relayout if necessary (fix for React breadcrumbs)
+      Ext.ComponentQuery.query('#breadcrumb')[0].updateLayout();
     };
 
     // FIXME: Need a better way to know when the UI is actually rendered so we can hide the mask

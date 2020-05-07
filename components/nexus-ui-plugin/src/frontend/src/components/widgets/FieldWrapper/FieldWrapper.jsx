@@ -10,17 +10,23 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+
 import React from 'react';
+import PropTypes from 'prop-types';
 
-import NxButton from "@sonatype/react-shared-components/components/NxButton/NxButton";
+import './FieldWrapper.scss';
 
-/**
- * @since 3.21
- *
- * The button component may be passed a variant value of "primary" (blue). No variant will be a gray color.
- */
-export default function Button({type, ...rest}) {
-  return <NxButton type={type || 'input'} {...rest} />;
-}
+export default function FieldWrapper({labelText, descriptionText, children}) {
+  const fieldName = React.Children.only(children).props.name;
 
-Button.propTypes = NxButton.propTypes;
+  return <div className='field-wrapper'>
+    {labelText ? <label htmlFor={fieldName} className='field-wrapper-label'>{labelText}</label> : null}
+    {descriptionText ? <span className='field-wrapper-description'>{descriptionText}</span> : null}
+    {children}
+  </div>;
+};
+
+FieldWrapper.propTypes = {
+  labelText: PropTypes.string,
+  descriptionText: PropTypes.string
+};

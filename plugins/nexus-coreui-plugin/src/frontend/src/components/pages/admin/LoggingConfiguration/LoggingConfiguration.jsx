@@ -1,4 +1,4 @@
-/**
+/*
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
  * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
@@ -10,6 +10,24 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import React from 'react';
 
-@import '~@sonatype/react-shared-components/scss-shared/nx-container-helpers';
-@import '~@sonatype/react-shared-components/base-styles/nx-btn';
+import {ContentBody, Detail, Master, MasterDetail} from "nexus-ui-plugin";
+
+import LoggingConfigurationList from "./LoggingConfigurationList";
+import LoggingConfigurationForm from "./LoggingConfigurationForm";
+
+export default function LoggingConfiguration() {
+  return (
+      <ContentBody className="nxrm-logging-configuration">
+        <MasterDetail path="admin/support/logging">
+          <Master>
+            <LoggingConfigurationList />
+          </Master>
+          <Detail createBreadcrumb="Create Logger" editBreadcrumb={(itemId) => `Edit Logger for ${itemId}`}>
+            <LoggingConfigurationForm />
+          </Detail>
+        </MasterDetail>
+      </ContentBody>
+  );
+}

@@ -10,18 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext, NX*/
+import React from 'react';
+import {render} from '@testing-library/react';
+import '@testing-library/jest-dom/extend-expect';
 
-/**
- * Logger model.
- *
- * @since 3.0
- */
-Ext.define('NX.coreui.model.Logger', {
-  extend: 'Ext.data.Model',
-  idProperty: 'name',
-  fields: [
-    {name: 'name', type: 'string', sortType: 'asText'},
-    {name: 'level', type: 'string', sortType: 'asUCText'}
-  ]
+import SectionFooter from './SectionFooter';
+
+describe('SectionFooter', () => {
+  it('renders correctly', () => {
+    const {container} = render(
+        <SectionFooter>footer</SectionFooter>
+    );
+    expect(container).toMatchSnapshot();
+  });
 });
