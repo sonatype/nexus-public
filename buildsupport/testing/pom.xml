@@ -131,6 +131,12 @@
         <version>1.1.0</version>
       </dependency>   
 
+      <dependency>
+        <groupId>com.sonatype.nexus</groupId>
+        <artifactId>nexus-db-migrator</artifactId>
+        <version>3.22.1-01</version>
+      </dependency>
+
       <!--
       TODO: Non-trivial changes to M20; needs investigation
       -->
