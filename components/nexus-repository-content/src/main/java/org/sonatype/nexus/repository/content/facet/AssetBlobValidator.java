@@ -10,16 +10,22 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.storage;
+package org.sonatype.nexus.repository.content.facet;
+
+import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.repository.content.Asset;
 
 /**
- * Content validator interface; provides compatibility with clients expecting the old package.
+ * Something that determines and validates the Content-Type of asset-blobs.
  *
- * @deprecated use org.sonatype.nexus.repository.mime.ContentValidator instead
+ * @since 3.next
  */
-@Deprecated
-public interface ContentValidator
-    extends org.sonatype.nexus.repository.mime.ContentValidator
+public interface AssetBlobValidator
 {
-  // nothing to add...
+  /**
+   * Determines the Content-Type and optionally validates it against the declaration in the blob headers.
+   *
+   * @return the validated Content-Type
+   */
+  String determineContentType(Asset asset, Blob blob, boolean strictValidation);
 }

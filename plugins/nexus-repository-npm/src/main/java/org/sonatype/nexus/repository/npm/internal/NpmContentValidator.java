@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.npm.internal.orient;
+package org.sonatype.nexus.repository.npm.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,9 +23,8 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.mime.MimeRulesSource;
-import org.sonatype.nexus.repository.npm.internal.NpmFormat;
-import org.sonatype.nexus.repository.storage.ContentValidator;
-import org.sonatype.nexus.repository.storage.DefaultContentValidator;
+import org.sonatype.nexus.repository.mime.ContentValidator;
+import org.sonatype.nexus.repository.mime.DefaultContentValidator;
 
 import com.google.common.base.Supplier;
 

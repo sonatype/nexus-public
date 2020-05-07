@@ -131,7 +131,7 @@ public class FluentAssetImpl
   @Override
   public FluentAsset attach(final TempBlob tempBlob) {
     facet.checkAttachAllowed(asset);
-    return doAttach(makePermanent(tempBlob), tempBlob.getHashes());
+    return doAttach(makePermanent(tempBlob.getBlob()), tempBlob.getHashes());
   }
 
   @Override
@@ -222,17 +222,17 @@ public class FluentAssetImpl
     return new BlobRef(facet.nodeName(), facet.stores().blobStoreName, blob.getId().asUniqueString());
   }
 
-  private Blob makePermanent(final TempBlob tempBlob) {
-    Map<String, String> tempHeaders = tempBlob.getBlob().getHeaders();
-
+  private Blob makePermanent(final Blob tempBlob) {
     Builder<String, String> headers = ImmutableMap.builder();
+
+    Map<String, String> tempHeaders = tempBlob.getHeaders();
     headers.put(REPO_NAME_HEADER, tempHeaders.get(REPO_NAME_HEADER));
     headers.put(BLOB_NAME_HEADER, asset.path());
     headers.put(CREATED_BY_HEADER, tempHeaders.get(CREATED_BY_HEADER));
     headers.put(CREATED_BY_IP_HEADER, tempHeaders.get(CREATED_BY_IP_HEADER));
-    headers.put(CONTENT_TYPE_HEADER, tempHeaders.get(CONTENT_TYPE_HEADER));
+    headers.put(CONTENT_TYPE_HEADER, facet.checkContentType(asset, tempBlob));
 
-    return facet.stores().blobStore.copy(tempBlob.getBlob().getId(), headers.build());
+    return facet.stores().blobStore.copy(tempBlob.getId(), headers.build());
   }
 
   private FluentAsset doAttach(final Blob blob, final Map<HashAlgorithm, HashCode> checksums) {

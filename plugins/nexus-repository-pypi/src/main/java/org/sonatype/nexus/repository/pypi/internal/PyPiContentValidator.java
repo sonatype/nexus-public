@@ -23,8 +23,8 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.mime.MimeRulesSource;
-import org.sonatype.nexus.repository.storage.ContentValidator;
-import org.sonatype.nexus.repository.storage.DefaultContentValidator;
+import org.sonatype.nexus.repository.mime.ContentValidator;
+import org.sonatype.nexus.repository.mime.DefaultContentValidator;
 
 import com.google.common.base.Supplier;
 

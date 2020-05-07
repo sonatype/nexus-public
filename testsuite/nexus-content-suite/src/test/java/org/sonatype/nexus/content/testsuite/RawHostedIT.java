@@ -17,10 +17,15 @@ import org.sonatype.nexus.content.testsupport.raw.RawClient;
 import org.sonatype.nexus.content.testsupport.raw.RawITSupport;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.http.HttpStatus;
+import org.sonatype.nexus.repository.view.ContentTypes;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.utils.HttpClientUtils;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.FileEntity;
+import org.apache.http.entity.StringEntity;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.Before;
@@ -30,6 +35,7 @@ import org.junit.experimental.categories.Category;
 import static org.apache.http.entity.ContentType.TEXT_PLAIN;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.STRICT_CONTENT_TYPE_VALIDATION;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.WRITE_POLICY;
 import static org.sonatype.nexus.repository.content.facet.WritePolicy.ALLOW_ONCE;
 import static org.sonatype.nexus.repository.content.facet.WritePolicy.DENY;
@@ -101,5 +107,63 @@ public class RawHostedIT
     response = rawClient.put(TEST_CONTENT, testEntity);
     MatcherAssert.assertThat(response.getStatusLine().getStatusCode(), Matchers.is(HttpStatus.BAD_REQUEST));
     assertThat(response.getStatusLine().getReasonPhrase(), Matchers.containsString("cannot be updated"));
+  }
+
+  @Test
+  public void contentTypeDetectedFromContent() throws Exception {
+
+    HttpEntity textEntity = new StringEntity("test");
+    rawClient.put("path/to/content", textEntity);
+    HttpResponse response = rawClient.get("path/to/content");
+    MatcherAssert.assertThat(response.getFirstHeader("Content-Type").getValue(), Matchers.is(ContentTypes.TEXT_PLAIN));
+    HttpClientUtils.closeQuietly(response);
+
+    HttpEntity htmlEntity = new StringEntity("<html>...</html>");
+    rawClient.put("path/to/content", htmlEntity);
+    response = rawClient.get("path/to/content");
+    MatcherAssert.assertThat(response.getFirstHeader("Content-Type").getValue(), Matchers.is(ContentTypes.TEXT_HTML));
+    HttpClientUtils.closeQuietly(response);
+
+    // turn off strict validation so we can test falling back to declared content-type
+    Configuration hostedConfig = repositoryManager.get(HOSTED_REPO).getConfiguration().copy();
+    hostedConfig.attributes(STORAGE).set(STRICT_CONTENT_TYPE_VALIDATION, false);
+    repositoryManager.update(hostedConfig);
+
+    HttpEntity jsonEntity = new StringEntity("", ContentType.APPLICATION_JSON);
+    rawClient.put("path/to/content", jsonEntity);
+    response = rawClient.get("path/to/content");
+    MatcherAssert.assertThat(response.getFirstHeader("Content-Type").getValue(), Matchers.is(ContentTypes.APPLICATION_JSON));
+    HttpClientUtils.closeQuietly(response);
+  }
+
+  @Test
+  public void contentTypeDetectedFromPath() throws Exception {
+    HttpEntity testEntity = new ByteArrayEntity(new byte[0]);
+
+    rawClient.put("path/to/content.txt", testEntity);
+    HttpResponse response = rawClient.get("path/to/content.txt");
+    MatcherAssert.assertThat(response.getFirstHeader("Content-Type").getValue(), Matchers.is(ContentTypes.TEXT_PLAIN));
+    HttpClientUtils.closeQuietly(response);
+
+    rawClient.put("path/to/content.html", testEntity);
+    response = rawClient.get("path/to/content.html");
+    MatcherAssert.assertThat(response.getFirstHeader("Content-Type").getValue(), Matchers.is(ContentTypes.TEXT_HTML));
+    HttpClientUtils.closeQuietly(response);
+  }
+
+  @Test
+  public void strictContentTypeEnforced() throws Exception {
+
+    // make sure strict validation is on for this test
+    Configuration hostedConfig = repositoryManager.get(HOSTED_REPO).getConfiguration().copy();
+    hostedConfig.attributes(STORAGE).set(STRICT_CONTENT_TYPE_VALIDATION, true);
+    repositoryManager.update(hostedConfig);
+
+    HttpEntity testEntity = new StringEntity("<html>...</html>");
+
+    HttpResponse response = rawClient.put("path/to/content.jpg", testEntity);
+    MatcherAssert.assertThat(response.getStatusLine().getStatusCode(), Matchers.is(HttpStatus.BAD_REQUEST));
+    assertThat(response.getStatusLine().getReasonPhrase(),
+        Matchers.containsString("Detected content type [text/html], but expected [image/jpeg]"));
   }
 }

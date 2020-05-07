@@ -10,59 +10,65 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.storage;
+package org.sonatype.nexus.repository.content.facet;
 
+import java.io.IOException;
 import java.util.Map;
 
-import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.mime.MimeRulesSource;
+import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.mime.ContentValidator;
 import org.sonatype.nexus.repository.mime.DefaultContentValidator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 
 /**
- * Content validator selector component.
+ * Supplies {@link AssetBlobValidator}s to {@link ContentFacet}s.
  *
- * @since 3.0
+ * @since 3.next
  */
-@Singleton
 @Named
-public class ContentValidatorSelector
-    extends ComponentSupport
+@Singleton
+public class AssetBlobValidators
 {
+  private final Map<String, MimeRulesSource> mimeRulesSources;
+
   private final Map<String, ContentValidator> contentValidators;
 
   private final DefaultContentValidator defaultContentValidator;
 
   @Inject
-  public ContentValidatorSelector(final Map<String, ContentValidator> contentValidators,
-                                  final DefaultContentValidator defaultContentValidator)
+  public AssetBlobValidators(final Map<String, MimeRulesSource> mimeRulesSources,
+                             final Map<String, ContentValidator> contentValidators,
+                             final DefaultContentValidator defaultContentValidator)
   {
+    this.mimeRulesSources = checkNotNull(mimeRulesSources);
     this.contentValidators = checkNotNull(contentValidators);
     this.defaultContentValidator = checkNotNull(defaultContentValidator);
   }
 
-  /**
-   * Find content validator for given repository. If no format-specific validator is configured, the default is used.
-   *
-   * @param repository The repository for content validator is looked up.
-   * @return the repository specific content validator to be used, or the default content validator, never {@code null}.
-   */
-  @Nonnull
-  public ContentValidator validator(final Repository repository) {
-    checkNotNull(repository);
+  public AssetBlobValidator selectValidator(final Repository repository) {
     String format = repository.getFormat().getValue();
-    log.trace("Looking for content validator for format: {}", format);
-    ContentValidator contentValidator = contentValidators.get(format);
-    if (contentValidator == null) {
-      return defaultContentValidator;
-    }
-    return contentValidator;
+    MimeRulesSource mimeRulesSource = mimeRulesSources.getOrDefault(format, MimeRulesSource.NOOP);
+    ContentValidator contentValidator = contentValidators.getOrDefault(format, defaultContentValidator);
+    return (asset, blob, strict) -> {
+      try {
+        return contentValidator.determineContentType(
+            strict,
+            blob::getInputStream,
+            mimeRulesSource,
+            asset.path(),
+            blob.getHeaders().get(CONTENT_TYPE_HEADER));
+      }
+      catch (IOException e) {
+        throw new InvalidContentException(e);
+      }
+    };
   }
 }

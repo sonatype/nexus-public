@@ -35,6 +35,7 @@ import org.sonatype.nexus.repository.attributes.internal.AttributesFacetImpl;
 import org.sonatype.nexus.repository.browse.internal.orient.BrowseNodeEntityAdapter;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
+import org.sonatype.nexus.repository.mime.DefaultContentValidator;
 import org.sonatype.nexus.repository.search.SearchFacet;
 import org.sonatype.nexus.repository.storage.internal.ComponentSchemaRegistration;
 import org.sonatype.nexus.security.ClientInfoProvider;

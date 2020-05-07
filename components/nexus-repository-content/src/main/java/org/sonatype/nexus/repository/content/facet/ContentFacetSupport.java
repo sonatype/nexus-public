@@ -23,6 +23,7 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.groups.Default;
 
+import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.datastore.api.DataSession;
@@ -108,6 +109,8 @@ public abstract class ContentFacetSupport
 
   private Integer contentRepositoryId;
 
+  private AssetBlobValidator assetBlobValidator;
+
   protected ContentFacetSupport(final FormatStoreManager formatStoreManager) {
     this.formatStoreManager = checkNotNull(formatStoreManager);
   }
@@ -162,6 +165,8 @@ public abstract class ContentFacetSupport
         .orElseGet(this::createContentRepository).contentRepositoryId();
 
     checkState(contentRepositoryId != null, "Missing contentRepositoryId");
+
+    assetBlobValidator = dependencies.assetBlobValidators.selectValidator(getRepository());
   }
 
   @Override
@@ -289,11 +294,22 @@ public abstract class ContentFacetSupport
     throw new IllegalOperationException(repository().getName() + asset.path() + reason);
   }
 
+  public final String checkContentType(final Asset asset, final Blob blob) {
+    return determineContentType(asset, blob, config.strictContentTypeValidation);
+  }
+
   /**
    * Override this method to customize the write-policy of selected assets.
    */
   protected WritePolicy writePolicy(final Asset asset) {
     return ofNullable(config.writePolicy).orElse(ALLOW);
+  }
+
+  /**
+   * Override this method to customize Content-Type validation of asset blobs.
+   */
+  protected String determineContentType(final Asset asset, final Blob blob, final boolean strictValidation) {
+    return assetBlobValidator.determineContentType(asset, blob, strictValidation);
   }
 
   /**
