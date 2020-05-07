@@ -16,24 +16,31 @@ import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.content.testsupport.raw.RawClient;
 import org.sonatype.nexus.content.testsupport.raw.RawITSupport;
 import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.content.rest.internal.resources.ComponentsResource;
 import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.repository.view.ContentTypes;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import static org.apache.http.entity.ContentType.APPLICATION_OCTET_STREAM;
 import static org.apache.http.entity.ContentType.TEXT_PLAIN;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STRICT_CONTENT_TYPE_VALIDATION;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.WRITE_POLICY;
@@ -165,5 +172,27 @@ public class RawHostedIT
     MatcherAssert.assertThat(response.getStatusLine().getStatusCode(), Matchers.is(HttpStatus.BAD_REQUEST));
     assertThat(response.getStatusLine().getReasonPhrase(),
         Matchers.containsString("Detected content type [text/html], but expected [image/jpeg]"));
+  }
+
+  @Test
+  public void canUploadViaRest() throws Exception {
+    try (CloseableHttpClient client = clientBuilder().build()) {
+      MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+      builder.addTextBody("directory", "/foo");
+      builder.addTextBody("asset1.filename", "file1.txt");
+      builder.addBinaryBody("asset1", "content".getBytes(), APPLICATION_OCTET_STREAM, "file");
+
+      HttpPost post = new HttpPost(String.format("%s%s%s?repository=%s",
+          nexusUrl, REST_SERVICE_PATH, ComponentsResource.RESOURCE_URI, HOSTED_REPO));
+      post.setEntity(builder.build());
+
+      CloseableHttpResponse response = client.execute(post, clientContext());
+
+      assertThat(response.getStatusLine().getStatusCode(), is(204));
+    }
+
+    try (CloseableHttpResponse response = rawClient.get("foo/file1.txt")) {
+      assertThat(response.getStatusLine().getStatusCode(), is(200));
+    }
   }
 }

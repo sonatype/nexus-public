@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.orient.raw;
+package org.sonatype.nexus.content.raw;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,18 +32,16 @@ import org.sonatype.nexus.repository.raw.internal.RawFormat;
 import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
-import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.payloads.StreamPayload;
-import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.collect.Lists;
 
 /**
- * Support for uploading components via UI & API
+ * Support for uploading raw components via UI & API
  *
- * @since 3.7
+ * @since 3.next
  */
 @Named(RawFormat.NAME)
 @Singleton
@@ -65,18 +63,12 @@ public class RawUploadHandler
     RawContentFacet facet = repository.facet(RawContentFacet.class);
 
     List<Content> responseContents = Lists.newArrayList();
-    UnitOfWork.begin(repository.facet(StorageFacet.class).txSupplier());
-    try {
-      for (Entry<String,PartPayload> entry : pathToPayload.entrySet()) {
-        String path = entry.getKey();
+    for (Entry<String,PartPayload> entry : pathToPayload.entrySet()) {
+      String path = entry.getKey();
 
-        Content content = facet.put(path, entry.getValue());
+      Content content = new Content(facet.put(path, entry.getValue()));
 
-        responseContents.add(content);
-      }
-    }
-    finally {
-      UnitOfWork.end();
+      responseContents.add(content);
     }
     return responseContents;
   }
@@ -86,7 +78,12 @@ public class RawUploadHandler
       throws IOException
   {
     RawContentFacet facet = repository.facet(RawContentFacet.class);
-    return facet.put(path, new StreamPayload(() -> new FileInputStream(content), Files.size(contentPath),
-        Files.probeContentType(contentPath)));
+    return new Content(facet.put(path, new StreamPayload(() -> new FileInputStream(content), Files.size(contentPath),
+        Files.probeContentType(contentPath))));
+  }
+
+  @Override
+  protected String normalizePath(final String path) {
+    return "/" + super.normalizePath(path);
   }
 }

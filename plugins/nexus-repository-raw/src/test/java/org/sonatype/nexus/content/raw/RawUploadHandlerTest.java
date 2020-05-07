@@ -10,20 +10,16 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.orient.raw;
+package org.sonatype.nexus.content.raw;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
-import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.repository.raw.RawUploadHandlerTestSupport;
 import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
-import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.StorageFacet;
-import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.upload.AssetUpload;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadHandler;
@@ -41,7 +37,6 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -51,13 +46,7 @@ public class RawUploadHandlerTest
     extends RawUploadHandlerTestSupport
 {
   @Mock
-  Asset assetPayload;
-
-  @Mock
   RawContentFacet rawFacet;
-
-  @Mock
-  StorageTx storageTx;
 
   @Override
   protected UploadHandler newRawUploadHandler(final ContentPermissionChecker contentPermissionChecker,
@@ -70,10 +59,6 @@ public class RawUploadHandlerTest
   @Before
   public void setup() throws IOException {
     when(repository.facet(RawContentFacet.class)).thenReturn(rawFacet);
-
-    StorageFacet storageFacet = mock(StorageFacet.class);
-    when(storageFacet.txSupplier()).thenReturn(() -> storageTx);
-    when(repository.facet(StorageFacet.class)).thenReturn(storageFacet);
   }
 
   @Test
@@ -92,13 +77,10 @@ public class RawUploadHandlerTest
     asset.setPayload(sourcesPayload);
     component.getAssetUploads().add(asset);
 
-    when(assetPayload.componentId()).thenReturn(new DetachedEntityId("foo"));
-    when(attributesMap.get(Asset.class)).thenReturn(assetPayload);
     when(content.getAttributes()).thenReturn(attributesMap);
     when(rawFacet.put(any(), any())).thenReturn(content);
     UploadResponse uploadResponse = underTest.handle(repository, component);
-    assertThat(uploadResponse.getAssetPaths(), contains("org/apache/maven/foo.jar", "org/apache/maven/bar.jar"));
-    assertThat(uploadResponse.getComponentId().getValue(), is("foo"));
+    assertThat(uploadResponse.getAssetPaths(), contains("/org/apache/maven/foo.jar", "/org/apache/maven/bar.jar"));
 
     ArgumentCaptor<String> pathCapture = ArgumentCaptor.forClass(String.class);
     verify(rawFacet, times(2)).put(pathCapture.capture(), any(PartPayload.class));
@@ -109,15 +91,17 @@ public class RawUploadHandlerTest
 
     String path = paths.get(0);
     assertNotNull(path);
-    assertThat(path, is("org/apache/maven/foo.jar"));
+    assertThat(path, is("/org/apache/maven/foo.jar"));
 
     path = paths.get(1);
     assertNotNull(path);
-    assertThat(path, is("org/apache/maven/bar.jar"));
+    assertThat(path, is("/org/apache/maven/bar.jar"));
   }
 
   @Override
-  protected void testNormalizePath(String directory, String file, String expectedPath) throws IOException {
+  protected void testNormalizePath(final String directory, final String file, final String expectedPath)
+      throws IOException
+  {
     reset(rawFacet);
     ComponentUpload component = new ComponentUpload();
 
@@ -128,8 +112,6 @@ public class RawUploadHandlerTest
     asset.setPayload(jarPayload);
     component.getAssetUploads().add(asset);
 
-    when(assetPayload.componentId()).thenReturn(new DetachedEntityId("foo"));
-    when(attributesMap.get(Asset.class)).thenReturn(assetPayload);
     when(content.getAttributes()).thenReturn(attributesMap);
     when(rawFacet.put(any(), any())).thenReturn(content);
     underTest.handle(repository, component);
@@ -140,5 +122,10 @@ public class RawUploadHandlerTest
     String path = pathCapture.getValue();
     assertNotNull(path);
     assertThat(path, is(expectedPath));
+  }
+
+  @Override
+  protected String path(final String path) {
+    return "/" + path;
   }
 }
