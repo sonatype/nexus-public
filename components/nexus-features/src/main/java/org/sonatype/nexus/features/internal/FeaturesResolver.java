@@ -24,6 +24,8 @@ import org.apache.karaf.features.FeaturesService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.lang.System.getProperty;
+import static java.util.Arrays.asList;
 import static java.util.Collections.synchronizedSet;
 
 /**
@@ -43,6 +45,8 @@ public class FeaturesResolver
   private final Map<String, Feature> featuresById = new HashMap<>();
 
   private final Set<String> installedFeatures = synchronizedSet(new HashSet<>());
+
+  private final Set<String> excludedFeatures = findExcludedFeatures();
 
   public FeaturesResolver(final FeaturesService delegate) {
     try {
@@ -74,29 +78,21 @@ public class FeaturesResolver
     }
   }
 
-  public Stream<BundleInfo> resolve(final String name, final String version) {
-    // version might be specific or it could be the wildcard version
-    Feature feature = featuresById.get(name + '/' + version);
-    if (feature != null) {
-      return resolve(feature);
-    }
-    else {
-      log.warn("Missing feature {}/{}", name, version);
-      return Stream.of();
-    }
-  }
-
   public Stream<BundleInfo> resolve(final Feature feature) {
-    if (feature != null && installedFeatures.add(feature.getId())) {
-      log.debug("Resolving feature {}", feature.getId());
-      return Stream.concat(
-          feature.getDependencies().stream()
-              .flatMap(d -> resolve(d.getName(), d.getVersion())),
-          feature.getBundles().stream());
+    if (feature != null) {
+      String id = feature.getId();
+      if (excludedFeatures.contains(id) || excludedFeatures.contains(feature.getName())) {
+        log.info("Excluding feature {}", id);
+      }
+      else if (installedFeatures.add(id)) {
+        log.debug("Resolving feature {}", id);
+        return Stream.concat(
+            feature.getDependencies().stream()
+                .flatMap(d -> resolve(d.getName() + '/' + d.getVersion())),
+            feature.getBundles().stream());
+      }
     }
-    else {
-      return Stream.of();
-    }
+    return Stream.of();
   }
 
   public boolean isInstalled(final String id) {
@@ -105,5 +101,10 @@ public class FeaturesResolver
 
   private static String normalize(final String id) {
     return id.indexOf('/') < 0 ? id + VERSION_WILDCARD : id;
+  }
+
+  private static Set<String> findExcludedFeatures() {
+    String excludedFeatures = getProperty("nexus-exclude-features", "");
+    return new HashSet<>(asList(excludedFeatures.split("[\\s,]+")));
   }
 }

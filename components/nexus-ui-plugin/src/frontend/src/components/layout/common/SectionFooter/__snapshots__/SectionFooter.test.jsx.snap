@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SectionFooter renders correctly 1`] = `
+<div>
+  <div
+    class="nxrm-section-footer nx-tile-footer"
+  >
+    footer
+  </div>
+</div>
+`;

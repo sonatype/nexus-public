@@ -65,7 +65,7 @@ public class NpmGroupRepositoriesApiResource
     super(authorizingRepositoryManager, configurationAdapter, constraintViolationFactory, repositoryManager);
   }
 
-  @ApiOperation("Create Npm group repository")
+  @ApiOperation("Create npm group repository")
   @ApiResponses(value = {
       @ApiResponse(code = 201, message = REPOSITORY_CREATED),
       @ApiResponse(code = 401, message = AUTHENTICATION_REQUIRED),
@@ -79,7 +79,7 @@ public class NpmGroupRepositoriesApiResource
     return super.createRepository(request);
   }
 
-  @ApiOperation("Update Npm group repository")
+  @ApiOperation("Update npm group repository")
   @ApiResponses(value = {
       @ApiResponse(code = 204, message = REPOSITORY_UPDATED),
       @ApiResponse(code = 401, message = AUTHENTICATION_REQUIRED),

@@ -8,11 +8,11 @@ exports[`UserAccount renders correctly 1`] = `
     <div
       class="nxrm-settings-section"
     >
-      <label
-        class="nxrm-settings-section-field-wrapper"
+      <div
+        class="field-wrapper"
       >
         <label
-          class="nxrm-settings-section-field-wrapper-label"
+          class="field-wrapper-label"
           for="userId"
         >
           Username
@@ -25,12 +25,12 @@ exports[`UserAccount renders correctly 1`] = `
           type="text"
           value="admin"
         />
-      </label>
-      <label
-        class="nxrm-settings-section-field-wrapper"
+      </div>
+      <div
+        class="field-wrapper"
       >
         <label
-          class="nxrm-settings-section-field-wrapper-label"
+          class="field-wrapper-label"
           for="firstName"
         >
           First Name
@@ -43,12 +43,12 @@ exports[`UserAccount renders correctly 1`] = `
           type="text"
           value="User"
         />
-      </label>
-      <label
-        class="nxrm-settings-section-field-wrapper"
+      </div>
+      <div
+        class="field-wrapper"
       >
         <label
-          class="nxrm-settings-section-field-wrapper-label"
+          class="field-wrapper-label"
           for="lastName"
         >
           Last Name
@@ -61,12 +61,12 @@ exports[`UserAccount renders correctly 1`] = `
           type="text"
           value="Admin"
         />
-      </label>
-      <label
-        class="nxrm-settings-section-field-wrapper"
+      </div>
+      <div
+        class="field-wrapper"
       >
         <label
-          class="nxrm-settings-section-field-wrapper-label"
+          class="field-wrapper-label"
           for="email"
         >
           Email
@@ -79,7 +79,7 @@ exports[`UserAccount renders correctly 1`] = `
           type="text"
           value="admin@example.com"
         />
-      </label>
+      </div>
       <div
         class="nxrm-settings-section-footer"
       >
@@ -102,11 +102,11 @@ exports[`UserAccount renders correctly 1`] = `
     <div
       class="nxrm-settings-section"
     >
-      <label
-        class="nxrm-settings-section-field-wrapper"
+      <div
+        class="field-wrapper"
       >
         <label
-          class="nxrm-settings-section-field-wrapper-label"
+          class="field-wrapper-label"
           for="passwordCurrent"
         >
           Current Password
@@ -124,7 +124,7 @@ exports[`UserAccount renders correctly 1`] = `
         >
           <svg
             aria-hidden="true"
-            class="svg-inline--fa fa-exclamation-circle fa-w-16 "
+            class="svg-inline--fa fa-exclamation-circle fa-w-16 nx-icon"
             data-icon="exclamation-circle"
             data-prefix="fas"
             focusable="false"
@@ -146,12 +146,12 @@ exports[`UserAccount renders correctly 1`] = `
              
           </span>
         </span>
-      </label>
-      <label
-        class="nxrm-settings-section-field-wrapper"
+      </div>
+      <div
+        class="field-wrapper"
       >
         <label
-          class="nxrm-settings-section-field-wrapper-label"
+          class="field-wrapper-label"
           for="passwordNew"
         >
           New Password
@@ -169,7 +169,7 @@ exports[`UserAccount renders correctly 1`] = `
         >
           <svg
             aria-hidden="true"
-            class="svg-inline--fa fa-exclamation-circle fa-w-16 "
+            class="svg-inline--fa fa-exclamation-circle fa-w-16 nx-icon"
             data-icon="exclamation-circle"
             data-prefix="fas"
             focusable="false"
@@ -191,12 +191,12 @@ exports[`UserAccount renders correctly 1`] = `
              
           </span>
         </span>
-      </label>
-      <label
-        class="nxrm-settings-section-field-wrapper"
+      </div>
+      <div
+        class="field-wrapper"
       >
         <label
-          class="nxrm-settings-section-field-wrapper-label"
+          class="field-wrapper-label"
           for="passwordNewConfirm"
         >
           New Password (Confirm)
@@ -214,7 +214,7 @@ exports[`UserAccount renders correctly 1`] = `
         >
           <svg
             aria-hidden="true"
-            class="svg-inline--fa fa-exclamation-circle fa-w-16 "
+            class="svg-inline--fa fa-exclamation-circle fa-w-16 nx-icon"
             data-icon="exclamation-circle"
             data-prefix="fas"
             focusable="false"
@@ -236,7 +236,7 @@ exports[`UserAccount renders correctly 1`] = `
              
           </span>
         </span>
-      </label>
+      </div>
       <div
         class="nxrm-settings-section-footer"
       >
@@ -268,11 +268,11 @@ exports[`UserAccount renders correctly for an external user: externalUser 1`] = 
     <div
       class="nxrm-settings-section"
     >
-      <label
-        class="nxrm-settings-section-field-wrapper"
+      <div
+        class="field-wrapper"
       >
         <label
-          class="nxrm-settings-section-field-wrapper-label"
+          class="field-wrapper-label"
           for="userId"
         >
           Username
@@ -286,12 +286,12 @@ exports[`UserAccount renders correctly for an external user: externalUser 1`] = 
           type="text"
           value="externalUser"
         />
-      </label>
-      <label
-        class="nxrm-settings-section-field-wrapper"
+      </div>
+      <div
+        class="field-wrapper"
       >
         <label
-          class="nxrm-settings-section-field-wrapper-label"
+          class="field-wrapper-label"
           for="firstName"
         >
           First Name
@@ -305,12 +305,12 @@ exports[`UserAccount renders correctly for an external user: externalUser 1`] = 
           type="text"
           value="External"
         />
-      </label>
-      <label
-        class="nxrm-settings-section-field-wrapper"
+      </div>
+      <div
+        class="field-wrapper"
       >
         <label
-          class="nxrm-settings-section-field-wrapper-label"
+          class="field-wrapper-label"
           for="lastName"
         >
           Last Name
@@ -324,12 +324,12 @@ exports[`UserAccount renders correctly for an external user: externalUser 1`] = 
           type="text"
           value="User"
         />
-      </label>
-      <label
-        class="nxrm-settings-section-field-wrapper"
+      </div>
+      <div
+        class="field-wrapper"
       >
         <label
-          class="nxrm-settings-section-field-wrapper-label"
+          class="field-wrapper-label"
           for="email"
         >
           Email
@@ -343,7 +343,7 @@ exports[`UserAccount renders correctly for an external user: externalUser 1`] = 
           type="text"
           value="externalUser@saml.com"
         />
-      </label>
+      </div>
       <div
         class="nxrm-settings-section-footer"
       >

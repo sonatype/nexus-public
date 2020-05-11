@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.pypi.internal;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.repository.storage.DefaultContentValidator;
+import org.sonatype.nexus.repository.mime.DefaultContentValidator;
 
 import org.junit.Test;
 import org.mockito.InjectMocks;

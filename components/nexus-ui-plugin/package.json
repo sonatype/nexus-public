@@ -10,7 +10,7 @@
     "@fortawesome/fontawesome-svg-core": "=1.2.25",
     "@fortawesome/free-solid-svg-icons": "=5.11.2",
     "@fortawesome/react-fontawesome": "=0.1.8",
-    "@sonatype/react-shared-components": "=0.40.0",
+    "@sonatype/react-shared-components": "=0.43.1",
     "classnames": "=2.2.6"
   },
   "peerDependencies": {
@@ -21,6 +21,8 @@
   "devDependencies": {
     "@babel/cli": "=7.6.4",
     "@babel/plugin-proposal-class-properties": "=7.7.0",
+    "@testing-library/jest-dom": "=4.2.4",
+    "@testing-library/react": "=9.4.0",
     "cpx": "=1.5.0",
     "jest": "=24.8.0",
     "jest-junit": "=10.0.0",

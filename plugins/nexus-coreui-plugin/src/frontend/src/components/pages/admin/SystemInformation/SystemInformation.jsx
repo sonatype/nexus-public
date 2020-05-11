@@ -12,11 +12,10 @@
  */
 import React, {useState, useEffect} from 'react';
 
-import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import {faDownload} from '@fortawesome/free-solid-svg-icons';
 
 import Axios from 'axios';
-import {BreadcrumbActions, Button, ContentBody, Section, Utils} from 'nexus-ui-plugin';
+import {BreadcrumbActions, Button, ContentBody, NxFontAwesomeIcon, Section, Utils} from 'nexus-ui-plugin';
 import UIStrings from '../../../../constants/UIStrings';
 
 import SystemInformationBody from "./SystemInformationBody";
@@ -50,8 +49,8 @@ export default function SystemInformation() {
   return <>
     <BreadcrumbActions>
       <Button variant="primary" onClick={() => downloadSystemInformation()} disabled={!isLoaded}>
-        <FontAwesomeIcon icon={faDownload} pull="left"/>
-        {UIStrings.SYSTEM_INFORMATION.ACTIONS.download}
+        <NxFontAwesomeIcon icon={faDownload}/>
+        <span>{UIStrings.SYSTEM_INFORMATION.ACTIONS.download}</span>
       </Button>
     </BreadcrumbActions>
     <ContentBody className="nxrm-system-information">

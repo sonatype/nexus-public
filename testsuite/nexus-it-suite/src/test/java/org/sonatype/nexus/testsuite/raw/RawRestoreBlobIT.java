@@ -16,6 +16,7 @@ import java.io.File;
 import java.util.Properties;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import org.sonatype.goodies.httpfixture.server.fluent.Behaviours;
 import org.sonatype.goodies.httpfixture.server.fluent.Server;
@@ -64,6 +65,7 @@ public class RawRestoreBlobIT
   private BlobstoreRestoreTestHelper testHelper;
 
   @Inject
+  @Named("raw")
   private RestoreBlobStrategy restoreBlobStrategy;
 
   @Before

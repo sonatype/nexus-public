@@ -238,6 +238,11 @@ Ext.define('NX.controller.User', {
           }
         }
       }
+      else {
+        if (Ext.isFunction(options.failure)) {
+          options.failure.call(options.scope, options);
+        }
+      }
     });
   },
 

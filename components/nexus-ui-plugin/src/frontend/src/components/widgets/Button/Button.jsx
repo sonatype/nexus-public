@@ -14,8 +14,6 @@ import React from 'react';
 
 import NxButton from "@sonatype/react-shared-components/components/NxButton/NxButton";
 
-import './Button.scss';
-
 /**
  * @since 3.21
  *

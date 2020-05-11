@@ -3,7 +3,7 @@
 exports[`Section renders correctly 1`] = `
 <div>
   <div
-    class="nxrm-section"
+    class="nxrm-section nx-tile"
   >
     section
   </div>

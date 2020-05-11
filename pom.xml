@@ -609,6 +609,14 @@
 
       <dependency>
         <groupId>org.sonatype.nexus.assemblies</groupId>
+        <artifactId>nexus-cma-community</artifactId>
+        <version>3.24.0-SNAPSHOT</version>
+        <classifier>features</classifier>
+        <type>xml</type>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.assemblies</groupId>
         <artifactId>nexus-base-template</artifactId>
         <version>3.24.0-SNAPSHOT</version>
         <type>zip</type>
@@ -879,6 +887,7 @@
               <id>paranamer</id>
               <id>httpcore</id>
               <id>httpclient</id>
+              <id>shiro-guice</id>
               <id>metrics-guice</id>
               <id>simpleclient_dropwizard</id>
               <id>quartz</id>
@@ -1364,6 +1373,30 @@
             <configuration combine.children="override">
               <groups>org.sonatype.goodies.testsupport.group.Unstable</groups>
               <excludedGroups>org.sonatype.goodies.testsupport.group.Perf,org.sonatype.goodies.testsupport.group.External</excludedGroups>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>h2-integration-tests</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration combine.children="override">
+              <groups>org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup</groups>
+              <excludedGroups>org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,org.sonatype.goodies.testsupport.group.Unstable,org.sonatype.goodies.testsupport.group.Perf,org.sonatype.goodies.testsupport.group.External</excludedGroups>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration combine.children="override">
+              <groups>org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup</groups>
+              <excludedGroups>org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,org.sonatype.goodies.testsupport.group.Unstable,org.sonatype.goodies.testsupport.group.Perf,org.sonatype.goodies.testsupport.group.External</excludedGroups>
             </configuration>
           </plugin>
         </plugins>

@@ -1,4 +1,13 @@
 
+.nx-searchbox .has-icon input {
+    display: inline-block;
+    width: calc(100% - 16px);
+}
+
+.nx-searchbox input {
+    color: #000;
+}
+
 .nx-searchbox input::-webkit-input-placeholder {
     
     
@@ -259,7 +268,7 @@
 }
 
 .x-btn-inner-nx-mode-medium {
-    font: normal 14px/18px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 14px/18px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #fff;
     padding: 0 8px;
     max-width: 100%;
@@ -901,7 +910,7 @@
 }
 
 .x-btn-inner-nx-header-medium {
-    font: normal 14px/18px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 14px/18px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #fff;
     padding: 0 8px;
     max-width: 100%;
@@ -4239,7 +4248,7 @@
 }
 
 .x-btn-inner-nx-drilldown-medium {
-    font: normal 18px/18px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 18px/18px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #006bbf;
     max-width: 100%;
 }
@@ -4765,7 +4774,7 @@
 }
 
 .x-btn-inner-nx-drilldown-toolbar-small {
-    font: normal 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #006bbf;
     max-width: 100%;
 }

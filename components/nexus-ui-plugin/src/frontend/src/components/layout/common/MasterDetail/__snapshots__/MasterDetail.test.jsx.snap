@@ -1,0 +1,47 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`MasterDetail renders the detail view when on a child path 1`] = `
+<div>
+  <div
+    class="nxrm-master-detail"
+  >
+    <div
+      data-testid="detail"
+    >
+      $
+      itemId
+    </div>
+  </div>
+</div>
+`;
+
+exports[`MasterDetail renders the detail view when onCreate is called 1`] = `
+<div>
+  <div
+    class="nxrm-master-detail"
+  >
+    <div
+      data-testid="detail"
+    >
+      $
+      
+    </div>
+  </div>
+</div>
+`;
+
+exports[`MasterDetail renders the master view when at the root 1`] = `
+<div>
+  <div
+    class="nxrm-master-detail"
+  >
+    <div
+      data-testid="master"
+    >
+      <button
+        data-testid="create"
+      />
+    </div>
+  </div>
+</div>
+`;

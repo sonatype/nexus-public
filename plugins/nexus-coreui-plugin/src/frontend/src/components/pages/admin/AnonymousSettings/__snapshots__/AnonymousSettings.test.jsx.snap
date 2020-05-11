@@ -8,11 +8,11 @@ exports[`AnonymousSettings renders correctly 1`] = `
     <div
       class="nxrm-settings-section"
     >
-      <label
-        class="nxrm-settings-section-field-wrapper"
+      <div
+        class="field-wrapper"
       >
         <label
-          class="nxrm-settings-section-field-wrapper-label"
+          class="field-wrapper-label"
         >
           Access:
         </label>
@@ -49,12 +49,12 @@ exports[`AnonymousSettings renders correctly 1`] = `
             Allow anonymous users to access the server
           </span>
         </label>
-      </label>
-      <label
-        class="nxrm-settings-section-field-wrapper"
+      </div>
+      <div
+        class="field-wrapper"
       >
         <label
-          class="nxrm-settings-section-field-wrapper-label"
+          class="field-wrapper-label"
           for="userId"
         >
           Username:
@@ -67,12 +67,12 @@ exports[`AnonymousSettings renders correctly 1`] = `
           type="text"
           value="testUser"
         />
-      </label>
-      <label
-        class="nxrm-settings-section-field-wrapper"
+      </div>
+      <div
+        class="field-wrapper"
       >
         <label
-          class="nxrm-settings-section-field-wrapper-label"
+          class="field-wrapper-label"
           for="realmName"
         >
           Realm:
@@ -93,7 +93,7 @@ exports[`AnonymousSettings renders correctly 1`] = `
             Realm Two
           </option>
         </select>
-      </label>
+      </div>
       <div
         class="nxrm-settings-section-footer"
       >

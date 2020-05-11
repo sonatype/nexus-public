@@ -84,7 +84,7 @@ public class FluentComponentImpl
   @Override
   public FluentComponent attributes(final AttributeChange change, final String key, final Object value) {
     if (applyAttributeChange(component, change, key, value)) {
-      facet.componentStore().updateComponentAttributes(component);
+      facet.stores().componentStore.updateComponentAttributes(component);
     }
     return this;
   }
@@ -96,12 +96,13 @@ public class FluentComponentImpl
 
   @Override
   public Collection<FluentAsset> assets() {
-    return transform(facet.assetStore().browseComponentAssets(component), asset -> new FluentAssetImpl(facet, asset));
+    return transform(facet.stores().assetStore.browseComponentAssets(component),
+        asset -> new FluentAssetImpl(facet, asset));
   }
 
   @Override
   public boolean delete() {
-    return facet.componentStore().deleteComponent(component);
+    return facet.stores().componentStore.deleteComponent(component);
   }
 
   @Override

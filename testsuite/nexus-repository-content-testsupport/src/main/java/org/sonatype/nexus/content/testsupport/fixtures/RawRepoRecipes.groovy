@@ -16,6 +16,7 @@ import javax.annotation.Nonnull
 
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.config.Configuration
+import org.sonatype.nexus.repository.content.facet.WritePolicy
 
 import groovy.transform.CompileStatic
 

@@ -21,6 +21,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.audit.AuditData;
 import org.sonatype.nexus.audit.AuditorSupport;
+import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryDestroyedEvent;
@@ -100,7 +101,12 @@ public class RepositoryAuditor
   }
 
   private Map<String, Object> createFullAttributes(final Repository repository) {
+    boolean baseUrlAbsent = !BaseUrlHolder.isSet();
     try {
+      if (baseUrlAbsent) {
+        BaseUrlHolder.set(""); // use empty base URL placeholder during conversion to avoid log-spam
+      }
+
       AbstractApiRepository apiObject = convert(repository);
 
       ObjectWriter writer = mapper.writerFor(apiObject.getClass());
@@ -114,6 +120,11 @@ public class RepositoryAuditor
     catch (Exception e) {
       log.error("Failed to convert repo object falling back to simple", e);
       return createSimple(repository);
+    }
+    finally {
+      if (baseUrlAbsent) {
+        BaseUrlHolder.unset();
+      }
     }
   }
 

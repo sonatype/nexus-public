@@ -17,6 +17,7 @@ import java.net.URL;
 
 import org.sonatype.goodies.httpfixture.server.fluent.Behaviours;
 import org.sonatype.goodies.httpfixture.server.fluent.Server;
+import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.content.testsupport.raw.RawClient;
 import org.sonatype.nexus.content.testsupport.raw.RawITSupport;
 import org.sonatype.nexus.repository.Repository;
@@ -26,8 +27,8 @@ import com.google.common.io.Files;
 import org.apache.http.HttpResponse;
 import org.apache.http.entity.ContentType;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -38,6 +39,7 @@ import static org.sonatype.nexus.content.testsupport.FormatClientSupport.status;
 /**
  * @since 3.next
  */
+@Category(SQLTestGroup.class)
 public class RawProxyIT
     extends RawITSupport
 {

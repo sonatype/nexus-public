@@ -48,6 +48,7 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.gson.FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -66,7 +67,8 @@ public class NpmAuditFacet
 {
   private static final Logger logger = LoggerFactory.getLogger(NpmAuditFacet.class);
 
-  private static final int MAX_TIME_TO_WAIT_SEC = 180;
+  // npm audit timeout in sec to wait for a response
+  private final int timeout;
 
   private final EventManager eventManager;
 
@@ -81,8 +83,13 @@ public class NpmAuditFacet
           .create();
 
   @Inject
-  public NpmAuditFacet(final EventManager eventManager, final ReportCreator reportCreator)
+  public NpmAuditFacet(
+      @Named("${nexus.npm.audit.timeout:-600}") final int timeout,
+      final EventManager eventManager,
+      final ReportCreator reportCreator)
   {
+    checkArgument(timeout > 0, "nexus.npm.audit.timeout must be greater than 0");
+    this.timeout = timeout;
     this.eventManager = checkNotNull(eventManager);
     this.reportCreator = checkNotNull(reportCreator);
   }
@@ -182,7 +189,7 @@ public class NpmAuditFacet
   private ComponentsVulnerability getVulnerabilityResult(final CompletableFuture<ComponentsVulnerability> future)
       throws InterruptedException, ExecutionException, TimeoutException
   {
-    ComponentsVulnerability componentsVulnerability = future.get(MAX_TIME_TO_WAIT_SEC, SECONDS);
+    ComponentsVulnerability componentsVulnerability = future.get(timeout, SECONDS);
     if (log.isTraceEnabled()) {
       log.trace("Report: {}", gson.toJson(componentsVulnerability.getAuditComponents()));
     }

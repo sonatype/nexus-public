@@ -24,6 +24,7 @@ import org.sonatype.nexus.common.hash.HashAlgorithm
 import org.sonatype.nexus.mime.MimeRulesSource
 import org.sonatype.nexus.repository.IllegalOperationException
 import org.sonatype.nexus.repository.Repository
+import org.sonatype.nexus.repository.mime.DefaultContentValidator
 import org.sonatype.nexus.repository.view.ContentTypes
 
 import com.google.common.base.Supplier

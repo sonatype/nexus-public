@@ -59,7 +59,7 @@ public class NpmHostedRepositoriesApiResource
     super(authorizingRepositoryManager, configurationAdapter);
   }
 
-  @ApiOperation("Create Npm hosted repository")
+  @ApiOperation("Create npm hosted repository")
   @ApiResponses(value = {
       @ApiResponse(code = 201, message = REPOSITORY_CREATED),
       @ApiResponse(code = 401, message = AUTHENTICATION_REQUIRED),
@@ -73,7 +73,7 @@ public class NpmHostedRepositoriesApiResource
     return super.createRepository(request);
   }
 
-  @ApiOperation("Update Npm hosted repository")
+  @ApiOperation("Update npm hosted repository")
   @ApiResponses(value = {
       @ApiResponse(code = 204, message = REPOSITORY_UPDATED),
       @ApiResponse(code = 401, message = AUTHENTICATION_REQUIRED),

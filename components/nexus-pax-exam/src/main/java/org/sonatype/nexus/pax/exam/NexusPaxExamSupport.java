@@ -313,8 +313,15 @@ public abstract class NexusPaxExamSupport
   /**
    * @return Function that returns {@code true} when all tasks have stopped; otherwise {@code false}
    */
+  public static Callable<Boolean> tasksDone(TaskScheduler taskScheduler, int initialTaskCount) {
+    return () -> taskScheduler.getExecutedTaskCount() > initialTaskCount && taskScheduler.getRunningTaskCount() == 0;
+  }
+
+  /**
+   * @return Function that returns {@code true} when all tasks have stopped; otherwise {@code false}
+   */
   public static Callable<Boolean> tasksDone(TaskScheduler taskScheduler) {
-    return () -> taskScheduler.getExecutedTaskCount() > 0 && taskScheduler.getRunningTaskCount() == 0;
+    return tasksDone(taskScheduler, 0);
   }
 
   // -------------------------------------------------------------------------
@@ -477,7 +484,8 @@ public abstract class NexusPaxExamSupport
    * @return Pax-Exam option to change the Nexus edition based on groupId and artifactId
    */
   public static Option nexusEdition(final String groupId, final String artifactId) {
-    return nexusEdition(maven(groupId, artifactId).versionAsInProject().classifier("features").type("xml"), artifactId);
+    return nexusEdition(maven(groupId, artifactId).versionAsInProject().classifier("features").type("xml"),
+        artifactId + '/' + MavenUtils.getArtifactVersion(groupId, artifactId));
   }
 
   /**
@@ -491,7 +499,8 @@ public abstract class NexusPaxExamSupport
    * @return Pax-Exam option to install a Nexus plugin based on groupId and artifactId
    */
   public static Option nexusFeature(final String groupId, final String artifactId) {
-    return nexusFeature(maven(groupId, artifactId).versionAsInProject().classifier("features").type("xml"), artifactId);
+    return nexusFeature(maven(groupId, artifactId).versionAsInProject().classifier("features").type("xml"),
+        artifactId + '/' + MavenUtils.getArtifactVersion(groupId, artifactId));
   }
 
   /**

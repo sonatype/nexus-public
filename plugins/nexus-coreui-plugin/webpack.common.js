@@ -15,6 +15,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const TerserJSPlugin = require('terser-webpack-plugin');
 const path = require('path');
+const libImgDir = path.resolve(__dirname, 'node_modules/@sonatype/react-shared-components/assets/img');
 
 module.exports = {
   entry: './src/frontend/src/index.js',
@@ -38,6 +39,21 @@ module.exports = {
           'css-loader',
           'sass-loader'
         ]
+      },
+      {
+        include: libImgDir,
+        loader: 'file-loader',
+        options: {
+          name: 'img/[name].[ext]'
+        }
+      },
+      {
+        test: /\.(ttf|eot|woff2?|svg)$/,
+        exclude: libImgDir,
+        loader: 'file-loader',
+        options: {
+          name: 'fonts/[name].[ext]'
+        }
       }
     ]
   },
@@ -63,6 +79,7 @@ module.exports = {
   },
   externals: {
     react: 'react',
-    axios: 'axios'
+    axios: 'axios',
+    xstate: 'xstate'
   }
 };

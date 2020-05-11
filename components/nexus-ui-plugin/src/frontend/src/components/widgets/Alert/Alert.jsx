@@ -10,10 +10,10 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import classNames from 'classnames';
-import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
-import {faExclamationCircle} from '@fortawesome/free-solid-svg-icons';
 import React from 'react';
+import classNames from 'classnames';
+import {NxFontAwesomeIcon} from "@sonatype/react-shared-components";
+import {faExclamationCircle} from '@fortawesome/free-solid-svg-icons';
 
 import './Alert.scss';
 
@@ -25,7 +25,7 @@ import PropTypes from "prop-types";
 export default function Alert({type, children, className, ...attrs}) {
   const classes = classNames('nxrm-alert', className, `nxrm-alert--${type}`);
   return <div className={classes} role="alert" {...attrs}>
-    <FontAwesomeIcon icon={faExclamationCircle}/>
+    <NxFontAwesomeIcon icon={faExclamationCircle}/>
     {children}
   </div>;
 }

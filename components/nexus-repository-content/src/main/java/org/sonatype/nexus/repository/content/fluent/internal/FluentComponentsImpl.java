@@ -51,22 +51,22 @@ public class FluentComponentsImpl
   @Override
   public Continuation<FluentComponent> browse(final int limit, final String continuationToken) {
     return new FluentContinuation<>(
-        facet.componentStore().browseComponents(limit, limit, continuationToken),
+        facet.stores().componentStore.browseComponents(facet.contentRepositoryId(), limit, continuationToken),
         this::with);
   }
 
   @Override
   public Collection<String> namespaces() {
-    return facet.componentStore().browseNamespaces(facet.contentRepositoryId());
+    return facet.stores().componentStore.browseNamespaces(facet.contentRepositoryId());
   }
 
   @Override
   public Collection<String> names(final String namespace) {
-    return facet.componentStore().browseNames(facet.contentRepositoryId(), namespace);
+    return facet.stores().componentStore.browseNames(facet.contentRepositoryId(), namespace);
   }
 
   @Override
   public Collection<String> versions(final String namespace, final String name) {
-    return facet.componentStore().browseVersions(facet.contentRepositoryId(), namespace, name);
+    return facet.stores().componentStore.browseVersions(facet.contentRepositoryId(), namespace, name);
   }
 }

@@ -19,7 +19,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.mime.MimeRulesSource;
 import org.sonatype.nexus.mime.internal.DefaultMimeSupport;
 import org.sonatype.nexus.repository.InvalidContentException;
-import org.sonatype.nexus.repository.storage.DefaultContentValidator;
+import org.sonatype.nexus.repository.mime.DefaultContentValidator;
 
 import com.google.common.base.Supplier;
 import org.junit.Before;

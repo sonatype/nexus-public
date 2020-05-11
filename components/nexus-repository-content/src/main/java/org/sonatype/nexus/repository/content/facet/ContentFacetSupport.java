@@ -13,20 +13,26 @@
 package org.sonatype.nexus.repository.content.facet;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.inject.Inject;
+import javax.validation.ConstraintViolation;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.groups.Default;
 
-import org.sonatype.nexus.blobstore.api.BlobStore;
-import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.datastore.api.DataSession;
-import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.FacetSupport;
+import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.config.ConfigurationFacet;
+import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.ContentRepository;
 import org.sonatype.nexus.repository.content.fluent.AttributeChange;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
@@ -35,14 +41,10 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentAssetsImpl;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentBlobsImpl;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentComponentsImpl;
-import org.sonatype.nexus.repository.content.store.AssetBlobStore;
-import org.sonatype.nexus.repository.content.store.AssetStore;
-import org.sonatype.nexus.repository.content.store.ComponentStore;
 import org.sonatype.nexus.repository.content.store.ContentRepositoryData;
-import org.sonatype.nexus.repository.content.store.ContentRepositoryStore;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
+import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.security.ClientInfo;
-import org.sonatype.nexus.security.ClientInfoProvider;
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.TransactionalStore;
 
@@ -50,13 +52,15 @@ import com.google.common.annotations.VisibleForTesting;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.CONTENT_DATASTORE_NAME;
-import static org.sonatype.nexus.repository.config.ConfigurationConstants.BLOB_STORE_NAME;
-import static org.sonatype.nexus.repository.config.ConfigurationConstants.DATA_STORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
+import static org.sonatype.nexus.repository.content.facet.WritePolicy.ALLOW;
 import static org.sonatype.nexus.repository.content.fluent.internal.FluentAttributesHelper.applyAttributeChange;
+import static org.sonatype.nexus.validation.ConstraintViolations.maybeAdd;
+import static org.sonatype.nexus.validation.ConstraintViolations.maybePropagate;
 
 /**
  * {@link ContentFacet} support.
@@ -69,31 +73,43 @@ public abstract class ContentFacetSupport
 {
   private final FormatStoreManager formatStoreManager;
 
-  private DataSessionSupplier dataSessionSupplier;
+  @VisibleForTesting
+  static class Config
+  {
+    @NotEmpty
+    public String blobStoreName = DEFAULT_BLOBSTORE_NAME;
 
-  private BlobStoreManager blobStoreManager;
+    @NotEmpty
+    public String dataStoreName = CONTENT_DATASTORE_NAME;
 
-  private ClientInfoProvider clientInfoProvider;
+    @NotNull(groups = HostedType.ValidationGroup.class)
+    public WritePolicy writePolicy;
 
-  private NodeAccess nodeAccess;
+    @NotNull
+    public Boolean strictContentTypeValidation = Boolean.TRUE;
 
-  private String blobStoreName;
+    @Override
+    public String toString() {
+      return getClass().getSimpleName() + "{" +
+          "blobStoreName='" + blobStoreName + '\'' +
+          ", dataStoreName='" + dataStoreName + '\'' +
+          ", writePolicy=" + writePolicy +
+          ", strictContentTypeValidation=" + strictContentTypeValidation +
+          '}';
+    }
+  }
 
-  private String contentStoreName;
+  private ContentFacetDependencies dependencies;
+
+  private Config config;
+
+  private ContentFacetStores stores;
 
   private EntityId configRepositoryId;
 
   private Integer contentRepositoryId;
 
-  private BlobStore blobStore;
-
-  private ContentRepositoryStore<?> contentRepositoryStore;
-
-  private ComponentStore<?> componentStore;
-
-  private AssetStore<?> assetStore;
-
-  private AssetBlobStore<?> assetBlobStore;
+  private AssetBlobValidator assetBlobValidator;
 
   protected ContentFacetSupport(final FormatStoreManager formatStoreManager) {
     this.formatStoreManager = checkNotNull(formatStoreManager);
@@ -101,30 +117,40 @@ public abstract class ContentFacetSupport
 
   @Inject
   @VisibleForTesting
-  protected final void setDependencies(final DataSessionSupplier dataSessionSupplier,
-                                       final BlobStoreManager blobStoreManager,
-                                       final ClientInfoProvider clientInfoProvider,
-                                       final NodeAccess nodeAccess)
-  {
-    this.dataSessionSupplier = checkNotNull(dataSessionSupplier);
-    this.blobStoreManager = checkNotNull(blobStoreManager);
-    this.clientInfoProvider = checkNotNull(clientInfoProvider);
-    this.nodeAccess = checkNotNull(nodeAccess);
+  protected final void setDependencies(final ContentFacetDependencies dependencies) {
+    this.dependencies = checkNotNull(dependencies);
   }
 
   @Override
-  protected void doConfigure(final Configuration configuration) {
+  protected void doValidate(final Configuration configuration) throws Exception {
+    facet(ConfigurationFacet.class).validateSection(configuration, STORAGE, Config.class,
+        Default.class, getRepository().getType().getValidationGroup()
+    );
 
-    NestedAttributesMap storageAttributes = configuration.attributes(STORAGE);
-    blobStoreName = storageAttributes.get(BLOB_STORE_NAME, String.class, DEFAULT_BLOBSTORE_NAME);
-    contentStoreName = storageAttributes.get(DATA_STORE_NAME, String.class, CONTENT_DATASTORE_NAME);
+    Config configToValidate = facet(ConfigurationFacet.class).readSection(configuration, STORAGE, Config.class);
 
-    blobStore = blobStoreManager.get(blobStoreName);
+    Set<ConstraintViolation<?>> violations = new HashSet<>();
+    maybeAdd(violations, validateBlobStoreNotInGroup(configToValidate.blobStoreName));
+    maybePropagate(violations, log);
+  }
 
-    contentRepositoryStore = formatStoreManager.contentRepositoryStore(contentStoreName);
-    componentStore = formatStoreManager.componentStore(contentStoreName);
-    assetStore = formatStoreManager.assetStore(contentStoreName);
-    assetBlobStore = formatStoreManager.assetBlobStore(contentStoreName);
+  private ConstraintViolation<?> validateBlobStoreNotInGroup(final String blobStoreName) {
+    return dependencies.blobStoreManager.getParent(blobStoreName)
+        .map(groupName -> dependencies.constraintViolationFactory.
+            createViolation(format("%s.blobStoreName", STORAGE),
+            format("Blob Store '%s' is a member of Blob Store Group '%s' and cannot be set as storage",
+                blobStoreName, groupName)))
+        .orElse(null);
+  }
+
+  @Override
+  protected void doConfigure(final Configuration configuration) throws Exception {
+    config = facet(ConfigurationFacet.class).readSection(configuration, STORAGE, Config.class);
+    log.debug("Config: {}", config);
+
+    stores = new ContentFacetStores(
+        dependencies.blobStoreManager, config.blobStoreName,
+        formatStoreManager, config.dataStoreName);
   }
 
   @Override
@@ -135,10 +161,17 @@ public abstract class ContentFacetSupport
     checkState(configRepositoryId != null, "Missing configRepositoryId");
 
     // get or create the associated content repository
-    contentRepositoryId = contentRepositoryStore.readContentRepository(configRepositoryId)
+    contentRepositoryId = stores.contentRepositoryStore.readContentRepository(configRepositoryId)
         .orElseGet(this::createContentRepository).contentRepositoryId();
 
     checkState(contentRepositoryId != null, "Missing contentRepositoryId");
+
+    assetBlobValidator = dependencies.assetBlobValidators.selectValidator(getRepository());
+  }
+
+  @Override
+  protected void doDestroy() throws Exception {
+    config = null;
   }
 
   /**
@@ -147,22 +180,15 @@ public abstract class ContentFacetSupport
   private final ContentRepository createContentRepository() {
     ContentRepositoryData contentRepository = newContentRepository();
     contentRepository.setConfigRepositoryId(configRepositoryId);
-    contentRepositoryStore.createContentRepository(contentRepository);
+    stores.contentRepositoryStore.createContentRepository(contentRepository);
     return contentRepository;
-  }
-
-  /**
-   * Override this method to customize creation of new content repositories.
-   */
-  protected ContentRepositoryData newContentRepository() {
-    return new ContentRepositoryData();
   }
 
   /**
    * Retrieves the latest {@link ContentRepository} data from the store.
    */
   protected final ContentRepository contentRepository() {
-    return contentRepositoryStore
+    return stores.contentRepositoryStore
         .readContentRepository(configRepositoryId)
         .orElseThrow(() -> new IllegalStateException("Missing content repository for " + configRepositoryId));
   }
@@ -171,9 +197,9 @@ public abstract class ContentFacetSupport
   @Transactional
   protected void doDelete() throws Exception {
     if (configRepositoryId != null) {
-      assetStore.deleteAssets(contentRepositoryId);
-      componentStore.deleteComponents(contentRepositoryId);
-      contentRepositoryStore.deleteContentRepository(configRepositoryId);
+      stores.assetStore.deleteAssets(contentRepositoryId);
+      stores.componentStore.deleteComponents(contentRepositoryId);
+      stores.contentRepositoryStore.deleteContentRepository(configRepositoryId);
     }
   }
 
@@ -206,7 +232,7 @@ public abstract class ContentFacetSupport
   public final ContentFacet attributes(final AttributeChange change, final String key, final Object value) {
     ContentRepository contentRepository = contentRepository();
     if (applyAttributeChange(contentRepository, change, key, value)) {
-      contentRepositoryStore.updateContentRepositoryAttributes(contentRepository);
+      stores.contentRepositoryStore.updateContentRepositoryAttributes(contentRepository);
     }
     return this;
   }
@@ -228,50 +254,68 @@ public abstract class ContentFacetSupport
 
   @Override
   public final DataSession<?> openSession() {
-    return dataSessionSupplier.openSession(contentStoreName);
-  }
-
-  public final FormatStoreManager formatStoreManager() {
-    return formatStoreManager;
-  }
-
-  public final BlobStoreManager blobStoreManager() {
-    return blobStoreManager;
+    return dependencies.dataSessionSupplier.openSession(config.dataStoreName);
   }
 
   public final Optional<ClientInfo> clientInfo() {
-    return ofNullable(clientInfoProvider.getCurrentThreadClientInfo());
+    return ofNullable(dependencies.clientInfoProvider.getCurrentThreadClientInfo());
   }
 
   public final String nodeName() {
-    return nodeAccess.getId();
+    return dependencies.nodeAccess.getId();
   }
 
   public final Repository repository() {
     return getRepository();
   }
 
-  public final String blobStoreName() {
-    return blobStoreName;
+  public final ContentFacetStores stores() {
+    return stores;
   }
 
-  public final String contentStoreName() {
-    return contentStoreName;
+  public final void checkAttachAllowed(final Asset asset) {
+    if (!asset.blob().isPresent()) {
+      if (!writePolicy(asset).checkCreateAllowed()) {
+        throwNotAllowed(asset, " is read-only");
+      }
+    }
+    else if (!writePolicy(asset).checkUpdateAllowed()) {
+      throwNotAllowed(asset, " cannot be updated");
+    }
   }
 
-  public final BlobStore blobStore() {
-    return blobStore;
+  public final void checkDeleteAllowed(final Asset asset) {
+    if (asset.blob().isPresent() && !writePolicy(asset).checkDeleteAllowed()) {
+      throwNotAllowed(asset, " cannot be deleted");
+    }
   }
 
-  public final ComponentStore<?> componentStore() {
-    return componentStore;
+  private void throwNotAllowed(final Asset asset, final String reason) {
+    throw new IllegalOperationException(repository().getName() + asset.path() + reason);
   }
 
-  public final AssetStore<?> assetStore() {
-    return assetStore;
+  public final String checkContentType(final Asset asset, final Blob blob) {
+    return determineContentType(asset, blob, config.strictContentTypeValidation);
   }
 
-  public final AssetBlobStore<?> assetBlobStore() {
-    return assetBlobStore;
+  /**
+   * Override this method to customize the write-policy of selected assets.
+   */
+  protected WritePolicy writePolicy(final Asset asset) {
+    return ofNullable(config.writePolicy).orElse(ALLOW);
+  }
+
+  /**
+   * Override this method to customize Content-Type validation of asset blobs.
+   */
+  protected String determineContentType(final Asset asset, final Blob blob, final boolean strictValidation) {
+    return assetBlobValidator.determineContentType(asset, blob, strictValidation);
+  }
+
+  /**
+   * Override this method to customize creation of new content repositories.
+   */
+  protected ContentRepositoryData newContentRepository() {
+    return new ContentRepositoryData();
   }
 }

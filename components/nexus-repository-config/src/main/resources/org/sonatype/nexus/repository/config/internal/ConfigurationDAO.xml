@@ -47,7 +47,7 @@
     SELECT * FROM repository WHERE name = #{value};
   </select>
 
-  <update id="update" parameterType="ConfigurationData">
+  <update id="update" parameterType="ConfigurationData" useGeneratedKeys="true" keyProperty="id">
     UPDATE repository SET
         <!-- recipe_name is not considered updateable -->
         online = #{online}, routing_rule_id = #{routingRuleId}, attributes = #{attributes}

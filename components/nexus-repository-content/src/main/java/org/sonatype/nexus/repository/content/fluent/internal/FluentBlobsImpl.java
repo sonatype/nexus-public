@@ -72,9 +72,9 @@ public class FluentBlobsImpl
     tempHeaders.put(CONTENT_TYPE_HEADER, ofNullable(contentType).orElse(APPLICATION_OCTET_STREAM));
 
     MultiHashingInputStream hashingStream = new MultiHashingInputStream(hashing, in);
-    Blob blob = facet.blobStore().create(hashingStream, tempHeaders.build());
+    Blob blob = facet.stores().blobStore.create(hashingStream, tempHeaders.build());
 
-    return new TempBlob(blob, hashingStream.hashes(), true, facet.blobStore());
+    return new TempBlob(blob, hashingStream.hashes(), true, facet.stores().blobStore);
   }
 
   @Override

@@ -10,14 +10,12 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import PropTypes from 'prop-types';
 import React from 'react';
-
-import './Section.scss';
+import classNames from 'classnames';
 
 /**
  * @since 3.22
  */
-export default function Section({children}) {
-  return <div className="nxrm-section">{children}</div>;
+export default function Section({className, children, ...rest}) {
+  return <div className={classNames("nxrm-section", "nx-tile", className)} {...rest}>{children}</div>;
 }

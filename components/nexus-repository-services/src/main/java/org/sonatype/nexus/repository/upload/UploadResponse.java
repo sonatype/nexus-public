@@ -12,7 +12,10 @@
  */
 package org.sonatype.nexus.repository.upload;
 
+import java.util.Collection;
 import java.util.List;
+
+import org.sonatype.nexus.repository.view.Content;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -27,6 +30,10 @@ public class UploadResponse
 
   public UploadResponse(final List<String> assetPaths) {
     this.assetPaths = checkNotNull(assetPaths);
+  }
+
+  public UploadResponse(final Collection<Content> contents, final List<String> assetPaths) {
+    this(assetPaths);
   }
 
   public List<String> getAssetPaths() {

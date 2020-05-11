@@ -150,3 +150,10 @@
     font-size: $font-size-body;
   }
 }
+
+.x-btn-nx-primary-small,
+.x-btn-nx-primary-medium {
+  .x-btn-glyph {
+    color: rgb(254, 254, 254);
+  }
+}

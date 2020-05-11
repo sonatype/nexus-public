@@ -2,6 +2,8 @@
  * @class Ext.button.Button
  */
 
+$nx-button-font-weight: 600;
+
 $button-default-color: $iq-grey-700;
 $button-default-color-over: $iq-grey-700;
 $button-default-color-focus: $iq-grey-900;
@@ -20,17 +22,17 @@ $button-small-font-size-focus: $font-size-body;
 $button-small-font-size-pressed: $font-size-body;
 $button-small-font-size-disabled: $font-size-body;
 
-$button-small-font-weight: $font-weight-body;
-$button-small-font-weight-over: $font-weight-body;
-$button-small-font-weight-focus: $font-weight-body;
-$button-small-font-weight-pressed: $font-weight-body;
-$button-small-font-weight-disabled: $font-weight-body;
+$button-small-font-weight: $nx-button-font-weight;
+$button-small-font-weight-over: $nx-button-font-weight;
+$button-small-font-weight-focus: $nx-button-font-weight;
+$button-small-font-weight-pressed: $nx-button-font-weight;
+$button-small-font-weight-disabled: $nx-button-font-weight;
 
-$button-medium-font-weight: $font-weight-body;
-$button-medium-font-weight-over: $font-weight-body;
-$button-medium-font-weight-focus: $font-weight-body;
-$button-medium-font-weight-pressed: $font-weight-body;
-$button-medium-font-weight-disabled: $font-weight-body;
+$button-medium-font-weight: $nx-button-font-weight;
+$button-medium-font-weight-over: $nx-button-font-weight;
+$button-medium-font-weight-focus: $nx-button-font-weight;
+$button-medium-font-weight-pressed: $nx-button-font-weight;
+$button-medium-font-weight-disabled: $nx-button-font-weight;
 
 $button-default-glyph-color: $iq-grey-700;
 $button-default-glyph-opacity: 1;

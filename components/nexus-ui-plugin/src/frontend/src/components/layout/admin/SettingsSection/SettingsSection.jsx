@@ -16,6 +16,7 @@ import React, {createRef} from 'react';
 import './SettingsSection.scss';
 
 import UIStrings from '../../../../constants/UIStrings';
+import FieldWrapper from "../../../widgets/FieldWrapper/FieldWrapper";
 
 /**
  * @since 3.21
@@ -69,20 +70,7 @@ SettingsSection.propTypes = {
   isLoading: PropTypes.bool
 };
 
-SettingsSection.FieldWrapper = function({labelText, descriptionText, children}) {
-  const WrapperElement = labelText ? 'label' : 'div';
-  const fieldName = React.Children.only(children).props.name;
-
-  return <WrapperElement className='nxrm-settings-section-field-wrapper'>
-    {labelText ? <label htmlFor={fieldName} className='nxrm-settings-section-field-wrapper-label'>{labelText}</label> : null}
-    {descriptionText ? <span className='nxrm-settings-section-field-wrapper-description'>{descriptionText}</span> : null}
-    {children}
-  </WrapperElement>;
-};
-
-SettingsSection.FieldWrapper.propTypes = {
-  labelText: PropTypes.string
-};
+SettingsSection.FieldWrapper = FieldWrapper;
 
 SettingsSection.Footer = function({children}) {
   return <div className='nxrm-settings-section-footer'>

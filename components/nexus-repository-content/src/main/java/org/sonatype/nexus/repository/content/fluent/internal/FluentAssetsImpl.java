@@ -49,7 +49,7 @@ public class FluentAssetsImpl
   @Override
   public Continuation<FluentAsset> browse(final int limit, final String continuationToken) {
     return new FluentContinuation<>(
-        facet.assetStore().browseAssets(facet.contentRepositoryId(), limit, continuationToken),
+        facet.stores().assetStore.browseAssets(facet.contentRepositoryId(), limit, continuationToken),
         this::with);
   }
 }

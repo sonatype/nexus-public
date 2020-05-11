@@ -6,7 +6,7 @@ exports[`SystemInformation renders correctly 1`] = `
     class="nxrm-content-body nxrm-support-request"
   >
     <div
-      class="nxrm-section"
+      class="nxrm-section nx-tile"
     >
       <p>
         Please include a complete description of your problem and steps to allow us to reproduce the problem (if available).
@@ -24,7 +24,7 @@ exports[`SystemInformation renders correctly 1`] = `
       >
         <svg
           aria-hidden="true"
-          class="svg-inline--fa fa-external-link-alt fa-w-18 fa-pull-left "
+          class="svg-inline--fa fa-external-link-alt fa-w-18 nx-icon"
           data-icon="external-link-alt"
           data-prefix="fas"
           focusable="false"
@@ -37,7 +37,9 @@ exports[`SystemInformation renders correctly 1`] = `
             fill="currentColor"
           />
         </svg>
-        Submit Request
+        <span>
+          Submit Request
+        </span>
       </button>
     </div>
   </div>

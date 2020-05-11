@@ -238,6 +238,10 @@ public class BootstrapListener
       properties.setProperty(NEXUS_DB_FEATURE, "nexus-datastore-mybatis");
       properties.setProperty("nexus.datastore.enabled", "true");
       properties.setProperty("nexus.quartz.jobstore.jdbc", "true");
+      if (NEXUS_OSS_EDITION.equals(properties.getProperty(NEXUS_EDITION))) {
+        properties.setProperty("nexus-exclude-features",
+            "nexus-cma-feature,nexus-cma-community," + properties.getProperty("nexus-exclude-features", ""));
+      }
     }
   }
 

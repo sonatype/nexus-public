@@ -2,25 +2,25 @@
 
 exports[`SettingsSection SettingsSection.FieldWrapper renders correctly with label 1`] = `
 <div>
-  <label
-    class="nxrm-settings-section-field-wrapper"
+  <div
+    class="field-wrapper"
   >
     <label
-      class="nxrm-settings-section-field-wrapper-label"
+      class="field-wrapper-label"
     >
       test-label
     </label>
     <input
       type="text"
     />
-  </label>
+  </div>
 </div>
 `;
 
 exports[`SettingsSection SettingsSection.FieldWrapper renders correctly without label 1`] = `
 <div>
   <div
-    class="nxrm-settings-section-field-wrapper"
+    class="field-wrapper"
   >
     <input
       type="text"

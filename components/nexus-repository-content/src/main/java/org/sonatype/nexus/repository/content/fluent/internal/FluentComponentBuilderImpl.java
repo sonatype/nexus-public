@@ -57,14 +57,14 @@ public class FluentComponentBuilderImpl
 
   @Override
   public FluentComponent getOrCreate() {
-    return new FluentComponentImpl(facet, facet.componentStore()
+    return new FluentComponentImpl(facet, facet.stores().componentStore
         .readComponent(facet.contentRepositoryId(), namespace, name, version)
         .orElseGet(this::createComponent));
   }
 
   @Override
   public Optional<FluentComponent> find() {
-    return facet.componentStore()
+    return facet.stores().componentStore
         .readComponent(facet.contentRepositoryId(), namespace, name, version)
         .map(component -> new FluentComponentImpl(facet, component));
   }
@@ -76,7 +76,7 @@ public class FluentComponentBuilderImpl
     component.setName(name);
     component.setVersion(version);
 
-    facet.componentStore().createComponent(component);
+    facet.stores().componentStore.createComponent(component);
 
     return component;
   }

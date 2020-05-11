@@ -12,7 +12,7 @@ exports[`SystemInformation renders correctly 1`] = `
     >
       <svg
         aria-hidden="true"
-        class="svg-inline--fa fa-download fa-w-16 fa-pull-left "
+        class="svg-inline--fa fa-download fa-w-16 nx-icon"
         data-icon="download"
         data-prefix="fas"
         focusable="false"
@@ -25,14 +25,16 @@ exports[`SystemInformation renders correctly 1`] = `
           fill="currentColor"
         />
       </svg>
-      Download as JSON
+      <span>
+        Download as JSON
+      </span>
     </button>
   </div>
   <div
     class="nxrm-content-body nxrm-system-information"
   >
     <div
-      class="nxrm-section"
+      class="nxrm-section nx-tile"
     >
       Loading...
     </div>
@@ -51,7 +53,7 @@ exports[`SystemInformation renders correctly 2`] = `
     >
       <svg
         aria-hidden="true"
-        class="svg-inline--fa fa-download fa-w-16 fa-pull-left "
+        class="svg-inline--fa fa-download fa-w-16 nx-icon"
         data-icon="download"
         data-prefix="fas"
         focusable="false"
@@ -64,14 +66,16 @@ exports[`SystemInformation renders correctly 2`] = `
           fill="currentColor"
         />
       </svg>
-      Download as JSON
+      <span>
+        Download as JSON
+      </span>
     </button>
   </div>
   <div
     class="nxrm-content-body nxrm-system-information"
   >
     <div
-      class="nxrm-section"
+      class="nxrm-section nx-tile"
     >
       <h2>
         nexus-status
@@ -98,7 +102,7 @@ exports[`SystemInformation renders correctly 2`] = `
       </table>
     </div>
     <div
-      class="nxrm-section"
+      class="nxrm-section nx-tile"
     >
       <h2>
         nexus-node
@@ -125,7 +129,7 @@ exports[`SystemInformation renders correctly 2`] = `
       </table>
     </div>
     <div
-      class="nxrm-section"
+      class="nxrm-section nx-tile"
     >
       <h2>
         nexus-configuration
@@ -152,7 +156,7 @@ exports[`SystemInformation renders correctly 2`] = `
       </table>
     </div>
     <div
-      class="nxrm-section"
+      class="nxrm-section nx-tile"
     >
       <h2>
         nexus-properties
@@ -179,7 +183,7 @@ exports[`SystemInformation renders correctly 2`] = `
       </table>
     </div>
     <div
-      class="nxrm-section"
+      class="nxrm-section nx-tile"
     >
       <h2>
         nexus-license
@@ -206,7 +210,7 @@ exports[`SystemInformation renders correctly 2`] = `
       </table>
     </div>
     <div
-      class="nxrm-section"
+      class="nxrm-section nx-tile"
     >
       <h2>
         nexus-bundles
@@ -266,7 +270,7 @@ exports[`SystemInformation renders correctly 2`] = `
       </div>
     </div>
     <div
-      class="nxrm-section"
+      class="nxrm-section nx-tile"
     >
       <h2>
         system-time
@@ -293,7 +297,7 @@ exports[`SystemInformation renders correctly 2`] = `
       </table>
     </div>
     <div
-      class="nxrm-section"
+      class="nxrm-section nx-tile"
     >
       <h2>
         system-properties
@@ -320,7 +324,7 @@ exports[`SystemInformation renders correctly 2`] = `
       </table>
     </div>
     <div
-      class="nxrm-section"
+      class="nxrm-section nx-tile"
     >
       <h2>
         system-environment
@@ -347,7 +351,7 @@ exports[`SystemInformation renders correctly 2`] = `
       </table>
     </div>
     <div
-      class="nxrm-section"
+      class="nxrm-section nx-tile"
     >
       <h2>
         system-runtime
@@ -374,7 +378,7 @@ exports[`SystemInformation renders correctly 2`] = `
       </table>
     </div>
     <div
-      class="nxrm-section"
+      class="nxrm-section nx-tile"
     >
       <h2>
         system-network
@@ -406,7 +410,7 @@ exports[`SystemInformation renders correctly 2`] = `
       </div>
     </div>
     <div
-      class="nxrm-section"
+      class="nxrm-section nx-tile"
     >
       <h2>
         system-filestores

@@ -62,15 +62,16 @@ public class NexusBundleTracker
         return null; // false-positive, this doesn't need preparing
       }
       prepareDependencies(bundle);
+      String bundleDetails = bundle.getSymbolicName() + " [" + bundle.getVersion() + "]";
       try {
         BindingPublisher publisher;
-        log.info("ACTIVATING {}", bundle);
+        log.info("ACTIVATING {}", bundleDetails);
         publisher = super.prepare(bundle);
-        log.info("ACTIVATED {}", bundle);
+        log.info("ACTIVATED {}", bundleDetails);
         return publisher;
       }
       catch (final Exception e) {
-        log.warn("BROKEN {}", bundle);
+        log.warn("BROKEN {}", bundleDetails);
         throw e;
       }
     }

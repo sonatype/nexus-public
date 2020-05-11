@@ -11,9 +11,11 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import AnonymousSettings from './components/pages/admin/AnonymousSettings/AnonymousSettings';
+import LoggingConfiguration from './components/pages/admin/LoggingConfiguration/LoggingConfiguration';
 import SystemInformation from './components/pages/admin/SystemInformation/SystemInformation';
+import SupportRequest from './components/pages/admin/SupportRequest/SupportRequest';
+
 import UIStrings from './constants/UIStrings';
-import SupportRequest from "./components/pages/admin/SupportRequest/SupportRequest";
 import UserAccount from "./components/pages/admin/UserAccount/UserAccount";
 
 window.plugins.push({
@@ -40,13 +42,14 @@ window.plugins.push({
     },
     {
       mode: 'admin',
-      path: '/Support/SystemInformation',
-      text: UIStrings.SYSTEM_INFORMATION.MENU.text,
-      view: SystemInformation,
-      iconCls: 'x-fa fa-globe',
+      path: '/Support/Logging',
+      text: UIStrings.LOGGING.MENU.text,
+      description: UIStrings.LOGGING.MENU.description,
+      view: LoggingConfiguration,
+      iconCls: 'x-fa fa-book',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
-        permissions: ['nexus:atlas:read']
+        permissions: ['nexus:logging:read']
       }
     },
     {
@@ -60,6 +63,17 @@ window.plugins.push({
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         permissions: ['nexus:atlas:create'],
         editions: ['PRO']
+      }
+    },
+    {
+      mode: 'admin',
+      path: '/Support/SystemInformation',
+      text: UIStrings.SYSTEM_INFORMATION.MENU.text,
+      view: SystemInformation,
+      iconCls: 'x-fa fa-globe',
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        permissions: ['nexus:atlas:read']
       }
     },
     {
