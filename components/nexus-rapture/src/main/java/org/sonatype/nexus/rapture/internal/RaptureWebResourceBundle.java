@@ -32,7 +32,6 @@ import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.template.TemplateAccessible;
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.common.template.TemplateParameters;
-import org.sonatype.nexus.rapture.ReactFrontendConfiguration;
 import org.sonatype.nexus.rapture.internal.state.StateComponent;
 import org.sonatype.nexus.servlet.ServletHelper;
 import org.sonatype.nexus.ui.UiPluginDescriptor;
@@ -82,16 +81,13 @@ public class RaptureWebResourceBundle
 
   private final Gson gson;
 
-  private final ReactFrontendConfiguration reactFrontendConfiguration;
-
   @Inject
   public RaptureWebResourceBundle(final ApplicationVersion applicationVersion,
                                   final Provider<HttpServletRequest> servletRequestProvider,
                                   final Provider<StateComponent> stateComponentProvider,
                                   final TemplateHelper templateHelper,
                                   final List<UiPluginDescriptor> pluginDescriptors,
-                                  final List<org.sonatype.nexus.rapture.UiPluginDescriptor> extJsPluginDescriptors,
-                                  final ReactFrontendConfiguration reactFrontendConfiguration)
+                                  final List<org.sonatype.nexus.rapture.UiPluginDescriptor> extJsPluginDescriptors)
   {
     this.applicationVersion = checkNotNull(applicationVersion);
     this.servletRequestProvider = checkNotNull(servletRequestProvider);
@@ -99,7 +95,6 @@ public class RaptureWebResourceBundle
     this.templateHelper = checkNotNull(templateHelper);
     this.pluginDescriptors = checkNotNull(pluginDescriptors);
     this.extJsPluginDescriptors = checkNotNull(extJsPluginDescriptors);
-    this.reactFrontendConfiguration = checkNotNull(reactFrontendConfiguration);
 
     log.info("UI plugin descriptors:");
     for (UiPluginDescriptor descriptor : pluginDescriptors) {
@@ -350,14 +345,12 @@ public class RaptureWebResourceBundle
     // add extjs descriptor styles
     styles.addAll(getExtJsStyles());
 
-    if (reactFrontendConfiguration.isEnabled()) {
-      List<URI> resources = pluginDescriptors.stream()
-          .map(UiPluginDescriptor::getStyles)
-          .flatMap(Collection::stream)
-          .map(this::relativeToAbsoluteUri)
-          .collect(toList());
-      styles.addAll(resources);
-    }
+    List<URI> resources = pluginDescriptors.stream()
+        .map(UiPluginDescriptor::getStyles)
+        .flatMap(Collection::stream)
+        .map(this::relativeToAbsoluteUri)
+        .collect(toList());
+    styles.addAll(resources);
 
     return styles;
   }
@@ -391,14 +384,12 @@ public class RaptureWebResourceBundle
         extJsPluginDescriptors.stream().map(descriptor -> descriptor.getScripts(debug)).flatMap(Collection::stream)
             .map(this::relativeToAbsoluteUri).collect(toList()));
 
-    if (reactFrontendConfiguration.isEnabled()) {
-      List<URI> resources = pluginDescriptors.stream()
-          .map(descriptor -> descriptor.getScripts(debug))
-          .flatMap(Collection::stream)
-          .map(this::relativeToAbsoluteUri)
-          .collect(toList());
-      scripts.addAll(resources);
-    }
+    List<URI> resources = pluginDescriptors.stream()
+        .map(descriptor -> descriptor.getScripts(debug))
+        .flatMap(Collection::stream)
+        .map(this::relativeToAbsoluteUri)
+        .collect(toList());
+    scripts.addAll(resources);
 
     if (!debug) {
       // add all extjs scripts
