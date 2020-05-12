@@ -64,23 +64,23 @@ public class ProxyRepositoryApiRequestToConfigurationConverter<T extends ProxyRe
   private void convertHttpClient(final T request, final Configuration configuration) {
     HttpClientAttributes httpClient = request.getHttpClient();
     if (nonNull(httpClient)) {
-      NestedAttributesMap httpclientConfiguration = configuration.attributes("httpclient");
-      httpclientConfiguration.set("blocked", httpClient.getBlocked());
-      httpclientConfiguration.set("autoBlock", httpClient.getAutoBlock());
+      NestedAttributesMap httpClientConfiguration = configuration.attributes("httpclient");
+      httpClientConfiguration.set("blocked", httpClient.getBlocked());
+      httpClientConfiguration.set("autoBlock", httpClient.getAutoBlock());
       HttpClientConnectionAttributes connection = httpClient.getConnection();
-      NestedAttributesMap connectionConfiguration = httpclientConfiguration.child("connection");
+      NestedAttributesMap connectionConfiguration = httpClientConfiguration.child("connection");
       convertConnection(connection, connectionConfiguration);
-      convertAuthentication(httpClient, connectionConfiguration);
+      convertAuthentication(httpClient, httpClientConfiguration);
     }
   }
 
   private void convertAuthentication(
       final HttpClientAttributes httpClient,
-      final NestedAttributesMap connectionConfiguration)
+      final NestedAttributesMap httpClientConfiguration)
   {
     HttpClientConnectionAuthenticationAttributes authentication = httpClient.getAuthentication();
     if (nonNull(authentication)) {
-      NestedAttributesMap authenticationConfiguration = connectionConfiguration.child("authentication");
+      NestedAttributesMap authenticationConfiguration = httpClientConfiguration.child("authentication");
       authenticationConfiguration.set("type", authentication.getType());
       authenticationConfiguration.set("username", authentication.getUsername());
       authenticationConfiguration.set("password", authentication.getPassword());
