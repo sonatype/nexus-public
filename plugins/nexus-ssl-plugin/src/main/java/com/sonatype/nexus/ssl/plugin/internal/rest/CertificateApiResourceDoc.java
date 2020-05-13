@@ -35,7 +35,7 @@ import static org.apache.http.HttpStatus.SC_FORBIDDEN;
 /**
  * @since 3.19
  */
-@Api(value = "Security: Certificates")
+@Api(value = "Security: certificates")
 public interface CertificateApiResourceDoc
 {
   @ApiOperation("Helper method to retrieve certificate details from a remote system.")

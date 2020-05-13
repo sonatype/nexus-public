@@ -32,7 +32,7 @@ import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
  *
  * @since 3.4.0
  */
-@Api(value = "components")
+@Api(value = "Components")
 public interface ComponentsResourceDoc
 {
   @ApiOperation("List components")

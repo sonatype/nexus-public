@@ -42,7 +42,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM
 @Named
 @Singleton
 @Path(SupportResource.RESOURCE_URI)
-@Api('support')
+@Api('Support')
 class SupportResource
     extends ComponentSupport
     implements Resource

@@ -28,7 +28,7 @@ import io.swagger.annotations.ApiResponses;
  *
  * @since 3.4.0
  */
-@Api(value = "assets", description = "Operations to get and delete assets")
+@Api(value = "Assets", description = "Operations to get and delete assets")
 public interface AssetsResourceDoc
 {
   @ApiOperation("List assets")

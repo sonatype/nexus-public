@@ -21,7 +21,7 @@ import io.swagger.annotations.ApiParam;
  *
  * @since 3.16
  */
-@Api("lifecycle")
+@Api("Lifecycle")
 public interface ManagedLifecycleResourceDoc
 {
   @ApiOperation("Get current lifecycle phase")

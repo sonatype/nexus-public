@@ -28,7 +28,7 @@ import io.swagger.annotations.ApiResponses;
  *
  * @since 3.15
  */
-@Api("status")
+@Api("Status")
 public interface StatusResourceDoc
 {
   /**

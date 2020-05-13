@@ -28,7 +28,7 @@ import io.swagger.annotations.ApiResponses;
  *
  * @since 3.17
  */
-@Api(value = "Security Management: Users")
+@Api(value = "Security management: users")
 public interface UserApiResourceDoc
 {
   String USER_ID_DESCRIPTION = "The userid the request should apply to.";

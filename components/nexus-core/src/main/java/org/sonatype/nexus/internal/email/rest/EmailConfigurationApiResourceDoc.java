@@ -31,7 +31,7 @@ import static org.sonatype.nexus.repository.http.HttpStatus.OK;
  *
  * @since 3.19
  */
-@Api(value = "email")
+@Api(value = "Email")
 public interface EmailConfigurationApiResourceDoc
 {
   @ApiOperation("Retrieve the current email configuration")

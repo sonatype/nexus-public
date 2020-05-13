@@ -24,7 +24,7 @@ import io.swagger.annotations.ApiResponses;
  *
  * @since 3.6
  */
-@Api(value = "read-only")
+@Api(value = "Read-only")
 public interface FreezeResourceDoc
 {
   @ApiOperation("Get read-only state")

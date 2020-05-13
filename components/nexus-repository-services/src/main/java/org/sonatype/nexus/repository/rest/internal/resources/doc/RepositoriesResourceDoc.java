@@ -25,7 +25,7 @@ import io.swagger.annotations.ApiOperation;
  *
  * @since 3.9
  */
-@Api(value = "repositories")
+@Api(value = "Repositories")
 public interface RepositoriesResourceDoc
 {
   @ApiOperation("List repositories")

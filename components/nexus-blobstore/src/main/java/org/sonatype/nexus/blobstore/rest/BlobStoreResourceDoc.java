@@ -23,7 +23,7 @@ import io.swagger.annotations.ApiParam;
  *
  * @since 3.14
  */
-@Api(value = "Blob Store")
+@Api(value = "Blob store")
 public interface BlobStoreResourceDoc
 {
   @ApiOperation("List the blob stores")

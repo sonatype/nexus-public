@@ -26,7 +26,7 @@ import org.sonatype.nexus.rest.Page;
  *
  * @since 3.6
  */
-@Api(value = "tasks")
+@Api(value = "Tasks")
 public interface TasksResourceDoc
 {
   @ApiOperation("List tasks")

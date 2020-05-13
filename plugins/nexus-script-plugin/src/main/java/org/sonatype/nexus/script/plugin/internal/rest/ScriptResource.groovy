@@ -63,7 +63,7 @@ import static org.sonatype.nexus.security.privilege.PrivilegeDescriptorSupport.A
 @Path(ScriptResource.RESOURCE_URI)
 @Produces([APPLICATION_JSON])
 @Consumes([APPLICATION_JSON])
-@Api('script')
+@Api('Script')
 class ScriptResource
     extends ComponentSupport
     implements ScriptClient, Resource

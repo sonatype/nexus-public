@@ -26,7 +26,7 @@ import io.swagger.annotations.ApiParam;
  *
  * @since 3.10
  */
-@Api(value = "formats")
+@Api(value = "Formats")
 public interface UploadDefinitionResourceDoc
 {
   @ApiOperation("Get upload field requirements for each supported format")

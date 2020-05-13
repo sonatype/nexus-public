@@ -36,7 +36,7 @@ import static org.sonatype.nexus.repository.http.HttpStatus.OK;
  *
  * @since 3.19
  */
-@Api(value = "content-selectors")
+@Api(value = "Content selectors")
 public interface ContentSelectorsResourceDoc
 {
   String NAME_DESCRIPTION = "The content selector name cannot be changed after creation";
@@ -55,7 +55,7 @@ public interface ContentSelectorsResourceDoc
 
   String EXPRESSION_NOTES = "See http://links.sonatype.com/products/nexus/selectors/docs for more details";
 
-  @ApiOperation("List Content Selectors")
+  @ApiOperation("List content selectors")
   @ApiResponses({
       @ApiResponse(code = OK, message = "successful operation", response = ContentSelectorApiResponse.class, responseContainer = "List"),
       @ApiResponse(code = FORBIDDEN, message = "Insufficient permissions to read content selectors")

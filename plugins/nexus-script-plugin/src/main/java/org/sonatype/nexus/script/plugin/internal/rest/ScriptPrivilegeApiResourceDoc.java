@@ -27,7 +27,7 @@ import io.swagger.annotations.ApiResponses;
 /**
  * @since 3.19
  */
-@Api(value = "Security Management: Privileges")
+@Api(value = "Security management: privileges")
 public interface ScriptPrivilegeApiResourceDoc
 {
   @ApiOperation("Create a script type privilege.")

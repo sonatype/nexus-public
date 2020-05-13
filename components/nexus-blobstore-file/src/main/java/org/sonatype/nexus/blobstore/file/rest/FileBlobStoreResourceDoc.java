@@ -25,7 +25,7 @@ import io.swagger.annotations.ApiParam;
  *
  * @since 3.19
  */
-@Api("Blob Store")
+@Api("Blob store")
 public interface FileBlobStoreResourceDoc
 {
   @ApiOperation("Create a file blob store")

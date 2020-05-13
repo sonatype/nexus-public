@@ -24,7 +24,7 @@ import io.swagger.annotations.ApiResponses;
  *
  * @since 3.17
  */
-@Api(value = "Security Management")
+@Api(value = "Security management")
 public interface SecurityApiResourceDoc
 {
   @ApiOperation("Retrieve a list of the available user sources.")
