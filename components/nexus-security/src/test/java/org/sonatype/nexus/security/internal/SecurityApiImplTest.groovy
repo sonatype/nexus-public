@@ -14,7 +14,7 @@ package org.sonatype.nexus.security.internal
 
 import org.sonatype.nexus.security.SecurityApi
 import org.sonatype.nexus.security.SecuritySystem
-import org.sonatype.nexus.security.anonymous.AnonymousConfiguration
+import org.sonatype.nexus.security.TestAnonymousConfiguration
 import org.sonatype.nexus.security.anonymous.AnonymousManager
 import org.sonatype.nexus.security.authz.AuthorizationManager
 import org.sonatype.nexus.security.role.Role
@@ -103,15 +103,5 @@ class SecurityApiImplTest
         privileges == ['priv'] as Set
         roles == ['role'] as Set
       }
-  }
-
-  static class TestAnonymousConfiguration implements AnonymousConfiguration {
-    boolean enabled
-    String realmName
-    String userId
-
-    AnonymousConfiguration copy() {
-      return this
-    }
   }
 }
