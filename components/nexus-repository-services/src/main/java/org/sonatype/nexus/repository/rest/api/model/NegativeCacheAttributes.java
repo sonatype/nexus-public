@@ -26,7 +26,7 @@ import io.swagger.annotations.ApiModelProperty;
 public class NegativeCacheAttributes
 {
   @ApiModelProperty(value = "Whether to cache responses for content not present in the proxied repository",
-      example = "false")
+      example = "true")
   @NotNull
   protected final Boolean enabled;
 
