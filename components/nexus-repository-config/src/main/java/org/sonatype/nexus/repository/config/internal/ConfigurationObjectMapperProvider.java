@@ -23,6 +23,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.config.ConfigurationObjectMapperCustomizer;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -50,7 +51,7 @@ public class ConfigurationObjectMapperProvider
 
   @Override
   public ObjectMapper get() {
-    ObjectMapper mapper = new ObjectMapper();
+    ObjectMapper mapper = new ObjectMapper().enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
     mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     for (ConfigurationObjectMapperCustomizer customizer : customizers.values()) {
       customizer.customize(mapper);
