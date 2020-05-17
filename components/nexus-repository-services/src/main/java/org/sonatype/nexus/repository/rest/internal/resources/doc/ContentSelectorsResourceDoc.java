@@ -70,7 +70,7 @@ public interface ContentSelectorsResourceDoc
   })
   void createContentSelector(@Valid final ContentSelectorApiCreateRequest request);
 
-  @ApiOperation("Get a content selector by id")
+  @ApiOperation("Get a content selector by name")
   @ApiResponses({
       @ApiResponse(code = OK, message = "successful operation", response = ContentSelectorApiResponse.class),
       @ApiResponse(code = FORBIDDEN, message = "Insufficient permissions to read the content selector")
