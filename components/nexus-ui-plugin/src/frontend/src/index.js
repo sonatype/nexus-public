@@ -19,7 +19,6 @@ export { default as ExtJS } from './interface/ExtJS';
 
 export { default as Utils } from './interface/Utils';
 
-export { default as SettingsSection } from './components/layout/admin/SettingsSection/SettingsSection';
 export { default as BreadcrumbActions } from './components/layout/common/BreadcrumbActions/BreadcrumbActions';
 export { default as ContentBody } from './components/layout/common/ContentBody/ContentBody';
 export { default as Section } from './components/layout/common/Section/Section';

@@ -1,4 +1,4 @@
-/**
+/*
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
  * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
@@ -10,37 +10,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import {act} from 'react-dom/test-utils';
+import {render} from '@testing-library/react';
+
 /**
- * @since 3.21
+ * @since 3.next
  */
-@import '../../../../styles/colors';
-
-.nxrm-settings-section {
-  background-color: $white;
-  border: solid 1px $light-gray;
-  padding: 12px;
-  margin-bottom: 1em;
-}
-
-.nxrm-content-body > .nxrm-settings-section:last-child {
-  margin-bottom: 0;
-}
-
-.nxrm-settings-section-loading-mask {
-  align-items: center;
-  background-color: $transparent;
-  color: $white;
-  display: flex;
-  font-size: 1.5em;
-  justify-content: center;
-  position: absolute;
-}
-
-.nxrm-settings-section-footer {
-  display: flex;
-  margin-top: 10px;
-
-  > :first-child {
-    margin-left: 0;
+export default class Utils {
+  static render(view, extraSelectors) {
+    const selectors = render(view);
+    const {queryByText} = selectors;
+    return {
+      ...selectors,
+      loadingMask: () => queryByText('Loading…'),
+      ...extraSelectors(selectors)};
   }
 }

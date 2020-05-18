@@ -13,7 +13,7 @@
 import React from 'react';
 import {useMachine} from '@xstate/react';
 import PasswordChangeMachine from './PasswordChangeMachine';
-import {Button, SettingsSection, Textfield} from 'nexus-ui-plugin';
+import {Button, FieldWrapper, SectionFooter, Section, Textfield} from 'nexus-ui-plugin';
 import UIStrings from '../../../../constants/UIStrings';
 
 export default function PasswordChangeForm({userId}) {
@@ -31,8 +31,8 @@ export default function PasswordChangeForm({userId}) {
     send('DISCARD');
   }
 
-  return <SettingsSection>
-    <SettingsSection.FieldWrapper labelText={UIStrings.USER_ACCOUNT.PASSWORD_CURRENT_FIELD_LABEL}>
+  return <Section>
+    <FieldWrapper labelText={UIStrings.USER_ACCOUNT.PASSWORD_CURRENT_FIELD_LABEL}>
       <Textfield
           name='passwordCurrent'
           type='password'
@@ -40,8 +40,8 @@ export default function PasswordChangeForm({userId}) {
           isRequired={true}
           onChange={handlePasswordInput}
       />
-    </SettingsSection.FieldWrapper>
-    <SettingsSection.FieldWrapper labelText={UIStrings.USER_ACCOUNT.PASSWORD_NEW_FIELD_LABEL}>
+    </FieldWrapper>
+    <FieldWrapper labelText={UIStrings.USER_ACCOUNT.PASSWORD_NEW_FIELD_LABEL}>
       <Textfield
           name='passwordNew'
           type='password'
@@ -51,8 +51,8 @@ export default function PasswordChangeForm({userId}) {
           validityMessage={UIStrings.USER_ACCOUNT.MESSAGES.PASSWORD_MUST_DIFFER_ERROR}
           onChange={handlePasswordInput}
       />
-    </SettingsSection.FieldWrapper>
-    <SettingsSection.FieldWrapper labelText={UIStrings.USER_ACCOUNT.PASSWORD_NEW_CONFIRM_FIELD_LABEL}>
+    </FieldWrapper>
+    <FieldWrapper labelText={UIStrings.USER_ACCOUNT.PASSWORD_NEW_CONFIRM_FIELD_LABEL}>
       <Textfield
           name='passwordNewConfirm'
           type='password'
@@ -62,8 +62,8 @@ export default function PasswordChangeForm({userId}) {
           validityMessage={UIStrings.USER_ACCOUNT.MESSAGES.PASSWORD_NO_MATCH_ERROR}
           onChange={handlePasswordInput}
       />
-    </SettingsSection.FieldWrapper>
-    <SettingsSection.Footer>
+    </FieldWrapper>
+    <SectionFooter>
       <Button
           variant='primary'
           disabled={current.matches('invalid')}
@@ -77,6 +77,6 @@ export default function PasswordChangeForm({userId}) {
       >
         {UIStrings.USER_ACCOUNT.ACTIONS.discardChangePassword}
       </Button>
-    </SettingsSection.Footer>
-  </SettingsSection>;
+    </SectionFooter>
+  </Section>;
 }

@@ -17,11 +17,9 @@ export default {
   SETTINGS: {
     CANCEL_BUTTON_LABEL: 'Cancel',
     DISCARD_BUTTON_LABEL: 'Discard',
-    LOADING_MASK: 'Loading...',
     SAVE_BUTTON_LABEL: 'Save'
   },
 
-  LOADING: 'Loading...',
   SAVING: 'Saving...',
 
   ERROR: {

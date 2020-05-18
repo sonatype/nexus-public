@@ -14,6 +14,7 @@ import React from 'react';
 import { act } from 'react-dom/test-utils';
 import {fireEvent, render, wait} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
+import TestUtils from 'nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import Axios from 'axios';
 import AnonymousSettings from './AnonymousSettings';
@@ -64,26 +65,18 @@ describe('AnonymousSettings', () => {
     window.dirty = [];
   });
 
-  const renderView = async (view) => {
-    var selectors;
-    await act(async () => {
-      let {container, getByText, getByLabelText, queryByText} = render(view);
-
-      selectors = {
-        container,
-        loadingMask: () => queryByText(UIStrings.SETTINGS.LOADING_MASK),
-        enabledField: () => getByLabelText(UIStrings.ANONYMOUS_SETTINGS.ENABLED_CHECKBOX_DESCRIPTION),
-        userIdField: () => getByLabelText(UIStrings.ANONYMOUS_SETTINGS.USERNAME_TEXTFIELD_LABEL),
-        realmField: () => getByLabelText(UIStrings.ANONYMOUS_SETTINGS.REALM_SELECT_LABEL),
-        saveButton: () => getByText(UIStrings.SETTINGS.SAVE_BUTTON_LABEL),
-        discardButton: () => getByText(UIStrings.SETTINGS.DISCARD_BUTTON_LABEL)
-      }
-    });
-    return selectors;
+  function renderView(view) {
+    return TestUtils.render(view, ({getByLabelText, getByText}) => ({
+      enabledField: () => getByLabelText(UIStrings.ANONYMOUS_SETTINGS.ENABLED_CHECKBOX_DESCRIPTION),
+      userIdField: () => getByLabelText(UIStrings.ANONYMOUS_SETTINGS.USERNAME_TEXTFIELD_LABEL),
+      realmField: () => getByLabelText(UIStrings.ANONYMOUS_SETTINGS.REALM_SELECT_LABEL),
+      saveButton: () => getByText(UIStrings.SETTINGS.SAVE_BUTTON_LABEL),
+      discardButton: () => getByText(UIStrings.SETTINGS.DISCARD_BUTTON_LABEL)
+    }));
   }
 
   it('renders correctly', async () => {
-    let {container, loadingMask} = await renderView(<AnonymousSettings/>);
+    let {container, loadingMask} = renderView(<AnonymousSettings/>);
 
     await wait(() => expect(loadingMask()).not.toBeInTheDocument());
 
@@ -93,7 +86,7 @@ describe('AnonymousSettings', () => {
   it('fetches the values of fields from the API and updates them as expected', async () => {
     let {
       loadingMask, enabledField, userIdField, realmField, saveButton, discardButton
-    } = await renderView(<AnonymousSettings/>);
+    } = renderView(<AnonymousSettings/>);
 
     await wait(() => expect(loadingMask()).not.toBeInTheDocument());
 
@@ -108,7 +101,7 @@ describe('AnonymousSettings', () => {
   it('Sends changes to the API on save', async () => {
     let {
       loadingMask, enabledField, userIdField, realmField, saveButton, discardButton
-    } = await renderView(<AnonymousSettings/>);
+    } = renderView(<AnonymousSettings/>);
 
     await wait(() => expect(loadingMask()).not.toBeInTheDocument());
 
@@ -145,7 +138,7 @@ describe('AnonymousSettings', () => {
   it('Resets the form on discard', async () => {
     let {
       loadingMask, userIdField, saveButton, discardButton
-    } = await renderView(<AnonymousSettings/>);
+    } = renderView(<AnonymousSettings/>);
 
     await wait(() => expect(loadingMask()).not.toBeInTheDocument());
 
@@ -165,7 +158,7 @@ describe('AnonymousSettings', () => {
   it('Sets the dirty flag appropriately', async () => {
     let {
       loadingMask, userIdField, discardButton
-    } = await renderView(<AnonymousSettings/>);
+    } = renderView(<AnonymousSettings/>);
 
     await wait(() => expect(loadingMask()).not.toBeInTheDocument());
 

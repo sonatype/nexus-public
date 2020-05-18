@@ -15,7 +15,7 @@ import React, {useState, useEffect} from 'react';
 import './AnonymousSettings.scss';
 
 import Axios from 'axios';
-import { ExtJS, Button, ContentBody, Checkbox, Textfield, Select, SettingsSection } from 'nexus-ui-plugin';
+import { ExtJS, Button, ContentBody, Checkbox, Textfield, Select, FieldWrapper, NxLoadWrapper, Section, SectionFooter } from 'nexus-ui-plugin';
 import UIStrings from '../../../../constants/UIStrings';
 
 export default function AnonymousSettings() {
@@ -92,60 +92,56 @@ export default function AnonymousSettings() {
   ExtJS.setDirtyStatus('AnonymousSettings', !isPristine);
 
   return <ContentBody className='nxrm-anonymous-settings'>
-    <SettingsSection isLoading={isLoading}>
-      <SettingsSection.FieldWrapper
-          labelText={UIStrings.ANONYMOUS_SETTINGS.ENABLED_CHECKBOX_LABEL}
-      >
-        <Checkbox
-            checkboxId='enabled'
-            isChecked={enabled}
-            onChange={handleInputChange}
-        >
-          {UIStrings.ANONYMOUS_SETTINGS.ENABLED_CHECKBOX_DESCRIPTION}
-        </Checkbox>
-      </SettingsSection.FieldWrapper>
-      <SettingsSection.FieldWrapper
-          labelText={UIStrings.ANONYMOUS_SETTINGS.USERNAME_TEXTFIELD_LABEL}
-      >
-        <Textfield
-            name='userId'
-            value={userId}
-            onChange={handleInputChange}
-            isRequired={!isLoading}
-            className='nxrm-anonymous-settings-field'
-        />
-      </SettingsSection.FieldWrapper>
-      <SettingsSection.FieldWrapper
-          labelText={UIStrings.ANONYMOUS_SETTINGS.REALM_SELECT_LABEL}
-      >
-        <Select
-            name='realmName'
-            value={realmName}
-            onChange={handleInputChange}
-            className='nxrm-anonymous-settings-field'
-        >
-          {
-            realmTypes.map((realmType) =>
-                <option key={realmType.id} value={realmType.id}>{realmType.name}</option>
-            )
-          }
-        </Select>
-      </SettingsSection.FieldWrapper>
-      <SettingsSection.Footer>
-        <Button
-            variant='primary'
-            disabled={isPristine || !userId}
-            onClick={handleSave}
-        >
-          {UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
-        </Button>
-        <Button
-            disabled={isPristine}
-            onClick={handleDiscard}
-        >
-          {UIStrings.SETTINGS.DISCARD_BUTTON_LABEL}
-        </Button>
-      </SettingsSection.Footer>
-    </SettingsSection>
+    <Section>
+      <NxLoadWrapper loading={isLoading}>
+        <FieldWrapper labelText={UIStrings.ANONYMOUS_SETTINGS.ENABLED_CHECKBOX_LABEL}>
+          <Checkbox
+              checkboxId='enabled'
+              isChecked={enabled}
+              onChange={handleInputChange}
+          >
+            {UIStrings.ANONYMOUS_SETTINGS.ENABLED_CHECKBOX_DESCRIPTION}
+          </Checkbox>
+        </FieldWrapper>
+        <FieldWrapper labelText={UIStrings.ANONYMOUS_SETTINGS.USERNAME_TEXTFIELD_LABEL}>
+          <Textfield
+              name='userId'
+              value={userId}
+              onChange={handleInputChange}
+              isRequired={!isLoading}
+              className='nxrm-anonymous-settings-field'
+          />
+        </FieldWrapper>
+        <FieldWrapper labelText={UIStrings.ANONYMOUS_SETTINGS.REALM_SELECT_LABEL}>
+          <Select
+              name='realmName'
+              value={realmName}
+              onChange={handleInputChange}
+              className='nxrm-anonymous-settings-field'
+          >
+            {
+              realmTypes.map((realmType) =>
+                  <option key={realmType.id} value={realmType.id}>{realmType.name}</option>
+              )
+            }
+          </Select>
+        </FieldWrapper>
+        <SectionFooter>
+          <Button
+              variant='primary'
+              disabled={isPristine || !userId}
+              onClick={handleSave}
+          >
+            {UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
+          </Button>
+          <Button
+              disabled={isPristine}
+              onClick={handleDiscard}
+          >
+            {UIStrings.SETTINGS.DISCARD_BUTTON_LABEL}
+          </Button>
+        </SectionFooter>
+      </NxLoadWrapper>
+    </Section>
   </ContentBody>;
 }

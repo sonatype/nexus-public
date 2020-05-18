@@ -14,6 +14,7 @@ import React from 'react';
 import {act} from 'react-dom/test-utils';
 import {fireEvent, render, wait} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
+import TestUtils from 'nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import axios from 'axios';
 
 import LoggingConfigurationList from './LoggingConfigurationList';
@@ -26,21 +27,11 @@ jest.mock('axios', () => ({
 }));
 
 describe('LoggingConfigurationList', function() {
-  const renderView = async () => {
-    var selectors;
-
-    await act(async () => {
-      const {container, queryByText, queryByPlaceholderText} = render(<LoggingConfigurationList/>);
-
-      selectors = {
-        container,
-        loadingMask: () => queryByText("Loading…"),
-        filter: () => queryByPlaceholderText(UIStrings.LOGGING.FILTER_PLACEHOLDER)
-      }
-    });
-
-    return selectors;
-  };
+  function renderView(view = <LoggingConfigurationList/>) {
+    return TestUtils.render(view, ({queryByPlaceholderText}) => ({
+      filter: () => queryByPlaceholderText(UIStrings.LOGGING.FILTER_PLACEHOLDER)
+    }));
+  }
 
   it('renders the resolved data', async function() {
     const rows = [
@@ -52,7 +43,7 @@ describe('LoggingConfigurationList', function() {
       data: rows
     }));
 
-    const {container, loadingMask} = await renderView();
+    const {container, loadingMask} = renderView();
 
     await wait(() => expect(loadingMask()).not.toBeInTheDocument());
 
@@ -66,7 +57,7 @@ describe('LoggingConfigurationList', function() {
   it('renders a loading spinner', async function() {
     axios.get.mockReturnValue(new Promise(() => {}));
 
-    const {container, loadingMask} = await renderView();
+    const {container, loadingMask} = renderView();
 
     expect(loadingMask()).toBeInTheDocument();
     expect(container).toMatchSnapshot();
@@ -75,7 +66,7 @@ describe('LoggingConfigurationList', function() {
   it('renders an error message', async function() {
     axios.get.mockReturnValue(Promise.reject({message: 'Error'}));
 
-    const {container, loadingMask} = await renderView();
+    const {container, loadingMask} = renderView();
 
     await wait(() => expect(loadingMask()).not.toBeInTheDocument());
 
@@ -91,7 +82,7 @@ describe('LoggingConfigurationList', function() {
       ]
     }));
 
-    const {container, loadingMask, filter} = await renderView();
+    const {container, loadingMask, filter} = renderView();
 
     await wait(() => expect(loadingMask()).not.toBeInTheDocument());
 
