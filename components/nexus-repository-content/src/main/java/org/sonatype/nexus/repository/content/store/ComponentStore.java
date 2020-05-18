@@ -64,6 +64,22 @@ public class ComponentStore<T extends ComponentDAO>
   }
 
   /**
+   * Purge components in the given repository whose assets were last downloaded more than given number of days ago
+   *
+   * @param repositoryId the repository to browse
+   * @param daysAgo last downloaded more than this
+   * @param limit at most items to delete
+   * @return number of components deleted
+   *
+   * @since 3.next
+   */
+  @Transactional
+  public int purgeNotRecentlyDownloaded(final int repositoryId, final int daysAgo, final int limit)
+  {
+    return dao().purgeNotRecentlyDownloaded(repositoryId, daysAgo, limit);
+  }
+
+  /**
    * Browse all component namespaces in the given repository.
    *
    * The result will include the empty string if there are any components that don't have a namespace.

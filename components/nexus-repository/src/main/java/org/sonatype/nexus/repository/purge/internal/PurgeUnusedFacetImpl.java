@@ -18,6 +18,7 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.orient.entity.AttachedEntityHelper;
 import org.sonatype.nexus.repository.FacetSupport;
@@ -49,6 +50,7 @@ import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
  *
  * @since 3.0
  */
+@FeatureFlag(name = "nexus.orient.enabled")
 @Named
 public class PurgeUnusedFacetImpl
     extends FacetSupport
