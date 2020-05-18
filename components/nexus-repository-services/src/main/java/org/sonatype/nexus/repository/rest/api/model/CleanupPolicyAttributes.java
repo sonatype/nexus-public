@@ -26,7 +26,7 @@ import io.swagger.annotations.ApiModelProperty;
 public class CleanupPolicyAttributes
 {
   @ApiModelProperty(value = "Components that match any of the applied policies will be deleted",
-      dataType = "java.util.List", example = "weekly-cleanup")
+      dataType = "[Ljava.lang.String;")
   protected Collection<String> policyNames;
 
   @JsonCreator

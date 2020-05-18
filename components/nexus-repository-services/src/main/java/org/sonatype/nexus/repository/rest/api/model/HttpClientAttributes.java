@@ -32,7 +32,7 @@ public class HttpClientAttributes
 
   @ApiModelProperty(
       value = "Whether to auto-block outbound connections if remote peer is detected as unreachable/unresponsive",
-      example = "false")
+      example = "true")
   @NotNull
   protected final Boolean autoBlock;
 

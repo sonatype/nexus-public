@@ -10,33 +10,31 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.rest.api.model;
+package org.sonatype.nexus.repository.maven.rest;
 
-import java.util.Collection;
-
-import javax.validation.constraints.NotEmpty;
+import org.sonatype.nexus.repository.maven.internal.Maven2Format;
+import org.sonatype.nexus.repository.rest.api.model.GroupAttributes;
+import org.sonatype.nexus.repository.rest.api.model.GroupRepositoryApiRequest;
+import org.sonatype.nexus.repository.rest.api.model.StorageAttributes;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModelProperty;
 
 /**
- * REST API model used to describe a group repository.
- *
- * @since 3.20
+ * @since 3.next
  */
-public class GroupAttributes
+@JsonIgnoreProperties({"format", "type"})
+public class MavenGroupRepositoryApiRequest
+    extends GroupRepositoryApiRequest
 {
-  @ApiModelProperty(value = "Member repositories' names", dataType = "[Ljava.lang.String;")
-  @NotEmpty
-  protected final Collection<String> memberNames;
-
   @JsonCreator
-  public GroupAttributes(@JsonProperty("memberNames") final Collection<String> memberNames) {
-    this.memberNames = memberNames;
-  }
-
-  public Collection<String> getMemberNames() {
-    return memberNames;
+  public MavenGroupRepositoryApiRequest(
+      @JsonProperty("name") final String name,
+      @JsonProperty("online") final Boolean online,
+      @JsonProperty("storage") final StorageAttributes storage,
+      @JsonProperty("group") final GroupAttributes group)
+  {
+    super(name, Maven2Format.NAME, online, storage, group);
   }
 }

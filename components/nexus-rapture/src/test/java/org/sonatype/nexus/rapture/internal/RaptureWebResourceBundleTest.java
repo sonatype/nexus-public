@@ -22,7 +22,6 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.common.template.TemplateHelper;
-import org.sonatype.nexus.rapture.ReactFrontendConfiguration;
 import org.sonatype.nexus.rapture.internal.state.StateComponent;
 import org.sonatype.nexus.ui.UiPluginDescriptorSupport;
 
@@ -51,8 +50,6 @@ public class RaptureWebResourceBundleTest
   @Mock
   private TemplateHelper templateHelper;
 
-  @Mock
-  private ReactFrontendConfiguration reactFrontendConfiguration;
 
   private RaptureWebResourceBundle underTest;
 
@@ -62,13 +59,10 @@ public class RaptureWebResourceBundleTest
 
     when(httpServletRequest.getParameter("debug")).thenReturn("false");
 
-    when(reactFrontendConfiguration.isEnabled()).thenReturn(true);
-
     underTest =
         new RaptureWebResourceBundle(applicationVersion, Providers.of(httpServletRequest), Providers.of(stateComponent),
             templateHelper, asList(new UiPluginDescriptorImpl()),
-            asList(new ExtJsUiPluginDescriptorImpl("test-1"), new ExtJsUiPluginDescriptorImpl("test-2")),
-            reactFrontendConfiguration);
+            asList(new ExtJsUiPluginDescriptorImpl("test-1"), new ExtJsUiPluginDescriptorImpl("test-2")));
   }
 
   @Test
@@ -98,18 +92,6 @@ public class RaptureWebResourceBundleTest
   }
 
   @Test
-  public void testGetStyles_extJsOnly() throws Exception {
-    when(reactFrontendConfiguration.isEnabled()).thenReturn(false);
-
-    List<URI> uris = underTest.getStyles();
-
-    assertThat(uris, is(asList(new URI("http://baseurl/static/rapture/resources/loading-prod.css"),
-        new URI("http://baseurl/static/rapture/resources/baseapp-prod.css"),
-        new URI("http://baseurl/static/rapture/resources/test-1-prod.css"),
-        new URI("http://baseurl/static/rapture/resources/test-2-prod.css"))));
-  }
-
-  @Test
   public void testGetScripts_prod() throws Exception {
     List<URI> uris = underTest.getScripts();
 
@@ -123,25 +105,6 @@ public class RaptureWebResourceBundleTest
         new URI("http://baseurl/extjs-script-2-test-2.js"),
         new URI("http://baseurl/react-script-1-test-prod.js"),
         new URI("http://baseurl/react-script-2-test-prod.js"),
-        new URI("http://baseurl/static/rapture/test-1-prod.js"),
-        new URI("http://baseurl/static/rapture/test-2-prod.js"),
-        new URI("http://baseurl/static/rapture/app.js"))));
-  }
-
-  @Test
-  public void testGetScripts_extJsOnly_prod() throws Exception {
-    when(reactFrontendConfiguration.isEnabled()).thenReturn(false);
-
-    List<URI> uris = underTest.getScripts();
-
-    assertThat(uris, is(asList(new URI("http://baseurl/static/rapture/baseapp-prod.js"),
-        new URI("http://baseurl/static/rapture/extdirect-prod.js"),
-        new URI("http://baseurl/static/rapture/bootstrap.js"),
-        new URI("http://baseurl/static/rapture/d3.v4.min.js"),
-        new URI("http://baseurl/extjs-script-1-test-1.js"),
-        new URI("http://baseurl/extjs-script-2-test-1.js"),
-        new URI("http://baseurl/extjs-script-1-test-2.js"),
-        new URI("http://baseurl/extjs-script-2-test-2.js"),
         new URI("http://baseurl/static/rapture/test-1-prod.js"),
         new URI("http://baseurl/static/rapture/test-2-prod.js"),
         new URI("http://baseurl/static/rapture/app.js"))));
@@ -163,24 +126,6 @@ public class RaptureWebResourceBundleTest
         new URI("http://baseurl/extjs-script-2-test-2.js"),
         new URI("http://baseurl/react-script-1-test-debug.js"),
         new URI("http://baseurl/react-script-2-test-debug.js"),
-        new URI("http://baseurl/static/rapture/app.js"))));
-  }
-
-  @Test
-  public void testGetScripts_extJsOnly_debug() throws Exception {
-    when(reactFrontendConfiguration.isEnabled()).thenReturn(false);
-    when(httpServletRequest.getParameter("debug")).thenReturn("true");
-
-    List<URI> uris = underTest.getScripts();
-
-    assertThat(uris, is(asList(new URI("http://baseurl/static/rapture/baseapp-debug.js"),
-        new URI("http://baseurl/static/rapture/extdirect-debug.js"),
-        new URI("http://baseurl/static/rapture/bootstrap.js"),
-        new URI("http://baseurl/static/rapture/d3.v4.min.js"),
-        new URI("http://baseurl/extjs-script-1-test-1.js"),
-        new URI("http://baseurl/extjs-script-2-test-1.js"),
-        new URI("http://baseurl/extjs-script-1-test-2.js"),
-        new URI("http://baseurl/extjs-script-2-test-2.js"),
         new URI("http://baseurl/static/rapture/app.js"))));
   }
 

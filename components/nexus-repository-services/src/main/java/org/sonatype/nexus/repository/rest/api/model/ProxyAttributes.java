@@ -26,7 +26,7 @@ import org.hibernate.validator.constraints.NotEmpty;
  */
 public class ProxyAttributes
 {
-  @ApiModelProperty(value = "Location of the remote repository being proxied", example = "https://registry.npmjs.org")
+  @ApiModelProperty(value = "Location of the remote repository being proxied", example = "https://remote.repository.com")
   @NotEmpty
   protected final String remoteUrl;
 

@@ -10,9 +10,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.security.internal.rest;
+package org.sonatype.nexus.security.anonymous.rest;
 
-import java.util.List;
+import javax.validation.Valid;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -20,16 +20,20 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
 /**
- * Swagger documentation for {@link SecurityApiResource}
- *
- * @since 3.17
+ * @since 3.next
  */
-@Api(value = "Security management")
-public interface SecurityApiResourceDoc
+@Api(value = "Security Management: Anonymous Access")
+public interface AnonymousAccessApiResourceDoc
 {
-  @ApiOperation("Retrieve a list of the available user sources.")
+  @ApiOperation("Get Anonymous Access settings")
   @ApiResponses(value = {
-      @ApiResponse(code = 403, message = NexusSecurityApiConstants.INVALID_PERMISSIONS)
+      @ApiResponse(code = 403, message = "Insufficient permissions to update settings")
   })
-  List<ApiUserSource> getUserSources();
+  AnonymousAccessSettingsXO read();
+
+  @ApiOperation("Update Anonymous Access settings")
+  @ApiResponses(value = {
+      @ApiResponse(code = 403, message = "Insufficient permissions to update settings")
+  })
+  AnonymousAccessSettingsXO update(@Valid AnonymousAccessSettingsXO anonymousXO);
 }

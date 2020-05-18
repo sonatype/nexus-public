@@ -38,7 +38,7 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
  *
  * @since 3.4
  */
-@Api(value = "search")
+@Api(value = "Search")
 public interface SearchResourceDoc
 {
   String CONTINUATION_TOKEN_DESCRIPTION = "A token returned by a prior request. If present, the next page of results are returned";

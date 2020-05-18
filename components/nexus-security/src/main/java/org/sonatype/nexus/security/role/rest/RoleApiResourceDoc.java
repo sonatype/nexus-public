@@ -35,7 +35,7 @@ import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
  *
  * @since 3.19
  */
-@Api(value = "Security Management: Roles")
+@Api(value = "Security management: roles")
 public interface RoleApiResourceDoc
 {
   @ApiOperation("List roles")

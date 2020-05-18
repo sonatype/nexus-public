@@ -27,7 +27,7 @@ import io.swagger.annotations.ApiResponses;
 /**
  * @since 3.19
  */
-@Api(value = "Security Management: Privileges")
+@Api(value = "Security management: privileges")
 public interface RepositoryPrivilegeApiResourceDoc
 {
   @ApiOperation("Create a repository admin type privilege.")

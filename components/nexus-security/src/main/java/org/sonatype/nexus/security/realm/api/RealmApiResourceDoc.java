@@ -21,7 +21,7 @@ import io.swagger.annotations.ApiParam;
 /**
  * @since 3.20
  */
-@Api(value = "Security Management: Realms")
+@Api(value = "Security management: realms")
 public interface RealmApiResourceDoc
 {
   @ApiOperation("List the available realms")

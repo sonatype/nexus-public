@@ -31,7 +31,7 @@ import io.swagger.annotations.ApiResponses;
  *
  * @since 3.16
  */
-@Api(value = "routing-rules")
+@Api(value = "Routing rules")
 public interface RoutingRulesApiResourceDoc
 {
   @ApiOperation("Create a single routing rule")
