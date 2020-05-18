@@ -17,8 +17,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -47,22 +45,16 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
 /**
  * @since 3.16
  */
-@Named
-@Singleton
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
-@Path(RoutingRulesApiResource.RESOURCE_URI)
 public class RoutingRulesApiResource
     extends ComponentSupport
     implements Resource, RoutingRulesApiResourceDoc
 {
-  public static final String RESOURCE_URI = BETA_API_PREFIX + "/routing-rules";
-
   private final RoutingRuleStore routingRuleStore;
 
   private final RoutingRuleHelper routingRuleHelper;
