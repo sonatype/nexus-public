@@ -107,6 +107,22 @@ class BlobStoreComponent
   @DirectMethod
   @Timed
   @ExceptionMetered
+  List<BlobStoreXO> readNames() {
+    repositoryPermissionChecker.ensureUserHasAnyPermissionOrAdminAccess(
+        singletonList(new ApplicationPermission('blobstores', READ)),
+        READ,
+        repositoryManager.browse()
+    )
+    def blobStores = blobStoreManager.browse()
+    def blobStoreGroups = blobStores.findAll { it.blobStoreConfiguration.type == BlobStoreGroup.TYPE }.
+        collect { it as BlobStoreGroup }
+
+    blobStores.collect { asBlobStoreXO(it, blobStoreGroups, true) }
+  }
+
+  @DirectMethod
+  @Timed
+  @ExceptionMetered
   @RequiresPermissions('nexus:blobstores:read')
   List<BlobStoreXO> readGroupable(final @Nullable StoreLoadParameters parameters) {
     def blobStores = blobStoreManager.browse()
@@ -218,8 +234,13 @@ class BlobStoreComponent
     'on'.equalsIgnoreCase(value)  || '1'.equalsIgnoreCase(value))
   }
 
-  BlobStoreXO asBlobStoreXO(final BlobStore blobStore, final Collection<BlobStoreGroup> blobStoreGroups = []) {
+  BlobStoreXO asBlobStoreXO(final BlobStore blobStore, final Collection<BlobStoreGroup> blobStoreGroups = [],
+                            final boolean namesOnly = false)
+  {
     NestedAttributesMap quotaAttributes = blobStore.getBlobStoreConfiguration().attributes(BlobStoreQuotaSupport.ROOT_KEY)
+    if (namesOnly) {
+      return new BlobStoreXO(name: blobStore.blobStoreConfiguration.name)
+    }
     def blobStoreXO = new BlobStoreXO(
         name: blobStore.blobStoreConfiguration.name,
         type: blobStore.blobStoreConfiguration.type,

@@ -57,7 +57,7 @@ Ext.define('NX.coreui.view.repository.facet.StorageFacet', {
             helpText: NX.I18n.get('Repository_Facet_StorageFacet_BlobStore_HelpText'),
             emptyText: NX.I18n.get('Repository_Facet_StorageFacet_BlobStore_EmptyText'),
             editable: false,
-            store: 'Blobstore',
+            store: 'BlobstoreNames',
             queryMode: 'local',
             displayField: 'name',
             valueField: 'name',

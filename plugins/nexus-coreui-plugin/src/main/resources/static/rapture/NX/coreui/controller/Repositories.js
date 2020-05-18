@@ -34,7 +34,7 @@ Ext.define('NX.coreui.controller.Repositories', {
     'Repository'
   ],
   stores: [
-    'Blobstore',
+    'BlobstoreNames',
     'Datastore',
     'ContentDatastore',
     'Repository',
