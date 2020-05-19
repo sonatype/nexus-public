@@ -32,6 +32,7 @@ import org.sonatype.goodies.testsupport.junit.TestIndexRule;
 import org.sonatype.goodies.testsupport.port.PortRegistry;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 
 import com.google.common.base.Joiner;
@@ -124,6 +125,8 @@ public abstract class NexusPaxExamSupport
   private static final int PORT_REGISTRY_MIN_FORK = PORT_REGISTRY_MAX_MAIN + 1;
 
   private static final int PORT_REGISTRY_MAX_FORK = 30000;
+
+  private static final String DATABASE_KEY = "it.database";
 
   // -------------------------------------------------------------------------
 
@@ -452,6 +455,11 @@ public abstract class NexusPaxExamSupport
         systemProperty(PORT_REGISTRY_MIN_KEY).value(Integer.toString(PORT_REGISTRY_MIN_FORK)),
         systemProperty(PORT_REGISTRY_MAX_KEY).value(Integer.toString(PORT_REGISTRY_MAX_FORK)),
 
+        //configure db
+        when(getValidTestDatabase().isUseContentStore()).useOptions(
+            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.orient.enabled", "false")
+        ),
+
         // randomize ports...
         editConfigurationFilePut(NEXUS_PROPERTIES_FILE, //
             "application-port", Integer.toString(portRegistry.reservePort())),
@@ -579,6 +587,19 @@ public abstract class NexusPaxExamSupport
     captureLogs(testIndex, resolveWorkFile("log"), getClass().getName());
 
     testCleaner.cleanOnSuccess(applicationDirectories.getInstallDirectory());
+  }
+
+  /**
+   * Get the database type to use for the test instance, based on system property.
+   * Defaults to Orient.
+   */
+  public static TestDatabase getValidTestDatabase() {
+    try {
+      return TestDatabase.valueOf(Strings2.upper(System.getProperty(DATABASE_KEY)));
+    } catch (Exception e){
+      //fallback to ORIENT if it is invalid
+      return TestDatabase.ORIENT;
+    }
   }
 
   // -------------------------------------------------------------------------
