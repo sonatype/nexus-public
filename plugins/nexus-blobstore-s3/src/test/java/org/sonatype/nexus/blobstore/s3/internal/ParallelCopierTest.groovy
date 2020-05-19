@@ -75,7 +75,7 @@ class ParallelCopierTest
       thrown(BlobStoreException)
       1 * s3.initiateMultipartUpload(_) >> new InitiateMultipartUploadResult(uploadId: 'testupload')
       1 * s3.getObjectMetadata('bucketName', 'source') >> new ObjectMetadata().with { setContentLength(101); it }
-      2 * s3.copyPart(_) >> { CopyPartRequest request -> throw new SdkClientException('') }
+      (1..2) * s3.copyPart(_) >> { CopyPartRequest request -> throw new SdkClientException('') }
       1 * s3.abortMultipartUpload(_)
   }
 
