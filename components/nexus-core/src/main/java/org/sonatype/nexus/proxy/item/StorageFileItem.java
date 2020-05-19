@@ -27,6 +27,16 @@ public interface StorageFileItem
   public static final String DIGEST_SHA1_KEY = "digest.sha1";
 
   /**
+   * The digest sha1 key used in item context and attributes.
+   */
+  public static final String DIGEST_SHA256_KEY = "digest.sha256";
+
+  /**
+   * The digest sha1 key used in item context and attributes.
+   */
+  public static final String DIGEST_SHA512_KEY = "digest.sha512";
+
+  /**
    * The digest md5 key used in item context and attributes. @deprecated MD5 is deprecated, use SHA1.
    */
   @Deprecated

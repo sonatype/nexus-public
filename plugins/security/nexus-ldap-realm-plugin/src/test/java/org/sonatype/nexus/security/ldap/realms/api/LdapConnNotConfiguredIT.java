@@ -82,38 +82,6 @@ public class LdapConnNotConfiguredIT
   }
 
   @Test
-  public void testSetPasswordToFake()
-      throws Exception
-  {
-
-    PlexusResource resource = getResource();
-
-    LdapConnectionInfoResponse response = new LdapConnectionInfoResponse();
-    LdapConnectionInfoDTO connectionInfo = new LdapConnectionInfoDTO();
-    response.setData(connectionInfo);
-    connectionInfo.setHost("localhost");
-    connectionInfo.setPort(this.getLdapPort());
-    connectionInfo.setSearchBase("o=sonatype");
-    connectionInfo.setSystemPassword(LdapRealmPlexusResourceConst.FAKE_PASSWORD);
-    connectionInfo.setSystemUsername("uid=admin,ou=system");
-    connectionInfo.setProtocol("ldap");
-    connectionInfo.setAuthScheme("simple");
-
-    //this is the same as not setting the password so it should throw an exception
-
-    try {
-      resource.put(null, null, null, response);
-      Assert.fail("Expected PlexusResourceException");
-    }
-    catch (PlexusResourceException e) {
-      ErrorResponse errorResponse = (ErrorResponse) e.getResultObject();
-      Assert.assertEquals(1, errorResponse.getErrors().size());
-
-      Assert.assertTrue(this.getErrorString(errorResponse, 0).toLowerCase().contains("password"));
-    }
-  }
-
-  @Test
   public void testGetPasswordNullWhenNotSet()
       throws Exception
   {

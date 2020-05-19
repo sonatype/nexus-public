@@ -31,6 +31,7 @@ import org.sonatype.nexus.proxy.item.StorageFileItem;
 import org.sonatype.nexus.proxy.item.StorageItem;
 import org.sonatype.nexus.proxy.item.StringContentLocator;
 import org.sonatype.nexus.proxy.maven.gav.Gav;
+import org.sonatype.nexus.proxy.maven.gav.Gav.HashType;
 import org.sonatype.nexus.proxy.storage.UnsupportedStorageOperationException;
 import org.sonatype.nexus.proxy.utils.RepositoryStringUtils;
 
@@ -81,27 +82,10 @@ public class ArtifactStoreHelper
       StorageFileItem storedFile =
           (StorageFileItem) getMavenRepository().retrieveItem(false, new ResourceStoreRequest(request));
 
-      String sha1Hash = storedFile.getRepositoryItemAttributes().get(DigestCalculatingInspector.DIGEST_SHA1_KEY);
-
-      String md5Hash = storedFile.getRepositoryItemAttributes().get(DigestCalculatingInspector.DIGEST_MD5_KEY);
-
-      if (!StringUtils.isEmpty(sha1Hash)) {
-        request.setRequestPath(storedFile.getPath() + ".sha1");
-
-        getMavenRepository().storeItem(
-            false,
-            new DefaultStorageFileItem(getMavenRepository(), request, true, true, new StringContentLocator(
-                sha1Hash)));
-      }
-
-      if (!StringUtils.isEmpty(md5Hash)) {
-        request.setRequestPath(storedFile.getPath() + ".md5");
-
-        getMavenRepository().storeItem(
-            false,
-            new DefaultStorageFileItem(getMavenRepository(), request, true, true, new StringContentLocator(
-                md5Hash)));
-      }
+      calculateAndStoreChecksum(storedFile, HashType.sha1, request);
+      calculateAndStoreChecksum(storedFile, HashType.sha256, request);
+      calculateAndStoreChecksum(storedFile, HashType.sha512, request);
+      calculateAndStoreChecksum(storedFile, HashType.md5, request);
     }
     catch (ItemNotFoundException e) {
       throw new LocalStorageException("Storage inconsistency!", e);
@@ -130,6 +114,24 @@ public class ArtifactStoreHelper
     String originalPath = request.getRequestPath();
 
     request.setRequestPath(originalPath + ".sha1");
+
+    try {
+      getMavenRepository().deleteItem(request);
+    }
+    catch (ItemNotFoundException e) {
+      // ignore not found
+    }
+
+    request.setRequestPath(originalPath + ".sha256");
+
+    try {
+      getMavenRepository().deleteItem(request);
+    }
+    catch (ItemNotFoundException e) {
+      // ignore not found
+    }
+
+    request.setRequestPath(originalPath + ".sha512");
 
     try {
       getMavenRepository().deleteItem(request);
@@ -172,30 +174,51 @@ public class ArtifactStoreHelper
 
       ResourceStoreRequest req = new ResourceStoreRequest(storedFile);
 
-      String sha1Hash = storedFile.getRepositoryItemAttributes().get(DigestCalculatingInspector.DIGEST_SHA1_KEY);
-
-      String md5Hash = storedFile.getRepositoryItemAttributes().get(DigestCalculatingInspector.DIGEST_MD5_KEY);
-
-      if (!StringUtils.isEmpty(sha1Hash)) {
-        req.setRequestPath(item.getPath() + ".sha1");
-
-        getMavenRepository().storeItem(
-            false,
-            new DefaultStorageFileItem(getMavenRepository(), req, true, true, new StringContentLocator(
-                sha1Hash)));
-      }
-
-      if (!StringUtils.isEmpty(md5Hash)) {
-        req.setRequestPath(item.getPath() + ".md5");
-
-        getMavenRepository().storeItem(
-            false,
-            new DefaultStorageFileItem(getMavenRepository(), req, true, true, new StringContentLocator(
-                md5Hash)));
-      }
+      calculateAndStoreChecksum(storedFile, HashType.sha1, req);
+      calculateAndStoreChecksum(storedFile, HashType.sha256, req);
+      calculateAndStoreChecksum(storedFile, HashType.sha512, req);
+      calculateAndStoreChecksum(storedFile, HashType.md5, req);
     }
     catch (ItemNotFoundException e) {
       throw new LocalStorageException("Storage inconsistency!", e);
+    }
+  }
+
+  private void calculateAndStoreChecksum(
+      final StorageFileItem storageFileItem,
+      HashType hashType,
+      final ResourceStoreRequest resourceStoreRequest)
+      throws UnsupportedStorageOperationException, IllegalOperationException, StorageException
+  {
+    String hash = null;
+    String extension = null;
+    switch (hashType) {
+      case sha1:
+        hash = storageFileItem.getRepositoryItemAttributes().get(DigestCalculatingInspector.DIGEST_SHA1_KEY);
+        extension = ".sha1";
+        break;
+      case sha256:
+        hash = storageFileItem.getRepositoryItemAttributes().get(DigestCalculatingInspector.DIGEST_SHA256_KEY);
+        extension = ".sha256";
+        break;
+      case sha512:
+        hash = storageFileItem.getRepositoryItemAttributes().get(DigestCalculatingInspector.DIGEST_SHA512_KEY);
+        extension = ".sha512";
+        break;
+      case md5:
+        hash = storageFileItem.getRepositoryItemAttributes().get(DigestCalculatingInspector.DIGEST_MD5_KEY);
+        extension = ".md5";
+        break;
+      default:
+        //do nothing, unsupported hash type
+    }
+    if (!StringUtils.isEmpty(hash)) {
+      resourceStoreRequest.setRequestPath(storageFileItem.getPath() + extension);
+
+      getMavenRepository().storeItem(
+          false,
+          new DefaultStorageFileItem(getMavenRepository(), resourceStoreRequest, true, true,
+              new StringContentLocator(hash)));
     }
   }
 
@@ -215,6 +238,30 @@ public class ArtifactStoreHelper
     }
 
     request.pushRequestPath(request.getRequestPath() + ".sha1");
+    try {
+      getMavenRepository().deleteItem(fromTask, request);
+
+    }
+    catch (ItemNotFoundException e) {
+      // ignore not found
+    }
+    finally {
+      request.popRequestPath();
+    }
+
+    request.pushRequestPath(request.getRequestPath() + ".sha256");
+    try {
+      getMavenRepository().deleteItem(fromTask, request);
+
+    }
+    catch (ItemNotFoundException e) {
+      // ignore not found
+    }
+    finally {
+      request.popRequestPath();
+    }
+
+    request.pushRequestPath(request.getRequestPath() + ".sha512");
     try {
       getMavenRepository().deleteItem(fromTask, request);
 

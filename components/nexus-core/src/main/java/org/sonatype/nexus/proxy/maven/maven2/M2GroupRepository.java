@@ -288,9 +288,17 @@ public class M2GroupRepository
 
       String sha1Digest = DigesterUtils.getSha1Digest(resultOutputStream.toByteArray());
 
+      String sha256Digest = DigesterUtils.getSha256Digest(resultOutputStream.toByteArray());
+
+      String sha512Digest = DigesterUtils.getSha512Digest(resultOutputStream.toByteArray());
+
       storeMergedMetadataItemDigest(request, md5Digest, items, "MD5");
 
       storeMergedMetadataItemDigest(request, sha1Digest, items, "SHA1");
+
+      storeMergedMetadataItemDigest(request, sha256Digest, items, "SHA-256");
+
+      storeMergedMetadataItemDigest(request, sha512Digest, items, "SHA-512");
 
       resultOutputStream.close();
 

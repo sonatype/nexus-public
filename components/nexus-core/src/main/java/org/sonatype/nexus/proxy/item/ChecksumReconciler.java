@@ -41,10 +41,14 @@ import org.apache.commons.lang.StringUtils;
 
 import static org.sonatype.nexus.proxy.attributes.inspectors.DigestCalculatingInspector.DIGEST_MD5_KEY;
 import static org.sonatype.nexus.proxy.attributes.inspectors.DigestCalculatingInspector.DIGEST_SHA1_KEY;
+import static org.sonatype.nexus.proxy.attributes.inspectors.DigestCalculatingInspector.DIGEST_SHA256_KEY;
+import static org.sonatype.nexus.proxy.attributes.inspectors.DigestCalculatingInspector.DIGEST_SHA512_KEY;
 import static org.sonatype.nexus.proxy.maven.ChecksumContentValidator.ATTR_REMOTE_MD5;
 import static org.sonatype.nexus.proxy.maven.ChecksumContentValidator.ATTR_REMOTE_SHA1;
 import static org.sonatype.nexus.proxy.maven.ChecksumContentValidator.SUFFIX_MD5;
 import static org.sonatype.nexus.proxy.maven.ChecksumContentValidator.SUFFIX_SHA1;
+import static org.sonatype.nexus.proxy.maven.ChecksumContentValidator.SUFFIX_SHA256;
+import static org.sonatype.nexus.proxy.maven.ChecksumContentValidator.SUFFIX_SHA512;
 
 /**
  * Reconciles any item attribute checksums affected by NEXUS-8178.
@@ -61,6 +65,10 @@ public class ChecksumReconciler
 
   private final MessageDigest sha1;
 
+  private final MessageDigest sha256;
+
+  private final MessageDigest sha512;
+
   private final MessageDigest md5;
 
   private File attributesBaseDir;
@@ -76,6 +84,8 @@ public class ChecksumReconciler
     this.digestCalculatingInspector = digestCalculatingInspector;
 
     sha1 = MessageDigest.getInstance("SHA1");
+    sha256 = MessageDigest.getInstance("SHA-256");
+    sha512 = MessageDigest.getInstance("SHA-512");
     md5 = MessageDigest.getInstance("MD5");
   }
 
@@ -129,15 +139,20 @@ public class ChecksumReconciler
       if (shouldAttemptReconciliation(itemPath)) {
 
         sha1.reset();
+        sha256.reset();
+        sha512.reset();
         md5.reset();
 
         // look for checksums affected by the link persister pre-fetching the first 8 bytes (see NEXUS-8178)
-        try (final InputStream is = new DigestInputStream(new DigestInputStream(item.getContentLocator().getContent(),
-            sha1), md5)) {
+        try (final InputStream is = new DigestInputStream(new DigestInputStream(
+            new DigestInputStream(new DigestInputStream(item.getContentLocator().getContent(), sha1), sha256), sha512),
+            md5)) {
 
           final byte[] buf = new byte[8];
           ByteStreams.read(is, buf, 0, 8);
           sha1.update(buf);
+          sha256.update(buf);
+          sha512.update(buf);
           md5.update(buf);
 
           ByteStreams.copy(is, ByteStreams.nullOutputStream());
@@ -165,6 +180,16 @@ public class ChecksumReconciler
 
         reconcileChecksumFile(repo, itemPath + SUFFIX_SHA1, affectedSHA1,
             item.getRepositoryItemAttributes().get(DIGEST_SHA1_KEY));
+
+        final String affectedSHA256 = DigesterUtils.getDigestAsString(sha256.digest());
+
+        reconcileChecksumFile(repo, itemPath + SUFFIX_SHA256, affectedSHA256,
+            item.getRepositoryItemAttributes().get(DIGEST_SHA256_KEY));
+
+        final String affectedSHA512 = DigesterUtils.getDigestAsString(sha512.digest());
+
+        reconcileChecksumFile(repo, itemPath + SUFFIX_SHA512, affectedSHA512,
+            item.getRepositoryItemAttributes().get(DIGEST_SHA512_KEY));
 
         final String affectedMD5 = DigesterUtils.getDigestAsString(md5.digest());
 
@@ -194,7 +219,8 @@ public class ChecksumReconciler
    * Should we attempt checksum reconciliation for the given path?
    */
   private boolean shouldAttemptReconciliation(final String itemPath) {
-    if (itemPath == null || itemPath.endsWith(SUFFIX_SHA1) || itemPath.endsWith(SUFFIX_MD5)) {
+    if (itemPath == null || itemPath.endsWith(SUFFIX_SHA1) || itemPath.endsWith(SUFFIX_SHA256) ||
+        itemPath.endsWith(SUFFIX_SHA512) || itemPath.endsWith(SUFFIX_MD5)) {
       return false; // ignore associated checksum files, we'll fix them when we process the main item
     }
     final File attributesFile = new File(attributesBaseDir, StringUtils.strip(itemPath, "/"));

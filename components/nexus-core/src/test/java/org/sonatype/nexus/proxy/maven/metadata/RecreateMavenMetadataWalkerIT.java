@@ -216,6 +216,8 @@ public class RecreateMavenMetadataWalkerIT
     // === 3rd pass: e manually "break" one checksum, and expect that one only to be overwritten
     {
       final String checksumPath = "/com/mycom/group1/maven-metadata.xml.sha1";
+      final String checksumPath256 = "/com/mycom/group1/maven-metadata.xml.sha256";
+      final String checksumPath512 = "/com/mycom/group1/maven-metadata.xml.sha512";
       final String checksumPathMd5 = "/com/mycom/group1/maven-metadata.xml.md5";
       // coming from http://repo1.maven.org/maven2/org/slf4j/slf4j-api/1.6.4/slf4j-api-1.6.4.pom.sha1
       final String wrongChecksum = "93c66c9afd6cf7b91bd4ecf38a60ca48fc5f2078";
@@ -231,9 +233,11 @@ public class RecreateMavenMetadataWalkerIT
       walker.walk(ctx);
       eventBus().unregister(validationEventListener);
       assertTrue("We should record one STORE!", validationEventListener.hasStoresRecorded());
-      assertEquals("There should be only 2 STOREs!", 2, validationEventListener.storeCount());
+      assertEquals("There should be only 4 STOREs!", 4, validationEventListener.storeCount());
       assertTrue("This checksum should be recreated!", validationEventListener.isOverwritten(checksumPath));
-      // if SHA1 detected a broken, BOTH sha1 and md5 are recreated
+      // if SHA1 detected a broken, ALL of sha1, sha256, sha512 and md5 are recreated
+      assertTrue("This checksum should be recreated!", validationEventListener.isOverwritten(checksumPath256));
+      assertTrue("This checksum should be recreated!", validationEventListener.isOverwritten(checksumPath512));
       assertTrue("This checksum should be recreated!", validationEventListener.isOverwritten(checksumPathMd5));
     }
 

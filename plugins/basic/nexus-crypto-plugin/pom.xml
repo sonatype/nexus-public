@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.plugins</groupId>
     <artifactId>nexus-plugins-basic</artifactId>
-    <version>2.14.17-01</version>
+    <version>2.14.18-01</version>
   </parent>
 
   <artifactId>nexus-crypto-plugin</artifactId>
@@ -41,22 +41,42 @@
 
     <dependency>
       <groupId>org.bouncycastle</groupId>
-      <artifactId>bcprov-jdk15on</artifactId>
+      <artifactId>bcprov-jdk15to18</artifactId>
     </dependency>
 
     <dependency>
       <groupId>org.bouncycastle</groupId>
-      <artifactId>bcpg-jdk15on</artifactId>
+      <artifactId>bcpg-jdk15to18</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.bouncycastle</groupId>
+          <artifactId>bcprov-jdk15on</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
       <groupId>org.bouncycastle</groupId>
-      <artifactId>bcpkix-jdk15on</artifactId>
+      <artifactId>bcpkix-jdk15to18</artifactId>
     </dependency>
 
     <dependency>
       <groupId>org.sonatype.sisu.goodies</groupId>
       <artifactId>goodies-crypto</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.bouncycastle</groupId>
+          <artifactId>bcpkix-jdk15on</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.bouncycastle</groupId>
+          <artifactId>bcpg-jdk15on</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.bouncycastle</groupId>
+          <artifactId>bcprov-jdk15on</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
@@ -73,11 +93,14 @@
         <artifactId>nexus-plugin-bundle-maven-plugin</artifactId>
         <configuration>
           <sharedDependencies>
-            <sharedDependency>org.bouncycastle:bcprov-jdk15on</sharedDependency>
-            <sharedDependency>org.bouncycastle:bcpg-jdk15on</sharedDependency>
-            <sharedDependency>org.bouncycastle:bcpkix-jdk15on</sharedDependency>
+            <sharedDependency>org.bouncycastle:bcprov-jdk15to18</sharedDependency>
+            <sharedDependency>org.bouncycastle:bcpg-jdk15to18</sharedDependency>
+            <sharedDependency>org.bouncycastle:bcpkix-jdk15to18</sharedDependency>
             <sharedDependency>org.sonatype.sisu.goodies:goodies-crypto</sharedDependency>
           </sharedDependencies>
+          <classpathDependencyExcludes>
+            <dependencyExclude>org.bouncycastle:bcprov-jdk15on</dependencyExclude>
+          </classpathDependencyExcludes>
         </configuration>
       </plugin>
 

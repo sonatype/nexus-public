@@ -149,10 +149,10 @@ public class LocalContentDiscovererImplTest
       final PrefixSource entrySource = result.getPrefixSource();
       assertThat(
           entrySource.readEntries(),
-          hasItems("/archetype-catalog.xml", "/archetype-catalog.xml.sha1", "/archetype-catalog.xml.md5",
-              "/org/sonatype", "/org/apache"));
+          hasItems("/archetype-catalog.xml", "/archetype-catalog.xml.sha1", "/archetype-catalog.xml.sha256",
+              "/archetype-catalog.xml.sha512", "/archetype-catalog.xml.md5", "/org/sonatype", "/org/apache"));
       assertThat(entrySource.readEntries(), not(hasItems("/com/sonatype")));
-      assertThat(entrySource.readEntries().size(), equalTo(5));
+      assertThat(entrySource.readEntries().size(), equalTo(7));
     }
 
     addSomeContent(mavenRepository, PATHS2);
@@ -167,9 +167,10 @@ public class LocalContentDiscovererImplTest
       final PrefixSource entrySource = result.getPrefixSource();
       assertThat(
           entrySource.readEntries(),
-          hasItems("/archetype-catalog.xml", "/archetype-catalog.xml.sha1", "/archetype-catalog.xml.md5",
-              "/org/sonatype", "/com/sonatype", "/org/apache"));
-      assertThat(entrySource.readEntries().size(), equalTo(6));
+          hasItems("/archetype-catalog.xml", "/archetype-catalog.xml.sha1", "/archetype-catalog.xml.sha256",
+              "/archetype-catalog.xml.sha512", "/archetype-catalog.xml.md5", "/org/sonatype", "/com/sonatype",
+              "/org/apache"));
+      assertThat(entrySource.readEntries().size(), equalTo(8));
     }
 
     removeSomeContent(mavenRepository, PATHS3);
@@ -184,12 +185,12 @@ public class LocalContentDiscovererImplTest
       final PrefixSource entrySource = result.getPrefixSource();
       assertThat(
           entrySource.readEntries(),
-          hasItems("/archetype-catalog.xml", "/archetype-catalog.xml.sha1", "/archetype-catalog.xml.md5",
-              "/com/sonatype", "/org/apache"));
+          hasItems("/archetype-catalog.xml", "/archetype-catalog.xml.sha1", "/archetype-catalog.xml.sha256",
+              "/archetype-catalog.xml.sha512", "/archetype-catalog.xml.md5", "/com/sonatype", "/org/apache"));
       // NEXUS-6485: Not true anymore, we do include empty directories due to "depth" optimization
       // see LocalContentDiscovererImpl
       // assertThat(entrySource.readEntries(), not(hasItems("/org/sonatype")));
-      assertThat(entrySource.readEntries().size(), equalTo(6)); // was 5
+      assertThat(entrySource.readEntries().size(), equalTo(8)); // was 5
     }
   }
 }

@@ -57,16 +57,7 @@ import org.codehaus.plexus.util.StringUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.proxy.ItemNotFoundException.reasonFor;
-import static org.sonatype.nexus.proxy.maven.ChecksumContentValidator.ATTR_REMOTE_HASH_EXPIRED;
-import static org.sonatype.nexus.proxy.maven.ChecksumContentValidator.ATTR_REMOTE_MD5;
-import static org.sonatype.nexus.proxy.maven.ChecksumContentValidator.ATTR_REMOTE_SHA1;
-import static org.sonatype.nexus.proxy.maven.ChecksumContentValidator.SUFFIX_MD5;
-import static org.sonatype.nexus.proxy.maven.ChecksumContentValidator.SUFFIX_SHA1;
-import static org.sonatype.nexus.proxy.maven.ChecksumContentValidator.doRetrieveMD5;
-import static org.sonatype.nexus.proxy.maven.ChecksumContentValidator.doRetrieveSHA1;
-import static org.sonatype.nexus.proxy.maven.ChecksumContentValidator.doStoreMD5;
-import static org.sonatype.nexus.proxy.maven.ChecksumContentValidator.doStoreSHA1;
-import static org.sonatype.nexus.proxy.maven.ChecksumContentValidator.newHashItem;
+import static org.sonatype.nexus.proxy.maven.ChecksumContentValidator.*;
 
 /**
  * The abstract (layout unaware) Maven Repository.
@@ -389,8 +380,13 @@ public abstract class AbstractMavenRepository
       if (request.getRequestPath().endsWith(SUFFIX_SHA1)) {
         return doRetrieveSHA1(this, request, doRetrieveArtifactItem(request, SUFFIX_SHA1)).getHashItem();
       }
-
-      if (request.getRequestPath().endsWith(SUFFIX_MD5)) {
+      else if (request.getRequestPath().endsWith(SUFFIX_SHA256)) {
+        return doRetrieveSHA256(this, request, doRetrieveArtifactItem(request, SUFFIX_SHA256)).getHashItem();
+      }
+      else if (request.getRequestPath().endsWith(SUFFIX_SHA512)) {
+        return doRetrieveSHA512(this, request, doRetrieveArtifactItem(request, SUFFIX_SHA512)).getHashItem();
+      }
+      else if (request.getRequestPath().endsWith(SUFFIX_MD5)) {
         return doRetrieveMD5(this, request, doRetrieveArtifactItem(request, SUFFIX_MD5)).getHashItem();
       }
     }
@@ -449,6 +445,12 @@ public abstract class AbstractMavenRepository
           if (item.getPath().endsWith(SUFFIX_SHA1)) {
             doStoreSHA1(this, doRetrieveArtifactItem(request, SUFFIX_SHA1), (StorageFileItem) item);
           }
+          else if (item.getPath().endsWith(SUFFIX_SHA256)) {
+            doStoreSHA256(this, doRetrieveArtifactItem(request, SUFFIX_SHA256), (StorageFileItem) item);
+          }
+          else if (item.getPath().endsWith(SUFFIX_SHA512)) {
+            doStoreSHA512(this, doRetrieveArtifactItem(request, SUFFIX_SHA512), (StorageFileItem) item);
+          }
           else if (item.getPath().endsWith(SUFFIX_MD5)) {
             doStoreMD5(this, doRetrieveArtifactItem(request, SUFFIX_MD5), (StorageFileItem) item);
           }
@@ -484,6 +486,8 @@ public abstract class AbstractMavenRepository
   {
     final AbstractStorageItem result = super.doCacheItem(item);
     result.getRepositoryItemAttributes().remove(ATTR_REMOTE_SHA1);
+    result.getRepositoryItemAttributes().remove(ATTR_REMOTE_SHA256);
+    result.getRepositoryItemAttributes().remove(ATTR_REMOTE_SHA512);
     result.getRepositoryItemAttributes().remove(ATTR_REMOTE_MD5);
     return result;
   }
@@ -497,6 +501,12 @@ public abstract class AbstractMavenRepository
 
       if (request.getRequestPath().endsWith(SUFFIX_SHA1)) {
         expireRemoteHash(request, SUFFIX_SHA1);
+      }
+      else if (request.getRequestPath().endsWith(SUFFIX_SHA256)) {
+        expireRemoteHash(request, SUFFIX_SHA256);
+      }
+      else if (request.getRequestPath().endsWith(SUFFIX_SHA512)) {
+        expireRemoteHash(request, SUFFIX_SHA512);
       }
       else if (request.getRequestPath().endsWith(SUFFIX_MD5)) {
         expireRemoteHash(request, SUFFIX_MD5);
@@ -513,7 +523,8 @@ public abstract class AbstractMavenRepository
     try {
       StorageItem artifact = getLocalStorage().retrieveItem(this, hashRequest);
       Attributes attributes = artifact.getRepositoryItemAttributes();
-      if (attributes.containsKey(ATTR_REMOTE_SHA1) || attributes.containsKey(ATTR_REMOTE_MD5)) {
+      if (attributes.containsKey(ATTR_REMOTE_SHA1) || attributes.containsKey(ATTR_REMOTE_SHA256) ||
+          attributes.containsKey(ATTR_REMOTE_SHA512) || attributes.containsKey(ATTR_REMOTE_MD5)) {
         attributes.put(ATTR_REMOTE_HASH_EXPIRED, "true");
         getAttributesHandler().storeAttributes(artifact);
       }
@@ -548,6 +559,8 @@ public abstract class AbstractMavenRepository
       Map<String, StorageItem> result = new TreeMap<String, StorageItem>();
       for (StorageItem item : items) {
         putChecksumItem(result, request, item, ATTR_REMOTE_SHA1, SUFFIX_SHA1);
+        putChecksumItem(result, request, item, ATTR_REMOTE_SHA256, SUFFIX_SHA256);
+        putChecksumItem(result, request, item, ATTR_REMOTE_SHA512, SUFFIX_SHA512);
         putChecksumItem(result, request, item, ATTR_REMOTE_MD5, SUFFIX_MD5);
       }
 

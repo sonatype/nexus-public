@@ -206,6 +206,10 @@ public abstract class LayoutConverterShadowRepository
 
       String sha1Hash = storedFile.getRepositoryItemAttributes().get(DigestCalculatingInspector.DIGEST_SHA1_KEY);
 
+      String sha256Hash = storedFile.getRepositoryItemAttributes().get(DigestCalculatingInspector.DIGEST_SHA256_KEY);
+
+      String sha512Hash = storedFile.getRepositoryItemAttributes().get(DigestCalculatingInspector.DIGEST_SHA512_KEY);
+
       String md5Hash = storedFile.getRepositoryItemAttributes().get(DigestCalculatingInspector.DIGEST_MD5_KEY);
 
       if (!StringUtils.isEmpty(sha1Hash)) {
@@ -213,6 +217,20 @@ public abstract class LayoutConverterShadowRepository
 
         storeItem(false, new DefaultStorageFileItem(this, request, true, true, new StringContentLocator(
             sha1Hash)));
+      }
+
+      if (!StringUtils.isEmpty(sha256Hash)) {
+        request.setRequestPath(storedFile.getPath() + ".sha256");
+
+        storeItem(false, new DefaultStorageFileItem(this, request, true, true, new StringContentLocator(
+            sha256Hash)));
+      }
+
+      if (!StringUtils.isEmpty(sha512Hash)) {
+        request.setRequestPath(storedFile.getPath() + ".sha512");
+
+        storeItem(false, new DefaultStorageFileItem(this, request, true, true, new StringContentLocator(
+            sha512Hash)));
       }
 
       if (!StringUtils.isEmpty(md5Hash)) {
@@ -302,6 +320,10 @@ public abstract class LayoutConverterShadowRepository
 
       String sha1Hash = storedFile.getRepositoryItemAttributes().get(DigestCalculatingInspector.DIGEST_SHA1_KEY);
 
+      String sha256Hash = storedFile.getRepositoryItemAttributes().get(DigestCalculatingInspector.DIGEST_SHA256_KEY);
+
+      String sha512Hash = storedFile.getRepositoryItemAttributes().get(DigestCalculatingInspector.DIGEST_SHA512_KEY);
+
       String md5Hash = storedFile.getRepositoryItemAttributes().get(DigestCalculatingInspector.DIGEST_MD5_KEY);
 
       if (!StringUtils.isEmpty(sha1Hash)) {
@@ -309,6 +331,20 @@ public abstract class LayoutConverterShadowRepository
 
         storeItem(fromTask, new DefaultStorageFileItem(this, req, true, true, new StringContentLocator(
             sha1Hash)));
+      }
+
+      if (!StringUtils.isEmpty(sha256Hash)) {
+        req.setRequestPath(storedFile.getPath() + ".sha256");
+
+        storeItem(false, new DefaultStorageFileItem(this, req, true, true, new StringContentLocator(
+            sha256Hash)));
+      }
+
+      if (!StringUtils.isEmpty(sha512Hash)) {
+        req.setRequestPath(storedFile.getPath() + ".sha512");
+
+        storeItem(false, new DefaultStorageFileItem(this, req, true, true, new StringContentLocator(
+            sha512Hash)));
       }
 
       if (!StringUtils.isEmpty(md5Hash)) {
