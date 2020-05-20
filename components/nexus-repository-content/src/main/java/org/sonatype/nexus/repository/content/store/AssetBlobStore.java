@@ -12,13 +12,14 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
-import java.util.Collection;
 import java.util.Optional;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.transaction.Transactional;
@@ -43,11 +44,17 @@ public class AssetBlobStore<T extends AssetBlobDAO>
   }
 
   /**
-   * Browse unused blob references in the content data store.
+   * Browse unused asset blobs in the content data store in a paged fashion.
+   *
+   * @param limit maximum number of asset blobs to return
+   * @param continuationToken optional token to continue from a previous request
+   * @return collection of asset blobs and the next continuation token
+   *
+   * @see Continuation#nextContinuationToken()
    */
   @Transactional
-  public Collection<BlobRef> browseUnusedBlobs() {
-    return dao().browseUnusedBlobs();
+  public Continuation<AssetBlob> browseUnusedAssetBlobs(final int limit, @Nullable final String continuationToken) {
+    return dao().browseUnusedAssetBlobs(limit, continuationToken);
   }
 
   /**

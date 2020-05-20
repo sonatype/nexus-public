@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.repository.content.Asset;
@@ -36,7 +35,6 @@ import org.junit.Test;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
@@ -315,9 +313,6 @@ public class AssetDAOTest
     String path = asset.path();
     Asset tempResult;
 
-    BlobRef blobRef1 = assetBlob1.blobRef();
-    BlobRef blobRef2 = assetBlob2.blobRef();
-
     try (DataSession<?> session = sessionRule.openSession("content")) {
       AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
       dao.createAssetBlob(assetBlob1);
@@ -325,7 +320,8 @@ public class AssetDAOTest
       session.access(TestAssetDAO.class).createAsset(asset);
       session.getTransaction().commit();
 
-      assertThat(dao.browseUnusedBlobs(), containsInAnyOrder(blobRef1, blobRef2));
+      assertThat(dao.browseUnusedAssetBlobs(10, null),
+          contains(sameBlob(assetBlob1), sameBlob(assetBlob2)));
     }
 
     // ATTACH BLOB
@@ -353,7 +349,8 @@ public class AssetDAOTest
 
       session.getTransaction().commit();
 
-      assertThat(session.access(TestAssetBlobDAO.class).browseUnusedBlobs(), contains(blobRef2));
+      assertThat(session.access(TestAssetBlobDAO.class).browseUnusedAssetBlobs(10, null),
+          contains(sameBlob(assetBlob2)));
     }
 
     // REPLACE BLOB
@@ -381,7 +378,8 @@ public class AssetDAOTest
 
       session.getTransaction().commit();
 
-      assertThat(session.access(TestAssetBlobDAO.class).browseUnusedBlobs(), contains(blobRef1));
+      assertThat(session.access(TestAssetBlobDAO.class).browseUnusedAssetBlobs(10, null),
+          contains(sameBlob(assetBlob1)));
     }
 
     // REPLACING WITH SAME BLOB DOESN'T UPDATE
@@ -409,7 +407,8 @@ public class AssetDAOTest
 
       session.getTransaction().commit();
 
-      assertThat(session.access(TestAssetBlobDAO.class).browseUnusedBlobs(), contains(blobRef1));
+      assertThat(session.access(TestAssetBlobDAO.class).browseUnusedAssetBlobs(10, null),
+          contains(sameBlob(assetBlob1)));
     }
 
     // DETACH BLOB
@@ -435,7 +434,8 @@ public class AssetDAOTest
 
       session.getTransaction().commit();
 
-      assertThat(session.access(TestAssetBlobDAO.class).browseUnusedBlobs(), containsInAnyOrder(blobRef1, blobRef2));
+      assertThat(session.access(TestAssetBlobDAO.class).browseUnusedAssetBlobs(10, null),
+          contains(sameBlob(assetBlob1), sameBlob(assetBlob2)));
     }
 
     // DETACHING BLOB AGAIN DOESN'T UPDATE
@@ -461,7 +461,8 @@ public class AssetDAOTest
 
       session.getTransaction().commit();
 
-      assertThat(session.access(TestAssetBlobDAO.class).browseUnusedBlobs(), containsInAnyOrder(blobRef1, blobRef2));
+      assertThat(session.access(TestAssetBlobDAO.class).browseUnusedAssetBlobs(10, null),
+          contains(sameBlob(assetBlob1), sameBlob(assetBlob2)));
     }
   }
 

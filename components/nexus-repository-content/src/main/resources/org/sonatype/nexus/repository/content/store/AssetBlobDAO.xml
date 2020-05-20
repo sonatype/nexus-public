@@ -36,9 +36,14 @@
     --
   </insert>
 
-  <select id="browseUnusedBlobs" resultType="BlobRef">
-    SELECT blob_ref FROM ${format}_asset_blob LEFT JOIN ${format}_asset
-        USING (asset_blob_id) WHERE ${format}_asset.asset_blob_id IS NULL LIMIT 100;
+  <select id="browseUnusedAssetBlobs" resultType="AssetBlobData">
+    SELECT * FROM ${format}_asset_blob LEFT JOIN ${format}_asset
+        USING (asset_blob_id)
+        WHERE ${format}_asset.asset_blob_id IS NULL
+        <if test="continuationToken != null">
+          AND ${format}_asset_blob.asset_blob_id > #{continuationToken}
+        </if>
+        ORDER BY ${format}_asset_blob.asset_blob_id LIMIT #{limit};
   </select>
 
   <insert id="createAssetBlob" useGeneratedKeys="true" keyProperty="assetBlobId" parameterType="AssetBlobData">

@@ -10,29 +10,32 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.datastore.mybatis;
+package org.sonatype.nexus.repository.content.store.internal;
 
-import java.util.ArrayList;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.entity.Continuation;
-import org.sonatype.nexus.common.entity.ContinuationAware;
-
-import static com.google.common.base.Preconditions.checkState;
+import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 /**
- * Collection of elements with a token that can be used to request the next set of results.
- *
- * @since 3.20
+ * @since 3.next
  */
-public class ContinuationArrayList<E extends ContinuationAware>
-    extends ArrayList<E>
-    implements Continuation<E>
+@Named
+@Singleton
+public class AssetBlobCleanupTaskDescriptor
+    extends TaskDescriptorSupport
 {
-  private static final long serialVersionUID = -8278643802740770499L;
+  public static final String TYPE_ID = "assetBlob.cleanup";
 
-  @Override
-  public String nextContinuationToken() {
-    checkState(!isEmpty(), "No more results");
-    return get(size() - 1).nextContinuationToken();
+  public static final String FORMAT_FIELD_ID = "format";
+
+  public static final String CONTENT_STORE_FIELD_ID = "contentStore";
+
+  public AssetBlobCleanupTaskDescriptor() {
+    super(TYPE_ID,
+        AssetBlobCleanupTask.class,
+        "Admin - Cleanup unused asset blobs",
+        VISIBLE,
+        NOT_EXPOSED);
   }
 }
