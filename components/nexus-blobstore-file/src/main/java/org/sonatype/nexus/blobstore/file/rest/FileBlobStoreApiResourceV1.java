@@ -10,25 +10,33 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.rest;
+package org.sonatype.nexus.blobstore.file.rest;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+import javax.ws.rs.Path;
+
+import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+
+import static org.sonatype.nexus.blobstore.file.rest.FileBlobStoreApiResourceV1.RESOURCE_URI;
+import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 
 /**
- * Constants relating to REST APIs.
+ * v1 endpoint for File BlobStore REST API
  *
- * @since 3.4
+ * @since 3.next
  */
-public class APIConstants
+@Named
+@Singleton
+@Path(RESOURCE_URI)
+public class FileBlobStoreApiResourceV1
+  extends FileBlobStoreResource
 {
-  private APIConstants() {
+  public static final String RESOURCE_URI = V1_API_PREFIX + "/blobstores/file";
+
+  @Inject
+  public FileBlobStoreApiResourceV1(final BlobStoreManager blobStoreManager) {
+    super(blobStoreManager);
   }
-
-  public static final String V1_API_PREFIX = "/v1";
-
-  /**
-   * @deprecated beta prefix is being phased out, prefer starting new APIs with {@link #V1_API_PREFIX} instead
-   */
-  @Deprecated
-  public static final String BETA_API_PREFIX = "/beta";
-
-  public static final String INTERNAL_API_PREFIX = "/internal";
 }
