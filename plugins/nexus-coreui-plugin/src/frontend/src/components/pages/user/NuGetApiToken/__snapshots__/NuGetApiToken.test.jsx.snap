@@ -1,0 +1,67 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`NuGetApiToken renders correctly: baseline 1`] = `
+<div>
+  <div
+    class="nxrm-content-body"
+  >
+    <div
+      class="nxrm-settings-section"
+    >
+      <p>
+         
+        A new API Key will be created the first time it is accessed. Resetting your API Key will invalidate the current key.
+         
+      </p>
+      <div
+        class="nxrm-settings-section-footer"
+      >
+        <button
+          class="nx-btn nx-btn--primary"
+          type="input"
+        >
+          <svg
+            aria-hidden="true"
+            class="svg-inline--fa fa-lock fa-w-14 nx-icon"
+            data-icon="lock"
+            data-prefix="fas"
+            focusable="false"
+            role="img"
+            viewBox="0 0 448 512"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M400 224h-24v-72C376 68.2 307.8 0 224 0S72 68.2 72 152v72H48c-26.5 0-48 21.5-48 48v192c0 26.5 21.5 48 48 48h352c26.5 0 48-21.5 48-48V272c0-26.5-21.5-48-48-48zm-104 0H152v-72c0-39.7 32.3-72 72-72s72 32.3 72 72v72z"
+              fill="currentColor"
+            />
+          </svg>
+           
+          Access API Key
+        </button>
+        <button
+          class="nx-btn"
+          type="input"
+        >
+          <svg
+            aria-hidden="true"
+            class="svg-inline--fa fa-lock fa-w-14 nx-icon"
+            data-icon="lock"
+            data-prefix="fas"
+            focusable="false"
+            role="img"
+            viewBox="0 0 448 512"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M400 224h-24v-72C376 68.2 307.8 0 224 0S72 68.2 72 152v72H48c-26.5 0-48 21.5-48 48v192c0 26.5 21.5 48 48 48h352c26.5 0 48-21.5 48-48V272c0-26.5-21.5-48-48-48zm-104 0H152v-72c0-39.7 32.3-72 72-72s72 32.3 72 72v72z"
+              fill="currentColor"
+            />
+          </svg>
+           
+          Reset API Key
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+`;

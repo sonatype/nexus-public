@@ -39,6 +39,8 @@ export { default as Select } from './components/widgets/Select/Select';
 export { default as Textarea } from './components/widgets/Textarea/Textarea';
 export { default as Textfield } from './components/widgets/Textfield/Textfield';
 
+export { default as TokenMachine } from './components/machines/TokenMachine';
+
 // Direct RSC exports
 export {
   NxErrorAlert,

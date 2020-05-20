@@ -1336,22 +1336,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     System_HttpRequestSettings_Attempts_FieldLabel: 'Connection/Socket retry attempts',
     System_HttpRequestSettings_Attempts_HelpText: 'Total retries if the initial connection attempt suffers a timeout',
 
-    // User -> NuGet Api Key
-    NuGetApiKey_Text: 'NuGet API Key',
-    NuGetApiKey_Description: 'Configure credentials for NuGet repositories',
-    Nuget_NuGetApiKeyDetails_Html: 'Your NuGet API Key enables pushing packages using NuGet.exe. ' +
-        '<span style="font-weight: bold;">Keep this key secret!</span>',
-    Nuget_NuGetApiKeyDetails_ApiKey_Text: 'Your NuGet API Key is:',
-    Nuget_NuGetApiKeyDetails_Register_Text: 'You can register this key for a given repository with the following command:',
-    Nuget_NuGetApiKeyDetails_Register_Value: 'nuget setapikey {0} -source {1}',
-    Nuget_NuGetApiKeyDetails_AutoClose_Html: 'This window will automatically close after one minute.',
-    Nuget_NuGetApiKeyDetails_AutoClose_Message: 'Automatically closing NuGet API Key details due to timeout',
-    Nuget_NuGetApiKey_Instructions_Text: 'A new API Key will be created the first time it is accessed. Resetting your API Key will invalidate the current key.',
-    Nuget_NuGetApiKey_Access_Button: 'Access API Key',
-    Nuget_NuGetApiKey_Access_HelpText: 'Accessing NuGet API Key requires validation of your credentials.',
-    Nuget_NuGetApiKey_Reset_Button: 'Reset API Key',
-    Nuget_NuGetApiKey_Reset_HelpText: 'Resetting NuGet API Key requires validation of your credentials.',
-
     // Admin -> System -> Licensing
     Licensing_Text: 'Licensing',
     Licensing_Description: 'A valid license is required for PRO features. Manage it here.',

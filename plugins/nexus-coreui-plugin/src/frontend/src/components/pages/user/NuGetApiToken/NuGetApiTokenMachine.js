@@ -10,27 +10,20 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/**
- * @since 3.21
- */
-export default {
-  SETTINGS: {
-    CANCEL_BUTTON_LABEL: 'Cancel',
-    DISCARD_BUTTON_LABEL: 'Discard',
-    SAVE_BUTTON_LABEL: 'Save'
-  },
+import Axios from 'axios';
 
-  SAVING: 'Saving...',
+import {ExtJS, TokenMachine} from 'nexus-ui-plugin';
 
-  ERROR: {
-    FIELD_REQUIRED: 'This field is required'
-  },
+import UIStrings from '../../../../constants/UIStrings';
 
-  USER_TOKEN: {
-    MESSAGES: {
-      ACCESS_ERROR: 'You must authenticate successfully to access your token',
-      RESET_SUCCESS: 'Your user token has been reset',
-      RESET_ERROR: 'You must authenticate successfully to reset your token'
+export default TokenMachine.withConfig({
+      services: {
+        resetToken: () => ExtJS.requestAuthenticationToken(UIStrings.NUGET_API_KEY.AUTH_INSTRUCTIONS)
+            .then(authToken =>
+                Axios.delete(`/service/rest/internal/nuget-api-key?authToken=${btoa(authToken)}`)),
+        accessToken: () => ExtJS.requestAuthenticationToken(UIStrings.NUGET_API_KEY.AUTH_INSTRUCTIONS)
+            .then(authToken =>
+                Axios.get(`/service/rest/internal/nuget-api-key?authToken=${btoa(authToken)}`))
+      }
     }
-  }
-};
+);

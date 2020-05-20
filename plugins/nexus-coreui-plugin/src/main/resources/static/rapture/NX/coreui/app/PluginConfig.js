@@ -134,11 +134,6 @@ Ext.define('NX.coreui.app.PluginConfig', {
             NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-migration-plugin');
       }
     },
-    { id: 'NX.coreui.controller.NuGetApiKey',
-      active: function () {
-        return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-repository-nuget');
-      }
-    },
     {
       id: 'NX.coreui.controller.Outreach',
       active: function () {

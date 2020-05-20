@@ -17,6 +17,7 @@ import SupportRequest from './components/pages/admin/SupportRequest/SupportReque
 
 import UIStrings from './constants/UIStrings';
 import UserAccount from "./components/pages/admin/UserAccount/UserAccount";
+import NuGetApiToken from "./components/pages/user/NuGetApiToken/NuGetApiToken";
 
 window.plugins.push({
   id: 'nexus-coreui-plugin',
@@ -77,6 +78,18 @@ window.plugins.push({
       description: UIStrings.USER_ACCOUNT.MENU.description,
       view: UserAccount,
       iconCls: 'x-fa fa-user',
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        requiresUser: true,
+      }
+    },
+    {
+      mode: 'user',
+      path: '/NuGetApiToken',
+      text: UIStrings.NUGET_API_KEY.TITLE,
+      description: UIStrings.NUGET_API_KEY.DESCRIPTION,
+      view: NuGetApiToken,
+      iconCls: 'x-fa fa-key',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         requiresUser: true,
