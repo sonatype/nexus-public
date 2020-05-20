@@ -253,6 +253,7 @@ public class MavenFacetImpl
     final StorageTx tx = UnitOfWork.currentTx();
 
     removeRebuildFlag(asset);
+    tx.saveAsset(asset);
     Blob metadataBlob = tx.requireBlob(asset.requireBlobRef());
     Metadata metadata = MavenModels.readMetadata(metadataBlob.getInputStream());
 
