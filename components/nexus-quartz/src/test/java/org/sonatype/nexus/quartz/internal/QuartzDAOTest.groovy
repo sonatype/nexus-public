@@ -15,12 +15,14 @@ package org.sonatype.nexus.quartz.internal
 import java.util.concurrent.TimeUnit
 
 import org.sonatype.goodies.testsupport.TestSupport
+import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup
 import org.sonatype.nexus.quartz.internal.store.ConfigStoreConnectionProvider
 import org.sonatype.nexus.testdb.DataSessionRule
 
 import org.hamcrest.Matchers
 import org.junit.Rule
 import org.junit.Test
+import org.junit.experimental.categories.Category
 import org.quartz.DateBuilder
 import org.quartz.Job
 import org.quartz.JobDetail
@@ -49,6 +51,7 @@ import static org.quartz.JobBuilder.newJob
 import static org.quartz.TriggerBuilder.newTrigger
 import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE_NAME
 
+@Category(SQLTestGroup.class)
 class QuartzDAOTest
     extends TestSupport
 {

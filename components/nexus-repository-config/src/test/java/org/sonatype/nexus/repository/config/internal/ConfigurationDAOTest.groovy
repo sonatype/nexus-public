@@ -13,17 +13,20 @@
 package org.sonatype.nexus.repository.config.internal
 
 import org.sonatype.nexus.common.entity.EntityId
+import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup
 import org.sonatype.nexus.datastore.api.DataSession
 import org.sonatype.nexus.repository.routing.internal.RoutingRuleDAO
 import org.sonatype.nexus.repository.routing.internal.RoutingRuleData
 import org.sonatype.nexus.testdb.DataSessionRule
 
 import org.junit.Rule
+import org.junit.experimental.categories.Category
 import spock.lang.Specification
 
 import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE_NAME
 import static org.sonatype.nexus.repository.routing.RoutingMode.ALLOW
 
+@Category(SQLTestGroup.class)
 class ConfigurationDAOTest
     extends Specification
 {

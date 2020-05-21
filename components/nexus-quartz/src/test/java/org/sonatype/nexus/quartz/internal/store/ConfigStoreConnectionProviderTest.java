@@ -16,12 +16,14 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.testdb.DataSessionRule;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -29,6 +31,7 @@ import static org.junit.Assert.assertThat;
 /**
  * Test the {@link ConfigStoreConnectionProvider}.
  */
+@Category(SQLTestGroup.class)
 public class ConfigStoreConnectionProviderTest
     extends TestSupport
 {

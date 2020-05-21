@@ -20,6 +20,7 @@ import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityUUID;
 import org.sonatype.nexus.common.time.UTC;
+import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.datastore.api.ContentDataAccess;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
@@ -45,6 +46,7 @@ import com.google.inject.Key;
 import com.google.inject.name.Names;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.instanceOf;
@@ -57,6 +59,7 @@ import static org.sonatype.nexus.datastore.mybatis.CombUUID.combUUID;
 /**
  * Test {@link FormatStoreManager}.
  */
+@Category(SQLTestGroup.class)
 public class FormatStoreManagerTest
     extends TestSupport
 {
