@@ -12,7 +12,7 @@
  */
 import React from 'react';
 import {useMachine} from '@xstate/react';
-import {Button, SettingsSection, ContentBody} from 'nexus-ui-plugin';
+import {Button, NxLoadWrapper, Section, SectionFooter, ContentBody} from 'nexus-ui-plugin';
 import {NxFontAwesomeIcon, NxModal} from '@sonatype/react-shared-components';
 import {faLock} from '@fortawesome/free-solid-svg-icons';
 
@@ -39,20 +39,22 @@ export default function NuGetApiToken() {
   }
 
   return <ContentBody>
-    <SettingsSection isLoading={isLoading}>
-      <p> {UIStrings.NUGET_API_KEY.INSTRUCTIONS} </p>
-      <SettingsSection.Footer>
-        <Button variant='primary' onClick={handleAccessKey}>
-          <NxFontAwesomeIcon icon={faLock}/>
-          <span>{UIStrings.NUGET_API_KEY.ACCESS.BUTTON}</span>
-        </Button>
-        <Button onClick={handleResetKey}>
-          <NxFontAwesomeIcon icon={faLock}/>
-          <span>{UIStrings.NUGET_API_KEY.RESET.BUTTON}</span>
-        </Button>
-      </SettingsSection.Footer>
+    <Section>
+      <NxLoadWrapper isLoading={isLoading}>
+        <p> {UIStrings.NUGET_API_KEY.INSTRUCTIONS} </p>
+        <SectionFooter>
+          <Button variant='primary' onClick={handleAccessKey}>
+            <NxFontAwesomeIcon icon={faLock}/>
+            <span>{UIStrings.NUGET_API_KEY.ACCESS.BUTTON}</span>
+          </Button>
+          <Button onClick={handleResetKey}>
+            <NxFontAwesomeIcon icon={faLock}/>
+            <span>{UIStrings.NUGET_API_KEY.RESET.BUTTON}</span>
+          </Button>
+        </SectionFooter>
 
-      {showNugetModal &&  <NuGetApiTokenModal apiKey={state.context.token.apiKey} onCloseClick={handleCloseKey} />}
-    </SettingsSection>
+        {showNugetModal && <NuGetApiTokenModal apiKey={state.context.token.apiKey} onCloseClick={handleCloseKey}/>}
+      </NxLoadWrapper>
+    </Section>
   </ContentBody>;
 }

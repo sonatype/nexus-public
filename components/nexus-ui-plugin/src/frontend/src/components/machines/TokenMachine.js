@@ -11,8 +11,8 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import {assign, Machine} from 'xstate';
-
-import {ExtJS, UIStrings} from 'nexus-ui-plugin';
+import ExtJS from '../../interface/ExtJS';
+import UIStrings from '../../constants/UIStrings';
 
 export default Machine(
     {
