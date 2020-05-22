@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.annotations.ApiModelProperty;
 
 /**
- * @since 3.24
+ * @since 3.next
  */
 @JsonInclude
 public class AnonymousAccessSettingsXO

@@ -27,7 +27,7 @@ import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 /**
  * beta endpoint for File BlobStore REST API
  *
- * @since 3.24
+ * @since 3.next
  * @deprecated moving to {@link FileBlobStoreApiResourceV1}
  */
 @Api(hidden = true)

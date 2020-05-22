@@ -13,17 +13,22 @@
 package org.sonatype.nexus.transaction;
 
 import java.io.IOException;
+import java.util.Set;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.common.sequence.ThreadLocalSplittableRandom;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSet;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.collect.Sets.difference;
+import static com.google.common.collect.Sets.union;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.stream.Collectors.joining;
 import static org.sonatype.goodies.common.Time.millis;
 import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getInteger;
 import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getString;
@@ -63,11 +68,8 @@ public class RetryController
 
   private int majorDelayMillis = getTime("nexus.tx.retry.majorDelay", DEFAULT_MAJOR_DELAY_MILLIS).toMillisI();
 
-  private final ExceptionFilter majorExceptionFilter = new ExceptionFilter(
+  private Set<String> majorExceptionFilter = parseFilter(
       getString("nexus.tx.retry.majorExceptionFilter", IOException.class.getName()));
-
-  private final ExceptionFilter noisyExceptionFilter = new ExceptionFilter(
-      getString("nexus.tx.retry.noisyExceptionFilter", ""));
 
   /**
    * Point at which we declare the transaction as having excessive retries.
@@ -154,21 +156,31 @@ public class RetryController
   }
 
   /**
-   * Filter that decides if an exception is major (like an I/O issue) resulting in a longer delay.
-   *
-   * @since 3.24
+   * Gets the comma-separated list of types to be considered as major exceptions.
    */
-  public ExceptionFilter majorExceptionFilter() {
-    return majorExceptionFilter;
+  public String getMajorExceptionFilter() {
+    return majorExceptionFilter.stream().collect(joining(","));
   }
 
   /**
-   * Filter that decides if an exception is noisy and shouldn't be included in excessive retry stats.
-   *
-   * @since 3.24
+   * Sets the comma-separated list of types to be considered as major exceptions.
    */
-  public ExceptionFilter noisyExceptionFilter() {
-    return noisyExceptionFilter;
+  public void setMajorExceptionFilter(final String majorExceptionFilter) {
+    this.majorExceptionFilter = parseFilter(majorExceptionFilter);
+  }
+
+  /**
+   * Treats the given exception type as a major exception.
+   */
+  public void addAsMajorException(final Class<? extends Exception> type) {
+    this.majorExceptionFilter = union(majorExceptionFilter, ImmutableSet.of(type.getName())).immutableCopy();
+  }
+
+  /**
+   * Treats the given exception type as a minor exception.
+   */
+  public void removeAsMajorException(final Class<? extends Exception> type) {
+    this.majorExceptionFilter = difference(majorExceptionFilter, ImmutableSet.of(type.getName())).immutableCopy();
   }
 
   /**
@@ -196,7 +208,7 @@ public class RetryController
      *
      * Note: this is only done once as we cross the threshold, not for every retry.
      */
-    if (nextRetry == excessiveRetriesThreshold && !noisyExceptionFilter.test(cause)) {
+    if (nextRetry == excessiveRetriesThreshold) {
       excessiveRetriesHourlyStats.mark();
     }
 
@@ -248,12 +260,26 @@ public class RetryController
   private long randomDelay(final int nextRetry, final Exception cause) {
     int slots = min(max(1 << nextRetry, minSlots), maxSlots);
     int randomSlot = randomHolder.get().nextInt(slots);
-    if (majorExceptionFilter.test(cause)) {
+    if (isMajorException(cause)) {
       // avoid zero wait if it's a major exception
       return majorDelayMillis * (randomSlot + 1);
     }
     else {
       return minorDelayMillis * randomSlot;
     }
+  }
+
+  /**
+   * Parses a comma-separated list into a {@link Set}.
+   */
+  private static Set<String> parseFilter(final String filter) {
+    return ImmutableSet.copyOf(filter.split("\\s*,\\s*"));
+  }
+
+  /**
+   * Determines whether this is a major exception (like an I/O issue) resulting in a longer delay.
+   */
+  private boolean isMajorException(final Exception cause) {
+    return majorExceptionFilter.contains(cause.getClass().getName());
   }
 }

@@ -28,9 +28,4 @@ public abstract class FormatFacetSupport
   public String getSubFormat() {
     return null;
   }
-
-  @Override
-  public void markSubFormat() {
-    // noop
-  }
 }

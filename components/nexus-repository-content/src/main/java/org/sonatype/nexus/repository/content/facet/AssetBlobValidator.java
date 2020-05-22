@@ -18,7 +18,7 @@ import org.sonatype.nexus.repository.content.Asset;
 /**
  * Something that determines and validates the Content-Type of asset-blobs.
  *
- * @since 3.24
+ * @since 3.next
  */
 public interface AssetBlobValidator
 {

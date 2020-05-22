@@ -26,7 +26,7 @@ import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
 /**
  * Swagger documentation for components API.
  *
- * @since 3.24
+ * @since 3.next
  */
 @Api(value = "components")
 public interface ComponentsResourceDoc

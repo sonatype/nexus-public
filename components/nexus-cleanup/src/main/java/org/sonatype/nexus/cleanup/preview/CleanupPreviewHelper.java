@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.rest.api.ComponentXO;
 /**
  * Cleanup preview helper.
  *
- * @since 3.24
+ * @since 3.next
  */
 public interface CleanupPreviewHelper
 {

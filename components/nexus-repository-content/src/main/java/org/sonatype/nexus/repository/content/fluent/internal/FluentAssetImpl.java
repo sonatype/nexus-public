@@ -61,7 +61,7 @@ import static org.sonatype.nexus.repository.storage.Bucket.REPO_NAME_HEADER;
 /**
  * {@link FluentAsset} implementation.
  *
- * @since 3.24
+ * @since 3.next
  */
 public class FluentAssetImpl
     implements FluentAsset, WrappedContent<Asset>

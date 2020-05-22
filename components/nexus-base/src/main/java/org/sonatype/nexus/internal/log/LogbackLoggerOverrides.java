@@ -32,7 +32,6 @@ import javax.xml.parsers.SAXParserFactory;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.FileReplacer;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
-import org.sonatype.nexus.common.io.SafeXml;
 import org.sonatype.nexus.common.log.LoggerLevel;
 
 import ch.qos.logback.classic.Logger;
@@ -159,7 +158,7 @@ public class LogbackLoggerOverrides
   private Map<String, LoggerLevel> read(final File inputFile) throws Exception {
     final Map<String, LoggerLevel> result = Maps.newHashMap();
 
-    SAXParserFactory parserFactory = SafeXml.newSaxParserFactory();
+    SAXParserFactory parserFactory = SAXParserFactory.newInstance();
     parserFactory.setValidating(false);
     parserFactory.setNamespaceAware(true);
     SAXParser parser = parserFactory.newSAXParser();

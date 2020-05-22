@@ -32,7 +32,7 @@ import static org.sonatype.nexus.repository.content.fluent.internal.FluentAttrib
 /**
  * {@link FluentComponent} implementation.
  *
- * @since 3.24
+ * @since 3.next
  */
 public class FluentComponentImpl
     implements FluentComponent, WrappedContent<Component>

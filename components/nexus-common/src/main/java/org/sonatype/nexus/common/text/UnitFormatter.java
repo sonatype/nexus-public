@@ -21,7 +21,7 @@ import static java.lang.Math.pow;
 import static java.lang.String.format;
 
 /**
- * @since 3.24
+ * @since 3.next
  */
 public final class UnitFormatter {
 

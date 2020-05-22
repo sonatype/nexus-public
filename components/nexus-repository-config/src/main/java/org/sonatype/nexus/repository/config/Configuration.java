@@ -38,7 +38,7 @@ public interface Configuration
   }
 
   /**
-   * @since 3.24
+   * @since 3.next
    */
   EntityId getRepositoryId();
 

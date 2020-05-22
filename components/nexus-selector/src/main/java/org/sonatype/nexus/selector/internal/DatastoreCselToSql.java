@@ -37,7 +37,7 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.CONTENT_DATASTOR
 /**
  * Walks the script, transforming CSEL expressions into Datastore appropriate SQL clauses.
  *
- * @since 3.24
+ * @since 3.next
  */
 @Named("mybatis")
 @Singleton

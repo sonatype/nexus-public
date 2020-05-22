@@ -18,7 +18,7 @@ import java.util.Objects;
 /**
  * Model will be serialized into Json representation for npm audit report.
  *
- * @since 3.24
+ * @since 3.next
  */
 public class Finding
 {

@@ -40,7 +40,7 @@ import static org.sonatype.nexus.repository.http.HttpStatus.NOT_FOUND;
 /**
  * Handle all exceptions which could be thrown from npm audit.
  *
- * @since 3.24
+ * @since 3.next
  */
 @Named
 @Singleton

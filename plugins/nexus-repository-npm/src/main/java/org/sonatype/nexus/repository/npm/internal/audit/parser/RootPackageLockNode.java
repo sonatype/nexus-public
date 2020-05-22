@@ -20,7 +20,7 @@ import com.google.gson.annotations.SerializedName;
 /**
  * Root node for parsing package-lock.json
  *
- * @since 3.24
+ * @since 3.next
  */
 public class RootPackageLockNode
     extends PackageLockNode

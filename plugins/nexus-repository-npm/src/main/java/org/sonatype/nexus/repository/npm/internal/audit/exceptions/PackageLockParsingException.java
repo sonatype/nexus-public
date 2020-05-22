@@ -17,7 +17,7 @@ import static org.sonatype.nexus.repository.npm.internal.audit.model.NpmAuditErr
 /**
  * Thrown when package-lock parsing went wrong.
  *
- * @since 3.24
+ * @since 3.next
  */
 public class PackageLockParsingException extends Exception
 {

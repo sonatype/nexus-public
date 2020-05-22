@@ -31,7 +31,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Component-led layout based on group, name, and version; places assets one level below their components.
  *
- * @since 3.24
+ * @since 3.next
  */
 @Singleton
 @Named(DefaultDatastoreBrowseNodeGenerator.NAME)

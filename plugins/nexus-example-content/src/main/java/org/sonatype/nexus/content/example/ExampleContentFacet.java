@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.view.Payload;
 /**
  * Provides persistent content for an 'example' format.
  *
- * @since 3.24
+ * @since 3.next
  */
 @Facet.Exposed
 public interface ExampleContentFacet

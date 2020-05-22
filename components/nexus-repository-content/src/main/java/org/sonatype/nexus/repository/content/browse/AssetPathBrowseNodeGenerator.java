@@ -27,7 +27,7 @@ import static java.util.Optional.of;
 /**
  * Asset-led layout that assumes the asset name is its path and components have the same path as their assets.
  *
- * @since 3.24
+ * @since 3.next
  */
 public abstract class AssetPathBrowseNodeGenerator
     implements DatastoreBrowseNodeGenerator

@@ -35,7 +35,7 @@ import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher
 /**
  * Raw group repository recipe.
  *
- * @since 3.24
+ * @since 3.next
  */
 @Named(RawGroupRecipe.NAME)
 @Singleton

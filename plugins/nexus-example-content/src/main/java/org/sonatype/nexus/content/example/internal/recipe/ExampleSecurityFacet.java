@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 /**
  * Example format security facet.
  *
- * @since 3.24
+ * @since 3.next
  */
 @Named
 public class ExampleSecurityFacet

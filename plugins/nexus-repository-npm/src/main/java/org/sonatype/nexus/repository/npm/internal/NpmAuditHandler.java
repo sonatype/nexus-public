@@ -23,7 +23,7 @@ import org.sonatype.nexus.repository.view.Response;
 /**
  * Handle 'npm audit' cmd.
  *
- * @since 3.24
+ * @since 3.next
  */
 @Named
 @Singleton

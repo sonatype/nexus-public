@@ -29,7 +29,7 @@ import org.apache.http.client.RedirectStrategy;
 /**
  * Custom {@link HttpClientFacet} implementation which allow override HttpClientConfiguration.
  *
- * @since 3.24
+ * @since 3.next
  */
 @Named(HttpClientCustomConfigFacetImpl.NAME)
 public class HttpClientCustomConfigFacetImpl

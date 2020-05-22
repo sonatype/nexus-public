@@ -30,7 +30,7 @@ import org.apache.http.protocol.HttpContext;
  * Custom authentication strategy for handling situation when response from server
  * doesn't contain WWW_AUTHENTICATE header with requested authentication type.
  *
- * @since 3.24
+ * @since 3.next
  */
 public class RequestHeaderAuthenticationStrategy
     extends TargetAuthenticationStrategy

@@ -27,7 +27,7 @@ import static org.sonatype.nexus.security.BreadActions.BROWSE;
 
 /**
  * Simple helper class that encapsulates the auth checks for reuse across datastore related classes
- * @since 3.24
+ * @since 3.next
  */
 @Named
 @Singleton

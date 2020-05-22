@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.npm.internal.audit.model;
 /**
  * Enum of error codes and error messages for npm audit
  *
- * @since 3.24
+ * @since 3.next
  */
 public enum NpmAuditError
 {

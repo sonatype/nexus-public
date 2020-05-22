@@ -14,7 +14,7 @@ import React from 'react';
 import classNames from 'classnames';
 
 /**
- * @since 3.24
+ * @since 3.next
  *
  * This component must be used within a Section component.
  */

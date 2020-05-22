@@ -15,7 +15,7 @@ package org.sonatype.nexus.coreui
 import javax.validation.constraints.NotEmpty
 
 /**
- * @since 3.24
+ * @since 3.next
  */
 class UserAccountPasswordXO {
   @NotEmpty

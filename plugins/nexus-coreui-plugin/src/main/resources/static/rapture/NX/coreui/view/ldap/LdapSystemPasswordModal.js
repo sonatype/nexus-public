@@ -15,7 +15,7 @@
 /**
  * Modal to retrieve the 'System Password' of the LDAP server
  *
- * @since 3.24
+ * @since 3.next
  */
 Ext.define('NX.coreui.view.ldap.LdapSystemPasswordModal', {
   extend: 'NX.view.ModalDialog',

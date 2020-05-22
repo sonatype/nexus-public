@@ -52,7 +52,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
 /**
  * Local {@link FreezeService} that remembers user-initiated freeze requests between restarts.
  *
- * @since 3.24
+ * @since 3.next
  */
 @Named
 @ManagedLifecycle(phase = STORAGE)

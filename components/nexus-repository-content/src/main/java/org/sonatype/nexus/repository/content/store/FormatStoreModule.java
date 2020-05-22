@@ -28,7 +28,7 @@ package org.sonatype.nexus.repository.content.store;
  * }
  * </pre></code>
  *
- * @since 3.24
+ * @since 3.next
  */
 public abstract class FormatStoreModule<CONTENT_REPOSITORY_DAO extends ContentRepositoryDAO,
                                         COMPONENT_DAO extends ComponentDAO,

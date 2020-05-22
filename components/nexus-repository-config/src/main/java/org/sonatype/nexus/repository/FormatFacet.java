@@ -27,10 +27,4 @@ public interface FormatFacet
 
   @Nullable
   String getSubFormat();
-
-  /**
-   * Hook to allow a sub format to be identified
-   * @since 3.24
-   */
-  void markSubFormat();
 }

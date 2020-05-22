@@ -20,7 +20,7 @@ import com.google.gson.annotations.SerializedName;
 /**
  * Model will be serialized into Json representation for npm audit report.
  *
- * @since 3.24
+ * @since 3.next
  */
 public class Action
 {

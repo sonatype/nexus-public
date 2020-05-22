@@ -22,7 +22,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 /**
  * Global repository settings.
  *
- * @since 3.24
+ * @since 3.next
  */
 @Named
 @Singleton

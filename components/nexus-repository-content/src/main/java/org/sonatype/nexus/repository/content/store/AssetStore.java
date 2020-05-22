@@ -73,7 +73,7 @@ public class AssetStore<T extends AssetDAO>
    * @param limit at most items to delete
    * @return number of assets deleted
    *
-   * @since 3.24
+   * @since 3.next
    */
   @Transactional
   public int purgeNotRecentlyDownloaded(final int repositoryId, final int daysAgo, final int limit)

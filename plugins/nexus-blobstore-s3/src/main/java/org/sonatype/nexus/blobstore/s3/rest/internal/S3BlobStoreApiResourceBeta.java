@@ -27,7 +27,7 @@ import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 /**
  * beta endpoint for S3 BlobStore REST API
  *
- * @since 3.24
+ * @since 3.next
  * @deprecated moving to {@link S3BlobStoreApiResourceV1}
  */
 @Api(hidden = true)

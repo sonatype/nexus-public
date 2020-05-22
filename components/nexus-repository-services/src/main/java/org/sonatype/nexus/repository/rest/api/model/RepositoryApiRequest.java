@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.rest.api.model;
 
 /**
- * @since 3.24
+ * @since 3.next
  */
 public interface RepositoryApiRequest
 {

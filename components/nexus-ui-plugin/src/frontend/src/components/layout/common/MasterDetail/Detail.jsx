@@ -15,7 +15,7 @@ import React from 'react';
 import ExtJS from "../../../../interface/ExtJS";
 
 /**
- * @since 3.24
+ * @since 3.next
  */
 export default function Detail({children, editBreadcrumb, createBreadcrumb, itemId, ...attrs}) {
   ExtJS.setBreadcrumbs([{

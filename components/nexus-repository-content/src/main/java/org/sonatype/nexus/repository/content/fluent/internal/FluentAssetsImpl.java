@@ -24,7 +24,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * {@link FluentAssets} implementation.
  *
- * @since 3.24
+ * @since 3.next
  */
 public class FluentAssetsImpl
     implements FluentAssets

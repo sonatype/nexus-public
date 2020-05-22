@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.security.RepositoryFormatSecurityContributo
 /**
  * Example format security contributor.
  *
- * @since 3.24
+ * @since 3.next
  */
 @Named
 @Singleton

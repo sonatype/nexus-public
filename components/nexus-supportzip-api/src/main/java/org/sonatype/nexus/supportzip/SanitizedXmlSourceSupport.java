@@ -31,8 +31,6 @@ import javax.xml.transform.sax.SAXSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
-import org.sonatype.nexus.common.io.SafeXml;
-
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 
@@ -75,10 +73,10 @@ public class SanitizedXmlSourceSupport
       try (OutputStream output = new BufferedOutputStream(stream)) {
 
         StreamSource styleSource = new StreamSource(new StringReader(stylesheet));
-        TransformerFactory transformerFactory = SafeXml.newTransformerFactory();
+        TransformerFactory transformerFactory = TransformerFactory.newInstance();
         Transformer transformer = transformerFactory.newTransformer(styleSource);
 
-        SAXParserFactory parserFactory = SafeXml.newSaxParserFactory();
+        SAXParserFactory parserFactory = SAXParserFactory.newInstance();
         parserFactory.setNamespaceAware(true);
 
         SAXParser parser = parserFactory.newSAXParser();

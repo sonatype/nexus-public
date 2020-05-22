@@ -16,7 +16,7 @@ import SystemInformationSection from "./SystemInformationSection";
 import NestedSystemInformationSection from "./NestedSystemInformationSection";
 
 /**
- * @since 3.24
+ * @since 3.next
  * @param systemInformation - a map with objects representing each section of system information
  */
 export default function SystemInformationBody({systemInformation}) {

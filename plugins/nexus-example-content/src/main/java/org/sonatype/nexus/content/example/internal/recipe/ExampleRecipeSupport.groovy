@@ -33,7 +33,7 @@ import org.sonatype.nexus.repository.view.handlers.TimingHandler
 /**
  * Example format recipe support.
  *
- * @since 3.24
+ * @since 3.next
  */
 abstract class ExampleRecipeSupport
     extends RecipeSupport

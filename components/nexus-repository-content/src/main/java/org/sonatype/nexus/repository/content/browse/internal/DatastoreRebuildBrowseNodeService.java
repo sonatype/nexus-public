@@ -38,7 +38,7 @@ import static java.lang.String.format;
 /**
  * Rebuild browse node service for the Orient based browse node implementation.
  *
- * @since 3.24
+ * @since 3.next
  */
 @Singleton
 @Named("mybatis")

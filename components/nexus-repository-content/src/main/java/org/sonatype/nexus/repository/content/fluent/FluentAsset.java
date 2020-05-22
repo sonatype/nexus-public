@@ -36,7 +36,7 @@ public interface FluentAsset
   /**
    * The repository containing this asset.
    *
-   * @since 3.24
+   * @since 3.next
    */
   Repository repository();
 
@@ -63,21 +63,21 @@ public interface FluentAsset
   /**
    * Mark this generated/proxied asset as recently cached.
    *
-   * @since 3.24
+   * @since 3.next
    */
   FluentAsset markAsCached(CacheInfo cachInfo);
 
   /**
    * Mark this generated/proxied asset as stale.
    *
-   * @since 3.24
+   * @since 3.next
    */
   FluentAsset markAsStale();
 
   /**
    * Is this generated/proxied asset stale?
    *
-   * @since 3.24
+   * @since 3.next
    */
   boolean isStale(CacheController cacheController);
 

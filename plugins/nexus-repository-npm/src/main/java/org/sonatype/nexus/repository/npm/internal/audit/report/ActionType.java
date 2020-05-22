@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.npm.internal.audit.report;
 /**
  * Enum with types of decision for NPM component.
  *
- * @since 3.24
+ * @since 3.next
  */
 public enum ActionType
 {

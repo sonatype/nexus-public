@@ -28,7 +28,7 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 /**
  * Content implementation of {@code TempBlobFactory}
  *
- * @since 3.24
+ * @since 3.next
  */
 @Named
 @Singleton

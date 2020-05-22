@@ -133,13 +133,6 @@ public interface SearchService
                                            final int from,
                                            final int size,
                                            Collection<String> repoNames);
-  /**
-   * @since 3.24
-   */
-  SearchResponse searchUnrestrictedInReposWithAggregations(final QueryBuilder query,
-                                                           final List<AggregationBuilder> aggregations,
-                                                           final List<SortBuilder> sort,
-                                                           final Collection<String> repoNames);
 
   /**
    * Search component metadata and browse results using aggregations with content selectors applied.

@@ -15,7 +15,7 @@ package org.sonatype.nexus.content.example.internal.store;
 import org.sonatype.nexus.repository.content.store.ComponentDAO;
 
 /**
- * @since 3.24
+ * @since 3.next
  */
 public interface ExampleComponentDAO
     extends ComponentDAO

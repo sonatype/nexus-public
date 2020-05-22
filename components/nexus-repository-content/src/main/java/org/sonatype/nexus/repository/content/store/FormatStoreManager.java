@@ -33,7 +33,7 @@ import static java.util.Arrays.stream;
  * Content stores can exist in different datastores (unlike config stores that only exist in the config datastore)
  * so you need to pass in the datastore name. The manager knows which DAO and store classes to use for the format.
  *
- * @since 3.24
+ * @since 3.next
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class FormatStoreManager

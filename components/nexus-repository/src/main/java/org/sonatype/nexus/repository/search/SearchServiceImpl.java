@@ -687,25 +687,8 @@ public class SearchServiceImpl
 
     try (SubjectRegistration registration = searchSubjectHelper.register(securityHelper.subject())) {
       return executeSearch(query, aggregations, searchableIndexes,
-          QueryBuilders.scriptQuery(ContentAuthPluginScriptFactory.newScript(registration.getId())), emptyList(), null);
+          QueryBuilders.scriptQuery(ContentAuthPluginScriptFactory.newScript(registration.getId())), null);
     }
-  }
-
-  @Override
-  public SearchResponse searchUnrestrictedInReposWithAggregations(final QueryBuilder query,
-                                                                  final List<AggregationBuilder> aggregations,
-                                                                  final List<SortBuilder> sort,
-                                                                  final Collection<String> repoNames)
-  {
-    if (!validateQuery(query)) {
-      return EMPTY_SEARCH_RESPONSE;
-    }
-    final String[] searchableIndexes = getSearchableIndexes(false);
-    if (searchableIndexes.length == 0) {
-      return EMPTY_SEARCH_RESPONSE;
-    }
-
-    return executeSearch(query, aggregations, searchableIndexes, null, sort, null);
   }
 
   private SearchResponse executeSearch(final QueryBuilder query,
@@ -748,7 +731,6 @@ public class SearchServiceImpl
                                        final List<AggregationBuilder> aggregations,
                                        final String[] searchableIndexes,
                                        @Nullable final QueryBuilder postFilter,
-                                       final List<SortBuilder> sort,
                                        final Integer timeout)
   {
     checkNotNull(query);
@@ -769,10 +751,6 @@ public class SearchServiceImpl
 
     if (postFilter != null) {
       searchRequestBuilder.setPostFilter(postFilter);
-    }
-
-    for (SortBuilder entry : sort) {
-      searchRequestBuilder.addSort(entry);
     }
 
     if (timeout != null) {

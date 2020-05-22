@@ -20,7 +20,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
 /**
- * @since 3.24
+ * @since 3.next
  */
 @Api(value = "Security Management: Anonymous Access")
 public interface AnonymousAccessApiResourceDoc

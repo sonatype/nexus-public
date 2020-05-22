@@ -45,7 +45,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Cleanup preview {@link DirectComponent}.
  *
- * @since 3.24
+ * @since 3.next
  */
 @Named
 @Singleton

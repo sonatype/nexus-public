@@ -36,7 +36,7 @@ import static org.sonatype.nexus.repository.http.HttpMethods.PUT;
 /**
  * Example format content handler.
  *
- * @since 3.24
+ * @since 3.next
  */
 @Named
 @Singleton

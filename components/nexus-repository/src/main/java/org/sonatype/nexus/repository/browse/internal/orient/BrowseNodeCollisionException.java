@@ -21,7 +21,7 @@ import com.orientechnologies.common.concur.ONeedRetryException;
  *
  * @since 3.14
  */
-public class BrowseNodeCollisionException
+class BrowseNodeCollisionException
     extends ONeedRetryException
 {
   BrowseNodeCollisionException(final String message) {

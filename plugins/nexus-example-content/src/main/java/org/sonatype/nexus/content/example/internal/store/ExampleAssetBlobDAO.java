@@ -15,7 +15,7 @@ package org.sonatype.nexus.content.example.internal.store;
 import org.sonatype.nexus.repository.content.store.AssetBlobDAO;
 
 /**
- * @since 3.24
+ * @since 3.next
  */
 public interface ExampleAssetBlobDAO
     extends AssetBlobDAO

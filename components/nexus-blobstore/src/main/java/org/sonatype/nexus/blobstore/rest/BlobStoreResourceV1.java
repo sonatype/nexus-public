@@ -26,7 +26,7 @@ import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 /**
  * v1 endpoint for BlobStore REST API
  *
- * @since 3.24
+ * @since 3.next
  */
 @Named
 @Singleton

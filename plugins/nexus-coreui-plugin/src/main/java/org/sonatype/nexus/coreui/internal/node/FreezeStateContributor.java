@@ -27,7 +27,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Contributes freeze state to the UI.
  *
- * @since 3.24
+ * @since 3.next
  */
 @Named
 @Singleton

@@ -40,7 +40,7 @@ import static org.sonatype.nexus.repository.content.store.internal.AssetBlobClea
 /**
  * Background task that cleans up unused {@link AssetBlob}s.
  *
- * @since 3.24
+ * @since 3.next
  */
 @Named
 @TaskLogging(NEXUS_LOG_ONLY)

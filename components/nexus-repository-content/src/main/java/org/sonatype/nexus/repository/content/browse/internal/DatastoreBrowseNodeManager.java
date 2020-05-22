@@ -32,7 +32,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Manages format specific behaviour for browse nodes
  *
- * @since 3.24
+ * @since 3.next
  */
 @Named("mybatis")
 @Singleton

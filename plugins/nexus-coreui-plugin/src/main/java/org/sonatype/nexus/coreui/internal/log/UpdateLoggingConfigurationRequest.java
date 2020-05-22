@@ -15,7 +15,7 @@ package org.sonatype.nexus.coreui.internal.log;
 import org.sonatype.nexus.common.log.LoggerLevel;
 
 /**
- * @since 3.24
+ * @since 3.next
  */
 public class UpdateLoggingConfigurationRequest
 {

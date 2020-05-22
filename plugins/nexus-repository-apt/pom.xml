@@ -19,7 +19,7 @@
   <parent>
     <groupId>org.sonatype.nexus.plugins</groupId>
     <artifactId>nexus-plugins</artifactId>
-    <version>3.24.0-02</version>
+    <version>3.25.0-SNAPSHOT</version>
   </parent>
 
 
@@ -59,7 +59,7 @@
 
     <dependency>
       <groupId>org.bouncycastle</groupId>
-      <artifactId>bcpg-jdk15to18</artifactId>
+      <artifactId>bcpg-jdk15on</artifactId>
     </dependency>
 
     <dependency>
@@ -91,7 +91,7 @@
           <instructions>
             <Embed-Directory>lib</Embed-Directory>
             <Embed-Dependency>
-              bcpg-jdk15to18|bcprov-jdk15to18
+              bcpg-jdk15on|bcprov-jdk15on
             </Embed-Dependency>
             <Embed-Transitive>true</Embed-Transitive>
           </instructions>

@@ -21,7 +21,7 @@ import org.sonatype.nexus.common.script.ScriptCleanupHandler;
 /**
  * Stub DataStore implementation of {@link ScriptCleanupHandler}.
  *
- * @since 3.24
+ * @since 3.next
  */
 @Named("datastore")
 @Singleton

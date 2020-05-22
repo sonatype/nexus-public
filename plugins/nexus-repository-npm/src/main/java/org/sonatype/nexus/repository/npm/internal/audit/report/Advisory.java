@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.vulnerability.SeverityLevel;
 /**
  * Model will be serialized into Json representation for npm audit report.
  *
- * @since 3.24
+ * @since 3.next
  */
 public class Advisory
 {

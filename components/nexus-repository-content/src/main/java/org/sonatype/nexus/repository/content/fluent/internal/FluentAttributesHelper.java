@@ -32,7 +32,7 @@ import static com.google.common.collect.Lists.newArrayList;
 /**
  * {@link FluentAttributes} helper.
  *
- * @since 3.24
+ * @since 3.next
  */
 public class FluentAttributesHelper
 {

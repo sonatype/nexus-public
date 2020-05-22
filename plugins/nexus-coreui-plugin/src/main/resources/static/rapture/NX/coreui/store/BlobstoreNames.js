@@ -15,7 +15,7 @@
 /**
  * Blobstore format.
  *
- * @since 3.24
+ * @since 3.next
  */
 Ext.define('NX.coreui.store.BlobstoreNames', {
   extend: 'Ext.data.Store',
