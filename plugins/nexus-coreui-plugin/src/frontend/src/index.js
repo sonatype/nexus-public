@@ -14,6 +14,7 @@ import AnonymousSettings from './components/pages/admin/AnonymousSettings/Anonym
 import LoggingConfiguration from './components/pages/admin/LoggingConfiguration/LoggingConfiguration';
 import SystemInformation from './components/pages/admin/SystemInformation/SystemInformation';
 import SupportRequest from './components/pages/admin/SupportRequest/SupportRequest';
+import MetricHealth from "./components/pages/admin/MetricHealth/MetricHealth";
 
 import UIStrings from './constants/UIStrings';
 import UserAccount from "./components/pages/admin/UserAccount/UserAccount";
@@ -93,6 +94,18 @@ window.plugins.push({
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         requiresUser: true,
+      }
+    },
+    {
+      mode: 'admin',
+      path: '/Support/Status',
+      text: 'Status',
+      description: 'System status checks',
+      view: MetricHealth,
+      iconCls: 'x-fa fa-medkit',
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        permissions: ['nexus:metrics:read']
       }
     },
   ]

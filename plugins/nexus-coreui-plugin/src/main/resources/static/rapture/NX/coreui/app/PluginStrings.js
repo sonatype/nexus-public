@@ -958,19 +958,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Support_Metrics_ResponseCode_Title: 'Web Response Codes',
     Support_Metrics_Requests_Title: 'Web Requests',
 
-    // Admin -> Support -> MetricHealth
-    Metric_Health_Text: 'Status',
-    Metric_Health_Description: 'System status checks',
-    Metric_Health_Name_Header: 'Name',
-    Metric_Health_Message_Header: 'Message',
-    Metric_Health_Error_Header: 'Error',
-    Metric_Health_Load_Mask: 'Loading&hellip;',
-    Metric_Health_Refresh_Warning: 'Failed to refresh server status',
-    Metric_Health_Invalid_Response_Error: 'Unable to retrieve application health, this may be a result of an incorrectly configured proxy server',
-    Metric_Health_Empty_Text: '<div class="summary">No system status checks found</div>' +
-        '<div class="panel nx-subsection"><h3 class="title alert"><span class="icon"></span>What went wrong?</h3>' +
-        '<p>The most likely cause of missing system status checks is an incorrectly configured proxy server.</p></div>',
-
     // Admin -> Support -> Support ZIP
     SupportZip_Title: 'Support ZIP',
     SupportZip_Description: 'Creates a ZIP file containing useful support information about your server',

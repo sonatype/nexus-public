@@ -144,5 +144,11 @@ export default {
       REGISTER_COMMAND: 'nuget setapikey {0} -source {1}',
       AUTO_CLOSE: 'This window will automatically close after one minute.'
     }
+  },
+
+  METRIC_HEALTH: {
+    NAME_HEADER: 'Name',
+    MESSAGE_HEADER: 'Message',
+    ERROR_HEADER: 'Error',
   }
 };
