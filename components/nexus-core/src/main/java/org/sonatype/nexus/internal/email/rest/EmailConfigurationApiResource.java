@@ -13,8 +13,6 @@
 package org.sonatype.nexus.internal.email.rest;
 
 import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import javax.mail.internet.AddressException;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -40,17 +38,11 @@ import org.slf4j.LoggerFactory;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
-@Named
-@Singleton
-@Path(EmailConfigurationApiResource.RESOURCE_URI)
 @Produces(APPLICATION_JSON)
 public class EmailConfigurationApiResource
     implements Resource, EmailConfigurationApiResourceDoc
 {
-  public static final String RESOURCE_URI = BETA_API_PREFIX + "/email";
-
   private static final Logger log = LoggerFactory.getLogger(EmailConfigurationApiResource.class);
 
   private final EmailManager emailManager;
