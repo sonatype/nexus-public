@@ -28,6 +28,7 @@ import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.browse.internal.orient.BrowseNodeCollisionException;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.BucketDeleter;
 import org.sonatype.nexus.repository.storage.BucketEntityAdapter;
@@ -70,7 +71,10 @@ public class StorageFacetManagerImpl
     this.bucketDeleter = checkNotNull(bucketDeleter);
 
     // extend retry delay when blobs are missing to account for slow blob-stores
-    retryController.addAsMajorException(MissingBlobException.class);
+    retryController.majorExceptionFilter().addException(MissingBlobException.class);
+
+    // mark BrowseNodeCollisionException as potentially noisy so it doesn't skew retry stats
+    retryController.noisyExceptionFilter().addException(BrowseNodeCollisionException.class);
   }
 
   @Override

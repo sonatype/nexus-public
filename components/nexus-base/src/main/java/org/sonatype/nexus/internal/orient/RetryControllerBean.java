@@ -91,11 +91,21 @@ public class RetryControllerBean
 
   @ManagedAttribute
   public String getMajorExceptionFilter() {
-    return retryController.getMajorExceptionFilter();
+    return retryController.majorExceptionFilter().getFilterString();
   }
 
   @ManagedAttribute
   public void setMajorExceptionFilter(final String majorExceptionFilter) {
-    retryController.setMajorExceptionFilter(majorExceptionFilter);
+    retryController.majorExceptionFilter().setFilterString(majorExceptionFilter);
+  }
+
+  @ManagedAttribute
+  public String getNoisyExceptionFilter() {
+    return retryController.noisyExceptionFilter().getFilterString();
+  }
+
+  @ManagedAttribute
+  public void setNoisyExceptionFilter(final String noisyExceptionFilter) {
+    retryController.noisyExceptionFilter().setFilterString(noisyExceptionFilter);
   }
 }
