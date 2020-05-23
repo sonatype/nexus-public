@@ -10,21 +10,22 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.browse.internal.orient;
+package org.sonatype.nexus.repository.browse.node;
 
-import org.sonatype.nexus.repository.browse.node.BrowseNode;
+import java.util.function.BooleanSupplier;
 
-import com.orientechnologies.common.concur.ONeedRetryException;
+import org.sonatype.nexus.repository.Repository;
 
 /**
- * {@link ONeedRetryException} thrown when we want to retry upserting a {@link BrowseNode} due to a collision.
+ * Service for rebuilding browse node data.
  *
- * @since 3.14
+ * @since 3.22
  */
-public class BrowseNodeCollisionException
-    extends ONeedRetryException
+public interface RebuildBrowseNodeService
 {
-  BrowseNodeCollisionException(final String message) {
-    super(message);
-  }
+  /**
+   * @param repo {@link Repository} to rebuild browse node data for.
+   * @param isCancelled a {@link BooleanSupplier} that returns if the rebuilding should be cancelled.
+   */
+  void rebuild(Repository repo, BooleanSupplier isCancelled) throws RebuildBrowseNodeFailedException;
 }

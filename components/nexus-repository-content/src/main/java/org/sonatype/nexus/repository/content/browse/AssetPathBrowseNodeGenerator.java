@@ -15,7 +15,8 @@ package org.sonatype.nexus.repository.content.browse;
 import java.util.List;
 import java.util.Optional;
 
-import org.sonatype.nexus.repository.browse.BrowsePaths;
+import org.sonatype.nexus.repository.browse.node.BrowsePath;
+import org.sonatype.nexus.repository.browse.node.BrowsePathBuilder;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 
@@ -33,16 +34,16 @@ public abstract class AssetPathBrowseNodeGenerator
     implements DatastoreBrowseNodeGenerator
 {
   @Override
-  public List<BrowsePaths> computeAssetPaths(final Asset asset, final Optional<Component> component) {
+  public List<BrowsePath> computeAssetPaths(final Asset asset, final Optional<Component> component) {
     checkNotNull(asset);
 
     List<String> nameParts = Splitter.on('/').omitEmptyStrings().splitToList(asset.path());
 
-    return BrowsePaths.fromPaths(nameParts, false);
+    return BrowsePathBuilder.fromPaths(nameParts, false);
   }
 
   @Override
-  public List<BrowsePaths> computeComponentPaths(final Asset asset, final Component component) {
+  public List<BrowsePath> computeComponentPaths(final Asset asset, final Component component) {
     return computeAssetPaths(asset, of(component));
   }
 }

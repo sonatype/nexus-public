@@ -16,8 +16,8 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.repository.browse.BrowsePaths;
-import org.sonatype.nexus.repository.storage.BrowseNode;
+import org.sonatype.nexus.repository.browse.node.BrowseNode;
+import org.sonatype.nexus.repository.browse.node.BrowsePath;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -147,7 +147,7 @@ public class DatastoreBrowseNode
     this.path = checkNotNull(path);
   }
 
-  public void setPaths(final List<BrowsePaths> paths) {
+  public void setPaths(final List<BrowsePath> paths) {
     setName(paths.get(paths.size() - 1).getBrowsePath());
     setPath(paths.get(paths.size() - 1).getRequestPath());
   }

@@ -10,22 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.browse;
-
-import java.util.function.BooleanSupplier;
-
-import org.sonatype.nexus.repository.Repository;
+package org.sonatype.nexus.repository.browse.node;
 
 /**
- * Service for rebuilding browse node data.
+ * For when rebuilding of browse nodes fails.
  *
  * @since 3.22
  */
-public interface RebuildBrowseNodeService
+public class RebuildBrowseNodeFailedException
+    extends Exception
 {
-  /**
-   * @param repo {@link Repository} to rebuild browse node data for.
-   * @param isCancelled a {@link BooleanSupplier} that returns if the rebuilding should be cancelled.
-   */
-  void rebuild(Repository repo, BooleanSupplier isCancelled) throws RebuildBrowseNodeFailedException;
+  public RebuildBrowseNodeFailedException(final String message, final Throwable cause) {
+    super(message, cause);
+  }
 }

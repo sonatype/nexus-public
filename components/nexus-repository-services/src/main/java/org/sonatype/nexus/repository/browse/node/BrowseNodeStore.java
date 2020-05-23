@@ -10,18 +10,29 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.storage;
+package org.sonatype.nexus.repository.browse.node;
 
-import java.util.function.BiPredicate;
+import java.util.List;
 
 /**
- * This interface is used to filter the list of browse nodes that are returned at a given level of the browse tree
- * and we need to be very careful to ensure this condition is not too expensive. It is also worth noting that this has
- * the ability to hide non-leaf nodes which if implemented incorrectly could hide entire branches.
+ * Store providing access to the browse tree.
  *
- * @since 3.11
+ * @since 3.7
  */
-public interface BrowseNodeFilter
-    extends BiPredicate<BrowseNode<?>, Boolean>
+public interface BrowseNodeStore<ID>
 {
+  /**
+   * Returns the {@link BrowseNode}s directly visible under the given path.
+   */
+  Iterable<BrowseNode<ID>> getByPath(String repositoryName, List<String> path, int maxNodes);
+
+  /**
+   * Returns an external representation of the identifier.
+   */
+  String getValue(ID id);
+
+  /**
+   * Returns an internal representation of the serialized identifier.
+   */
+  ID fromValue(String value);
 }

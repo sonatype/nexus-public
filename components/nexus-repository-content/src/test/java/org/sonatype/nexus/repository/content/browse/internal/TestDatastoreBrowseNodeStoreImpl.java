@@ -18,13 +18,13 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
-import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeComparator;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeFilter;
 import org.sonatype.nexus.repository.content.store.ContentRepositoryDAO;
 import org.sonatype.nexus.repository.content.store.ContentRepositoryStore;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.selector.DatastoreContentAuthHelper;
-import org.sonatype.nexus.repository.storage.BrowseNodeComparator;
-import org.sonatype.nexus.repository.storage.BrowseNodeFilter;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.selector.SelectorManager;
 

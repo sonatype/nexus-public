@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.repository.browse.BrowsePaths;
+import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
@@ -32,18 +32,18 @@ import static org.mockito.Mockito.when;
 public class BrowseTestSupport
     extends TestSupport
 {
-  protected void assertPaths(List<String> expectedPaths, List<BrowsePaths> paths) {
+  protected void assertPaths(List<String> expectedPaths, List<BrowsePath> paths) {
     assertPaths(expectedPaths, paths, false);
   }
 
-  protected void assertPaths(List<String> expectedPaths, List<BrowsePaths> paths, boolean withTrailingSlash) {
+  protected void assertPaths(List<String> expectedPaths, List<BrowsePath> paths, boolean withTrailingSlash) {
     assertPaths(expectedPaths, expectedPaths, paths, withTrailingSlash);
   }
 
   protected void assertPaths(
       List<String> expectedBrowsePaths,
       List<String> expectedRequestPaths,
-      List<BrowsePaths> paths)
+      List<BrowsePath> paths)
   {
     assertPaths(expectedBrowsePaths, expectedRequestPaths, paths, false);
   }
@@ -51,7 +51,7 @@ public class BrowseTestSupport
   protected void assertPaths(
       List<String> expectedBrowsePaths,
       List<String> expectedRequestPaths,
-      List<BrowsePaths> paths,
+      List<BrowsePath> paths,
       boolean withTrailingSlash)
   {
     assertThat(expectedRequestPaths.size(), is(expectedBrowsePaths.size()));
@@ -93,14 +93,14 @@ public class BrowseTestSupport
     return component;
   }
 
-  protected List<BrowsePaths> toBrowsePaths(List<String> paths) {
-    List<BrowsePaths> results = new ArrayList<>();
+  protected List<BrowsePath> toBrowsePaths(List<String> paths) {
+    List<BrowsePath> results = new ArrayList<>();
 
     final StringBuilder requestPath = new StringBuilder();
 
     paths.forEach(path -> {
       requestPath.append(path);
-      results.add(new BrowsePaths(path, requestPath.toString()));
+      results.add(new BrowsePath(path, requestPath.toString()));
       requestPath.append("/");
     });
 

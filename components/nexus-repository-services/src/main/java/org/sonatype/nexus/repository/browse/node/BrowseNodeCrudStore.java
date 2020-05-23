@@ -10,29 +10,41 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.storage;
+package org.sonatype.nexus.repository.browse.node;
 
 import java.util.List;
 
 /**
- * Store providing access to the browse tree.
+ * Store providing access to the browse tree for assets & components.
  *
  * @since 3.7
  */
-public interface BrowseNodeStore<ID>
+public interface BrowseNodeCrudStore<ASSET, COMPONENT>
 {
   /**
-   * Returns the {@link BrowseNode}s directly visible under the given path.
+   * Creates a {@link BrowseNode} for the given asset.
    */
-  Iterable<BrowseNode<ID>> getByPath(String repositoryName, List<String> path, int maxNodes);
+  void createAssetNode(String repositoryName, String format, List<BrowsePath> paths, ASSET asset);
 
   /**
-   * Returns an external representation of the identifier.
+   * Creates a {@link BrowseNode} for the given component.
    */
-  String getValue(ID id);
+  void createComponentNode(String repositoryName, String format, List<BrowsePath> paths, COMPONENT component);
+
+  boolean assetNodeExists(ASSET asset);
 
   /**
-   * Returns an internal representation of the serialized identifier.
+   * Deletes the asset's {@link BrowseNode}.
    */
-  ID fromValue(String value);
+  void deleteAssetNode(ASSET asset);
+
+  /**
+   * Deletes the component's {@link BrowseNode}.
+   */
+  void deleteComponentNode(COMPONENT component);
+
+  /**
+   * Deletes all {@link BrowseNode}s belonging to the given repository.
+   */
+  void deleteByRepository(String repositoryName);
 }

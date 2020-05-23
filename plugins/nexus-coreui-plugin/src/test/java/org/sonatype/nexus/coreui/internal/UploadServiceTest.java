@@ -19,8 +19,6 @@ import java.util.Collections;
 import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.common.entity.DetachedEntityId;
-import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.upload.UploadManager;
@@ -54,13 +52,11 @@ public class UploadServiceTest
   @Mock
   private HttpServletRequest request;
 
-  private EntityId newId = new DetachedEntityId("newId");
-
   @Before
   public void setup() throws IOException {
     when(repositoryManager.get(REPO_NAME)).thenReturn(repo);
 
-    UploadResponse uploadResponse = new UploadResponse(newId, Collections.singletonList("foo"));
+    UploadResponse uploadResponse = new UploadResponse(Collections.singletonList("foo"));
     when(uploadManager.handle(repo, request)).thenReturn(uploadResponse);
 
     component = new UploadService(repositoryManager, uploadManager);

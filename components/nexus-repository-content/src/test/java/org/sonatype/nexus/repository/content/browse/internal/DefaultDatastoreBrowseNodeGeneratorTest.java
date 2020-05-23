@@ -14,8 +14,8 @@ package org.sonatype.nexus.repository.content.browse.internal;
 
 import java.util.List;
 
-import org.sonatype.nexus.repository.browse.BrowsePaths;
 import org.sonatype.nexus.repository.content.browse.BrowseTestSupport;
+import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 
@@ -43,7 +43,7 @@ public class DefaultDatastoreBrowseNodeGeneratorTest
   public void computeAssetPathWithNoComponent() {
     Asset asset = createAsset("/path/asset");
 
-    List<BrowsePaths> paths = generator.computeAssetPaths(asset,  empty());
+    List<BrowsePath> paths = generator.computeAssetPaths(asset,  empty());
 
     assertPaths(asList("path", "asset"), paths);
   }
@@ -52,7 +52,7 @@ public class DefaultDatastoreBrowseNodeGeneratorTest
   public void computeAssetPathWithNoComponent_trailingSlash() {
     Asset asset = createAsset("/path/asset/");
 
-    List<BrowsePaths> paths = generator.computeAssetPaths(asset, empty());
+    List<BrowsePath> paths = generator.computeAssetPaths(asset, empty());
 
     assertPaths(asList("path", "asset"), paths);
   }
@@ -62,7 +62,7 @@ public class DefaultDatastoreBrowseNodeGeneratorTest
     Component component = createComponent("component", null, null);
     Asset asset = createAsset("path/assetName");
 
-    List<BrowsePaths> paths = generator.computeAssetPaths(asset, of(component));
+    List<BrowsePath> paths = generator.computeAssetPaths(asset, of(component));
 
     assertPaths(asList(component.name(), "assetName"), paths);
   }
@@ -72,7 +72,7 @@ public class DefaultDatastoreBrowseNodeGeneratorTest
     Component component = createComponent("component", null, "1.0.0");
     Asset asset = createAsset("path/assetName");
 
-    List<BrowsePaths> paths = generator.computeAssetPaths(asset, of(component));
+    List<BrowsePath> paths = generator.computeAssetPaths(asset, of(component));
 
     assertPaths(asList(component.name(), component.version(), "assetName"), paths);
   }
@@ -82,7 +82,7 @@ public class DefaultDatastoreBrowseNodeGeneratorTest
     Component component = createComponent("component", "group", "1.0.0");
     Asset asset = createAsset("path/assetName");
 
-    List<BrowsePaths> paths = generator.computeAssetPaths(asset, of(component));
+    List<BrowsePath> paths = generator.computeAssetPaths(asset, of(component));
 
     assertPaths(asList(component.namespace(), component.name(), component.version(), "assetName"), paths);
   }
@@ -92,7 +92,7 @@ public class DefaultDatastoreBrowseNodeGeneratorTest
     Component component = createComponent("component", null, null);
     Asset asset = createAsset("path/assetName");
 
-    List<BrowsePaths> paths = generator.computeComponentPaths(asset, component);
+    List<BrowsePath> paths = generator.computeComponentPaths(asset, component);
 
     assertPaths(singletonList(component.name()), paths, true);
   }
@@ -102,7 +102,7 @@ public class DefaultDatastoreBrowseNodeGeneratorTest
     Component component = createComponent("component", null, "1.0.0");
     Asset asset = createAsset("path/assetName");
 
-    List<BrowsePaths> paths = generator.computeComponentPaths(asset, component);
+    List<BrowsePath> paths = generator.computeComponentPaths(asset, component);
 
     assertPaths(asList(component.name(), component.version()), paths, true);
   }
@@ -112,7 +112,7 @@ public class DefaultDatastoreBrowseNodeGeneratorTest
     Component component = createComponent("component", "group", "1.0.0");
     Asset asset = createAsset("path/assetName");
 
-    List<BrowsePaths> paths = generator.computeComponentPaths(asset, component);
+    List<BrowsePath> paths = generator.computeComponentPaths(asset, component);
 
     assertPaths(asList(component.namespace(), component.name(), component.version()), paths, true);
   }

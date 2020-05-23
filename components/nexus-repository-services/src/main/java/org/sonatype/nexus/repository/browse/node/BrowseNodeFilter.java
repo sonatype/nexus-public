@@ -10,35 +10,18 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.storage;
+package org.sonatype.nexus.repository.browse.node;
 
-import javax.annotation.Nullable;
+import java.util.function.BiPredicate;
 
 /**
- * Represents a path segment in a tree hierarchy.
+ * This interface is used to filter the list of browse nodes that are returned at a given level of the browse tree
+ * and we need to be very careful to ensure this condition is not too expensive. It is also worth noting that this has
+ * the ability to hide non-leaf nodes which if implemented incorrectly could hide entire branches.
  *
- * @since 3.6
+ * @since 3.11
  */
-public interface BrowseNode<ID>
+public interface BrowseNodeFilter
+    extends BiPredicate<BrowseNode<?>, Boolean>
 {
-  /**
-   * @since 3.18
-   */
-  String getPath();
-
-  /**
-   * @since 3.7
-   */
-  String getName();
-
-  /**
-   * @since 3.6.1
-   */
-  boolean isLeaf();
-
-  @Nullable
-  ID getComponentId();
-
-  @Nullable
-  ID getAssetId();
 }

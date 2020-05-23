@@ -22,8 +22,10 @@ import org.sonatype.nexus.common.app.VersionComparator;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
-import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
 import org.sonatype.nexus.repository.browse.BrowsePaths;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration;
+import org.sonatype.nexus.repository.browse.node.BrowsePath;
+import org.sonatype.nexus.repository.browse.node.DefaultBrowseNodeComparator;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
@@ -32,7 +34,6 @@ import org.sonatype.nexus.repository.storage.BucketEntityAdapter;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
 import org.sonatype.nexus.repository.storage.ComponentFactory;
-import org.sonatype.nexus.repository.storage.DefaultBrowseNodeComparator;
 import org.sonatype.nexus.repository.storage.DefaultComponent;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.selector.SelectorManager;
@@ -147,14 +148,14 @@ public class OrientBrowseNodeStoreImplLoadTest
   public void exercisePathContentionBetweenAssets() throws Exception {
     ConcurrentRunner runner = new ConcurrentRunner(1, 30);
 
-    List<BrowsePaths> componentPath = asList(new BrowsePaths("some", "some"), new BrowsePaths("kind", "some/kind"),
+    List<BrowsePath> componentPath = asList(new BrowsePaths("some", "some"), new BrowsePaths("kind", "some/kind"),
         new BrowsePaths("of", "some/kind/of"), new BrowsePaths("path", "some/kind/of/path"));
 
     for (int i = 0; i < ASSET_COUNT; i++) {
       int assetIndex = i;
       runner.addTask(1, () -> {
         underTest.createComponentNode(REPOSITORY_NAME, "aformat", componentPath, component);
-        List<BrowsePaths> assetPath = newArrayList(concat(componentPath,
+        List<BrowsePath> assetPath = newArrayList(concat(componentPath,
             asList(new BrowsePaths("to", "some/kind/of/path/to"),
                 new BrowsePaths("asset" + assetIndex, "some/kind/of/path/to/asset" + assetIndex))));
         underTest.createAssetNode(REPOSITORY_NAME, "aformat", assetPath, assets.get(assetIndex));
@@ -169,7 +170,7 @@ public class OrientBrowseNodeStoreImplLoadTest
   public void exercisePathContentionBetweenAssetAndComponent() throws Exception {
     ConcurrentRunner runner = new ConcurrentRunner(1, 30);
 
-    List<BrowsePaths> commonPath = asList(new BrowsePaths("some", "some"), new BrowsePaths("kind", "some/kind"),
+    List<BrowsePath> commonPath = asList(new BrowsePaths("some", "some"), new BrowsePaths("kind", "some/kind"),
         new BrowsePaths("of", "some/kind/of"), new BrowsePaths("path", "some/kind/of/path"));
 
     runner.addTask(1, () -> {

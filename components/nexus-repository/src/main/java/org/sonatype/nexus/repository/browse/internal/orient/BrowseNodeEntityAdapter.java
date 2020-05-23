@@ -27,10 +27,10 @@ import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.AttachedEntityId;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
-import org.sonatype.nexus.repository.browse.BrowsePaths;
+import org.sonatype.nexus.repository.browse.node.BrowseNode;
+import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
-import org.sonatype.nexus.repository.storage.BrowseNode;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
 
@@ -211,7 +211,7 @@ public class BrowseNodeEntityAdapter
   public void createComponentNode(final ODatabaseDocumentTx db,
                                   final String repositoryName,
                                   final String format,
-                                  final List<BrowsePaths> paths,
+                                  final List<? extends BrowsePath> paths,
                                   final Component component)
   {
     //create any parent folder nodes for this component if not already existing
@@ -246,7 +246,7 @@ public class BrowseNodeEntityAdapter
   public void createAssetNode(final ODatabaseDocumentTx db,
                               final String repositoryName,
                               final String format,
-                              final List<BrowsePaths> paths,
+                              final List<? extends BrowsePath> paths,
                               final Asset asset)
   {
     //create any parent folder nodes for this asset if not already existing
@@ -288,7 +288,7 @@ public class BrowseNodeEntityAdapter
   private void maybeCreateParentNodes(final ODatabaseDocumentTx db,
                                       final String repositoryName,
                                       final String format,
-                                      final List<BrowsePaths> paths)
+                                      final List<? extends BrowsePath> paths)
   {
     for (int i = paths.size() ; i > 0 ; i--) {
       OrientBrowseNode parentNode = newNode(repositoryName, format, paths.subList(0, i));
@@ -317,7 +317,7 @@ public class BrowseNodeEntityAdapter
   private static OrientBrowseNode newNode(
       final String repositoryName,
       final String format,
-      final List<BrowsePaths> paths)
+      final List<? extends BrowsePath> paths)
   {
     OrientBrowseNode node = new OrientBrowseNode();
     node.setRepositoryName(repositoryName);

@@ -19,7 +19,8 @@ import java.util.Optional;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.text.Strings2;
-import org.sonatype.nexus.repository.browse.BrowsePaths;
+import org.sonatype.nexus.repository.browse.node.BrowsePath;
+import org.sonatype.nexus.repository.browse.node.BrowsePathBuilder;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.browse.ComponentPathBrowseNodeGenerator;
@@ -44,7 +45,7 @@ public class DefaultDatastoreBrowseNodeGenerator
    * @return componentPath/lastSegment(assetPath) if the component was not null, otherwise assetPath
    */
   @Override
-  public List<BrowsePaths> computeAssetPaths(final Asset asset, final Optional<Component> component) {
+  public List<BrowsePath> computeAssetPaths(final Asset asset, final Optional<Component> component) {
     checkNotNull(asset);
     checkNotNull(component);
 
@@ -53,10 +54,10 @@ public class DefaultDatastoreBrowseNodeGenerator
         .orElseGet(() -> super.computeAssetPaths(asset, component));
   }
 
-  private List<BrowsePaths> computeComponentAssetPaths(final Asset asset, final Component component) {
-    List<BrowsePaths> paths = computeComponentPaths(asset, component);
+  private List<BrowsePath> computeComponentAssetPaths(final Asset asset, final Component component) {
+    List<BrowsePath> paths = computeComponentPaths(asset, component);
     String lastSegment = lastSegment(asset.path());
-    BrowsePaths.appendPath(paths, lastSegment);
+    BrowsePathBuilder.appendPath(paths, lastSegment);
     return paths;
   }
 
@@ -64,7 +65,7 @@ public class DefaultDatastoreBrowseNodeGenerator
    * @return [componentGroup]/componentName/[componentVersion]
    */
   @Override
-  public List<BrowsePaths> computeComponentPaths(final Asset asset, final Component component) {
+  public List<BrowsePath> computeComponentPaths(final Asset asset, final Component component) {
     checkNotNull(asset);
     checkNotNull(component);
 
@@ -77,6 +78,6 @@ public class DefaultDatastoreBrowseNodeGenerator
     if (!Strings2.isBlank(component.version())) {
       paths.add(component.version());
     }
-    return BrowsePaths.fromPaths(paths, true);
+    return BrowsePathBuilder.fromPaths(paths, true);
   }
 }

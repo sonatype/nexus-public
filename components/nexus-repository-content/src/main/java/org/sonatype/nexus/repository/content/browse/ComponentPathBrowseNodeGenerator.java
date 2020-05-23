@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.content.browse;
 
 import java.util.List;
 
-import org.sonatype.nexus.repository.browse.BrowsePaths;
+import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 
@@ -29,8 +29,8 @@ public abstract class ComponentPathBrowseNodeGenerator
     extends AssetPathBrowseNodeGenerator
 {
   @Override
-  public List<BrowsePaths> computeComponentPaths(final Asset asset, final Component component) {
-    List<BrowsePaths> assetPaths = computeAssetPaths(asset, of(component));
+  public List<BrowsePath> computeComponentPaths(final Asset asset, final Component component) {
+    List<BrowsePath> assetPaths = computeAssetPaths(asset, of(component));
     return assetPaths.subList(0, assetPaths.size() - 1);
   }
 }

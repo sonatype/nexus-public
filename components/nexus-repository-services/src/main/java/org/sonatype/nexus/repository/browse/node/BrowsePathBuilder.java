@@ -10,45 +10,42 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.browse;
+package org.sonatype.nexus.repository.browse.node;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.sonatype.nexus.repository.browse.node.BrowsePath;
-
 /**
- * Provides compatibility between the new {@link BrowsePath} interface and existing CMA path generators.
+ * Static methods for building {@link BrowsePath}.
  *
- * @since 3.18
+ * @since 3.next
  */
-public class BrowsePaths
-    extends BrowsePath
+public class BrowsePathBuilder
 {
-  public BrowsePaths(final String browsePath, final String requestPath) {
-    super(browsePath, requestPath);
+  private BrowsePathBuilder() {
+    // static utility class
   }
 
-  public static List<BrowsePaths> fromPaths(List<String> paths, boolean trailingSlash) {
-    List<BrowsePaths> results = new ArrayList<>();
+  public static List<BrowsePath> fromPaths(List<String> paths, boolean trailingSlash) {
+    List<BrowsePath> results = new ArrayList<>();
 
     StringBuilder requestPath = new StringBuilder();
-    for (int i = 0 ; i < paths.size() ; i++) {
+    for (int i = 0; i < paths.size(); i++) {
       requestPath.append(paths.get(i));
       if (trailingSlash || i < paths.size() - 1) {
         requestPath.append("/");
       }
-      results.add(new BrowsePaths(paths.get(i), requestPath.toString()));
+      results.add(new BrowsePath(paths.get(i), requestPath.toString()));
     }
 
     return results;
   }
 
-  public static void appendPath(List<BrowsePaths> browsePaths, String path) {
-    browsePaths.add(new BrowsePaths(path, browsePaths.get(browsePaths.size() - 1).getRequestPath() + path));
+  public static void appendPath(List<BrowsePath> browsePaths, String path) {
+    browsePaths.add(new BrowsePath(path, browsePaths.get(browsePaths.size() - 1).getRequestPath() + path));
   }
 
-  public static void appendPath(List<BrowsePaths> browsePaths, String path, String requestPath) {
-    browsePaths.add(new BrowsePaths(path, requestPath));
+  public static void appendPath(List<BrowsePath> browsePaths, String path, String requestPath) {
+    browsePaths.add(new BrowsePath(path, requestPath));
   }
 }

@@ -10,25 +10,35 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.storage;
+package org.sonatype.nexus.repository.browse.node;
 
-import java.util.function.Function;
-
-import org.sonatype.nexus.repository.Facet;
+import javax.annotation.Nullable;
 
 /**
- * Optional BrowseNode facet; used to customize legacy browse-node behaviour.
+ * Represents a path segment in a tree hierarchy.
  *
- * @since 3.22
+ * @since 3.6
  */
-@Facet.Exposed
-public interface BrowseNodeFacet
-    extends Facet
+public interface BrowseNode<ID>
 {
   /**
-   * Returns a function to apply to a browse node to determine distinctness
+   * @since 3.18
    */
-  default Function<BrowseNode<?>, String> browseNodeIdentity() {
-    return BrowseNode::getName;
-  }
+  String getPath();
+
+  /**
+   * @since 3.7
+   */
+  String getName();
+
+  /**
+   * @since 3.6.1
+   */
+  boolean isLeaf();
+
+  @Nullable
+  ID getComponentId();
+
+  @Nullable
+  ID getAssetId();
 }

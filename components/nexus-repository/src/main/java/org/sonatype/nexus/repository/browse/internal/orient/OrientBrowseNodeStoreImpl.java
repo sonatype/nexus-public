@@ -34,20 +34,20 @@ import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
-import org.sonatype.nexus.repository.browse.BrowsePaths;
+import org.sonatype.nexus.repository.browse.node.BrowseNode;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeComparator;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeCrudStore;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeFacet;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeFilter;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeStore;
+import org.sonatype.nexus.repository.browse.node.BrowsePath;
+import org.sonatype.nexus.repository.browse.node.DefaultBrowseNodeComparator;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.BrowseNode;
-import org.sonatype.nexus.repository.storage.BrowseNodeComparator;
-import org.sonatype.nexus.repository.storage.BrowseNodeCrudStore;
-import org.sonatype.nexus.repository.storage.BrowseNodeFacet;
-import org.sonatype.nexus.repository.storage.BrowseNodeFilter;
-import org.sonatype.nexus.repository.storage.BrowseNodeStore;
 import org.sonatype.nexus.repository.storage.Component;
-import org.sonatype.nexus.repository.storage.DefaultBrowseNodeComparator;
 import org.sonatype.nexus.repository.storage.internal.ComponentSchemaRegistration;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.security.BreadActions;
@@ -137,7 +137,7 @@ public class OrientBrowseNodeStoreImpl
   @Guarded(by = STARTED)
   public void createComponentNode(final String repositoryName,
                                   final String format,
-                                  final List<BrowsePaths> paths,
+                                  final List<BrowsePath> paths,
                                   final Component component)
   {
     inTxRetry(databaseInstance)
@@ -150,7 +150,7 @@ public class OrientBrowseNodeStoreImpl
   @Guarded(by = STARTED)
   public void createAssetNode(final String repositoryName,
                               final String format,
-                              final List<BrowsePaths> paths,
+                              final List<BrowsePath> paths,
                               final Asset asset)
   {
     inTxRetry(databaseInstance)

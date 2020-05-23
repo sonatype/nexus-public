@@ -86,6 +86,15 @@ public interface BlobStore
   String DIRECT_PATH_BLOB_HEADER = "BlobStore.direct-path";
 
   /**
+   * An associated repository name for disaster recovery purposes (which isn't required to be strictly unique)
+   *
+   * (uses 'Bucket' prefix for legacy compatibility reasons)
+   *
+   * @since 3.next
+   */
+  String REPO_NAME_HEADER = "Bucket.repo-name";
+
+  /**
    * Creates a new blob. The header map must contain at least two keys:
    *
    * <ul>

@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.content.browse;
 
 import java.util.List;
 
-import org.sonatype.nexus.repository.browse.BrowsePaths;
+import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 
@@ -41,7 +41,7 @@ public class ComponentPathBrowseNodeGeneratorTest
   public void computeAssetPathNoComponent() {
     Asset asset = createAsset("asset/path/foo");
 
-    List<BrowsePaths> paths = generator.computeAssetPaths(asset, null);
+    List<BrowsePath> paths = generator.computeAssetPaths(asset, null);
 
     assertPaths(asList("asset", "path", "foo"), paths);
   }
@@ -51,7 +51,7 @@ public class ComponentPathBrowseNodeGeneratorTest
     Component component = createComponent("component", "group", "1.0.0");
     Asset asset = createAsset("asset/path/foo");
 
-    List<BrowsePaths> paths = generator.computeAssetPaths(asset, of(component));
+    List<BrowsePath> paths = generator.computeAssetPaths(asset, of(component));
 
     assertPaths(asList("asset", "path", "foo"), paths);
   }
@@ -61,7 +61,7 @@ public class ComponentPathBrowseNodeGeneratorTest
     Component component = createComponent("component", "group", "1.0.0");
     Asset asset = createAsset("asset/path/foo");
 
-    List<BrowsePaths> paths = generator.computeComponentPaths(asset, component);
+    List<BrowsePath> paths = generator.computeComponentPaths(asset, component);
 
     assertPaths(asList("asset", "path"), paths, true);
   }

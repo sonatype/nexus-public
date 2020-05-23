@@ -10,17 +10,25 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.browse;
+package org.sonatype.nexus.repository.browse.node;
+
+import java.util.function.Function;
+
+import org.sonatype.nexus.repository.Facet;
 
 /**
- * For when rebuilding of browse nodes fails.
+ * Optional BrowseNode facet; used to customize legacy browse-node behaviour.
  *
  * @since 3.22
  */
-public class RebuildBrowseNodeFailedException
-    extends Exception
+@Facet.Exposed
+public interface BrowseNodeFacet
+    extends Facet
 {
-  public RebuildBrowseNodeFailedException(final String message, final Throwable cause) {
-    super(message, cause);
+  /**
+   * Returns a function to apply to a browse node to determine distinctness
+   */
+  default Function<BrowseNode<?>, String> browseNodeIdentity() {
+    return BrowseNode::getName;
   }
 }
