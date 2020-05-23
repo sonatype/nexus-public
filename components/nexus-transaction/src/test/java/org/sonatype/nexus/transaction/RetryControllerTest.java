@@ -165,7 +165,7 @@ public class RetryControllerTest
     verifyBackoff(6, TEST_CAUSE, 0, 1270);
     verifyBackoff(7, TEST_CAUSE, 0, 2550);
 
-    underTest.addAsMajorException(TestException.class);
+    underTest.majorExceptionFilter().addException(TestException.class);
 
     verifyBackoff(0, TEST_CAUSE, 100, 200);
     verifyBackoff(1, TEST_CAUSE, 100, 400);
@@ -176,7 +176,7 @@ public class RetryControllerTest
     verifyBackoff(6, TEST_CAUSE, 100, 12800);
     verifyBackoff(7, TEST_CAUSE, 100, 25600);
 
-    underTest.removeAsMajorException(TestException.class);
+    underTest.majorExceptionFilter().removeException(TestException.class);
 
     verifyBackoff(0, TEST_CAUSE, 0, 10);
     verifyBackoff(1, TEST_CAUSE, 0, 30);
@@ -238,6 +238,41 @@ public class RetryControllerTest
     assertThat(underTest.excessiveRetriesInLastHour(), is(4L));
     underTest.allowRetry(7, MINOR_CAUSE);
     assertThat(underTest.excessiveRetriesInLastHour(), is(4L));
+  }
+
+  @Test
+  public void testStatsUnaffectedByNoisyException() throws Exception {
+    assertThat(underTest.excessiveRetriesInLastHour(), is(0L));
+
+    underTest.allowRetry(0, TEST_CAUSE);
+    underTest.allowRetry(1, TEST_CAUSE);
+    underTest.allowRetry(2, TEST_CAUSE);
+    underTest.allowRetry(3, TEST_CAUSE);
+    assertThat(underTest.excessiveRetriesInLastHour(), is(0L));
+    underTest.allowRetry(4, TEST_CAUSE);
+    assertThat(underTest.excessiveRetriesInLastHour(), is(1L)); // bump
+
+    // mark TestException as noisy so it won't affect the retry stats
+    underTest.noisyExceptionFilter().addException(TestException.class);
+
+    underTest.allowRetry(0, TEST_CAUSE);
+    underTest.allowRetry(1, TEST_CAUSE);
+    underTest.allowRetry(2, TEST_CAUSE);
+    underTest.allowRetry(3, TEST_CAUSE);
+    assertThat(underTest.excessiveRetriesInLastHour(), is(1L));
+    underTest.allowRetry(4, TEST_CAUSE);
+    assertThat(underTest.excessiveRetriesInLastHour(), is(1L)); // no bump
+
+    // mark TestException as not noisy so it can affect retry stats again
+    underTest.noisyExceptionFilter().removeException(TestException.class);
+
+    underTest.allowRetry(0, TEST_CAUSE);
+    underTest.allowRetry(1, TEST_CAUSE);
+    underTest.allowRetry(2, TEST_CAUSE);
+    underTest.allowRetry(3, TEST_CAUSE);
+    assertThat(underTest.excessiveRetriesInLastHour(), is(1L));
+    underTest.allowRetry(4, TEST_CAUSE);
+    assertThat(underTest.excessiveRetriesInLastHour(), is(2L)); // bump
   }
 
   private void verifyBackoff(final int retriesSoFar,
