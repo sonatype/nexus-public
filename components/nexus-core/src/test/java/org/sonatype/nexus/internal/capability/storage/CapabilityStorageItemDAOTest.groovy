@@ -13,14 +13,17 @@
 
 package org.sonatype.nexus.internal.capability.storage
 
+import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup
 import org.sonatype.nexus.datastore.api.DataSession
 import org.sonatype.nexus.testdb.DataSessionRule
 
 import org.junit.Rule
+import org.junit.experimental.categories.Category
 import spock.lang.Specification
 
 import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE_NAME
 
+@Category(SQLTestGroup.class)
 class CapabilityStorageItemDAOTest
     extends Specification
 {

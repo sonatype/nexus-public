@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.internal.security.model
 
+import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup
 import org.sonatype.nexus.datastore.api.DataSession
 import org.sonatype.nexus.datastore.api.DataStoreManager
 import org.sonatype.nexus.security.config.CPrivilege
@@ -19,8 +20,10 @@ import org.sonatype.nexus.security.config.CUserRoleMapping
 import org.sonatype.nexus.testdb.DataSessionRule
 
 import org.junit.Rule
+import org.junit.experimental.categories.Category
 import spock.lang.Specification
 
+@Category(SQLTestGroup.class)
 class CuserRoleMappingDAOTest
     extends Specification
 {

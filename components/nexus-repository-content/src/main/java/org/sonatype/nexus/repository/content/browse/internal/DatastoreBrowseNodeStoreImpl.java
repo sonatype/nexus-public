@@ -31,8 +31,15 @@ import org.sonatype.nexus.common.entity.Entity;
 import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
-import org.sonatype.nexus.repository.browse.BrowsePaths;
+import org.sonatype.nexus.repository.browse.node.BrowseNode;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeComparator;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeCrudStore;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeFacet;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeFilter;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeStore;
+import org.sonatype.nexus.repository.browse.node.BrowsePath;
+import org.sonatype.nexus.repository.browse.node.DefaultBrowseNodeComparator;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.ContentRepository;
@@ -43,13 +50,6 @@ import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.repository.selector.DatastoreContentAuthHelper;
-import org.sonatype.nexus.repository.storage.BrowseNode;
-import org.sonatype.nexus.repository.storage.BrowseNodeComparator;
-import org.sonatype.nexus.repository.storage.BrowseNodeCrudStore;
-import org.sonatype.nexus.repository.storage.BrowseNodeFacet;
-import org.sonatype.nexus.repository.storage.BrowseNodeFilter;
-import org.sonatype.nexus.repository.storage.BrowseNodeStore;
-import org.sonatype.nexus.repository.storage.DefaultBrowseNodeComparator;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.security.SecurityHelper;
@@ -144,7 +144,7 @@ public class DatastoreBrowseNodeStoreImpl<T extends BrowseNodeDAO>
   public void createAssetNode(
       final String repositoryName,
       final String format,
-      final List<BrowsePaths> paths,
+      final List<BrowsePath> paths,
       final Asset asset)
   {
     checkNotNull(repositoryName);
@@ -161,7 +161,7 @@ public class DatastoreBrowseNodeStoreImpl<T extends BrowseNodeDAO>
   public void createComponentNode(
       final String repositoryName,
       final String format,
-      final List<BrowsePaths> paths,
+      final List<BrowsePath> paths,
       final Component component)
   {
     checkNotNull(repositoryName);
@@ -424,17 +424,17 @@ public class DatastoreBrowseNodeStoreImpl<T extends BrowseNodeDAO>
    * Walk the given {@code browsePaths} creating nodes as needed returning the ID associated with the deepest browse
    * path.
    */
-  private Optional<Integer> createNodes(final String repositoryName, final List<BrowsePaths> browsePaths) {
+  private Optional<Integer> createNodes(final String repositoryName, final List<BrowsePath> browsePaths) {
     Repository repository = repositoryManager.get(repositoryName);
     ContentRepository contentRepository = getContentRepository(repository);
-    List<String> paths = browsePaths.stream().map(BrowsePaths::getRequestPath).collect(Collectors.toList());
+    List<String> paths = browsePaths.stream().map(BrowsePath::getRequestPath).collect(Collectors.toList());
 
     // Try to find the deepest node in the path to avoid failures creating pre-existing nodes.
     Optional<DatastoreBrowseNode> deepestNode =
         dao().findDeepestNode(contentRepository, paths.toArray(new String[paths.size()]));
 
     Integer parentId = null;
-    List<BrowsePaths> nodesToCreate = browsePaths;
+    List<BrowsePath> nodesToCreate = browsePaths;
 
     if (deepestNode.isPresent()) {
       parentId = deepestNode.get().getId();
@@ -446,7 +446,7 @@ public class DatastoreBrowseNodeStoreImpl<T extends BrowseNodeDAO>
     }
 
     // Create missing nodes in the path
-    for (BrowsePaths browsePath : nodesToCreate) {
+    for (BrowsePath browsePath : nodesToCreate) {
       DatastoreBrowseNode node = new DatastoreBrowseNode(repository.getFormat().getValue(), parentId,
           browsePath.getRequestPath(), browsePath.getBrowsePath());
       dao().createNode(contentRepository, node);

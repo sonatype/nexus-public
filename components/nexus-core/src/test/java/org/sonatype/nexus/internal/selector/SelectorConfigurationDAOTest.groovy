@@ -12,17 +12,20 @@
  */
 package org.sonatype.nexus.internal.selector
 
+import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup
 import org.sonatype.nexus.datastore.api.DataSession
 import org.sonatype.nexus.selector.SelectorConfiguration
 import org.sonatype.nexus.testdb.DataSessionRule
 
 import org.junit.Rule
+import org.junit.experimental.categories.Category
 import spock.lang.Specification
 
 import static com.google.common.collect.Streams.stream
 import static java.util.stream.Collectors.toList
 import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE_NAME
 
+@Category(SQLTestGroup.class)
 class SelectorConfigurationDAOTest
     extends Specification
 {

@@ -48,6 +48,7 @@ Ext.define('NX.view.Authenticate', {
     }
 
     Ext.apply(this, {
+      closable:false,
       items: {
         xtype: 'form',
         defaultType: 'textfield',
@@ -85,7 +86,14 @@ Ext.define('NX.view.Authenticate', {
         buttonAlign: 'left',
         buttons: [
           { text: NX.I18n.get('User_View_Authenticate_Submit_Button'), action: 'authenticate', formBind: true, bindToEnter: true, ui: 'nx-primary' },
-          { text: NX.I18n.get('Authenticate_Cancel_Button'), handler: me.close, scope: me }
+          {
+            text: NX.I18n.get('Authenticate_Cancel_Button'), handler: function() {
+              if (!!me.options && Ext.isFunction(me.options.failure)) {
+                me.options.failure.call(me.options.failure, me.options);
+              }
+              me.close();
+            }, scope: me
+          }
         ]
       }
     });

@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.content.browse;
 import java.util.List;
 import java.util.Optional;
 
-import org.sonatype.nexus.repository.browse.BrowsePaths;
+import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 
@@ -26,9 +26,9 @@ import org.sonatype.nexus.repository.content.Component;
  */
 public interface DatastoreBrowseNodeGenerator
 {
-  List<BrowsePaths> computeAssetPaths(Asset asset, Optional<Component> component);
+  List<BrowsePath> computeAssetPaths(Asset asset, Optional<Component> component);
 
-  List<BrowsePaths> computeComponentPaths(Asset asset, Component component);
+  List<BrowsePath> computeComponentPaths(Asset asset, Component component);
 
   default String lastSegment(final String path) {
     int lastNonSlash = path.length() - 1;

@@ -15,7 +15,7 @@ import React, {useState, useEffect} from 'react';
 import {faDownload} from '@fortawesome/free-solid-svg-icons';
 
 import Axios from 'axios';
-import {BreadcrumbActions, Button, ContentBody, NxFontAwesomeIcon, Section, Utils} from 'nexus-ui-plugin';
+import {BreadcrumbActions, Button, ContentBody, NxFontAwesomeIcon, NxLoadWrapper, Utils} from 'nexus-ui-plugin';
 import UIStrings from '../../../../constants/UIStrings';
 
 import SystemInformationBody from "./SystemInformationBody";
@@ -54,7 +54,9 @@ export default function SystemInformation() {
       </Button>
     </BreadcrumbActions>
     <ContentBody className="nxrm-system-information">
-      {isLoading ? <Section>{UIStrings.LOADING}</Section> : <SystemInformationBody systemInformation={systemInformation} />}
+      <NxLoadWrapper loading={isLoading}>
+        <SystemInformationBody systemInformation={systemInformation} />
+      </NxLoadWrapper>
     </ContentBody>
   </>;
 }

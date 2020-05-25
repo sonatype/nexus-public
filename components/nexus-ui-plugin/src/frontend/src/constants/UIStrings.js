@@ -17,14 +17,20 @@ export default {
   SETTINGS: {
     CANCEL_BUTTON_LABEL: 'Cancel',
     DISCARD_BUTTON_LABEL: 'Discard',
-    LOADING_MASK: 'Loading...',
     SAVE_BUTTON_LABEL: 'Save'
   },
 
-  LOADING: 'Loading...',
   SAVING: 'Saving...',
 
   ERROR: {
     FIELD_REQUIRED: 'This field is required'
+  },
+
+  USER_TOKEN: {
+    MESSAGES: {
+      ACCESS_ERROR: 'You must authenticate successfully to access your token',
+      RESET_SUCCESS: 'Your user token has been reset',
+      RESET_ERROR: 'You must authenticate successfully to reset your token'
+    }
   }
 };

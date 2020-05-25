@@ -21,11 +21,11 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.browse.BrowsePaths;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeCrudStore;
+import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.browse.DatastoreBrowseNodeGenerator;
-import org.sonatype.nexus.repository.storage.BrowseNodeCrudStore;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -80,13 +80,13 @@ public class DatastoreBrowseNodeManager
       final Asset asset)
   {
     try {
-      List<BrowsePaths> assetPaths = generator.computeAssetPaths(asset, asset.component());
+      List<BrowsePath> assetPaths = generator.computeAssetPaths(asset, asset.component());
       if (!assetPaths.isEmpty()) {
         browseNodeStore.createAssetNode(repository.getName(), formatOf(repository), assetPaths, asset);
       }
 
       asset.component().ifPresent(component -> {
-        List<BrowsePaths> componentPaths = generator.computeComponentPaths(asset, component);
+        List<BrowsePath> componentPaths = generator.computeComponentPaths(asset, component);
         if (!componentPaths.isEmpty()) {
           browseNodeStore.createComponentNode(repository.getName(), formatOf(repository), componentPaths, component);
         }

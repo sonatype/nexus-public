@@ -35,6 +35,13 @@ export default class {
   }
 
   /**
+   *@returns a complete url for the current nexus instance
+   */
+  static urlOf(path) {
+    return NX.util.Url.urlOf(path);
+  }
+
+  /**
    * Set the global dirty status to prevent accidental navigation
    * @param key - a unique key for the view that is dirty
    * @param isDirty - whether the view is dirty or not
@@ -179,14 +186,13 @@ export default class {
           message,
           {
             success: function(authToken) {
-              return resolve(authToken)
+              return resolve(authToken);
             },
-            default: function() {
-              return reject()
+            failure: function() {
+              return reject();
             }
           }
       );
     });
   }
-
 }

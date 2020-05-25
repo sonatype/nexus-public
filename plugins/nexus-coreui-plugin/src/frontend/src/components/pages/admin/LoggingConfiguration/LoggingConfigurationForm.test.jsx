@@ -14,6 +14,7 @@ import React from 'react';
 import { act } from 'react-dom/test-utils';
 import {fireEvent, render, wait} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
+import TestUtils from 'nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import axios from 'axios';
 import {ExtJS} from 'nexus-ui-plugin';
 
@@ -49,27 +50,17 @@ describe('LoggingConfigurationForm', function() {
     return renderView(<LoggingConfigurationForm onDone={onDone} />);
   };
 
-  const renderView = async (view) => {
-    let selectors;
-
-    await act(async () => {
-      const {container, queryByLabelText, queryByText} = render(view);
-
-      selectors = {
-        container,
-        loadingMask: () => queryByText("Loading…"),
-        name: () => queryByLabelText(UIStrings.LOGGING.NAME_LABEL),
-        level: () => queryByLabelText(UIStrings.LOGGING.LEVEL_LABEL),
-        saveMask: () => queryByText(UIStrings.SAVING),
-        saveButton: () => queryByText(UIStrings.SETTINGS.SAVE_BUTTON_LABEL),
-        cancelButton: () => queryByText(UIStrings.SETTINGS.CANCEL_BUTTON_LABEL),
-        resetMask: () => queryByText(UIStrings.LOGGING.MESSAGES.RESETTING),
-        resetButton: () => queryByText(UIStrings.LOGGING.RESET_BUTTON)
-      }
-    });
-
-    return selectors;
-  };
+  function renderView(view) {
+    return TestUtils.render(view, ({queryByLabelText, queryByText}) => ({
+      name: () => queryByLabelText(UIStrings.LOGGING.NAME_LABEL),
+      level: () => queryByLabelText(UIStrings.LOGGING.LEVEL_LABEL),
+      saveMask: () => queryByText(UIStrings.SAVING),
+      saveButton: () => queryByText(UIStrings.SETTINGS.SAVE_BUTTON_LABEL),
+      cancelButton: () => queryByText(UIStrings.SETTINGS.CANCEL_BUTTON_LABEL),
+      resetMask: () => queryByText(UIStrings.LOGGING.MESSAGES.RESETTING),
+      resetButton: () => queryByText(UIStrings.LOGGING.RESET_BUTTON)
+    }));
+  }
 
   const changeFieldAndAssertValue = async (fieldSelector, value) => {
     fireEvent.change(fieldSelector(), {target: {value: value}});

@@ -18,7 +18,7 @@ import java.util.function.BooleanSupplier;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
-import org.sonatype.nexus.repository.storage.DefaultComponentMaintenanceImpl.DeletionProgress;
+import org.sonatype.nexus.repository.task.DeletionProgress;
 
 /**
  * @since 3.next

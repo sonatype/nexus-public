@@ -19,7 +19,6 @@ export { default as ExtJS } from './interface/ExtJS';
 
 export { default as Utils } from './interface/Utils';
 
-export { default as SettingsSection } from './components/layout/admin/SettingsSection/SettingsSection';
 export { default as BreadcrumbActions } from './components/layout/common/BreadcrumbActions/BreadcrumbActions';
 export { default as ContentBody } from './components/layout/common/ContentBody/ContentBody';
 export { default as Section } from './components/layout/common/Section/Section';
@@ -39,6 +38,8 @@ export { default as Information } from './components/widgets/Information/Informa
 export { default as Select } from './components/widgets/Select/Select';
 export { default as Textarea } from './components/widgets/Textarea/Textarea';
 export { default as Textfield } from './components/widgets/Textfield/Textfield';
+
+export { default as TokenMachine } from './components/machines/TokenMachine';
 
 // Direct RSC exports
 export {

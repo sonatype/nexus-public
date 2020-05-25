@@ -14,10 +14,10 @@ package org.sonatype.nexus.coreui
 
 import org.sonatype.nexus.common.entity.EntityId
 import org.sonatype.nexus.repository.Repository
-import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration
+import org.sonatype.nexus.repository.browse.node.BrowseNode
+import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration
+import org.sonatype.nexus.repository.browse.node.BrowseNodeStore
 import org.sonatype.nexus.repository.manager.RepositoryManager
-import org.sonatype.nexus.repository.storage.BrowseNode
-import org.sonatype.nexus.repository.storage.BrowseNodeStore
 
 import spock.lang.Specification
 import spock.lang.Subject

@@ -14,9 +14,6 @@ package org.sonatype.nexus.blobstore.rest;
 
 import java.util.List;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -41,15 +38,10 @@ import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
-import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 
 /**
  * @since 3.14
  */
-@Named
-@Singleton
-@Path("/")
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
 public class BlobStoreResource
@@ -60,7 +52,6 @@ public class BlobStoreResource
 
   private final BlobStoreQuotaService quotaService;
 
-  @Inject
   public BlobStoreResource(final BlobStoreManager blobStoreManager, final BlobStoreQuotaService quotaService)
   {
     this.blobStoreManager = checkNotNull(blobStoreManager);
@@ -71,7 +62,6 @@ public class BlobStoreResource
   @RequiresAuthentication
   @RequiresPermissions("nexus:blobstores:read")
   @GET
-  @Path(BETA_API_PREFIX + "/blobstores")
   public List<GenericBlobStoreApiResponse> listBlobStores() {
     return stream(blobStoreManager.browse())
         .map(GenericBlobStoreApiResponse::new)
@@ -82,7 +72,7 @@ public class BlobStoreResource
   @RequiresAuthentication
   @RequiresPermissions("nexus:blobstores:delete")
   @DELETE
-  @Path(BETA_API_PREFIX + "/blobstores/{name}")
+  @Path("/{name}")
   public void deleteBlobStore(@PathParam("name") final String name) throws Exception {
     if (!blobStoreManager.exists(name)) {
       BlobStoreResourceUtil.throwBlobStoreNotFoundException();
@@ -90,20 +80,19 @@ public class BlobStoreResource
     blobStoreManager.delete(name);
   }
 
-  @Override
   @RequiresAuthentication
   @RequiresPermissions("nexus:blobstores:read")
   @GET
-  @Path(V1_API_PREFIX + "/blobstores/{id}/quota-status")
-  public BlobStoreQuotaResultXO quotaStatus(@PathParam("id") final String id) {
-    BlobStore blobStore = blobStoreManager.get(id);
+  @Path("/{name}/quota-status")
+  public BlobStoreQuotaResultXO quotaStatus(@PathParam("name") final String name) {
+    BlobStore blobStore = blobStoreManager.get(name);
 
     if (blobStore == null) {
-      throw new WebApplicationException(format("No blob store found for id '%s' ", id), NOT_FOUND);
+      throw new WebApplicationException(format("No blob store found for id '%s' ", name), NOT_FOUND);
     }
 
     BlobStoreQuotaResult result = quotaService.checkQuota(blobStore);
 
-    return result != null ? BlobStoreQuotaResultXO.asQuotaXO(result) : BlobStoreQuotaResultXO.asNoQuotaXO(id);
+    return result != null ? BlobStoreQuotaResultXO.asQuotaXO(result) : BlobStoreQuotaResultXO.asNoQuotaXO(name);
   }
 }

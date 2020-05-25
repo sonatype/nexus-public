@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.plugins</groupId>
     <artifactId>nexus-plugins</artifactId>
-    <version>3.24.0-SNAPSHOT</version>
+    <version>3.25.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-coreui-plugin</artifactId>
@@ -47,6 +47,12 @@
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-capability</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-repository-services</artifactId>
       <scope>provided</scope>
     </dependency>
 
@@ -188,7 +194,7 @@
                 <JEST_JUNIT_OUTPUT_NAME>TEST-react-jest.xml</JEST_JUNIT_OUTPUT_NAME>
                 <JEST_JUNIT_OUTPUT_DIR>${project.build.directory}/jest-reports/</JEST_JUNIT_OUTPUT_DIR>
               </environmentVariables>
-              <arguments>test -- --reporters=jest-junit</arguments>
+              <arguments>test --reporters=jest-junit --reporters=default</arguments>
               <skip>${npm.skipTests}</skip>
             </configuration>
           </execution>

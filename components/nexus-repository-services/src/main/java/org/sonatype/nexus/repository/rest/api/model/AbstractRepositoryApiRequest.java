@@ -26,6 +26,7 @@ import org.hibernate.validator.constraints.NotEmpty;
  * @since 3.20
  */
 public abstract class AbstractRepositoryApiRequest
+    implements RepositoryApiRequest
 {
   @ApiModelProperty(value = "A unique identifier for this repository", example = "internal", required = true)
   @Pattern(regexp = NamePatternConstants.REGEX, message = NamePatternConstants.MESSAGE)
@@ -58,18 +59,22 @@ public abstract class AbstractRepositoryApiRequest
     this.online = online;
   }
 
+  @Override
   public String getName() {
     return name;
   }
 
+  @Override
   public String getFormat() {
     return format;
   }
 
+  @Override
   public String getType() {
     return type;
   }
 
+  @Override
   public Boolean getOnline() {
     return online;
   }

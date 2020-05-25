@@ -14,64 +14,19 @@ package org.sonatype.nexus.repository.browse;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+
+import org.sonatype.nexus.repository.browse.node.BrowsePath;
 
 /**
- * Used to denote a single nodes name and path used for security checks.  As well allow browse paths to be different
- * from request paths, this is used to map a request path to a browse node name.  Suppose for browsing format 'foo'
- * we change all folders named 'bar' to 'foo' for display purposes, i.e.
- *
- * requestPath - org/foo/bar/some.file
- * browsePath - org/foo/foo/some.file
- *
- * so the BrowsePaths objects to define the above path would be like so (browsePath -> requestPath)
- * org -> org/
- * org/foo -> org/foo/
- * org/foo/foo -> org/foo/bar/
- * org/foo/foo/some.file -> org/foo/bar/some.file
+ * Provides compatibility between the new {@link BrowsePath} interface and existing CMA path generators.
  *
  * @since 3.18
  */
 public class BrowsePaths
+    extends BrowsePath
 {
-  private String browsePath;
-
-  private String requestPath;
-
-  public BrowsePaths(String browsePath, String requestPath) {
-    this.browsePath = browsePath;
-    this.requestPath = requestPath;
-  }
-
-  public String getBrowsePath() {
-    return browsePath;
-  }
-
-  public String getRequestPath() {
-    return requestPath;
-  }
-
-  public void setBrowsePath(final String browsePath) {
-    this.browsePath = browsePath;
-  }
-
-  public void setRequestPath(final String requestPath) {
-    this.requestPath = requestPath;
-  }
-
-  @Override
-  public boolean equals(final Object obj) {
-    if (!(obj instanceof BrowsePaths)) {
-      return false;
-    }
-
-    return Objects.equals(browsePath, ((BrowsePaths) obj).getBrowsePath()) && Objects
-        .equals(requestPath, ((BrowsePaths) obj).getRequestPath());
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(browsePath, requestPath);
+  public BrowsePaths(final String browsePath, final String requestPath) {
+    super(browsePath, requestPath);
   }
 
   public static List<BrowsePaths> fromPaths(List<String> paths, boolean trailingSlash) {

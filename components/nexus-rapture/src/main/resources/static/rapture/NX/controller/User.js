@@ -240,7 +240,7 @@ Ext.define('NX.controller.User', {
       }
       else {
         if (Ext.isFunction(options.failure)) {
-          options.failure.call(options.scope, options);
+          options.failure.call(options.failure, options);
         }
       }
     });
@@ -278,6 +278,10 @@ Ext.define('NX.controller.User', {
       if (username) {
         win.down('form').getForm().setValues({username: username});
         win.down('#password').focus();
+      }
+    } else {
+      if (Ext.isFunction(options.failure)) {
+        options.failure.call(options.failure, options);
       }
     }
   },

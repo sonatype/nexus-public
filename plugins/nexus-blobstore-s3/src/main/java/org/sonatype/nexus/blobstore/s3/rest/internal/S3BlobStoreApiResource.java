@@ -14,9 +14,6 @@ package org.sonatype.nexus.blobstore.s3.rest.internal;
 
 import java.util.Optional;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -49,25 +46,18 @@ import static org.apache.commons.lang.StringUtils.equalsIgnoreCase;
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.TYPE;
 import static org.sonatype.nexus.blobstore.s3.rest.internal.S3BlobStoreApiConfigurationMapper.CONFIGURATION_MAPPER;
 import static org.sonatype.nexus.blobstore.s3.rest.internal.S3BlobStoreApiModelMapper.MODEL_MAPPER;
-import static org.sonatype.nexus.blobstore.s3.rest.internal.S3BlobStoreApiResource.RESOURCE_URI;
-import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
 /**
  * REST API endpoints for creating, reading, updating and deleting an S3 blob store.
  *
  * @since 3.20
  */
-@Named
-@Singleton
-@Path(RESOURCE_URI)
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
 public class S3BlobStoreApiResource
     extends ComponentSupport
     implements Resource, S3BlobStoreApiResourceDoc
 {
-  static final String RESOURCE_URI = BETA_API_PREFIX + "/blobstores/s3";
-
   private static final String UNKNOWN_BLOB_STORE_MSG_FORMAT = "\"Blob store %s doesn't exist.\"";
 
   private static final String NOT_AN_S3_BLOB_STORE_MSG_FORMAT = "\"%s is not an S3 blob store.\"";
@@ -76,7 +66,6 @@ public class S3BlobStoreApiResource
 
   private final BlobStoreManager blobStoreManager;
 
-  @Inject
   public S3BlobStoreApiResource(
       final BlobStoreManager blobStoreManager,
       final S3BlobStoreApiUpdateValidation validation)

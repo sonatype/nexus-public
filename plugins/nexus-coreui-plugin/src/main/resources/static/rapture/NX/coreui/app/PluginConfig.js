@@ -122,21 +122,10 @@ Ext.define('NX.coreui.app.PluginConfig', {
       }
     },
     {
-      id: 'NX.coreui.controller.MetricHealth',
-      active: function () {
-        return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-coreui-plugin');
-      }
-    },
-    {
       id: 'NX.coreui.migration.Controller',
       active: function () {
         return NX.State.getValue('migration', {})['enabled'] &&
             NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-migration-plugin');
-      }
-    },
-    { id: 'NX.coreui.controller.NuGetApiKey',
-      active: function () {
-        return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-repository-nuget');
       }
     },
     {

@@ -65,6 +65,32 @@
     ORDER BY component_id LIMIT #{limit};
   </select>
 
+  <delete id="purgeNotRecentlyDownloaded">
+    -- store purged component ids in a temporary table local to our session
+    CREATE LOCAL TEMPORARY TABLE IF NOT EXISTS purged_component_ids (component_id INT NOT NULL UNIQUE)
+        <if test="_databaseId == 'H2'">NOT PERSISTENT</if>;
+
+    TRUNCATE TABLE purged_component_ids; -- sanity: remove any stale data
+
+    -- multi-statement script so have to use string sub ($..) instead of prepared param (#..)
+    -- this is safe because the parameter types declared in the purge method are all integers
+    INSERT INTO purged_component_ids (component_id)
+        SELECT component_id
+          FROM ${format}_asset
+        WHERE repository_id = ${repositoryId}
+          AND component_id IS NOT NULL
+        GROUP BY component_id
+          HAVING TIMESTAMPDIFF(DAY, MAX(last_downloaded), CURRENT_DATE) >= ${daysAgo}
+        LIMIT ${limit};
+
+    DELETE FROM ${format}_asset WHERE component_id IN (SELECT component_id FROM purged_component_ids);
+    DELETE FROM ${format}_component WHERE component_id IN (SELECT component_id FROM purged_component_ids);
+
+    -- we want to return number of deleted components so we can't simply drop the table
+    -- (also means we avoid setting up a new table each time this is called per-session)
+    DELETE FROM purged_component_ids;
+  </delete>
+
   <select id="browseNamespaces" resultType="String">
     SELECT DISTINCT(namespace) FROM ${format}_component WHERE repository_id = #{repositoryId};
   </select>

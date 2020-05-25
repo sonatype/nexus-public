@@ -27,6 +27,7 @@ import org.sonatype.nexus.repository.cache.NegativeCacheHandler
 import org.sonatype.nexus.repository.http.PartialFetchHandler
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet
 import org.sonatype.nexus.repository.proxy.ProxyHandler
+import org.sonatype.nexus.repository.purge.PurgeUnusedFacet
 import org.sonatype.nexus.repository.raw.internal.RawFormat
 import org.sonatype.nexus.repository.routing.RoutingRuleHandler
 import org.sonatype.nexus.repository.types.ProxyType
@@ -64,6 +65,9 @@ class RawProxyRecipe
   Provider<RawProxyFacet> proxyFacet
 
   @Inject
+  Provider<PurgeUnusedFacet> purgeUnusedFacet
+
+  @Inject
   NegativeCacheHandler negativeCacheHandler
 
   @Inject
@@ -97,6 +101,7 @@ class RawProxyRecipe
     repository.attach(negativeCacheFacet.get())
     repository.attach(proxyFacet.get())
     repository.attach(contentFacet.get())
+    repository.attach(purgeUnusedFacet.get())
   }
 
   /**

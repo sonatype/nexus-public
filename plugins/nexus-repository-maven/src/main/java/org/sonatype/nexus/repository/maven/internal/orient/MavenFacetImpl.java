@@ -55,7 +55,6 @@ import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreMetadata;
-import org.sonatype.nexus.repository.transaction.TransactionalTouchBlob;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.view.Content;
@@ -66,13 +65,13 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.hash.HashCode;
+import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.apache.maven.model.Model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Boolean.TRUE;
 import static java.util.Collections.singletonList;
-import static java.util.Objects.nonNull;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.*;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
@@ -210,50 +209,46 @@ public class MavenFacetImpl
   @Override
   public Content get(final MavenPath path) throws IOException {
     log.debug("GET {} : {}", getRepository().getName(), path.getPath());
-
-    AssetAndBlob assetAndBlob = getAssetAndBlob(path);
-    if (assetAndBlob == null) {
-      return null;
-    }
-
-    Asset asset = assetAndBlob.asset;
-    Blob blob = assetAndBlob.blob;
-
-    if (needsRebuild(path, asset)) {
-      assetAndBlob = rebuildMetadata(asset, path);
-      asset = assetAndBlob.asset;
-      blob = assetAndBlob.blob;
-    }
-
-    return asset == null ? null : toContent(asset, blob);
+    return doGet(path);
   }
 
-  // Gets both the asset and it's blob in a single transaction, optimizing the common case where a rebuild is not necessary.
   @Nullable
-  @TransactionalTouchBlob
-  protected AssetAndBlob getAssetAndBlob(MavenPath path) {
-    final StorageTx tx = UnitOfWork.currentTx();
-    Asset asset = findAsset(tx, tx.findBucket(getRepository()), path);
+  @TransactionalStoreBlob
+  protected Content doGet(MavenPath path) throws IOException {
+    StorageTx tx = UnitOfWork.currentTx();
+
+    Bucket bucket = tx.findBucket(getRepository());
+    Asset asset = findAsset(tx, bucket, path);
     if (asset == null) {
       return null;
     }
 
-    Blob blob = null;
-    if (!needsRebuild(path, asset)) {
-      blob = tx.requireBlob(asset.requireBlobRef());
+    Blob blob = tx.requireBlob(asset.requireBlobRef());
+
+    if (needsRebuild(path, asset)) {
+      try {
+        removeRebuildFlag(asset);
+        tx.saveAsset(asset);
+        rebuildMetadata(blob);
+
+        // locate the rebuilt asset + blob
+        asset = findAsset(tx, bucket, path);
+        if (asset == null) {
+          return null;
+        }
+
+        blob = tx.requireBlob(asset.requireBlobRef());
+      }
+      catch (OModificationOperationProhibitedException e) {
+        log.debug("Cannot rebuild metadata when NXRM is read-only {} : {}",
+            getRepository().getName(), path.getPath(), e);
+      }
     }
 
-    return new AssetAndBlob(asset, blob);
+    return toContent(asset, blob);
   }
 
-  @TransactionalStoreBlob
-  protected AssetAndBlob rebuildMetadata(final Asset asset, final MavenPath path)
-      throws IOException
-  {
-    final StorageTx tx = UnitOfWork.currentTx();
-
-    removeRebuildFlag(asset);
-    Blob metadataBlob = tx.requireBlob(asset.requireBlobRef());
+  private void rebuildMetadata(final Blob metadataBlob) throws IOException {
     Metadata metadata = MavenModels.readMetadata(metadataBlob.getInputStream());
 
     // avoid triggering nested rebuilds as the rebuilder will already do that if necessary
@@ -271,11 +266,6 @@ public class MavenFacetImpl
     finally {
       rebuilding.remove();
     }
-
-    Asset foundAsset = findAsset(tx, tx.findBucket(getRepository()), path);
-    Blob foundBlob = nonNull(foundAsset) ? tx.requireBlob(foundAsset.requireBlobRef()) : null;
-
-    return new AssetAndBlob(foundAsset, foundBlob);
   }
 
   // rebuild metadata if we're not already rebuilding and it has been marked for rebuild (except for proxy repos)
@@ -649,19 +639,6 @@ public class MavenFacetImpl
     }
     else {
       return AssetKind.OTHER.name();
-    }
-  }
-
-  /**
-   * Data structure that holds both an asset and it's associated blob.
-   */
-  protected static final class AssetAndBlob {
-    public final Asset asset;
-    public final Blob blob;
-
-    public AssetAndBlob(final Asset asset, final Blob blob) {
-      this.asset = asset;
-      this.blob = blob;
     }
   }
 }

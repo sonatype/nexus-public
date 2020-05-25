@@ -20,9 +20,9 @@ import org.sonatype.nexus.common.encoding.EncodingUtil
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.repository.Repository
-import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration
+import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration
+import org.sonatype.nexus.repository.browse.node.BrowseNodeStore
 import org.sonatype.nexus.repository.manager.RepositoryManager
-import org.sonatype.nexus.repository.storage.BrowseNodeStore
 
 import com.codahale.metrics.annotation.ExceptionMetered
 import com.codahale.metrics.annotation.Timed

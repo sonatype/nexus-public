@@ -18,13 +18,13 @@ import java.util.Map;
 
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.browse.BrowsePaths;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeCrudStore;
+import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.browse.BrowseTestSupport;
 import org.sonatype.nexus.repository.content.browse.DatastoreBrowseNodeGenerator;
-import org.sonatype.nexus.repository.storage.BrowseNodeCrudStore;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -83,7 +83,7 @@ public class DatastoreBrowseNodeManagerTest
 
   @Test
   public void createFromAssetSavesNodesForAssetWithoutComponent() {
-    List<BrowsePaths> assetPath = toBrowsePaths(singletonList("asset"));
+    List<BrowsePath> assetPath = toBrowsePaths(singletonList("asset"));
     Asset asset = createAsset("asset");
     setFormat(repository, "otherFormat");
 
@@ -101,7 +101,7 @@ public class DatastoreBrowseNodeManagerTest
 
   @Test
   public void createFromAssetSavesNodesForFormatSpecificAssetWithComponent() {
-    List<BrowsePaths> assetPath = toBrowsePaths(asList("component", "asset"));
+    List<BrowsePath> assetPath = toBrowsePaths(asList("component", "asset"));
 
     Component component = createComponent("component", null, null);
     Asset asset = createAsset("asset", component);
@@ -162,8 +162,8 @@ public class DatastoreBrowseNodeManagerTest
       Asset asset = assets.get(i);
       Component component = components.get(i);
 
-      List<BrowsePaths> componentsPaths = componentPaths(component);
-      List<BrowsePaths> assetPaths = assetPaths(component, asset);
+      List<BrowsePath> componentsPaths = componentPaths(component);
+      List<BrowsePath> assetPaths = assetPaths(component, asset);
 
       when(maven2Generator.computeComponentPaths(asset, component)).thenReturn(componentsPaths);
       when(maven2Generator.computeAssetPaths(asset, of(component))).thenReturn(assetPaths);
@@ -175,8 +175,8 @@ public class DatastoreBrowseNodeManagerTest
       Asset asset = assets.get(i);
       Component component = components.get(i);
 
-      List<BrowsePaths> componentsPaths = componentPaths(component);
-      List<BrowsePaths> assetPaths = assetPaths(component, asset);
+      List<BrowsePath> componentsPaths = componentPaths(component);
+      List<BrowsePath> assetPaths = assetPaths(component, asset);
 
       verify(browseNodeStore).createComponentNode(REPOSITORY_NAME, MAVEN_2, componentsPaths, component);
       verify(browseNodeStore).createAssetNode(REPOSITORY_NAME, MAVEN_2, assetPaths, asset);
@@ -187,7 +187,7 @@ public class DatastoreBrowseNodeManagerTest
 
   @Test
   public void maybeCreateFromUpdatedAssetSkipsAssetsWithoutBlobRef() {
-    List<BrowsePaths> assetPath = toBrowsePaths(singletonList("asset"));
+    List<BrowsePath> assetPath = toBrowsePaths(singletonList("asset"));
     Asset asset = createAsset("asset");
 
     when(asset.blob()).thenReturn(empty());
@@ -203,7 +203,7 @@ public class DatastoreBrowseNodeManagerTest
 
   @Test
   public void maybeCreateFromUpdatedAssetSkipsAssetsWithExistingBrowseNode() {
-    List<BrowsePaths> assetPath = toBrowsePaths(singletonList("asset"));
+    List<BrowsePath> assetPath = toBrowsePaths(singletonList("asset"));
     Asset asset = createAsset("asset");
 
     when(asset.blob()).thenReturn(of(mock(AssetBlob.class)));
@@ -224,7 +224,7 @@ public class DatastoreBrowseNodeManagerTest
   @Test
   public void maybeCreateFromUpdatedAssetCreatesForAssetWithContentAndNoExistingBrowseNode() {
     setFormat(repository, "otherFormat");
-    List<BrowsePaths> assetPath = toBrowsePaths(singletonList("asset"));
+    List<BrowsePath> assetPath = toBrowsePaths(singletonList("asset"));
     Asset asset = createAsset("asset");
 
     when(asset.blob()).thenReturn(of(mock(AssetBlob.class)));
@@ -251,11 +251,11 @@ public class DatastoreBrowseNodeManagerTest
     when(repository.getFormat()).thenReturn(fmt);
   }
 
-  private List<BrowsePaths> componentPaths(final Component component) {
+  private List<BrowsePath> componentPaths(final Component component) {
     return toBrowsePaths(asList(component.namespace(), component.name(), component.version()));
   }
 
-  private List<BrowsePaths> assetPaths(final Component component, final Asset asset) {
+  private List<BrowsePath> assetPaths(final Component component, final Asset asset) {
     return toBrowsePaths(asList(component.namespace(), component.name(), component.version(), asset.path()));
   }
 }

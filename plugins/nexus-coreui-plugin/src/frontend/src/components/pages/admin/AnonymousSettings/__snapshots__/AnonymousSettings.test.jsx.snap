@@ -6,7 +6,7 @@ exports[`AnonymousSettings renders correctly 1`] = `
     class="nxrm-content-body nxrm-anonymous-settings"
   >
     <div
-      class="nxrm-settings-section"
+      class="nxrm-section nx-tile"
     >
       <div
         class="field-wrapper"
@@ -95,7 +95,7 @@ exports[`AnonymousSettings renders correctly 1`] = `
         </select>
       </div>
       <div
-        class="nxrm-settings-section-footer"
+        class="nxrm-section-footer nx-tile-footer"
       >
         <button
           class="nx-btn nx-btn--primary"

@@ -15,6 +15,7 @@ package org.sonatype.nexus.internal.httpclient
 import java.util.concurrent.TimeUnit
 
 import org.sonatype.goodies.common.Time
+import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup
 import org.sonatype.nexus.crypto.internal.CryptoHelperImpl
 import org.sonatype.nexus.crypto.internal.MavenCipherImpl
 import org.sonatype.nexus.datastore.api.DataSession
@@ -30,10 +31,12 @@ import org.sonatype.nexus.security.PhraseService
 import org.sonatype.nexus.testdb.DataSessionRule
 
 import org.junit.Rule
+import org.junit.experimental.categories.Category
 import spock.lang.Specification
 
 import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE_NAME
 
+@Category(SQLTestGroup.class)
 class HttpClientConfigurationDAOTest
     extends Specification
 {

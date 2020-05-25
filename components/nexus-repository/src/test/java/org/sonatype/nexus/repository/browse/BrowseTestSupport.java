@@ -17,6 +17,7 @@ import java.util.List;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.DefaultComponent;
@@ -80,7 +81,8 @@ public abstract class BrowseTestSupport
     return component;
   }
 
-  protected List<BrowsePaths> toBrowsePaths(List<String> paths) {
+  @SuppressWarnings("unchecked")
+  protected <T extends BrowsePath> List<T> toBrowsePaths(List<String> paths) {
     List<BrowsePaths> results = new ArrayList<>();
 
     final StringBuilder requestPath = new StringBuilder();
@@ -91,6 +93,6 @@ public abstract class BrowseTestSupport
       requestPath.append("/");
     });
 
-    return results;
+    return (List<T>) results;
   }
 }

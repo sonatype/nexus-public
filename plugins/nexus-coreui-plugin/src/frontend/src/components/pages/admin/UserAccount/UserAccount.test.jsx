@@ -14,6 +14,7 @@ import React from 'react';
 import {act} from 'react-dom/test-utils';
 import {fireEvent, render, wait} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
+import TestUtils from 'nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
 import Axios from 'axios';
 import UserAccount from './UserAccount';
@@ -68,27 +69,19 @@ describe('UserAccount', () => {
     window.dirty = [];
   });
 
-  const renderView = async (view) => {
-    let selectors;
-    await act(async () => {
-      let {container, getByText, getByLabelText, queryByText} = render(view);
-
-      selectors = {
-        container,
-        loadingMask: () => queryByText(UIStrings.SETTINGS.LOADING_MASK),
-        userIdField: () => getByLabelText(UIStrings.USER_ACCOUNT.ID_FIELD_LABEL),
-        firstNameField: () => getByLabelText(UIStrings.USER_ACCOUNT.FIRST_FIELD_LABEL),
-        lastNameField: () => getByLabelText(UIStrings.USER_ACCOUNT.LAST_FIELD_LABEL),
-        emailField: () => getByLabelText(UIStrings.USER_ACCOUNT.EMAIL_FIELD_LABEL),
-        saveButton: () => getByText(UIStrings.SETTINGS.SAVE_BUTTON_LABEL),
-        discardButton: () => getByText(UIStrings.SETTINGS.SAVE_BUTTON_LABEL),
-      };
-    });
-    return selectors;
-  };
+  function renderView(view) {
+    return TestUtils.render(view, ({getByLabelText, getByText}) => ({
+      userIdField: () => getByLabelText(UIStrings.USER_ACCOUNT.ID_FIELD_LABEL),
+      firstNameField: () => getByLabelText(UIStrings.USER_ACCOUNT.FIRST_FIELD_LABEL),
+      lastNameField: () => getByLabelText(UIStrings.USER_ACCOUNT.LAST_FIELD_LABEL),
+      emailField: () => getByLabelText(UIStrings.USER_ACCOUNT.EMAIL_FIELD_LABEL),
+      saveButton: () => getByText(UIStrings.SETTINGS.SAVE_BUTTON_LABEL),
+      discardButton: () => getByText(UIStrings.SETTINGS.SAVE_BUTTON_LABEL)
+    }));
+  }
 
   it('renders correctly', async () => {
-    let {container, loadingMask} = await renderView(<UserAccount/>);
+    let {container, loadingMask} = renderView(<UserAccount/>);
 
     await wait(() => expect(loadingMask()).not.toBeInTheDocument());
 
@@ -101,7 +94,7 @@ describe('UserAccount', () => {
     let {
       container, loadingMask, userIdField, firstNameField, lastNameField, emailField,
       saveButton, discardButton
-    } = await renderView(<UserAccount/>);
+    } = renderView(<UserAccount/>);
 
     await wait(() => expect(loadingMask()).not.toBeInTheDocument());
 
@@ -120,7 +113,7 @@ describe('UserAccount', () => {
     let {
       loadingMask, userIdField, firstNameField, lastNameField, emailField,
         saveButton, discardButton
-    } = await renderView(<UserAccount/>);
+    } = renderView(<UserAccount/>);
 
     await wait(() => expect(loadingMask()).not.toBeInTheDocument());
 
@@ -136,7 +129,7 @@ describe('UserAccount', () => {
   it('Sends changes to the API on save', async () => {
     let {
       loadingMask, lastNameField, saveButton, discardButton
-    } = await renderView(<UserAccount/>);
+    } = renderView(<UserAccount/>);
 
     await wait(() => expect(loadingMask()).not.toBeInTheDocument());
 
@@ -169,7 +162,7 @@ describe('UserAccount', () => {
   it('Resets the form on discard', async () => {
     let {
       loadingMask, lastNameField, saveButton, discardButton
-    } = await renderView(<UserAccount/>);
+    } = renderView(<UserAccount/>);
 
     await wait(() => expect(loadingMask()).not.toBeInTheDocument());
 
@@ -189,7 +182,7 @@ describe('UserAccount', () => {
   it('Sets the dirty flag appropriately', async () => {
     let {
       loadingMask, lastNameField, discardButton
-    } = await renderView(<UserAccount/>);
+    } = renderView(<UserAccount/>);
 
     await wait(() => expect(loadingMask()).not.toBeInTheDocument());
 

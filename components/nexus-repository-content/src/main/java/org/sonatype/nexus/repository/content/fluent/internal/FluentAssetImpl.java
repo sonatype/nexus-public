@@ -49,6 +49,7 @@ import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_IP_HEADER;
+import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
 import static org.sonatype.nexus.common.time.DateHelper.toLocalDateTime;
 import static org.sonatype.nexus.repository.cache.CacheInfo.CACHE;
 import static org.sonatype.nexus.repository.cache.CacheInfo.CACHE_TOKEN;
@@ -56,7 +57,6 @@ import static org.sonatype.nexus.repository.cache.CacheInfo.INVALIDATED;
 import static org.sonatype.nexus.repository.content.fluent.AttributeChange.OVERLAY;
 import static org.sonatype.nexus.repository.content.fluent.AttributeChange.SET;
 import static org.sonatype.nexus.repository.content.fluent.internal.FluentAttributesHelper.applyAttributeChange;
-import static org.sonatype.nexus.repository.storage.Bucket.REPO_NAME_HEADER;
 
 /**
  * {@link FluentAsset} implementation.

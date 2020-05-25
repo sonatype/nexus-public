@@ -53,7 +53,7 @@ public class CoreUiReactPluginDescriptorImpl
 
   @Override
   public String getName() {
-    return "nexus-security-plugin";
+    return "nexus-coreui-plugin";
   }
 
   @Nullable

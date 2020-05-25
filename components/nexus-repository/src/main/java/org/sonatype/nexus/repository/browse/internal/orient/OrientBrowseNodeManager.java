@@ -24,9 +24,9 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseNodeGenerator;
-import org.sonatype.nexus.repository.browse.BrowsePaths;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeCrudStore;
+import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.BrowseNodeCrudStore;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentStore;
 
@@ -124,6 +124,7 @@ public class OrientBrowseNodeManager
   /**
    * Creates an asset browse node and optional component browse node if the asset has a component.
    */
+  @SuppressWarnings("unchecked")
   private void createBrowseNodes(final String repositoryName,
                                  final String format,
                                  final BrowseNodeGenerator generator,
@@ -132,15 +133,15 @@ public class OrientBrowseNodeManager
     try {
       Component component = asset.componentId() != null ? componentStore.read(asset.componentId()) : null;
 
-      List<BrowsePaths> assetPaths = generator.computeAssetPaths(asset, component);
+      List<? extends BrowsePath> assetPaths = generator.computeAssetPaths(asset, component);
       if (!assetPaths.isEmpty()) {
-        browseNodeStore.createAssetNode(repositoryName, format, assetPaths, asset);
+        browseNodeStore.createAssetNode(repositoryName, format, (List<BrowsePath>) assetPaths, asset);
       }
 
       if (component != null) {
-        List<BrowsePaths> componentPaths = generator.computeComponentPaths(asset, component);
+        List<? extends BrowsePath> componentPaths = generator.computeComponentPaths(asset, component);
         if (!componentPaths.isEmpty()) {
-          browseNodeStore.createComponentNode(repositoryName, format, componentPaths, component);
+          browseNodeStore.createComponentNode(repositoryName, format, (List<BrowsePath>) componentPaths, component);
         }
       }
     }

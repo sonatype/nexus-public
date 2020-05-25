@@ -19,6 +19,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.common.entity.ContinuationAware;
 import org.sonatype.nexus.repository.content.AssetBlob;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -30,7 +31,7 @@ import static java.util.Optional.ofNullable;
  * @since 3.20
  */
 public class AssetBlobData
-    implements AssetBlob
+    implements AssetBlob, ContinuationAware
 {
   Integer assetBlobId; // NOSONAR: internal id
 
@@ -145,5 +146,12 @@ public class AssetBlobData
    */
   public void setCreatedByIp(@Nullable final String createdByIp) {
     this.createdByIp = createdByIp;
+  }
+
+  // ContinuationAware
+
+  @Override
+  public String nextContinuationToken() {
+    return Integer.toString(assetBlobId);
   }
 }

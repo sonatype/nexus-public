@@ -14,6 +14,7 @@ package org.sonatype.nexus.testsuite.raw;
 
 import java.io.File;
 
+import org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup;
 import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.testsuite.testsupport.raw.RawClient;
 import org.sonatype.nexus.testsuite.testsupport.raw.RawITSupport;
@@ -23,6 +24,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.entity.ContentType;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -32,6 +34,7 @@ import static org.sonatype.nexus.testsuite.testsupport.FormatClientSupport.statu
 /**
  * IT for group raw repositories
  */
+@Category(OrientAndSQLTestGroup.class)
 public class RawGroupIT
     extends RawITSupport
 {

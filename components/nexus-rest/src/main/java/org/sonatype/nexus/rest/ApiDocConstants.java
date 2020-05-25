@@ -34,7 +34,7 @@ public class ApiDocConstants
 
   public static final String REPOSITORY_DELETED = "Repository deleted";
 
-  public static final String API_REPOSITORY_MANAGEMENT = "Repository management";
+  public static final String API_REPOSITORY_MANAGEMENT = "Repository Management";
 
   public static final String API_BLOB_STORE = "Blob store";
 

@@ -27,23 +27,24 @@ import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
 import org.sonatype.nexus.repository.browse.BrowsePaths;
+import org.sonatype.nexus.repository.browse.node.BrowseNode;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeComparator;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeFacet;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeFilter;
+import org.sonatype.nexus.repository.browse.node.BrowsePath;
+import org.sonatype.nexus.repository.browse.node.DefaultBrowseNodeComparator;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.BrowseNode;
-import org.sonatype.nexus.repository.storage.BrowseNodeComparator;
-import org.sonatype.nexus.repository.storage.BrowseNodeFacet;
-import org.sonatype.nexus.repository.storage.BrowseNodeFilter;
 import org.sonatype.nexus.repository.storage.Component;
-import org.sonatype.nexus.repository.storage.DefaultBrowseNodeComparator;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.selector.CselSelector;
-import org.sonatype.nexus.selector.OrientCselToSql;
 import org.sonatype.nexus.selector.JexlSelector;
+import org.sonatype.nexus.selector.OrientCselToSql;
 import org.sonatype.nexus.selector.Selector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorFactory;
@@ -225,9 +226,9 @@ public class OrientBrowseNodeStoreImplTest
 
   @Test
   public void storeOperations() throws Exception {
-    List<BrowsePaths> componentPath = asList(new BrowsePaths("org", "org"), new BrowsePaths("foo", "org/foo"),
+    List<BrowsePath> componentPath = asList(new BrowsePaths("org", "org"), new BrowsePaths("foo", "org/foo"),
         new BrowsePaths("1.0", "org/foo/1.0"));
-    List<BrowsePaths> assetPath = asList(new BrowsePaths("org", "org"), new BrowsePaths("foo", "org/foo"),
+    List<BrowsePath> assetPath = asList(new BrowsePaths("org", "org"), new BrowsePaths("foo", "org/foo"),
         new BrowsePaths("1.0", "org/foo/1.0"), new BrowsePaths("foo-1.0.jar", "org/foo/1.0/foo-1.0.jar"));
 
     underTest.createComponentNode(REPOSITORY_NAME, "aformat", componentPath, component);

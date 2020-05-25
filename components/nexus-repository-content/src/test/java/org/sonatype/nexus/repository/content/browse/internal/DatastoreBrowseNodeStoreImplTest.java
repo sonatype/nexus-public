@@ -37,8 +37,13 @@ import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
-import org.sonatype.nexus.repository.browse.BrowsePaths;
+import org.sonatype.nexus.repository.browse.node.BrowseNode;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeComparator;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeFacet;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeFilter;
+import org.sonatype.nexus.repository.browse.node.BrowsePath;
+import org.sonatype.nexus.repository.browse.node.DefaultBrowseNodeComparator;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
@@ -51,11 +56,6 @@ import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.selector.DatastoreContentAuthHelper;
-import org.sonatype.nexus.repository.storage.BrowseNode;
-import org.sonatype.nexus.repository.storage.BrowseNodeComparator;
-import org.sonatype.nexus.repository.storage.BrowseNodeFacet;
-import org.sonatype.nexus.repository.storage.BrowseNodeFilter;
-import org.sonatype.nexus.repository.storage.DefaultBrowseNodeComparator;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.selector.CselSelector;
@@ -585,23 +585,23 @@ public class DatastoreBrowseNodeStoreImplTest
     while (assets.hasNext() && components.hasNext()) {
       Asset asset = assets.next();
       Component component = components.next();
-      List<BrowsePaths> paths = createBrowsePaths(asset.path().split("/"));
+      List<BrowsePath> paths = createBrowsePaths(asset.path().split("/"));
 
       underTest.createAssetNode(REPOSITORY_NAME, FORMAT_NAME, paths, asset);
       underTest.createComponentNode(REPOSITORY_NAME, FORMAT_NAME, paths, component);
     }
   }
 
-  private List<BrowsePaths> createBrowsePaths(final String... paths) {
-    List<BrowsePaths> browsePaths = new ArrayList<>();
+  private List<BrowsePath> createBrowsePaths(final String... paths) {
+    List<BrowsePath> browsePaths = new ArrayList<>();
     List<String> pathsList = Arrays.asList(paths);
     for (int i = 0; i < paths.length; i++) {
-      browsePaths.add(new BrowsePaths(paths[i], Joiner.on('/').join(pathsList.subList(0, i + 1))));
+      browsePaths.add(new BrowsePath(paths[i], Joiner.on('/').join(pathsList.subList(0, i + 1))));
     }
     return browsePaths;
   }
 
-  private boolean componentNodeExists(final Component component, final List<BrowsePaths> browsePaths) {
+  private boolean componentNodeExists(final Component component, final List<BrowsePath> browsePaths) {
     String requestPath = browsePaths.get(browsePaths.size() - 2).getRequestPath();
     Iterable<BrowseNode<Integer>> iter =
         underTest.getByPath(REPOSITORY_NAME, Arrays.asList(requestPath.split("/")), 100);

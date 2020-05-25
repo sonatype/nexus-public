@@ -62,9 +62,6 @@ class StorageFacetManagerImplTest
   private BucketDeleter bucketDeleter
 
   @Mock
-  private RetryController retryController
-
-  @Mock
   private Repository repository
 
   @Mock
@@ -82,7 +79,7 @@ class StorageFacetManagerImplTest
         { databaseInstance },
         bucketEntityAdapter,
         bucketDeleter,
-        retryController
+        RetryController.INSTANCE
     )
   }
 

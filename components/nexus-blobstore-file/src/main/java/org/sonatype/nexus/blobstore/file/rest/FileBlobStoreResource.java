@@ -12,9 +12,6 @@
  */
 package org.sonatype.nexus.blobstore.file.rest;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -39,25 +36,18 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
 /**
  * @since 3.19
  */
-@Named
-@Singleton
-@Path(FileBlobStoreResource.RESOURCE_URI)
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
 public class FileBlobStoreResource
     extends ComponentSupport
     implements Resource, FileBlobStoreResourceDoc
 {
-  public static final String RESOURCE_URI = BETA_API_PREFIX + "/blobstores/file";
-
   private BlobStoreManager blobStoreManager;
 
-  @Inject
   public FileBlobStoreResource(final BlobStoreManager blobStoreManager) {
     this.blobStoreManager = checkNotNull(blobStoreManager);
   }

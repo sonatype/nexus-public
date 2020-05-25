@@ -12,7 +12,17 @@
  */
 import React from 'react';
 import {useService} from '@xstate/react';
-import {Alert, Button, ExtJS, SettingsSection, Textfield} from 'nexus-ui-plugin';
+import {
+  Alert,
+  Button,
+  ExtJS,
+  FieldWrapper,
+  NxLoadWrapper,
+  NxSubmitMask,
+  Section,
+  SectionFooter,
+  Textfield
+} from 'nexus-ui-plugin';
 import UIStrings from '../../../../constants/UIStrings';
 
 export default function UserAccountSettings({service}) {
@@ -23,7 +33,8 @@ export default function UserAccountSettings({service}) {
   const firstName = useUserAccountMachine('firstName', service, isReadOnly);
   const lastName = useUserAccountMachine('lastName', service, isReadOnly);
   const email = useUserAccountMachine('email', service, isReadOnly);
-  const isLoading = current.matches('loading') || current.matches('saving');
+  const isLoading = current.matches('loading');
+  const isSaving = current.matches('saving');
   const isPristine = context.isPristine;
   const isInvalid = !context.isValid;
 
@@ -58,30 +69,33 @@ export default function UserAccountSettings({service}) {
 
   ExtJS.setDirtyStatus('UserAccount', !isPristine);
 
-  return <SettingsSection isLoading={isLoading}>
-    {error}
-
-    <SettingsSection.FieldWrapper labelText={UIStrings.USER_ACCOUNT.ID_FIELD_LABEL}>
-      <Textfield  disabled={isReadOnly} {...userId} />
-    </SettingsSection.FieldWrapper>
-    <SettingsSection.FieldWrapper labelText={UIStrings.USER_ACCOUNT.FIRST_FIELD_LABEL}>
-      <Textfield disabled={isReadOnly} {...firstName} />
-    </SettingsSection.FieldWrapper>
-    <SettingsSection.FieldWrapper labelText={UIStrings.USER_ACCOUNT.LAST_FIELD_LABEL}>
-      <Textfield disabled={isReadOnly} {...lastName} />
-    </SettingsSection.FieldWrapper>
-    <SettingsSection.FieldWrapper labelText={UIStrings.USER_ACCOUNT.EMAIL_FIELD_LABEL}>
-      <Textfield disabled={isReadOnly} {...email} />
-    </SettingsSection.FieldWrapper>
-    <SettingsSection.Footer>
-      <Button variant='primary' disabled={isReadOnly || isPristine || isInvalid} onClick={handleSave}>
-        {UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
-      </Button>
-      <Button disabled={isReadOnly || isPristine} onClick={handleDiscard}>
-        {UIStrings.SETTINGS.DISCARD_BUTTON_LABEL}
-      </Button>
-    </SettingsSection.Footer>
-  </SettingsSection>;
+  return <Section>
+    <NxLoadWrapper loading={isLoading}>
+      {isSaving && <NxSubmitMask message={UIStrings.SAVING}/>}
+      {error}
+  
+      <FieldWrapper labelText={UIStrings.USER_ACCOUNT.ID_FIELD_LABEL}>
+        <Textfield  disabled={isReadOnly} {...userId} />
+      </FieldWrapper>
+      <FieldWrapper labelText={UIStrings.USER_ACCOUNT.FIRST_FIELD_LABEL}>
+        <Textfield disabled={isReadOnly} {...firstName} />
+      </FieldWrapper>
+      <FieldWrapper labelText={UIStrings.USER_ACCOUNT.LAST_FIELD_LABEL}>
+        <Textfield disabled={isReadOnly} {...lastName} />
+      </FieldWrapper>
+      <FieldWrapper labelText={UIStrings.USER_ACCOUNT.EMAIL_FIELD_LABEL}>
+        <Textfield disabled={isReadOnly} {...email} />
+      </FieldWrapper>
+      <SectionFooter>
+        <Button variant='primary' disabled={isReadOnly || isPristine || isInvalid} onClick={handleSave}>
+          {UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
+        </Button>
+        <Button disabled={isReadOnly || isPristine} onClick={handleDiscard}>
+          {UIStrings.SETTINGS.DISCARD_BUTTON_LABEL}
+        </Button>
+      </SectionFooter>
+    </NxLoadWrapper>
+  </Section>;
 }
 
 function useUserAccountMachine(name, service, readOnly=false) {

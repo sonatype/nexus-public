@@ -18,11 +18,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.repository.browse.BrowseNodeConfiguration;
-import org.sonatype.nexus.repository.browse.internal.RebuildBrowseNodesTaskDescriptor;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration;
+import org.sonatype.nexus.repository.browse.node.RebuildBrowseNodesTaskDescriptor;
+import org.sonatype.nexus.scheduling.CurrentState;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
-import org.sonatype.nexus.scheduling.CurrentState;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 import org.sonatype.nexus.scheduling.TaskState;
 

@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.sonatype.nexus.testsuite</groupId>
     <artifactId>nexus-testsuite</artifactId>
-    <version>3.24.0-SNAPSHOT</version>
+    <version>3.25.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-content-suite</artifactId>
@@ -53,14 +53,20 @@
     </dependency>
 
     <dependency>
-      <groupId>org.sonatype.nexus.testsuite</groupId>
-      <artifactId>nexus-repository-content-testsupport</artifactId>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-repository-content</artifactId>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-repository-content</artifactId>
+      <artifactId>nexus-datastore-mybatis</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.testsuite</groupId>
+      <artifactId>nexus-repository-content-testsupport</artifactId>
       <scope>test</scope>
     </dependency>
 

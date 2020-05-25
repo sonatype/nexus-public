@@ -22,7 +22,6 @@ import org.apache.ibatis.exceptions.PersistenceException;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.emptyIterable;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
@@ -51,15 +50,17 @@ public class AssetBlobDAOTest
     try (DataSession<?> session = sessionRule.openSession("content")) {
       AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
 
-      assertThat(dao.browseUnusedBlobs(), emptyIterable());
+      assertThat(dao.browseUnusedAssetBlobs(1, null), emptyIterable());
 
       dao.createAssetBlob(assetBlob1);
 
-      assertThat(dao.browseUnusedBlobs(), contains(blobRef1));
+      assertThat(dao.browseUnusedAssetBlobs(1, null), contains(sameBlob(assetBlob1)));
 
       dao.createAssetBlob(assetBlob2);
 
-      assertThat(dao.browseUnusedBlobs(), containsInAnyOrder(blobRef1, blobRef2));
+      assertThat(dao.browseUnusedAssetBlobs(1, null), contains(sameBlob(assetBlob1)));
+
+      assertThat(dao.browseUnusedAssetBlobs(2, null), contains(sameBlob(assetBlob1), sameBlob(assetBlob2)));
 
       session.getTransaction().commit();
     }
@@ -106,11 +107,11 @@ public class AssetBlobDAOTest
 
       assertTrue(dao.deleteAssetBlob(blobRef1));
 
-      assertThat(dao.browseUnusedBlobs(), contains(blobRef2));
+      assertThat(dao.browseUnusedAssetBlobs(1, null), contains(sameBlob(assetBlob2)));
 
       assertTrue(dao.deleteAssetBlob(blobRef2));
 
-      assertThat(dao.browseUnusedBlobs(), emptyIterable());
+      assertThat(dao.browseUnusedAssetBlobs(1, null), emptyIterable());
 
       assertFalse(dao.deleteAssetBlob(new BlobRef("test-node", "test-store", "test-blob")));
     }

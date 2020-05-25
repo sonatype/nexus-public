@@ -6,7 +6,7 @@ exports[`UserAccount renders correctly 1`] = `
     class="nxrm-content-body nxrm-user-account"
   >
     <div
-      class="nxrm-settings-section"
+      class="nxrm-section nx-tile"
     >
       <div
         class="field-wrapper"
@@ -81,7 +81,7 @@ exports[`UserAccount renders correctly 1`] = `
         />
       </div>
       <div
-        class="nxrm-settings-section-footer"
+        class="nxrm-section-footer nx-tile-footer"
       >
         <button
           class="nx-btn nx-btn--primary"
@@ -100,7 +100,7 @@ exports[`UserAccount renders correctly 1`] = `
       </div>
     </div>
     <div
-      class="nxrm-settings-section"
+      class="nxrm-section nx-tile"
     >
       <div
         class="field-wrapper"
@@ -238,7 +238,7 @@ exports[`UserAccount renders correctly 1`] = `
         </span>
       </div>
       <div
-        class="nxrm-settings-section-footer"
+        class="nxrm-section-footer nx-tile-footer"
       >
         <button
           class="nx-btn nx-btn--primary"
@@ -266,7 +266,7 @@ exports[`UserAccount renders correctly for an external user: externalUser 1`] = 
     class="nxrm-content-body nxrm-user-account"
   >
     <div
-      class="nxrm-settings-section"
+      class="nxrm-section nx-tile"
     >
       <div
         class="field-wrapper"
@@ -345,7 +345,7 @@ exports[`UserAccount renders correctly for an external user: externalUser 1`] = 
         />
       </div>
       <div
-        class="nxrm-settings-section-footer"
+        class="nxrm-section-footer nx-tile-footer"
       >
         <button
           class="nx-btn nx-btn--primary"

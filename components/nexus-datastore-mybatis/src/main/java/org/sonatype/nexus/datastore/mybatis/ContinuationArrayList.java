@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.ContinuationAware;
 
+import static com.google.common.base.Preconditions.checkState;
+
 /**
  * Collection of elements with a token that can be used to request the next set of results.
  *
@@ -30,6 +32,7 @@ public class ContinuationArrayList<E extends ContinuationAware>
 
   @Override
   public String nextContinuationToken() {
+    checkState(!isEmpty(), "No more results");
     return get(size() - 1).nextContinuationToken();
   }
 }

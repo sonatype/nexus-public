@@ -216,4 +216,19 @@ class BlobStoreComponentTest
       1 * blobStoreConfig.setAttributes([blobStoreQuotaConfig: [quotaType: 'properType', quotaLimitBytes: 10 * pow(10, 6)]])
   }
 
+  def 'requesting blobstore names only does not set other properties'() {
+    setup:
+      def blobStore = Mock(BlobStore) {
+        getBlobStoreConfiguration() >> new MockBlobStoreConfiguration(name: "test",
+            attributes: [file: [path: 'path'], blobStoreQuotaConfig: [quotaType: 'spaceUsedQuota', quotaLimitBytes: 7]])
+      }
+
+    when: 'create the XO with namesOnly'
+      def blobStoreXO = blobStoreComponent.asBlobStoreXO(blobStore, [], true)
+
+    then: 'only name is set'
+      blobStoreXO.name == 'test'
+      blobStoreXO.type == null
+      0 * blobStore.getMetrics()
+  }
 }
