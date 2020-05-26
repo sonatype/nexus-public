@@ -20,6 +20,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.event.EventAware;
@@ -51,6 +52,7 @@ import static org.sonatype.nexus.repository.content.store.internal.AssetBlobClea
 /**
  * @since 3.next
  */
+@FeatureFlag(name = "nexus.datastore.enabled")
 @Named
 @ManagedLifecycle(phase = TASKS)
 @Singleton
