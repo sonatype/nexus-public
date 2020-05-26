@@ -145,7 +145,7 @@ Ext.define('NX.coreui.view.clm.ClmSettings', {
           xtype: 'nx-button',
           action: 'open',
           text: NX.I18n.get('Clm_Dashboard_Description'),
-          glyph: 'xf08e@FontAwesome' /* fa-external-link */
+          iconCls: 'x-fa fa-external-link-alt'
         }
       ]
     };

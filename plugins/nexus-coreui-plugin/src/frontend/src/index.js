@@ -42,7 +42,7 @@ window.plugins.push({
       text: UIStrings.LOGGING.MENU.text,
       description: UIStrings.LOGGING.MENU.description,
       view: LoggingConfiguration,
-      iconCls: 'x-fa fa-book',
+      iconCls: 'x-fa fa-scroll',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         permissions: ['nexus:logging:read']
@@ -54,7 +54,7 @@ window.plugins.push({
       text: UIStrings.SUPPORT_REQUEST.MENU.text,
       description: UIStrings.SUPPORT_REQUEST.MENU.description,
       view: SupportRequest,
-      iconCls: 'x-fa fa-user-circle-o',
+      iconCls: 'x-fa fa-user-circle',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         permissions: ['nexus:atlas:create'],

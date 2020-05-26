@@ -25,7 +25,7 @@ Ext.define('NX.view.dev.Panel', {
   alias: 'widget.nx-dev-panel',
   ariaRole: 'region',
   title: 'Developer',
-  glyph: 'xf188@FontAwesome', // fa-bug
+  iconCls: 'x-fa fa-bug',
   ui: 'nx-developer',
   stateful: true,
   stateId: 'nx-dev-panel',

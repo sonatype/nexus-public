@@ -90,7 +90,7 @@ Ext.define('NX.coreui.view.privilege.PrivilegeList', {
             text: NX.I18n.get('Privilege_PrivilegeList_New_Button'),
             action: 'new',
             disabled: true,
-            glyph: 'xf055@FontAwesome' /* fa-plus-circle */
+            iconCls: 'x-fa fa-plus-circle'
           }
         ]
       }],

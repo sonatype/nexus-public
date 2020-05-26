@@ -86,7 +86,7 @@ Ext.define('NX.coreui.view.support.FileCreatedForm', {
           formBind: true,
           bindToEnter: true,
           ui: 'nx-primary',
-          glyph: 'xf023@FontAwesome' /* fa-lock */
+          iconCls: 'x-fa fa-lock'
         },
         {
           text: NX.I18n.get('Support_FileCreated_Cancel_Button'),

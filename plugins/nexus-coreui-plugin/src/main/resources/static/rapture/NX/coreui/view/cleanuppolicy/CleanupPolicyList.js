@@ -59,7 +59,7 @@ Ext.define('NX.coreui.view.cleanuppolicy.CleanupPolicyList', {
           {
             xtype: 'button',
             text: NX.I18n.get('CleanupPolicy_CleanupPolicyList_New_Button'),
-            glyph: 'xf055@FontAwesome',
+            iconCls: 'x-fa fa-plus-circle',
             action: 'new',
             disabled: true
           }

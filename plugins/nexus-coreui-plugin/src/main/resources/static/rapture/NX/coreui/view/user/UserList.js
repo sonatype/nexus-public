@@ -62,7 +62,7 @@ Ext.define('NX.coreui.view.user.UserList', {
           {
             xtype: 'button',
             text: NX.I18n.get('User_UserList_New_Button'),
-            glyph: 'xf055@FontAwesome' /* fa-plus-circle */,
+            iconCls: 'x-fa fa-plus-circle',
             action: 'new',
             disabled: true
           },

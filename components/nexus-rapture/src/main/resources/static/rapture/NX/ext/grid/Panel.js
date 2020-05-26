@@ -34,7 +34,7 @@ Ext.define('NX.ext.grid.Panel', {
           menu.insert(2, [
             {
               text: 'Clear Sort',
-              glyph: 'xf12d@FontAwesome' /* fa-eraser */,
+              iconCls: 'x-fa fa-eraser',
 
               handler: function() {
                 store.sorters.clear();

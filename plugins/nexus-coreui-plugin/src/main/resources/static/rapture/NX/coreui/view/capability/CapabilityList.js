@@ -88,7 +88,7 @@ Ext.define('NX.coreui.view.capability.CapabilityList', {
           text: NX.I18n.get('Capability_CapabilityList_New_Button'),
           action: 'new',
           disabled: true,
-          glyph: 'xf055@FontAwesome' /* fa-plus-circle */
+          iconCls: 'x-fa fa-plus-circle'
         }
       ]
     }];

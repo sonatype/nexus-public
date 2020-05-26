@@ -50,21 +50,21 @@ Ext.define('NX.coreui.view.component.ComponentDetails', {
           {
             xtype: 'nx-button',
             text: NX.I18n.get('ComponentDetails_Delete_Button'),
-            glyph: 'xf1f8@FontAwesome' /* fa-trash */,
+            iconCls: 'x-fa fa-trash',
             action: 'deleteComponent',
             hidden: true
           },
           {
             xtype: 'nx-button',
             text: NX.I18n.get('ComponentDetails_Browse_Snapshots_Button'),
-            glyph: 'xf1c0@FontAwesome' /* fa-database */,
+            iconCls: 'x-fa fa-database',
             action: 'browseComponent',
             hidden: true
           },
           {
             xtype: 'nx-button',
             text: NX.I18n.get('ComponentDetails_Analyze_Button'),
-            glyph: 'xf085@FontAwesome' /* fa-gears */,
+            iconCls: 'x-fa fa-cog',
             action: 'analyzeApplication'
           }
         ]

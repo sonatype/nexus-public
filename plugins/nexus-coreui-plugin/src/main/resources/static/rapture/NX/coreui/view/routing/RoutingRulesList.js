@@ -95,13 +95,13 @@ Ext.define('NX.coreui.view.routing.RoutingRulesList', {
           {
             xtype: 'button',
             text: NX.I18n.get('RoutingRules_Create_Button'),
-            glyph: 'xf055@FontAwesome' /* fa-plus-circle */,
+            iconCls: 'x-fa fa-plus-circle',
             action: 'new'
           },
           {
             xtype: 'button',
             text: NX.I18n.get('RoutingRules_GlobalRoutingPreview_Button'),
-            glyph: 'xf0b0@FontAwesome' /* fa-filter */,
+            iconCls: 'x-fa fa-filter',
             action: 'test'
           }
         ]

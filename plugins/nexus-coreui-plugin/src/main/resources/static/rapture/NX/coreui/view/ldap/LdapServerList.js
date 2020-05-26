@@ -59,21 +59,21 @@ Ext.define('NX.coreui.view.ldap.LdapServerList', {
           {
             xtype: 'button',
             text: NX.I18n.get('Ldap_LdapServerList_New_Button'),
-            glyph: 'xf055@FontAwesome' /* fa-plus-circle */,
+            iconCls: 'x-fa fa-plus-circle',
             action: 'new',
             disabled: true
           },
           {
             xtype: 'button',
             text: NX.I18n.get('Ldap_LdapServerList_ChangeOrder_Button'),
-            glyph: 'xf162@FontAwesome' /* fa-sort-numeric-asc */,
+            iconCls: 'x-fa fa-sort-numeric-up',
             action: 'changeorder',
             disabled: true
           },
           {
             xtype: 'button',
             text: NX.I18n.get('Ldap_LdapServerList_ClearCache_Button'),
-            glyph: 'xf014@FontAwesome' /* fa-trash-o */,
+            iconCls: 'x-fa fa-trash',
             action: 'clearcache',
             disabled: true
           }

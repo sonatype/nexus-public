@@ -40,7 +40,7 @@ Ext.define('NX.coreui.view.repository.RepositoryList', {
           {
             xtype: 'button',
             text: NX.I18n.get('Repository_RepositoryList_New_Button'),
-            glyph: 'xf055@FontAwesome' /* fa-plus-circle */,
+            iconCls: 'x-fa fa-plus-circle',
             action: 'new',
             disabled: true
           }

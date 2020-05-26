@@ -120,14 +120,14 @@ Ext.define('NX.coreui.view.licensing.LicensingDetails', {
               allowBlank: false,
               buttonText: NX.I18n.get('Licensing_LicensingDetails_LicenseSelect_Button'),
               buttonConfig: {
-                glyph: 'xf016@FontAwesome' /* fa-file-o */
+                iconCls: 'x-fa fa-file'
               }
             }
           ],
 
           buttonAlign: 'left',
           buttons: [
-            { text: NX.I18n.get('Licensing_LicensingDetails_LicenseInstall_Button'), action: 'install', formBind: true, ui: 'nx-primary', glyph: 'xf023@FontAwesome' /* fa-lock */ }
+            { text: NX.I18n.get('Licensing_LicensingDetails_LicenseInstall_Button'), action: 'install', formBind: true, ui: 'nx-primary', iconCls: 'x-fa fa-lock' }
           ]
         }
       ]

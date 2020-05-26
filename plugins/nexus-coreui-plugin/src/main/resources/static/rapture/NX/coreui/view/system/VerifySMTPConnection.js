@@ -87,7 +87,7 @@ Ext.define('NX.coreui.view.system.VerifySMTPConnection', {
             formBind: true,
             bindToEnter: true,
             ui: 'nx-primary',
-            glyph: 'xf003@FontAwesome' /* fa-envelope-o */
+            iconCls: 'x-fa fa-envelope'
           },
           {
             text: 'Cancel',

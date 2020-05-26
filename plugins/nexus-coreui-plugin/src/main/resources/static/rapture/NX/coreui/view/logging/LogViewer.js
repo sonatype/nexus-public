@@ -50,14 +50,14 @@ Ext.define('NX.coreui.view.logging.LogViewer', {
           {
             xtype: 'button',
             text: NX.I18n.get('Logging_LogViewer_Download_Button'),
-            glyph: 'xf019@FontAwesome' /* fa-download */,
+            iconCls: 'x-fa fa-download',
             action: 'download'
           },
           '-',
           {
             xtype: 'button',
             text: NX.I18n.get('Logging_LogViewer_Mark_Button'),
-            glyph: 'xf11e@FontAwesome' /* fa-flag-checkered */,
+            iconCls: 'x-fa fa-flag-checkered',
             action: 'mark',
             disabled: true
           },

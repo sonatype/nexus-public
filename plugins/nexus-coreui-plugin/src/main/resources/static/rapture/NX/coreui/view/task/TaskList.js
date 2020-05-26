@@ -63,7 +63,7 @@ Ext.define('NX.coreui.view.task.TaskList', {
           {
             xtype: 'button',
             text: NX.I18n.get('Task_TaskList_New_Button'),
-            glyph: 'xf055@FontAwesome' /* fa-plus-circle */,
+            iconCls: 'x-fa fa-plus-circle',
             action: 'new',
             disabled: true
           }

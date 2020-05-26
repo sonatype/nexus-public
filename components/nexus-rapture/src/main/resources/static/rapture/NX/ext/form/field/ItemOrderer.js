@@ -53,11 +53,11 @@ Ext.define('NX.ext.form.field.ItemOrderer', {
    * @cfg {Object} buttonsGlyph The glyphs for the {@link #buttons}.
    * Glyphs for buttons.
    */
-  buttonsGlyph: {
-    top: 'xf102@FontAwesome' /* fa-angle-double-up */,
-    up: 'xf106@FontAwesome' /* fa-angle-up */,
-    down: 'xf107@FontAwesome' /* fa-angle-down */,
-    bottom: 'xf103@FontAwesome' /* fa-angle-double-down */
+  buttonsIconCls: {
+    top: 'x-fa fa-angle-double-up',
+    up: 'x-fa fa-angle-up',
+    down: 'x-fa fa-angle-down',
+    bottom: 'x-fa fa-angle-double-down'
   },
 
   layout: {
@@ -132,7 +132,7 @@ Ext.define('NX.ext.form.field.ItemOrderer', {
         buttons.push({
           xtype: 'button',
           tooltip: me.buttonsText[name],
-          glyph: me.buttonsGlyph[name],
+          iconCls: me.buttonsIconCls[name],
           handler: me['on' + Ext.String.capitalize(name) + 'BtnClick'],
           navBtn: true,
           scope: me,

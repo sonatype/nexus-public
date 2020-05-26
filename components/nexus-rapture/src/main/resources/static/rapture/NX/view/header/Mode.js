@@ -51,11 +51,12 @@ Ext.define('NX.view.header.Mode', {
     tooltip: undefined,
 
     /**
-     * Mode button glyph.
+     * Mode icon class
      *
      * @cfg {String}
      */
-    glyph: undefined,
+    iconCls: undefined,
+
 
     /**
      * If button should auto hide when no features are available for selected mode.
@@ -110,7 +111,7 @@ Ext.define('NX.view.header.Mode', {
           handler: function(button) {
             me.fireEvent('selected', me);
           },
-          glyph: me.glyph,
+          iconCls: me.iconCls,
           // copied autoEl from Ext.button.Button
           autoEl: {
             tag: 'a',

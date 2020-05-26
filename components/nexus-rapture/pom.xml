@@ -258,29 +258,6 @@
     </profile>
 
     <profile>
-      <id>install-ext</id>
-
-      <build>
-        <defaultGoal>install:install-file</defaultGoal>
-
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-install-plugin</artifactId>
-            <configuration>
-              <file>${ext.dist}</file>
-              <groupId>com.sencha</groupId>
-              <artifactId>ext</artifactId>
-              <classifier>commercial</classifier>
-              <packaging>zip</packaging>
-              <version>${ext.version}</version>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-
-    <profile>
       <id>driver</id>
 
       <dependencies>

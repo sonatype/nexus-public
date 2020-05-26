@@ -84,7 +84,7 @@ Ext.define('NX.coreui.view.support.Metrics', {
             xtype: 'button',
             text: NX.I18n.get('Support_Metrics_Download_Button'),
             tooltip: NX.I18n.get('Metrics_Download_Tooltip'),
-            glyph: 'xf019@FontAwesome' /* fa-download */,
+            iconCls: 'x-fa fa-download',
             action: 'download'
           },
           '-',
@@ -92,7 +92,7 @@ Ext.define('NX.coreui.view.support.Metrics', {
             xtype: 'button',
             text: NX.I18n.get('Support_Metrics_Dump_Button'),
             tooltip: NX.I18n.get('Support_Metrics_Dump_Tooltip'),
-            glyph: 'xf019@FontAwesome' /* fa-download */,
+            iconCls: 'x-fa fa-download',
             action: 'threads'
           }
         ]
