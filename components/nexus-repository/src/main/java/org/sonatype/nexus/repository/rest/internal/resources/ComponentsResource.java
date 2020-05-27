@@ -22,6 +22,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
@@ -133,14 +134,15 @@ public class ComponentsResource
   @Override
   @GET
   public Page<ComponentXO> getComponents(@QueryParam("continuationToken") final String continuationToken,
-                                         @QueryParam("repository") final String repositoryId)
+                                         @QueryParam("repository") final String repositoryId,
+                                         @QueryParam("limit") @DefaultValue("10") final int limit)
   {
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryId);
 
     //must explicitly order by id or the generate sql will automatically order on group/name/version. (see BrowseComponentsSqlBuider)
     BrowseResult<Component> componentBrowseResult = browseService
         .browseComponents(repository,
-            new QueryOptions(null, "id", "asc", 0, 10, lastIdFromContinuationToken(continuationToken)));
+            new QueryOptions(null, "id", "asc", 0, limit, lastIdFromContinuationToken(continuationToken)));
 
     List<ComponentXO> componentXOs = componentBrowseResult.getResults().stream()
         .map(component -> fromComponent(component, repository))
