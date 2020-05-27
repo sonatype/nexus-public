@@ -81,7 +81,7 @@
               Bouncycastle is located in parent directory, not the system repository
               -->
               <Class-Path>
-                ../${project.artifactMap(org.bouncycastle:bcprov-jdk15on).file.name}
+                ../${project.artifactMap(org.bouncycastle:bcprov-jdk15to18).file.name}
               </Class-Path>
             </manifestEntries>
           </archive>
