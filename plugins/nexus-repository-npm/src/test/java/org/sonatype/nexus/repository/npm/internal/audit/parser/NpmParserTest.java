@@ -38,17 +38,17 @@ public class NpmParserTest
       "org/sonatype/nexus/repository/npm/internal/audit/parser/package-lock-complex-path.json";
 
   private final Set<AuditComponent> expectedComponents = ImmutableSet.of(
-      new AuditComponent(NAME, "marked", "0.6.3"),
-      new AuditComponent(NAME, "debug", "2.3.3"),
-      new AuditComponent(NAME, "lodash", "2.4.2")
+      new AuditComponent(null, NAME, "marked", "0.6.3"),
+      new AuditComponent(null, NAME, "debug", "2.3.3"),
+      new AuditComponent(null, NAME, "lodash", "2.4.2")
   );
 
   private final Set<AuditComponent> expectedComplexComponents = ImmutableSet.of(
-      new AuditComponent(NAME, "marked", "0.6.3"),
-      new AuditComponent(NAME, "debug", "2.3.3"),
-      new AuditComponent(NAME, "lodash", "2.4.2"),
-      new AuditComponent(NAME, "inherits", "2.0.3"),
-      new AuditComponent(NAME, "debug", "0.0.1")
+      new AuditComponent(null, NAME, "marked", "0.6.3"),
+      new AuditComponent(null, NAME, "debug", "2.3.3"),
+      new AuditComponent(null, NAME, "lodash", "2.4.2"),
+      new AuditComponent(null, NAME, "inherits", "2.0.3"),
+      new AuditComponent(null, NAME, "debug", "0.0.1")
   );
 
   @Test

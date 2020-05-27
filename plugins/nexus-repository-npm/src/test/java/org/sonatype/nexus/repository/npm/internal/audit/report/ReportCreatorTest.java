@@ -51,9 +51,9 @@ public class ReportCreatorTest
       "org/sonatype/nexus/repository/npm/internal/audit/report/npm-audit-response.json";
 
   private final Map<AuditComponent, List<Vulnerability>> dummyVulnerabilities =
-      ImmutableMap.of(new AuditComponent(NAME, "marked", "0.6.3"),
+      ImmutableMap.of(new AuditComponent("appId", NAME, "marked", "0.6.3"),
           newArrayList(new Vulnerability(SeverityLevel.CRITICAL, "marked", "0.0.0", "marked")),
-          new AuditComponent(NAME, "lodash", "2.4.2"),
+          new AuditComponent("appId", NAME, "lodash", "2.4.2"),
           newArrayList(new Vulnerability(SeverityLevel.HIGH, "lodash", "0.0.1", "lodash"))
       );
 

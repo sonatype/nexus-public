@@ -40,10 +40,11 @@ public class PackageLock
   }
 
   public Set<AuditComponent> getComponents() {
+    String applicationId = getRoot().getApplicationId();
     return nodes.entrySet().stream()
         .filter(entry -> !ROOT.equals(entry.getKey()))
         .flatMap(entry -> entry.getValue().stream()
-            .map(dependency -> new AuditComponent(NAME, entry.getKey(), dependency.getVersion())))
+            .map(dependency -> new AuditComponent(applicationId, NAME, entry.getKey(), dependency.getVersion())))
         .collect(toSet());
   }
 

@@ -13,15 +13,22 @@
 package org.sonatype.nexus.repository.npm.internal;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
+import javax.cache.Cache;
+import javax.cache.expiry.CreatedExpiryPolicy;
+import javax.cache.expiry.Duration;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Facet.Exposed;
 import org.sonatype.nexus.repository.FacetSupport;
@@ -38,6 +45,8 @@ import org.sonatype.nexus.repository.vulnerability.AuditRepositoryComponent;
 import org.sonatype.nexus.repository.vulnerability.ComponentValidation;
 import org.sonatype.nexus.repository.vulnerability.ComponentsVulnerability;
 import org.sonatype.nexus.repository.vulnerability.RepositoryComponentValidation;
+import org.sonatype.nexus.repository.vulnerability.Vulnerability;
+import org.sonatype.nexus.repository.vulnerability.VulnerabilityList;
 import org.sonatype.nexus.repository.vulnerability.exceptions.ConfigurationException;
 import org.sonatype.nexus.repository.vulnerability.exceptions.TarballLoadingException;
 
@@ -67,6 +76,11 @@ public class NpmAuditFacet
 {
   private static final Logger logger = LoggerFactory.getLogger(NpmAuditFacet.class);
 
+  private static final String CACHE_NAME = "npm-audit-data";
+
+  // Nexus IQ Hosted Data Services (HDS) update vulnerabilities data every 12 hours.
+  private static final Duration CACHE_DURATION = new Duration(TimeUnit.HOURS, 12);
+
   // npm audit timeout in sec to wait for a response
   private final int timeout;
 
@@ -75,6 +89,10 @@ public class NpmAuditFacet
   private final ReportCreator reportCreator;
 
   private NpmAuditTarballFacet npmAuditTarballFacet;
+
+  private final CacheHelper cacheHelper;
+
+  private Cache<AuditComponent, VulnerabilityList> cache;
 
   private final Gson gson =
       new GsonBuilder()
@@ -86,18 +104,26 @@ public class NpmAuditFacet
   public NpmAuditFacet(
       @Named("${nexus.npm.audit.timeout:-600}") final int timeout,
       final EventManager eventManager,
-      final ReportCreator reportCreator)
+      final ReportCreator reportCreator,
+      final CacheHelper cacheHelper)
   {
     checkArgument(timeout > 0, "nexus.npm.audit.timeout must be greater than 0");
     this.timeout = timeout;
     this.eventManager = checkNotNull(eventManager);
     this.reportCreator = checkNotNull(reportCreator);
+    this.cacheHelper = checkNotNull(cacheHelper);
   }
 
   @Override
   protected void doInit(final Configuration configuration) throws Exception {
     super.doInit(configuration);
     this.npmAuditTarballFacet = facet(NpmAuditTarballFacet.class);
+    maybeCreateCache();
+  }
+
+  @Override
+  protected void doDelete() {
+    maybeDestroyCache();
   }
 
   public Payload audit(final Payload payload)
@@ -133,20 +159,46 @@ public class NpmAuditFacet
         log.trace("Handle {} npm components to analyze", componentsToAnalyze.size());
         log.trace("Evaluating components: {}", componentsToAnalyze);
       }
-      try {
-        if (applicationId != null) {
-          componentsVulnerability.addComponentsVulnerabilities(
-              getComponentsVulnerabilityFromRemoteServer(componentsToAnalyze, applicationId));
-        }
-        else {
-          componentsVulnerability.addComponentsVulnerabilities(
-              getComponentsVulnerabilityFromRemoteServer(componentsToAnalyze));
+
+      // get vulnerabilities from the cache
+      for (AuditComponent auditComponent : componentsToAnalyze) {
+        VulnerabilityList componentVulnerability = cache.get(auditComponent);
+        if (componentVulnerability != null) {
+          List<Vulnerability> vulnerabilities = componentVulnerability.getVulnerabilities();
+          componentsVulnerability.addVulnerabilities(auditComponent, vulnerabilities);
         }
       }
-      catch (InterruptedException | TimeoutException e) {
-        throw new RuntimeException(e);
+
+      // get vulnerabilities from the IQ Server
+      Set<AuditComponent> foundAuditComponents = componentsVulnerability.getAuditComponents().keySet();
+      Set<AuditComponent> auditComponents = componentsToAnalyze.stream()
+          .filter(c -> !foundAuditComponents.contains(c))
+          .collect(Collectors.toSet());
+      if (!auditComponents.isEmpty()) {
+        ComponentsVulnerability vulnerabilities;
+        try {
+          if (applicationId != null) {
+            vulnerabilities = getComponentsVulnerabilityFromRemoteServer(auditComponents, applicationId);
+          }
+          else {
+            vulnerabilities = getComponentsVulnerabilityFromRemoteServer(auditComponents);
+          }
+          componentsVulnerability.addComponentsVulnerabilities(vulnerabilities);
+          vulnerabilities.getAuditComponents().forEach((auditComponent, componentVulnerabilities) ->
+              cache.put(auditComponent, new VulnerabilityList(componentVulnerabilities)));
+
+          // components without vulnerabilities also should be added to the cache
+          Set<AuditComponent> componentsWithVulnerabilities = componentsVulnerability.getAuditComponents().keySet();
+          componentsToAnalyze.stream()
+              .filter(c -> !componentsWithVulnerabilities.contains(c))
+              .forEach(component -> cache.put(component, new VulnerabilityList()));
+        }
+        catch (InterruptedException | TimeoutException e) {
+          throw new RuntimeException(e);
+        }
       }
     }
+
     return componentsVulnerability;
   }
 
@@ -206,5 +258,22 @@ public class NpmAuditFacet
     log.trace("npm audit report: {}", responseReportString);
     log.debug("Build report with metadata: {}", responseReport.getMetadata());
     return new StringPayload(responseReportString, APPLICATION_JSON);
+  }
+
+  private void maybeCreateCache() {
+    if (cache == null) {
+      log.debug("Creating {} for: {}", CACHE_NAME, getRepository());
+      cache = cacheHelper.maybeCreateCache(CACHE_NAME, AuditComponent.class, VulnerabilityList.class,
+          CreatedExpiryPolicy.factoryOf(CACHE_DURATION));
+      log.debug("Created {}: {}", CACHE_NAME, cache);
+    }
+  }
+
+  private void maybeDestroyCache() {
+    if (cache != null) {
+      log.debug("Destroying {} for: {}", CACHE_NAME, getRepository());
+      cacheHelper.maybeDestroyCache(CACHE_NAME);
+      cache = null;
+    }
   }
 }
