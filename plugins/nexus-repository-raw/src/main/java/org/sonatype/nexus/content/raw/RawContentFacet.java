@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.view.Payload;
 /**
  * Provides persistent content for the 'raw' format.
  *
- * @since 3.next
+ * @since 3.24
  */
 @Facet.Exposed
 public interface RawContentFacet

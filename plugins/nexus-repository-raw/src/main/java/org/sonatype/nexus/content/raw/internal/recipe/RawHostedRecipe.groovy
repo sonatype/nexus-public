@@ -37,7 +37,7 @@ import static org.sonatype.nexus.repository.view.matchers.logic.LogicMatchers.an
 /**
  * Raw hosted repository recipe.
  *
- * @since 3.next
+ * @since 3.24
  */
 @Named(RawHostedRecipe.NAME)
 @Singleton

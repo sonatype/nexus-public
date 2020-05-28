@@ -57,7 +57,7 @@ public interface ComponentDAO
    * @param limit at most items to delete
    * @return number of components deleted
    *
-   * @since 3.next
+   * @since 3.24
    */
   int purgeNotRecentlyDownloaded(
       @Param("repositoryId") int repositoryId,

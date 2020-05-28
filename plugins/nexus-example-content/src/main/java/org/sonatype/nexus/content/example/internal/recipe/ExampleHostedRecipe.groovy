@@ -36,7 +36,7 @@ import static org.sonatype.nexus.repository.view.matchers.logic.LogicMatchers.an
 /**
  * Example hosted recipe.
  *
- * @since 3.next
+ * @since 3.24
  */
 @Named(ExampleHostedRecipe.NAME)
 @Singleton

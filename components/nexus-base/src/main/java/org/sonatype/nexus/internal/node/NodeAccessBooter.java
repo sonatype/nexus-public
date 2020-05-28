@@ -27,7 +27,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.STORAGE;
 /**
  * {@link NodeAccess} booter.
  *
- * @since 3.next
+ * @since 3.24
  */
 @Named
 @ManagedLifecycle(phase = STORAGE)

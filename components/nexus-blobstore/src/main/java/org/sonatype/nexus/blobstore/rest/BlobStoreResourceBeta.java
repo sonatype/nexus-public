@@ -30,7 +30,7 @@ import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 /**
  * beta endpoint for BlobStore REST API
  *
- * @since 3.next
+ * @since 3.24
  * @deprecated moving to {@link BlobStoreResourceV1}
  */
 @Api(hidden = true)

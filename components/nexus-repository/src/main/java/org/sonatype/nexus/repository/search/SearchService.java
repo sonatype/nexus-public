@@ -134,7 +134,7 @@ public interface SearchService
                                            final int size,
                                            Collection<String> repoNames);
   /**
-   * @since 3.next
+   * @since 3.24
    */
   SearchResponse searchUnrestrictedInReposWithAggregations(final QueryBuilder query,
                                                            final List<AggregationBuilder> aggregations,

@@ -94,14 +94,14 @@ public class CacheInfo
   }
 
   /**
-   * @since 3.next
+   * @since 3.24
    */
   public Map<String, String> toMap() {
     return ImmutableMap.of(CACHE_TOKEN, cacheToken, LAST_VERIFIED, lastVerified.toString());
   }
 
   /**
-   * @since 3.next
+   * @since 3.24
    */
   @Nullable
   public static CacheInfo fromMap(final Map<String, String> map) {
@@ -109,7 +109,7 @@ public class CacheInfo
   }
 
   /**
-   * @since 3.next
+   * @since 3.24
    */
   @Nullable
   public static CacheInfo fromMap(final AttributesMap map) {

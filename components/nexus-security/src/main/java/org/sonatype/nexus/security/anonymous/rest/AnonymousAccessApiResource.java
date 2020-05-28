@@ -39,7 +39,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.security.anonymous.rest.AnonymousAccessApiResource.RESOURCE_URI;
 
 /**
- * @since 3.next
+ * @since 3.24
  */
 @Named
 @Singleton

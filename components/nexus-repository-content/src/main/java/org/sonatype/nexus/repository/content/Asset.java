@@ -32,7 +32,7 @@ public interface Asset
   /**
    * The kind of asset.
    *
-   * @since 3.next
+   * @since 3.24
    */
   String kind();
 

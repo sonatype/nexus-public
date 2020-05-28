@@ -50,7 +50,7 @@ import static org.sonatype.nexus.repository.content.store.internal.AssetBlobClea
 import static org.sonatype.nexus.repository.content.store.internal.AssetBlobCleanupTaskDescriptor.TYPE_ID;
 
 /**
- * @since 3.next
+ * @since 3.24
  */
 @FeatureFlag(name = "nexus.datastore.enabled")
 @Named

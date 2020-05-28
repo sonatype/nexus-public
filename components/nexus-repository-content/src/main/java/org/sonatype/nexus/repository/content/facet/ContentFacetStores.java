@@ -25,7 +25,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Persistence stores associated with a repository's {@link ContentFacet}.
  *
- * @since 3.next
+ * @since 3.24
  */
 public class ContentFacetStores
 {

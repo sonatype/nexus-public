@@ -59,7 +59,7 @@ public interface AssetDAO
    * @param limit at most items to delete
    * @return number of assets deleted
    *
-   * @since 3.next
+   * @since 3.24
    */
   int purgeNotRecentlyDownloaded(
       @Param("repositoryId") int repositoryId,

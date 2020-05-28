@@ -27,7 +27,7 @@ import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
 /**
  * Raw proxy facet.
  *
- * @since 3.next
+ * @since 3.24
  */
 @Named
 public class RawProxyFacet

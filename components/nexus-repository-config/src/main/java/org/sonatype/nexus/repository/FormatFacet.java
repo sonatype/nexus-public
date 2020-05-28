@@ -30,7 +30,7 @@ public interface FormatFacet
 
   /**
    * Hook to allow a sub format to be identified
-   * @since 3.next
+   * @since 3.24
    */
   void markSubFormat();
 }

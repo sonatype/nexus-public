@@ -28,7 +28,7 @@ import static java.util.OptionalInt.empty;
  *
  * Where possible prefer the external identifiers such as component coordinates and asset paths.
  *
- * @since 3.next
+ * @since 3.24
  */
 public class InternalIds
 {

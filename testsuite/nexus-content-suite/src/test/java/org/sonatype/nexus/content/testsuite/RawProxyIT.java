@@ -37,7 +37,7 @@ import static org.sonatype.nexus.content.testsupport.FormatClientSupport.bytes;
 import static org.sonatype.nexus.content.testsupport.FormatClientSupport.status;
 
 /**
- * @since 3.next
+ * @since 3.24
  */
 @Category(SQLTestGroup.class)
 public class RawProxyIT

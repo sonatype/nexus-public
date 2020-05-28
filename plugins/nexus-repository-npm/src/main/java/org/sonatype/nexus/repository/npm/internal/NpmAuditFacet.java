@@ -67,7 +67,7 @@ import static org.sonatype.nexus.repository.view.ContentTypes.APPLICATION_JSON;
 /**
  * Facet for processing dependencies from 'npm audit' cmd to analyze them on vulnerabilities by IQ Server.
  *
- * @since 3.next
+ * @since 3.24
  */
 @Named
 @Exposed

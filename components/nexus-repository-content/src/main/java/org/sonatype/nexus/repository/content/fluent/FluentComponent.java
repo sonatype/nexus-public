@@ -28,7 +28,7 @@ public interface FluentComponent
   /**
    * The repository containing this component.
    *
-   * @since 3.next
+   * @since 3.24
    */
   Repository repository();
 

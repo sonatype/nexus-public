@@ -44,7 +44,7 @@ import static org.sonatype.nexus.repository.http.HttpHandlers.notFound
 /**
  * Raw proxy repository recipe.
  *
- * @since 3.next
+ * @since 3.24
  */
 @Named(RawProxyRecipe.NAME)
 @Priority(Integer.MAX_VALUE)

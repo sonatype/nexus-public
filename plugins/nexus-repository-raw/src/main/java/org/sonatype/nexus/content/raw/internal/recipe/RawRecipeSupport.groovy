@@ -32,7 +32,7 @@ import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler
 import org.sonatype.nexus.repository.view.handlers.TimingHandler
 
 /**
- * @since 3.next
+ * @since 3.24
  */
 abstract class RawRecipeSupport
     extends RecipeSupport

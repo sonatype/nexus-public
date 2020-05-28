@@ -61,7 +61,7 @@ import static org.sonatype.nexus.repository.content.fluent.internal.FluentAttrib
 /**
  * {@link FluentAsset} implementation.
  *
- * @since 3.next
+ * @since 3.24
  */
 public class FluentAssetImpl
     implements FluentAsset, WrappedContent<Asset>

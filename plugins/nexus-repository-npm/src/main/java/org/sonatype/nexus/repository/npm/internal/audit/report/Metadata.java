@@ -19,7 +19,7 @@ import com.google.gson.annotations.SerializedName;
 /**
  * Metadata model will be serialized into Json representation for npm audit report
  *
- * @since 3.next
+ * @since 3.24
  */
 public class Metadata
 {

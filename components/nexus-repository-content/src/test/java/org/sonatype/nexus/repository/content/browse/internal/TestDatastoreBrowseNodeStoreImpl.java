@@ -31,7 +31,7 @@ import org.sonatype.nexus.selector.SelectorManager;
 /**
  * Test datastore browse node store implementation.
  *
- * @since 3.next
+ * @since 3.24
  */
 @Named
 public class TestDatastoreBrowseNodeStoreImpl

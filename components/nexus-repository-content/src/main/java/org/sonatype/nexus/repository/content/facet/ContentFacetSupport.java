@@ -65,7 +65,7 @@ import static org.sonatype.nexus.validation.ConstraintViolations.maybePropagate;
 /**
  * {@link ContentFacet} support.
  *
- * @since 3.next
+ * @since 3.24
  */
 public abstract class ContentFacetSupport
     extends FacetSupport
