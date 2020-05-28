@@ -94,13 +94,13 @@ public interface MavenFacet
   boolean exists(final MavenPath path);
 
   /**
-   * @since 3.next
+   * @since 3.24
    * @param path to the maven component that might need metadata rebuilt or deleted
    */
   void maybeDeleteOrFlagToRebuildMetadata(final Bucket bucket, final MavenPath path) throws IOException;
 
   /**
-   * @since 3.next
+   * @since 3.24
    * @param paths to the maven components that might need metadata rebuilt or deleted
    */
   void maybeDeleteOrFlagToRebuildMetadata(final Collection<MavenPath> paths) throws IOException;

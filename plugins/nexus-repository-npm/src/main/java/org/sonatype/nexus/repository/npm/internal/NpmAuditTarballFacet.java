@@ -69,7 +69,7 @@ import static org.sonatype.nexus.repository.view.Content.T_CONTENT_HASH_CODES_MA
 /**
  * Facet for saving/fetching npm package tarballs.
  *
- * @since 3.next
+ * @since 3.24
  */
 @Named
 @Exposed

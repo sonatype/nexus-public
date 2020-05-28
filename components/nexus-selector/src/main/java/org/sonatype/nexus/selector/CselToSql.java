@@ -17,7 +17,7 @@ import org.apache.commons.jexl3.parser.ASTJexlScript;
 /**
  * Walks the {@link ASTJexlScript} script, transforming CSEL expressions and populating the {@link SelectorSqlBuilder} builder.
  *
- * @since 3.next
+ * @since 3.24
  */
 public interface CselToSql
 {

@@ -43,7 +43,7 @@ import static java.util.Collections.singletonList;
 /**
  * Common base for raw upload handlers
  *
- * @since 3.next
+ * @since 3.24
  */
 public abstract class RawUploadHandlerSupport
     extends UploadHandlerSupport

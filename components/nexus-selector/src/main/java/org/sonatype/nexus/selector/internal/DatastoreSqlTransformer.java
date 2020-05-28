@@ -31,7 +31,7 @@ import org.apache.commons.jexl3.parser.JexlNode;
 /**
  * Base class to transform CSEL operators to SQL
  *
- * @since 3.next
+ * @since 3.24
  */
 public abstract class DatastoreSqlTransformer
     extends ParserVisitorSupport

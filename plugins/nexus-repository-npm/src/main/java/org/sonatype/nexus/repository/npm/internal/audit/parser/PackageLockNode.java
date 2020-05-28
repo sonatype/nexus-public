@@ -18,7 +18,7 @@ import java.util.Objects;
 /**
  * Node for parsing package-lock.json
  *
- * @since 3.next
+ * @since 3.24
  */
 public class PackageLockNode
 {

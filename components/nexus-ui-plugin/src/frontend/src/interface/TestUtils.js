@@ -14,7 +14,7 @@ import {act} from 'react-dom/test-utils';
 import {render} from '@testing-library/react';
 
 /**
- * @since 3.next
+ * @since 3.24
  */
 export default class Utils {
   static render(view, extraSelectors) {

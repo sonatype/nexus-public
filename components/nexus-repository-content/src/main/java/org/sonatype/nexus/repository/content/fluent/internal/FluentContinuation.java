@@ -25,7 +25,7 @@ import static com.google.common.collect.Collections2.transform;
 /**
  * Fluent {@link Continuation}s.
  *
- * @since 3.next
+ * @since 3.24
  */
 public class FluentContinuation<E, T>
     extends ForwardingCollection<E>

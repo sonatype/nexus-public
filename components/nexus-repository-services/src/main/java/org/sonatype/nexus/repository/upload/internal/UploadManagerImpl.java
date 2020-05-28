@@ -47,7 +47,7 @@ import static java.util.stream.Collectors.toList;
 /**
  * {@link UploadManager} implementation.
  *
- * @since 3.next
+ * @since 3.24
  */
 @Named
 @Singleton

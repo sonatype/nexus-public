@@ -15,7 +15,7 @@ import React from 'react';
 import {Information, Section} from 'nexus-ui-plugin';
 
 /**
- * @since 3.next
+ * @since 3.24
  * @param sectionName - the name of the nested section to display
  * @param sectionInformation - system information that has objects as the value instead of simple strings
  */

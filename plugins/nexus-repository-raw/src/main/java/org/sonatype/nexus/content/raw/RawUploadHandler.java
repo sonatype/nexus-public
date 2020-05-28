@@ -41,7 +41,7 @@ import com.google.common.collect.Lists;
 /**
  * Support for uploading raw components via UI & API
  *
- * @since 3.next
+ * @since 3.24
  */
 @Named(RawFormat.NAME)
 @Singleton

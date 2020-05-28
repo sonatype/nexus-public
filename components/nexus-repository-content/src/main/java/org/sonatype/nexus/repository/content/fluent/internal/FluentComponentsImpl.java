@@ -26,7 +26,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * {@link FluentComponents} implementation.
  *
- * @since 3.next
+ * @since 3.24
  */
 public class FluentComponentsImpl
     implements FluentComponents

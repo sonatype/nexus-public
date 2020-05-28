@@ -64,7 +64,7 @@ public class FreezeRequest
   /**
    * Is this a user request?
    *
-   * @since 3.next
+   * @since 3.24
    */
   public boolean isUserRequest() {
     return token == null; // user requests have no system token

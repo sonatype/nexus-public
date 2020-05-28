@@ -38,7 +38,7 @@ import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
 /**
  * Updates the asset last downloaded time.
  *
- * @since 3.next
+ * @since 3.24
  */
 @Named
 @Singleton

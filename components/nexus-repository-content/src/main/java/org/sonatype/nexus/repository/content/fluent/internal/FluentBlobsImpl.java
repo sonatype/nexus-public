@@ -45,7 +45,7 @@ import static org.sonatype.nexus.repository.view.ContentTypes.APPLICATION_OCTET_
 /**
  * {@link FluentBlobs} implementation.
  *
- * @since 3.next
+ * @since 3.24
  */
 public class FluentBlobsImpl
     implements FluentBlobs

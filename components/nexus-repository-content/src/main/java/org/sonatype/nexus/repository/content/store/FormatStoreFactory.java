@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.content.store;
 /**
  * Assisted-Inject generic template that defines the API to create content stores for a particular format.
  *
- * @since 3.next
+ * @since 3.24
  */
 interface FormatStoreFactory
     <

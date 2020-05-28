@@ -24,7 +24,7 @@ import static java.util.stream.Collectors.joining;
 /**
  * Filters {@link Exception}s by name.
  *
- * @since 3.next
+ * @since 3.24
  */
 public class ExceptionFilter
     implements Predicate<Exception>

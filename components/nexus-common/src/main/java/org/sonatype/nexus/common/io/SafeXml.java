@@ -28,7 +28,7 @@ import static javax.xml.stream.XMLInputFactory.SUPPORT_DTD;
 /**
  * Provides various XML factories that are configured to protect against XXE attacks.
  *
- * @since 3.next
+ * @since 3.24
  */
 public final class SafeXml
 {

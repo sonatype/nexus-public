@@ -20,7 +20,7 @@ import Detail from './Detail';
 import ExtJS from '../../../../interface/ExtJS';
 
 /**
- * @since 3.next
+ * @since 3.24
  */
 export default function MasterDetail({className, children, path, ...attrs}) {
   const {location: {pathname}} = ExtJS.useHistory({basePath: path});

@@ -113,7 +113,7 @@ public interface UploadHandler
 
   /**
    * Denote if the format is supported using the export/import task
-   * @since 3.next
+   * @since 3.24
    */
   default boolean supportsExportImport() {
     return false;

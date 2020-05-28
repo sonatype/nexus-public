@@ -30,7 +30,7 @@ import static javax.ws.rs.core.Response.Status.SERVICE_UNAVAILABLE;
  *
  * Handles exceptions wrapped by MyBatis, such as when writes fail due to NXRM being in read-only mode.
  *
- * @since 3.next
+ * @since 3.24
  */
 @Named
 @Singleton

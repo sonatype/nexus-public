@@ -48,7 +48,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  *
  * Most formats don't need this flexibility and should use {@link FormatStoreModule}.
  *
- * @since 3.next
+ * @since 3.24
  */
 @SuppressWarnings("unused")
 public abstract class BespokeFormatStoreModule<CONTENT_REPOSITORY_STORE extends ContentRepositoryStore<?>,

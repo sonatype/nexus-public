@@ -26,7 +26,7 @@ public interface FluentAssetBuilder
   /**
    * Continue building the asset using the given kind.
    *
-   * @since 3.next
+   * @since 3.24
    */
   FluentAssetBuilder kind(String kind);
 

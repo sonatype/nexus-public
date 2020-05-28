@@ -67,28 +67,28 @@ public class DateHelper
   }
 
   /**
-   * @since 3.next
+   * @since 3.24
    */
   public static DateTime toDateTime(final LocalDateTime localDateTime) {
     return new DateTime(localDateTime.atOffset(ZoneOffset.UTC).toInstant().toEpochMilli());
   }
 
   /**
-   * @since 3.next
+   * @since 3.24
    */
   public static LocalDateTime toLocalDateTime(final DateTime dateTime) {
     return Instant.ofEpochMilli(dateTime.getMillis()).atOffset(ZoneOffset.UTC).toLocalDateTime();
   }
 
   /**
-   * @since 3.next
+   * @since 3.24
    */
   public static Duration toJavaDuration(final org.joda.time.Duration jodaDuration) {
     return Duration.ofMillis(jodaDuration.getMillis());
   }
 
   /**
-   * @since 3.next
+   * @since 3.24
    */
   public static org.joda.time.Duration toJodaDuration(final Duration javaDuration) {
     return org.joda.time.Duration.millis(javaDuration.toMillis());

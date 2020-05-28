@@ -25,7 +25,7 @@ import './SystemInformation.scss';
 const INITIAL_VALUE = {};
 
 /**
- * @since 3.next
+ * @since 3.24
  */
 export default function SystemInformation() {
   const [systemInformation, setSystemInformation] = useState(INITIAL_VALUE);

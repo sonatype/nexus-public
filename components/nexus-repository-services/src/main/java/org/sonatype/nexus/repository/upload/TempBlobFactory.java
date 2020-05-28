@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 /**
  * Factory for creating {@link TempBlob}
  *
- * @since 3.next
+ * @since 3.24
  */
 public interface TempBlobFactory {
   TempBlob create(Repository repository, InputStream inputStream, Iterable<HashAlgorithm> hashAlgorithms);

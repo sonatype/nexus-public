@@ -118,7 +118,7 @@ public interface FreezeService
   /**
    * @return Is the application frozen by user request?
    *
-   * @since 3.next
+   * @since 3.24
    */
   default boolean isFrozenByUser() {
     return currentFreezeRequests().stream().anyMatch(FreezeRequest::isUserRequest);

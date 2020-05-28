@@ -37,7 +37,7 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 /**
  * A {@link RawContentFacet} that persists to a {@link ContentFacet}.
  *
- * @since 3.next
+ * @since 3.24
  */
 @Named(RawFormat.NAME)
 public class RawContentFacetImpl
