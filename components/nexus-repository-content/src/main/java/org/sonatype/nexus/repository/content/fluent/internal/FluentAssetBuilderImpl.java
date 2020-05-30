@@ -14,12 +14,14 @@ package org.sonatype.nexus.repository.content.fluent.internal;
 
 import java.util.Optional;
 
+import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.store.AssetData;
+import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -76,6 +78,10 @@ public class FluentAssetBuilderImpl
     asset.setPath(path);
     asset.setKind(kind);
     asset.setComponent(component);
+
+    if (ProxyFacetSupport.isDownloading()) {
+      asset.setLastDownloaded(UTC.now());
+    }
 
     facet.stores().assetStore.createAsset(asset);
 
