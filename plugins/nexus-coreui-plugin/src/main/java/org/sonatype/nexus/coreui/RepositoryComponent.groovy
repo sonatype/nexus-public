@@ -39,8 +39,8 @@ import org.sonatype.nexus.repository.cache.RepositoryCacheUtils
 import org.sonatype.nexus.repository.config.Configuration
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet
 import org.sonatype.nexus.repository.manager.RepositoryManager
-import org.sonatype.nexus.repository.search.RebuildIndexTask
-import org.sonatype.nexus.repository.search.RebuildIndexTaskDescriptor
+import org.sonatype.nexus.repository.search.index.RebuildIndexTask
+import org.sonatype.nexus.repository.search.index.RebuildIndexTaskDescriptor
 import org.sonatype.nexus.repository.security.RepositoryAdminPermission
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker
 import org.sonatype.nexus.repository.security.RepositorySelector

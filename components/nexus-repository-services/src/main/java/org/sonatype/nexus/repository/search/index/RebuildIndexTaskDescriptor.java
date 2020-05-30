@@ -10,24 +10,21 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search;
+package org.sonatype.nexus.repository.search.index;
 
-import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.formfields.RepositoryCombobox;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 /**
- * Legacy task descriptor for {@link RebuildIndexTask} that includes multi-node configuration.
+ * Task descriptor for {@link RebuildIndexTask}.
  *
  * @since 3.0
  */
 @Named(RebuildIndexTaskDescriptor.TYPE_ID)
-@Priority(Integer.MAX_VALUE)
 @Singleton
 public class RebuildIndexTaskDescriptor
     extends TaskDescriptorSupport
@@ -37,9 +34,9 @@ public class RebuildIndexTaskDescriptor
   public static final String REPOSITORY_NAME_FIELD_ID = "repositoryName";
 
   @Inject
-  public RebuildIndexTaskDescriptor(final NodeAccess nodeAccess) {
+  public RebuildIndexTaskDescriptor() {
     super(TYPE_ID,
-        org.sonatype.nexus.repository.search.index.RebuildIndexTask.class,
+        RebuildIndexTask.class,
         "Repair - Rebuild repository search",
         VISIBLE,
         EXPOSED,
@@ -48,9 +45,7 @@ public class RebuildIndexTaskDescriptor
             "Repository",
             "Select the repository to rebuild index",
             true
-        ).includingAnyOfFacets(SearchFacet.class).includeAnEntryForAllRepositories(),
-
-        nodeAccess.isClustered() ? newMultinodeFormField().withInitialValue(true) : null
+        ).includingAnyOfFacets(SearchIndexFacet.class).includeAnEntryForAllRepositories()
     );
   }
 }

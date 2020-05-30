@@ -10,18 +10,36 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search;
+package org.sonatype.nexus.repository.search.index;
 
 import javax.inject.Named;
 
+import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.RepositoryTaskSupport;
+import org.sonatype.nexus.scheduling.Cancelable;
+
 /**
- * Legacy task to rebuild index of given repository.
+ * Internal task to rebuild index of given repository.
  *
  * @since 3.0
  */
 @Named
 public class RebuildIndexTask
-    extends org.sonatype.nexus.repository.search.index.RebuildIndexTask
+    extends RepositoryTaskSupport
+    implements Cancelable
 {
-  // nothing to add...
+  @Override
+  protected void execute(final Repository repository) {
+    repository.facet(SearchIndexFacet.class).rebuildIndex();
+  }
+
+  @Override
+  protected boolean appliesTo(final Repository repository) {
+    return repository.optionalFacet(SearchIndexFacet.class).isPresent();
+  }
+
+  @Override
+  public String getMessage() {
+    return "Rebuilding search index of " + getRepositoryField();
+  }
 }

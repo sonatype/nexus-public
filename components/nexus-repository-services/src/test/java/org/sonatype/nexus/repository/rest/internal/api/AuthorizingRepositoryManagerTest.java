@@ -21,10 +21,12 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
 import org.sonatype.nexus.repository.rest.api.IncompatibleRepositoryException;
 import org.sonatype.nexus.repository.rest.api.RepositoryNotFoundException;
+import org.sonatype.nexus.repository.search.index.RebuildIndexTaskDescriptor;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
+import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 
 import org.apache.shiro.authz.AuthorizationException;
@@ -102,6 +104,57 @@ public class AuthorizingRepositoryManagerTest
   }
 
   @Test
+  public void rebuildIndexShouldThrowExceptionIfRepositoryDoesNotExist() throws Exception {
+    expectedException.expect(RepositoryNotFoundException.class);
+
+    authorizingRepositoryManager.rebuildSearchIndex("absent");
+
+    verify(repositoryManager).get(eq("repository"));
+    verifyNoMoreInteractions(repositoryManager, repositoryPermissionChecker, taskScheduler);
+  }
+
+  @Test
+  public void rebuildIndexShouldThrowExceptionIfRepositoryTypeIsNotHostedOrProxy() throws Exception {
+    when(repository.getType()).thenReturn(new GroupType());
+    expectedException.expect(IncompatibleRepositoryException.class);
+
+    authorizingRepositoryManager.rebuildSearchIndex("repository");
+
+    verify(repositoryManager).get(eq("repository"));
+    verifyNoMoreInteractions(repositoryManager, repositoryPermissionChecker, taskScheduler);
+  }
+
+  @Test
+  public void rebuildIndexShouldThrowExceptionIfInsufficientPermissions() throws Exception {
+    when(repository.getType()).thenReturn(new HostedType());
+    doThrow(new AuthorizationException("User is not permitted."))
+        .when(repositoryPermissionChecker)
+        .ensureUserCanAdmin(any(), any());
+    expectedException.expect(AuthorizationException.class);
+
+    authorizingRepositoryManager.rebuildSearchIndex("repository");
+
+    verify(repositoryManager).get(eq("repository"));
+    verify(repositoryPermissionChecker).ensureUserCanAdmin(eq(EDIT), eq(repository));
+    verifyNoMoreInteractions(repositoryManager, repositoryPermissionChecker, taskScheduler);
+  }
+
+  @Test
+  public void rebuildIndexShouldTriggerTask() throws Exception {
+    TaskConfiguration taskConfiguration = mock(TaskConfiguration.class);
+    when(taskScheduler.createTaskConfigurationInstance(any())).thenReturn(taskConfiguration);
+    when(repository.getType()).thenReturn(new HostedType());
+
+    authorizingRepositoryManager.rebuildSearchIndex("repository");
+
+    verify(repositoryManager).get(eq("repository"));
+    verify(repositoryPermissionChecker).ensureUserCanAdmin(eq(EDIT), eq(repository));
+    verify(taskScheduler).createTaskConfigurationInstance(RebuildIndexTaskDescriptor.TYPE_ID);
+    verify(taskScheduler).submit(any());
+    verifyNoMoreInteractions(repositoryManager, repositoryPermissionChecker, taskScheduler);
+  }
+
+  @Test
   public void invalidateCacheShouldThrowExceptionIfRepositoryDoesNotExist() throws Exception {
     expectedException.expect(RepositoryNotFoundException.class);
 
@@ -167,11 +220,5 @@ public class AuthorizingRepositoryManagerTest
     verify(repository).facet(GroupFacet.class);
     verify(groupFacet).invalidateGroupCaches();
     verifyNoMoreInteractions(repositoryManager, repositoryPermissionChecker, groupFacet);
-  }
-
-  @Test
-  public void rebuildIndexIsNotYetImplemented() throws Exception {
-    expectedException.expect(UnsupportedOperationException.class);
-    authorizingRepositoryManager.rebuildSearchIndex("repository");
   }
 }
