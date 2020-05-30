@@ -68,11 +68,11 @@ public class FeaturesWrapper
   private final FeaturesService wrapper = (FeaturesService) newProxyInstance(FeaturesService.class.getClassLoader(),
       new Class<?>[] { FeaturesService.class }, this);
 
-  private final LocationResolver locationResolver = new LocationResolver();
-
   private volatile FeaturesService delegate;
 
   private ServiceRegistration<FeaturesService> trampoline;
+
+  private volatile LocationResolver locationResolver;
 
   private volatile FeaturesResolver featuresResolver;
 
@@ -111,6 +111,7 @@ public class FeaturesWrapper
           log.info("Fast FeaturesService stopping");
           trampoline.unregister();
           super.removedService(reference, service);
+          locationResolver = null;
           featuresResolver = null;
           delegate = null;
         }
@@ -212,6 +213,7 @@ public class FeaturesWrapper
     if (featuresResolver == null) {
       synchronized (wrapper) {
         if (featuresResolver == null) {
+          locationResolver = new LocationResolver();
           featuresResolver = new FeaturesResolver(delegate);
         }
       }
