@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.store.example.TestAssetBlobDAO;
@@ -607,6 +608,36 @@ public class AssetDAOTest
       dao.deleteAssets(repositoryId, -1);
 
       assertThat(dao.browseAssets(repositoryId, 100, null).size(), is(0));
+    }
+  }
+
+  @Test
+  public void testPurgeOperation() {
+    AssetData asset1 = randomAsset(repositoryId);
+    AssetData asset2 = randomAsset(repositoryId);
+    asset2.setPath(asset1.path() + "/2"); // make sure paths are different
+
+    asset1.setLastDownloaded(UTC.now().minusDays(2));
+    asset2.setLastDownloaded(UTC.now().minusDays(4));
+
+    try (DataSession<?> session = sessionRule.openSession("content")) {
+      AssetDAO dao = session.access(TestAssetDAO.class);
+      dao.createAsset(asset1);
+      dao.createAsset(asset2);
+      session.getTransaction().commit();
+    }
+
+    try (DataSession<?> session = sessionRule.openSession("content")) {
+      AssetDAO dao = session.access(TestAssetDAO.class);
+
+      assertTrue(dao.readAsset(repositoryId, asset1.path()).isPresent());
+      assertTrue(dao.readAsset(repositoryId, asset2.path()).isPresent());
+
+      int deleted = dao.purgeNotRecentlyDownloaded(repositoryId, 3, 10);
+      assertThat(deleted, is(1));
+
+      assertTrue(dao.readAsset(repositoryId, asset1.path()).isPresent());
+      assertFalse(dao.readAsset(repositoryId, asset2.path()).isPresent());
     }
   }
 }

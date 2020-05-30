@@ -87,15 +87,6 @@
     ORDER BY asset_id LIMIT #{limit};
   </select>
 
-  <delete id="purgeNotRecentlyDownloaded">
-    DELETE
-    FROM ${format}_asset
-    WHERE repository_id = #{repositoryId}
-      AND component_id IS NULL
-      AND TIMESTAMPDIFF(DAY, last_downloaded, CURRENT_DATE) >= #{daysAgo}
-    LIMIT #{limit}
-  </delete>
-
   <select id="browseComponentAssets" resultMap="assetResult" parameterType="ComponentData">
     <choose>
       <when test="componentId != null">
@@ -141,13 +132,32 @@
   </delete>
 
   <delete id="deleteAssets">
-    DELETE FROM ${format}_asset WHERE repository_id = #{repositoryId}<if test="limit gt 0"> LIMIT #{limit}</if>;
+    DELETE FROM ${format}_asset WHERE
+        repository_id = #{repositoryId}
+        <if test="limit gt 0"> LIMIT #{limit}</if>;
   </delete>
 
   <delete id="deleteAssets" databaseId="PostgreSQL">
     DELETE FROM ${format}_asset WHERE
         <if test="limit gt 0"> asset_id IN (SELECT asset_id FROM ${format}_asset WHERE </if>
         repository_id = #{repositoryId}
+        <if test="limit gt 0"> LIMIT #{limit})</if>;
+  </delete>
+
+  <delete id="purgeNotRecentlyDownloaded">
+    DELETE FROM ${format}_asset WHERE
+        repository_id = #{repositoryId}
+        AND component_id IS NULL
+        AND last_downloaded &lt;= CURRENT_TIMESTAMP - CAST(#{daysAgo} AS INT) * INTERVAL '1' DAY
+        <if test="limit gt 0"> LIMIT #{limit}</if>;
+  </delete>
+
+  <delete id="purgeNotRecentlyDownloaded" databaseId="PostgreSQL">
+    DELETE FROM ${format}_asset WHERE
+        <if test="limit gt 0"> asset_id IN (SELECT asset_id FROM ${format}_asset WHERE </if>
+        repository_id = #{repositoryId}
+        AND component_id IS NULL
+        AND last_downloaded &lt;= CURRENT_TIMESTAMP - CAST(#{daysAgo} AS INT) * INTERVAL '1' DAY
         <if test="limit gt 0"> LIMIT #{limit})</if>;
   </delete>
 
