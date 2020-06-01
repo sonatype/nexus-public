@@ -26,7 +26,7 @@ import org.elasticsearch.search.lookup.SourceLookup;
 /**
  * Simple implementation that will expose the path/format variable resolvers.
  *
- * @since 3.next
+ * @since 3.24
  */
 @Named("simple")
 @Singleton

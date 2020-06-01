@@ -76,30 +76,16 @@ Ext.define('NX.ext.form.field.ItemSelector', {
    * @param button
    */
   customizeButton: function (name, button) {
-    // remove icon
-    delete button.iconCls;
+    var icons = {
+      top: 'x-fa fa-angle-double-up',
+      up: 'x-fa fa-angle-up',
+      add: 'x-fa fa-angle-right',
+      remove: 'x-fa fa-angle-left',
+      down: 'x-fa fa-angle-down',
+      bottom: 'x-fa fa-angle-double-down'
+    };
 
-    // replace with glyph
-    switch (name) {
-      case 'top':
-        button.glyph = 'xf102@FontAwesome'; // fa-angle-double-up
-        break;
-      case 'up':
-        button.glyph = 'xf106@FontAwesome'; // fa-angle-up
-        break;
-      case 'add':
-        button.glyph = 'xf105@FontAwesome'; // fa-angle-right
-        break;
-      case 'remove':
-        button.glyph = 'xf104@FontAwesome'; // fa-angle-left
-        break;
-      case 'down':
-        button.glyph = 'xf107@FontAwesome'; // fa-angle-down
-        break;
-      case 'bottom':
-        button.glyph = 'xf103@FontAwesome'; // fa-angle-double-down
-        break;
-    }
+    button.iconCls = icons[name];
   },
 
   createList: function (title) {

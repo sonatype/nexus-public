@@ -102,7 +102,7 @@ Ext.define('NX.coreui.view.routing.RoutingRulesSettingsForm', {
             },
             {
               xtype: 'button',
-              glyph: 'xf055@FontAwesome' /* fa-plus-circle */,
+              iconCls: 'x-fa fa-plus-circle',
               text: NX.I18n.get('RoutingRules_Matchers_Add_Button'),
               tooltip: NX.I18n.get('RoutingRules_Matchers_Add_Button'),
               handler: me.onAddMatcherClick.bind(this),
@@ -161,7 +161,7 @@ Ext.define('NX.coreui.view.routing.RoutingRulesSettingsForm', {
             {
               xtype: 'button',
               cls: 'nx-matcher-remove-button',
-              glyph: 'xf1f8@FontAwesome' /* fa-trash */,
+              iconCls: 'x-fa fa-trash',
               tooltip: NX.I18n.get('RoutingRules_Matchers_Remove_Button'),
               handler: this.onRemoveMatcherClick.bind(this),
               hidden: this.readOnly

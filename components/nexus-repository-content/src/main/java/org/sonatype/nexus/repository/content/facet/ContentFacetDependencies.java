@@ -27,7 +27,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Internal dependencies injected into a repository's {@link ContentFacet}.
  *
- * @since 3.next
+ * @since 3.24
  */
 @Named
 @Singleton

@@ -28,7 +28,7 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 /**
  * CMA implementation of {@link TempBlobFactory}
  *
- * @since 3.next
+ * @since 3.24
  */
 @Named("default")
 @Singleton

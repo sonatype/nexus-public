@@ -13,6 +13,9 @@
 package org.sonatype.nexus.security.token;
 
 import javax.annotation.Nullable;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.nexus.security.UserPrincipalsHelper;
 import org.sonatype.nexus.security.authc.NexusApiKeyAuthenticationToken;
@@ -41,6 +44,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public abstract class BearerTokenRealm
     extends AuthenticatingRealm
 {
+  public static final String IS_TOKEN_AUTH_KEY = BearerTokenRealm.class.getName() + ".IS_TOKEN";
+
   @VisibleForTesting
   static final String ANONYMOUS_USER = "anonymous";
 
@@ -52,6 +57,8 @@ public abstract class BearerTokenRealm
 
   private final String format;
 
+  private Provider<HttpServletRequest> requestProvider;
+
   public BearerTokenRealm(final ApiKeyStore keyStore,
                           final UserPrincipalsHelper principalsHelper,
                           final String format) {
@@ -60,6 +67,11 @@ public abstract class BearerTokenRealm
     this.format = checkNotNull(format);
     setName(format);
     setAuthenticationCachingEnabled(false);
+  }
+
+  @Inject
+  private void setRequestProvider(final Provider<HttpServletRequest> requestProvider) {
+    this.requestProvider = checkNotNull(requestProvider);
   }
 
   @Override
@@ -76,6 +88,9 @@ public abstract class BearerTokenRealm
       try {
         if (anonymousAndSupported(principals) || principalsHelper.getUserStatus(principals).isActive()) {
           ((NexusApiKeyAuthenticationToken) token).setPrincipal(principals.getPrimaryPrincipal());
+          if (requestProvider != null) {
+            requestProvider.get().setAttribute(IS_TOKEN_AUTH_KEY, Boolean.TRUE);
+          }
           return new SimpleAuthenticationInfo(principals, token.getCredentials());
         }
       }

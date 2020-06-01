@@ -24,7 +24,7 @@ Ext.define('NX.view.header.Help', {
     'NX.I18n'
   ],
 
-  glyph: 'xf059@FontAwesome', // fa-question-circle
+  iconCls: 'x-fa fa-question-circle', // fa-question-circle
 
   /**
    * @override

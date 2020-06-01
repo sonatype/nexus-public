@@ -9,10 +9,18 @@
 
   <service>
     <jsr107:defaults default-template="nexus-default" enable-management="true" enable-statistics="true">
+      <jsr107:cache name="npm-audit-data" template="nexus-npm-audit-data"/>
     </jsr107:defaults>
   </service>
 
   <persistence directory="${java.io.tmpdir}/nexus-ehcache"/>
+
+  <cache-template name="nexus-npm-audit-data">
+    <expiry>
+      <ttl unit="hours">12</ttl>
+    </expiry>
+    <heap unit="entries">50000</heap>
+  </cache-template>
 
   <cache-template name="nexus-default">
     <heap unit="entries">10000</heap>

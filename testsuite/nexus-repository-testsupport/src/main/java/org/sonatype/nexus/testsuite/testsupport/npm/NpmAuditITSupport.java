@@ -84,7 +84,7 @@ public abstract class NpmAuditITSupport
       String[] npmPackageParts = pathname.split("/-/");
       String npmPackageName = npmPackageParts.length > 0 ? npmPackageParts[0] : pathname;
       String npmPackageVersion = pathname.replaceAll(".*?((?<!\\w)\\d+([.]\\d+)*).tgz", "$1");
-      return new AuditComponent(repoAuditComponent.getFormat(), npmPackageName, npmPackageVersion);
+      return new AuditComponent(null, repoAuditComponent.getFormat(), npmPackageName, npmPackageVersion);
     }
   }
 }

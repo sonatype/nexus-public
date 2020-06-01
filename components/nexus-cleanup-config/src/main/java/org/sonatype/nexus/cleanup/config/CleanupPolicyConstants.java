@@ -15,7 +15,7 @@ package org.sonatype.nexus.cleanup.config;
 /**
  * Cleanup policy constants.
  *
- * @since 3.next
+ * @since 3.24
  */
 public interface CleanupPolicyConstants
 {

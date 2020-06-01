@@ -103,7 +103,7 @@ public class AssetData
   /**
    * Sets the asset kind.
    *
-   * @since 3.next
+   * @since 3.24
    */
   public void setKind(final String kind) {
     this.kind = checkNotNull(kind);

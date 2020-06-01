@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.task.DeletionProgress;
 
 /**
- * @since 3.next
+ * @since 3.24
  */
 @Facet.Exposed
 public interface ContentMaintenanceFacet

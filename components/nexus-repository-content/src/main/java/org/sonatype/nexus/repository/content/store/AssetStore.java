@@ -66,22 +66,6 @@ public class AssetStore<T extends AssetDAO>
   }
 
   /**
-   * Purge assets without component in the given repository last downloaded more than given number of days ago
-   *
-   * @param repositoryId the repository to browse
-   * @param daysAgo last downloaded more than this
-   * @param limit at most items to delete
-   * @return number of assets deleted
-   *
-   * @since 3.next
-   */
-  @Transactional
-  public int purgeNotRecentlyDownloaded(final int repositoryId, final int daysAgo, final int limit)
-  {
-    return dao().purgeNotRecentlyDownloaded(repositoryId, daysAgo, limit);
-  }
-
-  /**
    * Browse all assets associated with the given logical component.
    *
    * @param component the component to browse
@@ -185,5 +169,20 @@ public class AssetStore<T extends AssetDAO>
     }
     log.debug("Deleted all assets in repository {}", repositoryId);
     return deleted;
+  }
+
+  /**
+   * Purge assets without component in the given repository last downloaded more than given number of days ago
+   *
+   * @param repositoryId the repository to browse
+   * @param daysAgo last downloaded more than this
+   * @param limit at most items to delete
+   * @return number of assets deleted
+   *
+   * @since 3.24
+   */
+  @Transactional
+  public int purgeNotRecentlyDownloaded(final int repositoryId, final int daysAgo, final int limit) {
+    return dao().purgeNotRecentlyDownloaded(repositoryId, daysAgo, limit);
   }
 }

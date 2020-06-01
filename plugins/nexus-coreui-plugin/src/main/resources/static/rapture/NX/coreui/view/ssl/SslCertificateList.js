@@ -90,7 +90,7 @@ Ext.define('NX.coreui.view.ssl.SslCertificateList', {
         {
           xtype: 'button',
           text: NX.I18n.get('Ssl_SslCertificateList_New_Button'),
-          glyph: 'xf055@FontAwesome' /* fa-plus-circle */,
+          iconCls: 'x-fa fa-plus-circle',
           action: 'new',
           disabled: true,
           menu: [

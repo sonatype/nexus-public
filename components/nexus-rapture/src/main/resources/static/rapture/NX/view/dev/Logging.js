@@ -53,13 +53,13 @@ Ext.define('NX.view.dev.Logging', {
       xtype: 'button',
       text: 'Clear events',
       action: 'clear',
-      glyph: 'xf12d@FontAwesome' /* fa-eraser */
+      iconCls: 'x-fa fa-eraser'
     },
     {
       xtype: 'button',
       text: 'Export selection',
       action: 'export',
-      glyph: 'xf019@FontAwesome' /* fa-download */
+      iconCls: 'x-fa fa-download'
     },
     '-',
     {

@@ -13,11 +13,17 @@
 package org.sonatype.nexus.features.internal;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.nio.file.Files.isDirectory;
+import static java.nio.file.Files.isSameFile;
 import static org.apache.karaf.util.maven.Parser.pathFromMaven;
 
 /**
@@ -33,7 +39,21 @@ public class LocationResolver
 {
   private static final Logger log = LoggerFactory.getLogger(LocationResolver.class);
 
-  private final File systemDir = new File("system");
+  private final File systemDir;
+
+  private final File mavenDir;
+
+  public LocationResolver() {
+    this.systemDir = new File("system");
+
+    // add local Maven repository for testing snapshots?
+    if (!"false".equalsIgnoreCase(System.getProperty("nexus.testLocalSnapshots", "false"))) {
+      this.mavenDir = mavenDir(systemDir);
+    }
+    else {
+      this.mavenDir = null;
+    }
+  }
 
   /**
    * Resolves the given location to the most direct link possible to reduce I/O during startup.
@@ -43,17 +63,17 @@ public class LocationResolver
     try {
       int mvn = location.indexOf("mvn:");
       if (mvn == 0) {
-        result = systemPath(location);
+        result = resolveMavenPath(location);
       }
       else if (mvn > 0) {
         String prefix = location.substring(0, mvn);
         int flags = location.indexOf('$');
         if (flags < 0) {
-          result = prefix + systemPath(location.substring(mvn));
+          result = prefix + resolveMavenPath(location.substring(mvn));
         }
         else {
           String suffix = location.substring(flags, location.length());
-          result = prefix + systemPath(location.substring(mvn, flags)) + suffix;
+          result = prefix + resolveMavenPath(location.substring(mvn, flags)) + suffix;
         }
       }
     }
@@ -71,13 +91,57 @@ public class LocationResolver
   /**
    * Prefer a direct 'file:' link under the system directory if the file exists and can be read.
    */
-  private String systemPath(final String mvnPath) throws MalformedURLException {
-    String repoPath = pathFromMaven(mvnPath);
-    if (new File(systemDir, repoPath).canRead()) {
-      return "file:system/" + repoPath;
+  private String resolveMavenPath(final String mvnPath) throws MalformedURLException {
+    String repositoryPath = pathFromMaven(mvnPath);
+    // Pax-Exam: check local Maven repository (if configured) for snapshots _before_ NXRM's system repository
+    if (mavenDir != null && repositoryPath.contains("SNAPSHOT") && new File(mavenDir, repositoryPath).canRead()) {
+      return mavenDir.toURI() + repositoryPath;
+    }
+    else if (new File(systemDir, repositoryPath).canRead()) {
+      return "file:system/" + repositoryPath;
     }
     else {
       return mvnPath;
     }
+  }
+
+  /**
+   * Attempts to locate the configured local Maven repository for testing snapshots.
+   */
+  private static File mavenDir(final File systemDir) {
+    try {
+      // NexusPaxExamSupport will propagate any explicit setting from CI
+      String localRepository = System.getProperty("maven.repo.local", System.getProperty("localRepository", ""));
+
+      // fall back to check user's home for their local repository
+      if (localRepository.isEmpty()) {
+        Path userHome = Paths.get(System.getProperty("user.home"));
+        if (userHome.isAbsolute() && isDirectory(userHome)) {
+          localRepository = userHome.resolve(".m2").resolve("repository").toString();
+        }
+        else {
+          return null; // still not found
+        }
+      }
+
+      // accept both URIs and paths
+      File mavenDir;
+      if (localRepository.startsWith("file:")) {
+        mavenDir = new File(URI.create(localRepository));
+      }
+      else {
+        mavenDir = new File(localRepository);
+      }
+
+      // final check that the directory exists and is different to NXRM's system repository
+      if (mavenDir.isDirectory() && !isSameFile(mavenDir.toPath(), systemDir.toPath())) {
+        log.info("Using local maven repository '{}' for testing snapshots", mavenDir);
+        return mavenDir;
+      }
+    }
+    catch (RuntimeException | IOException e) {
+      log.debug("Cannot locate local maven repository for testing snapshots", e);
+    }
+    return null;
   }
 }

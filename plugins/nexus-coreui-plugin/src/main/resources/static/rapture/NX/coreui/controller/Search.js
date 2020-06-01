@@ -416,7 +416,7 @@ Ext.define('NX.coreui.controller.Search', {
       cls: 'more-criteria',
       itemId: 'addButton',
       text: NX.I18n.get('Search_More_Text'),
-      glyph: 'xf055@FontAwesome' /* fa-plus-circle */,
+      iconCls: 'x-fa fa-plus-circle',
       menu: addCriteriaMenu
     });
   },

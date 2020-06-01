@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.raw.internal.RawFormat;
 /**
  * Configures the content store bindings for an raw format.
  *
- * @since 3.next
+ * @since 3.24
  */
 @Named(RawFormat.NAME)
 public class RawStoreModule

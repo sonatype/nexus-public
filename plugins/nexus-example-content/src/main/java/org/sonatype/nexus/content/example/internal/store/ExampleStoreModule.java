@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.content.store.FormatStoreModule;
 /**
  * Configures the content store bindings for an 'example' format.
  *
- * @since 3.next
+ * @since 3.24
  */
 @Named(ExampleFormat.NAME)
 public class ExampleStoreModule

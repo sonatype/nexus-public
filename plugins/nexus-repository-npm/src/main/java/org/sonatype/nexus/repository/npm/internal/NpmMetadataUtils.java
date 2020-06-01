@@ -228,7 +228,7 @@ public final class NpmMetadataUtils
   /**
    * Create a tarball name.
    *
-   * @since 3.next
+   * @since 3.24
    */
   public static String createTarballName(final String name, final String version) {
     return String.format("%s-%s.tgz", name, version);

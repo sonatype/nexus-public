@@ -71,7 +71,7 @@ Ext.define('NX.coreui.view.system.NodeList', {
         {
           xtype: 'button',
           text: 'Enable read-only mode',
-          glyph: 'xf1e5@FontAwesome' /* fa-binoculars */,
+          iconCls: 'x-fa fa-binoculars',
           action: 'freeze'
         }
       ]

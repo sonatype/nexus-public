@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.content.Component;
 /**
  * Defines the browse node layout for components and assets of the same format.
  *
- * @since 3.next
+ * @since 3.24
  */
 public interface DatastoreBrowseNodeGenerator
 {

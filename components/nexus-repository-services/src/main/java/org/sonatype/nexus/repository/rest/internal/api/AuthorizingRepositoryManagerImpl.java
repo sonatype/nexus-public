@@ -26,10 +26,13 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.rest.api.AuthorizingRepositoryManager;
 import org.sonatype.nexus.repository.rest.api.IncompatibleRepositoryException;
 import org.sonatype.nexus.repository.rest.api.RepositoryNotFoundException;
+import org.sonatype.nexus.repository.search.index.RebuildIndexTask;
+import org.sonatype.nexus.repository.search.index.RebuildIndexTaskDescriptor;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
+import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -119,7 +122,12 @@ public class AuthorizingRepositoryManagerImpl
   public void rebuildSearchIndex(@Nonnull final String name)
       throws RepositoryNotFoundException, IncompatibleRepositoryException
   {
-    throw new UnsupportedOperationException("To be implemented using the new content API");
+    Repository repository = getEditableRepositoryOrThrow(name);
+    ensureHostedOrProxy(repository);
+    TaskConfiguration taskConfiguration =
+        taskScheduler.createTaskConfigurationInstance(RebuildIndexTaskDescriptor.TYPE_ID);
+    taskConfiguration.setString(RebuildIndexTask.REPOSITORY_NAME_FIELD_ID, name);
+    taskScheduler.submit(taskConfiguration);
   }
 
   /**

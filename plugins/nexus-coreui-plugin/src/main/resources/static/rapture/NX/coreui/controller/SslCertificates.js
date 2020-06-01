@@ -365,7 +365,7 @@ Ext.define('NX.coreui.controller.SslCertificates', {
               formBind: true,
               disabled: true,
               ui: 'nx-primary',
-              glyph: 'xf1f8@FontAwesome' /* fa-trash */
+              iconCls: 'x-fa fa-trash'
             });
             button = tbar.down('button[action=remove]');
             me.mon(
@@ -387,7 +387,7 @@ Ext.define('NX.coreui.controller.SslCertificates', {
               formBind: true,
               disabled: true,
               ui: 'nx-primary',
-              glyph: 'xf055@FontAwesome' /* fa-plus-circle */
+              iconCls: 'x-fa fa-plus-circle'
             });
             button = tbar.down('button[action=add]');
             me.mon(

@@ -355,14 +355,14 @@ public abstract class NexusPaxExamSupport
   public static Option nexusDistribution(final MavenUrlReference frameworkZip) {
 
     // support explicit CI setting as well as automatic detection
-    String localRepo = System.getProperty("maven.repo.local", "");
-    if (localRepo.length() > 0) {
+    String localRepository = System.getProperty("maven.repo.local", System.getProperty("localRepository", ""));
+    if (localRepository.length() > 0) {
       // pass on explicit setting to Pax-URL (otherwise it uses wrong value)
-      System.setProperty("org.ops4j.pax.url.mvn.localRepository", localRepo);
+      System.setProperty("org.ops4j.pax.url.mvn.localRepository", localRepository);
     }
     else {
       // use placeholder in karaf config
-      localRepo = "${maven.repo.local}";
+      localRepository = "${maven.repo.local}";
     }
 
     // allow overriding the distribution under test from the command-line
@@ -431,8 +431,14 @@ public abstract class NexusPaxExamSupport
 
         keepRuntimeFolder(), // keep files around in case we need to debug
 
+        // enable testing of plugin snapshots from the local repository
+        systemProperty("nexus.testLocalSnapshots").value("true"),
+
+        propagateSystemProperty("maven.repo.local"),
+        propagateSystemProperty("localRepository"),
+
         editConfigurationFilePut(PAX_URL_MAVEN_FILE, // so we can fetch local snapshots
-            "org.ops4j.pax.url.mvn.localRepository", localRepo),
+            "org.ops4j.pax.url.mvn.localRepository", localRepository),
 
         useOwnKarafExamSystemConfiguration("nexus"),
 

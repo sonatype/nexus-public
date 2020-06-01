@@ -39,11 +39,6 @@ Ext.define('NX.view.dev.styles.Toolbars', {
           },
           {
             xtype: 'button',
-            text: 'with glyph',
-            glyph: 'xf1b2@FontAwesome'
-          },
-          {
-            xtype: 'button',
             text: 'with icon',
             iconCls: 'nx-icon-help-kb-x16'
           },
@@ -53,7 +48,6 @@ Ext.define('NX.view.dev.styles.Toolbars', {
             text: 'button menu',
             menu: [
               { text: 'plain' },
-              { text: 'with glyph', glyph: 'xf059@FontAwesome' },
               { text: 'with icon', iconCls: 'nx-icon-help-kb-x16'}
             ]
           },

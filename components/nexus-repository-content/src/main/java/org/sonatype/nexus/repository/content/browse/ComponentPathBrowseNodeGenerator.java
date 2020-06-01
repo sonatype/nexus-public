@@ -23,7 +23,7 @@ import static java.util.Optional.of;
 /**
  * Component-led layout that places components one level above their assets.
  *
- * @since 3.next
+ * @since 3.24
  */
 public abstract class ComponentPathBrowseNodeGenerator
     extends AssetPathBrowseNodeGenerator

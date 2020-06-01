@@ -58,12 +58,12 @@ Ext.define('NX.coreui.controller.HealthCheckWarnings', {
       if (user && user.administrator) {
         warningPanel.show();
         if (healthChecksFailed) {
-          warningPanel.setGlyph('xf06a@FontAwesome');
+          warningPanel.setIconCls('x-fa fa-exclamation-circle');
           warningPanel.addCls('nx-health-button-red');
           warningPanel.removeCls('nx-health-button-green');
         }
         else {
-          warningPanel.setGlyph('xf058@FontAwesome');
+          warningPanel.setIconCls('x-fa fa-check-circle');
           warningPanel.addCls('nx-health-button-green');
           warningPanel.removeCls('nx-health-button-red');
         }

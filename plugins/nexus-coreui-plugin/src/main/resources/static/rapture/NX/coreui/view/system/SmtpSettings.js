@@ -137,7 +137,7 @@ Ext.define('NX.coreui.view.system.SmtpSettings', {
       text: NX.I18n.get('System_SmtpSettings_VerifyServer_Button'),
       formBind: true,
       action: 'verify',
-      glyph: 'xf003@FontAwesome' /* fa-envelope-o */
+      iconCls: 'x-fa fa-envelope'
     });
   }
 });

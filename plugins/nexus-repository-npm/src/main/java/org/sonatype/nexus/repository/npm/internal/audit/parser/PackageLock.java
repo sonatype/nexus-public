@@ -29,7 +29,7 @@ import static org.sonatype.nexus.repository.npm.internal.audit.parser.PackageLoc
  * Product of parsing package-lock.json by PackageLockParser Used for fetching all components witch contains in
  * package-lock.json and creation Resolve instance (entity from npm report for each component)
  *
- * @since 3.next
+ * @since 3.24
  */
 public class PackageLock
 {
@@ -40,10 +40,11 @@ public class PackageLock
   }
 
   public Set<AuditComponent> getComponents() {
+    String applicationId = getRoot().getApplicationId();
     return nodes.entrySet().stream()
         .filter(entry -> !ROOT.equals(entry.getKey()))
         .flatMap(entry -> entry.getValue().stream()
-            .map(dependency -> new AuditComponent(NAME, entry.getKey(), dependency.getVersion())))
+            .map(dependency -> new AuditComponent(applicationId, NAME, entry.getKey(), dependency.getVersion())))
         .collect(toSet());
   }
 

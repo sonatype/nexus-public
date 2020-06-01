@@ -15,7 +15,7 @@
 /**
  * Repository "Settings" form for example hosted content.
  *
- * @since 3.next
+ * @since 3.24
  */
 Ext.define('NX.example.view.repository.recipe.ExampleHosted', {
   extend: 'NX.coreui.view.repository.RepositorySettingsForm',

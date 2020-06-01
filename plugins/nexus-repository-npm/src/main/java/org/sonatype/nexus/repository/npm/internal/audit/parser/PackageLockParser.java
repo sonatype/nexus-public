@@ -22,7 +22,7 @@ import com.google.gson.Gson;
 /**
  * Parser for package-lock.json, shrinkwrap.json is also parsable by this parser as it has same format
  *
- * @since 3.next
+ * @since 3.24
  */
 public class PackageLockParser
 {

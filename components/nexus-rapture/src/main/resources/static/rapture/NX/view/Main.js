@@ -97,7 +97,7 @@ Ext.define('NX.view.Main', {
         name: 'browse',
         title: NX.I18n.get('Header_BrowseMode_Title'),
         tooltip: NX.I18n.get('Header_BrowseMode_Tooltip'),
-        glyph: 'xf1b2@FontAwesome', /* fa-cube */
+        iconCls: 'x-fa fa-cube',
         autoHide: true,
         collapseMenu: true
       },
@@ -106,7 +106,7 @@ Ext.define('NX.view.Main', {
         name: 'admin',
         title: NX.I18n.get('Header_AdminMode_Title'),
         tooltip: NX.I18n.get('Header_AdminMode_Tooltip'),
-        glyph: 'xf013@FontAwesome', /* fa-gear */
+        iconCls: 'x-fa fa-cog',
         autoHide: true,
         collapseMenu: false
       },
@@ -118,7 +118,7 @@ Ext.define('NX.view.Main', {
         xtype: 'button',
         name: 'metric-health',
         tooltip: NX.I18n.get('Header_Health_Tooltip'),
-        glyph: 'xf058@FontAwesome', /* fa-check-circle */
+        iconCls: 'x-fa fa-check-circle',
         autoHide: true,
         hidden: true,
         collapseMenu: false,
@@ -134,7 +134,7 @@ Ext.define('NX.view.Main', {
         xtype: 'nx-header-mode',
         name: 'user',
         title: NX.I18n.get('Header_UserMode_Title'),
-        glyph: 'xf007@FontAwesome', // fa-user
+        iconCls: 'x-fa fa-user',
         autoHide: false,
         collapseMenu: false
       },

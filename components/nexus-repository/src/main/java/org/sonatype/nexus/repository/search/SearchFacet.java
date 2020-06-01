@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.search;
 
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Facet;
-import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.search.index.SearchIndexFacet;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 /**
@@ -24,7 +24,7 @@ import org.sonatype.nexus.transaction.UnitOfWork;
  */
 @Facet.Exposed
 public interface SearchFacet
-    extends Facet
+    extends SearchIndexFacet
 {
   /**
    * Indexes the metadata of the given component, requires an active {@link UnitOfWork}.
@@ -49,10 +49,4 @@ public interface SearchFacet
    * @since 3.4
    */
   void bulkDelete(Iterable<EntityId> componentIds);
-
-  /**
-   * Forcefully rebuilds index of the {@link Repository} this facet is attached to. Rebuild happens by dropping current
-   * index and recreating it from scratch.
-   */
-  void rebuildIndex();
 }

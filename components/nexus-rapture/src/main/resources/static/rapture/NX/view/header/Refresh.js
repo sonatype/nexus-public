@@ -24,7 +24,7 @@ Ext.define('NX.view.header.Refresh', {
     'NX.I18n'
   ],
 
-  iconCls: 'x-fa fa-refresh',
+  iconCls: 'x-fa fa-sync',
 
   /**
    * @override

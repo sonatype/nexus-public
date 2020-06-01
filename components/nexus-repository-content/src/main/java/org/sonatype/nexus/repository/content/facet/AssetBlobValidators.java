@@ -31,7 +31,7 @@ import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 /**
  * Supplies {@link AssetBlobValidator}s to {@link ContentFacet}s.
  *
- * @since 3.next
+ * @since 3.24
  */
 @Named
 @Singleton

@@ -33,7 +33,7 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
 /**
  * Provides persistent content for an 'example' format.
  *
- * @since 3.next
+ * @since 3.24
  */
 @Named(ExampleFormat.NAME)
 public class ExampleContentFacetImpl

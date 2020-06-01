@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.search;
 
+import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -21,11 +22,12 @@ import org.sonatype.nexus.formfields.RepositoryCombobox;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 /**
- * Task descriptor for {@link RebuildIndexTask}.
+ * Legacy task descriptor for {@link RebuildIndexTask} that includes multi-node configuration.
  *
  * @since 3.0
  */
-@Named
+@Named(RebuildIndexTaskDescriptor.TYPE_ID)
+@Priority(Integer.MAX_VALUE)
 @Singleton
 public class RebuildIndexTaskDescriptor
     extends TaskDescriptorSupport
@@ -37,7 +39,7 @@ public class RebuildIndexTaskDescriptor
   @Inject
   public RebuildIndexTaskDescriptor(final NodeAccess nodeAccess) {
     super(TYPE_ID,
-        RebuildIndexTask.class,
+        org.sonatype.nexus.repository.search.index.RebuildIndexTask.class,
         "Repair - Rebuild repository search",
         VISIBLE,
         EXPOSED,

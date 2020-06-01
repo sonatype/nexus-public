@@ -46,13 +46,13 @@ Ext.define('NX.coreui.view.task.TaskFeature', {
         {
           xtype: 'button',
           text: NX.I18n.get('Task_TaskFeature_Delete_Button'),
-          glyph: 'xf1f8@FontAwesome' /* fa-trash */,
+          iconCls: 'x-fa fa-trash',
           action: 'delete',disabled: true
         },
         {
           xtype: 'button',
           text: NX.I18n.get('Task_TaskFeature_Run_Button'),
-          glyph: 'xf04b@FontAwesome' /* fa-play */,
+          iconCls: 'x-fa fa-play',
           action: 'run',
           handler: function(button) {
             button.fireEvent('runaction');
@@ -62,7 +62,7 @@ Ext.define('NX.coreui.view.task.TaskFeature', {
         {
           xtype: 'button',
           text: NX.I18n.get('Task_TaskFeature_Stop_Button'),
-          glyph: 'xf04d@FontAwesome' /* fa-stop */,
+          iconCls: 'x-fa fa-stop',
           action: 'stop',
           handler: function(button) {
             button.fireEvent('runaction');

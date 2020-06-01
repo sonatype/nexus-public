@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.store.example.TestAssetDAO;
@@ -342,6 +343,61 @@ public class ComponentDAOTest
       dao.deleteComponents(repositoryId, -1);
 
       assertThat(dao.browseComponents(repositoryId, 100, null).size(), is(0));
+    }
+  }
+
+  @Test
+  public void testPurgeOperation() {
+    ComponentData component1 = randomComponent(repositoryId);
+    ComponentData component2 = randomComponent(repositoryId);
+    component2.setVersion(component1.version() + ".2"); // make sure versions are different
+
+    try (DataSession<?> session = sessionRule.openSession("content")) {
+      ComponentDAO dao = session.access(TestComponentDAO.class);
+      dao.createComponent(component1);
+      dao.createComponent(component2);
+      session.getTransaction().commit();
+    }
+
+    AssetData asset1 = randomAsset(repositoryId);
+    AssetData asset2 = randomAsset(repositoryId);
+    asset2.setPath(asset1.path() + "/2"); // make sure paths are different
+
+    asset1.setComponent(component1);
+    asset1.setLastDownloaded(UTC.now().minusDays(2));
+    asset2.setComponent(component2);
+    asset2.setLastDownloaded(UTC.now().minusDays(4));
+
+    try (DataSession<?> session = sessionRule.openSession("content")) {
+      AssetDAO dao = session.access(TestAssetDAO.class);
+      dao.createAsset(asset1);
+      dao.createAsset(asset2);
+      session.getTransaction().commit();
+    }
+
+    try (DataSession<?> session = sessionRule.openSession("content")) {
+      ComponentDAO componentDao = session.access(TestComponentDAO.class);
+      AssetDAO assetDao = session.access(TestAssetDAO.class);
+
+      assertTrue(componentDao.readComponent(repositoryId,
+          component1.namespace(), component1.name(), component1.version()).isPresent());
+      assertTrue(componentDao.readComponent(repositoryId,
+          component2.namespace(), component2.name(), component2.version()).isPresent());
+
+      assertTrue(assetDao.readAsset(repositoryId, asset1.path()).isPresent());
+      assertTrue(assetDao.readAsset(repositoryId, asset2.path()).isPresent());
+
+      componentDao.createTemporaryPurgeTable();
+      int deleted = componentDao.purgeNotRecentlyDownloaded(repositoryId, 3, 10);
+      assertThat(deleted, is(1));
+
+      assertTrue(componentDao.readComponent(repositoryId,
+          component1.namespace(), component1.name(), component1.version()).isPresent());
+      assertFalse(componentDao.readComponent(repositoryId,
+          component2.namespace(), component2.name(), component2.version()).isPresent());
+
+      assertTrue(assetDao.readAsset(repositoryId, asset1.path()).isPresent());
+      assertFalse(assetDao.readAsset(repositoryId, asset2.path()).isPresent());
     }
   }
 }

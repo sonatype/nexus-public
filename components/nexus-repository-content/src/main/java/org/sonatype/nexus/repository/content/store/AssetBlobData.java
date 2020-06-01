@@ -121,7 +121,7 @@ public class AssetBlobData
   /**
    * Sets the checksums for the blob.
    *
-   * @since 3.next
+   * @since 3.24
    */
   public void setChecksums(final Map<String, String> checksums) {
     this.checksums = checkNotNull(checksums);

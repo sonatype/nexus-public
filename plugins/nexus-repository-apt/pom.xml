@@ -59,7 +59,7 @@
 
     <dependency>
       <groupId>org.bouncycastle</groupId>
-      <artifactId>bcpg-jdk15on</artifactId>
+      <artifactId>bcpg-jdk15to18</artifactId>
     </dependency>
 
     <dependency>
@@ -91,7 +91,7 @@
           <instructions>
             <Embed-Directory>lib</Embed-Directory>
             <Embed-Dependency>
-              bcpg-jdk15on|bcprov-jdk15on
+              bcpg-jdk15to18|bcprov-jdk15to18
             </Embed-Dependency>
             <Embed-Transitive>true</Embed-Transitive>
           </instructions>

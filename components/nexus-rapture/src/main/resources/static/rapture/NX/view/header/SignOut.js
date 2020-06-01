@@ -24,7 +24,7 @@ Ext.define('NX.view.header.SignOut', {
     'NX.I18n'
   ],
 
-  glyph: 'xf08b@FontAwesome', // fa-sign-out
+  iconCls: 'x-fa fa-sign-out-alt',
 
   /**
    * @override

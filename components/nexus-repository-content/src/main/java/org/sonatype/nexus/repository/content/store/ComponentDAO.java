@@ -50,21 +50,6 @@ public interface ComponentDAO
                                            @Param("continuationToken") @Nullable String continuationToken);
 
   /**
-   * Purge components in the given repository whose assets were last downloaded more than given number of days ago
-   *
-   * @param repositoryId the repository to browse
-   * @param daysAgo last downloaded more than this
-   * @param limit at most items to delete
-   * @return number of components deleted
-   *
-   * @since 3.next
-   */
-  int purgeNotRecentlyDownloaded(
-      @Param("repositoryId") int repositoryId,
-      @Param("daysAgo") int daysAgo,
-      @Param("limit") int limit);
-
-  /**
    * Browse all component namespaces in the given repository.
    *
    * The result will include the empty string if there are any components that don't have a namespace.
@@ -156,4 +141,25 @@ public interface ComponentDAO
    * @return {@code true} if any components were deleted
    */
   boolean deleteComponents(@Param("repositoryId") int repositoryId, @Param("limit") int limit);
+
+  /**
+   * Creates a temporary table local to the session for holding purge data.
+   *
+   * @since 3.next
+   */
+  void createTemporaryPurgeTable();
+
+  /**
+   * Purge components in the given repository whose assets were last downloaded more than given number of days ago
+   *
+   * @param repositoryId the repository to browse
+   * @param daysAgo last downloaded more than this
+   * @param limit at most items to delete
+   * @return number of components deleted
+   *
+   * @since 3.24
+   */
+  int purgeNotRecentlyDownloaded(@Param("repositoryId") int repositoryId,
+                                 @Param("daysAgo") int daysAgo,
+                                 @Param("limit") int limit);
 }

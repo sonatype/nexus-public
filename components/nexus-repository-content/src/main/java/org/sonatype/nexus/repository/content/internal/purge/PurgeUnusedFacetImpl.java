@@ -28,7 +28,7 @@ import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 
 /**
- * @since 3.next
+ * @since 3.24
  */
 @FeatureFlag(name = "nexus.datastore.enabled")
 @Named

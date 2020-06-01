@@ -96,7 +96,7 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreList', {
             {
               xtype: 'button',
               text: NX.I18n.get('Blobstore_BlobstoreList_New_Button'),
-              glyph: 'xf055@FontAwesome' /* fa-plus-circle */,
+              iconCls: 'x-fa fa-plus-circle',
               action: 'new',
               disabled: true
             }

@@ -52,21 +52,6 @@ public interface AssetDAO
                                    @Param("continuationToken") @Nullable String continuationToken);
 
   /**
-   * Purge assets without component in the given repository last downloaded more than given number of days ago
-   *
-   * @param repositoryId the repository to browse
-   * @param daysAgo last downloaded more than this
-   * @param limit at most items to delete
-   * @return number of assets deleted
-   *
-   * @since 3.next
-   */
-  int purgeNotRecentlyDownloaded(
-      @Param("repositoryId") int repositoryId,
-      @Param("daysAgo") int daysAgo,
-      @Param("limit") int limit);
-
-  /**
    * Browse all assets associated with the given logical component.
    *
    * @param component the component to browse
@@ -136,4 +121,18 @@ public interface AssetDAO
    * @return {@code true} if any assets were deleted
    */
   boolean deleteAssets(@Param("repositoryId") int repositoryId, @Param("limit") int limit);
+
+  /**
+   * Purge assets without component in the given repository last downloaded more than given number of days ago
+   *
+   * @param repositoryId the repository to browse
+   * @param daysAgo last downloaded more than this
+   * @param limit at most items to delete
+   * @return number of assets deleted
+   *
+   * @since 3.24
+   */
+  int purgeNotRecentlyDownloaded(@Param("repositoryId") int repositoryId,
+                                 @Param("daysAgo") int daysAgo,
+                                 @Param("limit") int limit);
 }

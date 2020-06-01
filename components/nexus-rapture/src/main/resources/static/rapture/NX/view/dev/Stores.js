@@ -74,13 +74,13 @@ Ext.define('NX.view.dev.Stores', {
           xtype: 'button',
           text: 'Load store',
           action: 'load',
-          glyph: 'xf0ab@FontAwesome' /* fa-arrow-circle-down */
+          iconCls: 'x-fa fa-arrow-circle-down'
         },
         {
           xtype: 'button',
           text: 'Clear store',
           action: 'clear',
-          glyph: 'xf12d@FontAwesome' /* fa-eraser */
+          iconCls: 'x-fa fa-eraser'
         }
       ]
     });

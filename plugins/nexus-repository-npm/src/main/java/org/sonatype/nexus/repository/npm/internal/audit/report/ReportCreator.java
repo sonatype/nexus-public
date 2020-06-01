@@ -43,7 +43,7 @@ import static org.apache.commons.lang.StringUtils.isNotBlank;
  * Class which accept report from IQ server and result of parsing package-lock.json and generate npm report for npm
  * audit command
  *
- * @since 3.next
+ * @since 3.24
  */
 @Named
 @Singleton

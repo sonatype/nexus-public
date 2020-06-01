@@ -24,7 +24,7 @@ Ext.define('NX.view.header.SignIn', {
     'NX.I18n'
   ],
 
-  glyph: 'xf090@FontAwesome', // fa-sign-in
+  iconCls: 'x-fa fa-sign-in-alt',
 
   /**
    * @override

@@ -79,7 +79,7 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
                   me.createRow(),
                   {
                     xtype: 'button',
-                    glyph: 'xf055@FontAwesome' /* fa-plus-circle */,
+                    iconCls: 'x-fa fa-plus-circle',
                     text: NX.I18n.get('FeatureGroups_Upload_Asset_Form_Add_Asset_Button'),
                     action: 'add_asset',
                     hidden: !me.uploadDefinition.get('multipleUpload')
@@ -174,7 +174,7 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
                   clearOnSubmit: false,
                   buttonText: NX.I18n.get('FeatureGroups_Upload_Form_Browse_Button'),
                   buttonConfig: {
-                      glyph: 'xf016@FontAwesome' /* fa-file-o */
+                      iconCls: 'x-fa fa-file'
                   },
                   name: 'asset' + prefix,
                   width: '300px',
@@ -197,7 +197,7 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
       row.items.push({
         xtype: 'button',
         text: NX.I18n.get('FeatureGroups_Upload_Asset_Form_Remove_Button'),
-        glyph: 'xf1f8@FontAwesome' /* fa-trash */,
+        iconCls: 'x-fa fa-trash',
         action: 'remove_upload_asset',
         hidden: true
       });

@@ -70,7 +70,7 @@ Ext.define('NX.view.info.DependencySnippetPanel', {
                 action: 'copySnippet',
                 margin: '0 0 0 24px',
                 tooltip: NX.I18n.get('DependencySnippetPanel_Copy_Button_Tooltip'),
-                glyph: 'xf0c5@FontAwesome' /* fa-copy */,
+                iconCls: 'x-fa fa-copy',
                 listeners: {
                   click: this.onCopyClick.bind(this)
                 }

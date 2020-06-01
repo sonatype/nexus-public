@@ -45,7 +45,7 @@ Ext.define('NX.coreui.view.cleanuppolicy.CleanupPolicyFeature', {
         {
           xtype: 'button',
           text: NX.I18n.get('CleanupPolicy_CleanupPolicyFeature_Delete_Button'),
-          glyph: 'xf1f8@FontAwesome' /* fa-trash */,
+          iconCls: 'x-fa fa-trash',
           action: 'delete',
           handler: function(button) {
             button.fireEvent('deleteaction');

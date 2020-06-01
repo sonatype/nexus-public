@@ -147,7 +147,7 @@ Ext.define('NX.coreui.view.repository.facet.DockerProxyFacet', {
           },
           {
             xtype: 'button',
-            glyph: 'xf055@FontAwesome' /* fa-plus-circle */,
+            iconCls: 'x-fa fa-plus-circle',
             text: NX.I18n.get('Repository_Facet_DockerProxyFacet_ForeignLayersWhitelist_AddButton'),
             tooltip: NX.I18n.get('Repository_Facet_DockerProxyFacet_ForeignLayersWhitelist_AddButton'),
             handler: function() {
@@ -185,7 +185,7 @@ Ext.define('NX.coreui.view.repository.facet.DockerProxyFacet', {
             {
               xtype: 'button',
               cls: 'nx-remove-whitelist-row-button',
-              glyph: 'xf1f8@FontAwesome' /* fa-trash */,
+              iconCls: 'x-fa fa-trash',
               style: {
                 marginLeft: '10px'
               },

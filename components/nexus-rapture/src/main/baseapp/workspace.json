@@ -20,8 +20,9 @@
     "frameworks": {
         "ext": {
             "path":"../../../target/ext",
-            "version":"6.5.3.57"
+            "version":"7.2.0.67"
         }
+        
     },
 
     /**

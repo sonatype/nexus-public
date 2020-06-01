@@ -156,7 +156,7 @@ public class RetryController
   /**
    * Filter that decides if an exception is major (like an I/O issue) resulting in a longer delay.
    *
-   * @since 3.next
+   * @since 3.24
    */
   public ExceptionFilter majorExceptionFilter() {
     return majorExceptionFilter;
@@ -165,7 +165,7 @@ public class RetryController
   /**
    * Filter that decides if an exception is noisy and shouldn't be included in excessive retry stats.
    *
-   * @since 3.next
+   * @since 3.24
    */
   public ExceptionFilter noisyExceptionFilter() {
     return noisyExceptionFilter;

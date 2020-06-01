@@ -15,7 +15,7 @@
 /**
  * Configuration for Nuget Repository Groups.
  *
- * @since 3.next
+ * @since 3.24
  */
 Ext.define('NX.coreui.view.repository.facet.NugetGroupFacet', {
   extend: 'Ext.form.FieldContainer',

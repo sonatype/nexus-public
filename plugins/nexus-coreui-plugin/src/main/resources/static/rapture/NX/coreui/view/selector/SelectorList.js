@@ -87,7 +87,7 @@ Ext.define('NX.coreui.view.selector.SelectorList', {
           {
             xtype: 'button',
             text: NX.I18n.get('Selector_SelectorList_New_Button'),
-            glyph: 'xf055@FontAwesome' /* fa-plus-circle */,
+            iconCls: 'x-fa fa-plus-circle',
             action: 'new',
             disabled: true
           }

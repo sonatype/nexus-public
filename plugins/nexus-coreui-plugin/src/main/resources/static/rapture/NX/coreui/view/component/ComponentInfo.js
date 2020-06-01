@@ -34,14 +34,14 @@ Ext.define('NX.coreui.view.component.ComponentInfo', {
       {
         xtype: 'nx-button',
         text: NX.I18n.get('ComponentDetails_Delete_Button'),
-        glyph: 'xf1f8@FontAwesome' /* fa-trash */,
+        iconCls: 'x-fa fa-trash',
         action: 'deleteComponent',
         hidden: true
       },
       {
         xtype: 'nx-button',
         text: NX.I18n.get('ComponentDetails_Analyze_Button'),
-        glyph: 'xf085@FontAwesome' /* fa-gears */,
+        iconCls: 'x-fa fa-cog',
         action: 'analyzeApplication'
       }
     ]

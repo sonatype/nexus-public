@@ -40,13 +40,13 @@ Ext.define('NX.coreui.view.component.ComponentAssetInfo', {
       {
         xtype: 'nx-button',
         text: NX.I18n.get('FolderInfo_Delete_Button'),
-        glyph: 'xf1f8@FontAwesome' /* fa-trash */,
+        iconCls: 'x-fa fa-trash',
         action: 'deleteFolder',
         hidden: true
       }, {
         xtype: 'nx-button',
         text: NX.I18n.get('AssetInfo_Delete_Button'),
-        glyph: 'xf1f8@FontAwesome' /* fa-trash */,
+        iconCls: 'x-fa fa-trash',
         action: 'deleteAsset',
         hidden: true
       }

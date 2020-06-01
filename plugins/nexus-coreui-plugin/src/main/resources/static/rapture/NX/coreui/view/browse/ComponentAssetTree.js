@@ -95,7 +95,7 @@ Ext.define('NX.coreui.view.browse.ComponentAssetTree', {
           items: [{
             xtype: 'button',
             text: NX.I18n.get('Component_Asset_Tree_Upload_Component'),
-            glyph: 'xf093@FontAwesome' /* fa-upload */,
+            iconCls: 'x-fa fa-upload',
             action: 'upload',
             hidden: true
           },

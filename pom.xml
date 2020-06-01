@@ -874,9 +874,9 @@
               <id>logback-core</id>
               <id>logback-classic</id>
               <id>jboss-logging</id>
-              <id>bcprov-jdk15on</id>
-              <id>bcpkix-jdk15on</id>
-              <id>bcpg-jdk15on</id>
+              <id>bcprov-jdk15to18</id>
+              <id>bcpkix-jdk15to18</id>
+              <id>bcpg-jdk15to18</id>
               <id>directjngine</id>
               <id>validation-api</id>
               <!--

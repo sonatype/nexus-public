@@ -146,14 +146,14 @@ Ext.define('NX.coreui.view.support.SupportZip', {
         {
           text: NX.I18n.get('Support_SupportZip_Create_Button'),
           formBind: true,
-          glyph: 'xf019@FontAwesome' /* fa-download */,
+          iconCls: 'x-fa fa-download',
           action: 'submit',
           ui: 'nx-primary'
         },
         {
           text: NX.I18n.get('Support_HA_SupportZip_Create_Button'),
           formBind: true,
-          glyph: 'xf019@FontAwesome' /* fa-download */,
+          iconCls: 'x-fa fa-download',
           action: 'hazips',
           ui: 'nx-primary',
           disabled: !NX.State.isClustered()

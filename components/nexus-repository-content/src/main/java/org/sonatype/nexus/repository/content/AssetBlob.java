@@ -47,7 +47,7 @@ public interface AssetBlob
   /**
    * Checksums for the blob.
    *
-   * @since 3.next
+   * @since 3.24
    */
   Map<String, String> checksums();
 
