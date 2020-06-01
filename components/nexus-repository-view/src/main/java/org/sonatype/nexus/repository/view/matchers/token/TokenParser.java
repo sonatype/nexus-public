@@ -14,17 +14,17 @@ package org.sonatype.nexus.repository.view.matchers.token;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
 import org.sonatype.goodies.common.ComponentSupport;
-
-import static com.google.common.base.Preconditions.checkState;
 
 
 /**
@@ -79,14 +79,10 @@ public class TokenParser
       return null;
     }
 
-    checkState(matcher.groupCount() == variables.size(),
-        "Mismatch between the number of captured groups (%s) and the number of variables, %s.", matcher.groupCount(),
-        variables.size());
-
     Map<String, String> values = new HashMap<>();
-    for (int i = 0; i < matcher.groupCount(); i++) {
-      final String name = variables.get(i).getName();
-      final String value = matcher.group(i + 1);
+    for (VariableToken variableToken : variables) {
+      final String name = variableToken.getName();
+      final String value = matcher.group(variableToken.getRegexpGroupName());
       if (values.containsKey(name)) {
         final String existingValue = values.get(name);
         if (!Objects.equals(existingValue, value)) {
@@ -108,8 +104,21 @@ public class TokenParser
 
   private String regexp(final List<Token> tokens) {
     StringBuilder b = new StringBuilder();
+    Set<String> previous = new HashSet<>();
     for (Token token : tokens) {
-      b.append(token.toRegexp());
+      if (token instanceof VariableToken) {
+        VariableToken variable = (VariableToken) token;
+        if (previous.contains(variable.getName())) {
+          b.append("\\k<" + variable.getRegexpGroupName() + ">");
+        }
+        else {
+          b.append(variable.toRegexp());
+        }
+        previous.add(variable.getName());
+      }
+      else {
+        b.append(token.toRegexp());
+      }
     }
     return b.toString();
   }
