@@ -55,6 +55,7 @@ import org.sonatype.nexus.testsuite.testsupport.conda.CondaClientFactory;
 import org.sonatype.nexus.testsuite.testsupport.fixtures.BlobStoreRule;
 import org.sonatype.nexus.testsuite.testsupport.fixtures.RepositoryRule;
 import org.sonatype.nexus.testsuite.testsupport.golang.GolangClient;
+import org.sonatype.nexus.testsuite.testsupport.maven.Maven2Client;
 import org.sonatype.nexus.testsuite.testsupport.npm.NpmClient;
 import org.sonatype.nexus.testsuite.testsupport.raw.RawClient;
 
@@ -133,6 +134,19 @@ public abstract class GenericRepositoryITSupport<RR extends RepositoryRule>
 
   protected RawClient rawClient(final URL repositoryUrl) throws Exception {
     return new RawClient(
+        clientBuilder(repositoryUrl).build(),
+        clientContext(),
+        repositoryUrl.toURI()
+    );
+  }
+
+  protected Maven2Client maven2Client(final Repository repository) throws Exception {
+    checkNotNull(repository);
+    return maven2Client(repositoryBaseUrl(repository));
+  }
+
+  protected Maven2Client maven2Client(final URL repositoryUrl) throws Exception {
+    return new Maven2Client(
         clientBuilder(repositoryUrl).build(),
         clientContext(),
         repositoryUrl.toURI()
