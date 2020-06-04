@@ -115,10 +115,10 @@ configDefaults = [
     restore      : false,   // Restore backup of sonatype-work disabled by default
     builder      : '-T 1C', // default one thread per core
     randomPassword: false,
-    // default to using CI for slower, but more stable builds - change to "install" for faster but less stable build which also updates the lock file
-    npmInstall: 'install --frozen-lockfile',
+    // use the default maven property or change to "install" for faster but less stable build which also updates the lock file
+    npmInstall: '',
     // default to building both debug and production builds with webpack - change to "build" to get the debug build copied as the "production" build (saves around 30s of build time)
-    npmBuild: 'build-all'
+    npmBuild: ''
 ]
 
 buildOptions = [
@@ -698,8 +698,12 @@ def processMavenCommand() {
     buildOptions.mavenCommand += ' -Dno-docker'
   }
 
-  buildOptions.mavenCommand += " -Dnpm.install=${rcConfig.npmInstall}"
-  buildOptions.mavenCommand += " -Dnpm.build=${rcConfig.npmBuild}"
+  if (rcConfig.npmInstall) {
+    buildOptions.mavenCommand += " -Dnpm.install=${rcConfig.npmInstall}"
+  }
+  if (rcConfig.npmBuild) {
+    buildOptions.mavenCommand += " -Dnpm.build=${rcConfig.npmBuild}"
+  }
 
   buildOptions.mavenCommand += ' ' + positionalOptions.join(' ')
 }
