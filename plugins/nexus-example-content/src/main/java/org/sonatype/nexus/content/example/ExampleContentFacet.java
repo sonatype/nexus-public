@@ -17,6 +17,7 @@ import java.util.Optional;
 
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
+import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 
 /**
@@ -28,9 +29,9 @@ import org.sonatype.nexus.repository.view.Payload;
 public interface ExampleContentFacet
     extends ContentFacet
 {
-  Optional<Payload> get(String path) throws IOException;
+  Optional<Content> get(String path) throws IOException;
 
-  Payload put(String path, Payload content) throws IOException;
+  Content put(String path, Payload content) throws IOException;
 
   boolean delete(String path) throws IOException;
 }

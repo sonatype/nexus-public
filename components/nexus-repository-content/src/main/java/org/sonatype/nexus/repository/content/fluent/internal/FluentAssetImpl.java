@@ -35,13 +35,15 @@ import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.store.AssetBlobData;
 import org.sonatype.nexus.repository.content.store.AssetData;
 import org.sonatype.nexus.repository.content.store.WrappedContent;
+import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
 import org.sonatype.nexus.repository.view.Content;
+import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.BlobPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.hash.HashCode;
+import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
@@ -55,8 +57,10 @@ import static org.sonatype.nexus.repository.cache.CacheInfo.CACHE;
 import static org.sonatype.nexus.repository.cache.CacheInfo.CACHE_TOKEN;
 import static org.sonatype.nexus.repository.cache.CacheInfo.INVALIDATED;
 import static org.sonatype.nexus.repository.content.fluent.AttributeChange.OVERLAY;
-import static org.sonatype.nexus.repository.content.fluent.AttributeChange.SET;
 import static org.sonatype.nexus.repository.content.fluent.internal.FluentAttributesHelper.applyAttributeChange;
+import static org.sonatype.nexus.repository.view.Content.CONTENT;
+import static org.sonatype.nexus.repository.view.Content.CONTENT_ETAG;
+import static org.sonatype.nexus.repository.view.Content.CONTENT_LAST_MODIFIED;
 
 /**
  * {@link FluentAsset} implementation.
@@ -152,9 +156,28 @@ public class FluentAssetImpl
     }
 
     Content content = new Content(new BlobPayload(blob, assetBlob.contentType()));
-
     AttributesMap contentAttributes = content.getAttributes();
+
+    // attach asset so downstream format handlers can retrieve it if neccessary
     contentAttributes.set(Asset.class, this);
+
+    if (attributes().contains(CACHE)) {
+      // internal cache details used to decide when content is stale/invalidated
+      contentAttributes.set(CacheInfo.class, CacheInfo.fromMap(attributes(CACHE)));
+    }
+
+    if (attributes().contains(CONTENT)) {
+      // external cache details previously recorded from upstream content
+      AttributesMap contentHeaders = attributes(CONTENT);
+      contentAttributes.set(CONTENT_LAST_MODIFIED, new DateTime(contentHeaders.get(CONTENT_LAST_MODIFIED)));
+      contentAttributes.set(CONTENT_ETAG, contentHeaders.get(CONTENT_ETAG));
+    }
+    else {
+      // otherwise use the blob to supply details for external caching
+      BlobMetrics metrics = blob.getMetrics();
+      contentAttributes.set(CONTENT_LAST_MODIFIED, metrics.getCreationTime());
+      contentAttributes.set(CONTENT_ETAG, metrics.getSha1Hash());
+    }
 
     return content;
   }
@@ -166,8 +189,21 @@ public class FluentAssetImpl
   }
 
   @Override
+  public FluentAsset markAsCached(final Payload content) {
+    if (content instanceof Content) {
+      AttributesMap contentAttributes = ((Content) content).getAttributes();
+      CacheInfo cacheInfo = contentAttributes.get(CacheInfo.class);
+      if (cacheInfo != null) {
+        markAsCached(cacheInfo);
+      }
+      cacheContentHeaders(contentAttributes);
+    }
+    return this;
+  }
+
+  @Override
   public FluentAsset markAsCached(final CacheInfo cacheInfo) {
-    return attributes(SET, CACHE, cacheInfo.toMap());
+    return withAttribute(CACHE, cacheInfo.toMap());
   }
 
   @Override
@@ -223,16 +259,16 @@ public class FluentAssetImpl
   }
 
   private Blob makePermanent(final Blob tempBlob) {
-    Builder<String, String> headers = ImmutableMap.builder();
+    ImmutableMap.Builder<String, String> headerBuilder = ImmutableMap.builder();
 
     Map<String, String> tempHeaders = tempBlob.getHeaders();
-    headers.put(REPO_NAME_HEADER, tempHeaders.get(REPO_NAME_HEADER));
-    headers.put(BLOB_NAME_HEADER, asset.path());
-    headers.put(CREATED_BY_HEADER, tempHeaders.get(CREATED_BY_HEADER));
-    headers.put(CREATED_BY_IP_HEADER, tempHeaders.get(CREATED_BY_IP_HEADER));
-    headers.put(CONTENT_TYPE_HEADER, facet.checkContentType(asset, tempBlob));
+    headerBuilder.put(REPO_NAME_HEADER, tempHeaders.get(REPO_NAME_HEADER));
+    headerBuilder.put(BLOB_NAME_HEADER, asset.path());
+    headerBuilder.put(CREATED_BY_HEADER, tempHeaders.get(CREATED_BY_HEADER));
+    headerBuilder.put(CREATED_BY_IP_HEADER, tempHeaders.get(CREATED_BY_IP_HEADER));
+    headerBuilder.put(CONTENT_TYPE_HEADER, facet.checkContentType(asset, tempBlob));
 
-    return facet.stores().blobStore.copy(tempBlob.getId(), headers.build());
+    return facet.stores().blobStore.copy(tempBlob.getId(), headerBuilder.build());
   }
 
   private FluentAsset doAttach(final Blob blob, final Map<HashAlgorithm, HashCode> checksums) {
@@ -245,5 +281,27 @@ public class FluentAssetImpl
     facet.stores().assetStore.updateAssetBlobLink(asset);
 
     return this;
+  }
+
+  /**
+   * Record external cache details provided by upstream content.
+   *
+   * @see ProxyFacetSupport#fetch
+   */
+  private void cacheContentHeaders(final AttributesMap contentAttributes) {
+    ImmutableMap.Builder<String, String> headerBuilder = ImmutableMap.builder();
+    if (contentAttributes.contains(CONTENT_LAST_MODIFIED)) {
+      headerBuilder.put(CONTENT_LAST_MODIFIED, contentAttributes.get(CONTENT_LAST_MODIFIED).toString());
+    }
+    if (contentAttributes.contains(CONTENT_ETAG)) {
+      headerBuilder.put(CONTENT_ETAG, contentAttributes.get(CONTENT_ETAG, String.class));
+    }
+    Map<String, String> contentHeaders = headerBuilder.build();
+    if (!contentHeaders.isEmpty()) {
+      withAttribute(CONTENT, contentHeaders);
+    }
+    else {
+      withoutAttribute(CONTENT);
+    }
   }
 }

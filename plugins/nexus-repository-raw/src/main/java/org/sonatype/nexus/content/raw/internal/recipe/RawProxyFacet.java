@@ -14,12 +14,10 @@ package org.sonatype.nexus.content.raw.internal.recipe;
 
 import java.io.IOException;
 
-import javax.annotation.Nonnull;
 import javax.inject.Named;
 
 import org.sonatype.nexus.content.raw.RawContentFacet;
-import org.sonatype.nexus.repository.cache.CacheInfo;
-import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
+import org.sonatype.nexus.repository.content.facet.ContentProxyFacetSupport;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
@@ -31,49 +29,36 @@ import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
  */
 @Named
 public class RawProxyFacet
-    extends ProxyFacetSupport
+    extends ContentProxyFacetSupport
 {
   @Override
   protected Content getCachedContent(final Context context) throws IOException {
-    return content()
-        .get(componentPath(context))
-        .map(Content::new)
-        .orElse(null);
-  }
-
-  @Override
-  protected void indicateVerified(final Context context, final Content content, final CacheInfo cacheInfo) throws IOException {
-    log.debug("Not implemented yet");
-    //caching will be worked on in - NEXUS-23605
+    return content().get(assetPath(context)).orElse(null);
   }
 
   @Override
   protected Content store(final Context context, final Content payload) throws IOException {
-    final String path = componentPath(context);
-    return new Content(content().put(path, payload));
+    return content().put(assetPath(context), payload);
   }
 
   @Override
-  protected String getUrl(@Nonnull final Context context) {
-    return removePrefixingSlash(componentPath(context));
-  }
-
-  /**
-   * Determines what 'component' this request relates to.
-   */
-  private String componentPath(final Context context) {
-    final TokenMatcher.State tokenMatcherState = context.getAttributes().require(TokenMatcher.State.class);
-    return tokenMatcherState.getTokens().get(RawProxyRecipe.PATH_NAME);
+  protected String getUrl(final Context context) {
+    return removeSlashPrefix(assetPath(context));
   }
 
   private RawContentFacet content() {
     return getRepository().facet(RawContentFacet.class);
   }
 
-  private String removePrefixingSlash(final String url) {
-    if(url != null && url.startsWith("/")) {
-      return url.replaceFirst("/", "");
-    }
-    return url;
+  /**
+   * Determines what 'asset' this request relates to.
+   */
+  private String assetPath(final Context context) {
+    final TokenMatcher.State tokenMatcherState = context.getAttributes().require(TokenMatcher.State.class);
+    return tokenMatcherState.getTokens().get(RawProxyRecipe.PATH_NAME);
+  }
+
+  private String removeSlashPrefix(final String url) {
+    return url != null && url.startsWith("/") ? url.substring(1) : url;
   }
 }

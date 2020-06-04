@@ -97,7 +97,12 @@ public class CacheInfo
    * @since 3.24
    */
   public Map<String, String> toMap() {
-    return ImmutableMap.of(CACHE_TOKEN, cacheToken, LAST_VERIFIED, lastVerified.toString());
+    ImmutableMap.Builder<String, String> cacheHeaders = ImmutableMap.builder();
+    cacheHeaders.put(LAST_VERIFIED, lastVerified.toString());
+    if (cacheToken != null) {
+      cacheHeaders.put(CACHE_TOKEN, cacheToken);
+    }
+    return cacheHeaders.build();
   }
 
   /**
@@ -105,7 +110,10 @@ public class CacheInfo
    */
   @Nullable
   public static CacheInfo fromMap(final Map<String, String> map) {
-    return map != null ? new CacheInfo(new DateTime(map.get(LAST_VERIFIED)), map.get(CACHE_TOKEN)) : null;
+    if (map != null) {
+      return new CacheInfo(new DateTime(map.get(LAST_VERIFIED)), map.get(CACHE_TOKEN));
+    }
+    return null;
   }
 
   /**
@@ -113,7 +121,10 @@ public class CacheInfo
    */
   @Nullable
   public static CacheInfo fromMap(final AttributesMap map) {
-    return map != null ? new CacheInfo(new DateTime(map.get(LAST_VERIFIED)), map.get(CACHE_TOKEN, String.class)) : null;
+    if (map != null) {
+      return new CacheInfo(new DateTime(map.get(LAST_VERIFIED)), map.get(CACHE_TOKEN, String.class));
+    }
+    return null;
   }
 
   @Override

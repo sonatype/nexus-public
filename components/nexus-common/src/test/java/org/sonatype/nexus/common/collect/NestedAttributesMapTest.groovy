@@ -62,17 +62,6 @@ class NestedAttributesMapTest
   }
 
   @Test
-  void 'set with map value fails'() {
-    try {
-      underTest.set('invalid', [:])
-      fail()
-    }
-    catch (IllegalStateException e) {
-      // expected
-    }
-  }
-
-  @Test
   void 'child() with non-map value fails'() {
     underTest.set('value', false)
 

@@ -21,6 +21,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.content.example.ExampleContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpResponses;
+import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Payload;
@@ -58,7 +59,7 @@ public class ExampleContentHandler
     switch (method) {
       case HEAD:
       case GET: {
-        Optional<Payload> content = storage.get(path);
+        Optional<Content> content = storage.get(path);
         if (content.isPresent()) {
           return HttpResponses.ok(content.get());
         }

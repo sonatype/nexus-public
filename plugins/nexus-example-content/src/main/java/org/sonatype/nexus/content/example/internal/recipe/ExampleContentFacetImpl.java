@@ -23,6 +23,7 @@ import org.sonatype.nexus.content.example.ExampleContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
+import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
@@ -48,14 +49,14 @@ public class ExampleContentFacetImpl
   }
 
   @Override
-  public Optional<Payload> get(final String path) {
+  public Optional<Content> get(final String path) {
     return assets().path(path).find().map(FluentAsset::download);
   }
 
   @Override
-  public Payload put(final String path, final Payload content) throws IOException {
+  public Content put(final String path, final Payload content) throws IOException {
     try (TempBlob blob = blobs().ingest(content, HASHING)) {
-      return assets().path(path).getOrCreate().attach(blob).download();
+      return assets().path(path).getOrCreate().attach(blob).markAsCached(content).download();
     }
   }
 
