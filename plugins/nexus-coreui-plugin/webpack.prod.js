@@ -20,7 +20,7 @@ module.exports = merge(common, {
   devtool: 'source-map',
 
   output: {
-    filename: 'nexus-coreui-bundle.js',
+    filename: '[name].js',
     path: path.resolve(__dirname, 'target', 'classes', 'static')
   }
 });

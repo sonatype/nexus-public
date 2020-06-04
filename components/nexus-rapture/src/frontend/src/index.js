@@ -11,12 +11,21 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import axios from 'axios';
+import * as nxrmUiPlugin from 'nexus-ui-plugin';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import * as xstate from 'xstate';
 
 import registerFeature from './registerFeature';
 
+// Expose shared dependencies on the window object for plugins to declare as externals
+window.axios = axios;
+window.react = React;
+window.ReactDOM = ReactDOM;
+window.xstate = xstate;
+window.nxrmUiPlugin = nxrmUiPlugin;
+
+// Configure axios
 axios.defaults.xsrfCookieName = axios.defaults.xsrfHeaderName = 'NX-ANTI-CSRF-TOKEN';
 axios.defaults.baseURL = NX.app.baseUrl;
 const axiosAdapter = axios.defaults.adapter;
@@ -33,12 +42,7 @@ axios.defaults.adapter = function(config) {
   return axiosAdapter(config);
 };
 
-window.axios = axios;
-window.react = React;
-window.ReactDOM = ReactDOM;
-window.xstate = xstate;
-
-// Declare an inital (empty) array for plugin configurations
+// Declare an initial (empty) array for plugin configurations
 window.plugins = [];
 
 // A function for the ExtJS codebase to call to register React plugins

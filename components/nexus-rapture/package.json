@@ -3,7 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "webpack --config webpack.prod.js && webpack --config webpack.dev.js",
+    "build": "npm-run-all build-dev copy-dev",
+    "build-all": "npm-run-all build-dev build-prod",
+    "build-dev": "webpack --config webpack.dev.js",
+    "build-prod": "webpack --config webpack.prod.js",
+    "copy-dev": "cpy \"target/classes/static/nexus-rapture-bundle.debug.js\" \"target/classes/static/\" --rename=\"nexus-rapture-bundle.js\"",
     "watch": "webpack --config webpack.dev.js  --watch"
   },
   "devDependencies": {
@@ -14,6 +18,9 @@
     "babel-loader": "=8.0.6",
     "babel-polyfill": "=6.26.0",
     "copy-modules-webpack-plugin": "=2.0.4",
+    "cpy-cli": "=3.1.1",
+    "node-sass": "=4.12.0",
+    "optimize-css-assets-webpack-plugin": "=5.0.3",
     "terser-webpack-plugin": "=1.3.0",
     "webpack": "=4.42.0",
     "webpack-cli": "=3.3.11",
@@ -24,6 +31,8 @@
     "@fortawesome/free-solid-svg-icons": "=5.9.0",
     "@fortawesome/react-fontawesome": "=0.1.4",
     "axios": "=0.19.0",
+    "mini-css-extract-plugin": "=0.9.0",
+    "nexus-ui-plugin": "0.1.0",
     "react": "=16.11.0",
     "react-dom": "=16.11.0",
     "xstate": "=4.7.5"
