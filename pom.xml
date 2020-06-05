@@ -602,6 +602,14 @@
 
       <dependency>
         <groupId>org.sonatype.nexus.assemblies</groupId>
+        <artifactId>nexus-community-feature</artifactId>
+        <version>3.25.0-SNAPSHOT</version>
+        <classifier>features</classifier>
+        <type>xml</type>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.assemblies</groupId>
         <artifactId>nexus-cma-feature</artifactId>
         <version>3.25.0-SNAPSHOT</version>
         <classifier>features</classifier>
