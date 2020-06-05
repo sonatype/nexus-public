@@ -253,17 +253,34 @@ Ext.define('NX.coreui.controller.LdapServers', {
    * Update an existing LDAP entry
    */
   updateServer: function() {
-    var me = this,
-      feature = me.getFeature(),
-      connectionForm = feature.down('nx-coreui-ldapserver-connection').down('nx-coreui-ldapserver-connection-form'),
-      userGroupForm = feature.down('nx-coreui-ldapserver-userandgroup').down('nx-coreui-ldapserver-userandgroup-form'),
-      values = {};
+    const me = this,
+          values = me.getValues();
+
+    //all options except anonymous (none) require a password, so throw up the dialog if not set in form
+    if (values.authScheme !== 'none' && !values.authPassword) {
+      Ext.create('NX.coreui.view.ldap.LdapSystemPasswordModal', {
+        onSuccess: me.doVerifyConnection
+      });
+    }
+    else {
+      this.doVerifyConnection();
+    }
+  },
+
+  doUpdateServer: function(ldapSystemPassword) {
+    const me = this,
+          feature = me.getFeature(),
+          connectionForm = feature.down('nx-coreui-ldapserver-connection').down('nx-coreui-ldapserver-connection-form'),
+          userGroupForm = feature.down('nx-coreui-ldapserver-userandgroup').down('nx-coreui-ldapserver-userandgroup-form'),
+          values = {};
 
     // Get fields from all relevant forms
     Ext.apply(values, connectionForm.getForm().getFieldValues());
     Ext.apply(values, userGroupForm.getForm().getFieldValues());
-
-    var modelData = connectionForm.getForm().getRecord().getData(false);
+    if (ldapSystemPassword) {
+      values.authPassword = ldapSystemPassword;
+    }
+    const modelData = connectionForm.getForm().getRecord().getData(false);
 
     Object.keys(values).forEach(function(field) {
       delete modelData[field];
@@ -466,6 +483,28 @@ Ext.define('NX.coreui.controller.LdapServers', {
       if (Ext.isObject(response) && response.success) {
         NX.Messages.success(NX.I18n.format('LdapServers_VerifyMapping_Success', url));
         Ext.widget('nx-coreui-ldapserver-userandgroup-testresults', {mappedUsers: response.data});
+      }
+    });
+  },
+
+  doVerifyConnection: function(ldapSystemPassword) {
+    const me = this,
+          values = me.getValues(),
+          url = values.protocol + '://' + values.host + ':' + values.port;
+
+    if (ldapSystemPassword) {
+      values.authPassword = ldapSystemPassword;
+    }
+    me.getMain().getEl().mask(NX.I18n.format('LdapServers_VerifyConnection_Mask', url));
+
+    NX.direct.ldap_LdapServer.verifyConnection(values, function(response) {
+      me.getMain().getEl().unmask();
+      if (Ext.isObject(response) && response.success) {
+        NX.Messages.success(NX.I18n.format('LdapServers_VerifyConnection_Success', url));
+        me.doUpdateServer(values.authPassword);
+      }
+      else if (Ext.isObject(response) && Ext.isDefined(response.errors)) {
+        NX.Messages.error(response.errors['*']);
       }
     });
   },
