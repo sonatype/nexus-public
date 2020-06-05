@@ -1102,10 +1102,10 @@
   resolved "https://registry.yarnpkg.com/@sheerun/mutationobserver-shim/-/mutationobserver-shim-0.3.2.tgz#8013f2af54a2b7d735f71560ff360d3a8176a87b"
   integrity sha512-vTCdPp/T/Q3oSqwHmZ5Kpa9oI7iLtGl3RQaA/NyLHikvcrPxACkkKVr/XzkSPJWXHRhKGzVvb0urJsbMlRxi1Q==
 
-"@sonatype/react-shared-components@=0.43.1":
-  version "0.43.1"
-  resolved "https://registry.yarnpkg.com/@sonatype/react-shared-components/-/react-shared-components-0.43.1.tgz#ddd0462903ec554a1117737c4b25e7eac8fbad64"
-  integrity sha512-N+xHetvrOnjMYOuk0pjr5bMNe5OJF6Nc/nIZYr7EZ2MK0/EGAPB68EbdbqfspBqe/ToW6wT202/I5jsk2TLgIw==
+"@sonatype/react-shared-components@=0.45.11":
+  version "0.45.11"
+  resolved "https://registry.yarnpkg.com/@sonatype/react-shared-components/-/react-shared-components-0.45.11.tgz#cb7a00a50957f5597b8d298193594ea6849fe4ea"
+  integrity sha512-HwOaQCfPD3f1DTtza7APL1uP1hBkh6BmnD7mMgtrSxXvJJtsR91kpb9ynr8lSufcGJMMKOdD/OKPwTicA+O4Pw==
   dependencies:
     "@fortawesome/fontawesome-svg-core" "1.2.17"
     "@fortawesome/free-solid-svg-icons" "=5.8.1"
