@@ -1520,25 +1520,27 @@ Ext.define('NX.coreui.app.PluginStrings', {
     'NX.coreui.migration.OverviewScreen': {
       Title: 'Overview',
       Description: '<p>This wizard will help you upgrade from Nexus Repository Manager 2.</p>' +
-          '<p>Many aspects of a server can be upgraded <strong>automatically</strong>:' +
+          '<p>Many aspects of a server can be upgraded using this capability:' +
           '<ul>' +
           '<li>Configuration: security (users, roles and privileges) and other applicable system settings </li>' +
           '<li>Repositories in supported formats: maven2, nuget, npm, rubygems, site</li>' +
           '</ul>' +
           '</p>' +
-          '<p>Some aspects are <strong>incompatible</strong> and can not be automatically upgraded:' +
+          '<p>Some aspects are <strong>incompatible</strong> and are not included in the upgrade:' +
           '<ul>' +
           '<li>Unsupported repository formats: yum, p2, obr</li>' +
           '<li>Scheduled tasks</li>' +
           '<li>Capabilities</li>' +
+          '<li>Staging repositories (Pro)</li>' +
           '</ul>' +
           '</p>' +
-          '<p>Upgrade is incremental. We recommend upgrading one or two repositories first to ensure that the process works, then repeat the process and upgrade the rest. Take note of the following:' +
+          '<p>Take note of the following:' +
           '<ul>' +
+          '<li>Server configuration can be transferred multiple times, each time it will completely replace existing configurations.</li>' +
+          '<li>Unlike server configuration, this tool is intended to be used on repositories only once.  Upgrading repositories in batches or multiple times has known issues and is not recommended or supported.</li>' +
           '<li>Repository upgrade could take <strong>considerable time</strong>.</li>' +
           '<li>Until upgrade has successfully completed, it is not recommended to make any configuration changes in Nexus Repository Manager 3, as the configuration is volatile during this time.</li>' +
           '<li>Also during the upgrade, all of the repositories in Nexus Repository Manager 3 will be offline.</li>' +
-          '<li>Server configuration can be transferred multiple times, each time it will completely replace existing configurations.</li>' +
           '</ul>' +
           '</p>'
     },

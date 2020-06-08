@@ -21,6 +21,7 @@ import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.view.Content;
+import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 import com.google.common.hash.HashCode;
@@ -61,11 +62,18 @@ public interface FluentAsset
   FluentAsset markAsDownloaded();
 
   /**
-   * Mark this generated/proxied asset as recently cached.
+   * Mark this proxied asset as recently cached from the given content.
+   *
+   * @since 3.next
+   */
+  FluentAsset markAsCached(Payload content);
+
+  /**
+   * Mark this generated asset as recently cached.
    *
    * @since 3.24
    */
-  FluentAsset markAsCached(CacheInfo cachInfo);
+  FluentAsset markAsCached(CacheInfo cacheInfo);
 
   /**
    * Mark this generated/proxied asset as stale.

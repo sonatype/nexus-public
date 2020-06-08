@@ -11,11 +11,16 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 const CopyModulesPlugin = require('copy-modules-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const TerserJSPlugin = require('terser-webpack-plugin');
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const path = require('path');
+const libImgDir = path.resolve(__dirname, 'node_modules/@sonatype/react-shared-components/assets/img');
 
 module.exports = {
-  entry: './src/frontend/src/index.js',
+  entry: {
+    'nexus-rapture-bundle': './src/frontend/src/index.js'
+  },
   module: {
     rules: [
       {
@@ -26,6 +31,31 @@ module.exports = {
             loader: 'babel-loader'
           }
         ]
+      },
+      {
+        test: /\.s?css$/,
+        use: [
+          {
+            loader: MiniCssExtractPlugin.loader
+          },
+          'css-loader',
+          'sass-loader'
+        ]
+      },
+      {
+        include: libImgDir,
+        loader: 'file-loader',
+        options: {
+          name: 'img/[name].[ext]'
+        }
+      },
+      {
+        test: /\.(ttf|eot|woff2?|svg)$/,
+        exclude: libImgDir,
+        loader: 'file-loader',
+        options: {
+          name: 'fonts/[name].[ext]'
+        }
       }
     ]
   },
@@ -35,12 +65,16 @@ module.exports = {
         cache: true,
         parallel: true,
         sourceMap: true
-      })
+      }),
+      new OptimizeCSSAssetsPlugin({})
     ]
   },
   plugins: [
     new CopyModulesPlugin({
       destination: path.resolve(__dirname, 'target', 'webpack-modules')
+    }),
+    new MiniCssExtractPlugin({
+      filename: '[name].css'
     })
   ],
   resolve: {

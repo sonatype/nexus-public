@@ -15,17 +15,13 @@ package org.sonatype.nexus.repository.view;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Map;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
-import org.sonatype.nexus.common.hash.HashAlgorithm;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.hash.HashCode;
-import com.google.common.reflect.TypeToken;
 import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -47,22 +43,12 @@ public class Content
   /**
    * Key of content "Last-Modified" attribute, with type {@link DateTime}.
    */
-  public static final String CONTENT_LAST_MODIFIED = "lastModified";
+  public static final String CONTENT_LAST_MODIFIED = "last_modified";
 
   /**
-   * Key of content "ETag" attribute, with type of {@link String}.
+   * Key of content "ETag" attribute, with type {@link String}.
    */
   public static final String CONTENT_ETAG = "etag";
-
-  /**
-   * Key of the "hashCodes" attribute, with type of {@link #T_CONTENT_HASH_CODES_MAP}.
-   *
-   * Essentially, this is a map of content hashes required by the format from where this content originates.
-   */
-  public static final String CONTENT_HASH_CODES_MAP = "hashCodesMap";
-
-  public static final TypeToken<Map<HashAlgorithm, HashCode>> T_CONTENT_HASH_CODES_MAP =
-      new TypeToken<Map<HashAlgorithm, HashCode>>() {};
 
   private final Payload payload;
 

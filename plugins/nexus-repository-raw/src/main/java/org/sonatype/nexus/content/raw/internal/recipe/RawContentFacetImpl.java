@@ -26,6 +26,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.raw.RawCoordinatesHelper;
 import org.sonatype.nexus.repository.raw.internal.RawFormat;
+import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
@@ -52,12 +53,12 @@ public class RawContentFacetImpl
   }
 
   @Override
-  public Optional<Payload> get(final String path) throws IOException {
+  public Optional<Content> get(final String path) throws IOException {
     return assets().path(path).find().map(FluentAsset::download);
   }
 
   @Override
-  public Payload put(final String path, final Payload content) throws IOException {
+  public Content put(final String path, final Payload content) throws IOException {
     try (TempBlob blob = blobs().ingest(content, HASHING)){
       return assets()
           .path(path)
@@ -67,6 +68,7 @@ public class RawContentFacetImpl
               .getOrCreate())
           .getOrCreate()
           .attach(blob)
+          .markAsCached(content)
           .download();
     }
   }

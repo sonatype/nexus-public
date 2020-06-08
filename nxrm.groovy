@@ -115,7 +115,10 @@ configDefaults = [
     restore      : false,   // Restore backup of sonatype-work disabled by default
     builder      : '-T 1C', // default one thread per core
     randomPassword: false,
-    npmInstall: 'ci' // default to using CI for slower, but more stable builds - change to install for faster but less stable build
+    // use the default maven property or change to "install" for faster but less stable build which also updates the lock file
+    npmInstall: '',
+    // default to building both debug and production builds with webpack - change to "build" to get the debug build copied as the "production" build (saves around 30s of build time)
+    npmBuild: ''
 ]
 
 buildOptions = [
@@ -225,6 +228,7 @@ ConfigObject processRcConfigFile() {
   config.restore = assign('restore', 'no-restore', config.restore)
   config.randomPassword = assign('random-password', 'no-random-password', config.randomPassword)
   config.npmInstall = assign('npm-install', 'npm-ci', config.npmInstall)
+  config.npmBuild = assign('npm-build-all', 'npm-build', config.npmBuild)
 
   debug("config read from RC and merged with defaults: ${config}")
 
@@ -694,8 +698,11 @@ def processMavenCommand() {
     buildOptions.mavenCommand += ' -Dno-docker'
   }
 
-  if (rcConfig.npmInstall == 'install') {
-    buildOptions.mavenCommand += ' -Dnpm.install=install'
+  if (rcConfig.npmInstall) {
+    buildOptions.mavenCommand += " -Dnpm.install=${rcConfig.npmInstall}"
+  }
+  if (rcConfig.npmBuild) {
+    buildOptions.mavenCommand += " -Dnpm.build=${rcConfig.npmBuild}"
   }
 
   buildOptions.mavenCommand += ' ' + positionalOptions.join(' ')

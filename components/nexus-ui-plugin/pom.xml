@@ -101,7 +101,7 @@
             </goals>
             <phase>compile</phase>
             <configuration>
-              <arguments>build</arguments>
+              <arguments>${npm.build}</arguments>
             </configuration>
           </execution>
           <execution>

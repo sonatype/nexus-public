@@ -16,8 +16,9 @@
 @import '../../../styles/colors';
 
 .nxrm-textfield {
-  border: solid 1px;
-  border-color: $gray $light-gray $light-gray;
+  border: 1px solid $nxrm-input-enabled-dark;
+  border-right-color: $nxrm-input-enabled-light;
+  border-bottom-color: $nxrm-input-enabled-light;
   font-size: 1em;
   height: 2em;
   padding-left: 0.4em;
@@ -29,5 +30,14 @@
 
   &:focus, &:active {
     border-color: $light-blue;
+  }
+
+  &:disabled {
+    pointer-events: none;
+    color: $nxrm-input-disabled-color;
+    border-top-color: $nxrm-input-disabled-dark;
+    border-left-color: $nxrm-input-disabled-dark;
+    border-right-color: $nxrm-input-disabled-light;
+    border-bottom-color: $nxrm-input-disabled-light;
   }
 }

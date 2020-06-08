@@ -124,16 +124,6 @@ public class NestedAttributesMap
     return new NestedAttributesMap(this, name, (Map<String, Object>) child);
   }
 
-  /**
-   * Prevents setting {@link Map} values and require use of {@link #child}.
-   */
-  @Nullable
-  @Override
-  public Object set(final String key, @Nullable final Object value) {
-    checkState(!(value instanceof Map), "Use child() to set a map value");
-    return super.set(key, value);
-  }
-
   @Override
   public String toString() {
     return getClass().getSimpleName() + "{" +

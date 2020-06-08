@@ -533,7 +533,7 @@ public abstract class ProxyFacetSupport
   }
 
   /**
-   * For whatever component/asset
+   * Refresh the asset's cache status because the upstream server has indicated that the content has not changed.
    */
   protected abstract void indicateVerified(final Context context, final Content content, final CacheInfo cacheInfo)
       throws IOException;

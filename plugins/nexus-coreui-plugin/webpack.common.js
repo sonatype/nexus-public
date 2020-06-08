@@ -16,9 +16,12 @@ const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const TerserJSPlugin = require('terser-webpack-plugin');
 const path = require('path');
 const libImgDir = path.resolve(__dirname, 'node_modules/@sonatype/react-shared-components/assets/img');
+const {NormalModuleReplacementPlugin} = require('webpack');
 
 module.exports = {
-  entry: './src/frontend/src/index.js',
+  entry: {
+    'nexus-coreui-bundle': './src/frontend/src/index.js'
+  },
   module: {
     rules: [
       {
@@ -59,27 +62,41 @@ module.exports = {
   },
   optimization: {
     minimizer: [
-        new TerserJSPlugin({
-          cache: true,
-          parallel: true,
-          sourceMap: true
-        }),
-        new OptimizeCSSAssetsPlugin({})]
+      new TerserJSPlugin({
+        cache: true,
+        parallel: true,
+        sourceMap: true
+      }),
+      new OptimizeCSSAssetsPlugin({})
+    ]
   },
   plugins: [
     new CopyModulesPlugin({
       destination: path.resolve(__dirname, 'target/webpack-modules')
     }),
     new MiniCssExtractPlugin({
-      filename: 'nexus-coreui-bundle.css'
-    })
+      filename: '[name].css'
+    }),
+    new NormalModuleReplacementPlugin(
+        // Replace scss from the RSC library with empty css since it's already included in nexus-rapture
+        // make sure to use path.sep to cover varying OS's
+        /.*@sonatype.*\.s?css/,
+        function(resource) {
+          const RSC_INDEX = resource.request.indexOf(
+              'node_modules' + path.sep + '@sonatype' + path.sep + 'react-shared-components');
+
+          resource.request = resource.request.substring(0, RSC_INDEX) + 'buildsupport' + path.sep + 'ui' +
+              path.sep + 'empty.scss';
+        }
+    )
   ],
   resolve: {
     extensions: ['.js', '.jsx']
   },
   externals: {
-    react: 'react',
     axios: 'axios',
+    'nexus-ui-plugin': 'nxrmUiPlugin',
+    react: 'react',
     xstate: 'xstate'
   }
 };
