@@ -111,7 +111,7 @@ public abstract class NexusITSupport
   private RepositoryManager repositoryManager;
 
   @Inject
-  private DeadBlobFinder deadBlobFinder;
+  private DeadBlobFinder<?> deadBlobFinder;
 
   @Inject
   protected RestClientFactory restClientFactory;
@@ -182,12 +182,10 @@ public abstract class NexusITSupport
    * Left protected to allow specific subclasses to override where this behaviour is expected due to minimal test setup.
    */
   protected void doVerifyNoDeadBlobs() {
-
-    Map<String, List<DeadBlobResult>> badRepos =
-        StreamSupport.stream(repositoryManager.browse().spliterator(), true)
-            .map(repository -> deadBlobFinder.find(repository, shouldIgnoreMissingBlobRefs()))
-            .flatMap(Collection::stream)
-            .collect(Collectors.groupingBy(DeadBlobResult::getRepositoryName));
+    Map<String, List<DeadBlobResult<?>>> badRepos = StreamSupport.stream(repositoryManager.browse().spliterator(), true)
+        .map(repository -> deadBlobFinder.find(repository, shouldIgnoreMissingBlobRefs()))
+        .flatMap(Collection::stream)
+        .collect(Collectors.groupingBy(DeadBlobResult::getRepositoryName));
 
     if (!badRepos.isEmpty()) {
       log.error("Detected dead blobs: {}", badRepos);

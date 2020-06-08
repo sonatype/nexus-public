@@ -10,10 +10,11 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.tools
+package org.sonatype.nexus.repository.tools.orient
 
 import java.util.concurrent.TimeUnit
 
+import javax.annotation.Priority
 import javax.inject.Inject
 import javax.inject.Named
 import javax.validation.constraints.NotNull
@@ -28,6 +29,10 @@ import org.sonatype.nexus.repository.storage.Asset
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter
 import org.sonatype.nexus.repository.storage.StorageFacet
 import org.sonatype.nexus.repository.storage.StorageTx
+import org.sonatype.nexus.repository.tools.BlobUnavilableException
+import org.sonatype.nexus.repository.tools.DeadBlobFinder
+import org.sonatype.nexus.repository.tools.DeadBlobResult
+import org.sonatype.nexus.repository.tools.MismatchedSHA1Exception
 
 import com.google.common.base.Stopwatch
 import groovy.transform.ToString
@@ -46,15 +51,17 @@ import static org.sonatype.nexus.repository.tools.ResultState.UNREADABLE_BLOB
  * Blob binary is missing or indicates a different sha1 than that stored in the DB.
  * @since 3.3
  */
+@Priority(Integer.MAX_VALUE)
 @ToString(includePackage = false)
 @Named
-class DeadBlobFinder
+class OrientDeadBlobFinder
     extends ComponentSupport
+    implements DeadBlobFinder<Asset>
 {
   final AssetEntityAdapter assetEntityAdapter
 
   @Inject
-  DeadBlobFinder(final AssetEntityAdapter assetEntityAdapter) {
+  OrientDeadBlobFinder(final AssetEntityAdapter assetEntityAdapter) {
     this.assetEntityAdapter = checkNotNull(assetEntityAdapter)
   }
 
@@ -80,7 +87,7 @@ class DeadBlobFinder
 
   /**
    * Identify any potentially incorrect data by inspecting all Assets in the system. It is expected that
-   * in a highly concurrent system some of the blob related data may already be stale after being loaded in 
+   * in a highly concurrent system some of the blob related data may already be stale after being loaded in
    * memory, so we collect those for later inspection.
    */
   private List<DeadBlobResult> identifySuspects(StorageTx tx, Repository repository,

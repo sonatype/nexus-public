@@ -10,36 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.tools
+@FeatureFlag(name = "nexus.orient.store.content")
+package org.sonatype.nexus.repository.tools.orient;
 
-import javax.annotation.Nullable
-
-import org.sonatype.nexus.repository.storage.Asset
-
-import groovy.transform.ToString
-
-import static com.google.common.base.Preconditions.checkNotNull
-
-/**
- * @since 3.3
- */
-@ToString(includePackage = false)
-class DeadBlobResult
-{
-  final String repositoryName
-
-  final Asset asset
-
-  final String errorMessage
-
-  final ResultState resultState
-
-  DeadBlobResult(final String repositoryName, @Nullable final Asset asset, final ResultState resultState,
-                 final String errorMessage)
-  {
-    this.repositoryName = checkNotNull(repositoryName)
-    this.asset = asset
-    this.resultState = checkNotNull(resultState)
-    this.errorMessage = checkNotNull(errorMessage)
-  }
-}
+import org.sonatype.nexus.common.app.FeatureFlag;

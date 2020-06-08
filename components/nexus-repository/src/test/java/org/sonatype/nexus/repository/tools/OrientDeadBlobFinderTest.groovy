@@ -27,6 +27,7 @@ import org.sonatype.nexus.repository.storage.Asset
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter
 import org.sonatype.nexus.repository.storage.StorageFacet
 import org.sonatype.nexus.repository.storage.StorageTx
+import org.sonatype.nexus.repository.tools.orient.OrientDeadBlobFinder
 
 import com.google.common.base.Supplier
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx
@@ -42,7 +43,7 @@ import static org.sonatype.nexus.repository.tools.ResultState.MISSING_BLOB_REF
 import static org.sonatype.nexus.repository.tools.ResultState.SHA1_DISAGREEMENT
 import static org.sonatype.nexus.repository.tools.ResultState.UNAVAILABLE_BLOB
 
-class DeadBlobFinderTest
+class OrientDeadBlobFinderTest
     extends Specification
 {
   Repository repository = Mock()
@@ -71,8 +72,7 @@ class DeadBlobFinderTest
   BlobMetrics blobMetrics = new BlobMetrics(DateTime.now(), '1234', 1234)
 
   @Subject
-  DeadBlobFinder deadBlobFinder = new DeadBlobFinder(assetEntityAdapter)
-
+  DeadBlobFinder deadBlobFinder = new OrientDeadBlobFinder(assetEntityAdapter)
 
   def setup() {
     asset = createAsset()

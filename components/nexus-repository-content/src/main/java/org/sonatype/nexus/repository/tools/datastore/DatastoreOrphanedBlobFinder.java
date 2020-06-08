@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.tools;
+package org.sonatype.nexus.repository.tools.datastore;
 
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -26,25 +26,25 @@ import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.Asset;
+import org.sonatype.nexus.repository.content.AssetBlob;
+import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.StorageFacet;
-import org.sonatype.nexus.repository.storage.StorageTx;
+import org.sonatype.nexus.repository.tools.OrphanedBlobFinder;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
-import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
 /**
- * Detects orphaned blobs (i.e. non-deleted blobs that exist in the blobstore but not the asset table)
+ * Detects orphaned blobs (i.e. nn-deleted blobs that exist in the blobstore but not the asset table)
  *
- * @since 3.13
+ * @since 3.next
  */
 @Named
-public class OrphanedBlobFinder
+public class DatastoreOrphanedBlobFinder
     extends ComponentSupport
+    implements OrphanedBlobFinder
 {
   private static final String REPOSITORY_NAME_KEY = "Bucket.repo-name";
 
@@ -59,9 +59,7 @@ public class OrphanedBlobFinder
   private final BlobStoreManager blobStoreManager;
 
   @Inject
-  public OrphanedBlobFinder(final RepositoryManager repositoryManager,
-                            final BlobStoreManager blobStoreManager)
-  {
+  public DatastoreOrphanedBlobFinder(final RepositoryManager repositoryManager, final BlobStoreManager blobStoreManager) {
     this.repositoryManager = checkNotNull(repositoryManager);
     this.blobStoreManager = checkNotNull(blobStoreManager);
   }
@@ -69,9 +67,10 @@ public class OrphanedBlobFinder
   /**
    * Delete orphaned blobs for all repositories
    */
+  @Override
   public void delete() {
     log.info("Starting delete of orphaned blobs for all known blob stores");
-    
+
     blobStoreManager.browse().forEach(this::delete);
 
     log.info("Finished deleting orphaned blobs");
@@ -82,6 +81,7 @@ public class OrphanedBlobFinder
    *
    * @param repository - where to look for orphaned blobs
    */
+  @Override
   public void delete(final Repository repository) {
     log.info("Starting delete of orphaned blobs for {}", repository.getName());
 
@@ -89,7 +89,7 @@ public class OrphanedBlobFinder
 
     log.info("Finished deleting orphaned blobs for {}", repository.getName());
   }
-  
+
   private void delete(final BlobStore blobStore) {
     detect(blobStore, blobId -> {
       log.info("Deleting orphaned blob {} from blobstore {}", blobId, blobStore.getBlobStoreConfiguration().getName());
@@ -104,12 +104,13 @@ public class OrphanedBlobFinder
    * @param repository - where to look for orphaned blobs
    * @param handler    - callback to handle an orphaned blob
    */
+  @Override
   public void detect(final Repository repository, final Consumer<String> handler) {
     validateRepositoryConfiguration(repository);
-    
+
     detect(getBlobStoreForRepository(repository), handler);
   }
-  
+
   private void detect(final BlobStore blobStore, final Consumer<String> handler) {
     Stream<BlobId> blobIds = blobStore.getBlobIdStream();
 
@@ -126,7 +127,7 @@ public class OrphanedBlobFinder
 
   private void checkIfOrphaned(final Consumer<String> handler, final BlobId id, final BlobAttributes attributes) {
     String repositoryName = attributes.getHeaders().get(REPOSITORY_NAME_KEY);
-    
+
     if (repositoryName != null) {
       String assetName = attributes.getHeaders().get(ASSET_NAME_KEY);
 
@@ -139,7 +140,7 @@ public class OrphanedBlobFinder
       }
       else {
         findAssociatedAsset(assetName, repository).ifPresent(asset -> {
-          BlobRef blobRef = asset.blobRef();
+          BlobRef blobRef = asset.blob().map(AssetBlob::blobRef).orElse(null);
           if (blobRef != null && !blobRef.getBlobId().asUniqueString().equals(id.asUniqueString())) {
             if (!attributes.isDeleted()) {
               handler.accept(id.asUniqueString());
@@ -162,11 +163,7 @@ public class OrphanedBlobFinder
   }
 
   private Optional<Asset> findAssociatedAsset(final String assetName, final Repository repository) {
-    try (StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get()) {
-      tx.begin();
-
-      return ofNullable(tx.findAssetWithProperty(P_NAME, assetName, tx.findBucket(repository)));
-    }
+    return repository.facet(ContentFacet.class).assets().path(assetName).find().map(a -> (Asset) a);
   }
 
   private void validateRepositoryConfiguration(final Repository repository) {

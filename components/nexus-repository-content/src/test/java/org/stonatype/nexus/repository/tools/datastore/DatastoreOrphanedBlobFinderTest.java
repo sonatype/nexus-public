@@ -10,9 +10,10 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.tools;
+package org.stonatype.nexus.repository.tools.datastore;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -30,11 +31,14 @@ import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.file.FileBlobStore;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.content.AssetBlob;
+import org.sonatype.nexus.repository.content.facet.ContentFacet;
+import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
+import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.Bucket;
-import org.sonatype.nexus.repository.storage.StorageFacet;
-import org.sonatype.nexus.repository.storage.StorageTx;
+import org.sonatype.nexus.repository.tools.OrphanedBlobFinder;
+import org.sonatype.nexus.repository.tools.datastore.DatastoreOrphanedBlobFinder;
 
 import com.google.common.collect.ImmutableList;
 import org.joda.time.DateTime;
@@ -46,12 +50,11 @@ import static com.google.common.collect.ImmutableMap.of;
 import static java.util.Collections.emptyMap;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @Named
-public class OrphanedBlobFinderTest
+public class DatastoreOrphanedBlobFinderTest
     extends TestSupport
 {
   private static final String REPOSITORY_NAME = "repository";
@@ -71,7 +74,10 @@ public class OrphanedBlobFinderTest
   private BlobStoreManager blobStoreManager;
 
   @Mock
-  private FileBlobStore blobStore, blobStore2;
+  private FileBlobStore blobStore;
+
+  @Mock
+  private FileBlobStore blobStore2;
 
   @Mock
   private BlobStoreConfiguration blobStoreConfiguration;
@@ -80,13 +86,7 @@ public class OrphanedBlobFinderTest
   private Repository repository;
 
   @Mock
-  private Bucket bucket;
-
-  @Mock
-  private StorageFacet storageFacet;
-
-  @Mock
-  private StorageTx tx;
+  private ContentFacet contentFacet;
 
   @Mock
   private Consumer<String> orphanedBlobHandler;
@@ -99,7 +99,7 @@ public class OrphanedBlobFinderTest
 
     when(blobStoreManager.get(BLOB_STORE_NAME)).thenReturn(blobStore);
 
-    underTest = new OrphanedBlobFinder(repositoryManager, blobStoreManager);
+    underTest = new DatastoreOrphanedBlobFinder(repositoryManager, blobStoreManager);
   }
 
   @Test
@@ -108,9 +108,7 @@ public class OrphanedBlobFinderTest
 
     underTest.detect(repository, orphanedBlobHandler);
 
-    verify(tx, times(2)).begin();
     verify(orphanedBlobHandler).accept(ORPHANED_BLOB_ID);
-    verify(tx, times(2)).close();
   }
 
   @Test
@@ -193,25 +191,31 @@ public class OrphanedBlobFinderTest
 
     when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
 
-    Asset asset = buildAssetWithBlobId(USED_BLOB_ID);
+    FluentAsset asset = buildAssetWithBlobId(USED_BLOB_ID);
 
     setupTransactionToFindAsset(asset);
   }
 
-  private Asset buildAssetWithBlobId(final String usedBlob) {
-    Asset asset = new Asset();
+  private FluentAsset buildAssetWithBlobId(final String usedBlob) {
+    FluentAsset asset = mock(FluentAsset.class);
     BlobRef blobRef = new BlobRef("node", "store", usedBlob);
-    asset.blobRef(blobRef);
+
+    AssetBlob assetBlob = mock(AssetBlob.class);
+    when(asset.blob()).thenReturn(Optional.of(assetBlob));
+    when(assetBlob.blobRef()).thenReturn(blobRef);
 
     return asset;
   }
 
-  private void setupTransactionToFindAsset(final Asset asset) {
+  private void setupTransactionToFindAsset(final FluentAsset asset) {
     when(repositoryManager.get(REPOSITORY_NAME)).thenReturn(repository);
-    when(repository.facet(StorageFacet.class)).thenReturn(storageFacet);
-    when(storageFacet.txSupplier()).thenReturn(() -> tx);
-    when(tx.findBucket(repository)).thenReturn(bucket);
-    when(tx.findAssetWithProperty("name", ASSET_NAME, bucket)).thenReturn(asset);
+    when(repository.facet(ContentFacet.class)).thenReturn(contentFacet);
+
+    FluentAssets fluentAssets = mock(FluentAssets.class);
+    when(contentFacet.assets()).thenReturn(fluentAssets);
+    FluentAssetBuilder builder = mock(FluentAssetBuilder.class);
+    when(fluentAssets.path(ASSET_NAME)).thenReturn(builder);
+    when(builder.find()).thenReturn(Optional.of(asset));
   }
 
   private void setupRepository(final Repository repository) {
