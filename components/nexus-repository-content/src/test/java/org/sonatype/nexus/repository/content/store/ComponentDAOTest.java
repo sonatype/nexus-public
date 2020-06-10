@@ -77,8 +77,10 @@ public class ComponentDAOTest
     // cover with/without namespace and different versions
     component1.setNamespace("");
     component1.setVersion("1.1");
+    component1.setKind("kind1");
     component2.setNamespace("demo");
     component2.setVersion("1.2");
+    component2.setKind("kind2");
 
     String namespace1 = component1.namespace();
     String name1 = component1.name();

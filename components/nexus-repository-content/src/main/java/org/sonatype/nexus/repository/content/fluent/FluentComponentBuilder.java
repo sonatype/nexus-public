@@ -27,6 +27,13 @@ public interface FluentComponentBuilder
   FluentComponentBuilder namespace(String namespace);
 
   /**
+   * Continue building the component using the given kind.
+   *
+   * @since 3.next
+   */
+  FluentComponentBuilder kind(String kind);
+
+  /**
    * Continue building the component using the given version.
    */
   FluentComponentBuilder version(String version);

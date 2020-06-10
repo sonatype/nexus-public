@@ -62,6 +62,11 @@ public class FluentComponentImpl
   }
 
   @Override
+  public String kind() {
+    return component.kind();
+  }
+
+  @Override
   public String version() {
     return component.version();
   }

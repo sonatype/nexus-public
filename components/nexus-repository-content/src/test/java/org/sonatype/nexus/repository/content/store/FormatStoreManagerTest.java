@@ -123,6 +123,7 @@ public class FormatStoreManagerTest
     component.setRepositoryId(repository.repositoryId);
     component.setNamespace("");
     component.setName("testComponent");
+    component.setKind("aKind");
     component.setVersion("1.0");
     componentStore.createComponent(component);
 

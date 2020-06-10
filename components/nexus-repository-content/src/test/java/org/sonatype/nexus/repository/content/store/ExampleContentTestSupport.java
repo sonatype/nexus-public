@@ -227,6 +227,7 @@ public class ExampleContentTestSupport
       component.setVersion("");
     }
     component.setAttributes(newAttributes("component"));
+    component.setKind("aKind");
     return component;
   }
 
@@ -270,7 +271,7 @@ public class ExampleContentTestSupport
   }
 
   static Matcher<Component> sameCoordinates(final Component expected) {
-    return new FieldMatcher<>(expected, Component::namespace, Component::name, Component::version);
+    return new FieldMatcher<>(expected, Component::namespace, Component::name, Component::kind, Component::version);
   }
 
   static Matcher<Asset> samePath(final Asset expected) {
