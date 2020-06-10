@@ -50,7 +50,7 @@ class SecurityApiImpl
   AnonymousConfiguration setAnonymousAccess(final boolean enabled) {
     AnonymousConfiguration anonymousConfiguration = anonymousManager.configuration
 
-    if (anonymousConfiguration.enabled != enabled) {
+    if (!anonymousManager.configured || anonymousConfiguration.enabled != enabled) {
       anonymousConfiguration.enabled = enabled
       anonymousManager.configuration = anonymousConfiguration
       log.info('Anonymous access configuration updated to: {}', anonymousConfiguration)
