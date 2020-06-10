@@ -23,6 +23,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.Query;
+import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.testsuite.testsupport.FormatClientITSupport;
 
@@ -145,6 +146,10 @@ public abstract class CondaClientITSupport
       }
     }
     assertThat(isExistExtension, is(TRUE));
+  }
+
+  private static StorageTx getStorageTx(final Repository repository) {
+    return repository.facet(StorageFacet.class).txSupplier().get();
   }
 
   public void activateNewEnvironment()

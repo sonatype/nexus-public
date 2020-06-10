@@ -19,24 +19,11 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Provider;
-
-import org.sonatype.nexus.orient.DatabaseInstance;
-import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.Component;
-import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.testsuite.testsupport.RepositoryITSupport;
 import org.sonatype.nexus.testsuite.testsupport.fixtures.RepositoryRule;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.bouncycastle.bcpg.ArmoredInputStream;
 import org.bouncycastle.openpgp.PGPObjectFactory;
 import org.bouncycastle.openpgp.PGPPublicKey;
@@ -47,9 +34,6 @@ import org.bouncycastle.openpgp.PGPUtil;
 import org.bouncycastle.openpgp.operator.jcajce.JcaKeyFingerprintCalculator;
 import org.bouncycastle.openpgp.operator.jcajce.JcaPGPContentVerifierBuilderProvider;
 import org.junit.experimental.categories.Category;
-
-import static com.google.common.collect.Lists.newArrayList;
-import static java.util.stream.Collectors.toList;
 
 /**
  * Support for Apt ITs.
@@ -110,10 +94,6 @@ public class AptITSupport
 
   protected static final String PROXIED_HOSTED_REPO_NAME = "proxied-apt-hosted";
 
-  @Inject
-  @Named(DatabaseInstanceNames.COMPONENT)
-  Provider<DatabaseInstance> databaseInstanceProvider;
-
   public AptITSupport() {
     testData.addDirectory(resolveBaseFile("target/it-resources/apt"));
   }
@@ -124,7 +104,7 @@ public class AptITSupport
     return createAptHostedRepository(repos, name, distribution, testData.resolveFile(gpgKeyName).toPath());
   }
 
-  public Repository createAptHostedRepository(RepositoryRule repository,
+  public Repository createAptHostedRepository(final RepositoryRule repository,
                                               final String name,
                                               final String distribution,
                                               final Path gpgFilePath)
@@ -136,29 +116,6 @@ public class AptITSupport
 
   protected Repository createAptProxyRepository(final String name, final String remoteUrl, final String distribution) {
     return repos.createAptProxy(name, remoteUrl, distribution);
-  }
-
-  protected List<Asset> findAssets(final String repositoryName) {
-    String sql = "SELECT * FROM asset WHERE bucket.repository_name = ?";
-    try (ODatabaseDocumentTx tx = databaseInstanceProvider.get().acquire()) {
-      tx.begin();
-      List<ODocument> results = tx.command(new OCommandSQL(sql)).execute(repositoryName);
-      return results.stream().map(this::toAsset).collect(toList());
-    }
-  }
-
-  protected static List<Component> findComponents(final Repository repo) {
-    try (StorageTx tx = getStorageTx(repo)) {
-      tx.begin();
-      return newArrayList(tx.browseComponents(tx.findBucket(repo)));
-    }
-  }
-
-  private Asset toAsset(final ODocument doc) {
-    Asset asset = new Asset();
-    asset.name(doc.field("name", String.class).toString());
-    asset.contentType(doc.field("content_type", String.class).toString());
-    return asset;
   }
 
   public boolean verifyReleaseFilePgpSignature(final InputStream signedData,

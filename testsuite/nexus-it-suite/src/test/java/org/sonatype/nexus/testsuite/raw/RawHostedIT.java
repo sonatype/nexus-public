@@ -13,19 +13,22 @@
 package org.sonatype.nexus.testsuite.raw;
 
 import java.io.File;
+import java.time.Duration;
 import java.util.function.BiConsumer;
 
 import javax.inject.Inject;
 
 import org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.storage.AssetManager;
+import org.sonatype.nexus.repository.capability.GlobalRepositorySettings;
+import org.sonatype.nexus.testsuite.testsupport.fixtures.LastDownloadedIntervalRule;
 import org.sonatype.nexus.testsuite.testsupport.raw.RawClient;
 import org.sonatype.nexus.testsuite.testsupport.raw.RawITSupport;
 
 import org.apache.http.HttpResponse;
 import org.joda.time.DateTime;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -36,11 +39,9 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
-import static org.joda.time.Duration.standardSeconds;
 import static org.sonatype.nexus.repository.http.HttpStatus.BAD_REQUEST;
 import static org.sonatype.nexus.repository.http.HttpStatus.CREATED;
 import static org.sonatype.nexus.repository.http.HttpStatus.OK;
-import static org.sonatype.nexus.repository.storage.WritePolicy.ALLOW_ONCE;
 import static org.sonatype.nexus.testsuite.testsupport.FormatClientSupport.bytes;
 import static org.sonatype.nexus.testsuite.testsupport.FormatClientSupport.status;
 
@@ -56,7 +57,10 @@ public class RawHostedIT
   public static final String TEST_CONTENT = "alphabet.txt";
 
   @Inject
-  private AssetManager assetManager;
+  private GlobalRepositorySettings repositorySettings;
+
+  @Rule
+  public LastDownloadedIntervalRule lastDownloadedRule = new LastDownloadedIntervalRule(() -> repositorySettings);
 
   private RawClient rawClient;
 
@@ -80,7 +84,7 @@ public class RawHostedIT
 
   @Test
   public void failWhenRedeployNotAllowed() throws Exception {
-    rawClient = rawClient(repos.createRawHosted(testName.getMethodName(), ALLOW_ONCE));
+    rawClient = rawClient(repos.createRawHosted(testName.getMethodName(), "ALLOW_ONCE"));
 
     File testFile = resolveTestFile(TEST_CONTENT);
 
@@ -91,7 +95,7 @@ public class RawHostedIT
 
   @Test
   public void setLastDownloadOnGetNotPut() throws Exception {
-    Repository repository = repos.createRawHosted(testName.getMethodName(), ALLOW_ONCE);
+    Repository repository = repos.createRawHosted(testName.getMethodName(), "ALLOW_ONCE");
 
     rawClient = rawClient(repository);
 
@@ -109,20 +113,20 @@ public class RawHostedIT
 
   @Test
   public void lastDownloadedIsUpdatedWhenFrequencyConfigured() throws Exception {
-    assetManager.setLastDownloadedInterval(standardSeconds(1));
+    lastDownloadedRule.setLastDownloadedInterval(Duration.ofSeconds(1));
 
     verifyLastDownloadedTime((newDate, initialDate) -> assertThat(newDate, is(greaterThan(initialDate))));
   }
 
   @Test
   public void lastDownloadedIsNotUpdatedWhenFrequencyNotExceeded() throws Exception {
-    assetManager.setLastDownloadedInterval(standardSeconds(10));
+    lastDownloadedRule.setLastDownloadedInterval(Duration.ofSeconds(10));
 
     verifyLastDownloadedTime((newDate, initialDate) -> assertThat(newDate, is(equalTo(initialDate))));
   }
 
-  private void verifyLastDownloadedTime(BiConsumer<DateTime, DateTime> matcher) throws Exception {
-    Repository repository = repos.createRawHosted(testName.getMethodName(), ALLOW_ONCE);
+  private void verifyLastDownloadedTime(final BiConsumer<DateTime, DateTime> matcher) throws Exception {
+    Repository repository = repos.createRawHosted(testName.getMethodName(), "ALLOW_ONCE");
 
     RawClient rawClient = rawClient(repository);
 

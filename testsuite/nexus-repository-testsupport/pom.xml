@@ -50,6 +50,12 @@
     </dependency>
 
     <dependency>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-repository-services</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-repository-maven</artifactId>
       <scope>provided</scope>
@@ -198,7 +204,30 @@
         <configuration>
           <instructions>
             <!-- mark Pax-Exam imports as optional; not all are needed at test-time -->
-            <Import-Package>org.ops4j.pax.exam.*;resolution:=optional,*</Import-Package>
+            <Import-Package>
+              org.ops4j.pax.exam.*;resolution:=optional,
+              com.orientechnologies.orient.*;resolution:=optional,
+              org.apache.maven.*;resolution:=optional,
+              org.sonatype.nexus.orient.*;resolution:=optional,
+              com.sonatype.nexus.repository.nuget.*;resolution:=optional,
+              org.sonatype.nexus.repository.apt.*;resolution:=optional,
+              org.sonatype.nexus.repository.bower.*;resolution:=optional,
+              org.sonatype.nexus.repository.cocoapods.*;resolution:=optional,
+              org.sonatype.nexus.repository.conda.*;resolution:=optional,
+              org.sonatype.nexus.repository.docker.*;resolution:=optional,
+              org.sonatype.nexus.repository.gitlfs.*;resolution:=optional,
+              org.sonatype.nexus.repository.golang.*;resolution:=optional,
+              org.sonatype.nexus.repository.maven.*;resolution:=optional,
+              org.sonatype.nexus.repository.npm.*;resolution:=optional,
+              org.sonatype.nexus.repository.pypi.*;resolution:=optional,
+              org.sonatype.nexus.repository.rubygems.*;resolution:=optional,
+              org.sonatype.nexus.repository.yum.*;resolution:=optional,
+              org.sonatype.nexus.repository.search.*;resolution:=optional,
+              org.sonatype.nexus.repository.storage.*;resolution:=optional,
+              org.sonatype.nexus.repository.vulnerability.*;resolution:=optional,
+              org.sonatype.nexus.testsuite.testsupport.cleanup.*;resolution:=optional,
+              *
+            </Import-Package>
           </instructions>
         </configuration>
       </plugin>

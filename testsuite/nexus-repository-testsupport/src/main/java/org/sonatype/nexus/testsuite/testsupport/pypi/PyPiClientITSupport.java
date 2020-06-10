@@ -16,10 +16,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
+import javax.inject.Inject;
+
 import com.sonatype.nexus.docker.testsupport.framework.DockerContainerConfig;
 import com.sonatype.nexus.docker.testsupport.pypi.PyPiCommandLineITSupport;
 
 import org.sonatype.nexus.testsuite.testsupport.FormatClientITSupport;
+import org.sonatype.nexus.testsuite.testsupport.utility.SearchTestHelper;
 
 import org.apache.http.HttpResponse;
 import org.junit.After;
@@ -54,6 +57,9 @@ public abstract class PyPiClientITSupport
   private static final String PYTHON_PACKAGE_NAME = "name";
 
   private final PyPiClientFactory pyPiClientFactory = new PyPiClientFactory();
+
+  @Inject
+  protected SearchTestHelper searchTesthelper;
 
   /**
    * Default {@link DockerContainerConfig} for testing PyPi. Should at
@@ -128,7 +134,7 @@ public abstract class PyPiClientITSupport
   }
 
   protected void assertPackageInstalledCorrectly(final String name, final String version) throws Exception {
-    waitFor(() -> searchService.
+    waitFor(() -> searchTesthelper.searchService.
         browseUnrestricted(boolQuery()
             .filter(termQuery(PYTHON_PACKAGE_NAME + ".raw", name))
             .filter(termQuery(PYTHON_PACKAGE_VERSION, version)))

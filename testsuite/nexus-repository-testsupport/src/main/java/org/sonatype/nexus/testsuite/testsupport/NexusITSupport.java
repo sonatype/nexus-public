@@ -35,7 +35,6 @@ import javax.ws.rs.core.UriBuilder;
 
 import org.sonatype.nexus.pax.exam.NexusPaxExamSupport;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.search.SearchService;
 import org.sonatype.nexus.repository.tools.DeadBlobFinder;
 import org.sonatype.nexus.repository.tools.DeadBlobResult;
 import org.sonatype.nexus.rest.client.RestClientConfiguration;
@@ -115,9 +114,6 @@ public abstract class NexusITSupport
 
   @Inject
   protected RestClientFactory restClientFactory;
-
-  @Inject
-  protected SearchService searchService;
 
   @Inject
   private TestSuiteObjectMapperResolver testSuiteObjectMapperResolver;
@@ -436,16 +432,5 @@ public abstract class NexusITSupport
         return responseBuilder.build();
       }
     }
-  }
-
-  /**
-   * Waits for indexing to finish and makes sure any updates are available to search.
-   *
-   * General flow is component/asset events -> bulk index requests -> search indexing.
-   */
-  protected void waitForSearch() throws Exception {
-    waitFor(eventManager::isCalmPeriod);
-    searchService.flush(false); // no need for full fsync here
-    waitFor(searchService::isCalmPeriod);
   }
 }

@@ -33,6 +33,7 @@ import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.security.subject.FakeAlmightySubject;
 import org.sonatype.nexus.testsuite.testsupport.RepositoryITSupport;
+import org.sonatype.nexus.testsuite.testsupport.utility.SearchTestHelper;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -82,6 +83,9 @@ public class CleanupITSupport
   protected static final int TWO_SECONDS = 2;
 
   private static final BoolQueryBuilder SEARCH_ALL = boolQuery().must(matchAllQuery());
+
+  @Inject
+  private SearchTestHelper searchTestHelper;
 
   @Inject
   private CleanupPolicyStorage cleanupPolicyStorage;
@@ -234,7 +238,7 @@ public class CleanupITSupport
   }
 
   protected void runCleanupTask() throws Exception {
-    waitForSearch();
+    searchTestHelper.waitForSearch();
 
     TaskInfo task = findCleanupTask().get();
 
@@ -303,7 +307,7 @@ public class CleanupITSupport
 
     assertThat(countComponents(testName.getMethodName()), is(equalTo(totalComponents)));
 
-    waitFor(() -> size(searchService.browse(SEARCH_ALL)) == totalComponents);
+    waitFor(() -> size(searchTestHelper.searchService.browse(SEARCH_ALL)) == totalComponents);
 
     runCleanupTask();
 
@@ -327,7 +331,7 @@ public class CleanupITSupport
 
     assertThat(countComponents(testName.getMethodName()), is(equalTo(totalComponents)));
 
-    waitFor(() -> size(searchService.browse(SEARCH_ALL)) == totalComponents);
+    waitFor(() -> size(searchTestHelper.searchService.browse(SEARCH_ALL)) == totalComponents);
 
     runCleanupTask();
 
@@ -364,7 +368,7 @@ public class CleanupITSupport
 
     assertThat(countComponents(testName.getMethodName()), is(equalTo(totalComponents)));
 
-    waitFor(() -> size(searchService.browse(SEARCH_ALL)) == totalComponents);
+    waitFor(() -> size(searchTestHelper.searchService.browse(SEARCH_ALL)) == totalComponents);
 
     runCleanupTask();
 
@@ -389,7 +393,7 @@ public class CleanupITSupport
                                            final long countAfterPrereleaseCleanup) throws Exception
   {
     long count = countComponents(repository.getName());
-    waitFor(() -> size(searchService
+    waitFor(() -> size(searchTestHelper.searchService
         .browseUnrestrictedInRepos(SEARCH_ALL, ImmutableList.of(repository.getName()))) == count);
 
     setPolicyToBePrerelease(repository, true);
@@ -420,7 +424,7 @@ public class CleanupITSupport
 
     setPolicyToBeRegex(repository, expression);
 
-    waitFor(() -> size(searchService.browse(SEARCH_ALL)) == totalComponents);
+    waitFor(() -> size(searchTestHelper.searchService.browse(SEARCH_ALL)) == totalComponents);
 
     runCleanupTask();
 
@@ -464,7 +468,7 @@ public class CleanupITSupport
             .lte("now-" + TWO_SECONDS + "s")
     ).must(matchQuery(IS_PRERELEASE_KEY, true));
 
-    waitFor(() -> size(searchService.browseUnrestricted(query)) > 0);
+    waitFor(() -> size(searchTestHelper.searchService.browseUnrestricted(query)) > 0);
   }
 
   public static String randomName() {

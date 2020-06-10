@@ -19,12 +19,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 
 import com.sonatype.nexus.docker.testsupport.framework.DockerContainerConfig;
 import com.sonatype.nexus.docker.testsupport.maven.MavenCommandLineITSupport;
 
 import org.sonatype.nexus.testsuite.testsupport.FormatClientITSupport;
+import org.sonatype.nexus.testsuite.testsupport.utility.SearchTestHelper;
 
 import com.google.common.base.Joiner;
 import org.junit.After;
@@ -56,6 +58,9 @@ public abstract class MavenClientITSupport
   protected MavenCommandLineITSupport mvn;
 
   protected File settings;
+
+  @Inject
+  private SearchTestHelper searchTestHelper;
 
   @Before
   public void onInitializeClientIT() throws Exception {
@@ -108,7 +113,7 @@ public abstract class MavenClientITSupport
                                                        final String version)
       throws Exception
   {
-    waitForSearch();
+    searchTestHelper.waitForSearch();
 
     Response response = restClient().target(nexusUrl("/service/rest/v1/search"))
         .queryParam("repository", repository)

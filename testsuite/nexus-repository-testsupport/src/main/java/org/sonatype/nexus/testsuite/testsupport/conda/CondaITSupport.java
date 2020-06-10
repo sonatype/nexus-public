@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.conda;
 
-import java.util.List;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
@@ -21,18 +19,9 @@ import javax.inject.Provider;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.Component;
-import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.testsuite.testsupport.RepositoryITSupport;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.junit.experimental.categories.Category;
-
-import static com.google.common.collect.Lists.newArrayList;
-import static java.util.stream.Collectors.toList;
 
 /**
  * Support for Conda ITs.
@@ -79,28 +68,5 @@ public class CondaITSupport
 
   public Repository createCondaProxyRepository(final String name, final String remoteUrl) {
     return repos.createCondaProxy(name, remoteUrl);
-  }
-
-  protected List<Asset> findAssets(final String repositoryName) {
-    String sql = "SELECT * FROM asset WHERE bucket.repository_name = ?";
-    try (ODatabaseDocumentTx tx = databaseInstanceProvider.get().acquire()) {
-      tx.begin();
-      List<ODocument> results = tx.command(new OCommandSQL(sql)).execute(repositoryName);
-      return results.stream().map(this::toAsset).collect(toList());
-    }
-  }
-
-  private Asset toAsset(final ODocument doc) {
-    Asset asset = new Asset();
-    asset.name(doc.field("name", String.class).toString());
-    asset.contentType(doc.field("content_type", String.class).toString());
-    return asset;
-  }
-
-  protected static List<Component> findComponents(final Repository repo) {
-    try (StorageTx tx = getStorageTx(repo)) {
-      tx.begin();
-      return newArrayList(tx.browseComponents(tx.findBucket(repo)));
-    }
   }
 }

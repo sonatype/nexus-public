@@ -18,7 +18,6 @@ import javax.inject.Provider
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
 import org.sonatype.nexus.repository.config.Configuration
 import org.sonatype.nexus.repository.manager.RepositoryManager
-import org.sonatype.nexus.repository.storage.WritePolicy
 
 import groovy.transform.CompileStatic
 
@@ -39,7 +38,7 @@ trait ConfigurationRecipes
   @Nonnull
   Configuration createHosted(final String name,
                              final String recipeName,
-                             final WritePolicy writePolicy = WritePolicy.ALLOW,
+                             final String writePolicy = "ALLOW",
                              final boolean strictContentTypeValidation = true,
                              final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
                              final boolean latestPolicy = false)

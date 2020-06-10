@@ -16,7 +16,6 @@ import javax.annotation.Nonnull
 
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.config.Configuration
-import org.sonatype.nexus.repository.storage.WritePolicy
 
 import groovy.transform.CompileStatic
 
@@ -31,7 +30,7 @@ trait AptRepoRecipes
   Repository createAptHosted(final String name,
                              final String distribution,
                              final String keypair,
-                             final WritePolicy writePolicy = WritePolicy.ALLOW)
+                             final String writePolicy = "ALLOW")
   {
     def configuration = createHosted(name, 'apt-hosted', writePolicy)
     configuration.attributes.apt = [

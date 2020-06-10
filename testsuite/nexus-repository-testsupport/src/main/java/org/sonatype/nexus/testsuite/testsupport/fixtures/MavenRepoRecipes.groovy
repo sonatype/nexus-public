@@ -17,9 +17,6 @@ import javax.annotation.Nonnull
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.config.Configuration
-import org.sonatype.nexus.repository.maven.LayoutPolicy
-import org.sonatype.nexus.repository.maven.VersionPolicy
-import org.sonatype.nexus.repository.storage.WritePolicy
 
 import groovy.transform.CompileStatic
 
@@ -32,9 +29,9 @@ trait MavenRepoRecipes
 {
   @Nonnull
   Repository createMavenHosted(final String name,
-                               final VersionPolicy versionPolicy = VersionPolicy.RELEASE,
-                               final WritePolicy writePolicy = WritePolicy.ALLOW_ONCE,
-                               final LayoutPolicy layoutPolicy = LayoutPolicy.STRICT,
+                               final String versionPolicy = "RELEASE",
+                               final String writePolicy = "ALLOW_ONCE",
+                               final String layoutPolicy = "STRICT",
                                final String blobStoreName = BlobStoreManager.DEFAULT_BLOBSTORE_NAME)
   {
     Configuration configuration =
@@ -46,8 +43,8 @@ trait MavenRepoRecipes
   @Nonnull
   Repository createMavenProxy(final String name,
                               final String remoteUrl,
-                              final VersionPolicy versionPolicy = VersionPolicy.RELEASE,
-                              final LayoutPolicy layoutPolicy = LayoutPolicy.STRICT)
+                              final String versionPolicy = "RELEASE",
+                              final String layoutPolicy = "STRICT")
   {
     Configuration configuration = createProxy(name, 'maven2-proxy', remoteUrl)
     configuration.attributes.maven = configureMaven(versionPolicy, layoutPolicy)
@@ -63,8 +60,8 @@ trait MavenRepoRecipes
     createRepository(configuration)
   }
 
-  private Map configureMaven(final VersionPolicy versionPolicy = VersionPolicy.MIXED,
-                             final LayoutPolicy layoutPolicy = LayoutPolicy.STRICT) {
+  private Map configureMaven(final String versionPolicy = "MIXED",
+                             final String layoutPolicy = "STRICT") {
     [versionPolicy: versionPolicy as String, layoutPolicy: layoutPolicy as String] as Map
   }
 
