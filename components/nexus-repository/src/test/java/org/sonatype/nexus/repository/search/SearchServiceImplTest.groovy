@@ -26,6 +26,12 @@ import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.config.Configuration
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.manager.internal.RepositoryImpl
+import org.sonatype.nexus.repository.search.index.HashedNamingPolicy
+import org.sonatype.nexus.repository.search.index.IndexNamingPolicy
+import org.sonatype.nexus.repository.search.index.SearchIndexFacet
+import org.sonatype.nexus.repository.search.query.SearchQueryService
+import org.sonatype.nexus.repository.search.query.SearchQueryServiceImpl
+import org.sonatype.nexus.repository.search.query.SearchSubjectHelper
 import org.sonatype.nexus.repository.storage.Component
 import org.sonatype.nexus.repository.storage.DefaultComponent
 import org.sonatype.nexus.repository.types.HostedType
@@ -52,7 +58,6 @@ import org.mockito.ArgumentCaptor
 import org.mockito.Mock
 
 import static org.hamcrest.MatcherAssert.assertThat
-import static org.hamcrest.Matchers.arrayWithSize
 import static org.hamcrest.Matchers.contains
 import static org.junit.Assert.fail
 import static org.mockito.Mockito.eq
@@ -61,6 +66,7 @@ import static org.mockito.Mockito.never
 import static org.mockito.Mockito.verify
 import static org.mockito.Mockito.when
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1
+import static org.sonatype.nexus.repository.search.index.SearchConstants.TYPE
 
 class SearchServiceImplTest
     extends TestSupport
@@ -124,8 +130,12 @@ class SearchServiceImplTest
     when(adminClient.indices()).thenReturn(indicesAdminClient)
     when(client.settings()).thenReturn(settings)
 
-    searchService = new SearchServiceImpl(clientProvider, repositoryManager, securityHelper, searchSubjectHelper,
-        indexSettingsContributors, eventManager, false, 1000, 0, 0, 3000, 1)
+    IndexNamingPolicy indexNamingPolicy = new HashedNamingPolicy()
+    SearchQueryService searchQueryService = new SearchQueryServiceImpl(clientProvider,
+      repositoryManager, securityHelper, searchSubjectHelper, indexNamingPolicy, false)
+
+    searchService = new SearchServiceImpl(clientProvider, searchQueryService,
+        indexNamingPolicy, indexSettingsContributors, eventManager, 1000, 0, 0, 3000, 1)
     searchService.bulkProcessorToExecutors = new HashMap<>()
     searchService.bulkProcessorToExecutors.put(0, new SimpleImmutableEntry<>(bulkProcessor, executorService))
   }
@@ -172,14 +182,14 @@ class SearchServiceImplTest
     BiMap<Component, String> inverse = components.inverse()
     String json = '{ "a": "b" }'
 
-    Repository repository = repository(SearchServiceImpl.TYPE)
+    Repository repository = repository('test-repo')
     ArgumentCaptor<String> indexName = captureRepoNameArg()
     searchService.createIndex(repository)
 
     components.entrySet().forEach({ entry ->
       IndexRequestBuilder builder = mock(IndexRequestBuilder.class)
       when(
-          client.prepareIndex(indexName.capture(), eq(SearchServiceImpl.TYPE), eq(entry.getKey()))
+          client.prepareIndex(indexName.capture(), eq(TYPE), eq(entry.getKey()))
       ).thenReturn(builder)
       when(builder.setSource(json)).thenReturn(builder)
       org.elasticsearch.action.index.IndexRequest request = mock(org.elasticsearch.action.index.IndexRequest.class)
@@ -202,7 +212,7 @@ class SearchServiceImplTest
   @Test
   void testBulkPutCancellation() {
     def components = [new DefaultComponent()]
-    Repository repository = repository(SearchServiceImpl.TYPE)
+    Repository repository = repository('test-repo')
     captureRepoNameArg()
     searchService.createIndex(repository)
 
@@ -218,36 +228,13 @@ class SearchServiceImplTest
     verify(bulkProcessor, never()).flush()
   }
 
-  @Test
-  void testGetSearchableIndexes() {
-    ArgumentCaptor<String> captureA = captureRepoNameArg()
-    def repositoryA = repository('a')
-    searchService.createIndex(repositoryA)
-    def encodedA = captureA.allValues[0]
-
-    ArgumentCaptor<String> captureB = captureRepoNameArg()
-    def repositoryB = repository('b')
-    searchService.createIndex(repositoryB)
-    def encodedB = captureB.allValues[0]
-
-    when(repositoryManager.browse()).thenReturn([repositoryA, repositoryB])
-    def searchable = searchService.getSearchableIndexes(true, ['a'])
-    assertThat(searchable as List, contains(encodedA))
-    assertThat(searchable, arrayWithSize(1))
-
-    when(repositoryManager.browse()).thenReturn([repositoryA, repositoryB])
-    searchable = searchService.getSearchableIndexes(true, ['a', 'b'])
-    assertThat(searchable as List, contains(encodedA, encodedB))
-    assertThat(searchable, arrayWithSize(2))
-  }
-
   protected Repository repository(String name) {
     Repository repository = new RepositoryImpl(eventManager, new HostedType(), new TestFormat('test'))
     repository.name = name
     def configuration = mock(Configuration)
     when(configuration.isOnline()).thenReturn(true)
     repository.configuration = configuration
-    SearchFacet searchFacet = mock(SearchFacet)
+    SearchIndexFacet searchFacet = mock(SearchIndexFacet)
     repository.attach(searchFacet)
     return repository
   }

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.selector.internal;
+package org.sonatype.nexus.repository.search.selector;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -35,8 +35,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.FORMAT;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REPOSITORY_NAME;
+import static org.sonatype.nexus.repository.search.index.SearchConstants.FORMAT;
+import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
 import static org.sonatype.nexus.security.BreadActions.BROWSE;
 
 /**
@@ -84,16 +84,15 @@ public class ContentAuthPluginScript
       String repositoryName = (String) checkNotNull(sourceLookup.get(REPOSITORY_NAME));
       VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(format);
       @SuppressWarnings("unchecked")
-      List<Map<String, Object>> assets = (List<Map<String, Object>>) sourceLookup
-          .getOrDefault("assets", Collections.emptyList());
-      if (assets != null) {
-        for (Map<String, Object> asset : assets) {
-          VariableSource variableSource = variableResolverAdapter.fromSourceLookup(sourceLookup, asset);
-          Set<String> repoNames = new HashSet<>();
-          repoNames.add(repositoryName);
-          repoNames.addAll(repositoryManager.findContainingGroups(repositoryName));
-          return contentPermissionChecker.isPermitted(repoNames, format, BROWSE, variableSource);
-        }
+      List<Map<String, Object>> assets =
+          (List<Map<String, Object>>) sourceLookup.getOrDefault("assets", Collections.emptyList());
+      if (assets != null && !assets.isEmpty()) {
+        Map<String, Object> asset = assets.get(0);
+        VariableSource variableSource = variableResolverAdapter.fromSourceLookup(sourceLookup, asset);
+        Set<String> repoNames = new HashSet<>();
+        repoNames.add(repositoryName);
+        repoNames.addAll(repositoryManager.findContainingGroups(repositoryName));
+        return contentPermissionChecker.isPermitted(repoNames, format, BROWSE, variableSource);
       }
       return false;
     }
@@ -103,7 +102,7 @@ public class ContentAuthPluginScript
         try {
           TimeUnit.MILLISECONDS.sleep(1);
         }
-        catch (InterruptedException e) {
+        catch (InterruptedException e) { // NOSONAR: pooled ES thread
           log.error("Thread.sleep interruped", e);
         }
       }
