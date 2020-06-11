@@ -33,7 +33,7 @@ public class NpmSearchMappings
     implements SearchMappings
 {
   private static final List<SearchMapping> MAPPINGS = ImmutableList.of(
-      new SearchMapping("npm.scope", "group", "NPM scope")
+      new SearchMapping("npm.scope", "group", "npm scope")
   );
 
   @Override
