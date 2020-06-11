@@ -1,0 +1,365 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SupportZipForm renders support zip form 1`] = `
+<div>
+  <div>
+    <p>
+      No information will be sent to Sonatype when creating the support ZIP file.
+    </p>
+    <p>
+      Support ZIP creation may take a few minutes to complete.
+    </p>
+  </div>
+  <div
+    class="nxrm-checkbox-group"
+  >
+    <label
+      class="nxrm-checkbox-group-label"
+    >
+      Contents:
+    </label>
+    <label
+      class="nx-checkbox tm-checked"
+    >
+      <input
+        checked=""
+        class="nx-checkbox__input"
+        id="systemInformation"
+        readonly=""
+        type="checkbox"
+      />
+      <span
+        class="nx-checkbox__box"
+      >
+        <svg
+          aria-hidden="true"
+          class="svg-inline--fa fa-check fa-w-16 "
+          data-icon="check"
+          data-prefix="fas"
+          focusable="false"
+          role="img"
+          viewBox="0 0 512 512"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
+            fill="currentColor"
+          />
+        </svg>
+      </span>
+      <span
+        class="nx-checkbox__content"
+      >
+        System information report
+      </span>
+    </label>
+    <label
+      class="nx-checkbox tm-unchecked"
+    >
+      <input
+        class="nx-checkbox__input"
+        id="threadDump"
+        readonly=""
+        type="checkbox"
+      />
+      <span
+        class="nx-checkbox__box"
+      >
+         
+      </span>
+      <span
+        class="nx-checkbox__content"
+      >
+        JVM thread-dump
+      </span>
+    </label>
+    <label
+      class="nx-checkbox tm-checked"
+    >
+      <input
+        checked=""
+        class="nx-checkbox__input"
+        id="configuration"
+        readonly=""
+        type="checkbox"
+      />
+      <span
+        class="nx-checkbox__box"
+      >
+        <svg
+          aria-hidden="true"
+          class="svg-inline--fa fa-check fa-w-16 "
+          data-icon="check"
+          data-prefix="fas"
+          focusable="false"
+          role="img"
+          viewBox="0 0 512 512"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
+            fill="currentColor"
+          />
+        </svg>
+      </span>
+      <span
+        class="nx-checkbox__content"
+      >
+        Configuration files
+      </span>
+    </label>
+    <label
+      class="nx-checkbox tm-unchecked"
+    >
+      <input
+        class="nx-checkbox__input"
+        id="security"
+        readonly=""
+        type="checkbox"
+      />
+      <span
+        class="nx-checkbox__box"
+      >
+         
+      </span>
+      <span
+        class="nx-checkbox__content"
+      >
+        Security configuration files
+      </span>
+    </label>
+    <label
+      class="nx-checkbox tm-checked"
+    >
+      <input
+        checked=""
+        class="nx-checkbox__input"
+        id="log"
+        readonly=""
+        type="checkbox"
+      />
+      <span
+        class="nx-checkbox__box"
+      >
+        <svg
+          aria-hidden="true"
+          class="svg-inline--fa fa-check fa-w-16 "
+          data-icon="check"
+          data-prefix="fas"
+          focusable="false"
+          role="img"
+          viewBox="0 0 512 512"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
+            fill="currentColor"
+          />
+        </svg>
+      </span>
+      <span
+        class="nx-checkbox__content"
+      >
+        Log files
+      </span>
+    </label>
+    <label
+      class="nx-checkbox tm-unchecked"
+    >
+      <input
+        class="nx-checkbox__input"
+        id="taskLog"
+        readonly=""
+        type="checkbox"
+      />
+      <span
+        class="nx-checkbox__box"
+      >
+         
+      </span>
+      <span
+        class="nx-checkbox__content"
+      >
+        Task log files
+      </span>
+    </label>
+    <label
+      class="nx-checkbox tm-checked"
+    >
+      <input
+        checked=""
+        class="nx-checkbox__input"
+        id="auditLog"
+        readonly=""
+        type="checkbox"
+      />
+      <span
+        class="nx-checkbox__box"
+      >
+        <svg
+          aria-hidden="true"
+          class="svg-inline--fa fa-check fa-w-16 "
+          data-icon="check"
+          data-prefix="fas"
+          focusable="false"
+          role="img"
+          viewBox="0 0 512 512"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
+            fill="currentColor"
+          />
+        </svg>
+      </span>
+      <span
+        class="nx-checkbox__content"
+      >
+        Audit log files
+      </span>
+    </label>
+    <label
+      class="nx-checkbox tm-unchecked"
+    >
+      <input
+        class="nx-checkbox__input"
+        id="metrics"
+        readonly=""
+        type="checkbox"
+      />
+      <span
+        class="nx-checkbox__box"
+      >
+         
+      </span>
+      <span
+        class="nx-checkbox__content"
+      >
+        System and component metrics
+      </span>
+    </label>
+    <label
+      class="nx-checkbox tm-checked"
+    >
+      <input
+        checked=""
+        class="nx-checkbox__input"
+        id="jmx"
+        readonly=""
+        type="checkbox"
+      />
+      <span
+        class="nx-checkbox__box"
+      >
+        <svg
+          aria-hidden="true"
+          class="svg-inline--fa fa-check fa-w-16 "
+          data-icon="check"
+          data-prefix="fas"
+          focusable="false"
+          role="img"
+          viewBox="0 0 512 512"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
+            fill="currentColor"
+          />
+        </svg>
+      </span>
+      <span
+        class="nx-checkbox__content"
+      >
+        JMX information
+      </span>
+    </label>
+  </div>
+  <div
+    class="nxrm-checkbox-group"
+  >
+    <label
+      class="nxrm-checkbox-group-label"
+    >
+      Options:
+    </label>
+    <label
+      class="nx-checkbox tm-unchecked"
+    >
+      <input
+        class="nx-checkbox__input"
+        id="limitFileSizes"
+        readonly=""
+        type="checkbox"
+      />
+      <span
+        class="nx-checkbox__box"
+      >
+         
+      </span>
+      <span
+        class="nx-checkbox__content"
+      >
+        Limit files in the ZIP archive to 30 MB apiece
+      </span>
+    </label>
+    <label
+      class="nx-checkbox tm-checked"
+    >
+      <input
+        checked=""
+        class="nx-checkbox__input"
+        id="limitZipSize"
+        readonly=""
+        type="checkbox"
+      />
+      <span
+        class="nx-checkbox__box"
+      >
+        <svg
+          aria-hidden="true"
+          class="svg-inline--fa fa-check fa-w-16 "
+          data-icon="check"
+          data-prefix="fas"
+          focusable="false"
+          role="img"
+          viewBox="0 0 512 512"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
+            fill="currentColor"
+          />
+        </svg>
+      </span>
+      <span
+        class="nx-checkbox__content"
+      >
+        Limit the ZIP archive to 20 MB
+      </span>
+    </label>
+  </div>
+  <button
+    class="nx-btn nx-btn--primary"
+    type="submit"
+  >
+    <svg
+      aria-hidden="true"
+      class="svg-inline--fa fa-file-archive fa-w-12 nx-icon"
+      data-icon="file-archive"
+      data-prefix="fas"
+      focusable="false"
+      role="img"
+      viewBox="0 0 384 512"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M377 105L279.1 7c-4.5-4.5-10.6-7-17-7H256v128h128v-6.1c0-6.3-2.5-12.4-7-16.9zM128.4 336c-17.9 0-32.4 12.1-32.4 27 0 15 14.6 27 32.5 27s32.4-12.1 32.4-27-14.6-27-32.5-27zM224 136V0h-63.6v32h-32V0H24C10.7 0 0 10.7 0 24v464c0 13.3 10.7 24 24 24h336c13.3 0 24-10.7 24-24V160H248c-13.2 0-24-10.8-24-24zM95.9 32h32v32h-32zm32.3 384c-33.2 0-58-30.4-51.4-62.9L96.4 256v-32h32v-32h-32v-32h32v-32h-32V96h32V64h32v32h-32v32h32v32h-32v32h32v32h-32v32h22.1c5.7 0 10.7 4.1 11.8 9.7l17.3 87.7c6.4 32.4-18.4 62.6-51.4 62.6z"
+        fill="currentColor"
+      />
+    </svg>
+    <span>
+      Create support ZIP
+    </span>
+  </button>
+</div>
+`;
