@@ -806,6 +806,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     LdapServersConnectionFieldSet_SaslRealm_HelpText: 'The SASL realm to bind to (e.g. mydomain.com)',
     LdapServersConnectionFieldSet_Username_FieldLabel: 'Username or DN',
     LdapServersConnectionFieldSet_Username_HelpText: 'This must be a fully qualified username if simple authentication is used',
+    LdapServersConnectionFieldSet_ChangePasswordItem: 'Change password',
     LdapServersConnectionFieldSet_Password_FieldLabel: 'Password',
     LdapServersConnectionFieldSet_Password_HelpText: 'The password to bind with',
     LdapServersConnectionFieldSet_Rules_Text: 'Connection rules',
