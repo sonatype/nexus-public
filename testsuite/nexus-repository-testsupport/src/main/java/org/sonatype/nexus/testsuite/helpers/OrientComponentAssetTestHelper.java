@@ -157,11 +157,61 @@ public class OrientComponentAssetTestHelper
 
   @Override
   public boolean componentExists(final Repository repository, final String namespace, final String name, final String version) {
-    Optional<Component> component = findComponents(repository).stream()
+    return findComponent(repository, namespace, name, version).isPresent();
+  }
+
+  @Override
+  public boolean assetWithComponentExists(final Repository repository, final String path, final String group, final String name) {
+    return findAssetByName(repository, path)
+        .map(Asset::componentId)
+        .flatMap(componentId -> {
+          try (StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get()) {
+            tx.begin();
+            return Optional.ofNullable(tx.findComponent(componentId));
+          }
+        })
+        .filter(component -> Objects.equals(component.group(), group))
+        .filter(component -> Objects.equals(component.name(), name))
+        .isPresent();
+  }
+
+  @Override
+  public boolean assetWithComponentExists(
+      final Repository repository,
+      final String path,
+      final String group,
+      final String name,
+      final String version)
+  {
+    return findAssetByName(repository, path)
+        .map(Asset::componentId)
+        .flatMap(componentId -> {
+          try (StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get()) {
+            tx.begin();
+            return Optional.ofNullable(tx.findComponent(componentId));
+          }
+        })
+        .filter(component -> Objects.equals(component.group(), group))
+        .filter(component -> Objects.equals(component.name(), name))
+        .filter(component -> Objects.equals(component.version(), version))
+        .isPresent();
+  }
+
+  @Override
+  public NestedAttributesMap componentAttributes(final Repository repository, final String namespace, final String name, final String version) {
+    return findComponent(repository, namespace, name, version).map(Component::attributes)
+        .orElseThrow(() -> new ComponentNotFoundException(repository, namespace, name, version));
+  }
+
+  private Optional<Component> findComponent(final Repository repository, final String namespace, final String name, final String version) {
+    return findComponents(repository).stream()
         .filter(c -> Objects.equals(namespace, c.group()))
         .filter(c -> name.equals(c.name()))
         .filter(c -> version.equals(c.version())).findAny();
+  }
 
-    return component.isPresent();
+  @Override
+  public boolean assetWithoutComponentExists(final Repository repository, final String path) {
+    return !findAssetByName(repository, path).map(Asset::componentId).isPresent();
   }
 }

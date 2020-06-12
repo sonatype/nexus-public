@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.testsuite.helpers;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -133,5 +135,35 @@ public class DatastoreComponentAssetTestHelper
         .find().filter(c -> Objects.equals(c.namespace(), namespace));
 
     return component.isPresent();
+  }
+
+  @Override
+  public boolean assetWithComponentExists(final Repository repository, final String path, final String group, final String name) {
+    Collection<FluentAsset> assets = repository.facet(ContentFacet.class).components().name(name).namespace(group)
+        .find().map(FluentComponent::assets).orElse(Collections.emptyList());
+    return assets.stream().anyMatch(asset -> Objects.equals(asset.path(), path));
+  }
+
+  @Override
+  public boolean assetWithComponentExists(
+      final Repository repository,
+      final String path,
+      final String group,
+      final String name,
+      final String version)
+  {
+    Collection<FluentAsset> assets = repository.facet(ContentFacet.class).components().name(name).namespace(group)
+        .version(version).find().map(FluentComponent::assets).orElse(Collections.emptyList());
+    return assets.stream().anyMatch(asset -> Objects.equals(asset.path(), path));
+  }
+
+  @Override
+  public boolean assetWithoutComponentExists(final Repository repository, final String path) {
+    return !findAssetByPathNotNull(repository, path).component().isPresent();
+  }
+
+  @Override
+  public NestedAttributesMap componentAttributes(final Repository repository, final String namespace, final String name, final String version) {
+    return findComponent(repository, namespace, name, version).attributes();
   }
 }

@@ -64,6 +64,21 @@ public interface ComponentAssetTestHelper
   boolean assetExists(Repository repository, String path);
 
   /**
+   * Verify that an asset at the given path exists for the specified repository, and associated with a component.
+   */
+  boolean assetWithComponentExists(Repository repository, String path, String group, String name);
+
+  /**
+   * Verify that an asset at the given path exists for the specified repository, and associated with a component.
+   */
+  boolean assetWithComponentExists(Repository repository, String path, String group, String name, String version);
+
+  /**
+   * Verify that an asset at the given path exists for the specified repository, and is not associated with a component.
+   */
+  boolean assetWithoutComponentExists(Repository repository, String path);
+
+  /**
    * Verify that a component with the given name and version exists for the specified repository.
    */
   boolean componentExists(Repository repository, String name, String version);
@@ -87,6 +102,11 @@ public interface ComponentAssetTestHelper
    * Retrieve the attributes for the asset at the given path
    */
   NestedAttributesMap attributes(Repository repository, String path);
+
+  /**
+   * Retrieve the attributes for the component
+   */
+  NestedAttributesMap componentAttributes(Repository repository, String namespace, String name, String version);
 
   static class AssetNotFoundException
       extends RuntimeException
