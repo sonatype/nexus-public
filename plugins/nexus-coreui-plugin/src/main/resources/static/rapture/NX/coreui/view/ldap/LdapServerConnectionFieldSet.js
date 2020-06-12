@@ -160,7 +160,7 @@ Ext.define('NX.coreui.view.ldap.LdapServerConnectionFieldSet', {
         listeners: {
           change: function (combo, newValue) {
             this.up('panel').showOrHide('authScheme', newValue);
-            this.up('panel').hidePassFieldOrPassButton();
+            this.up('panel').showOrHidePassFieldOrPassButton();
           }
         }
       },

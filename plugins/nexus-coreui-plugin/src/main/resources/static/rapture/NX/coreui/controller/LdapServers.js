@@ -143,7 +143,7 @@ Ext.define('NX.coreui.controller.LdapServers', {
           click: me.verifyConnection
         },
         'nx-coreui-ldapserver-connection-fieldset button[action=setpassword]': {
-          click: me.verifyConnection
+          click: me.updatePass
         },
         'nx-coreui-ldapserver-userandgroup-add button[action=verifyusermapping]': {
           click: me.verifyUserMapping
@@ -253,6 +253,27 @@ Ext.define('NX.coreui.controller.LdapServers', {
 
   /**
    * @private
+   * Update an existing LDAP entry with new pass
+   */
+  updatePass: function() {
+    const me = this,
+        values = me.getValues();
+
+    //all options except anonymous (none) require a password, so throw up the dialog if not set in form
+    if (values.authScheme !== 'none') {
+      Ext.create('NX.coreui.view.ldap.LdapSystemPasswordModal', {
+        onSuccess: function(pass) {
+          me.doVerifyConnection(true, pass);
+        }
+      });
+    }
+    else {
+      this.doVerifyConnection(true);
+    }
+  },
+
+  /**
+   * @private
    * Update an existing LDAP entry
    */
   updateServer: function() {
@@ -262,11 +283,13 @@ Ext.define('NX.coreui.controller.LdapServers', {
     //all options except anonymous (none) require a password, so throw up the dialog if not set in form
     if (values.authScheme !== 'none' && !values.authPassword) {
       Ext.create('NX.coreui.view.ldap.LdapSystemPasswordModal', {
-        onSuccess: me.doVerifyConnection
+        onSuccess: function(pass) {
+          me.doVerifyConnection(true, pass);
+        }
       });
     }
     else {
-      this.doVerifyConnection();
+      this.doVerifyConnection(true);
     }
   },
 
@@ -429,11 +452,13 @@ Ext.define('NX.coreui.controller.LdapServers', {
     //all options except anonymous (none) require a password, so throw up the dialog if not set in form
     if (values.authScheme !== 'none' && !values.authPassword) {
       Ext.create('NX.coreui.view.ldap.LdapSystemPasswordModal', {
-        onSuccess: me.doVerifyConnection
+        onSuccess: function(pass) {
+          me.doVerifyConnection(false, pass);
+        }
       });
     }
     else {
-      this.doVerifyConnection();
+      this.doVerifyConnection(false);
     }
   },
 
@@ -491,7 +516,7 @@ Ext.define('NX.coreui.controller.LdapServers', {
     });
   },
 
-  doVerifyConnection: function(ldapSystemPassword) {
+  doVerifyConnection: function(shouldUpdate, ldapSystemPassword) {
     const me = this,
           values = me.getValues(),
           url = values.protocol + '://' + values.host + ':' + values.port;
@@ -505,7 +530,9 @@ Ext.define('NX.coreui.controller.LdapServers', {
       me.getMain().getEl().unmask();
       if (Ext.isObject(response) && response.success) {
         NX.Messages.success(NX.I18n.format('LdapServers_VerifyConnection_Success', url));
-        me.doUpdateServer(values.authPassword);
+        if (shouldUpdate) {
+          me.doUpdateServer(values.authPassword);
+        }
       }
       else if (Ext.isObject(response) && Ext.isDefined(response.errors)) {
         NX.Messages.error(response.errors['*']);
