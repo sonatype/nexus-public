@@ -34,10 +34,13 @@ public class GraphUtilTest
   }
 
   @Test(expected = IllegalStateException.class)
-  public void depthRequiresNoSelfLoops() {
-    MutableGraph<String> directedGraphWithSelfLoopsAllowed  = GraphBuilder.directed().allowsSelfLoops(true).build();
+  public void depthRequiresNoLoops() {
+    MutableGraph<String> directedGraphWithLoops  = GraphBuilder.directed().build();
+    directedGraphWithLoops.addNode(ROOT_NODE);
+    directedGraphWithLoops.putEdge(ROOT_NODE, TEST_NODE);
+    directedGraphWithLoops.putEdge(TEST_NODE, ROOT_NODE);
 
-    GraphUtil.depth(directedGraphWithSelfLoopsAllowed, "", 0);
+    GraphUtil.depth(directedGraphWithLoops, "", 0);
   }
 
   @Test

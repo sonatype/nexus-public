@@ -13,6 +13,7 @@
 package org.sonatype.nexus.common.graph;
 
 import com.google.common.graph.Graph;
+import com.google.common.graph.Graphs;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -39,7 +40,8 @@ public class GraphUtil
   public static <T> int depth(Graph<T> graph, T node, int initialDepth) {
     checkNotNull(graph);
     checkNotNull(node);
-    checkState(graph.isDirected() && !graph.allowsSelfLoops());
+    checkState(graph.isDirected(), "unable to compute depth for an undirected graph");
+    checkState(!Graphs.hasCycle(graph), "unable to compute depth for a graph with cycles");
 
     int currentDepth = initialDepth + 1;
     return graph.successors(node).stream()
