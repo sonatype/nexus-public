@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.content.fluent.internal;
 
+import javax.annotation.Nullable;
+
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
@@ -47,9 +49,13 @@ public class FluentAssetsImpl
   }
 
   @Override
-  public Continuation<FluentAsset> browse(final int limit, final String continuationToken) {
+  public Continuation<FluentAsset> browse(
+      @Nullable final String kind,
+      final int limit,
+      final String continuationToken)
+  {
     return new FluentContinuation<>(
-        facet.stores().assetStore.browseAssets(facet.contentRepositoryId(), limit, continuationToken),
+        facet.stores().assetStore.browseAssets(facet.contentRepositoryId(), kind, limit, continuationToken),
         this::with);
   }
 }

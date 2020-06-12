@@ -63,6 +63,9 @@
 
   <select id="browseComponents" resultType="ComponentData">
     SELECT * FROM ${format}_component WHERE repository_id = #{repositoryId}
+    <if test="kind != null">
+      AND kind = #{kind}
+    </if>
     <if test="continuationToken != null">
       AND component_id > #{continuationToken}
     </if>

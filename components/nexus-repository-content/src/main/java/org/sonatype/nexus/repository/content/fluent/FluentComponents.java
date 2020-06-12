@@ -39,7 +39,14 @@ public interface FluentComponents
   /**
    * Browse through all components in the repository.
    */
-  Continuation<FluentComponent> browse(int limit, @Nullable String continuationToken);
+  default Continuation<FluentComponent> browse(int limit, @Nullable String continuationToken) {
+    return browse(null, limit, continuationToken);
+  }
+
+  /**
+   * Browse through all components in the repository by kind.
+   */
+  Continuation<FluentComponent> browse(@Nullable String kind, int limit, @Nullable String continuationToken);
 
   /**
    * List all namespaces of components in the repository.

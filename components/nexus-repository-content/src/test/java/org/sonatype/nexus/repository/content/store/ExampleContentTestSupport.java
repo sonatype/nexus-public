@@ -240,6 +240,12 @@ public class ExampleContentTestSupport
     return asset;
   }
 
+  protected TestAssetData randomAsset(final int repositoryId, final String kind) {
+    TestAssetData asset = randomAsset(repositoryId);
+    asset.setKind(kind);
+    return asset;
+  }
+
   protected AssetBlobData randomAssetBlob() {
     AssetBlobData assetBlob = new AssetBlobData();
     assetBlob.setBlobRef(new BlobRef("test-node", "test-store", randomUUID().toString()));

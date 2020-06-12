@@ -51,6 +51,7 @@ public class AssetStore<T extends AssetDAO>
    * Browse all assets in the given repository in a paged fashion.
    *
    * @param repositoryId the repository to browse
+   * @param kind the kind of assets to return
    * @param limit maximum number of assets to return
    * @param continuationToken optional token to continue from a previous request
    * @return collection of assets and the next continuation token
@@ -59,10 +60,11 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public Continuation<Asset> browseAssets(final int repositoryId,
+                                          @Nullable final String kind,
                                           final int limit,
                                           @Nullable final String continuationToken)
   {
-    return dao().browseAssets(repositoryId, limit, continuationToken);
+    return dao().browseAssets(repositoryId, kind, limit, continuationToken);
   }
 
   /**

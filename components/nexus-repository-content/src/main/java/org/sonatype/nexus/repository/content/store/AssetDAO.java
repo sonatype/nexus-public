@@ -41,6 +41,7 @@ public interface AssetDAO
    * Browse all assets in the given repository in a paged fashion.
    *
    * @param repositoryId the repository to browse
+   * @param kind the kind of assets to return
    * @param limit maximum number of assets to return
    * @param continuationToken optional token to continue from a previous request
    * @return collection of assets and the next continuation token
@@ -48,6 +49,7 @@ public interface AssetDAO
    * @see Continuation#nextContinuationToken()
    */
   Continuation<Asset> browseAssets(@Param("repositoryId") int repositoryId,
+                                   @Param("kind") @Nullable String kind,
                                    @Param("limit") int limit,
                                    @Param("continuationToken") @Nullable String continuationToken);
 
