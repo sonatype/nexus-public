@@ -10,25 +10,30 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search;
+package org.sonatype.nexus.repository.search.query;
+
+import javax.inject.Named;
+import javax.inject.Singleton;
 
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 
 /**
- * Contributor to search query/filter.
+ * "attributes.nuget.tag" {@link SearchContribution} (adds a match query for tag).
  *
  * @since 3.15
  */
-public interface SearchContribution
+@Named("attributes.nuget.tags")
+@Singleton
+public class NugetTagsSearchContribution
+    extends SearchContributionSupport
 {
 
-  /**
-   * Contribute to search query/filter.
-   *
-   * @param query to contribute to
-   * @param type   type of filter
-   * @param value  value of filter
-   */
-  void contribute(BoolQueryBuilder query, String type, String value);
+  @Override
+  public void contribute(final BoolQueryBuilder query, final String type, final String value) {
+    if (value != null) {
+      query.must(QueryBuilders.matchQuery(type, value));
+    }
+  }
 
 }

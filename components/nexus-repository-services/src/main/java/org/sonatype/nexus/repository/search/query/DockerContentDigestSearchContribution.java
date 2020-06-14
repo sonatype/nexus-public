@@ -10,22 +10,30 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.rest.cma;
+package org.sonatype.nexus.repository.search.query;
 
-import org.sonatype.nexus.repository.rest.api.ComponentXO;
-import org.sonatype.nexus.repository.rest.internal.resources.SearchResource;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 
 /**
- * Extension point for the {@link SearchResource} class
+ * "attributes.docker.content_digest" {@link SearchContribution} (adds a prefix query for content_digest).
  *
- * @since 3.8
+ * @since 3.15
  */
-public interface SearchResourceExtension
+@Named("assets.attributes.docker.content_digest")
+@Singleton
+public class DockerContentDigestSearchContribution
+    extends SearchContributionSupport
 {
-  /**
-   * Update the {@link ComponentXO} with data from the {@link SearchHit}
-   */
-  ComponentXO updateComponentXO(ComponentXO componentXO, SearchHit hit);
+
+  @Override
+  public void contribute(final BoolQueryBuilder query, final String type, final String value) {
+    if (value != null) {
+      query.filter(QueryBuilders.termQuery(type, value));
+    }
+  }
+
 }

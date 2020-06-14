@@ -22,8 +22,8 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
-import org.sonatype.nexus.repository.search.SearchResultComponent;
-import org.sonatype.nexus.repository.search.SearchResultComponentGeneratorSupport;
+import org.sonatype.nexus.repository.search.query.SearchResultComponent;
+import org.sonatype.nexus.repository.search.query.SearchResultComponentGeneratorSupport;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 

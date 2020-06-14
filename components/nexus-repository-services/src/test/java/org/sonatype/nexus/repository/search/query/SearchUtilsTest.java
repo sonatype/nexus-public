@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.rest.cma;
+package org.sonatype.nexus.repository.search.query;
 
 import java.util.HashMap;
 import java.util.List;
@@ -20,9 +20,6 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
-import org.sonatype.nexus.repository.search.DefaultSearchContribution;
-import org.sonatype.nexus.repository.search.KeywordSearchContribution;
-import org.sonatype.nexus.repository.search.SearchContribution;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;

@@ -12,9 +12,9 @@
  */
 package org.sonatype.nexus.repository.rest.internal.resources;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityId;
@@ -26,21 +26,20 @@ import org.sonatype.nexus.repository.browse.BrowseService;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
-import org.sonatype.nexus.repository.rest.cma.SearchUtils;
-import org.sonatype.nexus.repository.search.DefaultSearchContribution;
-import org.sonatype.nexus.repository.search.KeywordSearchContribution;
-import org.sonatype.nexus.repository.search.SearchContribution;
+import org.sonatype.nexus.repository.search.query.DefaultSearchContribution;
+import org.sonatype.nexus.repository.search.query.KeywordSearchContribution;
+import org.sonatype.nexus.repository.search.query.SearchContribution;
+import org.sonatype.nexus.repository.search.query.SearchUtils;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 
 import com.google.common.base.Supplier;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.mockito.Mockito.when;
 
@@ -80,6 +79,9 @@ public abstract class RepositoryResourceTestSupport
       )
   );
 
+  Map<String, String> testChecksum =
+      ImmutableMap.of(HashAlgorithm.SHA1.name(), "87acec17cd9dcd20a716cc2cf67417b71c8a7016");
+
   SearchUtils searchUtils;
 
   AssetMapUtils assetMapUtils;
@@ -114,14 +116,13 @@ public abstract class RepositoryResourceTestSupport
   }
 
   Asset getMockedAsset(String name, String idValue) {
-    Map<String,Object> checksum = Maps.newHashMap(ImmutableMap.of(HashAlgorithm.SHA1.name(), "87acec17cd9dcd20a716cc2cf67417b71c8a7016"));
-
     AssetMocks assetMocks = new AssetMocks();
     MockitoAnnotations.initMocks(assetMocks);
 
     when(assetMocks.asset.name()).thenReturn(name);
     when(assetMocks.asset.getEntityMetadata()).thenReturn(assetMocks.assetEntityMetadata);
-    when(assetMocks.asset.attributes()).thenReturn(new NestedAttributesMap("attributes", ImmutableMap.of(Asset.CHECKSUM, checksum)));
+    NestedAttributesMap attributes = new NestedAttributesMap("attributes", ImmutableMap.of(Asset.CHECKSUM, testChecksum));
+    when(assetMocks.asset.attributes()).thenReturn(attributes);
 
     when(assetMocks.assetEntityMetadata.getId()).thenReturn(assetMocks.assetEntityId);
     when(assetMocks.assetEntityId.getValue()).thenReturn(idValue);

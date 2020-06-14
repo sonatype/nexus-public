@@ -23,8 +23,8 @@ import org.sonatype.nexus.repository.rest.SearchMappings;
 
 import com.google.common.collect.ImmutableList;
 
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.IS_PRERELEASE_KEY;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REPOSITORY_NAME;
+import static org.sonatype.nexus.repository.search.index.SearchConstants.IS_PRERELEASE_KEY;
+import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
 
 /**
  * @since 3.7

@@ -29,9 +29,9 @@ import io.swagger.annotations.ApiResponses;
 
 import static org.sonatype.nexus.repository.rest.internal.resources.AssetDownloadResponseProcessor.NO_SEARCH_RESULTS_FOUND;
 import static org.sonatype.nexus.repository.rest.internal.resources.AssetDownloadResponseProcessor.SEARCH_RETURNED_MULTIPLE_ASSETS;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.GROUP;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.NAME;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.VERSION;
+import static org.sonatype.nexus.repository.search.index.SearchConstants.GROUP;
+import static org.sonatype.nexus.repository.search.index.SearchConstants.NAME;
+import static org.sonatype.nexus.repository.search.index.SearchConstants.VERSION;
 
 /**
  * Swagger documentation for {@link SearchResource}

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search;
+package org.sonatype.nexus.repository.search.query;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -30,7 +30,7 @@ import org.mockito.Mock;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REPOSITORY_NAME;
+import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
 
 public class RepositorySearchContributionTest
   extends TestSupport

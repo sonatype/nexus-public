@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search;
+package org.sonatype.nexus.repository.search.query;
 
 import java.util.Map;
 import java.util.Set;
@@ -25,10 +25,10 @@ import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 
 import org.elasticsearch.search.SearchHit;
 
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.FORMAT;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.GROUP;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.NAME;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.VERSION;
+import static org.sonatype.nexus.repository.search.index.SearchConstants.FORMAT;
+import static org.sonatype.nexus.repository.search.index.SearchConstants.GROUP;
+import static org.sonatype.nexus.repository.search.index.SearchConstants.NAME;
+import static org.sonatype.nexus.repository.search.index.SearchConstants.VERSION;
 
 /**
  * @since 3.14

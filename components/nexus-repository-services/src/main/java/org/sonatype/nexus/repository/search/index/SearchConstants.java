@@ -24,4 +24,22 @@ public interface SearchConstants
   String FORMAT = "format";
 
   String REPOSITORY_NAME = "repository_name";
+
+  String GROUP = "group";
+
+  String ID = "id";
+
+  String NAME = "name";
+
+  String VERSION = "version";
+
+  String NORMALIZED_VERSION = "normalized_version";
+
+  String IS_PRERELEASE_KEY = "isPrerelease";
+
+  String ASSETS = "assets";
+
+  String ATTRIBUTES = "attributes";
+
+  String CHECKSUM = "checksum";
 }

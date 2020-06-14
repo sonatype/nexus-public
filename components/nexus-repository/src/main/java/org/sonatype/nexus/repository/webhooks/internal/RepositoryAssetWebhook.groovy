@@ -18,7 +18,7 @@ import javax.inject.Singleton
 
 import org.sonatype.nexus.audit.InitiatorProvider
 import org.sonatype.nexus.common.node.NodeAccess
-import org.sonatype.nexus.repository.rest.internal.api.RepositoryItemIDXO
+import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO
 import org.sonatype.nexus.repository.storage.Asset
 import org.sonatype.nexus.repository.storage.AssetCreatedEvent
 import org.sonatype.nexus.repository.storage.AssetDeletedEvent

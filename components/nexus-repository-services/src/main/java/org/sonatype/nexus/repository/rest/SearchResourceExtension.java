@@ -10,18 +10,22 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search;
+package org.sonatype.nexus.repository.rest;
 
-import java.util.Set;
+import org.sonatype.nexus.repository.rest.api.ComponentXO;
+import org.sonatype.nexus.repository.rest.internal.resources.SearchResource;
 
 import org.elasticsearch.search.SearchHit;
 
 /**
+ * Extension point for the {@link SearchResource} class
  *
- *
- * @since 3.14
+ * @since 3.8
  */
-public interface SearchResultComponentGenerator
+public interface SearchResourceExtension
 {
-  SearchResultComponent from(final SearchHit hit, final Set<String> componentIdSet);
+  /**
+   * Update the {@link ComponentXO} with data from the {@link SearchHit}
+   */
+  ComponentXO updateComponentXO(ComponentXO componentXO, SearchHit hit);
 }

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.rest.cma;
+package org.sonatype.nexus.repository.search.query;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,9 +30,6 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
-import org.sonatype.nexus.repository.search.DefaultSearchContribution;
-import org.sonatype.nexus.repository.search.SearchContribution;
-import org.sonatype.nexus.repository.search.SearchFilter;
 
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -47,11 +44,11 @@ import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.StreamSupport.stream;
 import static org.elasticsearch.search.sort.SortBuilders.fieldSort;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.GROUP;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.NAME;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.NORMALIZED_VERSION;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REPOSITORY_NAME;
-import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.VERSION;
+import static org.sonatype.nexus.repository.search.index.SearchConstants.GROUP;
+import static org.sonatype.nexus.repository.search.index.SearchConstants.NAME;
+import static org.sonatype.nexus.repository.search.index.SearchConstants.NORMALIZED_VERSION;
+import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
+import static org.sonatype.nexus.repository.search.index.SearchConstants.VERSION;
 
 /**
  * @since 3.7
@@ -227,6 +224,8 @@ public class SearchUtils
         case "desc":
         case "descending":
           return SortOrder.DESC;
+        default:
+          break;
       }
     }
 

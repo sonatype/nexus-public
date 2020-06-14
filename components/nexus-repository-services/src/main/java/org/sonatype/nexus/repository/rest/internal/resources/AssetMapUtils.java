@@ -22,7 +22,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.core.MultivaluedMap;
 
-import org.sonatype.nexus.repository.rest.cma.SearchUtils;
+import org.sonatype.nexus.repository.search.query.SearchUtils;
 
 import com.google.common.annotations.VisibleForTesting;
 

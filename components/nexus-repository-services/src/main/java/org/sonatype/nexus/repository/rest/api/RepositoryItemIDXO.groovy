@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.rest.internal.api
+package org.sonatype.nexus.repository.rest.api
 
 import javax.ws.rs.NotFoundException
 import javax.ws.rs.WebApplicationException
