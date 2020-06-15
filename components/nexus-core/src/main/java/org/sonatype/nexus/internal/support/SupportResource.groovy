@@ -67,4 +67,21 @@ class SupportResource
     }
     Response.ok(entity).header('Content-Disposition', "attachment; filename=\"$name\"").build()
   }
+
+  @RequiresAuthentication
+  @RequiresPermissions('nexus:atlas:create')
+  @ApiOperation('Creates a support zip and returns the path')
+  @Consumes([APPLICATION_JSON])
+  @Produces([APPLICATION_JSON])
+  @POST
+  @Path("/supportzippath")
+  SupportZipXO supportzippath(final SupportZipGenerator.Request request) {
+    def result = supportZipGenerator.generate(request)
+    return new SupportZipXO(
+        file: result.localPath,
+        name: result.filename,
+        size: result.size,
+        truncated: result.truncated
+    )
+  }
 }

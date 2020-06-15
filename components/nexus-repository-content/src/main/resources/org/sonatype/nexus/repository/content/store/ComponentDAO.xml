@@ -25,6 +25,7 @@
       repository_id INT NOT NULL,
       namespace     VARCHAR NOT NULL,
       name          VARCHAR NOT NULL,
+      kind          VARCHAR NOT NULL,
       version       VARCHAR NOT NULL,
       attributes    ${JSON_TYPE} NOT NULL,
       created       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -35,6 +36,9 @@
       CONSTRAINT fk_${format}_component_repository_id FOREIGN KEY (repository_id)
          REFERENCES ${format}_content_repository (repository_id)
     );
+
+    CREATE INDEX IF NOT EXISTS idx_${format}_component_kind ON ${format}_component (kind);
+
     --
   </insert>
 
@@ -59,6 +63,9 @@
 
   <select id="browseComponents" resultType="ComponentData">
     SELECT * FROM ${format}_component WHERE repository_id = #{repositoryId}
+    <if test="kind != null">
+      AND kind = #{kind}
+    </if>
     <if test="continuationToken != null">
       AND component_id > #{continuationToken}
     </if>
@@ -78,8 +85,8 @@
   </select>
 
   <insert id="createComponent" useGeneratedKeys="true" keyProperty="componentId" parameterType="ComponentData">
-    INSERT INTO ${format}_component (repository_id, namespace, name, version, attributes)
-        VALUES (#{repositoryId}, #{namespace}, #{name}, #{version}, #{attributes});
+    INSERT INTO ${format}_component (repository_id, namespace, name, kind, version, attributes)
+        VALUES (#{repositoryId}, #{namespace}, #{name}, #{kind}, #{version}, #{attributes});
   </insert>
 
   <select id="readComponent" resultType="ComponentData">

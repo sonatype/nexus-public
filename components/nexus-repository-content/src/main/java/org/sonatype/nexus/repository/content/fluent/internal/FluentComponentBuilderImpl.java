@@ -34,6 +34,8 @@ public class FluentComponentBuilderImpl
 
   private final String name;
 
+  private String kind = "";
+
   private String namespace = "";
 
   private String version = "";
@@ -46,6 +48,12 @@ public class FluentComponentBuilderImpl
   @Override
   public FluentComponentBuilder namespace(final String namespace) {
     this.namespace = checkNotNull(namespace);
+    return this;
+  }
+
+  @Override
+  public FluentComponentBuilder kind(String kind) {
+    this.kind = checkNotNull(kind);
     return this;
   }
 
@@ -74,6 +82,7 @@ public class FluentComponentBuilderImpl
     component.setRepositoryId(facet.contentRepositoryId());
     component.setNamespace(namespace);
     component.setName(name);
+    component.setKind(kind);
     component.setVersion(version);
 
     facet.stores().componentStore.createComponent(component);

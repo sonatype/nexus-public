@@ -114,7 +114,11 @@ public interface SearchService
    *
    * @since 3.1
    */
-  SearchResponse search(QueryBuilder query, @Nullable List<SortBuilder> sort, int from, int size, Integer timeout);
+  SearchResponse search(QueryBuilder query,
+                        @Nullable List<SortBuilder> sort,
+                        int from,
+                        int size,
+                        @Nullable Integer timeout);
 
   /**
    * Search component metadata and browse results with content selectors applied.
@@ -128,18 +132,18 @@ public interface SearchService
    *
    * @since 3.14
    */
-  SearchResponse searchUnrestrictedInRepos(final QueryBuilder query,
-                                           @Nullable final List<SortBuilder> sort,
-                                           final int from,
-                                           final int size,
+  SearchResponse searchUnrestrictedInRepos(QueryBuilder query,
+                                           @Nullable List<SortBuilder> sort,
+                                           int from,
+                                           int size,
                                            Collection<String> repoNames);
   /**
    * @since 3.24
    */
-  SearchResponse searchUnrestrictedInReposWithAggregations(final QueryBuilder query,
-                                                           final List<AggregationBuilder> aggregations,
-                                                           final List<SortBuilder> sort,
-                                                           final Collection<String> repoNames);
+  SearchResponse searchUnrestrictedInReposWithAggregations(QueryBuilder query,
+                                                           List<AggregationBuilder> aggregations,
+                                                           @Nullable List<SortBuilder> sort,
+                                                           Collection<String> repoNames);
 
   /**
    * Search component metadata and browse results using aggregations with content selectors applied.

@@ -14,7 +14,6 @@ package org.sonatype.nexus.testsuite.testsupport.pypi
 
 import javax.inject.Inject
 
-import org.sonatype.nexus.common.entity.EntityId
 import org.sonatype.nexus.common.log.LogManager
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.storage.ComponentMaintenance
@@ -92,7 +91,7 @@ class PyPiITSupport
   }
 
   Repository createPyPiHostedRepository(final String name, final WritePolicy writePolicy = ALLOW) {
-    return repos.createPyPiHosted(name, writePolicy)
+    return repos.createPyPiHosted(name, writePolicy.toString())
   }
 
   Repository createPyPiGroupRepository(final String name, final String... members) {
@@ -124,11 +123,7 @@ class PyPiITSupport
   }
 
   void deleteAsset(final Repository repository, final String assetName) {
-    def maintenanceFacet = repository.facet(ComponentMaintenance.class)
-
-    EntityId assetId = findAsset(repository, assetName).getEntityMetadata().getId()
-
-    maintenanceFacet.deleteAsset(assetId)
+    componentAssetTestHelper.removeAsset(repository, assetName);
   }
 
   void deleteComponent(final Repository repository, final String componentName) {

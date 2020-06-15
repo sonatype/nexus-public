@@ -15,6 +15,7 @@ import LoggingConfiguration from './components/pages/admin/LoggingConfiguration/
 import SystemInformation from './components/pages/admin/SystemInformation/SystemInformation';
 import SupportRequest from './components/pages/admin/SupportRequest/SupportRequest';
 import MetricHealth from "./components/pages/admin/MetricHealth/MetricHealth";
+import SupportZip from "./components/pages/admin/SupportZip/SupportZip";
 
 import UIStrings from './constants/UIStrings';
 import UserAccount from "./components/pages/admin/UserAccount/UserAccount";
@@ -103,6 +104,18 @@ window.plugins.push({
       description: 'System status checks',
       view: MetricHealth,
       iconCls: 'x-fa fa-medkit',
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        permissions: ['nexus:metrics:read']
+      }
+    },
+    {
+      mode: 'admin',
+      path: '/Support/SupportZip',
+      text: UIStrings.SUPPORT_ZIP.MENU.text,
+      description: UIStrings.SUPPORT_ZIP.MENU.description,
+      view: SupportZip,
+      iconCls: 'x-fa fa-file-archive',
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         permissions: ['nexus:metrics:read']

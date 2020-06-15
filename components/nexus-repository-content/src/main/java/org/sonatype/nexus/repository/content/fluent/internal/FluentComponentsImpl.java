@@ -14,6 +14,8 @@ package org.sonatype.nexus.repository.content.fluent.internal;
 
 import java.util.Collection;
 
+import javax.annotation.Nullable;
+
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
@@ -49,9 +51,13 @@ public class FluentComponentsImpl
   }
 
   @Override
-  public Continuation<FluentComponent> browse(final int limit, final String continuationToken) {
+  public Continuation<FluentComponent> browse(
+      @Nullable final String kind,
+      final int limit,
+      final String continuationToken)
+  {
     return new FluentContinuation<>(
-        facet.stores().componentStore.browseComponents(facet.contentRepositoryId(), limit, continuationToken),
+        facet.stores().componentStore.browseComponents(facet.contentRepositoryId(), kind, limit, continuationToken),
         this::with);
   }
 

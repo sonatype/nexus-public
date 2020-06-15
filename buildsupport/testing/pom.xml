@@ -134,7 +134,13 @@
       <dependency>
         <groupId>com.sonatype.nexus</groupId>
         <artifactId>nexus-db-migrator</artifactId>
-        <version>3.22.1-01</version>
+        <version>3.23.0-SNAPSHOT</version>
+        <exclusions>
+          <exclusion>
+            <groupId>*</groupId>
+            <artifactId>*</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <!--

@@ -23,13 +23,11 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.browse.BrowseResult;
+import org.sonatype.nexus.repository.rest.SearchResourceExtension;
 import org.sonatype.nexus.repository.rest.api.AssetXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
-import org.sonatype.nexus.repository.rest.cma.SearchResourceExtension;
-import org.sonatype.nexus.repository.search.SearchService;
-import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.search.query.SearchQueryService;
 import org.sonatype.nexus.rest.Page;
 
 import com.google.common.collect.ImmutableSet;
@@ -37,7 +35,6 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
-import org.elasticsearch.search.sort.SortBuilder;
 import org.jboss.resteasy.spi.ResteasyUriInfo;
 import org.junit.Before;
 import org.junit.Rule;
@@ -50,8 +47,6 @@ import org.mockito.Spy;
 
 import static com.google.common.collect.ImmutableMap.of;
 import static com.google.common.collect.Lists.newArrayList;
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 import static org.elasticsearch.index.query.QueryBuilders.queryStringQuery;
@@ -63,7 +58,6 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.collection.IsMapContaining.hasKey;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -79,7 +73,7 @@ public class SearchResourceTest
   public ExpectedException thrown = ExpectedException.none();
 
   @Mock
-  SearchService searchService;
+  SearchQueryService searchQueryService;
 
   @Mock
   SearchResponse searchResponse;
@@ -99,14 +93,8 @@ public class SearchResourceTest
   @Captor
   ArgumentCaptor<QueryBuilder> queryBuilderArgumentCaptor;
 
-  @Captor
-  ArgumentCaptor<List<SortBuilder>> sortBuilderArgumentCaptor;
-
   @Mock
   Repository repository;
-
-  @Mock
-  BrowseResult<Asset> browseResult;
 
   @Spy
   SearchResourceExtension searchResourceExtension = new TestSearchResourceExtension();
@@ -118,7 +106,7 @@ public class SearchResourceTest
     configureMockedRepository(repository, "test-repo", "http://localhost:8081/test");
     setupResponse();
 
-    underTest = new SearchResource(searchUtils, assetMapUtils, browseService, searchService, new TokenEncoder(),
+    underTest = new SearchResource(searchUtils, assetMapUtils, searchQueryService, new TokenEncoder(),
         new ComponentXOFactory(emptySet()), ImmutableSet.of(searchResourceExtension));
   }
 
@@ -148,13 +136,6 @@ public class SearchResourceTest
     when(searchHitMaven_withMultipleAssets.getSource()).thenReturn(component_with_multiple_assets);
     when(searchHitMaven_withMultipleAssets.getId()).thenReturn("id2");
 
-    when(browseService.browseComponentAssets(eq(repository), anyString())).thenReturn(browseResult);
-    Asset mockedAsset = getMockedAsset("first", "one");
-    Asset mockedAsset1 = getMockedAsset("second", "two");
-
-    when(browseResult.getResults()).thenReturn(asList(mockedAsset,
-        mockedAsset1));
-
     List<?> assets2 = newArrayList(
         createAsset("bar.one", "npm", "third-sha1", of("extension", "one")),
         createAsset("bar.two", "npm", "fourth-sha1", of("extension", "two")),
@@ -173,7 +154,7 @@ public class SearchResourceTest
     //the expected query
     QueryBuilder expected = boolQuery().must(queryStringQuery("maven2").field("format").lowercaseExpandedTerms(false));
 
-    when(searchService.search(queryBuilderArgumentCaptor.capture(), eq(emptyList()), eq(0), eq(50), eq(null)))
+    when(searchQueryService.search(queryBuilderArgumentCaptor.capture(), eq(0), eq(50)))
         .thenReturn(searchResponse);
 
     Page<ComponentXO> componentPage = underTest.search(null, null, null, null, uriInfo("?format=maven2"));
@@ -189,8 +170,7 @@ public class SearchResourceTest
     ComponentXO componentXO1 = items.stream().filter(item -> item.getName().equals("bar")).findFirst().get();
     assertThat(componentXO1.getGroup(), is("group2"));
     assertThat(componentXO1.getVersion(), is("2.0"));
-    assertThat(componentXO1.getAssets().get(0).getChecksum().get("sha1"),
-        is("87acec17cd9dcd20a716cc2cf67417b71c8a7016"));
+    assertThat(componentXO1.getAssets().get(0).getChecksum().get("sha1"), is("third-sha1"));
 
     assertThat(queryBuilderArgumentCaptor.getValue().toString(), is(expected.toString()));
     verify(searchResourceExtension, times(2)).updateComponentXO(any(ComponentXO.class), any(SearchHit.class));
@@ -200,7 +180,7 @@ public class SearchResourceTest
   public void testSearchWithChecksum() {
     when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitNpm});
 
-    when(searchService.search(queryBuilderArgumentCaptor.capture(), eq(emptyList()), eq(0), eq(50), eq(null)))
+    when(searchQueryService.search(queryBuilderArgumentCaptor.capture(), eq(0), eq(50)))
         .thenReturn(searchResponse);
 
     Page<AssetXO> assets = underTest.searchAssets(null, null, null, null, uriInfo("?format=npm"));
@@ -217,7 +197,7 @@ public class SearchResourceTest
   public void testSearch_Multiple_By_Extension_Empty_Classifier_Return_Maven_Asset_Without_Classifier() {
     when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitMaven_withMultipleAssets});
 
-    when(searchService.search(queryBuilderArgumentCaptor.capture(), eq(emptyList()), eq(0), eq(50), eq(null)))
+    when(searchQueryService.search(queryBuilderArgumentCaptor.capture(), eq(0), eq(50)))
         .thenReturn(searchResponse);
 
     Page<AssetXO> assets = underTest.searchAssets(null, null, null, null,
@@ -231,7 +211,7 @@ public class SearchResourceTest
   public void testSearch_Multiple_By_AVE_And_Empty_Classifier_Return_Maven_WithOut_Classifier() {
     when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitMaven_withMultipleAssets});
 
-    when(searchService.search(queryBuilderArgumentCaptor.capture(), eq(emptyList()), eq(0), eq(50), eq(null)))
+    when(searchQueryService.search(queryBuilderArgumentCaptor.capture(), eq(0), eq(50)))
         .thenReturn(searchResponse);
 
     Page<AssetXO> assets = underTest.searchAssets(null, null, null, null,
@@ -251,7 +231,7 @@ public class SearchResourceTest
   public void testSearch_Multiple_By_Classifier_Return_Maven_With_Classifier() {
     when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitMaven_withMultipleAssets});
 
-    when(searchService.search(queryBuilderArgumentCaptor.capture(), eq(emptyList()), eq(0), eq(50), eq(null)))
+    when(searchQueryService.search(queryBuilderArgumentCaptor.capture(), eq(0), eq(50)))
         .thenReturn(searchResponse);
 
     Page<AssetXO> assets = underTest.searchAssets(null, null, null, null,
@@ -265,7 +245,7 @@ public class SearchResourceTest
   public void testSearch_Multiple_By_GA_And_Classifier_Return_Maven_Asset_With_Classifier() {
     when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitMaven_withMultipleAssets});
 
-    when(searchService.search(queryBuilderArgumentCaptor.capture(), eq(emptyList()), eq(0), eq(50), eq(null)))
+    when(searchQueryService.search(queryBuilderArgumentCaptor.capture(), eq(0), eq(50)))
         .thenReturn(searchResponse);
 
     Page<AssetXO> assets = underTest.searchAssets(null, null, null, null,
@@ -279,7 +259,7 @@ public class SearchResourceTest
   public void testSearch_Using_Long_And_Short_AssetParamNames() {
     when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitMaven, searchHitNpm});
 
-    when(searchService.search(queryBuilderArgumentCaptor.capture(), eq(emptyList()), eq(0), eq(50), eq(null)))
+    when(searchQueryService.search(queryBuilderArgumentCaptor.capture(), eq(0), eq(50)))
         .thenReturn(searchResponse);
 
     Page<AssetXO> assets_longName = underTest.searchAssets(null, null, null, null,
@@ -297,7 +277,7 @@ public class SearchResourceTest
   public void testSearch_When_Multiple_Aliases_For_An_AssetAttribute() {
     when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitMaven, searchHitNpm});
 
-    when(searchService.search(queryBuilderArgumentCaptor.capture(), eq(emptyList()), eq(0), eq(50), eq(null)))
+    when(searchQueryService.search(queryBuilderArgumentCaptor.capture(), eq(0), eq(50)))
         .thenReturn(searchResponse);
 
     Page<AssetXO> assets_shortName = underTest.searchAssets(null, null, null, null,
@@ -316,7 +296,7 @@ public class SearchResourceTest
   public void testSearch_With_UnMapped_Long_AssetAttribute() {
     when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitMaven});
 
-    when(searchService.search(queryBuilderArgumentCaptor.capture(), eq(emptyList()), eq(0), eq(50), eq(null)))
+    when(searchQueryService.search(queryBuilderArgumentCaptor.capture(), eq(0), eq(50)))
         .thenReturn(searchResponse);
 
     //Positive case, 'classifier' is unmapped
@@ -349,11 +329,11 @@ public class SearchResourceTest
     when(multipleAssetSearchHits2.hits()).thenReturn(new SearchHit[]{searchHitMaven_withMultipleAssets});
     when(multipleAssetSearchHits3.hits()).thenReturn(new SearchHit[]{});
 
-    when(searchService.search(any(), eq(emptyList()), eq(0), eq(1), eq(null)))
+    when(searchQueryService.search(any(), eq(0), eq(1)))
         .thenReturn(multipleAssetsSearchResponse1);
-    when(searchService.search(any(), eq(emptyList()), eq(1), eq(1), eq(null)))
+    when(searchQueryService.search(any(), eq(1), eq(1)))
         .thenReturn(multipleAssetsSearchResponse2);
-    when(searchService.search(any(), eq(emptyList()), eq(2), eq(1), eq(null)))
+    when(searchQueryService.search(any(), eq(2), eq(1)))
         .thenReturn(multipleAssetsSearchResponse3);
 
     underTest.setPageSize(1);
@@ -373,38 +353,11 @@ public class SearchResourceTest
   }
 
   @Test
-  public void testSearch_withSort() {
-    when(searchService
-        .search(queryBuilderArgumentCaptor.capture(), sortBuilderArgumentCaptor.capture(), eq(0), eq(50), eq(null)))
-        .thenReturn(searchResponse);
-
-    underTest.search(null, "group", "desc", null, uriInfo("?format=maven2"));
-
-    //validating contents of the SortBuilder is nightmarish, see SearchUtilsTest
-    //so just validating the proper number are assigned for group sort
-    assertThat(sortBuilderArgumentCaptor.getValue().size(), is(3));
-  }
-
-  @Test
-  public void testSearchAssets_withSort() {
-    when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitNpm});
-    when(searchService
-        .search(queryBuilderArgumentCaptor.capture(), sortBuilderArgumentCaptor.capture(), eq(0), eq(50), eq(null)))
-        .thenReturn(searchResponse);
-
-    underTest.searchAssets(null, "group", "desc", null, uriInfo("?format=npm"));
-
-    //validating contents of the SortBuilder is nightmarish, see SearchUtilsTest
-    //so just validating the proper number are assigned for group sort
-    assertThat(sortBuilderArgumentCaptor.getValue().size(), is(3));
-  }
-
-  @Test
   public void testSearchAndDownload_NoAssetParams_WillReturnAll() {
     // mock Elastic is only returning npm
     when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitNpm});
 
-    when(searchService.search(queryBuilderArgumentCaptor.capture(), eq(emptyList()), eq(0), eq(50), eq(null)))
+    when(searchQueryService.search(queryBuilderArgumentCaptor.capture(), eq(0), eq(50)))
         .thenReturn(searchResponse);
 
     Page<AssetXO> assets = underTest.searchAssets(null, null, null, null,
@@ -431,7 +384,7 @@ public class SearchResourceTest
   public void testSearchAndDownload_SpecificAssetParam_WillReturnOne() {
     when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitNpm});
 
-    when(searchService.search(queryBuilderArgumentCaptor.capture(), eq(emptyList()), eq(0), eq(50), eq(null)))
+    when(searchQueryService.search(queryBuilderArgumentCaptor.capture(), eq(0), eq(50)))
         .thenReturn(searchResponse);
 
     Page<AssetXO> assets = underTest.searchAssets(null, null, null, null,
@@ -456,7 +409,7 @@ public class SearchResourceTest
   @Test
   public void testSearchAndDownload_SpecificAssetParam_NotFound() {
     when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitNpm});
-    when(searchService.search(queryBuilderArgumentCaptor.capture(), eq(emptyList()), eq(0), eq(50), eq(null)))
+    when(searchQueryService.search(queryBuilderArgumentCaptor.capture(), eq(0), eq(50)))
         .thenReturn(searchResponse);
 
     Page<AssetXO> assets = underTest.searchAssets(null, null, null, null,
@@ -470,7 +423,7 @@ public class SearchResourceTest
   @Test
   public void testSearchAndDownload_SpecificAssetParam_NotFound_404_HTTP_RESPONSE() {
     when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitNpm});
-    when(searchService.search(queryBuilderArgumentCaptor.capture(), eq(emptyList()), eq(0), eq(50), eq(null)))
+    when(searchQueryService.search(queryBuilderArgumentCaptor.capture(), eq(0), eq(50)))
         .thenReturn(searchResponse);
     try {
       underTest.searchAndDownloadAssets(null, null, null, uriInfo("?format=npm&sha1=notfound"));
@@ -484,7 +437,7 @@ public class SearchResourceTest
   public void testSearchAndDownload_SpecificAssetParam_NotFound_400_HTTP_RESPONSE() {
     // mock Elastic is only returning npm
     when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitNpm});
-    when(searchService.search(queryBuilderArgumentCaptor.capture(), eq(emptyList()), eq(0), eq(50), eq(null)))
+    when(searchQueryService.search(queryBuilderArgumentCaptor.capture(), eq(0), eq(50)))
         .thenReturn(searchResponse);
     try {
       underTest.searchAndDownloadAssets(null, null, null, uriInfo("?format=npm"));
@@ -497,7 +450,7 @@ public class SearchResourceTest
   @Test
   public void testSearchAndDownload_SpecificAssetParam_AssetFound_302_REDIRECT() {
     when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitNpm});
-    when(searchService.search(queryBuilderArgumentCaptor.capture(), eq(emptyList()), eq(0), eq(50), eq(null)))
+    when(searchQueryService.search(queryBuilderArgumentCaptor.capture(), eq(0), eq(50)))
         .thenReturn(searchResponse);
     Response response = underTest.searchAndDownloadAssets(null, null, null,
         uriInfo("?format=npm&sha1=fifth-sha1"));
@@ -508,7 +461,7 @@ public class SearchResourceTest
   @Test
   public void testSearchAndDownload_WithLongAssetParam_AssetFound_302_REDIRECT() {
     when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitMaven});
-    when(searchService.search(queryBuilderArgumentCaptor.capture(), eq(emptyList()), eq(0), eq(50), eq(null)))
+    when(searchQueryService.search(queryBuilderArgumentCaptor.capture(), eq(0), eq(50)))
         .thenReturn(searchResponse);
     Response response = underTest.searchAndDownloadAssets(null, null, null,
         uriInfo("?assets.attributes.maven2.extension=jar"));
@@ -519,7 +472,7 @@ public class SearchResourceTest
   @Test
   public void testSearchAndDownload_EmptyClassifier_JarAssetFound_302_REDIRECT() {
     when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitMaven_withMultipleAssets});
-    when(searchService.search(queryBuilderArgumentCaptor.capture(), eq(emptyList()), eq(0), eq(50), eq(null)))
+    when(searchQueryService.search(queryBuilderArgumentCaptor.capture(), eq(0), eq(50)))
         .thenReturn(searchResponse);
     Response response =
         underTest.searchAndDownloadAssets(null, null, null,
@@ -531,7 +484,7 @@ public class SearchResourceTest
   @Test
   public void testSearchAndDownload_Classifier_JarAssetFound_302_REDIRECT() {
     when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitMaven_withMultipleAssets});
-    when(searchService.search(queryBuilderArgumentCaptor.capture(), eq(emptyList()), eq(0), eq(50), eq(null)))
+    when(searchQueryService.search(queryBuilderArgumentCaptor.capture(), eq(0), eq(50)))
         .thenReturn(searchResponse);
     Response response =
         underTest.searchAndDownloadAssets(null, null, null,
@@ -543,15 +496,14 @@ public class SearchResourceTest
   @Test
   public void testSearchAndDownload_withSort() {
     when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitNpm});
-    when(searchService
-        .search(queryBuilderArgumentCaptor.capture(), sortBuilderArgumentCaptor.capture(), eq(0), eq(50), eq(null)))
+    when(searchQueryService
+        .search(queryBuilderArgumentCaptor.capture(), eq(0), eq(50)))
         .thenReturn(searchResponse);
 
-    underTest.searchAndDownloadAssets("group", "desc", null, uriInfo("?format=npm&sha1=fifth-sha1"));
+    Response response = underTest.searchAndDownloadAssets("group", "desc", null, uriInfo("?format=npm&sha1=fifth-sha1"));
 
-    //validating contents of the SortBuilder is nightmarish, see SearchUtilsTest
-    //so just validating the proper number are assigned for group sort
-    assertThat(sortBuilderArgumentCaptor.getValue().size(), is(3));
+    assertThat(response.getStatus(), equalTo(302));
+    assertThat(response.getHeaderString("Location"), is("http://localhost:8081/test/bar.three"));
   }
 
   @Test

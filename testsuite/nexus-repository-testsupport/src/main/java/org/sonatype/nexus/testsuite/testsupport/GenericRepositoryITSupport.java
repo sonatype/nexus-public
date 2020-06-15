@@ -16,7 +16,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -27,10 +26,6 @@ import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.Component;
-import org.sonatype.nexus.repository.storage.StorageFacet;
-import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authc.apikey.ApiKeyStore;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
@@ -46,6 +41,7 @@ import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.security.user.UserStatus;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorManager;
+import org.sonatype.nexus.testsuite.helpers.ComponentAssetTestHelper;
 import org.sonatype.nexus.testsuite.testsupport.apt.AptClient;
 import org.sonatype.nexus.testsuite.testsupport.apt.AptClientFactory;
 import org.sonatype.nexus.testsuite.testsupport.cocoapods.CocoapodsClient;
@@ -71,10 +67,8 @@ import org.junit.Rule;
 import org.junit.rules.RuleChain;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Lists.newArrayList;
 import static org.hamcrest.Matchers.is;
 import static org.sonatype.nexus.repository.http.HttpStatus.OK;
-import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 import static org.sonatype.nexus.testsuite.testsupport.FormatClientSupport.status;
 
@@ -93,6 +87,9 @@ public abstract class GenericRepositoryITSupport<RR extends RepositoryRule>
   protected CondaClientFactory condaClientFactory = new CondaClientFactory();
 
   protected CocoapodsClientFactory cocoapodsClientFactory = new CocoapodsClientFactory();
+
+  @Inject
+  protected ComponentAssetTestHelper componentAssetTestHelper;
 
   @Inject
   protected RepositoryManager repositoryManager;
@@ -299,44 +296,7 @@ public abstract class GenericRepositoryITSupport<RR extends RepositoryRule>
   }
 
   protected DateTime getLastDownloadedTime(final Repository repository, final String assetName) {
-    try (StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get()) {
-      tx.begin();
-
-      Iterable<Asset> assets = tx.browseAssets(tx.findBucket(repository));
-      for (Asset asset : assets) {
-        if (asset.name().equals(assetName)) {
-          return asset.lastDownloaded();
-        }
-      }
-
-      return null;
-    }
-  }
-
-  protected static Component findComponent(final Repository repo, final String name) {
-    try (StorageTx tx = getStorageTx(repo)) {
-      tx.begin();
-      return tx.findComponentWithProperty(P_NAME, name, tx.findBucket(repo));
-    }
-  }
-
-  protected static List<Component> getAllComponents(final Repository repo) {
-    try (StorageTx tx = repo.facet(StorageFacet.class).txSupplier().get()) {
-      tx.begin();
-
-      return newArrayList(tx.browseComponents(tx.findBucket(repo)));
-    }
-  }
-
-  protected static Asset findAsset(final Repository repo, final String name) {
-    try (StorageTx tx = getStorageTx(repo)) {
-      tx.begin();
-      return tx.findAssetWithProperty(P_NAME, name, tx.findBucket(repo));
-    }
-  }
-
-  protected static StorageTx getStorageTx(final Repository repository) {
-    return repository.facet(StorageFacet.class).txSupplier().get();
+    return componentAssetTestHelper.getLastDownloadedTime(repository, assetName);
   }
 
   /**

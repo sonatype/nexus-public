@@ -39,6 +39,7 @@ public interface ComponentDAO
    * Browse all components in the given repository in a paged fashion.
    *
    * @param repositoryId the repository to browse
+   * @param kind the kind of components to return
    * @param limit maximum number of components to return
    * @param continuationToken optional token to continue from a previous request
    * @return collection of components and the next continuation token
@@ -46,6 +47,7 @@ public interface ComponentDAO
    * @see Continuation#nextContinuationToken()
    */
   Continuation<Component> browseComponents(@Param("repositoryId") int repositoryId,
+                                           @Param("kind") @Nullable String kind,
                                            @Param("limit") int limit,
                                            @Param("continuationToken") @Nullable String continuationToken);
 

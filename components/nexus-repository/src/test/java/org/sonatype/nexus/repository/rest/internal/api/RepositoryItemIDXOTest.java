@@ -16,6 +16,7 @@ import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO;
 
 import org.junit.Test;
 

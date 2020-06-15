@@ -32,6 +32,8 @@ public class ComponentData
 
   private String name;
 
+  private String kind;
+
   private String version;
 
   // Component API
@@ -44,6 +46,11 @@ public class ComponentData
   @Override
   public String name() {
     return name;
+  }
+
+  @Override
+  public String kind() {
+    return kind;
   }
 
   @Override
@@ -72,6 +79,15 @@ public class ComponentData
    */
   public void setName(final String name) {
     this.name = checkNotNull(name);
+  }
+
+  /**
+   * Sets the component kind.
+   *
+   * @since 3.next
+   */
+  public void setKind(final String kind) {
+    this.kind = checkNotNull(kind);
   }
 
   /**

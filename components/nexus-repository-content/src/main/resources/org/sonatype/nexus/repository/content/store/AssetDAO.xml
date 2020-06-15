@@ -81,6 +81,9 @@
 
   <select id="browseAssets" resultMap="assetResult">
     SELECT * FROM ${format}_asset WHERE repository_id = #{repositoryId}
+    <if test="kind != null">
+      AND kind = #{kind}
+    </if>
     <if test="continuationToken != null">
       AND asset_id > #{continuationToken}
     </if>

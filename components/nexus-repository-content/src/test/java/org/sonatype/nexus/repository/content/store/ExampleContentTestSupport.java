@@ -227,6 +227,7 @@ public class ExampleContentTestSupport
       component.setVersion("");
     }
     component.setAttributes(newAttributes("component"));
+    component.setKind("aKind");
     return component;
   }
 
@@ -236,6 +237,12 @@ public class ExampleContentTestSupport
     asset.setPath(paths.get(random.nextInt(paths.size())));
     asset.setKind("test");
     asset.setAttributes(newAttributes("asset"));
+    return asset;
+  }
+
+  protected TestAssetData randomAsset(final int repositoryId, final String kind) {
+    TestAssetData asset = randomAsset(repositoryId);
+    asset.setKind(kind);
     return asset;
   }
 
@@ -270,7 +277,7 @@ public class ExampleContentTestSupport
   }
 
   static Matcher<Component> sameCoordinates(final Component expected) {
-    return new FieldMatcher<>(expected, Component::namespace, Component::name, Component::version);
+    return new FieldMatcher<>(expected, Component::namespace, Component::name, Component::kind, Component::version);
   }
 
   static Matcher<Asset> samePath(final Asset expected) {

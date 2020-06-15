@@ -53,6 +53,8 @@ import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAG
 public class PurgeUnusedIT
     extends RawITSupport
 {
+  private static final String COMPONENT_KIND = "";
+
   private final String PROXY_REPOSITORY_NAME = "raw-proxy-" + testName.getMethodName();
 
   private static final String ASSET_KIND = "";
@@ -186,6 +188,7 @@ public class PurgeUnusedIT
     componentData.setRepositoryId(contentFacet.contentRepositoryId());
     componentData.setNamespace(NAMESPACE);
     componentData.setName(name);
+    componentData.setKind(COMPONENT_KIND);
     componentData.setVersion(VERSION);
     componentStore.createComponent(componentData);
 

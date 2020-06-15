@@ -28,6 +28,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
+import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.testsuite.testsupport.blobstore.restore.BlobstoreRestoreTestHelper;
 import org.sonatype.nexus.testsuite.testsupport.raw.RawClient;
@@ -152,5 +153,9 @@ public class RawRestoreBlobIT
 
   private Content resolveFile(final String filename) {
     return Behaviours.file(testData.resolveFile(filename));
+  }
+
+  private static StorageTx getStorageTx(final Repository repository) {
+    return repository.facet(StorageFacet.class).txSupplier().get();
   }
 }

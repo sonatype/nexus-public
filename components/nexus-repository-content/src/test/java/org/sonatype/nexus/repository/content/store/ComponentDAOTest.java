@@ -73,12 +73,20 @@ public class ComponentDAOTest
 
     ComponentData component1 = randomComponent(repositoryId);
     ComponentData component2 = randomComponent(repositoryId);
+    ComponentData component3 = randomComponent(repositoryId);
 
     // cover with/without namespace and different versions
+    String akind = "kind1";
+    String anotherKind = "kind2";
     component1.setNamespace("");
     component1.setVersion("1.1");
+    component1.setKind(akind);
     component2.setNamespace("demo");
     component2.setVersion("1.2");
+    component2.setKind(anotherKind);
+    component3.setNamespace("another demo");
+    component3.setVersion("1.0");
+    component3.setKind(anotherKind);
 
     String namespace1 = component1.namespace();
     String name1 = component1.name();
@@ -95,18 +103,26 @@ public class ComponentDAOTest
     try (DataSession<?> session = sessionRule.openSession("content")) {
       ComponentDAO dao = session.access(TestComponentDAO.class);
 
-      assertThat(dao.browseComponents(repositoryId, 10, null), emptyIterable());
+      assertThat(dao.browseComponents(repositoryId, null, 10, null), emptyIterable());
 
       dao.createComponent(component1);
 
-      assertThat(dao.browseComponents(repositoryId, 10, null),
+      assertThat(dao.browseComponents(repositoryId, null, 10, null),
           contains(allOf(sameCoordinates(component1), sameAttributes(component1))));
 
       dao.createComponent(component2);
+      dao.createComponent(component3);
 
-      assertThat(dao.browseComponents(repositoryId, 10, null),
+      //browse all components
+      assertThat(dao.browseComponents(repositoryId, null, 10, null),
           contains(allOf(sameCoordinates(component1), sameAttributes(component1)),
-              allOf(sameCoordinates(component2), sameAttributes(component2))));
+              allOf(sameCoordinates(component2), sameAttributes(component2)),
+              allOf(sameCoordinates(component3), sameAttributes(component3))));
+
+      //browse by kind
+      assertThat(dao.browseComponents(repositoryId, anotherKind, 10, null),
+          contains(allOf(sameCoordinates(component2), sameAttributes(component2)),
+              allOf(sameCoordinates(component3), sameAttributes(component3))));
 
       session.getTransaction().commit();
     }
@@ -234,12 +250,13 @@ public class ComponentDAOTest
 
       assertTrue(dao.deleteComponent(component1));
 
-      assertThat(dao.browseComponents(repositoryId, 10, null),
-          contains(allOf(sameCoordinates(component2), sameAttributes(component2))));
+      assertThat(dao.browseComponents(repositoryId, null, 10, null),
+          contains(allOf(sameCoordinates(component2), sameAttributes(component2)),
+              allOf(sameCoordinates(component3), sameAttributes(component3))));
 
       assertTrue(dao.deleteComponents(repositoryId, 0));
 
-      assertThat(dao.browseComponents(repositoryId, 10, null), emptyIterable());
+      assertThat(dao.browseComponents(repositoryId, null, 10, null), emptyIterable());
 
       assertFalse(dao.deleteCoordinate(repositoryId, "test-namespace", "test-name", "test-version"));
     }
@@ -292,7 +309,7 @@ public class ComponentDAOTest
 
       int page = 0;
 
-      Continuation<Component> components = dao.browseComponents(repositoryId, 10, null);
+      Continuation<Component> components = dao.browseComponents(repositoryId, null, 10, null);
       while (!components.isEmpty()) {
 
         // verify we got the expected slice
@@ -303,7 +320,7 @@ public class ComponentDAOTest
                 .map(ExampleContentTestSupport::sameCoordinates)
                 .collect(toList())));
 
-        components = dao.browseComponents(repositoryId, 10, components.nextContinuationToken());
+        components = dao.browseComponents(repositoryId, null, 10, components.nextContinuationToken());
 
         page++;
       }
@@ -323,26 +340,26 @@ public class ComponentDAOTest
     try (DataSession<?> session = sessionRule.openSession("content")) {
       ComponentDAO dao = session.access(TestComponentDAO.class);
 
-      assertThat(dao.browseComponents(repositoryId, 100, null).size(), is(100));
+      assertThat(dao.browseComponents(repositoryId, null, 100, null).size(), is(100));
 
       // must delete assets before we start deleting their components
       session.access(TestAssetDAO.class).deleteAssets(repositoryId, 100);
 
       dao.deleteComponents(repositoryId, 20);
 
-      assertThat(dao.browseComponents(repositoryId, 100, null).size(), is(80));
+      assertThat(dao.browseComponents(repositoryId, null, 100, null).size(), is(80));
 
       dao.deleteComponents(repositoryId, 10);
 
-      assertThat(dao.browseComponents(repositoryId, 100, null).size(), is(70));
+      assertThat(dao.browseComponents(repositoryId, null, 100, null).size(), is(70));
 
       dao.deleteComponents(repositoryId, 0);
 
-      assertThat(dao.browseComponents(repositoryId, 100, null).size(), is(0));
+      assertThat(dao.browseComponents(repositoryId, null, 100, null).size(), is(0));
 
       dao.deleteComponents(repositoryId, -1);
 
-      assertThat(dao.browseComponents(repositoryId, 100, null).size(), is(0));
+      assertThat(dao.browseComponents(repositoryId, null, 100, null).size(), is(0));
     }
   }
 

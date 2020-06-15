@@ -28,10 +28,15 @@ export { default as SectionHeader } from './components/layout/common/SectionHead
 export { default as MasterDetail } from './components/layout/common/MasterDetail/MasterDetail';
 export { default as Master } from './components/layout/common/MasterDetail/Master';
 export { default as Detail } from './components/layout/common/MasterDetail/Detail';
+export { default as Tab } from './components/layout/common/TabPanel/Tab';
+export { default as TabLabel } from './components/layout/common/TabPanel/TabLabel';
+export { default as TabList } from './components/layout/common/TabPanel/TabList';
+export { default as TabPanel } from './components/layout/common/TabPanel/TabPanel';
 
 export { default as Alert } from './components/widgets/Alert/Alert';
 export { default as Button } from './components/widgets/Button/Button';
 export { default as Checkbox } from './components/widgets/Checkbox/Checkbox';
+export { default as CheckboxGroup } from './components/widgets/CheckboxGroup/CheckboxGroup';
 export { default as FieldErrorMessage } from './components/widgets/FieldErrorMessage/FieldErrorMessage';
 export { default as FieldWrapper } from './components/widgets/FieldWrapper/FieldWrapper';
 export { default as Information } from './components/widgets/Information/Information';

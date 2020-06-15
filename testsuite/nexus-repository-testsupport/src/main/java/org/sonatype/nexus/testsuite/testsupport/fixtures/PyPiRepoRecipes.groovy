@@ -16,11 +16,8 @@ import javax.annotation.Nonnull
 
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.config.Configuration
-import org.sonatype.nexus.repository.storage.WritePolicy
 
 import groovy.transform.CompileStatic
-
-import static org.sonatype.nexus.repository.storage.WritePolicy.ALLOW
 
 /**
  * Factory for PyPI {@link Repository} {@link Configuration}.
@@ -35,7 +32,7 @@ trait PyPiRepoRecipes
   }
 
   @Nonnull
-  Repository createPyPiHosted(final String name, final WritePolicy writePolicy = ALLOW) {
+  Repository createPyPiHosted(final String name, final String writePolicy = "ALLOW") {
     createRepository(createHosted(name, 'pypi-hosted', writePolicy, false))
   }
 

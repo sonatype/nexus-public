@@ -74,9 +74,19 @@ public class AssetDAOTest
   @Test
   public void testCrudOperations() throws InterruptedException {
 
+    String aKind = "a kind";
+    String anotherKind = "another kind";
     AssetData asset1 = randomAsset(repositoryId);
     AssetData asset2 = randomAsset(repositoryId);
-    asset2.setPath(asset1.path() + "/2"); // make sure paths are different
+    AssetData asset3 = randomAsset(repositoryId, aKind);
+    AssetData asset4 = randomAsset(repositoryId, anotherKind);
+    AssetData asset5 = randomAsset(repositoryId, anotherKind);
+
+    // make sure paths are different
+    asset2.setPath(asset1.path() + "/2");
+    asset3.setPath(asset1.path() + "/3");
+    asset4.setPath(asset1.path() + "/4");
+    asset5.setPath(asset1.path() + "/5");
 
     String path1 = asset1.path();
     String path2 = asset2.path();
@@ -88,18 +98,34 @@ public class AssetDAOTest
     try (DataSession<?> session = sessionRule.openSession("content")) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
-      assertThat(dao.browseAssets(repositoryId, 10, null), emptyIterable());
+      assertThat(dao.browseAssets(repositoryId, null, 10, null), emptyIterable());
 
       dao.createAsset(asset1);
 
-      assertThat(dao.browseAssets(repositoryId, 10, null), contains(
+      assertThat(dao.browseAssets(repositoryId, null, 10, null), contains(
           allOf(samePath(asset1), sameKind(asset1), sameAttributes(asset1))));
 
       dao.createAsset(asset2);
+      dao.createAsset(asset3);
+      dao.createAsset(asset4);
+      dao.createAsset(asset5);
 
-      assertThat(dao.browseAssets(repositoryId, 10, null), contains(
+      //browse all assets
+      assertThat(dao.browseAssets(repositoryId, null, 10, null), contains(
           allOf(samePath(asset1), sameKind(asset1), sameAttributes(asset1)),
-          allOf(samePath(asset2), sameKind(asset2), sameAttributes(asset2))));
+          allOf(samePath(asset2), sameKind(asset2), sameAttributes(asset2)),
+          allOf(samePath(asset3), sameKind(asset3), sameAttributes(asset3)),
+          allOf(samePath(asset4), sameKind(asset4), sameAttributes(asset4)),
+          allOf(samePath(asset5), sameKind(asset5), sameAttributes(asset5))));
+
+      //browse by kind
+      assertThat(dao.browseAssets(repositoryId, aKind, 10, null), contains(
+          allOf(samePath(asset3), sameKind(asset3), sameAttributes(asset3))));
+
+      assertThat(dao.browseAssets(repositoryId, anotherKind, 10, null), contains(
+          allOf(samePath(asset4), sameKind(asset4), sameAttributes(asset4)),
+          allOf(samePath(asset5), sameKind(asset5), sameAttributes(asset5))));
+
 
       session.getTransaction().commit();
     }
@@ -232,12 +258,15 @@ public class AssetDAOTest
 
       assertTrue(dao.deleteAsset(asset1));
 
-      assertThat(dao.browseAssets(repositoryId, 10, null), contains(
-          allOf(samePath(asset2), sameKind(asset2), sameAttributes(asset2))));
+      assertThat(dao.browseAssets(repositoryId, null, 10, null), contains(
+          allOf(samePath(asset2), sameKind(asset2), sameAttributes(asset2)),
+          allOf(samePath(asset3), sameKind(asset3), sameAttributes(asset3)),
+          allOf(samePath(asset4), sameKind(asset4), sameAttributes(asset4)),
+          allOf(samePath(asset5), sameKind(asset5), sameAttributes(asset5))));
 
       assertTrue(dao.deleteAssets(repositoryId, 0));
 
-      assertThat(dao.browseAssets(repositoryId, 10, null), emptyIterable());
+      assertThat(dao.browseAssets(repositoryId, null, 10, null), emptyIterable());
 
       assertFalse(dao.deletePath(repositoryId, "test-path"));
     }
@@ -482,7 +511,7 @@ public class AssetDAOTest
 
       // now gather them back by browsing
       generatedRepositories().forEach(r ->
-          componentDAO.browseComponents(r.repositoryId, 10, null).stream()
+          componentDAO.browseComponents(r.repositoryId, null, 10, null).stream()
               .map(ComponentData.class::cast)
               .map(assetDao::browseComponentAssets)
               .forEach(browsedAssets::addAll));
@@ -525,7 +554,7 @@ public class AssetDAOTest
 
       int page = 0;
 
-      Continuation<Asset> assets = dao.browseAssets(repositoryId, 10, null);
+      Continuation<Asset> assets = dao.browseAssets(repositoryId, null, 10, null);
       while (!assets.isEmpty()) {
 
         // verify we got the expected slice
@@ -536,7 +565,7 @@ public class AssetDAOTest
                 .map(ExampleContentTestSupport::samePath)
                 .collect(toList())));
 
-        assets = dao.browseAssets(repositoryId, 10, assets.nextContinuationToken());
+        assets = dao.browseAssets(repositoryId, null, 10, assets.nextContinuationToken());
 
         page++;
       }
@@ -591,23 +620,23 @@ public class AssetDAOTest
     try (DataSession<?> session = sessionRule.openSession("content")) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
-      assertThat(dao.browseAssets(repositoryId, 100, null).size(), is(100));
+      assertThat(dao.browseAssets(repositoryId, null, 100, null).size(), is(100));
 
       dao.deleteAssets(repositoryId, 20);
 
-      assertThat(dao.browseAssets(repositoryId, 100, null).size(), is(80));
+      assertThat(dao.browseAssets(repositoryId, null, 100, null).size(), is(80));
 
       dao.deleteAssets(repositoryId, 10);
 
-      assertThat(dao.browseAssets(repositoryId, 100, null).size(), is(70));
+      assertThat(dao.browseAssets(repositoryId, null, 100, null).size(), is(70));
 
       dao.deleteAssets(repositoryId, 0);
 
-      assertThat(dao.browseAssets(repositoryId, 100, null).size(), is(0));
+      assertThat(dao.browseAssets(repositoryId, null, 100, null).size(), is(0));
 
       dao.deleteAssets(repositoryId, -1);
 
-      assertThat(dao.browseAssets(repositoryId, 100, null).size(), is(0));
+      assertThat(dao.browseAssets(repositoryId, null, 100, null).size(), is(0));
     }
   }
 

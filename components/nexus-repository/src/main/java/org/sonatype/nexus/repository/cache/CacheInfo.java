@@ -117,6 +117,18 @@ public class CacheInfo
     return new CacheInfo(lastVerified, cacheToken);
   }
 
+  @Nullable
+  public static CacheInfo extractFromAsset(final NestedAttributesMap attributes) {
+    checkNotNull(attributes);
+    final NestedAttributesMap cache = attributes.child(CACHE);
+    final DateTime lastVerified = toDateTime(cache.get(LAST_VERIFIED, Date.class));
+    if (lastVerified == null) {
+      return null;
+    }
+    final String cacheToken = cache.get(CACHE_TOKEN, String.class);
+    return new CacheInfo(lastVerified, cacheToken);
+  }
+
   /**
    * Applies non-format specific cache info attributes onto passed in {@link Asset}.
    */

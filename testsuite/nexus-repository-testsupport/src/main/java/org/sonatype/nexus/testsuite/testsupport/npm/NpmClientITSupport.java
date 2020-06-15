@@ -30,6 +30,7 @@ import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
 import org.sonatype.nexus.security.anonymous.AnonymousManager;
 import org.sonatype.nexus.security.realm.RealmConfiguration;
 import org.sonatype.nexus.testsuite.testsupport.FormatClientITSupport;
+import org.sonatype.nexus.testsuite.testsupport.utility.SearchTestHelper;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
@@ -72,6 +73,9 @@ public abstract class NpmClientITSupport
   protected NpmCommandLineITSupport npmCli;
 
   private NpmClientFactory npmClientFactory = new NpmClientFactory();
+
+  @Inject
+  protected SearchTestHelper searchTestHelper;
 
   @Inject
   AnonymousManager anonymousManager;
@@ -232,7 +236,7 @@ public abstract class NpmClientITSupport
     assertThat(results.stream().anyMatch(s -> s.contains("added 1 package")), is(true));
   }
 
-  protected void verifyAudit(final List<String> results, String verifyText) {
+  protected void verifyAudit(final List<String> results, final String verifyText) {
     assertThat(results.size(), is(greaterThan(0)));
     assertThat(results.stream().anyMatch(s -> s.contains(verifyText)), is(true));
   }
@@ -282,7 +286,7 @@ public abstract class NpmClientITSupport
                                                        final String name,
                                                        final String version) throws Exception
   {
-    waitForSearch();
+    searchTestHelper.waitForSearch();
 
     Response response = restClient().target(nexusUrl("/service/rest/v1/search"))
         .queryParam("repository", repository)

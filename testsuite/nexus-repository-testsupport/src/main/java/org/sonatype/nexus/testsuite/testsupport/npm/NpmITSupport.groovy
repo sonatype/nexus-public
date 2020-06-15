@@ -46,11 +46,11 @@ class NpmITSupport
   }
 
   Repository createNpmHostedRepository(String name, WritePolicy writePolicy = WritePolicy.ALLOW_ONCE) {
-    return repos.createNpmHosted(name, writePolicy)
+    return repos.createNpmHosted(name, writePolicy.toString())
   }
 
   Repository createNpmHostedRepository(String name, String blobStoreName) {
-    return repos.createNpmHosted(name, WritePolicy.ALLOW_ONCE, blobStoreName)
+    return repos.createNpmHosted(name, WritePolicy.ALLOW_ONCE.toString(), blobStoreName)
   }
 
   Repository createNpmGroupRepository(String repositoryName, String... members) {

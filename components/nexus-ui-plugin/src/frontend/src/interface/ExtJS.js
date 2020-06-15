@@ -195,4 +195,12 @@ export default class {
       );
     });
   }
+
+  static downloadUrl(url) {
+    NX.util.DownloadHelper.downloadUrl(url);
+  }
+
+  static state() {
+    return NX.State;
+  }
 }

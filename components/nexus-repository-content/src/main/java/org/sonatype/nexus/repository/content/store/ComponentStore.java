@@ -49,6 +49,7 @@ public class ComponentStore<T extends ComponentDAO>
    * Browse all components in the given repository in a paged fashion.
    *
    * @param repositoryId the repository to browse
+   * @param kind the kind of components to return
    * @param limit maximum number of components to return
    * @param continuationToken optional token to continue from a previous request
    * @return collection of components and the next continuation token
@@ -57,10 +58,11 @@ public class ComponentStore<T extends ComponentDAO>
    */
   @Transactional
   public Continuation<Component> browseComponents(final int repositoryId,
+                                                  @Nullable final String kind,
                                                   final int limit,
                                                   @Nullable final String continuationToken)
   {
-    return dao().browseComponents(repositoryId, limit, continuationToken);
+    return dao().browseComponents(repositoryId, kind, limit, continuationToken);
   }
 
   /**

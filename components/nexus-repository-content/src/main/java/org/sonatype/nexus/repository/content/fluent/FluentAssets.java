@@ -37,5 +37,12 @@ public interface FluentAssets
   /**
    * Browse through all assets in the repository.
    */
-  Continuation<FluentAsset> browse(int limit, @Nullable String continuationToken);
+  default Continuation<FluentAsset> browse(int limit, @Nullable String continuationToken) {
+    return browse(null, limit, continuationToken);
+  }
+
+  /**
+   * Browse through all assets in the repository by kind.
+   */
+  Continuation<FluentAsset> browse(@Nullable String kind, int limit, @Nullable String continuationToken);
 }

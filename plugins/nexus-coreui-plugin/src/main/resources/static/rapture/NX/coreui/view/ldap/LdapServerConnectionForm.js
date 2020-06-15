@@ -24,6 +24,8 @@ Ext.define('NX.coreui.view.ldap.LdapServerConnectionForm', {
     'NX.Conditions',
     'NX.I18n'
   ],
+  // isAddPage variable uses for define, is user add new LDAP configuration or edit an old one.
+  isAddPage: false,
 
   /**
    * @override

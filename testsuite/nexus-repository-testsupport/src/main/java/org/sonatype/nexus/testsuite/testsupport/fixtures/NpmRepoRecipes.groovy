@@ -16,7 +16,6 @@ import javax.annotation.Nonnull
 
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.config.Configuration
-import org.sonatype.nexus.repository.storage.WritePolicy
 
 import groovy.transform.CompileStatic
 
@@ -31,21 +30,15 @@ import static org.sonatype.nexus.repository.storage.StorageFacetConstants.STORAG
 trait NpmRepoRecipes
     extends ConfigurationRecipes
 {
-
   @Nonnull
   Repository createNpmHosted(final String repoName,
-                             final WritePolicy writePolicy = WritePolicy.ALLOW)
-  {
-    createRepository(createHosted(repoName, 'npm-hosted', writePolicy))
-  }
-
-  @Nonnull
-  Repository createNpmHosted(final String repoName,
-                             final WritePolicy writePolicy = WritePolicy.ALLOW,
-                             final String blobStoreName)
+                             final String writePolicy = "ALLOW",
+                             final String blobStoreName = null)
   {
     Configuration configuration = createHosted(repoName, 'npm-hosted', writePolicy)
-    configuration.attributes(STORAGE).set(BLOB_STORE_NAME, blobStoreName)
+    if (blobStoreName != null) {
+      configuration.attributes(STORAGE).set(BLOB_STORE_NAME, blobStoreName)
+    }
     return createRepository(configuration)
   }
 

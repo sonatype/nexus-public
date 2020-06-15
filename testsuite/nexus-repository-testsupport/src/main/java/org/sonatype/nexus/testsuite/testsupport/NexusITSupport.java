@@ -35,7 +35,6 @@ import javax.ws.rs.core.UriBuilder;
 
 import org.sonatype.nexus.pax.exam.NexusPaxExamSupport;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.search.SearchService;
 import org.sonatype.nexus.repository.tools.DeadBlobFinder;
 import org.sonatype.nexus.repository.tools.DeadBlobResult;
 import org.sonatype.nexus.rest.client.RestClientConfiguration;
@@ -111,13 +110,10 @@ public abstract class NexusITSupport
   private RepositoryManager repositoryManager;
 
   @Inject
-  private DeadBlobFinder deadBlobFinder;
+  private DeadBlobFinder<?> deadBlobFinder;
 
   @Inject
   protected RestClientFactory restClientFactory;
-
-  @Inject
-  protected SearchService searchService;
 
   @Inject
   private TestSuiteObjectMapperResolver testSuiteObjectMapperResolver;
@@ -182,12 +178,10 @@ public abstract class NexusITSupport
    * Left protected to allow specific subclasses to override where this behaviour is expected due to minimal test setup.
    */
   protected void doVerifyNoDeadBlobs() {
-
-    Map<String, List<DeadBlobResult>> badRepos =
-        StreamSupport.stream(repositoryManager.browse().spliterator(), true)
-            .map(repository -> deadBlobFinder.find(repository, shouldIgnoreMissingBlobRefs()))
-            .flatMap(Collection::stream)
-            .collect(Collectors.groupingBy(DeadBlobResult::getRepositoryName));
+    Map<String, List<DeadBlobResult<?>>> badRepos = StreamSupport.stream(repositoryManager.browse().spliterator(), true)
+        .map(repository -> deadBlobFinder.find(repository, shouldIgnoreMissingBlobRefs()))
+        .flatMap(Collection::stream)
+        .collect(Collectors.groupingBy(DeadBlobResult::getRepositoryName));
 
     if (!badRepos.isEmpty()) {
       log.error("Detected dead blobs: {}", badRepos);
@@ -438,16 +432,5 @@ public abstract class NexusITSupport
         return responseBuilder.build();
       }
     }
-  }
-
-  /**
-   * Waits for indexing to finish and makes sure any updates are available to search.
-   *
-   * General flow is component/asset events -> bulk index requests -> search indexing.
-   */
-  protected void waitForSearch() throws Exception {
-    waitFor(eventManager::isCalmPeriod);
-    searchService.flush(false); // no need for full fsync here
-    waitFor(searchService::isCalmPeriod);
   }
 }

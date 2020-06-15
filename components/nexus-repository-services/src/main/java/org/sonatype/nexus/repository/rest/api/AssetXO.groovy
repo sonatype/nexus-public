@@ -12,9 +12,17 @@
  */
 package org.sonatype.nexus.repository.rest.api
 
+import org.sonatype.nexus.repository.Repository
+
 import groovy.transform.CompileStatic
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
+import groovy.transform.builder.Builder
+
+import static org.sonatype.nexus.repository.search.index.SearchConstants.ATTRIBUTES
+import static org.sonatype.nexus.repository.search.index.SearchConstants.CHECKSUM
+import static org.sonatype.nexus.repository.search.index.SearchConstants.ID
+import static org.sonatype.nexus.repository.search.index.SearchConstants.NAME
 
 /**
  * Asset transfer object for REST APIs.
@@ -22,6 +30,7 @@ import groovy.transform.ToString
  * @since 3.3
  */
 @CompileStatic
+@Builder
 @ToString(includePackage = false, includeNames = true)
 @EqualsAndHashCode(includes = ['id'])
 class AssetXO
@@ -37,4 +46,18 @@ class AssetXO
   String format
 
   Map checksum
+
+  static AssetXO fromElasticSearchMap(final Map map, final Repository repository) {
+    String path = map.get(NAME)
+    String id = map.get(ID)
+    Map checksum = (Map) map.get(ATTRIBUTES, [:])[CHECKSUM]
+    return builder()
+        .path(path)
+        .downloadUrl(repository.url + '/' + path)
+        .id(new RepositoryItemIDXO(repository.name, id).value)
+        .repository(repository.name)
+        .checksum(checksum)
+        .format(repository.format.value)
+        .build()
+  }
 }

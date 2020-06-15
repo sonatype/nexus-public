@@ -17,25 +17,17 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
-import java.util.stream.StreamSupport;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -46,62 +38,44 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.search.SearchSubjectHelper.SubjectRegistration;
-import org.sonatype.nexus.repository.security.RepositoryViewPermission;
-import org.sonatype.nexus.repository.selector.internal.ContentAuthPluginScriptFactory;
-import org.sonatype.nexus.security.SecurityHelper;
+import org.sonatype.nexus.repository.search.index.IndexNamingPolicy;
+import org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder;
+import org.sonatype.nexus.repository.search.query.SearchQueryService;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Resources;
 import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.action.admin.indices.validate.query.QueryExplanation;
-import org.elasticsearch.action.admin.indices.validate.query.ValidateQueryResponse;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
-import org.elasticsearch.action.search.ClearScrollRequest;
-import org.elasticsearch.action.search.ClearScrollResponse;
-import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.search.SearchScrollRequestBuilder;
-import org.elasticsearch.action.search.ShardSearchFailure;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.IndicesAdminClient;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.indices.IndexAlreadyExistsException;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
-import org.elasticsearch.search.internal.InternalSearchResponse;
-import org.elasticsearch.search.profile.ProfileShardResult;
 import org.elasticsearch.search.sort.SortBuilder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.time.Duration.ofSeconds;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableMap;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static java.util.stream.Collectors.toList;
 import static org.elasticsearch.index.query.QueryBuilders.idsQuery;
-import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
+import static org.sonatype.nexus.repository.search.index.SearchConstants.TYPE;
+import static org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder.repositoryQuery;
 import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
-import static org.sonatype.nexus.security.BreadActions.BROWSE;
 
 /**
  * Default {@link SearchService} implementation. It does not expects that {@link Repository} have storage facet
@@ -115,23 +89,14 @@ public class SearchServiceImpl
     extends ComponentSupport
     implements SearchService
 {
-  private static final String TYPE = "component";
-
   /**
    * Resource name of ElasticSearch mapping configuration.
    */
   public static final String MAPPING_JSON = "elasticsearch-mapping.json";
 
-  private static final SearchResponse EMPTY_SEARCH_RESPONSE = new SearchResponse(InternalSearchResponse.empty(), null, 0,
-      0, 0, new ShardSearchFailure[]{});
-
   private final Provider<Client> client;
 
-  private final RepositoryManager repositoryManager;
-
-  private final SecurityHelper securityHelper;
-
-  private final SearchSubjectHelper searchSubjectHelper;
+  private final SearchQueryService searchQueryService;
 
   private final List<IndexSettingsContributor> indexSettingsContributors;
 
@@ -139,26 +104,24 @@ public class SearchServiceImpl
 
   private int calmTimeout;
 
-  private final ConcurrentMap<String, String> repositoryNameMapping;
+  private final IndexNamingPolicy indexNamingPolicy;
 
   private final List<BulkIndexUpdateListener> updateListeners;
-
-  private final boolean profile;
 
   private final boolean periodicFlush;
 
   private final AtomicLong updateCount = new AtomicLong();
 
+  private final ConcurrentMap<String, String> repositoryIndexNames = Maps.newConcurrentMap();
+
   private Map<Integer, Entry<BulkProcessor, ExecutorService>> bulkProcessorToExecutors;
 
   /**
    * @param client source for a {@link Client}
-   * @param repositoryManager the repositoryManager
-   * @param securityHelper the securityHelper
-   * @param searchSubjectHelper the searchSubjectHelper
-   * @param indexSettingsContributors the indexSettingsContributors
-   * @param eventManager the eventManager
-   * @param profile whether or not to profile elasticsearch queries (default: false)
+   * @param searchQueryService the search query service
+   * @param indexNamingPolicy the index naming policy
+   * @param indexSettingsContributors the index settings contributors
+   * @param eventManager the event manager
    * @param bulkCapacity how many bulk requests to batch before they're automatically flushed (default: 1000)
    * @param concurrentRequests how many bulk requests to execute concurrently (default: 1; 0 means execute synchronously)
    * @param flushInterval how long to wait in milliseconds between flushing bulk requests (default: 0, instantaneous)
@@ -170,12 +133,10 @@ public class SearchServiceImpl
   @Inject
   public SearchServiceImpl(
       final Provider<Client> client, //NOSONAR
-      final RepositoryManager repositoryManager,
-      final SecurityHelper securityHelper,
-      final SearchSubjectHelper searchSubjectHelper,
+      final SearchQueryService searchQueryService,
+      final IndexNamingPolicy indexNamingPolicy,
       final List<IndexSettingsContributor> indexSettingsContributors,
       final EventManager eventManager,
-      @Named("${nexus.elasticsearch.profile:-false}") final boolean profile,
       @Named("${nexus.elasticsearch.bulkCapacity:-1000}") final int bulkCapacity,
       @Named("${nexus.elasticsearch.concurrentRequests:-1}") final int concurrentRequests,
       @Named("${nexus.elasticsearch.flushInterval:-0}") final int flushInterval,
@@ -185,15 +146,12 @@ public class SearchServiceImpl
     checkState(batchingThreads > 0,
         "'nexus.elasticsearch.batching.threads.count' must be positive.");
     this.client = checkNotNull(client);
-    this.repositoryManager = checkNotNull(repositoryManager);
-    this.securityHelper = checkNotNull(securityHelper);
-    this.searchSubjectHelper = checkNotNull(searchSubjectHelper);
+    this.searchQueryService = checkNotNull(searchQueryService);
+    this.indexNamingPolicy = checkNotNull(indexNamingPolicy);
     this.indexSettingsContributors = checkNotNull(indexSettingsContributors);
     this.eventManager = eventManager;
     this.calmTimeout = calmTimeout;
-    this.repositoryNameMapping = Maps.newConcurrentMap();
     this.updateListeners = new ArrayList<>();
-    this.profile = profile;
     this.periodicFlush = flushInterval > 0;
     createBulkProcessorsAndExecutors(bulkCapacity, concurrentRequests, flushInterval, batchingThreads);
   }
@@ -252,6 +210,13 @@ public class SearchServiceImpl
     final ExecutorService executorService = bulkProcessorExecutorPair.getValue();
     final BulkProcessor bulkProcessor = bulkProcessorExecutorPair.getKey();
     return executorService.submit(new BulkProcessorFlusher(bulkProcessor));
+  }
+
+  /**
+   * Returns the indixes admin client.
+   */
+  private IndicesAdminClient indicesAdminClient() {
+    return client.get().admin().indices();
   }
 
   @Override
@@ -322,7 +287,7 @@ public class SearchServiceImpl
   @Override
   public void createIndex(final Repository repository) {
     checkNotNull(repository);
-    final String safeIndexName = SHA1.function().hashUnencodedChars(repository.getName()).toString();
+    final String safeIndexName = indexNamingPolicy.indexName(repository);
     log.debug("Creating index for {}", repository);
     createIndex(repository, safeIndexName);
   }
@@ -365,13 +330,13 @@ public class SearchServiceImpl
         throw new RuntimeException(e);
       }
     }
-    repositoryNameMapping.put(repository.getName(), indexName);
+    repositoryIndexNames.put(repository.getName(), indexName);
   }
 
   @Override
   public void deleteIndex(final Repository repository) {
     checkNotNull(repository);
-    String indexName = repositoryNameMapping.remove(repository.getName());
+    String indexName = repositoryIndexNames.remove(repository.getName());
     if (indexName != null) {
       log.debug("Removing index of {}", repository);
       deleteIndex(indexName);
@@ -391,7 +356,7 @@ public class SearchServiceImpl
   @Override
   public void rebuildIndex(final Repository repository) {
     checkNotNull(repository);
-    String indexName = repositoryNameMapping.remove(repository.getName());
+    String indexName = repositoryIndexNames.remove(repository.getName());
     if (indexName != null) {
       log.debug("Rebuilding index for {}", repository);
       deleteIndex(indexName);
@@ -404,7 +369,7 @@ public class SearchServiceImpl
     checkNotNull(repository);
     checkNotNull(identifier);
     checkNotNull(json);
-    String indexName = repositoryNameMapping.get(repository.getName());
+    String indexName = repositoryIndexNames.get(repository.getName());
     if (indexName == null) {
       return;
     }
@@ -431,7 +396,7 @@ public class SearchServiceImpl
                                         final Function<T, String> jsonDocumentProducer) {
     checkNotNull(repository);
     checkNotNull(components);
-    String indexName = repositoryNameMapping.get(repository.getName());
+    String indexName = repositoryIndexNames.get(repository.getName());
     if (indexName == null) {
       return emptyList();
     }
@@ -470,7 +435,7 @@ public class SearchServiceImpl
   public void delete(final Repository repository, final String identifier) {
     checkNotNull(repository);
     checkNotNull(identifier);
-    String indexName = repositoryNameMapping.get(repository.getName());
+    String indexName = repositoryIndexNames.get(repository.getName());
     if (indexName == null) {
       return;
     }
@@ -497,7 +462,7 @@ public class SearchServiceImpl
     final BulkProcessor bulkProcessor = bulkProcessorToExecutorPair.getKey();
     final ExecutorService executorService = bulkProcessorToExecutorPair.getValue();
     if (repository != null) {
-      String indexName = repositoryNameMapping.get(repository.getName());
+      String indexName = repositoryIndexNames.get(repository.getName());
       if (indexName == null) {
         return; // index has gone, nothing to delete
       }
@@ -573,8 +538,15 @@ public class SearchServiceImpl
    */
   @Override
   public Iterable<SearchHit> browseUnrestrictedInRepos(final QueryBuilder query,
-                                                       @Nullable final Collection<String> repoNames) {
-    return browse(query, repoNames, false, true);
+                                                       @Nullable final Collection<String> repoNames)
+  {
+    RepositoryQueryBuilder repoQuery = repositoryQuery(query);
+
+    if (repoNames != null) {
+      repoQuery = repoQuery.inRepositories(repoNames);
+    }
+
+    return searchQueryService.browse(repoQuery.unrestricted());
   }
 
   /**
@@ -589,29 +561,7 @@ public class SearchServiceImpl
    */
   @Override
   public Iterable<SearchHit> browse(final QueryBuilder query) {
-    return browse(query, null, true, false);
-  }
-
-  private Iterable<SearchHit> browse(final QueryBuilder query,
-                                     @Nullable final Collection<String> repoNames,
-                                     final boolean skipContentPermForIndexes,
-                                     final boolean skipContentPermForSearch)
-  {
-    checkNotNull(query);
-    try {
-      if (!indicesAdminClient().prepareValidateQuery().setQuery(query).execute().actionGet().isValid()) {
-        throw new IllegalArgumentException("Invalid query");
-      }
-    }
-    catch (IndexNotFoundException e) {
-      // no repositories were created yet, so there is no point in searching
-      return emptyList();
-    }
-    final String[] searchableIndexes = getSearchableIndexes(skipContentPermForIndexes, repoNames);
-    if (searchableIndexes.length == 0) {
-      return emptyList();
-    }
-    return () -> new SearchHitIterator(query, searchableIndexes, skipContentPermForSearch);
+    return searchQueryService.browse(query);
   }
 
   @Override
@@ -621,17 +571,13 @@ public class SearchServiceImpl
                                                   final int size,
                                                   final Collection<String> repoNames)
   {
-    if (!validateQuery(query)) {
-      return EMPTY_SEARCH_RESPONSE;
+    RepositoryQueryBuilder repoQuery = repositoryQuery(query).inRepositories(repoNames);
+
+    if (sort != null) {
+      repoQuery = repoQuery.sorted(sort);
     }
 
-    final String[] searchableIndexes = getSearchableIndexes(false, repoNames);
-
-    if (searchableIndexes.length == 0) {
-      return EMPTY_SEARCH_RESPONSE;
-    }
-
-    return executeSearch(query, searchableIndexes, from, size, sort, null, null);
+    return searchQueryService.search(repoQuery.unrestricted(), from, size);
   }
 
   @Override
@@ -640,15 +586,13 @@ public class SearchServiceImpl
                                            final int from,
                                            final int size)
   {
-    if (!validateQuery(query)) {
-      return EMPTY_SEARCH_RESPONSE;
-    }
-    final String[] searchableIndexes = getSearchableIndexes(false);
-    if (searchableIndexes.length == 0) {
-      return EMPTY_SEARCH_RESPONSE;
+    RepositoryQueryBuilder repoQuery = repositoryQuery(query);
+
+    if (sort != null) {
+      repoQuery = repoQuery.sorted(sort);
     }
 
-    return executeSearch(query, searchableIndexes, from, size, sort, null, null);
+    return searchQueryService.search(repoQuery.unrestricted(), from, size);
   }
 
   @Override
@@ -656,20 +600,19 @@ public class SearchServiceImpl
                                @Nullable final List<SortBuilder> sort,
                                final int from,
                                final int size,
-                               final Integer timeout)
+                               @Nullable final Integer seconds)
   {
-    if (!validateQuery(query)) {
-      return EMPTY_SEARCH_RESPONSE;
-    }
-    final String[] searchableIndexes = getSearchableIndexes(true);
-    if (searchableIndexes.length == 0) {
-      return EMPTY_SEARCH_RESPONSE;
+    RepositoryQueryBuilder repoQuery = repositoryQuery(query);
+
+    if (sort != null) {
+      repoQuery = repoQuery.sorted(sort);
     }
 
-    try (SubjectRegistration registration = searchSubjectHelper.register(securityHelper.subject())) {
-      return executeSearch(query, searchableIndexes, from, size, sort,
-          QueryBuilders.scriptQuery(ContentAuthPluginScriptFactory.newScript(registration.getId())), timeout);
+    if (seconds != null) {
+      repoQuery = repoQuery.timeout(ofSeconds(seconds));
     }
+
+    return searchQueryService.search(repoQuery, from, size);
   }
 
   @Override
@@ -677,295 +620,30 @@ public class SearchServiceImpl
                                                       final List<AggregationBuilder> aggregations,
                                                       final Collection<String> repoNames)
   {
-    if (!validateQuery(query)) {
-      return EMPTY_SEARCH_RESPONSE;
-    }
-    final String[] searchableIndexes = getSearchableIndexes(true, repoNames);
-    if (searchableIndexes.length == 0) {
-      return EMPTY_SEARCH_RESPONSE;
-    }
+    RepositoryQueryBuilder repoQuery = repositoryQuery(query).inRepositories(repoNames);
 
-    try (SubjectRegistration registration = searchSubjectHelper.register(securityHelper.subject())) {
-      return executeSearch(query, aggregations, searchableIndexes,
-          QueryBuilders.scriptQuery(ContentAuthPluginScriptFactory.newScript(registration.getId())), emptyList(), null);
-    }
+    return searchQueryService.search(repoQuery, aggregations);
   }
 
   @Override
   public SearchResponse searchUnrestrictedInReposWithAggregations(final QueryBuilder query,
                                                                   final List<AggregationBuilder> aggregations,
-                                                                  final List<SortBuilder> sort,
+                                                                  @Nullable final List<SortBuilder> sort,
                                                                   final Collection<String> repoNames)
   {
-    if (!validateQuery(query)) {
-      return EMPTY_SEARCH_RESPONSE;
-    }
-    final String[] searchableIndexes = getSearchableIndexes(false);
-    if (searchableIndexes.length == 0) {
-      return EMPTY_SEARCH_RESPONSE;
-    }
+    RepositoryQueryBuilder repoQuery = repositoryQuery(query).inRepositories(repoNames);
 
-    return executeSearch(query, aggregations, searchableIndexes, null, sort, null);
-  }
-
-  private SearchResponse executeSearch(final QueryBuilder query,
-                                       final String[] searchableIndexes,
-                                       final int from,
-                                       final int size,
-                                       @Nullable final List<SortBuilder> sort,
-                                       @Nullable final QueryBuilder postFilter,
-                                       final Integer timeout)
-  {
-    checkNotNull(query);
-    checkNotNull(searchableIndexes);
-    SearchRequestBuilder searchRequestBuilder = client.get().prepareSearch(searchableIndexes)
-        .setTypes(TYPE)
-        .setQuery(query)
-        .setFrom(from)
-        .setSize(size)
-        .setProfile(profile);
-    if (postFilter != null) {
-      searchRequestBuilder.setPostFilter(postFilter);
-    }
     if (sort != null) {
-      for (SortBuilder entry : sort) {
-        searchRequestBuilder.addSort(entry);
-      }
-    }
-    if (timeout != null) {
-      searchRequestBuilder.setTimeout(timeout.toString() + 's');
-    }
-    SearchResponse searchResponse = searchRequestBuilder.execute().actionGet();
-
-    if (profile) {
-      logProfileResults(searchResponse);
+      repoQuery = repoQuery.sorted(sort);
     }
 
-    return searchResponse;
-  }
-
-  private SearchResponse executeSearch(final QueryBuilder query,
-                                       final List<AggregationBuilder> aggregations,
-                                       final String[] searchableIndexes,
-                                       @Nullable final QueryBuilder postFilter,
-                                       final List<SortBuilder> sort,
-                                       final Integer timeout)
-  {
-    checkNotNull(query);
-    checkNotNull(aggregations);
-    checkNotNull(searchableIndexes);
-
-    SearchRequestBuilder searchRequestBuilder = client.get().prepareSearch(searchableIndexes)
-        .setTypes(TYPE)
-        .setQuery(query)
-        .setFrom(0)
-        .setSize(0)
-        .setProfile(profile)
-        .setTrackScores(true);
-
-    for (AggregationBuilder aggregation : aggregations) {
-      searchRequestBuilder.addAggregation(aggregation);
-    }
-
-    if (postFilter != null) {
-      searchRequestBuilder.setPostFilter(postFilter);
-    }
-
-    for (SortBuilder entry : sort) {
-      searchRequestBuilder.addSort(entry);
-    }
-
-    if (timeout != null) {
-      searchRequestBuilder.setTimeout(timeout.toString() + 's');
-    }
-
-    SearchResponse searchResponse = searchRequestBuilder.execute().actionGet();
-
-    if (profile) {
-      logProfileResults(searchResponse);
-    }
-
-    return searchResponse;
+    return searchQueryService.search(repoQuery.unrestricted(), aggregations);
   }
 
   @Override
   public long countUnrestricted(final QueryBuilder query) {
-    if(!validateQuery(query)) {
-      return 0;
-    }
-    final String[] searchableIndexes = getSearchableIndexes(false);
-    if (searchableIndexes.length == 0) {
-      return 0;
-    }
-    SearchRequestBuilder count = client.get().prepareSearch(searchableIndexes).setQuery(query).setSize(0);
-    SearchResponse response = count.execute().actionGet();
-    return response.getHits().totalHits();
-  }
+    RepositoryQueryBuilder repoQuery = repositoryQuery(query);
 
-  private boolean validateQuery(final QueryBuilder query) {
-    checkNotNull(query);
-    try {
-      ValidateQueryResponse validateQueryResponse = indicesAdminClient().prepareValidateQuery()
-          .setQuery(query).setExplain(true).execute().actionGet();
-      if (!validateQueryResponse.isValid()) {
-        if (log.isDebugEnabled()) {
-          Collection<String> explanations = Collections2.transform(validateQueryResponse.getQueryExplanation(),
-              new Function<QueryExplanation, String>()
-              {
-                @Nullable
-                @Override
-                public String apply(final QueryExplanation input) {
-                  return input.getExplanation() != null ? input.getExplanation() : input.getError();
-                }
-              });
-          log.debug("Invalid query explanation: {}", explanations);
-        }
-        throw new IllegalArgumentException("Invalid query");
-      }
-    }
-    catch (IndexNotFoundException e) {
-      // no repositories were created yet, so there is no point in searching
-      return false;
-    }
-    return true;
-  }
-
-  private String[] getSearchableIndexes(final boolean skipPermissionCheck) {
-    return getSearchableIndexes(skipPermissionCheck, null);
-  }
-
-  @VisibleForTesting
-  String[] getSearchableIndexes(final boolean skipPermissionCheck, final Collection<String> repoChoices) {
-    Predicate<String> repoChoicesFilter = repoChoices == null ? s -> true : repoChoices::contains;
-    return StreamSupport.stream(repositoryManager.browse().spliterator(), false)
-        .map(repo -> {
-          if (repoOnlineAndHasSearchFacet(repo) && (repositoryNameMapping.containsKey(repo.getName()))
-              && (skipPermissionCheck || securityHelper.allPermitted(new RepositoryViewPermission(repo, BROWSE)))) {
-            return repo.getName();
-          }
-          return null;
-        })
-        .filter(Objects::nonNull)
-        .filter(repoChoicesFilter)
-        .map(repositoryNameMapping::get)
-        .toArray(String[]::new);
-  }
-
-  private static boolean repoOnlineAndHasSearchFacet(final Repository repo) {
-    return repo.optionalFacet(SearchFacet.class).isPresent() && repo.getConfiguration().isOnline();
-  }
-
-  /**
-   * Returns the indixes admin client.
-   */
-  private IndicesAdminClient indicesAdminClient() {
-    return client.get().admin().indices();
-  }
-
-  private void logProfileResults(final SearchResponse searchResponse) {
-    for (Entry<String, List<ProfileShardResult>> entry : searchResponse.getProfileResults().entrySet()) {
-      for (ProfileShardResult profileShardResult : entry.getValue()) {
-        try {
-          XContentBuilder builder = XContentFactory.contentBuilder(XContentType.JSON);
-          builder.startObject();
-          profileShardResult.toXContent(builder, ToXContent.EMPTY_PARAMS);
-          builder.endObject();
-          log.info("Elasticsearch profile for {} is: {}", entry.getKey(), builder.string());
-        }
-        catch (IOException e) {
-          log.error("Error writing elasticsearch profile result", e);
-        }
-      }
-    }
-  }
-
-  private class SearchHitIterator
-      implements Iterator<SearchHit>
-  {
-    private final QueryBuilder query;
-
-    private final String[] searchableIndexes;
-
-    private final boolean skipPermissionCheck;
-
-    private SearchResponse response;
-
-    private Iterator<SearchHit> iterator;
-
-    private boolean noMoreHits = false;
-
-    private SearchHitIterator(final QueryBuilder query,
-                              final String[] searchableIndexes, // NOSONAR
-                              final boolean skipPermissionCheck)
-    {
-      this.query = query;
-      this.searchableIndexes = searchableIndexes;
-      this.skipPermissionCheck = skipPermissionCheck;
-    }
-
-    @Override
-    public boolean hasNext() {
-      if (noMoreHits) {
-        return false;
-      }
-      if (response == null) {
-        SearchRequestBuilder builder = client.get().prepareSearch(searchableIndexes)
-            .setTypes(TYPE)
-            .setQuery(query)
-            .setScroll(new TimeValue(1, TimeUnit.MINUTES))
-            .setSize(100)
-            .setProfile(profile);
-        if (!skipPermissionCheck) {
-          try (SubjectRegistration registration = searchSubjectHelper.register(securityHelper.subject())) {
-            QueryBuilder permissionsFilter =
-                QueryBuilders.scriptQuery(ContentAuthPluginScriptFactory.newScript(registration.getId()));
-            builder.setPostFilter(permissionsFilter);
-            response = builder.execute().actionGet();
-          }
-        }
-        else {
-          response = builder.execute().actionGet();
-        }
-        iterator = Arrays.asList(response.getHits().getHits()).iterator();
-        noMoreHits = !iterator.hasNext();
-      }
-      else if (!iterator.hasNext()) {
-        SearchScrollRequestBuilder builder = client.get().prepareSearchScroll(response.getScrollId())
-            .setScroll(new TimeValue(1, TimeUnit.MINUTES));
-        response = builder.execute().actionGet();
-        iterator = Arrays.asList(response.getHits().getHits()).iterator();
-        noMoreHits = !iterator.hasNext();
-      }
-      return iterator.hasNext();
-    }
-
-    @Override
-    public SearchHit next() {
-      if (!hasNext()) {
-        throw new NoSuchElementException();
-      }
-      return iterator.next();
-    }
-
-    @Override
-    public void remove() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void forEachRemaining(final Consumer<? super SearchHit> action) {
-      Iterator.super.forEachRemaining(action);
-      closeScrollId();
-    }
-
-    private void closeScrollId() {
-      log.debug("Clearing scroll id {}", response.getScrollId());
-      ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
-      clearScrollRequest.addScrollId(response.getScrollId());
-      ClearScrollResponse clearScrollResponse = client.get().clearScroll(clearScrollRequest).actionGet();
-      if (!clearScrollResponse.isSucceeded()) {
-        log.info("Unable to close scroll id {}", response.getScrollId());
-      }
-    }
+    return searchQueryService.count(repoQuery.unrestricted());
   }
 }

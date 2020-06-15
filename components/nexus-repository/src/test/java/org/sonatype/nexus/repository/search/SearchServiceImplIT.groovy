@@ -26,6 +26,12 @@ import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.config.Configuration
 import org.sonatype.nexus.repository.manager.RepositoryManager
+import org.sonatype.nexus.repository.search.index.HashedNamingPolicy
+import org.sonatype.nexus.repository.search.index.IndexNamingPolicy
+import org.sonatype.nexus.repository.search.index.SearchIndexFacet
+import org.sonatype.nexus.repository.search.query.SearchQueryService
+import org.sonatype.nexus.repository.search.query.SearchQueryServiceImpl
+import org.sonatype.nexus.repository.search.query.SearchSubjectHelper
 import org.sonatype.nexus.repository.storage.Component
 import org.sonatype.nexus.repository.storage.DefaultComponent
 import org.sonatype.nexus.security.SecurityHelper
@@ -76,16 +82,16 @@ class SearchServiceImplIT
   NodeAccess nodeAccess
 
   @Mock
-  RepositoryManager repositoryManager
-
-  @Mock
   Configuration repositoryConfig
 
   @Mock
-  SearchFacet searchFacet
+  SearchIndexFacet searchFacet
 
   @Mock
   Format testFormat
+
+  @Mock
+  RepositoryManager repositoryManager
 
   @Mock
   SecurityHelper securityHelper
@@ -116,17 +122,22 @@ class SearchServiceImplIT
     NodeProvider nodeProvider = new NodeProvider(directories, nodeAccess, null, null)
     ClientProvider clientProvider = new ClientProvider(nodeProvider)
 
-    searchService = new SearchServiceImpl(clientProvider, repositoryManager, securityHelper, searchSubjectHelper,
-        ImmutableList.of(), eventManager, false, 1000, 1, 0, CALM_TIMEOUT, 1)
+    IndexNamingPolicy indexNamingPolicy = new HashedNamingPolicy()
+    SearchQueryService searchQueryService = new SearchQueryServiceImpl(clientProvider,
+        repositoryManager, securityHelper, searchSubjectHelper, indexNamingPolicy, false)
+
+    searchService = new SearchServiceImpl(clientProvider, searchQueryService,
+        indexNamingPolicy, ImmutableList.of(), eventManager, 1000, 1, 0, CALM_TIMEOUT, 1)
 
     when(repositoryConfig.isOnline()).thenReturn(true)
     when(testFormat.getValue()).thenReturn('test-format')
 
     for (int i = 0; i < TEST_REPOSITORY_COUNT; i++) {
       Repository repository = mock(Repository.class)
-      when(repository.getName()).thenReturn("test-$i" as String)
+      def repoName = "test-$i" as String;
+      when(repository.getName()).thenReturn(repoName)
       when(repository.getConfiguration()).thenReturn(repositoryConfig)
-      when(repository.optionalFacet(SearchFacet.class)).thenReturn(Optional.of(searchFacet))
+      when(repository.optionalFacet(SearchIndexFacet.class)).thenReturn(Optional.of(searchFacet))
       when(repository.getFormat()).thenReturn(testFormat)
       searchService.createIndex(repository)
       repositories.add(repository)
