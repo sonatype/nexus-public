@@ -26,6 +26,7 @@ import org.mockito.Mock;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class UserManagerImplTest
@@ -43,11 +44,15 @@ public class UserManagerImplTest
   @Mock
   PasswordService passwordService;
 
+  @Mock
+  PasswordValidator passwordValidator;
+
   private UserManagerImpl underTest;
 
   @Before
   public void setup() {
-    underTest = new UserManagerImpl(eventManager, securityConfigurationManager, securitySystem, passwordService);
+    underTest = new UserManagerImpl(eventManager, securityConfigurationManager, securitySystem, passwordService,
+        passwordValidator);
   }
 
   @Test
@@ -61,5 +66,7 @@ public class UserManagerImplTest
     underTest.changePassword("test", "newpass");
 
     assertThat(user.getStatus(), is(CUser.STATUS_ACTIVE));
+
+    verify(passwordValidator).validate("newpass");
   }
 }

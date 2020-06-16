@@ -70,16 +70,20 @@ public class UserManagerImpl
 
   private final PasswordService passwordService;
 
+  private final PasswordValidator passwordValidator;
+
   @Inject
   public UserManagerImpl(final EventManager eventManager,
                          final SecurityConfigurationManager configuration,
                          final SecuritySystem securitySystem,
-                         final PasswordService passwordService)
+                         final PasswordService passwordService,
+                         final PasswordValidator passwordValidator)
   {
     this.eventManager = checkNotNull(eventManager);
     this.configuration = configuration;
     this.securitySystem = securitySystem;
     this.passwordService = passwordService;
+    this.passwordValidator = passwordValidator;
   }
 
   protected CUser toUser(User user) {
@@ -287,6 +291,7 @@ public class UserManagerImpl
   }
 
   private String hashPassword(String clearPassword) {
+    passwordValidator.validate(clearPassword);
     // set the password if its not null
     if (clearPassword != null && clearPassword.trim().length() > 0) {
       return this.passwordService.encryptPassword(clearPassword);
