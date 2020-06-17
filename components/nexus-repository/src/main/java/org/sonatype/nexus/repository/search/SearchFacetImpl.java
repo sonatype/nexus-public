@@ -55,7 +55,6 @@ import static com.google.common.collect.Iterables.transform;
 import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REPOSITORY_NAME;
-import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_BUCKET;
 
 /**
  * Default {@link SearchFacet} implementation.

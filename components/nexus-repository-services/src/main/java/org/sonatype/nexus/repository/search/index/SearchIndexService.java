@@ -10,39 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search.query;
-
-import java.util.List;
-
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.aggregations.AggregationBuilder;
+package org.sonatype.nexus.repository.search.index;
 
 /**
- * Search query service.
+ * Search index service.
  *
  * @since 3.next
  */
-public interface SearchQueryService
+public interface SearchIndexService
 {
   /**
-   * Browse component metadata matches.
+   * Wait for a calm period where no search indexing is happening.
    */
-  Iterable<SearchHit> browse(QueryBuilder query);
-
-  /**
-   * Search component metadata (paged).
-   */
-  SearchResponse search(QueryBuilder query, int from, int size);
-
-  /**
-   * Search component metadata (aggregated).
-   */
-  SearchResponse search(QueryBuilder query, List<AggregationBuilder> aggregations);
-
-  /**
-   * Count component metadata.
-   */
-  long count(QueryBuilder query);
+  void waitForCalm();
 }

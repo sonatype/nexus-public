@@ -19,6 +19,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.pax.exam.NexusPaxExamSupport;
 import org.sonatype.nexus.repository.search.SearchService;
+import org.sonatype.nexus.repository.search.query.SearchQueryService;
 
 @Named
 @Singleton
@@ -26,6 +27,9 @@ public class SearchTestHelper
 {
   @Inject
   public SearchService searchService;
+
+  @Inject
+  public SearchQueryService searchQueryService;
 
   @Inject
   public EventManager eventManager;

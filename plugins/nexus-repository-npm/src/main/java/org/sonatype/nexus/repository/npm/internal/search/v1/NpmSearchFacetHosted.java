@@ -18,7 +18,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.repository.FacetSupport;
-import org.sonatype.nexus.repository.search.SearchService;
+import org.sonatype.nexus.repository.search.query.SearchQueryService;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.ContentTypes;
 import org.sonatype.nexus.repository.view.Parameters;
@@ -36,6 +36,7 @@ import org.elasticsearch.search.sort.SortOrder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singletonList;
+import static org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder.repositoryQuery;
 
 /**
  * Implementation of {@code NpmSearchFacet} for proxy repositories.
@@ -47,7 +48,7 @@ public class NpmSearchFacetHosted
     extends FacetSupport
     implements NpmSearchFacet
 {
-  private final SearchService searchService;
+  private final SearchQueryService searchQueryService;
 
   private final NpmSearchParameterExtractor npmSearchParameterExtractor;
 
@@ -58,13 +59,13 @@ public class NpmSearchFacetHosted
   private final int v1SearchMaxResults;
 
   @Inject
-  public NpmSearchFacetHosted(final SearchService searchService,
+  public NpmSearchFacetHosted(final SearchQueryService searchQueryService,
                               final NpmSearchParameterExtractor npmSearchParameterExtractor,
                               final NpmSearchResponseFactory npmSearchResponseFactory,
                               final NpmSearchResponseMapper npmSearchResponseMapper,
                               @Named("${nexus.npm.v1SearchMaxResults:-250}") final int v1SearchMaxResults)
   {
-    this.searchService = checkNotNull(searchService);
+    this.searchQueryService = checkNotNull(searchQueryService);
     this.npmSearchParameterExtractor = checkNotNull(npmSearchParameterExtractor);
     this.npmSearchResponseFactory = checkNotNull(npmSearchResponseFactory);
     this.npmSearchResponseMapper = checkNotNull(npmSearchResponseMapper);
@@ -94,9 +95,8 @@ public class NpmSearchFacetHosted
               .setTrackScores(true)
               .setSize(1));
 
-      SearchResponse searchResponse = searchService.searchInReposWithAggregations(query,
-          singletonList(terms),
-          singletonList(getRepository().getName()));
+      SearchResponse searchResponse = searchQueryService.search(
+          repositoryQuery(query).inRepositories(getRepository()), singletonList(terms));
       Aggregations aggregations = searchResponse.getAggregations();
       Terms nameTerms = aggregations.get("name");
       response = npmSearchResponseFactory.buildResponseForResults(nameTerms.getBuckets(), size, from);

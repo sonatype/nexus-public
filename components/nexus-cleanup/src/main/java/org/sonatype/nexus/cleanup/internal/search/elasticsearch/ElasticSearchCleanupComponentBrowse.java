@@ -30,14 +30,13 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.extdirect.model.PagedResponse;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.QueryOptions;
-import org.sonatype.nexus.repository.search.SearchService;
+import org.sonatype.nexus.repository.search.query.SearchQueryService;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
-import com.google.common.collect.ImmutableList;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -57,6 +56,7 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
+import static org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder.unrestricted;
 
 /**
  * Finds components for cleanup using Elastic Search.
@@ -75,7 +75,7 @@ public class ElasticSearchCleanupComponentBrowse
 
   private static final String GROUP = "group";
 
-  private final SearchService searchService;
+  private final SearchQueryService searchQueryService;
 
   private final MetricRegistry metricRegistry;
 
@@ -85,11 +85,11 @@ public class ElasticSearchCleanupComponentBrowse
 
   @Inject
   public ElasticSearchCleanupComponentBrowse(final Map<String, CriteriaAppender> criteriaAppenders,
-                                             final SearchService searchService,
+                                             final SearchQueryService searchQueryService,
                                              final MetricRegistry metricRegistry)
   {
     this.criteriaAppenders = checkNotNull(criteriaAppenders);
-    this.searchService = checkNotNull(searchService);
+    this.searchQueryService = checkNotNull(searchQueryService);
     this.metricRegistry = checkNotNull(metricRegistry);
   }
 
@@ -114,8 +114,7 @@ public class ElasticSearchCleanupComponentBrowse
     long start = System.nanoTime();
 
     try {
-      return searchService
-          .browseUnrestrictedInRepos(query, ImmutableList.of(repository.getName()));
+      return searchQueryService.browse(unrestricted(query).inRepositories(repository));
     }
     finally {
       updateTimer(policy, repository, System.nanoTime() - start);
@@ -154,11 +153,12 @@ public class ElasticSearchCleanupComponentBrowse
     long start = System.nanoTime();
 
     try {
-      return searchService.searchUnrestrictedInRepos(query,
-          getSort(options.getSortProperty(), options.getSortDirection()),
+      return searchQueryService.search(
+          unrestricted(query)
+              .sorted(getSort(options.getSortProperty(), options.getSortDirection()))
+              .inRepositories(repository),
           options.getStart(),
-          options.getLimit(),
-          ImmutableList.of(repository.getName()));
+          options.getLimit());
     }
     finally {
       updateTimer(policy, repository, System.nanoTime() - start);
@@ -216,9 +216,7 @@ public class ElasticSearchCleanupComponentBrowse
     criteriaAppenders.get(key).append(query, value);
   }
 
-  private List<SortBuilder> getSort(final String sortProperty, final String sortDirection) {
-    return ImmutableList.of(
-        SortBuilders.fieldSort(sortProperty).order(SortOrder.valueOf(sortDirection.toUpperCase()))
-    );
+  private SortBuilder getSort(final String sortProperty, final String sortDirection) {
+    return SortBuilders.fieldSort(sortProperty).order(SortOrder.valueOf(sortDirection.toUpperCase()));
   }
 }

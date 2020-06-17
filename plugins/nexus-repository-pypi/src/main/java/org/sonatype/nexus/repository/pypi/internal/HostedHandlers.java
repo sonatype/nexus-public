@@ -31,7 +31,7 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpResponses;
-import org.sonatype.nexus.repository.search.SearchService;
+import org.sonatype.nexus.repository.search.query.SearchQueryService;
 import org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.view.Content;
@@ -62,6 +62,7 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.name;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.path;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiSearchUtils.buildSearchResponse;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiSearchUtils.parseSearchRequest;
+import static org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder.unrestricted;
 
 /**
  * PyPI hosted handlers.
@@ -73,11 +74,11 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiSearchUtils.parseS
 public final class HostedHandlers
     extends ComponentSupport
 {
-  private final SearchService searchService;
+  private final SearchQueryService searchQueryService;
 
   @Inject
-  public HostedHandlers(final SearchService searchService) {
-    this.searchService = checkNotNull(searchService);
+  public HostedHandlers(final SearchQueryService searchQueryService) {
+    this.searchQueryService = checkNotNull(searchQueryService);
   }
 
   /**
@@ -191,7 +192,7 @@ public final class HostedHandlers
       try (InputStream is = payload.openInputStream()) {
         QueryBuilder query = parseSearchRequest(context.getRepository().getName(), is);
         List<PyPiSearchResult> results = new ArrayList<>();
-        for (SearchHit hit : searchService.browseUnrestricted(query)) {
+        for (SearchHit hit : searchQueryService.browse(unrestricted(query))) {
           Map<String, Object> source = hit.getSource();
           Map<String, Object> formatAttributes = (Map<String, Object>) source.getOrDefault(
               MetadataNodeEntityAdapter.P_ATTRIBUTES, Collections.emptyMap());

@@ -19,6 +19,7 @@ import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.search.index.SearchIndexService;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
@@ -34,6 +35,7 @@ import org.elasticsearch.search.sort.SortBuilder;
  * @since 3.0
  */
 public interface SearchService
+    extends SearchIndexService
 {
 
   /**
