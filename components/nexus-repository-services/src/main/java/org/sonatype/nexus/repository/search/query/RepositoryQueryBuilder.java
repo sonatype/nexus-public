@@ -61,7 +61,7 @@ public class RepositoryQueryBuilder
   /**
    * Apply sorting to this search.
    */
-  public RepositoryQueryBuilder sorted(final List<SortBuilder> sort) {
+  public RepositoryQueryBuilder sortBy(final List<SortBuilder> sort) {
     this.sort = checkNotNull(sort);
     return this;
   }
@@ -69,7 +69,7 @@ public class RepositoryQueryBuilder
   /**
    * Apply sorting to this search.
    */
-  public RepositoryQueryBuilder sorted(final SortBuilder... sort) {
+  public RepositoryQueryBuilder sortBy(final SortBuilder... sort) {
     this.sort = ImmutableList.copyOf(sort);
     return this;
   }

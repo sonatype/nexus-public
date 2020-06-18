@@ -308,7 +308,7 @@ public class CleanupITSupport
 
     assertThat(countComponents(testName.getMethodName()), is(equalTo(totalComponents)));
 
-    waitFor(() -> size(searchTestHelper.searchQueryService.browse(SEARCH_ALL)) == totalComponents);
+    waitFor(() -> size(searchTestHelper.queryService.browse(SEARCH_ALL)) == totalComponents);
 
     runCleanupTask();
 
@@ -332,7 +332,7 @@ public class CleanupITSupport
 
     assertThat(countComponents(testName.getMethodName()), is(equalTo(totalComponents)));
 
-    waitFor(() -> size(searchTestHelper.searchQueryService.browse(SEARCH_ALL)) == totalComponents);
+    waitFor(() -> size(searchTestHelper.queryService.browse(SEARCH_ALL)) == totalComponents);
 
     runCleanupTask();
 
@@ -369,7 +369,7 @@ public class CleanupITSupport
 
     assertThat(countComponents(testName.getMethodName()), is(equalTo(totalComponents)));
 
-    waitFor(() -> size(searchTestHelper.searchQueryService.browse(SEARCH_ALL)) == totalComponents);
+    waitFor(() -> size(searchTestHelper.queryService.browse(SEARCH_ALL)) == totalComponents);
 
     runCleanupTask();
 
@@ -394,7 +394,7 @@ public class CleanupITSupport
                                            final long countAfterPrereleaseCleanup) throws Exception
   {
     long count = countComponents(repository.getName());
-    waitFor(() -> size(searchTestHelper.searchQueryService.browse(
+    waitFor(() -> size(searchTestHelper.queryService.browse(
         unrestricted(SEARCH_ALL).inRepositories(repository))) == count);
 
     setPolicyToBePrerelease(repository, true);
@@ -425,7 +425,7 @@ public class CleanupITSupport
 
     setPolicyToBeRegex(repository, expression);
 
-    waitFor(() -> size(searchTestHelper.searchQueryService.browse(SEARCH_ALL)) == totalComponents);
+    waitFor(() -> size(searchTestHelper.queryService.browse(SEARCH_ALL)) == totalComponents);
 
     runCleanupTask();
 
@@ -469,7 +469,7 @@ public class CleanupITSupport
             .lte("now-" + TWO_SECONDS + "s")
     ).must(matchQuery(IS_PRERELEASE_KEY, true));
 
-    waitFor(() -> size(searchTestHelper.searchQueryService.browse(unrestricted(query))) > 0);
+    waitFor(() -> size(searchTestHelper.queryService.browse(unrestricted(query))) > 0);
   }
 
   public static String randomName() {

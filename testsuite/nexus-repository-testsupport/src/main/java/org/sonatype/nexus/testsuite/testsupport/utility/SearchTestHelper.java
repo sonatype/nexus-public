@@ -18,7 +18,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.pax.exam.NexusPaxExamSupport;
-import org.sonatype.nexus.repository.search.SearchService;
+import org.sonatype.nexus.repository.search.index.SearchIndexService;
 import org.sonatype.nexus.repository.search.query.SearchQueryService;
 
 @Named
@@ -26,10 +26,10 @@ import org.sonatype.nexus.repository.search.query.SearchQueryService;
 public class SearchTestHelper
 {
   @Inject
-  public SearchService searchService;
+  public SearchIndexService indexService;
 
   @Inject
-  public SearchQueryService searchQueryService;
+  public SearchQueryService queryService;
 
   @Inject
   public EventManager eventManager;
@@ -41,7 +41,7 @@ public class SearchTestHelper
    */
   public void waitForSearch() throws Exception {
     NexusPaxExamSupport.waitFor(eventManager::isCalmPeriod);
-    searchService.flush(false); // no need for full fsync here
-    NexusPaxExamSupport.waitFor(searchService::isCalmPeriod);
+    indexService.flush(false); // no need for full fsync here
+    NexusPaxExamSupport.waitFor(indexService::isCalmPeriod);
   }
 }

@@ -134,7 +134,7 @@ public class SearchResource
     int from = tokenEncoder.decode(continuationToken, query);
 
     RepositoryQueryBuilder repoQuery = repositoryQuery(query);
-    repoQuery.sorted(searchUtils.getSortBuilders(sort, direction, false));
+    repoQuery.sortBy(searchUtils.getSortBuilders(sort, direction, false));
     if (seconds != null) {
       repoQuery.timeout(Duration.ofSeconds(seconds));
     }
@@ -198,7 +198,7 @@ public class SearchResource
     int from = tokenEncoder.decode(continuationToken, query);
 
     RepositoryQueryBuilder repoQuery = repositoryQuery(query);
-    repoQuery.sorted(searchUtils.getSortBuilders(sort, direction, false));
+    repoQuery.sortBy(searchUtils.getSortBuilders(sort, direction, false));
     if (seconds != null) {
       repoQuery.timeout(Duration.ofSeconds(seconds));
     }
@@ -245,7 +245,7 @@ public class SearchResource
                                        @Nullable final Integer seconds)
   {
     RepositoryQueryBuilder repoQuery = repositoryQuery(query);
-    repoQuery.sorted(searchUtils.getSortBuilders(sort, direction, false));
+    repoQuery.sortBy(searchUtils.getSortBuilders(sort, direction, false));
     if (seconds != null) {
       repoQuery.timeout(Duration.ofSeconds(seconds));
     }

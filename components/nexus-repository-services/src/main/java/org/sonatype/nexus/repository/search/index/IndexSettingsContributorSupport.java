@@ -10,28 +10,42 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search;
+package org.sonatype.nexus.repository.search.index;
 
 import java.net.URL;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 
+import com.google.common.io.Resources;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
- * Contributor to ES index settings.
- *
- * Index settings from all contributors are merged before index is created.
+ * Support for {@link IndexSettingsContributor} implementations.
  *
  * @since 3.0
  */
-public interface IndexSettingsContributor
+public class IndexSettingsContributorSupport
+    extends ComponentSupport
+    implements IndexSettingsContributor
 {
-  /**
-   * Retrieves index settings for specific repository.
-   *
-   * @return ES index settings in json format or null if this contributor has no settings for repository
-   */
+  private final Format format;
+
+  public IndexSettingsContributorSupport(final Format format) {
+    this.format = checkNotNull(format);
+  }
+
+  @Override
   @Nullable
-  URL getIndexSettings(Repository repository);
+  public URL getIndexSettings(final Repository repository) {
+    checkNotNull(repository);
+    if (format.equals(repository.getFormat())) {
+      return Resources.getResource(getClass(), MAPPING_JSON);
+    }
+    return null;
+  }
 }

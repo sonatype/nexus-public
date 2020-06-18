@@ -10,24 +10,33 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search;
+package org.sonatype.nexus.repository.search.index;
+
+import java.net.URL;
+
+import javax.annotation.Nullable;
+
+import org.sonatype.nexus.repository.Repository;
 
 /**
- * Metadata (to be indexed) about a component.
+ * Contributor to ES index settings.
+ *
+ * Index settings from all contributors are merged before index is created.
  *
  * @since 3.0
  */
-public interface ComponentMetadata
+public interface IndexSettingsContributor
 {
+  /**
+   * Resource name of ElasticSearch mapping configuration.
+   */
+  String MAPPING_JSON = "elasticsearch-mapping.json";
 
   /**
-   * Retrieves component Metadata id.
+   * Retrieves index settings for specific repository.
+   *
+   * @return ES index settings in json format or null if this contributor has no settings for repository
    */
-  String getId();
-
-  /**
-   * Converts component metadata to JSON format.
-   */
-  String toJson();
-
+  @Nullable
+  URL getIndexSettings(Repository repository);
 }

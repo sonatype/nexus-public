@@ -135,7 +135,7 @@ public abstract class PyPiClientITSupport
   }
 
   protected void assertPackageInstalledCorrectly(final String name, final String version) throws Exception {
-    waitFor(() -> searchTesthelper.searchQueryService.
+    waitFor(() -> searchTesthelper.queryService.
         browse(unrestricted(boolQuery()
             .filter(termQuery(PYTHON_PACKAGE_NAME + ".raw", name))
             .filter(termQuery(PYTHON_PACKAGE_VERSION, version))))

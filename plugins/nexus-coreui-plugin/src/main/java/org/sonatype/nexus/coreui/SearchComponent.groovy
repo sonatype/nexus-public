@@ -104,7 +104,7 @@ class SearchComponent
       def timeout = uiSettingsManager.settings.searchRequestTimeout ?: uiSettingsManager.settings.requestTimeout - 5
 
       SearchResponse response = searchQueryService.search(
-        repositoryQuery(query).sorted(sortBuilders).timeout(ofSeconds(timeout)), parameters.start, parameters.limit)
+        repositoryQuery(query).sortBy(sortBuilders).timeout(ofSeconds(timeout)), parameters.start, parameters.limit)
 
       List<SearchResultComponent> searchResultComponents = searchResultsGenerator.getSearchResultList(response)
 

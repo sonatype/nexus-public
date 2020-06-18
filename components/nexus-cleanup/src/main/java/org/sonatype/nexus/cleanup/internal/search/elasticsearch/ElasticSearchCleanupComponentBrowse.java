@@ -155,7 +155,7 @@ public class ElasticSearchCleanupComponentBrowse
     try {
       return searchQueryService.search(
           unrestricted(query)
-              .sorted(getSort(options.getSortProperty(), options.getSortDirection()))
+              .sortBy(getSort(options.getSortProperty(), options.getSortDirection()))
               .inRepositories(repository),
           options.getStart(),
           options.getLimit());

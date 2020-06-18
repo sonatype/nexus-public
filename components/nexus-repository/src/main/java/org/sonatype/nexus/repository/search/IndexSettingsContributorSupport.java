@@ -12,43 +12,16 @@
  */
 package org.sonatype.nexus.repository.search;
 
-import java.net.URL;
-
-import javax.annotation.Nullable;
-
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Format;
-import org.sonatype.nexus.repository.Repository;
-
-import com.google.common.io.Resources;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.search.SearchServiceImpl.MAPPING_JSON;
-
-// TODO: Can probably simplify and avoid intf/impl here for such simple configurator
 
 /**
- * Support for {@link IndexSettingsContributor} implementations.
- *
- * @since 3.0
+ * @deprecated Use {@link org.sonatype.nexus.repository.search.index.IndexSettingsContributorSupport} instead
  */
-public class IndexSettingsContributorSupport
-  extends ComponentSupport
-  implements IndexSettingsContributor
+@Deprecated
+public abstract class IndexSettingsContributorSupport
+    extends org.sonatype.nexus.repository.search.index.IndexSettingsContributorSupport
 {
-  private final Format format;
-
-  public IndexSettingsContributorSupport(final Format format) {
-    this.format = checkNotNull(format);
-  }
-
-  @Override
-  @Nullable
-  public URL getIndexSettings(final Repository repository) {
-    checkNotNull(repository);
-    if (format.equals(repository.getFormat())) {
-      return Resources.getResource(getClass(), MAPPING_JSON);
-    }
-    return null;
+  protected IndexSettingsContributorSupport(final Format format) {
+    super(format);
   }
 }
