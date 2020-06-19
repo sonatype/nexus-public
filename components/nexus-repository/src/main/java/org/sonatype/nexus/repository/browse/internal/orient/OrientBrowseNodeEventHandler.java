@@ -19,7 +19,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.event.EventAware;
-import org.sonatype.nexus.common.event.WithLocality;
+import org.sonatype.nexus.common.event.HasLocality;
 import org.sonatype.nexus.repository.config.ConfigurationDeletedEvent;
 import org.sonatype.nexus.repository.storage.AssetCreatedEvent;
 import org.sonatype.nexus.repository.storage.AssetDeletedEvent;
@@ -78,7 +78,7 @@ public class OrientBrowseNodeEventHandler
     handle(event, e -> browseNodeManager.deleteByRepository(e.getRepositoryName()));
   }
 
-  private <E extends WithLocality> void handle(final E event, final Consumer<E> consumer) {
+  private <E extends HasLocality> void handle(final E event, final Consumer<E> consumer) {
     checkNotNull(event);
     if (event.isLocal()) {
       dontWaitForReplicationResults();

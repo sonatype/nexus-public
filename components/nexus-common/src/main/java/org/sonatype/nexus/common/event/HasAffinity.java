@@ -20,7 +20,7 @@ package org.sonatype.nexus.common.event;
  *
  * @since 3.11
  */
-public interface WithAffinity
+public interface HasAffinity
 {
   /**
    * @return affinity hint

@@ -21,7 +21,7 @@ import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.event.EventAware.Asynchronous;
 import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.common.event.WithAffinity;
+import org.sonatype.nexus.common.event.HasAffinity;
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.jmx.reflect.ManagedAttribute;
 import org.sonatype.nexus.jmx.reflect.ManagedObject;
@@ -126,8 +126,8 @@ public class EventManagerImpl
     // notify synchronous subscribers before going asynchronous
     eventBus.post(event);
 
-    if (isAffinityEnabled() && event instanceof WithAffinity) {
-      String affinity = ((WithAffinity) event).getAffinity();
+    if (isAffinityEnabled() && event instanceof HasAffinity) {
+      String affinity = ((HasAffinity) event).getAffinity();
       if (affinity != null) {
         eventExecutor.executeWithAffinity(affinity, () -> asyncBus.post(event));
       }
