@@ -26,6 +26,10 @@
   <artifactId>org.sonatype.nexus.bundles.elasticsearch</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
 
+  <properties>
+    <clm.skip>false</clm.skip>
+  </properties>
+
   <dependencies>
     <!--
     Mark as optional to workaround MNG-5899
