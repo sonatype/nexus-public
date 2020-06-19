@@ -78,6 +78,15 @@ public interface AssetDAO
   Optional<Asset> readAsset(@Param("repositoryId") int repositoryId, @Param("path") String path);
 
   /**
+   * Updates the kind of the given asset in the content data store.
+   *
+   * @param asset the asset to update
+   *
+   * @since 3.next
+   */
+  void updateAssetKind(Asset asset);
+
+  /**
    * Updates the attributes of the given asset in the content data store.
    *
    * @param asset the asset to update

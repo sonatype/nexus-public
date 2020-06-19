@@ -111,6 +111,11 @@
     SELECT * FROM ${format}_asset WHERE <include refid="assetPathMatch"/>;
   </select>
 
+  <update id="updateAssetKind" parameterType="AssetData">
+    UPDATE ${format}_asset SET kind = #{kind}, last_updated = CURRENT_TIMESTAMP
+        WHERE <include refid="assetMatch"/> AND kind != #{kind};
+  </update>
+
   <update id="updateAssetAttributes" parameterType="AssetData">
     UPDATE ${format}_asset SET attributes = #{attributes}, last_updated = CURRENT_TIMESTAMP
         WHERE <include refid="assetMatch"/> AND attributes != #{attributes};

@@ -93,6 +93,11 @@
     SELECT * FROM ${format}_component WHERE <include refid="componentCoordinateMatch"/>;
   </select>
 
+  <update id="updateComponentKind" parameterType="ComponentData">
+    UPDATE ${format}_component SET kind = #{kind}, last_updated = CURRENT_TIMESTAMP
+        WHERE <include refid="componentMatch"/> AND kind != #{kind};
+  </update>
+
   <update id="updateComponentAttributes" parameterType="ComponentData">
     UPDATE ${format}_component SET attributes = #{attributes}, last_updated = CURRENT_TIMESTAMP
         WHERE <include refid="componentMatch"/> AND attributes != #{attributes};

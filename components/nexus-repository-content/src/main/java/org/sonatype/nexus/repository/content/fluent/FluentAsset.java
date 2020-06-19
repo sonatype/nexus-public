@@ -90,6 +90,13 @@ public interface FluentAsset
   boolean isStale(CacheController cacheController);
 
   /**
+   * Update this asset to have the given kind.
+   *
+   * @since 3.next
+   */
+  FluentAsset kind(String kind);
+
+  /**
    * Deletes this asset.
    */
   boolean delete();

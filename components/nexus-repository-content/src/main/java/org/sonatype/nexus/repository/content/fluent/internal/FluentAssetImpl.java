@@ -218,6 +218,13 @@ public class FluentAssetImpl
   }
 
   @Override
+  public FluentAsset kind(final String kind) {
+    ((AssetData) asset).setKind(kind);
+    facet.stores().assetStore.updateAssetKind(asset);
+    return this;
+  }
+
+  @Override
   public boolean delete() {
     facet.checkDeleteAllowed(asset);
     return facet.stores().assetStore.deleteAsset(asset);

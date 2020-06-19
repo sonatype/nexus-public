@@ -280,6 +280,10 @@ public class ExampleContentTestSupport
     return new FieldMatcher<>(expected, Component::namespace, Component::name, Component::kind, Component::version);
   }
 
+  static Matcher<Component> sameKind(final Component expected) {
+    return new FieldMatcher<>(expected, Component::kind);
+  }
+
   static Matcher<Asset> samePath(final Asset expected) {
     return new FieldMatcher<>(expected, Asset::path);
   }

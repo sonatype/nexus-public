@@ -108,21 +108,21 @@ public class ComponentDAOTest
       dao.createComponent(component1);
 
       assertThat(dao.browseComponents(repositoryId, null, 10, null),
-          contains(allOf(sameCoordinates(component1), sameAttributes(component1))));
+          contains(allOf(sameCoordinates(component1), sameKind(component1), sameAttributes(component1))));
 
       dao.createComponent(component2);
       dao.createComponent(component3);
 
       //browse all components
       assertThat(dao.browseComponents(repositoryId, null, 10, null),
-          contains(allOf(sameCoordinates(component1), sameAttributes(component1)),
-              allOf(sameCoordinates(component2), sameAttributes(component2)),
-              allOf(sameCoordinates(component3), sameAttributes(component3))));
+          contains(allOf(sameCoordinates(component1), sameKind(component1), sameAttributes(component1)),
+              allOf(sameCoordinates(component2), sameKind(component2), sameAttributes(component2)),
+              allOf(sameCoordinates(component3), sameKind(component3), sameAttributes(component3))));
 
       //browse by kind
       assertThat(dao.browseComponents(repositoryId, anotherKind, 10, null),
-          contains(allOf(sameCoordinates(component2), sameAttributes(component2)),
-              allOf(sameCoordinates(component3), sameAttributes(component3))));
+          contains(allOf(sameCoordinates(component2), sameKind(component2), sameAttributes(component2)),
+              allOf(sameCoordinates(component3), sameKind(component3), sameAttributes(component3))));
 
       session.getTransaction().commit();
     }
@@ -156,10 +156,12 @@ public class ComponentDAOTest
 
       tempResult = dao.readComponent(repositoryId, namespace1, name1, version1).get();
       assertThat(tempResult, sameCoordinates(component1));
+      assertThat(tempResult, sameKind(component1));
       assertThat(tempResult, sameAttributes(component1));
 
       tempResult = dao.readComponent(repositoryId, namespace2, name2, version2).get();
       assertThat(tempResult, sameCoordinates(component2));
+      assertThat(tempResult, sameKind(component2));
       assertThat(tempResult, sameAttributes(component2));
     }
 
@@ -179,9 +181,12 @@ public class ComponentDAOTest
 
       component1.attributes("custom-section-1").set("custom-key-1", "more-test-values-1");
       dao.updateComponentAttributes(component1);
+      component1.setKind("new-kind-1");
+      dao.updateComponentKind(component1);
 
       tempResult = dao.readComponent(repositoryId, namespace1, name1, version1).get();
       assertThat(tempResult, sameCoordinates(component1));
+      assertThat(tempResult, sameKind(component1));
       assertThat(tempResult, sameAttributes(component1));
       assertThat(tempResult.created(), is(oldCreated));
       assertTrue(tempResult.lastUpdated().isAfter(oldLastUpdated)); // should change as attributes have changed
@@ -194,9 +199,12 @@ public class ComponentDAOTest
       component2.componentId = null; // check a 'detached' entity with no internal id can be updated
       component2.attributes("custom-section-2").set("custom-key-2", "more-test-values-2");
       dao.updateComponentAttributes(component2);
+      component2.setKind("new-kind-2");
+      dao.updateComponentKind(component2);
 
       tempResult = dao.readComponent(repositoryId, namespace2, name2, version2).get();
       assertThat(tempResult, sameCoordinates(component2));
+      assertThat(tempResult, sameKind(component2));
       assertThat(tempResult, sameAttributes(component2));
       assertThat(tempResult.created(), is(oldCreated));
       assertTrue(tempResult.lastUpdated().isAfter(oldLastUpdated)); // should change as attributes have changed
@@ -223,6 +231,7 @@ public class ComponentDAOTest
 
       tempResult = dao.readComponent(repositoryId, namespace1, name1, version1).get();
       assertThat(tempResult, sameCoordinates(component1));
+      assertThat(tempResult, sameKind(component1));
       assertThat(tempResult, sameAttributes(component1));
       assertThat(tempResult.created(), is(oldCreated));
       assertTrue(tempResult.lastUpdated().isAfter(oldLastUpdated)); // should change as attributes changed again
@@ -236,6 +245,7 @@ public class ComponentDAOTest
 
       tempResult = dao.readComponent(repositoryId, namespace2, name2, version2).get();
       assertThat(tempResult, sameCoordinates(component2));
+      assertThat(tempResult, sameKind(component2));
       assertThat(tempResult, sameAttributes(component2));
       assertThat(tempResult.created(), is(oldCreated));
       assertThat(tempResult.lastUpdated(), is(oldLastUpdated)); // won't have changed as attributes haven't changed
@@ -251,8 +261,8 @@ public class ComponentDAOTest
       assertTrue(dao.deleteComponent(component1));
 
       assertThat(dao.browseComponents(repositoryId, null, 10, null),
-          contains(allOf(sameCoordinates(component2), sameAttributes(component2)),
-              allOf(sameCoordinates(component3), sameAttributes(component3))));
+          contains(allOf(sameCoordinates(component2), sameKind(component2), sameAttributes(component2)),
+              allOf(sameCoordinates(component3), sameKind(component3), sameAttributes(component3))));
 
       assertTrue(dao.deleteComponents(repositoryId, 0));
 

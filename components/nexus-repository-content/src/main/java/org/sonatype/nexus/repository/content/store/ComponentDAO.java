@@ -107,6 +107,15 @@ public interface ComponentDAO
                                     @Param("version") String version);
 
   /**
+   * Updates the kind of the given component in the content data store.
+   *
+   * @param component the component to update
+   *
+   * @since 3.next
+   */
+  void updateComponentKind(Component component);
+
+  /**
    * Updates the attributes of the given component in the content data store.
    *
    * @param component the component to update
