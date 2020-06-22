@@ -36,11 +36,11 @@
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>25.0-jre</version>
+        <version>27.1-jre</version>
         <exclusions>
           <exclusion>
             <groupId>org.checkerframework</groupId>
-            <artifactId>checker-compat-qual</artifactId>
+            <artifactId>checker-qual</artifactId>
           </exclusion>
           <exclusion>
             <groupId>com.google.errorprone</groupId>
@@ -53,6 +53,10 @@
           <exclusion>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>animal-sniffer-annotations</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.google.guava</groupId>
+            <artifactId>listenablefuture</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
