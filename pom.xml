@@ -866,6 +866,8 @@
               -->
               <id>org.osgi.core</id>
               <id>org.osgi.compendium</id>
+              <id>osgi.core</id>
+              <id>osgi.cmpn</id>
               <id>org.eclipse.osgi</id>
               <id>activation</id>
               <id>javax.annotation</id>

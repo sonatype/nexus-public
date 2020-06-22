@@ -32,7 +32,7 @@ public class NexusLogActivator
   }
 
   @Override
-  public void stop(final BundleContext bundleContext) {
+  public void stop(final BundleContext bundleContext) throws Exception {
     ProgressTaskLogger.shutdown();
     super.stop(bundleContext);
   }
