@@ -12,6 +12,7 @@
  */
 import AnonymousSettings from './components/pages/admin/AnonymousSettings/AnonymousSettings';
 import LoggingConfiguration from './components/pages/admin/LoggingConfiguration/LoggingConfiguration';
+import LogViewer from "./components/pages/admin/LogViewer/LogViewer";
 import SystemInformation from './components/pages/admin/SystemInformation/SystemInformation';
 import SupportRequest from './components/pages/admin/SupportRequest/SupportRequest';
 import MetricHealth from "./components/pages/admin/MetricHealth/MetricHealth";
@@ -119,6 +120,18 @@ window.plugins.push({
       visibility: {
         bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
         permissions: ['nexus:metrics:read']
+      }
+    },
+    {
+      mode: 'admin',
+      path: '/Support/Logging/LogViewer',
+      text: UIStrings.LOG_VIEWER.MENU.text,
+      description: UIStrings.LOG_VIEWER.MENU.description,
+      view: LogViewer,
+      iconCls: 'x-fa fa-terminal',
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        permissions: ['nexus:logging:read']
       }
     },
   ]

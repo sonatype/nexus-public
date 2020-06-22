@@ -1,4 +1,4 @@
-/*
+/**
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
  * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
@@ -10,19 +10,41 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.coreui.internal.log
-
-import groovy.transform.ToString
-import org.hibernate.validator.constraints.NotEmpty
-
 /**
- * Marker exchange object.
- *
- * @since 3.0
+ * @since 3.24
  */
-@ToString(includePackage = false, includeNames = true)
-class MarkerXO
-{
-  @NotEmpty
-  String message
+
+@import "~nexus-ui-plugin/dist/styles/colors";
+
+.nxrm-log-viewer {
+  height: 100%;
+  width: 100%;
+
+  > div {
+    height: 100%;
+  }
+
+  textarea {
+    background-color: $white;
+    color: $nx-text-color-light;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 13px;
+    resize: none;
+    width: 100%;
+    height: 96%;
+  }
+}
+
+.nxrm-select-action {
+  display: inline-block;
+  padding-left: 10px;
+  
+  select {
+    padding-right: 20px;
+  }
+}
+
+.nxrm-log-viewer-mark-text {
+    width: 200px;
+    display: inline-block;
 }

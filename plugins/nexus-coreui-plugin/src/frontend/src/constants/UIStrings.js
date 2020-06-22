@@ -73,6 +73,29 @@ export default {
     }
   },
 
+  LOG_VIEWER: {
+    MENU: {
+      text: 'Log Viewer',
+      description: 'View the current log contents'
+    },
+    REFRESH: {
+      TEXT: 'Refresh Interval',
+      MANUAL_ITEM: 'Manual',
+      TWENTY_SECONDS_ITEM: 'Every 20 seconds',
+      MINUTE_ITEM: 'Every minute',
+      TWO_MINUTES_ITEM: 'Every 2 minutes',
+      FIVE_MINUTES_ITEM: 'Every 5 minutes'
+    },
+    SIZE: {
+      LAST25KB_ITEM: 'Last 25KB',
+      LAST50KB_ITEM: 'Last 50KB',
+      LAST100KB_ITEM: 'Last 100KB'
+    },
+    DOWNLOAD: 'Download',
+    INSERT_MARK: 'Insert Mark',
+    MARK_PLACEHOLDER: 'Marker to insert into log'
+  },
+
   SYSTEM_INFORMATION: {
     MENU: {
       text: 'System Information'

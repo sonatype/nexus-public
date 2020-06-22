@@ -1,0 +1,149 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`LogViewer renders the log into the text area 1`] = `
+<div>
+  <div
+    class="nxrm-content-body nxrm-log-viewer"
+  >
+    <div
+      class="nxrm-section nx-tile"
+    >
+      <div
+        class="nxrm-section-actions nx-tile__actions"
+      >
+        <label
+          for="period"
+        >
+          Refresh Interval
+        </label>
+        <div
+          class="nxrm-select-action"
+        >
+          <select
+            class="nxrm-select"
+            id="period"
+            name="period"
+          >
+            <option
+              value="0"
+            >
+              Manual
+            </option>
+            <option
+              value="20"
+            >
+              Every 20 seconds
+            </option>
+            <option
+              value="60"
+            >
+              Every minute
+            </option>
+            <option
+              value="120"
+            >
+              Every 2 minutes
+            </option>
+            <option
+              value="300"
+            >
+              Every 5 minutes
+            </option>
+          </select>
+        </div>
+        <div
+          class="nxrm-select-action"
+        >
+          <select
+            class="nxrm-select"
+            id="size"
+            name="size"
+          >
+            <option
+              value="25"
+            >
+              Last 25KB
+            </option>
+            <option
+              value="50"
+            >
+              Last 50KB
+            </option>
+            <option
+              value="100"
+            >
+              Last 100KB
+            </option>
+          </select>
+        </div>
+      </div>
+      <div
+        class="nxrm-section-header nx-tile-header"
+      >
+        <button
+          class="nx-btn nx-btn--primary"
+          type="input"
+        >
+          <svg
+            aria-hidden="true"
+            class="svg-inline--fa fa-download fa-w-16 nx-icon"
+            data-icon="download"
+            data-prefix="fas"
+            focusable="false"
+            role="img"
+            viewBox="0 0 512 512"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M216 0h80c13.3 0 24 10.7 24 24v168h87.7c17.8 0 26.7 21.5 14.1 34.1L269.7 378.3c-7.5 7.5-19.8 7.5-27.3 0L90.1 226.1c-12.6-12.6-3.7-34.1 14.1-34.1H192V24c0-13.3 10.7-24 24-24zm296 376v112c0 13.3-10.7 24-24 24H24c-13.3 0-24-10.7-24-24V376c0-13.3 10.7-24 24-24h146.7l49 49c20.1 20.1 52.5 20.1 72.6 0l49-49H488c13.3 0 24 10.7 24 24zm-124 88c0-11-9-20-20-20s-20 9-20 20 9 20 20 20 20-9 20-20zm64 0c0-11-9-20-20-20s-20 9-20 20 9 20 20 20 20-9 20-20z"
+              fill="currentColor"
+            />
+          </svg>
+          <span>
+            Download
+          </span>
+        </button>
+        <input
+          class="nxrm-textfield nxrm-log-viewer-mark-text"
+          id="mark"
+          name="mark"
+          placeholder="Marker to insert into log"
+          type="text"
+          value=""
+        />
+        <button
+          class="nx-btn"
+          id="insertMark"
+          type="input"
+        >
+          <svg
+            aria-hidden="true"
+            class="svg-inline--fa fa-map-marker fa-w-12 nx-icon"
+            data-icon="map-marker"
+            data-prefix="fas"
+            focusable="false"
+            role="img"
+            viewBox="0 0 384 512"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M172.268 501.67C26.97 291.031 0 269.413 0 192 0 85.961 85.961 0 192 0s192 85.961 192 192c0 77.413-26.97 99.031-172.268 309.67-9.535 13.774-29.93 13.773-39.464 0z"
+              fill="currentColor"
+            />
+          </svg>
+          <span>
+            Insert Mark
+          </span>
+        </button>
+      </div>
+      <textarea
+        class="nxrm-textarea"
+        readonly=""
+        wrap="false"
+      >
+        log data
+      </textarea>
+    </div>
+  </div>
+</div>
+`;

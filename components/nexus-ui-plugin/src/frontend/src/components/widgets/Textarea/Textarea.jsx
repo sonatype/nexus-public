@@ -12,7 +12,7 @@
  */
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, {forwardRef} from 'react';
 
 import './Textarea.scss';
 
@@ -21,7 +21,7 @@ import FieldErrorMessage from '../FieldErrorMessage/FieldErrorMessage';
 /**
  * @since 3.22
  */
-export default function Textarea({isRequired, value, className, name, id, ...attrs}) {
+const Textarea = forwardRef(({isRequired, value, className, name, id, ...attrs}, ref) => {
   const isMissingRequiredValue = isRequired && !value;
   const classes = classNames('nxrm-textarea', className, {
     'missing-required-value': isMissingRequiredValue
@@ -33,12 +33,15 @@ export default function Textarea({isRequired, value, className, name, id, ...att
         required={isRequired}
         value={value}
         className={classes}
+        ref={ref}
         {...attrs}
     />
     {isMissingRequiredValue ? <FieldErrorMessage/> : null}
   </>;
-}
+});
 
 Textarea.propTypes = {
   isRequired: PropTypes.bool
 };
+
+export default Textarea;
