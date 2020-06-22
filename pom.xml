@@ -812,13 +812,13 @@
         <plugin>
           <groupId>org.apache.felix</groupId>
           <artifactId>maven-bundle-plugin</artifactId>
-          <version>3.3.0</version>
-          <!-- We need to force biz.aQute.bndlib to 3.5.0 because of https://issues.apache.org/jira/browse/FELIX-5698 -->
+          <version>4.2.1</version>
           <dependencies>
+            <!-- bndlib 4.3.1 has several performance improvements -->
             <dependency>
               <groupId>biz.aQute.bnd</groupId>
               <artifactId>biz.aQute.bndlib</artifactId>
-              <version>3.5.0</version>
+              <version>4.3.1</version>
             </dependency>
           </dependencies>
           <extensions>true</extensions>
@@ -845,6 +845,8 @@
                 $(if;$(classes;IMPLEMENTS;*.AssetBlobDAO);org.sonatype.nexus.blobstore.api),
                 *
               </Import-Package>
+              <!-- match previous plugin behaviour: turn off scanning for Class.forName usage -->
+              <_noclassforname>true</_noclassforname>
             </instructions>
           </configuration>
         </plugin>
