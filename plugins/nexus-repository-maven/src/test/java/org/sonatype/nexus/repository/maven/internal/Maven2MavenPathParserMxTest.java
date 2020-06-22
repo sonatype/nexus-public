@@ -56,7 +56,10 @@ public class Maven2MavenPathParserMxTest
   public static String[] CLASSIFIERS = {null, "single", "with-dash", "with.dot"};
 
   public static String[] EXTENSIONS = {
-      "jar", "jar.sha1", "jar.asc", "jar.asc.md5", "tar.gz", "tar.gz.sha1", "tar.gz.asc", "tar.gz.asc.md5"
+      "jar", "jar.sha1", "jar.asc", "jar.asc.md5", "tar.gz",
+      "tar.anyext.sha1", "tar.anyext.md5", "tar.anyext.asc", "tar.anyext.asc.md5",
+      "cpio.anyext.sha1", "cpio.anyext.md5", "cpio.anyext.asc", "cpio.anyext.asc.md5",
+      "nk.os.sha1", "nk.os.md5", "nk.os.asc", "nk.os.asc.md5"
   };
 
   @Parameters
