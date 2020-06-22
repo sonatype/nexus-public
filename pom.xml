@@ -129,6 +129,7 @@
 
     <it.includes>**/*IT.*</it.includes>
     <it.excludedGroups>org.sonatype.goodies.testsupport.group.Perf,org.sonatype.goodies.testsupport.group.External,org.sonatype.goodies.testsupport.group.Unstable</it.excludedGroups>
+    <clm.skip>true</clm.skip>
   </properties>
 
   <modules>
@@ -1284,6 +1285,22 @@
                 </bannedDependencies>
               </rules>
             </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>com.sonatype.clm</groupId>
+        <artifactId>clm-maven-plugin</artifactId>
+        <version>2.16.0-01</version>
+        <configuration>
+          <skip>${clm.skip}</skip>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>index</goal>
+            </goals>
           </execution>
         </executions>
       </plugin>

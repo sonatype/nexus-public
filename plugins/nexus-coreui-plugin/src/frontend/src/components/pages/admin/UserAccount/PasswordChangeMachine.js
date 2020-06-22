@@ -106,8 +106,14 @@ const passwordChangeMachine = Machine({
                 ExtJS.showSuccessMessage('Password changed');
               })
               .catch((error) => {
-                ExtJS.showErrorMessage('Change password failed');
-                console.error(error);
+                if (error.response?.status === 400 && Array.isArray(error.response.data)) {
+                  const message = error.response.data.map(e => e.message).join('\\n');
+                  ExtJS.showErrorMessage(message);
+                }
+                else {
+                  ExtJS.showErrorMessage('Change password failed');
+                  console.error(error);
+                }
               });
         }),
   },

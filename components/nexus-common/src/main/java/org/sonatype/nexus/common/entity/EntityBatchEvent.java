@@ -15,7 +15,7 @@ package org.sonatype.nexus.common.entity;
 import java.util.Collections;
 import java.util.List;
 
-import org.sonatype.nexus.common.event.WithAffinity;
+import org.sonatype.nexus.common.event.HasAffinity;
 
 /**
  * Batched sequence of {@link EntityEvent}s.
@@ -23,7 +23,7 @@ import org.sonatype.nexus.common.event.WithAffinity;
  * @since 3.1
  */
 public class EntityBatchEvent
-    implements WithAffinity
+    implements HasAffinity
 {
   /**
    * Marker for {@link EntityEvent}s which can be batched together in a {@link EntityBatchEvent} as well

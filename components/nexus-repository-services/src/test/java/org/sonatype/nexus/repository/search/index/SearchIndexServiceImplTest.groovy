@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search
+package org.sonatype.nexus.repository.search.index
 
 import java.util.AbstractMap.SimpleImmutableEntry
 import java.util.concurrent.ExecutorService
@@ -26,14 +26,8 @@ import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.config.Configuration
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.manager.internal.RepositoryImpl
-import org.sonatype.nexus.repository.search.index.HashedNamingPolicy
-import org.sonatype.nexus.repository.search.index.IndexNamingPolicy
-import org.sonatype.nexus.repository.search.index.SearchIndexFacet
-import org.sonatype.nexus.repository.search.query.SearchQueryService
 import org.sonatype.nexus.repository.search.query.SearchQueryServiceImpl
 import org.sonatype.nexus.repository.search.query.SearchSubjectHelper
-import org.sonatype.nexus.repository.storage.Component
-import org.sonatype.nexus.repository.storage.DefaultComponent
 import org.sonatype.nexus.repository.types.HostedType
 import org.sonatype.nexus.scheduling.CancelableHelper
 import org.sonatype.nexus.scheduling.TaskInterruptedException
@@ -68,12 +62,12 @@ import static org.mockito.Mockito.when
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1
 import static org.sonatype.nexus.repository.search.index.SearchConstants.TYPE
 
-class SearchServiceImplTest
+class SearchIndexServiceImplTest
     extends TestSupport
 {
-  private static final Function<Component, String> NEVER_CALLED_ID_PRODUCER = null
+  private static final Function<Map, String> NEVER_CALLED_ID_PRODUCER = null
 
-  private static final Function<Component, String> NEVER_CALLED_JSON_DOC_PRODUCER = null
+  private static final Function<Map, String> NEVER_CALLED_JSON_DOC_PRODUCER = null
 
   @Mock
   Provider<Client> clientProvider
@@ -120,7 +114,9 @@ class SearchServiceImplTest
 
   Settings settings = Settings.EMPTY
 
-  SearchServiceImpl searchService
+  SearchIndexServiceImpl searchIndexService
+
+  SearchQueryServiceImpl searchQueryService
 
   @Before
   public void setup() {
@@ -131,13 +127,15 @@ class SearchServiceImplTest
     when(client.settings()).thenReturn(settings)
 
     IndexNamingPolicy indexNamingPolicy = new HashedNamingPolicy()
-    SearchQueryService searchQueryService = new SearchQueryServiceImpl(clientProvider,
+
+    searchIndexService = new SearchIndexServiceImpl(clientProvider,
+        indexNamingPolicy, indexSettingsContributors, eventManager, 1000, 0, 0, 3000, 1)
+
+    searchQueryService = new SearchQueryServiceImpl(clientProvider,
       repositoryManager, securityHelper, searchSubjectHelper, indexNamingPolicy, false)
 
-    searchService = new SearchServiceImpl(clientProvider, searchQueryService,
-        indexNamingPolicy, indexSettingsContributors, eventManager, 1000, 0, 0, 3000, 1)
-    searchService.bulkProcessorToExecutors = new HashMap<>()
-    searchService.bulkProcessorToExecutors.put(0, new SimpleImmutableEntry<>(bulkProcessor, executorService))
+    searchIndexService.bulkProcessorToExecutors = new HashMap<>()
+    searchIndexService.bulkProcessorToExecutors.put(0, new SimpleImmutableEntry<>(bulkProcessor, executorService))
   }
 
   @After
@@ -150,7 +148,7 @@ class SearchServiceImplTest
   public void testCreateIndexAlreadyExists() throws Exception {
     ArgumentCaptor<String> varArgs = captureRepoNameArg()
 
-    searchService.createIndex(repository('test'))
+    searchIndexService.createIndex(repository('test'))
 
     assertThat(varArgs.getAllValues(), contains(SHA1.function().hashUnencodedChars('test').toString()))
   }
@@ -163,28 +161,29 @@ class SearchServiceImplTest
   public void testCreateIndexRepositoryNameMapping() throws Exception {
     ArgumentCaptor<String> varArgs = captureRepoNameArg()
 
-    searchService.createIndex(repository('UPPERCASE'))
+    searchIndexService.createIndex(repository('UPPERCASE'))
 
     assertThat(varArgs.getAllValues(), contains(SHA1.function().hashUnencodedChars('UPPERCASE').toString()))
   }
 
   /**
-   * Verify successful execution path for {@link SearchServiceImpl#bulkPut(Repository, Iterable, Function, Function)}.
+   * Verify successful execution path for {@link SearchIndexServiceImpl#bulkPut(Repository, Iterable, Function, Function)}.
    */
   @Test
   void testBulkPut() {
     int requestCount = 50
-    BiMap<String, Component> components = HashBiMap.create()
+    BiMap<String, Map> components = HashBiMap.create()
     for (int i = 0; i < requestCount; i++) {
-      components.put(UUID.randomUUID().toString(), new DefaultComponent())
+      String id = UUID.randomUUID().toString()
+      components.put(id, ['id':id])
     }
 
-    BiMap<Component, String> inverse = components.inverse()
+    BiMap<Map, String> inverse = components.inverse()
     String json = '{ "a": "b" }'
 
     Repository repository = repository('test-repo')
     ArgumentCaptor<String> indexName = captureRepoNameArg()
-    searchService.createIndex(repository)
+    searchIndexService.createIndex(repository)
 
     components.entrySet().forEach({ entry ->
       IndexRequestBuilder builder = mock(IndexRequestBuilder.class)
@@ -196,7 +195,7 @@ class SearchServiceImplTest
       when(builder.request()).thenReturn(request)
     })
 
-    def futures = searchService.bulkPut(repository,
+    def futures = searchIndexService.bulkPut(repository,
         components.values(),
         { component -> inverse.get(component) },
         { component -> json }
@@ -211,15 +210,15 @@ class SearchServiceImplTest
 
   @Test
   void testBulkPutCancellation() {
-    def components = [new DefaultComponent()]
+    def components = [[:]]
     Repository repository = repository('test-repo')
     captureRepoNameArg()
-    searchService.createIndex(repository)
+    searchIndexService.createIndex(repository)
 
     cancelled.set(true)
 
     try {
-      searchService.bulkPut(repository, components, NEVER_CALLED_ID_PRODUCER, NEVER_CALLED_JSON_DOC_PRODUCER)
+      searchIndexService.bulkPut(repository, components, NEVER_CALLED_ID_PRODUCER, NEVER_CALLED_JSON_DOC_PRODUCER)
       fail('Expected exception')
     }
     catch (TaskInterruptedException expected) {

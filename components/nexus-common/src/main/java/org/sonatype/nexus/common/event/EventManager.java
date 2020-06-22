@@ -61,7 +61,7 @@ public interface EventManager
   boolean isCalmPeriod();
 
   /**
-   * Is {@link WithAffinity} support enabled?
+   * Is {@link HasAffinity} support enabled?
    *
    * @since 3.11
    */

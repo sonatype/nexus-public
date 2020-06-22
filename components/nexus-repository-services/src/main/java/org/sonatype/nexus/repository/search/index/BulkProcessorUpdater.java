@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search;
+package org.sonatype.nexus.repository.search.index;
 
 import java.util.concurrent.Callable;
 
@@ -26,8 +26,8 @@ import org.elasticsearch.action.bulk.BulkProcessor;
  * The intention is for this Runnable to be run on a single dedicated worker thread so that only that thread
  * is contesting for the BulkProcessor's MutEx when {@link BulkProcessor#add(ActionRequest)} is invoked.
  * That worker thread should be the same worker thread running instances of {@link BulkProcessorFlusher}.
- * This is achieved by using a single thread pool in {@link SearchServiceImpl} to run instances of this Runnable which
- * are created in {@link SearchServiceImpl}.
+ * This is achieved by using a single thread pool in {@link SearchIndexServiceImpl} to run instances of
+ * this Runnable which are created in {@link SearchIndexServiceImpl}.
  *
  * @since 3.22
  */

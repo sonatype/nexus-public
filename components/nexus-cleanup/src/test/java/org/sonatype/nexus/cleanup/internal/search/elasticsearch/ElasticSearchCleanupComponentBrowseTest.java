@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.cleanup.internal.search.elasticsearch;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -22,7 +21,8 @@ import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.search.SearchService;
+import org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder;
+import org.sonatype.nexus.repository.search.query.SearchQueryService;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.transaction.UnitOfWork;
@@ -65,6 +65,7 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_BLOB_UPDATED_KEY;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_DOWNLOADED_KEY;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REGEX_KEY;
+import static org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder.repositoryQuery;
 
 public class ElasticSearchCleanupComponentBrowseTest
     extends TestSupport
@@ -87,7 +88,7 @@ public class ElasticSearchCleanupComponentBrowseTest
   private SearchHit searchHit1, searchHit2;
 
   @Mock
-  private SearchService searchService;
+  private SearchQueryService searchQueryService;
 
   @Mock
   private StorageTx tx;
@@ -107,7 +108,7 @@ public class ElasticSearchCleanupComponentBrowseTest
         LAST_BLOB_UPDATED_KEY, new LastBlobUpdatedCriteriaAppender(),
         IS_PRERELEASE_KEY, new PrereleaseCriteriaAppender(),
         REGEX_KEY, new RegexCriteriaAppender()
-    ), searchService, metricRegistry);
+    ), searchQueryService, metricRegistry);
 
     when(repository.getName()).thenReturn(REPO_NAME);
 
@@ -185,20 +186,20 @@ public class ElasticSearchCleanupComponentBrowseTest
     CleanupPolicy lastBlobUpdatedPolicy = new OrientCleanupPolicy();
     lastBlobUpdatedPolicy.setCriteria(criteria);
 
-    when(searchService.browseUnrestrictedInRepos(any(), any())).thenReturn(ImmutableList.of(searchHit1, searchHit2));
+    when(searchQueryService.browse(any())).thenReturn(ImmutableList.of(searchHit1, searchHit2));
 
     Iterable<EntityId> componentsIterable = underTest.browse(lastBlobUpdatedPolicy, repository);
 
     assertThat(componentsIterable.iterator().hasNext(), is(false));
 
-    verify(searchService, never()).browseUnrestrictedInRepos(any(), any());
+    verify(searchQueryService, never()).browse(any());
   }
 
   private void assertComponentsReturned(final Map<String, String> criteria) {
     CleanupPolicy lastBlobUpdatedPolicy = new OrientCleanupPolicy();
     lastBlobUpdatedPolicy.setCriteria(criteria);
 
-    when(searchService.browseUnrestrictedInRepos(any(), any())).thenReturn(ImmutableList.of(searchHit1, searchHit2));
+    when(searchQueryService.browse(any())).thenReturn(ImmutableList.of(searchHit1, searchHit2));
 
     Iterable<EntityId> componentsIterable = underTest.browse(lastBlobUpdatedPolicy, repository);
 
@@ -210,11 +211,12 @@ public class ElasticSearchCleanupComponentBrowseTest
 
   private void assertQuery(final String key, final String expectedQuery) {
     ArgumentCaptor<QueryBuilder> queryBuilderCaptor = ArgumentCaptor.forClass(QueryBuilder.class);
-    ArgumentCaptor<Collection> repoNameCaptor = ArgumentCaptor.forClass(Collection.class);
-    verify(searchService).browseUnrestrictedInRepos(queryBuilderCaptor.capture(), repoNameCaptor.capture());
+    verify(searchQueryService).browse(queryBuilderCaptor.capture());
 
-    assertThat(queryBuilderCaptor.getValue().toString(), is(equalTo(expectedQuery)));
-    assertThat(repoNameCaptor.getValue().iterator().next(), is(equalTo(REPO_NAME)));
+    RepositoryQueryBuilder actualQuery = repositoryQuery(queryBuilderCaptor.getValue());
+
+    assertThat(actualQuery.toString(), is(equalTo(expectedQuery)));
+    assertThat(actualQuery.getRepositoryNames().iterator().next(), is(equalTo(REPO_NAME)));
   }
 
   private String timeQuery(final String matchOn, final String time) {

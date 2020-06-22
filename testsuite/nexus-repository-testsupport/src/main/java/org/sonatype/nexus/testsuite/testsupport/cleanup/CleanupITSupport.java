@@ -59,6 +59,7 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_BLOB_UPDATED_KEY;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_DOWNLOADED_KEY;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REGEX_KEY;
+import static org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder.unrestricted;
 import static org.sonatype.nexus.scheduling.TaskState.WAITING;
 
 /**
@@ -307,7 +308,7 @@ public class CleanupITSupport
 
     assertThat(countComponents(testName.getMethodName()), is(equalTo(totalComponents)));
 
-    waitFor(() -> size(searchTestHelper.searchService.browse(SEARCH_ALL)) == totalComponents);
+    waitFor(() -> size(searchTestHelper.queryService.browse(SEARCH_ALL)) == totalComponents);
 
     runCleanupTask();
 
@@ -331,7 +332,7 @@ public class CleanupITSupport
 
     assertThat(countComponents(testName.getMethodName()), is(equalTo(totalComponents)));
 
-    waitFor(() -> size(searchTestHelper.searchService.browse(SEARCH_ALL)) == totalComponents);
+    waitFor(() -> size(searchTestHelper.queryService.browse(SEARCH_ALL)) == totalComponents);
 
     runCleanupTask();
 
@@ -368,7 +369,7 @@ public class CleanupITSupport
 
     assertThat(countComponents(testName.getMethodName()), is(equalTo(totalComponents)));
 
-    waitFor(() -> size(searchTestHelper.searchService.browse(SEARCH_ALL)) == totalComponents);
+    waitFor(() -> size(searchTestHelper.queryService.browse(SEARCH_ALL)) == totalComponents);
 
     runCleanupTask();
 
@@ -393,8 +394,8 @@ public class CleanupITSupport
                                            final long countAfterPrereleaseCleanup) throws Exception
   {
     long count = countComponents(repository.getName());
-    waitFor(() -> size(searchTestHelper.searchService
-        .browseUnrestrictedInRepos(SEARCH_ALL, ImmutableList.of(repository.getName()))) == count);
+    waitFor(() -> size(searchTestHelper.queryService.browse(
+        unrestricted(SEARCH_ALL).inRepositories(repository))) == count);
 
     setPolicyToBePrerelease(repository, true);
     runCleanupTask();
@@ -424,7 +425,7 @@ public class CleanupITSupport
 
     setPolicyToBeRegex(repository, expression);
 
-    waitFor(() -> size(searchTestHelper.searchService.browse(SEARCH_ALL)) == totalComponents);
+    waitFor(() -> size(searchTestHelper.queryService.browse(SEARCH_ALL)) == totalComponents);
 
     runCleanupTask();
 
@@ -468,7 +469,7 @@ public class CleanupITSupport
             .lte("now-" + TWO_SECONDS + "s")
     ).must(matchQuery(IS_PRERELEASE_KEY, true));
 
-    waitFor(() -> size(searchTestHelper.searchService.browseUnrestricted(query)) > 0);
+    waitFor(() -> size(searchTestHelper.queryService.browse(unrestricted(query))) > 0);
   }
 
   public static String randomName() {

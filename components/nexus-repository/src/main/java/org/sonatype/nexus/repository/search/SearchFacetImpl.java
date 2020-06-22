@@ -29,6 +29,7 @@ import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.search.index.SearchIndexService;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.BucketEntityAdapter;
@@ -55,7 +56,6 @@ import static com.google.common.collect.Iterables.transform;
 import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REPOSITORY_NAME;
-import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_BUCKET;
 
 /**
  * Default {@link SearchFacet} implementation.
@@ -73,7 +73,7 @@ public class SearchFacetImpl
 
   private static final int BUCKET = 0;
 
-  private final SearchService searchService;
+  private final SearchIndexService searchIndexService;
 
   private final Map<String, ComponentMetadataProducer> componentMetadataProducers;
 
@@ -86,13 +86,13 @@ public class SearchFacetImpl
   private Map<String, Object> repositoryMetadata;
 
   @Inject
-  public SearchFacetImpl(final SearchService searchService,
+  public SearchFacetImpl(final SearchIndexService searchIndexService,
                          final Map<String, ComponentMetadataProducer> componentMetadataProducers,
                          final ComponentEntityAdapter componentEntityAdapter,
                          final ComponentStore componentStore,
                          final BucketEntityAdapter bucketEntityAdapter)
   {
-    this.searchService = checkNotNull(searchService);
+    this.searchIndexService = checkNotNull(searchIndexService);
     this.componentMetadataProducers = checkNotNull(componentMetadataProducers);
     this.componentEntityAdapter = checkNotNull(componentEntityAdapter);
     this.componentStore = checkNotNull(componentStore);
@@ -109,7 +109,7 @@ public class SearchFacetImpl
   @Guarded(by = STARTED)
   public void rebuildIndex() {
     log.info("Rebuilding index of repository {}", getRepository().getName());
-    searchService.rebuildIndex(getRepository());
+    searchIndexService.rebuildIndex(getRepository());
     UnitOfWork.begin(facet(StorageFacet.class).txSupplier());
     try {
       rebuildComponentIndex();
@@ -171,7 +171,7 @@ public class SearchFacetImpl
     checkNotNull(componentId);
     String json = json(componentId);
     if (json != null) {
-      searchService.put(getRepository(), identifier(componentId), json);
+      searchIndexService.put(getRepository(), identifier(componentId), json);
     }
   }
 
@@ -179,31 +179,31 @@ public class SearchFacetImpl
   @Guarded(by = STARTED)
   public void bulkPut(final Iterable<EntityId> componentIds) {
     checkNotNull(componentIds);
-    searchService.bulkPut(getRepository(), componentIds, this::identifier, this::json);
+    searchIndexService.bulkPut(getRepository(), componentIds, this::identifier, this::json);
   }
 
   @Override
   @Guarded(by = STARTED)
   public void delete(final EntityId componentId) {
     checkNotNull(componentId);
-    searchService.delete(getRepository(), identifier(componentId));
+    searchIndexService.delete(getRepository(), identifier(componentId));
   }
 
   @Override
   @Guarded(by = STARTED)
   public void bulkDelete(final Iterable<EntityId> componentIds) {
     checkNotNull(componentIds);
-    searchService.bulkDelete(getRepository(), transform(componentIds, this::identifier));
+    searchIndexService.bulkDelete(getRepository(), transform(componentIds, this::identifier));
   }
 
   @Override
   protected void doStart() throws Exception {
-    searchService.createIndex(getRepository());
+    searchIndexService.createIndex(getRepository());
   }
 
   @Override
   protected void doDelete() {
-    searchService.deleteIndex(getRepository());
+    searchIndexService.deleteIndex(getRepository());
   }
 
   /**

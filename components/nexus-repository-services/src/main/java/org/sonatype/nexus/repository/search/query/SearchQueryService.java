@@ -20,7 +20,7 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 
 /**
- * Search service.
+ * Search query service.
  *
  * @since 3.next
  */

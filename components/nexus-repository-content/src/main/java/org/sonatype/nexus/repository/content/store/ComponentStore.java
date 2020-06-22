@@ -134,6 +134,16 @@ public class ComponentStore<T extends ComponentDAO>
   }
 
   /**
+   * Updates the kind of the given component in the content data store.
+   *
+   * @param component the component to update
+   */
+  @Transactional
+  public void updateComponentKind(final Component component) {
+    dao().updateComponentKind(component);
+  }
+
+  /**
    * Updates the attributes of the given component in the content data store.
    *
    * @param component the component to update

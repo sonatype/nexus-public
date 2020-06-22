@@ -10,31 +10,35 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search;
+package org.sonatype.nexus.repository.search.index;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 
+import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.bulk.BulkProcessor;
+import org.elasticsearch.action.delete.DeleteRequest;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import static org.mockito.Mockito.verify;
 
-public class BulkProcessorFlusherTest
+public class BulkProcessorUpdaterTest
     extends TestSupport
 {
-
   @Mock
   private BulkProcessor bulkProcessor;
 
+  @Mock
+  private ActionRequest<DeleteRequest> deleteRequest;
+
   @InjectMocks
-  private BulkProcessorFlusher underTest;
+  private BulkProcessorUpdater<DeleteRequest> underTest;
 
   @Test
-  public void runShouldFlushBulkProcessor() {
+  public void runShouldAddRequestToBulkProcessor() {
     underTest.call();
 
-    verify(bulkProcessor).flush();
+    verify(bulkProcessor).add(deleteRequest);
   }
 }

@@ -19,13 +19,12 @@ import javax.validation.ValidationException
 
 import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.coreui.events.UiSearchEvent
-import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.extdirect.model.LimitedPagedResponse
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters
 import org.sonatype.nexus.rapture.UiSettingsManager
-import org.sonatype.nexus.repository.search.SearchService
 import org.sonatype.nexus.repository.search.query.SearchFilter
+import org.sonatype.nexus.repository.search.query.SearchQueryService
 import org.sonatype.nexus.repository.search.query.SearchResultComponent
 import org.sonatype.nexus.repository.search.query.SearchResultsGenerator
 import org.sonatype.nexus.repository.search.query.SearchUtils
@@ -37,6 +36,9 @@ import com.softwarementors.extjs.djn.config.annotations.DirectMethod
 import org.apache.shiro.authz.annotation.RequiresPermissions
 import org.elasticsearch.action.search.SearchResponse
 import org.elasticsearch.index.query.QueryBuilder
+
+import static java.time.Duration.ofSeconds
+import static org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder.repositoryQuery
 
 /**
  * Search {@link DirectComponent}.
@@ -50,7 +52,7 @@ class SearchComponent
     extends DirectComponentSupport
 {
   @Inject
-  SearchService searchService
+  SearchQueryService searchQueryService
 
   @Inject
   SearchUtils searchUtils
@@ -101,7 +103,9 @@ class SearchComponent
       def sortBuilders = searchUtils.getSortBuilders(sort?.property, sort?.direction)
       def timeout = uiSettingsManager.settings.searchRequestTimeout ?: uiSettingsManager.settings.requestTimeout - 5
 
-      SearchResponse response = searchService.search(query, sortBuilders, parameters.start, parameters.limit, timeout)
+      SearchResponse response = searchQueryService.search(
+        repositoryQuery(query).sortBy(sortBuilders).timeout(ofSeconds(timeout)), parameters.start, parameters.limit)
+
       List<SearchResultComponent> searchResultComponents = searchResultsGenerator.getSearchResultList(response)
 
       return new LimitedPagedResponse<ComponentXO>(

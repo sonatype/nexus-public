@@ -48,12 +48,17 @@
       <groupId>com.spotify</groupId>
       <artifactId>docker-client</artifactId>
       <classifier>shaded</classifier>
-      <exclusions>
-        <exclusion>
-          <groupId>*</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>com.github.jnr</groupId>
+      <artifactId>jffi</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.github.jnr</groupId>
+      <artifactId>jffi</artifactId>
+      <classifier>native</classifier>
     </dependency>
 
     <dependency>

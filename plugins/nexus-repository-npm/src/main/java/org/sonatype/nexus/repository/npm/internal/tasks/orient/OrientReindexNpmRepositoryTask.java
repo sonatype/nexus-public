@@ -18,17 +18,16 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind;
-import org.sonatype.nexus.repository.npm.internal.orient.NpmFormatAttributesExtractor;
-import org.sonatype.nexus.repository.npm.internal.NpmPackageParser;
-import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchFacet;
-
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryTaskSupport;
 import org.sonatype.nexus.repository.attributes.AttributesFacet;
-import org.sonatype.nexus.repository.search.SearchFacet;
+import org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind;
+import org.sonatype.nexus.repository.npm.internal.NpmPackageParser;
+import org.sonatype.nexus.repository.npm.internal.orient.NpmFormatAttributesExtractor;
+import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchFacet;
+import org.sonatype.nexus.repository.search.index.SearchIndexFacet;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.storage.StorageFacet;
@@ -41,8 +40,8 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind.TARBALL;
 import static java.util.Collections.singletonList;
+import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind.TARBALL;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
 /**
@@ -81,8 +80,8 @@ public class OrientReindexNpmRepositoryTask
   @Override
   protected void execute(final Repository repository) {
     // the search index must be rebuilt first in order to absorb the changes to the elasticsearch mapping
-    SearchFacet searchFacet = repository.facet(SearchFacet.class);
-    searchFacet.rebuildIndex();
+    SearchIndexFacet searchIndexFacet = repository.facet(SearchIndexFacet.class);
+    searchIndexFacet.rebuildIndex();
 
     // format attributes must be extracted from each asset as we may not have done so previously (for existing npm
     // repositories with content before we actually bothered to extract and save any asset-specific format metadata)

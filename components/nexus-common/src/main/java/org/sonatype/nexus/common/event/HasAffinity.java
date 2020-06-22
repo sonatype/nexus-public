@@ -10,28 +10,20 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search;
-
-import java.net.URL;
-
-import javax.annotation.Nullable;
-
-import org.sonatype.nexus.repository.Repository;
+package org.sonatype.nexus.common.event;
 
 /**
- * Contributor to ES index settings.
+ * Event mix-in that declares the affinity to use during asynchronous event delivery.
  *
- * Index settings from all contributors are merged before index is created.
+ * This is a hint to try and maintain ordering between events with the same affinity
+ * at the point they reach subscribers, even when event delivery is multi-threaded.
  *
- * @since 3.0
+ * @since 3.11
  */
-public interface IndexSettingsContributor
+public interface HasAffinity
 {
   /**
-   * Retrieves index settings for specific repository.
-   *
-   * @return ES index settings in json format or null if this contributor has no settings for repository
+   * @return affinity hint
    */
-  @Nullable
-  URL getIndexSettings(Repository repository);
+  String getAffinity();
 }

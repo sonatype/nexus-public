@@ -191,7 +191,7 @@ public class OrientComponentAssetTestHelper
             return Optional.ofNullable(tx.findComponent(componentId));
           }
         })
-        .filter(component -> Objects.equals(component.group(), group))
+        .filter(component -> group == null || Objects.equals(component.group(), group))
         .filter(component -> Objects.equals(component.name(), name))
         .filter(component -> Objects.equals(component.version(), version))
         .isPresent();

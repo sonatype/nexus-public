@@ -183,6 +183,8 @@ public class AssetDAOTest
 
       asset1.attributes("custom-section-1").set("custom-key-1", "more-test-values-1");
       dao.updateAssetAttributes(asset1);
+      asset1.setKind("new-kind-1");
+      dao.updateAssetKind(asset1);
 
       tempResult = dao.readAsset(repositoryId, path1).get();
       assertThat(tempResult, samePath(asset1));
@@ -199,6 +201,8 @@ public class AssetDAOTest
       asset2.assetId = null; // check a 'detached' entity with no internal id can be updated
       asset2.attributes("custom-section-2").set("custom-key-2", "more-test-values-2");
       dao.updateAssetAttributes(asset2);
+      asset2.setKind("new-kind-2");
+      dao.updateAssetKind(asset2);
 
       tempResult = dao.readAsset(repositoryId, path2).get();
       assertThat(tempResult, samePath(asset2));

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search
+package org.sonatype.nexus.repository.search.index
 
 import java.nio.file.Paths
 import java.security.SecureRandom
@@ -26,14 +26,8 @@ import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.config.Configuration
 import org.sonatype.nexus.repository.manager.RepositoryManager
-import org.sonatype.nexus.repository.search.index.HashedNamingPolicy
-import org.sonatype.nexus.repository.search.index.IndexNamingPolicy
-import org.sonatype.nexus.repository.search.index.SearchIndexFacet
-import org.sonatype.nexus.repository.search.query.SearchQueryService
 import org.sonatype.nexus.repository.search.query.SearchQueryServiceImpl
 import org.sonatype.nexus.repository.search.query.SearchSubjectHelper
-import org.sonatype.nexus.repository.storage.Component
-import org.sonatype.nexus.repository.storage.DefaultComponent
 import org.sonatype.nexus.security.SecurityHelper
 
 import com.google.common.collect.ContiguousSet
@@ -60,8 +54,9 @@ import static org.junit.Assert.assertThat
 import static org.mockito.Mockito.any
 import static org.mockito.Mockito.mock
 import static org.mockito.Mockito.when
+import static org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder.unrestricted
 
-class SearchServiceImplIT
+class SearchIndexServiceImplIT
     extends TestSupport
 {
   static final String BASEDIR = new File(System.getProperty('basedir', '')).absolutePath
@@ -102,13 +97,15 @@ class SearchServiceImplIT
   @Mock
   EventManager eventManager
 
-  SearchServiceImpl searchService
+  SearchIndexServiceImpl searchIndexService
+
+  SearchQueryServiceImpl searchQueryService
 
   def repositories = []
 
   def components = []
 
-  Multimap<Repository, Component> componentsByRepository = Multimaps.newListMultimap([:], {[]})
+  Multimap<Repository, Map> componentsByRepository = Multimaps.newListMultimap([:], {[]})
 
   BoolQueryBuilder exampleQuery = boolQuery().must(queryStringQuery('example'))
 
@@ -123,11 +120,12 @@ class SearchServiceImplIT
     ClientProvider clientProvider = new ClientProvider(nodeProvider)
 
     IndexNamingPolicy indexNamingPolicy = new HashedNamingPolicy()
-    SearchQueryService searchQueryService = new SearchQueryServiceImpl(clientProvider,
-        repositoryManager, securityHelper, searchSubjectHelper, indexNamingPolicy, false)
 
-    searchService = new SearchServiceImpl(clientProvider, searchQueryService,
+    searchIndexService = new SearchIndexServiceImpl(clientProvider,
         indexNamingPolicy, ImmutableList.of(), eventManager, 1000, 1, 0, CALM_TIMEOUT, 1)
+
+    searchQueryService = new SearchQueryServiceImpl(clientProvider,
+        repositoryManager, securityHelper, searchSubjectHelper, indexNamingPolicy, false)
 
     when(repositoryConfig.isOnline()).thenReturn(true)
     when(testFormat.getValue()).thenReturn('test-format')
@@ -139,7 +137,7 @@ class SearchServiceImplIT
       when(repository.getConfiguration()).thenReturn(repositoryConfig)
       when(repository.optionalFacet(SearchIndexFacet.class)).thenReturn(Optional.of(searchFacet))
       when(repository.getFormat()).thenReturn(testFormat)
-      searchService.createIndex(repository)
+      searchIndexService.createIndex(repository)
       repositories.add(repository)
     }
 
@@ -147,18 +145,18 @@ class SearchServiceImplIT
     when(securityHelper.allPermitted(any())).thenReturn(true)
 
     for (int i = 0; i < TEST_COMPONENT_COUNT; i++) {
-      Component component = new DefaultComponent()
-      component.format('test-format')
-      component.group('example')
-      component.name("$i")
-      component.version('1.0')
+      Map component = [:]
+      component.format = 'test-format'
+      component.group = 'example'
+      component.name = "$i"
+      component.version = '1.0'
       components.add(component)
     }
   }
 
   @After
   public void teardown() {
-    repositories.forEach(searchService.&deleteIndex)
+    repositories.forEach(searchIndexService.&deleteIndex)
   }
 
   @Test
@@ -168,11 +166,11 @@ class SearchServiceImplIT
 
     // attempt to bulk-delete indexed documents under each repository
     repositories.forEach({ repo ->
-        searchService.bulkDelete(repo, componentsByRepository.get(repo)*.name()) })
+        searchIndexService.bulkDelete(repo, componentsByRepository.get(repo).collect { it.name as String }) })
 
     // wait for all documents to be removed
     await().atMost(1, MINUTES).until({
-        assertThat(Iterables.size(searchService.browseUnrestricted(exampleQuery)), is(0)) })
+        assertThat(Iterables.size(searchQueryService.browse(unrestricted(exampleQuery))), is(0)) })
   }
 
   @Test
@@ -181,11 +179,11 @@ class SearchServiceImplIT
     seedComponentIndex()
 
     // attempt to bulk-delete indexed documents by identifier only, without knowing the owning repository
-    searchService.bulkDelete(null, ContiguousSet.create(Range.closed(0, TEST_COMPONENT_COUNT), integers()).asList())
+    searchIndexService.bulkDelete(null, ContiguousSet.create(Range.closed(0, TEST_COMPONENT_COUNT), integers()).asList())
 
     // wait for all documents to be removed
     await().atMost(1, MINUTES).until({
-        assertThat(Iterables.size(searchService.browseUnrestricted(exampleQuery)), is(0)) })
+        assertThat(Iterables.size(searchQueryService.browse(unrestricted(exampleQuery))), is(0)) })
   }
 
   @Test
@@ -196,11 +194,11 @@ class SearchServiceImplIT
         .must(matchAllQuery())
 
     def repos = repositories.stream().map { it.name }.collect()
-    def searchResponse = searchService.searchUnrestrictedInRepos(query, null, 0, 2, repos)
+    def searchResponse = searchQueryService.search(unrestricted(query).inRepositories(repos), 0, 2)
 
     assert searchResponse.hits.size() == 2
 
-    def secondPage = searchService.searchUnrestrictedInRepos(query, null, 2, 4, repos)
+    def secondPage = searchQueryService.search(unrestricted(query).inRepositories(repos), 2, 4)
 
     assert secondPage.hits.size() == 4
     assert !searchResponse.hits.contains(secondPage.hits[0])
@@ -216,16 +214,16 @@ class SearchServiceImplIT
 
     // populate each index using bulk operations
     componentsByRepository.keySet().forEach({ repository ->
-      searchService.bulkPut(
+      searchIndexService.bulkPut(
           repository,
           componentsByRepository.get(repository),
-          { component -> component.name() },
+          { component -> component.name as String },
           { component ->
             """
-              { "format":"${component.format()}",
-                "group":"${component.group()}",
-                "name":"${component.name()}",
-                "version":"${component.version()}"
+              { "format":"${component.format}",
+                "group":"${component.group}",
+                "name":"${component.name}",
+                "version":"${component.version}"
               }
               """ as String
           })
@@ -233,6 +231,6 @@ class SearchServiceImplIT
 
     // wait for all documents to be indexed
     await().atMost(1, MINUTES).until({
-        assertThat(Iterables.size(searchService.browseUnrestricted(exampleQuery)), is(TEST_COMPONENT_COUNT)) })
+        assertThat(Iterables.size(searchQueryService.browse(unrestricted(exampleQuery))), is(TEST_COMPONENT_COUNT)) })
   }
 }

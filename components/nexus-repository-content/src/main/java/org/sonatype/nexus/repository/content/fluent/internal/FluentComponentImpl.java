@@ -23,6 +23,7 @@ import org.sonatype.nexus.repository.content.fluent.AttributeChange;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.store.ComponentData;
 import org.sonatype.nexus.repository.content.store.WrappedContent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -103,6 +104,13 @@ public class FluentComponentImpl
   public Collection<FluentAsset> assets() {
     return transform(facet.stores().assetStore.browseComponentAssets(component),
         asset -> new FluentAssetImpl(facet, asset));
+  }
+
+  @Override
+  public FluentComponent kind(final String kind) {
+    ((ComponentData) component).setKind(kind);
+    facet.stores().componentStore.updateComponentKind(component);
+    return this;
   }
 
   @Override

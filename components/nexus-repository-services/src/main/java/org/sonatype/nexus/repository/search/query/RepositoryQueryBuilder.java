@@ -17,11 +17,17 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 
+import org.sonatype.nexus.repository.Repository;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static java.util.Arrays.stream;
 
 /**
  * Utilities to adapt search queries for various repository situations.
@@ -55,8 +61,16 @@ public class RepositoryQueryBuilder
   /**
    * Apply sorting to this search.
    */
-  public RepositoryQueryBuilder sorted(final List<SortBuilder> sort) {
+  public RepositoryQueryBuilder sortBy(final List<SortBuilder> sort) {
     this.sort = checkNotNull(sort);
+    return this;
+  }
+
+  /**
+   * Apply sorting to this search.
+   */
+  public RepositoryQueryBuilder sortBy(final SortBuilder... sort) {
+    this.sort = ImmutableList.copyOf(sort);
     return this;
   }
 
@@ -65,6 +79,22 @@ public class RepositoryQueryBuilder
    */
   public RepositoryQueryBuilder inRepositories(final Collection<String> repositoryNames) {
     this.repositoryNames = checkNotNull(repositoryNames);
+    return this;
+  }
+
+  /**
+   * Limit this search to the named repositories.
+   */
+  public RepositoryQueryBuilder inRepositories(final String... repositoryNames) {
+    this.repositoryNames = ImmutableList.copyOf(repositoryNames);
+    return this;
+  }
+
+  /**
+   * Limit this search to the named repositories.
+   */
+  public RepositoryQueryBuilder inRepositories(final Repository... repositories) {
+    this.repositoryNames = stream(repositories).map(Repository::getName).collect(toImmutableList());
     return this;
   }
 
@@ -84,6 +114,13 @@ public class RepositoryQueryBuilder
     return this;
   }
 
+  /**
+   * Turn off content selector filtering for this search.
+   */
+  public static RepositoryQueryBuilder unrestricted(final QueryBuilder query) {
+    return repositoryQuery(query).unrestricted();
+  }
+
   @Override
   public XContentBuilder toXContent(final XContentBuilder builder, final Params params) throws IOException {
     // our customizations just alter the search request being built, the underlying query is left unchanged
@@ -93,5 +130,10 @@ public class RepositoryQueryBuilder
   @Override
   protected void doXContent(final XContentBuilder builder, final Params params) throws IOException {
     // unused since we delegate to the underlying query builder
+  }
+
+  @VisibleForTesting
+  public Collection<String> getRepositoryNames() {
+    return ImmutableList.copyOf(repositoryNames);
   }
 }

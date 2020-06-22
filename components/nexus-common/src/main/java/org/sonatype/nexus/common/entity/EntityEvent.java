@@ -14,8 +14,8 @@ package org.sonatype.nexus.common.entity;
 
 import javax.annotation.Nullable;
 
-import org.sonatype.nexus.common.event.WithAffinity;
-import org.sonatype.nexus.common.event.WithLocality;
+import org.sonatype.nexus.common.event.HasAffinity;
+import org.sonatype.nexus.common.event.HasLocality;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -26,7 +26,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @SuppressWarnings("unchecked")
 public abstract class EntityEvent
-    implements WithAffinity, WithLocality
+    implements HasAffinity, HasLocality
 {
   private final EntityMetadata metadata;
 

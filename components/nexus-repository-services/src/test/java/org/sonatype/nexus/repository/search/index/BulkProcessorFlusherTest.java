@@ -10,16 +10,31 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.event;
+package org.sonatype.nexus.repository.search.index;
 
-/**
- * Event mix-in to determine whether or not an event is local in a distributed configuration.
- *
- * @since 3.21
- */
-public interface WithLocality {
-  /**
-   * @return {@code true} if this is a local event
-   */
-  boolean isLocal();
+import org.sonatype.goodies.testsupport.TestSupport;
+
+import org.elasticsearch.action.bulk.BulkProcessor;
+import org.junit.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+
+import static org.mockito.Mockito.verify;
+
+public class BulkProcessorFlusherTest
+    extends TestSupport
+{
+
+  @Mock
+  private BulkProcessor bulkProcessor;
+
+  @InjectMocks
+  private BulkProcessorFlusher underTest;
+
+  @Test
+  public void runShouldFlushBulkProcessor() {
+    underTest.call();
+
+    verify(bulkProcessor).flush();
+  }
 }

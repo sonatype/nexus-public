@@ -10,35 +10,33 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search;
+package org.sonatype.nexus.repository.search.index;
 
-import org.sonatype.goodies.testsupport.TestSupport;
+import java.net.URL;
 
-import org.elasticsearch.action.ActionRequest;
-import org.elasticsearch.action.bulk.BulkProcessor;
-import org.elasticsearch.action.delete.DeleteRequest;
-import org.junit.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import javax.annotation.Nullable;
 
-import static org.mockito.Mockito.verify;
+import org.sonatype.nexus.repository.Repository;
 
-public class BulkProcessorUpdaterTest
-    extends TestSupport
+/**
+ * Contributor to ES index settings.
+ *
+ * Index settings from all contributors are merged before index is created.
+ *
+ * @since 3.0
+ */
+public interface IndexSettingsContributor
 {
-  @Mock
-  private BulkProcessor bulkProcessor;
+  /**
+   * Resource name of ElasticSearch mapping configuration.
+   */
+  String MAPPING_JSON = "elasticsearch-mapping.json";
 
-  @Mock
-  private ActionRequest<DeleteRequest> deleteRequest;
-
-  @InjectMocks
-  private BulkProcessorUpdater<DeleteRequest> underTest;
-
-  @Test
-  public void runShouldAddRequestToBulkProcessor() {
-    underTest.call();
-
-    verify(bulkProcessor).add(deleteRequest);
-  }
+  /**
+   * Retrieves index settings for specific repository.
+   *
+   * @return ES index settings in json format or null if this contributor has no settings for repository
+   */
+  @Nullable
+  URL getIndexSettings(Repository repository);
 }

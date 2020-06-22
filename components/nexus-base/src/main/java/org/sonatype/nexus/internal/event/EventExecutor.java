@@ -30,7 +30,7 @@ import org.sonatype.goodies.common.Time;
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventAware.Asynchronous;
-import org.sonatype.nexus.common.event.WithAffinity;
+import org.sonatype.nexus.common.event.HasAffinity;
 import org.sonatype.nexus.thread.NexusExecutorService;
 import org.sonatype.nexus.thread.NexusThreadFactory;
 
@@ -178,7 +178,7 @@ class EventExecutor
   }
 
   /**
-   * Is {@link WithAffinity} support enabled?
+   * Is {@link HasAffinity} support enabled?
    *
    * @since 3.11
    */

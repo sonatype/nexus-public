@@ -27,6 +27,10 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <description>Utility that migrates OrientDB component databases to new-DB.</description>
 
+  <properties>
+    <clm.skip>false</clm.skip>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.slf4j</groupId>

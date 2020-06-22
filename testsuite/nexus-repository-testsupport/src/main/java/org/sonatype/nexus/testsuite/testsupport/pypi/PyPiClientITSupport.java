@@ -40,6 +40,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.sonatype.nexus.common.io.NetworkHelper.findLocalHostAddress;
 import static org.sonatype.nexus.repository.http.HttpStatus.OK;
+import static org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder.unrestricted;
 import static org.sonatype.nexus.testsuite.testsupport.FormatClientSupport.status;
 
 /**
@@ -134,10 +135,10 @@ public abstract class PyPiClientITSupport
   }
 
   protected void assertPackageInstalledCorrectly(final String name, final String version) throws Exception {
-    waitFor(() -> searchTesthelper.searchService.
-        browseUnrestricted(boolQuery()
+    waitFor(() -> searchTesthelper.queryService.
+        browse(unrestricted(boolQuery()
             .filter(termQuery(PYTHON_PACKAGE_NAME + ".raw", name))
-            .filter(termQuery(PYTHON_PACKAGE_VERSION, version)))
+            .filter(termQuery(PYTHON_PACKAGE_VERSION, version))))
         .iterator()
         .hasNext(), 2000);
   }

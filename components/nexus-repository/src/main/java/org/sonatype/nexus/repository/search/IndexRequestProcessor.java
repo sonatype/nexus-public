@@ -26,6 +26,7 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.stateguard.InvalidStateException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.search.index.SearchIndexService;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
@@ -53,7 +54,7 @@ public class IndexRequestProcessor
 
   private final EventManager eventManager;
 
-  private final SearchService searchService;
+  private final SearchIndexService searchIndexService;
 
   private final boolean bulkProcessing;
 
@@ -62,12 +63,12 @@ public class IndexRequestProcessor
   @Inject
   public IndexRequestProcessor(final RepositoryManager repositoryManager,
                                final EventManager eventManager,
-                               final SearchService searchService,
+                               final SearchIndexService searchIndexService,
                                @Named("${nexus.elasticsearch.bulkProcessing:-true}") final boolean bulkProcessing)
   {
     this.repositoryManager = checkNotNull(repositoryManager);
     this.eventManager = checkNotNull(eventManager);
-    this.searchService = checkNotNull(searchService);
+    this.searchIndexService = checkNotNull(searchIndexService);
     this.bulkProcessing = bulkProcessing;
   }
 
@@ -79,7 +80,7 @@ public class IndexRequestProcessor
   @Override
   protected void doStop() {
     eventManager.unregister(this);
-    searchService.flush(true);
+    searchIndexService.flush(true);
   }
 
   @Subscribe
@@ -100,7 +101,7 @@ public class IndexRequestProcessor
     if (!pendingDeletes.isEmpty()) {
       // IndexSyncService can request deletes that have no associated repository,
       // in which case we need to attempt a special bulk delete as the last step
-      searchService.bulkDelete(null, transform(pendingDeletes, EntityId::getValue));
+      searchIndexService.bulkDelete(null, transform(pendingDeletes, EntityId::getValue));
     }
   }
 

@@ -79,7 +79,7 @@ import static org.sonatype.nexus.security.BreadActions.BROWSE;
  *
  * @since 3.next
  */
-@Named
+@Named("default")
 @Singleton
 public class SearchQueryServiceImpl
     extends ComponentSupport
@@ -100,6 +100,14 @@ public class SearchQueryServiceImpl
 
   private final boolean profile;
 
+  /**
+   * @param client source for a {@link Client}
+   * @param repositoryManager the repositoryManager
+   * @param securityHelper the securityHelper
+   * @param searchSubjectHelper the searchSubjectHelper
+   * @param indexNamingPolicy the index naming policy
+   * @param profile whether or not to profile elasticsearch queries (default: false)
+   */
   @Inject
   public SearchQueryServiceImpl(final Provider<Client> client,
                                 final RepositoryManager repositoryManager,
@@ -316,7 +324,7 @@ public class SearchQueryServiceImpl
   String[] getSearchableIndexes(final RepositoryQueryBuilder repoQuery) {
     Stream<Repository> repositories = StreamSupport
         .stream(repositoryManager.browse().spliterator(), false)
-        .filter(SearchQueryServiceImpl::repoOnlineAndHasSearchFacet);
+        .filter(SearchQueryServiceImpl::repoOnlineAndHasSearchIndexFacet);
 
     if (repoQuery.repositoryNames != null) {
       repositories = repositories
@@ -334,7 +342,7 @@ public class SearchQueryServiceImpl
         .toArray(String[]::new);
   }
 
-  private static boolean repoOnlineAndHasSearchFacet(final Repository repo) {
+  private static boolean repoOnlineAndHasSearchIndexFacet(final Repository repo) {
     return repo.optionalFacet(SearchIndexFacet.class).isPresent() && repo.getConfiguration().isOnline();
   }
 

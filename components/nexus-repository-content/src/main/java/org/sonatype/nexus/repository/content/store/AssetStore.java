@@ -101,6 +101,18 @@ public class AssetStore<T extends AssetDAO>
   }
 
   /**
+   * Updates the kind of the given asset in the content data store.
+   *
+   * @param asset the asset to update
+   *
+   * @since 3.next
+   */
+  @Transactional
+  public void updateAssetKind(final Asset asset) {
+    dao().updateAssetKind(asset);
+  }
+
+  /**
    * Updates the attributes of the given asset in the content data store.
    *
    * @param asset the asset to update

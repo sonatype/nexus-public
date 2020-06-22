@@ -43,6 +43,13 @@ public interface FluentComponent
   Collection<FluentAsset> assets();
 
   /**
+   * Update this component to have the given kind.
+   *
+   * @since 3.next
+   */
+  FluentComponent kind(String kind);
+
+  /**
    * Deletes this component.
    */
   boolean delete();

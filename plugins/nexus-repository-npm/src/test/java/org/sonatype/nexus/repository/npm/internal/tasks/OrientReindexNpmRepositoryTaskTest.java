@@ -28,7 +28,7 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageParser;
 import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchFacet;
 import org.sonatype.nexus.repository.npm.internal.tasks.orient.OrientReindexNpmRepositoryTask;
-import org.sonatype.nexus.repository.search.SearchFacet;
+import org.sonatype.nexus.repository.search.index.SearchIndexFacet;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.storage.StorageFacet;
@@ -93,7 +93,7 @@ public class OrientReindexNpmRepositoryTaskTest
   StorageFacet storageFacet;
 
   @Mock
-  SearchFacet searchFacet;
+  SearchIndexFacet searchIndexFacet;
 
   @Mock
   AttributesFacet attributesFacet;
@@ -159,7 +159,7 @@ public class OrientReindexNpmRepositoryTaskTest
     when(repositoryManager.get(REPOSITORY_NAME)).thenReturn(repository);
     when(repositoryManager.browse()).thenReturn(singletonList(repository));
 
-    when(repository.facet(SearchFacet.class)).thenReturn(searchFacet);
+    when(repository.facet(SearchIndexFacet.class)).thenReturn(searchIndexFacet);
     when(repository.facet(StorageFacet.class)).thenReturn(storageFacet);
     when(repository.facet(NpmSearchFacet.class)).thenReturn(npmSearchFacet);
     when(repository.facet(AttributesFacet.class)).thenReturn(attributesFacet);
@@ -197,7 +197,7 @@ public class OrientReindexNpmRepositoryTaskTest
 
     underTest.call();
 
-    verifyNoMoreInteractions(searchFacet);
+    verifyNoMoreInteractions(searchIndexFacet);
     verifyNoMoreInteractions(attributesFacet);
     verifyNoMoreInteractions(storageTx);
   }
@@ -206,7 +206,7 @@ public class OrientReindexNpmRepositoryTaskTest
   public void searchIndexIsRebuilt() throws Exception {
     underTest.call();
 
-    verify(searchFacet).rebuildIndex();
+    verify(searchIndexFacet).rebuildIndex();
   }
 
   @Test
