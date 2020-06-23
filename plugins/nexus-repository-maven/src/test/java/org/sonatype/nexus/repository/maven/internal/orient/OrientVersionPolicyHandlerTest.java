@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.maven.internal;
+package org.sonatype.nexus.repository.maven.internal.orient;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,6 +22,8 @@ import org.sonatype.nexus.orient.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.sonatype.nexus.repository.maven.VersionPolicy;
+import org.sonatype.nexus.repository.maven.internal.Maven2MavenPathParser;
+import org.sonatype.nexus.repository.maven.internal.VersionPolicyValidator;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.Response;
@@ -47,10 +49,10 @@ import static org.sonatype.nexus.repository.maven.VersionPolicy.RELEASE;
 import static org.sonatype.nexus.repository.maven.VersionPolicy.SNAPSHOT;
 
 /**
- * Tests {@link VersionPolicyHandler}
+ * Tests {@link OrientVersionPolicyHandler}
  */
 @RunWith(Parameterized.class)
-public class VersionPolicyHandlerTest
+public class OrientVersionPolicyHandlerTest
     extends TestSupport
 {
   @Mock
@@ -72,11 +74,11 @@ public class VersionPolicyHandlerTest
 
   private MavenPathParser mavenPathParser = new Maven2MavenPathParser();
 
-  private VersionPolicyHandler underTest;
+  private OrientVersionPolicyHandler underTest;
 
   @Before
   public void setup() {
-    underTest = new VersionPolicyHandler(versionPolicyValidator);
+    underTest = new OrientVersionPolicyHandler(versionPolicyValidator);
   }
 
   @Parameters

@@ -10,14 +10,15 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.maven.internal;
+package org.sonatype.nexus.repository.maven.internal.orient;
 
 import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.maven.internal.orient.MavenVariableResolverAdapter;
+import org.sonatype.nexus.repository.maven.internal.Maven2Format;
+import org.sonatype.nexus.repository.maven.internal.Maven2MavenPathParser;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.selector.VariableSource;
@@ -33,7 +34,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
 
-public class MavenVariableResolverAdapterTest
+public class OrientMavenVariableResolverAdapterTest
     extends TestSupport
 {
   private static final String FORMAT_VARIABLE = "format";
@@ -68,12 +69,12 @@ public class MavenVariableResolverAdapterTest
   @Mock
   Repository repository;
 
-  MavenVariableResolverAdapter mavenVariableResolverAdapter = new MavenVariableResolverAdapter(
+  OrientMavenVariableResolverAdapter mavenVariableResolverAdapter = new OrientMavenVariableResolverAdapter(
       new Maven2MavenPathParser());
 
   @Before
   public void setup() throws Exception {
-    when(repository.getName()).thenReturn("MavenVariableResolverAdapterTest");
+    when(repository.getName()).thenReturn("OrientMavenVariableResolverAdapterTest");
     when(repository.getFormat()).thenReturn(new Format(Maven2Format.NAME) { });
   }
 

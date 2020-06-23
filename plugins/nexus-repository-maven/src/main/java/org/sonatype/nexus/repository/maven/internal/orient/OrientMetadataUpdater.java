@@ -27,7 +27,6 @@ import org.sonatype.nexus.repository.maven.internal.hosted.metadata.Maven2Metada
 import org.sonatype.nexus.repository.maven.internal.hosted.metadata.Maven2Metadata.Plugin;
 import org.sonatype.nexus.repository.maven.internal.hosted.metadata.Maven2Metadata.Snapshot;
 import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUpdater;
-import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -93,7 +92,7 @@ public class OrientMetadataUpdater
         checkNotNull(mavenPath);
         checkNotNull(metadata);
 
-        final Metadata oldMetadata = MetadataUtils.read(repository, mavenPath);
+        final Metadata oldMetadata = OrientMetadataUtils.read(repository, mavenPath);
         if (oldMetadata == null) {
           // old does not exists, just write it
           write(mavenPath, toMetadata(metadata));
@@ -125,7 +124,7 @@ public class OrientMetadataUpdater
         checkNotNull(mavenPath);
         checkNotNull(metadata);
 
-        final Metadata oldMetadata = MetadataUtils.read(repository, mavenPath);
+        final Metadata oldMetadata = OrientMetadataUtils.read(repository, mavenPath);
         if (oldMetadata == null) {
           // old does not exists, just write it
           write(mavenPath, toMetadata(metadata));
@@ -147,7 +146,7 @@ public class OrientMetadataUpdater
    */
   @VisibleForTesting
   void delete(final MavenPath mavenPath) {
-    MetadataUtils.delete(repository, mavenPath);
+    OrientMetadataUtils.delete(repository, mavenPath);
   }
 
   /**
@@ -207,7 +206,7 @@ public class OrientMetadataUpdater
    */
   @Override@Nullable
   public Metadata read(final MavenPath mavenPath) throws IOException {
-    return MetadataUtils.read(repository, mavenPath);
+    return OrientMetadataUtils.read(repository, mavenPath);
   }
 
   /**
@@ -216,7 +215,7 @@ public class OrientMetadataUpdater
   @Override public void write(final MavenPath mavenPath, final Metadata metadata)
       throws IOException
   {
-    MetadataUtils.write(repository, mavenPath, metadata);
+    OrientMetadataUtils.write(repository, mavenPath, metadata);
   }
 
   private void writeIfUnchanged(final MavenPath mavenPath, final Metadata oldMetadata, final Metadata newMetadata)

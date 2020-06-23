@@ -12,22 +12,16 @@
  */
 package org.sonatype.nexus.repository.maven.internal.orient;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
@@ -37,8 +31,10 @@ import org.sonatype.nexus.orient.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
-import org.sonatype.nexus.repository.maven.internal.Constants;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
+import org.sonatype.nexus.repository.maven.internal.utils.HashedPayload;
+import org.sonatype.nexus.repository.maven.internal.utils.MavenIOUtils;
+import org.sonatype.nexus.repository.maven.internal.utils.MavenIOUtils.Writer;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
@@ -47,21 +43,19 @@ import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
-import org.sonatype.nexus.repository.view.payloads.StreamPayload;
-import org.sonatype.nexus.repository.view.payloads.StreamPayload.InputStreamSupplier;
-import org.sonatype.nexus.repository.view.payloads.StringPayload;
 
 import com.google.common.hash.HashCode;
-import com.google.common.hash.HashingOutputStream;
 import org.joda.time.DateTime;
 
 import static java.util.Collections.singletonList;
 import static org.sonatype.nexus.common.app.VersionComparator.version;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Constants.SNAPSHOT_VERSION_SUFFIX;
+import static org.sonatype.nexus.repository.maven.internal.utils.MavenIOUtils.hashesToPayloads;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_VERSION;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
+import static org.sonatype.nexus.repository.view.Content.CONTENT_LAST_MODIFIED;
 
 /**
  * Maven facet utilities.
@@ -131,47 +125,15 @@ public final class MavenFacetUtils
   }
 
   /**
-   * Wrapper to pass in into {@link #createTempContent(Path, String, Writer)} to write out actual content.
-   */
-  public interface Writer
-  {
-    void write(OutputStream outputStream) throws IOException;
-  }
-
-  /**
    * Creates a temporary {@link Content} equipped will all the whistles and bells, like hashes and so.
    */
   public static Content createTempContent(final Path path, final String contentType, final Writer writer) throws IOException {
-    Map<HashAlgorithm, HashingOutputStream> hashingStreams = new HashMap<>();
-    try (OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(path))) {
-      OutputStream os = outputStream;
-      for (HashType hashType : HashType.values()) {
-        os = new HashingOutputStream(hashType.getHashAlgorithm().function(), os);
-        hashingStreams.put(hashType.getHashAlgorithm(), (HashingOutputStream) os);
-      }
-      writer.write(os);
-      os.flush();
-    }
-    Map<HashAlgorithm, HashCode> hashCodes = new HashMap<>();
-    for (Map.Entry<HashAlgorithm, HashingOutputStream> entry : hashingStreams.entrySet()) {
-      hashCodes.put(entry.getKey(), entry.getValue().hash());
-    }
-    Content content = new Content(new StreamPayload(
-        new InputStreamSupplier()
-        {
-          @Nonnull
-          @Override
-          public InputStream get() throws IOException {
-            return new BufferedInputStream(Files.newInputStream(path));
-          }
-        },
-        Files.size(path),
-        contentType)
-    );
+    HashedPayload hashedPayload = MavenIOUtils.createStreamPayload(path, contentType, writer);
+
+    Content content = new Content(hashedPayload.getPayload());
     content.getAttributes().set(Content.CONTENT_LAST_MODIFIED, DateTime.now());
-    content.getAttributes().set(Content.CONTENT_HASH_CODES_MAP, hashCodes);
-    AttributesMap attributesMap = content.getAttributes();
-    mayAddETag(attributesMap, getHashAlgorithmFromContent(attributesMap));
+    content.getAttributes().set(Content.CONTENT_HASH_CODES_MAP, hashedPayload.getHashCodes());
+    mayAddETag(content.getAttributes(), hashedPayload.getHashCodes());
     return content;
   }
 
@@ -209,7 +171,7 @@ public final class MavenFacetUtils
                                    final Content content) throws IOException
   {
     final Map<HashAlgorithm, HashCode> hashCodes = getHashAlgorithmFromContent(content.getAttributes());
-    final DateTime now = content.getAttributes().require(Content.CONTENT_LAST_MODIFIED, DateTime.class);
+    final DateTime now = content.getAttributes().require(CONTENT_LAST_MODIFIED, DateTime.class);
 
     mavenFacet.put(mavenPath, content);
     addHashes(mavenFacet, mavenPath, hashCodes, now);
@@ -221,14 +183,10 @@ public final class MavenFacetUtils
                                 final DateTime now)
       throws IOException
   {
-    for (HashType hashType : HashType.values()) {
-      final HashCode hashCode = hashCodes.get(hashType.getHashAlgorithm());
-      if (hashCode != null) {
-        final Content hashContent = new Content(
-            new StringPayload(hashCode.toString(), Constants.CHECKSUM_CONTENT_TYPE));
-        hashContent.getAttributes().set(Content.CONTENT_LAST_MODIFIED, now);
-        mavenFacet.put(mavenPath.hash(hashType), hashContent);
-      }
+    for (Entry<HashType, Payload> entry : hashesToPayloads(hashCodes).entrySet()) {
+      Content hashedContent = new Content(entry.getValue());
+      hashedContent.getAttributes().set(CONTENT_LAST_MODIFIED, now);
+      mavenFacet.put(mavenPath.hash(entry.getKey()), hashedContent);
     }
   }
 
@@ -253,7 +211,7 @@ public final class MavenFacetUtils
     final DateTime now = DateTime.now();
 
     Content result = mavenFacet.put(mavenPath, tempBlob, contentType, attributesMap);
-    result.getAttributes().set(Content.CONTENT_LAST_MODIFIED, now);
+    result.getAttributes().set(CONTENT_LAST_MODIFIED, now);
     addHashes(mavenFacet, mavenPath, tempBlob.getHashes(), now);
     return result;
   }

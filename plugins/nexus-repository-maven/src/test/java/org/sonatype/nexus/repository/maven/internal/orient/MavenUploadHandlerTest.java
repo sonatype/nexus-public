@@ -135,7 +135,7 @@ public class MavenUploadHandlerTest
     when(mavenPomGenerator.generatePom(any(), any(), any(), any())).thenReturn("<project/>");
 
     Maven2MavenPathParser pathParser = new Maven2MavenPathParser();
-    underTest = new MavenUploadHandler(pathParser, new MavenVariableResolverAdapter(pathParser),
+    underTest = new MavenUploadHandler(pathParser, new OrientMavenVariableResolverAdapter(pathParser),
         contentPermissionChecker, versionPolicyValidator, mavenPomGenerator, emptySet());
 
     when(repository.getName()).thenReturn(REPO_NAME);
@@ -186,7 +186,7 @@ public class MavenUploadHandlerTest
   public void testGetDefinitionWithExtensionContributions() {
     //Rebuilding the uploadhandler to provide a set of definition extensions
     Maven2MavenPathParser pathParser = new Maven2MavenPathParser();
-    underTest = new MavenUploadHandler(pathParser, new MavenVariableResolverAdapter(pathParser),
+    underTest = new MavenUploadHandler(pathParser, new OrientMavenVariableResolverAdapter(pathParser),
         contentPermissionChecker, versionPolicyValidator, mavenPomGenerator, getDefinitionExtensions());
     UploadDefinition def = underTest.getDefinition();
 

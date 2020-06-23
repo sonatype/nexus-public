@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.testsuite.helpers;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -42,7 +43,12 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.joda.time.DateTime;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static java.time.LocalDate.now;
 import static java.util.stream.Collectors.toList;
+import static org.apache.commons.lang3.StringUtils.endsWith;
+import static org.apache.commons.lang3.StringUtils.indexOf;
+import static org.apache.commons.lang3.StringUtils.startsWith;
+import static org.apache.commons.lang3.StringUtils.substring;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
 @FeatureFlag(name = "nexus.orient.store.content")
@@ -54,6 +60,10 @@ public class OrientComponentAssetTestHelper
 {
   private static final String DELETE_COMPONENT_SQL =
       "delete from component where group = ? and name = ? and version = ?";
+
+  private static final DateTimeFormatter YEAR_MONTH_DAY_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
+
+  private static final String SNAPSHOT_VERSION_SUFFIX = "-SNAPSHOT";
 
   @Inject
   @Named(DatabaseInstanceNames.COMPONENT)
@@ -148,16 +158,40 @@ public class OrientComponentAssetTestHelper
 
   @Override
   public boolean componentExists(final Repository repository, final String name, final String version) {
-    Optional<Component> component = findComponents(repository).stream()
-        .filter(c -> name.equals(c.name()))
-        .filter(c -> version.equals(c.version())).findAny();
-
-    return component.isPresent();
+    if (version.endsWith(SNAPSHOT_VERSION_SUFFIX)) {
+      Optional<Component> component = findSnapshotComponent(repository, name, version);
+      return component.isPresent();
+    }
+    else {
+       return findComponents(repository).stream()
+          .filter(c -> name.equals(c.name()))
+          .anyMatch(c -> version.equals(c.version()));
+    }
   }
 
   @Override
   public boolean componentExists(final Repository repository, final String namespace, final String name, final String version) {
-    return findComponent(repository, namespace, name, version).isPresent();
+    if (endsWith(version, SNAPSHOT_VERSION_SUFFIX)) {
+      Optional<Component> component = findSnapshotComponent(repository, name, version);
+      return component.isPresent();
+    }
+    else {
+      return findComponent(repository, namespace, name, version).isPresent();
+    }
+  }
+
+  private Optional<Component> findSnapshotComponent(
+      final Repository repository,
+      final String name,
+      final String version)
+  {
+    String gav = substring(version, 0, indexOf(version, SNAPSHOT_VERSION_SUFFIX));
+    String versionWithDate = String.format("%s-%s", gav, now().format(YEAR_MONTH_DAY_FORMAT));
+    return findComponents(repository)
+        .stream()
+        .filter(c -> name.equals(c.name()))
+        .filter(comp -> startsWith(comp.version(), versionWithDate))
+        .findAny();
   }
 
   @Override

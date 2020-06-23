@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.testsuite.helpers;
 
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -24,6 +26,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.time.DateHelper;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
@@ -37,11 +40,21 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 
 import org.joda.time.DateTime;
 
+import static java.time.LocalDate.now;
+import static org.apache.commons.lang3.StringUtils.endsWith;
+import static org.apache.commons.lang3.StringUtils.indexOf;
+import static org.apache.commons.lang3.StringUtils.startsWith;
+import static org.apache.commons.lang3.StringUtils.substring;
+
 @Named
 @Singleton
 public class DatastoreComponentAssetTestHelper
     implements ComponentAssetTestHelper
 {
+  private static final String SNAPSHOT_VERSION_SUFFIX = "-SNAPSHOT";
+
+  private static final DateTimeFormatter YEAR_MONTH_DAY_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
+
   @Inject
   private RepositoryManager repositoryManager;
 
@@ -124,9 +137,38 @@ public class DatastoreComponentAssetTestHelper
 
   @Override
   public boolean componentExists(final Repository repository, final String name, final String version) {
-    Optional<FluentComponent> component =
-        repository.facet(ContentFacet.class).components().name(name).version(version).find();
-    return component.isPresent();
+    if (endsWith(version, SNAPSHOT_VERSION_SUFFIX)) {
+      return findSnapshotComponent(repository, name, version).isPresent();
+    }
+    else {
+      List<FluentComponent> components = browseComponents(repository);
+      return components.stream().anyMatch(comp -> comp.name().equals(name) && comp.version().equals(version));
+    }
+  }
+
+  private Optional<FluentComponent> findSnapshotComponent(
+      final Repository repository,
+      final String name,
+      final String version)
+  {
+    List<FluentComponent> components = browseComponents(repository);
+    String gav = substring(version, 0, indexOf(version, SNAPSHOT_VERSION_SUFFIX));
+    String versionWithDate = String.format("%s-%s", gav, now().format(YEAR_MONTH_DAY_FORMAT));
+    return components.stream()
+        .filter(comp -> comp.name().equals(name))
+        .filter(comp -> startsWith(comp.version(), versionWithDate))
+        .findAny();
+  }
+
+  private List<FluentComponent> browseComponents(final Repository repository) {
+    List<FluentComponent> componentsFound = new ArrayList<>();
+    ContentFacet facet = repository.facet(ContentFacet.class);
+    Continuation<FluentComponent> components = facet.components().browse(10, null);
+    while (!components.isEmpty()) {
+      componentsFound.addAll(components);
+      components = facet.components().browse(10, components.nextContinuationToken());
+    }
+    return componentsFound;
   }
 
   @Override

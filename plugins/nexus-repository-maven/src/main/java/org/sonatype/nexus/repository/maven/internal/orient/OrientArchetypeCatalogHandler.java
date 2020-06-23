@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.maven.internal.hosted;
+package org.sonatype.nexus.repository.maven.internal.orient;
 
 import java.io.IOException;
 
@@ -25,7 +25,6 @@ import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.orient.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenHostedFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
-import org.sonatype.nexus.repository.maven.internal.orient.MavenFacetUtils;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
@@ -42,7 +41,7 @@ import static org.sonatype.nexus.repository.maven.internal.orient.MavenFacetUtil
  */
 @Singleton
 @Named
-public class ArchetypeCatalogHandler
+public class OrientArchetypeCatalogHandler
     extends ComponentSupport
     implements Handler
 {
