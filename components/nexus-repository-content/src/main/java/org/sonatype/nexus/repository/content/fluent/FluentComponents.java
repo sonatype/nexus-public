@@ -37,6 +37,11 @@ public interface FluentComponents
   FluentComponent with(Component component);
 
   /**
+   * Count all components in the repository.
+   */
+  int count();
+
+  /**
    * Browse through all components in the repository.
    */
   default Continuation<FluentComponent> browse(int limit, @Nullable String continuationToken) {

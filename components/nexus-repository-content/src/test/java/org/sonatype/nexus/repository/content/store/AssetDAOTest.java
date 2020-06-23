@@ -33,6 +33,7 @@ import org.hamcrest.collection.IsIterableContainingInOrder;
 import org.junit.Before;
 import org.junit.Test;
 
+import static java.util.stream.Collectors.summingInt;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
@@ -513,6 +514,14 @@ public class AssetDAOTest
       AssetDAO assetDao = session.access(TestAssetDAO.class);
       ComponentDAO componentDAO = session.access(TestComponentDAO.class);
 
+      assertThat(generatedRepositories().stream()
+          .map(ContentRepositoryData::contentRepositoryId)
+          .collect(summingInt(assetDao::countAssets)), is(100));
+
+      assertThat(generatedRepositories().stream()
+          .map(ContentRepositoryData::contentRepositoryId)
+          .collect(summingInt(componentDAO::countComponents)), is(10));
+
       // now gather them back by browsing
       generatedRepositories().forEach(r ->
           componentDAO.browseComponents(r.repositoryId, null, 10, null).stream()
@@ -555,6 +564,8 @@ public class AssetDAOTest
 
     try (DataSession<?> session = sessionRule.openSession("content")) {
       AssetDAO dao = session.access(TestAssetDAO.class);
+
+      assertThat(dao.countAssets(repositoryId), is(1000));
 
       int page = 0;
 
@@ -623,6 +634,8 @@ public class AssetDAOTest
 
     try (DataSession<?> session = sessionRule.openSession("content")) {
       AssetDAO dao = session.access(TestAssetDAO.class);
+
+      assertThat(dao.countAssets(repositoryId), is(100));
 
       assertThat(dao.browseAssets(repositoryId, null, 100, null).size(), is(100));
 

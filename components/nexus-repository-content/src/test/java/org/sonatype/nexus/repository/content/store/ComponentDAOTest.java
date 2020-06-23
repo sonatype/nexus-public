@@ -30,6 +30,7 @@ import org.hamcrest.collection.IsIterableContainingInOrder;
 import org.junit.Before;
 import org.junit.Test;
 
+import static java.util.stream.Collectors.summingInt;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
@@ -284,6 +285,10 @@ public class ComponentDAOTest
     try (DataSession<?> session = sessionRule.openSession("content")) {
       ComponentDAO dao = session.access(TestComponentDAO.class);
 
+      assertThat(generatedRepositories().stream()
+          .map(ContentRepositoryData::contentRepositoryId)
+          .collect(summingInt(dao::countComponents)), is(10));
+
       // now gather them back by browsing
       generatedRepositories().forEach(r ->
           dao.browseNamespaces(r.repositoryId).forEach(ns ->
@@ -317,6 +322,8 @@ public class ComponentDAOTest
     try (DataSession<?> session = sessionRule.openSession("content")) {
       ComponentDAO dao = session.access(TestComponentDAO.class);
 
+      assertThat(dao.countComponents(repositoryId), is(1000));
+
       int page = 0;
 
       Continuation<Component> components = dao.browseComponents(repositoryId, null, 10, null);
@@ -349,6 +356,8 @@ public class ComponentDAOTest
 
     try (DataSession<?> session = sessionRule.openSession("content")) {
       ComponentDAO dao = session.access(TestComponentDAO.class);
+
+      assertThat(dao.countComponents(repositoryId), is(100));
 
       assertThat(dao.browseComponents(repositoryId, null, 100, null).size(), is(100));
 

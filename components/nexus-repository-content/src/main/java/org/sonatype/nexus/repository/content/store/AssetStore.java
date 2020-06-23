@@ -48,6 +48,17 @@ public class AssetStore<T extends AssetDAO>
   }
 
   /**
+   * Count all assets in the given repository.
+   *
+   * @param repositoryId the repository to count
+   * @return count of assets in the repository
+   */
+  @Transactional
+  public int countAssets(final int repositoryId) {
+    return dao().countAssets(repositoryId);
+  }
+
+  /**
    * Browse all assets in the given repository in a paged fashion.
    *
    * @param repositoryId the repository to browse

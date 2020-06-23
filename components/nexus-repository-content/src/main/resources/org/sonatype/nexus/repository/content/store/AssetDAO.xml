@@ -79,6 +79,10 @@
     SELECT * FROM ${format}_asset_blob WHERE asset_blob_id = #{asset_blob_id}
   </select>
 
+  <select id="countAssets" resultType="int">
+    SELECT COUNT(*) FROM ${format}_asset WHERE repository_id = #{repositoryId};
+  </select>
+
   <select id="browseAssets" resultMap="assetResult">
     SELECT * FROM ${format}_asset WHERE repository_id = #{repositoryId}
     <if test="kind != null">

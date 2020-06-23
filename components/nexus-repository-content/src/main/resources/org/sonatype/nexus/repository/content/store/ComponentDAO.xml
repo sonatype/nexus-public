@@ -61,6 +61,10 @@
     </choose>
   </sql>
 
+  <select id="countComponents" resultType="int">
+    SELECT COUNT(*) FROM ${format}_component WHERE repository_id = #{repositoryId};
+  </select>
+
   <select id="browseComponents" resultType="ComponentData">
     SELECT * FROM ${format}_component WHERE repository_id = #{repositoryId}
     <if test="kind != null">

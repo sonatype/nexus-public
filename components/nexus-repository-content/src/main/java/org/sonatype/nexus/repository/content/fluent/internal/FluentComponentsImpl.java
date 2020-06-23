@@ -51,6 +51,11 @@ public class FluentComponentsImpl
   }
 
   @Override
+  public int count() {
+    return facet.stores().componentStore.countComponents(facet.contentRepositoryId());
+  }
+
+  @Override
   public Continuation<FluentComponent> browse(
       @Nullable final String kind,
       final int limit,

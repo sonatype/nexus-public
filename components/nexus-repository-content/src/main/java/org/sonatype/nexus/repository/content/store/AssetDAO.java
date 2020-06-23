@@ -38,6 +38,14 @@ public interface AssetDAO
     extends ContentDataAccess
 {
   /**
+   * Count all assets in the given repository.
+   *
+   * @param repositoryId the repository to count
+   * @return count of assets in the repository
+   */
+  int countAssets(@Param("repositoryId") int repositoryId);
+
+  /**
    * Browse all assets in the given repository in a paged fashion.
    *
    * @param repositoryId the repository to browse
