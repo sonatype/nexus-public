@@ -13,15 +13,22 @@
 package org.sonatype.nexus.testsuite.testsupport.maven;
 
 import java.io.File;
+import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+
+import javax.inject.Inject;
+import javax.ws.rs.client.WebTarget;
 
 import com.sonatype.nexus.docker.testsupport.framework.DockerContainerConfig;
 import com.sonatype.nexus.docker.testsupport.maven.MavenCommandLineITSupport;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.testsuite.testsupport.FormatClientITSupport;
+import org.sonatype.nexus.testsuite.testsupport.utility.SearchTestHelper;
 
+import com.google.common.base.Joiner;
 import org.junit.After;
 import org.junit.Before;
 
@@ -50,6 +57,9 @@ public abstract class MavenClientITSupport
   protected MavenCommandLineITSupport mvn;
 
   protected File settings;
+
+  @Inject
+  private SearchTestHelper searchTestHelper;
 
   @Before
   public void onInitializeClientIT() throws Exception {
@@ -94,22 +104,32 @@ public abstract class MavenClientITSupport
     assertThat(buildLog.stream().anyMatch(line -> line.contains(OK_BUILD)), is(success));
   }
 
-  protected void verifyComponentExists(
-      final Repository repository,
-      final String name,
-      final String version,
-      final boolean exists)
-  {
-      boolean componentExists = componentAssetTestHelper.componentExists(repository, name, version);
-      assertThat(componentExists, is(exists));
-  }
-
   protected List<String> getBuildLog(final Optional<List<String>> result) {
     if (!result.isPresent()) {
       throw new AssertionError("No build log found - did the docker container fail to start?");
     }
 
     return result.get().stream().map(String::trim).collect(toList());
+  }
+
+  protected void verifyComponentExists(
+      final Repository repository,
+      final String name,
+      final String version,
+      final boolean exists)
+      throws Exception
+  {
+    WebTarget target = restClient().target(nexusUrl("/service/rest/v1/search"));
+    searchTestHelper.verifyComponentExists(target, repository, name, version, exists);
+  }
+
+  private String nexusUrl(final String... segments) {
+    try {
+      return nexusUrl.toURI().resolve(Joiner.on('/').join(Arrays.asList(segments))).toString();
+    }
+    catch (URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected String getSettingsFileLocation() {

@@ -128,7 +128,7 @@ public class OrientComponentAssetTestHelper
     return findComponents(repository).size();
   }
 
-  private  List<Component> findComponents(final Repository repository) {
+  private List<Component> findComponents(final Repository repository) {
     try (StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get()) {
       tx.begin();
       return newArrayList(tx.browseComponents(tx.findBucket(repository)));
@@ -163,14 +163,19 @@ public class OrientComponentAssetTestHelper
       return component.isPresent();
     }
     else {
-       return findComponents(repository).stream()
+      return findComponents(repository).stream()
           .filter(c -> name.equals(c.name()))
           .anyMatch(c -> version.equals(c.version()));
     }
   }
 
   @Override
-  public boolean componentExists(final Repository repository, final String namespace, final String name, final String version) {
+  public boolean componentExists(
+      final Repository repository,
+      final String namespace,
+      final String name,
+      final String version)
+  {
     if (endsWith(version, SNAPSHOT_VERSION_SUFFIX)) {
       Optional<Component> component = findSnapshotComponent(repository, name, version);
       return component.isPresent();
@@ -195,7 +200,12 @@ public class OrientComponentAssetTestHelper
   }
 
   @Override
-  public boolean assetWithComponentExists(final Repository repository, final String path, final String group, final String name) {
+  public boolean assetWithComponentExists(
+      final Repository repository,
+      final String path,
+      final String group,
+      final String name)
+  {
     return findAssetByName(repository, path)
         .map(Asset::componentId)
         .flatMap(componentId -> {
@@ -232,12 +242,22 @@ public class OrientComponentAssetTestHelper
   }
 
   @Override
-  public NestedAttributesMap componentAttributes(final Repository repository, final String namespace, final String name, final String version) {
+  public NestedAttributesMap componentAttributes(
+      final Repository repository,
+      final String namespace,
+      final String name,
+      final String version)
+  {
     return findComponent(repository, namespace, name, version).map(Component::attributes)
         .orElseThrow(() -> new ComponentNotFoundException(repository, namespace, name, version));
   }
 
-  private Optional<Component> findComponent(final Repository repository, final String namespace, final String name, final String version) {
+  private Optional<Component> findComponent(
+      final Repository repository,
+      final String namespace,
+      final String name,
+      final String version)
+  {
     return findComponents(repository).stream()
         .filter(c -> Objects.equals(namespace, c.group()))
         .filter(c -> name.equals(c.name()))
