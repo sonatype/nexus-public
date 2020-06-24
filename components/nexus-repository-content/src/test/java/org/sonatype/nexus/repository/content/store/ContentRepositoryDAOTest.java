@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import org.sonatype.nexus.common.entity.EntityId;
@@ -116,8 +116,8 @@ public class ContentRepositoryDAOTest
 
       tempResult = dao.readContentRepository(configRepositoryId1).get();
 
-      LocalDateTime oldCreated = tempResult.created();
-      LocalDateTime oldLastUpdated = tempResult.lastUpdated();
+      OffsetDateTime oldCreated = tempResult.created();
+      OffsetDateTime oldLastUpdated = tempResult.lastUpdated();
 
       contentRepository1.attributes("custom-section-1").set("custom-key-1", "more-test-values-1");
       dao.updateContentRepositoryAttributes(contentRepository1);
@@ -157,8 +157,8 @@ public class ContentRepositoryDAOTest
 
       tempResult = dao.readContentRepository(configRepositoryId1).get();
 
-      LocalDateTime oldCreated = tempResult.created();
-      LocalDateTime oldLastUpdated = tempResult.lastUpdated();
+      OffsetDateTime oldCreated = tempResult.created();
+      OffsetDateTime oldLastUpdated = tempResult.lastUpdated();
 
       contentRepository1.attributes("custom-section-1").set("custom-key-1", "more-test-values-again");
       dao.updateContentRepositoryAttributes(contentRepository1);

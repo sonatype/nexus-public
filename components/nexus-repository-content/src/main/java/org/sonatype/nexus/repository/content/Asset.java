@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.content;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Optional;
 
 /**
@@ -49,5 +49,5 @@ public interface Asset
   /**
    * If/when this asset was last downloaded.
    */
-  Optional<LocalDateTime> lastDownloaded();
+  Optional<OffsetDateTime> lastDownloaded();
 }

@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.tools.datastore;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -223,11 +223,11 @@ public class DatastoreDeadBlobFinder
     }
   }
 
-  private static LocalDateTime blobUpdated(final DeadBlobResult<Asset> deadBlobResult) {
+  private static OffsetDateTime blobUpdated(final DeadBlobResult<Asset> deadBlobResult) {
     return Optional.ofNullable(deadBlobResult.getAsset()).flatMap(Asset::blob).map(AssetBlob::blobCreated).orElse(null);
   }
 
-  private static LocalDateTime lastUpdated(final DeadBlobResult<Asset> deadBlobResult) {
+  private static OffsetDateTime lastUpdated(final DeadBlobResult<Asset> deadBlobResult) {
     return Optional.ofNullable(deadBlobResult.getAsset()).map(Asset::lastUpdated).orElse(null);
   }
 }

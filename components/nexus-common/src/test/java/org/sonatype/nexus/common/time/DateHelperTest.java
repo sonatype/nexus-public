@@ -13,7 +13,7 @@
 package org.sonatype.nexus.common.time;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import org.joda.time.DateTime;
 import org.junit.Test;
@@ -23,21 +23,22 @@ import static org.junit.Assert.assertThat;
 import static org.sonatype.nexus.common.time.DateHelper.toDateTime;
 import static org.sonatype.nexus.common.time.DateHelper.toJavaDuration;
 import static org.sonatype.nexus.common.time.DateHelper.toJodaDuration;
-import static org.sonatype.nexus.common.time.DateHelper.toLocalDateTime;
+import static org.sonatype.nexus.common.time.DateHelper.toOffsetDateTime;
 
-public class DateHelperTest {
+public class DateHelperTest
+{
   @Test
   public void toDateTimeTest() {
-    LocalDateTime localDateTime = LocalDateTime.parse("2010-06-30T01:20");
+    OffsetDateTime offsetDateTime = OffsetDateTime.parse("2010-06-30T01:20+00:00");
     DateTime jodaDateTime = new DateTime("2010-06-30T01:20+00:00");
-    assertThat(toDateTime(localDateTime), equalTo(jodaDateTime));
+    assertThat(toDateTime(offsetDateTime).toInstant(), equalTo(jodaDateTime.toInstant()));
   }
 
   @Test
-  public void toLocalDateTimeTest() {
-    LocalDateTime localDateTime = LocalDateTime.parse("2010-06-30T01:20");
+  public void toOffsetDateTimeTest() {
+    OffsetDateTime offsetDateTime = OffsetDateTime.parse("2010-06-30T01:20+00:00");
     DateTime jodaDateTime = new DateTime("2010-06-30T01:20+00:00");
-    assertThat(toLocalDateTime(jodaDateTime), equalTo(localDateTime));
+    assertThat(toOffsetDateTime(jodaDateTime).toInstant(), equalTo(offsetDateTime.toInstant()));
   }
 
   @Test

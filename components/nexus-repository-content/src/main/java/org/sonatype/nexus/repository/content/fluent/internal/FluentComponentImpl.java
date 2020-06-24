@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.fluent.internal;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Collection;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
@@ -78,12 +78,12 @@ public class FluentComponentImpl
   }
 
   @Override
-  public LocalDateTime created() {
+  public OffsetDateTime created() {
     return component.created();
   }
 
   @Override
-  public LocalDateTime lastUpdated() {
+  public OffsetDateTime lastUpdated() {
     return component.lastUpdated();
   }
 

@@ -27,10 +27,10 @@
       kind            VARCHAR NOT NULL,
       component_id    INT,
       asset_blob_id   INT,
-      last_downloaded TIMESTAMP,
+      last_downloaded TIMESTAMP WITH TIME ZONE,
       attributes      ${JSON_TYPE} NOT NULL,
-      created         TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      last_updated    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      created         TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      last_updated    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
       CONSTRAINT pk_${format}_asset_id PRIMARY KEY (asset_id),
       CONSTRAINT uk_${format}_asset_repository_path UNIQUE (repository_id, path),

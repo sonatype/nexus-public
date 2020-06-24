@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.internal.handlers;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -85,7 +85,7 @@ public class LastDownloadedHandler
     }
   }
 
-  private boolean isNextUpdateInFuture(Optional<LocalDateTime> lastTime) {
+  private boolean isNextUpdateInFuture(Optional<OffsetDateTime> lastTime) {
     return lastTime.isPresent() && lastTime.get().plus(globalSettings.getLastDownloadedInterval()).isAfter(UTC.now());
   }
 

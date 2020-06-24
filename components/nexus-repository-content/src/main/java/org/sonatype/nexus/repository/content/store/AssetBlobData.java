@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.Optional;
 
@@ -43,7 +43,7 @@ public class AssetBlobData
 
   private Map<String, String> checksums;
 
-  private LocalDateTime blobCreated;
+  private OffsetDateTime blobCreated;
 
   @Nullable
   private String createdBy;
@@ -74,7 +74,7 @@ public class AssetBlobData
   }
 
   @Override
-  public LocalDateTime blobCreated() {
+  public OffsetDateTime blobCreated() {
     return blobCreated;
   }
 
@@ -130,7 +130,7 @@ public class AssetBlobData
   /**
    * Sets when the blob was created.
    */
-  public void setBlobCreated(final LocalDateTime blobCreated) {
+  public void setBlobCreated(final OffsetDateTime blobCreated) {
     this.blobCreated = checkNotNull(blobCreated);
   }
 

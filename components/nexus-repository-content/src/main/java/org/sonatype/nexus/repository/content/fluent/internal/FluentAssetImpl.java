@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.fluent.internal;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.Optional;
 
@@ -52,7 +52,7 @@ import static org.sonatype.nexus.blobstore.api.BlobStore.CONTENT_TYPE_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.CREATED_BY_IP_HEADER;
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
-import static org.sonatype.nexus.common.time.DateHelper.toLocalDateTime;
+import static org.sonatype.nexus.common.time.DateHelper.toOffsetDateTime;
 import static org.sonatype.nexus.repository.cache.CacheInfo.CACHE;
 import static org.sonatype.nexus.repository.cache.CacheInfo.CACHE_TOKEN;
 import static org.sonatype.nexus.repository.cache.CacheInfo.INVALIDATED;
@@ -105,7 +105,7 @@ public class FluentAssetImpl
   }
 
   @Override
-  public Optional<LocalDateTime> lastDownloaded() {
+  public Optional<OffsetDateTime> lastDownloaded() {
     return asset.lastDownloaded();
   }
 
@@ -115,12 +115,12 @@ public class FluentAssetImpl
   }
 
   @Override
-  public LocalDateTime created() {
+  public OffsetDateTime created() {
     return asset.created();
   }
 
   @Override
-  public LocalDateTime lastUpdated() {
+  public OffsetDateTime lastUpdated() {
     return asset.lastUpdated();
   }
 
@@ -252,7 +252,7 @@ public class FluentAssetImpl
             e -> e.getKey().name(),
             e -> e.getValue().toString())));
 
-    assetBlob.setBlobCreated(toLocalDateTime(metrics.getCreationTime()));
+    assetBlob.setBlobCreated(toOffsetDateTime(metrics.getCreationTime()));
     assetBlob.setCreatedBy(headers.get(CREATED_BY_HEADER));
     assetBlob.setCreatedByIp(headers.get(CREATED_BY_IP_HEADER));
 

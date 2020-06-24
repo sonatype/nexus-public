@@ -14,13 +14,14 @@ package org.sonatype.nexus.common.time;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
 
 import javax.annotation.Nullable;
 
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 /**
  * Helper for {@link DateTime} and {@link Date} types.
@@ -67,17 +68,17 @@ public class DateHelper
   }
 
   /**
-   * @since 3.24
+   * @since 3.next
    */
-  public static DateTime toDateTime(final LocalDateTime localDateTime) {
-    return new DateTime(localDateTime.atOffset(ZoneOffset.UTC).toInstant().toEpochMilli());
+  public static DateTime toDateTime(final OffsetDateTime offsetDateTime) {
+    return new DateTime(offsetDateTime.toInstant().toEpochMilli(), DateTimeZone.UTC);
   }
 
   /**
-   * @since 3.24
+   * @since 3.next
    */
-  public static LocalDateTime toLocalDateTime(final DateTime dateTime) {
-    return Instant.ofEpochMilli(dateTime.getMillis()).atOffset(ZoneOffset.UTC).toLocalDateTime();
+  public static OffsetDateTime toOffsetDateTime(final DateTime dateTime) {
+    return Instant.ofEpochMilli(dateTime.getMillis()).atOffset(ZoneOffset.UTC);
   }
 
   /**
