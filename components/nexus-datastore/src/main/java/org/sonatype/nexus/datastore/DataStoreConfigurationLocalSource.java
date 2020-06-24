@@ -18,7 +18,6 @@ import java.io.UncheckedIOException;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Pattern;
 
 import javax.annotation.Priority;
 import javax.inject.Inject;
@@ -29,7 +28,6 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.property.PropertiesFile;
 import org.sonatype.nexus.datastore.api.DataStoreConfiguration;
-import org.sonatype.nexus.validation.constraint.NamePatternConstants;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -41,8 +39,9 @@ import static com.google.common.collect.Maps.filterKeys;
 import static com.google.common.collect.Maps.fromProperties;
 import static java.lang.Integer.MIN_VALUE;
 import static java.util.Arrays.stream;
-import static java.util.regex.Pattern.compile;
 import static org.sonatype.nexus.datastore.DataStoreConfigurationLocalSource.LOCAL;
+import static org.sonatype.nexus.datastore.DataStoreConfigurationSourceSupport.VALID_NAME_PATTERN;
+import static org.sonatype.nexus.datastore.DataStoreConfigurationSourceSupport.checkName;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE_NAME;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.CONTENT_DATASTORE_NAME;
 
@@ -67,8 +66,6 @@ public class DataStoreConfigurationLocalSource
   private static final String TYPE_KEY = "type";
 
   private static final Set<String> TOP_LEVEL_KEYS = ImmutableSet.of(NAME_KEY, TYPE_KEY);
-
-  private static final Pattern VALID_NAME_PATTERN = compile(NamePatternConstants.REGEX);
 
   private static final String STORE_PROPERTIES_SUFFIX = "-store.properties";
 
@@ -185,13 +182,6 @@ public class DataStoreConfigurationLocalSource
         storeProperties.getFile().delete();
       }
     }
-  }
-
-  /**
-   * Checks the given store name is valid using the standard name regex.
-   */
-  private void checkName(final String storeName) {
-    checkArgument(VALID_NAME_PATTERN.matcher(storeName).matches(), "%s is not a valid data store name", storeName);
   }
 
   /**

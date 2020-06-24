@@ -73,6 +73,10 @@
       <groupId>org.sonatype.goodies</groupId>
       <artifactId>goodies-testsupport</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers</artifactId>
+    </dependency>
 
     <!--
     Minimum API expected by nexus-pax-exam
@@ -106,11 +110,15 @@
             <Embed-Directory>testlib</Embed-Directory>
             <_nodefaultversion>true</_nodefaultversion>
             <Embed-Dependency>
-              goodies-testsupport
+              goodies-testsupport,
+              testcontainers,
+              duct-tape
             </Embed-Dependency>
             <_exportcontents>
               !*.internal,
-              org.sonatype.*
+              org.sonatype.*,
+              org.testcontainers.*,
+              org.rnorth.ducttape.*
             </_exportcontents>
             <!--
             These imports are available immediately at boot
