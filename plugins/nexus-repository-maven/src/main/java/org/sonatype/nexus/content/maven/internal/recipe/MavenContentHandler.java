@@ -65,7 +65,7 @@ public class MavenContentHandler
         return HttpResponses.created();
 
       case DELETE:
-        return doDelete(path, storage);
+        return doDelete(mavenPath, storage);
 
       default:
         return HttpResponses.methodNotAllowed(method, GET, HEAD, PUT, DELETE);
@@ -101,12 +101,12 @@ public class MavenContentHandler
     }
   }
 
-  private Response doDelete(final String path, final MavenContentFacet storage) throws IOException {
-    boolean deleted = storage.delete(path);
+  private Response doDelete(final MavenPath mavenPath, final MavenContentFacet storage) throws IOException {
+    boolean deleted = storage.delete(mavenPath);
     if (deleted) {
       return HttpResponses.noContent();
     }
-    return HttpResponses.notFound(path);
+    return HttpResponses.notFound(mavenPath.getPath());
   }
 
   private boolean isValidSnapshot(Coordinates coordinates) {

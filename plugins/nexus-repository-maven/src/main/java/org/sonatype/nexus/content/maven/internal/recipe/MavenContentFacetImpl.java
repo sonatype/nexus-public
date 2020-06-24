@@ -192,7 +192,8 @@ public class MavenContentFacetImpl
   private Payload createOrUpdateAsset(
       final MavenPath path,
       final Component component,
-      final TempBlob blob) {
+      final TempBlob blob)
+  {
     FluentAssetBuilder assetBuilder = assets().path(path.getPath()).kind(assetKind(path));
     if (component != null) {
       assetBuilder = assetBuilder.component(component);
@@ -209,9 +210,37 @@ public class MavenContentFacetImpl
   }
 
   @Override
-  public boolean delete(final String path) {
-    log.trace("DELETE {} : {}", getRepository().getName(), path);
-    return assets().path(path).find().map(FluentAsset::delete).orElse(false);
+  public boolean delete(final MavenPath mavenPath) {
+    log.trace("DELETE {} : {}", getRepository().getName(), mavenPath);
+    boolean assetIsDeleted = deleteAsset(mavenPath);
+    if (assetIsDeleted && mavenPath.getCoordinates() != null) {
+      maybeDeleteComponent(mavenPath.getCoordinates());
+    }
+    return assetIsDeleted;
+  }
+
+  private Boolean deleteAsset(final MavenPath mavenPath) {
+    String path = mavenPath.getPath();
+    return assets()
+        .path(path)
+        .find()
+        .map(FluentAsset::delete)
+        .orElse(false);
+  }
+
+  private void maybeDeleteComponent(final Coordinates coordinates) {
+    components()
+        .name(coordinates.getArtifactId())
+        .namespace(coordinates.getGroupId())
+        .version(coordinates.getVersion())
+        .find()
+        .ifPresent(this::deleteIfNoAssetsLeft);
+  }
+
+  private void deleteIfNoAssetsLeft(FluentComponent component) {
+    if (component.assets().isEmpty()) {
+      component.delete();
+    }
   }
 
   @Override

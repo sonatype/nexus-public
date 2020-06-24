@@ -36,7 +36,7 @@ public interface MavenContentFacet
 
   Payload put(MavenPath path, Payload content) throws IOException;
 
-  boolean delete(String path) throws IOException;
+  boolean delete(MavenPath path) throws IOException;
 
   MavenPathParser getMavenPathParser();
 
