@@ -4,6 +4,7 @@ executors:
   my-executor:
     docker:
       - image: circleci/openjdk:8-jdk
+    resource_class: large
     working_directory: ~/nexus-public
     environment:
       MAVEN_OPTS: -Xmx3200m
