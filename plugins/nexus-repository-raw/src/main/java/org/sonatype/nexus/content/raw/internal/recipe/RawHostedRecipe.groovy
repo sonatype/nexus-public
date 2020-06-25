@@ -58,6 +58,7 @@ class RawHostedRecipe
     repository.attach(securityFacet.get())
     repository.attach(configure(viewFacet.get()))
     repository.attach(contentFacet.get())
+    repository.attach(searchFacet.get())
   }
 
   /**

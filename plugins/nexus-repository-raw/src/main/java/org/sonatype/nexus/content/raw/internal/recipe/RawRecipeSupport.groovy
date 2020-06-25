@@ -19,6 +19,7 @@ import org.sonatype.nexus.content.raw.RawContentFacet
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.RecipeSupport
 import org.sonatype.nexus.repository.Type
+import org.sonatype.nexus.repository.content.search.SearchFacet
 import org.sonatype.nexus.repository.http.PartialFetchHandler
 import org.sonatype.nexus.repository.raw.internal.RawSecurityFacet
 import org.sonatype.nexus.repository.security.SecurityHandler
@@ -45,6 +46,9 @@ abstract class RawRecipeSupport
 
   @Inject
   Provider<RawContentFacet> contentFacet
+
+  @Inject
+  Provider<SearchFacet> searchFacet
 
   @Inject
   ExceptionHandler exceptionHandler
