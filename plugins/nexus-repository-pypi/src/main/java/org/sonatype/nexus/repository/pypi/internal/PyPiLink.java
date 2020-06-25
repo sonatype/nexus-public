@@ -23,7 +23,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 3.20
  */
-final class PyPiLink
+public final class PyPiLink
 {
   private final String file;
 
@@ -31,7 +31,7 @@ final class PyPiLink
 
   private final String dataRequiresPython;
 
-  PyPiLink(@Nonnull final String file,
+  public PyPiLink(@Nonnull final String file,
            @Nonnull final String link,
            final String dataRequiresPython) {
     this.file = checkNotNull(file);

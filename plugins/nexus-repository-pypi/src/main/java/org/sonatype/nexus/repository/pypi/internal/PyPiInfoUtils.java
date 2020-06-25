@@ -69,7 +69,7 @@ public final class PyPiInfoUtils
   /**
    * Extracts metadata from archive files, returning an empty map on failure.
    */
-  static Map<String, String> extractMetadata(final InputStream is) {
+  public static Map<String, String> extractMetadata(final InputStream is) {
     checkNotNull(is);
     Map<String, Exception> exceptions = new HashMap<>();
 

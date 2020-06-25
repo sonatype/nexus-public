@@ -69,7 +69,7 @@ public final class PyPiFileUtils
    * Extracts the name of the component from the filename. This is a best guess and should only be used when no other
    * information (such as metadata) is available.
    */
-  static String extractNameFromFilename(final String filename) {
+  public static String extractNameFromFilename(final String filename) {
     checkNotNull(filename);
     return filename.substring(0, getFilenameVersionStart(filename));
   }

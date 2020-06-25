@@ -10,40 +10,28 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.pypi.internal;
+package org.sonatype.nexus.repository.pypi.tasks.orient;
 
-import javax.annotation.Nonnull;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
 /**
- * Search result for PyPI.
+ * Task descriptor for {@link OrientPyPiDeleteLegacyProxyAssetsTask}.
  *
- * @since 3.1
+ * @since 3.22
  */
-public final class PyPiSearchResult
+@Named
+@Singleton
+public class OrientPyPiDeleteLegacyProxyAssetsTaskDescriptor
+    extends TaskDescriptorSupport
 {
-  private final String name;
+  public static final String TASK_NAME = "PyPi - Delete legacy proxy assets";
 
-  private final String version;
+  public static final String TYPE_ID = "repository.pypi.delete-legacy-proxy-assets";
 
-  private final String summary;
-
-  public PyPiSearchResult(@Nonnull final String name, @Nonnull final String version, @Nonnull final String summary) {
-    this.name = checkNotNull(name);
-    this.version = checkNotNull(version);
-    this.summary = checkNotNull(summary);
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public String getVersion() {
-    return version;
-  }
-
-  public String getSummary() {
-    return summary;
+  public OrientPyPiDeleteLegacyProxyAssetsTaskDescriptor() {
+    super(TYPE_ID, OrientPyPiDeleteLegacyProxyAssetsTask.class, TASK_NAME, VISIBLE, EXPOSED);
   }
 }
