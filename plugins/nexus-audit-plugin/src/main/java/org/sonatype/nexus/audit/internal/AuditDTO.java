@@ -42,6 +42,8 @@ public class AuditDTO
 
   private String context;
 
+  private String thread;
+
   private Map<String, Object> attributes;
 
   private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss,SSSZ");
@@ -61,6 +63,7 @@ public class AuditDTO
     this.domain = auditData.getDomain();
     this.type = auditData.getType();
     this.context = auditData.getContext();
+    this.thread = Thread.currentThread().getName();
     this.attributes = auditData.getAttributes();
   }
 
@@ -110,6 +113,10 @@ public class AuditDTO
 
   public void setContext(String context) {
     this.context = context;
+  }
+
+  public String getThread() {
+    return thread;
   }
 
   public Map<String, Object> getAttributes() {
