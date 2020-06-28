@@ -119,8 +119,6 @@ public class S3BlobStore
 
   public static final int DEFAULT_EXPIRATION_IN_DAYS = 3;
 
-  public static final int NO_AUTOMATIC_EXPIRY_HARD_DELETE = 0;
-
   public static final String METADATA_FILENAME = "metadata.properties";
 
   public static final String TYPE_KEY = "type";
@@ -361,7 +359,7 @@ public class S3BlobStore
   }
 
   private boolean deleteByExpire() {
-    return getConfiguredExpirationInDays(blobStoreConfiguration) != NO_AUTOMATIC_EXPIRY_HARD_DELETE;
+    return getConfiguredExpirationInDays(blobStoreConfiguration) > 0;
   }
 
   private boolean expire(final BlobId blobId, final String reason) {
