@@ -78,10 +78,11 @@
             </manifest>
             <manifestEntries>
               <!--
-              Bouncycastle is located in parent directory, not the system repository
+              These jars are located in parent directory, not the system repository
               -->
               <Class-Path>
                 ../${project.artifactMap(org.bouncycastle:bcprov-jdk15to18).file.name}
+                ../boot/org.${project.artifactMap(org.osgi:osgi.core).file.name}
               </Class-Path>
             </manifestEntries>
           </archive>
