@@ -1,0 +1,7 @@
+CREATE USER nxrmUser PASSWORD 'nxrmPassword';
+
+CREATE DATABASE config;
+GRANT ALL PRIVILEGES ON DATABASE config to nxrmUser;
+
+CREATE DATABASE content;
+GRANT ALL PRIVILEGES ON DATABASE content to nxrmUser;

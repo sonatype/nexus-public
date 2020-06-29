@@ -539,6 +539,62 @@ public class Maven2MavenPathParserTest
   }
 
   @Test
+  public void parseExtension() {
+    MavenPath mavenPath;
+
+    mavenPath =
+        pathParser.parsePath(
+            "/org/sonatype/nexus/tools/nexus-migration-app/1.0.0-beta-6-SNAPSHOT/nexus-migration-app-1.0.0-beta-6-20080809.181715-2-cli.anyext");
+    assertThat(mavenPath.getCoordinates().getExtension(), equalTo("anyext"));
+
+    mavenPath =
+        pathParser.parsePath(
+            "/org/sonatype/nexus/tools/nexus-migration-app/1.0.0-beta-6-SNAPSHOT/nexus-migration-app-1.0.0-beta-6-20080809.181715-2-cli.anyext.sha1");
+    assertThat(mavenPath.getCoordinates().getExtension(), equalTo("anyext.sha1"));
+
+    mavenPath =
+        pathParser.parsePath(
+            "/org/sonatype/nexus/tools/nexus-migration-app/1.0.0-beta-6-SNAPSHOT/nexus-migration-app-1.0.0-beta-6-20080809.181715-2-cli.anyext.md5");
+    assertThat(mavenPath.getCoordinates().getExtension(), equalTo("anyext.md5"));
+
+    mavenPath =
+        pathParser.parsePath(
+            "/org/sonatype/nexus/tools/nexus-migration-app/1.0.0-beta-6-SNAPSHOT/nexus-migration-app-1.0.0-beta-6-20080809.181715-2-cli.anyext.asc");
+    assertThat(mavenPath.getCoordinates().getExtension(), equalTo("anyext.asc"));
+
+    mavenPath =
+        pathParser.parsePath(
+            "/org/sonatype/nexus/tools/nexus-migration-app/1.0.0-beta-6-SNAPSHOT/nexus-migration-app-1.0.0-beta-6-20080809.181715-2-cli.anyext.asc.md5");
+    assertThat(mavenPath.getCoordinates().getExtension(), equalTo("anyext.asc.md5"));
+
+    mavenPath =
+        pathParser.parsePath(
+            "/org/sonatype/nexus/tools/nexus-migration-app/1.0.0-beta-6-SNAPSHOT/nexus-migration-app-1.0.0-beta-6-20080809.181715-2-cli.tar.anyext");
+    assertThat(mavenPath.getCoordinates().getExtension(), equalTo("tar.anyext"));
+
+    mavenPath =
+        pathParser.parsePath(
+            "/org/sonatype/nexus/tools/nexus-migration-app/1.0.0-beta-6-SNAPSHOT/nexus-migration-app-1.0.0-beta-6-20080809.181715-2-cli.cpio.anyext");
+    assertThat(mavenPath.getCoordinates().getExtension(), equalTo("cpio.anyext"));
+
+    mavenPath =
+        pathParser.parsePath(
+            "/org/sonatype/nexus/tools/nexus-migration-app/1.0.0-beta-6-SNAPSHOT/nexus-migration-app-1.0.0-beta-6-20080809.181715-2-cli.anyext.zip");
+    assertThat(mavenPath.getCoordinates().getExtension(), equalTo("zip"));
+
+    mavenPath =
+        pathParser.parsePath(
+            "/org/sonatype/nexus/tools/nexus-migration-app/1.0.0-beta-6-SNAPSHOT/nexus-migration-app-1.0.0-beta-6-20080809.181715-2-cli.nk.os");
+    assertThat(mavenPath.getCoordinates().getExtension(), equalTo("nk.os"));
+
+    mavenPath =
+        pathParser.parsePath(
+            "/org/sonatype/nexus/tools/nexus-migration-app/1.0.0-beta-6-SNAPSHOT/nexus-migration-app-1.0.0-beta-6-20080809.181715-2-cli.unknown.os");
+    assertThat(mavenPath.getCoordinates().getExtension(), equalTo("os"));
+  }
+
+
+  @Test
   public void extremeSnapshot() throws Exception
   {
     MavenPath mavenPath;

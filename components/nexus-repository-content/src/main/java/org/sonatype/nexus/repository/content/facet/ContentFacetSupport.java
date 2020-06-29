@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.facet;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -219,12 +219,12 @@ public abstract class ContentFacetSupport
   }
 
   @Override
-  public final LocalDateTime created() {
+  public final OffsetDateTime created() {
     return contentRepository().created();
   }
 
   @Override
-  public final LocalDateTime lastUpdated() {
+  public final OffsetDateTime lastUpdated() {
     return contentRepository().lastUpdated();
   }
 

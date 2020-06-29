@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.content;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.Optional;
 
@@ -54,7 +54,7 @@ public interface AssetBlob
   /**
    * When the blob was created.
    */
-  LocalDateTime blobCreated();
+  OffsetDateTime blobCreated();
 
   /**
    * The user that triggered creation of this blob; empty if it was an internal request.

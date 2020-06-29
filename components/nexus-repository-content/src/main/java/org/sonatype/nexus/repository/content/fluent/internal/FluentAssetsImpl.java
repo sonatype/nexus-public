@@ -49,6 +49,11 @@ public class FluentAssetsImpl
   }
 
   @Override
+  public int count() {
+    return facet.stores().assetStore.countAssets(facet.contentRepositoryId());
+  }
+
+  @Override
   public Continuation<FluentAsset> browse(
       @Nullable final String kind,
       final int limit,

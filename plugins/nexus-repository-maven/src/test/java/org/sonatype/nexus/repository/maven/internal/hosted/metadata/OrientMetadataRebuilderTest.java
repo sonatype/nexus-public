@@ -25,7 +25,7 @@ import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.EntityAdapter;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.maven.MavenFacet;
+import org.sonatype.nexus.orient.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.MavenPathParser;

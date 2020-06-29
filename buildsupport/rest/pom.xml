@@ -29,7 +29,7 @@
 
   <properties>
     <jackson2.version>2.9.10</jackson2.version>
-    <jackson2.databind.version>2.9.10.4</jackson2.databind.version>
+    <jackson2.databind.version>2.9.10.5</jackson2.databind.version>
     <jaxb.version>2.2.7</jaxb.version>
     <resteasy.version>3.1.3.Final</resteasy.version>
     <swagger.version>1.5.21</swagger.version>
@@ -75,7 +75,7 @@
       <dependency>
         <groupId>com.thoughtworks.xstream</groupId>
         <artifactId>xstream</artifactId>
-        <version>1.4.10</version>
+        <version>1.4.12</version>
         <exclusions>
           <exclusion>
             <groupId>xmlpull</groupId>

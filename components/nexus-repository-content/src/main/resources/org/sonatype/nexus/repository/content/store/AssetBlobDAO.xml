@@ -26,7 +26,7 @@
       blob_size     BIGINT NOT NULL,
       content_type  VARCHAR NOT NULL,
       checksums     ${JSON_TYPE} NOT NULL,
-      blob_created  TIMESTAMP NOT NULL,
+      blob_created  TIMESTAMP WITH TIME ZONE NOT NULL,
       created_by    VARCHAR,
       created_by_ip VARCHAR,
 

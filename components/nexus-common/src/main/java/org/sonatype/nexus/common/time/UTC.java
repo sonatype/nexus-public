@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.common.time;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
 /**
@@ -25,7 +25,7 @@ public class UTC {
     // empty
   }
 
-  public static LocalDateTime now() {
-    return LocalDateTime.now(ZoneOffset.UTC);
+  public static OffsetDateTime now() {
+    return OffsetDateTime.now(ZoneOffset.UTC);
   }
 }

@@ -17,8 +17,10 @@ import java.io.InputStream;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
@@ -26,8 +28,11 @@ import javax.ws.rs.core.Response;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.log.LogManager;
+import org.sonatype.nexus.common.log.LogMarker;
+import org.sonatype.nexus.rest.APIConstants;
 import org.sonatype.nexus.rest.Resource;
 
+import com.google.common.base.Strings;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -48,13 +53,18 @@ public class LogResource
     extends ComponentSupport
     implements Resource
 {
-  public static final String RESOURCE_URI = "/logging/log";
+  public static final String RESOURCE_URI = APIConstants.INTERNAL_API_PREFIX + "/logging/log";
+
+  public static final String DEFAULT_MARK = "MARK";
 
   private final LogManager logManager;
 
+  private final LogMarker logMarker;
+
   @Inject
-  public LogResource(final LogManager logManager) {
+  public LogResource(final LogManager logManager, final LogMarker logMarker) {
     this.logManager = checkNotNull(logManager);
+    this.logMarker = checkNotNull(logMarker);
   }
 
   /**
@@ -90,5 +100,20 @@ public class LogResource
     return Response.ok(log)
         .header(CONTENT_DISPOSITION, format("attachment; filename=\"%s\"", logName))
         .build();
+  }
+
+  /**
+   */
+  @POST
+  @Path("/mark")
+  @Consumes({TEXT_PLAIN})
+  @RequiresPermissions("nexus:logging:create")
+  public void mark(final String message) {
+    if (Strings.isNullOrEmpty(message)) {
+      logMarker.markLog(DEFAULT_MARK);
+    }
+    else {
+      logMarker.markLog(message);
+    }
   }
 }

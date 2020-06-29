@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.testsuite.helpers;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -42,7 +43,12 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.joda.time.DateTime;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static java.time.LocalDate.now;
 import static java.util.stream.Collectors.toList;
+import static org.apache.commons.lang3.StringUtils.endsWith;
+import static org.apache.commons.lang3.StringUtils.indexOf;
+import static org.apache.commons.lang3.StringUtils.startsWith;
+import static org.apache.commons.lang3.StringUtils.substring;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
 @FeatureFlag(name = "nexus.orient.store.content")
@@ -54,6 +60,10 @@ public class OrientComponentAssetTestHelper
 {
   private static final String DELETE_COMPONENT_SQL =
       "delete from component where group = ? and name = ? and version = ?";
+
+  private static final DateTimeFormatter YEAR_MONTH_DAY_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
+
+  private static final String SNAPSHOT_VERSION_SUFFIX = "-SNAPSHOT";
 
   @Inject
   @Named(DatabaseInstanceNames.COMPONENT)
@@ -118,7 +128,7 @@ public class OrientComponentAssetTestHelper
     return findComponents(repository).size();
   }
 
-  private  List<Component> findComponents(final Repository repository) {
+  private List<Component> findComponents(final Repository repository) {
     try (StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get()) {
       tx.begin();
       return newArrayList(tx.browseComponents(tx.findBucket(repository)));
@@ -148,20 +158,54 @@ public class OrientComponentAssetTestHelper
 
   @Override
   public boolean componentExists(final Repository repository, final String name, final String version) {
-    Optional<Component> component = findComponents(repository).stream()
+    if (version.endsWith(SNAPSHOT_VERSION_SUFFIX)) {
+      Optional<Component> component = findSnapshotComponent(repository, name, version);
+      return component.isPresent();
+    }
+    else {
+      return findComponents(repository).stream()
+          .filter(c -> name.equals(c.name()))
+          .anyMatch(c -> version.equals(c.version()));
+    }
+  }
+
+  @Override
+  public boolean componentExists(
+      final Repository repository,
+      final String namespace,
+      final String name,
+      final String version)
+  {
+    if (endsWith(version, SNAPSHOT_VERSION_SUFFIX)) {
+      Optional<Component> component = findSnapshotComponent(repository, name, version);
+      return component.isPresent();
+    }
+    else {
+      return findComponent(repository, namespace, name, version).isPresent();
+    }
+  }
+
+  private Optional<Component> findSnapshotComponent(
+      final Repository repository,
+      final String name,
+      final String version)
+  {
+    String gav = substring(version, 0, indexOf(version, SNAPSHOT_VERSION_SUFFIX));
+    String versionWithDate = String.format("%s-%s", gav, now().format(YEAR_MONTH_DAY_FORMAT));
+    return findComponents(repository)
+        .stream()
         .filter(c -> name.equals(c.name()))
-        .filter(c -> version.equals(c.version())).findAny();
-
-    return component.isPresent();
+        .filter(comp -> startsWith(comp.version(), versionWithDate))
+        .findAny();
   }
 
   @Override
-  public boolean componentExists(final Repository repository, final String namespace, final String name, final String version) {
-    return findComponent(repository, namespace, name, version).isPresent();
-  }
-
-  @Override
-  public boolean assetWithComponentExists(final Repository repository, final String path, final String group, final String name) {
+  public boolean assetWithComponentExists(
+      final Repository repository,
+      final String path,
+      final String group,
+      final String name)
+  {
     return findAssetByName(repository, path)
         .map(Asset::componentId)
         .flatMap(componentId -> {
@@ -198,12 +242,22 @@ public class OrientComponentAssetTestHelper
   }
 
   @Override
-  public NestedAttributesMap componentAttributes(final Repository repository, final String namespace, final String name, final String version) {
+  public NestedAttributesMap componentAttributes(
+      final Repository repository,
+      final String namespace,
+      final String name,
+      final String version)
+  {
     return findComponent(repository, namespace, name, version).map(Component::attributes)
         .orElseThrow(() -> new ComponentNotFoundException(repository, namespace, name, version));
   }
 
-  private Optional<Component> findComponent(final Repository repository, final String namespace, final String name, final String version) {
+  private Optional<Component> findComponent(
+      final Repository repository,
+      final String namespace,
+      final String name,
+      final String version)
+  {
     return findComponents(repository).stream()
         .filter(c -> Objects.equals(namespace, c.group()))
         .filter(c -> name.equals(c.name()))

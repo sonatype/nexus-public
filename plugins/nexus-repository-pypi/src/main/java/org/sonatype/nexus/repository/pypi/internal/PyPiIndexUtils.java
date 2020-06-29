@@ -67,7 +67,7 @@ public final class PyPiIndexUtils
   /**
    * Returns a map (in original order of appearance) of the files and associated paths extracted from the index.
    */
-  static List<PyPiLink> extractLinksFromIndex(final InputStream in) throws IOException {
+  public static List<PyPiLink> extractLinksFromIndex(final InputStream in) throws IOException {
     checkNotNull(in);
     try (Reader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
       return extractLinksFromIndex(CharStreams.toString(reader));
@@ -77,7 +77,7 @@ public final class PyPiIndexUtils
   /**
    * Returns a map (in original order of appearance) of the files and associated paths extracted from the index.
    */
-  static List<PyPiLink> extractLinksFromIndex(final String html) {
+  public static List<PyPiLink> extractLinksFromIndex(final String html) {
     checkNotNull(html);
     List<PyPiLink> results = new ArrayList<>();
     Document document = Jsoup.parse(html);
@@ -94,7 +94,7 @@ public final class PyPiIndexUtils
   /**
    * Returns a string containing the HTML simple index page for the links, rendered in iteration order.
    */
-  static String buildIndexPage(final TemplateHelper helper, final String name, final Collection<PyPiLink> links) {
+  public static String buildIndexPage(final TemplateHelper helper, final String name, final Collection<PyPiLink> links) {
     checkNotNull(helper);
     checkNotNull(name);
     checkNotNull(links);
@@ -108,7 +108,7 @@ public final class PyPiIndexUtils
   /**
    * Returns a string containing the HTML simple root index page for the links, rendered in iteration order.
    */
-  static String buildRootIndexPage(final TemplateHelper helper, final Collection<PyPiLink> links) {
+  public static String buildRootIndexPage(final TemplateHelper helper, final Collection<PyPiLink> links) {
     checkNotNull(helper);
     checkNotNull(links);
     URL template = PyPiIndexUtils.class.getResource("pypi-root-index.vm");
@@ -158,7 +158,7 @@ public final class PyPiIndexUtils
     return newLinks;
   }
 
-  static boolean validateIndexLinks(final String packageName, final List<PyPiLink> links) {
+  public static boolean validateIndexLinks(final String packageName, final List<PyPiLink> links) {
     // PEP 503 - Normalized names
     Function<String, String> normalize = name -> name.replaceAll("[-_.]+", "-").toLowerCase(Locale.ENGLISH);
 
@@ -171,7 +171,7 @@ public final class PyPiIndexUtils
   /**
    * Rewrites an index page so that the links reference NXRM paths.
    */
-  static List<PyPiLink> makeIndexLinksNexusPaths(final String name, final InputStream in)
+  public static List<PyPiLink> makeIndexLinksNexusPaths(final String name, final InputStream in)
       throws IOException
   {
     return makePackageLinksNexusPaths(name, extractLinksFromIndex(in));
@@ -202,7 +202,7 @@ public final class PyPiIndexUtils
   /**
    * Rewrites a root index page from a stream so that the links are all relative where possible.
    */
-  static List<PyPiLink> makeRootIndexRelative(final InputStream in) throws IOException {
+  public static List<PyPiLink> makeRootIndexRelative(final InputStream in) throws IOException {
     return makeRootIndexLinksRelative(extractLinksFromIndex(in));
   }
 

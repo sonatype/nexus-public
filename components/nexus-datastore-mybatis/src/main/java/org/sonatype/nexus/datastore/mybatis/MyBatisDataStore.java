@@ -84,7 +84,7 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.defaults.DefaultSqlSessionFactory;
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
-import org.apache.ibatis.type.LocalDateTimeTypeHandler;
+import org.apache.ibatis.type.OffsetDateTimeTypeHandler;
 import org.apache.ibatis.type.TypeAliasRegistry;
 import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
@@ -359,7 +359,7 @@ public class MyBatisDataStore
     register(new SetTypeHandler());
     register(new MapTypeHandler());
     register(new DateTimeTypeHandler());
-    register(new LocalDateTimeTypeHandler());
+    register(new OffsetDateTimeTypeHandler());
 
     // mapping of entity ids needs some extra handling
     TypeHandler entityIdHandler = new EntityUUIDTypeHandler(lenient);

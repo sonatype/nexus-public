@@ -39,6 +39,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Range;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.ExpectedException;
@@ -56,6 +57,10 @@ import org.ops4j.pax.exam.options.ProvisionOption;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.containers.wait.strategy.Wait;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.ops4j.pax.exam.CoreOptions.composite;
@@ -67,7 +72,9 @@ import static org.ops4j.pax.exam.CoreOptions.systemTimeout;
 import static org.ops4j.pax.exam.CoreOptions.vmOption;
 import static org.ops4j.pax.exam.CoreOptions.when;
 import static org.ops4j.pax.exam.CoreOptions.wrappedBundle;
+import static org.ops4j.pax.exam.OptionUtils.combine;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.*;
+import static org.testcontainers.containers.BindMode.READ_ONLY;
 
 /**
  * Provides support for testing Nexus with Pax-Exam, test-cases can inject any component from the distribution. <br>
@@ -111,6 +118,8 @@ public abstract class NexusPaxExamSupport
   public static final String PAX_URL_MAVEN_FILE = "etc/karaf/org.ops4j.pax.url.mvn.cfg";
 
   public static final String KARAF_MANAGEMENT_FILE = "etc/karaf/org.apache.karaf.management.cfg";
+
+  public static String TEST_JDBC_URL_PROPERTY = "nexus.test.jdbcUrl";
 
   private static final String PORT_REGISTRY_MIN_KEY = "it.portRegistry.min";
 
@@ -161,6 +170,16 @@ public abstract class NexusPaxExamSupport
 
   @Inject
   protected TaskScheduler taskScheduler;
+
+  private static final String POSTGRES_IMAGE = "postgres:12.3";
+
+  private static final int POSTGRES_PORT = 5432;
+
+  public static final String DB_USER = "nxrmUser";
+
+  public static final String DB_PASSWORD = "nxrmPassword";
+
+  private static GenericContainer postgresContainer = null;
 
   protected final Logger log = checkNotNull(createLogger());
 
@@ -461,9 +480,9 @@ public abstract class NexusPaxExamSupport
         systemProperty(PORT_REGISTRY_MIN_KEY).value(Integer.toString(PORT_REGISTRY_MIN_FORK)),
         systemProperty(PORT_REGISTRY_MAX_KEY).value(Integer.toString(PORT_REGISTRY_MAX_FORK)),
 
-        //configure db
+        //configure db, including starting external resources
         when(getValidTestDatabase().isUseContentStore()).useOptions(
-            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.orient.enabled", "false")
+            configureDatabase()
         ),
 
         // randomize ports...
@@ -476,6 +495,49 @@ public abstract class NexusPaxExamSupport
         editConfigurationFilePut(KARAF_MANAGEMENT_FILE, //
             "rmiServerPort", Integer.toString(portRegistry.reservePort()))
     );
+  }
+
+  protected static Option[] configureDatabase() {
+    switch (getValidTestDatabase()) {
+      case POSTGRES:
+        postgresContainer = new GenericContainer(POSTGRES_IMAGE) //NOSONAR
+          .withExposedPorts(POSTGRES_PORT)
+          .withEnv("POSTGRES_USER", DB_USER)
+          .withEnv("POSTGRES_PASSWORD", DB_PASSWORD)
+          .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger(NexusPaxExamSupport.class)))
+          .withClasspathResourceMapping("initialize-postgres.sql", "/docker-entrypoint-initdb.d/initialize-postgres.sql", READ_ONLY)
+          .waitingFor(Wait.forLogMessage(".*database system is ready to accept connections.*", 1));
+
+        return combine(null,
+            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.orient.enabled", "false"),
+            systemProperty(TEST_JDBC_URL_PROPERTY).value(configurePostgres())
+        );
+      case H2:
+        return combine(null,
+            editConfigurationFilePut(NEXUS_PROPERTIES_FILE, "nexus.orient.enabled", "false")
+        );
+      case ORIENT:
+        return new Option[0];
+      default:
+        throw new IllegalStateException("No case defined for " + getValidTestDatabase());
+    }
+  }
+
+  private static String configurePostgres() {
+    if (!postgresContainer.isRunning()) {
+      postgresContainer.start();
+    }
+
+    return String.format("jdbc:postgresql://%s:%d/",
+        postgresContainer.getHost(),
+        postgresContainer.getMappedPort(POSTGRES_PORT));
+  }
+
+  @AfterClass
+  public static final void shutdownPostgres() {
+    if(postgresContainer != null && postgresContainer.isRunning()) {
+      postgresContainer.stop();
+    }
   }
 
   /**
@@ -562,7 +624,7 @@ public abstract class NexusPaxExamSupport
    * Processes two sequences of options and combines them into a single sequence.
    */
   public static Option[] options(final Option[] options1, final Option... options2) {
-    return options(OptionUtils.combine(options1, options2));
+    return options(combine(options1, options2));
   }
 
   // -------------------------------------------------------------------------

@@ -47,7 +47,7 @@ class DependencyResolver<T extends DependencySource>
   /**
    * Helper to generate string label for source.
    */
-  private static String labelOf(final DependencySource<T> source) {
+  private static String labelOf(final DependencySource<?> source) {
     return OID.render(source)
   }
 

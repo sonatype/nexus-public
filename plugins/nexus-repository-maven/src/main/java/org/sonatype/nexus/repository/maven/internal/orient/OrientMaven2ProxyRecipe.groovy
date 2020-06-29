@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.maven.internal.orient
 
 import javax.annotation.Nonnull
+import javax.annotation.Priority
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Provider
@@ -24,15 +25,12 @@ import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.cache.NegativeCacheFacet
 import org.sonatype.nexus.repository.cache.NegativeCacheHandler
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet
-import org.sonatype.nexus.repository.maven.MavenIndexFacet
 import org.sonatype.nexus.repository.maven.MavenPathParser
 import org.sonatype.nexus.repository.maven.RemoveSnapshotsFacet
 import org.sonatype.nexus.repository.maven.internal.Maven2Format
 import org.sonatype.nexus.repository.maven.internal.MavenSecurityFacet
-import org.sonatype.nexus.repository.maven.internal.VersionPolicyHandler
 import org.sonatype.nexus.repository.maven.internal.matcher.MavenNx2MetaFilesMatcher
 import org.sonatype.nexus.repository.maven.internal.recipes.Maven2ProxyRecipe
-import org.sonatype.nexus.repository.proxy.ProxyFacet
 import org.sonatype.nexus.repository.proxy.ProxyHandler
 import org.sonatype.nexus.repository.purge.PurgeUnusedFacet
 import org.sonatype.nexus.repository.search.SearchFacet
@@ -50,6 +48,7 @@ import static org.sonatype.nexus.repository.http.HttpHandlers.notFound
  * @since 3.0
  */
 @Named(Maven2ProxyRecipe.NAME)
+@Priority(Integer.MAX_VALUE)
 @Singleton
 class OrientMaven2ProxyRecipe
     extends OrientMavenRecipeSupport
@@ -80,7 +79,7 @@ class OrientMaven2ProxyRecipe
   NegativeCacheHandler negativeCacheHandler
 
   @Inject
-  VersionPolicyHandler versionPolicyHandler
+  OrientVersionPolicyHandler versionPolicyHandler
 
   @Inject
   ProxyHandler proxyHandler

@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
@@ -32,9 +32,9 @@ public abstract class AbstractRepositoryContent
 
   private NestedAttributesMap attributes = new NestedAttributesMap("attributes", new HashMap<>());
 
-  private LocalDateTime created;
+  private OffsetDateTime created;
 
-  private LocalDateTime lastUpdated;
+  private OffsetDateTime lastUpdated;
 
   // RepositoryContent API
 
@@ -44,12 +44,12 @@ public abstract class AbstractRepositoryContent
   }
 
   @Override
-  public LocalDateTime created() {
+  public OffsetDateTime created() {
     return created;
   }
 
   @Override
-  public LocalDateTime lastUpdated() {
+  public OffsetDateTime lastUpdated() {
     return lastUpdated;
   }
 
@@ -72,14 +72,14 @@ public abstract class AbstractRepositoryContent
   /**
    * Sets when this metadata was first created.
    */
-  public void setCreated(final LocalDateTime created) {
+  public void setCreated(final OffsetDateTime created) {
     this.created = checkNotNull(created);
   }
 
   /**
    * Sets when this metadata was last updated.
    */
-  public void setLastUpdated(final LocalDateTime lastUpdated) {
+  public void setLastUpdated(final OffsetDateTime lastUpdated) {
     this.lastUpdated = checkNotNull(lastUpdated);
   }
 }

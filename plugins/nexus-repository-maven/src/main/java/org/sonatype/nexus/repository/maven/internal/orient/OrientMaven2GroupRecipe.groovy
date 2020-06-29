@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.maven.internal.orient
 
 import javax.annotation.Nonnull
+import javax.annotation.Priority
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Provider
@@ -44,6 +45,7 @@ import static org.sonatype.nexus.repository.http.HttpHandlers.notFound
  * @since 3.0
  */
 @Named(Maven2GroupRecipe.NAME)
+@Priority(Integer.MAX_VALUE)
 @Singleton
 class OrientMaven2GroupRecipe
     extends OrientMavenRecipeSupport

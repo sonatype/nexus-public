@@ -35,6 +35,11 @@ public interface FluentAssets
   FluentAsset with(Asset asset);
 
   /**
+   * Count all assets in the repository.
+   */
+  int count();
+
+  /**
    * Browse through all assets in the repository.
    */
   default Continuation<FluentAsset> browse(int limit, @Nullable String continuationToken) {

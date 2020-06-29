@@ -16,15 +16,15 @@ import java.io.File;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import javax.inject.Inject;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.client.WebTarget;
 
 import com.sonatype.nexus.docker.testsupport.framework.DockerContainerConfig;
 import com.sonatype.nexus.docker.testsupport.maven.MavenCommandLineITSupport;
 
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.testsuite.testsupport.FormatClientITSupport;
 import org.sonatype.nexus.testsuite.testsupport.utility.SearchTestHelper;
 
@@ -33,7 +33,6 @@ import org.junit.After;
 import org.junit.Before;
 
 import static java.io.File.createTempFile;
-import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.io.FileUtils.forceDelete;
 import static org.apache.commons.io.FileUtils.readFileToString;
@@ -89,12 +88,11 @@ public abstract class MavenClientITSupport
     write(settings, settingsContent);
   }
 
-  protected String buildAndDeployProject(final String url,
-                                         final String snapshotVersion,
-                                         final boolean success)
+  protected void buildAndDeployProject(
+      final String groupId, final String artifactId, final String url,
+      final String snapshotVersion,
+      final boolean success)
   {
-    String groupId = randomUUID().toString();
-    String artifactId = randomUUID().toString();
     List<String> buildLog = getBuildLog(
         mvn.deploy(PROJECT_PATH,
             url,
@@ -104,37 +102,25 @@ public abstract class MavenClientITSupport
         ));
 
     assertThat(buildLog.stream().anyMatch(line -> line.contains(OK_BUILD)), is(success));
-    return artifactId;
   }
 
-  @SuppressWarnings("unchecked")
-  private List<Map<String, Object>> searchForComponent(final String repository,
-                                                       final String artifactId,
-                                                       final String version)
-      throws Exception
-  {
-    searchTestHelper.waitForSearch();
+  protected List<String> getBuildLog(final Optional<List<String>> result) {
+    if (!result.isPresent()) {
+      throw new AssertionError("No build log found - did the docker container fail to start?");
+    }
 
-    Response response = restClient().target(nexusUrl("/service/rest/v1/search"))
-        .queryParam("repository", repository)
-        .queryParam("maven.artifactId", artifactId)
-        .queryParam("maven.baseVersion", version)
-        .request()
-        .buildGet()
-        .invoke();
-
-    Map<String, Object> map = response.readEntity(Map.class);
-    return (List<Map<String, Object>>) map.get("items");
+    return result.get().stream().map(String::trim).collect(toList());
   }
 
-  protected void verifyComponentExists(final String repositoryName,
-                                       final String name,
-                                       final String version,
-                                       final boolean exists)
+  protected void verifyComponentExists(
+      final Repository repository,
+      final String name,
+      final String version,
+      final boolean exists)
       throws Exception
   {
-    List<Map<String, Object>> items = searchForComponent(repositoryName, name, version);
-    assertThat(items.size(), is(exists ? 1 : 0));
+    WebTarget target = restClient().target(nexusUrl("/service/rest/v1/search"));
+    searchTestHelper.verifyComponentExists(target, repository, name, version, exists);
   }
 
   private String nexusUrl(final String... segments) {
@@ -144,14 +130,6 @@ public abstract class MavenClientITSupport
     catch (URISyntaxException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  protected List<String> getBuildLog(final Optional<List<String>> result) {
-    if (!result.isPresent()) {
-      throw new AssertionError("No build log found - did the docker container fail to start?");
-    }
-
-    return result.get().stream().map(String::trim).collect(toList());
   }
 
   protected String getSettingsFileLocation() {

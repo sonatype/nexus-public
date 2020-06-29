@@ -42,4 +42,10 @@ public interface SearchConstants
   String ATTRIBUTES = "attributes";
 
   String CHECKSUM = "checksum";
+
+  String CONTENT_TYPE = "content_type";
+
+  String LAST_BLOB_UPDATED_KEY = "lastBlobUpdated";
+
+  String LAST_DOWNLOADED_KEY = "lastDownloaded";
 }

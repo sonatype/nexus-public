@@ -29,7 +29,7 @@ import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.maven.MavenFacet;
+import org.sonatype.nexus.orient.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
@@ -57,11 +57,12 @@ public class MavenRestoreBlobStrategy
   private final MavenPathParser mavenPathParser;
 
   @Inject
-  public MavenRestoreBlobStrategy(final MavenPathParser mavenPathParser,
-                                  final NodeAccess nodeAccess,
-                                  final RepositoryManager repositoryManager,
-                                  final BlobStoreManager blobStoreManager,
-                                  final DryRunPrefix dryRunPrefix)
+  public MavenRestoreBlobStrategy(
+      final MavenPathParser mavenPathParser,
+      final NodeAccess nodeAccess,
+      final RepositoryManager repositoryManager,
+      final BlobStoreManager blobStoreManager,
+      final DryRunPrefix dryRunPrefix)
   {
     super(nodeAccess, repositoryManager, blobStoreManager, dryRunPrefix);
     this.mavenPathParser = checkNotNull(mavenPathParser);
@@ -75,17 +76,26 @@ public class MavenRestoreBlobStrategy
   @Override
   protected boolean canAttemptRestore(@Nonnull final MavenRestoreBlobData data) {
     MavenPath mavenPath = data.getMavenPath();
-    Repository repository = data.getBlobData().getRepository();
+    RestoreBlobData blobData = data.getBlobData();
+    Repository repository = blobData.getRepository();
 
     if (mavenPath.getCoordinates() == null && !mavenPathParser.isRepositoryMetadata(mavenPath)) {
-      log.warn("Skipping as no maven coordinates found and is not maven metadata");
+      if (log.isWarnEnabled()) {
+        log.warn(
+            "Skipping blob in repository named {}, because no maven coordinates found for blob named {} in blob store named {} and the blob not maven metadata",
+            repository.getName(),
+            blobData.getBlobName(),
+            blobData.getBlobStoreName());
+      }
       return false;
     }
 
     Optional<MavenFacet> mavenFacet = repository.optionalFacet(MavenFacet.class);
 
     if (!mavenFacet.isPresent()) {
-      log.warn("Skipping as Maven Facet not found on repository: {}", repository.getName());
+      if (log.isWarnEnabled()) {
+        log.warn("Skipping as Maven Facet not found on repository: {}", repository.getName());
+      }
       return false;
     }
 

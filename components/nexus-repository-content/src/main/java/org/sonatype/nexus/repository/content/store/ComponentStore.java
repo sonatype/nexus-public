@@ -46,6 +46,17 @@ public class ComponentStore<T extends ComponentDAO>
   }
 
   /**
+   * Count all components in the given repository.
+   *
+   * @param repositoryId the repository to count
+   * @return count of components in the repository
+   */
+  @Transactional
+  public int countComponents(final int repositoryId) {
+    return dao().countComponents(repositoryId);
+  }
+
+  /**
    * Browse all components in the given repository in a paged fashion.
    *
    * @param repositoryId the repository to browse

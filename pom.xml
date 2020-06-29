@@ -812,13 +812,13 @@
         <plugin>
           <groupId>org.apache.felix</groupId>
           <artifactId>maven-bundle-plugin</artifactId>
-          <version>3.3.0</version>
-          <!-- We need to force biz.aQute.bndlib to 3.5.0 because of https://issues.apache.org/jira/browse/FELIX-5698 -->
+          <version>4.2.1</version>
           <dependencies>
+            <!-- bndlib 4.3.1 has several performance improvements -->
             <dependency>
               <groupId>biz.aQute.bnd</groupId>
               <artifactId>biz.aQute.bndlib</artifactId>
-              <version>3.5.0</version>
+              <version>4.3.1</version>
             </dependency>
           </dependencies>
           <extensions>true</extensions>
@@ -845,6 +845,8 @@
                 $(if;$(classes;IMPLEMENTS;*.AssetBlobDAO);org.sonatype.nexus.blobstore.api),
                 *
               </Import-Package>
+              <!-- match previous plugin behaviour: turn off scanning for Class.forName usage -->
+              <_noclassforname>true</_noclassforname>
             </instructions>
           </configuration>
         </plugin>
@@ -864,6 +866,8 @@
               -->
               <id>org.osgi.core</id>
               <id>org.osgi.compendium</id>
+              <id>osgi.core</id>
+              <id>osgi.cmpn</id>
               <id>org.eclipse.osgi</id>
               <id>activation</id>
               <id>javax.annotation</id>
@@ -1418,7 +1422,13 @@
                 org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup,
                 org.sonatype.nexus.content.testsuite.groups.H2TestGroup
               </groups>
-              <excludedGroups>org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,org.sonatype.goodies.testsupport.group.Unstable,org.sonatype.goodies.testsupport.group.Perf,org.sonatype.goodies.testsupport.group.External</excludedGroups>
+              <excludedGroups>
+                org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,
+                org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup,
+                org.sonatype.goodies.testsupport.group.Unstable,
+                org.sonatype.goodies.testsupport.group.Perf,
+                org.sonatype.goodies.testsupport.group.External
+              </excludedGroups>
             </configuration>
           </plugin>
           <plugin>
@@ -1430,7 +1440,57 @@
                 org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup,
                 org.sonatype.nexus.content.testsuite.groups.H2TestGroup
               </groups>
-              <excludedGroups>org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,org.sonatype.goodies.testsupport.group.Unstable,org.sonatype.goodies.testsupport.group.Perf,org.sonatype.goodies.testsupport.group.External</excludedGroups>
+              <excludedGroups>
+                org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,
+                org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup,
+                org.sonatype.goodies.testsupport.group.Unstable,
+                org.sonatype.goodies.testsupport.group.Perf,
+                org.sonatype.goodies.testsupport.group.External
+              </excludedGroups>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>postgres-integration-tests</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration combine.children="override">
+              <groups>
+                org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
+                org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup,
+                org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup
+              </groups>
+              <excludedGroups>
+                org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,
+                org.sonatype.nexus.content.testsuite.groups.H2TestGroup,
+                org.sonatype.goodies.testsupport.group.Unstable,
+                org.sonatype.goodies.testsupport.group.Perf,
+                org.sonatype.goodies.testsupport.group.External
+              </excludedGroups>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration combine.children="override">
+              <groups>
+                org.sonatype.nexus.content.testsuite.groups.SQLTestGroup,
+                org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup,
+                org.sonatype.nexus.content.testsuite.groups.PostgresTestGroup
+              </groups>
+              <excludedGroups>
+                org.sonatype.nexus.content.testsuite.groups.OrientTestGroup,
+                org.sonatype.nexus.content.testsuite.groups.H2TestGroup,
+                org.sonatype.goodies.testsupport.group.Unstable,
+                org.sonatype.goodies.testsupport.group.Perf,
+                org.sonatype.goodies.testsupport.group.External
+              </excludedGroups>
             </configuration>
           </plugin>
         </plugins>

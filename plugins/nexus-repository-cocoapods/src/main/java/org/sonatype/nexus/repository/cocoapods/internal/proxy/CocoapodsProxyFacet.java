@@ -84,6 +84,9 @@ public class CocoapodsProxyFacet
   @Override
   public Content get(final Context context) throws IOException {
     Content ret = super.get(context);
+    if (ret == null) {
+      return null;
+    }
     AssetKind assetKind = context.getAttributes().require(AssetKind.class);
     if (assetKind == SPEC) {
       ret = transformSpecFile(ret);

@@ -55,7 +55,20 @@ Ext.define('NX.onboarding.step.ChangeAdminPasswordStep', {
         me.moveNext();
       },
       failure: function (response) {
-        NX.Messages.error(response.statusText);
+        var message;
+
+        try {
+          message = JSON.parse(response.responseText);
+
+          if (Array.isArray(message)) {
+            message = message.map(function(e) { return e.message; }).join('\\n');
+          }
+        }
+        catch (e) {
+          message = response.statusText;
+        }
+
+        NX.Messages.error(message);
       }
     });
   }

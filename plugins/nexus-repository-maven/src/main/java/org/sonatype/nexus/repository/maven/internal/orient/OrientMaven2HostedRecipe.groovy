@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.maven.internal.orient
 
 import javax.annotation.Nonnull
+import javax.annotation.Priority
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Provider
@@ -27,8 +28,6 @@ import org.sonatype.nexus.repository.maven.PurgeUnusedSnapshotsFacet
 import org.sonatype.nexus.repository.maven.RemoveSnapshotsFacet
 import org.sonatype.nexus.repository.maven.internal.Maven2Format
 import org.sonatype.nexus.repository.maven.internal.MavenSecurityFacet
-import org.sonatype.nexus.repository.maven.internal.VersionPolicyHandler
-import org.sonatype.nexus.repository.maven.internal.hosted.ArchetypeCatalogHandler
 import org.sonatype.nexus.repository.maven.internal.hosted.HostedHandler
 import org.sonatype.nexus.repository.maven.internal.hosted.MavenHostedIndexFacet
 import org.sonatype.nexus.repository.maven.internal.recipes.Maven2HostedRecipe
@@ -46,6 +45,7 @@ import static org.sonatype.nexus.repository.http.HttpHandlers.notFound
  * @since 3.0
  */
 @Named(Maven2HostedRecipe.NAME)
+@Priority(Integer.MAX_VALUE)
 @Singleton
 class OrientMaven2HostedRecipe
     extends OrientMavenRecipeSupport
@@ -67,13 +67,13 @@ class OrientMaven2HostedRecipe
   Provider<MavenHostedComponentMaintenanceFacet> componentMaintenanceFacet
 
   @Inject
-  VersionPolicyHandler versionPolicyHandler
+  OrientVersionPolicyHandler versionPolicyHandler
 
   @Inject
   HostedHandler hostedHandler
 
   @Inject
-  ArchetypeCatalogHandler archetypeCatalogHandler
+  OrientArchetypeCatalogHandler archetypeCatalogHandler
   
   @Inject
   Provider<RemoveSnapshotsFacet> removeSnapshotsFacet

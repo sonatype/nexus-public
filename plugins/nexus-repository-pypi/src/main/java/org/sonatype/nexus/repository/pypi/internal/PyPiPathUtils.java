@@ -39,28 +39,28 @@ public final class PyPiPathUtils
   /**
    * Returns whether or not the request is a PyPI search request.
    */
-  static boolean isSearchRequest(final Request request) {
+  public static boolean isSearchRequest(final Request request) {
     return HttpMethods.POST.equals(request.getAction()) && request.getPath().endsWith("/pypi");
   }
 
   /**
    * Returns the {@link TokenMatcher.State} for the content.
    */
-  static TokenMatcher.State matcherState(final Context context) {
+  public static TokenMatcher.State matcherState(final Context context) {
     return context.getAttributes().require(TokenMatcher.State.class);
   }
 
   /**
    * Returns the name from a {@link TokenMatcher.State}.
    */
-  static String name(final TokenMatcher.State state) {
+  public static String name(final TokenMatcher.State state) {
     return match(state, "name");
   }
 
   /**
    * Returns the name from a {@link TokenMatcher.State}.
    */
-  static String path(final TokenMatcher.State state) {
+  public static String path(final TokenMatcher.State state) {
     return match(state, "path");
   }
 
@@ -77,14 +77,14 @@ public final class PyPiPathUtils
   /**
    * Builds a path to the simple index for a particular name.
    */
-  static String indexPath(final String name) {
+  public static String indexPath(final String name) {
     return INDEX_PATH_PREFIX + name + (name.endsWith("/") ? "" : "/");
   }
 
   /**
    * Builds a path to a package for a particular path.
    */
-  static String packagesPath(final String... parts) {
+  public static String packagesPath(final String... parts) {
     String pkg = String.join("/", parts);
 
     return pkg.startsWith("packages/") ? pkg : PACKAGE_PATH_PREFIX + pkg;
@@ -94,7 +94,7 @@ public final class PyPiPathUtils
    * Extract the package name from a path known to be structured like
    * <code>packages/{packageName}/{packageName}-{version}.{ext}</code>
    */
-  static String packageNameFromPath(final String path) {
+  public static String packageNameFromPath(final String path) {
     Matcher m = PACKAGE_PATTERN.matcher(path);
     if (m.matches()) {
       return m.group("packageName");
@@ -105,14 +105,14 @@ public final class PyPiPathUtils
   /**
    * Normalizes a name following the algorithm outlined in PEP 503.
    */
-  static String normalizeName(final String name) {
+  public static String normalizeName(final String name) {
     return name.replaceAll("[\\-\\_\\.]+", "-").toLowerCase(Locale.ENGLISH);
   }
 
   /**
    * Normalizes a name following the algorithm outlined in PEP 503.
    */
-  static String normalizeName(final String name, final String replace) {
+  public static String normalizeName(final String name, final String replace) {
     return name.replaceAll("[\\-\\_\\.]+", replace).toLowerCase(Locale.ENGLISH);
   }
 

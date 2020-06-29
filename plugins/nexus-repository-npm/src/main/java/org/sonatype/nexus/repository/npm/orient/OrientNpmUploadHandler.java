@@ -12,7 +12,11 @@
  */
 package org.sonatype.nexus.repository.npm.orient;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
 
@@ -33,17 +37,23 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
+import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.StorageFacet;
+import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.upload.UploadHandlerSupport;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadResponse;
+import org.sonatype.nexus.repository.view.Content;
+import org.sonatype.nexus.repository.view.Payload;
+import org.sonatype.nexus.repository.view.payloads.StreamPayload;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.collect.ImmutableMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils.toContent;
 
 /**
  * Support for uploading components via UI & API
@@ -85,12 +95,7 @@ public class OrientNpmUploadHandler
     try (TempBlob tempBlob = storageFacet.createTempBlob(upload.getAssetUploads().get(0).getPayload(),
         NpmFacetUtils.HASH_ALGORITHMS)) {
       final Map<String, Object> packageJson = npmPackageParser.parsePackageJson(tempBlob);
-      final String name = (String) packageJson.get(NpmAttributes.P_NAME);
-      final String version =(String) packageJson.get(NpmAttributes.P_VERSION);
-      final String path = NpmMetadataUtils.createRepositoryPath(name, version);
-      final Map<String, String> coordinates = toCoordinates(packageJson);
-
-      ensurePermitted(repository.getName(), NpmFormat.NAME, path, coordinates);
+      ensureNpmPermitted(repository, packageJson);
 
       UnitOfWork.begin(storageFacet.txSupplier());
       try {
@@ -100,6 +105,40 @@ public class OrientNpmUploadHandler
         UnitOfWork.end();
       }
     }
+  }
+
+  @Override
+  public Content handle(
+      final Repository repository,
+      final File content,
+      final String path)
+      throws IOException
+  {
+    NpmHostedFacet npmFacet = repository.facet(NpmHostedFacet.class);
+    StorageFacet storageFacet = repository.facet(StorageFacet.class);
+
+    Path contentPath = content.toPath();
+    Payload payload =
+        new StreamPayload(() -> new FileInputStream(content), content.length(), Files.probeContentType(contentPath));
+    TempBlob tempBlob = storageFacet.createTempBlob(payload, NpmFacetUtils.HASH_ALGORITHMS);
+    final Map<String, Object> packageJson = npmPackageParser.parsePackageJson(tempBlob);
+    ensureNpmPermitted(repository, packageJson);
+    StorageTx tx = UnitOfWork.currentTx();
+    Asset asset = npmFacet.putPackage(packageJson, tempBlob);
+    return toContent(asset, tx.requireBlob(asset.requireBlobRef()));
+  }
+
+  private Map<String, Object> ensureNpmPermitted(
+      final Repository repository,
+      final Map<String, Object> packageJson)
+  {
+    final String name = (String) packageJson.get(NpmAttributes.P_NAME);
+    final String version = (String) packageJson.get(NpmAttributes.P_VERSION);
+    final String repositoryPath = NpmMetadataUtils.createRepositoryPath(name, version);
+    final Map<String, String> coordinates = toCoordinates(packageJson);
+
+    ensurePermitted(repository.getName(), NpmFormat.NAME, repositoryPath, coordinates);
+    return packageJson;
   }
 
   private Map<String, String> toCoordinates(final Map<String, Object> packageJson) {
@@ -131,5 +170,10 @@ public class OrientNpmUploadHandler
   @Override
   public ContentPermissionChecker contentPermissionChecker() {
     return contentPermissionChecker;
+  }
+
+  @Override
+  public boolean supportsExportImport() {
+    return true;
   }
 }

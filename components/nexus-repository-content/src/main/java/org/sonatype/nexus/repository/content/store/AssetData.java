@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -55,7 +55,7 @@ public class AssetData
   private AssetBlob assetBlob;
 
   @Nullable
-  private LocalDateTime lastDownloaded;
+  private OffsetDateTime lastDownloaded;
 
   // Asset API
 
@@ -80,7 +80,7 @@ public class AssetData
   }
 
   @Override
-  public Optional<LocalDateTime> lastDownloaded() {
+  public Optional<OffsetDateTime> lastDownloaded() {
     return ofNullable(lastDownloaded);
   }
 
@@ -138,7 +138,7 @@ public class AssetData
   /**
    * Sets the (optional) last downloaded time.
    */
-  public void setLastDownloaded(@Nullable final LocalDateTime lastDownloaded) {
+  public void setLastDownloaded(@Nullable final OffsetDateTime lastDownloaded) {
     this.lastDownloaded = lastDownloaded;
   }
 

@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.content;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
@@ -38,10 +38,10 @@ public interface RepositoryContent
   /**
    * When the metadata was first created.
    */
-  LocalDateTime created();
+  OffsetDateTime created();
 
   /**
    * When the metadata was last updated.
    */
-  LocalDateTime lastUpdated();
+  OffsetDateTime lastUpdated();
 }

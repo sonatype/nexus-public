@@ -28,8 +28,8 @@
       kind          VARCHAR NOT NULL,
       version       VARCHAR NOT NULL,
       attributes    ${JSON_TYPE} NOT NULL,
-      created       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      last_updated  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      created       TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      last_updated  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
       CONSTRAINT pk_${format}_component_id PRIMARY KEY (component_id),
       CONSTRAINT uk_${format}_component_coordinate UNIQUE (repository_id, namespace, name, version),
@@ -60,6 +60,10 @@
       </otherwise>
     </choose>
   </sql>
+
+  <select id="countComponents" resultType="int">
+    SELECT COUNT(*) FROM ${format}_component WHERE repository_id = #{repositoryId};
+  </select>
 
   <select id="browseComponents" resultType="ComponentData">
     SELECT * FROM ${format}_component WHERE repository_id = #{repositoryId}

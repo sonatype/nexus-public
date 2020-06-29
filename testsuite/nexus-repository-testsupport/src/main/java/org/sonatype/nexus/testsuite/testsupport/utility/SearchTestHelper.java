@@ -12,36 +12,27 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.utility;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import javax.ws.rs.client.WebTarget;
 
-import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.pax.exam.NexusPaxExamSupport;
-import org.sonatype.nexus.repository.search.index.SearchIndexService;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.search.query.SearchQueryService;
 
-@Named
-@Singleton
-public class SearchTestHelper
+/**
+ * This interface was introduced so as to allow us to continue to use Search for assertions when running the ITs in
+ * Orient mode. This is due to Search not being available for SQL mode at the time the DataStore/SQL version
+ * of Maven Hosted was implemented.
+ */
+public interface SearchTestHelper
 {
-  @Inject
-  public SearchIndexService indexService;
+  void waitForSearch() throws Exception;
 
-  @Inject
-  public SearchQueryService queryService;
+  void verifyComponentExists(
+      WebTarget nexusSearchWebTarget,
+      Repository repository,
+      String name,
+      String version,
+      boolean exists)
+      throws Exception;
 
-  @Inject
-  public EventManager eventManager;
-
-  /**
-   * Waits for indexing to finish and makes sure any updates are available to search.
-   *
-   * General flow is component/asset events -> bulk index requests -> search indexing.
-   */
-  public void waitForSearch() throws Exception {
-    NexusPaxExamSupport.waitFor(eventManager::isCalmPeriod);
-    indexService.flush(false); // no need for full fsync here
-    NexusPaxExamSupport.waitFor(indexService::isCalmPeriod);
-  }
+  SearchQueryService queryService();
 }

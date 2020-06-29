@@ -36,6 +36,14 @@ public interface ComponentDAO
     extends ContentDataAccess
 {
   /**
+   * Count all components in the given repository.
+   *
+   * @param repositoryId the repository to count
+   * @return count of components in the repository
+   */
+  int countComponents(@Param("repositoryId") int repositoryId);
+
+  /**
    * Browse all components in the given repository in a paged fashion.
    *
    * @param repositoryId the repository to browse

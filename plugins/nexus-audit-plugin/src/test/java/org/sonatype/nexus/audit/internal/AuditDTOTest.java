@@ -42,6 +42,8 @@ public class AuditDTOTest
 
   @Test
   public void testToString_withData() {
+    //Setting Thread name is required because AuditData provides thread name for AuditDTO.
+    Thread.currentThread().setName("quartz-7-thread-1");
     underTest = new AuditDTO(makeAuditData());
 
     Matcher timestampMatcher = TIMESTAMP_PATTERN.matcher(underTest.toString());
@@ -51,7 +53,7 @@ public class AuditDTOTest
     assertThat(parse(timestamp, forPattern("yyyy-MM-dd HH:mm:ss,SSSZ")).getMillis(), is(TEST_TIMESTAMP));
 
     assertThat(timestampMatcher.replaceAll("$1<TIMESTAMP>$3"), is(
-        "{\"timestamp\":\"<TIMESTAMP>\",\"nodeId\":\"testnodeid\",\"initiator\":\"testinitiator\",\"domain\":\"testdomain\",\"type\":\"testtype\",\"context\":\"testcontext\",\"attributes\":{\"testattribute1\":\"testvalue1\",\"testattribute2\":\"testvalue2\"}}"));
+        "{\"timestamp\":\"<TIMESTAMP>\",\"nodeId\":\"testnodeid\",\"initiator\":\"testinitiator\",\"domain\":\"testdomain\",\"type\":\"testtype\",\"context\":\"testcontext\",\"thread\":\"quartz-7-thread-1\",\"attributes\":{\"testattribute1\":\"testvalue1\",\"testattribute2\":\"testvalue2\"}}"));
   }
 
   private static AuditData makeAuditData() {

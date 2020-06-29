@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.content.testsuite;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Optional;
 
 import javax.inject.Inject;
@@ -90,10 +90,10 @@ public class PurgeUnusedIT
   @Test
   public void shouldPurgeUnusedAssets() {
     assertThat(browseAssets(), iterableWithSize(0));
-    createAssetWithLastDownloadedDate("3days", LocalDateTime.now().minusDays(3));
-    createAssetWithLastDownloadedDate("2days", LocalDateTime.now().minusDays(2));
-    createAssetWithLastDownloadedDate("1day", LocalDateTime.now().minusDays(1));
-    createAssetWithLastDownloadedDate("0day", LocalDateTime.now());
+    createAssetWithLastDownloadedDate("3days", OffsetDateTime.now().minusDays(3));
+    createAssetWithLastDownloadedDate("2days", OffsetDateTime.now().minusDays(2));
+    createAssetWithLastDownloadedDate("1day", OffsetDateTime.now().minusDays(1));
+    createAssetWithLastDownloadedDate("0day", OffsetDateTime.now());
     assertThat(browseAssets(), iterableWithSize(4));
 
     repository.facet(PurgeUnusedFacet.class).purgeUnused(2);
@@ -111,10 +111,10 @@ public class PurgeUnusedIT
   public void shouldPurgeUnusedComponents() {
     assertThat(browseComponents(), iterableWithSize(0));
     assertThat(browseAssets(), iterableWithSize(0));
-    createComponentWithAssetLastDownloadedDate("3days", LocalDateTime.now().minusDays(3));
-    createComponentWithAssetLastDownloadedDate("2days", LocalDateTime.now().minusDays(2));
-    createComponentWithAssetLastDownloadedDate("1day", LocalDateTime.now().minusDays(1));
-    createComponentWithAssetLastDownloadedDate("0day", LocalDateTime.now());
+    createComponentWithAssetLastDownloadedDate("3days", OffsetDateTime.now().minusDays(3));
+    createComponentWithAssetLastDownloadedDate("2days", OffsetDateTime.now().minusDays(2));
+    createComponentWithAssetLastDownloadedDate("1day", OffsetDateTime.now().minusDays(1));
+    createComponentWithAssetLastDownloadedDate("0day", OffsetDateTime.now());
     assertThat(browseComponents(), iterableWithSize(4));
     assertThat(browseAssets(), iterableWithSize(4));
 
@@ -141,7 +141,7 @@ public class PurgeUnusedIT
   public void shouldPurgeComponentsBasedOnMostRecentlyDownloadedAsset() {
     assertThat(browseComponents(), iterableWithSize(0));
     assertThat(browseAssets(), iterableWithSize(0));
-    LocalDateTime now = LocalDateTime.now();
+    OffsetDateTime now = OffsetDateTime.now();
     createComponentWithAssetLastDownloadedDate("0day-3days", now, now.minusDays(3));
     createComponentWithAssetLastDownloadedDate("2day-3days", now.minusDays(2), now.minusDays(2));
     assertThat(browseComponents(), iterableWithSize(2));
@@ -170,11 +170,11 @@ public class PurgeUnusedIT
     return contentFacet.components().browse(BROWSE_LIMIT, null);
   }
 
-  private void createAssetWithLastDownloadedDate(final String path, final LocalDateTime lastDownloaded) {
+  private void createAssetWithLastDownloadedDate(final String path, final OffsetDateTime lastDownloaded) {
     assetStore.createAsset(prepareAssetLastDownloaded(path, lastDownloaded));
   }
 
-  private AssetData prepareAssetLastDownloaded(final String path, final LocalDateTime lastDownloaded) {
+  private AssetData prepareAssetLastDownloaded(final String path, final OffsetDateTime lastDownloaded) {
     AssetData assetData = new AssetData();
     assetData.setRepositoryId(contentFacet.contentRepositoryId());
     assetData.setPath(path);
@@ -183,7 +183,7 @@ public class PurgeUnusedIT
     return assetData;
   }
 
-  private void createComponentWithAssetLastDownloadedDate(final String name, final LocalDateTime... lastDownloaded) {
+  private void createComponentWithAssetLastDownloadedDate(final String name, final OffsetDateTime... lastDownloaded) {
     ComponentData componentData = new ComponentData();
     componentData.setRepositoryId(contentFacet.contentRepositoryId());
     componentData.setNamespace(NAMESPACE);
@@ -198,7 +198,7 @@ public class PurgeUnusedIT
     Component component = maybeComponent.get();
 
     int counter = 0;
-    for (LocalDateTime lastDownloadedAsset : lastDownloaded) {
+    for (OffsetDateTime lastDownloadedAsset : lastDownloaded) {
       AssetData assetData = prepareAssetLastDownloaded(name + counter++, lastDownloadedAsset);
       assetData.setComponent(component);
       assetStore.createAsset(assetData);

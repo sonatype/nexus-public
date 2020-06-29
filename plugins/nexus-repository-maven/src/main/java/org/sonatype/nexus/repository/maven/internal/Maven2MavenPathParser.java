@@ -39,6 +39,14 @@ public class Maven2MavenPathParser
     extends ComponentSupport
     implements MavenPathParser
 {
+  private static final String TAR_EXT_PREFIX = ".tar";
+
+  private static final String CPIO_EXT_PREFIX = ".cpio";
+
+  // The extension supported for Coca-Cola
+  // https://issues.sonatype.org/browse/NEXUS-24098
+  private static final String NK_OS_EXT = ".nk.os";
+
   @Nonnull
   @Override
   public MavenPath parsePath(final String path) {
@@ -125,7 +133,8 @@ public class Maven2MavenPathParser
       Integer buildNumber = null;
       String tail = null;
       if (snapshot) {
-        int vSnapshotStart = artifactId.length() + 1 + baseVersion.length() - Constants.SNAPSHOT_VERSION_SUFFIX.length();
+        int vSnapshotStart =
+            artifactId.length() + 1 + baseVersion.length() - Constants.SNAPSHOT_VERSION_SUFFIX.length();
         version = str.substring(vSnapshotStart, vSnapshotStart + Constants.SNAPSHOT_VERSION_SUFFIX.length());
 
         if (Constants.SNAPSHOT_VERSION_SUFFIX.equals(version)) {
@@ -203,13 +212,10 @@ public class Maven2MavenPathParser
         tail = str.substring(nTailPos);
       }
 
-      int nExtPos = tail.lastIndexOf('.');
+      int nExtPos = getExceptionPos(tail);
       if (nExtPos == -1) {
         // NX-563: not allowing extensionless paths to be interpreted as artifact
         return null;
-      }
-      if (tail.endsWith(".tar.gz")) {
-        nExtPos = nExtPos - 4;
       }
 
       final String ext = tail.substring(nExtPos + 1);
@@ -231,5 +237,26 @@ public class Maven2MavenPathParser
     catch (StringIndexOutOfBoundsException e) {
       return null;
     }
+  }
+
+  private int getExceptionPos(final String tail) {
+    int nExtPos = tail.lastIndexOf('.');
+    if (nExtPos == -1) {
+      return -1;
+    }
+
+    String tailWithoutExt = tail.substring(0, nExtPos);
+
+    if (tailWithoutExt.endsWith(TAR_EXT_PREFIX)) {
+      nExtPos -= TAR_EXT_PREFIX.length();
+    }
+    else if (tailWithoutExt.endsWith(CPIO_EXT_PREFIX)) {
+      nExtPos -= CPIO_EXT_PREFIX.length();
+    }
+    else if (tail.endsWith(NK_OS_EXT)){
+      nExtPos = tail.length() - NK_OS_EXT.length();
+    }
+
+    return nExtPos;
   }
 }

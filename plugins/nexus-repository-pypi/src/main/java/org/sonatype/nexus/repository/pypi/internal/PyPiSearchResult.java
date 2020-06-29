@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 3.1
  */
-final class PyPiSearchResult
+public final class PyPiSearchResult
 {
   private final String name;
 
