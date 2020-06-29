@@ -13,11 +13,15 @@
 package org.sonatype.nexus.extender.modules;
 
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
+
+import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
 
@@ -25,13 +29,20 @@ import org.eclipse.sisu.space.ClassFinder;
 import org.eclipse.sisu.space.ClassSpace;
 import org.eclipse.sisu.space.IndexedClassFinder;
 import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleReference;
+import org.osgi.framework.wiring.BundleWire;
+import org.osgi.framework.wiring.BundleWiring;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Strings.emptyToNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.common.collect.Iterators.asEnumeration;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.StreamSupport.stream;
+import static org.osgi.framework.wiring.BundleRevision.HOST_NAMESPACE;
 import static org.sonatype.nexus.common.property.SystemPropertiesHelper.getBoolean;
 
 /**
@@ -44,6 +55,8 @@ public class FeatureFlaggedIndex
     implements ClassFinder
 {
   private static final Logger log = LoggerFactory.getLogger(FeatureFlaggedIndex.class);
+
+  private static final String FEATURE_FLAGGED_HEADER = "Feature-Flagged";
 
   private static final String PACKAGE_INFO = "package-info";
 
@@ -59,7 +72,7 @@ public class FeatureFlaggedIndex
    * Filter out components in the given bundle whose feature-flag is currently disabled.
    */
   public static ClassFinder filterByFeatureFlag(final Bundle bundle) {
-    String featureFlaggedClasses = bundle.getHeaders().get("Feature-Flagged");
+    String featureFlaggedClasses = findFeatureFlaggedClasses(bundle);
     if (!isNullOrEmpty(featureFlaggedClasses)) {
 
       String[] classNames = featureFlaggedClasses.split(",");
@@ -120,5 +133,37 @@ public class FeatureFlaggedIndex
             .map(name -> space.getResource(name.replace('.', '/') + ".class"))
             .filter(Objects::nonNull)
             .iterator());
+  }
+
+  /**
+   * Extract feature-flagged classes from the bundle's headers as well as the headers of any attached fragments.
+   */
+  @Nullable
+  private static String findFeatureFlaggedClasses(final Bundle bundle) {
+
+    // check for fragments; each fragment will be wired to the bundle's host capability
+    BundleWiring wiring = bundle.adapt(BundleWiring.class);
+    List<BundleWire> fragmentWires = wiring.getProvidedWires(HOST_NAMESPACE);
+    if (fragmentWires == null || fragmentWires.isEmpty()) {
+      return getFeatureFlaggedHeader(bundle);
+    }
+
+    // fragment headers aren't merged with the host so we need to combine them separately
+    List<Bundle> hostAndFragments = new ArrayList<>();
+    hostAndFragments.add(bundle);
+    fragmentWires.stream()
+        .map(BundleWire::getRequirerWiring)
+        .map(BundleReference::getBundle)
+        .collect(toCollection(() -> hostAndFragments));
+
+    return emptyToNull(hostAndFragments.stream()
+        .map(FeatureFlaggedIndex::getFeatureFlaggedHeader)
+        .filter(Objects::nonNull)
+        .collect(joining(",")));
+  }
+
+  @Nullable
+  private static String getFeatureFlaggedHeader(final Bundle bundle) {
+    return emptyToNull(bundle.getHeaders().get(FEATURE_FLAGGED_HEADER));
   }
 }
