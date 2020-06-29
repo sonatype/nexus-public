@@ -36,7 +36,6 @@ import static java.lang.System.lineSeparator;
 import static org.sonatype.nexus.repository.http.HttpStatus.BAD_REQUEST;
 import static org.sonatype.nexus.repository.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.sonatype.nexus.repository.http.HttpStatus.NOT_FOUND;
-import static org.sonatype.nexus.repository.npm.internal.NpmAuditFacet.QUICK_AUDIT_ATTR_NAME;
 
 /**
  * Handle all exceptions which could be thrown from npm audit.
@@ -69,8 +68,7 @@ public class NpmAuditErrorHandler
       return NpmResponses.npmErrorAuditResponse(NOT_FOUND, USER_ERROR_MSG);
     }
     catch (ExecutionException e) {
-      boolean quickAudit = (boolean) context.getAttributes().require(QUICK_AUDIT_ATTR_NAME);
-      return handleAuditExceptions(e, quickAudit);
+      return handleAuditExceptions(e);
     }
     catch (TimeoutException e) {
       log.warn(e.getMessage(), e);
@@ -82,7 +80,7 @@ public class NpmAuditErrorHandler
     }
   }
 
-  private Response handleAuditExceptions(final ExecutionException e, final boolean quickAudit) {
+  private Response handleAuditExceptions(final ExecutionException e) {
     // list of all general exceptions in org.sonatype.nexus.repository.vulnerability.exceptions
     Throwable cause = e.getCause();
     if (cause instanceof CompatibilityException) {
@@ -93,13 +91,7 @@ public class NpmAuditErrorHandler
       return NpmResponses.npmErrorAuditResponse(INTERNAL_SERVER_ERROR, USER_ERROR_MSG);
     }
     else if (cause instanceof ConfigurationException) {
-      if (quickAudit) {
-        // don't spam NXRM logs in case of quick audit, see NEXUS-24334
-        log.debug(cause.getMessage(), e);
-      }
-      else {
-        log.warn(cause.getMessage(), log.isDebugEnabled() ? e : null);
-      }
+      log.warn(cause.getMessage(), e);
       return NpmResponses.npmErrorAuditResponse(BAD_REQUEST, cause.getMessage());
     }
     else {

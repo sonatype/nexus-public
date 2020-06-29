@@ -119,7 +119,7 @@ public interface ComponentDAO
    *
    * @param component the component to update
    *
-   * @since 3.25.0
+   * @since 3.next
    */
   void updateComponentKind(Component component);
 
@@ -164,7 +164,7 @@ public interface ComponentDAO
   /**
    * Creates a temporary table local to the session for holding purge data.
    *
-   * @since 3.25.0
+   * @since 3.next
    */
   void createTemporaryPurgeTable();
 

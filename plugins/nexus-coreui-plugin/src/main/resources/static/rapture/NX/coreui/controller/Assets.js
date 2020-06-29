@@ -45,8 +45,6 @@ Ext.define('NX.coreui.controller.Assets', {
     {ref: 'assetList', selector: 'grid[assetContainerSource=true]'},
     {ref: 'assetInfo', selector: 'nx-coreui-component-assetinfo'},
     {ref: 'deleteAssetButton', selector: 'nx-coreui-component-assetcontainer button[action=deleteAsset]'},
-    {ref: 'componentAssetInfo', selector: 'nx-coreui-component-componentassetinfo'},
-    {ref: 'viewVulnerabilitiesButton', selector: 'nx-coreui-component-componentassetinfo button[action=viewVulnerabilities]'},
     {ref: 'componentList', selector: 'grid[componentList=true]'},
     {ref: 'componentDetails', selector: 'nx-coreui-component-details'},
     {ref: 'deleteComponentButton', selector: 'nx-coreui-component-details button[action=deleteComponent]'},
@@ -117,9 +115,6 @@ Ext.define('NX.coreui.controller.Assets', {
         },
         'nx-coreui-component-assetcontainer button[action=deleteAsset]': {
           click: me.deleteAsset
-        },
-        'nx-coreui-component-componentassetinfo button[action=viewVulnerabilities]': {
-          click: me.mixins.componentUtils.viewVulnerabilities
         },
         'nx-coreui-component-details button[action=deleteComponent]': {
           click: me.deleteComponent

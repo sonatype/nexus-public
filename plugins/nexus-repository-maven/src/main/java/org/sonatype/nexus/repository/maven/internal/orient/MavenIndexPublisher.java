@@ -240,7 +240,7 @@ public final class MavenIndexPublisher
   private static boolean delete(final Repository repository, final String path) throws IOException {
     MavenFacet mavenFacet = repository.facet(MavenFacet.class);
     MavenPath mavenPath = mavenFacet.getMavenPathParser().parsePath(path);
-    return !mavenFacet.delete(mavenPath).isEmpty();
+    return mavenFacet.delete(mavenPath);
   }
 
   /**

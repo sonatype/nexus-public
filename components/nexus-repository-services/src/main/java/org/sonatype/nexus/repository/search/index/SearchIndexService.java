@@ -25,7 +25,7 @@ import com.google.common.annotations.VisibleForTesting;
 /**
  * Search index service.
  *
- * @since 3.25.0
+ * @since 3.next
  */
 public interface SearchIndexService
 {

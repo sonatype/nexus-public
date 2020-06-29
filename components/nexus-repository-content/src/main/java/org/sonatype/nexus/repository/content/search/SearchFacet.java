@@ -18,7 +18,7 @@ import org.sonatype.nexus.repository.search.index.SearchIndexFacet;
 /**
  * Search {@link Facet}, that indexes/de-indexes component metadata.
  *
- * @since 3.25.0
+ * @since 3.next
  */
 @Facet.Exposed
 public interface SearchFacet

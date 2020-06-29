@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-components</artifactId>
-    <version>3.25.1-02</version>
+    <version>3.26.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-repository-services</artifactId>
@@ -168,11 +168,6 @@
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
       <artifactId>metrics-healthchecks</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.goodies</groupId>
-      <artifactId>package-url-java</artifactId>
     </dependency>
 
     <dependency>

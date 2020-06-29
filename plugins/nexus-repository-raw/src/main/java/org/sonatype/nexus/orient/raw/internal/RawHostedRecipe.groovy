@@ -19,7 +19,6 @@ import javax.inject.Named
 import javax.inject.Provider
 import javax.inject.Singleton
 
-import org.sonatype.nexus.content.raw.internal.recipe.ContentDispositionHandler
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.RecipeSupport
 import org.sonatype.nexus.repository.Repository
@@ -43,8 +42,8 @@ import org.sonatype.nexus.repository.view.ViewFacet
 import org.sonatype.nexus.repository.view.handlers.ConditionalRequestHandler
 import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler
 import org.sonatype.nexus.repository.view.handlers.ExceptionHandler
-import org.sonatype.nexus.repository.view.handlers.HandlerContributor
 import org.sonatype.nexus.repository.view.handlers.IndexHtmlForwardHandler
+import org.sonatype.nexus.repository.view.handlers.HandlerContributor
 import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler
 import org.sonatype.nexus.repository.view.handlers.TimingHandler
 import org.sonatype.nexus.repository.view.matchers.ActionMatcher
@@ -121,9 +120,6 @@ class RawHostedRecipe
   HandlerContributor handlerContributor
 
   @Inject
-  ContentDispositionHandler contentDispositionHandler
-
-  @Inject
   RawHostedRecipe(@Named(HostedType.NAME) final Type type,
                   @Named(RawFormat.NAME) final Format format)
   {
@@ -160,7 +156,6 @@ class RawHostedRecipe
     builder.route(new Route.Builder()
         .matcher(new TokenMatcher('/{name:.+}'))
         .handler(timingHandler)
-        .handler(contentDispositionHandler)
         .handler(securityHandler)
         .handler(exceptionHandler)
         .handler(handlerContributor)

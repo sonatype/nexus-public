@@ -76,8 +76,6 @@ public class NpmAuditFacet
 {
   private static final Logger logger = LoggerFactory.getLogger(NpmAuditFacet.class);
 
-  public static final String QUICK_AUDIT_ATTR_NAME = "QUICK_AUDIT";
-
   private static final String CACHE_NAME = "npm-audit-data";
 
   // Nexus IQ Hosted Data Services (HDS) update vulnerabilities data every 12 hours.

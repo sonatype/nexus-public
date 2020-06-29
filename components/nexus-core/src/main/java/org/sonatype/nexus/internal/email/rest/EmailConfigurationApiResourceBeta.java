@@ -27,7 +27,7 @@ import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 /**
  * beta endpoint for email configuration REST API
  *
- * @since 3.25.0
+ * @since 3.next
  * @deprecated moving to {@link EmailConfigurationApiResourceV1}
  */
 @Api(hidden = true)

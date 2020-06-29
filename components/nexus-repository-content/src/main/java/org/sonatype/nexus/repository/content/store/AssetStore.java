@@ -116,7 +116,7 @@ public class AssetStore<T extends AssetDAO>
    *
    * @param asset the asset to update
    *
-   * @since 3.25.0
+   * @since 3.next
    */
   @Transactional
   public void updateAssetKind(final Asset asset) {

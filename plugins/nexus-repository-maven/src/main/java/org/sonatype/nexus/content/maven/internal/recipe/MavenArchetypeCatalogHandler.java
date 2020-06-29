@@ -30,7 +30,7 @@ import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
 /**
  * Fetches or rebuilds the maven archetype catalog for a given repository.
  *
- * @since 3.25.0
+ * @since 3.next
  */
 @Named
 @Singleton

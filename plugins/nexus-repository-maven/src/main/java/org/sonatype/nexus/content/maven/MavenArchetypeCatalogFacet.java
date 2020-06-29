@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.Facet;
 /**
  * Facet for rebuilding maven archetype catalog.
  *
- * @since 3.25.0
+ * @since 3.next
  */
 @Facet.Exposed
 public interface MavenArchetypeCatalogFacet

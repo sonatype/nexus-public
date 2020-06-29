@@ -20,7 +20,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 /**
- * @since 3.25.0
+ * @since 3.next
  */
 public class PasswordValidatorTest
 {

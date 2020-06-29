@@ -16,7 +16,7 @@ package org.sonatype.nexus.content.maven.internal.store;
 import org.sonatype.nexus.repository.content.store.AssetBlobDAO;
 
 /**
- * @since 3.25.0
+ * @since 3.next
  */
 public interface MavenAssetBlobDAO
     extends AssetBlobDAO

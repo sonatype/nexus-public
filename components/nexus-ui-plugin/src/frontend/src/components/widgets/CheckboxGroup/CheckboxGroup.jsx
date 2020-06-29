@@ -17,7 +17,7 @@ import classNames from 'classnames';
 import './CheckboxGroup.scss';
 
 /**
- * @since 3.25.0
+ * @since 3.next
  */
 export default function CheckboxGroup({labelText, children, className, ...attrs}) {
   const classes = classNames('nxrm-checkbox-group', className);

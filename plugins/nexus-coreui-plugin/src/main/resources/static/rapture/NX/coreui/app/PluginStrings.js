@@ -73,8 +73,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
 
     ComponentDetails_Delete_Button: 'Delete component',
     ComponentDetails_Analyze_Button: 'Analyze application',
-    ComponentDetails_View_Vulnerabilities_Button: 'View Vulnerabilities',
-    ComponentDetails_View_Vulnerabilities_Count_Button: 'View {0} Vulnerabilities',
     ComponentDetails_Browse_Snapshots_Button: 'Browse SNAPSHOT(s)',
     ComponentDetails_Delete_Body: 'This will delete all asset(s) associated with the component: {0}',
     ComponentDetails_Delete_Title: 'Confirm deletion?',
@@ -118,12 +116,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     HealthCheckInfo_Error_Tooltip: 'Error retrieving component data',
     HealthCheckInfo_Quota_Tooltip: 'The query limit for age and popularity data has been reached. Contact Sonatype support to extend current quota limits.',
     HealthCheckInfo_Unavailable_Tooltip: 'No data available for this component',
-
-    // Vulnerability
-    Vulnerability_Information: 'Information',
-    Vulnerability_NotScanned: 'Vulnerability information unavailable',
-    Vulnerability_Count: 'Vulnerability Count',
-    Vulnerability_Ref: 'Vulnerability Details',
 
     // Browse -> Search
     Search_Text: 'Search',
@@ -203,7 +195,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Search_Assets_Version: 'Version',
     SearchResultAssetList_Name_Header: 'Name',
     Component_AssetInfo_Info_Title: 'Summary',
-    Component_Vulnerability_Info_Title: 'OSS Index Vulnerabilities',
     Component_AssetInfo_Attributes_Title: 'Attributes',
     Component_AssetInfo_HealthCheck_Title: 'Component IQ',
 
@@ -377,11 +368,6 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_NegativeCacheFacet_Title: 'Negative Cache',
     Repository_Facet_NugetProxyFacet_Title: 'NuGet',
     Repository_Facet_ProxyFacet_Title: 'Proxy',
-    Repository_Facet_Raw_Title: 'Raw',
-    Repository_Facet_Raw_ContentDisposition_FieldLabel: 'Content Disposition',
-    Repository_Facet_Raw_ContentDisposition_HelpText: 'Add Content-Disposition header as \'Attachment\' to disable some content from being inline in a browser.',
-    Repository_Facet_Raw_ContentDisposition_Inline: 'Inline',
-    Repository_Facet_Raw_ContentDisposition_Attachment: 'Attachment',
     Repository_Facet_StorageFacet_Title: 'Storage',
     Repository_Facet_StorageFacetHosted_Title: 'Hosted',
     Repository_Facet_RoutingRuleFacet_Title: 'Routing Rule',

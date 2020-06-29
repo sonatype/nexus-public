@@ -32,7 +32,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Maven2 implementation will expose the groupId/artifactId/version/extension/classifier attributes when available.
  *
- * @since 3.25.0
+ * @since 3.next
  */
 @Named(Maven2Format.NAME)
 public class MavenVariableResolverAdapter

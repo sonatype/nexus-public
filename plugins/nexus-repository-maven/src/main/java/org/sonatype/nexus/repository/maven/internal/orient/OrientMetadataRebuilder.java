@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.maven.internal.orient;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -221,6 +222,70 @@ public class OrientMetadataRebuilder
     }
     catch (IOException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Delete metadata for the given GAbV and rebuild metadata for the GA. If Group level metadata is present, rebuild
+   * at that level to account for plugin deletion.
+   * 
+   * @param repository  The repository whose metadata needs rebuild (Maven2 format, Hosted type only).
+   * @param groupId     scope the work to given groupId.
+   * @param artifactId  scope the work to given artifactId (groupId must be given).
+   * @param baseVersion scope the work to given baseVersion (groupId and artifactId must ge given).
+   * @return paths of deleted metadata files
+   */
+  @Override public Set<String> deleteAndRebuild(final Repository repository, final String groupId,
+                               final String artifactId, final String baseVersion)
+  {
+    checkNotNull(repository);
+    checkNotNull(groupId);
+    checkNotNull(artifactId);
+    checkNotNull(baseVersion);
+
+    Set<String> deletedPaths = new HashSet<>();
+    final StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get();
+    UnitOfWork.beginBatch(tx);
+    boolean groupChange = false;
+    try {
+      // Delete the specific GAV
+      MavenPath gavMetadataPath = metadataPath(groupId, artifactId, baseVersion);
+      OrientMetadataUtils.delete(repository, gavMetadataPath);
+      deletedPaths.addAll(MavenFacetUtils.getPathWithHashes(gavMetadataPath));
+      // Delete the GA; will be rebuilt as necessary but may hold the last GAV in which case rebuild would ignore it
+      MavenPath gaMetadataPath = metadataPath(groupId, artifactId, null);
+      OrientMetadataUtils.delete(repository, gaMetadataPath);
+      deletedPaths.addAll(MavenFacetUtils.getPathWithHashes(gaMetadataPath));
+
+      // Check explicitly for whether or not we have Group level metadata that might need rebuilding, since this
+      // is potentially the most expensive possible path to take.
+      MavenPath groupPath = metadataPath(groupId, null, null);
+      if (OrientMetadataUtils.exists(repository, groupPath)) {
+        OrientMetadataUtils.delete(repository, groupPath);
+        deletedPaths.addAll(MavenFacetUtils.getPathWithHashes(groupPath));
+        // we have metadata for plugins at the Group level so we should build that as well
+        groupChange = true;
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    finally {
+      UnitOfWork.end();
+    }
+
+    boolean rebuild;
+    if (groupChange) {
+      rebuild = rebuild(repository, true, false, groupId, null, null);
+    }
+    else {
+      rebuild = rebuild(repository, true, false, groupId, artifactId, null);
+    }
+
+    if (rebuild) {
+      return emptySet();
+    } else {
+      return deletedPaths;
     }
   }
 

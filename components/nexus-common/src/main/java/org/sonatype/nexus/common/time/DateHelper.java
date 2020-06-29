@@ -68,14 +68,14 @@ public class DateHelper
   }
 
   /**
-   * @since 3.25.0
+   * @since 3.next
    */
   public static DateTime toDateTime(final OffsetDateTime offsetDateTime) {
     return new DateTime(offsetDateTime.toInstant().toEpochMilli(), DateTimeZone.UTC);
   }
 
   /**
-   * @since 3.25.0
+   * @since 3.next
    */
   public static OffsetDateTime toOffsetDateTime(final DateTime dateTime) {
     return Instant.ofEpochMilli(dateTime.getMillis()).atOffset(ZoneOffset.UTC);

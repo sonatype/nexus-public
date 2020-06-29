@@ -30,7 +30,7 @@ import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
 
 /**
- * @since 3.25.0
+ * @since 3.next
  */
 public class VersionPolicyHandler
     extends ComponentSupport

@@ -320,19 +320,10 @@ abstract class OrientNpmRecipeSupport
     new Builder().matcher(
         LogicMatchers.and(
             new ActionMatcher(POST),
-            new LiteralMatcher('/-/npm/v1/security/audits') // is used while npm audit
-        )
-    )
-  }
-
-  /**
-   * Matcher for {@code npm audit quick}.
-   */
-  static Builder auditQuickMatcher() {
-    new Builder().matcher(
-        LogicMatchers.and(
-            new ActionMatcher(POST),
-            new LiteralMatcher('/-/npm/v1/security/audits/quick') // is used while npm install
+            LogicMatchers.or(
+                new LiteralMatcher('/-/npm/v1/security/audits'),      // is used while npm audit
+                new LiteralMatcher('/-/npm/v1/security/audits/quick') // is used while npm install
+            )
         )
     )
   }

@@ -26,8 +26,8 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
-import org.sonatype.nexus.orient.maven.MavenFacet;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.orient.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
@@ -218,9 +218,9 @@ public final class MavenFacetUtils
 
   /**
    * Performs a {@link MavenFacet#delete(MavenPath...)} for passed in {@link MavenPath} and all it's hashes too.
-   * Returns set of deleted paths.
+   * Returns {@code true} if any of deleted paths existed.
    */
-  public static Set<String> deleteWithHashes(final MavenFacet mavenFacet, final MavenPath mavenPath) throws IOException {
+  public static boolean deleteWithHashes(final MavenFacet mavenFacet, final MavenPath mavenPath) throws IOException {
     final ArrayList<MavenPath> paths = new ArrayList<>(HashType.values().length + 1);
     paths.add(mavenPath.main());
     for (HashType hashType : HashType.values()) {

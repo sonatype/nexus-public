@@ -35,7 +35,7 @@ import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler
 import org.sonatype.nexus.repository.view.handlers.TimingHandler
 
 /**
- * @since 3.25.0
+ * @since 3.next
  */
 abstract class MavenRecipeSupport
     extends RecipeSupport

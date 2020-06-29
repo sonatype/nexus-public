@@ -51,7 +51,7 @@ import static org.sonatype.nexus.repository.view.ContentTypes.APPLICATION_XML;
 /**
  * Rebuilds the maven archetype catalog for a given repository.
  *
- * @since 3.25.0
+ * @since 3.next
  */
 @Named
 public class MavenArchetypeCatalogFacetImpl

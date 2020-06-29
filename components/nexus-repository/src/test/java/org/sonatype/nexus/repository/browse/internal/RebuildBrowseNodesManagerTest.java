@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.browse.internal;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Optional;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityHelper;
@@ -28,7 +27,6 @@ import org.sonatype.nexus.repository.browse.internal.orient.BrowseNodeEntityAdap
 import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration;
 import org.sonatype.nexus.repository.browse.node.RebuildBrowseNodesTaskDescriptor;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.ossindex.PackageUrlService;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.storage.Bucket;
@@ -53,7 +51,6 @@ import static java.util.Collections.singletonList;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -115,9 +112,6 @@ public class RebuildBrowseNodesManagerTest
   @Mock
   private BrowseNodeConfiguration configuration;
 
-  @Mock
-  private PackageUrlService packageUrlService;
-
   @Before
   public void configure() throws Exception {
     when(configuration.isAutomaticRebuildEnabled()).thenReturn(true);
@@ -138,9 +132,7 @@ public class RebuildBrowseNodesManagerTest
     bucketEntityAdapter = new BucketEntityAdapter();
     componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter, componentFactory, emptySet());
     assetEntityAdapter = new AssetEntityAdapter(bucketEntityAdapter, componentEntityAdapter);
-    when(packageUrlService.getPackageUrl(anyString(), anyString(), anyString(), anyString()))
-        .thenReturn(Optional.empty());
-    browseNodeEntityAdapter = new BrowseNodeEntityAdapter(componentEntityAdapter, assetEntityAdapter, packageUrlService);
+    browseNodeEntityAdapter = new BrowseNodeEntityAdapter(componentEntityAdapter, assetEntityAdapter);
     underTest = new RebuildBrowseNodesManager(databaseInstanceRule.getInstanceProvider(), taskScheduler, configuration,
         bucketEntityAdapter);
 

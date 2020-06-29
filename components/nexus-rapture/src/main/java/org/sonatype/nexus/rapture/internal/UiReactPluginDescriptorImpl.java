@@ -30,7 +30,7 @@ import static java.util.Arrays.asList;
 /**
  * {@link UiPluginDescriptor} for {@code nexus-rapture} react code.
  *
- * @since 3.25.0
+ * @since 3.next
  */
 @Named
 @Singleton

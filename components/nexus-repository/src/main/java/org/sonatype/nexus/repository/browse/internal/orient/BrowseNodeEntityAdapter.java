@@ -21,7 +21,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.packageurl.PackageUrl;
 import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.orient.OClassNameBuilder;
@@ -30,8 +29,6 @@ import org.sonatype.nexus.orient.entity.AttachedEntityId;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.browse.node.BrowsePath;
-import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.ossindex.PackageUrlService;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.storage.Component;
@@ -72,8 +69,6 @@ public class BrowseNodeEntityAdapter
   public static final String P_PARENT_PATH = "parent_path";
 
   public static final String P_NAME = "name";
-
-  public static final String P_PACKAGE_URL = "package_url";
 
   public static final String P_COMPONENT_ID = "component_id";
 
@@ -130,17 +125,13 @@ public class BrowseNodeEntityAdapter
 
   private final AssetEntityAdapter assetEntityAdapter;
 
-  private final PackageUrlService packageUrlService;
-
   @Inject
   public BrowseNodeEntityAdapter(final ComponentEntityAdapter componentEntityAdapter,
-                                 final AssetEntityAdapter assetEntityAdapter,
-                                 final PackageUrlService packageUrlService)
+                                 final AssetEntityAdapter assetEntityAdapter)
   {
     super(DB_CLASS);
     this.assetEntityAdapter = checkNotNull(assetEntityAdapter);
     this.componentEntityAdapter = checkNotNull(componentEntityAdapter);
-    this.packageUrlService = checkNotNull(packageUrlService);
   }
 
   @Override
@@ -152,7 +143,6 @@ public class BrowseNodeEntityAdapter
     type.createProperty(P_NAME, OType.STRING).setMandatory(true).setNotNull(true);
     type.createProperty(P_COMPONENT_ID, OType.LINK, componentEntityAdapter.getSchemaType());
     type.createProperty(P_ASSET_ID, OType.LINK, assetEntityAdapter.getSchemaType());
-    type.createProperty(P_PACKAGE_URL, OType.STRING);
   }
 
   @Override
@@ -180,14 +170,12 @@ public class BrowseNodeEntityAdapter
     String path = document.field(P_PATH, OType.STRING);
     String parentPath = document.field(P_PARENT_PATH, OType.STRING);
     String name = document.field(P_NAME, OType.STRING);
-    String packageUrl = document.field(P_PACKAGE_URL, OType.STRING);
 
     entity.setRepositoryName(repositoryName);
     entity.setFormat(format);
     entity.setPath(path);
     entity.setParentPath(parentPath);
     entity.setName(name);
-    entity.setPackageUrl(packageUrl);
 
     ORID componentId = document.field(P_COMPONENT_ID, ORID.class);
     if (componentId != null) {
@@ -209,7 +197,6 @@ public class BrowseNodeEntityAdapter
     document.field(P_NAME, entity.getName());
 
     if (entity.getComponentId() != null) {
-      document.field(P_PACKAGE_URL, entity.getPackageUrl());
       document.field(P_COMPONENT_ID, componentEntityAdapter.recordIdentity(entity.getComponentId()));
     }
 
@@ -235,26 +222,15 @@ public class BrowseNodeEntityAdapter
     ODocument document = findNodeRecord(db, node);
     if (document == null) {
       // complete the new entity before persisting
-      EntityId componentId = EntityHelper.id(component);
-      String packageUrl = packageUrlService
-          .getPackageUrl(component.format(), component.group(), component.name(), component.version())
-          .map(PackageUrl::toString)
-          .orElse(null);
-      node.setPackageUrl(packageUrl);
-      node.setComponentId(componentId);
+      node.setComponentId(EntityHelper.id(component));
       addEntity(db, node);
     }
     else {
       ORID oldComponentId = document.field(P_COMPONENT_ID, ORID.class);
       ORID newComponentId = componentEntityAdapter.recordIdentity(component);
-      String packageUrl = packageUrlService
-          .getPackageUrl(component.format(), component.group(), component.name(), component.version())
-          .map(PackageUrl::toString)
-          .orElse(null);
-      if (packageUrl != null || oldComponentId == null) {
+      if (oldComponentId == null) {
         // shortcut: merge new information directly into existing record
         document.field(P_COMPONENT_ID, newComponentId);
-        document.field(P_PACKAGE_URL, packageUrl);
         document.save();
       }
       else if (!oldComponentId.equals(newComponentId)) {

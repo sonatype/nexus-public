@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 /**
  * Configures the content store bindings for a maven format.
  *
- * @since 3.25.0
+ * @since 3.next
  */
 @Named(Maven2Format.NAME)
 public class MavenStoreModule

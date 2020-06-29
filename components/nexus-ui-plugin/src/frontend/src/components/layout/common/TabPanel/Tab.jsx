@@ -16,7 +16,7 @@ import React from 'react';
 import './TabPanel.scss';
 
 /**
- * @since 3.25.0
+ * @since 3.next
  */
 export default function Tab({children, ...attrs}) {
   return <div {...attrs}>

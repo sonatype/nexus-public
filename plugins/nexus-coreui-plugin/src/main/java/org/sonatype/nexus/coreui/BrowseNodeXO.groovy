@@ -38,6 +38,4 @@ class BrowseNodeXO {
   String componentId
 
   String assetId
-
-  String packageUrl
 }

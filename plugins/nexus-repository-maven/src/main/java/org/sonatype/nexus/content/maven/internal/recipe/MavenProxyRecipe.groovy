@@ -30,7 +30,7 @@ import org.sonatype.nexus.repository.view.ViewFacet
 import static org.sonatype.nexus.repository.http.HttpHandlers.notFound
 
 /**
- * @since 3.25.0
+ * @since 3.next
  */
 @Named(Maven2ProxyRecipe.NAME)
 @Singleton

@@ -32,7 +32,7 @@ import static java.util.Arrays.stream;
 /**
  * Utilities to adapt search queries for various repository situations.
  *
- * @since 3.25.0
+ * @since 3.next
  */
 public class RepositoryQueryBuilder
     extends QueryBuilder

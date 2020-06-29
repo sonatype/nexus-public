@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,9 +28,9 @@ import javax.inject.Named;
 import org.sonatype.nexus.common.entity.EntityBatchEvent;
 import org.sonatype.nexus.common.entity.EntityEvent;
 import org.sonatype.nexus.orient.entity.AttachedEntityHelper;
-import org.sonatype.nexus.orient.maven.MavenFacet;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.orient.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenHostedFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.internal.Attributes;
@@ -134,13 +133,7 @@ public class MavenHostedFacetImpl
   public Set<String> deleteMetadata(final String groupId, final String artifactId, final String baseVersion) {
     log.debug("Deleting Maven2 hosted repository metadata: repository={}, g={}, a={}, bV={}", getRepository().getName(),
         groupId, artifactId, baseVersion);
-    try {
-      return OrientMetadataUtils.deleteAndAddRebuildFlagToParents(getRepository(), groupId, artifactId, baseVersion);
-    }
-    catch (IOException e) {
-      log.error("Failed to delete maven-metadata.xml of {}:{}:{}", groupId, artifactId, baseVersion, e);
-      return Collections.emptySet();
-    }
+    return metadataRebuilder.deleteAndRebuild(getRepository(), groupId, artifactId, baseVersion);
   }
 
   @TransactionalStoreBlob

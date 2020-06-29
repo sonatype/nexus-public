@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 /**
  * Producer of search documents to be indexed by Elasticsearch.
  *
- * @since 3.25.0
+ * @since 3.next
  */
 public interface SearchDocumentProducer
 {

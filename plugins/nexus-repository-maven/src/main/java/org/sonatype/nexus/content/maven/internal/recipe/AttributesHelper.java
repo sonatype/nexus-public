@@ -36,7 +36,7 @@ import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_K
 /**
  * Helper class used by {@link MavenContentFacetImpl} for setting Asset and Component attributes
  *
- * @since 3.25.0
+ * @since 3.next
  */
 final class AttributesHelper
 {

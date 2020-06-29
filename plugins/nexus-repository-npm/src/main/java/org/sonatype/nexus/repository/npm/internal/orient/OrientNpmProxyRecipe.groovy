@@ -26,7 +26,6 @@ import org.sonatype.nexus.repository.http.HttpHandlers
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet
 import org.sonatype.nexus.repository.npm.internal.NpmAuditErrorHandler
 import org.sonatype.nexus.repository.npm.internal.NpmAuditHandler
-import org.sonatype.nexus.repository.npm.internal.NpmAuditQuickHandler
 import org.sonatype.nexus.repository.npm.internal.NpmFormat
 import org.sonatype.nexus.repository.npm.internal.NpmHandlers
 import org.sonatype.nexus.repository.npm.internal.NpmNegativeCacheHandler
@@ -104,9 +103,6 @@ class OrientNpmProxyRecipe
 
   @Inject
   NpmAuditHandler auditHandler
-
-  @Inject
-  NpmAuditQuickHandler auditQuickHandler
 
   @Inject
   NpmAuditErrorHandler auditErrorHandler
@@ -195,14 +191,6 @@ class OrientNpmProxyRecipe
         .handler(unitOfWorkHandler)
         .handler(auditErrorHandler)
         .handler(auditHandler)
-        .create())
-
-    // POST /-/npm/v1/security/audits/quick
-    builder.route(auditQuickMatcher()
-        .handler(timingHandler)
-        .handler(unitOfWorkHandler)
-        .handler(auditErrorHandler)
-        .handler(auditQuickHandler)
         .create())
 
     // GET /packageName (npm install)

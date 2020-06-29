@@ -26,7 +26,6 @@ import org.sonatype.nexus.repository.group.GroupHandler
 import org.sonatype.nexus.repository.http.HttpHandlers
 import org.sonatype.nexus.repository.npm.internal.NpmFormat
 import org.sonatype.nexus.repository.npm.internal.NpmGroupAuditHandler
-import org.sonatype.nexus.repository.npm.internal.NpmGroupAuditQuickHandler
 import org.sonatype.nexus.repository.npm.internal.NpmHandlers
 import org.sonatype.nexus.repository.npm.internal.NpmPingHandler
 import org.sonatype.nexus.repository.npm.internal.NpmWhoamiHandler
@@ -82,9 +81,6 @@ class OrientNpmGroupRecipe
 
   @Inject
   NpmGroupAuditHandler npmGroupAuditHandler
-
-  @Inject
-  NpmGroupAuditQuickHandler npmGroupAuditQuickHandler
 
   @Inject
   OrientNpmGroupRecipe(@Named(GroupType.NAME) final Type type,
@@ -147,14 +143,6 @@ class OrientNpmGroupRecipe
         .handler(unitOfWorkHandler)
         .handler(auditErrorHandler)
         .handler(npmGroupAuditHandler)
-        .create())
-
-    // POST /-/npm/v1/security/audits/quick
-    builder.route(auditQuickMatcher()
-        .handler(timingHandler)
-        .handler(unitOfWorkHandler)
-        .handler(auditErrorHandler)
-        .handler(npmGroupAuditQuickHandler)
         .create())
 
     // GET /packageName (npm install)

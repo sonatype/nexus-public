@@ -38,7 +38,7 @@ import org.sonatype.nexus.repository.view.matchers.logic.LogicMatchers
 import static org.sonatype.nexus.repository.http.HttpHandlers.notFound
 
 /**
- * @since 3.25.0
+ * @since 3.next
  */
 @Named(Maven2HostedRecipe.NAME)
 @Singleton

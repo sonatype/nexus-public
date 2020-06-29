@@ -12,15 +12,12 @@
  */
 package org.sonatype.nexus.coreui
 
-import javax.inject.Provider
-
 import org.sonatype.nexus.common.entity.EntityId
 import org.sonatype.nexus.repository.Repository
-import org.sonatype.nexus.repository.browse.internal.orient.OrientBrowseNode
+import org.sonatype.nexus.repository.browse.node.BrowseNode
 import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration
 import org.sonatype.nexus.repository.browse.node.BrowseNodeStore
 import org.sonatype.nexus.repository.manager.RepositoryManager
-import org.sonatype.nexus.repository.ossindex.VulnerabilityService
 
 import spock.lang.Specification
 import spock.lang.Subject
@@ -50,11 +47,8 @@ class BrowseComponentTest
 
   Repository repository = Mock { _ * getName() >> REPOSITORY_NAME }
 
-  Provider<VulnerabilityService> vulnerabilityServiceProvider = Mock() { get() >> Mock(VulnerabilityService) }
-
   @Subject
-  BrowseComponent browseComponent = new BrowseComponent(configuration: configuration, browseNodeStore: browseNodeStore,
-      repositoryManager: repositoryManager, vulnerabilityServiceProvider: vulnerabilityServiceProvider)
+  BrowseComponent browseComponent = new BrowseComponent(configuration: configuration, browseNodeStore: browseNodeStore, repositoryManager: repositoryManager)
 
   def setup() {
     componentId.value >> "componentId"
@@ -63,15 +57,12 @@ class BrowseComponentTest
 
   def "Root node list query"() {
     given: 'These test objects'
-      def browseNodes = [Mock(OrientBrowseNode) { _ * getName() >> 'com'
-                                            _ * getPackageUrl() >> null},
-                         Mock(OrientBrowseNode) { _ * getName() >> 'org'
-                                            _ * getComponentId() >> componentId
-                                            _ * getPackageUrl() >> null},
-                         Mock(OrientBrowseNode) { _ * getName() >> 'net'
+      def browseNodes = [Mock(BrowseNode) { _ * getName() >> 'com' },
+                         Mock(BrowseNode) { _ * getName() >> 'org'
+                                            _ * getComponentId() >> componentId },
+                         Mock(BrowseNode) { _ * getName() >> 'net'
                                             _ * getAssetId() >> assetId
-                                            _ * isLeaf() >> true
-                                            _ * getPackageUrl() >> null}]
+                                            _ * isLeaf() >> true }]
 
     when: 'Requesting the list of root nodes'
       TreeStoreLoadParameters treeStoreLoadParameters = new TreeStoreLoadParameters(
@@ -91,15 +82,12 @@ class BrowseComponentTest
 
   def "non-root list query"() {
     given: 'These test objects'
-      def browseNodes = [Mock(OrientBrowseNode) { _ * getName() >> 'com'
-                                            _ * getPackageUrl() >> null},
-                         Mock(OrientBrowseNode) { _ * getName() >> 'org'
-                                            _ * getComponentId() >> componentId
-                                            _ * getPackageUrl() >> null},
-                         Mock(OrientBrowseNode) { _ * getName() >> 'net'
+      def browseNodes = [Mock(BrowseNode) { _ * getName() >> 'com' },
+                         Mock(BrowseNode) { _ * getName() >> 'org'
+                                            _ * getComponentId() >> componentId },
+                         Mock(BrowseNode) { _ * getName() >> 'net'
                                             _ * getAssetId() >> assetId
-                                            _ * isLeaf() >> true
-                                            _ * getPackageUrl() >> null}]
+                                            _ * isLeaf() >> true }]
 
     when: 'Requesting the list of root nodes'
       TreeStoreLoadParameters treeStoreLoadParameters = new TreeStoreLoadParameters(
@@ -119,14 +107,12 @@ class BrowseComponentTest
 
   def 'validate encoded segments'() {
     given: 'These test objects'
-      def browseNodes = [Mock(OrientBrowseNode) { _ * getName() >> 'com' },
-                         Mock(OrientBrowseNode) { _ * getName() >> 'org'
-                                            _ * getComponentId() >> componentId
-                                            _ * getPackageUrl() >> null},
-                         Mock(OrientBrowseNode) { _ * getName() >> 'n/e/t'
+      def browseNodes = [Mock(BrowseNode) { _ * getName() >> 'com' },
+                         Mock(BrowseNode) { _ * getName() >> 'org'
+                                            _ * getComponentId() >> componentId },
+                         Mock(BrowseNode) { _ * getName() >> 'n/e/t'
                                             _ * getAssetId() >> assetId
-                                            _ * isLeaf() >> true
-                                            _ * getPackageUrl() >> null}]
+                                            _ * isLeaf() >> true }]
 
     when: 'Requesting the list of root nodes'
     TreeStoreLoadParameters treeStoreLoadParameters = new TreeStoreLoadParameters(

@@ -64,7 +64,7 @@ public interface FluentAsset
   /**
    * Mark this proxied asset as recently cached from the given content.
    *
-   * @since 3.25.0
+   * @since 3.next
    */
   FluentAsset markAsCached(Payload content);
 
@@ -92,7 +92,7 @@ public interface FluentAsset
   /**
    * Update this asset to have the given kind.
    *
-   * @since 3.25.0
+   * @since 3.next
    */
   FluentAsset kind(String kind);
 

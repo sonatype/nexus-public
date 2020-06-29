@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.maven.internal.Constants;
 /**
  * Utility class containing shared general methods for Maven metadata.
  *
- * @since 3.25.0
+ * @since 3.next
  */
 public final class MetadataUtils
 {

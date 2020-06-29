@@ -24,7 +24,7 @@ import org.sonatype.nexus.repository.view.Context;
 /**
  * Content {@link ProxyFacet} support.
  *
- * @since 3.25.0
+ * @since 3.next
  */
 public abstract class ContentProxyFacetSupport
     extends ProxyFacetSupport

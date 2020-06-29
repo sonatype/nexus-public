@@ -24,7 +24,7 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
  * {@link org.sonatype.nexus.repository.maven.internal.orient.OrientMavenVariableResolverAdapter}
  * and {@link org.sonatype.nexus.content.maven.internal.MavenVariableResolverAdapter}
  *
- * @since 3.25.0
+ * @since 3.next
  */
 public class MavenVariableResolverAdapterUtil
 {

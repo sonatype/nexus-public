@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -83,7 +82,7 @@ public interface MavenFacet
    */
   Content put(MavenPath path, TempBlob blob, String contentType, AttributesMap contentAttributes) throws IOException;
 
-  Set<String> delete(MavenPath... paths) throws IOException;
+  boolean delete(MavenPath... paths) throws IOException;
 
   /**
    * @since 3.4
@@ -102,12 +101,11 @@ public interface MavenFacet
    * @since 3.24
    * @param path to the maven component that might need metadata rebuilt or deleted
    */
-  Set<String> maybeDeleteOrFlagToRebuildMetadata(final Bucket bucket, final MavenPath path) throws IOException;
+  void maybeDeleteOrFlagToRebuildMetadata(final Bucket bucket, final MavenPath path) throws IOException;
 
   /**
    * @since 3.24
    * @param paths to the maven components that might need metadata rebuilt or deleted
-   * @return paths there were delete
    */
-  Set<String> maybeDeleteOrFlagToRebuildMetadata(final Collection<MavenPath> paths) throws IOException;
+  void maybeDeleteOrFlagToRebuildMetadata(final Collection<MavenPath> paths) throws IOException;
 }

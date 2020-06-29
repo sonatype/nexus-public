@@ -47,9 +47,6 @@ public class OrientBrowseNode
   private boolean leaf;
 
   @Nullable
-  private String packageUrl;
-
-  @Nullable
   private EntityId componentId;
 
   @Nullable
@@ -170,14 +167,5 @@ public class OrientBrowseNode
     return "BrowseNode{" + "repositoryName=" + repositoryName + ", format=" + format + ", parentPath=" + parentPath
         + ", name=" + name + ", path=" + path + ", leaf=" + leaf + ", componentId='" + componentId + '\''
         + ", assetId='" + assetId + '\'' + '}';
-  }
-
-  @Nullable
-  public String getPackageUrl() {
-    return packageUrl;
-  }
-
-  public void setPackageUrl(final String packageUrl) {
-    this.packageUrl = packageUrl;
   }
 }

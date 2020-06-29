@@ -18,7 +18,7 @@ import org.sonatype.nexus.repository.Repository;
 /**
  * Search index {@link Facet}.
  *
- * @since 3.25.0
+ * @since 3.next
  */
 @Facet.Exposed
 public interface SearchIndexFacet

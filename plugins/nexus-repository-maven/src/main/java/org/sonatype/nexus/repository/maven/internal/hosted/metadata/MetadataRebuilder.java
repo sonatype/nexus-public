@@ -69,4 +69,16 @@ public interface MetadataRebuilder
    * @since 3.14
    */
   void deleteMetadata(Repository repository, List<String[]> gavs);
+
+  /**
+   * Delete metadata for the given GAbV and rebuild metadata for the GA. If Group level metadata is present, rebuild
+   * at that level to account for plugin deletion.
+   *
+   * @param repository  The repository whose metadata needs rebuild (Maven2 format, Hosted type only).
+   * @param groupId     scope the work to given groupId.
+   * @param artifactId  scope the work to given artifactId (groupId must be given).
+   * @param baseVersion scope the work to given baseVersion (groupId and artifactId must ge given).
+   * @return paths of deleted metadata files
+   */
+  Set<String> deleteAndRebuild(Repository repository, String groupId, String artifactId, String baseVersion);
 }
