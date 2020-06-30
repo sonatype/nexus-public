@@ -34,6 +34,7 @@ import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.junit.experimental.categories.Category;
@@ -220,8 +221,6 @@ public abstract class MavenITSupport
       throws Exception
   {
     checkNotNull(repositoryName);
-    checkNotNull(username);
-    checkNotNull(password);
     Repository repository = repositoryManager.get(repositoryName);
     checkNotNull(repository);
     return createMaven2Client(resolveUrl(nexusUrl, "/repository/" + repositoryName + "/"), username, password);
@@ -230,15 +229,20 @@ public abstract class MavenITSupport
   protected Maven2Client createMaven2Client(final URL repositoryUrl, final String username, final String password)
       throws Exception
   {
-    AuthScope scope = new AuthScope(repositoryUrl.getHost(), -1);
-    CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-    credentialsProvider.setCredentials(scope, new UsernamePasswordCredentials(username, password));
+    HttpClientBuilder client = HttpClients.custom();
+    if (username != null) {
+      AuthScope scope = new AuthScope(repositoryUrl.getHost(), -1);
+      CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+      credentialsProvider.setCredentials(scope, new UsernamePasswordCredentials(username, password));
+      client.setDefaultCredentialsProvider(credentialsProvider);
+    }
+
     RequestConfig.Builder requestConfigBuilder = RequestConfig.custom();
     requestConfigBuilder.setExpectContinueEnabled(true);
     HttpClientContext httpClientContext = HttpClientContext.create();
     httpClientContext.setRequestConfig(requestConfigBuilder.build());
     return new Maven2Client(
-        HttpClients.custom().setDefaultCredentialsProvider(credentialsProvider).build(),
+        client.build(),
         httpClientContext,
         repositoryUrl.toURI()
     );

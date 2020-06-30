@@ -21,6 +21,7 @@ import org.sonatype.nexus.repository.maven.LayoutPolicy;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.sonatype.nexus.repository.maven.VersionPolicy;
+import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 
 /**
@@ -32,9 +33,9 @@ import org.sonatype.nexus.repository.view.Payload;
 public interface MavenContentFacet
     extends ContentFacet
 {
-  Optional<Payload> get(String path) throws IOException;
+  Optional<Content> get(String path) throws IOException;
 
-  Payload put(MavenPath path, Payload content) throws IOException;
+  Content put(MavenPath path, Payload content) throws IOException;
 
   boolean delete(MavenPath path) throws IOException;
 

@@ -34,9 +34,12 @@ import org.sonatype.nexus.repository.view.handlers.HandlerContributor
 import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler
 import org.sonatype.nexus.repository.view.handlers.TimingHandler
 
+import groovy.transform.CompileStatic
+
 /**
  * @since 3.next
  */
+@CompileStatic
 abstract class MavenRecipeSupport
     extends RecipeSupport
 {

@@ -44,6 +44,7 @@ import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.maven.internal.validation.MavenMetadataContentValidator;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
+import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
@@ -121,7 +122,7 @@ public class MavenContentFacetImpl
   }
 
   @Override
-  public Optional<Payload> get(final String path) {
+  public Optional<Content> get(final String path) {
     log.debug("GET {} : {}", getRepository().getName(), path);
 
     return findAsset(path)
@@ -129,14 +130,14 @@ public class MavenContentFacetImpl
   }
 
   @Override
-  public Payload put(final MavenPath path, final Payload content) throws IOException {
+  public Content put(final MavenPath path, final Payload content) throws IOException {
     log.debug("PUT {} : {}", getRepository().getName(), path);
 
     try (TempBlob blob = blobs().ingest(content, HASHING)) {
       if (isMetadataAndValidationEnabled(path)) {
         validate(path, blob);
       }
-      return save(path, blob);
+      return save(path, content, blob);
     }
   }
 
@@ -150,19 +151,19 @@ public class MavenContentFacetImpl
     return path.getFileName().equals(METADATA_FILENAME) && metadataValidationEnabled;
   }
 
-  private void validate(MavenPath mavenPath, TempBlob blob) {
+  private void validate(final MavenPath mavenPath, final TempBlob blob) {
     log.debug("Validating maven-metadata.xml before storing");
     metadataValidator.validate(mavenPath.getPath(), blob.get());
   }
 
-  private Payload save(final MavenPath mavenPath, final TempBlob blob) throws IOException {
+  private Content save(final MavenPath mavenPath, final Payload content, final TempBlob blob) throws IOException {
     FluentComponent component = null;
     Coordinates coordinates = mavenPath.getCoordinates();
     if (coordinates != null) {
       component = createOrGetComponent(mavenPath);
       maybeUpdateComponentAttributesFromModel(component, mavenPath, blob);
     }
-    return createOrUpdateAsset(mavenPath, component, blob);
+    return createOrUpdateAsset(mavenPath, component, content, blob);
   }
 
   private FluentComponent createOrGetComponent(final MavenPath mavenPath)
@@ -213,9 +214,10 @@ public class MavenContentFacetImpl
     return model;
   }
 
-  private Payload createOrUpdateAsset(
+  private Content createOrUpdateAsset(
       final MavenPath path,
       final Component component,
+      final Payload content,
       final TempBlob blob)
   {
     FluentAssetBuilder assetBuilder = assets().path(path.getPath()).kind(assetKind(path));
@@ -227,7 +229,9 @@ public class MavenContentFacetImpl
     if (isNewRepositoryContent(asset)) {
       setAssetAttributes(asset, path);
     }
-    return asset.attach(blob).download();
+    return asset.attach(blob)
+        .markAsCached(content)
+        .download();
   }
 
   @Override
@@ -255,7 +259,7 @@ public class MavenContentFacetImpl
         .ifPresent(this::deleteIfNoAssetsLeft);
   }
 
-  private void deleteIfNoAssetsLeft(FluentComponent component) {
+  private void deleteIfNoAssetsLeft(final FluentComponent component) {
     if (component.assets().isEmpty()) {
       component.delete();
       publishEvents(component);
