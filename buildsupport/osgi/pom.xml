@@ -28,7 +28,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <karaf.version>4.2.6</karaf.version>
+    <karaf.version>4.2.9</karaf.version>
   </properties>
 
   <dependencyManagement>
