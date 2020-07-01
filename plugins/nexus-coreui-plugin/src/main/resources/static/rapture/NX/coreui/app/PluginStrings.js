@@ -384,6 +384,8 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Repository_Facet_GroupFacet_Members_HelpText: 'Select and order the repositories that are part of this group',
     Repository_Facet_GroupFacet_Members_FromTitle: 'Available',
     Repository_Facet_GroupFacet_Members_ToTitle: 'Members',
+    Repository_Facet_GroupWriteFacet_Writable_Repository_FieldLabel: 'Writable Repository',
+    Repository_Facet_GroupWriteFacet_Writable_Repository_HelpText: 'The member repository that POST and PUT requests will be routed to',
     Repository_Facet_StorageFacetHosted_Deployment_FieldLabel: 'Deployment policy',
     Repository_Facet_StorageFacetHosted_Deployment_HelpText: 'Controls if deployments of and updates to artifacts are allowed',
     Repository_Facet_StorageFacetHosted_Deployment_EmptyText: 'Select a policy',
