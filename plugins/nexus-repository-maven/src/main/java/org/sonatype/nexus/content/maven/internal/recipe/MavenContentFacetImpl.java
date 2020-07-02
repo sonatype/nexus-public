@@ -75,7 +75,7 @@ public class MavenContentFacetImpl
 {
   private static final String CONFIG_KEY = "maven";
 
-  protected static final List<HashAlgorithm> HASHING = ImmutableList.of(SHA1, MD5);
+  private static final List<HashAlgorithm> HASHING = ImmutableList.of(SHA1, MD5);
 
   private final Map<String, MavenPathParser> mavenPathParsers;
 
@@ -180,7 +180,7 @@ public class MavenContentFacetImpl
     return component;
   }
 
-  private boolean isNewRepositoryContent(RepositoryContent repositoryContent) {
+  private boolean isNewRepositoryContent(final RepositoryContent repositoryContent) {
     return repositoryContent.attributes().isEmpty();
   }
 

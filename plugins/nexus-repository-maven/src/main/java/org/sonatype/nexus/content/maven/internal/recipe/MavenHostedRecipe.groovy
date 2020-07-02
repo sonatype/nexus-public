@@ -56,6 +56,7 @@ class MavenHostedRecipe
     repository.attach(securityFacet.get())
     repository.attach(configure(viewFacet.get()))
     repository.attach(mavenContentFacet.get())
+    repository.attach(searchFacet.get())
     repository.attach(mavenArchetypeCatalogFacet.get())
   }
 
