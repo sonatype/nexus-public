@@ -27,10 +27,12 @@ import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.content.maven.internal.event.RebuildMavenArchetypeCatalogEvent;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
+import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.RepositoryContent;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
+import org.sonatype.nexus.repository.content.facet.WritePolicy;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
@@ -49,17 +51,23 @@ import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 import com.google.common.collect.ImmutableList;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
+import static org.sonatype.nexus.content.maven.internal.recipe.AttributesHelper.P_ASSET_KIND;
 import static org.sonatype.nexus.content.maven.internal.recipe.AttributesHelper.assetKind;
 import static org.sonatype.nexus.content.maven.internal.recipe.AttributesHelper.getPackaging;
 import static org.sonatype.nexus.content.maven.internal.recipe.AttributesHelper.setAssetAttributes;
 import static org.sonatype.nexus.content.maven.internal.recipe.AttributesHelper.setComponentAttributes;
 import static org.sonatype.nexus.content.maven.internal.recipe.AttributesHelper.setPomAttributes;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenArchetypeCatalogFacetImpl.MAVEN_ARCHETYPE_KIND;
+import static org.sonatype.nexus.repository.content.facet.WritePolicy.ALLOW;
+import static org.sonatype.nexus.repository.content.facet.WritePolicy.ALLOW_ONCE;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_INDEX;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
 import static org.sonatype.nexus.repository.maven.internal.Constants.METADATA_FILENAME;
 import static org.sonatype.nexus.repository.maven.internal.MavenModels.readModel;
 
@@ -122,6 +130,47 @@ public class MavenContentFacetImpl
   }
 
   @Override
+  public MavenPathParser getMavenPathParser() {
+    return mavenPathParser;
+  }
+
+  @Override
+  public LayoutPolicy layoutPolicy() {
+    return config.layoutPolicy;
+  }
+
+  @Override
+  public VersionPolicy getVersionPolicy() {
+    return config.versionPolicy;
+  }
+
+  @Override
+  protected void doInit(final Configuration configuration) throws Exception {
+    super.doInit(configuration);
+    mavenPathParser = checkNotNull(mavenPathParsers.get(getRepository().getFormat().getValue()));
+  }
+
+  @Override
+  protected void doConfigure(final Configuration configuration) throws Exception {
+    super.doConfigure(configuration);
+    config = facet(ConfigurationFacet.class).readSection(configuration, CONFIG_KEY, MavenContentFacetImpl.Config.class);
+    log.debug("Config: {}", config);
+  }
+
+  @Override
+  protected WritePolicy writePolicy(final Asset asset) {
+    WritePolicy configuredWritePolicy = super.writePolicy(asset);
+    if (ALLOW_ONCE == configuredWritePolicy) {
+      String assetKind = asset.kind();
+      if (StringUtils.equals(REPOSITORY_METADATA.name(), assetKind)
+          || StringUtils.equals(REPOSITORY_INDEX.name(), assetKind)) {
+        return ALLOW;
+      }
+    }
+    return configuredWritePolicy;
+  }
+
+  @Override
   public Optional<Content> get(final String path) {
     log.debug("GET {} : {}", getRepository().getName(), path);
 
@@ -158,8 +207,7 @@ public class MavenContentFacetImpl
 
   private Content save(final MavenPath mavenPath, final Payload content, final TempBlob blob) throws IOException {
     FluentComponent component = null;
-    Coordinates coordinates = mavenPath.getCoordinates();
-    if (coordinates != null) {
+    if (mavenPath.getCoordinates() != null) {
       component = createOrGetComponent(mavenPath);
       maybeUpdateComponentAttributesFromModel(component, mavenPath, blob);
     }
@@ -220,14 +268,14 @@ public class MavenContentFacetImpl
       final Payload content,
       final TempBlob blob)
   {
-    FluentAssetBuilder assetBuilder = assets().path(path.getPath()).kind(assetKind(path));
+    FluentAssetBuilder assetBuilder = assets().path(path.getPath()).kind(assetKind(path, mavenPathParser));
     if (component != null) {
       assetBuilder = assetBuilder.component(component);
     }
 
     FluentAsset asset = assetBuilder.getOrCreate();
     if (isNewRepositoryContent(asset)) {
-      setAssetAttributes(asset, path);
+      setAssetAttributes(asset, path, mavenPathParser);
     }
     return asset.attach(blob)
         .markAsCached(content)
@@ -264,33 +312,5 @@ public class MavenContentFacetImpl
       component.delete();
       publishEvents(component);
     }
-  }
-
-  @Override
-  public MavenPathParser getMavenPathParser() {
-    return mavenPathParser;
-  }
-
-  @Override
-  public LayoutPolicy layoutPolicy() {
-    return config.layoutPolicy;
-  }
-
-  @Override
-  public VersionPolicy getVersionPolicy() {
-    return config.versionPolicy;
-  }
-
-  @Override
-  protected void doInit(final Configuration configuration) throws Exception {
-    super.doInit(configuration);
-    mavenPathParser = checkNotNull(mavenPathParsers.get(getRepository().getFormat().getValue()));
-  }
-
-  @Override
-  protected void doConfigure(final Configuration configuration) throws Exception {
-    super.doConfigure(configuration);
-    config = facet(ConfigurationFacet.class).readSection(configuration, CONFIG_KEY, MavenContentFacetImpl.Config.class);
-    log.debug("Config: {}", config);
   }
 }

@@ -21,6 +21,7 @@ import java.util.Optional;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.time.DateHelper;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
@@ -33,6 +34,7 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.io.IOUtils;
+import org.joda.time.DateTime;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyMap;
@@ -114,5 +116,19 @@ public class DataStoreMavenTestHelper
     MavenPath mavenPath = mavenContentFacet.getMavenPathParser().parsePath(path);
 
     return mavenContentFacet.get(mavenPath.getPath()).orElse(null);
+  }
+
+  @Override
+  public DateTime getLastDownloadedTime(final Repository repository, final String assetPath) throws IOException {
+    MavenContentFacet mavenContentFacet = repository.facet(MavenContentFacet.class);
+    MavenPath mavenPath = mavenContentFacet.getMavenPathParser().parsePath(assetPath);
+    return mavenContentFacet.get(mavenPath.getPath())
+        .map(Content::getAttributes)
+        .map(attributes -> attributes.get(Asset.class))
+        .map(Asset::lastDownloaded)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .map(DateHelper::toDateTime)
+        .orElse(null);
   }
 }
