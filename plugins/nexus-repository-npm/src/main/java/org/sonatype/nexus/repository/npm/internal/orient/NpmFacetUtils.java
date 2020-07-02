@@ -53,6 +53,7 @@ import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.view.Content;
+import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.payloads.BlobPayload;
 import org.sonatype.nexus.repository.view.payloads.BytesPayload;
@@ -569,7 +570,7 @@ public final class NpmFacetUtils
   public static Response mergeDistTagResponse(final Map<Repository, Response> responses) throws IOException {
     final List<NestedAttributesMap> collection = responses
         .values().stream()
-        .map(response -> (Content) response.getPayload())
+        .map(Response::getPayload)
         .filter(Objects::nonNull)
         .map(NpmFacetUtils::readDistTagResponse)
         .filter(Objects::nonNull)
@@ -599,8 +600,8 @@ public final class NpmFacetUtils
     };
   }
 
-  private static NestedAttributesMap readDistTagResponse(final Content content) {
-    try (InputStream is = content.openInputStream()) {
+  private static NestedAttributesMap readDistTagResponse(final Payload payload) {
+    try (InputStream is = payload.openInputStream()) {
       return NpmJsonUtils.parse(() -> is);
     }
     catch (IOException ignore) { //NOSONAR
