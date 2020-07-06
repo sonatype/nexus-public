@@ -19,6 +19,7 @@ import javax.inject.Named
 import javax.inject.Provider
 import javax.inject.Singleton
 
+import org.sonatype.nexus.content.raw.internal.recipe.ContentDispositionHandler
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.RecipeSupport
 import org.sonatype.nexus.repository.Repository
@@ -136,6 +137,9 @@ class RawProxyRecipe
   RoutingRuleHandler routingRuleHandler
 
   @Inject
+  ContentDispositionHandler contentDispositionHandler
+
+  @Inject
   public RawProxyRecipe(final @Named(ProxyType.NAME) Type type,
                         final @Named(RawFormat.NAME) Format format)
   {
@@ -166,6 +170,7 @@ class RawProxyRecipe
     builder.route(new Route.Builder()
         .matcher(new TokenMatcher('/{name:.+}'))
         .handler(timingHandler)
+        .handler(contentDispositionHandler)
         .handler(securityHandler)
         .handler(routingRuleHandler)
         .handler(exceptionHandler)

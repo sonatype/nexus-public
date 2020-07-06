@@ -10,34 +10,26 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext, NX*/
+package org.sonatype.nexus.repository.raw.rest;
+
+import javax.inject.Named;
+
+import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.rest.api.HostedRepositoryApiRequestToConfigurationConverter;
+
+import static org.sonatype.nexus.repository.raw.rest.RawAttributes.CONTENT_DISPOSITION;
 
 /**
- * Repository "Settings" form for a Raw Group repository.
- *
- * @since 3.0
+ * @since 3.next
  */
-Ext.define('NX.coreui.view.repository.recipe.RawGroup', {
-  extend: 'NX.coreui.view.repository.RepositorySettingsForm',
-  alias: 'widget.nx-coreui-repository-raw-group',
-  requires: [
-    'NX.coreui.view.repository.facet.RawFacet',
-    'NX.coreui.view.repository.facet.StorageFacet',
-    'NX.coreui.view.repository.facet.GroupFacet'
-  ],
-
-  /**
-   * @override
-   */
-  initComponent: function() {
-    var me = this;
-
-    me.items = [
-      { xtype: 'nx-coreui-repository-raw-facet'},
-      { xtype: 'nx-coreui-repository-storage-facet'},
-      { xtype: 'nx-coreui-repository-group-facet', format: 'raw' }
-    ];
-
-    me.callParent();
+@Named
+public class RawHostedRepositoryApiRequestToConfigurationConverter
+    extends HostedRepositoryApiRequestToConfigurationConverter<RawHostedRepositoryApiRequest>
+{
+  @Override
+  public Configuration convert(final RawHostedRepositoryApiRequest request) {
+    Configuration configuration = super.convert(request);
+    configuration.attributes("raw").set(CONTENT_DISPOSITION, request.getRaw().getContentDisposition());
+    return configuration;
   }
-});
+}

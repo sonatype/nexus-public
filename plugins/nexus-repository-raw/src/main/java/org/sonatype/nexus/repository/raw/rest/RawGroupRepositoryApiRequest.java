@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import static org.sonatype.nexus.content.raw.internal.recipe.ContentDisposition.ATTACHMENT;
+
 /**
  * @since 3.24
  */
@@ -28,13 +30,21 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class RawGroupRepositoryApiRequest
     extends GroupRepositoryApiRequest
 {
+  private final RawAttributes raw;
+
   @JsonCreator
   public RawGroupRepositoryApiRequest(
       @JsonProperty("name") final String name,
       @JsonProperty("online") final Boolean online,
       @JsonProperty("storage") final StorageAttributes storage,
-      @JsonProperty("group") final GroupAttributes group)
+      @JsonProperty("group") final GroupAttributes group,
+      @JsonProperty("raw") final RawAttributes raw)
   {
     super(name, RawFormat.NAME, online, storage, group);
+    this.raw = raw != null ? raw : new RawAttributes(ATTACHMENT);
+  }
+
+  public RawAttributes getRaw() {
+    return raw;
   }
 }

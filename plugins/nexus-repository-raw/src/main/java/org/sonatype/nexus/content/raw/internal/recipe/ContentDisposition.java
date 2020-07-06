@@ -10,34 +10,23 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-/*global Ext, NX*/
+package org.sonatype.nexus.content.raw.internal.recipe;
 
 /**
- * Repository "Settings" form for a Raw Group repository.
- *
- * @since 3.0
+ * @since 3.next
  */
-Ext.define('NX.coreui.view.repository.recipe.RawGroup', {
-  extend: 'NX.coreui.view.repository.RepositorySettingsForm',
-  alias: 'widget.nx-coreui-repository-raw-group',
-  requires: [
-    'NX.coreui.view.repository.facet.RawFacet',
-    'NX.coreui.view.repository.facet.StorageFacet',
-    'NX.coreui.view.repository.facet.GroupFacet'
-  ],
+public enum ContentDisposition
+{
+  INLINE("inline"),
+  ATTACHMENT("attachment");
 
-  /**
-   * @override
-   */
-  initComponent: function() {
-    var me = this;
+  private final String value;
 
-    me.items = [
-      { xtype: 'nx-coreui-repository-raw-facet'},
-      { xtype: 'nx-coreui-repository-storage-facet'},
-      { xtype: 'nx-coreui-repository-group-facet', format: 'raw' }
-    ];
-
-    me.callParent();
+  ContentDisposition(final String value) {
+    this.value = value;
   }
-});
+
+  public String getValue() {
+    return value;
+  }
+}
