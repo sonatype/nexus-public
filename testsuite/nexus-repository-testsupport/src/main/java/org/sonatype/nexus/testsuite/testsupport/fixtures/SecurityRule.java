@@ -25,6 +25,8 @@ import javax.inject.Provider;
 
 import org.sonatype.nexus.repository.security.RepositoryContentSelectorPrivilegeDescriptor;
 import org.sonatype.nexus.security.SecuritySystem;
+import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
+import org.sonatype.nexus.security.anonymous.AnonymousManager;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
 import org.sonatype.nexus.security.privilege.Privilege;
 import org.sonatype.nexus.security.role.Role;
@@ -54,11 +56,15 @@ public class SecurityRule
 
   private final Provider<SelectorManager> selectorManagerProvider;
 
+  private final Provider<AnonymousManager> anonymousConfigurationProvider;
+
   private final Set<Privilege> privileges = new HashSet<>();
 
   private final Set<Role> roles = new HashSet<>();
 
   private final Set<User> users = new HashSet<>();
+
+  private AnonymousConfiguration originalAnonymousConfiguration = null;
 
   final Set<SelectorConfiguration> selectors = new HashSet<>();
 
@@ -66,8 +72,17 @@ public class SecurityRule
       final Provider<SecuritySystem> securitySystemProvider,
       final Provider<SelectorManager> selectorManagerProvider)
   {
+    this(securitySystemProvider, selectorManagerProvider, () -> null);
+  }
+
+  public SecurityRule(
+      final Provider<SecuritySystem> securitySystemProvider,
+      final Provider<SelectorManager> selectorManagerProvider,
+      final Provider<AnonymousManager> anonymousConfigurationProvider)
+  {
     this.securitySystemProvider = checkNotNull(securitySystemProvider);
     this.selectorManagerProvider = checkNotNull(selectorManagerProvider);
+    this.anonymousConfigurationProvider = checkNotNull(anonymousConfigurationProvider);
   }
 
   @Override
@@ -104,6 +119,10 @@ public class SecurityRule
         log.debug("Failed to cleanup content selector: {}", selector.getName(), e);
       }
     });
+
+    if (originalAnonymousConfiguration != null) {
+      anonymousConfigurationProvider.get().setConfiguration(originalAnonymousConfiguration);
+    }
   }
 
   public Privilege getPrivilege(final String privilegeName) {
@@ -293,5 +312,28 @@ public class SecurityRule
       }
     });
     selectors.clear();
+  }
+
+  /**
+   * Sets whether anonymous access should be enabled. Note that the original unset state of Anonymous Access can't be
+   * restore as setting the state persists it.
+   */
+  public void setAnonymousEnabled(final boolean anonymousEnabled) {
+    AnonymousManager anonymousManager = anonymousConfigurationProvider.get();
+    if (originalAnonymousConfiguration == null) {
+      AnonymousConfiguration current = anonymousManager.getConfiguration();
+      // The original one can't be modified, technically we can't quite get back the orign
+      originalAnonymousConfiguration = anonymousManager.newConfiguration();
+      originalAnonymousConfiguration.setEnabled(current.isEnabled());
+      originalAnonymousConfiguration.setRealmName(current.getRealmName());
+      originalAnonymousConfiguration.setUserId(current.getUserId());
+    }
+
+    AnonymousConfiguration configuration = anonymousManager.newConfiguration();
+    configuration.setEnabled(anonymousEnabled);
+    configuration.setRealmName(originalAnonymousConfiguration.getRealmName());
+    configuration.setUserId(originalAnonymousConfiguration.getUserId());
+
+    anonymousManager.setConfiguration(configuration);
   }
 }

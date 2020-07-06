@@ -19,6 +19,7 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.node.NodeAccess;
+import org.sonatype.nexus.repository.search.index.RebuildIndexTaskDescriptor;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskInfo;
 import org.sonatype.nexus.scheduling.TaskScheduler;

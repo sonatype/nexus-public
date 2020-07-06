@@ -21,6 +21,7 @@ import org.sonatype.nexus.content.maven.internal.VersionPolicyHandler
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.RecipeSupport
 import org.sonatype.nexus.repository.Type
+import org.sonatype.nexus.repository.content.search.SearchFacet
 import org.sonatype.nexus.repository.http.PartialFetchHandler
 import org.sonatype.nexus.repository.maven.MavenPathParser
 import org.sonatype.nexus.repository.maven.internal.MavenSecurityFacet
@@ -34,9 +35,12 @@ import org.sonatype.nexus.repository.view.handlers.HandlerContributor
 import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler
 import org.sonatype.nexus.repository.view.handlers.TimingHandler
 
+import groovy.transform.CompileStatic
+
 /**
  * @since 3.next
  */
+@CompileStatic
 abstract class MavenRecipeSupport
     extends RecipeSupport
 {
@@ -88,6 +92,9 @@ abstract class MavenRecipeSupport
 
   @Inject
   Provider<MavenContentFacet> mavenContentFacet
+
+  @Inject
+  Provider<SearchFacet> searchFacet
 
   @Inject
   Provider<MavenArchetypeCatalogFacet> mavenArchetypeCatalogFacet

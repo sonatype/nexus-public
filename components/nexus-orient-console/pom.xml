@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-components</artifactId>
-    <version>3.25.0-SNAPSHOT</version>
+    <version>3.26.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-orient-console</artifactId>
@@ -78,10 +78,11 @@
             </manifest>
             <manifestEntries>
               <!--
-              Bouncycastle is located in parent directory, not the system repository
+              These jars are located in parent directory, not the system repository
               -->
               <Class-Path>
                 ../${project.artifactMap(org.bouncycastle:bcprov-jdk15to18).file.name}
+                ../boot/${project.artifactMap(org.osgi:osgi.core).file.name}
               </Class-Path>
             </manifestEntries>
           </archive>

@@ -35,6 +35,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Reader;
+import org.joda.time.DateTime;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
@@ -87,6 +88,9 @@ public abstract class MavenTestHelper
   public abstract void writeWithoutValidation(Repository repository, String path, Payload payload) throws IOException;
 
   public abstract void verifyHashesExistAndCorrect(Repository repository, String path) throws Exception;
+
+  public abstract DateTime getLastDownloadedTime(final Repository repository, final String assetPath)
+      throws IOException;
 
   public Metadata parseMetadata(final Repository repository, final String path) throws Exception {
     try (Payload payload = read(repository, path)) {

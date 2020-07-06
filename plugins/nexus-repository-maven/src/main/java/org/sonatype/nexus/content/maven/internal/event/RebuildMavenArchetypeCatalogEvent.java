@@ -10,18 +10,23 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.search;
-
-import javax.inject.Named;
+package org.sonatype.nexus.content.maven.internal.event;
 
 /**
- * Legacy task to rebuild index of given repository.
+ * Event used to indicate when the archetype catalog for a given maven repository should be rebuilt.
  *
- * @since 3.0
+ * @since 3.next
  */
-@Named
-public class RebuildIndexTask
-    extends org.sonatype.nexus.repository.search.index.RebuildIndexTask
+public final class RebuildMavenArchetypeCatalogEvent
 {
-  // nothing to add...
+  private final String repositoryName;
+
+  public RebuildMavenArchetypeCatalogEvent(final String repositoryName)
+  {
+    this.repositoryName = repositoryName;
+  }
+
+  public String getRepositoryName() {
+    return repositoryName;
+  }
 }

@@ -51,6 +51,7 @@ import static org.apache.http.HttpHeaders.IF_MODIFIED_SINCE;
  */
 public class FormatClientSupport
     extends ComponentSupport
+    implements AutoCloseable
 {
   protected final CloseableHttpClient httpClient;
 
@@ -136,6 +137,11 @@ public class FormatClientSupport
   @Nonnull
   protected URI resolve(final String path) {
     return repositoryBaseUri.resolve(path);
+  }
+
+  @Override
+  public void close() throws IOException {
+    httpClient.close();
   }
 
   public static int status(HttpResponse response) {

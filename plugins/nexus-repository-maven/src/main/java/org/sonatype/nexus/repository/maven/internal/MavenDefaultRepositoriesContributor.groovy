@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.maven.internal.orient
+package org.sonatype.nexus.repository.maven.internal
 
 
 import javax.inject.Inject
@@ -19,6 +19,7 @@ import javax.inject.Singleton
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
 import org.sonatype.nexus.repository.config.Configuration
+import org.sonatype.nexus.repository.content.facet.WritePolicy
 import org.sonatype.nexus.repository.manager.DefaultRepositoriesContributor
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.maven.LayoutPolicy
@@ -26,7 +27,6 @@ import org.sonatype.nexus.repository.maven.VersionPolicy
 import org.sonatype.nexus.repository.maven.internal.recipes.Maven2GroupRecipe
 import org.sonatype.nexus.repository.maven.internal.recipes.Maven2HostedRecipe
 import org.sonatype.nexus.repository.maven.internal.recipes.Maven2ProxyRecipe
-import org.sonatype.nexus.repository.storage.WritePolicy
 
 /**
  * Provide default hosted and proxy repositories for Maven.
@@ -35,7 +35,7 @@ import org.sonatype.nexus.repository.storage.WritePolicy
  */
 @Named
 @Singleton
-class OrientMavenDefaultRepositoriesContributor
+class MavenDefaultRepositoriesContributor
     implements DefaultRepositoriesContributor
 {
   static final String DEFAULT_RELEASE_REPO = 'maven-releases'

@@ -16,6 +16,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.formfields.RepositoryCombobox;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 
@@ -34,7 +35,7 @@ public class RebuildIndexTaskDescriptor
   public static final String REPOSITORY_NAME_FIELD_ID = "repositoryName";
 
   @Inject
-  public RebuildIndexTaskDescriptor() {
+  public RebuildIndexTaskDescriptor(final NodeAccess nodeAccess) {
     super(TYPE_ID,
         RebuildIndexTask.class,
         "Repair - Rebuild repository search",
@@ -45,7 +46,9 @@ public class RebuildIndexTaskDescriptor
             "Repository",
             "Select the repository to rebuild index",
             true
-        ).includingAnyOfFacets(SearchIndexFacet.class).includeAnEntryForAllRepositories()
+        ).includingAnyOfFacets(SearchIndexFacet.class).includeAnEntryForAllRepositories(),
+
+        nodeAccess.isClustered() ? newMultinodeFormField().withInitialValue(true) : null
     );
   }
 }

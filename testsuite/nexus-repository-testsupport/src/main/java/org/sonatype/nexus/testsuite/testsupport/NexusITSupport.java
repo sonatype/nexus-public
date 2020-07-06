@@ -41,6 +41,7 @@ import org.sonatype.nexus.rest.client.RestClientConfiguration;
 import org.sonatype.nexus.rest.client.RestClientConfiguration.Customizer;
 import org.sonatype.nexus.rest.client.RestClientFactory;
 import org.sonatype.nexus.security.SecuritySystem;
+import org.sonatype.nexus.security.anonymous.AnonymousManager;
 import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.testsuite.testsupport.fixtures.SecurityRule;
 import org.sonatype.nexus.testsuite.testsupport.rest.TestSuiteObjectMapperResolver;
@@ -124,7 +125,10 @@ public abstract class NexusITSupport
   @Inject
   private SelectorManager selectorManager;
 
-  protected SecurityRule securityRule = new SecurityRule(() -> securitySystem, () -> selectorManager);
+  @Inject
+  private AnonymousManager anonymousManager;
+
+  protected SecurityRule securityRule = new SecurityRule(() -> securitySystem, () -> selectorManager, () -> anonymousManager);
 
   @Configuration
   public static Option[] configureNexus() {

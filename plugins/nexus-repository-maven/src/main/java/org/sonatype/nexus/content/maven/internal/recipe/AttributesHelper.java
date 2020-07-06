@@ -16,12 +16,16 @@ import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
+import org.sonatype.nexus.repository.maven.MavenPathParser;
 
 import org.apache.maven.model.Model;
 
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.ARTIFACT;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.ARTIFACT_SUBORDINATE;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.OTHER;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_INDEX;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_ARTIFACT_ID;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_CLASSIFIER;
@@ -31,7 +35,6 @@ import static org.sonatype.nexus.repository.maven.internal.Attributes.P_PACKAGIN
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_POM_DESCRIPTION;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_POM_NAME;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_VERSION;
-import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
 /**
  * Helper class used by {@link MavenContentFacetImpl} for setting Asset and Component attributes
@@ -41,6 +44,8 @@ import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_K
 final class AttributesHelper
 {
   private static final String JAR = "jar";
+
+  public static final String P_ASSET_KIND = "asset_kind";
 
   private AttributesHelper() {
     //no-op
@@ -53,8 +58,12 @@ final class AttributesHelper
     component.withAttribute(P_BASE_VERSION, coordinates.getBaseVersion());
   }
 
-  static void setAssetAttributes(final FluentAsset asset, final MavenPath path) {
-    Coordinates coordinates = path.getCoordinates();
+  static void setAssetAttributes(
+      final FluentAsset asset,
+      final MavenPath mavenPath,
+      final MavenPathParser mavenPathParser)
+  {
+    Coordinates coordinates = mavenPath.getCoordinates();
     if (coordinates != null) {
       asset.withAttribute(P_GROUP_ID, coordinates.getGroupId());
       asset.withAttribute(P_ARTIFACT_ID, coordinates.getArtifactId());
@@ -62,7 +71,10 @@ final class AttributesHelper
       asset.withAttribute(P_BASE_VERSION, coordinates.getBaseVersion());
       ofNullable(coordinates.getClassifier()).ifPresent(value -> asset.withAttribute(P_CLASSIFIER, value));
       asset.withAttribute(P_EXTENSION, coordinates.getExtension());
-      asset.withAttribute(P_ASSET_KIND, assetKind(path));
+      asset.withAttribute(P_ASSET_KIND, assetKind(mavenPath, mavenPathParser));
+    }
+    else {
+      asset.withAttribute(P_ASSET_KIND, assetKind(mavenPath, mavenPathParser));
     }
   }
 
@@ -77,7 +89,28 @@ final class AttributesHelper
     return packaging == null ? JAR : packaging;
   }
 
-  static String assetKind(final MavenPath path) {
-    return path.isSubordinate() ? ARTIFACT_SUBORDINATE.name() : ARTIFACT.name();
+  static String assetKind(final MavenPath mavenPath, final MavenPathParser mavenPathParser) {
+    if (mavenPath.getCoordinates() != null) {
+      return artifactRelatedAssetKind(mavenPath);
+    }
+    else {
+      return fileAssetKindFor(mavenPath, mavenPathParser);
+    }
+  }
+
+  private static String artifactRelatedAssetKind(final MavenPath mavenPath) {
+    return mavenPath.isSubordinate() ? ARTIFACT_SUBORDINATE.name() : ARTIFACT.name();
+  }
+
+  private static String fileAssetKindFor(final MavenPath mavenPath, final MavenPathParser mavenPathParser) {
+    if (mavenPathParser.isRepositoryMetadata(mavenPath)) {
+      return REPOSITORY_METADATA.name();
+    }
+    else if (mavenPathParser.isRepositoryIndex(mavenPath)) {
+      return REPOSITORY_INDEX.name();
+    }
+    else {
+      return OTHER.name();
+    }
   }
 }
