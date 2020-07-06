@@ -45,7 +45,7 @@ public class BlobRefTypeHandler
                                   final JdbcType jdbcType)
       throws SQLException
   {
-    ps.setString(parameterIndex, parameter.toString());
+    ps.setString(parameterIndex, toPersistableString(parameter));
   }
 
   @Override
@@ -65,6 +65,32 @@ public class BlobRefTypeHandler
 
   @Nullable
   private BlobRef nullableBlobRef(@Nullable final String blobRef) {
-    return blobRef != null ? BlobRef.parse(blobRef) : null;
+    return blobRef != null ? parsePersistableFormat(blobRef) : null;
+  }
+
+  /**
+   * @return the {@link BlobRef} encoded as a string, using the syntax {@code store:blob-id@node}
+   *
+   * @since 3.next
+   */
+  public String toPersistableString(final BlobRef blobRef) {
+    return String.format("%s:%s@%s", blobRef.getStore(), blobRef.getBlob(), blobRef.getNode());
+  }
+
+  /**
+   * Parse a string representation of a {@link BlobRef}, using the syntax {@code store:blob-id@node}
+   *
+   * @since 3.next
+   */
+  public static BlobRef parsePersistableFormat(final String spec) {
+    int colon = spec.indexOf(':');
+    int at = spec.lastIndexOf('@');
+
+    if (colon > 0 && at > 0 && at-1 > colon && at < spec.length()-1) {
+      return new BlobRef(spec.substring(at+1), spec.substring(0, colon), spec.substring(colon+1, at));
+    }
+    else {
+      throw new IllegalArgumentException("Not a valid blob reference: " + spec);
+    }
   }
 }
