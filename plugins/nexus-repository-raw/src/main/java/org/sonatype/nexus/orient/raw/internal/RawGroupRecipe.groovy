@@ -19,6 +19,7 @@ import javax.inject.Named
 import javax.inject.Provider
 import javax.inject.Singleton
 
+import org.sonatype.nexus.content.raw.internal.recipe.ContentDispositionHandler
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.RecipeSupport
 import org.sonatype.nexus.repository.Repository
@@ -85,6 +86,9 @@ class RawGroupRecipe
   HandlerContributor handlerContributor
 
   @Inject
+  ContentDispositionHandler contentDispositionHandler
+
+  @Inject
   RawGroupRecipe(@Named(GroupType.NAME) Type type,
                  @Named(RawFormat.NAME) Format format)
   {
@@ -109,6 +113,7 @@ class RawGroupRecipe
     builder.route(new Route.Builder()
         .matcher(new TokenMatcher('/{name:.+}'))
         .handler(timingHandler)
+        .handler(contentDispositionHandler)
         .handler(securityHandler)
         .handler(exceptionHandler)
         .handler(handlerContributor)
