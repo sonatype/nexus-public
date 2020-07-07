@@ -384,6 +384,12 @@
         <version>2.9.0</version>
       </dependency>
 
+      <dependency>
+        <groupId>org.sonatype.ossindex</groupId>
+        <artifactId>ossindex-service-client</artifactId>
+        <version>1.3.0</version>
+      </dependency>
+
     </dependencies>
   </dependencyManagement>
 

@@ -39,6 +39,14 @@ Ext.define('NX.coreui.view.component.ComponentAssetInfo', {
     items: [
       {
         xtype: 'nx-button',
+        text: NX.I18n.get('ComponentDetails_View_Vulnerabilities_Button'),
+        iconCls: 'x-fa fa-bug',
+        reference: 'viewVulnerabilitiesButton',
+        action: 'viewVulnerabilities',
+        hidden: true
+      },
+      {
+        xtype: 'nx-button',
         text: NX.I18n.get('FolderInfo_Delete_Button'),
         iconCls: 'x-fa fa-trash',
         action: 'deleteFolder',
@@ -55,25 +63,37 @@ Ext.define('NX.coreui.view.component.ComponentAssetInfo', {
 
   referenceHolder: true,
 
-  items: [{
-    xtype: 'nx-info-panel',
-    reference: 'summaryPanel',
-    titled: 'Summary',
-    collapsible: true
-  }, {
-    xtype: 'nx-info-dependency-snippet-panel',
-    reference: 'dependencySnippetPanel'
-  }, {
-    xtype: 'panel',
-    ui: 'nx-inset',
-    title: 'Attributes',
-    collapsible: true,
-    manageHeight: false,
-    items: [{
-      xtype: 'nx-coreui-component-assetattributes',
-      reference: 'attributesPanel'
-    }]
-  }],
+  items: [
+    {
+      xtype: 'nx-info-panel',
+      reference: 'summaryPanel',
+      titled: 'Summary',
+      collapsible: true
+    },
+    {
+      xtype: 'nx-info-panel',
+      reference: 'vulnerabilityPanel',
+      titled: NX.I18n.get('Component_Vulnerability_Info_Title'),
+      collapsible: true,
+      hidden: true
+    },
+    {
+      xtype: 'nx-info-dependency-snippet-panel',
+      reference: 'dependencySnippetPanel'
+    }, {
+      xtype: 'panel',
+      ui: 'nx-inset',
+      title: 'Attributes',
+      collapsible: true,
+      manageHeight: false,
+      items: [
+        {
+          xtype: 'nx-coreui-component-assetattributes',
+          reference: 'attributesPanel'
+        }
+      ]
+    }
+  ],
 
   savedInfo: {},
 
@@ -152,5 +172,13 @@ Ext.define('NX.coreui.view.component.ComponentAssetInfo', {
 
   getDependencySnippetPanel: function() {
     return this.lookup('dependencySnippetPanel');
+  },
+
+  getVulnerabilityPanel: function() {
+    return this.lookup('vulnerabilityPanel');
+  },
+
+  getViewVulnerabilitiesButton: function() {
+    return this.lookup('viewVulnerabilitiesButton');
   }
 });
