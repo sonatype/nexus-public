@@ -4,4 +4,14 @@
 
 .nx-coreui-component-componentassetinfo {
   @extend .nx-coreui-component-componentinfo;
+
+  .x-panel-nx-inset {
+    .x-panel-header-nx-inset.vulnerabilities {
+      background-color: $nx-red-500;
+
+      .x-title-text-nx-inset {
+        color: $color-white;
+      }
+    }
+  }
 }

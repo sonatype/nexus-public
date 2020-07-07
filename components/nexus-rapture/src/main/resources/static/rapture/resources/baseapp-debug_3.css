@@ -11273,6 +11273,14 @@ tr.x-grid-subtable-row {
     background-color: #fff;
 }
 
+.nx-coreui-component-componentassetinfo .x-panel-nx-inset .x-panel-header-nx-inset.vulnerabilities {
+    background-color: #831d1d;
+}
+
+.nx-coreui-component-componentassetinfo .x-panel-nx-inset .x-panel-header-nx-inset.vulnerabilities .x-title-text-nx-inset {
+    color: #fff;
+}
+
 .nx-coreui-component-componentinfo,
 .nx-coreui-component-componentassetinfo {
     /**
@@ -11344,6 +11352,16 @@ tr.x-grid-subtable-row {
 .nx-coreui-component-componentinfo .x-panel-nx-inset .x-panel-header-nx-inset .x-tool-img:hover,
 .nx-coreui-component-componentassetinfo .x-panel-nx-inset .x-panel-header-nx-inset .x-tool-img:hover {
     opacity: 0.7;
+}
+
+.nx-coreui-component-componentinfo .x-panel-nx-inset .x-panel-header-nx-inset.vulnerabilities,
+.nx-coreui-component-componentassetinfo .x-panel-nx-inset .x-panel-header-nx-inset.vulnerabilities {
+    background-color: #831d1d;
+}
+
+.nx-coreui-component-componentinfo .x-panel-nx-inset .x-panel-header-nx-inset.vulnerabilities .x-title-text-nx-inset,
+.nx-coreui-component-componentassetinfo .x-panel-nx-inset .x-panel-header-nx-inset.vulnerabilities .x-title-text-nx-inset {
+    color: #fff;
 }
 
 .nx-coreui-component-componentinfo .x-autocontainer-innerCt > .x-panel-nx-inset.x-panel-collapsed.x-panel-nx-inset-collapsed,

@@ -108,6 +108,31 @@ Ext.define('NX.coreui.mixin.ComponentUtils', {
     }
   },
 
+  viewVulnerabilities: function() {
+    var info = this.getComponentInfo || this.getComponentAssetInfo;
+    var vulnerabilityPanel = info().getVulnerabilityPanel();
+    if (vulnerabilityPanel) {
+      window.open(vulnerabilityPanel.referenceLink);
+    }
+  },
+
+  updateVulnerabilitiesButton: function(panel, vulnerabilityInfo) {
+    var viewVulnerabilitiesButton = panel.getViewVulnerabilitiesButton();
+    if(vulnerabilityInfo) {
+      viewVulnerabilitiesButton.setVisible(true);
+      if (vulnerabilityInfo.count > 0) {
+        viewVulnerabilitiesButton.setText(
+            NX.I18n.format('ComponentDetails_View_Vulnerabilities_Count_Button', vulnerabilityInfo.count));
+      }
+      else {
+        viewVulnerabilitiesButton.setText(NX.I18n.get('ComponentDetails_View_Vulnerabilities_Button'));
+      }
+    }
+    else {
+      viewVulnerabilitiesButton.setVisible(false);
+    }
+  },
+
   updateDeleteComponentButton: function(currentRepository, componentModel) {
     var me = this,
         deleteComponentButton = me.getDeleteComponentButton();
@@ -233,8 +258,14 @@ Ext.define('NX.coreui.mixin.ComponentUtils', {
       case 'folder':
         return iconController.findIcon('tree-folder', 'x16');
       case 'component':
+        if('OSS' === NX.State.getEdition() && asset.get('vulnerable')) {
+          return iconController.findIcon('vulnerability', 'x16');
+        }
         return iconController.findIcon('tree-component', 'x16');
       case 'asset':
+        if('OSS' === NX.State.getEdition() && asset.get('vulnerable')) {
+          return iconController.findIcon('vulnerability', 'x16');
+        }
         var assetName = asset.get('text');
         var icon = me.getIconForAssetName(assetName);
         if (icon) {

@@ -49,7 +49,14 @@ Ext.define('NX.coreui.view.component.ComponentDetails', {
         items: [
           {
             xtype: 'nx-button',
-            text: NX.I18n.get('ComponentDetails_Delete_Button'),
+            text: NX.I18n.get('ComponentDetails_View_Vulnerabilities_Button'),
+            iconCls: 'x-fa fa-bug',
+            action: 'viewVulnerabilities',
+            hidden: true
+          },
+          {
+            xtype: 'nx-button',
+            text: ''+NX.I18n.get('ComponentDetails_Delete_Button'),
             iconCls: 'x-fa fa-trash',
             action: 'deleteComponent',
             hidden: true
