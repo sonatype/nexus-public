@@ -29,7 +29,7 @@ public class RawHostedRepositoryApiRequestToConfigurationConverter
   @Override
   public Configuration convert(final RawHostedRepositoryApiRequest request) {
     Configuration configuration = super.convert(request);
-    configuration.attributes("raw").set(CONTENT_DISPOSITION, request.getRaw().getContentDisposition());
+    configuration.attributes("raw").set(CONTENT_DISPOSITION, request.getRaw().getContentDisposition().name());
     return configuration;
   }
 }

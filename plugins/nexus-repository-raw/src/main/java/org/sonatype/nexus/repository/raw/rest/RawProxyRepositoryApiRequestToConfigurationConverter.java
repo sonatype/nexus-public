@@ -36,7 +36,7 @@ public class RawProxyRepositoryApiRequestToConfigurationConverter
   @Override
   public Configuration convert(final RawProxyRepositoryApiRequest request) {
     Configuration configuration = super.convert(request);
-    configuration.attributes("raw").set(CONTENT_DISPOSITION, request.getRaw().getContentDisposition());
+    configuration.attributes("raw").set(CONTENT_DISPOSITION, request.getRaw().getContentDisposition().name());
     return configuration;
   }
 }
