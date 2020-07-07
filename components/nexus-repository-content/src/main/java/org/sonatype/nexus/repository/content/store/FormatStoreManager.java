@@ -15,15 +15,15 @@ package org.sonatype.nexus.repository.content.store;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-import javax.inject.Provider;
+import javax.inject.Inject;
+
+import org.sonatype.nexus.datastore.api.ContentDataAccess;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Arrays.stream;
 
 /**
  * Manages content stores for a particular format. To get the {@link FormatStoreManager} for format "example", inject
@@ -35,62 +35,63 @@ import static java.util.Arrays.stream;
  *
  * @since 3.24
  */
-@SuppressWarnings({ "rawtypes", "unchecked" })
+@SuppressWarnings("unchecked")
 public class FormatStoreManager
 {
-  private static final Class<?>[] KNOWN_DAOS = {
-      ContentRepositoryDAO.class,
-      ComponentDAO.class,
-      AssetDAO.class,
-      AssetBlobDAO.class };
-
   private final Cache<String, ContentStoreSupport<?>> cachedStores = CacheBuilder.newBuilder().weakValues().build();
 
-  private final Provider<FormatStoreFactory> factoryProvider;
+  private final String formatClassPrefix;
 
-  private final Map<Class<?>, Class<?>> formatDaoMap;
+  private Map<String, FormatStoreFactory> formatStoreFactories;
 
-  FormatStoreManager(final Provider<FormatStoreFactory> factoryProvider, final Class<?>[] daoClasses) {
-    this.factoryProvider = checkNotNull(factoryProvider);
-    this.formatDaoMap = indexDAOs(checkNotNull(daoClasses));
+  FormatStoreManager(final String formatClassPrefix) {
+    this.formatClassPrefix = checkNotNull(formatClassPrefix);
+  }
+
+  @Inject
+  void setFormatStoreFactories(final Map<String, FormatStoreFactory> formatStoreFactories) {
+    this.formatStoreFactories = checkNotNull(formatStoreFactories);
   }
 
   /**
    * Gets the {@link ContentRepositoryStore} for this format in the named datastore.
    */
   public <T extends ContentRepositoryStore<?>> T contentRepositoryStore(final String contentStoreName) {
-    return (T) getFormatStore(contentStoreName, ContentRepositoryDAO.class);
+    return (T) formatStore(contentStoreName, ContentRepositoryDAO.class);
   }
 
   /**
    * Gets the {@link ComponentStore} for this format in the named datastore.
    */
   public <T extends ComponentStore<?>> T componentStore(final String contentStoreName) {
-    return (T) getFormatStore(contentStoreName, ComponentDAO.class);
+    return (T) formatStore(contentStoreName, ComponentDAO.class);
   }
 
   /**
    * Gets the {@link AssetStore} for this format in the named datastore.
    */
   public <T extends AssetStore<?>> T assetStore(final String contentStoreName) {
-    return (T) getFormatStore(contentStoreName, AssetDAO.class);
+    return (T) formatStore(contentStoreName, AssetDAO.class);
   }
 
   /**
    * Gets the {@link AssetBlobStore} for this format in the named datastore.
    */
   public <T extends AssetBlobStore<?>> T assetBlobStore(final String contentStoreName) {
-    return (T) getFormatStore(contentStoreName, AssetBlobDAO.class);
+    return (T) formatStore(contentStoreName, AssetBlobDAO.class);
   }
 
   /**
    * Gets the format-specific store for the named datastore and type of DAO (component/asset/etc...)
    * If the store doesn't exist it is created and cached for other repositories in the same datastore.
    */
-  private ContentStoreSupport<?> getFormatStore(final String contentStoreName, final Class<?> daoClass) {
+  public <T extends ContentStoreSupport<D>, D extends ContentDataAccess> T formatStore(
+      final String contentStoreName,
+      final Class<? extends D> daoClass)
+  {
+    String cacheKey = contentStoreName + '/' + formatDaoName(daoClass);
     try {
-      return cachedStores.get(contentStoreName + '/' + daoClass.getName(),
-          () -> createFormatStore(contentStoreName, daoClass));
+      return (T) cachedStores.get(cacheKey, () -> createFormatStore(contentStoreName, daoClass));
     }
     catch (ExecutionException e) {
       throw new UncheckedExecutionException(e.getCause());
@@ -101,20 +102,9 @@ public class FormatStoreManager
    * Creates a format-specific store for the named datastore and type of DAO (component/asset/etc...)
    */
   private ContentStoreSupport<?> createFormatStore(final String contentStoreName, final Class<?> daoClass) {
-    FormatStoreFactory factory = factoryProvider.get();
-    Class<?> formatDaoClass = formatDaoMap.get(daoClass);
-
-    if (ContentRepositoryDAO.class.equals(daoClass)) {
-      return factory.contentRepositoryStore(contentStoreName, formatDaoClass);
-    }
-    else if (ComponentDAO.class.equals(daoClass)) {
-      return factory.componentStore(contentStoreName, formatDaoClass);
-    }
-    else if (AssetDAO.class.equals(daoClass)) {
-      return factory.assetStore(contentStoreName, formatDaoClass);
-    }
-    else if (AssetBlobDAO.class.equals(daoClass)) {
-      return factory.assetBlobStore(contentStoreName, formatDaoClass);
+    FormatStoreFactory factory = formatStoreFactories.get(formatDaoName(daoClass));
+    if (factory != null) {
+      return factory.createFormatStore(contentStoreName);
     }
     else {
       throw new IllegalArgumentException("Unexpected DAO class: " + daoClass);
@@ -122,16 +112,13 @@ public class FormatStoreManager
   }
 
   /**
-   * Indexes the format-specific DAOs by whichever known DAO interface they extend.
+   * Returns the format-specific name for the requested DAO type.
    */
-  private static Map<Class<?>, Class<?>> indexDAOs(final Class<?>[] daoClasses) {
-    ImmutableMap.Builder<Class<?>, Class<?>> index = ImmutableMap.builder();
-    for (Class<?> knownDao : KNOWN_DAOS) {
-      index.put(knownDao, stream(daoClasses)
-          .filter(knownDao::isAssignableFrom)
-          .findFirst()
-          .orElseThrow(() -> new IllegalArgumentException("Format does not define " + knownDao)));
+  private String formatDaoName(final Class<?> daoClass) {
+    String daoName = daoClass.getSimpleName();
+    if (daoName.startsWith(formatClassPrefix)) {
+      return daoName; // requested DAO is already format-specific
     }
-    return index.build();
+    return formatClassPrefix + daoName;
   }
 }

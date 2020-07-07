@@ -13,13 +13,13 @@
 
 package org.sonatype.nexus.content.maven.internal.store;
 
-import org.sonatype.nexus.repository.content.store.ComponentDAO;
+import org.sonatype.nexus.repository.content.store.ContentRepositoryDAO;
 
 /**
  * @since 3.next
  */
-public interface MavenComponentDAO
-    extends ComponentDAO
+public interface Maven2ContentRepositoryDAO
+    extends ContentRepositoryDAO
 {
   // nothing to add...
 }

@@ -13,13 +13,13 @@
 
 package org.sonatype.nexus.content.maven.internal.store;
 
-import org.sonatype.nexus.repository.content.store.AssetBlobDAO;
+import org.sonatype.nexus.repository.content.store.AssetDAO;
 
 /**
  * @since 3.next
  */
-public interface MavenAssetBlobDAO
-    extends AssetBlobDAO
+public interface Maven2AssetDAO
+    extends AssetDAO
 {
   // nothing to add...
 }

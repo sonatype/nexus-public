@@ -13,13 +13,22 @@
 
 package org.sonatype.nexus.content.maven.internal.store;
 
-import org.sonatype.nexus.repository.content.store.ContentRepositoryDAO;
+import javax.inject.Named;
+
+import org.sonatype.nexus.repository.content.store.FormatStoreModule;
+import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 
 /**
+ * Configures the content store bindings for a maven format.
+ *
  * @since 3.next
  */
-public interface MavenContentRepositoryDAO
-    extends ContentRepositoryDAO
+@Named(Maven2Format.NAME)
+public class Maven2StoreModule
+    extends FormatStoreModule<Maven2ContentRepositoryDAO,
+                              Maven2ComponentDAO,
+                              Maven2AssetDAO,
+                              Maven2AssetBlobDAO>
 {
   // nothing to add...
 }

@@ -25,14 +25,14 @@ import org.sonatype.nexus.datastore.api.ContentDataAccess;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.Asset;
-import org.sonatype.nexus.repository.content.store.example.BespokeStoreModule;
-import org.sonatype.nexus.repository.content.store.example.PlainStoreModule;
 import org.sonatype.nexus.repository.content.store.example.TestAssetBlobDAO;
 import org.sonatype.nexus.repository.content.store.example.TestAssetDAO;
 import org.sonatype.nexus.repository.content.store.example.TestAssetData;
 import org.sonatype.nexus.repository.content.store.example.TestAssetStore;
+import org.sonatype.nexus.repository.content.store.example.TestBespokeStoreModule;
 import org.sonatype.nexus.repository.content.store.example.TestComponentDAO;
 import org.sonatype.nexus.repository.content.store.example.TestContentRepositoryDAO;
+import org.sonatype.nexus.repository.content.store.example.TestPlainStoreModule;
 import org.sonatype.nexus.testdb.DataSessionRule;
 import org.sonatype.nexus.transaction.TransactionModule;
 import org.sonatype.nexus.transaction.Transactional;
@@ -44,6 +44,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
+import org.eclipse.sisu.wire.WireModule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -82,8 +83,10 @@ public class FormatStoreManagerTest
 
   @Test
   public void testPlainBindings() {
-    Injector injector = Guice.createInjector(new PlainStoreModule(), new SessionModule(), new TransactionModule());
-    FormatStoreManager underTest = injector.getInstance(Key.get(FormatStoreManager.class, Names.named("plain")));
+    Injector injector =
+        Guice.createInjector(new WireModule(new TestPlainStoreModule(), new SessionModule(), new TransactionModule()));
+
+    FormatStoreManager underTest = injector.getInstance(Key.get(FormatStoreManager.class, Names.named("test")));
 
     ContentRepositoryStore<?> contentRepositoryStore = underTest.contentRepositoryStore("content");
     ComponentStore<?> componentStore = underTest.componentStore("content");
@@ -105,8 +108,10 @@ public class FormatStoreManagerTest
 
   @Test
   public void testPlainOperations() {
-    Injector injector = Guice.createInjector(new PlainStoreModule(), new SessionModule(), new TransactionModule());
-    FormatStoreManager underTest = injector.getInstance(Key.get(FormatStoreManager.class, Names.named("plain")));
+    Injector injector =
+        Guice.createInjector(new WireModule(new TestPlainStoreModule(), new SessionModule(), new TransactionModule()));
+
+    FormatStoreManager underTest = injector.getInstance(Key.get(FormatStoreManager.class, Names.named("test")));
 
     ContentRepositoryStore<?> contentRepositoryStore = underTest.contentRepositoryStore("content");
     ComponentStore<?> componentStore = underTest.componentStore("content");
@@ -153,8 +158,10 @@ public class FormatStoreManagerTest
 
   @Test
   public void testBespokeBindings() {
-    Injector injector = Guice.createInjector(new BespokeStoreModule(), new SessionModule(), new TransactionModule());
-    FormatStoreManager underTest = injector.getInstance(Key.get(FormatStoreManager.class, Names.named("bespoke")));
+    Injector injector =
+        Guice.createInjector(new WireModule(new TestBespokeStoreModule(), new SessionModule(), new TransactionModule()));
+
+    FormatStoreManager underTest = injector.getInstance(Key.get(FormatStoreManager.class, Names.named("test")));
 
     ContentRepositoryStore<?> contentRepositoryStore = underTest.contentRepositoryStore("content");
     ComponentStore<?> componentStore = underTest.componentStore("content");
@@ -176,8 +183,10 @@ public class FormatStoreManagerTest
 
   @Test
   public void testBespokeOperations() {
-    Injector injector = Guice.createInjector(new BespokeStoreModule(), new SessionModule(), new TransactionModule());
-    FormatStoreManager underTest = injector.getInstance(Key.get(FormatStoreManager.class, Names.named("bespoke")));
+    Injector injector =
+        Guice.createInjector(new WireModule(new TestBespokeStoreModule(), new SessionModule(), new TransactionModule()));
+
+    FormatStoreManager underTest = injector.getInstance(Key.get(FormatStoreManager.class, Names.named("test")));
 
     // add our bespoke schema for testing purposes
     try (DataSession<?> session = sessionRule.openSession("content")) {

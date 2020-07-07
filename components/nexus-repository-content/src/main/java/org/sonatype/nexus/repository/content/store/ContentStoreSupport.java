@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.content.store;
 
 import org.sonatype.nexus.common.property.SystemPropertiesHelper;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
-import org.sonatype.nexus.datastore.api.DataAccess;
+import org.sonatype.nexus.datastore.api.ContentDataAccess;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.transaction.TransactionalStore;
@@ -30,7 +30,7 @@ import static org.sonatype.nexus.datastore.DataAccessHelper.access;
  *
  * @since 3.21
  */
-public abstract class ContentStoreSupport<T extends DataAccess>
+public abstract class ContentStoreSupport<T extends ContentDataAccess>
     extends StateGuardLifecycleSupport
     implements TransactionalStore<DataSession<?>>
 {
