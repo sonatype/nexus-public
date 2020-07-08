@@ -12,9 +12,9 @@
  */
 import React from 'react';
 import {useMachine} from '@xstate/react';
-import {Button, NxLoadWrapper, Section, SectionFooter, ContentBody} from 'nexus-ui-plugin';
+import {Button, NxLoadWrapper, Page, PageHeader, PageTitle, Section, SectionFooter, ContentBody} from 'nexus-ui-plugin';
 import {NxFontAwesomeIcon, NxModal} from '@sonatype/react-shared-components';
-import {faLock} from '@fortawesome/free-solid-svg-icons';
+import {faKey, faLock} from '@fortawesome/free-solid-svg-icons';
 
 import NuGetApiTokenMachine from './NuGetApiTokenMachine';
 import NuGetApiTokenModal from './NuGetApiTokenModal';
@@ -38,23 +38,26 @@ export default function NuGetApiToken() {
     send('HIDE');
   }
 
-  return <ContentBody>
-    <Section>
-      <NxLoadWrapper isLoading={isLoading}>
-        <p> {UIStrings.NUGET_API_KEY.INSTRUCTIONS} </p>
-        <SectionFooter>
-          <Button variant='primary' onClick={handleAccessKey}>
-            <NxFontAwesomeIcon icon={faLock}/>
-            <span>{UIStrings.NUGET_API_KEY.ACCESS.BUTTON}</span>
-          </Button>
-          <Button onClick={handleResetKey}>
-            <NxFontAwesomeIcon icon={faLock}/>
-            <span>{UIStrings.NUGET_API_KEY.RESET.BUTTON}</span>
-          </Button>
-        </SectionFooter>
+  return <Page>
+    <PageHeader><PageTitle icon={faKey} {...UIStrings.NUGET_API_KEY.MENU}/></PageHeader>
+    <ContentBody>
+      <Section>
+        <NxLoadWrapper isLoading={isLoading}>
+          <p> {UIStrings.NUGET_API_KEY.INSTRUCTIONS} </p>
+          <SectionFooter>
+            <Button variant='primary' onClick={handleAccessKey}>
+              <NxFontAwesomeIcon icon={faLock}/>
+              <span>{UIStrings.NUGET_API_KEY.ACCESS.BUTTON}</span>
+            </Button>
+            <Button onClick={handleResetKey}>
+              <NxFontAwesomeIcon icon={faLock}/>
+              <span>{UIStrings.NUGET_API_KEY.RESET.BUTTON}</span>
+            </Button>
+          </SectionFooter>
 
-        {showNugetModal && <NuGetApiTokenModal apiKey={state.context.token.apiKey} onCloseClick={handleCloseKey}/>}
-      </NxLoadWrapper>
-    </Section>
-  </ContentBody>;
+          {showNugetModal && <NuGetApiTokenModal apiKey={state.context.token.apiKey} onCloseClick={handleCloseKey}/>}
+        </NxLoadWrapper>
+      </Section>
+    </ContentBody>
+  </Page>;
 }

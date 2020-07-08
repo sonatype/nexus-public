@@ -18,8 +18,11 @@ import {
   Button,
   ContentBody,
   ExtJS,
-  NxFilterInput,
   NxFontAwesomeIcon,
+  Page,
+  PageActions,
+  PageHeader,
+  PageTitle,
   Select,
   Section,
   SectionActions,
@@ -28,7 +31,7 @@ import {
   Textarea
 } from 'nexus-ui-plugin';
 
-import {faDownload, faMapMarker} from '@fortawesome/free-solid-svg-icons';
+import {faDownload, faScroll, faStamp} from '@fortawesome/free-solid-svg-icons';
 
 import LogViewerMachine from "./LogViewerMachine";
 import UIStrings from "../../../../constants/UIStrings";
@@ -96,46 +99,53 @@ export default function LogViewer() {
     send('INSERT_MARK');
   }
 
-  return <ContentBody className="nxrm-log-viewer">
-    <Section>
-      <SectionActions>
-        <label htmlFor="period">{UIStrings.LOG_VIEWER.REFRESH.TEXT}</label>
-        <SelectAction>
-          <Select name="period" id="period" value={selectedPeriod} onChange={onChangePeriod}>
-            {refreshPeriods.map(([period, label]) =>
-              <option key={period} value={period}>{label}</option>
-            )}
-          </Select>
-        </SelectAction>
-        <SelectAction>
-          <Select name="size" value={selectedSize} onChange={onChangeSize}>
-            {refreshSizes.map(([size, label]) =>
-              <option key={size} value={size}>{label}</option>
-            )}
-          </Select>
-        </SelectAction>
-      </SectionActions>
-      <SectionHeader>
+  return <Page className="nxrm-log-viewer">
+    <PageHeader>
+      <PageTitle icon={faScroll} {...UIStrings.LOG_VIEWER.MENU}/>
+      <PageActions>
         <Button variant="primary" onClick={download}>
           <NxFontAwesomeIcon icon={faDownload}/>
           <span>{UIStrings.LOG_VIEWER.DOWNLOAD}</span>
         </Button>
-        <Textfield
-            className="nxrm-log-viewer-mark-text"
-            name="mark"
-            value={mark}
-            onChange={updateMark}
-            onKeyPress={onMarkKeyPress}
-            placeholder={UIStrings.LOG_VIEWER.MARK_PLACEHOLDER}
-        />
-        <Button onClick={insertMark} id="insertMark">
-          <NxFontAwesomeIcon icon={faMapMarker}/>
-          <span>{UIStrings.LOG_VIEWER.INSERT_MARK}</span>
-        </Button>
-      </SectionHeader>
-      <Textarea ref={textarea} readOnly wrap="false" value={logText}/>
-    </Section>
-  </ContentBody>;
+      </PageActions>
+    </PageHeader>
+    <ContentBody>
+      <Section>
+        <SectionActions>
+          <label htmlFor="period">{UIStrings.LOG_VIEWER.REFRESH.TEXT}</label>
+          <SelectAction>
+            <Select name="period" id="period" value={selectedPeriod} onChange={onChangePeriod}>
+              {refreshPeriods.map(([period, label]) =>
+                  <option key={period} value={period}>{label}</option>
+              )}
+            </Select>
+          </SelectAction>
+          <SelectAction>
+            <Select name="size" value={selectedSize} onChange={onChangeSize}>
+              {refreshSizes.map(([size, label]) =>
+                  <option key={size} value={size}>{label}</option>
+              )}
+            </Select>
+          </SelectAction>
+        </SectionActions>
+        <SectionHeader>
+          <Textfield
+              className="nxrm-log-viewer-mark-text"
+              name="mark"
+              value={mark}
+              onChange={updateMark}
+              onKeyPress={onMarkKeyPress}
+              placeholder={UIStrings.LOG_VIEWER.MARK_PLACEHOLDER}
+          />
+          <Button onClick={insertMark} id="insertMark">
+            <NxFontAwesomeIcon icon={faStamp}/>
+            <span>{UIStrings.LOG_VIEWER.INSERT_MARK}</span>
+          </Button>
+        </SectionHeader>
+        <Textarea ref={textarea} readOnly wrap="false" value={logText}/>
+      </Section>
+    </ContentBody>
+  </Page>;
 }
 
 function SelectAction({className, children, ...attrs}) {

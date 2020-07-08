@@ -12,18 +12,32 @@
  */
 import React from 'react';
 
-import {Detail, Master, MasterDetail} from 'nexus-ui-plugin';
+import {render} from '@testing-library/react';
+import '@testing-library/jest-dom/extend-expect';
 
-import LoggingConfigurationList from './LoggingConfigurationList';
-import LoggingConfigurationForm from './LoggingConfigurationForm';
+import {faInfo} from '@fortawesome/free-solid-svg-icons';
 
-export default function LoggingConfiguration() {
-  return <MasterDetail path="admin/support/logging">
-    <Master>
-      <LoggingConfigurationList/>
-    </Master>
-    <Detail>
-      <LoggingConfigurationForm/>
-    </Detail>
-  </MasterDetail>;
-}
+import PageTitle from './PageTitle';
+
+describe('PageTitle', () => {
+  it('renders the text with an icon', () => {
+    const {container} = render(
+        <PageTitle icon={faInfo} text="text"/>
+    );
+    expect(container).toMatchSnapshot();
+  });
+
+  it('renders the text without an icon', () => {
+    const {container} = render(
+        <PageTitle text="text"/>
+    );
+    expect(container).toMatchSnapshot();
+  });
+
+  it('renders the text with a description', () => {
+    const {container} = render(
+        <PageTitle text="text" description="description"/>
+    );
+    expect(container).toMatchSnapshot();
+  });
+});

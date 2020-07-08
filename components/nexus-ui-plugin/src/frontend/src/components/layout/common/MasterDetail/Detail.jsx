@@ -12,15 +12,9 @@
  */
 import React from 'react';
 
-import ExtJS from "../../../../interface/ExtJS";
-
 /**
  * @since 3.24
  */
-export default function Detail({children, editBreadcrumb, createBreadcrumb, itemId, ...attrs}) {
-  ExtJS.setBreadcrumbs([{
-    itemName: itemId ? editBreadcrumb(itemId) : createBreadcrumb
-  }]);
-
+export default function Detail({children, itemId, ...attrs}) {
   return <>{React.Children.map(children, (child) => React.cloneElement(child, {...attrs, itemId}))}</>;
 }

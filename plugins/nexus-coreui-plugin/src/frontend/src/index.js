@@ -29,8 +29,7 @@ window.plugins.push({
     {
       mode: 'admin',
       path: '/Security/Anonymous',
-      text: UIStrings.ANONYMOUS_SETTINGS.MENU.text,
-      description: UIStrings.ANONYMOUS_SETTINGS.MENU.description,
+      ...UIStrings.ANONYMOUS_SETTINGS.MENU,
       view: AnonymousSettings,
       iconCls: 'x-fa fa-user',
       visibility: {
@@ -41,8 +40,7 @@ window.plugins.push({
     {
       mode: 'admin',
       path: '/Support/Logging',
-      text: UIStrings.LOGGING.MENU.text,
-      description: UIStrings.LOGGING.MENU.description,
+      ...UIStrings.LOGGING.MENU,
       view: LoggingConfiguration,
       iconCls: 'x-fa fa-scroll',
       visibility: {
@@ -53,8 +51,7 @@ window.plugins.push({
     {
       mode: 'admin',
       path: '/Support/SupportRequest',
-      text: UIStrings.SUPPORT_REQUEST.MENU.text,
-      description: UIStrings.SUPPORT_REQUEST.MENU.description,
+      ...UIStrings.SUPPORT_REQUEST.MENU,
       view: SupportRequest,
       iconCls: 'x-fa fa-user-circle',
       visibility: {
@@ -66,7 +63,7 @@ window.plugins.push({
     {
       mode: 'admin',
       path: '/Support/SystemInformation',
-      text: UIStrings.SYSTEM_INFORMATION.MENU.text,
+      ...UIStrings.SYSTEM_INFORMATION.MENU,
       view: SystemInformation,
       iconCls: 'x-fa fa-globe',
       visibility: {
@@ -77,8 +74,7 @@ window.plugins.push({
     {
       mode: 'user',
       path: '/Account',
-      text: UIStrings.USER_ACCOUNT.MENU.text,
-      description: UIStrings.USER_ACCOUNT.MENU.description,
+      ...UIStrings.USER_ACCOUNT.MENU,
       view: UserAccount,
       iconCls: 'x-fa fa-user',
       visibility: {
@@ -89,8 +85,7 @@ window.plugins.push({
     {
       mode: 'user',
       path: '/NuGetApiToken',
-      text: UIStrings.NUGET_API_KEY.TITLE,
-      description: UIStrings.NUGET_API_KEY.DESCRIPTION,
+      ...UIStrings.NUGET_API_KEY.MENU,
       view: NuGetApiToken,
       iconCls: 'x-fa fa-key',
       visibility: {
@@ -101,8 +96,7 @@ window.plugins.push({
     {
       mode: 'admin',
       path: '/Support/Status',
-      text: 'Status',
-      description: 'System status checks',
+      ...UIStrings.METRIC_HEALTH.MENU,
       view: MetricHealth,
       iconCls: 'x-fa fa-medkit',
       visibility: {
@@ -113,8 +107,7 @@ window.plugins.push({
     {
       mode: 'admin',
       path: '/Support/SupportZip',
-      text: UIStrings.SUPPORT_ZIP.MENU.text,
-      description: UIStrings.SUPPORT_ZIP.MENU.description,
+      ...UIStrings.SUPPORT_ZIP.MENU,
       view: SupportZip,
       iconCls: 'x-fa fa-file-archive',
       visibility: {
@@ -125,8 +118,7 @@ window.plugins.push({
     {
       mode: 'admin',
       path: '/Support/Logging/LogViewer',
-      text: UIStrings.LOG_VIEWER.MENU.text,
-      description: UIStrings.LOG_VIEWER.MENU.description,
+      ...UIStrings.LOG_VIEWER.MENU,
       view: LogViewer,
       iconCls: 'x-fa fa-terminal',
       visibility: {

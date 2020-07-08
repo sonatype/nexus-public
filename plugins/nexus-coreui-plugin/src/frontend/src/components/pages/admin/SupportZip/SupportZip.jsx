@@ -13,12 +13,13 @@
 import React from 'react';
 import {useMachine} from '@xstate/react';
 import UIStrings from '../../../../constants/UIStrings';
-import {ContentBody, ExtJS, NxLoadWrapper, Section} from "nexus-ui-plugin";
+import {ContentBody, ExtJS, NxLoadWrapper, Page, PageHeader, PageTitle, Section} from 'nexus-ui-plugin';
 
-import SupportZipForm from "./SupportZipForm";
-import SupportZipResponse from "./SupportZipResponse";
-import SupportZipResponseHA from "./SupportZipResponseHA";
-import SupportZipMachine from "./SupportZipMachine";
+import SupportZipForm from './SupportZipForm';
+import SupportZipResponse from './SupportZipResponse';
+import SupportZipResponseHA from './SupportZipResponseHA';
+import SupportZipMachine from './SupportZipMachine';
+import {faArchive} from '@fortawesome/free-solid-svg-icons';
 
 export default function SupportZip() {
   const [current, send] = useMachine(SupportZipMachine, {devTools: true});
@@ -54,15 +55,18 @@ export default function SupportZip() {
     });
   }
 
-  return <ContentBody className="nxrm-support-zip">
-    <Section>
-      {!(isCreated || isHaZipsCreated) &&
+  return <Page>
+    <PageHeader><PageTitle icon={faArchive} {...UIStrings.SUPPORT_ZIP.MENU}/></PageHeader>
+    <ContentBody className="nxrm-support-zip">
+      <Section>
+        {!(isCreated || isHaZipsCreated) &&
         <NxLoadWrapper loading={isLoading} error={createError ? `${createError}` : null}>
           <SupportZipForm params={params} setParams={setParams} submit={submit} clustered={ExtJS.state().isClustered()} hazips={hazips}/>
         </NxLoadWrapper>
-      }
-      {isCreated && <SupportZipResponse response={response} download={download}/>}
-      {isHaZipsCreated && <SupportZipResponseHA response={response} download={download}/>}
-    </Section>
-  </ContentBody>;
+        }
+        {isCreated && <SupportZipResponse response={response} download={download}/>}
+        {isHaZipsCreated && <SupportZipResponseHA response={response} download={download}/>}
+      </Section>
+    </ContentBody>
+  </Page>;
 }

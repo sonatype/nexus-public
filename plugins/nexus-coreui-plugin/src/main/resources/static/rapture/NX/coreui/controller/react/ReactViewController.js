@@ -28,6 +28,10 @@ Ext.define('NX.coreui.controller.react.ReactViewController', {
     {
       ref: 'reactMainContainer',
       selector: 'nx-coreui-react-main-container'
+    },
+    {
+      ref: 'breadcrumb',
+      selector: 'nx-breadcrumb'
     }
   ],
 
@@ -35,6 +39,16 @@ Ext.define('NX.coreui.controller.react.ReactViewController', {
     controller: {
       '#Refresh': {
         refresh: 'refresh'
+      }
+    },
+    component: {
+      'nx-coreui-react-main-container': {
+        render: function() {
+          this.getBreadcrumb().hide();
+        },
+        destroy: function() {
+          this.getBreadcrumb().show();
+        }
       }
     }
   },

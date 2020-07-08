@@ -12,9 +12,33 @@
  */
 import React from 'react';
 
+import PropTypes from 'prop-types';
+import classNames from 'classnames';
+import {NxFontAwesomeIcon} from "@sonatype/react-shared-components";
+
+import './PageTitle.scss';
+
 /**
- * @since 3.24
+ * @since 3.next
  */
-export default function Master({children, ...attrs}) {
-  return <>{React.Children.map(children, (child) => React.cloneElement(child, attrs))}</>;
+export default function PageTitle({className, icon, text, description, ...rest}) {
+  const classes = classNames("nxrm-page-title", className);
+
+  return <div className={classes} {...rest}>
+    <h1 className="title">
+      {icon && <NxFontAwesomeIcon icon={icon}/>}
+      <span className="nx-feature-name">{text}</span>
+    </h1>
+    {description && <p className="description nx-feature-description">{description}</p>}
+  </div>;
 }
+
+PageTitle.propTypes = {
+  text: PropTypes.string.isRequired,
+  icon: PropTypes.oneOfType([
+    PropTypes.object,
+    PropTypes.array,
+    PropTypes.string
+  ]),
+  description: PropTypes.string
+};

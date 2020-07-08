@@ -12,14 +12,22 @@
  */
 import React, {useState, useEffect} from 'react';
 
-import {faDownload} from '@fortawesome/free-solid-svg-icons';
-
+import {faDownload, faGlobe} from '@fortawesome/free-solid-svg-icons';
 import Axios from 'axios';
-import {BreadcrumbActions, Button, ContentBody, NxFontAwesomeIcon, NxLoadWrapper, Utils} from 'nexus-ui-plugin';
+import {
+  Button,
+  ContentBody,
+  NxFontAwesomeIcon,
+  NxLoadWrapper,
+  Page,
+  PageActions,
+  PageHeader,
+  PageTitle,
+  Utils
+} from 'nexus-ui-plugin';
+
 import UIStrings from '../../../../constants/UIStrings';
-
-import SystemInformationBody from "./SystemInformationBody";
-
+import SystemInformationBody from './SystemInformationBody';
 import './SystemInformation.scss';
 
 const INITIAL_VALUE = {};
@@ -46,17 +54,20 @@ export default function SystemInformation() {
     window.open(Utils.urlFromPath('/service/rest/atlas/system-information'), '_blank');
   }
 
-  return <>
-    <BreadcrumbActions>
-      <Button variant="primary" onClick={() => downloadSystemInformation()} disabled={!isLoaded}>
-        <NxFontAwesomeIcon icon={faDownload}/>
-        <span>{UIStrings.SYSTEM_INFORMATION.ACTIONS.download}</span>
-      </Button>
-    </BreadcrumbActions>
+  return <Page>
+    <PageHeader>
+      <PageTitle icon={faGlobe} {...UIStrings.SYSTEM_INFORMATION.MENU}/>
+      <PageActions>
+        <Button variant="primary" onClick={() => downloadSystemInformation()} disabled={!isLoaded}>
+          <NxFontAwesomeIcon icon={faDownload}/>
+          <span>{UIStrings.SYSTEM_INFORMATION.ACTIONS.download}</span>
+        </Button>
+      </PageActions>
+    </PageHeader>
     <ContentBody className="nxrm-system-information">
       <NxLoadWrapper loading={isLoading}>
         <SystemInformationBody systemInformation={systemInformation} />
       </NxLoadWrapper>
     </ContentBody>
-  </>;
+  </Page>;
 }

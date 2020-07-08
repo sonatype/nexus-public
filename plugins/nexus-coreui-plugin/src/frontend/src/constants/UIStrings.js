@@ -35,8 +35,7 @@ export default {
   LOGGING: {
     MENU: {
       text: 'Logging',
-      description: 'Control logging levels',
-      edit: (name) => `Edit ${name}`
+      description: 'Control logging levels'
     },
 
     CREATE_BUTTON: 'Create Logger',
@@ -143,8 +142,10 @@ export default {
   },
 
   NUGET_API_KEY: {
-    TITLE: 'NuGet API Key',
-    DESCRIPTION: 'Configure credentials for NuGet repositories',
+    MENU: {
+      text: 'NuGet API Key',
+      description: 'Configure credentials for NuGet repositories'
+    },
     INSTRUCTIONS: 'A new API Key will be created the first time it is accessed. Resetting your API Key will invalidate the current key.',
     AUTH_INSTRUCTIONS: 'Accessing NuGet API Key requires validation of your credentials.',
     AUTH_ERROR: 'Authentication Failure',
@@ -170,6 +171,10 @@ export default {
   },
 
   METRIC_HEALTH: {
+    MENU: {
+      text: 'Status',
+      description: 'System status checks'
+    },
     NAME_HEADER: 'Name',
     MESSAGE_HEADER: 'Message',
     ERROR_HEADER: 'Error',

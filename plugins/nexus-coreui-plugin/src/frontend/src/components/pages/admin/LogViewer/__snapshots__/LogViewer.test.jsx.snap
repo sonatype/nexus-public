@@ -3,82 +3,46 @@
 exports[`LogViewer renders the log into the text area 1`] = `
 <div>
   <div
-    class="nxrm-content-body nxrm-log-viewer"
+    class="nxrm-page nxrm-log-viewer"
   >
     <div
-      class="nxrm-section nx-tile"
+      class="nxrm-page-header"
     >
       <div
-        class="nxrm-section-actions nx-tile__actions"
+        class="nxrm-page-title"
       >
-        <label
-          for="period"
+        <h1
+          class="title"
         >
-          Refresh Interval
-        </label>
-        <div
-          class="nxrm-select-action"
-        >
-          <select
-            class="nxrm-select"
-            id="period"
-            name="period"
+          <svg
+            aria-hidden="true"
+            class="svg-inline--fa fa-scroll fa-w-20 nx-icon"
+            data-icon="scroll"
+            data-prefix="fas"
+            focusable="false"
+            role="img"
+            viewBox="0 0 640 512"
+            xmlns="http://www.w3.org/2000/svg"
           >
-            <option
-              value="0"
-            >
-              Manual
-            </option>
-            <option
-              value="20"
-            >
-              Every 20 seconds
-            </option>
-            <option
-              value="60"
-            >
-              Every minute
-            </option>
-            <option
-              value="120"
-            >
-              Every 2 minutes
-            </option>
-            <option
-              value="300"
-            >
-              Every 5 minutes
-            </option>
-          </select>
-        </div>
-        <div
-          class="nxrm-select-action"
-        >
-          <select
-            class="nxrm-select"
-            id="size"
-            name="size"
+            <path
+              d="M48 0C21.53 0 0 21.53 0 48v64c0 8.84 7.16 16 16 16h80V48C96 21.53 74.47 0 48 0zm208 412.57V352h288V96c0-52.94-43.06-96-96-96H111.59C121.74 13.41 128 29.92 128 48v368c0 38.87 34.65 69.65 74.75 63.12C234.22 474 256 444.46 256 412.57zM288 384v32c0 52.93-43.06 96-96 96h336c61.86 0 112-50.14 112-112 0-8.84-7.16-16-16-16H288z"
+              fill="currentColor"
+            />
+          </svg>
+          <span
+            class="nx-feature-name"
           >
-            <option
-              value="25"
-            >
-              Last 25KB
-            </option>
-            <option
-              value="50"
-            >
-              Last 50KB
-            </option>
-            <option
-              value="100"
-            >
-              Last 100KB
-            </option>
-          </select>
-        </div>
+            Log Viewer
+          </span>
+        </h1>
+        <p
+          class="description nx-feature-description"
+        >
+          View the current log contents
+        </p>
       </div>
       <div
-        class="nxrm-section-header nx-tile-header"
+        class="nxrm-page-actions"
       >
         <button
           class="nx-btn nx-btn--primary"
@@ -103,46 +67,127 @@ exports[`LogViewer renders the log into the text area 1`] = `
             Download
           </span>
         </button>
-        <input
-          class="nxrm-textfield nxrm-log-viewer-mark-text"
-          id="mark"
-          name="mark"
-          placeholder="Marker to insert into log"
-          type="text"
-          value=""
-        />
-        <button
-          class="nx-btn"
-          id="insertMark"
-          type="input"
-        >
-          <svg
-            aria-hidden="true"
-            class="svg-inline--fa fa-map-marker fa-w-12 nx-icon"
-            data-icon="map-marker"
-            data-prefix="fas"
-            focusable="false"
-            role="img"
-            viewBox="0 0 384 512"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M172.268 501.67C26.97 291.031 0 269.413 0 192 0 85.961 85.961 0 192 0s192 85.961 192 192c0 77.413-26.97 99.031-172.268 309.67-9.535 13.774-29.93 13.773-39.464 0z"
-              fill="currentColor"
-            />
-          </svg>
-          <span>
-            Insert Mark
-          </span>
-        </button>
       </div>
-      <textarea
-        class="nxrm-textarea"
-        readonly=""
-        wrap="false"
+    </div>
+    <div
+      class="nxrm-content-body"
+    >
+      <div
+        class="nxrm-section nx-tile"
       >
-        log data
-      </textarea>
+        <div
+          class="nxrm-section-actions nx-tile__actions"
+        >
+          <label
+            for="period"
+          >
+            Refresh Interval
+          </label>
+          <div
+            class="nxrm-select-action"
+          >
+            <select
+              class="nxrm-select"
+              id="period"
+              name="period"
+            >
+              <option
+                value="0"
+              >
+                Manual
+              </option>
+              <option
+                value="20"
+              >
+                Every 20 seconds
+              </option>
+              <option
+                value="60"
+              >
+                Every minute
+              </option>
+              <option
+                value="120"
+              >
+                Every 2 minutes
+              </option>
+              <option
+                value="300"
+              >
+                Every 5 minutes
+              </option>
+            </select>
+          </div>
+          <div
+            class="nxrm-select-action"
+          >
+            <select
+              class="nxrm-select"
+              id="size"
+              name="size"
+            >
+              <option
+                value="25"
+              >
+                Last 25KB
+              </option>
+              <option
+                value="50"
+              >
+                Last 50KB
+              </option>
+              <option
+                value="100"
+              >
+                Last 100KB
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="nxrm-section-header nx-tile-header"
+        >
+          <input
+            class="nxrm-textfield nxrm-log-viewer-mark-text"
+            id="mark"
+            name="mark"
+            placeholder="Marker to insert into log"
+            type="text"
+            value=""
+          />
+          <button
+            class="nx-btn"
+            id="insertMark"
+            type="input"
+          >
+            <svg
+              aria-hidden="true"
+              class="svg-inline--fa fa-stamp fa-w-16 nx-icon"
+              data-icon="stamp"
+              data-prefix="fas"
+              focusable="false"
+              role="img"
+              viewBox="0 0 512 512"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M32 512h448v-64H32v64zm384-256h-66.56c-16.26 0-29.44-13.18-29.44-29.44v-9.46c0-27.37 8.88-53.41 21.46-77.72 9.11-17.61 12.9-38.39 9.05-60.42-6.77-38.78-38.47-70.7-77.26-77.45C212.62-9.04 160 37.33 160 96c0 14.16 3.12 27.54 8.69 39.58C182.02 164.43 192 194.7 192 226.49v.07c0 16.26-13.18 29.44-29.44 29.44H96c-53.02 0-96 42.98-96 96v32c0 17.67 14.33 32 32 32h448c17.67 0 32-14.33 32-32v-32c0-53.02-42.98-96-96-96z"
+                fill="currentColor"
+              />
+            </svg>
+            <span>
+              Insert Mark
+            </span>
+          </button>
+        </div>
+        <textarea
+          class="nxrm-textarea"
+          readonly=""
+          wrap="false"
+        >
+          log data
+        </textarea>
+      </div>
     </div>
   </div>
 </div>

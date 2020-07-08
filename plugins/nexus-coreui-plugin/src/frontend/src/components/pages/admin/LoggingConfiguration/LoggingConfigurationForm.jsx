@@ -14,20 +14,24 @@ import React from 'react';
 import {useMachine} from '@xstate/react';
 
 import {
-  Button,
+  Button, ContentBody,
   FieldWrapper,
   NxErrorAlert,
   NxLoadWrapper,
   NxSubmitMask,
+  Page,
+  PageHeader,
+  PageTitle,
   Section,
   SectionFooter,
   Select,
   Textfield
-} from "nexus-ui-plugin";
+} from 'nexus-ui-plugin';
 
-import LoggingConfigurationFormMachine from "./LoggingConfigurationFormMachine";
+import LoggingConfigurationFormMachine from './LoggingConfigurationFormMachine';
 
-import UIStrings from "../../../../constants/UIStrings";
+import UIStrings from '../../../../constants/UIStrings';
+import {faScroll} from '@fortawesome/free-solid-svg-icons';
 
 export default function LoggingConfigurationForm({itemId, onDone}) {
   const [current, send] = useMachine(LoggingConfigurationFormMachine, {
@@ -71,30 +75,35 @@ export default function LoggingConfigurationForm({itemId, onDone}) {
     send('RESET');
   }
 
-  return <Section className="nxrm-logging-configuration-form" onKeyPress={handleEnter}>
-    <NxLoadWrapper loading={isLoading} error={loadError ? `${loadError}` : null}>
-      {saveError && <NxErrorAlert>{UIStrings.LOGGING.MESSAGES.SAVE_ERROR} {saveError}</NxErrorAlert>}
-      {isSaving && <NxSubmitMask message={UIStrings.SAVING}/>}
-      {isResetting && <NxSubmitMask message={UIStrings.LOGGING.MESSAGES.RESETTING}/>}
+  return <Page>
+    <PageHeader><PageTitle icon={faScroll} {...UIStrings.LOGGING.MENU}/></PageHeader>
+    <ContentBody className="nxrm-logging-configuration">
+      <Section className="nxrm-logging-configuration-form" onKeyPress={handleEnter}>
+        <NxLoadWrapper loading={isLoading} error={loadError ? `${loadError}` : null}>
+          {saveError && <NxErrorAlert>{UIStrings.LOGGING.MESSAGES.SAVE_ERROR} {saveError}</NxErrorAlert>}
+          {isSaving && <NxSubmitMask message={UIStrings.SAVING}/>}
+          {isResetting && <NxSubmitMask message={UIStrings.LOGGING.MESSAGES.RESETTING}/>}
 
-      <FieldWrapper labelText={UIStrings.LOGGING.NAME_LABEL}>
-        <Textfield isRequired disabled={pristineData.name} name="name" value={data.name} onChange={update}/>
-      </FieldWrapper>
-      <FieldWrapper labelText={UIStrings.LOGGING.LEVEL_LABEL}>
-        <Select name="level" value={data.level} onChange={update}>
-          {['OFF', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'].map(logLevel =>
-              <option key={logLevel} value={logLevel}>{logLevel}</option>
-          )}
-        </Select>
-      </FieldWrapper>
+          <FieldWrapper labelText={UIStrings.LOGGING.NAME_LABEL}>
+            <Textfield isRequired disabled={pristineData.name} name="name" value={data.name} onChange={update}/>
+          </FieldWrapper>
+          <FieldWrapper labelText={UIStrings.LOGGING.LEVEL_LABEL}>
+            <Select name="level" value={data.level} onChange={update}>
+              {['OFF', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'].map(logLevel =>
+                  <option key={logLevel} value={logLevel}>{logLevel}</option>
+              )}
+            </Select>
+          </FieldWrapper>
 
-      <SectionFooter>
-        <Button variant="primary" disabled={isPristine || isInvalid} onClick={save} type="submit">
-          {UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
-        </Button>
-        <Button onClick={cancel}>{UIStrings.SETTINGS.CANCEL_BUTTON_LABEL}</Button>
-        {itemId && <Button variant="error" onClick={reset}>{UIStrings.LOGGING.RESET_BUTTON}</Button>}
-      </SectionFooter>
-    </NxLoadWrapper>
-  </Section>;
+          <SectionFooter>
+            <Button variant="primary" disabled={isPristine || isInvalid} onClick={save} type="submit">
+              {UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
+            </Button>
+            <Button onClick={cancel}>{UIStrings.SETTINGS.CANCEL_BUTTON_LABEL}</Button>
+            {itemId && <Button variant="error" onClick={reset}>{UIStrings.LOGGING.RESET_BUTTON}</Button>}
+          </SectionFooter>
+        </NxLoadWrapper>
+      </Section>
+    </ContentBody>
+  </Page>;
 }

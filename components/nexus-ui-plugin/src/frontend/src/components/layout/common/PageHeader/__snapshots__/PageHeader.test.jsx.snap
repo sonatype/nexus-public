@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`PageHeader renders with children 1`] = `
+<div>
+  <div
+    class="nxrm-page-header"
+  >
+    test
+  </div>
+</div>
+`;

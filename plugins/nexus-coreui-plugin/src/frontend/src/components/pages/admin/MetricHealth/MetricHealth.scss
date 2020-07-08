@@ -16,14 +16,16 @@
 
 @import "~nexus-ui-plugin/dist/styles/colors";
 
-.nxrm-metric-health--healthy {
-  background-color: $nxrm-off-white;
-  border-color: $nxrm-dark-blue;
-  color: $green;
-}
+.nxrm-metric-health {
+  .nx-cell--sortable {
+    min-width: 90px;
+  }
 
-.nxrm-metric-health--unhealthy {
-  background-color: $nxrm-fail-color-bg;
-  border-color: $nxrm-fail-color;
-  color: $nxrm-fail-color;
+  .healthy {
+    color: $nx-valid-color;
+  }
+
+  .unhealthy {
+    color: $nx-invalid-color;
+  }
 }

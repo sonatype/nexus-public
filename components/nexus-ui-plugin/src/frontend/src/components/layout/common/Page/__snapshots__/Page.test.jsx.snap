@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Page renders with custom class 1`] = `
+<div>
+  <div
+    class="nxrm-page test"
+  >
+    test
+  </div>
+</div>
+`;
