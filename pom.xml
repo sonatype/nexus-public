@@ -88,7 +88,7 @@
     Define nexus versions.  The 'nexus.version' property always refers to the version of the current project.
     These values must always be constants; 'nexus.version' will get update automatically by set-version.
     -->
-    <nexus.version>3.25.0-01</nexus.version>
+    <nexus.version>3.25.0-SNAPSHOT</nexus.version>
     <nexus2.version>2.14.18-01</nexus2.version>
 
     <!-- Define the node and yarn versions used by the frontend-maven-plugin -->
