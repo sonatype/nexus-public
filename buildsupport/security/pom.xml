@@ -78,6 +78,14 @@
             <groupId>commons-beanutils</groupId>
             <artifactId>commons-beanutils</artifactId>
           </exclusion>
+          <!--
+          Exclude shiro modules that are duplicated in shiro-core
+          (this exclusion can be removed when SHIRO-654 is fixed)
+          -->
+          <exclusion>
+            <groupId>org.apache.shiro</groupId>
+            <artifactId>*</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
 
