@@ -24,7 +24,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
 /**
- * @since 3.next
+ * @since 3.25
  */
 @Named
 @Singleton

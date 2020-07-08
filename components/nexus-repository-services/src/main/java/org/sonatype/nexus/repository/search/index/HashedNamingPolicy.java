@@ -26,7 +26,7 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 /**
  * Name search indexes by hashing the repository name; avoids characters not allowed by Elasticsearch.
  *
- * @since 3.next
+ * @since 3.25
  */
 @Named
 @Singleton

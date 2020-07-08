@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.rest.api.HostedRepositoryApiRequestToConfig
 import static org.sonatype.nexus.repository.raw.rest.RawAttributes.CONTENT_DISPOSITION;
 
 /**
- * @since 3.next
+ * @since 3.25
  */
 @Named
 public class RawHostedRepositoryApiRequestToConfigurationConverter

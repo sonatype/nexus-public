@@ -21,7 +21,7 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * REST API model of raw attributes for repositories API
  *
- * @since 3.next
+ * @since 3.25
  */
 public class RawAttributes
 {

@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.task;
 /**
  * Tracks deletion progress.
  *
- * @since 3.next
+ * @since 3.25
  */
 public class DeletionProgress
 {

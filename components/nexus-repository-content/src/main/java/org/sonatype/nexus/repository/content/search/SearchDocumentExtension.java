@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 /**
  * Extension point to contribute fields to {@link SearchDocumentProducer}.
  *
- * @since 3.next
+ * @since 3.25
  */
 public interface SearchDocumentExtension
 {

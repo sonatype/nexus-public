@@ -29,7 +29,7 @@ public interface FluentComponentBuilder
   /**
    * Continue building the component using the given kind.
    *
-   * @since 3.next
+   * @since 3.25
    */
   FluentComponentBuilder kind(String kind);
 
