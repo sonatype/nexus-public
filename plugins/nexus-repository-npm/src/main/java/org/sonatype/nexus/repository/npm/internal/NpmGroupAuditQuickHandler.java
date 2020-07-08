@@ -25,7 +25,7 @@ import static org.sonatype.nexus.repository.npm.internal.NpmAuditFacet.QUICK_AUD
 /**
  * Handle 'npm audit' after 'npm install' cmd.
  *
- * @since 3.next
+ * @since 3.25.0
  */
 @Named
 @Singleton

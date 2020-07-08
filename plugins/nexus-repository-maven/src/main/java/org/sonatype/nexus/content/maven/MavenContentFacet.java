@@ -26,7 +26,7 @@ import org.sonatype.nexus.repository.view.Payload;
 /**
  * Provides persistence operations for Maven.
  *
- * @since 3.next
+ * @since 3.25.0
  */
 @Facet.Exposed
 public interface MavenContentFacet

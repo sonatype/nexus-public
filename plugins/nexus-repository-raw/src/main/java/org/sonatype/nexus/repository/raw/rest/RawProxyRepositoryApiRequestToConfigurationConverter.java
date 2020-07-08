@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 import static org.sonatype.nexus.repository.raw.rest.RawAttributes.CONTENT_DISPOSITION;
 
 /**
- * @since 3.next
+ * @since 3.25.0
  */
 @Named
 public class RawProxyRepositoryApiRequestToConfigurationConverter

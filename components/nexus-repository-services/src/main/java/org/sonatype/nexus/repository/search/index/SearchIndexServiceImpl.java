@@ -72,7 +72,7 @@ import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 /**
  * Default {@link SearchIndexService} implementation.
  *
- * @since 3.next
+ * @since 3.25.0
  */
 @Named("default")
 @Singleton

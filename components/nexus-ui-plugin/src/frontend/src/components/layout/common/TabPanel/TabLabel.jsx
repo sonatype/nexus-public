@@ -17,7 +17,7 @@ import classNames from 'classnames';
 import './TabPanel.scss';
 
 /**
- * @since 3.next
+ * @since 3.25.0
  */
 export default function TabLabel({active, className, children, ...attrs}) {
   const classes = classNames('nxrm-tab-panel-header-item', className, {

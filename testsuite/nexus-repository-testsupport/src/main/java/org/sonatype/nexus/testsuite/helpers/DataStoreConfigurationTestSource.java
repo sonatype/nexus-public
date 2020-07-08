@@ -39,7 +39,7 @@ import static org.sonatype.nexus.datastore.api.DataStoreManager.CONTENT_DATASTOR
 /**
  * Programmatic source of {@link DataStoreConfiguration}s
  *
- * @since 3.next
+ * @since 3.25.0
  */
 @Named(TEST)
 @Priority(MAX_VALUE)

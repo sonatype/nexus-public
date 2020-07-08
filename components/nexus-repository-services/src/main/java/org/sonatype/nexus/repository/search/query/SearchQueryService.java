@@ -22,7 +22,7 @@ import org.elasticsearch.search.aggregations.AggregationBuilder;
 /**
  * Search query service.
  *
- * @since 3.next
+ * @since 3.25.0
  */
 public interface SearchQueryService
 {

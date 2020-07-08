@@ -60,7 +60,7 @@ import static org.sonatype.nexus.repository.maven.internal.MavenModels.readModel
 /**
  * A {@link MavenContentFacet} that persists to a {@link ContentFacet}.
  *
- * @since 3.next
+ * @since 3.25.0
  */
 @Named(Maven2Format.NAME)
 public class MavenContentFacetImpl

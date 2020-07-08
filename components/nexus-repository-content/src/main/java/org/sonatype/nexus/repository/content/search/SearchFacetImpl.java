@@ -43,7 +43,7 @@ import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 /**
  * Default {@link SearchFacet} implementation.
  *
- * @since 3.next
+ * @since 3.25.0
  */
 @Named
 public class SearchFacetImpl

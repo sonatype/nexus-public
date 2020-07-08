@@ -60,7 +60,7 @@ import static org.sonatype.nexus.repository.search.index.SearchConstants.VERSION
 /**
  * Default {@link SearchDocumentProducer} that combines properties of components and their assets.
  *
- * @since 3.next
+ * @since 3.25.0
  */
 @Named
 @Singleton

@@ -57,7 +57,7 @@ import static org.sonatype.nexus.repository.tools.ResultState.UNREADABLE_BLOB;
  * Examines Asset metadata and confirms the sha1 of all referenced blobs. Reports on any instances where
  * Blob binary is missing or indicates a different sha1 than that stored in the DB.
  *
- * @since 3.next
+ * @since 3.25.0
  */
 @Named
 public class DatastoreDeadBlobFinder

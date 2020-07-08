@@ -77,7 +77,7 @@ import static org.sonatype.nexus.security.BreadActions.BROWSE;
 /**
  * Default {@link SearchQueryService} implementation.
  *
- * @since 3.next
+ * @since 3.25.0
  */
 @Named("default")
 @Singleton

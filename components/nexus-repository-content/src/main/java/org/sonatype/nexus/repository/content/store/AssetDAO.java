@@ -90,7 +90,7 @@ public interface AssetDAO
    *
    * @param asset the asset to update
    *
-   * @since 3.next
+   * @since 3.25.0
    */
   void updateAssetKind(Asset asset);
 

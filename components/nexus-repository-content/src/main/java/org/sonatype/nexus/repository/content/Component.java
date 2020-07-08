@@ -34,7 +34,7 @@ public interface Component
   /**
    * The component kind.
    *
-   * @since 3.next
+   * @since 3.25.0
    */
   String kind();
 

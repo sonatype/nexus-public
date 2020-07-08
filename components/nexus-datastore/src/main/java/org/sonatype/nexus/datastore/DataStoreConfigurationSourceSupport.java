@@ -23,7 +23,7 @@ import static java.util.regex.Pattern.compile;
 /**
  * Base class to collect common functions from multiple {@link DataStoreConfigurationSource} implementations.
  *
- * @since 3.next
+ * @since 3.25.0
  */
 public abstract class DataStoreConfigurationSourceSupport
     extends ComponentSupport

@@ -39,7 +39,7 @@ import static org.apache.commons.lang.StringUtils.isNotBlank;
 /**
  * Detects orphaned blobs (i.e. nn-deleted blobs that exist in the blobstore but not the asset table)
  *
- * @since 3.next
+ * @since 3.25.0
  */
 @Named
 public class DatastoreOrphanedBlobFinder

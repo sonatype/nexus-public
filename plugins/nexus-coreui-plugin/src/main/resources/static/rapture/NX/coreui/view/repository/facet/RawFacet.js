@@ -15,7 +15,7 @@
 /**
  * Configuration specific to raw repos to set content-disposition
  *
- * @since 3.next
+ * @since 3.25.0
  */
 Ext.define('NX.coreui.view.repository.facet.RawFacet', {
   extend: 'Ext.form.FieldContainer',

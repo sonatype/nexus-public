@@ -22,7 +22,7 @@ import static java.util.Comparator.comparing;
 /**
  * Additional utility functions for working with {@link com.google.common.graph.Graph}
  *
- * @since 3.next
+ * @since 3.25.0
  */
 public class GraphUtil
 {

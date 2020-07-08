@@ -23,7 +23,7 @@ import org.sonatype.nexus.repository.storage.Asset;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
 /**
- * @since 3.next
+ * @since 3.25.0
  */
 @Singleton
 @Named(NpmFormat.NAME)

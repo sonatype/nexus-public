@@ -84,7 +84,7 @@ public class ComponentData
   /**
    * Sets the component kind.
    *
-   * @since 3.next
+   * @since 3.25.0
    */
   public void setKind(final String kind) {
     this.kind = checkNotNull(kind);

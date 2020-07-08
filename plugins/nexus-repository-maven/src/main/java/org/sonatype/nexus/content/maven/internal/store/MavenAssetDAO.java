@@ -16,7 +16,7 @@ package org.sonatype.nexus.content.maven.internal.store;
 import org.sonatype.nexus.repository.content.store.AssetDAO;
 
 /**
- * @since 3.next
+ * @since 3.25.0
  */
 public interface MavenAssetDAO
     extends AssetDAO

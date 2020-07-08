@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.search.index;
 /**
  * Search constants.
  *
- * @since 3.next
+ * @since 3.25.0
  */
 public interface SearchConstants
 {

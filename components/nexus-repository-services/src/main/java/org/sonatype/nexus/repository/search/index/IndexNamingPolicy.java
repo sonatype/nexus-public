@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.Repository;
 /**
  * Policy for naming repository search indexes.
  *
- * @since 3.next
+ * @since 3.25.0
  */
 public interface IndexNamingPolicy
 {
