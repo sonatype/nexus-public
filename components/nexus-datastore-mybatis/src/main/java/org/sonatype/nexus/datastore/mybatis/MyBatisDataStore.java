@@ -26,6 +26,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -68,6 +69,8 @@ import org.sonatype.nexus.security.PasswordHelper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Splitter.MapSplitter;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Streams;
 import com.google.common.io.Resources;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
@@ -141,7 +144,9 @@ public class MyBatisDataStore
 
   private static final Pattern MAPPER_BODY = compile(".*<mapper[^>]*>(.*)</mapper>", DOTALL);
 
-  private final Set<Class<?>> accessTypes = new HashSet<>();
+  private final Iterable<? extends BeanEntry<Named, Class<DataAccess>>> declaredAccessTypes;
+
+  private final Set<Class<?>> registeredAccessTypes = new HashSet<>();
 
   private final AtomicBoolean frozenMarker = new AtomicBoolean();
 
@@ -173,6 +178,10 @@ public class MyBatisDataStore
     this.beanLocator = checkNotNull(beanLocator);
 
     useMyBatisClassLoaderForEntityProxies();
+
+    // any DAO types in plugins are bound by DataAccessModule so we can locate them here
+    // (the same bindings are used to drive store registration in DataStoreManagerImpl)
+    this.declaredAccessTypes = beanLocator.locate(new Key<Class<DataAccess>>() {});
   }
 
   @VisibleForTesting
@@ -188,6 +197,8 @@ public class MyBatisDataStore
     }
     this.directories = null;
     this.beanLocator = null;
+
+    this.declaredAccessTypes = ImmutableList.of();
   }
 
   @Override
@@ -210,7 +221,7 @@ public class MyBatisDataStore
   @Override
   protected void doStop() throws Exception {
     sessionFactory = null;
-    accessTypes.clear();
+    registeredAccessTypes.clear();
     try {
       dataSource.close();
     }
@@ -221,7 +232,7 @@ public class MyBatisDataStore
 
   @Override
   public void register(final Class<? extends DataAccess> accessType) {
-    if (!accessTypes.add(accessType) || accessType.isAnnotationPresent(SchemaTemplate.class)) {
+    if (!registeredAccessTypes.add(accessType) || accessType.isAnnotationPresent(SchemaTemplate.class)) {
       return; // skip registration if we've already seen this type or this is a template
     }
 
@@ -559,30 +570,48 @@ public class MyBatisDataStore
 
   /**
    * Finds the expected access type for the expected template type, given the current access and template types.
-   * To simplify matters we assume the current and expected access types are in the same package and classloader.
    */
   private Class expectedAccessType(final Class currentAccessType,
                                    final Class currentTemplateType,
                                    final Class expectedTemplateType)
   {
-    String currentSuffix = currentTemplateType.getSimpleName();
-    String expectedSuffix = expectedTemplateType.getSimpleName();
+    String currentTemplateName = currentTemplateType.getSimpleName();
+    String expectedTemplateName = expectedTemplateType.getSimpleName();
 
-    // org.example.MavenAssetDAO / AssetDAO / ComponentDAO = org.example.MavenComponentDAO
-    String expectedAccessName = currentAccessType.getName().replace(currentSuffix, expectedSuffix);
-    Class expectedAccessType;
-    try {
-      expectedAccessType = currentAccessType.getClassLoader().loadClass(expectedAccessName);
-    }
-    catch (Exception | LinkageError e) {
-      throw new TypeNotPresentException(expectedAccessName, e);
-    }
+    // MavenAssetDAO -> s/AssetDAO/ComponentDAO/ -> MavenComponentDAO
+    String currentAccessName = currentAccessType.getSimpleName();
+    String expectedAccessName = currentAccessName.replace(currentTemplateName, expectedTemplateName);
+
+    // check registered types first (includes UT registered DAOs) before searching declared DAOs
+    Class expectedAccessType = findRegisteredAccessType(expectedAccessName)
+        .orElseGet(() -> findDeclaredAccessType(expectedAccessName)
+            .orElseThrow(() -> new IllegalArgumentException(
+                "Access type " + expectedAccessName + " expected by " + currentAccessType + " is missing")));
 
     // sanity check that this type has the expected class hierarchy
     checkArgument(expectedTemplateType.isAssignableFrom(expectedAccessType),
         "%s must extend %s", expectedAccessType, expectedTemplateType);
 
     return expectedAccessType;
+  }
+
+  /**
+   * Returns the first DAO with the given simpleName registered with this store.
+   */
+  private Optional<Class<?>> findRegisteredAccessType(final String simpleName) {
+    return registeredAccessTypes.stream()
+        .filter(accessType -> simpleName.equals(accessType.getSimpleName()))
+        .findFirst();
+  }
+
+  /**
+   * Returns the first DAO with the given simpleName declared by a plugin/bundle.
+   */
+  private Optional<? extends Class> findDeclaredAccessType(final String simpleName) {
+    return Streams.stream(declaredAccessTypes)
+        .map(BeanEntry::getValue)
+        .filter(accessType -> simpleName.equals(accessType.getSimpleName()))
+        .findFirst();
   }
 
   /**
