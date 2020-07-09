@@ -240,6 +240,7 @@
                 <feature>kar</feature>
                 <feature>log</feature>
                 <feature>package</feature>
+                <feature>scr</feature>
                 <feature>shell</feature>
                 <feature>service</feature>
                 <feature>system</feature>
@@ -281,11 +282,13 @@
                       tofile="${project.build.directory}/assembly/lib/boot/nexus-main.jar"/>
                 <copy file="${javax.activation:activation:jar}"
                       todir="${project.build.directory}/assembly/lib/boot"/>
-                <copy file="${javax.xml.bind:jaxb-api:jar}"
+                <copy file="${jakarta.xml.bind:jakarta.xml.bind-api:jar}"
                       todir="${project.build.directory}/assembly/lib/boot"/>
-                <copy file="${com.sun.xml.bind:jaxb-core:jar}"
+                <copy file="${org.glassfish.jaxb:jaxb-runtime:jar}"
                       todir="${project.build.directory}/assembly/lib/boot"/>
-                <copy file="${com.sun.xml.bind:jaxb-impl:jar}"
+                <copy file="${org.glassfish.jaxb:txw2:jar}"
+                      todir="${project.build.directory}/assembly/lib/boot"/>
+                <copy file="${com.sun.istack:istack-commons-runtime:jar}"
                       todir="${project.build.directory}/assembly/lib/boot"/>
 
                 <!-- install additional framework jars -->

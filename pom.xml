@@ -878,9 +878,10 @@
               <id>aopalliance</id>
               <id>javax.ws.rs</id>
               <id>javax.ws.rs-api</id>
-              <id>jaxb-api</id>
-              <id>jaxb-core</id>
-              <id>jaxb-impl</id>
+              <id>jakarta.xml.bind-api</id>
+              <id>jaxb-runtime</id>
+              <id>txw2</id>
+              <id>istack-commons-runtime</id>
               <id>jsr250-api</id>
               <id>jsr305</id>
               <id>slf4j-api</id>
@@ -1272,6 +1273,13 @@
                     Ban old javax.mail
                     -->
                     <exclude>javax.mail:mail:*</exclude>
+
+                    <!--
+                    Ban old jaxb
+                    -->
+                    <exclude>javax.xml.bind:jaxb-api:*</exclude>
+                    <exclude>com.sun.xml.bind:jaxb-core:*</exclude>
+                    <exclude>com.sun.xml.bind:jaxb-impl:*</exclude>
                   </excludes>
 
                   <!--

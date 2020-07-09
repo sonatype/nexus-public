@@ -64,6 +64,12 @@
       </dependency>
 
       <dependency>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>org.apache.felix.scr</artifactId>
+        <version>2.1.20</version>
+      </dependency>
+
+      <dependency>
         <groupId>org.apache.karaf</groupId>
         <artifactId>org.apache.karaf.main</artifactId>
         <version>${karaf.version}</version>
