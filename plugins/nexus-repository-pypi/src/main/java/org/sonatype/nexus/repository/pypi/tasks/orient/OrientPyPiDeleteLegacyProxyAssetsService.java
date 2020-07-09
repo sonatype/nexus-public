@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.pypi.tasks.orient;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -60,8 +59,6 @@ public class OrientPyPiDeleteLegacyProxyAssetsService
   @Override
   protected void doStart() throws Exception {
     if (Files.exists(markerFile)) {
-      log.info("Delaying {} task for 30 seconds", TYPE_ID);
-      TimeUnit.SECONDS.sleep(30);
       log.info("Scheduling task: {}", TYPE_ID);
       taskScheduler.submit(taskScheduler.createTaskConfigurationInstance(TYPE_ID));
     }
