@@ -1110,6 +1110,12 @@
             </excludes>
           </configuration>
         </plugin>
+
+        <plugin>
+          <groupId>io.fabric8</groupId>
+          <artifactId>docker-maven-plugin</artifactId>
+          <version>0.33.0</version>
+        </plugin>
       </plugins>
     </pluginManagement>
 
