@@ -27,10 +27,10 @@ import org.sonatype.nexus.repository.group.GroupHandler;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
-import org.sonatype.nexus.repository.storage.RetryDeniedException;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Response;
+import org.sonatype.nexus.transaction.RetryDeniedException;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
