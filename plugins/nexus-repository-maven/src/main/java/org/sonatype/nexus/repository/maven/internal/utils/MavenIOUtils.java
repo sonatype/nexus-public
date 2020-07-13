@@ -48,7 +48,7 @@ import static org.sonatype.nexus.repository.maven.internal.Constants.CHECKSUM_CO
  * The integration tests for Maven will exercise the code in this utility class when running against an Orient or SQL
  * database.
  *
- * @since 3.next
+ * @since 3.25
  */
 public final class MavenIOUtils
 {

@@ -13,10 +13,11 @@
 import React from 'react';
 import {useMachine} from '@xstate/react';
 
-import {faChevronRight, faPlusCircle, faRedo} from '@fortawesome/free-solid-svg-icons';
+import {faChevronRight, faPlusCircle, faRedo, faScroll} from '@fortawesome/free-solid-svg-icons';
 
 import {
   Button,
+  ContentBody,
   NxFilterInput,
   NxFontAwesomeIcon,
   NxTable,
@@ -24,9 +25,12 @@ import {
   NxTableCell,
   NxTableHead,
   NxTableRow,
+  Page,
+  PageActions,
+  PageHeader,
+  PageTitle,
   Section,
-  SectionActions,
-  SectionHeader
+  SectionActions
 } from 'nexus-ui-plugin';
 
 import LoggingConfigurationListMachine, {ASC} from './LoggingConfigurationListMachine';
@@ -62,46 +66,53 @@ export default function LoggingConfigurationList({onCreate, onEdit}) {
     send('RESET');
   }
 
-  return <Section className="nxrm-logging-configuration-list">
-    <SectionActions>
-      <NxFilterInput
-          inputId="filter"
-          onChange={filter}
-          onClear={clearFilter}
-          value={filterText}
-          placeholder={UIStrings.LOGGING.FILTER_PLACEHOLDER}/>
-    </SectionActions>
-    <SectionHeader>
-      <Button variant="primary" onClick={onCreate}>
-        <NxFontAwesomeIcon icon={faPlusCircle}/>
-        <span>{UIStrings.LOGGING.CREATE_BUTTON}</span>
-      </Button>
-      <Button onClick={reset}>
-        <NxFontAwesomeIcon icon={faRedo}/>
-        <span>{UIStrings.LOGGING.RESET_ALL_BUTTON}</span>
-      </Button>
-    </SectionHeader>
-    <NxTable>
-      <NxTableHead>
-        <NxTableRow>
-          <NxTableCell onClick={() => send('SORT_BY_NAME')} isSortable sortDir={nameSortDir}>
-            {UIStrings.LOGGING.NAME_LABEL}
-          </NxTableCell>
-          <NxTableCell onClick={() => send('SORT_BY_LEVEL')} isSortable sortDir={levelSortDir}>
-            {UIStrings.LOGGING.LEVEL_LABEL}
-          </NxTableCell>
-          <NxTableCell hasIcon />
-        </NxTableRow>
-      </NxTableHead>
-      <NxTableBody isLoading={isLoading} error={error}>
-        {data.map(({name, level}) => (
-            <NxTableRow key={name} onClick={() => onEdit(name)} isClickable>
-              <NxTableCell>{name}</NxTableCell>
-              <NxTableCell>{level}</NxTableCell>
-              <NxTableCell hasIcon><NxFontAwesomeIcon icon={faChevronRight} /></NxTableCell>
+  return <Page>
+    <PageHeader>
+      <PageTitle icon={faScroll} {...UIStrings.LOGGING.MENU}/>
+      <PageActions>
+        <Button variant="primary" onClick={onCreate}>
+          <NxFontAwesomeIcon icon={faPlusCircle}/>
+          <span>{UIStrings.LOGGING.CREATE_BUTTON}</span>
+        </Button>
+        <Button onClick={reset}>
+          <NxFontAwesomeIcon icon={faRedo}/>
+          <span>{UIStrings.LOGGING.RESET_ALL_BUTTON}</span>
+        </Button>
+      </PageActions>
+    </PageHeader>
+    <ContentBody className="nxrm-logging-configuration">
+      <Section className="nxrm-logging-configuration-list">
+        <SectionActions>
+          <NxFilterInput
+              inputId="filter"
+              onChange={filter}
+              onClear={clearFilter}
+              value={filterText}
+              placeholder={UIStrings.LOGGING.FILTER_PLACEHOLDER}/>
+        </SectionActions>
+        <NxTable>
+          <NxTableHead>
+            <NxTableRow>
+              <NxTableCell onClick={() => send('SORT_BY_NAME')} isSortable sortDir={nameSortDir}>
+                {UIStrings.LOGGING.NAME_LABEL}
+              </NxTableCell>
+              <NxTableCell onClick={() => send('SORT_BY_LEVEL')} isSortable sortDir={levelSortDir}>
+                {UIStrings.LOGGING.LEVEL_LABEL}
+              </NxTableCell>
+              <NxTableCell hasIcon/>
             </NxTableRow>
-        ))}
-      </NxTableBody>
-    </NxTable>
-  </Section>;
+          </NxTableHead>
+          <NxTableBody isLoading={isLoading} error={error}>
+            {data.map(({name, level}) => (
+                <NxTableRow key={name} onClick={() => onEdit(name)} isClickable>
+                  <NxTableCell>{name}</NxTableCell>
+                  <NxTableCell>{level}</NxTableCell>
+                  <NxTableCell hasIcon><NxFontAwesomeIcon icon={faChevronRight}/></NxTableCell>
+                </NxTableRow>
+            ))}
+          </NxTableBody>
+        </NxTable>
+      </Section>
+    </ContentBody>
+  </Page>;
 }

@@ -15,19 +15,20 @@ import {useMachine} from '@xstate/react';
 
 import './MetricHealth.scss';
 
-import {faCheckCircle,faExclamationCircle} from '@fortawesome/free-solid-svg-icons';
+import {faCheckCircle, faExclamationCircle, faMedkit} from '@fortawesome/free-solid-svg-icons';
 
 import {
-  Alert,
   ContentBody,
-  Button,
   NxFontAwesomeIcon,
-  NxFilterInput,
   NxTable,
   NxTableBody,
   NxTableCell,
   NxTableHead,
   NxTableRow,
+  Page,
+  PageHeader,
+  PageTitle,
+  Section
 } from 'nexus-ui-plugin';
 
 import MetricHealthMachine, {ASC} from './MetricHealthMachine';
@@ -51,38 +52,41 @@ export default function MetricHealth() {
     return sortDirection === ASC ? 'asc' : 'desc';
   }
 
-  return (
+  return <Page>
+    <PageHeader><PageTitle icon={faMedkit} {...UIStrings.METRIC_HEALTH.MENU}/></PageHeader>
     <ContentBody className="nxrm-metric-health">
-      <NxTable>
-        <NxTableHead>
-          <NxTableRow>
-            <NxTableCell hasIcon />
-            <NxTableCell onClick={() => send('SORT_BY_NAME')} isSortable sortDir={nameSortDir}>
-              {UIStrings.METRIC_HEALTH.NAME_HEADER}
-            </NxTableCell>
-            <NxTableCell onClick={() => send('SORT_BY_MESSAGE')} isSortable sortDir={messageSortDir}
-              >{UIStrings.METRIC_HEALTH.MESSAGE_HEADER}
-            </NxTableCell>
-            <NxTableCell onClick={() => send('SORT_BY_ERROR')} isSortable sortDir={errorSortDir}>
-              {UIStrings.METRIC_HEALTH.ERROR_HEADER}
-            </NxTableCell>
-          </NxTableRow>
-        </NxTableHead>
-        <NxTableBody isLoading={isLoading} error={error}>
-          {data.map(metric => (
-            <NxTableRow key={metric.name}>
-              <NxTableCell hasIcon>
-                <NxFontAwesomeIcon
-                  className={metric.healthy ? 'nxrm-metric-health--healthy' : 'nxrm-metric-health--unhealthy'}
-                  icon={metric.healthy ? faCheckCircle : faExclamationCircle}/>
+      <Section>
+        <NxTable>
+          <NxTableHead>
+            <NxTableRow>
+              <NxTableCell hasIcon />
+              <NxTableCell onClick={() => send('SORT_BY_NAME')} isSortable sortDir={nameSortDir}>
+                {UIStrings.METRIC_HEALTH.NAME_HEADER}
               </NxTableCell>
-              <NxTableCell>{metric.name}</NxTableCell>
-              <NxTableCell><span dangerouslySetInnerHTML={{__html: metric.message}} /></NxTableCell>
-              <NxTableCell>{metric.error ? metric.error.message : ''}</NxTableCell>
+              <NxTableCell onClick={() => send('SORT_BY_MESSAGE')} isSortable sortDir={messageSortDir}
+                >{UIStrings.METRIC_HEALTH.MESSAGE_HEADER}
+              </NxTableCell>
+              <NxTableCell onClick={() => send('SORT_BY_ERROR')} isSortable sortDir={errorSortDir}>
+                {UIStrings.METRIC_HEALTH.ERROR_HEADER}
+              </NxTableCell>
             </NxTableRow>
-          ))}
-        </NxTableBody>
-      </NxTable>
+          </NxTableHead>
+          <NxTableBody isLoading={isLoading} error={error}>
+            {data.map(metric => (
+              <NxTableRow key={metric.name}>
+                <NxTableCell hasIcon>
+                  <NxFontAwesomeIcon
+                    className={metric.healthy ? 'healthy' : 'unhealthy'}
+                    icon={metric.healthy ? faCheckCircle : faExclamationCircle}/>
+                </NxTableCell>
+                <NxTableCell>{metric.name}</NxTableCell>
+                <NxTableCell><span dangerouslySetInnerHTML={{__html: metric.message}} /></NxTableCell>
+                <NxTableCell>{metric.error ? metric.error.message : ''}</NxTableCell>
+              </NxTableRow>
+            ))}
+          </NxTableBody>
+        </NxTable>
+      </Section>
     </ContentBody>
-  );
+  </Page>;
 }

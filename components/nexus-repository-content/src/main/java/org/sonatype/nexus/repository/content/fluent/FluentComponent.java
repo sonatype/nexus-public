@@ -45,7 +45,7 @@ public interface FluentComponent
   /**
    * Update this component to have the given kind.
    *
-   * @since 3.next
+   * @since 3.25
    */
   FluentComponent kind(String kind);
 

@@ -24,6 +24,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import static org.sonatype.nexus.content.raw.internal.recipe.ContentDisposition.ATTACHMENT;
+
 /**
  * @since 3.24
  */
@@ -31,6 +33,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class RawProxyRepositoryApiRequest
     extends ProxyRepositoryApiRequest
 {
+  private final RawAttributes raw;
+
   @JsonCreator
   @SuppressWarnings("squid:S00107") // suppress constructor parameter count
   public RawProxyRepositoryApiRequest(
@@ -41,8 +45,14 @@ public class RawProxyRepositoryApiRequest
       @JsonProperty("proxy") final ProxyAttributes proxy,
       @JsonProperty("negativeCache")  final NegativeCacheAttributes negativeCache,
       @JsonProperty("httpClient") final HttpClientAttributes httpClient,
-      @JsonProperty("routingRule") final String routingRule)
+      @JsonProperty("routingRule") final String routingRule,
+      @JsonProperty("raw") final RawAttributes raw)
   {
     super(name, RawFormat.NAME, online, storage, cleanup, proxy, negativeCache, httpClient, routingRule);
+    this.raw = raw != null ? raw : new RawAttributes(ATTACHMENT);
+  }
+
+  public RawAttributes getRaw() {
+    return raw;
   }
 }

@@ -3,114 +3,155 @@
 exports[`AnonymousSettings renders correctly 1`] = `
 <div>
   <div
-    class="nxrm-content-body nxrm-anonymous-settings"
+    class="nxrm-page"
   >
     <div
-      class="nxrm-section nx-tile"
+      class="nxrm-page-header"
     >
       <div
-        class="field-wrapper"
+        class="nxrm-page-title"
       >
-        <label
-          class="field-wrapper-label"
+        <h1
+          class="title"
         >
-          Access:
-        </label>
-        <label
-          class="nx-checkbox tm-checked"
-        >
-          <input
-            class="nx-checkbox__input"
-            id="enabled"
-            type="checkbox"
-          />
-          <span
-            class="nx-checkbox__box"
+          <svg
+            aria-hidden="true"
+            class="svg-inline--fa fa-user fa-w-14 nx-icon"
+            data-icon="user"
+            data-prefix="fas"
+            focusable="false"
+            role="img"
+            viewBox="0 0 448 512"
+            xmlns="http://www.w3.org/2000/svg"
           >
-            <svg
-              aria-hidden="true"
-              class="svg-inline--fa fa-check fa-w-16 "
-              data-icon="check"
-              data-prefix="fas"
-              focusable="false"
-              role="img"
-              viewBox="0 0 512 512"
-              xmlns="http://www.w3.org/2000/svg"
+            <path
+              d="M224 256c70.7 0 128-57.3 128-128S294.7 0 224 0 96 57.3 96 128s57.3 128 128 128zm89.6 32h-16.7c-22.2 10.2-46.9 16-72.9 16s-50.6-5.8-72.9-16h-16.7C60.2 288 0 348.2 0 422.4V464c0 26.5 21.5 48 48 48h352c26.5 0 48-21.5 48-48v-41.6c0-74.2-60.2-134.4-134.4-134.4z"
+              fill="currentColor"
+            />
+          </svg>
+          <span
+            class="nx-feature-name"
+          >
+            Anonymous Access
+          </span>
+        </h1>
+        <p
+          class="description nx-feature-description"
+        >
+          Configure anonymous access to server contents
+        </p>
+      </div>
+    </div>
+    <div
+      class="nxrm-content-body nxrm-anonymous-settings"
+    >
+      <div
+        class="nxrm-section nx-tile"
+      >
+        <div
+          class="field-wrapper"
+        >
+          <label
+            class="field-wrapper-label"
+          >
+            Access:
+          </label>
+          <label
+            class="nx-checkbox tm-checked"
+          >
+            <input
+              class="nx-checkbox__input"
+              id="enabled"
+              type="checkbox"
+            />
+            <span
+              class="nx-checkbox__box"
             >
-              <path
-                d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
-                fill="currentColor"
-              />
-            </svg>
-          </span>
-          <span
-            class="nx-checkbox__content"
+              <svg
+                aria-hidden="true"
+                class="svg-inline--fa fa-check fa-w-16 "
+                data-icon="check"
+                data-prefix="fas"
+                focusable="false"
+                role="img"
+                viewBox="0 0 512 512"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
+                  fill="currentColor"
+                />
+              </svg>
+            </span>
+            <span
+              class="nx-checkbox__content"
+            >
+              Allow anonymous users to access the server
+            </span>
+          </label>
+        </div>
+        <div
+          class="field-wrapper"
+        >
+          <label
+            class="field-wrapper-label"
+            for="userId"
           >
-            Allow anonymous users to access the server
-          </span>
-        </label>
-      </div>
-      <div
-        class="field-wrapper"
-      >
-        <label
-          class="field-wrapper-label"
-          for="userId"
+            Username:
+          </label>
+          <input
+            class="nxrm-textfield nxrm-anonymous-settings-field"
+            id="userId"
+            name="userId"
+            required=""
+            type="text"
+            value="testUser"
+          />
+        </div>
+        <div
+          class="field-wrapper"
         >
-          Username:
-        </label>
-        <input
-          class="nxrm-textfield nxrm-anonymous-settings-field"
-          id="userId"
-          name="userId"
-          required=""
-          type="text"
-          value="testUser"
-        />
-      </div>
-      <div
-        class="field-wrapper"
-      >
-        <label
-          class="field-wrapper-label"
-          for="realmName"
-        >
-          Realm:
-        </label>
-        <select
-          class="nxrm-select nxrm-anonymous-settings-field"
-          id="realmName"
-          name="realmName"
-        >
-          <option
-            value="r1"
+          <label
+            class="field-wrapper-label"
+            for="realmName"
           >
-            Realm One
-          </option>
-          <option
-            value="r2"
+            Realm:
+          </label>
+          <select
+            class="nxrm-select nxrm-anonymous-settings-field"
+            id="realmName"
+            name="realmName"
           >
-            Realm Two
-          </option>
-        </select>
-      </div>
-      <div
-        class="nxrm-section-footer nx-tile-footer"
-      >
-        <button
-          class="nx-btn nx-btn--primary"
-          disabled=""
-          type="input"
+            <option
+              value="r1"
+            >
+              Realm One
+            </option>
+            <option
+              value="r2"
+            >
+              Realm Two
+            </option>
+          </select>
+        </div>
+        <div
+          class="nxrm-section-footer nx-tile-footer"
         >
-          Save
-        </button>
-        <button
-          class="nx-btn"
-          disabled=""
-          type="input"
-        >
-          Discard
-        </button>
+          <button
+            class="nx-btn nx-btn--primary"
+            disabled=""
+            type="input"
+          >
+            Save
+          </button>
+          <button
+            class="nx-btn"
+            disabled=""
+            type="input"
+          >
+            Discard
+          </button>
+        </div>
       </div>
     </div>
   </div>

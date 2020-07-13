@@ -12,53 +12,31 @@
  */
 package org.sonatype.nexus.testsuite.testsupport.utility;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.client.WebTarget;
 
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.search.query.SearchQueryService;
-import org.sonatype.nexus.testsuite.helpers.ComponentAssetTestHelper;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
+import org.sonatype.nexus.repository.search.index.SearchIndexFacet;
 
 /**
- * This class is temporary; when Search is available/implemented for SQL/DataStore (new DB), this class
- * should be updated to use Search for verifying component existence.
- *
- * At that time, we probably will no longer need separate implementations of SearchTestHelper
- * i.e SearchTestHelper can be reverted to a class
+ * This class is temporary; when automatic Search re-indexing is implemented for SQL/DataStore (new DB) mode,
+ * this class should be removed and the orient feature flag on  {@link SearchTestHelper} should be removed.
  */
 @Named
 @Singleton
 public class DataStoreSearchTestHelper
-    implements SearchTestHelper
+    extends SearchTestHelper
 {
-  @Inject
-  protected ComponentAssetTestHelper componentAssetTestHelper;
-
-  @Override
-  public void waitForSearch() throws Exception {
-    throw new UnsupportedOperationException("Search is not available.");
-  }
-
   @Override
   public void verifyComponentExists(
       final WebTarget nexusSearchWebTarget,
       final Repository repository,
       final String name,
       final String version,
-      final boolean exists)
+      final boolean exists) throws Exception
   {
-    boolean componentExists = componentAssetTestHelper.componentExists(repository, name, version);
-    assertThat(componentExists, is(exists));
-  }
-
-  @Override
-  public SearchQueryService queryService() {
-    throw new UnsupportedOperationException("Search is not available.");
+    repository.facet(SearchIndexFacet.class).rebuildIndex();
+    super.verifyComponentExists(nexusSearchWebTarget, repository, name, version, exists);
   }
 }
-

@@ -498,11 +498,13 @@ public class MavenUploadHandler
     }
 
     Path contentPath = content.toPath();
-    Payload payload = new StreamPayload(() -> new FileInputStream(content), content.length(), Files.probeContentType(contentPath));
-    MavenFacet mavenFacet = repository.facet(MavenFacet.class);
-    Content asset = mavenFacet.put(mavenPath, payload);
-    putChecksumFiles(mavenFacet, mavenPath, asset);
-    return asset;
+    try (FileInputStream fis = new FileInputStream(content)) {
+      Payload payload = new StreamPayload(() -> fis, content.length(), Files.probeContentType(contentPath));
+      MavenFacet mavenFacet = repository.facet(MavenFacet.class);
+      Content asset = mavenFacet.put(mavenPath, payload);
+      putChecksumFiles(mavenFacet, mavenPath, asset);
+      return asset;
+    }
   }
 
   @Override

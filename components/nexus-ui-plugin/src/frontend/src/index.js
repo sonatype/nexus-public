@@ -28,6 +28,10 @@ export { default as SectionHeader } from './components/layout/common/SectionHead
 export { default as MasterDetail } from './components/layout/common/MasterDetail/MasterDetail';
 export { default as Master } from './components/layout/common/MasterDetail/Master';
 export { default as Detail } from './components/layout/common/MasterDetail/Detail';
+export { default as Page } from './components/layout/common/Page/Page';
+export { default as PageActions } from './components/layout/common/PageActions/PageActions';
+export { default as PageHeader } from './components/layout/common/PageHeader/PageHeader';
+export { default as PageTitle } from './components/layout/common/PageTitle/PageTitle';
 export { default as Tab } from './components/layout/common/TabPanel/Tab';
 export { default as TabLabel } from './components/layout/common/TabPanel/TabLabel';
 export { default as TabList } from './components/layout/common/TabPanel/TabList';

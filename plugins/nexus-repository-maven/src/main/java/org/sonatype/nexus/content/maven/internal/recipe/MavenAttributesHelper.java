@@ -12,6 +12,9 @@
  */
 package org.sonatype.nexus.content.maven.internal.recipe;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.maven.MavenPath;
@@ -35,53 +38,50 @@ import static org.sonatype.nexus.repository.maven.internal.Attributes.P_PACKAGIN
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_POM_DESCRIPTION;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_POM_NAME;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_VERSION;
+import static org.sonatype.nexus.repository.maven.internal.Maven2Format.NAME;
 
 /**
  * Helper class used by {@link MavenContentFacetImpl} for setting Asset and Component attributes
  *
  * @since 3.next
  */
-final class AttributesHelper
+final class MavenAttributesHelper
 {
   private static final String JAR = "jar";
 
-  public static final String P_ASSET_KIND = "asset_kind";
-
-  private AttributesHelper() {
+  private MavenAttributesHelper() {
     //no-op
   }
 
-  static void setComponentAttributes(final FluentComponent component, final Coordinates coordinates) {
-    component.withAttribute(P_GROUP_ID, coordinates.getGroupId());
-    component.withAttribute(P_ARTIFACT_ID, coordinates.getArtifactId());
-    component.withAttribute(P_VERSION, coordinates.getVersion());
-    component.withAttribute(P_BASE_VERSION, coordinates.getBaseVersion());
+  static void setMavenAttributes(final FluentComponent component, final Coordinates coordinates) {
+    Map<String, String> mavenAttributes = new HashMap<>();
+    mavenAttributes.put(P_GROUP_ID, coordinates.getGroupId());
+    mavenAttributes.put(P_ARTIFACT_ID, coordinates.getArtifactId());
+    mavenAttributes.put(P_VERSION, coordinates.getVersion());
+    mavenAttributes.put(P_BASE_VERSION, coordinates.getBaseVersion());
+    component.withAttribute(NAME, mavenAttributes);
   }
 
-  static void setAssetAttributes(
-      final FluentAsset asset,
-      final MavenPath mavenPath,
-      final MavenPathParser mavenPathParser)
-  {
+  static void setMavenAttributes(final FluentAsset asset, final MavenPath mavenPath) {
+    Map<String, String> mavenAttributes = new HashMap<>();
     Coordinates coordinates = mavenPath.getCoordinates();
     if (coordinates != null) {
-      asset.withAttribute(P_GROUP_ID, coordinates.getGroupId());
-      asset.withAttribute(P_ARTIFACT_ID, coordinates.getArtifactId());
-      asset.withAttribute(P_VERSION, coordinates.getVersion());
-      asset.withAttribute(P_BASE_VERSION, coordinates.getBaseVersion());
-      ofNullable(coordinates.getClassifier()).ifPresent(value -> asset.withAttribute(P_CLASSIFIER, value));
-      asset.withAttribute(P_EXTENSION, coordinates.getExtension());
-      asset.withAttribute(P_ASSET_KIND, assetKind(mavenPath, mavenPathParser));
+      mavenAttributes.put(P_GROUP_ID, coordinates.getGroupId());
+      mavenAttributes.put(P_ARTIFACT_ID, coordinates.getArtifactId());
+      mavenAttributes.put(P_VERSION, coordinates.getVersion());
+      mavenAttributes.put(P_BASE_VERSION, coordinates.getBaseVersion());
+      ofNullable(coordinates.getClassifier()).ifPresent(value -> mavenAttributes.put(P_CLASSIFIER, value));
+      mavenAttributes.put(P_EXTENSION, coordinates.getExtension());
     }
-    else {
-      asset.withAttribute(P_ASSET_KIND, assetKind(mavenPath, mavenPathParser));
-    }
+    asset.withAttribute(NAME, mavenAttributes);
   }
 
   static void setPomAttributes(final FluentComponent component, final Model model) {
-    component.withAttribute(P_PACKAGING, getPackaging(model));
-    ofNullable(model.getName()).ifPresent(name -> component.withAttribute(P_POM_NAME, name));
-    ofNullable(model.getDescription()).ifPresent(desc -> component.withAttribute(P_POM_DESCRIPTION, desc));
+    Map<String, Object> pomAttributes = new HashMap<>(component.attributes(NAME).backing());
+    pomAttributes.put(P_PACKAGING, getPackaging(model));
+    ofNullable(model.getName()).ifPresent(name -> pomAttributes.put(P_POM_NAME, name));
+    ofNullable(model.getDescription()).ifPresent(desc -> pomAttributes.put(P_POM_DESCRIPTION, desc));
+    component.withAttribute(NAME, pomAttributes);
   }
 
   static String getPackaging(Model model) {

@@ -10,16 +10,26 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+package org.sonatype.nexus.repository.raw.rest;
 
-package org.sonatype.nexus.content.maven.internal.store;
+import javax.inject.Named;
 
-import org.sonatype.nexus.repository.content.store.AssetDAO;
+import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.rest.GroupRepositoryApiRequestToConfigurationConverter;
+
+import static org.sonatype.nexus.repository.raw.rest.RawAttributes.CONTENT_DISPOSITION;
 
 /**
- * @since 3.next
+ * @since 3.25
  */
-public interface MavenAssetDAO
-    extends AssetDAO
+@Named
+public class RawGroupRepositoryApiRequestToConfigurationConverter
+    extends GroupRepositoryApiRequestToConfigurationConverter<RawGroupRepositoryApiRequest>
 {
-  // nothing to add...
+  @Override
+  public Configuration convert(final RawGroupRepositoryApiRequest request) {
+    Configuration configuration = super.convert(request);
+    configuration.attributes("raw").set(CONTENT_DISPOSITION, request.getRaw().getContentDisposition().name());
+    return configuration;
+  }
 }

@@ -33,6 +33,14 @@ Ext.define('NX.coreui.view.component.ComponentInfo', {
     items: [
       {
         xtype: 'nx-button',
+        text: NX.I18n.get('ComponentDetails_View_Vulnerabilities_Button'),
+        iconCls: 'x-fa fa-bug',
+        reference: 'viewVulnerabilitiesButton',
+        action: 'viewVulnerabilities',
+        hidden: true
+      },
+      {
+        xtype: 'nx-button',
         text: NX.I18n.get('ComponentDetails_Delete_Button'),
         iconCls: 'x-fa fa-trash',
         action: 'deleteComponent',
@@ -55,6 +63,13 @@ Ext.define('NX.coreui.view.component.ComponentInfo', {
       reference: 'summaryPanel',
       titled: NX.I18n.get('Component_AssetInfo_Info_Title'),
       collapsible: true
+    },
+    {
+      xtype: 'nx-info-panel',
+      reference: 'vulnerabilityPanel',
+      titled: NX.I18n.get('Component_Vulnerability_Info_Title'),
+      collapsible: true,
+      hidden: true
     },
     {
       xtype: 'nx-info-dependency-snippet-panel',
@@ -101,5 +116,13 @@ Ext.define('NX.coreui.view.component.ComponentInfo', {
 
   getDependencySnippetPanel: function() {
     return this.lookup('dependencySnippetPanel');
+  },
+
+  getVulnerabilityPanel: function() {
+    return this.lookup('vulnerabilityPanel');
+  },
+
+  getViewVulnerabilitiesButton: function() {
+    return this.lookup('viewVulnerabilitiesButton');
   }
 });

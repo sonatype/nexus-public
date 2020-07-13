@@ -12,31 +12,28 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import javax.inject.Provider;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
- * Assisted-Inject generic template that defines the API to create content stores for a particular format.
+ * Factory that creates content stores for a format-specific DAO.
  *
- * @since 3.24
+ * @since 3.next
  */
-interface FormatStoreFactory
-    <
-    // first capture the format's store types (order must match BespokeFormatStoreModule)
-    CONTENT_REPOSITORY_STORE extends ContentRepositoryStore<CONTENT_REPOSITORY_DAO>,
-    COMPONENT_STORE          extends ComponentStore<COMPONENT_DAO>,
-    ASSET_STORE              extends AssetStore<ASSET_DAO>,
-    ASSET_BLOB_STORE         extends AssetBlobStore<ASSET_BLOB_DAO>,
-
-    // now capture the format's DAO classes (must be in the same order!)
-    CONTENT_REPOSITORY_DAO   extends ContentRepositoryDAO,
-    COMPONENT_DAO            extends ComponentDAO,
-    ASSET_DAO                extends AssetDAO,
-    ASSET_BLOB_DAO           extends AssetBlobDAO
-    >
+@SuppressWarnings({"rawtypes", "unchecked"})
+class FormatStoreFactory
 {
-  CONTENT_REPOSITORY_STORE contentRepositoryStore(String contentStoreName, Class<CONTENT_REPOSITORY_DAO> daoClass);
+  private final Provider<ContentStoreFactory> factoryProvider;
 
-  COMPONENT_STORE componentStore(String contentStoreName, Class<COMPONENT_DAO> daoClass);
+  private final Class<?> formatDaoClass;
 
-  ASSET_STORE assetStore(String contentStoreName, Class<ASSET_DAO> daoClass);
+  FormatStoreFactory(final Provider<ContentStoreFactory> factoryProvider, final Class<?> formatDaoClass) {
+    this.factoryProvider = checkNotNull(factoryProvider);
+    this.formatDaoClass = checkNotNull(formatDaoClass);
+  }
 
-  ASSET_BLOB_STORE assetBlobStore(String contentStoreName, Class<ASSET_BLOB_DAO> daoClass);
+  public <T extends ContentStoreSupport> T createFormatStore(final String contentStoreName) {
+    return (T) factoryProvider.get().createContentStore(contentStoreName, formatDaoClass);
+  }
 }

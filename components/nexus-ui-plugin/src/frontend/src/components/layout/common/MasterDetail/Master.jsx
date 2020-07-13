@@ -12,13 +12,9 @@
  */
 import React from 'react';
 
-import ExtJS from "../../../../interface/ExtJS";
-
 /**
  * @since 3.24
  */
 export default function Master({children, ...attrs}) {
-  ExtJS.setBreadcrumbs();
-
   return <>{React.Children.map(children, (child) => React.cloneElement(child, attrs))}</>;
 }

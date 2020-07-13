@@ -56,10 +56,6 @@ public interface MavenGroupFacet
   @Nullable
   Content mergeWithoutCaching(MavenPath mavenPath, Map<Repository, Response> responses) throws IOException;
 
-  @Subscribe
-  @AllowConcurrentEvents
-  void on(AssetEvent event);
-
   @FunctionalInterface
   interface ContentFunction<T>
   {

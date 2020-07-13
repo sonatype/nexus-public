@@ -3,147 +3,192 @@
 exports[`MetricHealth renders a loading spinner 1`] = `
 <div>
   <div
-    class="nxrm-content-body nxrm-metric-health"
+    class="nxrm-page"
   >
-    <table
-      class="nx-table"
+    <div
+      class="nxrm-page-header"
     >
-      <thead>
-        <tr
-          class="nx-table-row nx-table-row--header"
+      <div
+        class="nxrm-page-title"
+      >
+        <h1
+          class="title"
         >
-          <th
-            class="nx-cell nx-cell--header nx-cell--icon"
-          />
-          <th
-            class="nx-cell nx-cell--header nx-cell--sortable"
+          <svg
+            aria-hidden="true"
+            class="svg-inline--fa fa-medkit fa-w-16 nx-icon"
+            data-icon="medkit"
+            data-prefix="fas"
+            focusable="false"
+            role="img"
+            viewBox="0 0 512 512"
+            xmlns="http://www.w3.org/2000/svg"
           >
-            <span>
-              Name
-            </span>
-            <span
-              class="nx-cell__sort-icons fa-layers fa-fw"
-            >
-              <svg
-                aria-hidden="true"
-                class="svg-inline--fa fa-sort-down fa-w-10 nx-icon"
-                data-icon="sort-down"
-                data-prefix="fas"
-                focusable="false"
-                role="img"
-                viewBox="0 0 320 512"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41z"
-                  fill="currentColor"
-                />
-              </svg>
-              <svg
-                aria-hidden="true"
-                class="svg-inline--fa fa-sort-up fa-w-10 nx-icon"
-                data-icon="sort-up"
-                data-prefix="fas"
-                focusable="false"
-                role="img"
-                viewBox="0 0 320 512"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41z"
-                  fill="currentColor"
-                />
-              </svg>
-            </span>
-          </th>
-          <th
-            class="nx-cell nx-cell--header nx-cell--sortable"
+            <path
+              d="M96 480h320V128h-32V80c0-26.51-21.49-48-48-48H176c-26.51 0-48 21.49-48 48v48H96v352zm96-384h128v32H192V96zm320 80v256c0 26.51-21.49 48-48 48h-16V128h16c26.51 0 48 21.49 48 48zM64 480H48c-26.51 0-48-21.49-48-48V176c0-26.51 21.49-48 48-48h16v352zm288-208v32c0 8.837-7.163 16-16 16h-48v48c0 8.837-7.163 16-16 16h-32c-8.837 0-16-7.163-16-16v-48h-48c-8.837 0-16-7.163-16-16v-32c0-8.837 7.163-16 16-16h48v-48c0-8.837 7.163-16 16-16h32c8.837 0 16 7.163 16 16v48h48c8.837 0 16 7.163 16 16z"
+              fill="currentColor"
+            />
+          </svg>
+          <span
+            class="nx-feature-name"
           >
-            <span>
-              Message
-            </span>
-            <span
-              class="nx-cell__sort-icons fa-layers fa-fw"
-            >
-              <svg
-                aria-hidden="true"
-                class="svg-inline--fa fa-sort fa-w-10 nx-icon"
-                data-icon="sort"
-                data-prefix="fas"
-                focusable="false"
-                role="img"
-                viewBox="0 0 320 512"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
-                  fill="currentColor"
-                />
-              </svg>
-            </span>
-          </th>
-          <th
-            class="nx-cell nx-cell--header nx-cell--sortable"
-          >
-            <span>
-              Error
-            </span>
-            <span
-              class="nx-cell__sort-icons fa-layers fa-fw"
-            >
-              <svg
-                aria-hidden="true"
-                class="svg-inline--fa fa-sort fa-w-10 nx-icon"
-                data-icon="sort"
-                data-prefix="fas"
-                focusable="false"
-                role="img"
-                viewBox="0 0 320 512"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
-                  fill="currentColor"
-                />
-              </svg>
-            </span>
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          class="nx-table-row"
+            Status
+          </span>
+        </h1>
+        <p
+          class="description nx-feature-description"
         >
-          <td
-            class="nx-cell nx-cell--empty"
-            colspan="4"
-          >
-            <div
-              class="nx-loading-spinner"
+          System status checks
+        </p>
+      </div>
+    </div>
+    <div
+      class="nxrm-content-body nxrm-metric-health"
+    >
+      <div
+        class="nxrm-section nx-tile"
+      >
+        <table
+          class="nx-table"
+        >
+          <thead>
+            <tr
+              class="nx-table-row nx-table-row--header"
             >
-              <svg
-                aria-hidden="true"
-                class="svg-inline--fa fa-circle-notch fa-w-16 fa-spin nx-loading-spinner__icon nx-icon"
-                data-icon="circle-notch"
-                data-prefix="fas"
-                focusable="false"
-                role="img"
-                viewBox="0 0 512 512"
-                xmlns="http://www.w3.org/2000/svg"
+              <th
+                class="nx-cell nx-cell--header nx-cell--icon"
+              />
+              <th
+                class="nx-cell nx-cell--header nx-cell--sortable"
               >
-                <path
-                  d="M288 39.056v16.659c0 10.804 7.281 20.159 17.686 23.066C383.204 100.434 440 171.518 440 256c0 101.689-82.295 184-184 184-101.689 0-184-82.295-184-184 0-84.47 56.786-155.564 134.312-177.219C216.719 75.874 224 66.517 224 55.712V39.064c0-15.709-14.834-27.153-30.046-23.234C86.603 43.482 7.394 141.206 8.003 257.332c.72 137.052 111.477 246.956 248.531 246.667C393.255 503.711 504 392.788 504 256c0-115.633-79.14-212.779-186.211-240.236C302.678 11.889 288 23.456 288 39.056z"
-                  fill="currentColor"
-                />
-              </svg>
-              <span>
-                Loading…
-              </span>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+                <span>
+                  Name
+                </span>
+                <span
+                  class="nx-cell__sort-icons fa-layers fa-fw"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="svg-inline--fa fa-sort-down fa-w-10 nx-icon"
+                    data-icon="sort-down"
+                    data-prefix="fas"
+                    focusable="false"
+                    role="img"
+                    viewBox="0 0 320 512"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                  <svg
+                    aria-hidden="true"
+                    class="svg-inline--fa fa-sort-up fa-w-10 nx-icon"
+                    data-icon="sort-up"
+                    data-prefix="fas"
+                    focusable="false"
+                    role="img"
+                    viewBox="0 0 320 512"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </span>
+              </th>
+              <th
+                class="nx-cell nx-cell--header nx-cell--sortable"
+              >
+                <span>
+                  Message
+                </span>
+                <span
+                  class="nx-cell__sort-icons fa-layers fa-fw"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="svg-inline--fa fa-sort fa-w-10 nx-icon"
+                    data-icon="sort"
+                    data-prefix="fas"
+                    focusable="false"
+                    role="img"
+                    viewBox="0 0 320 512"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </span>
+              </th>
+              <th
+                class="nx-cell nx-cell--header nx-cell--sortable"
+              >
+                <span>
+                  Error
+                </span>
+                <span
+                  class="nx-cell__sort-icons fa-layers fa-fw"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="svg-inline--fa fa-sort fa-w-10 nx-icon"
+                    data-icon="sort"
+                    data-prefix="fas"
+                    focusable="false"
+                    role="img"
+                    viewBox="0 0 320 512"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              class="nx-table-row"
+            >
+              <td
+                class="nx-cell nx-cell--empty"
+                colspan="4"
+              >
+                <div
+                  class="nx-loading-spinner"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="svg-inline--fa fa-circle-notch fa-w-16 fa-spin nx-loading-spinner__icon nx-icon"
+                    data-icon="circle-notch"
+                    data-prefix="fas"
+                    focusable="false"
+                    role="img"
+                    viewBox="0 0 512 512"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M288 39.056v16.659c0 10.804 7.281 20.159 17.686 23.066C383.204 100.434 440 171.518 440 256c0 101.689-82.295 184-184 184-101.689 0-184-82.295-184-184 0-84.47 56.786-155.564 134.312-177.219C216.719 75.874 224 66.517 224 55.712V39.064c0-15.709-14.834-27.153-30.046-23.234C86.603 43.482 7.394 141.206 8.003 257.332c.72 137.052 111.477 246.956 248.531 246.667C393.255 503.711 504 392.788 504 256c0-115.633-79.14-212.779-186.211-240.236C302.678 11.889 288 23.456 288 39.056z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                  <span>
+                    Loading…
+                  </span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
 `;
@@ -151,143 +196,188 @@ exports[`MetricHealth renders a loading spinner 1`] = `
 exports[`MetricHealth renders an error message 1`] = `
 <div>
   <div
-    class="nxrm-content-body nxrm-metric-health"
+    class="nxrm-page"
   >
-    <table
-      class="nx-table"
+    <div
+      class="nxrm-page-header"
     >
-      <thead>
-        <tr
-          class="nx-table-row nx-table-row--header"
+      <div
+        class="nxrm-page-title"
+      >
+        <h1
+          class="title"
         >
-          <th
-            class="nx-cell nx-cell--header nx-cell--icon"
-          />
-          <th
-            class="nx-cell nx-cell--header nx-cell--sortable"
+          <svg
+            aria-hidden="true"
+            class="svg-inline--fa fa-medkit fa-w-16 nx-icon"
+            data-icon="medkit"
+            data-prefix="fas"
+            focusable="false"
+            role="img"
+            viewBox="0 0 512 512"
+            xmlns="http://www.w3.org/2000/svg"
           >
-            <span>
-              Name
-            </span>
-            <span
-              class="nx-cell__sort-icons fa-layers fa-fw"
-            >
-              <svg
-                aria-hidden="true"
-                class="svg-inline--fa fa-sort-down fa-w-10 nx-icon"
-                data-icon="sort-down"
-                data-prefix="fas"
-                focusable="false"
-                role="img"
-                viewBox="0 0 320 512"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41z"
-                  fill="currentColor"
-                />
-              </svg>
-              <svg
-                aria-hidden="true"
-                class="svg-inline--fa fa-sort-up fa-w-10 nx-icon"
-                data-icon="sort-up"
-                data-prefix="fas"
-                focusable="false"
-                role="img"
-                viewBox="0 0 320 512"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41z"
-                  fill="currentColor"
-                />
-              </svg>
-            </span>
-          </th>
-          <th
-            class="nx-cell nx-cell--header nx-cell--sortable"
+            <path
+              d="M96 480h320V128h-32V80c0-26.51-21.49-48-48-48H176c-26.51 0-48 21.49-48 48v48H96v352zm96-384h128v32H192V96zm320 80v256c0 26.51-21.49 48-48 48h-16V128h16c26.51 0 48 21.49 48 48zM64 480H48c-26.51 0-48-21.49-48-48V176c0-26.51 21.49-48 48-48h16v352zm288-208v32c0 8.837-7.163 16-16 16h-48v48c0 8.837-7.163 16-16 16h-32c-8.837 0-16-7.163-16-16v-48h-48c-8.837 0-16-7.163-16-16v-32c0-8.837 7.163-16 16-16h48v-48c0-8.837 7.163-16 16-16h32c8.837 0 16 7.163 16 16v48h48c8.837 0 16 7.163 16 16z"
+              fill="currentColor"
+            />
+          </svg>
+          <span
+            class="nx-feature-name"
           >
-            <span>
-              Message
-            </span>
-            <span
-              class="nx-cell__sort-icons fa-layers fa-fw"
-            >
-              <svg
-                aria-hidden="true"
-                class="svg-inline--fa fa-sort fa-w-10 nx-icon"
-                data-icon="sort"
-                data-prefix="fas"
-                focusable="false"
-                role="img"
-                viewBox="0 0 320 512"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
-                  fill="currentColor"
-                />
-              </svg>
-            </span>
-          </th>
-          <th
-            class="nx-cell nx-cell--header nx-cell--sortable"
-          >
-            <span>
-              Error
-            </span>
-            <span
-              class="nx-cell__sort-icons fa-layers fa-fw"
-            >
-              <svg
-                aria-hidden="true"
-                class="svg-inline--fa fa-sort fa-w-10 nx-icon"
-                data-icon="sort"
-                data-prefix="fas"
-                focusable="false"
-                role="img"
-                viewBox="0 0 320 512"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
-                  fill="currentColor"
-                />
-              </svg>
-            </span>
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          class="nx-table-row"
+            Status
+          </span>
+        </h1>
+        <p
+          class="description nx-feature-description"
         >
-          <td
-            class="nx-cell nx-error"
-            colspan="4"
-          >
-            <span>
-              <svg
-                aria-hidden="true"
-                class="svg-inline--fa fa-exclamation-triangle fa-w-18 fa-fw nx-icon"
-                data-icon="exclamation-triangle"
-                data-prefix="fas"
-                focusable="false"
-                role="img"
-                viewBox="0 0 576 512"
-                xmlns="http://www.w3.org/2000/svg"
+          System status checks
+        </p>
+      </div>
+    </div>
+    <div
+      class="nxrm-content-body nxrm-metric-health"
+    >
+      <div
+        class="nxrm-section nx-tile"
+      >
+        <table
+          class="nx-table"
+        >
+          <thead>
+            <tr
+              class="nx-table-row nx-table-row--header"
+            >
+              <th
+                class="nx-cell nx-cell--header nx-cell--icon"
+              />
+              <th
+                class="nx-cell nx-cell--header nx-cell--sortable"
               >
-                <path
-                  d="M569.517 440.013C587.975 472.007 564.806 512 527.94 512H48.054c-36.937 0-59.999-40.055-41.577-71.987L246.423 23.985c18.467-32.009 64.72-31.951 83.154 0l239.94 416.028zM288 354c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
-                  fill="currentColor"
-                />
-              </svg>
-              Error
-            </span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+                <span>
+                  Name
+                </span>
+                <span
+                  class="nx-cell__sort-icons fa-layers fa-fw"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="svg-inline--fa fa-sort-down fa-w-10 nx-icon"
+                    data-icon="sort-down"
+                    data-prefix="fas"
+                    focusable="false"
+                    role="img"
+                    viewBox="0 0 320 512"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                  <svg
+                    aria-hidden="true"
+                    class="svg-inline--fa fa-sort-up fa-w-10 nx-icon"
+                    data-icon="sort-up"
+                    data-prefix="fas"
+                    focusable="false"
+                    role="img"
+                    viewBox="0 0 320 512"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </span>
+              </th>
+              <th
+                class="nx-cell nx-cell--header nx-cell--sortable"
+              >
+                <span>
+                  Message
+                </span>
+                <span
+                  class="nx-cell__sort-icons fa-layers fa-fw"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="svg-inline--fa fa-sort fa-w-10 nx-icon"
+                    data-icon="sort"
+                    data-prefix="fas"
+                    focusable="false"
+                    role="img"
+                    viewBox="0 0 320 512"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </span>
+              </th>
+              <th
+                class="nx-cell nx-cell--header nx-cell--sortable"
+              >
+                <span>
+                  Error
+                </span>
+                <span
+                  class="nx-cell__sort-icons fa-layers fa-fw"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="svg-inline--fa fa-sort fa-w-10 nx-icon"
+                    data-icon="sort"
+                    data-prefix="fas"
+                    focusable="false"
+                    role="img"
+                    viewBox="0 0 320 512"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              class="nx-table-row"
+            >
+              <td
+                class="nx-cell nx-error"
+                colspan="4"
+              >
+                <span>
+                  <svg
+                    aria-hidden="true"
+                    class="svg-inline--fa fa-exclamation-triangle fa-w-18 fa-fw nx-icon"
+                    data-icon="exclamation-triangle"
+                    data-prefix="fas"
+                    focusable="false"
+                    role="img"
+                    viewBox="0 0 576 512"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M569.517 440.013C587.975 472.007 564.806 512 527.94 512H48.054c-36.937 0-59.999-40.055-41.577-71.987L246.423 23.985c18.467-32.009 64.72-31.951 83.154 0l239.94 416.028zM288 354c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                  Error
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
 `;
@@ -295,202 +385,247 @@ exports[`MetricHealth renders an error message 1`] = `
 exports[`MetricHealth renders the resolved data 1`] = `
 <div>
   <div
-    class="nxrm-content-body nxrm-metric-health"
+    class="nxrm-page"
   >
-    <table
-      class="nx-table"
+    <div
+      class="nxrm-page-header"
     >
-      <thead>
-        <tr
-          class="nx-table-row nx-table-row--header"
+      <div
+        class="nxrm-page-title"
+      >
+        <h1
+          class="title"
         >
-          <th
-            class="nx-cell nx-cell--header nx-cell--icon"
-          />
-          <th
-            class="nx-cell nx-cell--header nx-cell--sortable"
+          <svg
+            aria-hidden="true"
+            class="svg-inline--fa fa-medkit fa-w-16 nx-icon"
+            data-icon="medkit"
+            data-prefix="fas"
+            focusable="false"
+            role="img"
+            viewBox="0 0 512 512"
+            xmlns="http://www.w3.org/2000/svg"
           >
-            <span>
-              Name
-            </span>
-            <span
-              class="nx-cell__sort-icons fa-layers fa-fw"
-            >
-              <svg
-                aria-hidden="true"
-                class="svg-inline--fa fa-sort-down fa-w-10 nx-icon"
-                data-icon="sort-down"
-                data-prefix="fas"
-                focusable="false"
-                role="img"
-                viewBox="0 0 320 512"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41z"
-                  fill="currentColor"
-                />
-              </svg>
-              <svg
-                aria-hidden="true"
-                class="svg-inline--fa fa-sort-up fa-w-10 nx-icon"
-                data-icon="sort-up"
-                data-prefix="fas"
-                focusable="false"
-                role="img"
-                viewBox="0 0 320 512"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41z"
-                  fill="currentColor"
-                />
-              </svg>
-            </span>
-          </th>
-          <th
-            class="nx-cell nx-cell--header nx-cell--sortable"
+            <path
+              d="M96 480h320V128h-32V80c0-26.51-21.49-48-48-48H176c-26.51 0-48 21.49-48 48v48H96v352zm96-384h128v32H192V96zm320 80v256c0 26.51-21.49 48-48 48h-16V128h16c26.51 0 48 21.49 48 48zM64 480H48c-26.51 0-48-21.49-48-48V176c0-26.51 21.49-48 48-48h16v352zm288-208v32c0 8.837-7.163 16-16 16h-48v48c0 8.837-7.163 16-16 16h-32c-8.837 0-16-7.163-16-16v-48h-48c-8.837 0-16-7.163-16-16v-32c0-8.837 7.163-16 16-16h48v-48c0-8.837 7.163-16 16-16h32c8.837 0 16 7.163 16 16v48h48c8.837 0 16 7.163 16 16z"
+              fill="currentColor"
+            />
+          </svg>
+          <span
+            class="nx-feature-name"
           >
-            <span>
-              Message
-            </span>
-            <span
-              class="nx-cell__sort-icons fa-layers fa-fw"
-            >
-              <svg
-                aria-hidden="true"
-                class="svg-inline--fa fa-sort fa-w-10 nx-icon"
-                data-icon="sort"
-                data-prefix="fas"
-                focusable="false"
-                role="img"
-                viewBox="0 0 320 512"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
-                  fill="currentColor"
-                />
-              </svg>
-            </span>
-          </th>
-          <th
-            class="nx-cell nx-cell--header nx-cell--sortable"
-          >
-            <span>
-              Error
-            </span>
-            <span
-              class="nx-cell__sort-icons fa-layers fa-fw"
-            >
-              <svg
-                aria-hidden="true"
-                class="svg-inline--fa fa-sort fa-w-10 nx-icon"
-                data-icon="sort"
-                data-prefix="fas"
-                focusable="false"
-                role="img"
-                viewBox="0 0 320 512"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
-                  fill="currentColor"
-                />
-              </svg>
-            </span>
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          class="nx-table-row"
+            Status
+          </span>
+        </h1>
+        <p
+          class="description nx-feature-description"
         >
-          <td
-            class="nx-cell nx-cell--icon"
-          >
-            <svg
-              aria-hidden="true"
-              class="svg-inline--fa fa-check-circle fa-w-16 nxrm-metric-health--healthy nx-icon"
-              data-icon="check-circle"
-              data-prefix="fas"
-              focusable="false"
-              role="img"
-              viewBox="0 0 512 512"
-              xmlns="http://www.w3.org/2000/svg"
+          System status checks
+        </p>
+      </div>
+    </div>
+    <div
+      class="nxrm-content-body nxrm-metric-health"
+    >
+      <div
+        class="nxrm-section nx-tile"
+      >
+        <table
+          class="nx-table"
+        >
+          <thead>
+            <tr
+              class="nx-table-row nx-table-row--header"
             >
-              <path
-                d="M504 256c0 136.967-111.033 248-248 248S8 392.967 8 256 119.033 8 256 8s248 111.033 248 248zM227.314 387.314l184-184c6.248-6.248 6.248-16.379 0-22.627l-22.627-22.627c-6.248-6.249-16.379-6.249-22.628 0L216 308.118l-70.059-70.059c-6.248-6.248-16.379-6.248-22.628 0l-22.627 22.627c-6.248 6.248-6.248 16.379 0 22.627l104 104c6.249 6.249 16.379 6.249 22.628.001z"
-                fill="currentColor"
+              <th
+                class="nx-cell nx-cell--header nx-cell--icon"
               />
-            </svg>
-          </td>
-          <td
-            class="nx-cell"
-          >
-            <span>
-              Available CPUs
-            </span>
-          </td>
-          <td
-            class="nx-cell"
-          >
-            <span>
-              The host system is allocating a maximum of 6 cores to the application.
-            </span>
-          </td>
-          <td
-            class="nx-cell"
-          >
-            <span />
-          </td>
-        </tr>
-        <tr
-          class="nx-table-row"
-        >
-          <td
-            class="nx-cell nx-cell--icon"
-          >
-            <svg
-              aria-hidden="true"
-              class="svg-inline--fa fa-exclamation-circle fa-w-16 nxrm-metric-health--unhealthy nx-icon"
-              data-icon="exclamation-circle"
-              data-prefix="fas"
-              focusable="false"
-              role="img"
-              viewBox="0 0 512 512"
-              xmlns="http://www.w3.org/2000/svg"
+              <th
+                class="nx-cell nx-cell--header nx-cell--sortable"
+              >
+                <span>
+                  Name
+                </span>
+                <span
+                  class="nx-cell__sort-icons fa-layers fa-fw"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="svg-inline--fa fa-sort-down fa-w-10 nx-icon"
+                    data-icon="sort-down"
+                    data-prefix="fas"
+                    focusable="false"
+                    role="img"
+                    viewBox="0 0 320 512"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                  <svg
+                    aria-hidden="true"
+                    class="svg-inline--fa fa-sort-up fa-w-10 nx-icon"
+                    data-icon="sort-up"
+                    data-prefix="fas"
+                    focusable="false"
+                    role="img"
+                    viewBox="0 0 320 512"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.2 15.1 4.5 41-16.9 41z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </span>
+              </th>
+              <th
+                class="nx-cell nx-cell--header nx-cell--sortable"
+              >
+                <span>
+                  Message
+                </span>
+                <span
+                  class="nx-cell__sort-icons fa-layers fa-fw"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="svg-inline--fa fa-sort fa-w-10 nx-icon"
+                    data-icon="sort"
+                    data-prefix="fas"
+                    focusable="false"
+                    role="img"
+                    viewBox="0 0 320 512"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </span>
+              </th>
+              <th
+                class="nx-cell nx-cell--header nx-cell--sortable"
+              >
+                <span>
+                  Error
+                </span>
+                <span
+                  class="nx-cell__sort-icons fa-layers fa-fw"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="svg-inline--fa fa-sort fa-w-10 nx-icon"
+                    data-icon="sort"
+                    data-prefix="fas"
+                    focusable="false"
+                    role="img"
+                    viewBox="0 0 320 512"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm255-105L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              class="nx-table-row"
             >
-              <path
-                d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
-                fill="currentColor"
-              />
-            </svg>
-          </td>
-          <td
-            class="nx-cell"
-          >
-            <span>
-              testError
-            </span>
-          </td>
-          <td
-            class="nx-cell"
-          >
-            <span>
-              TestError
-            </span>
-          </td>
-          <td
-            class="nx-cell"
-          >
-            <span>
-              TestError
-            </span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+              <td
+                class="nx-cell nx-cell--icon"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="svg-inline--fa fa-check-circle fa-w-16 healthy nx-icon"
+                  data-icon="check-circle"
+                  data-prefix="fas"
+                  focusable="false"
+                  role="img"
+                  viewBox="0 0 512 512"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M504 256c0 136.967-111.033 248-248 248S8 392.967 8 256 119.033 8 256 8s248 111.033 248 248zM227.314 387.314l184-184c6.248-6.248 6.248-16.379 0-22.627l-22.627-22.627c-6.248-6.249-16.379-6.249-22.628 0L216 308.118l-70.059-70.059c-6.248-6.248-16.379-6.248-22.628 0l-22.627 22.627c-6.248 6.248-6.248 16.379 0 22.627l104 104c6.249 6.249 16.379 6.249 22.628.001z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  Available CPUs
+                </span>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  The host system is allocating a maximum of 6 cores to the application.
+                </span>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <span />
+              </td>
+            </tr>
+            <tr
+              class="nx-table-row"
+            >
+              <td
+                class="nx-cell nx-cell--icon"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="svg-inline--fa fa-exclamation-circle fa-w-16 unhealthy nx-icon"
+                  data-icon="exclamation-circle"
+                  data-prefix="fas"
+                  focusable="false"
+                  role="img"
+                  viewBox="0 0 512 512"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  testError
+                </span>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  TestError
+                </span>
+              </td>
+              <td
+                class="nx-cell"
+              >
+                <span>
+                  TestError
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
 `;

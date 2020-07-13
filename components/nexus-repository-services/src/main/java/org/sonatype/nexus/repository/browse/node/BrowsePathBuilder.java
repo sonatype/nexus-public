@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * Static methods for building {@link BrowsePath}.
  *
- * @since 3.next
+ * @since 3.25
  */
 public class BrowsePathBuilder
 {

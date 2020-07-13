@@ -57,12 +57,11 @@ import org.apache.maven.model.Model;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
-import static org.sonatype.nexus.content.maven.internal.recipe.AttributesHelper.P_ASSET_KIND;
-import static org.sonatype.nexus.content.maven.internal.recipe.AttributesHelper.assetKind;
-import static org.sonatype.nexus.content.maven.internal.recipe.AttributesHelper.getPackaging;
-import static org.sonatype.nexus.content.maven.internal.recipe.AttributesHelper.setAssetAttributes;
-import static org.sonatype.nexus.content.maven.internal.recipe.AttributesHelper.setComponentAttributes;
-import static org.sonatype.nexus.content.maven.internal.recipe.AttributesHelper.setPomAttributes;
+import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.assetKind;
+import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.getPackaging;
+import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.setMavenAttributes;
+import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.setMavenAttributes;
+import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.setPomAttributes;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenArchetypeCatalogFacetImpl.MAVEN_ARCHETYPE_KIND;
 import static org.sonatype.nexus.repository.content.facet.WritePolicy.ALLOW;
 import static org.sonatype.nexus.repository.content.facet.WritePolicy.ALLOW_ONCE;
@@ -74,7 +73,7 @@ import static org.sonatype.nexus.repository.maven.internal.MavenModels.readModel
 /**
  * A {@link MavenContentFacet} that persists to a {@link ContentFacet}.
  *
- * @since 3.next
+ * @since 3.25
  */
 @Named(Maven2Format.NAME)
 public class MavenContentFacetImpl
@@ -223,7 +222,7 @@ public class MavenContentFacetImpl
         .version(coordinates.getVersion())
         .getOrCreate();
     if (isNewRepositoryContent(component)) {
-      setComponentAttributes(component, coordinates);
+      MavenAttributesHelper.setMavenAttributes(component, coordinates);
     }
     return component;
   }
@@ -275,8 +274,9 @@ public class MavenContentFacetImpl
 
     FluentAsset asset = assetBuilder.getOrCreate();
     if (isNewRepositoryContent(asset)) {
-      setAssetAttributes(asset, path, mavenPathParser);
+      setMavenAttributes(asset, path);
     }
+
     return asset.attach(blob)
         .markAsCached(content)
         .download();

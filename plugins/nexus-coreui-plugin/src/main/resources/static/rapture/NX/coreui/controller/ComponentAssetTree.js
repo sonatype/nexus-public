@@ -71,6 +71,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     {ref: 'deleteAssetFolderButton', selector: 'nx-coreui-component-componentassetinfo button[action=deleteFolder]'},
     {ref: 'deleteFolderButton', selector: 'nx-coreui-component-componentfolderinfo button[action=deleteFolder]'},
     {ref: 'analyzeApplicationButton', selector: 'nx-coreui-component-componentinfo button[action=analyzeApplication]'},
+    {ref: 'viewVulnerabilitiesButton', selector: 'nx-coreui-component-componentinfo button[action=viewVulnerabilities]'},
     {ref: 'analyzeApplicationWindow', selector: 'nx-coreui-component-analyze-window'},
     {ref: 'rootContainer', selector: 'nx-main'},
     {ref: 'treeWarning', selector: 'nx-coreui-componentassettreefeature nx-coreui-component-asset-tree #warning'}
@@ -131,6 +132,9 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
         'nx-coreui-component-componentinfo button[action=analyzeApplication]': {
           click: me.mixins.componentUtils.openAnalyzeApplicationWindow
         },
+        'nx-coreui-component-componentinfo button[action=viewVulnerabilities]': {
+          click: me.mixins.componentUtils.viewVulnerabilities
+        },
         'nx-coreui-component-componentassetinfo button[action=deleteAsset]': {
           click: me.deleteAsset
         },
@@ -163,6 +167,14 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
       'tree-component': {
         file: 'box_front.png',
         variants: ['x16']
+      },
+      'tree-component-vulnerable': {
+        file: 'box_front_error.png',
+        variants: ['x16']
+      },
+      'vulnerability': {
+        file: 'vulnerability.png',
+        variants: ['x16', 'x32']
       },
       'tree-asset': {
         file: 'page_white_stack.png',
@@ -390,6 +402,8 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
           me.setComponentModel(componentModel);
          }
       });
+
+      me.handleVulnerabilitiesPanel(node, componentInfoPanel);
     }
     else if ('asset' === node.get('type')) {
       assetInfoPanel = me.getComponentAssetInfo();
@@ -406,6 +420,8 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
           me.maybeUnmask(assetInfoPanel);
         }
       });
+
+      me.handleVulnerabilitiesPanel(node, assetInfoPanel);
     }
     else if ('folder' === node.get('type')) {
       var folderInfoPanel = me.getComponentFolderInfo();
@@ -419,6 +435,25 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
       folderInfoPanel.setModel({repositoryName: me.getCurrentRepository().get('name'), folderName: node.get('text'), path: node.get('id')});
       me.updateDeleteFolderButton(me.getDeleteFolderButton(), me.getCurrentRepository(), node.get('id'));
       me.maybeUnmask(folderInfoPanel);
+    }
+  },
+
+  handleVulnerabilitiesPanel: function(node, panel) {
+    var me = this;
+    if('OSS' === NX.State.getEdition() && me.getCurrentRepository().get('type') === 'proxy') {
+      NX.direct.coreui_Vulnerability.read(me.getCurrentRepository().get('name'), node.get('componentId'),
+          function(response) {
+            var vulnerabilityPanel = panel.getVulnerabilityPanel();
+            if(response.success && response.data) {
+              vulnerabilityPanel.setVisible(true);
+              me.setVulnerabilityInfo(vulnerabilityPanel, response.data);
+              me.updateVulnerabilitiesButton(panel, response.data);
+            }
+            else {
+              vulnerabilityPanel.setVisible(false);
+              me.updateVulnerabilitiesButton(panel, null);
+            }
+          });
     }
   },
 
@@ -471,6 +506,25 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
         dependencySnippetPanel.show();
       }
     }
+  },
+
+  setVulnerabilityInfo: function(vulnerabilityPanel, vulnerabilityInfo) {
+    var summary = {};
+
+    if (vulnerabilityInfo) {
+        summary[NX.I18n.get('Vulnerability_Count')] = Ext.htmlEncode(vulnerabilityInfo.count);
+        summary[NX.I18n.get('Vulnerability_Ref')] = NX.util.Url.asLink(vulnerabilityInfo.reference);
+        vulnerabilityPanel.referenceLink = vulnerabilityInfo.reference;
+        if(vulnerabilityInfo.count > 0) {
+          vulnerabilityPanel.items.items[0].header.addCls('vulnerabilities');
+        } else {
+          vulnerabilityPanel.items.items[0].header.removeCls('vulnerabilities');
+        }
+    }
+    else {
+      summary[NX.I18n.get('Vulnerability_Information')] = Ext.htmlEncode(NX.I18n.get('Vulnerability_NotScanned'));
+    }
+    vulnerabilityPanel.showInfo(summary);
   },
 
   isPanelVisible : function(panel) {

@@ -38,4 +38,6 @@ class BrowseNodeXO {
   String componentId
 
   String assetId
+
+  boolean vulnerable
 }

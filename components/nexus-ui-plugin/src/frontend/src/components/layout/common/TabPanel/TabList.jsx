@@ -17,7 +17,7 @@ import classNames from 'classnames';
 import './TabPanel.scss';
 
 /**
- * @since 3.next
+ * @since 3.25
  */
 export default function TabList({className, children, ...attrs}) {
   const classes = classNames('nxrm-tab-panel-header', className);

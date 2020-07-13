@@ -22,7 +22,9 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.SchemaTemplate;
 import org.sonatype.nexus.testdb.DataSessionRule;
+import org.sonatype.nexus.testdb.example.template.metal.MetalSpindleDAO;
 import org.sonatype.nexus.testdb.example.template.metal.MetalSprocketDAO;
+import org.sonatype.nexus.testdb.example.template.plastic.PlasticSpindleDAO;
 import org.sonatype.nexus.testdb.example.template.plastic.PlasticSprocketDAO;
 
 import org.hamcrest.Matcher;
@@ -41,7 +43,9 @@ public class SchemaTemplateTest
 {
   @Rule
   public DataSessionRule sessionRule = new DataSessionRule()
+      .access(PlasticSpindleDAO.class)
       .access(PlasticSprocketDAO.class)
+      .access(MetalSpindleDAO.class)
       .access(MetalSprocketDAO.class);
 
   @Test

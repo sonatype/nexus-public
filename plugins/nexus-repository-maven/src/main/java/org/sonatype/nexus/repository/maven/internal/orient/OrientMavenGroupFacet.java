@@ -284,7 +284,6 @@ public class OrientMavenGroupFacet
     return MavenFacetUtils.putWithHashes(mavenFacet, mavenPath, tempBlob, contentType, attributesMap);
   }
 
-  @Override
   @Subscribe
   @AllowConcurrentEvents
   public void on(final AssetEvent event) {

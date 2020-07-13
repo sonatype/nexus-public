@@ -12,11 +12,14 @@
  */
 package org.sonatype.nexus.repository.browse.node;
 
+import java.util.concurrent.TimeUnit;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryTaskSupport;
+import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.scheduling.Cancelable;
 
 /**
@@ -30,6 +33,8 @@ public class RebuildBrowseNodesTask
     implements Cancelable
 {
   private final RebuildBrowseNodeService rebuildBrowseNodeService;
+
+  private static final String PYPI_FORMAT_NAME = "pypi";
 
   @Inject
   public RebuildBrowseNodesTask(final RebuildBrowseNodeService rebuildBrowseNodeService)
@@ -45,10 +50,24 @@ public class RebuildBrowseNodesTask
   @Override
   protected void execute(final Repository repo) {
     try {
+      delayIfPyPi(repo);
       rebuildBrowseNodeService.rebuild(repo, this::isCanceled);
     }
     catch (RebuildBrowseNodeFailedException e) {
-      log.error("Error rebuild browse nodes for repository: {}", repo, e);
+      log.error("Error rebuilding browse nodes for repository: {}", repo, e);
+    }
+  }
+
+  @SuppressWarnings("java:S2142") // we cannot rethrow exception and we don't want to interrupt the current thread
+  private void delayIfPyPi(final Repository repo) {
+    if (PYPI_FORMAT_NAME.equals(repo.getFormat().getValue()) && ProxyType.NAME.equals(repo.getType().getValue())) {
+      try {
+        log.info("Delaying rebuild browse node task for repository {} for 30 seconds", repo);
+        TimeUnit.SECONDS.sleep(30);
+      }
+      catch (InterruptedException e) {
+        log.warn("Problem delaying rebuild for PyPI repository: {}", e.getMessage());
+      }
     }
   }
 

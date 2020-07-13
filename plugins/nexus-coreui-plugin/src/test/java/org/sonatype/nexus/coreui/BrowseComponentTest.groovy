@@ -12,12 +12,17 @@
  */
 package org.sonatype.nexus.coreui
 
+import javax.inject.Provider
+
 import org.sonatype.nexus.common.entity.EntityId
 import org.sonatype.nexus.repository.Repository
+import org.sonatype.nexus.repository.browse.BrowseService
 import org.sonatype.nexus.repository.browse.node.BrowseNode
 import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration
 import org.sonatype.nexus.repository.browse.node.BrowseNodeStore
 import org.sonatype.nexus.repository.manager.RepositoryManager
+import org.sonatype.nexus.repository.ossindex.VulnerabilityService
+import org.sonatype.nexus.repository.storage.ComponentEntityAdapter
 
 import spock.lang.Specification
 import spock.lang.Subject
@@ -47,8 +52,16 @@ class BrowseComponentTest
 
   Repository repository = Mock { _ * getName() >> REPOSITORY_NAME }
 
+  BrowseService browseService = Mock()
+
+  ComponentEntityAdapter componentEntityAdapter = Mock()
+
+  Provider<VulnerabilityService> vulnerabilityServiceProvider = Mock() { get() >> Mock(VulnerabilityService) }
+
   @Subject
-  BrowseComponent browseComponent = new BrowseComponent(configuration: configuration, browseNodeStore: browseNodeStore, repositoryManager: repositoryManager)
+  BrowseComponent browseComponent = new BrowseComponent(configuration: configuration, browseNodeStore: browseNodeStore,
+      repositoryManager: repositoryManager, browseService: browseService,
+      componentEntityAdapter: componentEntityAdapter, vulnerabilityServiceProvider: vulnerabilityServiceProvider)
 
   def setup() {
     componentId.value >> "componentId"

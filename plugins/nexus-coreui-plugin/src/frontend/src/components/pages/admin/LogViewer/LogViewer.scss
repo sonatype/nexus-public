@@ -17,34 +17,44 @@
 @import "~nexus-ui-plugin/dist/styles/colors";
 
 .nxrm-log-viewer {
+  display: flex;
+  flex-direction: column;
   height: 100%;
-  width: 100%;
 
-  > div {
-    height: 100%;
-  }
-
-  textarea {
-    background-color: $white;
-    color: $nx-text-color-light;
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 13px;
-    resize: none;
-    width: 100%;
-    height: 96%;
-  }
-}
-
-.nxrm-select-action {
-  display: inline-block;
-  padding-left: 10px;
-  
-  select {
-    padding-right: 20px;
-  }
-}
-
-.nxrm-log-viewer-mark-text {
+  .nxrm-log-viewer-mark-text {
     width: 200px;
     display: inline-block;
+  }
+
+  #insertMark {
+    margin-bottom: 3px;
+  }
+
+  .nxrm-select-action {
+    display: inline-block;
+    padding-left: 10px;
+
+    select {
+      padding-right: 20px;
+    }
+  }
+
+  .nxrm-content-body {
+    flex: 1;
+
+    .nxrm-section {
+      height: 100%;
+      padding-bottom: 59px;
+
+      textarea {
+        background-color: $white;
+        color: $nx-text-color-light;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 13px;
+        resize: none;
+        width: 100%;
+        height: 100%;
+      }
+    }
+  }
 }

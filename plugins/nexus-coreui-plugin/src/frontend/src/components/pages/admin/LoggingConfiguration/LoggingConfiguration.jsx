@@ -12,22 +12,18 @@
  */
 import React from 'react';
 
-import {ContentBody, Detail, Master, MasterDetail} from "nexus-ui-plugin";
+import {Detail, Master, MasterDetail} from 'nexus-ui-plugin';
 
-import LoggingConfigurationList from "./LoggingConfigurationList";
-import LoggingConfigurationForm from "./LoggingConfigurationForm";
+import LoggingConfigurationList from './LoggingConfigurationList';
+import LoggingConfigurationForm from './LoggingConfigurationForm';
 
 export default function LoggingConfiguration() {
-  return (
-      <ContentBody className="nxrm-logging-configuration">
-        <MasterDetail path="admin/support/logging">
-          <Master>
-            <LoggingConfigurationList />
-          </Master>
-          <Detail createBreadcrumb="Create Logger" editBreadcrumb={(itemId) => `Edit Logger for ${itemId}`}>
-            <LoggingConfigurationForm />
-          </Detail>
-        </MasterDetail>
-      </ContentBody>
-  );
+  return <MasterDetail path="admin/support/logging">
+    <Master>
+      <LoggingConfigurationList/>
+    </Master>
+    <Detail>
+      <LoggingConfigurationForm/>
+    </Detail>
+  </MasterDetail>;
 }

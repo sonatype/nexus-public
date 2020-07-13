@@ -1,0 +1,13 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`PageActions renders correctly 1`] = `
+<div>
+  <div
+    class="nxrm-page-actions"
+  >
+    <span>
+      action
+    </span>
+  </div>
+</div>
+`;

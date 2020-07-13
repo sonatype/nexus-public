@@ -56,6 +56,13 @@
         opacity: 0.7;
       }
     }
+
+    .x-panel-header-nx-inset.vulnerabilities {
+      background-color: $nx-red-500;
+      .x-title-text-nx-inset {
+        color: $color-white;
+      }
+    }
   }
 
   .x-autocontainer-innerCt > .x-panel-nx-inset.x-panel-collapsed.x-panel-nx-inset-collapsed {

@@ -22,7 +22,6 @@ import ExtJS from '../../../../interface/ExtJS';
 
 jest.mock('../../../../interface/ExtJS', () => class {
   static useHistory = jest.fn();
-  static setBreadcrumbs = jest.fn();
 });
 
 describe('MasterDetail', () => {
@@ -37,7 +36,6 @@ describe('MasterDetail', () => {
 
     expect(queryByTestId('master')).toBeInTheDocument();
     expect(queryByTestId('detail')).not.toBeInTheDocument();
-    expect(ExtJS.setBreadcrumbs).toBeCalledWith();
     expect(container).toMatchSnapshot();
   });
 
@@ -46,13 +44,12 @@ describe('MasterDetail', () => {
     const {container, queryByTestId} = render(
         <MasterDetail path="admin">
           <Master><TestMaster /></Master>
-          <Detail editBreadcrumb={(itemId) => `Edit ${itemId}`}><TestDetail /></Detail>
+          <Detail><TestDetail /></Detail>
         </MasterDetail>
     );
 
     expect(queryByTestId('master')).not.toBeInTheDocument();
     expect(queryByTestId('detail')).toBeInTheDocument();
-    expect(ExtJS.setBreadcrumbs).toBeCalledWith([{itemName: 'Edit itemId'}]);
     expect(container).toMatchSnapshot();
   });
 
@@ -61,17 +58,15 @@ describe('MasterDetail', () => {
     const {container, getByTestId, queryByTestId} = render(
         <MasterDetail path="admin">
           <Master><TestMaster /></Master>
-          <Detail createBreadcrumb="Create"><TestDetail /></Detail>
+          <Detail><TestDetail /></Detail>
         </MasterDetail>
     );
 
     expect(queryByTestId('master')).toBeInTheDocument();
-    expect(ExtJS.setBreadcrumbs).toBeCalledWith();
     fireEvent.click(getByTestId('create'));
 
     expect(queryByTestId('master')).not.toBeInTheDocument();
     expect(queryByTestId('detail')).toBeInTheDocument();
-    expect(ExtJS.setBreadcrumbs).toBeCalledWith([{itemName: 'Create'}]);
     expect(container).toMatchSnapshot();
   });
 });

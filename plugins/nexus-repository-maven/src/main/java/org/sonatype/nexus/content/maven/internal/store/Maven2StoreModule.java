@@ -10,24 +10,25 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.store.example;
+
+package org.sonatype.nexus.content.maven.internal.store;
 
 import javax.inject.Named;
 
-import org.sonatype.nexus.repository.content.store.AssetBlobStore;
-import org.sonatype.nexus.repository.content.store.BespokeFormatStoreModule;
-import org.sonatype.nexus.repository.content.store.ComponentStore;
-import org.sonatype.nexus.repository.content.store.ContentRepositoryStore;
+import org.sonatype.nexus.repository.content.store.FormatStoreModule;
+import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 
 /**
- * Bespoke store module for a bespoke format that uses a custom asset store with extra features.
+ * Configures the content store bindings for a maven format.
+ *
+ * @since 3.25
  */
-@Named("bespoke")
-public class BespokeStoreModule
-    extends BespokeFormatStoreModule<ContentRepositoryStore<TestContentRepositoryDAO>,
-                                     ComponentStore<TestComponentDAO>,
-                                     TestAssetStore, // adds support for browseFlaggedAssets
-                                     AssetBlobStore<TestAssetBlobDAO>>
+@Named(Maven2Format.NAME)
+public class Maven2StoreModule
+    extends FormatStoreModule<Maven2ContentRepositoryDAO,
+                              Maven2ComponentDAO,
+                              Maven2AssetDAO,
+                              Maven2AssetBlobDAO>
 {
   // nothing to add...
 }
