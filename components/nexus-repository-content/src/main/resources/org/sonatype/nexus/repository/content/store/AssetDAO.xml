@@ -34,7 +34,8 @@
 
       CONSTRAINT pk_${format}_asset_id PRIMARY KEY (asset_id),
       CONSTRAINT uk_${format}_asset_repository_path UNIQUE (repository_id, path),
-      CONSTRAINT fk_${format}_asset_repository_id FOREIGN KEY (repository_id)
+
+      CONSTRAINT fk_${format}_asset_repository FOREIGN KEY (repository_id)
          REFERENCES ${format}_content_repository (repository_id),
       CONSTRAINT fk_${format}_asset_component FOREIGN KEY (component_id)
          REFERENCES ${format}_component (component_id),
@@ -43,6 +44,8 @@
     );
 
     CREATE INDEX IF NOT EXISTS idx_${format}_asset_kind ON ${format}_asset (kind);
+    CREATE INDEX IF NOT EXISTS idx_${format}_asset_component ON ${format}_asset (component_id);
+    CREATE INDEX IF NOT EXISTS idx_${format}_asset_blob ON ${format}_asset (asset_blob_id);
     --
   </insert>
 
@@ -62,7 +65,7 @@
   </sql>
 
   <sql id="componentCoordinateMatch">
-    ${format}_component.repository_id = #{repositoryId}
+    C.repository_id = #{repositoryId}
         AND namespace = #{namespace} AND name = #{name} AND version = #{version}
   </sql>
 
@@ -100,7 +103,7 @@
         SELECT * FROM ${format}_asset WHERE component_id = #{componentId};
       </when>
       <otherwise>
-        SELECT ${format}_asset.* FROM ${format}_asset INNER JOIN ${format}_component
+        SELECT A.* FROM ${format}_asset A INNER JOIN ${format}_component C
             USING (component_id) WHERE <include refid="componentCoordinateMatch"/>;
       </otherwise>
     </choose>
