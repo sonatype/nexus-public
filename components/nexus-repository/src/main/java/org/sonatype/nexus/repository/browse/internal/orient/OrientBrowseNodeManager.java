@@ -24,7 +24,6 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.BrowseNodeGenerator;
-import org.sonatype.nexus.repository.browse.node.BrowseNodeCrudStore;
 import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
@@ -45,7 +44,7 @@ public class OrientBrowseNodeManager
 {
   private static final String DEFAULT_PATH_HANDLER = "default";
 
-  private final BrowseNodeCrudStore<Asset, Component> browseNodeStore;
+  private final OrientBrowseNodeStore browseNodeStore;
 
   private final ComponentStore componentStore;
 
@@ -55,7 +54,7 @@ public class OrientBrowseNodeManager
 
   @Inject
   public OrientBrowseNodeManager(
-      final BrowseNodeCrudStore<Asset, Component> browseNodeStore,
+      final OrientBrowseNodeStore browseNodeStore,
       final ComponentStore componentStore,
       final Map<String, BrowseNodeGenerator> pathGenerators)
   {

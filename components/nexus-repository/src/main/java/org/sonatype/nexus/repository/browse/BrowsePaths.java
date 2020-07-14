@@ -25,8 +25,8 @@ import org.sonatype.nexus.repository.browse.node.BrowsePath;
 public class BrowsePaths
     extends BrowsePath
 {
-  public BrowsePaths(final String browsePath, final String requestPath) {
-    super(browsePath, requestPath);
+  public BrowsePaths(final String displayName, final String requestPath) {
+    super(displayName, requestPath);
   }
 
   public static List<BrowsePaths> fromPaths(List<String> paths, boolean trailingSlash) {

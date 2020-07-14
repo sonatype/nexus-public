@@ -10,16 +10,21 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.browse.node;
+package org.sonatype.nexus.content.raw.internal.browse;
 
-import java.util.Comparator;
+import javax.inject.Named;
+
+import org.sonatype.nexus.repository.content.browse.store.FormatBrowseModule;
+import org.sonatype.nexus.repository.raw.internal.RawFormat;
 
 /**
- * Sort the results of the tree nodes, and make it snappy!
+ * Configures the browse bindings for the raw format.
  *
- * @since 3.13
+ * @since 3.next
  */
-public interface BrowseNodeComparator
-    extends Comparator<BrowseNode>
+@Named(RawFormat.NAME)
+public class RawBrowseModule
+    extends FormatBrowseModule<RawBrowseNodeDAO>
 {
+  // nothing to add...
 }

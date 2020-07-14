@@ -27,7 +27,6 @@ import org.sonatype.nexus.repository.browse.BrowseNodeGenerator;
 import org.sonatype.nexus.repository.browse.BrowsePaths;
 import org.sonatype.nexus.repository.browse.BrowseTestSupport;
 import org.sonatype.nexus.repository.browse.internal.DefaultBrowseNodeGenerator;
-import org.sonatype.nexus.repository.browse.node.BrowseNodeCrudStore;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentStore;
@@ -57,7 +56,7 @@ public class OrientBrowseNodeManagerTest
   private OrientBrowseNodeManager manager;
 
   @Mock
-  private BrowseNodeCrudStore<Asset, Component> browseNodeStore;
+  private OrientBrowseNodeStore browseNodeStore;
 
   @Mock
   private ComponentStore componentStore;

@@ -23,7 +23,7 @@ import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration;
-import org.sonatype.nexus.repository.browse.node.BrowseNodeStore;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeQueryService;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
@@ -57,7 +57,7 @@ public class DeleteFolderServiceImplTest
     extends TestSupport
 {
   @Mock
-  BrowseNodeStore browseNodeStore;
+  BrowseNodeQueryService browseNodeQueryService;
 
   @Mock
   BrowseNodeConfiguration configuration;
@@ -102,7 +102,7 @@ public class DeleteFolderServiceImplTest
     when(repository.getName()).thenReturn("repo");
     when(repository.getFormat()).thenReturn(new Format("maven2") { });
     when(configuration.getMaxNodes()).thenReturn(1);
-    when(browseNodeStore.getByPath(repository.getName(), Arrays.asList("com", "sonatype"), 1)).thenReturn(browseNodes);
+    when(browseNodeQueryService.getByPath(repository.getName(), Arrays.asList("com", "sonatype"), 1)).thenReturn(browseNodes);
     when(variableResolverAdapterManager.get("maven2")).thenReturn(assetVariableResolver);
     when(assetVariableResolver.fromAsset(any(Asset.class))).thenReturn(variableSource);
     when(repository.facet(StorageFacet.class)).thenReturn(storageFacet);
@@ -110,7 +110,7 @@ public class DeleteFolderServiceImplTest
     when(securityHelper.isPermitted(new RepositoryViewPermission(repository, BreadActions.DELETE)))
         .thenReturn(new boolean[]{false});
 
-    service = new DeleteFolderServiceImpl(browseNodeStore, configuration, assetStore, contentPermissionChecker,
+    service = new DeleteFolderServiceImpl(browseNodeQueryService, configuration, assetStore, contentPermissionChecker,
         variableResolverAdapterManager, securityHelper);
   }
 

@@ -51,7 +51,7 @@ public class RebuildBrowseNodesTask
   protected void execute(final Repository repo) {
     try {
       delayIfPyPi(repo);
-      rebuildBrowseNodeService.rebuild(repo, this::isCanceled);
+      rebuildBrowseNodeService.rebuild(repo);
     }
     catch (RebuildBrowseNodeFailedException e) {
       log.error("Error rebuilding browse nodes for repository: {}", repo, e);

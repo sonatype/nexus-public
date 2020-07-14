@@ -12,31 +12,25 @@
  */
 package org.sonatype.nexus.repository.pypi.internal;
 
-import java.util.function.Function;
-
 import javax.inject.Named;
 
-import org.sonatype.nexus.repository.Facet;
-import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
-import org.sonatype.nexus.repository.browse.node.BrowseNodeFacet;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeIdentity;
 
 /**
- * PyPi customization of {@link BrowseNodeFacet}.
+ * PyPi custom {@link BrowseNodeIdentity}
  *
  * @since 3.22
  */
-@Named
-@Facet.Exposed
-public class PyPiBrowseNodeFacet
-    extends FacetSupport
-    implements BrowseNodeFacet
+@Named(PyPiFormat.NAME)
+public class PyPiBrowseNodeIdentity
+    implements BrowseNodeIdentity
 {
   /**
    * Changes default behavior to be distinct and ignore case
    */
   @Override
-  public Function<BrowseNode<?>, String> browseNodeIdentity() {
-    return node -> node.getName().toLowerCase();
+  public String identity(final BrowseNode browseNode) {
+    return browseNode.getName().toLowerCase();
   }
 }

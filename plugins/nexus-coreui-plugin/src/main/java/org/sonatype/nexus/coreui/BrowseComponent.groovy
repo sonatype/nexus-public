@@ -25,7 +25,7 @@ import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.browse.BrowseService
 import org.sonatype.nexus.repository.browse.node.BrowseNode
 import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration
-import org.sonatype.nexus.repository.browse.node.BrowseNodeStore
+import org.sonatype.nexus.repository.browse.node.BrowseNodeQueryService
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.ossindex.VulnerabilityService
 import org.sonatype.nexus.repository.storage.Component
@@ -57,7 +57,7 @@ class BrowseComponent
   BrowseNodeConfiguration configuration
 
   @Inject
-  BrowseNodeStore<EntityId> browseNodeStore
+  BrowseNodeQueryService browseNodeQueryService
 
   @Inject
   RepositoryManager repositoryManager
@@ -88,7 +88,7 @@ class BrowseComponent
       pathSegments = path.split('/').collect { String part -> EncodingUtil.urlDecode(part) }
     }
 
-    return browseNodeStore.getByPath(repository.name, pathSegments, configuration.maxNodes)
+    return browseNodeQueryService.getByPath(repository.name, pathSegments, configuration.maxNodes)
         .collect { BrowseNode browseNode ->
           def encodedPath = EncodingUtil.urlEncode(browseNode.name)
           def type = browseNode.assetId != null ? ASSET : browseNode.componentId != null ? COMPONENT : FOLDER
@@ -103,8 +103,8 @@ class BrowseComponent
               type: type,
               text: browseNode.name,
               leaf: browseNode.leaf,
-              componentId: browseNodeStore.getValue(browseNode.componentId as EntityId),
-              assetId: browseNodeStore.getValue(browseNode.assetId as EntityId),
+              componentId: browseNode.componentId?.value,
+              assetId: browseNode.assetId?.value,
               vulnerable: vulnerable
           )
         }

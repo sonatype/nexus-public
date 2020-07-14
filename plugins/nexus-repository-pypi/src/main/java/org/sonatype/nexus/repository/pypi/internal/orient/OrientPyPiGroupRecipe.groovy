@@ -25,7 +25,7 @@ import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.group.GroupHandler
 import org.sonatype.nexus.repository.http.HttpHandlers
 import org.sonatype.nexus.repository.pypi.internal.AssetKind
-import org.sonatype.nexus.repository.pypi.internal.PyPiBrowseNodeFacet
+import org.sonatype.nexus.repository.pypi.internal.PyPiBrowseNodeIdentity
 import org.sonatype.nexus.repository.pypi.internal.PyPiFormat
 import org.sonatype.nexus.repository.pypi.internal.PyPiRecipeSupport
 import org.sonatype.nexus.repository.pypi.internal.SearchGroupHandler
@@ -50,9 +50,6 @@ class OrientPyPiGroupRecipe
   Provider<OrientPyPiGroupFacet> groupFacet
 
   @Inject
-  Provider<PyPiBrowseNodeFacet> browseNodeFacet
-
-  @Inject
   GroupHandler standardGroupHandler
 
   @Inject
@@ -73,7 +70,6 @@ class OrientPyPiGroupRecipe
     repository.attach(securityFacet.get())
     repository.attach(configure(viewFacet.get()))
     repository.attach(attributesFacet.get())
-    repository.attach(browseNodeFacet.get())
   }
 
   /**

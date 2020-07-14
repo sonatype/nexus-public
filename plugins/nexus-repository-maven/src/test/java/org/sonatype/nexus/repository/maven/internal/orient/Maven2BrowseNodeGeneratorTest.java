@@ -154,7 +154,7 @@ public class Maven2BrowseNodeGeneratorTest
     assertThat(paths.size(), is(expectedBrowsePaths.size()));
 
     for (int i = 0 ; i < expectedBrowsePaths.size() ; i++) {
-      assertThat(paths.get(i).getBrowsePath(), is(expectedBrowsePaths.get(i)));
+      assertThat(paths.get(i).getDisplayName(), is(expectedBrowsePaths.get(i)));
     }
 
     String requestPath = "";

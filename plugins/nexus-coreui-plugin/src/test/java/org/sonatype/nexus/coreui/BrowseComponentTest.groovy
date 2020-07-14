@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.browse.BrowseService
 import org.sonatype.nexus.repository.browse.node.BrowseNode
 import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration
-import org.sonatype.nexus.repository.browse.node.BrowseNodeStore
+import org.sonatype.nexus.repository.browse.node.BrowseNodeQueryService
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.ossindex.VulnerabilityService
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter
@@ -42,7 +42,7 @@ class BrowseComponentTest
 
   BrowseNodeConfiguration configuration = new BrowseNodeConfiguration()
 
-  BrowseNodeStore browseNodeStore = Mock()
+  BrowseNodeQueryService browseNodeQueryService = Mock()
 
   RepositoryManager repositoryManager = Mock()
 
@@ -59,7 +59,7 @@ class BrowseComponentTest
   Provider<VulnerabilityService> vulnerabilityServiceProvider = Mock() { get() >> Mock(VulnerabilityService) }
 
   @Subject
-  BrowseComponent browseComponent = new BrowseComponent(configuration: configuration, browseNodeStore: browseNodeStore,
+  BrowseComponent browseComponent = new BrowseComponent(configuration: configuration, browseNodeQueryService: browseNodeQueryService,
       repositoryManager: repositoryManager, browseService: browseService,
       componentEntityAdapter: componentEntityAdapter, vulnerabilityServiceProvider: vulnerabilityServiceProvider)
 
@@ -83,7 +83,7 @@ class BrowseComponentTest
           node: ROOT)
 
       1 * repositoryManager.get(REPOSITORY_NAME) >> repository
-      1 * browseNodeStore.getByPath(REPOSITORY_NAME, [], configuration.maxHtmlNodes) >> browseNodes
+      1 * browseNodeQueryService.getByPath(REPOSITORY_NAME, [], configuration.maxHtmlNodes) >> browseNodes
       List<BrowseNodeXO> xos = browseComponent.read(treeStoreLoadParameters)
 
     then: 'the 3 root entries are returned'
@@ -108,7 +108,7 @@ class BrowseComponentTest
           node: 'com/boogie/down')
 
       1 * repositoryManager.get(REPOSITORY_NAME) >> repository
-      1 * browseNodeStore.getByPath(REPOSITORY_NAME, ['com','boogie','down'], configuration.maxHtmlNodes) >> browseNodes
+      1 * browseNodeQueryService.getByPath(REPOSITORY_NAME, ['com','boogie','down'], configuration.maxHtmlNodes) >> browseNodes
       List<BrowseNodeXO> xos = browseComponent.read(treeStoreLoadParameters)
 
     then: 'the 3 entries are returned'
@@ -133,7 +133,7 @@ class BrowseComponentTest
         node: 'com/boo%2Fgie/down')
 
       1 * repositoryManager.get(REPOSITORY_NAME) >> repository
-      1 * browseNodeStore.getByPath(REPOSITORY_NAME, ['com','boo/gie','down'], configuration.maxHtmlNodes) >> browseNodes
+      1 * browseNodeQueryService.getByPath(REPOSITORY_NAME, ['com','boo/gie','down'], configuration.maxHtmlNodes) >> browseNodes
     List<BrowseNodeXO> xos = browseComponent.read(treeStoreLoadParameters)
 
     then: 'the 3 entries are returned'

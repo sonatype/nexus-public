@@ -10,29 +10,22 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.browse.node;
+package org.sonatype.nexus.content.raw.internal.browse;
 
-import java.util.List;
+import javax.inject.Named;
+import javax.inject.Singleton;
+
+import org.sonatype.nexus.repository.content.browse.AssetPathBrowseNodeGenerator;
+import org.sonatype.nexus.repository.raw.internal.RawFormat;
 
 /**
- * Store providing access to the browse tree.
+ * RAW places components at the same level as their assets.
  *
- * @since 3.7
+ * @since 3.next
  */
-public interface BrowseNodeStore<ID>
+@Singleton
+@Named(RawFormat.NAME)
+public class RawBrowseNodeGenerator
+    extends AssetPathBrowseNodeGenerator
 {
-  /**
-   * Returns the {@link BrowseNode}s directly visible under the given path.
-   */
-  Iterable<BrowseNode<ID>> getByPath(String repositoryName, List<String> path, int maxNodes);
-
-  /**
-   * Returns an external representation of the identifier.
-   */
-  String getValue(ID id);
-
-  /**
-   * Returns an internal representation of the serialized identifier.
-   */
-  ID fromValue(String value);
 }

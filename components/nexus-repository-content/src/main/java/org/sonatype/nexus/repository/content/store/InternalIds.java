@@ -14,12 +14,17 @@ package org.sonatype.nexus.repository.content.store;
 
 import java.util.OptionalInt;
 
+import org.sonatype.nexus.common.entity.EntityHelper;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.RepositoryContent;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+import static java.lang.Integer.parseUnsignedInt;
+import static java.lang.Integer.toHexString;
 import static java.util.Optional.ofNullable;
 import static java.util.OptionalInt.empty;
 
@@ -34,6 +39,19 @@ public class InternalIds
 {
   private InternalIds() {
     // static utility class
+  }
+
+  // use Knuth's (reversible) multiplicative hash to scatter internal ids
+  private static final long TO_EXTERNAL = 1327217885L; // 2 ^ 31 / golden ratio
+  private static final long TO_INTERNAL = 828308341L; // multiplicative inverse
+
+  public static EntityId toExternalId(final int internalId) {
+    checkArgument(internalId > 0);
+    return EntityHelper.id(toHexString((int) (internalId * TO_EXTERNAL))); // NOSONAR: we want truncation
+  }
+
+  public static int toInternalId(final EntityId externalId) {
+    return (int) (parseUnsignedInt(externalId.getValue(), 16) * TO_INTERNAL); // NOSONAR: we want truncation
   }
 
   public static int internalRepositoryId(final RepositoryContent content) {
