@@ -58,7 +58,7 @@ public class MavenContentHandler
     switch (method) {
       case HEAD:
       case GET:
-        return doGet(path, storage);
+        return doGet(mavenPath, storage);
 
       case PUT:
         doPut(context, mavenPath, storage);
@@ -76,11 +76,11 @@ public class MavenContentHandler
     return context.getAttributes().require(MavenPath.class);
   }
 
-  private Response doGet(final String path, final MavenContentFacet storage) throws IOException {
+  private Response doGet(final MavenPath mavenPath, final MavenContentFacet storage) throws IOException {
     return storage
-        .get(path)
+        .get(mavenPath)
         .map(HttpResponses::ok)
-        .orElseGet(() -> HttpResponses.notFound(path));
+        .orElseGet(() -> HttpResponses.notFound(mavenPath.getPath()));
   }
 
   private void doPut(

@@ -49,6 +49,8 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 public class DataStoreMavenTestHelper
     extends MavenTestHelper
 {
+  private static final char ASSET_PATH_PREFIX = '/';
+
   @Override
   public void write(final Repository repository, final String path, final Payload payload) throws IOException
   {
@@ -64,7 +66,7 @@ public class DataStoreMavenTestHelper
 
     try (TempBlob blob = mavenContentFacet.blobs().ingest(payload, ImmutableList.of(SHA1, MD5))) {
       mavenContentFacet.assets()
-          .path(mavenPath.getPath())
+          .path(ASSET_PATH_PREFIX + mavenPath.getPath())
           .getOrCreate()
           .attach(blob);
     }
@@ -76,7 +78,7 @@ public class DataStoreMavenTestHelper
     MavenPath mavenPath = mavenContentFacet.getMavenPathParser().parsePath(path);
 
     Optional<Map<String, String>> maybeHashCodes =
-        mavenContentFacet.get(mavenPath.getPath()).map(this::getExpectedHashCodes);
+        mavenContentFacet.get(mavenPath).map(this::getExpectedHashCodes);
 
     assertTrue(maybeHashCodes.isPresent());
     assertExpectedHashContentMatchActual(maybeHashCodes.get(), mavenContentFacet, mavenPath);
@@ -90,7 +92,7 @@ public class DataStoreMavenTestHelper
     for (HashType hashType : HashType.values()) {
       String expectedHashContent = expectedHashCodes.get(hashType.getHashAlgorithm().name());
 
-      Optional<Content> maybeStoredHashContent = mavenContentFacet.get(mavenPath.hash(hashType).getPath());
+      Optional<Content> maybeStoredHashContent = mavenContentFacet.get(mavenPath.hash(hashType));
       assertTrue(maybeStoredHashContent.isPresent());
 
       try (InputStream inputStream = maybeStoredHashContent.get().openInputStream()) {
@@ -115,14 +117,14 @@ public class DataStoreMavenTestHelper
     MavenContentFacet mavenContentFacet = repository.facet(MavenContentFacet.class);
     MavenPath mavenPath = mavenContentFacet.getMavenPathParser().parsePath(path);
 
-    return mavenContentFacet.get(mavenPath.getPath()).orElse(null);
+    return mavenContentFacet.get(mavenPath).orElse(null);
   }
 
   @Override
   public DateTime getLastDownloadedTime(final Repository repository, final String assetPath) throws IOException {
     MavenContentFacet mavenContentFacet = repository.facet(MavenContentFacet.class);
     MavenPath mavenPath = mavenContentFacet.getMavenPathParser().parsePath(assetPath);
-    return mavenContentFacet.get(mavenPath.getPath())
+    return mavenContentFacet.get(mavenPath)
         .map(Content::getAttributes)
         .map(attributes -> attributes.get(Asset.class))
         .map(Asset::lastDownloaded)

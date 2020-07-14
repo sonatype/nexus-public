@@ -40,7 +40,7 @@ public class MavenProxyFacet
   @Override
   protected Content getCachedContent(final Context context) throws IOException {
     return content()
-        .get(mavenPath(context).getPath())
+        .get(mavenPath(context))
         .orElse(null);
   }
 
