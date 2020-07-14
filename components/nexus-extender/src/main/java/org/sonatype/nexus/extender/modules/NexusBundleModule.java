@@ -29,6 +29,7 @@ import org.eclipse.sisu.space.SpaceModule;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.Constants;
 
+import static java.lang.Boolean.parseBoolean;
 import static org.sonatype.nexus.extender.modules.FeatureFlaggedIndex.filterByFeatureFlag;
 
 /**
@@ -110,7 +111,9 @@ public class NexusBundleModule
   }
 
   private void maybeAddDataAccessBindings(final List<Module> modules) {
-    if (imports.contains("org.sonatype.nexus.datastore") || imports.contains("org.sonatype.nexus.repository.content")) {
+    if (parseBoolean((String) nexusProperties.get("nexus.datastore.enabled"))
+        && (imports.contains("org.sonatype.nexus.datastore")
+            || imports.contains("org.sonatype.nexus.repository.content"))) {
       modules.add(new DataAccessModule(space.getBundle()));
     }
   }
