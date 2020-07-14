@@ -59,6 +59,10 @@ public class OrientHttpClientConfiguration
   @Nullable
   private AuthenticationStrategy authenticationStrategy;
 
+  @Valid
+  @Nullable
+  private Boolean shouldNormalizeUri;
+
   @Nullable
   public ConnectionConfiguration getConnection() {
     return connection;
@@ -108,6 +112,16 @@ public class OrientHttpClientConfiguration
     this.redirectStrategy = redirectStrategy;
   }
 
+  @Override
+  public Boolean getNormalizeUri() {
+    return shouldNormalizeUri;
+  }
+
+  @Override
+  public void setNormalizeUri(final Boolean normalizeUri) {
+    this.shouldNormalizeUri = normalizeUri;
+  }
+
   public OrientHttpClientConfiguration copy() {
     try {
       OrientHttpClientConfiguration copy = (OrientHttpClientConfiguration) clone();
@@ -124,6 +138,7 @@ public class OrientHttpClientConfiguration
         // no real cloning/copying needed, as we are allowed to use a singleton instance
         copy.redirectStrategy = redirectStrategy;
       }
+      copy.shouldNormalizeUri = shouldNormalizeUri;
       return copy;
     }
     catch (CloneNotSupportedException e) {

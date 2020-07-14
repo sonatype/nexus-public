@@ -21,6 +21,7 @@ import org.sonatype.nexus.httpclient.HttpClientManager;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 import org.sonatype.nexus.repository.httpclient.AutoBlockConfiguration;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
+import org.sonatype.nexus.repository.httpclient.NormalizationStrategy;
 import org.sonatype.nexus.repository.httpclient.RequestHeaderAuthenticationStrategy;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -44,9 +45,10 @@ public class HttpClientCustomConfigFacetImpl
       final HttpClientManager httpClientManager,
       final Map<String, AutoBlockConfiguration> autoBlockConfiguration,
       final Map<String, RedirectStrategy> redirectStrategy,
+      final Map<String, NormalizationStrategy> normalizationStrategies,
       final RequestHeaderAuthenticationStrategy requestHeaderAuthenticationStrategy)
   {
-    super(httpClientManager, autoBlockConfiguration, redirectStrategy);
+    super(httpClientManager, autoBlockConfiguration, redirectStrategy, normalizationStrategies);
     this.requestHeaderAuthenticationStrategy = requestHeaderAuthenticationStrategy;
   }
 
@@ -60,6 +62,7 @@ public class HttpClientCustomConfigFacetImpl
     delegateConfig.setConnection(config.connection);
     delegateConfig.setAuthentication(config.authentication);
     delegateConfig.setRedirectStrategy(getRedirectStrategy());
+    setNormalizationStrategy(delegateConfig);
     delegateConfig.setAuthenticationStrategy(requestHeaderAuthenticationStrategy);
     return delegateConfig;
   }

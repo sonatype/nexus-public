@@ -129,6 +129,9 @@ public class ConfigurationCustomizer
     if (configuration.getAuthenticationStrategy() != null) {
       apply(configuration.getAuthenticationStrategy(), plan);
     }
+    if (configuration.getNormalizeUri() != null) {
+      plan.getRequest().setNormalizeUri(configuration.getNormalizeUri());
+    }
   }
 
   /**

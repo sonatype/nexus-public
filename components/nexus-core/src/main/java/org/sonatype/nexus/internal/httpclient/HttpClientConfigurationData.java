@@ -54,6 +54,10 @@ public class HttpClientConfigurationData
   @Nullable
   private AuthenticationConfiguration authentication;
 
+  @Valid
+  @Nullable
+  private Boolean shouldNormalizeUri;
+
   @Override
   @Nullable
   public ConnectionConfiguration getConnection() {
@@ -109,6 +113,16 @@ public class HttpClientConfigurationData
       @Nullable final AuthenticationStrategy authenticationStrategy)
   {
     this.authenticationStrategy = authenticationStrategy;
+  }
+
+  @Override
+  public Boolean getNormalizeUri() {
+    return shouldNormalizeUri;
+  }
+
+  @Override
+  public void setNormalizeUri(final Boolean normalizeUri) {
+    this.shouldNormalizeUri = normalizeUri;
   }
 
   @Override

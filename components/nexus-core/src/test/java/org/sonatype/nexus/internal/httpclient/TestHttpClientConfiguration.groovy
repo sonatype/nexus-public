@@ -33,6 +33,16 @@ class TestHttpClientConfiguration
 
   AuthenticationStrategy authenticationStrategy;
 
+  Boolean normalizeUri
+
+  Boolean getNormalizeUri() {
+    return Optional.ofNullable(normalizeUri)
+  }
+
+  void setNormalizeUri(Boolean normalizeUri) {
+    this.normalizeUri = normalizeUri
+  }
+
   TestHttpClientConfiguration copy() {
     return this
   }
