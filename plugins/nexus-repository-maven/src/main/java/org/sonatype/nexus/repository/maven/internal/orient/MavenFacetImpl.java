@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -29,12 +30,12 @@ import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
+import org.sonatype.nexus.orient.maven.MavenFacet;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.maven.LayoutPolicy;
-import org.sonatype.nexus.orient.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
@@ -64,6 +65,7 @@ import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Sets;
 import com.google.common.hash.HashCode;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import org.apache.maven.artifact.repository.metadata.Metadata;
@@ -76,12 +78,12 @@ import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.*;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
 import static org.sonatype.nexus.repository.maven.internal.Constants.METADATA_FILENAME;
-import static org.sonatype.nexus.repository.maven.internal.orient.OrientMetadataUtils.addRebuildFlag;
-import static org.sonatype.nexus.repository.maven.internal.orient.OrientMetadataUtils.removeRebuildFlag;
-import static org.sonatype.nexus.repository.maven.internal.orient.OrientMetadataUtils.requiresRebuild;
 import static org.sonatype.nexus.repository.maven.internal.orient.MavenFacetUtils.deleteWithHashes;
 import static org.sonatype.nexus.repository.maven.internal.orient.MavenFacetUtils.findAsset;
 import static org.sonatype.nexus.repository.maven.internal.orient.MavenFacetUtils.findComponent;
+import static org.sonatype.nexus.repository.maven.internal.orient.OrientMetadataUtils.addRebuildFlag;
+import static org.sonatype.nexus.repository.maven.internal.orient.OrientMetadataUtils.removeRebuildFlag;
+import static org.sonatype.nexus.repository.maven.internal.orient.OrientMetadataUtils.requiresRebuild;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
@@ -545,27 +547,35 @@ public class MavenFacetImpl
 
   @Override
   @TransactionalDeleteBlob
-  public boolean delete(final MavenPath... paths) throws IOException {
+  public Set<String> delete(final MavenPath... paths) throws IOException {
     final StorageTx tx = UnitOfWork.currentTx();
 
-    boolean result = false;
+    Set<String> deletedPaths = Sets.newHashSet();
     for (MavenPath path : paths) {
       log.trace("DELETE {} : {}", getRepository().getName(), path.getPath());
-      if (path.getCoordinates() != null) {
-        result = deleteArtifact(path, tx) || result;
-      }
-      else {
-        result = deleteFile(path, tx) || result;
+      if (deleteFileOrArtifact(tx, path)) {
+        deletedPaths.add(path.getPath());
       }
     }
-    return result;
+    return deletedPaths;
   }
+
+  private boolean deleteFileOrArtifact(final StorageTx tx, final MavenPath mavenPath) {
+    if (mavenPath.getCoordinates() != null) {
+      return deleteArtifact(mavenPath, tx);
+    }
+    else {
+      return deleteFile(mavenPath, tx);
+    }
+  }
+
 
   @Override
   @TransactionalDeleteBlob
-  public void maybeDeleteOrFlagToRebuildMetadata(final Bucket bucket, final MavenPath path) throws IOException {
+  public Set<String> maybeDeleteOrFlagToRebuildMetadata(final Bucket bucket, final MavenPath path) throws IOException {
     final StorageTx tx = UnitOfWork.currentTx();
     final Asset metadata = findAsset(tx, bucket, path);
+    final Set<String> deletePaths = Sets.newHashSet();
     if (metadata != null) {
       final Builder query = builder();
       final NestedAttributesMap mavenAttrs = metadata.attributes().child(Maven2Format.NAME);
@@ -585,24 +595,27 @@ public class MavenFacetImpl
 
       long count = tx.countComponents(query.build(), singletonList(getRepository()));
       if (count == 0) {
-        deleteWithHashes(this, path);
+        deletePaths.addAll(deleteWithHashes(this, path));
       }
       else {
         addRebuildFlag(metadata);
         tx.saveAsset(metadata);
       }
     }
+    return deletePaths;
   }
 
   @Override
   @TransactionalDeleteBlob
-  public void maybeDeleteOrFlagToRebuildMetadata(final Collection<MavenPath> paths) throws IOException {
+  public Set<String> maybeDeleteOrFlagToRebuildMetadata(final Collection<MavenPath> paths) throws IOException {
     final StorageTx tx = UnitOfWork.currentTx();
     final Bucket bucket = tx.findBucket(getRepository());
 
+    Set<String> deletedPaths = Sets.newHashSet();
     for (MavenPath path : paths) {
-      maybeDeleteOrFlagToRebuildMetadata(bucket, path);
+      deletedPaths.addAll(maybeDeleteOrFlagToRebuildMetadata(bucket, path));
     }
+    return deletedPaths;
   }
 
   private boolean deleteArtifact(final MavenPath path, final StorageTx tx) {

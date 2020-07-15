@@ -94,7 +94,7 @@ public class HostedHandler
   }
 
   private Response doDelete(final MavenPath path, final MavenFacet mavenFacet) throws IOException {
-    boolean deleted = mavenFacet.delete(path);
+    boolean deleted = !mavenFacet.delete(path).isEmpty();
     if (!deleted) {
       return HttpResponses.notFound(path.getPath());
     }
