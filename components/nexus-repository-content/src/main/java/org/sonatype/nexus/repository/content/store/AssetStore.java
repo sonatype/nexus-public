@@ -30,6 +30,8 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.inject.assistedinject.Assisted;
 
+import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
+
 /**
  * {@link Asset} store.
  *
@@ -191,6 +193,7 @@ public class AssetStore<T extends AssetDAO>
       tx.commit();
       deleted = true;
       tx.begin();
+      checkCancellation();
     }
     log.debug("Deleted all assets in repository {}", repositoryId);
     return deleted;

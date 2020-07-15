@@ -28,6 +28,8 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.inject.assistedinject.Assisted;
 
+import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
+
 /**
  * {@link Component} store.
  *
@@ -210,6 +212,7 @@ public class ComponentStore<T extends ComponentDAO>
       tx.commit();
       deleted = true;
       tx.begin();
+      checkCancellation();
     }
     log.debug("Deleted all components in repository {}", repositoryId);
     return deleted;

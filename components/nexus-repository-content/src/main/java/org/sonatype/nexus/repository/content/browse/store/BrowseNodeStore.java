@@ -23,6 +23,8 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.inject.assistedinject.Assisted;
 
+import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
+
 /**
  * Browse node store.
  *
@@ -65,6 +67,7 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
       tx.commit();
       deleted = true;
       tx.begin();
+      checkCancellation();
     }
     log.debug("Deleted all browse nodes in repository {}", repositoryId);
     return deleted;
