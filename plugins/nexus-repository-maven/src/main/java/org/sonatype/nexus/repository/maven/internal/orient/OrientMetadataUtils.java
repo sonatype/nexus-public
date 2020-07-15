@@ -14,24 +14,29 @@ package org.sonatype.nexus.repository.maven.internal.orient;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.hash.HashAlgorithm;
+import org.sonatype.nexus.orient.maven.MavenFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheInfo;
-import org.sonatype.nexus.orient.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.internal.Constants;
 import org.sonatype.nexus.repository.maven.internal.MavenMimeRulesSource;
 import org.sonatype.nexus.repository.maven.internal.MavenModels;
 import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.payloads.BytesPayload;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
+import org.sonatype.nexus.transaction.UnitOfWork;
 
+import com.google.common.collect.Sets;
 import com.google.common.hash.HashCode;
 import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.slf4j.Logger;
@@ -42,6 +47,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.lang.Boolean.TRUE;
 import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.cache.CacheInfo.extractFromAsset;
+import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
 
 /**
  * Utility class containing shared (orient specific) methods for Maven metadata.
@@ -107,15 +113,43 @@ public final class OrientMetadataUtils
   /**
    * Deletes metadata.
    */
-  public static void delete(final Repository repository, final MavenPath mavenPath) {
+  public static Set<String> delete(final Repository repository, final MavenPath mavenPath) {
     checkNotNull(repository);
     checkNotNull(mavenPath);
     try {
-      MavenFacetUtils.deleteWithHashes(repository.facet(MavenFacet.class), mavenPath);
+      return MavenFacetUtils.deleteWithHashes(repository.facet(MavenFacet.class), mavenPath);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  /**
+   *
+   * @param repository
+   * @param groupId
+   * @param artifactId
+   * @param baseVersion
+   * @return Set of paths that were deleted. If asset was just marked for rebuild it will not be part of this set.
+   * @throws IOException
+   */
+  public static Set<String> deleteAndAddRebuildFlagToParents(
+      final Repository repository,
+      final String groupId,
+      final String artifactId,
+      final String baseVersion) throws IOException
+  {
+    UnitOfWork.begin(repository.facet(StorageFacet.class).txSupplier());
+    Set<String> deletedPaths = Sets.newHashSet();
+    try {
+      deletedPaths.addAll(delete(repository, metadataPath(groupId, artifactId, baseVersion)));
+      deletedPaths.addAll(repository.facet(MavenFacet.class).maybeDeleteOrFlagToRebuildMetadata(
+          Arrays.asList(metadataPath(groupId, artifactId, null), metadataPath(groupId, null, null))));
+    }
+    finally {
+      UnitOfWork.end();
+    }
+    return deletedPaths;
   }
 
   public static void addRebuildFlag(final Asset metadataAsset) {
