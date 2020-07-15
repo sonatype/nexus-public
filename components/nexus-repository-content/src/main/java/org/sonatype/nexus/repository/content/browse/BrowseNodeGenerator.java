@@ -18,16 +18,31 @@ import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.content.Asset;
 
 /**
- * Component-led layout that places components one level above their assets.
+ * Defines the browse node layout for assets and their components of the same format.
  *
  * @since 3.24
  */
-public abstract class ComponentPathBrowseNodeGenerator
-    extends AssetPathBrowseNodeGenerator
+public interface BrowseNodeGenerator
 {
-  @Override
-  public List<BrowsePath> computeComponentPaths(final Asset asset) {
-    List<BrowsePath> assetPaths = computeAssetPaths(asset);
-    return assetPaths.subList(0, assetPaths.size() - 1);
+  /**
+   * Computes the paths leading to the asset in the browse tree.
+   */
+  List<BrowsePath> computeAssetPaths(Asset asset);
+
+  /**
+   * Computes the paths leading to the asset's component in the browse tree.
+   */
+  List<BrowsePath> computeComponentPaths(Asset asset);
+
+  /**
+   * Finds the last segment of the given path.
+   */
+  default String lastSegment(final String path) {
+    int lastNonSlash = path.length() - 1;
+    while (lastNonSlash >= 0 && path.charAt(lastNonSlash) == '/') {
+      lastNonSlash--;
+    }
+    int precedingSlash = path.lastIndexOf('/', lastNonSlash - 1);
+    return path.substring(precedingSlash + 1, lastNonSlash + 1);
   }
 }

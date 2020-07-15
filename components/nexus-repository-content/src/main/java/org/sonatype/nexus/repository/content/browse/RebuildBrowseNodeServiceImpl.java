@@ -12,31 +12,26 @@
  */
 package org.sonatype.nexus.repository.content.browse;
 
-import java.util.List;
-import java.util.Optional;
+import javax.inject.Named;
 
-import org.sonatype.nexus.repository.browse.node.BrowsePath;
-import org.sonatype.nexus.repository.content.Asset;
-import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.browse.node.RebuildBrowseNodeFailedException;
+import org.sonatype.nexus.repository.browse.node.RebuildBrowseNodeService;
+
+import groovy.lang.Singleton;
 
 /**
- * Defines the browse node layout for components and assets of the same format.
+ * Rebuild browse node service for content repositories.
  *
- * @since 3.24
+ * @since 3.next
  */
-public interface DatastoreBrowseNodeGenerator
+@Named
+@Singleton
+public class RebuildBrowseNodeServiceImpl
+    implements RebuildBrowseNodeService
 {
-  List<BrowsePath> computeAssetPaths(Asset asset, Optional<Component> component);
-
-  List<BrowsePath> computeComponentPaths(Asset asset, Component component);
-
-  default String lastSegment(final String path) {
-    int lastNonSlash = path.length() - 1;
-    while (lastNonSlash >= 0 && path.charAt(lastNonSlash) == '/') {
-      lastNonSlash--;
-    }
-    int precedingSlash = path.lastIndexOf('/', lastNonSlash - 1);
-    return path.substring(precedingSlash + 1, lastNonSlash + 1);
+  @Override
+  public void rebuild(final Repository repository) throws RebuildBrowseNodeFailedException {
+    repository.optionalFacet(BrowseFacet.class).ifPresent(BrowseFacet::rebuildBrowseNodes);
   }
-
 }

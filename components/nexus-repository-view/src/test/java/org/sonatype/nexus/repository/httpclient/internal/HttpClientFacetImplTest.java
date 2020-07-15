@@ -26,6 +26,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.httpclient.AutoBlockConfiguration;
+import org.sonatype.nexus.repository.httpclient.NormalizationStrategy;
 import org.sonatype.nexus.repository.httpclient.internal.HttpClientFacetImpl.Config;
 
 import org.apache.http.Header;
@@ -53,6 +54,8 @@ public class HttpClientFacetImplTest
   private static final String DEFAULT = "default";
 
   private static final String NPM = "npm";
+
+  private static final String DOCKER = "docker";
 
   private HttpClientFacetImpl underTest;
 
@@ -107,8 +110,16 @@ public class HttpClientFacetImplTest
     Map<String, AutoBlockConfiguration> autoBlockConfiguration = new HashMap<>();
     autoBlockConfiguration.put(DEFAULT, defaultAutoBlockConfiguration);
     autoBlockConfiguration.put(NPM, npmAutoBlockConfiguration);
+
+    Map<String, NormalizationStrategy> normalizationStrategies = new HashMap<>();
+    normalizationStrategies.put(DOCKER, new NormalizationStrategy() {
+      @Override
+      public boolean shouldNormalizeUri() {
+        return true;
+      }
+    });
     
-    underTest = new HttpClientFacetImpl(httpClientManager, autoBlockConfiguration, newHashMap(), config);
+    underTest = new HttpClientFacetImpl(httpClientManager, autoBlockConfiguration, newHashMap(), normalizationStrategies, config);
     underTest.attach(repository);
     underTest.installDependencies(eventManager);
     when(configurationFacet.readSection(configuration, CONFIG_KEY, Config.class)).thenReturn(config);

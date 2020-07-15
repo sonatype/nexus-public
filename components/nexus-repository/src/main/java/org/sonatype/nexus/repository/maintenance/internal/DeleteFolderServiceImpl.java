@@ -29,7 +29,7 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration;
-import org.sonatype.nexus.repository.browse.node.BrowseNodeStore;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeQueryService;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
@@ -55,7 +55,7 @@ public class DeleteFolderServiceImpl
     extends ComponentSupport
     implements DeleteFolderService
 {
-  private final BrowseNodeStore<EntityId> browseNodeStore;
+  private final BrowseNodeQueryService browseNodeQueryService;
 
   private final BrowseNodeConfiguration configuration;
 
@@ -69,14 +69,14 @@ public class DeleteFolderServiceImpl
 
   @Inject
   public DeleteFolderServiceImpl(
-      final BrowseNodeStore<EntityId> browseNodeStore,
+      final BrowseNodeQueryService browseNodeQueryService,
       final BrowseNodeConfiguration configuration,
       final AssetStore assetStore,
       final ContentPermissionChecker contentPermissionChecker,
       final VariableResolverAdapterManager variableResolverAdapterManager,
       final SecurityHelper securityHelper)
   {
-    this.browseNodeStore = checkNotNull(browseNodeStore);
+    this.browseNodeQueryService = checkNotNull(browseNodeQueryService);
     this.configuration = checkNotNull(configuration);
     this.assetStore = checkNotNull(assetStore);
     this.contentPermissionChecker = checkNotNull(contentPermissionChecker);
@@ -99,12 +99,12 @@ public class DeleteFolderServiceImpl
     while (!cancelledCheck.getAsBoolean() && !paths.isEmpty()) {
       String basePath = paths.poll();
       List<String> path = Arrays.asList(basePath.split("/"));
-      Iterable<BrowseNode<EntityId>> nodes =
-          browseNodeStore.getByPath(repository.getName(), path, configuration.getMaxNodes());
-      Iterator<BrowseNode<EntityId>> nodeIterator = nodes.iterator();
+      Iterable<BrowseNode> nodes =
+          browseNodeQueryService.getByPath(repository.getName(), path, configuration.getMaxNodes());
+      Iterator<BrowseNode> nodeIterator = nodes.iterator();
 
       while (!cancelledCheck.getAsBoolean() && nodeIterator.hasNext()) {
-        BrowseNode<EntityId> node = nodeIterator.next();
+        BrowseNode node = nodeIterator.next();
 
         if (!node.isLeaf()) {
           paths.offer(basePath + "/" + node.getName());

@@ -43,7 +43,7 @@ public class DefaultBrowseNodeComparator
   }
 
   @Override
-  public int compare(final BrowseNode<?> o1, final BrowseNode<?> o2) {
+  public int compare(final BrowseNode o1, final BrowseNode o2) {
     int o1Type = getType(o1);
     int o2Type = getType(o2);
 
@@ -63,7 +63,7 @@ public class DefaultBrowseNodeComparator
     return Integer.compare(o1Type, o2Type);
   }
 
-  protected int getType(final BrowseNode<?> browseNode) {
+  protected int getType(final BrowseNode browseNode) {
     if (browseNode.getComponentId() != null) {
       return TYPE_COMPONENT;
     }

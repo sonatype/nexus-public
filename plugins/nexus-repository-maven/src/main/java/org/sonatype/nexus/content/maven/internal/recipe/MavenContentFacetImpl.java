@@ -57,12 +57,11 @@ import org.apache.maven.model.Model;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
+import static org.sonatype.nexus.content.maven.internal.recipe.MavenArchetypeCatalogFacetImpl.MAVEN_ARCHETYPE_KIND;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.assetKind;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.getPackaging;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.setMavenAttributes;
-import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.setMavenAttributes;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.setPomAttributes;
-import static org.sonatype.nexus.content.maven.internal.recipe.MavenArchetypeCatalogFacetImpl.MAVEN_ARCHETYPE_KIND;
 import static org.sonatype.nexus.repository.content.facet.WritePolicy.ALLOW;
 import static org.sonatype.nexus.repository.content.facet.WritePolicy.ALLOW_ONCE;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_INDEX;
@@ -80,6 +79,8 @@ public class MavenContentFacetImpl
     extends ContentFacetSupport
     implements MavenContentFacet
 {
+  private static final char ASSET_PATH_PREFIX = '/';
+
   private static final String CONFIG_KEY = "maven";
 
   private static final List<HashAlgorithm> HASHING = ImmutableList.of(SHA1, MD5);
@@ -170,22 +171,22 @@ public class MavenContentFacetImpl
   }
 
   @Override
-  public Optional<Content> get(final String path) {
-    log.debug("GET {} : {}", getRepository().getName(), path);
+  public Optional<Content> get(final MavenPath mavenPath) {
+    log.debug("GET {} : {}", getRepository().getName(), mavenPath);
 
-    return findAsset(path)
+    return findAsset(assetPath(mavenPath))
         .map(FluentAsset::download);
   }
 
   @Override
-  public Content put(final MavenPath path, final Payload content) throws IOException {
-    log.debug("PUT {} : {}", getRepository().getName(), path);
+  public Content put(final MavenPath mavenPath, final Payload content) throws IOException {
+    log.debug("PUT {} : {}", getRepository().getName(), mavenPath);
 
     try (TempBlob blob = blobs().ingest(content, HASHING)) {
-      if (isMetadataAndValidationEnabled(path)) {
-        validate(path, blob);
+      if (isMetadataAndValidationEnabled(mavenPath)) {
+        validate(mavenPath, blob);
       }
-      return save(path, content, blob);
+      return save(mavenPath, content, blob);
     }
   }
 
@@ -195,8 +196,8 @@ public class MavenContentFacetImpl
         .find();
   }
 
-  private boolean isMetadataAndValidationEnabled(final MavenPath path) {
-    return path.getFileName().equals(METADATA_FILENAME) && metadataValidationEnabled;
+  private boolean isMetadataAndValidationEnabled(final MavenPath mavenPath) {
+    return mavenPath.getFileName().equals(METADATA_FILENAME) && metadataValidationEnabled;
   }
 
   private void validate(final MavenPath mavenPath, final TempBlob blob) {
@@ -255,31 +256,36 @@ public class MavenContentFacetImpl
     if (mavenPath.isPom()) {
       model = readModel(blob.getBlob().getInputStream());
       if (model == null) {
-        log.warn("Could not parse POM: {} @ {}", getRepository().getName(), mavenPath.getPath());
+        log.warn("Could not parse POM: {} @ {}", getRepository().getName(), assetPath(mavenPath));
       }
     }
     return model;
   }
 
   private Content createOrUpdateAsset(
-      final MavenPath path,
+      final MavenPath mavenPath,
       final Component component,
       final Payload content,
       final TempBlob blob)
   {
-    FluentAssetBuilder assetBuilder = assets().path(path.getPath()).kind(assetKind(path, mavenPathParser));
+    String path = assetPath(mavenPath);
+    FluentAssetBuilder assetBuilder = assets().path(path).kind(assetKind(mavenPath, mavenPathParser));
     if (component != null) {
       assetBuilder = assetBuilder.component(component);
     }
 
     FluentAsset asset = assetBuilder.getOrCreate();
     if (isNewRepositoryContent(asset)) {
-      setMavenAttributes(asset, path);
+      setMavenAttributes(asset, mavenPath);
     }
 
     return asset.attach(blob)
         .markAsCached(content)
         .download();
+  }
+
+  private String assetPath(final MavenPath mavenPath) {
+    return ASSET_PATH_PREFIX + mavenPath.getPath();
   }
 
   @Override
@@ -293,7 +299,7 @@ public class MavenContentFacetImpl
   }
 
   private boolean deleteAsset(final MavenPath mavenPath) {
-    return findAsset(mavenPath.getPath())
+    return findAsset(assetPath(mavenPath))
         .map(FluentAsset::delete)
         .orElse(false);
   }

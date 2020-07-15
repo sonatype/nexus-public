@@ -49,7 +49,7 @@ public class NpmBrowseNodeGenerator
   public List<BrowsePaths> computeAssetPaths(final Asset asset, @Nullable final Component component) {
     checkNotNull(asset);
 
-    return super.computeAssetPaths(asset, component).stream().filter(paths -> !"-".equals(paths.getBrowsePath()))
+    return super.computeAssetPaths(asset, component).stream().filter(paths -> !"-".equals(paths.getDisplayName()))
         .collect(toList());
   }
 }

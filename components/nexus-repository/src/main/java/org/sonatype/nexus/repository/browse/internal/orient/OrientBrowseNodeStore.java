@@ -16,7 +16,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -37,10 +36,9 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.browse.node.BrowseNodeComparator;
 import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration;
-import org.sonatype.nexus.repository.browse.node.BrowseNodeCrudStore;
-import org.sonatype.nexus.repository.browse.node.BrowseNodeFacet;
 import org.sonatype.nexus.repository.browse.node.BrowseNodeFilter;
-import org.sonatype.nexus.repository.browse.node.BrowseNodeStore;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeIdentity;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeQueryService;
 import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.browse.node.DefaultBrowseNodeComparator;
 import org.sonatype.nexus.repository.group.GroupFacet;
@@ -77,7 +75,7 @@ import static org.sonatype.nexus.repository.browse.internal.orient.BrowseNodeEnt
 import static org.sonatype.nexus.repository.browse.internal.orient.BrowseNodeEntityAdapter.P_PATH;
 
 /**
- * Orient implementation of {@link BrowseNodeStore}.
+ * Orient {@link BrowseNode} store that also acts as a {@link BrowseNodeQueryService}.
  *
  * Note that this store does not register the browse-node schema because that needs to be registered
  * after the component and asset schemas. To guarantee ordering, registration of all those schemas is
@@ -89,9 +87,9 @@ import static org.sonatype.nexus.repository.browse.internal.orient.BrowseNodeEnt
 @ManagedLifecycle(phase = SCHEMAS)
 @Priority(Integer.MAX_VALUE) // make sure this implementation appears above the datastore one in mixed-mode
 @Named
-public class OrientBrowseNodeStoreImpl
+public class OrientBrowseNodeStore
     extends StateGuardLifecycleSupport
-    implements BrowseNodeStore<EntityId>, BrowseNodeCrudStore<Asset, Component>
+    implements BrowseNodeQueryService
 {
   private final Provider<DatabaseInstance> databaseInstance;
 
@@ -105,6 +103,8 @@ public class OrientBrowseNodeStoreImpl
 
   private final Map<String, BrowseNodeFilter> browseNodeFilters;
 
+  private final Map<String, BrowseNodeIdentity> browseNodeIdentities;
+
   private final Map<String, BrowseNodeComparator> browseNodeComparators;
 
   private final BrowseNodeComparator defaultBrowseNodeComparator;
@@ -112,7 +112,7 @@ public class OrientBrowseNodeStoreImpl
   private final int deletePageSize;
 
   @Inject
-  public OrientBrowseNodeStoreImpl(
+  public OrientBrowseNodeStore(
       @Named("component") final Provider<DatabaseInstance> databaseInstance,
       final BrowseNodeEntityAdapter entityAdapter,
       final SecurityHelper securityHelper,
@@ -120,6 +120,7 @@ public class OrientBrowseNodeStoreImpl
       final BrowseNodeConfiguration configuration,
       final RepositoryManager repositoryManager,
       final Map<String, BrowseNodeFilter> browseNodeFilters,
+      final Map<String, BrowseNodeIdentity> browseNodeIdentities,
       final Map<String, BrowseNodeComparator> browseNodeComparators)
   {
     this.databaseInstance = checkNotNull(databaseInstance);
@@ -127,13 +128,13 @@ public class OrientBrowseNodeStoreImpl
     this.securityHelper = checkNotNull(securityHelper);
     this.selectorManager = checkNotNull(selectorManager);
     this.browseNodeFilters = checkNotNull(browseNodeFilters);
+    this.browseNodeIdentities = checkNotNull(browseNodeIdentities);
     this.browseNodeComparators = checkNotNull(browseNodeComparators);
     this.repositoryManager = checkNotNull(repositoryManager);
     this.deletePageSize = configuration.getDeletePageSize();
     this.defaultBrowseNodeComparator = checkNotNull(browseNodeComparators.get(DefaultBrowseNodeComparator.NAME));
   }
 
-  @Override
   @Guarded(by = STARTED)
   public void createComponentNode(final String repositoryName,
                                   final String format,
@@ -146,7 +147,6 @@ public class OrientBrowseNodeStoreImpl
         .run(db -> entityAdapter.createComponentNode(db, repositoryName, format, paths, component));
   }
 
-  @Override
   @Guarded(by = STARTED)
   public void createAssetNode(final String repositoryName,
                               final String format,
@@ -159,28 +159,24 @@ public class OrientBrowseNodeStoreImpl
         .run(db -> entityAdapter.createAssetNode(db, repositoryName, format, paths, asset));
   }
 
-  @Override
   @Guarded(by = STARTED)
   public boolean assetNodeExists(final Asset asset) {
     EntityId assetId = EntityHelper.id(asset);
     return inTx(databaseInstance).call(db -> entityAdapter.assetNodeExists(db, assetId));
   }
 
-  @Override
   @Guarded(by = STARTED)
   public void deleteComponentNode(final Component component) {
     EntityId componentId = EntityHelper.id(component);
     inTxRetry(databaseInstance).run(db -> entityAdapter.deleteComponentNode(db, componentId));
   }
 
-  @Override
   @Guarded(by = STARTED)
   public void deleteAssetNode(final Asset asset) {
     EntityId assetId = EntityHelper.id(asset);
     inTxRetry(databaseInstance).run(db -> entityAdapter.deleteAssetNode(db, assetId));
   }
 
-  @Override
   @Guarded(by = STARTED)
   public void deleteByRepository(final String repositoryName) {
     log.debug("Deleting all browse nodes for repository {}", repositoryName);
@@ -204,7 +200,7 @@ public class OrientBrowseNodeStoreImpl
 
   @Override
   @Guarded(by = STARTED)
-  public Iterable<BrowseNode<EntityId>> getByPath(
+  public Iterable<BrowseNode> getByPath(
       final String repositoryName,
       final List<String> path,
       final int maxNodes)
@@ -224,25 +220,18 @@ public class OrientBrowseNodeStoreImpl
     Map<String, Object> filterParameters = new HashMap<>();
     String assetFilter = buildAssetFilter(repository, selectors, filterParameters);
 
-    BrowseNodeFilter filter = browseNodeFilters.getOrDefault(repository.getFormat().getValue(), (node, name) -> true);
+    BrowseNodeFilter filter = browseNodeFilters.getOrDefault(format, (node, name) -> true);
 
-    List<BrowseNode<EntityId>> results;
+    List<BrowseNode> results;
     if (repository.getType() instanceof GroupType) {
-      Equivalence<OrientBrowseNode> browseNodeIdentity;
-      Optional<BrowseNodeFacet> browseNodeFacet = repository.optionalFacet(BrowseNodeFacet.class);
-      if (browseNodeFacet.isPresent()) {
-        browseNodeIdentity = Equivalence.equals()
-            .onResultOf(input -> browseNodeFacet.get().browseNodeIdentity().apply(input));
-      }
-      else {
-        browseNodeIdentity = Equivalence.equals().onResultOf(BrowseNode::getName);
-      }
+      BrowseNodeIdentity identity = browseNodeIdentities.getOrDefault(format, BrowseNode::getName);
+      Equivalence<OrientBrowseNode> browseNodeEquivalence = Equivalence.equals().onResultOf(identity::identity);
 
       // overlay member results, first-one-wins if there are any nodes with the same name
       results = members(repository)
           .map(m -> getByPath(m.getName(), path, maxNodes, assetFilter, filterParameters))
           .flatMap(List::stream)
-          .map(browseNodeIdentity::wrap)
+          .map(browseNodeEquivalence::wrap)
           .distinct()
           .map(Wrapper::get)
           .filter(node -> filter.test(node, repositoryName.equals(node.getRepositoryName())))
@@ -367,17 +356,7 @@ public class OrientBrowseNodeStoreImpl
     }
   }
 
-  private Comparator<BrowseNode<?>> getBrowseNodeComparator(final String format) {
+  private Comparator<BrowseNode> getBrowseNodeComparator(final String format) {
     return browseNodeComparators.getOrDefault(format, defaultBrowseNodeComparator);
-  }
-
-  @Override
-  public String getValue(final EntityId id) {
-    return id == null ? null : id.getValue();
-  }
-
-  @Override
-  public EntityId fromValue(final String value) {
-    return value == null ? null : EntityHelper.id(value);
   }
 }

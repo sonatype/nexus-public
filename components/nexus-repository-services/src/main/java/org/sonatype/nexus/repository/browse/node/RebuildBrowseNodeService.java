@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.browse.node;
 
-import java.util.function.BooleanSupplier;
-
 import org.sonatype.nexus.repository.Repository;
 
 /**
@@ -24,8 +22,7 @@ import org.sonatype.nexus.repository.Repository;
 public interface RebuildBrowseNodeService
 {
   /**
-   * @param repo {@link Repository} to rebuild browse node data for.
-   * @param isCancelled a {@link BooleanSupplier} that returns if the rebuilding should be cancelled.
+   * @param repository {@link Repository} to rebuild browse node data for.
    */
-  void rebuild(Repository repo, BooleanSupplier isCancelled) throws RebuildBrowseNodeFailedException;
+  void rebuild(Repository repository) throws RebuildBrowseNodeFailedException;
 }

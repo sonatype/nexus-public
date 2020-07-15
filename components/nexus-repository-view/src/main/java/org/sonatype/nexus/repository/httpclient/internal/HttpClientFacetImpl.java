@@ -35,6 +35,7 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.httpclient.AutoBlockConfiguration;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
+import org.sonatype.nexus.repository.httpclient.NormalizationStrategy;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusEvent;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusObserver;
@@ -50,6 +51,7 @@ import org.apache.http.message.BasicHeader;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
+import static java.util.Optional.ofNullable;
 import static org.apache.http.HttpHeaders.AUTHORIZATION;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import static org.sonatype.nexus.repository.httpclient.RemoteConnectionStatusType.AUTO_BLOCKED_UNAVAILABLE;
@@ -75,6 +77,8 @@ public class HttpClientFacetImpl
   private final Map<String, AutoBlockConfiguration> autoBlockConfiguration;
 
   private final Map<String, RedirectStrategy> redirectStrategy;
+
+  private final Map<String, NormalizationStrategy> normalizationStrategies;
 
   @VisibleForTesting
   static class Config
@@ -102,19 +106,22 @@ public class HttpClientFacetImpl
   @Inject
   public HttpClientFacetImpl(final HttpClientManager httpClientManager,
                              final Map<String, AutoBlockConfiguration> autoBlockConfiguration,
-                             final Map<String, RedirectStrategy> redirectStrategy)
+                             final Map<String, RedirectStrategy> redirectStrategy,
+                             final Map<String, NormalizationStrategy> normalizationStrategies)
   {
     this.httpClientManager = checkNotNull(httpClientManager);
     this.autoBlockConfiguration = checkNotNull(autoBlockConfiguration);
     this.redirectStrategy = checkNotNull(redirectStrategy);
+    this.normalizationStrategies = checkNotNull(normalizationStrategies);
   }
 
   @VisibleForTesting
   HttpClientFacetImpl(final HttpClientManager httpClientManager,
                       final Map<String, AutoBlockConfiguration> autoBlockConfiguration,
                       final Map<String, RedirectStrategy> redirectStrategy,
+                      final Map<String, NormalizationStrategy> normalizationStrategy,
                       final Config config) {
-    this(httpClientManager, autoBlockConfiguration, redirectStrategy);
+    this(httpClientManager, autoBlockConfiguration, redirectStrategy, normalizationStrategy);
     this.config = checkNotNull(config);
     checkNotNull(autoBlockConfiguration.get(DEFAULT));
   }
@@ -267,6 +274,7 @@ public class HttpClientFacetImpl
     delegateConfig.setConnection(config.connection);
     delegateConfig.setAuthentication(config.authentication);
     delegateConfig.setRedirectStrategy(getRedirectStrategy());
+    setNormalizationStrategy(delegateConfig);
     return delegateConfig;
   }
 
@@ -282,6 +290,11 @@ public class HttpClientFacetImpl
 
   protected RedirectStrategy getRedirectStrategy() {
     return this.redirectStrategy.get(getRepository().getFormat().getValue());
+  }
+
+  protected void setNormalizationStrategy(HttpClientConfiguration delegateConfig) {
+    ofNullable(normalizationStrategies.get(getRepository().getFormat().getValue()))
+        .ifPresent(strategy -> delegateConfig.setNormalizeUri(strategy.shouldNormalizeUri()));
   }
 
   private void closeHttpClient() throws IOException {

@@ -13,9 +13,10 @@
 package org.sonatype.nexus.repository.browse.internal.orient;
 
 import java.util.AbstractMap.SimpleEntry;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.function.BooleanSupplier;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
@@ -32,6 +33,7 @@ import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetStore;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.BucketStore;
+import org.sonatype.nexus.scheduling.CancelableHelper;
 import org.sonatype.nexus.scheduling.TaskInterruptedException;
 
 import com.orientechnologies.orient.core.id.ORID;
@@ -143,7 +145,7 @@ public class OrientRebuildBrowseNodeServiceTest
     when(assetStore.getById(EntityHelper.id(asset2))).thenReturn(asset2);
     when(assetStore.getById(EntityHelper.id(asset3))).thenReturn(asset3);
 
-    underTest.rebuild(repository, () -> false);
+    underTest.rebuild(repository);
 
     verify(assetStore, times(2)).getNextPage(any(), eq(REBUILD_PAGE_SIZE));
 
@@ -154,7 +156,7 @@ public class OrientRebuildBrowseNodeServiceTest
   public void executeTruncatesNodesForNoAssets() throws RebuildBrowseNodeFailedException {
     when(assetStore.countAssets(any())).thenReturn(0L);
 
-    underTest.rebuild(repository, () -> false);
+    underTest.rebuild(repository);
 
     verify(browseNodeManager).deleteByRepository(repository.getName());
     verify(assetStore).countAssets(any());
@@ -183,7 +185,7 @@ public class OrientRebuildBrowseNodeServiceTest
     when(assetStore.getById(EntityHelper.id(asset2))).thenReturn(asset2);
     when(assetStore.getById(EntityHelper.id(asset3))).thenReturn(asset3);
 
-    underTest.rebuild(repository, () -> false);
+    underTest.rebuild(repository);
 
     verify(assetStore, times(3)).getNextPage(any(), eq(REBUILD_PAGE_SIZE));
 
@@ -206,19 +208,23 @@ public class OrientRebuildBrowseNodeServiceTest
         createIndexEntry(bucketId, EntityHelper.id(asset3)));
     List<Entry<Object, EntityId>> page3 = emptyList();
 
+    AtomicBoolean cancelFlag = new AtomicBoolean();
+    CancelableHelper.set(cancelFlag);
+
     when(assetStore.countAssets(any())).thenReturn(3L);
-    when(assetStore.getNextPage(any(), eq(REBUILD_PAGE_SIZE))).thenReturn(page1, page2, page3);
+    when(assetStore.getNextPage(any(), eq(REBUILD_PAGE_SIZE))).thenAnswer(invocation -> {
+      cancelFlag.set(true);
+      return Arrays.asList(page1, page2, page3);
+    });
+
     when(assetStore.getById(EntityHelper.id(asset1))).thenReturn(asset1);
     when(assetStore.getById(EntityHelper.id(asset2))).thenReturn(asset2);
     when(assetStore.getById(EntityHelper.id(asset3))).thenReturn(asset3);
 
-    BooleanSupplier mockCancel = mock(BooleanSupplier.class);
-    when(mockCancel.getAsBoolean()).thenReturn(false).thenReturn(true);
-
     thrown.expect(RebuildBrowseNodeFailedException.class);
     thrown.expectCause(instanceOf(TaskInterruptedException.class));
 
-    underTest.rebuild(repository, mockCancel);
+    underTest.rebuild(repository);
 
     verify(assetStore, times(1)).getNextPage(any(), eq(REBUILD_PAGE_SIZE));
 

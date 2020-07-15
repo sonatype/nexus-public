@@ -44,7 +44,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.browse.internal.model.BrowseListItem;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration;
-import org.sonatype.nexus.repository.browse.node.BrowseNodeStore;
+import org.sonatype.nexus.repository.browse.node.BrowseNodeQueryService;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
@@ -85,7 +85,7 @@ public class RepositoryBrowseResource
 
   private final RepositoryManager repositoryManager;
 
-  private final BrowseNodeStore<EntityId> browseNodeStore;
+  private final BrowseNodeQueryService browseNodeQueryService;
 
   private final BrowseNodeConfiguration configuration;
 
@@ -102,14 +102,14 @@ public class RepositoryBrowseResource
   @Inject
   public RepositoryBrowseResource(
       final RepositoryManager repositoryManager,
-      final BrowseNodeStore<EntityId> browseNodeStore,
+      final BrowseNodeQueryService browseNodeQueryService,
       final BrowseNodeConfiguration configuration,
       final BucketStore bucketStore,
       final TemplateHelper templateHelper,
       final SecurityHelper securityHelper)
   {
     this.repositoryManager = checkNotNull(repositoryManager);
-    this.browseNodeStore = checkNotNull(browseNodeStore);
+    this.browseNodeQueryService = checkNotNull(browseNodeQueryService);
     this.configuration = checkNotNull(configuration);
     this.templateHelper = checkNotNull(templateHelper);
     this.securityHelper = checkNotNull(securityHelper);
@@ -142,8 +142,8 @@ public class RepositoryBrowseResource
       pathSegments = asList(repositoryPath.split("/"));
     }
 
-    Iterable<BrowseNode<EntityId>> browseNodes =
-        browseNodeStore.getByPath(repository.getName(), pathSegments, configuration.getMaxHtmlNodes());
+    Iterable<BrowseNode> browseNodes =
+        browseNodeQueryService.getByPath(repository.getName(), pathSegments, configuration.getMaxHtmlNodes());
 
     final boolean permitted = securityHelper.allPermitted(new RepositoryViewPermission(repository, BROWSE));
     final boolean hasChildren = browseNodes != null && !Iterables.isEmpty(browseNodes);
@@ -173,7 +173,7 @@ public class RepositoryBrowseResource
   }
 
   private List<BrowseListItem> toListItems(
-      final Iterable<BrowseNode<EntityId>> browseNodes,
+      final Iterable<BrowseNode> browseNodes,
       final Repository repository,
       final String path)
   {
@@ -181,7 +181,7 @@ public class RepositoryBrowseResource
 
     if (browseNodes != null) {
       SimpleDateFormat format = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy");
-      for (BrowseNode<EntityId> browseNode : browseNodes) {
+      for (BrowseNode browseNode : browseNodes) {
         String size = null;
         String lastModified = null;
         String listItemPath;

@@ -15,36 +15,14 @@ package org.sonatype.nexus.repository.browse.node;
 import java.util.List;
 
 /**
- * Store providing access to the browse tree for assets & components.
+ * Store providing access to the browse tree.
  *
  * @since 3.7
  */
-public interface BrowseNodeCrudStore<ASSET, COMPONENT>
+public interface BrowseNodeQueryService
 {
   /**
-   * Creates a {@link BrowseNode} for the given asset.
+   * Returns the {@link BrowseNode}s directly visible under the given path.
    */
-  void createAssetNode(String repositoryName, String format, List<BrowsePath> paths, ASSET asset);
-
-  /**
-   * Creates a {@link BrowseNode} for the given component.
-   */
-  void createComponentNode(String repositoryName, String format, List<BrowsePath> paths, COMPONENT component);
-
-  boolean assetNodeExists(ASSET asset);
-
-  /**
-   * Deletes the asset's {@link BrowseNode}.
-   */
-  void deleteAssetNode(ASSET asset);
-
-  /**
-   * Deletes the component's {@link BrowseNode}.
-   */
-  void deleteComponentNode(COMPONENT component);
-
-  /**
-   * Deletes all {@link BrowseNode}s belonging to the given repository.
-   */
-  void deleteByRepository(String repositoryName);
+  Iterable<BrowseNode> getByPath(String repositoryName, List<String> path, int maxNodes);
 }

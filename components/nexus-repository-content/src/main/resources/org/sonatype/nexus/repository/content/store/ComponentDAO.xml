@@ -33,7 +33,8 @@
 
       CONSTRAINT pk_${format}_component_id PRIMARY KEY (component_id),
       CONSTRAINT uk_${format}_component_coordinate UNIQUE (repository_id, namespace, name, version),
-      CONSTRAINT fk_${format}_component_repository_id FOREIGN KEY (repository_id)
+
+      CONSTRAINT fk_${format}_component_repository FOREIGN KEY (repository_id)
          REFERENCES ${format}_content_repository (repository_id)
     );
 

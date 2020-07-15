@@ -14,12 +14,14 @@ package org.sonatype.nexus.repository.browse.node;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.common.entity.EntityId;
+
 /**
  * Represents a path segment in a tree hierarchy.
  *
  * @since 3.6
  */
-public interface BrowseNode<ID>
+public interface BrowseNode
 {
   /**
    * @since 3.18
@@ -37,8 +39,8 @@ public interface BrowseNode<ID>
   boolean isLeaf();
 
   @Nullable
-  ID getComponentId();
+  EntityId getComponentId();
 
   @Nullable
-  ID getAssetId();
+  EntityId getAssetId();
 }

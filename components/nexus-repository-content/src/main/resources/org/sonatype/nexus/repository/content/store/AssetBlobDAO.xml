@@ -37,13 +37,13 @@
   </insert>
 
   <select id="browseUnusedAssetBlobs" resultType="AssetBlobData">
-    SELECT * FROM ${format}_asset_blob LEFT JOIN ${format}_asset
+    SELECT B.* FROM ${format}_asset_blob B LEFT JOIN ${format}_asset A
         USING (asset_blob_id)
-        WHERE ${format}_asset.asset_blob_id IS NULL
+        WHERE A.asset_blob_id IS NULL
         <if test="continuationToken != null">
-          AND ${format}_asset_blob.asset_blob_id > #{continuationToken}
+          AND B.asset_blob_id > #{continuationToken}
         </if>
-        ORDER BY ${format}_asset_blob.asset_blob_id LIMIT #{limit};
+        ORDER BY B.asset_blob_id LIMIT #{limit};
   </select>
 
   <insert id="createAssetBlob" useGeneratedKeys="true" keyProperty="assetBlobId" parameterType="AssetBlobData">

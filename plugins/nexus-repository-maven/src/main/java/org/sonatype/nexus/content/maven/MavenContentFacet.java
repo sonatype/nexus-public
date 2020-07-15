@@ -33,7 +33,7 @@ import org.sonatype.nexus.repository.view.Payload;
 public interface MavenContentFacet
     extends ContentFacet
 {
-  Optional<Content> get(String path) throws IOException;
+  Optional<Content> get(MavenPath mavenPath) throws IOException;
 
   Content put(MavenPath path, Payload content) throws IOException;
 

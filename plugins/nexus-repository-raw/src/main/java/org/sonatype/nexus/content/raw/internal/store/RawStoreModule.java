@@ -18,7 +18,7 @@ import org.sonatype.nexus.repository.content.store.FormatStoreModule;
 import org.sonatype.nexus.repository.raw.internal.RawFormat;
 
 /**
- * Configures the content store bindings for an raw format.
+ * Configures the content store bindings for the raw format.
  *
  * @since 3.24
  */

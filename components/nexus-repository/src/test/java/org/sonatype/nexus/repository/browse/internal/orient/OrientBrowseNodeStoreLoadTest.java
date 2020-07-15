@@ -52,7 +52,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptySet;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 
-public class OrientBrowseNodeStoreImplLoadTest
+public class OrientBrowseNodeStoreLoadTest
     extends TestSupport
 {
   private static final String REPOSITORY_NAME = "test-repo";
@@ -79,7 +79,7 @@ public class OrientBrowseNodeStoreImplLoadTest
 
   private List<Asset> assets = new ArrayList<>();
 
-  private OrientBrowseNodeStoreImpl underTest;
+  private OrientBrowseNodeStore underTest;
 
   @Before
   public void setUp() throws Exception {
@@ -125,13 +125,14 @@ public class OrientBrowseNodeStoreImplLoadTest
       bucketEntityAdapter.register(db);
     }
 
-    underTest = new OrientBrowseNodeStoreImpl(
+    underTest = new OrientBrowseNodeStore(
         database.getInstanceProvider(),
         browseNodeEntityAdapter,
         securityHelper,
         selectorManager,
         configuration,
         repositoryManager,
+        new HashMap<>(),
         new HashMap<>(),
         ImmutableMap.of(DefaultBrowseNodeComparator.NAME, new DefaultBrowseNodeComparator(new VersionComparator())));
 

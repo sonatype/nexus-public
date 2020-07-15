@@ -22,7 +22,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
-import static java.util.Optional.of;
 
 public class ComponentPathBrowseNodeGeneratorTest
     extends BrowseTestSupport
@@ -41,7 +40,7 @@ public class ComponentPathBrowseNodeGeneratorTest
   public void computeAssetPathNoComponent() {
     Asset asset = createAsset("asset/path/foo");
 
-    List<BrowsePath> paths = generator.computeAssetPaths(asset, null);
+    List<BrowsePath> paths = generator.computeAssetPaths(asset);
 
     assertPaths(asList("asset", "path", "foo"), paths);
   }
@@ -49,9 +48,9 @@ public class ComponentPathBrowseNodeGeneratorTest
   @Test
   public void computeAssetPathWithComponent() {
     Component component = createComponent("component", "group", "1.0.0");
-    Asset asset = createAsset("asset/path/foo");
+    Asset asset = createAsset("asset/path/foo", component);
 
-    List<BrowsePath> paths = generator.computeAssetPaths(asset, of(component));
+    List<BrowsePath> paths = generator.computeAssetPaths(asset);
 
     assertPaths(asList("asset", "path", "foo"), paths);
   }
@@ -59,9 +58,9 @@ public class ComponentPathBrowseNodeGeneratorTest
   @Test
   public void computeComponentPathWithComponent() {
     Component component = createComponent("component", "group", "1.0.0");
-    Asset asset = createAsset("asset/path/foo");
+    Asset asset = createAsset("asset/path/foo", component);
 
-    List<BrowsePath> paths = generator.computeComponentPaths(asset, component);
+    List<BrowsePath> paths = generator.computeComponentPaths(asset);
 
     assertPaths(asList("asset", "path"), paths, true);
   }

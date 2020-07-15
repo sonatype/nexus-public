@@ -60,7 +60,7 @@ public abstract class BrowseTestSupport
       if (withTrailingSlash || i < expectedBrowsePaths.size() - 1) {
         requestPath += "/";
       }
-      assertThat(paths.get(i).getBrowsePath(), is(expectedBrowsePaths.get(i)));
+      assertThat(paths.get(i).getDisplayName(), is(expectedBrowsePaths.get(i)));
       assertThat(paths.get(i).getRequestPath(), is(requestPath));
     }
   }

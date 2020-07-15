@@ -14,8 +14,6 @@ package org.sonatype.nexus.repository.browse.internal.orient;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -31,7 +29,6 @@ import org.sonatype.nexus.repository.browse.BrowsePaths;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.browse.node.BrowseNodeComparator;
 import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration;
-import org.sonatype.nexus.repository.browse.node.BrowseNodeFacet;
 import org.sonatype.nexus.repository.browse.node.BrowseNodeFilter;
 import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.browse.node.DefaultBrowseNodeComparator;
@@ -81,7 +78,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-public class OrientBrowseNodeStoreImplTest
+public class OrientBrowseNodeStoreTest
     extends TestSupport
 {
   private static final String REPOSITORY_NAME = "test-repo";
@@ -141,9 +138,6 @@ public class OrientBrowseNodeStoreImplTest
   private GroupFacet groupFacet;
 
   @Mock
-  private BrowseNodeFacet browseNodeFacet;
-
-  @Mock
   private Format format;
 
   @Mock
@@ -161,7 +155,7 @@ public class OrientBrowseNodeStoreImplTest
   @Mock
   private BrowseNodeFilter browseNodeFilter;
 
-  private OrientBrowseNodeStoreImpl underTest;
+  private OrientBrowseNodeStore underTest;
 
   @Before
   public void setUp() throws Exception {
@@ -206,7 +200,7 @@ public class OrientBrowseNodeStoreImplTest
 
     when(browseNodeFilter.test(any(), any())).thenReturn(true);
 
-    underTest = new OrientBrowseNodeStoreImpl(
+    underTest = new OrientBrowseNodeStore(
         () -> databaseInstance,
         browseNodeEntityAdapter,
         securityHelper,
@@ -214,6 +208,7 @@ public class OrientBrowseNodeStoreImplTest
         new BrowseNodeConfiguration(true, 1000, DELETE_PAGE_SIZE, 10_000, 10_000),
         repositoryManager,
         ImmutableMap.of(FORMAT_NAME, browseNodeFilter),
+        ImmutableMap.of(),
         ImmutableMap.of(DefaultBrowseNodeComparator.NAME, new DefaultBrowseNodeComparator(new VersionComparator())));
 
     underTest.start();
@@ -362,8 +357,6 @@ public class OrientBrowseNodeStoreImplTest
     when(repository.getType()).thenReturn(new GroupType());
     when(repository.facet(GroupFacet.class)).thenReturn(groupFacet);
     when(groupFacet.leafMembers()).thenReturn(asList(memberA, memberB, memberC));
-    when(repository.optionalFacet(BrowseNodeFacet.class)).thenReturn(Optional.of(browseNodeFacet));
-    when(browseNodeFacet.browseNodeIdentity()).thenReturn(browseNodeIdentity());
 
     when(browseNodeEntityAdapter.getByPath(db, MEMBER_A, queryPath, MAX_NODES, "", emptyMap()))
         .thenReturn(asList(node(MEMBER_A, "com"), node(MEMBER_A, "org")));
@@ -372,7 +365,7 @@ public class OrientBrowseNodeStoreImplTest
     when(browseNodeEntityAdapter.getByPath(db, MEMBER_C, queryPath, MAX_NODES, "", emptyMap()))
         .thenReturn(asList(node(MEMBER_C, "com"), node(MEMBER_C, "javax")));
 
-    Iterable<BrowseNode<EntityId>> nodes = underTest.getByPath(REPOSITORY_NAME, queryPath, MAX_NODES);
+    Iterable<BrowseNode> nodes = underTest.getByPath(REPOSITORY_NAME, queryPath, MAX_NODES);
 
     // check that duplicate nodes were removed, should follow a 'first-one-wins' approach
     assertThat(nodes, containsInAnyOrder(
@@ -396,8 +389,6 @@ public class OrientBrowseNodeStoreImplTest
     when(repository.getType()).thenReturn(new GroupType());
     when(repository.facet(GroupFacet.class)).thenReturn(groupFacet);
     when(groupFacet.leafMembers()).thenReturn(asList(memberA, memberB, memberC));
-    when(repository.optionalFacet(BrowseNodeFacet.class)).thenReturn(Optional.of(browseNodeFacet));
-    when(browseNodeFacet.browseNodeIdentity()).thenReturn(browseNodeIdentity());
 
     when(browseNodeEntityAdapter.getByPath(db, MEMBER_A, queryPath, 1, "", emptyMap()))
         .thenReturn(asList(node(MEMBER_A, "com")));
@@ -406,7 +397,7 @@ public class OrientBrowseNodeStoreImplTest
     when(browseNodeEntityAdapter.getByPath(db, MEMBER_C, queryPath, 1, "", emptyMap()))
         .thenReturn(asList(node(MEMBER_C, "com")));
 
-    Iterable<BrowseNode<EntityId>> nodes = underTest.getByPath(REPOSITORY_NAME, queryPath, 1);
+    Iterable<BrowseNode> nodes = underTest.getByPath(REPOSITORY_NAME, queryPath, 1);
 
     // check that the limit was correctly applied to the merged results
     assertThat(nodes, containsInAnyOrder(
@@ -477,7 +468,7 @@ public class OrientBrowseNodeStoreImplTest
 
   @Test
   public void alternateSorting() throws Exception {
-    underTest = new OrientBrowseNodeStoreImpl(
+    underTest = new OrientBrowseNodeStore(
         () -> databaseInstance,
         browseNodeEntityAdapter,
         securityHelper,
@@ -485,6 +476,7 @@ public class OrientBrowseNodeStoreImplTest
         new BrowseNodeConfiguration(true, 1000, DELETE_PAGE_SIZE, 10_000, 10_000),
         repositoryManager,
         ImmutableMap.of(FORMAT_NAME, browseNodeFilter),
+        ImmutableMap.of(),
         ImmutableMap.of(DefaultBrowseNodeComparator.NAME, new DefaultBrowseNodeComparator(new VersionComparator()), FORMAT_NAME, new TestComparator()));
 
     when(securityHelper.anyPermitted(any())).thenReturn(true);
@@ -497,15 +489,6 @@ public class OrientBrowseNodeStoreImplTest
             node("1.2", false, false)));
 
     assertThat(versions(asList("org", "foo")), contains("2.0", "1.2", "1.10", "1.1", "1.0"));
-  }
-
-  /**
-   * Workaround due to mockito 1.9 not supporting {@code thenCallRealMethod()} on interface default methods
-   *
-   * Implementation should be the same as {@link GroupFacet#browseNodeIdentity()}
-   */
-  private Function<BrowseNode<?>, String> browseNodeIdentity() {
-    return BrowseNode::getName;
   }
 
   private List<String> versions(final List<String> queryPath) {

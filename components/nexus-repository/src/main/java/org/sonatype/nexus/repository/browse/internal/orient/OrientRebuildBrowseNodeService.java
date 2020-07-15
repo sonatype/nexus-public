@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BooleanSupplier;
 
 import javax.annotation.Priority;
 import javax.inject.Inject;
@@ -35,7 +34,6 @@ import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.storage.AssetStore;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.BucketStore;
-import org.sonatype.nexus.scheduling.TaskInterruptedException;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
@@ -47,6 +45,7 @@ import groovy.lang.Singleton;
 import org.slf4j.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 
 /**
  * Rebuild browse node service for the Orient based browse node implementation.
@@ -85,14 +84,14 @@ public class OrientRebuildBrowseNodeService
   }
 
   @Override
-  public void rebuild(final Repository repo, final BooleanSupplier isCancelled) throws RebuildBrowseNodeFailedException {
-    log.info("Deleting browse nodes for repository {}", repo.getName());
+  public void rebuild(final Repository repository) throws RebuildBrowseNodeFailedException {
+    log.info("Deleting browse nodes for repository {}", repository.getName());
 
-    browseNodeManager.deleteByRepository(repo.getName());
+    browseNodeManager.deleteByRepository(repository.getName());
 
-    log.info("Rebuilding browse nodes for repository {}", repo.getName());
+    log.info("Rebuilding browse nodes for repository {}", repository.getName());
 
-    Bucket bucket = bucketStore.read(repo.getName());
+    Bucket bucket = bucketStore.read(repository.getName());
     ORID bucketId = AttachedEntityHelper.id(bucket);
 
     try {
@@ -106,7 +105,7 @@ public class OrientRebuildBrowseNodeService
         OIndexCursor cursor = assetStore.getIndex(AssetEntityAdapter.I_BUCKET_COMPONENT_NAME).cursor();
         List<Entry<OCompositeKey, EntityId>> nextPage = assetStore.getNextPage(cursor, rebuildPageSize);
         while (!Iterables.isEmpty(nextPage)) {
-          checkContinuation(isCancelled, repo.getName());
+          checkCancellation();
 
           List<Asset> assets = new ArrayList<>(rebuildPageSize);
           for (Entry<OCompositeKey, EntityId> indexEntry : nextPage) {
@@ -117,7 +116,7 @@ public class OrientRebuildBrowseNodeService
 
           int assetsSize = Iterables.size(assets);
 
-          browseNodeManager.createFromAssets(repo, assets);
+          browseNodeManager.createFromAssets(repository, assets);
 
           processed += assetsSize;
 
@@ -131,12 +130,6 @@ public class OrientRebuildBrowseNodeService
     }
     catch (Exception e) {
       throw new RebuildBrowseNodeFailedException("Could not re-create browse nodes", e);
-    }
-  }
-
-  private void checkContinuation(final BooleanSupplier isCancelled, final String repoName) {
-    if (isCancelled.getAsBoolean()) {
-      throw new TaskInterruptedException(String.format("Rebuilding browse nodes was cancelled for %s", repoName), true);
     }
   }
 }

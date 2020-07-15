@@ -22,6 +22,6 @@ import java.util.function.BiPredicate;
  * @since 3.11
  */
 public interface BrowseNodeFilter
-    extends BiPredicate<BrowseNode<?>, Boolean>
+    extends BiPredicate<BrowseNode, Boolean>
 {
 }

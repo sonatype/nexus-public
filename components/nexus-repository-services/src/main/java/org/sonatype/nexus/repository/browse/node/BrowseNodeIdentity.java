@@ -12,23 +12,12 @@
  */
 package org.sonatype.nexus.repository.browse.node;
 
-import java.util.function.Function;
-
-import org.sonatype.nexus.repository.Facet;
-
 /**
- * Optional BrowseNode facet; used to customize legacy browse-node behaviour.
+ * Customizes browse node distinctness for a particular format.
  *
  * @since 3.22
  */
-@Facet.Exposed
-public interface BrowseNodeFacet
-    extends Facet
+public interface BrowseNodeIdentity
 {
-  /**
-   * Returns a function to apply to a browse node to determine distinctness
-   */
-  default Function<BrowseNode<?>, String> browseNodeIdentity() {
-    return BrowseNode::getName;
-  }
+  String identity(BrowseNode browseNode);
 }

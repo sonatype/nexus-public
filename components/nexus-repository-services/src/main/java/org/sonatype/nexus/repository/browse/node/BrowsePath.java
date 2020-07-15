@@ -15,42 +15,41 @@ package org.sonatype.nexus.repository.browse.node;
 import java.util.Objects;
 
 /**
- * Used to denote a single nodes name and path used for security checks.  As well allow browse paths to be different
- * from request paths, this is used to map a request path to a browse node name.  Suppose for browsing format 'foo'
- * we change all folders named 'bar' to 'foo' for display purposes, i.e.
+ * Used to denote a node's request path (used for security checks) and a potentially different display name.
+ * Suppose when browsing format 'dash' we change all folders named 'dash' to '-' for display purposes, i.e.
  *
- * requestPath - org/foo/bar/some.file
- * browsePath - org/foo/foo/some.file
- *
- * so the BrowsePath objects to define the above path would be like so (browsePath -> requestPath)
- * org -> org/
- * org/foo -> org/foo/
- * org/foo/foo -> org/foo/bar/
- * org/foo/foo/some.file -> org/foo/bar/some.file
+ * <pre>
+ * requestPath         | displayName
+ * --------------------+----------------------
+ * org/                | org
+ * org/foo/            | foo
+ * org/foo/-/          | dash
+ * org/foo/-/some.file | some.file
+ * </pre>
  *
  * @since 3.18
  */
 public class BrowsePath
 {
-  private String browsePath; // NOSONAR
+  private String displayName;
 
   private String requestPath;
 
-  public BrowsePath(String browsePath, String requestPath) {
-    this.browsePath = browsePath;
+  public BrowsePath(String displayName, String requestPath) {
+    this.displayName = displayName;
     this.requestPath = requestPath;
   }
 
-  public String getBrowsePath() {
-    return browsePath;
+  public String getDisplayName() {
+    return displayName;
   }
 
   public String getRequestPath() {
     return requestPath;
   }
 
-  public void setBrowsePath(final String browsePath) {
-    this.browsePath = browsePath;
+  public void setDisplayName(final String displayName) {
+    this.displayName = displayName;
   }
 
   public void setRequestPath(final String requestPath) {
@@ -63,12 +62,12 @@ public class BrowsePath
       return false;
     }
 
-    return Objects.equals(browsePath, ((BrowsePath) obj).getBrowsePath()) && Objects
-        .equals(requestPath, ((BrowsePath) obj).getRequestPath());
+    return Objects.equals(displayName, ((BrowsePath) obj).getDisplayName())
+        && Objects.equals(requestPath, ((BrowsePath) obj).getRequestPath());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(browsePath, requestPath);
+    return Objects.hash(displayName, requestPath);
   }
 }

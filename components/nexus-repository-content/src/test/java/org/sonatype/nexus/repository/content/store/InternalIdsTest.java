@@ -12,10 +12,13 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import java.security.SecureRandom;
 import java.util.OptionalInt;
 import java.util.function.IntSupplier;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.goodies.testsupport.group.Slow;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
@@ -24,7 +27,9 @@ import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentAssetImpl;
 import org.sonatype.nexus.repository.content.fluent.internal.FluentComponentImpl;
 
+import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.mockito.Mock;
 
 import static org.hamcrest.Matchers.is;
@@ -120,5 +125,28 @@ public class InternalIdsTest
 
   private static void checkNotPresent(final OptionalInt underTest) {
     assertFalse(underTest.isPresent());
+  }
+
+  @Test
+  public void testExternalIdRoundTrip() {
+    SecureRandom random = new SecureRandom();
+    for (int numIds = 0; numIds < 1_000_000; numIds++) {
+      assertExternalIdRoundTrip(1 + random.nextInt(Integer.MAX_VALUE));
+    }
+  }
+
+  @Ignore("uncomment to test all external ids are reversible and unique")
+  @Category(Slow.class)
+  @Test
+  public void testExternalIdUniqueness() {
+    for (int expected = 0; expected < Integer.MAX_VALUE; expected++) {
+      assertExternalIdRoundTrip(1 + expected);
+    }
+  }
+
+  private void assertExternalIdRoundTrip(int expected) {
+    EntityId externalId = InternalIds.toExternalId(expected);
+    int internalId = InternalIds.toInternalId(externalId);
+    assertThat(internalId, is(expected));
   }
 }

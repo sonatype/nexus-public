@@ -49,5 +49,9 @@ public interface HttpClientConfiguration
 
   void setAuthenticationStrategy(@Nullable final AuthenticationStrategy authenticationStrategy);
 
+  Boolean getNormalizeUri();
+
+  void setNormalizeUri(final Boolean normalizeUri);
+
   HttpClientConfiguration copy();
 }
