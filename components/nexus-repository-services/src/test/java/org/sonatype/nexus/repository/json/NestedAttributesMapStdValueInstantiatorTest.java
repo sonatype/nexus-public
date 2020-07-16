@@ -46,7 +46,7 @@ public class NestedAttributesMapStdValueInstantiatorTest
 
   @Before
   public void setUp() {
-    underTest = new NestedAttributesMapStdValueInstantiator(stdValueInstantiator, nestedAttributesMap);
+    underTest = new NestedAttributesMapStdValueInstantiator(nestedAttributesMap);
     when(nestedAttributesMap.backing()).thenReturn(map);
   }
 

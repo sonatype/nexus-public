@@ -19,6 +19,7 @@ import java.io.Writer;
 import org.sonatype.goodies.testsupport.TestSupport;
 
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.core.util.RequestPayload;
 import org.junit.Before;
@@ -66,7 +67,7 @@ public class JsonParseDecoratorTest
     underTest.enable(null);
     underTest.disable(null);
     underTest.configure(null, false);
-    underTest.isEnabled(null);
+    underTest.isEnabled((Feature) null);
     underTest.getFeatureMask();
     underTest.setFeatureMask(1);
     underTest.overrideStdFeatures(1, 1);
@@ -159,7 +160,7 @@ public class JsonParseDecoratorTest
     verify(jsonParser).enable(null);
     verify(jsonParser).disable(null);
     verify(jsonParser).configure(null, false);
-    verify(jsonParser).isEnabled(null);
+    verify(jsonParser).isEnabled((Feature) null);
     verify(jsonParser).getFeatureMask();
     verify(jsonParser).setFeatureMask(1);
     verify(jsonParser).overrideStdFeatures(1, 1);

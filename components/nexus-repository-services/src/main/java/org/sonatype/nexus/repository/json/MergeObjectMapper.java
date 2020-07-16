@@ -31,7 +31,6 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.std.MapDeserializer;
-import com.fasterxml.jackson.databind.deser.std.StdValueInstantiator;
 
 import static com.fasterxml.jackson.core.JsonToken.END_ARRAY;
 import static com.fasterxml.jackson.core.JsonToken.END_OBJECT;
@@ -109,10 +108,8 @@ public class MergeObjectMapper
                              final MapDeserializer rootDeserializer)
       throws IOException
   {
-    StdValueInstantiator instantiator = (StdValueInstantiator) rootDeserializer.getValueInstantiator();
-
     SourceMapDeserializer.of(rootDeserializer.getValueType(),
-        new NestedAttributesMapStdValueInstantiator(instantiator, parser.getRoot()),
+        new NestedAttributesMapStdValueInstantiator(parser.getRoot()),
         new NestedAttributesMapUntypedObjectDeserializer(parser))
         .deserialize(parser, context);
   }

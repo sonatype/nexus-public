@@ -23,10 +23,11 @@ import java.util.Set;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonParser.NumberType;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.util.JsonGeneratorDelegate;
 
-import static com.fasterxml.jackson.core.JsonTokenId.ID_FIELD_NAME;
-import static com.fasterxml.jackson.core.JsonTokenId.ID_STRING;
+import static com.fasterxml.jackson.core.JsonTokenId.*;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -132,6 +133,164 @@ public class SanitizingJsonOutputStream
       }
       else {
         super.copyCurrentEvent(jp);
+      }
+    }
+
+    @Override
+    protected void _copyCurrentContents(final JsonParser p) throws IOException {
+      int depth = 1;
+      JsonToken t;
+      boolean replaceNext = false;
+
+      // Variation from superclass
+      while ((t = p.nextToken()) != null) {
+        switch (t.id()) {
+          case ID_FIELD_NAME:
+            if (fields.contains(p.getCurrentName())) {
+              replaceNext = true;
+            }
+            writeFieldName(p.getCurrentName());
+            break;
+
+          case ID_START_ARRAY:
+            writeStartArray();
+            replaceNext = false;
+            ++depth;
+            break;
+
+          case ID_START_OBJECT:
+            writeStartObject();
+            replaceNext = false;
+            ++depth;
+            break;
+
+          case ID_END_ARRAY:
+            writeEndArray();
+            if (--depth == 0) {
+              return;
+            }
+            break;
+          case ID_END_OBJECT:
+            writeEndObject();
+            if (--depth == 0) {
+              return;
+            }
+            break;
+
+          case ID_STRING:
+            if (replaceNext && !p.getText().isEmpty()) {
+              writeString(replacement);
+            }
+            else if (p.hasTextCharacters()) {
+              writeString(p.getTextCharacters(), p.getTextOffset(), p.getTextLength());
+            }
+            else {
+              writeString(p.getText());
+            }
+            break;
+          case ID_NUMBER_INT: {
+            NumberType n = p.getNumberType();
+            if (n == NumberType.INT) {
+              writeNumber(p.getIntValue());
+            }
+            else if (n == NumberType.BIG_INTEGER) {
+              writeNumber(p.getBigIntegerValue());
+            }
+            else {
+              writeNumber(p.getLongValue());
+            }
+            break;
+          }
+          case ID_NUMBER_FLOAT: {
+            NumberType n = p.getNumberType();
+            if (n == NumberType.BIG_DECIMAL) {
+              writeNumber(p.getDecimalValue());
+            }
+            else if (n == NumberType.FLOAT) {
+              writeNumber(p.getFloatValue());
+            }
+            else {
+              writeNumber(p.getDoubleValue());
+            }
+            break;
+          }
+          case ID_TRUE:
+            writeBoolean(true);
+            break;
+          case ID_FALSE:
+            writeBoolean(false);
+            break;
+          case ID_NULL:
+            writeNull();
+            break;
+          case ID_EMBEDDED_OBJECT:
+            writeObject(p.getEmbeddedObject());
+            break;
+          default:
+            throw new IllegalStateException("Internal error: unknown current token, " + t);
+        }
+        if (replaceNext) {
+          consume(p);
+          replaceNext = false;
+        }
+      }
+    }
+
+    private void consume(final JsonParser p) throws IOException {
+      int depth = 1;
+      int skip = 0;
+      JsonToken t;
+
+      while (skip >= 0 && (t = p.nextToken()) != null) {
+        switch (t.id()) {
+          case ID_FIELD_NAME:
+            writeFieldName(p.getCurrentName());
+            ++skip;
+            break;
+          case ID_START_ARRAY:
+            writeStartArray();
+            ++depth;
+            break;
+          case ID_START_OBJECT:
+            writeStartObject();
+            ++depth;
+            break;
+          case ID_END_ARRAY:
+            writeEndArray();
+            if (--depth == 0) {
+              return;
+            }
+            --skip;
+            break;
+          case ID_END_OBJECT:
+            writeEndObject();
+            if (--depth == 0) {
+              return;
+            }
+            --skip;
+            break;
+          case ID_NULL:
+            writeNull();
+            break;
+          case ID_NUMBER_INT:
+          case ID_NUMBER_FLOAT:
+          case ID_TRUE:
+          case ID_FALSE:
+          case ID_STRING:
+            if (!p.getText().isEmpty()) {
+              writeString(replacement);
+            }
+            else {
+              writeString(p.getText());
+            }
+            --skip;
+            break;
+          case ID_EMBEDDED_OBJECT:
+            writeObject(p.getEmbeddedObject());
+            break;
+          default:
+            throw new IllegalStateException("Internal error: unknown current token, " + t);
+        }
       }
     }
   }

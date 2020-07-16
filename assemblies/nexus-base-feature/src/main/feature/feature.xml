@@ -27,8 +27,14 @@
     <bundle>wrap:${mvn:resteasy-jackson2-provider}$Bundle-SymbolicName=resteasy-jackson2-provider&amp;Fragment-Host=org.sonatype.nexus.siesta</bundle>
     <bundle>wrap:${mvn:resteasy-jaxb-provider}$Bundle-SymbolicName=resteasy-jaxb-provider&amp;Fragment-Host=org.sonatype.nexus.siesta</bundle>
     <bundle>wrap:${mvn:resteasy-multipart-provider}$Bundle-SymbolicName=resteasy-multipart-provider&amp;Fragment-Host=org.sonatype.nexus.siesta</bundle>
-    <bundle>wrap:${mvn:resteasy-validator-provider-11}$Bundle-SymbolicName=resteasy-validator-provider&amp;Fragment-Host=org.sonatype.nexus.siesta</bundle>
+    <bundle>wrap:${mvn:resteasy-validator-provider}$Bundle-SymbolicName=resteasy-validator-provider&amp;Fragment-Host=org.sonatype.nexus.siesta</bundle>
     <bundle>wrap:${mvn:resteasy-client}$Bundle-SymbolicName=resteasy-client&amp;Fragment-Host=org.sonatype.nexus.siesta</bundle>
+
+    <!--
+    Relax jackson-coreutils import constraints to workaround a bad import range for Guava
+    -->
+    <bundle>wrap:${mvn:jackson-coreutils}$overwrite=merge&amp;Import-Package=*</bundle>
+    <bundle>wrap:${mvn:json-patch}$overwrite=merge&amp;Import-Package=*</bundle>
 
     <!--
     Relax Shiro-Guice import constraints to workaround a bad import range for javax.annotation
