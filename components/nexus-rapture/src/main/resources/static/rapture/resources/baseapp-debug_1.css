@@ -1322,20 +1322,6 @@ td.x-frame-br {
     justify-content: flex-end;
 }
 
-.x-btn-tooltip {
-    display: none;
-    position: absolute;
-    pointer-events: auto;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-}
-
-.x-btn-disabled .x-btn-tooltip {
-    display: block;
-}
-
 .x-rtl.x-btn-button-right {
     text-align: left;
 }
@@ -2676,19 +2662,11 @@ the height of a multi-line element */
 }
 
 .x-tagfield-input-field {
-    min-width: 3px;
-    width: 3px;
-    max-width: 130px;
     font: inherit;
     border: 0;
     margin: 0;
-    padding: 0;
     background: none;
-}
-
-.x-field.x-not-editable .x-tagfield-input-field,
-.x-tagfield-list.x-tagfield-singleselect .x-tagfield-input-field {
-    position: absolute;
+    width: 100%;
 }
 
 .x-tagfield-stacked .x-tagfield-item {
@@ -3385,20 +3363,6 @@ the height of a multi-line element */
 
 .x-tab-button-right {
     text-align: right;
-}
-
-.x-tab-tooltip {
-    display: none;
-    position: absolute;
-    pointer-events: auto;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-}
-
-.x-btn-disabled .x-tab-tooltip {
-    display: block;
 }
 
 .x-rtl.x-tab-button-right {
@@ -11409,10 +11373,6 @@ the height of a multi-line element */
     min-height: 55px;
 }
 
-.x-form-text-heighted .x-form-text-default.x-form-textarea {
-    min-height: auto;
-}
-
 .x-form-text-default.x-form-text-file {
     color: grey;
 }
@@ -16105,4 +16065,18 @@ div.x-border-layout-ct {
 .x-tab-focus .x-tab-default-top-ml,
 .x-tab-focus .x-tab-default-top-mr {
     background-image: url(images/tab/tab-default-top-focus-sides.gif);
+}
+
+.x-tab-focus .x-tab-default-top-mc {
+    background-repeat: repeat-x;
+    background-image: url(images/tab/tab-default-top-focus-fbg.gif);
+}
+
+.x-tab-focus.x-tab-over .x-tab-default-top-tl,
+.x-tab-focus.x-tab-over .x-tab-default-top-bl,
+.x-tab-focus.x-tab-over .x-tab-default-top-tr,
+.x-tab-focus.x-tab-over .x-tab-default-top-br,
+.x-tab-focus.x-tab-over .x-tab-default-top-tc,
+.x-tab-focus.x-tab-over .x-tab-default-top-bc {
+    background-image: url(images/tab/tab-default-top-focus-over-corners.gif);
 }
