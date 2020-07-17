@@ -57,6 +57,20 @@ public final class PyPiFileUtils
       .put(".egg", ZIP)
       .build();
 
+  public static String extractNameFromPath(final String path) {
+    checkNotNull(path);
+    String[] parts = path.split("/");
+    //parts[0] is 'packages'
+    return parts[1];
+  }
+
+  public static String extractVersionFromPath(final String path) {
+    checkNotNull(path);
+    String[] parts = path.split("/");
+    //parts[0] is 'packages', parts[1] is name
+    return parts[2];
+  }
+
   /**
    * Returns the filename portion of the path.
    */
