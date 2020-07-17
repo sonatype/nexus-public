@@ -29,7 +29,7 @@ export default function UserAccount() {
     <ContentBody className='nxrm-user-account'>
       <UserAccountSettings service={userAccountService}/>
 
-      {!current.context.data.external && <PasswordChangeForm userId={current.context.data.userId}/>}
+    { current.context.data?.external === false &&  <PasswordChangeForm userId={current.context.data.userId}/> }
     </ContentBody>
   </Page>;
 }

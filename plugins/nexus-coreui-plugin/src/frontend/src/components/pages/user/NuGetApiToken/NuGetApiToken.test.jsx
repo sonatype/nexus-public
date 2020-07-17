@@ -13,7 +13,7 @@
 import React from 'react';
 import Axios from 'axios';
 import {act} from 'react-dom/test-utils';
-import {fireEvent, render, wait} from '@testing-library/react';
+import {fireEvent, wait} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import TestUtils from 'nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 

@@ -10,113 +10,78 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import { assign, Machine } from 'xstate';
+import {assign, Machine} from 'xstate';
 import {ExtJS, Utils} from 'nexus-ui-plugin';
 import Axios from "axios";
 
-const initialContext = {
+import UIStrings from '../../../../constants/UIStrings';
+
+const EMPTY_DATA = {
   passwordCurrent: '',
   passwordNew: '',
-  passwordNewConfirm: '',
-  isEmpty: true,
-  isCurrentNotEqualNew: true,
-  isConfirmed: true,
+  passwordNewConfirm: ''
 };
 
-const passwordChangeMachine = Machine({
+export default Utils.buildFormMachine({
   id: 'passwordChange',
-  initial: 'empty',
-  context: initialContext,
-  states: {
-    empty: {
-      entry: assign(initialContext),
-      on: {
-        '': 'validating',
-      },
-    },
-    validating: {
-      id: 'validating',
-      on: {
-        '': [
-          {
-            cond: 'isValid',
-            target: 'valid',
-          },
-          {
-            target: 'invalid',
-          },
-        ]
+  initial: 'loaded',
+  config: (config) => ({
+    ...config,
+    context: {
+      ...config.context,
+      data: EMPTY_DATA,
+      pristineData: EMPTY_DATA
+    }
+  })
+}).withConfig({
+  actions: {
+    validate: assign({
+      validationErrors: ({data: {passwordCurrent, passwordNew, passwordNewConfirm}}) => {
+        let passwordNewError = [];
+        if (Utils.isBlank(passwordNew)) {
+          passwordNewError.push(UIStrings.ERROR.FIELD_REQUIRED);
+        }
+        if (passwordCurrent === passwordNew) {
+          passwordNewError.push(UIStrings.USER_ACCOUNT.MESSAGES.PASSWORD_MUST_DIFFER_ERROR);
+        }
+
+        let passwordNewConfirmError = [];
+        if (Utils.isBlank(passwordNewConfirm)) {
+          passwordNewConfirmError.push(UIStrings.ERROR.FIELD_REQUIRED);
+        }
+        if (passwordNew !== passwordNewConfirm) {
+          passwordNewConfirmError.push(UIStrings.USER_ACCOUNT.MESSAGES.PASSWORD_NO_MATCH_ERROR);
+        }
+
+        return {
+          passwordCurrent: Utils.isBlank(passwordCurrent) ? UIStrings.ERROR.FIELD_REQUIRED : null,
+          passwordNew: passwordNewError,
+          passwordNewConfirm: passwordNewConfirmError
+        };
+      }
+    }),
+    logSaveSuccess: () => ExtJS.showSuccessMessage('Password changed'),
+    logSaveError: (error) => {
+      if (error.response?.status === 400 && Array.isArray(error.response.data)) {
+        const message = error.response.data.map(e => e.message).join('\\n');
+        ExtJS.showErrorMessage(message);
+      }
+      else {
+        ExtJS.showErrorMessage('Change password failed');
+        console.error(error);
       }
     },
-    invalid: {
-    },
-    valid: {
-      on: {
-        SUBMIT: 'submitting',
-      },
-    },
-    submitting: {
-      invoke: {
-        id: 'submitting',
-        src: 'changePassword',
-        onDone: 'empty',
-        onError: 'validating',
-      },
-    },
-  },
-  on: {
-    INPUT: {
-      actions: ['capture', 'constraintCheck'],
-      target: 'validating',
-    },
-    DISCARD: 'empty',
-  }
-}, {
-  actions: {
-    capture: assign((_, evt) => {
-      return { [evt.name]: evt.value };
-    }),
-    constraintCheck: assign((ctx, _) => {
-      const { passwordCurrent, passwordNew, passwordNewConfirm } = ctx;
-      const isCurrentNotEqualNew = (passwordCurrent !== passwordNew);
-      const isConfirmed = (passwordNew === passwordNewConfirm);
-      const isEmpty = Utils.isBlank(passwordCurrent) && Utils.isBlank(passwordNew) && Utils.isBlank(passwordNewConfirm);
-      return { isCurrentNotEqualNew, isConfirmed, isEmpty };
-    }),
-  },
-  guards: {
-    isValid: (ctx, _) => {
-      const { passwordCurrent, passwordNew, passwordNewConfirm, isCurrentNotEqualNew,  isConfirmed} = ctx;
-      return (
-        Utils.notBlank(passwordCurrent) &&
-        Utils.notBlank(passwordNew) &&
-        Utils.notBlank(passwordNewConfirm) &&
-        isCurrentNotEqualNew &&
-        isConfirmed
-      );
-    },
+    onSaveSuccess: assign({
+      data: () => EMPTY_DATA,
+      pristineData: () => EMPTY_DATA
+    })
   },
   services: {
-    changePassword: (ctx, evt) =>
-        ExtJS.fetchAuthenticationToken(evt.userId, ctx.passwordCurrent)
-        .then((result) => {
-          Axios.put(`/service/rest/internal/ui/user/${evt.userId}/password`,
-              {authToken: result.data, password: ctx.passwordNew})
-              .then(() => {
-                ExtJS.showSuccessMessage('Password changed');
-              })
-              .catch((error) => {
-                if (error.response?.status === 400 && Array.isArray(error.response.data)) {
-                  const message = error.response.data.map(e => e.message).join('\\n');
-                  ExtJS.showErrorMessage(message);
-                }
-                else {
-                  ExtJS.showErrorMessage('Change password failed');
-                  console.error(error);
-                }
-              });
-        }),
-  },
+    saveData: ({data: {passwordCurrent, passwordNew}}, {userId}) =>
+        ExtJS.fetchAuthenticationToken(userId, passwordCurrent).then((result) =>
+            Axios.put(`/service/rest/internal/ui/user/${userId}/password`, {
+              authToken: result.data,
+              password: passwordNew
+            }))
+  }
 });
-
-export default passwordChangeMachine;

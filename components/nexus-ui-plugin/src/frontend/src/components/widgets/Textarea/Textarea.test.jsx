@@ -26,23 +26,10 @@ describe('Textarea', () => {
     expect(container).toMatchSnapshot();
   });
 
-  it('renders with an error message', () => {
-    const {container, queryByText} = render(<Textarea isRequired />);
+  it('renders with the first error message', () => {
+    const {queryByText} = render(<Textarea validationErrors={[UIStrings.ERROR.FIELD_REQUIRED, "ERROR_MESSAGE"]} />);
 
     expect(queryByText(UIStrings.ERROR.FIELD_REQUIRED)).toBeInTheDocument();
-
-    expect(container).toMatchSnapshot();
-  });
-
-  it('hides the error message when the value is required and not empty', () => {
-    const {queryByText} = render(<Textarea isRequired value="value" onChange={() =>{}}/>);
-
-    expect(queryByText(UIStrings.ERROR.FIELD_REQUIRED)).not.toBeInTheDocument();
-  });
-
-  it('shows the error message when the value is required but empty', () => {
-    const {queryByText} = render(<Textarea isRequired value="" onChange={() =>{}}/>);
-
-    expect(queryByText(UIStrings.ERROR.FIELD_REQUIRED)).toBeInTheDocument();
+    expect(queryByText("ERROR_MESSAGE")).not.toBeInTheDocument();
   });
 });

@@ -10,112 +10,67 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React, {useState, useEffect} from 'react';
-
-import './AnonymousSettings.scss';
-
-import Axios from 'axios';
+import React from 'react';
+import {useMachine} from '@xstate/react';
 import {
   Button,
   ContentBody,
   Checkbox,
-  ExtJS,
   FieldWrapper,
   NxLoadWrapper,
   Page,
   PageHeader,
   PageTitle,
-  Select,
   Section,
   SectionFooter,
-  Textfield
+  Select,
+  Textfield,
+  Utils
 } from 'nexus-ui-plugin';
 import {faUser} from '@fortawesome/free-solid-svg-icons';
 
 import UIStrings from '../../../../constants/UIStrings';
 
+import './AnonymousSettings.scss';
+
+import AnonymousMachine from './AnonymousMachine';
+
 export default function AnonymousSettings() {
-  const [anonymousSettings, setAnonymousSettings] = useState({
-    enabled: false,
-    realmName: '',
-    userId: ''
-  });
-  const [pristineSettings, setPristineSettings] = useState({});
-  const [realmTypes, setRealmTypes] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [current, send] = useMachine(AnonymousMachine, {devTools: true});
+  const data = current.context.data;
+  const realms = current.context.realms;
+  const validationErrors = current.context.validationErrors;
+  const isPristine = current.context.isPristine;
+  const isLoading = current.matches('loading');
+  const isInvalid = Utils.isInvalid(validationErrors);
+  const hasData = data && data !== {};
 
-  useEffect(() => {
-    if (!isLoading) {
-      return;
-    }
-
-    const cancelTokenSource = Axios.CancelToken.source();
-    const config = {
-      cancelToken: cancelTokenSource.token
-    };
-
-    Axios.all([
-      Axios.get('/service/rest/internal/ui/realms/types', config),
-      Axios.get('/service/rest/internal/ui/anonymous-settings', config)
-    ])
-        .then(Axios.spread((realmTypes, settings) => {
-          setIsLoading(false);
-          setRealmTypes(realmTypes.data);
-          setAnonymousSettings({...settings.data});
-          setPristineSettings({...settings.data});
-        }))
-        .catch((error) => {
-          if (!Axios.isCancel(error)) {
-            ExtJS.showErrorMessage(UIStrings.ANONYMOUS_SETTINGS.MESSAGES.LOAD_ERROR);
-            console.error(error);
-          }
-        });
-
-    return function cleanup() {
-      cancelTokenSource.cancel();
-    }
-  });
-
-  const handleInputChange = (event) => {
-    const target = event.target;
-    const value = target.type === 'checkbox' ? target.checked : target.value;
-    const name = target.name || target.id;
-    setAnonymousSettings({
-      ...anonymousSettings,
-      [name]: value
+  function handleInputChange({target}) {
+    send('UPDATE', {
+      data: {
+        [target.name || target.id]: target.type === 'checkbox' ? target.checked : target.value
+      }
     });
-  };
+  }
 
-  const handleDiscard = () => setAnonymousSettings({...pristineSettings});
+  function handleDiscard() {
+    send('RESET');
+  }
 
-  const handleSave = () => {
-    Axios.put('/service/rest/internal/ui/anonymous-settings', anonymousSettings)
-        .then(() => {
-          setPristineSettings({...anonymousSettings});
-          ExtJS.showSuccessMessage(UIStrings.ANONYMOUS_SETTINGS.MESSAGES.SAVE_SUCCESS);
-        })
-        .catch((error) => {
-          ExtJS.showErrorMessage(UIStrings.ANONYMOUS_SETTINGS.MESSAGES.SAVE_ERROR);
-          console.error(error);
-        });
-  };
-
-  const isPristine = Object.keys(pristineSettings).every(
-      (key) => pristineSettings[key] === anonymousSettings[key]
-  );
-  const {enabled, userId, realmName} = anonymousSettings;
-
-  ExtJS.setDirtyStatus('AnonymousSettings', !isPristine);
+  function handleSave() {
+    send('SAVE');
+  }
 
   return <Page>
     <PageHeader><PageTitle icon={faUser} {...UIStrings.ANONYMOUS_SETTINGS.MENU}/></PageHeader>
     <ContentBody className='nxrm-anonymous-settings'>
       <Section>
         <NxLoadWrapper loading={isLoading}>
+        {hasData && <>
           <FieldWrapper labelText={UIStrings.ANONYMOUS_SETTINGS.ENABLED_CHECKBOX_LABEL}>
             <Checkbox
                 checkboxId='enabled'
-                isChecked={enabled}
+                isChecked={data.enabled}
                 onChange={handleInputChange}
             >
               {UIStrings.ANONYMOUS_SETTINGS.ENABLED_CHECKBOX_DESCRIPTION}
@@ -124,22 +79,22 @@ export default function AnonymousSettings() {
           <FieldWrapper labelText={UIStrings.ANONYMOUS_SETTINGS.USERNAME_TEXTFIELD_LABEL}>
             <Textfield
                 name='userId'
-                value={userId}
+                value={data.userId}
                 onChange={handleInputChange}
-                isRequired={!isLoading}
                 className='nxrm-anonymous-settings-field'
+                validationErrors={validationErrors.userId}
             />
           </FieldWrapper>
           <FieldWrapper labelText={UIStrings.ANONYMOUS_SETTINGS.REALM_SELECT_LABEL}>
             <Select
                 name='realmName'
-                value={realmName}
+                value={data.realmName}
                 onChange={handleInputChange}
                 className='nxrm-anonymous-settings-field'
             >
               {
-                realmTypes.map((realmType) =>
-                    <option key={realmType.id} value={realmType.id}>{realmType.name}</option>
+                realms.map((realm) =>
+                    <option key={realm.id} value={realm.id}>{realm.name}</option>
                 )
               }
             </Select>
@@ -147,7 +102,7 @@ export default function AnonymousSettings() {
           <SectionFooter>
             <Button
                 variant='primary'
-                disabled={isPristine || !userId}
+                disabled={isPristine || isInvalid}
                 onClick={handleSave}
             >
               {UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
@@ -159,6 +114,7 @@ export default function AnonymousSettings() {
               {UIStrings.SETTINGS.DISCARD_BUTTON_LABEL}
             </Button>
           </SectionFooter>
+        </>}
         </NxLoadWrapper>
       </Section>
     </ContentBody>

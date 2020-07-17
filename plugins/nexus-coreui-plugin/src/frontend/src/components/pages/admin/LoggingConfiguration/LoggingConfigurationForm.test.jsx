@@ -11,8 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import { act } from 'react-dom/test-utils';
-import {fireEvent, render, wait} from '@testing-library/react';
+import {fireEvent, wait, waitForElement, waitForElementToBeRemoved} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import TestUtils from 'nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 import axios from 'axios';
@@ -32,8 +31,21 @@ jest.mock('axios', () => ({
 jest.mock('nexus-ui-plugin', () => ({
   ...jest.requireActual('nexus-ui-plugin'),
   ExtJS: {
-    setDirtyStatus: jest.fn(),
     requestConfirmation: jest.fn()
+  },
+  Utils: {
+    buildFormMachine: function(args) {
+      const machine = jest.requireActual('nexus-ui-plugin').Utils.buildFormMachine(args);
+      return machine.withConfig({
+        actions: {
+          logSaveSuccess: jest.fn(),
+          logLoadError: jest.fn()
+        }
+      })
+    },
+    isInvalid: jest.requireActual('nexus-ui-plugin').Utils.isInvalid,
+    isBlank: jest.requireActual('nexus-ui-plugin').Utils.isBlank,
+    notBlank: jest.requireActual('nexus-ui-plugin').Utils.notBlank
   }
 }));
 
@@ -42,19 +54,18 @@ describe('LoggingConfigurationForm', function() {
   const OVERRIDDEN_LOGGER = Promise.resolve({data: {override: true}});
   const onDone = jest.fn();
 
-  const renderEditView = async () => {
+  function renderEditView() {
     return renderView(<LoggingConfigurationForm itemId="ROOT" onDone={onDone}/>);
-  };
+  }
 
-  const renderCreateView = async () => {
+  function renderCreateView() {
     return renderView(<LoggingConfigurationForm onDone={onDone} />);
-  };
+  }
 
   function renderView(view) {
     return TestUtils.render(view, ({queryByLabelText, queryByText}) => ({
       name: () => queryByLabelText(UIStrings.LOGGING.NAME_LABEL),
       level: () => queryByLabelText(UIStrings.LOGGING.LEVEL_LABEL),
-      saveMask: () => queryByText(UIStrings.SAVING),
       saveButton: () => queryByText(UIStrings.SETTINGS.SAVE_BUTTON_LABEL),
       cancelButton: () => queryByText(UIStrings.SETTINGS.CANCEL_BUTTON_LABEL),
       resetMask: () => queryByText(UIStrings.LOGGING.MESSAGES.RESETTING),
@@ -67,14 +78,24 @@ describe('LoggingConfigurationForm', function() {
     await wait(() => expect(fieldSelector()).toHaveValue(value));
   };
 
+  it('renders a loading spinner', async function() {
+    axios.get.mockReturnValue(new Promise(() => {}));
+
+    const {container, loadingMask} = renderEditView();
+
+    await waitForElement(loadingMask);
+
+    expect(container).toMatchSnapshot();
+  });
+
   it('renders the resolved data', async function() {
-    axios.get.mockReturnValue(Promise.resolve({
+    axios.get.mockResolvedValue({
       data: {name: 'ROOT', level: 'INFO'}
-    }));
+    });
 
-    const {container, loadingMask, name, level, saveButton} = await renderEditView();
+    const {container, loadingMask, name, level, saveButton} = renderEditView();
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask);
 
     expect(name()).toHaveValue('ROOT');
     expect(level()).toHaveValue('INFO');
@@ -82,35 +103,26 @@ describe('LoggingConfigurationForm', function() {
     expect(container).toMatchSnapshot();
   });
 
-  it('renders a loading spinner', async function() {
-    axios.get.mockReturnValue(new Promise(() => {}));
-
-    const {container, loadingMask} = await renderEditView();
-
-    expect(loadingMask()).toBeInTheDocument();
-    expect(container).toMatchSnapshot();
-  });
-
   it('renders an error message', async function() {
-    axios.get.mockReturnValue(Promise.reject({message: 'Error'}));
+    axios.get.mockImplementation(() => new Promise((resolve, reject) => {
+      setTimeout(() => reject({message: 'Error'}), 100);
+    }));
 
-    const {container, loadingMask} = await renderEditView();
+    const {container, loadingMask} = renderEditView();
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask);
 
     expect(container.querySelector('.nx-alert--error')).toHaveTextContent('Error');
-    expect(container).toMatchSnapshot();
   });
 
   it('requires the name field when creating a new logging configuration', async function() {
-    const {container, loadingMask, name, level, saveButton} = await renderCreateView();
+    const {container, loadingMask, name, level, saveButton} = renderCreateView();
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask);
 
     expect(container).toMatchSnapshot();
 
     expect(saveButton()).toBeDisabled();
-    expect(name()).toBeRequired();
     expect(level()).toHaveValue('INFO');
 
     await changeFieldAndAssertValue(name, 'name');
@@ -119,19 +131,19 @@ describe('LoggingConfigurationForm', function() {
   });
 
   it('fires onDone when cancelled', async function() {
-    const {loadingMask, cancelButton} = await renderCreateView();
+    const {loadingMask, cancelButton} = renderCreateView();
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask);
 
     fireEvent.click(cancelButton());
 
-    expect(onDone).toBeCalled();
+    await wait(() => expect(onDone).toBeCalled());
   });
 
   it('requests confirmation when the logger is overridden and saves when requested', async function() {
-    const {loadingMask, name, level, saveMask, saveButton} = await renderCreateView();
+    const {loadingMask, name, level, saveButton} = renderCreateView();
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask);
 
     axios.put.mockReturnValue(Promise.resolve());
 
@@ -143,12 +155,10 @@ describe('LoggingConfigurationForm', function() {
     ExtJS.requestConfirmation.mockReturnValue(CONFIRM);
     fireEvent.click(saveButton());
 
-    await wait(() => expect(saveMask()).toBeInTheDocument());
-
-    expect(axios.put).toBeCalledWith(
+    await wait(() => expect(axios.put).toBeCalledWith(
         '/service/rest/internal/ui/loggingConfiguration/name',
         {name: 'name', level: 'DEBUG'}
-    );
+    ));
     expect(onDone).toBeCalled();
   });
 
@@ -157,25 +167,23 @@ describe('LoggingConfigurationForm', function() {
       data: {name: 'ROOT', level: 'INFO'}
     }));
 
-    const {loadingMask, level, saveMask, saveButton} = await renderEditView();
+    const {loadingMask, level, saveButton} = renderEditView();
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask);
 
-    expect(ExtJS.setDirtyStatus).toHaveBeenLastCalledWith('EditLoggingConfiguration', false);
+    await wait(() => expect(window.dirty).toEqual([]));
 
     await changeFieldAndAssertValue(level, 'DEBUG');
 
-    expect(ExtJS.setDirtyStatus).toHaveBeenLastCalledWith('EditLoggingConfiguration', true);
+    await wait(() => expect(window.dirty).toEqual(['LoggingConfigurationFormMachine']));
 
     fireEvent.click(saveButton());
 
-    await wait(() => expect(saveMask()).toBeInTheDocument());
-
-    expect(axios.put).toHaveBeenLastCalledWith(
+    await wait(() => expect(axios.put).toHaveBeenLastCalledWith(
         '/service/rest/internal/ui/loggingConfiguration/ROOT',
         {name: 'ROOT', level: 'DEBUG'}
-    );
-    expect(ExtJS.setDirtyStatus).toHaveBeenLastCalledWith('EditLoggingConfiguration', false);
+    ));
+    expect(window.dirty).toEqual([]);
   });
 
   it('resets an edited logger', async function() {
@@ -183,9 +191,9 @@ describe('LoggingConfigurationForm', function() {
       data: {name: 'test', level: 'ERROR'}
     }));
 
-    const {loadingMask, resetButton, resetMask} = await renderEditView();
+    const {loadingMask, resetButton, resetMask} = renderEditView();
 
-    await wait(() => expect(loadingMask()).not.toBeInTheDocument());
+    await waitForElementToBeRemoved(loadingMask);
 
     ExtJS.requestConfirmation.mockReturnValue(CONFIRM);
     axios.post.mockReturnValue(CONFIRM);

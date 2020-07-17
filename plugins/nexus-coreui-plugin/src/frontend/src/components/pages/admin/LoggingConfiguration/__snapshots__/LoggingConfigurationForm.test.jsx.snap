@@ -76,86 +76,6 @@ exports[`LoggingConfigurationForm renders a loading spinner 1`] = `
 </div>
 `;
 
-exports[`LoggingConfigurationForm renders an error message 1`] = `
-<div>
-  <div
-    class="nxrm-page"
-  >
-    <div
-      class="nxrm-page-header"
-    >
-      <div
-        class="nxrm-page-title"
-      >
-        <h1
-          class="title"
-        >
-          <svg
-            aria-hidden="true"
-            class="svg-inline--fa fa-scroll fa-w-20 nx-icon"
-            data-icon="scroll"
-            data-prefix="fas"
-            focusable="false"
-            role="img"
-            viewBox="0 0 640 512"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M48 0C21.53 0 0 21.53 0 48v64c0 8.84 7.16 16 16 16h80V48C96 21.53 74.47 0 48 0zm208 412.57V352h288V96c0-52.94-43.06-96-96-96H111.59C121.74 13.41 128 29.92 128 48v368c0 38.87 34.65 69.65 74.75 63.12C234.22 474 256 444.46 256 412.57zM288 384v32c0 52.93-43.06 96-96 96h336c61.86 0 112-50.14 112-112 0-8.84-7.16-16-16-16H288z"
-              fill="currentColor"
-            />
-          </svg>
-          <span
-            class="nx-feature-name"
-          >
-            Logging
-          </span>
-        </h1>
-        <p
-          class="description nx-feature-description"
-        >
-          Control logging levels
-        </p>
-      </div>
-    </div>
-    <div
-      class="nxrm-content-body nxrm-logging-configuration"
-    >
-      <div
-        class="nxrm-section nx-tile nxrm-logging-configuration-form"
-      >
-        <div
-          class="nx-alert nx-alert--error"
-        >
-          <svg
-            aria-hidden="true"
-            class="svg-inline--fa fa-times-circle fa-w-16 nx-icon"
-            data-icon="times-circle"
-            data-prefix="fas"
-            focusable="false"
-            role="img"
-            viewBox="0 0 512 512"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm121.6 313.1c4.7 4.7 4.7 12.3 0 17L338 377.6c-4.7 4.7-12.3 4.7-17 0L256 312l-65.1 65.6c-4.7 4.7-12.3 4.7-17 0L134.4 338c-4.7-4.7-4.7-12.3 0-17l65.6-65-65.6-65.1c-4.7-4.7-4.7-12.3 0-17l39.6-39.6c4.7-4.7 12.3-4.7 17 0l65 65.7 65.1-65.6c4.7-4.7 12.3-4.7 17 0l39.6 39.6c4.7 4.7 4.7 12.3 0 17L312 256l65.6 65.1z"
-              fill="currentColor"
-            />
-          </svg>
-          <span>
-            An error occurred loading data.
-          </span>
-           
-          <span>
-            Error
-          </span>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-`;
-
 exports[`LoggingConfigurationForm renders the resolved data 1`] = `
 <div>
   <div
@@ -218,7 +138,6 @@ exports[`LoggingConfigurationForm renders the resolved data 1`] = `
             disabled=""
             id="name"
             name="name"
-            required=""
             type="text"
             value="ROOT"
           />
@@ -356,10 +275,9 @@ exports[`LoggingConfigurationForm requires the name field when creating a new lo
             Logger Name
           </label>
           <input
-            class="nxrm-textfield missing-required-value"
+            class="nxrm-textfield invalid"
             id="name"
             name="name"
-            required=""
             type="text"
             value=""
           />

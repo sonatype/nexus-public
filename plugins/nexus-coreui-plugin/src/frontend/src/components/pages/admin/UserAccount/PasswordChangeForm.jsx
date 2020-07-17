@@ -13,22 +13,28 @@
 import React from 'react';
 import {useMachine} from '@xstate/react';
 import PasswordChangeMachine from './PasswordChangeMachine';
-import {Button, FieldWrapper, SectionFooter, Section, Textfield} from 'nexus-ui-plugin';
+import {Button, FieldWrapper, SectionFooter, Section, Textfield, Utils} from 'nexus-ui-plugin';
 import UIStrings from '../../../../constants/UIStrings';
 
 export default function PasswordChangeForm({userId}) {
   const [current, send] = useMachine(PasswordChangeMachine, {devTools: true});
+  const {data, isPristine, validationErrors} = current.context;
+  const {passwordCurrent, passwordNew, passwordNewConfirm} = data;
+  const isInvalid = Utils.isInvalid(validationErrors);
+  if (Object.keys(data).length === 0) {
+    console.trace();
+  }
 
-  function handlePasswordInput({target}) {
-    send({type: 'INPUT', name: target.name, value: target.value});
+  function update(event) {
+    send('UPDATE', {data: {[event.target.name]: event.target.value}});
   }
 
   function handlePasswordSubmit() {
-    send({type: 'SUBMIT', userId: userId});
+    send({type: 'SAVE', userId: userId});
   }
 
   function handlePasswordDiscard() {
-    send('DISCARD');
+    send('RESET');
   }
 
   return <Section>
@@ -36,43 +42,39 @@ export default function PasswordChangeForm({userId}) {
       <Textfield
           name='passwordCurrent'
           type='password'
-          value={current.context.passwordCurrent}
-          isRequired={true}
-          onChange={handlePasswordInput}
+          value={passwordCurrent}
+          onChange={update}
+          validationErrors={validationErrors.passwordCurrent}
       />
     </FieldWrapper>
     <FieldWrapper labelText={UIStrings.USER_ACCOUNT.PASSWORD_NEW_FIELD_LABEL}>
       <Textfield
           name='passwordNew'
           type='password'
-          value={current.context.passwordNew}
-          isRequired={true}
-          isValid={current.context.isCurrentNotEqualNew}
-          validityMessage={UIStrings.USER_ACCOUNT.MESSAGES.PASSWORD_MUST_DIFFER_ERROR}
-          onChange={handlePasswordInput}
+          value={passwordNew}
+          validationErrors={validationErrors.passwordNew}
+          onChange={update}
       />
     </FieldWrapper>
     <FieldWrapper labelText={UIStrings.USER_ACCOUNT.PASSWORD_NEW_CONFIRM_FIELD_LABEL}>
       <Textfield
           name='passwordNewConfirm'
           type='password'
-          value={current.context.passwordNewConfirm}
-          isRequired={true}
-          isValid={current.context.isConfirmed}
-          validityMessage={UIStrings.USER_ACCOUNT.MESSAGES.PASSWORD_NO_MATCH_ERROR}
-          onChange={handlePasswordInput}
+          value={passwordNewConfirm}
+          validationErrors={validationErrors.passwordNewConfirm}
+          onChange={update}
       />
     </FieldWrapper>
     <SectionFooter>
       <Button
           variant='primary'
-          disabled={current.matches('invalid')}
+          disabled={isInvalid}
           onClick={handlePasswordSubmit}
       >
         {UIStrings.USER_ACCOUNT.ACTIONS.changePassword}
       </Button>
       <Button
-          disabled={current.context.isEmpty}
+          disabled={isPristine}
           onClick={handlePasswordDiscard}
       >
         {UIStrings.USER_ACCOUNT.ACTIONS.discardChangePassword}

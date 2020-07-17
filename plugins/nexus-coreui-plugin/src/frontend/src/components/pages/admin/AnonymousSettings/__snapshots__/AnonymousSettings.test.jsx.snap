@@ -60,6 +60,7 @@ exports[`AnonymousSettings renders correctly 1`] = `
             class="nx-checkbox tm-checked"
           >
             <input
+              checked=""
               class="nx-checkbox__input"
               id="enabled"
               type="checkbox"
@@ -103,7 +104,6 @@ exports[`AnonymousSettings renders correctly 1`] = `
             class="nxrm-textfield nxrm-anonymous-settings-field"
             id="userId"
             name="userId"
-            required=""
             type="text"
             value="testUser"
           />
