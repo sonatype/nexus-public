@@ -73,8 +73,14 @@ public class OrientComponentAssetTestHelper
   RepositoryManager repositoryManager;
 
   @Override
-  public DateTime getCreatedTime(final Repository repository, final String path) {
+  public DateTime getBlobCreatedTime(final Repository repository, final String path) {
     return findAssetByName(repository, path).map(Asset::blobCreated).orElse(null);
+  }
+
+  @Override
+  public DateTime getAssetCreatedTime(final Repository repository, final String path) {
+    //not sure why it is the same
+    return getBlobCreatedTime(repository, path);
   }
 
   @Override

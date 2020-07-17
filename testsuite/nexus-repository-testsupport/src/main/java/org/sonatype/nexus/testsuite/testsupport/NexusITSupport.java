@@ -175,7 +175,10 @@ public abstract class NexusITSupport
 
   @After
   public void verifyNoDeadBlobs() throws Exception {
-    doVerifyNoDeadBlobs();
+    //only need to verify no dead blobs for non-newdb dbs
+    if (getValidTestDatabase().isUseContentStore()) {
+      doVerifyNoDeadBlobs();
+    }
   }
 
   /**

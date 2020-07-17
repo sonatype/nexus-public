@@ -59,15 +59,20 @@ public class DatastoreComponentAssetTestHelper
   private RepositoryManager repositoryManager;
 
   @Override
-  public DateTime getCreatedTime(final Repository repository, final String path) {
+  public DateTime getBlobCreatedTime(final Repository repository, final String path) {
     return findAssetByPathNotNull(repository, path).blob().map(AssetBlob::blobCreated)
         .map(DateHelper::toDateTime).orElse(null);
   }
 
   @Override
+  public DateTime getAssetCreatedTime(final Repository repository, final String path) {
+    return DateHelper.toDateTime(findAssetByPathNotNull(repository, path).created());
+  }
+
+  @Override
   public DateTime getUpdatedTime(final Repository repository, final String path) {
     // AssetBlobs are immutable so the created time is the equivalent of the old updated time.
-    return getCreatedTime(repository, path);
+    return getBlobCreatedTime(repository, path);
   }
 
   @Override
