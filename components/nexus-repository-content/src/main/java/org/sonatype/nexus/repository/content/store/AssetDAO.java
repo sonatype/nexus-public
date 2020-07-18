@@ -79,11 +79,19 @@ public interface AssetDAO
   /**
    * Retrieves an asset from the content data store.
    *
+   * @param assetId the internal id of the asset
+   * @return asset if it was found
+   */
+  Optional<Asset> readAsset(@Param("assetId") int assetId);
+
+  /**
+   * Retrieves an asset located at the given path in the content data store.
+   *
    * @param repositoryId the repository containing the asset
    * @param path the path of the asset
    * @return asset if it was found
    */
-  Optional<Asset> readAsset(@Param("repositoryId") int repositoryId, @Param("path") String path);
+  Optional<Asset> readPath(@Param("repositoryId") int repositoryId, @Param("path") String path);
 
   /**
    * Updates the kind of the given asset in the content data store.

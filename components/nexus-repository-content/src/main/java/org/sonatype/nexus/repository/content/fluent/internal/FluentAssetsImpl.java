@@ -12,9 +12,12 @@
  */
 package org.sonatype.nexus.repository.content.fluent.internal;
 
+import java.util.Optional;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
@@ -22,6 +25,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.content.store.InternalIds.toInternalId;
 
 /**
  * {@link FluentAssets} implementation.
@@ -62,5 +66,11 @@ public class FluentAssetsImpl
     return new FluentContinuation<>(
         facet.stores().assetStore.browseAssets(facet.contentRepositoryId(), kind, limit, continuationToken),
         this::with);
+  }
+
+  @Override
+  public Optional<FluentAsset> find(final EntityId externalId) {
+    return facet.stores().assetStore.readAsset(toInternalId(externalId))
+        .map(asset -> new FluentAssetImpl(facet, asset));
   }
 }

@@ -115,6 +115,10 @@
   </insert>
 
   <select id="readAsset" resultMap="assetResult">
+    SELECT * FROM ${format}_asset WHERE <include refid="assetMatch"/>;
+  </select>
+
+  <select id="readPath" resultMap="assetResult">
     SELECT * FROM ${format}_asset WHERE <include refid="assetPathMatch"/>;
   </select>
 

@@ -103,16 +103,24 @@ public interface ComponentDAO
   /**
    * Retrieves a component from the content data store.
    *
+   * @param componentId the internal id of the component
+   * @return component if it was found
+   */
+  Optional<Component> readComponent(@Param("componentId") int componentId);
+
+  /**
+   * Retrieves a component located at the given coordinate in the content data store.
+   *
    * @param repositoryId the repository containing the component
    * @param namespace the namespace of the component
    * @param name the name of the component
    * @param version the version of the component
    * @return component if it was found
    */
-  Optional<Component> readComponent(@Param("repositoryId") int repositoryId,
-                                    @Param("namespace") String namespace,
-                                    @Param("name") String name,
-                                    @Param("version") String version);
+  Optional<Component> readCoordinate(@Param("repositoryId") int repositoryId,
+                                     @Param("namespace") String namespace,
+                                     @Param("name") String name,
+                                     @Param("version") String version);
 
   /**
    * Updates the kind of the given component in the content data store.

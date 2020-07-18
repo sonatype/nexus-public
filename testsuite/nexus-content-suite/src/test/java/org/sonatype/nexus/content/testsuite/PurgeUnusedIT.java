@@ -193,7 +193,7 @@ public class PurgeUnusedIT
     componentStore.createComponent(componentData);
 
     Optional<Component> maybeComponent =
-        componentStore.readComponent(contentFacet.contentRepositoryId(), NAMESPACE, name, VERSION);
+        componentStore.readCoordinate(contentFacet.contentRepositoryId(), NAMESPACE, name, VERSION);
     assertThat(maybeComponent.isPresent(), is(true));
     Component component = maybeComponent.get();
 

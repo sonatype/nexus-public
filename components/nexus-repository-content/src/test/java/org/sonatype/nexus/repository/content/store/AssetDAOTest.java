@@ -155,14 +155,14 @@ public class AssetDAOTest
     try (DataSession<?> session = sessionRule.openSession("content")) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
-      assertFalse(dao.readAsset(repositoryId, "test-path").isPresent());
+      assertFalse(dao.readPath(repositoryId, "test-path").isPresent());
 
-      tempResult = dao.readAsset(repositoryId, path1).get();
+      tempResult = dao.readPath(repositoryId, path1).get();
       assertThat(tempResult, samePath(asset1));
       assertThat(tempResult, sameKind(asset1));
       assertThat(tempResult, sameAttributes(asset1));
 
-      tempResult = dao.readAsset(repositoryId, path2).get();
+      tempResult = dao.readPath(repositoryId, path2).get();
       assertThat(tempResult, samePath(asset2));
       assertThat(tempResult, sameKind(asset2));
       assertThat(tempResult, sameAttributes(asset2));
@@ -177,7 +177,7 @@ public class AssetDAOTest
     try (DataSession<?> session = sessionRule.openSession("content")) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
-      tempResult = dao.readAsset(repositoryId, path1).get();
+      tempResult = dao.readPath(repositoryId, path1).get();
 
       OffsetDateTime oldCreated = tempResult.created();
       OffsetDateTime oldLastUpdated = tempResult.lastUpdated();
@@ -187,14 +187,14 @@ public class AssetDAOTest
       asset1.setKind("new-kind-1");
       dao.updateAssetKind(asset1);
 
-      tempResult = dao.readAsset(repositoryId, path1).get();
+      tempResult = dao.readPath(repositoryId, path1).get();
       assertThat(tempResult, samePath(asset1));
       assertThat(tempResult, sameKind(asset1));
       assertThat(tempResult, sameAttributes(asset1));
       assertThat(tempResult.created(), is(oldCreated));
       assertTrue(tempResult.lastUpdated().isAfter(oldLastUpdated)); // should change as attributes have changed
 
-      tempResult = dao.readAsset(repositoryId, path2).get();
+      tempResult = dao.readPath(repositoryId, path2).get();
 
       oldCreated = tempResult.created();
       oldLastUpdated = tempResult.lastUpdated();
@@ -205,7 +205,7 @@ public class AssetDAOTest
       asset2.setKind("new-kind-2");
       dao.updateAssetKind(asset2);
 
-      tempResult = dao.readAsset(repositoryId, path2).get();
+      tempResult = dao.readPath(repositoryId, path2).get();
       assertThat(tempResult, samePath(asset2));
       assertThat(tempResult, sameKind(asset2));
       assertThat(tempResult, sameAttributes(asset2));
@@ -224,7 +224,7 @@ public class AssetDAOTest
     try (DataSession<?> session = sessionRule.openSession("content")) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
-      tempResult = dao.readAsset(repositoryId, path1).get();
+      tempResult = dao.readPath(repositoryId, path1).get();
 
       OffsetDateTime oldCreated = tempResult.created();
       OffsetDateTime oldLastUpdated = tempResult.lastUpdated();
@@ -232,21 +232,21 @@ public class AssetDAOTest
       asset1.attributes("custom-section-1").set("custom-key-1", "more-test-values-again");
       dao.updateAssetAttributes(asset1);
 
-      tempResult = dao.readAsset(repositoryId, path1).get();
+      tempResult = dao.readPath(repositoryId, path1).get();
       assertThat(tempResult, samePath(asset1));
       assertThat(tempResult, sameKind(asset1));
       assertThat(tempResult, sameAttributes(asset1));
       assertThat(tempResult.created(), is(oldCreated));
       assertTrue(tempResult.lastUpdated().isAfter(oldLastUpdated)); // should change as attributes changed again
 
-      tempResult = dao.readAsset(repositoryId, path2).get();
+      tempResult = dao.readPath(repositoryId, path2).get();
 
       oldCreated = tempResult.created();
       oldLastUpdated = tempResult.lastUpdated();
 
       dao.updateAssetAttributes(asset2);
 
-      tempResult = dao.readAsset(repositoryId, path2).get();
+      tempResult = dao.readPath(repositoryId, path2).get();
       assertThat(tempResult, samePath(asset2));
       assertThat(tempResult, sameKind(asset2));
       assertThat(tempResult, sameAttributes(asset2));
@@ -297,7 +297,7 @@ public class AssetDAOTest
     try (DataSession<?> session = sessionRule.openSession("content")) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
-      tempResult = dao.readAsset(repositoryId, path).get();
+      tempResult = dao.readPath(repositoryId, path).get();
 
       OffsetDateTime oldCreated = tempResult.created();
       OffsetDateTime oldLastUpdated = tempResult.lastUpdated();
@@ -305,7 +305,7 @@ public class AssetDAOTest
 
       dao.markAsDownloaded(asset);
 
-      tempResult = dao.readAsset(repositoryId, path).get();
+      tempResult = dao.readPath(repositoryId, path).get();
       assertTrue(tempResult.lastDownloaded().isPresent());
       assertTrue(tempResult.lastDownloaded().get().isAfter(oldLastUpdated));
       assertThat(tempResult.created(), is(oldCreated));
@@ -321,7 +321,7 @@ public class AssetDAOTest
     try (DataSession<?> session = sessionRule.openSession("content")) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
-      tempResult = dao.readAsset(repositoryId, path).get();
+      tempResult = dao.readPath(repositoryId, path).get();
 
       OffsetDateTime oldCreated = tempResult.created();
       OffsetDateTime oldLastUpdated = tempResult.lastUpdated();
@@ -329,7 +329,7 @@ public class AssetDAOTest
 
       dao.markAsDownloaded(asset);
 
-      tempResult = dao.readAsset(repositoryId, path).get();
+      tempResult = dao.readPath(repositoryId, path).get();
       assertTrue(tempResult.lastDownloaded().isPresent());
       assertTrue(tempResult.lastDownloaded().get().isAfter(oldLastDownloaded));
       assertThat(tempResult.created(), is(oldCreated));
@@ -366,7 +366,7 @@ public class AssetDAOTest
     try (DataSession<?> session = sessionRule.openSession("content")) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
-      tempResult = dao.readAsset(repositoryId, path).get();
+      tempResult = dao.readPath(repositoryId, path).get();
 
       OffsetDateTime oldCreated = tempResult.created();
       OffsetDateTime oldLastUpdated = tempResult.lastUpdated();
@@ -375,7 +375,7 @@ public class AssetDAOTest
       asset.setAssetBlob(assetBlob1);
       dao.updateAssetBlobLink(asset);
 
-      tempResult = dao.readAsset(repositoryId, path).get();
+      tempResult = dao.readPath(repositoryId, path).get();
       assertTrue(tempResult.blob().isPresent());
       assertThat(tempResult.blob().get(), sameBlob(assetBlob1));
       assertThat(tempResult, sameBlob(asset));
@@ -395,7 +395,7 @@ public class AssetDAOTest
     try (DataSession<?> session = sessionRule.openSession("content")) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
-      tempResult = dao.readAsset(repositoryId, path).get();
+      tempResult = dao.readPath(repositoryId, path).get();
 
       OffsetDateTime oldCreated = tempResult.created();
       OffsetDateTime oldLastUpdated = tempResult.lastUpdated();
@@ -404,7 +404,7 @@ public class AssetDAOTest
       asset.setAssetBlob(assetBlob2);
       dao.updateAssetBlobLink(asset);
 
-      tempResult = dao.readAsset(repositoryId, path).get();
+      tempResult = dao.readPath(repositoryId, path).get();
       assertTrue(tempResult.blob().isPresent());
       assertThat(tempResult.blob().get(), sameBlob(assetBlob2));
       assertThat(tempResult, sameBlob(asset));
@@ -424,7 +424,7 @@ public class AssetDAOTest
     try (DataSession<?> session = sessionRule.openSession("content")) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
-      tempResult = dao.readAsset(repositoryId, path).get();
+      tempResult = dao.readPath(repositoryId, path).get();
 
       OffsetDateTime oldCreated = tempResult.created();
       OffsetDateTime oldLastUpdated = tempResult.lastUpdated();
@@ -433,7 +433,7 @@ public class AssetDAOTest
       asset.setAssetBlob(assetBlob2);
       dao.updateAssetBlobLink(asset);
 
-      tempResult = dao.readAsset(repositoryId, path).get();
+      tempResult = dao.readPath(repositoryId, path).get();
       assertTrue(tempResult.blob().isPresent());
       assertThat(tempResult.blob().get(), sameBlob(assetBlob2));
       assertThat(tempResult, sameBlob(asset));
@@ -453,7 +453,7 @@ public class AssetDAOTest
     try (DataSession<?> session = sessionRule.openSession("content")) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
-      tempResult = dao.readAsset(repositoryId, path).get();
+      tempResult = dao.readPath(repositoryId, path).get();
 
       OffsetDateTime oldCreated = tempResult.created();
       OffsetDateTime oldLastUpdated = tempResult.lastUpdated();
@@ -462,7 +462,7 @@ public class AssetDAOTest
       asset.setAssetBlob(null);
       dao.updateAssetBlobLink(asset);
 
-      tempResult = dao.readAsset(repositoryId, path).get();
+      tempResult = dao.readPath(repositoryId, path).get();
       assertFalse(tempResult.blob().isPresent());
       assertThat(tempResult.created(), is(oldCreated));
       assertTrue(tempResult.lastUpdated().isAfter(oldLastUpdated));
@@ -480,7 +480,7 @@ public class AssetDAOTest
     try (DataSession<?> session = sessionRule.openSession("content")) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
-      tempResult = dao.readAsset(repositoryId, path).get();
+      tempResult = dao.readPath(repositoryId, path).get();
 
       OffsetDateTime oldCreated = tempResult.created();
       OffsetDateTime oldLastUpdated = tempResult.lastUpdated();
@@ -489,7 +489,7 @@ public class AssetDAOTest
       asset.setAssetBlob(null);
       dao.updateAssetBlobLink(asset);
 
-      tempResult = dao.readAsset(repositoryId, path).get();
+      tempResult = dao.readPath(repositoryId, path).get();
       assertFalse(tempResult.blob().isPresent());
       assertThat(tempResult.created(), is(oldCreated));
       assertThat(tempResult.lastUpdated(), is(oldLastUpdated));
@@ -676,14 +676,44 @@ public class AssetDAOTest
     try (DataSession<?> session = sessionRule.openSession("content")) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
-      assertTrue(dao.readAsset(repositoryId, asset1.path()).isPresent());
-      assertTrue(dao.readAsset(repositoryId, asset2.path()).isPresent());
+      assertTrue(dao.readPath(repositoryId, asset1.path()).isPresent());
+      assertTrue(dao.readPath(repositoryId, asset2.path()).isPresent());
 
       int deleted = dao.purgeNotRecentlyDownloaded(repositoryId, 3, 10);
       assertThat(deleted, is(1));
 
-      assertTrue(dao.readAsset(repositoryId, asset1.path()).isPresent());
-      assertFalse(dao.readAsset(repositoryId, asset2.path()).isPresent());
+      assertTrue(dao.readPath(repositoryId, asset1.path()).isPresent());
+      assertFalse(dao.readPath(repositoryId, asset2.path()).isPresent());
+    }
+  }
+
+  @Test
+  public void testRoundTrip() {
+    AssetData asset1 = randomAsset(repositoryId);
+    AssetData asset2 = randomAsset(repositoryId);
+    asset2.setPath(asset1.path() + "/2"); // make sure paths are different
+
+    try (DataSession<?> session = sessionRule.openSession("content")) {
+      AssetDAO dao = session.access(TestAssetDAO.class);
+      dao.createAsset(asset1);
+      dao.createAsset(asset2);
+      session.getTransaction().commit();
+    }
+
+    Asset tempResult;
+
+    try (DataSession<?> session = sessionRule.openSession("content")) {
+      AssetDAO dao = session.access(TestAssetDAO.class);
+
+      tempResult = dao.readAsset(asset1.assetId).get();
+      assertThat(tempResult, samePath(asset1));
+      assertThat(tempResult, sameKind(asset1));
+      assertThat(tempResult, sameAttributes(asset1));
+
+      tempResult = dao.readAsset(asset2.assetId).get();
+      assertThat(tempResult, samePath(asset2));
+      assertThat(tempResult, sameKind(asset2));
+      assertThat(tempResult, sameAttributes(asset2));
     }
   }
 }

@@ -13,10 +13,12 @@
 package org.sonatype.nexus.repository.content.fluent;
 
 import java.util.Collection;
+import java.util.Optional;
 
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.content.Component;
 
 /**
@@ -67,4 +69,11 @@ public interface FluentComponents
    * List all versions of components with the given namespace and name in the repository.
    */
   Collection<String> versions(String namespace, String name);
+
+  /**
+   * Find if a component exists that has the given external id.
+   *
+   * @since 3.next
+   */
+  Optional<FluentComponent> find(EntityId externalId);
 }

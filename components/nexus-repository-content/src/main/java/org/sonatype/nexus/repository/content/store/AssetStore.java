@@ -104,13 +104,24 @@ public class AssetStore<T extends AssetDAO>
   /**
    * Retrieves an asset from the content data store.
    *
+   * @param assetId the internalId of the asset
+   * @return asset if it was found
+   */
+  @Transactional
+  public Optional<Asset> readAsset(final int assetId) {
+    return dao().readAsset(assetId);
+  }
+
+  /**
+   * Retrieves an asset located at the given path in the content data store.
+   *
    * @param repositoryId the repository containing the asset
    * @param path the path of the asset
    * @return asset if it was found
    */
   @Transactional
-  public Optional<Asset> readAsset(final int repositoryId, final String path) {
-    return dao().readAsset(repositoryId, path);
+  public Optional<Asset> readPath(final int repositoryId, final String path) {
+    return dao().readPath(repositoryId, path);
   }
 
   /**

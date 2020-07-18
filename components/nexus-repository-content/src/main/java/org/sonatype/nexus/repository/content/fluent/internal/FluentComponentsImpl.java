@@ -13,10 +13,12 @@
 package org.sonatype.nexus.repository.content.fluent.internal;
 
 import java.util.Collection;
+import java.util.Optional;
 
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
@@ -24,6 +26,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponentBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.content.store.InternalIds.toInternalId;
 
 /**
  * {@link FluentComponents} implementation.
@@ -79,5 +82,11 @@ public class FluentComponentsImpl
   @Override
   public Collection<String> versions(final String namespace, final String name) {
     return facet.stores().componentStore.browseVersions(facet.contentRepositoryId(), namespace, name);
+  }
+
+  @Override
+  public Optional<FluentComponent> find(final EntityId externalId) {
+    return facet.stores().componentStore.readComponent(toInternalId(externalId))
+        .map(component -> new FluentComponentImpl(facet, component));
   }
 }
