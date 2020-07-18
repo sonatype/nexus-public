@@ -10,12 +10,14 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content;
+package org.sonatype.nexus.repository.content.director;
 
 import java.util.List;
 import java.util.Map;
 
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.Asset;
+import org.sonatype.nexus.repository.content.Component;
 
 /**
  * @since 3.24
