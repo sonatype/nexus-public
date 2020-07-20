@@ -10,11 +10,10 @@ exports[`Textfield renders correctly without an error message 1`] = `
 </div>
 `;
 
-exports[`Textfield renders with an error message 1`] = `
+exports[`Textfield renders with a single error message 1`] = `
 <div>
   <input
-    class="nxrm-textfield missing-required-value"
-    required=""
+    class="nxrm-textfield invalid"
     type="text"
     value=""
   />

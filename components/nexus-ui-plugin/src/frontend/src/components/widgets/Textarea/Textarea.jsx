@@ -17,31 +17,32 @@ import React, {forwardRef} from 'react';
 import './Textarea.scss';
 
 import FieldErrorMessage from '../FieldErrorMessage/FieldErrorMessage';
+import {hasValidationErrors, getFirstValidationError} from '@sonatype/react-shared-components/util/validationUtil';
 
 /**
  * @since 3.22
  */
-const Textarea = forwardRef(({isRequired, value, className, name, id, ...attrs}, ref) => {
-  const isMissingRequiredValue = isRequired && !value;
+const Textarea = forwardRef(({value, className, name, id, validationErrors, ...attrs}, ref) => {
+
+  const isInvalid = hasValidationErrors(validationErrors);
   const classes = classNames('nxrm-textarea', className, {
-    'missing-required-value': isMissingRequiredValue
+    'invalid': isInvalid
   });
   return <>
     <textarea
         id={id || name}
         name={name}
-        required={isRequired}
         value={value}
         className={classes}
         ref={ref}
         {...attrs}
     />
-    {isMissingRequiredValue ? <FieldErrorMessage/> : null}
+    {isInvalid ? <FieldErrorMessage message={getFirstValidationError(validationErrors)}/> : null}
   </>;
 });
 
 Textarea.propTypes = {
-  isRequired: PropTypes.bool
+  validationErrors: PropTypes.oneOfType([PropTypes.string, PropTypes.array])
 };
 
 export default Textarea;

@@ -16,6 +16,8 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MultivaluedMap;
@@ -30,6 +32,10 @@ import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
 import org.sonatype.nexus.repository.search.query.SearchQueryService;
 import org.sonatype.nexus.rest.Page;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.google.common.collect.ImmutableSet;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -52,6 +58,7 @@ import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 import static org.elasticsearch.index.query.QueryBuilders.queryStringQuery;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -381,7 +388,7 @@ public class SearchResourceTest
   }
 
   @Test
-  public void testSearchAndDownload_SpecificAssetParam_WillReturnOne() {
+  public void testSearchAndDownload_SpecificAssetParam_WillReturnOne() throws Exception {
     when(searchHits.hits()).thenReturn(new SearchHit[]{searchHitNpm});
 
     when(searchQueryService.search(queryBuilderArgumentCaptor.capture(), eq(0), eq(50)))
@@ -399,11 +406,20 @@ public class SearchResourceTest
     assertThat(assetXO.getRepository(), is("test-repo"));
     assertThat(assetXO.getDownloadUrl(), is("http://localhost:8081/test/bar.three"));
 
+
+    ObjectReader reader = new ObjectMapper().reader();
+    JsonNode actual = reader.readTree(queryBuilderArgumentCaptor.getValue().toString());
+
+    ArrayNode q = (ArrayNode) actual.get("bool").get("must");
+    List<JsonNode> actualNodes = StreamSupport.stream(q.spliterator(), false).collect(Collectors.toList());
+
     //the expected query
-    QueryBuilder expected = boolQuery()
-        .must(queryStringQuery("fifth\\-sha1").field("assets.attributes.checksum.sha1").lowercaseExpandedTerms(false))
-        .must(queryStringQuery("npm").field("format").lowercaseExpandedTerms(false));
-    assertThat(queryBuilderArgumentCaptor.getValue().toString(), is(expected.toString()));
+    JsonNode[] expected = new JsonNode[]{
+        reader.readTree(queryStringQuery("npm").field("format").lowercaseExpandedTerms(false).toString()),
+        reader.readTree(queryStringQuery("fifth\\-sha1").field("assets.attributes.checksum.sha1").lowercaseExpandedTerms(false)
+            .toString())};
+
+    assertThat(actualNodes, containsInAnyOrder(expected));
   }
 
   @Test

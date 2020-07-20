@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.json;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -32,7 +33,6 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.fail;
 
 public class MergeObjectMapperTest
     extends TestSupport
@@ -243,9 +243,7 @@ public class MergeObjectMapperTest
       return underTest.merge(inputStreams);
     }
     catch (IOException e) {
-      fail(e.getMessage());
+      throw new UncheckedIOException(e);
     }
-
-    return null;
   }
 }

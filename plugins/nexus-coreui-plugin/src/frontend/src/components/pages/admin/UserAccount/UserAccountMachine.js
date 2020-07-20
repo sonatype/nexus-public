@@ -16,95 +16,10 @@ import {ExtJS, Utils} from 'nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 
-const initialContext = {
-  data: {
-    userId: '',
-    firstName: '',
-    lastName: '',
-    email: '',
-    external: true,
-  },
-  pristineData: {},
-  isPristine: true,
-  isEdited: false,
-  isValid: true,
-  error: null
-};
-
-const userAccountMachine = Machine({
-  id: 'userAccount',
-  initial: 'loading',
-  context: initialContext,
-  states: {
-    loading: {
-      invoke: {
-        id: 'fetchData',
-        src: 'fetchData',
-        onDone: {
-          target: 'fetched',
-          actions: ['setData', 'checkEdited', 'validate'],
-        },
-        onError: {
-          target: 'error',
-          actions: ['logLoadError'],
-        },
-      },
-    },
-    fetched: {
-      on: {
-        'UPDATE': {
-          actions: ['update', 'checkEdited', 'validate']
-        },
-        'DISCARD': {
-          actions: ['discard', 'checkEdited', 'validate', 'clearError']
-        },
-        'SAVE': {
-          target: 'saving'
-        },
-      },
-    },
-    saving: {
-      invoke: {
-        id: 'saveData',
-        src: 'saveData',
-        onDone: {
-          target: 'loading',
-          actions: ['logSaveSuccess', 'clearError']
-        },
-        onError: {
-          target: 'fetched',
-          actions: ['setError']
-        },
-      },
-    },
-    error: {
-      type: 'final',
-    },
-  },
-}, {
+const userAccountMachine = Utils.buildFormMachine({
+  id: 'UserAccount'
+}).withConfig({
   actions: {
-    setData: assign({
-      data: (_, {data}) => data.data,
-      pristineData: (_, {data}) => data.data,
-    }),
-    update: assign({
-      data: (_, {data}) => data
-    }),
-    checkEdited: assign(({data, pristineData}) => {
-      const isPristine = Object.keys(data).every((key) => data[key] === pristineData[key]);
-      return {
-        isPristine,
-        isEdited: !isPristine
-      };
-    }),
-    validate: assign((ctx, _) => {
-      const {firstName, lastName, email} = ctx.data;
-      const isValid = (Utils.notBlank(firstName) && Utils.notBlank(lastName) && Utils.notBlank(email));
-      return {isValid};
-    }),
-    discard: assign({
-      data: ({pristineData}) => pristineData,
-    }),
     logLoadError: ({error}) => {
       if (error) {
         console.error(error);
@@ -114,19 +29,21 @@ const userAccountMachine = Machine({
     logSaveSuccess: () => {
       ExtJS.showSuccessMessage(UIStrings.USER_ACCOUNT.MESSAGES.UPDATE_SUCCESS);
     },
-    setError: assign({
-      error: (_, evt) => evt.data.response.data
-    }),
-    clearError: assign({
-      error: () => undefined
-    }),
+
+    validate: assign({
+      validationErrors: ({data}) => ({
+        firstName: Utils.isBlank(data.firstName) ? UIStrings.ERROR.FIELD_REQUIRED : null,
+        lastName: Utils.isBlank(data.lastName) ? UIStrings.ERROR.FIELD_REQUIRED : null,
+        email: Utils.isBlank(data.email) ? UIStrings.ERROR.FIELD_REQUIRED : null
+      })
+    })
   },
   services: {
     fetchData: () => Axios.get('/service/rest/internal/ui/user'),
     saveData: ({data}) => {
       return Axios.put('/service/rest/internal/ui/user', data);
-    },
-  },
+    }
+  }
 });
 
 export default userAccountMachine;

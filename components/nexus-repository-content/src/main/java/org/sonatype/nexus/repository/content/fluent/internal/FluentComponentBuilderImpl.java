@@ -66,14 +66,14 @@ public class FluentComponentBuilderImpl
   @Override
   public FluentComponent getOrCreate() {
     return new FluentComponentImpl(facet, facet.stores().componentStore
-        .readComponent(facet.contentRepositoryId(), namespace, name, version)
+        .readCoordinate(facet.contentRepositoryId(), namespace, name, version)
         .orElseGet(this::createComponent));
   }
 
   @Override
   public Optional<FluentComponent> find() {
     return facet.stores().componentStore
-        .readComponent(facet.contentRepositoryId(), namespace, name, version)
+        .readCoordinate(facet.contentRepositoryId(), namespace, name, version)
         .map(component -> new FluentComponentImpl(facet, component));
   }
 

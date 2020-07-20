@@ -15,28 +15,27 @@ import {useService} from '@xstate/react';
 import {
   Alert,
   Button,
-  ExtJS,
   FieldWrapper,
   NxLoadWrapper,
   NxSubmitMask,
   Section,
   SectionFooter,
-  Textfield
+  Textfield,
+  Utils
 } from 'nexus-ui-plugin';
 import UIStrings from '../../../../constants/UIStrings';
 
 export default function UserAccountSettings({service}) {
   const [current, send] = useService(service);
   const context = current.context;
-  const isReadOnly = context.data.external;
-  const userId = useUserAccountMachine('userId', service, true);
-  const firstName = useUserAccountMachine('firstName', service, isReadOnly);
-  const lastName = useUserAccountMachine('lastName', service, isReadOnly);
-  const email = useUserAccountMachine('email', service, isReadOnly);
+  const data = context.data;
+  const external = data?.external;
   const isLoading = current.matches('loading');
   const isSaving = current.matches('saving');
   const isPristine = context.isPristine;
-  const isInvalid = !context.isValid;
+  const validationErrors = context.validationErrors;
+  const isInvalid = Utils.isInvalid(validationErrors);
+  const hasData = data && data !== {};
 
   function handleSave(evt) {
     evt.preventDefault();
@@ -44,7 +43,15 @@ export default function UserAccountSettings({service}) {
   }
 
   function handleDiscard() {
-    send('DISCARD');
+    send('RESET');
+  }
+
+  function handleChange({target}) {
+    send('UPDATE', {
+      data: {
+        [target.name]: target.value
+      }
+    });
   }
 
   let error = null;
@@ -67,55 +74,46 @@ export default function UserAccountSettings({service}) {
     );
   }
 
-  ExtJS.setDirtyStatus('UserAccount', !isPristine);
-
   return <Section>
     <NxLoadWrapper loading={isLoading}>
-      {isSaving && <NxSubmitMask message={UIStrings.SAVING}/>}
-      {error}
-  
-      <FieldWrapper labelText={UIStrings.USER_ACCOUNT.ID_FIELD_LABEL}>
-        <Textfield  disabled={isReadOnly} {...userId} />
-      </FieldWrapper>
-      <FieldWrapper labelText={UIStrings.USER_ACCOUNT.FIRST_FIELD_LABEL}>
-        <Textfield disabled={isReadOnly} {...firstName} />
-      </FieldWrapper>
-      <FieldWrapper labelText={UIStrings.USER_ACCOUNT.LAST_FIELD_LABEL}>
-        <Textfield disabled={isReadOnly} {...lastName} />
-      </FieldWrapper>
-      <FieldWrapper labelText={UIStrings.USER_ACCOUNT.EMAIL_FIELD_LABEL}>
-        <Textfield disabled={isReadOnly} {...email} />
-      </FieldWrapper>
-      <SectionFooter>
-        <Button variant='primary' disabled={isReadOnly || isPristine || isInvalid} onClick={handleSave}>
-          {UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
-        </Button>
-        <Button disabled={isReadOnly || isPristine} onClick={handleDiscard}>
-          {UIStrings.SETTINGS.DISCARD_BUTTON_LABEL}
-        </Button>
-      </SectionFooter>
+      {hasData && <>
+        {isSaving && <NxSubmitMask message={UIStrings.SAVING}/>}
+        {error}
+
+        <FieldWrapper labelText={UIStrings.USER_ACCOUNT.ID_FIELD_LABEL}>
+          <Textfield name="userId" readOnly disabled value={data.userId}/>
+        </FieldWrapper>
+        <FieldWrapper labelText={UIStrings.USER_ACCOUNT.FIRST_FIELD_LABEL}>
+          <Textfield {...buildFieldProps('firstName', data, validationErrors, handleChange)}/>
+        </FieldWrapper>
+        <FieldWrapper labelText={UIStrings.USER_ACCOUNT.LAST_FIELD_LABEL}>
+          <Textfield {...buildFieldProps('lastName', data, validationErrors, handleChange)}/>
+        </FieldWrapper>
+        <FieldWrapper labelText={UIStrings.USER_ACCOUNT.EMAIL_FIELD_LABEL}>
+          <Textfield {...buildFieldProps('email', data, validationErrors, handleChange)}/>
+        </FieldWrapper>
+        <SectionFooter>
+          <Button variant='primary' disabled={external || isPristine || isInvalid} onClick={handleSave}>
+            {UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
+          </Button>
+          <Button disabled={external || isPristine} onClick={handleDiscard}>
+            {UIStrings.SETTINGS.DISCARD_BUTTON_LABEL}
+          </Button>
+        </SectionFooter>
+      </>}
     </NxLoadWrapper>
   </Section>;
 }
 
-function useUserAccountMachine(name, service, readOnly=false) {
-  const [current, send] = useService(service);
-  const value = current.context.data[name];
-  const isRequired=!(current.matches('loading') || current.matches('saving'));
-
-  function onChange({target}) {
-    send('UPDATE', {
-      data: {
-        ...current.context.data,
-        [target.name]: target.value
-      }
-    });
-  }
-
-  if (readOnly) {
-    return {name, value, readOnly};
-  }
-  else {
-    return {name, value, isRequired, onChange};
-  }
+function buildFieldProps(name, data, validationErrors, handleChange) {
+  const readOnly = data.external;
+  return {
+    name,
+    value: data[name],
+    disabled: readOnly,
+    readOnly: readOnly,
+    onChange: handleChange,
+    required: !readOnly,
+    validationErrors: validationErrors[name]
+  };
 }

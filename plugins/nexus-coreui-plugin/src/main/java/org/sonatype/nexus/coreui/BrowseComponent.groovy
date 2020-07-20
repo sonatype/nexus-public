@@ -28,7 +28,6 @@ import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration
 import org.sonatype.nexus.repository.browse.node.BrowseNodeQueryService
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.ossindex.VulnerabilityService
-import org.sonatype.nexus.repository.storage.Component
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter
 import org.sonatype.nexus.repository.types.ProxyType
 
@@ -94,9 +93,7 @@ class BrowseComponent
           def type = browseNode.assetId != null ? ASSET : browseNode.componentId != null ? COMPONENT : FOLDER
           def vulnerable = false
           if (browseNode.componentId) {
-            def component = browseService.getComponentById(componentEntityAdapter.recordIdentity(
-                browseNode.componentId as EntityId), repository)
-            vulnerable = displayVulnerability(component, repository)
+            vulnerable = displayVulnerability(browseNode, repository)
           }
           new BrowseNodeXO(
               id: isRoot(path) ? encodedPath : (path + '/' + encodedPath),
@@ -110,15 +107,17 @@ class BrowseComponent
         }
   }
 
-  boolean displayVulnerability(final Component component, final Repository repository) {
+  boolean displayVulnerability(final BrowseNode browseNode, final Repository repository) {
     def vulnerabilityService = vulnerabilityServiceProvider.get()
     if(!vulnerabilityService || !isProxy(repository)) {
       return false
     }
     try {
-      if (!vulnerabilityService.isEnabled()) {
+      if (!vulnerabilityService.isEnabled(repository)) {
         return false
       }
+      def component = browseService.getComponentById(componentEntityAdapter.recordIdentity(
+          browseNode.componentId as EntityId), repository)
       def vulnerabilityReport = vulnerabilityService.getVulnerabilityReport(component)
       return vulnerabilityReport?.count > 0
     } catch (Exception e) {

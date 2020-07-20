@@ -23,8 +23,12 @@ export default {
   SAVING: 'Saving...',
 
   ERROR: {
-    FIELD_REQUIRED: 'This field is required'
+    FIELD_REQUIRED: 'This field is required',
+    LOAD_ERROR: 'An error occurred while loading the form',
+    SAVE_ERROR: 'An error occurred while saving the form'
   },
+
+  SAVE_SUCCESS: 'The form was saved successfully',
 
   USER_TOKEN: {
     MESSAGES: {

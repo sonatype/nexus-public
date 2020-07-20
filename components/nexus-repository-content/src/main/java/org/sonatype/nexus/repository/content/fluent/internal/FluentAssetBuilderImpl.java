@@ -61,14 +61,14 @@ public class FluentAssetBuilderImpl
   @Override
   public FluentAsset getOrCreate() {
     return new FluentAssetImpl(facet,
-        facet.stores().assetStore.readAsset(facet.contentRepositoryId(), path)
+        facet.stores().assetStore.readPath(facet.contentRepositoryId(), path)
         .orElseGet(this::createAsset));
   }
 
   @Override
   public Optional<FluentAsset> find() {
     return facet.stores().assetStore
-        .readAsset(facet.contentRepositoryId(), path)
+        .readPath(facet.contentRepositoryId(), path)
         .map(asset -> new FluentAssetImpl(facet, asset));
   }
 

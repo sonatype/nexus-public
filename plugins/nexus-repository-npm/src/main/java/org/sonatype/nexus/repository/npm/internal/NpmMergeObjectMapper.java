@@ -28,7 +28,6 @@ import org.sonatype.nexus.repository.json.SourceMapDeserializer;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.std.MapDeserializer;
-import com.fasterxml.jackson.databind.deser.std.StdValueInstantiator;
 
 import static com.google.common.collect.Maps.newHashMap;
 import static java.util.Objects.isNull;
@@ -105,10 +104,8 @@ public class NpmMergeObjectMapper
                              final DeserializationContext context,
                              final MapDeserializer rootDeserializer) throws IOException
   {
-    StdValueInstantiator instantiator = (StdValueInstantiator) rootDeserializer.getValueInstantiator();
-
     SourceMapDeserializer.of(rootDeserializer.getValueType(),
-        new NestedAttributesMapStdValueInstantiator(instantiator, parser.getRoot()),
+        new NestedAttributesMapStdValueInstantiator(parser.getRoot()),
         new NpmNestedAttributesMapUntypedObjectDeserializer(parser))
         .deserialize(parser, context);
   }

@@ -90,10 +90,10 @@ public class PurgeUnusedIT
   @Test
   public void shouldPurgeUnusedAssets() {
     assertThat(browseAssets(), iterableWithSize(0));
-    createAssetWithLastDownloadedDate("3days", OffsetDateTime.now().minusDays(3));
-    createAssetWithLastDownloadedDate("2days", OffsetDateTime.now().minusDays(2));
-    createAssetWithLastDownloadedDate("1day", OffsetDateTime.now().minusDays(1));
-    createAssetWithLastDownloadedDate("0day", OffsetDateTime.now());
+    createAssetWithLastDownloadedDate("/3days", OffsetDateTime.now().minusDays(3));
+    createAssetWithLastDownloadedDate("/2days", OffsetDateTime.now().minusDays(2));
+    createAssetWithLastDownloadedDate("/1day", OffsetDateTime.now().minusDays(1));
+    createAssetWithLastDownloadedDate("/0day", OffsetDateTime.now());
     assertThat(browseAssets(), iterableWithSize(4));
 
     repository.facet(PurgeUnusedFacet.class).purgeUnused(2);
@@ -102,8 +102,8 @@ public class PurgeUnusedIT
     assertThat(assets, iterableWithSize(2));
     assertThat(assets,
         hasItems(
-            path(equalTo("0day")),
-            path(equalTo("1day"))
+            path(equalTo("/0day")),
+            path(equalTo("/1day"))
         ));
   }
 
@@ -111,10 +111,10 @@ public class PurgeUnusedIT
   public void shouldPurgeUnusedComponents() {
     assertThat(browseComponents(), iterableWithSize(0));
     assertThat(browseAssets(), iterableWithSize(0));
-    createComponentWithAssetLastDownloadedDate("3days", OffsetDateTime.now().minusDays(3));
-    createComponentWithAssetLastDownloadedDate("2days", OffsetDateTime.now().minusDays(2));
-    createComponentWithAssetLastDownloadedDate("1day", OffsetDateTime.now().minusDays(1));
-    createComponentWithAssetLastDownloadedDate("0day", OffsetDateTime.now());
+    createComponentWithAssetLastDownloadedDate("/3days", OffsetDateTime.now().minusDays(3));
+    createComponentWithAssetLastDownloadedDate("/2days", OffsetDateTime.now().minusDays(2));
+    createComponentWithAssetLastDownloadedDate("/1day", OffsetDateTime.now().minusDays(1));
+    createComponentWithAssetLastDownloadedDate("/0day", OffsetDateTime.now());
     assertThat(browseComponents(), iterableWithSize(4));
     assertThat(browseAssets(), iterableWithSize(4));
 
@@ -124,16 +124,16 @@ public class PurgeUnusedIT
     assertThat(components, iterableWithSize(2));
     assertThat(components,
         hasItems(
-            name(equalTo("0day")),
-            name(equalTo("1day"))
+            name(equalTo("/0day")),
+            name(equalTo("/1day"))
         ));
 
     Continuation<FluentAsset> assets = browseAssets();
     assertThat(assets, iterableWithSize(2));
     assertThat(assets,
         hasItems(
-            path(equalTo("0day0")),
-            path(equalTo("1day0"))
+            path(equalTo("/0day0")),
+            path(equalTo("/1day0"))
         ));
   }
 
@@ -142,8 +142,8 @@ public class PurgeUnusedIT
     assertThat(browseComponents(), iterableWithSize(0));
     assertThat(browseAssets(), iterableWithSize(0));
     OffsetDateTime now = OffsetDateTime.now();
-    createComponentWithAssetLastDownloadedDate("0day-3days", now, now.minusDays(3));
-    createComponentWithAssetLastDownloadedDate("2day-3days", now.minusDays(2), now.minusDays(2));
+    createComponentWithAssetLastDownloadedDate("/0day-3days", now, now.minusDays(3));
+    createComponentWithAssetLastDownloadedDate("/2day-3days", now.minusDays(2), now.minusDays(2));
     assertThat(browseComponents(), iterableWithSize(2));
     assertThat(browseAssets(), iterableWithSize(4));
 
@@ -151,14 +151,14 @@ public class PurgeUnusedIT
 
     Continuation<FluentComponent> components = browseComponents();
     assertThat(components, iterableWithSize(1));
-    assertThat(components, hasItems(name(equalTo("0day-3days"))));
+    assertThat(components, hasItems(name(equalTo("/0day-3days"))));
 
     Continuation<FluentAsset> assets = browseAssets();
     assertThat(assets, iterableWithSize(2));
     assertThat(assets,
         hasItems(
-            path(equalTo("0day-3days0")),
-            path(equalTo("0day-3days1"))
+            path(equalTo("/0day-3days0")),
+            path(equalTo("/0day-3days1"))
         ));
   }
 
@@ -193,7 +193,7 @@ public class PurgeUnusedIT
     componentStore.createComponent(componentData);
 
     Optional<Component> maybeComponent =
-        componentStore.readComponent(contentFacet.contentRepositoryId(), NAMESPACE, name, VERSION);
+        componentStore.readCoordinate(contentFacet.contentRepositoryId(), NAMESPACE, name, VERSION);
     assertThat(maybeComponent.isPresent(), is(true));
     Component component = maybeComponent.get();
 

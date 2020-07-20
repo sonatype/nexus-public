@@ -71,7 +71,7 @@ public final class NpmJsonUtils
   public static NestedAttributesMap parse(final Supplier<InputStream> streamSupplier) throws IOException {
     try {
       final Map<String, Object> backing =
-          mapper.<Map<String, Object>>readValue(streamSupplier.get(), rawMapJsonTypeRef);
+          mapper.<HashMap<String, Object>>readValue(streamSupplier.get(), rawMapJsonTypeRef);
       return new NestedAttributesMap(String.valueOf(backing.get(NpmMetadataUtils.NAME)), backing);
     }
     catch (JsonParseException e) {
@@ -79,7 +79,7 @@ public final class NpmJsonUtils
       if (e.getMessage().contains("Invalid UTF-8")) {
         // try again, but assume ISO8859-1 encoding now, that is illegal for JSON
         final Map<String, Object> backing =
-            mapper.<Map<String, Object>>readValue(
+            mapper.<HashMap<String, Object>>readValue(
                 new InputStreamReader(streamSupplier.get(), StandardCharsets.ISO_8859_1),
                 rawMapJsonTypeRef
             );

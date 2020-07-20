@@ -17,27 +17,27 @@ import React from 'react';
 import './Textfield.scss';
 
 import FieldErrorMessage from '../FieldErrorMessage/FieldErrorMessage';
+import {hasValidationErrors, getFirstValidationError} from '@sonatype/react-shared-components/util/validationUtil';
 
 /**
  * @since 3.21
  */
-export default function Textfield({id, name, value, onChange, isRequired, className, isValid = true, validityMessage, ...attrs}) {
-  const isMissingRequiredValue = isRequired && !value;
+export default function Textfield({id, name, value, onChange, className, validationErrors, ...attrs}) {
+  const isInvalid = hasValidationErrors(validationErrors);
   const classes = classNames('nxrm-textfield', className, {
-    'missing-required-value': isMissingRequiredValue
+    'invalid': isInvalid
   });
   return <>
     <input
         id={id || name}
         name={name}
         type='text'
-        required={isRequired}
         value={value}
         onChange={onChange}
         className={classes}
         {...attrs}
     />
-    {isMissingRequiredValue ? <FieldErrorMessage/> : (!isValid ? <FieldErrorMessage message={validityMessage}/> : null)}
+    {isInvalid ? <FieldErrorMessage message={getFirstValidationError(validationErrors)}/> : null}
   </>;
 }
 
@@ -45,5 +45,5 @@ Textfield.propTypes = {
   name: PropTypes.string,
   value: PropTypes.string,
   onChange: PropTypes.func,
-  isRequired: PropTypes.bool
+  validationErrors: PropTypes.oneOfType([PropTypes.string, PropTypes.array])
 };

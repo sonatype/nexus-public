@@ -28,6 +28,8 @@ import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.inject.assistedinject.Assisted;
 
+import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
+
 /**
  * {@link Component} store.
  *
@@ -129,6 +131,17 @@ public class ComponentStore<T extends ComponentDAO>
   /**
    * Retrieves a component from the content data store.
    *
+   * @param componentId the internal id of the component
+   * @return component if it was found
+   */
+  @Transactional
+  public Optional<Component> readComponent(final int componentId) {
+    return dao().readComponent(componentId);
+  }
+
+  /**
+   * Retrieves a component located at the given coordinate in the content data store.
+   *
    * @param repositoryId the repository containing the component
    * @param namespace the namespace of the component
    * @param name the name of the component
@@ -136,12 +149,12 @@ public class ComponentStore<T extends ComponentDAO>
    * @return component if it was found
    */
   @Transactional
-  public Optional<Component> readComponent(final int repositoryId,
-                                           final String namespace,
-                                           final String name,
-                                           final String version)
+  public Optional<Component> readCoordinate(final int repositoryId,
+                                            final String namespace,
+                                            final String name,
+                                            final String version)
   {
-    return dao().readComponent(repositoryId, namespace, name, version);
+    return dao().readCoordinate(repositoryId, namespace, name, version);
   }
 
   /**
@@ -210,6 +223,7 @@ public class ComponentStore<T extends ComponentDAO>
       tx.commit();
       deleted = true;
       tx.begin();
+      checkCancellation();
     }
     log.debug("Deleted all components in repository {}", repositoryId);
     return deleted;

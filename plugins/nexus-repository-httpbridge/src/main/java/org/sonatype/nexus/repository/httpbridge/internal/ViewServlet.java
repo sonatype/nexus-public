@@ -45,6 +45,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HttpHeaders;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.shiro.authz.AuthorizationException;
 import org.jboss.logging.MDC;
 import org.slf4j.Logger;
@@ -231,8 +232,9 @@ public class ViewServlet
 
   @VisibleForTesting
   Response describe(final Request request, final Response response, final Exception exception, final String flags) {
-    final Description description = new Description(ImmutableMap.<String, Object>of(
-        "path", request.getPath(),
+    final Description description = new Description(ImmutableMap.of(
+        // placeholder for the describeHtml.vm
+        "path", StringEscapeUtils.escapeHtml(request.getPath()),
         "nexusUrl", BaseUrlHolder.get()
     ));
     if (exception != null) {

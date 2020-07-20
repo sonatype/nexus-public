@@ -65,6 +65,17 @@ public interface OrientPyPiHostedFacet
   Asset upload(String filename, Map<String, String> attributes, TempBlobPartPayload payload) throws IOException;
 
   /**
+   * Perform a signature file upload
+   *
+   * @since 3.next
+   * @param name the package name
+   * @param version the package version
+   * @param payload uploaded file content
+   * @return the asset content
+   */
+  Content uploadSignature(final String name, final String version, final TempBlobPartPayload payload);
+
+  /**
    * Perform package and gpgSignature (if set) upload
    * @param pyPiPackage A PyPi package which may have a gpgSignature
    * @return the created/updated asset which represents the PyPi package wheel file

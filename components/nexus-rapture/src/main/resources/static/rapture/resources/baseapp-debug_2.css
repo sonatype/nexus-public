@@ -1,18 +1,4 @@
 
-.x-tab-focus .x-tab-default-top-mc {
-    background-repeat: repeat-x;
-    background-image: url(images/tab/tab-default-top-focus-fbg.gif);
-}
-
-.x-tab-focus.x-tab-over .x-tab-default-top-tl,
-.x-tab-focus.x-tab-over .x-tab-default-top-bl,
-.x-tab-focus.x-tab-over .x-tab-default-top-tr,
-.x-tab-focus.x-tab-over .x-tab-default-top-br,
-.x-tab-focus.x-tab-over .x-tab-default-top-tc,
-.x-tab-focus.x-tab-over .x-tab-default-top-bc {
-    background-image: url(images/tab/tab-default-top-focus-over-corners.gif);
-}
-
 .x-tab-focus.x-tab-over .x-tab-default-top-ml,
 .x-tab-focus.x-tab-over .x-tab-default-top-mr {
     background-image: url(images/tab/tab-default-top-focus-over-sides.gif);
@@ -4677,38 +4663,6 @@
 
 .x-rtl.x-column-header-last .x-column-header-over .x-column-header-trigger {
     border-left: 1px solid #c2c2c2;
-}
-
-.x-group-header {
-    border-right-width: 0;
-}
-
-.x-group-header:after {
-    content: '';
-    width: 1px;
-    height: 100%;
-    background: #c2c2c2;
-    position: absolute;
-    right: 0;
-    top: 0;
-}
-
-.x-rtl.x-group-header {
-    border-left-width: 0;
-}
-
-.x-rtl.x-group-header:before {
-    content: '';
-    width: 1px;
-    height: 100%;
-    background: #c2c2c2;
-    position: absolute;
-    left: 0;
-    top: 0;
-}
-
-.x-rtl.x-group-header:after {
-    width: 0;
 }
 
 .x-resizable-handle {
@@ -15035,4 +14989,52 @@ fieldset.x-fieldset {
 
 .fa-book-reader:before {
     content: '\f5da' !important;
+}
+
+.fa-bookmark:before {
+    content: '\f02e' !important;
+}
+
+.fa-bowling-ball:before {
+    content: '\f436' !important;
+}
+
+.fa-box:before {
+    content: '\f466' !important;
+}
+
+.fa-box-open:before {
+    content: '\f49e' !important;
+}
+
+.fa-boxes:before {
+    content: '\f468' !important;
+}
+
+.fa-braille:before {
+    content: '\f2a1' !important;
+}
+
+.fa-brain:before {
+    content: '\f5dc' !important;
+}
+
+.fa-briefcase:before {
+    content: '\f0b1' !important;
+}
+
+.fa-briefcase-medical:before {
+    content: '\f469' !important;
+}
+
+.fa-broadcast-tower:before {
+    content: '\f519' !important;
+}
+
+.fa-broom:before {
+    content: '\f51a' !important;
+}
+
+.fa-brush:before {
+    content: '\f55d' !important;
 }

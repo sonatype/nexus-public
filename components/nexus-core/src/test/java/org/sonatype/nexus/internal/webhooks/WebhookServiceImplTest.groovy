@@ -97,11 +97,11 @@ class WebhookServiceImplTest
 
     def post = postCaptor.getValue()
 
-    def expectedPayload = '{\"timestamp\":\"2016-08-18T18:18:30.326+0000\",\"nodeId\":\"nodeId\",' +
+    def expectedPayload = '{\"timestamp\":\"2016-08-18T18:18:30.326+00:00\",\"nodeId\":\"nodeId\",' +
         '\"initiator\":\"initiator\",\"action\":\"CREATED\",\"repository\":{\"format\":\"format\",\"name\":\"name\",' +
         '\"type\":\"value\"}}'
     assertThat(EntityUtils.toString(post.entity), equalTo(expectedPayload))
     assertThat(post.getFirstHeader('X-Nexus-Webhook-Signature').value,
-        equalTo('ebdbc210481ddb04ca57444bc377509fc3cbbd58'))
+        equalTo('918cb6e16fcf197f2c3df5af2cf41b20974ec8a2'))
   }
 }

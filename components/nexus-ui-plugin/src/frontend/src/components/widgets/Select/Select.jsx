@@ -17,24 +17,25 @@ import './Select.scss';
 import FieldErrorMessage from "../FieldErrorMessage/FieldErrorMessage";
 import PropTypes from "prop-types";
 import Textfield from "../Textfield/Textfield";
+import {getFirstValidationError, hasValidationErrors} from "@sonatype/react-shared-components/util/validationUtil";
 
 /**
  * @since 3.21
  */
-export default function Select({isRequired, value, children, className, name, id, ...rest}) {
-  const isMissingRequiredValue = isRequired && !value;
+export default function Select({value, children, className, name, id, validationErrors, ...rest}) {
+  const isInvalid = hasValidationErrors(validationErrors);
   const classes = classNames('nxrm-select', className, {
-    'missing-required-value': isMissingRequiredValue
+    'invalid': isInvalid
   });
 
   return <>
-    <select id={id || name} name={name} required={isRequired} className={classes} value={value} {...rest}>
+    <select id={id || name} name={name} className={classes} value={value} {...rest}>
       {children}
     </select>
-    {isMissingRequiredValue ? <FieldErrorMessage/> : null}
+    {isInvalid ? <FieldErrorMessage message={getFirstValidationError(validationErrors)}/> : null}
   </>;
 }
 
-Textfield.propTypes = {
-  isRequired: PropTypes.bool
+Select.propTypes = {
+  validationErrors: PropTypes.oneOfType([PropTypes.string, PropTypes.array])
 };

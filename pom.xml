@@ -874,6 +874,7 @@
               <id>javax.annotation-api</id>
               <id>jboss-annotations-api_1.1_spec</id>
               <id>jboss-annotations-api_1.2_spec</id>
+              <id>jboss-annotations-api_1.3_spec</id>
               <id>javax.inject</id>
               <id>aopalliance</id>
               <id>javax.ws.rs</id>
@@ -913,8 +914,10 @@
               <id>resteasy-jackson2-provider</id>
               <id>resteasy-jaxb-provider</id>
               <id>resteasy-multipart-provider</id>
-              <id>resteasy-validator-provider-11</id>
+              <id>resteasy-validator-provider</id>
               <id>resteasy-client</id>
+              <id>jackson-coreutils</id>
+              <id>json-patch</id>
               <id>swagger-core</id>
               <id>swagger-jaxrs</id>
             </excludedArtifactIds>

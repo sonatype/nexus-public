@@ -10,8 +10,8 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import {act} from 'react-dom/test-utils';
-import {render} from '@testing-library/react';
+import {fireEvent, render, wait} from '@testing-library/react';
+import UIStrings from '../constants/UIStrings';
 
 /**
  * @since 3.24
@@ -23,6 +23,17 @@ export default class Utils {
     return {
       ...selectors,
       loadingMask: () => queryByText('Loading…'),
+      savingMask: () => queryByText(UIStrings.SAVING),
       ...extraSelectors(selectors)};
+  }
+
+  static async changeField(fieldSelector, value) {
+    fireEvent.change(fieldSelector(), {
+      target: {
+        name: fieldSelector().name,
+        value
+      }
+    });
+    await wait(() => expect(fieldSelector()).toHaveValue(value));
   }
 }

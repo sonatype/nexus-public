@@ -522,7 +522,7 @@ public class JsonParserDecorator
   }
 
   @Override
-  public <T> Iterator<T> readValuesAs(final TypeReference<?> valueTypeRef) throws IOException {
+  public <T> Iterator<T> readValuesAs(final TypeReference<T> valueTypeRef) throws IOException {
     return jsonParser.readValuesAs(valueTypeRef);
   }
 

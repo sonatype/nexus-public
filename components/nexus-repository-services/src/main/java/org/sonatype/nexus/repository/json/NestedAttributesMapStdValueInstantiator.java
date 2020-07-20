@@ -12,10 +12,13 @@
  */
 package org.sonatype.nexus.repository.json;
 
+import java.util.HashMap;
+
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.deser.ValueInstantiator;
 import com.fasterxml.jackson.databind.deser.std.StdValueInstantiator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -28,12 +31,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.16
  */
 public class NestedAttributesMapStdValueInstantiator
-    extends StdValueInstantiator
+    extends ValueInstantiator.Base
+    implements java.io.Serializable
 {
   private final NestedAttributesMap root;
 
-  public NestedAttributesMapStdValueInstantiator(final StdValueInstantiator src, final NestedAttributesMap root) {
-    super(checkNotNull(src));
+  public NestedAttributesMapStdValueInstantiator(final NestedAttributesMap root) {
+    super(HashMap.class);
     this.root = checkNotNull(root);
   }
 
@@ -43,5 +47,15 @@ public class NestedAttributesMapStdValueInstantiator
   @Override
   public Object createUsingDefault(final DeserializationContext context) {
     return root.backing();
+  }
+
+  @Override
+  public boolean canInstantiate() {
+    return true;
+  }
+
+  @Override
+  public boolean canCreateUsingDefault() {
+    return true;
   }
 }

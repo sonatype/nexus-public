@@ -12,9 +12,12 @@
  */
 package org.sonatype.nexus.repository.content.fluent;
 
+import java.util.Optional;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.content.Asset;
 
 /**
@@ -50,4 +53,11 @@ public interface FluentAssets
    * Browse through all assets in the repository by kind.
    */
   Continuation<FluentAsset> browse(@Nullable String kind, int limit, @Nullable String continuationToken);
+
+  /**
+   * Find if an asset exists that has the given external id.
+   *
+   * @since 3.next
+   */
+  Optional<FluentAsset> find(EntityId externalId);
 }

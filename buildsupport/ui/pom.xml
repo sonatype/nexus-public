@@ -34,7 +34,7 @@
         <artifactId>ext</artifactId>
         <classifier>commercial</classifier>
         <type>zip</type>
-        <version>7.2.0</version>
+        <version>7.0</version>
       </dependency>
 
       <dependency>

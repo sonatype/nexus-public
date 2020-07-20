@@ -167,7 +167,7 @@ describe('AnonymousSettings', () => {
     fireEvent.change(userIdField(), {target: {value: 'anonymous'}})
     await wait(() => expect(userIdField()).toHaveValue('anonymous'));
 
-    expect(window.dirty).toEqual(['AnonymousSettings']);
+    expect(window.dirty).toEqual(['AnonymousSettingsForm']);
 
     fireEvent.click(discardButton());
 

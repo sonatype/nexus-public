@@ -95,6 +95,10 @@
   </insert>
 
   <select id="readComponent" resultType="ComponentData">
+    SELECT * FROM ${format}_component WHERE <include refid="componentMatch"/>;
+  </select>
+
+  <select id="readCoordinate" resultType="ComponentData">
     SELECT * FROM ${format}_component WHERE <include refid="componentCoordinateMatch"/>;
   </select>
 

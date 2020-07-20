@@ -73,7 +73,7 @@
 <div class="nexus-header">
   <a href="$nexusUrl">
     <div class="product-logo">
-      <img src="$nexusUrl/static/images/nexus.png?$urlSuffix" alt="Product logo"/>
+      <img src="$nexusUrl/static/rapture/resources/icons/x32/nexus-white.png?$urlSuffix" alt="Product logo"/>
     </div>
     <div class="product-id">
       <div class="product-id__line-1">

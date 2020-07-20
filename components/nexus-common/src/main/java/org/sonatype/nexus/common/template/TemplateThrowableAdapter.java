@@ -13,6 +13,7 @@
 package org.sonatype.nexus.common.template;
 
 import com.google.common.base.Throwables;
+import org.apache.commons.lang.StringEscapeUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -43,11 +44,11 @@ public class TemplateThrowableAdapter
   }
 
   public String getMessage() {
-    return cause.getMessage();
+    return StringEscapeUtils.escapeHtml(cause.getMessage());
   }
 
   public String getTrace() {
-    return Throwables.getStackTraceAsString(cause);
+    return StringEscapeUtils.escapeHtml(Throwables.getStackTraceAsString(cause));
   }
 
   public String toString() {

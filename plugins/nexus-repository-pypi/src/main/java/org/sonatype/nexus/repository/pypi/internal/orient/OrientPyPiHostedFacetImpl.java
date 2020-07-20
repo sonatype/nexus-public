@@ -243,6 +243,16 @@ public class OrientPyPiHostedFacetImpl
     return savePyPiWheelPayload(filename, attributes, payload);
   }
 
+  @TransactionalStoreBlob
+  @Override
+  public Content uploadSignature(
+      final String name,
+      final String version,
+      final TempBlobPartPayload payload)
+  {
+    return storeGpgSignaturePayload(payload, name, version);
+  }
+
   protected Asset savePyPiWheelPayload(
       final String filename,
       final Map<String, String> attributes,
@@ -379,19 +389,26 @@ public class OrientPyPiHostedFacetImpl
     return savePyPiWheelPayload(wheelFileName, attributes, wheelPayload);
   }
 
-  protected void storeGpgSignaturePayload(final TempBlobPartPayload gpgPayload,
-                                          final Map<String, String> attributes)
+  protected Content storeGpgSignaturePayload(
+      final TempBlobPartPayload gpgPayload,
+      final Map<String, String> attributes)
+  {
+    return storeGpgSignaturePayload(gpgPayload, attributes.get(P_NAME), attributes.get(P_VERSION));
+  }
+
+  protected Content storeGpgSignaturePayload(final TempBlobPartPayload gpgPayload,
+                                             final String name,
+                                             final String version)
   {
     if (gpgPayload != null) {
-      String name = attributes.get(P_NAME);
-      String version = attributes.get(P_VERSION);
       StorageTx tx = UnitOfWork.currentTx();
 
-      Optional.ofNullable(findComponent(tx, getRepository(), normalizeName(name), version))
+      return Optional.ofNullable(findComponent(tx, getRepository(), normalizeName(name), version))
           .map(component -> createGpgSignatureAsset(gpgPayload.getName(), name, version, component, tx))
           .map(asset -> saveGpgSignatureAsset(tx, asset, gpgPayload))
           .orElseThrow(() -> new IllegalStateException(String.format("Component %s/%s not found.", name, version)));
     }
+    return null;
   }
 
   private Asset createGpgSignatureAsset(

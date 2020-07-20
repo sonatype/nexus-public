@@ -28,7 +28,15 @@ public interface ComponentAssetTestHelper
    * @param repository the containing repository
    * @param path the path of the asset
    */
-  DateTime getCreatedTime(Repository repository, String path);
+  DateTime getBlobCreatedTime(Repository repository, String path);
+
+  /**
+   * Get the created time of the the asset at the path in the given repository.
+   *
+   * @param repository the containing repository
+   * @param path the path of the asset
+   */
+  DateTime getAssetCreatedTime(Repository repository, String path);
 
   /**
    * Get the updated time of the blob associated with the asset at the path in the given repository.

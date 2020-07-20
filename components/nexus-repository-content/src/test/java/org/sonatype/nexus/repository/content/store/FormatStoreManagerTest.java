@@ -151,7 +151,7 @@ public class FormatStoreManagerTest
     asset.setAssetBlob(assetBlob);
     assetStore.updateAssetBlobLink(asset);
 
-    Optional<Asset> result = assetStore.readAsset(repository.repositoryId, "/path/to/asset");
+    Optional<Asset> result = assetStore.readPath(repository.repositoryId, "/path/to/asset");
     assertThat(result.get().component().get().name(), is("testComponent"));
     assertThat(result.get().blob().get().blobRef().getBlob(), is("testBlob"));
   }

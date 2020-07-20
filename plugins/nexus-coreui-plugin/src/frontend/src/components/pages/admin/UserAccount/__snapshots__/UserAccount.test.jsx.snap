@@ -59,6 +59,7 @@ exports[`UserAccount renders correctly 1`] = `
           </label>
           <input
             class="nxrm-textfield"
+            disabled=""
             id="userId"
             name="userId"
             readonly=""
@@ -152,10 +153,9 @@ exports[`UserAccount renders correctly 1`] = `
             Current Password
           </label>
           <input
-            class="nxrm-textfield missing-required-value"
+            class="nxrm-textfield invalid"
             id="passwordCurrent"
             name="passwordCurrent"
-            required=""
             type="password"
             value=""
           />
@@ -197,10 +197,9 @@ exports[`UserAccount renders correctly 1`] = `
             New Password
           </label>
           <input
-            class="nxrm-textfield missing-required-value"
+            class="nxrm-textfield invalid"
             id="passwordNew"
             name="passwordNew"
-            required=""
             type="password"
             value=""
           />
@@ -242,10 +241,9 @@ exports[`UserAccount renders correctly 1`] = `
             New Password (Confirm)
           </label>
           <input
-            class="nxrm-textfield missing-required-value"
+            class="nxrm-textfield invalid"
             id="passwordNewConfirm"
             name="passwordNewConfirm"
-            required=""
             type="password"
             value=""
           />
