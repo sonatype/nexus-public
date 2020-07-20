@@ -404,13 +404,14 @@ public abstract class ProxyFacetSupport
 
   protected Content fetch(String url, Context context, @Nullable Content stale) throws IOException {
     HttpClient client = httpClient.getHttpClient();
+    String normalizedUrl = url.replaceAll(":", "%3A");
 
     checkState(config.remoteUrl.isAbsolute(),
         "Invalid remote URL '%s' for proxy repository %s, please fix your configuration", config.remoteUrl,
         getRepository().getName());
     URI uri;
     try {
-      uri = config.remoteUrl.resolve(url);
+      uri = config.remoteUrl.resolve(normalizedUrl);
     }
     catch (IllegalArgumentException e) { // NOSONAR
       log.warn("Unable to resolve url. Reason: {}", e.getMessage());
