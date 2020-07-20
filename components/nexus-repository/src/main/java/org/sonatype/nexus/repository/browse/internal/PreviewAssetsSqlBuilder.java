@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.nexus.repository.browse.QueryOptions;
+import org.sonatype.nexus.repository.query.QueryOptions;
 import org.sonatype.nexus.repository.security.RepositorySelector;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -72,6 +72,6 @@ public class PreviewAssetsSqlBuilder
 
   private String buildJexlExpression() {
     //posted question here, http://www.prjhub.com/#/issues/7476 as why we can't just have orients bulit in escaping for double quotes
-    return jexlExpression.replaceAll("\"", "'").replaceAll("\\s", " ");
+    return jexlExpression.replace("\"", "'").replaceAll("\\s", " ");
   }
 }

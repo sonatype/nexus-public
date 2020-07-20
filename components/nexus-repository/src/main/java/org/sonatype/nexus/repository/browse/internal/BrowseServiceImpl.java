@@ -34,11 +34,11 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.orient.entity.AttachedEntityHelper;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
-import org.sonatype.nexus.repository.browse.BrowseResult;
 import org.sonatype.nexus.repository.browse.BrowseService;
-import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.query.PageResult;
+import org.sonatype.nexus.repository.query.QueryOptions;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositorySelector;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
@@ -127,7 +127,7 @@ public class BrowseServiceImpl
   }
 
   @Override
-  public BrowseResult<Component> browseComponents(final Repository repository,
+  public PageResult<Component> browseComponents(final Repository repository,
                                                   final QueryOptions queryOptions)
   {
     checkNotNull(repository);
@@ -142,7 +142,7 @@ public class BrowseServiceImpl
             browseComponentsSqlBuilder.buildBrowseSql(bucketIds, queryOptions),
             browseComponentsSqlBuilder.buildSqlParams(repository.getName(), queryOptions)));
       }
-      return new BrowseResult<>(queryOptions, components);
+      return new PageResult<>(queryOptions, components);
     }
   }
 
@@ -156,7 +156,7 @@ public class BrowseServiceImpl
   }
 
   @Override
-  public BrowseResult<Asset> browseComponentAssets(final Repository repository, final String componentId)
+  public PageResult<Asset> browseComponentAssets(final Repository repository, final String componentId)
   {
     checkNotNull(repository);
     checkNotNull(componentId);
@@ -164,14 +164,14 @@ public class BrowseServiceImpl
       storageTx.begin();
       Component component = storageTx.findComponent(new DetachedEntityId(componentId));
       if (component == null) {
-        return new BrowseResult<>(0, Collections.emptyList());
+        return new PageResult<>(0, Collections.emptyList());
       }
       return browseComponentAssetsHelper(storageTx, repository, component);
     }
   }
 
   @Override
-  public BrowseResult<Asset> browseComponentAssets(final Repository repository, final Component component)
+  public PageResult<Asset> browseComponentAssets(final Repository repository, final Component component)
   {
     checkNotNull(repository);
     checkNotNull(component);
@@ -181,7 +181,7 @@ public class BrowseServiceImpl
     }
   }
 
-  private BrowseResult<Asset> browseComponentAssetsHelper(StorageTx storageTx, Repository repository, Component component)
+  private PageResult<Asset> browseComponentAssetsHelper(StorageTx storageTx, Repository repository, Component component)
   {
     //As this method is only called when showing list of assets for a component in search results,
     //we also need to check parent group(s) of the repository in question, as search doesn't have a
@@ -197,11 +197,11 @@ public class BrowseServiceImpl
                 BreadActions.BROWSE,
                 assetVariableResolver.fromAsset(asset))
         ).collect(Collectors.toList());
-    return new BrowseResult<>(assets.size(), assets);
+    return new PageResult<>(assets.size(), assets);
   }
 
   @Override
-  public BrowseResult<Asset> browseAssets(final Repository repository,
+  public PageResult<Asset> browseAssets(final Repository repository,
                                           final QueryOptions queryOptions)
   {
     checkNotNull(repository);
@@ -215,7 +215,7 @@ public class BrowseServiceImpl
         assets = getAssets(browseAssetIterableFactory.create(
             storageTx.getDb(), queryOptions.getLastId(), repository.getName(), bucketIds, queryOptions.getLimit()));
       }
-      return new BrowseResult<>(queryOptions, assets);
+      return new PageResult<>(queryOptions, assets);
     }
   }
 
@@ -229,7 +229,7 @@ public class BrowseServiceImpl
   }
 
   @Override
-  public BrowseResult<Asset> previewAssets(final RepositorySelector repositorySelector,
+  public PageResult<Asset> previewAssets(final RepositorySelector repositorySelector,
                                            final List<Repository> repositories,
                                            final String jexlExpression,
                                            final QueryOptions queryOptions)
@@ -256,7 +256,7 @@ public class BrowseServiceImpl
       String whereClause = String.format("and (%s)", builder.buildWhereClause());
 
       //The whereClause is passed in as the querySuffix so that contentExpression will run after repository filtering
-      return new BrowseResult<>(
+      return new PageResult<>(
           storageTx.countAssets(null, builder.buildSqlParams(), previewRepositories, whereClause),
           Lists.newArrayList(storageTx.findAssets(null, builder.buildSqlParams(),
               previewRepositories, whereClause + builder.buildQuerySuffix()))

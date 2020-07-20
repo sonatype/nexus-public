@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.browse;
+package org.sonatype.nexus.repository.query;
 
 import java.util.Arrays;
 import java.util.List;
@@ -21,7 +21,7 @@ import javax.annotation.Nullable;
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
- * Data carrier with fields commonly used by SQL builders for the {@link BrowseService} implementation. Also does
+ * Query data carrier with fields commonly used when browsing through database and search results. Also does
  * a quick check on the sortProperty and sortDirection fields as defensive programming against SQL injection.
  *
  * @since 3.1

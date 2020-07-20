@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.sonatype.nexus.repository.browse.BrowseSqlBuilderSupport;
-import org.sonatype.nexus.repository.browse.QueryOptions;
+import org.sonatype.nexus.repository.query.QueryOptions;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.MetadataNode;

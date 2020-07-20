@@ -10,18 +10,18 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.browse;
+package org.sonatype.nexus.repository.query;
 
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Data carrier for {@link BrowseService} results, containing the results of a particular query.
+ * Data carrier for paged results, containing one page of a particular query.
  *
  * @since 3.1
  */
-public class BrowseResult<T>
+public class PageResult<T>
 {
   private long total;
 
@@ -31,12 +31,12 @@ public class BrowseResult<T>
    * @param total   The total result count.
    * @param results The results returned.
    */
-  public BrowseResult(final long total, final List<T> results) {
+  public PageResult(final long total, final List<T> results) {
     this.total = total;
     this.results = checkNotNull(results);
   }
 
-  public BrowseResult(final QueryOptions queryOptions, final List<T> results) {
+  public PageResult(final QueryOptions queryOptions, final List<T> results) {
     this(estimateCount(queryOptions, results), results);
   }
 

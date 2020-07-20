@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.coreui;
+package org.sonatype.nexus.coreui.internal.orient;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,14 +29,17 @@ import org.sonatype.nexus.common.entity.DetachedEntityVersion;
 import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityMetadata;
+import org.sonatype.nexus.coreui.AssetXO;
+import org.sonatype.nexus.coreui.ComponentComponent;
+import org.sonatype.nexus.coreui.ComponentXO;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters;
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters.Filter;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.browse.BrowseResult;
 import org.sonatype.nexus.repository.browse.BrowseService;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.query.PageResult;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
 import org.sonatype.nexus.repository.storage.Asset;
@@ -76,9 +79,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Tests {@link ComponentComponent}.
+ * Tests {@link OrientComponentHelper}.
  */
-public class ComponentComponentTest
+public class OrientComponentHelperTest
     extends TestSupport
 {
   @Mock
@@ -125,21 +128,30 @@ public class ComponentComponentTest
 
   private ObjectMapper objectMapper;
 
+  private OrientComponentHelper orientHelper;
+
   private ComponentComponent underTest;
 
   @Before
   public void setup() {
     objectMapper = new ObjectMapper();
+
+    orientHelper = new OrientComponentHelper();
+    orientHelper.setRepositoryManager(repositoryManager);
+    orientHelper.setContentPermissionChecker(contentPermissionChecker);
+    orientHelper.setVariableResolverAdapterManager(variableResolverAdapterManager);
+    orientHelper.setBrowseService(browseService);
+    orientHelper.setMaintenanceService(maintenanceService);
+    orientHelper.setComponentFinders(componentFinders);
+    orientHelper.setBucketStore(bucketStore);
+
     underTest = new ComponentComponent();
     underTest.setRepositoryManager(repositoryManager);
     underTest.setContentPermissionChecker(contentPermissionChecker);
     underTest.setVariableResolverAdapterManager(variableResolverAdapterManager);
-    underTest.setMaintenanceService(maintenanceService);
-    underTest.setBrowseService(browseService);
     underTest.setSelectorFactory(selectorFactory);
     underTest.setObjectMapper(objectMapper);
-    underTest.setComponentFinders(componentFinders);
-    underTest.setBucketStore(bucketStore);
+    underTest.setComponentHelper(orientHelper);
 
     when(repositoryManager.get("testRepositoryName")).thenReturn(repository);
     when(repository.getName()).thenReturn("testRepositoryName");
@@ -344,7 +356,7 @@ public class ComponentComponentTest
   @Test
   public void testPreviewAsset_jexl() {
     when(browseService.previewAssets(any(), any(), any(), any()))
-        .thenReturn(new BrowseResult<Asset>(0, Collections.emptyList()));
+        .thenReturn(new PageResult<Asset>(0, Collections.emptyList()));
     underTest.previewAssets(createParameters("jexl", "foo"));
 
     verify(selectorFactory).validateSelector("jexl", "foo");
@@ -353,7 +365,7 @@ public class ComponentComponentTest
   @Test
   public void testPreviewAsset_csel() {
     when(browseService.previewAssets(any(), any(), any(), any()))
-        .thenReturn(new BrowseResult<Asset>(0, Collections.emptyList()));
+        .thenReturn(new PageResult<Asset>(0, Collections.emptyList()));
     underTest.previewAssets(createParameters("csel", "foo"));
 
     verify(selectorFactory).validateSelector("csel", "foo");
@@ -389,7 +401,7 @@ public class ComponentComponentTest
   }
 
   private void deleteComponent(final Component component, final String repositoryName) {
-    ComponentXO componentXO = ComponentComponent.COMPONENT_CONVERTER(component, repositoryName);
+    ComponentXO componentXO = OrientComponentHelper.COMPONENT_CONVERTER(component, repositoryName);
     try {
       underTest.deleteComponent(objectMapper.writeValueAsString(componentXO));
     }

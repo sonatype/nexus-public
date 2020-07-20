@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.browse.internal;
 
-import org.sonatype.nexus.repository.browse.QueryOptions;
+import org.sonatype.nexus.repository.query.QueryOptions;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

@@ -26,10 +26,10 @@ import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.browse.BrowseResult;
-import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.query.PageResult;
+import org.sonatype.nexus.repository.query.QueryOptions;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositorySelector;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
@@ -217,7 +217,7 @@ public class BrowseServiceImplTest
     when(queryOptions.getLimit()).thenReturn(10);
     when(browseAssetIterableFactory.create(any(), any(), any(), any(), eq(10))).thenReturn(resultDocs);
 
-    BrowseResult<Asset> browseResult = underTest.browseAssets(mavenReleases, queryOptions);
+    PageResult<Asset> browseResult = underTest.browseAssets(mavenReleases, queryOptions);
     assertThat(browseResult.getTotal(), is(2L));
     assertThat(browseResult.getResults(), is(results));
   }
@@ -265,7 +265,7 @@ public class BrowseServiceImplTest
     when(storageTx.countAssets(NO_WHERE, expectedQueryParams, repositories, expectedCountQuerySuffix)).thenReturn(2L);
     when(storageTx.findAssets(NO_WHERE, expectedQueryParams, repositories, expectedFindQuerySuffix)).thenReturn(results);
 
-    BrowseResult<Asset> browseResult =
+    PageResult<Asset> browseResult =
         underTest.previewAssets(repositorySelector, repositories, "myExpression", queryOptions);
     assertThat(browseResult.getTotal(), is(2L));
     assertThat(browseResult.getResults(), is(results));
@@ -310,7 +310,7 @@ public class BrowseServiceImplTest
     when(storageTx.findAssets(NO_WHERE, expectedQueryParams, groupRepositoryLeafMembers, expectedFindQuerySuffix))
         .thenReturn(results);
 
-    BrowseResult<Asset> browseResult =
+    PageResult<Asset> browseResult =
         underTest.previewAssets(repositorySelector, repositories, "myExpression", queryOptions);
     assertThat(browseResult.getTotal(), is(57L));
     assertThat(browseResult.getResults(), is(results));
@@ -440,7 +440,7 @@ public class BrowseServiceImplTest
   @Test
   public void testBrowseComponentAssets_all_authorized() {
     setupMocksForBrowserComponentAssets(true, true);
-    BrowseResult<Asset> results = underTest.browseComponentAssets(mavenReleases, "componentOne");
+    PageResult<Asset> results = underTest.browseComponentAssets(mavenReleases, "componentOne");
 
     assertThat(results.getTotal(), is(2l));
     assertThat(results.getResults().get(0).name(), is(assetOne.name()));
@@ -450,7 +450,7 @@ public class BrowseServiceImplTest
   @Test
   public void testBrowseComponentAssets_not_all_authorized() {
     setupMocksForBrowserComponentAssets(false, true);
-    BrowseResult<Asset> results = underTest.browseComponentAssets(mavenReleases, "componentOne");
+    PageResult<Asset> results = underTest.browseComponentAssets(mavenReleases, "componentOne");
 
     assertThat(results.getTotal(), is(1l));
     assertThat(results.getResults().get(0).name(), is(assetTwo.name()));
@@ -459,7 +459,7 @@ public class BrowseServiceImplTest
   @Test
   public void testBrowseComponentAssets_none_authorized() {
     setupMocksForBrowserComponentAssets(false, false);
-    BrowseResult<Asset> results = underTest.browseComponentAssets(mavenReleases, "componentOne");
+    PageResult<Asset> results = underTest.browseComponentAssets(mavenReleases, "componentOne");
 
     assertThat(results.getTotal(), is(0l));
   }

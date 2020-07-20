@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.browse;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.orient.entity.EntityAdapter;
+import org.sonatype.nexus.repository.query.QueryOptions;
 
 import static org.sonatype.nexus.repository.browse.internal.SuffixSqlBuilder.buildSuffix;
 

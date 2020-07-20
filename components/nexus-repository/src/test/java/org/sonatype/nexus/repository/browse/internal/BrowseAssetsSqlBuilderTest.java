@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.browse.internal;
 import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.repository.browse.QueryOptions;
+import org.sonatype.nexus.repository.query.QueryOptions;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 
 import org.junit.Before;
