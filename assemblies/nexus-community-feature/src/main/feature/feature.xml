@@ -15,6 +15,6 @@
 -->
 <features xmlns="http://karaf.apache.org/xmlns/features/v1.2.1" name="${project.artifactId}">
   <feature name="${project.artifactId}">
-    <!-- community format features -->
+    <feature>nexus-repository-helm</feature>
   </feature>
 </features>

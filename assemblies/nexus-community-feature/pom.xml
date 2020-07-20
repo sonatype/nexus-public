@@ -27,11 +27,19 @@
   <packaging>feature</packaging>
 
   <properties>
-    <!-- community format versions -->
+    <helm.format.version>1.0.14</helm.format.version>
   </properties>
 
   <dependencies>
-    <!-- community format features -->
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-repository-helm</artifactId>
+      <version>${helm.format.version}</version>
+      <classifier>features</classifier>
+      <type>xml</type>
+    </dependency>
+
   </dependencies>
 
   <build>
