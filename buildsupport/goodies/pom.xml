@@ -66,6 +66,12 @@
 
       <dependency>
         <groupId>org.sonatype.goodies</groupId>
+        <artifactId>package-url-java</artifactId>
+        <version>1.1.1</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.goodies</groupId>
         <artifactId>goodies-testsupport</artifactId>
         <version>${goodies.version}</version>
       </dependency>

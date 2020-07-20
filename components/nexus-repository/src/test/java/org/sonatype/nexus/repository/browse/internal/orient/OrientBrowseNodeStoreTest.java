@@ -33,7 +33,6 @@ import org.sonatype.nexus.repository.browse.node.BrowseNodeFilter;
 import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.browse.node.DefaultBrowseNodeComparator;
 import org.sonatype.nexus.repository.group.GroupFacet;
-import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
@@ -120,9 +119,6 @@ public class OrientBrowseNodeStoreTest
   private SelectorConfiguration jexl;
 
   @Mock
-  private RepositoryManager repositoryManager;
-
-  @Mock
   private Repository repository;
 
   @Mock
@@ -175,11 +171,6 @@ public class OrientBrowseNodeStoreTest
     when(memberC.getName()).thenReturn(MEMBER_C);
     when(memberC.getFormat()).thenReturn(format);
 
-    when(repositoryManager.get(MEMBER_A)).thenReturn(memberA);
-    when(repositoryManager.get(MEMBER_B)).thenReturn(memberB);
-    when(repositoryManager.get(MEMBER_C)).thenReturn(memberC);
-    when(repositoryManager.get(REPOSITORY_NAME)).thenReturn(repository);
-
     when(byGroup.getType()).thenReturn(CselSelector.TYPE);
     when(byGroup.getAttributes()).thenReturn(ImmutableMap.of("expression", "coordinate.groupId == \"org.sonatype\""));
     when(byVersion.getType()).thenReturn(CselSelector.TYPE);
@@ -206,7 +197,6 @@ public class OrientBrowseNodeStoreTest
         securityHelper,
         selectorManager,
         new BrowseNodeConfiguration(true, 1000, DELETE_PAGE_SIZE, 10_000, 10_000),
-        repositoryManager,
         ImmutableMap.of(FORMAT_NAME, browseNodeFilter),
         ImmutableMap.of(),
         ImmutableMap.of(DefaultBrowseNodeComparator.NAME, new DefaultBrowseNodeComparator(new VersionComparator())));
@@ -253,7 +243,7 @@ public class OrientBrowseNodeStoreTest
 
     when(securityHelper.anyPermitted(any())).thenReturn(true);
 
-    underTest.getByPath(REPOSITORY_NAME, queryPath, MAX_NODES);
+    underTest.getByPath(repository, queryPath, MAX_NODES);
 
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(browseNodeEntityAdapter).getByPath(db, REPOSITORY_NAME, queryPath, MAX_NODES, "", emptyMap());
@@ -267,7 +257,7 @@ public class OrientBrowseNodeStoreTest
     when(securityHelper.anyPermitted(any())).thenReturn(false);
     when(selectorManager.browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME))).thenReturn(emptyList());
 
-    underTest.getByPath(REPOSITORY_NAME, queryPath, MAX_NODES);
+    underTest.getByPath(repository, queryPath, MAX_NODES);
 
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
@@ -281,7 +271,7 @@ public class OrientBrowseNodeStoreTest
     when(securityHelper.anyPermitted(any())).thenReturn(false);
     when(selectorManager.browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME))).thenReturn(asList(byGroup));
 
-    underTest.getByPath(REPOSITORY_NAME, queryPath, MAX_NODES);
+    underTest.getByPath(repository, queryPath, MAX_NODES);
 
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
@@ -299,7 +289,7 @@ public class OrientBrowseNodeStoreTest
     when(selectorManager.browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME)))
         .thenReturn(asList(byGroup, byVersion));
 
-    underTest.getByPath(REPOSITORY_NAME, queryPath, MAX_NODES);
+    underTest.getByPath(repository, queryPath, MAX_NODES);
 
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
@@ -319,7 +309,7 @@ public class OrientBrowseNodeStoreTest
     when(selectorManager.browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME)))
         .thenReturn(asList(byGroup, jexl, byVersion));
 
-    underTest.getByPath(REPOSITORY_NAME, queryPath, MAX_NODES);
+    underTest.getByPath(repository, queryPath, MAX_NODES);
 
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
@@ -339,7 +329,7 @@ public class OrientBrowseNodeStoreTest
     when(securityHelper.anyPermitted(any())).thenReturn(false);
     when(selectorManager.browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME))).thenReturn(asList(jexl));
 
-    underTest.getByPath(REPOSITORY_NAME, queryPath, MAX_NODES);
+    underTest.getByPath(repository, queryPath, MAX_NODES);
 
     verify(securityHelper).anyPermitted(any(RepositoryViewPermission.class));
     verify(selectorManager).browseActive(asList(REPOSITORY_NAME), asList(FORMAT_NAME));
@@ -365,7 +355,7 @@ public class OrientBrowseNodeStoreTest
     when(browseNodeEntityAdapter.getByPath(db, MEMBER_C, queryPath, MAX_NODES, "", emptyMap()))
         .thenReturn(asList(node(MEMBER_C, "com"), node(MEMBER_C, "javax")));
 
-    Iterable<BrowseNode> nodes = underTest.getByPath(REPOSITORY_NAME, queryPath, MAX_NODES);
+    Iterable<BrowseNode> nodes = underTest.getByPath(repository, queryPath, MAX_NODES);
 
     // check that duplicate nodes were removed, should follow a 'first-one-wins' approach
     assertThat(nodes, containsInAnyOrder(
@@ -397,7 +387,7 @@ public class OrientBrowseNodeStoreTest
     when(browseNodeEntityAdapter.getByPath(db, MEMBER_C, queryPath, 1, "", emptyMap()))
         .thenReturn(asList(node(MEMBER_C, "com")));
 
-    Iterable<BrowseNode> nodes = underTest.getByPath(REPOSITORY_NAME, queryPath, 1);
+    Iterable<BrowseNode> nodes = underTest.getByPath(repository, queryPath, 1);
 
     // check that the limit was correctly applied to the merged results
     assertThat(nodes, containsInAnyOrder(
@@ -417,7 +407,7 @@ public class OrientBrowseNodeStoreTest
     when(browseNodeEntityAdapter.getByPath(any(), any(), any(), anyInt(), any(), anyMap()))
         .thenReturn(ImmutableList.of(node(REPOSITORY_NAME, "foo")));
 
-    underTest.getByPath(REPOSITORY_NAME, queryPath, MAX_NODES);
+    underTest.getByPath(repository, queryPath, MAX_NODES);
 
     verify(browseNodeFilter).test(any(), eq(true));
   }
@@ -474,7 +464,6 @@ public class OrientBrowseNodeStoreTest
         securityHelper,
         selectorManager,
         new BrowseNodeConfiguration(true, 1000, DELETE_PAGE_SIZE, 10_000, 10_000),
-        repositoryManager,
         ImmutableMap.of(FORMAT_NAME, browseNodeFilter),
         ImmutableMap.of(),
         ImmutableMap.of(DefaultBrowseNodeComparator.NAME, new DefaultBrowseNodeComparator(new VersionComparator()), FORMAT_NAME, new TestComparator()));
@@ -492,7 +481,7 @@ public class OrientBrowseNodeStoreTest
   }
 
   private List<String> versions(final List<String> queryPath) {
-    return StreamSupport.stream(underTest.getByPath(REPOSITORY_NAME, queryPath, MAX_NODES).spliterator(), false)
+    return StreamSupport.stream(underTest.getByPath(repository, queryPath, MAX_NODES).spliterator(), false)
         .map(BrowseNode::getName).collect(toList());
   }
 

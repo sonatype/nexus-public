@@ -26,7 +26,6 @@ import org.sonatype.nexus.repository.browse.BrowsePaths;
 import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration;
 import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.browse.node.DefaultBrowseNodeComparator;
-import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.storage.Bucket;
@@ -69,9 +68,6 @@ public class OrientBrowseNodeStoreLoadTest
 
   @Mock
   private SelectorManager selectorManager;
-
-  @Mock
-  private RepositoryManager repositoryManager;
 
   private Bucket bucket;
 
@@ -131,7 +127,6 @@ public class OrientBrowseNodeStoreLoadTest
         securityHelper,
         selectorManager,
         configuration,
-        repositoryManager,
         new HashMap<>(),
         new HashMap<>(),
         ImmutableMap.of(DefaultBrowseNodeComparator.NAME, new DefaultBrowseNodeComparator(new VersionComparator())));

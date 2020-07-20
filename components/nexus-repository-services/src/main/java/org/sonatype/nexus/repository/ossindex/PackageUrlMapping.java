@@ -10,26 +10,26 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.browse.node;
+package org.sonatype.nexus.repository.ossindex;
 
-import java.util.List;
+import java.util.Optional;
 
-import org.sonatype.nexus.repository.Repository;
+import javax.annotation.Nullable;
+
+import org.sonatype.goodies.packageurl.PackageUrl;
 
 /**
- * Store providing access to the browse tree.
+ * Represents a format-specific mapping of components to {@link PackageUrl}s.
  *
- * @since 3.7
+ * All formats should implement this to get vulnerability information
+ * @see https://ossindex.sonatype.org/ecosystems
+ *
+ * @since 3.next
  */
-public interface BrowseNodeQueryService
+public interface PackageUrlMapping
 {
   /**
-   * Returns the {@link BrowseNode}s directly visible under the given path.
+   * Returns {@link PackageUrl} for the given component coordinates.
    */
-  Iterable<BrowseNode> getByPath(Repository repository, List<String> path, int maxNodes);
-
-  /**
-   * Converts {@link BrowseNode}s into {@link BrowseListItem}s for HTML browsing.
-   */
-  List<BrowseListItem> toListItems(Repository repository, Iterable<BrowseNode> nodes);
+  Optional<PackageUrl> buildPackageUrl(@Nullable String namespace, String name, @Nullable String version);
 }

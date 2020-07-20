@@ -102,7 +102,7 @@ public class DeleteFolderServiceImplTest
     when(repository.getName()).thenReturn("repo");
     when(repository.getFormat()).thenReturn(new Format("maven2") { });
     when(configuration.getMaxNodes()).thenReturn(1);
-    when(browseNodeQueryService.getByPath(repository.getName(), Arrays.asList("com", "sonatype"), 1)).thenReturn(browseNodes);
+    when(browseNodeQueryService.getByPath(repository, Arrays.asList("com", "sonatype"), 1)).thenReturn(browseNodes);
     when(variableResolverAdapterManager.get("maven2")).thenReturn(assetVariableResolver);
     when(assetVariableResolver.fromAsset(any(Asset.class))).thenReturn(variableSource);
     when(repository.facet(StorageFacet.class)).thenReturn(storageFacet);

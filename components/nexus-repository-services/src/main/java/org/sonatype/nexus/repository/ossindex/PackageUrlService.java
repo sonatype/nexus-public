@@ -12,18 +12,21 @@
  */
 package org.sonatype.nexus.repository.ossindex;
 
+import java.util.Optional;
+
+import org.sonatype.goodies.packageurl.PackageUrl;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.storage.Component;
 
 /**
+ * {@link PackageUrl} lookup service.
+ *
  * @since 3.next
  */
-public interface VulnerabilityService
+public interface PackageUrlService
 {
   /**
-   * @return true if the vulnerability service is enable and supports the given Repository format
+   * Returns {@link PackageUrl} for the given component, if it exists.
    */
-  boolean isEnabled(Repository repository);
-
-  VulnerabilityReportXO getVulnerabilityReport(Component component);
+  Optional<PackageUrl> getPackageUrl(Repository repository, EntityId componentId);
 }

@@ -12,10 +12,15 @@
  */
 package org.sonatype.nexus.repository.browse.internal.orient;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -30,9 +35,12 @@ import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.common.template.EscapeHelper;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.orient.DatabaseInstance;
+import org.sonatype.nexus.orient.entity.AttachedEntityId;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.browse.node.BrowseListItem;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.browse.node.BrowseNodeComparator;
 import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration;
@@ -42,10 +50,12 @@ import org.sonatype.nexus.repository.browse.node.BrowseNodeQueryService;
 import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.browse.node.DefaultBrowseNodeComparator;
 import org.sonatype.nexus.repository.group.GroupFacet;
-import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.security.RepositoryViewPermission;
 import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.BucketEntityAdapter;
 import org.sonatype.nexus.repository.storage.Component;
+import org.sonatype.nexus.repository.storage.StorageFacet;
+import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.storage.internal.ComponentSchemaRegistration;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.security.BreadActions;
@@ -55,10 +65,13 @@ import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorEvaluationException;
 import org.sonatype.nexus.selector.SelectorManager;
 import org.sonatype.nexus.selector.SelectorSqlBuilder;
+import org.sonatype.nexus.transaction.Transactional;
+import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.base.Equivalence;
 import com.google.common.base.Equivalence.Wrapper;
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -99,8 +112,6 @@ public class OrientBrowseNodeStore
 
   private final SelectorManager selectorManager;
 
-  private final RepositoryManager repositoryManager;
-
   private final Map<String, BrowseNodeFilter> browseNodeFilters;
 
   private final Map<String, BrowseNodeIdentity> browseNodeIdentities;
@@ -118,7 +129,6 @@ public class OrientBrowseNodeStore
       final SecurityHelper securityHelper,
       final SelectorManager selectorManager,
       final BrowseNodeConfiguration configuration,
-      final RepositoryManager repositoryManager,
       final Map<String, BrowseNodeFilter> browseNodeFilters,
       final Map<String, BrowseNodeIdentity> browseNodeIdentities,
       final Map<String, BrowseNodeComparator> browseNodeComparators)
@@ -130,7 +140,6 @@ public class OrientBrowseNodeStore
     this.browseNodeFilters = checkNotNull(browseNodeFilters);
     this.browseNodeIdentities = checkNotNull(browseNodeIdentities);
     this.browseNodeComparators = checkNotNull(browseNodeComparators);
-    this.repositoryManager = checkNotNull(repositoryManager);
     this.deletePageSize = configuration.getDeletePageSize();
     this.defaultBrowseNodeComparator = checkNotNull(browseNodeComparators.get(DefaultBrowseNodeComparator.NAME));
   }
@@ -201,11 +210,11 @@ public class OrientBrowseNodeStore
   @Override
   @Guarded(by = STARTED)
   public Iterable<BrowseNode> getByPath(
-      final String repositoryName,
+      final Repository repository,
       final List<String> path,
       final int maxNodes)
   {
-    Repository repository = repositoryManager.get(repositoryName);
+    String repositoryName = repository.getName();
     String format = repository.getFormat().getValue();
 
     List<SelectorConfiguration> selectors = emptyList();
@@ -358,5 +367,86 @@ public class OrientBrowseNodeStore
 
   private Comparator<BrowseNode> getBrowseNodeComparator(final String format) {
     return browseNodeComparators.getOrDefault(format, defaultBrowseNodeComparator);
+  }
+
+  @Override
+  public List<BrowseListItem> toListItems(final Repository repository, final Iterable<BrowseNode> nodes)
+  {
+    List<BrowseListItem> listItems = new ArrayList<>();
+
+    if (nodes != null) {
+      SimpleDateFormat format = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy");
+      for (BrowseNode browseNode : nodes) {
+        String size = null;
+        String lastModified = null;
+        String listItemPath;
+        if (browseNode.isLeaf()) {
+          Asset asset = getAssetById(repository, browseNode.getAssetId());
+
+          if (asset == null) {
+            log.error("Could not find expected asset (id): {} ({}) in repository: {}",
+                browseNode.getPath(), browseNode.getAssetId(), repository.getName());
+            //something bad going on here, move along to the next
+            continue;
+          }
+
+          size = String.valueOf(asset.size());
+          lastModified = Optional.ofNullable(asset.blobUpdated()).map(dateTime -> format.format(dateTime.toDate()))
+              .orElse("");
+          listItemPath = getListItemPath(repository, browseNode, asset);
+        }
+        else {
+          listItemPath = getListItemPath(repository, browseNode, null);
+        }
+
+        listItems.add(
+            new BrowseListItem(listItemPath, browseNode.getName(), !browseNode.isLeaf(), lastModified, size,
+                ""));
+      }
+    }
+
+    return listItems;
+  }
+
+  private Asset getAssetById(final Repository repository, final EntityId assetId) {
+    Optional<GroupFacet> optionalGroupFacet = repository.optionalFacet(GroupFacet.class);
+    List<Repository> members = optionalGroupFacet.isPresent() ? optionalGroupFacet.get().allMembers()
+        : Collections.singletonList(repository);
+
+    return Transactional.operation.withDb(repository.facet(StorageFacet.class).txSupplier()).call(() -> {
+      StorageTx tx = UnitOfWork.currentTx();
+      Asset candidate = tx.findAsset(assetId);
+      if (candidate != null) {
+        // we just fetched the asset so we know its bucketId will have a DB record attached
+        ODocument bucketRecord = ((AttachedEntityId) candidate.bucketId()).getIdentity().getRecord();
+        String asssetBucketRepositoryName = bucketRecord.field(BucketEntityAdapter.P_REPOSITORY_NAME);
+        if (members.stream().anyMatch(repo -> repo.getName().equals(asssetBucketRepositoryName))) {
+          return candidate;
+        }
+      }
+
+      return null;
+    });
+  }
+
+  private static final EscapeHelper escapeHelper = new EscapeHelper();
+
+  private String getListItemPath(final Repository repository,
+                                 final BrowseNode browseNode,
+                                 final Asset asset)
+  {
+    final String listItemPath;
+
+    if (asset == null) {
+      listItemPath = escapeHelper.uri(browseNode.getName()) + "/";
+    }
+    else {
+      listItemPath = repository.getUrl() + "/" +
+          Stream.of(asset.name().split("/"))
+              .map(escapeHelper::uri)
+              .collect(Collectors.joining("/"));
+    }
+
+    return listItemPath;
   }
 }
