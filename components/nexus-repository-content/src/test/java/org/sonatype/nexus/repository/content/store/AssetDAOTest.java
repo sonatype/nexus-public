@@ -599,7 +599,7 @@ public class AssetDAOTest
     try (DataSession<?> session = sessionRule.openSession("content")) {
       TestAssetDAO dao = session.access(TestAssetDAO.class);
 
-      dao.addTestSchema();
+      // our bespoke schema will be applied automatically via 'extendSchema'...
 
       dao.createAsset(asset1);
       dao.createAsset(asset2);

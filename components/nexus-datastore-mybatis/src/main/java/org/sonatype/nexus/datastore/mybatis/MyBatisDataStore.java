@@ -242,7 +242,9 @@ public class MyBatisDataStore
     // finally create the schema for this DAO
     info("Creating schema for {}", accessType.getSimpleName());
     try (SqlSession session = sessionFactory.openSession()) {
-      session.getMapper(accessType).createSchema();
+      DataAccess dao = session.getMapper(accessType);
+      dao.createSchema();
+      dao.extendSchema();
       session.commit();
     }
   }

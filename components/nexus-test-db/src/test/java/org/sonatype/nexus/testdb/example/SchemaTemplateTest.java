@@ -53,8 +53,6 @@ public class SchemaTemplateTest
     try (DataSession<?> session = sessionRule.openSession("config")) {
       // will fail if @Expects and @SchemaTemplate are not respected
       session.access(MetalSprocketDAO.class);
-      session.access(PlasticSprocketDAO.class).extendSchema();
-      session.getTransaction().commit();
     }
 
     // check the extra column added by plastic_sprocket exists

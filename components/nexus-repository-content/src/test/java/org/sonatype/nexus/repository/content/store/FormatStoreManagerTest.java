@@ -188,11 +188,7 @@ public class FormatStoreManagerTest
 
     FormatStoreManager underTest = injector.getInstance(Key.get(FormatStoreManager.class, Names.named("test")));
 
-    // add our bespoke schema for testing purposes
-    try (DataSession<?> session = sessionRule.openSession("content")) {
-      session.access(TestAssetDAO.class).addTestSchema();
-      session.getTransaction().commit();
-    }
+    // our bespoke schema will be applied automatically via 'extendSchema'...
 
     ContentRepositoryStore<?> contentRepositoryStore = underTest.contentRepositoryStore("content");
     TestAssetStore assetStore = underTest.assetStore("content");
