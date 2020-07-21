@@ -46,6 +46,7 @@ import org.sonatype.nexus.selector.VariableSource;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -97,6 +98,9 @@ public class OrientNpmUploadHandlerTest
   @Captor
   private ArgumentCaptor<VariableSource> captor;
 
+  @Rule
+  public ExpectedException expectedException = ExpectedException.none();
+
   private File packageJson;
 
   @Before
@@ -123,6 +127,8 @@ public class OrientNpmUploadHandlerTest
     when(asset.componentId()).thenReturn(new DetachedEntityId("nuId"));
     when(asset.name()).thenReturn("@foo/bar/-/bar/bar-123.gz");
     when(npmFacet.putPackage(any(), any())).thenReturn(asset);
+
+    when(payload.getName()).thenReturn("test-npm.tgz");
   }
 
   @Test
@@ -217,6 +223,20 @@ public class OrientNpmUploadHandlerTest
 
   private void handlePath(String jsonFile) throws IOException, URISyntaxException {
     packageJson = new File(OrientNpmUploadHandlerTest.class.getResource("../internal/" + jsonFile).toURI());
+
+    ComponentUpload component = new ComponentUpload();
+    AssetUpload assetUpload = new AssetUpload();
+    assetUpload.setPayload(payload);
+    component.getAssetUploads().add(assetUpload);
+    underTest.handle(repository, component);
+  }
+
+  @Test
+  public void testWrongExtension() throws IOException
+  {
+    expectedException.expect(IllegalArgumentException.class);
+    expectedException.expectMessage("Unsupported extension. Extension must be .tgz");
+    when(payload.getName()).thenReturn("test-wrong-npm.node");
 
     ComponentUpload component = new ComponentUpload();
     AssetUpload assetUpload = new AssetUpload();
