@@ -16,7 +16,7 @@
  * @since 3.17
  */
 Ext.define('NX.onboarding.view.ChangeAdminPasswordScreen', {
-  extend: 'NX.wizard.Screen',
+  extend: 'NX.onboarding.view.OnboardingScreen',
   alias: 'widget.nx-onboarding-change-admin-password-screen',
   requires: [
     'NX.Conditions',
@@ -32,7 +32,7 @@ Ext.define('NX.onboarding.view.ChangeAdminPasswordScreen', {
     Ext.apply(me, {
       title: NX.I18n.render(me, 'Title'),
 
-      buttons: ['back', 'next'],
+      buttons: ['back', '->', 'next'],
 
       fields: [{
         xtype: 'form',

@@ -13,35 +13,15 @@
 /*global Ext, NX*/
 
 /**
- * @since 3.17
+ * @since 3.next
  */
-Ext.define('NX.onboarding.view.OnboardingCompleteScreen', {
-  extend: 'NX.onboarding.view.OnboardingScreen',
-  alias: 'widget.nx-onboarding-complete-screen',
+Ext.define('NX.onboarding.view.OnboardingScreen', {
+  extend: 'NX.wizard.Screen',
+  alias: 'widget.nx-onboarding-screen',
   requires: [
     'NX.Conditions',
     'NX.I18n'
   ],
 
-  /**
-   * @override
-   */
-  initComponent: function () {
-    var me = this;
-
-    Ext.apply(me, {
-      title: NX.I18n.render(me, 'Title'),
-
-      description: NX.I18n.render(me, 'Description'),
-
-      buttons: ['->', {
-        text: NX.I18n.render(me, 'Finish_Button'),
-        action: 'finish',
-        ui: 'nx-primary'
-      }]
-    });
-
-    me.callParent();
-  }
-
+  minHeight: 250
 });

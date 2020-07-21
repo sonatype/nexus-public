@@ -101,6 +101,9 @@ Ext.define('NX.wizard.Screen', {
             ui: 'default'
           })
         }
+        else if (button === '->') {
+          buttons.push(button);
+        }
         else if (Ext.isObject(button)) {
           // custom button configuration
           buttons.push(button);

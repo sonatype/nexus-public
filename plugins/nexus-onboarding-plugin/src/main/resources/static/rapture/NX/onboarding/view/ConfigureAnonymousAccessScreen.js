@@ -16,7 +16,7 @@
  * @since 3.17
  */
 Ext.define('NX.onboarding.view.ConfigureAnonymousAccessScreen', {
-  extend: 'NX.wizard.Screen',
+  extend: 'NX.onboarding.view.OnboardingScreen',
   alias: 'widget.nx-onboarding-configure-anonymous-access-screen',
   requires: [
     'NX.Conditions',
@@ -34,7 +34,7 @@ Ext.define('NX.onboarding.view.ConfigureAnonymousAccessScreen', {
 
       description: NX.I18n.render(me, 'Description'),
 
-      buttons: ['back','next'],
+      buttons: ['back','->', 'next'],
 
       fields: [{
         xtype: 'form',

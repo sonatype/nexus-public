@@ -16,7 +16,7 @@
  * @since 3.17
  */
 Ext.define('NX.onboarding.view.OnboardingStartScreen', {
-  extend: 'NX.wizard.Screen',
+  extend: 'NX.onboarding.view.OnboardingScreen',
   alias: 'widget.nx-onboarding-start-screen',
   requires: [
     'NX.Conditions',
@@ -34,7 +34,7 @@ Ext.define('NX.onboarding.view.OnboardingStartScreen', {
 
       description: NX.I18n.render(me, 'Description'),
 
-      buttons: ['next']
+      buttons: ['->', 'next']
     });
 
     me.callParent();
