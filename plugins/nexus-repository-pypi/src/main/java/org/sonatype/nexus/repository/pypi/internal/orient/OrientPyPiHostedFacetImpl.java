@@ -18,7 +18,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.TreeMap;
 
 import javax.annotation.Nullable;
@@ -403,10 +402,16 @@ public class OrientPyPiHostedFacetImpl
     if (gpgPayload != null) {
       StorageTx tx = UnitOfWork.currentTx();
 
-      return Optional.ofNullable(findComponent(tx, getRepository(), normalizeName(name), version))
-          .map(component -> createGpgSignatureAsset(gpgPayload.getName(), name, version, component, tx))
-          .map(asset -> saveGpgSignatureAsset(tx, asset, gpgPayload))
-          .orElseThrow(() -> new IllegalStateException(String.format("Component %s/%s not found.", name, version)));
+      Component component = findOrCreateComponent(name, version, normalizeName(name), facet(PyPiIndexFacet.class), tx,
+          tx.findBucket(getRepository()));
+
+      if (component.isNew()) {
+        tx.saveComponent(component);
+      }
+
+      Asset asset = createGpgSignatureAsset(gpgPayload.getName(), name, version, component, tx);
+
+      return saveGpgSignatureAsset(tx, asset, gpgPayload);
     }
     return null;
   }
