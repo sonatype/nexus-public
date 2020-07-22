@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.shiro.web.util.WebUtils.INCLUDE_SERVLET_PATH_ATTRIBUTE;
 
 /**
  * Security filter.
@@ -80,6 +81,13 @@ public class SecurityFilter
         httpRequest.setAttribute(ATTR_USER_PRINCIPAL, p);
         httpRequest.setAttribute(ATTR_USER_ID, p.getName());
       }
+      /**
+       * set request URI as servlet path for avoid url mismatching between
+       * data url processing: {@link com.google.inject.servlet.ServletUtils#getContextRelativePath(javax.servlet.http.HttpServletRequest)}
+       * and
+       * security url processing: {@link org.apache.shiro.web.util.WebUtils#getPathWithinApplication}
+       */
+      request.setAttribute(INCLUDE_SERVLET_PATH_ATTRIBUTE, httpRequest.getRequestURI());
     }
 
     super.executeChain(request, response, origChain);
