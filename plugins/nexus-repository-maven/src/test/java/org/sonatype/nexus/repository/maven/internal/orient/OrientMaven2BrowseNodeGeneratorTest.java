@@ -30,10 +30,10 @@ import static java.util.Collections.singletonMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-public class Maven2BrowseNodeGeneratorTest
+public class OrientMaven2BrowseNodeGeneratorTest
     extends BrowseTestSupport
 {
-  private BrowseNodeGenerator generator = new Maven2BrowseNodeGenerator();
+  private BrowseNodeGenerator generator = new OrientMaven2BrowseNodeGenerator();
 
   @Test
   public void computeAssetPathForAssetWithoutComponent() {

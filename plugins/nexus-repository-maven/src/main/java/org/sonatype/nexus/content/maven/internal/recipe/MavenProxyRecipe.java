@@ -23,7 +23,6 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.cache.NegativeCacheFacet;
 import org.sonatype.nexus.repository.cache.NegativeCacheHandler;
-import org.sonatype.nexus.repository.content.search.SearchFacet;
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
@@ -67,8 +66,6 @@ public class MavenProxyRecipe
 
   private final ProxyHandler proxyHandler;
 
-  private final Provider<SearchFacet> searchFacet;
-
   @Inject
   public MavenProxyRecipe(
       @Named(ProxyType.NAME) final Type type,
@@ -78,8 +75,7 @@ public class MavenProxyRecipe
       final Provider<MavenProxyFacet> proxyFacet,
       final Provider<PurgeUnusedFacet> purgeUnusedFacet,
       final NegativeCacheHandler negativeCacheHandler,
-      final ProxyHandler proxyHandler,
-      final Provider<SearchFacet> searchFacet)
+      final ProxyHandler proxyHandler)
   {
     super(type, format);
     this.httpClientFacet = checkNotNull(httpClientFacet);
@@ -88,7 +84,6 @@ public class MavenProxyRecipe
     this.purgeUnusedFacet = checkNotNull(purgeUnusedFacet);
     this.negativeCacheHandler = checkNotNull(negativeCacheHandler);
     this.proxyHandler = checkNotNull(proxyHandler);
-    this.searchFacet = checkNotNull(searchFacet);
   }
 
 
@@ -102,7 +97,8 @@ public class MavenProxyRecipe
     repository.attach(proxyFacet.get());
     repository.attach(getMavenContentFacet().get());
     repository.attach(purgeUnusedFacet.get());
-    repository.attach(searchFacet.get());
+    repository.attach(getSearchFacet().get());
+    repository.attach(getBrowseFacet().get());
   }
 
   private ViewFacet configure(final ConfigurableViewFacet facet) {

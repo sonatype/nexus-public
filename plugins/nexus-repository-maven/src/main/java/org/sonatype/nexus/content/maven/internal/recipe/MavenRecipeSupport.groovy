@@ -21,6 +21,7 @@ import org.sonatype.nexus.content.maven.internal.VersionPolicyHandler
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.RecipeSupport
 import org.sonatype.nexus.repository.Type
+import org.sonatype.nexus.repository.content.browse.BrowseFacet
 import org.sonatype.nexus.repository.content.search.SearchFacet
 import org.sonatype.nexus.repository.http.PartialFetchHandler
 import org.sonatype.nexus.repository.maven.MavenPathParser
@@ -95,6 +96,9 @@ abstract class MavenRecipeSupport
 
   @Inject
   Provider<SearchFacet> searchFacet
+
+  @Inject
+  Provider<BrowseFacet> browseFacet
 
   @Inject
   Provider<MavenArchetypeCatalogFacet> mavenArchetypeCatalogFacet

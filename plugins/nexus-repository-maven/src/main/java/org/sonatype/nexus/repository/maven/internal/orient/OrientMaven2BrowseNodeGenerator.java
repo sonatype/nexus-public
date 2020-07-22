@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Nullable;
+import javax.annotation.Priority;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -56,9 +57,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 @Singleton
 @Named(Maven2Format.NAME)
-public class Maven2BrowseNodeGenerator
+@Priority(Integer.MAX_VALUE)
+public class OrientMaven2BrowseNodeGenerator
     extends ComponentPathBrowseNodeGenerator
 {
+  private static final String FORWARD_SLASH = "/";
+
   /**
    * @return componentPath/lastSegment(assetPath) if the component was not null, otherwise assetPath
    */
@@ -99,7 +103,7 @@ public class Maven2BrowseNodeGenerator
       String baseVersion = component.attributes().child("maven2").get("baseVersion", String.class);
       //the request path should be as expected by maven, so that security is applied properly, hence we use the
       //same path for both nodes added below
-      String requestPath = paths.get(paths.size() - 1).getRequestPath() + baseVersion + "/";
+      String requestPath = paths.get(paths.size() - 1).getRequestPath() + baseVersion + FORWARD_SLASH;
       if (!component.version().equals(baseVersion)) {
         // Put the SNAPSHOT version (baseVersion) before the component version in the tree.
         BrowsePaths.appendPath(paths, baseVersion, requestPath);
