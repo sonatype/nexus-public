@@ -17,13 +17,9 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.store.ContentStoreSupport;
-import org.sonatype.nexus.transaction.Transaction;
 import org.sonatype.nexus.transaction.Transactional;
-import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.inject.assistedinject.Assisted;
-
-import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 
 /**
  * Browse node store.
@@ -61,13 +57,10 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
   @Transactional
   public boolean deleteBrowseNodes(final int repositoryId) {
     log.debug("Deleting all browse nodes in repository {}", repositoryId);
-    Transaction tx = UnitOfWork.currentTx();
     boolean deleted = false;
     while (dao().deleteBrowseNodes(repositoryId, deleteBatchSize())) {
-      tx.commit();
+      commitChangesSoFar();
       deleted = true;
-      tx.begin();
-      checkCancellation();
     }
     log.debug("Deleted all browse nodes in repository {}", repositoryId);
     return deleted;

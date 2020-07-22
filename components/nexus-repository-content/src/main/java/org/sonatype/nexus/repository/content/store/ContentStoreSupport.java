@@ -17,13 +17,15 @@ import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.datastore.api.ContentDataAccess;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
+import org.sonatype.nexus.transaction.Transaction;
 import org.sonatype.nexus.transaction.TransactionalStore;
+import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.inject.TypeLiteral;
 import org.eclipse.sisu.inject.TypeArguments;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.datastore.DataAccessHelper.access;
+import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 
 /**
  * Support class for transactional domain stores backed by a content data store.
@@ -63,8 +65,24 @@ public abstract class ContentStoreSupport<T extends ContentDataAccess>
     this.daoClass = checkNotNull(daoClass);
   }
 
+  protected DataSession<?> thisSession() {
+    return UnitOfWork.currentSession();
+  }
+
   protected T dao() {
-    return access(daoClass);
+    return thisSession().access(daoClass);
+  }
+
+  /**
+   * Commits any batched changes so far.
+   *
+   * Also checks to see if the current (potentially long-running) operation has been cancelled.
+   */
+  protected void commitChangesSoFar() {
+    Transaction tx = UnitOfWork.currentTx();
+    tx.commit();
+    tx.begin();
+    checkCancellation();
   }
 
   protected int deleteBatchSize() {
