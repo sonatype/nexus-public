@@ -316,6 +316,8 @@ public class S3BlobStore
   public Blob get(final BlobId blobId, final boolean includeDeleted) {
     checkNotNull(blobId);
 
+    log.debug("Accessing blob {}", blobId);
+
     final S3Blob blob = liveBlobs.getUnchecked(blobId);
 
     if (blob.isStale()) {
@@ -344,8 +346,6 @@ public class S3BlobStore
         lock.unlock();
       }
     }
-
-    log.debug("Accessing blob {}", blobId);
 
     return blob;
   }
@@ -608,7 +608,7 @@ public class S3BlobStore
       S3BlobAttributes blobAttributes = new S3BlobAttributes(s3, getConfiguredBucket(), attributePath(blobId));
       return blobAttributes.load() ? blobAttributes : null;
     }
-    catch (IOException e) {
+    catch (Exception e) {
       log.error("Unable to load S3BlobAttributes for blob id: {}", blobId, e);
       return null;
     }
