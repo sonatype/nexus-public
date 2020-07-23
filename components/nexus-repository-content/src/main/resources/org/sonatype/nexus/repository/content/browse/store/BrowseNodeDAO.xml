@@ -28,6 +28,7 @@
       component_id  INT,
       asset_id      INT,
       parent_id     INT,
+      package_url   VARCHAR,
 
       CONSTRAINT pk_${format}_browse_node_id PRIMARY KEY (node_id),
       CONSTRAINT uk_${format}_browse_node_repository_path UNIQUE (repository_id, request_path),
@@ -77,27 +78,27 @@
   </select>
 
   <insert id="mergeBrowseNode" useGeneratedKeys="true" keyProperty="nodeId" parameterType="BrowseNodeData">
-    MERGE INTO ${format}_browse_node (repository_id, request_path, display_name, parent_id
+    MERGE INTO ${format}_browse_node (repository_id, request_path, display_name, parent_id, package_url
         <if test="dbComponentId != null">, component_id</if>
         <if test="dbAssetId != null">, asset_id</if>
     )
-    KEY (repository_id, request_path) VALUES (#{repositoryId}, #{requestPath}, #{displayName}, #{parentId}
+    KEY (repository_id, request_path) VALUES (#{repositoryId}, #{requestPath}, #{displayName}, #{parentId}, #{package_url}
         <if test="dbComponentId != null">, #{dbComponentId}</if>
         <if test="dbAssetId != null">, #{dbAssetId}</if>
     );
   </insert>
 
   <insert id="mergeBrowseNode" useGeneratedKeys="true" keyProperty="nodeId" parameterType="BrowseNodeData" databaseId="PostgreSQL">
-    INSERT INTO ${format}_browse_node (repository_id, request_path, display_name, parent_id
+    INSERT INTO ${format}_browse_node (repository_id, request_path, display_name, parent_id, package_url
         <if test="dbComponentId != null">, component_id</if>
         <if test="dbAssetId != null">, asset_id</if>
     )
-    VALUES (#{repositoryId}, #{requestPath}, #{displayName}, #{parentId}
+    VALUES (#{repositoryId}, #{requestPath}, #{displayName}, #{parentId}, #{package_url}
         <if test="dbComponentId != null">, #{dbComponentId}</if>
         <if test="dbAssetId != null">, #{dbAssetId}</if>
     )
     ON CONFLICT (repository_id, request_path) DO UPDATE SET
-        display_name = #{displayName}, parent_id = #{parentId}
+        display_name = #{displayName}, parent_id = #{parentId}, package_url = #{package_url}
         <if test="dbComponentId != null">, component_id = #{dbComponentId}</if>
         <if test="dbAssetId != null">, asset_id = #{dbAssetId}</if>
     ;

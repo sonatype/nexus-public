@@ -35,6 +35,7 @@ Ext.define('NX.coreui.model.ComponentAssetTree', {
     {name: 'leaf', type: 'boolean'},
     {name: 'componentId', type: 'string'},
     {name: 'assetId', type: 'string'},
-    {name: 'vulnerable', type: 'boolean'}
+    {name: 'vulnerable', type: 'boolean'},
+    {name: 'packageUrl', type: 'string'}
   ]
 });

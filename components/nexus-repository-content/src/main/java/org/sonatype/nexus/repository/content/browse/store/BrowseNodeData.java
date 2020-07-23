@@ -64,6 +64,9 @@ public class BrowseNodeData
   @Nullable
   private Asset asset;
 
+  @Nullable
+  private String packageUrl;
+
   // BrowseNode API
 
   @Override
@@ -89,6 +92,12 @@ public class BrowseNodeData
   @Override
   public EntityId getAssetId() {
     return dbAssetId != null ? toExternalId(dbAssetId) : null;
+  }
+
+  @Nullable
+  @Override
+  public String getPackageUrl() {
+    return packageUrl;
   }
 
   // Content-specific API
@@ -162,6 +171,13 @@ public class BrowseNodeData
       this.dbAssetId = null;
     }
     this.asset = asset;
+  }
+
+  /**
+   * Sets the (optional) package url at this node.
+   */
+  public void setPackageUrl(@Nullable final String packageUrl) {
+    this.packageUrl = packageUrl;
   }
 
   // Getters to support lazy-loading (MyBatis will intercept them)

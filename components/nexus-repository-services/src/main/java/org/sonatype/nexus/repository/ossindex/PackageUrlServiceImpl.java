@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.ossindex.internal;
+package org.sonatype.nexus.repository.ossindex;
 
 import java.util.Map;
 import java.util.Optional;
@@ -21,15 +21,10 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.packageurl.PackageUrl;
-import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.content.facet.ContentFacet;
-import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.ossindex.PackageUrlMapping;
 import org.sonatype.nexus.repository.ossindex.PackageUrlService;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Strings.emptyToNull;
 import static java.util.Optional.empty;
 
 /**
@@ -49,20 +44,20 @@ public class PackageUrlServiceImpl
   }
 
   @Override
-  public Optional<PackageUrl> getPackageUrl(final Repository repository, final EntityId componentId) {
-    String format = repository.getFormat().getValue();
+  public Optional<PackageUrl> getPackageUrl(final String format,
+                                            final String namespace,
+                                            final String name,
+                                            final String version)
+  {
     PackageUrlMapping mapping = packageUrlMappings.get(format);
     if (mapping != null) {
       try {
-        ContentFacet contentFacet = repository.facet(ContentFacet.class);
-        Optional<FluentComponent> result = contentFacet.components().find(componentId);
-        return result.flatMap(component -> mapping.buildPackageUrl(
-            emptyToNull(component.namespace()),
-            component.name(),
-            emptyToNull(component.version())));
+        return mapping.buildPackageUrl(namespace, name, version);
       }
       catch (Exception e) {
-        log.debug("Cannot determine package URL coordinates for {} component {}", format, componentId, e);
+        log.debug("Cannot determine package URL coordinates for {} namespace/name/version {}/{}/{}", format, namespace,
+            name,
+            version, e);
       }
     }
     return empty();

@@ -42,5 +42,8 @@ public interface BrowseNode
   EntityId getComponentId();
 
   @Nullable
+  String getPackageUrl();
+
+  @Nullable
   EntityId getAssetId();
 }

@@ -39,5 +39,5 @@ class BrowseNodeXO {
 
   String assetId
 
-  boolean vulnerable
+  String packageUrl
 }

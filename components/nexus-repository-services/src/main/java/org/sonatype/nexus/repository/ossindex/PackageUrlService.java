@@ -15,8 +15,6 @@ package org.sonatype.nexus.repository.ossindex;
 import java.util.Optional;
 
 import org.sonatype.goodies.packageurl.PackageUrl;
-import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.repository.Repository;
 
 /**
  * {@link PackageUrl} lookup service.
@@ -28,5 +26,5 @@ public interface PackageUrlService
   /**
    * Returns {@link PackageUrl} for the given component, if it exists.
    */
-  Optional<PackageUrl> getPackageUrl(Repository repository, EntityId componentId);
+  Optional<PackageUrl> getPackageUrl(String format, String namespace, String name, String version);
 }
