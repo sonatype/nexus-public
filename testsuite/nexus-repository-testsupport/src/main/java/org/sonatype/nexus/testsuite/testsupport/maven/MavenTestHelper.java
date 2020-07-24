@@ -27,6 +27,7 @@ import org.sonatype.nexus.pax.exam.NexusPaxExamSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.view.Payload;
 
+import com.google.common.base.Strings;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -214,4 +215,31 @@ public abstract class MavenTestHelper
       }
     }
   }
+
+  public void rebuildMetadata(
+      final Repository repository,
+      final String groupId,
+      final String artifactId,
+      final String baseVersion,
+      final boolean rebuildChecksums) {
+    final boolean update = !Strings.isNullOrEmpty(groupId)
+        || !Strings.isNullOrEmpty(artifactId)
+        || !Strings.isNullOrEmpty(baseVersion);
+    rebuildMetadata(repository, groupId, artifactId, baseVersion, rebuildChecksums, update);
+  }
+
+  public abstract void rebuildMetadata(
+      final Repository repository,
+      final String groupId,
+      final String artifactId,
+      final String baseVersion,
+      final boolean rebuildChecksums,
+      final boolean update);
+
+  /**
+   * Delete test Components with the given version, confirming that a certain number exist first.
+   */
+  public abstract void deleteComponents(final Repository repository, final String version, final int expectedNumber);
+
+  public abstract void deleteAssets(final Repository repository, final String version, final int expectedNumber);
 }

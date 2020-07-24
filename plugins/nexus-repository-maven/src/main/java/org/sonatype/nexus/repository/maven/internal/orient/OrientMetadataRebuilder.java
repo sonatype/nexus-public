@@ -13,38 +13,30 @@
 package org.sonatype.nexus.repository.maven.internal.orient;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.annotation.Nullable;
+import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.common.MultipleFailures;
 import org.sonatype.nexus.orient.entity.AttachedEntityHelper;
-import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.orient.maven.MavenFacet;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
-import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.sonatype.nexus.repository.maven.internal.Attributes;
-import org.sonatype.nexus.repository.maven.internal.Constants;
-import org.sonatype.nexus.repository.maven.internal.DigestExtractor;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
-import org.sonatype.nexus.repository.maven.internal.MavenModels;
-import org.sonatype.nexus.repository.maven.internal.hosted.metadata.Maven2Metadata;
-import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataBuilder;
-import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataException;
-import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataRebuilder;
-import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUpdater;
+import org.sonatype.nexus.repository.maven.internal.hosted.metadata.AbstractMetadataRebuilder;
+import org.sonatype.nexus.repository.maven.internal.hosted.metadata.AbstractMetadataUpdater;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
@@ -53,24 +45,21 @@ import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
 import org.sonatype.nexus.repository.view.Content;
-import org.sonatype.nexus.repository.view.payloads.StringPayload;
+import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.hash.HashCode;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.codehaus.plexus.util.xml.Xpp3Dom;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
-import static java.util.Collections.emptySet;
-import static java.util.Objects.nonNull;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
 import static org.sonatype.nexus.repository.storage.ComponentEntityAdapter.P_GROUP;
@@ -86,42 +75,27 @@ import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
  * @since 3.0
  */
 @Singleton
-@Named
+@Named("orient")
+@Priority(Integer.MAX_VALUE)
 public class OrientMetadataRebuilder
-    extends ComponentSupport implements MetadataRebuilder
+    extends AbstractMetadataRebuilder
 {
-  private final int bufferSize;
-
-  private final int timeoutSeconds;
-
   @Inject
   public OrientMetadataRebuilder(
       @Named("${nexus.maven.metadata.rebuild.bufferSize:-1000}") final int bufferSize,
       @Named("${nexus.maven.metadata.rebuild.timeoutSeconds:-60}") final int timeoutSeconds)
   {
-    this.bufferSize = bufferSize;
-    this.timeoutSeconds = timeoutSeconds;
+    super(bufferSize, timeoutSeconds);
   }
-  /**
-   * Rebuilds/updates Maven metadata.
-   *
-   * @param repository  The repository whose metadata needs rebuild (Maven2 format, Hosted type only).
-   * @param update      if {@code true}, updates existing metadata, otherwise overwrites them with newly generated
-   *                    ones.
-   * @param rebuildChecksums whether or not checksums should be checked and corrected if found                     
-   *                           missing or incorrect                    
-   * @param groupId     scope the work to given groupId.
-   * @param artifactId  scope the work to given artifactId (groupId must be given).
-   * @param baseVersion scope the work to given baseVersion (groupId and artifactId must ge given).
-   *
-   * @return whether the rebuild actually triggered
-   */
-  @Override public boolean rebuild(final Repository repository,
-                      final boolean update,
-                      final boolean rebuildChecksums,
-                      @Nullable final String groupId,
-                      @Nullable final String artifactId,
-                      @Nullable final String baseVersion)
+
+  @Override
+  public boolean rebuild(
+      final Repository repository,
+      final boolean update,
+      final boolean rebuildChecksums,
+      @Nullable final String groupId,
+      @Nullable final String artifactId,
+      @Nullable final String baseVersion)
   {
     checkNotNull(repository);
     final StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get();
@@ -134,160 +108,100 @@ public class OrientMetadataRebuilder
     }
   }
 
-  /**
-   * Performs the {@link #rebuild} in an existing transactional context; ie. a {@link UnitOfWork} already exists.
-   *
-   * Don't put any {@link Transactional} annotation on this method because it will keep the transaction active
-   * for the _entire_ duration of any request including those that rebuild the entire repository, which would
-   * lead to excessive memory consumption. Callers may be annotated with {@link Transactional} as long as they
-   * only rebuild a limited subset of the repository, such as {@link MavenFacetImpl#rebuildMetadata}.
-   */
-  @Override public boolean rebuildInTransaction(final Repository repository,
-                                      final boolean update,
-                                      final boolean rebuildChecksums,
-                                      @Nullable final String groupId,
-                                      @Nullable final String artifactId,
-                                      @Nullable final String baseVersion)
+  @Override
+  public boolean rebuildInTransaction(
+      final Repository repository,
+      final boolean update,
+      final boolean rebuildChecksums,
+      @Nullable final String groupId,
+      @Nullable final String artifactId,
+      @Nullable final String baseVersion)
   {
     checkNotNull(repository);
-    return new Worker(repository, update, rebuildChecksums, groupId, artifactId, baseVersion, bufferSize, timeoutSeconds)
-        .rebuildMetadata();
+    return new Worker(repository, update, rebuildChecksums, groupId, artifactId, baseVersion, bufferSize,
+        timeoutSeconds, new OrientMetadataUpdater(update, repository)).rebuildMetadata();
   }
 
-  /**
-   * Delete the metadata for the input list of GAbVs.
-   *
-   * @param repository The repository whose metadata needs rebuilding (Maven2 format, Hosted type only).
-   * @param gavs       A list of gavs for which metadata will be deleted
-   *
-   * @since 3.14
-   */
-  @Override public void deleteMetadata(final Repository repository, final List<String []> gavs) {
-    checkNotNull(repository);
-    checkNotNull(gavs);
-
-    List<MavenPath> pathBatch = new ArrayList<>();
-    for (String[] gav : gavs) {
-      pathBatch.addAll(getPathsByGav(repository, gav[0], gav[1], gav[2]));
-    }
-
+  @Override
+  protected Set<String> deleteAllMetadataFiles(
+      final Repository repository,
+      final String groupId,
+      final String artifactId,
+      final String baseVersion)
+  {
+    final StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get();
+    UnitOfWork.beginBatch(tx);
     try {
-      MavenFacetUtils.deleteWithHashes(repository.facet(MavenFacet.class), pathBatch);
+      return super.deleteAllMetadataFiles(repository, groupId, artifactId, baseVersion);
     }
-    catch (IOException e) {
-      log.warn("Error encountered when deleting metadata: repository={}", repository);
-      throw new RuntimeException(e);
+    finally {
+      UnitOfWork.end();
     }
   }
 
-  /**
-   * Collect all {@link MavenPath} for the provided GAbV.
-   *
-   * @param repository  The repository associated with the provided GAbV (Maven2 format, Hosted type only).
-   * @param groupId     scope the work to given groupId.
-   * @param artifactId  scope the work to given artifactId (groupId must be given).
-   * @param baseVersion scope the work to given baseVersion (groupId and artifactId must ge given).
-   * @return list of all paths for the input coordinates
-   *
-   * @since 3.14
-   */
-  private List<MavenPath> getPathsByGav(final Repository repository,
-                                        final String groupId,
-                                        final String artifactId,
-                                        final String baseVersion)
+  @Override
+  protected Set<String> deleteGavMetadata(
+      final Repository repository,
+      final String groupId,
+      final String artifactId,
+      final String baseVersion)
   {
-    checkNotNull(groupId);
-    checkNotNull(artifactId);
-    checkNotNull(baseVersion);
+    MavenPath gavMetadataPath = metadataPath(groupId, artifactId, baseVersion);
+    OrientMetadataUtils.delete(repository, gavMetadataPath);
+    return MavenFacetUtils.getPathWithHashes(gavMetadataPath);
+  }
 
-    log.debug("Collecting MavenPaths for Maven2 hosted repository metadata: repository={}, g={}, a={}, bV={}",
-        repository.getName(), groupId, artifactId, baseVersion);
-
-    List<MavenPath> paths = new ArrayList<>();
+  @Override
+  public boolean exists(final Repository repository, final MavenPath mavenPath) {
+    final StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get();
+    UnitOfWork.beginBatch(tx);
     try {
-      // Build path for specific GAV
-      paths.add(metadataPath(groupId, artifactId, baseVersion));
-
-      // Build path for the GA; will be rebuilt as necessary but may hold the last GAV in which case rebuild would ignore it
-      paths.add(metadataPath(groupId, artifactId, null));
-
-      // Check explicitly for whether or not we have Group level metadata that might need rebuilding, since this
-      // is potentially the most expensive possible path to take.
-      MavenPath groupPath = metadataPath(groupId, null, null);
-      if (OrientMetadataUtils.exists(repository, groupPath)) {
-        paths.add(groupPath);
-      }
-      return paths;
+      return repository.facet(MavenFacet.class).exists(mavenPath);
     }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+    finally {
+      UnitOfWork.end();
     }
   }
 
   /**
    * Inner class that encapsulates the work, as metadata builder is stateful.
    */
-  private static class Worker
-      extends ComponentSupport
+  protected static class Worker
+      extends AbstractMetadataRebuilder.Worker
   {
-    private final Repository repository;
-
-    private final MavenFacet mavenFacet;
-
-    private final MavenPathParser mavenPathParser;
-
-    private final MetadataBuilder metadataBuilder;
-
-    private final MetadataUpdater metadataUpdater;
-
     private final Map<String, Object> sqlParams;
 
     private final String sql;
 
-    private final String groupId;
+    private final MavenFacet mavenFacet;
 
-    private final String artifactId;
-
-    private final String baseVersion;
-
-    private final boolean rebuildChecksums;
-
-    private final int bufferSize;
-
-    private final long timeoutSeconds;
-
-    public Worker(final Repository repository, // NOSONAR
-                  final boolean update,
-                  final boolean rebuildChecksums,
-                  @Nullable final String groupId,
-                  @Nullable final String artifactId,
-                  @Nullable final String baseVersion,
-                  final int bufferSize,
-                  final int timeoutSeconds
+    public Worker(
+        final Repository repository, // NOSONAR
+        final boolean update,
+        final boolean rebuildChecksums,
+        @Nullable final String groupId,
+        @Nullable final String artifactId,
+        @Nullable final String baseVersion,
+        final int bufferSize,
+        final int timeoutSeconds,
+        final AbstractMetadataUpdater metadataUpdater
     )
     {
-      this.repository = repository;
-      this.mavenFacet = repository.facet(MavenFacet.class);
-      this.mavenPathParser = mavenFacet.getMavenPathParser();
-      this.metadataBuilder = new MetadataBuilder();
-      this.metadataUpdater = new OrientMetadataUpdater(update, repository);
+      super(repository, update, rebuildChecksums, groupId, artifactId, baseVersion, bufferSize, timeoutSeconds,
+          metadataUpdater, repository.facet(MavenFacet.class).getMavenPathParser());
       this.sqlParams = Maps.newHashMap();
-      this.groupId = groupId;
-      this.artifactId = artifactId;
-      this.baseVersion = baseVersion;
       this.sql = buildSql(groupId, artifactId, baseVersion);
-      this.rebuildChecksums = rebuildChecksums;
-      this.bufferSize = bufferSize;
-      this.timeoutSeconds = timeoutSeconds;
+      this.mavenFacet = repository.facet(MavenFacet.class);
     }
 
     /**
      * Builds up SQL and populates parameters map for it based on passed in parameters. As side effect, it populates
      * the {@link #sqlParams} map too with required parameters.
      */
-    private String buildSql(@Nullable final String groupId,
-                            @Nullable final String artifactId,
-                            @Nullable final String baseVersion)
+    private String buildSql(
+        @Nullable final String groupId,
+        @Nullable final String artifactId,
+        @Nullable final String baseVersion)
     {
       sqlParams.put("bucket", findBucketORID(repository));
       final StringBuilder builder = new StringBuilder();
@@ -336,114 +250,42 @@ public class OrientMetadataRebuilder
       });
     }
 
-    /**
-     * Returns {@link Iterable} with Orient documents for GAVs.
-     */
-    private Iterable<ODocument> browseGAVs() {
-      return Transactional.operation.call(() -> {
+    @Override
+    protected List<Map<String, Object>> browseGAVs() {
+      Iterable<ODocument> iterableGavs = Transactional.operation.call(() -> {
         final StorageTx tx = UnitOfWork.currentTx();
         return tx.browse(sql, sqlParams, bufferSize, timeoutSeconds);
       });
+      return StreamSupport.stream(iterableGavs.spliterator(), false).map(odocument -> ImmutableMap.of(
+          "groupId", odocument.field("groupId", OType.STRING),
+          "artifactId", odocument.field("artifactId", OType.STRING),
+          "baseVersions", odocument.field("baseVersions", OType.EMBEDDEDSET)
+      )).collect(Collectors.toList());
     }
 
-    /**
-     * Method rebuilding metadata that performs the group level processing. It uses memory conservative "async" SQL
-     * approach, and calls {@link #rebuildMetadataInner(String, String, Set, MultipleFailures)} method as results are
-     * arriving.
-     */
-    public boolean rebuildMetadata()
-    {
-      final MultipleFailures failures = new MultipleFailures();
-      boolean metadataRebuilt = false;
-
-      checkCancellation();
-      String currentGroupId = null;
-
-      try {
-        Iterable<ODocument> gavDocs = browseGAVs();
-
-        if (Iterables.isEmpty(gavDocs) && nonNull(groupId)) {
-          metadataBuilder.onEnterGroupId(groupId);
-          if (nonNull(artifactId) && nonNull(baseVersion)) {
-            rebuildMetadataInner(groupId, artifactId, emptySet(), failures);
-          }
-          rebuildMetadataExitGroup(groupId, failures);
-        }
-
-        for (ODocument doc : gavDocs) {
-          checkCancellation();
-          final String groupId = doc.field("groupId", OType.STRING);
-          final String artifactId = doc.field("artifactId", OType.STRING);
-          final Set<String> baseVersions = doc.field("baseVersions", OType.EMBEDDEDSET);
-
-          final boolean groupChange = !Objects.equals(currentGroupId, groupId);
-          if (groupChange) {
-            if (currentGroupId != null) {
-              rebuildMetadataExitGroup(currentGroupId, failures);
-            }
-            currentGroupId = groupId;
-            metadataBuilder.onEnterGroupId(groupId);
-          }
-          rebuildMetadataInner(groupId, artifactId, baseVersions, failures);
-          metadataRebuilt = true;
-        }
-
-        if (currentGroupId != null) {
-          rebuildMetadataExitGroup(currentGroupId, failures);
-          metadataRebuilt = true;
-        }
-      }
-      finally {
-        maybeLogFailures(failures);
-      }
-
-      return metadataRebuilt;
+    @Override
+    protected Content get(final MavenPath mavenPath) throws IOException {
+      return mavenFacet.get(mavenPath);
     }
 
-    /**
-     * Logs any failures recorded during metadata
-     */
-    private void maybeLogFailures(final MultipleFailures failures) {
-      if (failures.isEmpty()) {
-        return;
-      }
-
-      log.warn("Errors encountered during metadata rebuild:");
-      failures.getFailures().forEach(failure -> log.warn(failure.getMessage(), failure));
+    @Override
+    protected void put(final MavenPath mavenPath, final Payload payload) throws IOException {
+      mavenFacet.put(mavenPath, payload);
     }
 
-    /**
-     * Process exits from group level, executed in isolation.
-     */
-    private void rebuildMetadataExitGroup(final String currentGroupId, final MultipleFailures failures) {
-      processMetadata(metadataPath(currentGroupId, null, null), metadataBuilder.onExitGroupId(), failures);
+    @Override
+    protected Optional<HashCode> getChecksum(final MavenPath mavenPath, final HashType hashType) {
+      StorageTx tx = UnitOfWork.currentTx();
+      return Optional.ofNullable(MavenFacetUtils.findAsset(tx, tx.findBucket(repository), mavenPath))
+          .map(asset -> asset.getChecksum(hashType.getHashAlgorithm()));
     }
 
-    /**
-     * Helper method that will capture exceptions that occur from the {@link MetadataUpdater} in a
-     * {@link MultipleFailures} store
-     */
-    private void processMetadata(final MavenPath metadataPath,
-                                 final Maven2Metadata metadata,
-                                 final MultipleFailures failures)
-    {
-      try {
-        metadataUpdater.processMetadata(metadataPath, metadata);
-      }
-      catch (Exception e) {
-        failures.add(new MetadataException("Error processing metadata for path: " + metadataPath.getPath(), e));
-      }
-    }
-
-    /**
-     * Method rebuilding metadata that performs artifact and baseVersion processing. While it is called from {@link
-     * #rebuildMetadata()} method, it will use a separate TX/DB to perform writes, it does NOT
-     * accept the TX from caller. Executed in isolation.
-     */
-    private void rebuildMetadataInner(final String groupId,
-                                      final String artifactId,
-                                      final Set<String> baseVersions,
-                                      final MultipleFailures failures)
+    @Override
+    protected void rebuildMetadataInner(
+        final String groupId,
+        final String artifactId,
+        final Set<String> baseVersions,
+        final MultipleFailures failures)
     {
       final StorageTx tx = UnitOfWork.currentTx();
 
@@ -452,8 +294,7 @@ public class OrientMetadataRebuilder
         checkCancellation();
         metadataBuilder.onEnterBaseVersion(baseVersion);
 
-        TransactionalStoreBlob.operation.call(() -> {
-          
+        TransactionalStoreBlob.operation.run(() -> {
           Bucket bucket = tx.findBucket(repository);
 
           Query query = builder()
@@ -486,8 +327,8 @@ public class OrientMetadataRebuilder
               }
               metadataBuilder.addArtifactVersion(mavenPath);
               if (rebuildChecksums) {
-                mayUpdateChecksum(asset, mavenPath, HashType.SHA1);
-                mayUpdateChecksum(asset, mavenPath, HashType.MD5);
+                mayUpdateChecksum(mavenPath, HashType.SHA1);
+                mayUpdateChecksum(mavenPath, HashType.MD5);
               }
               final String packaging = component.formatAttributes().get(Attributes.P_PACKAGING, String.class);
               log.debug("POM packaging: {}", packaging);
@@ -498,117 +339,31 @@ public class OrientMetadataRebuilder
             }
           }
 
-          processMetadata(metadataPath(groupId, artifactId, baseVersion), metadataBuilder.onExitBaseVersion(), failures);
-
-          return null;
+          processMetadata(metadataPath(groupId, artifactId, baseVersion), metadataBuilder.onExitBaseVersion(),
+              failures);
         });
       }
 
       processMetadata(metadataPath(groupId, artifactId, null), metadataBuilder.onExitArtifactId(), failures);
     }
+  }
 
-    /**
-     * Verifies and may fix/create the broken/non-existent Maven hashes (.sha1/.md5 files).
-     */
-    private void mayUpdateChecksum(final Asset asset, final MavenPath mavenPath,
-                                   final HashType hashType)
-    {
-      HashCode checksum = asset.getChecksum(hashType.getHashAlgorithm());
-      if (checksum == null) {
-        // this means that an asset stored in maven repository lacks checksum required by maven repository (see maven facet)
-        log.warn("Asset with path {} lacks checksum {}", mavenPath, hashType);
-        return;
-      }
-      String assetChecksum = checksum.toString();
-      final MavenPath checksumPath = mavenPath.hash(hashType);
-      try {
-        final Content content = mavenFacet.get(checksumPath);
-        if (content != null) {
-          try (InputStream is = content.openInputStream()) {
-            final String mavenChecksum = DigestExtractor.extract(is);
-            if (Objects.equals(assetChecksum, mavenChecksum)) {
-              return; // all is OK: exists and matches
-            }
-          }
-        }
-      }
-      catch (IOException e) {
-        log.warn("Error reading {}", checksumPath, e);
-      }
-      // we need to generate/write it
-      try {
-        log.debug("Generating checksum file: {}", checksumPath);
-        final StringPayload mavenChecksum = new StringPayload(assetChecksum, Constants.CHECKSUM_CONTENT_TYPE);
-        mavenFacet.put(checksumPath, mavenChecksum);
-      }
-      catch (IOException e) {
-        log.warn("Error writing {}", checksumPath, e);
-        throw new RuntimeException(e);
-      }
+  @Override
+  public void deleteMetadata(final Repository repository, final List<String []> gavs) {
+    checkNotNull(repository);
+    checkNotNull(gavs);
+
+    List<MavenPath> pathBatch = new ArrayList<>();
+    for (String[] gav : gavs) {
+      pathBatch.addAll(getPathsByGav(repository, gav[0], gav[1], gav[2]));
     }
 
-    /**
-     * Parses the DOM of a XML.
-     */
-    private Xpp3Dom parse(final MavenPath mavenPath, final InputStream is) {
-      try {
-        return MavenModels.parseDom(is);
-      }
-      catch (IOException e) {
-        log.warn("Could not parse POM: {} @ {}", repository.getName(), mavenPath.getPath(), e);
-        throw new RuntimeException(e);
-      }
+    try {
+      MavenFacetUtils.deleteWithHashes(repository.facet(MavenFacet.class), pathBatch);
     }
-
-    /**
-     * Returns the plugin prefix of a Maven plugin, by opening up the plugin JAR, and reading the Maven Plugin
-     * Descriptor. If fails, falls back to mangle artifactId (ie. extract XXX from XXX-maven-plugin or
-     * maven-XXX-plugin).
-     */
-    private String getPluginPrefix(final MavenPath mavenPath) {
-      // sanity checks: is artifact and extension is "jar", only possibility for maven plugins currently
-      checkArgument(mavenPath.getCoordinates() != null);
-      checkArgument(Objects.equals(mavenPath.getCoordinates().getExtension(), "jar"));
-      String prefix = null;
-      try {
-        final Content jarFile = mavenFacet.get(mavenPath);
-        if (jarFile != null) {
-          try (ZipInputStream zip = new ZipInputStream(jarFile.openInputStream())) {
-            ZipEntry entry;
-            while ((entry = zip.getNextEntry()) != null) {
-              if (!entry.isDirectory() && "META-INF/maven/plugin.xml".equals(entry.getName())) {
-                final Xpp3Dom dom = parse(mavenPath, zip);
-                prefix = getChildValue(dom, "goalPrefix", null);
-                break;
-              }
-              zip.closeEntry();
-            }
-          }
-        }
-      }
-      catch (IOException e) {
-        log.warn("Unable to read plugin.xml of {}", mavenPath, e);
-      }
-      if (prefix != null) {
-        return prefix;
-      }
-      if ("maven-plugin-plugin".equals(mavenPath.getCoordinates().getArtifactId())) {
-        return "plugin";
-      }
-      else {
-        return mavenPath.getCoordinates().getArtifactId().replaceAll("-?maven-?", "").replaceAll("-?plugin-?", "");
-      }
-    }
-
-    /**
-     * Helper method to get node's immediate child or default.
-     */
-    private String getChildValue(final Xpp3Dom doc, final String childName, final String defaultValue) {
-      Xpp3Dom child = doc.getChild(childName);
-      if (child == null) {
-        return defaultValue;
-      }
-      return child.getValue();
+    catch (IOException e) {
+      log.warn("Error encountered when deleting metadata: repository={}", repository);
+      throw new RuntimeException(e);
     }
   }
 }

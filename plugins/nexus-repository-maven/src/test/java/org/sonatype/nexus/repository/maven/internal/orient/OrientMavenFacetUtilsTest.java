@@ -39,7 +39,7 @@ import static org.sonatype.nexus.repository.maven.internal.orient.MavenFacetUtil
 import static org.sonatype.nexus.repository.maven.internal.orient.MavenFacetUtils.isSnapshot;
 import static org.sonatype.nexus.repository.storage.StorageTestUtil.createBucket;
 
-public class MavenFacetUtilsTest
+public class OrientMavenFacetUtilsTest
 {
   @Test
   public void testComponentVersionComparator_Release() {

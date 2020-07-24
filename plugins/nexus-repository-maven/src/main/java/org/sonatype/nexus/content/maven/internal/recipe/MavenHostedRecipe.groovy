@@ -60,6 +60,7 @@ class MavenHostedRecipe
   void apply(@Nonnull final Repository repository) throws Exception {
     repository.attach(securityFacet.get())
     repository.attach(configure(viewFacet.get()))
+    repository.attach(mavenMetadataRebuildFacet.get())
     repository.attach(mavenContentFacet.get())
     repository.attach(searchFacet.get())
     repository.attach(browseFacet.get())
@@ -77,6 +78,7 @@ class MavenHostedRecipe
         .handler(versionPolicyHandler)
         .handler(contentHeadersHandler)
         .handler(lastDownloadedHandler)
+        .handler(mavenMetadataRebuildHandler)
         .handler(mavenContentHandler)
         .create())
 

@@ -10,13 +10,15 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.maven.internal.hosted.metadata;
+package org.sonatype.nexus.repository.maven.internal.orient;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -24,12 +26,11 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.EntityAdapter;
-import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.orient.maven.MavenFacet;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
-import org.sonatype.nexus.repository.maven.internal.orient.OrientMetadataRebuilder;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
@@ -255,7 +256,9 @@ public class OrientMetadataRebuilderTest
   private Iterable infiniteIterator(Object returnItem) {
     Iterable iterable = mock(Iterable.class);
     Iterator iterator = mock(Iterator.class);
+    Spliterator spliterator = mock(Spliterator.class);
 
+    when(iterable.spliterator()).thenReturn(spliterator);
     when(iterable.iterator()).thenReturn(iterator);
     when(iterator.hasNext()).thenReturn(true);
     when(iterator.next()).thenReturn(returnItem);
@@ -267,8 +270,10 @@ public class OrientMetadataRebuilderTest
     int numItems = returnItems.length;
     Iterable iterable = mock(Iterable.class);
     Iterator iterator = mock(Iterator.class);
+    Spliterator spliterator = Spliterators.spliterator(returnItems, 0);
 
     final int[] iteratorCounter = {0};
+    when(iterable.spliterator()).thenReturn(spliterator);
     when(iterable.iterator()).thenReturn(iterator);
     when(iterator.hasNext()).thenAnswer((Answer<Boolean>) invocation -> iteratorCounter[0] < numItems);
     when(iterator.next()).thenAnswer((Answer<?>) invocation -> returnItems[iteratorCounter[0]++]);

@@ -15,19 +15,28 @@ package org.sonatype.nexus.testsuite.testsupport.maven;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import javax.annotation.Nonnull;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.time.DateHelper;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
+import org.sonatype.nexus.content.maven.MavenMetadataRebuildFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
+import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
+import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
@@ -40,6 +49,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertTrue;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
@@ -77,8 +87,7 @@ public class DataStoreMavenTestHelper
     MavenContentFacet mavenContentFacet = repository.facet(MavenContentFacet.class);
     MavenPath mavenPath = mavenContentFacet.getMavenPathParser().parsePath(path);
 
-    Optional<Map<String, String>> maybeHashCodes =
-        mavenContentFacet.get(mavenPath).map(this::getExpectedHashCodes);
+    Optional<Map<String, String>> maybeHashCodes = mavenContentFacet.get(mavenPath).map(this::getExpectedHashCodes);
 
     assertTrue(maybeHashCodes.isPresent());
     assertExpectedHashContentMatchActual(maybeHashCodes.get(), mavenContentFacet, mavenPath);
@@ -91,7 +100,6 @@ public class DataStoreMavenTestHelper
   {
     for (HashType hashType : HashType.values()) {
       String expectedHashContent = expectedHashCodes.get(hashType.getHashAlgorithm().name());
-
       Optional<Content> maybeStoredHashContent = mavenContentFacet.get(mavenPath.hash(hashType));
       assertTrue(maybeStoredHashContent.isPresent());
 
@@ -113,14 +121,6 @@ public class DataStoreMavenTestHelper
   }
 
   @Override
-  public Payload read(final Repository repository, final String path) throws IOException {
-    MavenContentFacet mavenContentFacet = repository.facet(MavenContentFacet.class);
-    MavenPath mavenPath = mavenContentFacet.getMavenPathParser().parsePath(path);
-
-    return mavenContentFacet.get(mavenPath).orElse(null);
-  }
-
-  @Override
   public DateTime getLastDownloadedTime(final Repository repository, final String assetPath) throws IOException {
     MavenContentFacet mavenContentFacet = repository.facet(MavenContentFacet.class);
     MavenPath mavenPath = mavenContentFacet.getMavenPathParser().parsePath(assetPath);
@@ -132,5 +132,58 @@ public class DataStoreMavenTestHelper
         .map(Optional::get)
         .map(DateHelper::toDateTime)
         .orElse(null);
+  }
+
+  @Override
+  public void rebuildMetadata(
+      final Repository repository,
+      final String groupId,
+      final String artifactId,
+      final String baseVersion,
+      final boolean rebuildChecksums,
+      final boolean update)
+  {
+    repository.facet(MavenMetadataRebuildFacet.class)
+        .rebuildMetadata(groupId, artifactId, baseVersion, rebuildChecksums, update);
+  }
+
+  @Override
+  public void deleteComponents(final Repository repository, final String version, final int expectedNumber) {
+    MavenContentFacet mavenContentFacet = repository.facet(MavenContentFacet.class);
+    List<FluentComponent> components = findComponents(mavenContentFacet, version).collect(Collectors.toList());
+    assertThat(components, hasSize(expectedNumber));
+    components.stream().map(FluentComponent::assets).forEach(assets -> deleteAll(mavenContentFacet, assets));
+  }
+
+  @Override
+  public void deleteAssets(final Repository repository, final String version, final int expectedNumber) {
+    MavenContentFacet mavenContentFacet = repository.facet(MavenContentFacet.class);
+    List<FluentAsset> assets = findComponents(mavenContentFacet, version)
+        .flatMap(component -> component.assets().stream())
+        .collect(Collectors.toList());
+    assertThat(assets, hasSize(expectedNumber));
+    deleteAll(mavenContentFacet, assets);
+  }
+
+  private void deleteAll(final MavenContentFacet mavenContentFacet, final Collection<FluentAsset> assets) {
+    MavenPathParser mavenPathParser = mavenContentFacet.getMavenPathParser();
+    assets.stream().map(FluentAsset::path).map(mavenPathParser::parsePath).forEach(
+        path -> {
+          try {
+            mavenContentFacet.delete(path);
+          }
+          catch (IOException e) {
+            e.printStackTrace();
+          }
+        });
+  }
+
+  @Nonnull
+  private Stream<FluentComponent> findComponents(final MavenContentFacet mavenContentFacet, final String version) {
+    return mavenContentFacet.components()
+        .browse(Integer.MAX_VALUE, null)
+        .stream()
+        .filter(component -> component.namespace().equals("org.sonatype.nexus.testsuite"))
+        .filter(component -> version.equals(component.attributes("maven2").get("baseVersion")));
   }
 }

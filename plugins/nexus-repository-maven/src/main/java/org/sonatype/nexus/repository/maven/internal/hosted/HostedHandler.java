@@ -20,10 +20,10 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
+import org.sonatype.nexus.orient.maven.MavenFacet;
 import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.maven.LayoutPolicy;
-import org.sonatype.nexus.orient.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.internal.orient.MavenFacetUtils;
@@ -36,7 +36,6 @@ import static org.sonatype.nexus.repository.http.HttpMethods.DELETE;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
 import static org.sonatype.nexus.repository.http.HttpMethods.PUT;
-import static org.sonatype.nexus.repository.maven.internal.orient.MavenFacetUtils.getHashAlgorithmFromContent;
 
 /**
  * Maven hosted handler.
@@ -77,7 +76,7 @@ public class HostedHandler
       return HttpResponses.notFound(path.getPath());
     }
     AttributesMap attributesMap = content.getAttributes();
-    MavenFacetUtils.mayAddETag(attributesMap, getHashAlgorithmFromContent(attributesMap));
+    MavenFacetUtils.mayAddETag(attributesMap, MavenFacetUtils.getHashAlgorithmFromContent(attributesMap));
     return HttpResponses.ok(content);
   }
 

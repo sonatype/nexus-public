@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.maven.internal.orient;
+package org.sonatype.nexus.repository.maven.internal.hosted.metadata;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -20,13 +20,13 @@ import java.util.Map;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
-import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.orient.maven.MavenFacet;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.internal.Maven2MavenPathParser;
-import org.sonatype.nexus.repository.maven.internal.hosted.metadata.Maven2Metadata;
 import org.sonatype.nexus.repository.maven.internal.hosted.metadata.Maven2Metadata.Plugin;
+import org.sonatype.nexus.repository.maven.internal.orient.OrientMetadataUpdater;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
@@ -47,7 +47,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * UT for {@link OrientMetadataUpdater}
+ * UT for {@link AbstractMetadataUpdater}
  *
  * @since 3.0
  */
@@ -76,7 +76,7 @@ public class MetadataUpdaterTest
 
   private final MavenPath mavenPath = new Maven2MavenPathParser().parsePath("/foo/bar");
 
-  private OrientMetadataUpdater testSubject;
+  private AbstractMetadataUpdater testSubject;
 
   @Before
   public void prepare() {

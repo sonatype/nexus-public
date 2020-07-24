@@ -17,6 +17,7 @@ import javax.inject.Provider
 
 import org.sonatype.nexus.content.maven.MavenArchetypeCatalogFacet
 import org.sonatype.nexus.content.maven.MavenContentFacet
+import org.sonatype.nexus.content.maven.MavenMetadataRebuildFacet
 import org.sonatype.nexus.content.maven.internal.VersionPolicyHandler
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.RecipeSupport
@@ -92,6 +93,9 @@ abstract class MavenRecipeSupport
   MavenArchetypeCatalogHandler archetypeCatalogHandler
 
   @Inject
+  MavenMetadataRebuildHandler mavenMetadataRebuildHandler
+
+  @Inject
   Provider<MavenContentFacet> mavenContentFacet
 
   @Inject
@@ -102,6 +106,9 @@ abstract class MavenRecipeSupport
 
   @Inject
   Provider<MavenArchetypeCatalogFacet> mavenArchetypeCatalogFacet
+
+  @Inject
+  Provider<MavenMetadataRebuildFacet> mavenMetadataRebuildFacet
 
   protected MavenRecipeSupport(final Type type, final Format format) {
     super(type, format)

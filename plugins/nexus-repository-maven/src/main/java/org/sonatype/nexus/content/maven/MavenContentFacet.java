@@ -14,6 +14,7 @@ package org.sonatype.nexus.content.maven;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.Set;
 
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
@@ -38,6 +39,8 @@ public interface MavenContentFacet
   Content put(MavenPath path, Payload content) throws IOException;
 
   boolean delete(MavenPath path) throws IOException;
+
+  Set<String> deleteWithHashes(MavenPath path) throws IOException;
 
   boolean exists(MavenPath mavenPath);
 
