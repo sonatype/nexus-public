@@ -201,6 +201,12 @@ Ext.define('NX.coreui.app.PluginConfig', {
       }
     },
     {
+      id: 'NX.coreui.controller.SearchGolang',
+      active: function () {
+        return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-repository-golang');
+      }
+    },
+    {
       id: 'NX.coreui.controller.SearchCocoapods',
       active: function () {
         return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-repository-cocoapods');
