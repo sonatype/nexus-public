@@ -19,12 +19,12 @@ import java.util.List;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.datastore.api.DataSession;
+import org.sonatype.nexus.datastore.api.DuplicateKeyException;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.store.example.TestAssetDAO;
 import org.sonatype.nexus.repository.content.store.example.TestComponentDAO;
 import org.sonatype.nexus.repository.content.store.example.TestContentRepositoryDAO;
 
-import org.apache.ibatis.exceptions.PersistenceException;
 import org.hamcrest.collection.IsIterableContainingInAnyOrder;
 import org.hamcrest.collection.IsIterableContainingInOrder;
 import org.junit.Before;
@@ -138,13 +138,14 @@ public class ComponentDAOTest
       duplicate.setNamespace(component1.namespace());
       duplicate.setName(component1.name());
       duplicate.setVersion(component1.version());
+      duplicate.setKind(component1.kind());
       duplicate.setAttributes(newAttributes("duplicate"));
       dao.createComponent(duplicate);
 
       session.getTransaction().commit();
       fail("Cannot create the same component twice");
     }
-    catch (PersistenceException e) {
+    catch (DuplicateKeyException e) {
       logger.debug("Got expected exception", e);
     }
 

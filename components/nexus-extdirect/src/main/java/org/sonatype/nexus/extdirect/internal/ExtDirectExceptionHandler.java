@@ -74,9 +74,11 @@ public class ExtDirectExceptionHandler
           method.getFullName(), method.getFullJavaMethodName(), e);
     }
 
+    String exceptionName = e.getClass().getName();
     if (e instanceof SQLException
-        || e.getClass().getName().contains("org.apache.ibatis")
-        || e.getClass().getName().contains("com.orientechnologies")) {
+        || exceptionName.contains("org.apache.ibatis")
+        || exceptionName.contains("org.sonatype.nexus.datastore")
+        || exceptionName.contains("com.orientechnologies")) {
       return error(new Exception("A database error occurred"));
     }
 

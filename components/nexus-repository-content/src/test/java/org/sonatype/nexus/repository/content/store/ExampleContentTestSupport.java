@@ -28,6 +28,7 @@ import org.sonatype.nexus.common.entity.EntityUUID;
 import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.datastore.api.DataAccess;
 import org.sonatype.nexus.datastore.api.DataSession;
+import org.sonatype.nexus.datastore.api.DuplicateKeyException;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
@@ -42,7 +43,6 @@ import org.sonatype.nexus.testdb.DataSessionRule;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.apache.ibatis.exceptions.PersistenceException;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
@@ -266,7 +266,7 @@ public class ExampleContentTestSupport
       session.getTransaction().commit();
       return true;
     }
-    catch (PersistenceException e) {
+    catch (DuplicateKeyException e) {
       logger.debug("Skipping duplicate generated content", e);
       return false;
     }

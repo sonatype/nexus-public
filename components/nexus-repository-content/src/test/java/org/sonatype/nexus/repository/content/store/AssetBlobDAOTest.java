@@ -15,10 +15,11 @@ package org.sonatype.nexus.repository.content.store;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.datastore.api.DataSession;
+import org.sonatype.nexus.datastore.api.DuplicateKeyException;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.store.example.TestAssetBlobDAO;
 
-import org.apache.ibatis.exceptions.PersistenceException;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.contains;
@@ -74,13 +75,14 @@ public class AssetBlobDAOTest
       duplicate.setBlobRef(assetBlob1.blobRef());
       duplicate.setBlobSize(1234);
       duplicate.setContentType("text/html");
+      duplicate.setChecksums(ImmutableMap.of());
       duplicate.setBlobCreated(UTC.now());
       dao.createAssetBlob(duplicate);
 
       session.getTransaction().commit();
       fail("Cannot create the same component twice");
     }
-    catch (PersistenceException e) {
+    catch (DuplicateKeyException e) {
       logger.debug("Got expected exception", e);
     }
 

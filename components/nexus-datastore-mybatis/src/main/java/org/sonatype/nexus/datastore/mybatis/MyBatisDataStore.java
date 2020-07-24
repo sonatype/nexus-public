@@ -84,8 +84,6 @@ import org.apache.ibatis.plugin.Interceptor;
 import org.apache.ibatis.reflection.factory.DefaultObjectFactory;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSession;
-import org.apache.ibatis.session.SqlSessionFactory;
-import org.apache.ibatis.session.defaults.DefaultSqlSessionFactory;
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
 import org.apache.ibatis.type.OffsetDateTimeTypeHandler;
 import org.apache.ibatis.type.TypeAliasRegistry;
@@ -160,7 +158,7 @@ public class MyBatisDataStore
 
   private HikariDataSource dataSource;
 
-  private SqlSessionFactory sessionFactory;
+  private Configuration mybatisConfig;
 
   @Nullable
   private Predicate<String> sensitiveAttributeFilter;
@@ -207,7 +205,7 @@ public class MyBatisDataStore
 
     dataSource = new HikariDataSource(configureHikari(storeName, attributes));
     Environment environment = new Environment(storeName, new JdbcTransactionFactory(), dataSource);
-    sessionFactory = new DefaultSqlSessionFactory(configureMyBatis(environment));
+    mybatisConfig = configureMyBatis(environment);
 
     registerCommonTypeHandlers(isContentStore);
 
@@ -220,7 +218,7 @@ public class MyBatisDataStore
 
   @Override
   protected void doStop() throws Exception {
-    sessionFactory = null;
+    mybatisConfig = null;
     registeredAccessTypes.clear();
     try {
       dataSource.close();
@@ -241,7 +239,7 @@ public class MyBatisDataStore
 
     // finally create the schema for this DAO
     info("Creating schema for {}", accessType.getSimpleName());
-    try (SqlSession session = sessionFactory.openSession()) {
+    try (SqlSession session = new DataAccessSqlSession(mybatisConfig)) {
       DataAccess dao = session.getMapper(accessType);
       dao.createSchema();
       dao.extendSchema();
@@ -257,7 +255,7 @@ public class MyBatisDataStore
   @Guarded(by = STARTED)
   @Override
   public MyBatisDataSession openSession() {
-    return new MyBatisDataSession(sessionFactory.openSession());
+    return new MyBatisDataSession(new DataAccessSqlSession(mybatisConfig));
   }
 
   @Guarded(by = STARTED)
@@ -365,7 +363,7 @@ public class MyBatisDataStore
    */
   @SuppressWarnings("unchecked")
   private void registerCommonTypeHandlers(boolean isContentStore) {
-    boolean lenient = configurePlaceholderTypes(sessionFactory.getConfiguration());
+    boolean lenient = configurePlaceholderTypes(mybatisConfig);
 
     // register raw/simple mappers first
     register(new ListTypeHandler());
@@ -394,7 +392,7 @@ public class MyBatisDataStore
       registerDetached(new EncryptedStringTypeHandler()); // detached so it doesn't apply to all Strings
 
       // enable automatic encryption of sensitive JSON fields in the config store
-      sensitiveAttributeFilter = buildSensitiveAttributeFilter(sessionFactory.getConfiguration());
+      sensitiveAttributeFilter = buildSensitiveAttributeFilter(mybatisConfig);
     }
 
     // finally register more complex mappers on top of the raw/simple mappers - this way we can have
@@ -440,7 +438,7 @@ public class MyBatisDataStore
    * Register simple package-less aliases for all parameter and return types in the DAO.
    */
   private void registerSimpleAliases(final Class<? extends DataAccess> accessType) {
-    TypeAliasRegistry registry = sessionFactory.getConfiguration().getTypeAliasRegistry();
+    TypeAliasRegistry registry = mybatisConfig.getTypeAliasRegistry();
     TypeLiteral<?> resolvedType = TypeLiteral.get(accessType);
     for (Method method : accessType.getMethods()) {
       for (TypeLiteral<?> parameterType : resolvedType.getParameterTypes(method)) {
@@ -503,7 +501,7 @@ public class MyBatisDataStore
     }
 
     // MyBatis will load the corresponding XML schema
-    sessionFactory.getConfiguration().addMapper(accessType);
+    mybatisConfig.addMapper(accessType);
   }
 
   /**
@@ -546,8 +544,6 @@ public class MyBatisDataStore
 
     try {
       log.trace(xml);
-
-      Configuration mybatisConfig = sessionFactory.getConfiguration();
 
       XMLMapperBuilder xmlParser = new XMLMapperBuilder(
           new ByteArrayInputStream(xml.getBytes(UTF_8)),
@@ -653,7 +649,7 @@ public class MyBatisDataStore
    */
   @VisibleForTesting
   public void register(final Interceptor interceptor) {
-    sessionFactory.getConfiguration().addInterceptor(interceptor);
+    mybatisConfig.addInterceptor(interceptor);
     info(REGISTERED_MESSAGE, interceptor.getClass().getSimpleName());
   }
 
@@ -684,7 +680,7 @@ public class MyBatisDataStore
 
   @Override
   public String getDatabaseId() {
-    return sessionFactory.getConfiguration().getDatabaseId();
+    return mybatisConfig.getDatabaseId();
   }
 
   /**
@@ -697,7 +693,6 @@ public class MyBatisDataStore
     if (sensitiveAttributeFilter != null && handler instanceof AbstractJsonTypeHandler<?>) {
       ((AbstractJsonTypeHandler<?>) handler).encryptSensitiveFields(passwordHelper, sensitiveAttributeFilter);
     }
-    Configuration mybatisConfig = sessionFactory.getConfiguration();
     registerSimpleAlias(mybatisConfig.getTypeAliasRegistry(), handler.getClass());
     return mybatisConfig.getTypeHandlerRegistry();
   }

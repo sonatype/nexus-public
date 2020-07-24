@@ -10,23 +10,21 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.app;
+package org.sonatype.nexus.datastore.api;
 
 /**
- * Thrown when something attempts to write while the application is frozen.
+ * Thrown when inserting/updating would break a unique key constraint.
  *
- * @since 3.21
+ * @since 3.next
  */
-public class FrozenException
-    extends NotWritableException
+public class DuplicateKeyException
+    extends DataAccessException
 {
-  private static final long serialVersionUID = -5328665935242655134L;
+  private static final long serialVersionUID = 98739582308995723L;
 
-  public FrozenException(final String message) {
-    super(message);
-  }
+  public static final String SQL_STATE = "23505";
 
-  public FrozenException(final String message, final Throwable cause) {
-    super(message, cause);
+  public DuplicateKeyException(final Throwable cause) {
+    super("Duplicate key", cause);
   }
 }

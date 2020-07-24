@@ -23,6 +23,7 @@ import org.sonatype.nexus.common.app.FrozenException;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityUUID;
 import org.sonatype.nexus.common.entity.HasEntityId;
+import org.sonatype.nexus.datastore.api.DuplicateKeyException;
 
 import org.apache.ibatis.cache.CacheKey;
 import org.apache.ibatis.cursor.Cursor;
@@ -76,7 +77,17 @@ final class EntityExecutor
     if (commandType == INSERT && parameter instanceof HasEntityId) {
       generateEntityId((HasEntityId) parameter);
     }
-    return delegate.update(ms, parameter);
+    try {
+      return delegate.update(ms, parameter);
+    }
+    catch (SQLException e) {
+      switch (e.getSQLState()) {
+        case DuplicateKeyException.SQL_STATE:
+          throw new DuplicateKeyException(e);
+        default:
+          throw e;
+      }
+    }
   }
 
   @Override

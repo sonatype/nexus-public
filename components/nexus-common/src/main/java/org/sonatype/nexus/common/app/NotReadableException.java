@@ -22,6 +22,8 @@ package org.sonatype.nexus.common.app;
 public class NotReadableException
     extends IllegalStateException
 {
+  private static final long serialVersionUID = 3425411938965871948L;
+
   public NotReadableException(final String message) {
     super(message);
   }

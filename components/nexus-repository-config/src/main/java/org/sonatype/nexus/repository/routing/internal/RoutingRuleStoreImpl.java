@@ -26,6 +26,7 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.datastore.ConfigStoreSupport;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
+import org.sonatype.nexus.datastore.api.DuplicateKeyException;
 import org.sonatype.nexus.repository.routing.RoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingRuleInvalidatedEvent;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
@@ -38,7 +39,6 @@ import com.google.common.collect.ImmutableList;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.UUID.fromString;
-import static org.sonatype.nexus.datastore.DataAccessHelper.causedByDuplicateKey;
 
 /**
  * MyBatis {@link RoutingRuleStore} implementation.
@@ -87,11 +87,8 @@ public class RoutingRuleStoreImpl
       dao().create((RoutingRuleData) validate(rule));
       return rule;
     }
-    catch (RuntimeException e) {
-      if (causedByDuplicateKey(e)) {
-        throw new ValidationErrorsException("name", "A rule with the same name already exists. Name must be unique.");
-      }
-      throw e;
+    catch (DuplicateKeyException e) {
+      throw new ValidationErrorsException("name", "A rule with the same name already exists. Name must be unique.");
     }
   }
 
@@ -118,11 +115,8 @@ public class RoutingRuleStoreImpl
     try {
       dao().update(rule);
     }
-    catch (RuntimeException e) {
-      if (causedByDuplicateKey(e)) {
-        throw new ValidationErrorsException("name", "A rule with the same name already exists. Name must be unique.");
-      }
-      throw e;
+    catch (DuplicateKeyException e) {
+      throw new ValidationErrorsException("name", "A rule with the same name already exists. Name must be unique.");
     }
   }
 
