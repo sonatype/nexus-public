@@ -12,18 +12,24 @@
  */
 package org.sonatype.nexus.repository.ossindex;
 
-import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.storage.Component;
+import java.util.Optional;
+
+import javax.annotation.Nullable;
+
+import org.sonatype.goodies.packageurl.PackageUrl;
 
 /**
- * @since 3.25
+ * Represents a format-specific mapping of components to {@link PackageUrl}s.
+ *
+ * All formats should implement this to get vulnerability information
+ * @see https://ossindex.sonatype.org/ecosystems
+ *
+ * @since 3.next
  */
-public interface VulnerabilityService
+public interface PackageUrlMapping
 {
   /**
-   * @return true if the vulnerability service is enable and supports the given Repository format
+   * Returns {@link PackageUrl} for the given component coordinates.
    */
-  boolean isEnabled(Repository repository);
-
-  VulnerabilityReportXO getVulnerabilityReport(Component component);
+  Optional<PackageUrl> buildPackageUrl(@Nullable String namespace, String name, @Nullable String version);
 }

@@ -10,24 +10,21 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.ossindex
+package org.sonatype.nexus.repository.ossindex;
 
-import javax.validation.constraints.NotBlank
+import java.util.Optional;
 
-import groovy.transform.EqualsAndHashCode
-import groovy.transform.ToString
-import org.hibernate.validator.constraints.Range
+import org.sonatype.goodies.packageurl.PackageUrl;
 
-@ToString(includePackage = false, includeNames = true)
-@EqualsAndHashCode
-class VulnerabilityReportXO
+/**
+ * {@link PackageUrl} lookup service.
+ *
+ * @since 3.next
+ */
+public interface PackageUrlService
 {
-  @NotBlank
-  String description
-
-  @NotBlank
-  String reference
-
-  @Range
-  int count
+  /**
+   * Returns {@link PackageUrl} for the given component, if it exists.
+   */
+  Optional<PackageUrl> getPackageUrl(String format, String namespace, String name, String version);
 }

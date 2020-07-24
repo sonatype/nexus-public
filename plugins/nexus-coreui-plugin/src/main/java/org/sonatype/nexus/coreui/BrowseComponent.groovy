@@ -22,14 +22,11 @@ import org.sonatype.nexus.common.entity.EntityId
 import org.sonatype.nexus.extdirect.DirectComponent
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.repository.Repository
-import org.sonatype.nexus.repository.browse.BrowseService
 import org.sonatype.nexus.repository.browse.node.BrowseNode
 import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration
 import org.sonatype.nexus.repository.browse.node.BrowseNodeStore
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.ossindex.VulnerabilityService
-import org.sonatype.nexus.repository.storage.ComponentEntityAdapter
-import org.sonatype.nexus.repository.types.ProxyType
 
 import com.codahale.metrics.annotation.ExceptionMetered
 import com.codahale.metrics.annotation.Timed
@@ -62,12 +59,6 @@ class BrowseComponent
   RepositoryManager repositoryManager
 
   @Inject
-  BrowseService browseService
-
-  @Inject
-  ComponentEntityAdapter componentEntityAdapter
-
-  @Inject
   Provider<VulnerabilityService> vulnerabilityServiceProvider
 
   @DirectMethod
@@ -91,10 +82,6 @@ class BrowseComponent
         .collect { BrowseNode browseNode ->
           def encodedPath = EncodingUtil.urlEncode(browseNode.name)
           def type = browseNode.assetId != null ? ASSET : browseNode.componentId != null ? COMPONENT : FOLDER
-          def vulnerable = false
-          if (browseNode.componentId) {
-            vulnerable = displayVulnerability(browseNode, repository)
-          }
           new BrowseNodeXO(
               id: isRoot(path) ? encodedPath : (path + '/' + encodedPath),
               type: type,
@@ -102,35 +89,13 @@ class BrowseComponent
               leaf: browseNode.leaf,
               componentId: browseNodeStore.getValue(browseNode.componentId as EntityId),
               assetId: browseNodeStore.getValue(browseNode.assetId as EntityId),
-              vulnerable: vulnerable
+              packageUrl: browseNode.packageUrl
           )
         }
-  }
-
-  boolean displayVulnerability(final BrowseNode browseNode, final Repository repository) {
-    def vulnerabilityService = vulnerabilityServiceProvider.get()
-    if(!vulnerabilityService || !isProxy(repository)) {
-      return false
-    }
-    try {
-      if (!vulnerabilityService.isEnabled(repository)) {
-        return false
-      }
-      def component = browseService.getComponentById(componentEntityAdapter.recordIdentity(
-          browseNode.componentId as EntityId), repository)
-      def vulnerabilityReport = vulnerabilityService.getVulnerabilityReport(component)
-      return vulnerabilityReport?.count > 0
-    } catch (Exception e) {
-      log.warn("Failed to get vulnerability report", e)
-      return false
-    }
   }
 
   def isRoot(String path) {
     return '/'.equals(path)
   }
 
-  boolean isProxy(final Repository repository) {
-    repository.type instanceof ProxyType
-  }
 }

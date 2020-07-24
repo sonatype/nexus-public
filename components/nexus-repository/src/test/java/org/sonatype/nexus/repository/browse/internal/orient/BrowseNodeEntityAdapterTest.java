@@ -14,11 +14,13 @@ package org.sonatype.nexus.repository.browse.internal.orient;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule;
 import org.sonatype.nexus.repository.browse.BrowseTestSupport;
+import org.sonatype.nexus.repository.ossindex.PackageUrlService;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.storage.Bucket;
@@ -45,6 +47,9 @@ import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 
 public class BrowseNodeEntityAdapterTest
@@ -71,6 +76,8 @@ public class BrowseNodeEntityAdapterTest
 
   private Asset asset;
 
+  private PackageUrlService packageUrlService;
+
   @Before
   public void setUp() throws Exception {
 
@@ -79,7 +86,10 @@ public class BrowseNodeEntityAdapterTest
     componentEntityAdapter = new ComponentEntityAdapter(bucketEntityAdapter, componentFactory, emptySet());
     assetEntityAdapter = new AssetEntityAdapter(bucketEntityAdapter, componentEntityAdapter);
 
-    underTest = new BrowseNodeEntityAdapter(componentEntityAdapter, assetEntityAdapter);
+    packageUrlService = mock(PackageUrlService.class);
+    when(packageUrlService.getPackageUrl(anyString(), anyString(), anyString(), anyString()))
+        .thenReturn(Optional.empty());
+    underTest = new BrowseNodeEntityAdapter(componentEntityAdapter, assetEntityAdapter, packageUrlService);
 
     try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
       bucketEntityAdapter.register(db);

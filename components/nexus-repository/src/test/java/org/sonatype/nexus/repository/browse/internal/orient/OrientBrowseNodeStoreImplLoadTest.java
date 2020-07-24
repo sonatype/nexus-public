@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.browse.internal.orient;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.goodies.testsupport.concurrent.ConcurrentRunner;
@@ -27,6 +28,7 @@ import org.sonatype.nexus.repository.browse.node.BrowseNodeConfiguration;
 import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.browse.node.DefaultBrowseNodeComparator;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.ossindex.PackageUrlService;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.repository.storage.Bucket;
@@ -50,6 +52,8 @@ import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptySet;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
 
 public class OrientBrowseNodeStoreImplLoadTest
@@ -73,6 +77,9 @@ public class OrientBrowseNodeStoreImplLoadTest
   @Mock
   private RepositoryManager repositoryManager;
 
+  @Mock
+  private PackageUrlService packageUrlService;
+
   private Bucket bucket;
 
   private Component component;
@@ -91,7 +98,11 @@ public class OrientBrowseNodeStoreImplLoadTest
         emptySet());
     AssetEntityAdapter assetEntityAdapter = new AssetEntityAdapter(bucketEntityAdapter, componentEntityAdapter);
 
-    BrowseNodeEntityAdapter browseNodeEntityAdapter = new BrowseNodeEntityAdapter(componentEntityAdapter, assetEntityAdapter);
+    when(packageUrlService.getPackageUrl(anyString(), anyString(), anyString(), anyString()))
+        .thenReturn(Optional.empty());
+    BrowseNodeEntityAdapter browseNodeEntityAdapter = new BrowseNodeEntityAdapter(componentEntityAdapter,
+        assetEntityAdapter,
+        packageUrlService);
 
     try (ODatabaseDocumentTx db = database.getInstance().connect()) {
       bucketEntityAdapter.register(db);
