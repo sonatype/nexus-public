@@ -272,52 +272,52 @@ public class ExampleContentTestSupport
     }
   }
 
-  static Matcher<ContentRepository> sameConfigRepository(final ContentRepository expected) {
+  protected static Matcher<ContentRepository> sameConfigRepository(final ContentRepository expected) {
     return new FieldMatcher<>(expected, ContentRepository::configRepositoryId);
   }
 
-  static Matcher<Component> sameCoordinates(final Component expected) {
+  protected static Matcher<Component> sameCoordinates(final Component expected) {
     return new FieldMatcher<>(expected, Component::namespace, Component::name, Component::kind, Component::version);
   }
 
-  static Matcher<Component> sameKind(final Component expected) {
+  protected static Matcher<Component> sameKind(final Component expected) {
     return new FieldMatcher<>(expected, Component::kind);
   }
 
-  static Matcher<Asset> samePath(final Asset expected) {
+  protected static Matcher<Asset> samePath(final Asset expected) {
     return new FieldMatcher<>(expected, Asset::path);
   }
 
-  static Matcher<Asset> sameKind(final Asset expected) {
+  protected static Matcher<Asset> sameKind(final Asset expected) {
     return new FieldMatcher<>(expected, Asset::kind);
   }
 
-  static Matcher<Asset> sameBlob(final Asset expected) {
+  protected static Matcher<Asset> sameBlob(final Asset expected) {
     return new FieldMatcher<>(expected, (Function<Asset, ?>) asset -> asset.blob().map(AssetBlob::blobRef));
   }
 
-  static Matcher<AssetBlob> sameBlob(final AssetBlob expected) {
+  protected static Matcher<AssetBlob> sameBlob(final AssetBlob expected) {
     return new FieldMatcher<>(expected, AssetBlob::blobRef, AssetBlob::blobSize, AssetBlob::contentType,
         AssetBlob::blobCreated, AssetBlob::createdBy, AssetBlob::createdByIp);
   }
 
-  static Matcher<Asset> sameLastDownloaded(final Asset expected) {
+  protected static Matcher<Asset> sameLastDownloaded(final Asset expected) {
     return new FieldMatcher<>(expected, Asset::lastDownloaded);
   }
 
-  static Matcher<RepositoryContent> sameAttributes(final RepositoryContent expected) {
+  protected static Matcher<RepositoryContent> sameAttributes(final RepositoryContent expected) {
     return new FieldMatcher<>(expected, (Function<RepositoryContent, ?>) content -> content.attributes().backing());
   }
 
-  static Matcher<RepositoryContent> sameCreated(final RepositoryContent expected) {
+  protected static Matcher<RepositoryContent> sameCreated(final RepositoryContent expected) {
     return new FieldMatcher<>(expected, RepositoryContent::created);
   }
 
-  static Matcher<RepositoryContent> sameLastUpdated(final RepositoryContent expected) {
+  protected static Matcher<RepositoryContent> sameLastUpdated(final RepositoryContent expected) {
     return new FieldMatcher<>(expected, RepositoryContent::lastUpdated);
   }
 
-  static class FieldMatcher<T>
+  protected static class FieldMatcher<T>
       extends TypeSafeDiagnosingMatcher<T>
   {
     private final T expected;
@@ -325,7 +325,7 @@ public class ExampleContentTestSupport
     private final List<Function<T, ?>> extractors;
 
     @SafeVarargs
-    FieldMatcher(final T expected, final Function<T, ?>... extractors) {
+    public FieldMatcher(final T expected, final Function<T, ?>... extractors) {
       this.expected = checkNotNull(expected);
       this.extractors = asList(checkNotNull(extractors));
     }

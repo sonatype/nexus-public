@@ -51,11 +51,11 @@ public class Maven2BrowseNodeGeneratorTest
 
     assertThat(browsePaths.size(), is(5));
     assertThat(browsePaths, containsInAnyOrder(
-        new BrowsePath("org", "org/"),
-        new BrowsePath("hamcrest", "org/hamcrest/"),
-        new BrowsePath("hamcrest-core", "org/hamcrest/hamcrest-core/"),
-        new BrowsePath(BASE_VERSION, "org/hamcrest/hamcrest-core/1.3/"),
-        new BrowsePath("hamcrest-core-1.3.jar", asset.path().substring(1))));
+        new BrowsePath("org", "/org/"),
+        new BrowsePath("hamcrest", "/org/hamcrest/"),
+        new BrowsePath("hamcrest-core", "/org/hamcrest/hamcrest-core/"),
+        new BrowsePath(BASE_VERSION, "/org/hamcrest/hamcrest-core/1.3/"),
+        new BrowsePath("hamcrest-core-1.3.jar", asset.path())));
   }
 
   @Test
@@ -68,13 +68,13 @@ public class Maven2BrowseNodeGeneratorTest
 
     assertThat(browsePaths.size(), is(6));
     assertThat(browsePaths, containsInAnyOrder(
-        new BrowsePath("org", "org/"),
-        new BrowsePath("hamcrest", "org/hamcrest/"),
-        new BrowsePath("hamcrest-core", "org/hamcrest/hamcrest-core/"),
-        new BrowsePath(SNAPSHOT_VERSION, "org/hamcrest/hamcrest-core/1.3-SNAPSHOT/"),
+        new BrowsePath("org", "/org/"),
+        new BrowsePath("hamcrest", "/org/hamcrest/"),
+        new BrowsePath("hamcrest-core", "/org/hamcrest/hamcrest-core/"),
+        new BrowsePath(SNAPSHOT_VERSION, "/org/hamcrest/hamcrest-core/1.3-SNAPSHOT/"),
         new BrowsePath(TIMESTAMPED_VERSION,
-            "org/hamcrest/hamcrest-core/1.3-SNAPSHOT/1.3-20200717.093520-1/"),
-        new BrowsePath("hamcrest-core-1.3-20200717.093520-1.jar", asset.path().substring(1))));
+            "/org/hamcrest/hamcrest-core/1.3-SNAPSHOT/1.3-20200717.093520-1/"),
+        new BrowsePath("hamcrest-core-1.3-20200717.093520-1.jar", asset.path())));
   }
 
   @Test
@@ -86,10 +86,10 @@ public class Maven2BrowseNodeGeneratorTest
 
     assertThat(browsePaths.size(), is(4));
     assertThat(browsePaths, containsInAnyOrder(
-        new BrowsePath("com", "com/"),
-        new BrowsePath("sonatype", "com/sonatype/"),
-        new BrowsePath("example", "com/sonatype/example/"),
-        new BrowsePath("metadata.xml", asset.path().substring(1))));
+        new BrowsePath("com", "/com/"),
+        new BrowsePath("sonatype", "/com/sonatype/"),
+        new BrowsePath("example", "/com/sonatype/example/"),
+        new BrowsePath("metadata.xml", asset.path())));
   }
 
   @Test
@@ -101,10 +101,10 @@ public class Maven2BrowseNodeGeneratorTest
 
     assertThat(browsePaths.size(), is(4));
     assertThat(browsePaths, containsInAnyOrder(
-        new BrowsePath("org", "org/"),
-        new BrowsePath("hamcrest", "org/hamcrest/"),
-        new BrowsePath("hamcrest-core", "org/hamcrest/hamcrest-core/"),
-        new BrowsePath(BASE_VERSION, "org/hamcrest/hamcrest-core/1.3/")));
+        new BrowsePath("org", "/org/"),
+        new BrowsePath("hamcrest", "/org/hamcrest/"),
+        new BrowsePath("hamcrest-core", "/org/hamcrest/hamcrest-core/"),
+        new BrowsePath(BASE_VERSION, "/org/hamcrest/hamcrest-core/1.3/")));
   }
 
   @Test
@@ -116,12 +116,12 @@ public class Maven2BrowseNodeGeneratorTest
 
     assertThat(browsePaths.size(), is(5));
     assertThat(browsePaths, containsInAnyOrder(
-        new BrowsePath("org", "org/"),
-        new BrowsePath("hamcrest", "org/hamcrest/"),
-        new BrowsePath("hamcrest-core", "org/hamcrest/hamcrest-core/"),
-        new BrowsePath(SNAPSHOT_VERSION, "org/hamcrest/hamcrest-core/1.3-SNAPSHOT/"),
+        new BrowsePath("org", "/org/"),
+        new BrowsePath("hamcrest", "/org/hamcrest/"),
+        new BrowsePath("hamcrest-core", "/org/hamcrest/hamcrest-core/"),
+        new BrowsePath(SNAPSHOT_VERSION, "/org/hamcrest/hamcrest-core/1.3-SNAPSHOT/"),
         new BrowsePath(TIMESTAMPED_VERSION,
-            "org/hamcrest/hamcrest-core/1.3-SNAPSHOT/1.3-20200717.093520-1/")));
+            "/org/hamcrest/hamcrest-core/1.3-SNAPSHOT/1.3-20200717.093520-1/")));
   }
 
   @Test
@@ -133,8 +133,8 @@ public class Maven2BrowseNodeGeneratorTest
 
     assertThat(browsePaths.size(), is(2));
     assertThat(browsePaths, containsInAnyOrder(
-        new BrowsePath("hamcrest-core", "hamcrest-core/"),
-        new BrowsePath("1.3", "hamcrest-core/1.3/")));
+        new BrowsePath("hamcrest-core", "/hamcrest-core/"),
+        new BrowsePath("1.3", "/hamcrest-core/1.3/")));
   }
 
   @Test
@@ -145,7 +145,7 @@ public class Maven2BrowseNodeGeneratorTest
     List<BrowsePath> browsePaths = underTest.computeComponentPaths(asset);
 
     assertThat(browsePaths.size(), is(1));
-    assertThat(browsePaths, containsInAnyOrder(new BrowsePath("hamcrest-core", "hamcrest-core/")));
+    assertThat(browsePaths, containsInAnyOrder(new BrowsePath("hamcrest-core", "/hamcrest-core/")));
   }
 
   private Component aReleaseVersionedComponent() {

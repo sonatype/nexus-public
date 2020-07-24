@@ -56,7 +56,7 @@ public class BrowseTestSupport
     assertThat(expectedRequestPaths.size(), is(expectedBrowsePaths.size()));
     assertThat(paths.size(), is(expectedBrowsePaths.size()));
 
-    String requestPath = "";
+    String requestPath = "/";
 
     for (int i = 0; i < expectedBrowsePaths.size(); i++) {
       requestPath += expectedRequestPaths.get(i);

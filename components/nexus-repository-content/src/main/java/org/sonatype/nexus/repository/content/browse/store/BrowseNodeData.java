@@ -41,14 +41,13 @@ public class BrowseNodeData
 {
   Integer nodeId; // NOSONAR: internal id
 
-  Integer repositoryId; // NOSONAR: internal repository id
+  int repositoryId; // NOSONAR: internal repository id
 
   private String requestPath;
 
   private String displayName;
 
-  @Nullable
-  Integer parentId; // NOSONAR: internal id
+  int parentId; // NOSONAR: internal id
 
   private boolean leaf;
   

@@ -86,7 +86,7 @@ public class SelectorSqlBuilder
   public void appendProperty(final String property) {
     queryBuilder.append(propertyAliases.computeIfAbsent(property, p -> {
       checkArgument(isAlphanumeric(p));
-      return propertyPrefix + p + parameterSuffix;
+      return propertyPrefix + p;
     }));
   }
 

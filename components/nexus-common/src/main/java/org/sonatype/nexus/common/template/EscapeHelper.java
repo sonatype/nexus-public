@@ -33,8 +33,8 @@ public class EscapeHelper
   }
 
   public String url(final String value) {
-    if (value == null) {
-      return null;
+    if (value == null || value.isEmpty()) {
+      return value;
     }
     else {
       return EncodingUtil.urlEncode(value);
@@ -54,8 +54,8 @@ public class EscapeHelper
   }
 
   public String uri(final String value) {
-    if (value == null) {
-      return null;
+    if (value == null || value.isEmpty()) {
+      return value;
     }
     else {
       return url(value)

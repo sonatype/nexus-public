@@ -30,28 +30,31 @@ import org.sonatype.nexus.repository.storage.Component;
 import com.google.common.base.Splitter;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.browse.node.BrowsePath.SLASH;
 
 /**
  * Maven layout is based on group, name, and version; places assets one level below their components.
  * This differs from the default generator in that any dots in the group are converted to slashes.
  *
- * Note: snapshot components keep their unique version in the component path:
+ * Note: snapshot components are combined under their base version but keep their timestamped version:
  *
- * /org/sonatype/nexus/nexus-common/3.7.0-20171212.235354-266/
+ * /org/sonatype/nexus/nexus-common/3.7.0-SNAPSHOT/3.7.0-20171212.235354-266/
  *
- * which means snapshot assets are listed under their unique version:
+ * This avoids having multiple snapshot components at the same '3.7.0-SNAPSHOT' node in the browse UI.
  *
- * /org/sonatype/nexus/nexus-common/3.7.0-20171107.223311-149/nexus-common-3.7.0-20171107.223311-149.pom
- * /org/sonatype/nexus/nexus-common/3.7.0-20171113.234015-168/nexus-common-3.7.0-20171113.234015-168.pom
- * /org/sonatype/nexus/nexus-common/3.7.0-20171212.235354-266/nexus-common-3.7.0-20171212.235354-266.pom
+ * A side-effect of this is snapshot assets are also displayed under the additional timestamped folder:
  *
- * instead being listed under the same base '-SNAPSHOT' directory:
+ * /org/sonatype/nexus/nexus-common/3.7.0-SNAPSHOT/3.7.0-20171107.223311-149/nexus-common-3.7.0-20171107.223311-149.pom
+ * /org/sonatype/nexus/nexus-common/3.7.0-SNAPSHOT/3.7.0-20171113.234015-168/nexus-common-3.7.0-20171113.234015-168.pom
+ * /org/sonatype/nexus/nexus-common/3.7.0-SNAPSHOT/3.7.0-20171212.235354-266/nexus-common-3.7.0-20171212.235354-266.pom
+ *
+ * instead being displayed under the same base '-SNAPSHOT' folder as in the standard Maven layout:
  *
  * /org/sonatype/nexus/nexus-common/3.7.0-SNAPSHOT/nexus-common-3.7.0-20171107.223311-149.pom
  * /org/sonatype/nexus/nexus-common/3.7.0-SNAPSHOT/nexus-common-3.7.0-20171113.234015-168.pom
  * /org/sonatype/nexus/nexus-common/3.7.0-SNAPSHOT/nexus-common-3.7.0-20171212.235354-266.pom
  *
- * This avoids having multiple snapshot components at the same '3.7.0-SNAPSHOT' node in the browse tree.
+ * But note they still retain their real asset path as the 'request' path for permissions checks.
  *
  * @since 3.6
  */
@@ -61,8 +64,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class OrientMaven2BrowseNodeGenerator
     extends ComponentPathBrowseNodeGenerator
 {
-  private static final String FORWARD_SLASH = "/";
-
   /**
    * @return componentPath/lastSegment(assetPath) if the component was not null, otherwise assetPath
    */
@@ -103,7 +104,7 @@ public class OrientMaven2BrowseNodeGenerator
       String baseVersion = component.attributes().child("maven2").get("baseVersion", String.class);
       //the request path should be as expected by maven, so that security is applied properly, hence we use the
       //same path for both nodes added below
-      String requestPath = paths.get(paths.size() - 1).getRequestPath() + baseVersion + FORWARD_SLASH;
+      String requestPath = paths.get(paths.size() - 1).getRequestPath() + baseVersion + SLASH;
       if (!component.version().equals(baseVersion)) {
         // Put the SNAPSHOT version (baseVersion) before the component version in the tree.
         BrowsePaths.appendPath(paths, baseVersion, requestPath);
