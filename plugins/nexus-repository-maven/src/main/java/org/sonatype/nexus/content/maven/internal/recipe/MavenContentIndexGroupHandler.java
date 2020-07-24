@@ -10,17 +10,14 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.maven.internal.group;
+package org.sonatype.nexus.content.maven.internal.recipe;
 
 import javax.annotation.Nonnull;
-import javax.inject.Named;
-import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.http.HttpResponses;
-import org.sonatype.nexus.orient.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
-import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Response;
@@ -28,11 +25,9 @@ import org.sonatype.nexus.repository.view.Response;
 /**
  * Group specific handler of Maven indexes: it serves up merged group index, if present.
  *
- * @since 3.0
+ * @since 3.next
  */
-@Singleton
-@Named
-public class IndexGroupHandler
+class MavenContentIndexGroupHandler
     extends ComponentSupport
     implements Handler
 {
@@ -40,11 +35,9 @@ public class IndexGroupHandler
   @Override
   public Response handle(@Nonnull final Context context) throws Exception {
     MavenPath mavenPath = context.getAttributes().require(MavenPath.class);
-    MavenFacet mavenFacet = context.getRepository().facet(MavenFacet.class);
-    Content content = mavenFacet.get(mavenPath);
-    if (content == null) {
-      return HttpResponses.notFound(mavenPath.getPath());
-    }
-    return HttpResponses.ok(content);
+    MavenContentFacet mavenContentFacet = context.getRepository().facet(MavenContentFacet.class);
+    return mavenContentFacet.get(mavenPath)
+        .map(HttpResponses::ok)
+        .orElseGet(() -> HttpResponses.notFound(mavenPath.getPath()));
   }
 }

@@ -17,34 +17,57 @@ import java.io.IOException;
 import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.validation.constraints.NotNull;
+import javax.validation.groups.Default;
 
+import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.maven.MavenIndexFacet;
 import org.sonatype.nexus.repository.maven.internal.MavenIndexPublisher;
 import org.sonatype.nexus.repository.maven.internal.filter.DuplicateDetectionStrategy;
 import org.sonatype.nexus.repository.maven.internal.filter.DuplicateDetectionStrategyProvider;
-import org.sonatype.nexus.repository.maven.internal.hosted.MavenHostedIndexFacet;
 import org.sonatype.nexus.repository.storage.StorageFacet;
+import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.maven.index.reader.Record;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Hosted implementation of {@link MavenIndexFacet}.
+ * Proxy implementation of {@link MavenIndexFacet}.
  *
  * @since 3.0
  */
 @Named
 @Priority(Integer.MAX_VALUE)
-public class OrientMavenHostedIndexFacet
+public class OrientMavenProxyIndexFacet
     extends OrientMavenIndexFacetSupport
-    implements MavenHostedIndexFacet
 {
+  @VisibleForTesting
+  static final String CONFIG_KEY = "maven-indexer";
+
+  @VisibleForTesting
+  static class Config
+  {
+    @NotNull(groups = ProxyType.ValidationGroup.class)
+    public Boolean cacheFallback = Boolean.FALSE;
+
+    @Override
+    public String toString() {
+      return getClass().getSimpleName() + "{" +
+          "cacheFallback=" + cacheFallback +
+          '}';
+    }
+  }
+
+  private Config config;
+
   private final DuplicateDetectionStrategyProvider duplicateDetectionStrategyProvider;
 
   @Inject
-  public OrientMavenHostedIndexFacet(
+  public OrientMavenProxyIndexFacet(
       final DuplicateDetectionStrategyProvider duplicateDetectionStrategyProvider,
       final MavenIndexPublisher mavenIndexPublisher)
   {
@@ -53,10 +76,24 @@ public class OrientMavenHostedIndexFacet
   }
 
   @Override
+  protected void doValidate(final Configuration configuration) {
+    facet(ConfigurationFacet.class).validateSection(configuration, CONFIG_KEY, Config.class,
+        Default.class, getRepository().getType().getValidationGroup()
+    );
+  }
+
+  @Override
+  protected void doConfigure(final Configuration configuration) {
+    config = facet(ConfigurationFacet.class).readSection(configuration, CONFIG_KEY, Config.class);
+    log.debug("Config: {}", config);
+  }
+
+  @Override
   public void publishIndex() throws IOException {
+    log.debug("Fetching maven index properties from remote");
     UnitOfWork.begin(getRepository().facet(StorageFacet.class).txSupplier());
-    try (DuplicateDetectionStrategy<Record> strategy = duplicateDetectionStrategyProvider.get()) {
-      mavenIndexPublisher.publishHostedIndex(getRepository(), strategy);
+    try(DuplicateDetectionStrategy<Record> strategy = duplicateDetectionStrategyProvider.get()) {
+      mavenIndexPublisher.publishProxyIndex(getRepository(), config.cacheFallback, strategy);
     }
     finally {
       UnitOfWork.end();

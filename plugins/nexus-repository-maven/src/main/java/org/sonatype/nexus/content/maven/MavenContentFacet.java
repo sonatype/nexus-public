@@ -39,6 +39,8 @@ public interface MavenContentFacet
 
   boolean delete(MavenPath path) throws IOException;
 
+  boolean exists(MavenPath mavenPath);
+
   MavenPathParser getMavenPathParser();
 
   LayoutPolicy layoutPolicy();

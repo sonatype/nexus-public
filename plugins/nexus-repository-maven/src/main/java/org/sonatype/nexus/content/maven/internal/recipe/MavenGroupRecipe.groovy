@@ -18,13 +18,13 @@ import javax.inject.Named
 import javax.inject.Provider
 import javax.inject.Singleton
 
+import org.sonatype.nexus.content.maven.internal.index.MavenContentGroupIndexFacet
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.group.GroupHandler
 import org.sonatype.nexus.repository.http.HttpMethods
 import org.sonatype.nexus.repository.maven.internal.Maven2Format
-import org.sonatype.nexus.repository.maven.internal.group.IndexGroupHandler
 import org.sonatype.nexus.repository.maven.internal.group.MavenGroupFacet
 import org.sonatype.nexus.repository.maven.internal.group.MergingGroupHandler
 import org.sonatype.nexus.repository.maven.internal.matcher.MavenArchetypeCatalogMatcher
@@ -53,6 +53,9 @@ class MavenGroupRecipe
 {
 
   @Inject
+  Provider<MavenContentGroupIndexFacet> mavenGroupIndexFacet
+
+  @Inject
   Provider<MavenGroupFacet> mavenGroupFacet
 
   @Inject
@@ -62,7 +65,7 @@ class MavenGroupRecipe
   MergingGroupHandler mergingGroupHandler
 
   @Inject
-  IndexGroupHandler indexGroupHandler
+  MavenContentIndexGroupHandler indexGroupHandler
 
   @Inject
   MavenGroupRecipe(
@@ -77,6 +80,7 @@ class MavenGroupRecipe
     repository.attach(securityFacet.get())
     repository.attach(mavenGroupFacet.get())
     repository.attach(mavenContentFacet.get())
+    repository.attach(mavenGroupIndexFacet.get())
     repository.attach(configure(viewFacet.get()))
   }
 

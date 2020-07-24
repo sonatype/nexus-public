@@ -298,6 +298,11 @@ public class MavenContentFacetImpl
     return assetIsDeleted;
   }
 
+  @Override
+  public boolean exists(final MavenPath mavenPath) {
+    return findAsset(assetPath(mavenPath)).isPresent();
+  }
+
   private boolean deleteAsset(final MavenPath mavenPath) {
     return findAsset(assetPath(mavenPath))
         .map(FluentAsset::delete)

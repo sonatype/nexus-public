@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.maven.internal.orient;
+package org.sonatype.nexus.content.maven.internal.index;
 
 import java.io.IOException;
 
@@ -22,29 +22,25 @@ import javax.validation.groups.Default;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.maven.MavenIndexFacet;
-import org.sonatype.nexus.repository.maven.internal.filter.DuplicateDetectionStrategyProvider;
+import org.sonatype.nexus.repository.maven.internal.MavenIndexPublisher;
 import org.sonatype.nexus.repository.maven.internal.filter.DuplicateDetectionStrategy;
-import org.sonatype.nexus.repository.storage.StorageFacet;
+import org.sonatype.nexus.repository.maven.internal.filter.DuplicateDetectionStrategyProvider;
 import org.sonatype.nexus.repository.types.ProxyType;
-import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.maven.index.reader.Record;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.maven.internal.orient.MavenIndexPublisher.prefetchIndexFiles;
-import static org.sonatype.nexus.repository.maven.internal.orient.MavenIndexPublisher.publishHostedIndex;
 
 /**
  * Proxy implementation of {@link MavenIndexFacet}.
  *
- * @since 3.0
+ * @since 3.next
  */
 @Named
-public class MavenProxyIndexFacet
-    extends MavenIndexFacetSupport
+public class MavenContentProxyIndexFacet
+    extends MavenContentIndexFacetSupport
 {
-  @VisibleForTesting
   static final String CONFIG_KEY = "maven-indexer";
 
   @VisibleForTesting
@@ -66,40 +62,33 @@ public class MavenProxyIndexFacet
   private final DuplicateDetectionStrategyProvider duplicateDetectionStrategyProvider;
 
   @Inject
-  public MavenProxyIndexFacet(final DuplicateDetectionStrategyProvider duplicateDetectionStrategyProvider) {
+  public MavenContentProxyIndexFacet(
+      final MavenIndexPublisher mavenIndexPublisher,
+      final DuplicateDetectionStrategyProvider duplicateDetectionStrategyProvider)
+  {
+    super(mavenIndexPublisher);
     this.duplicateDetectionStrategyProvider = checkNotNull(duplicateDetectionStrategyProvider);
   }
 
   @Override
-  protected void doValidate(final Configuration configuration) throws Exception {
-    facet(ConfigurationFacet.class).validateSection(configuration, CONFIG_KEY, Config.class,
+  protected void doValidate(final Configuration configuration) {
+    facet(ConfigurationFacet.class).validateSection(configuration, CONFIG_KEY, MavenContentProxyIndexFacet.Config.class,
         Default.class, getRepository().getType().getValidationGroup()
     );
   }
 
   @Override
-  protected void doConfigure(final Configuration configuration) throws Exception {
-    config = facet(ConfigurationFacet.class).readSection(configuration, CONFIG_KEY, Config.class);
+  protected void doConfigure(final Configuration configuration) {
+    config = facet(ConfigurationFacet.class)
+        .readSection(configuration, CONFIG_KEY, MavenContentProxyIndexFacet.Config.class);
     log.debug("Config: {}", config);
   }
 
   @Override
   public void publishIndex() throws IOException {
     log.debug("Fetching maven index properties from remote");
-    UnitOfWork.begin(getRepository().facet(StorageFacet.class).txSupplier());
-    try(DuplicateDetectionStrategy<Record> strategy = duplicateDetectionStrategyProvider.get()) {
-      if (!prefetchIndexFiles(getRepository())) {
-        if (Boolean.TRUE.equals(config.cacheFallback)) {
-          log.debug("No remote index found... generating partial index from caches");
-          publishHostedIndex(getRepository(), strategy);
-        }
-        else {
-          log.debug("No remote index found... nothing to publish");
-        }
-      }
-    }
-    finally {
-      UnitOfWork.end();
+    try (DuplicateDetectionStrategy<Record> strategy = duplicateDetectionStrategyProvider.get()) {
+      mavenIndexPublisher.publishProxyIndex(getRepository(), config.cacheFallback, strategy );
     }
   }
 }
