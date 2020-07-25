@@ -97,7 +97,7 @@ public class FluentComponentImpl
 
   @Override
   public FluentAssetBuilder asset(final String path) {
-    return new FluentAssetBuilderImpl(facet, path).component(this);
+    return new FluentAssetBuilderImpl(facet, facet.stores().assetStore, path).component(this);
   }
 
   @Override

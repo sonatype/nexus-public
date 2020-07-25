@@ -24,6 +24,7 @@ import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponentBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
+import org.sonatype.nexus.repository.content.store.ComponentStore;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toInternalId;
@@ -38,13 +39,16 @@ public class FluentComponentsImpl
 {
   private final ContentFacetSupport facet;
 
-  public FluentComponentsImpl(final ContentFacetSupport facet) {
+  private final ComponentStore<?> componentStore;
+
+  public FluentComponentsImpl(final ContentFacetSupport facet, final ComponentStore<?> componentStore) {
     this.facet = checkNotNull(facet);
+    this.componentStore = checkNotNull(componentStore);
   }
 
   @Override
   public FluentComponentBuilder name(final String name) {
-    return new FluentComponentBuilderImpl(facet, name);
+    return new FluentComponentBuilderImpl(facet, componentStore, name);
   }
 
   @Override
@@ -55,7 +59,7 @@ public class FluentComponentsImpl
 
   @Override
   public int count() {
-    return facet.stores().componentStore.countComponents(facet.contentRepositoryId());
+    return componentStore.countComponents(facet.contentRepositoryId());
   }
 
   @Override
@@ -65,28 +69,28 @@ public class FluentComponentsImpl
       final String continuationToken)
   {
     return new FluentContinuation<>(
-        facet.stores().componentStore.browseComponents(facet.contentRepositoryId(), kind, limit, continuationToken),
+        componentStore.browseComponents(facet.contentRepositoryId(), kind, limit, continuationToken),
         this::with);
   }
 
   @Override
   public Collection<String> namespaces() {
-    return facet.stores().componentStore.browseNamespaces(facet.contentRepositoryId());
+    return componentStore.browseNamespaces(facet.contentRepositoryId());
   }
 
   @Override
   public Collection<String> names(final String namespace) {
-    return facet.stores().componentStore.browseNames(facet.contentRepositoryId(), namespace);
+    return componentStore.browseNames(facet.contentRepositoryId(), namespace);
   }
 
   @Override
   public Collection<String> versions(final String namespace, final String name) {
-    return facet.stores().componentStore.browseVersions(facet.contentRepositoryId(), namespace, name);
+    return componentStore.browseVersions(facet.contentRepositoryId(), namespace, name);
   }
 
   @Override
   public Optional<FluentComponent> find(final EntityId externalId) {
-    return facet.stores().componentStore.readComponent(toInternalId(externalId))
+    return componentStore.readComponent(toInternalId(externalId))
         .map(component -> new FluentComponentImpl(facet, component));
   }
 }

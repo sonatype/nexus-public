@@ -105,6 +105,12 @@ public abstract class ContentFacetSupport
 
   private ContentFacetStores stores;
 
+  private FluentBlobs fluentBlobs;
+
+  private FluentComponents fluentComponents;
+
+  private FluentAssets fluentAssets;
+
   private EntityId configRepositoryId;
 
   private Integer contentRepositoryId;
@@ -151,6 +157,10 @@ public abstract class ContentFacetSupport
     stores = new ContentFacetStores(
         dependencies.blobStoreManager, config.blobStoreName,
         formatStoreManager, config.dataStoreName);
+
+    fluentBlobs = new FluentBlobsImpl(this, stores.blobStore);
+    fluentComponents = new FluentComponentsImpl(this, stores.componentStore);
+    fluentAssets = new FluentAssetsImpl(this, stores.assetStore);
   }
 
   @Override
@@ -239,17 +249,17 @@ public abstract class ContentFacetSupport
 
   @Override
   public final FluentBlobs blobs() {
-    return new FluentBlobsImpl(this);
+    return fluentBlobs;
   }
 
   @Override
   public final FluentComponents components() {
-    return new FluentComponentsImpl(this);
+    return fluentComponents;
   }
 
   @Override
   public final FluentAssets assets() {
-    return new FluentAssetsImpl(this);
+    return fluentAssets;
   }
 
   @Override

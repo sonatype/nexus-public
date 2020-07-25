@@ -23,6 +23,7 @@ import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
+import org.sonatype.nexus.repository.content.store.AssetStore;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toInternalId;
@@ -37,13 +38,16 @@ public class FluentAssetsImpl
 {
   private final ContentFacetSupport facet;
 
-  public FluentAssetsImpl(final ContentFacetSupport facet) {
+  private final AssetStore<?> assetStore;
+
+  public FluentAssetsImpl(final ContentFacetSupport facet, final AssetStore<?> assetStore) {
     this.facet = checkNotNull(facet);
+    this.assetStore = checkNotNull(assetStore);
   }
 
   @Override
   public FluentAssetBuilder path(final String path) {
-    return new FluentAssetBuilderImpl(facet, path);
+    return new FluentAssetBuilderImpl(facet, assetStore, path);
   }
 
   @Override
@@ -54,7 +58,7 @@ public class FluentAssetsImpl
 
   @Override
   public int count() {
-    return facet.stores().assetStore.countAssets(facet.contentRepositoryId());
+    return assetStore.countAssets(facet.contentRepositoryId());
   }
 
   @Override
@@ -64,13 +68,13 @@ public class FluentAssetsImpl
       final String continuationToken)
   {
     return new FluentContinuation<>(
-        facet.stores().assetStore.browseAssets(facet.contentRepositoryId(), kind, limit, continuationToken),
+        assetStore.browseAssets(facet.contentRepositoryId(), kind, limit, continuationToken),
         this::with);
   }
 
   @Override
   public Optional<FluentAsset> find(final EntityId externalId) {
-    return facet.stores().assetStore.readAsset(toInternalId(externalId))
+    return assetStore.readAsset(toInternalId(externalId))
         .map(asset -> new FluentAssetImpl(facet, asset));
   }
 }
