@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.fluent.internal;
+package org.sonatype.nexus.repository.content;
 
 import java.io.IOException;
 import java.util.List;
@@ -31,17 +31,17 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.sonatype.nexus.repository.content.fluent.AttributeChange.APPEND;
-import static org.sonatype.nexus.repository.content.fluent.AttributeChange.OVERLAY;
-import static org.sonatype.nexus.repository.content.fluent.AttributeChange.PREPEND;
-import static org.sonatype.nexus.repository.content.fluent.AttributeChange.REMOVE;
-import static org.sonatype.nexus.repository.content.fluent.AttributeChange.SET;
-import static org.sonatype.nexus.repository.content.fluent.internal.FluentAttributesHelper.applyAttributeChange;
+import static org.sonatype.nexus.repository.content.AttributeChange.APPEND;
+import static org.sonatype.nexus.repository.content.AttributeChange.OVERLAY;
+import static org.sonatype.nexus.repository.content.AttributeChange.PREPEND;
+import static org.sonatype.nexus.repository.content.AttributeChange.REMOVE;
+import static org.sonatype.nexus.repository.content.AttributeChange.SET;
+import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttributeChange;
 
 /**
- * Test {@link FluentAttributesHelper}.
+ * Test {@link AttributesHelper}.
  */
-public class FluentAttributesHelperTest
+public class AttributesHelperTest
     extends TestSupport
 {
   private static final ObjectMapper objectMapper = new ObjectMapper();

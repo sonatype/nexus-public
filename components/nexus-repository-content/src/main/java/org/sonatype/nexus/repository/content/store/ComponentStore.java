@@ -21,10 +21,13 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
+import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
+
+import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttributeChange;
 
 /**
  * {@link Component} store.
@@ -169,8 +172,17 @@ public class ComponentStore<T extends ComponentDAO>
    * @param component the component to update
    */
   @Transactional
-  public void updateComponentAttributes(final Component component) {
-    dao().updateComponentAttributes(component);
+  public void updateComponentAttributes(final Component component,
+                                        final AttributeChange change,
+                                        final String key,
+                                        final @Nullable Object value)
+  {
+    dao().readComponentAttributes(component).ifPresent(attributes -> {
+      ((ComponentData) component).setAttributes(attributes);
+      if (applyAttributeChange(attributes, change, key, value)) {
+        dao().updateComponentAttributes(component);
+      }
+    });
   }
 
   /**

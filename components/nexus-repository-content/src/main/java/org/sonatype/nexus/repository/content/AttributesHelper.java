@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.fluent.internal;
+package org.sonatype.nexus.repository.content;
 
 import java.util.HashMap;
 import java.util.List;
@@ -21,22 +21,19 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
-import org.sonatype.nexus.repository.content.RepositoryContent;
-import org.sonatype.nexus.repository.content.fluent.AttributeChange;
-import org.sonatype.nexus.repository.content.fluent.FluentAttributes;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.newArrayList;
 
 /**
- * {@link FluentAttributes} helper.
+ * Helper for applying {@link AttributeChange}s to repository content.
  *
  * @since 3.24
  */
-public class FluentAttributesHelper
+public class AttributesHelper
 {
-  private FluentAttributesHelper() {
+  private AttributesHelper() {
     // static utility methods
   }
 

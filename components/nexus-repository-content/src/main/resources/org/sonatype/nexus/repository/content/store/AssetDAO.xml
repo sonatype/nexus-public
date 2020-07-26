@@ -127,6 +127,10 @@
         WHERE <include refid="assetMatch"/> AND kind != #{kind};
   </update>
 
+  <select id="readAssetAttributes" resultType="NestedAttributesMap">
+    SELECT attributes FROM ${format}_asset WHERE <include refid="assetMatch"/>;
+  </select>
+
   <update id="updateAssetAttributes" parameterType="AssetData">
     UPDATE ${format}_asset SET attributes = #{attributes}, last_updated = CURRENT_TIMESTAMP
         WHERE <include refid="assetMatch"/> AND attributes != #{attributes};

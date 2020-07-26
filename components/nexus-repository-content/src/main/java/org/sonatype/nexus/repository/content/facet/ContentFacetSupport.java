@@ -33,8 +33,8 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.content.Asset;
+import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.ContentRepository;
-import org.sonatype.nexus.repository.content.fluent.AttributeChange;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.fluent.FluentBlobs;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
@@ -58,7 +58,6 @@ import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTOR
 import static org.sonatype.nexus.datastore.api.DataStoreManager.CONTENT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 import static org.sonatype.nexus.repository.content.facet.WritePolicy.ALLOW;
-import static org.sonatype.nexus.repository.content.fluent.internal.FluentAttributesHelper.applyAttributeChange;
 import static org.sonatype.nexus.validation.ConstraintViolations.maybeAdd;
 import static org.sonatype.nexus.validation.ConstraintViolations.maybePropagate;
 
@@ -240,10 +239,7 @@ public abstract class ContentFacetSupport
 
   @Override
   public final ContentFacet attributes(final AttributeChange change, final String key, final Object value) {
-    ContentRepository contentRepository = contentRepository();
-    if (applyAttributeChange(contentRepository, change, key, value)) {
-      stores.contentRepositoryStore.updateContentRepositoryAttributes(contentRepository);
-    }
+    stores.contentRepositoryStore.updateContentRepositoryAttributes(contentRepository(), change, key, value);
     return this;
   }
 

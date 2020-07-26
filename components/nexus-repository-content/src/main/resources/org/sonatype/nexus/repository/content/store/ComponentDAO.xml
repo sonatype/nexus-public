@@ -107,6 +107,10 @@
         WHERE <include refid="componentMatch"/> AND kind != #{kind};
   </update>
 
+  <select id="readComponentAttributes" resultType="NestedAttributesMap">
+    SELECT attributes FROM ${format}_component WHERE <include refid="componentMatch"/>;
+  </select>
+
   <update id="updateComponentAttributes" parameterType="ComponentData">
     UPDATE ${format}_component SET attributes = #{attributes}, last_updated = CURRENT_TIMESTAMP
         WHERE <include refid="componentMatch"/> AND attributes != #{attributes};

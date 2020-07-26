@@ -17,6 +17,7 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.ContentDataAccess;
 import org.sonatype.nexus.datastore.api.Expects;
@@ -130,6 +131,14 @@ public interface ComponentDAO
    * @since 3.25
    */
   void updateComponentKind(Component component);
+
+  /**
+   * Retrieves the latest attributes of the given component in the content data store.
+   *
+   * @param component the component to read
+   * @return component attributes if found
+   */
+  Optional<NestedAttributesMap> readComponentAttributes(Component component);
 
   /**
    * Updates the attributes of the given component in the content data store.

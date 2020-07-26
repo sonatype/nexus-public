@@ -19,6 +19,7 @@ import java.io.UncheckedIOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.lang.reflect.Type;
 import java.net.URL;
 import java.nio.file.Path;
 import java.sql.Connection;
@@ -85,6 +86,7 @@ import org.apache.ibatis.reflection.factory.DefaultObjectFactory;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
+import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.OffsetDateTimeTypeHandler;
 import org.apache.ibatis.type.TypeAliasRegistry;
 import org.apache.ibatis.type.TypeHandler;
@@ -694,6 +696,10 @@ public class MyBatisDataStore
       ((AbstractJsonTypeHandler<?>) handler).encryptSensitiveFields(passwordHelper, sensitiveAttributeFilter);
     }
     registerSimpleAlias(mybatisConfig.getTypeAliasRegistry(), handler.getClass());
+    Type handledType = ((BaseTypeHandler) handler).getRawType();
+    if (handledType instanceof Class<?>) {
+      registerSimpleAlias(mybatisConfig.getTypeAliasRegistry(), (Class<?>) handledType);
+    }
     return mybatisConfig.getTypeHandlerRegistry();
   }
 

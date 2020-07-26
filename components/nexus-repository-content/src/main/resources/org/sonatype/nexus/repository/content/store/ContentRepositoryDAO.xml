@@ -56,6 +56,10 @@
     SELECT * FROM ${format}_content_repository WHERE config_repository_id = #{configRepositoryId};
   </select>
 
+  <select id="readContentRepositoryAttributes" resultType="NestedAttributesMap">
+    SELECT attributes FROM ${format}_content_repository WHERE <include refid="repositoryMatch"/>;
+  </select>
+
   <update id="updateContentRepositoryAttributes" parameterType="ContentRepositoryData">
     UPDATE ${format}_content_repository SET attributes = #{attributes}, last_updated = CURRENT_TIMESTAMP
         WHERE <include refid="repositoryMatch"/> AND attributes != #{attributes};
