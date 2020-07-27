@@ -48,4 +48,11 @@ public interface DataSession<T extends Transaction>
    * @since 3.next
    */
   void onRollback(Runnable hook);
+
+  /**
+   * Returns the SQL dialect of the database backing this session.
+   *
+   * @since 3.next
+   */
+  String sqlDialect();
 }

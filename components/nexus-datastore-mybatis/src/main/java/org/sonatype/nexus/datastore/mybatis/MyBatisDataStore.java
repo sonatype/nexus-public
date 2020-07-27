@@ -680,11 +680,6 @@ public class MyBatisDataStore
     info(REGISTERED_MESSAGE, handler.getClass().getSimpleName() + " (detached)");
   }
 
-  @Override
-  public String getDatabaseId() {
-    return mybatisConfig.getDatabaseId();
-  }
-
   /**
    * Prepare the {@link TypeHandler} for use with this datastore.
    */

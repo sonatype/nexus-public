@@ -89,17 +89,9 @@ public interface DataStore<S extends DataSession<?>>
   /**
    * Backup this data store to the specified location.
    *
-   * @throws UnsupportedOperationException if the underlying DataStore does not support backing up
+   * @throws UnsupportedOperationException if the underlying data store does not support backing up
    *
    * @since 3.21
    */
   void backup(String location) throws Exception;
-
-  /**
-   * Returns the database Id of the database backing this datastore.
-   *
-   * @since 3.24
-   * @return The database ID of the underlying database
-   */
-  String getDatabaseId();
 }
