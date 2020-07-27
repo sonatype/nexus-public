@@ -33,14 +33,14 @@ import org.sonatype.nexus.common.entity.ContinuationTokenHelper;
 import org.sonatype.nexus.common.entity.ContinuationTokenHelper.ContinuationTokenException;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.browse.BrowseResult;
 import org.sonatype.nexus.repository.browse.BrowseService;
-import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.rest.api.AssetXO;
 import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
 import org.sonatype.nexus.repository.rest.internal.resources.doc.AssetsResourceDoc;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
+import org.sonatype.nexus.repository.query.PageResult;
+import org.sonatype.nexus.repository.query.QueryOptions;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
 import org.sonatype.nexus.rest.Page;
@@ -103,7 +103,7 @@ public class AssetsResource
   {
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryId);
 
-    BrowseResult<Asset> assetBrowseResult = browseService.browseAssets(
+    PageResult<Asset> assetBrowseResult = browseService.browseAssets(
         repository,
         new QueryOptions(null, "id", "asc", 0, 10, lastIdFromContinuationToken(continuationToken)));
 

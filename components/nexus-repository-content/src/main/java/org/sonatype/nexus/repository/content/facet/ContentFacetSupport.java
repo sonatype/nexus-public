@@ -33,8 +33,8 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.content.Asset;
+import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.ContentRepository;
-import org.sonatype.nexus.repository.content.fluent.AttributeChange;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.fluent.FluentBlobs;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
@@ -58,7 +58,6 @@ import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTOR
 import static org.sonatype.nexus.datastore.api.DataStoreManager.CONTENT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 import static org.sonatype.nexus.repository.content.facet.WritePolicy.ALLOW;
-import static org.sonatype.nexus.repository.content.fluent.internal.FluentAttributesHelper.applyAttributeChange;
 import static org.sonatype.nexus.validation.ConstraintViolations.maybeAdd;
 import static org.sonatype.nexus.validation.ConstraintViolations.maybePropagate;
 
@@ -104,6 +103,12 @@ public abstract class ContentFacetSupport
   private Config config;
 
   private ContentFacetStores stores;
+
+  private FluentBlobs fluentBlobs;
+
+  private FluentComponents fluentComponents;
+
+  private FluentAssets fluentAssets;
 
   private EntityId configRepositoryId;
 
@@ -151,6 +156,10 @@ public abstract class ContentFacetSupport
     stores = new ContentFacetStores(
         dependencies.blobStoreManager, config.blobStoreName,
         formatStoreManager, config.dataStoreName);
+
+    fluentBlobs = new FluentBlobsImpl(this, stores.blobStore);
+    fluentComponents = new FluentComponentsImpl(this, stores.componentStore);
+    fluentAssets = new FluentAssetsImpl(this, stores.assetStore);
   }
 
   @Override
@@ -230,26 +239,23 @@ public abstract class ContentFacetSupport
 
   @Override
   public final ContentFacet attributes(final AttributeChange change, final String key, final Object value) {
-    ContentRepository contentRepository = contentRepository();
-    if (applyAttributeChange(contentRepository, change, key, value)) {
-      stores.contentRepositoryStore.updateContentRepositoryAttributes(contentRepository);
-    }
+    stores.contentRepositoryStore.updateContentRepositoryAttributes(contentRepository(), change, key, value);
     return this;
   }
 
   @Override
   public final FluentBlobs blobs() {
-    return new FluentBlobsImpl(this);
+    return fluentBlobs;
   }
 
   @Override
   public final FluentComponents components() {
-    return new FluentComponentsImpl(this);
+    return fluentComponents;
   }
 
   @Override
   public final FluentAssets assets() {
-    return new FluentAssetsImpl(this);
+    return fluentAssets;
   }
 
   @Override

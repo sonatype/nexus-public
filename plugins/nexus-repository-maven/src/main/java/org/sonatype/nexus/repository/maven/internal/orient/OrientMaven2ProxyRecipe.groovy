@@ -67,7 +67,7 @@ class OrientMaven2ProxyRecipe
   Provider<MavenProxyFacet> mavenProxyFacet
 
   @Inject
-  Provider<MavenProxyIndexFacet> mavenIndexFacet
+  Provider<OrientMavenProxyIndexFacet> mavenIndexFacet
 
   @Inject
   Provider<PurgeUnusedFacet> purgeUnusedFacet

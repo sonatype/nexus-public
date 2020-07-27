@@ -15,15 +15,19 @@ package org.sonatype.nexus.repository.content.store;
 import java.util.Collection;
 import java.util.Optional;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
+import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.ContentRepository;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
+
+import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttributeChange;
 
 /**
  * {@link ContentRepository} store.
@@ -77,8 +81,17 @@ public class ContentRepositoryStore<T extends ContentRepositoryDAO>
    * @param contentRepository the content repository to update
    */
   @Transactional
-  public void updateContentRepositoryAttributes(final ContentRepository contentRepository) {
-    dao().updateContentRepositoryAttributes(contentRepository);
+  public void updateContentRepositoryAttributes(final ContentRepository contentRepository,
+                                                final AttributeChange change,
+                                                final String key,
+                                                final @Nullable Object value)
+  {
+    dao().readContentRepositoryAttributes(contentRepository).ifPresent(attributes -> {
+      ((ContentRepositoryData) contentRepository).setAttributes(attributes);
+      if (applyAttributeChange(attributes, change, key, value)) {
+        dao().updateContentRepositoryAttributes(contentRepository);
+      }
+    });
   }
 
   /**

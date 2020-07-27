@@ -12,18 +12,19 @@
  */
 package org.sonatype.nexus.repository.content.browse.store;
 
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
+import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.content.store.ContentStoreSupport;
-import org.sonatype.nexus.transaction.Transaction;
 import org.sonatype.nexus.transaction.Transactional;
-import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.inject.assistedinject.Assisted;
-
-import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 
 /**
  * Browse node store.
@@ -40,6 +41,27 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
                          @Assisted final Class<T> daoClass)
   {
     super(sessionSupplier, contentStoreName, daoClass);
+  }
+
+  /**
+   * Retrieves the browse nodes directly under the given hierarchical display path.
+   *
+   * @param repositoryId the repository containing the browse nodes
+   * @param displayPath the hierarchical path leading up to the browse nodes
+   * @param limit when positive limits the number of browse nodes returned
+   * @param filter optional filter to apply to the browse nodes
+   * @param filterParams parameter map for the optional filter
+   * @return browse nodes found directly under the display path
+   */
+  @Transactional
+  public List<BrowseNode> getByDisplayPath(
+      final int repositoryId,
+      final List<String> displayPath,
+      final int limit,
+      @Nullable final String filter,
+      @Nullable final Map<String, Object> filterParams)
+  {
+    return dao().getByDisplayPath(repositoryId, displayPath, limit, filter, filterParams);
   }
 
   /**
@@ -61,13 +83,10 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
   @Transactional
   public boolean deleteBrowseNodes(final int repositoryId) {
     log.debug("Deleting all browse nodes in repository {}", repositoryId);
-    Transaction tx = UnitOfWork.currentTx();
     boolean deleted = false;
     while (dao().deleteBrowseNodes(repositoryId, deleteBatchSize())) {
-      tx.commit();
+      commitChangesSoFar();
       deleted = true;
-      tx.begin();
-      checkCancellation();
     }
     log.debug("Deleted all browse nodes in repository {}", repositoryId);
     return deleted;

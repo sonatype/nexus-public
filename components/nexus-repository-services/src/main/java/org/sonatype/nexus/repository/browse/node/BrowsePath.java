@@ -31,6 +31,10 @@ import java.util.Objects;
  */
 public class BrowsePath
 {
+  public static final char SLASH_CHAR = '/';
+
+  public static final String SLASH = "/";
+
   private String displayName;
 
   private String requestPath;

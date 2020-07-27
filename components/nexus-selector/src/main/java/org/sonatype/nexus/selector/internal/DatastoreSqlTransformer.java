@@ -18,6 +18,7 @@ import org.sonatype.nexus.selector.SelectorSqlBuilder;
 import org.apache.commons.jexl3.JexlException;
 import org.apache.commons.jexl3.parser.ASTAndNode;
 import org.apache.commons.jexl3.parser.ASTEQNode;
+import org.apache.commons.jexl3.parser.ASTERNode;
 import org.apache.commons.jexl3.parser.ASTIdentifier;
 import org.apache.commons.jexl3.parser.ASTIdentifierAccess;
 import org.apache.commons.jexl3.parser.ASTNENode;
@@ -36,6 +37,8 @@ import org.apache.commons.jexl3.parser.JexlNode;
 public abstract class DatastoreSqlTransformer
     extends ParserVisitorSupport
 {
+  private static final String EXPECTED_STRING_LITERAL = "Expected string literal";
+
   @Override
   protected Object doVisit(final JexlNode node, final Object data) {
     throw new JexlException(node, "Expression not supported in CSEL selector, failing node is " + node.jexlInfo().toString());
@@ -66,6 +69,14 @@ public abstract class DatastoreSqlTransformer
   }
 
   /**
+   * Transform `a =~ b` into `a ~ b`
+   */
+  @Override
+  protected Object visit(final ASTERNode node, final Object data) {
+    return transformMatchesOperator(node, "~", (SelectorSqlBuilder) data);
+  }
+
+  /**
    * Transform `a =^ "something"` into `a like "something%"`
    */
   @Override
@@ -79,7 +90,7 @@ public abstract class DatastoreSqlTransformer
       transformStartsWithOperator(rightChild, (ASTStringLiteral) leftChild, (SelectorSqlBuilder) data);
     }
     else {
-      throw new JexlException(node, "Expected string literal");
+      throw new JexlException(node, EXPECTED_STRING_LITERAL);
     }
     return data;
   }
@@ -98,7 +109,7 @@ public abstract class DatastoreSqlTransformer
       transformNotEqualsOperator(rightChild, (ASTStringLiteral) leftChild, (SelectorSqlBuilder) data);
     }
     else {
-      throw new JexlException(node, "Expected string literal");
+      throw new JexlException(node, EXPECTED_STRING_LITERAL);
     }
     return data;
   }
@@ -150,6 +161,28 @@ public abstract class DatastoreSqlTransformer
     leftChild.jjtAccept(this, builder);
     builder.appendOperator(operator);
     rightChild.jjtAccept(this, builder);
+    return builder;
+  }
+
+  protected SelectorSqlBuilder transformMatchesOperator(
+      final JexlNode node,
+      final String operator,
+      final SelectorSqlBuilder builder)
+  {
+    JexlNode leftChild = node.jjtGetChild(LEFT);
+    JexlNode rightChild = node.jjtGetChild(RIGHT);
+    leftChild.jjtAccept(this, builder);
+    builder.appendOperator(operator);
+    if (rightChild instanceof ASTStringLiteral) {
+      String pattern = ((ASTStringLiteral) rightChild).getLiteral();
+      if (pattern.charAt(0) != '^') {
+        pattern = "^(" + pattern + ")$"; // match entire string
+      }
+      builder.appendLiteral(pattern);
+    }
+    else {
+      throw new JexlException(node, EXPECTED_STRING_LITERAL);
+    }
     return builder;
   }
 

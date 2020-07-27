@@ -42,10 +42,10 @@ import org.sonatype.nexus.common.entity.ContinuationTokenHelper.ContinuationToke
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.browse.BrowseResult;
 import org.sonatype.nexus.repository.browse.BrowseService;
-import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
+import org.sonatype.nexus.repository.query.PageResult;
+import org.sonatype.nexus.repository.query.QueryOptions;
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
 import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO;
@@ -138,7 +138,7 @@ public class ComponentsResource
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryId);
 
     //must explicitly order by id or the generate sql will automatically order on group/name/version. (see BrowseComponentsSqlBuider)
-    BrowseResult<Component> componentBrowseResult = browseService
+    PageResult<Component> componentBrowseResult = browseService
         .browseComponents(repository,
             new QueryOptions(null, "id", "asc", 0, 10, lastIdFromContinuationToken(continuationToken)));
 

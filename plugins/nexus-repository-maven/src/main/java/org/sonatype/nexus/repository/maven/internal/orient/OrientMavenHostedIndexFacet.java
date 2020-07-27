@@ -14,12 +14,14 @@ package org.sonatype.nexus.repository.maven.internal.orient;
 
 import java.io.IOException;
 
+import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.repository.maven.MavenIndexFacet;
-import org.sonatype.nexus.repository.maven.internal.filter.DuplicateDetectionStrategyProvider;
+import org.sonatype.nexus.repository.maven.internal.MavenIndexPublisher;
 import org.sonatype.nexus.repository.maven.internal.filter.DuplicateDetectionStrategy;
+import org.sonatype.nexus.repository.maven.internal.filter.DuplicateDetectionStrategyProvider;
 import org.sonatype.nexus.repository.maven.internal.hosted.MavenHostedIndexFacet;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.transaction.UnitOfWork;
@@ -34,13 +36,19 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 @Named
+@Priority(Integer.MAX_VALUE)
 public class OrientMavenHostedIndexFacet
-    extends MavenIndexFacetSupport implements MavenHostedIndexFacet
+    extends OrientMavenIndexFacetSupport
+    implements MavenHostedIndexFacet
 {
   private final DuplicateDetectionStrategyProvider duplicateDetectionStrategyProvider;
 
   @Inject
-  public OrientMavenHostedIndexFacet(final DuplicateDetectionStrategyProvider duplicateDetectionStrategyProvider) {
+  public OrientMavenHostedIndexFacet(
+      final DuplicateDetectionStrategyProvider duplicateDetectionStrategyProvider,
+      final MavenIndexPublisher mavenIndexPublisher)
+  {
+    super(mavenIndexPublisher);
     this.duplicateDetectionStrategyProvider = checkNotNull(duplicateDetectionStrategyProvider);
   }
 
@@ -48,7 +56,7 @@ public class OrientMavenHostedIndexFacet
   public void publishIndex() throws IOException {
     UnitOfWork.begin(getRepository().facet(StorageFacet.class).txSupplier());
     try (DuplicateDetectionStrategy<Record> strategy = duplicateDetectionStrategyProvider.get()) {
-      MavenIndexPublisher.publishHostedIndex(getRepository(), strategy);
+      mavenIndexPublisher.publishHostedIndex(getRepository(), strategy);
     }
     finally {
       UnitOfWork.end();

@@ -23,8 +23,5 @@ Ext.define('NX.onboarding.view.OnboardingWizard', {
     'NX.I18n'
   ],
 
-  initComponent: function() {
-    this.callParent();
-  }
-
+  minHeight: 250
 });

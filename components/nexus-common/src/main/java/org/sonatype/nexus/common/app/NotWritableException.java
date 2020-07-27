@@ -22,6 +22,8 @@ package org.sonatype.nexus.common.app;
 public class NotWritableException
     extends IllegalStateException
 {
+  private static final long serialVersionUID = 50364435356863049L;
+
   public NotWritableException(final String message) {
     super(message);
   }

@@ -594,14 +594,14 @@ Ext.define('NX.coreui.app.PluginStrings', {
         '<p>Select all "raw" format content<br/><i>format == "raw"</i></p>' +
         '<p>Select all "maven2" content along a path that starts with "/org/sonatype/nexus"<br/><i>format == "maven2" and path =^ "/org/sonatype/nexus"</i></p>' +
         '<br/>' +
-        '<p>See the <a href="http://links.sonatype.com/products/nexus/selectors/docs" target="_blank" rel="noopener">Nexus documentation</a> for more details</p>' +
+        '<p>See the <a href="http://links.sonatype.com/products/nexus/selectors/docs" target="_blank" rel="noopener">documentation</a> for more details</p>' +
         '</div>',
     Selector_SelectorSettingsForm_Expression_Examples_jexl: '<div style="font-size: 11px"><br/>' +
         '<h4>Example <a href="http://links.sonatype.com/products/nexus/jexl" target="_blank" rel="noopener">JEXL</a> queries:</h4>' +
         '<p>Select all "raw" format content<br/><i>format == "raw"</i></p>' +
         '<p>Select all "maven2" content along a path that starts with "/org/sonatype/nexus"<br/><i>format == "maven2" and path =^ "/org/sonatype/nexus"</i></p>' +
         '<br/>' +
-        '<p>See the <a href="http://links.sonatype.com/products/nexus/selectors/docs" target="_blank" rel="noopener">Nexus documentation</a> for more details</p>' +
+        '<p>See the <a href="http://links.sonatype.com/products/nexus/selectors/docs" target="_blank" rel="noopener">documentation</a> for more details</p>' +
         '</div>',
     Selector_SelectorSettingsForm_SelectorID_Title: 'Selector ID',
     Selector_SelectorSettingsForm_Specification_Title: 'Specification',

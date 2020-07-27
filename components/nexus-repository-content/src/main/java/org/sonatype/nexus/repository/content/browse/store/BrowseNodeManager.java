@@ -13,8 +13,12 @@
 package org.sonatype.nexus.repository.content.browse.store;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
+import javax.annotation.Nullable;
+
+import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.browse.node.BrowsePath;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -36,10 +40,21 @@ public class BrowseNodeManager
   }
 
   /**
-   * Deletes all browse nodes associated with the repository.
+   * Retrieves the browse nodes directly under the given hierarchical display path.
+   *
+   * @param displayPath the hierarchical path leading up to the browse nodes
+   * @param limit when positive limits the number of browse nodes returned
+   * @param filter optional filter to apply to the browse nodes
+   * @param filterParams parameter map for the optional filter
+   * @return browse nodes found directly under the display path
    */
-  public void deleteBrowseNodes() {
-    browseNodeStore.deleteBrowseNodes(repositoryId);
+  public List<BrowseNode> getByDisplayPath(
+      final List<String> displayPath,
+      final int limit,
+      @Nullable final String filter,
+      @Nullable final Map<String, Object> filterParams)
+  {
+    return browseNodeStore.getByDisplayPath(repositoryId, displayPath, limit, filter, filterParams);
   }
 
   /**
@@ -61,5 +76,12 @@ public class BrowseNodeManager
       browseNodeStore.mergeBrowseNode(node);
       parentId = node.nodeId;
     }
+  }
+
+  /**
+   * Deletes all browse nodes associated with the repository.
+   */
+  public void deleteBrowseNodes() {
+    browseNodeStore.deleteBrowseNodes(repositoryId);
   }
 }

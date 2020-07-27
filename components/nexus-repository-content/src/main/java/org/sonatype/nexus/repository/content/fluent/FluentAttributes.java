@@ -14,8 +14,10 @@ package org.sonatype.nexus.repository.content.fluent;
 
 import javax.annotation.Nullable;
 
-import static org.sonatype.nexus.repository.content.fluent.AttributeChange.REMOVE;
-import static org.sonatype.nexus.repository.content.fluent.AttributeChange.SET;
+import org.sonatype.nexus.repository.content.AttributeChange;
+
+import static org.sonatype.nexus.repository.content.AttributeChange.REMOVE;
+import static org.sonatype.nexus.repository.content.AttributeChange.SET;
 
 /**
  * Fluent API for repository content attributes.

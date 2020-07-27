@@ -17,6 +17,8 @@ import java.util.Map;
 
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.query.PageResult;
+import org.sonatype.nexus.repository.query.QueryOptions;
 import org.sonatype.nexus.repository.security.RepositorySelector;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
@@ -31,35 +33,35 @@ import com.orientechnologies.orient.core.id.ORID;
 public interface BrowseService
 {
   /**
-   * Returns a {@link BrowseResult} for browsing the specified repository and query options.
+   * Returns a {@link PageResult} for browsing the specified repository and query options.
    */
-  BrowseResult<Component> browseComponents(final Repository repository,
+  PageResult<Component> browseComponents(final Repository repository,
                                            final QueryOptions queryOptions);
 
   /**
-   * Returns a {@link BrowseResult} of assets for the specified component. Note that the Repository passed in is not
+   * Returns a {@link PageResult} of assets for the specified component. Note that the Repository passed in is not
    * necessarily the Repository where the component resides (in the case of a group Repository).
    */
-  BrowseResult<Asset> browseComponentAssets(final Repository repository, final String componentId);
+  PageResult<Asset> browseComponentAssets(final Repository repository, final String componentId);
 
   /**
-   * Returns a {@link BrowseResult} of assets for the specified component. Note that the Repository passed in is not
+   * Returns a {@link PageResult} of assets for the specified component. Note that the Repository passed in is not
    * necessarily the Repository where the component resides (in the case of a group Repository).
    *
    * @since 3.14
    */
-  BrowseResult<Asset> browseComponentAssets(final Repository repository, final Component component);
+  PageResult<Asset> browseComponentAssets(final Repository repository, final Component component);
 
   /**
-   * Returns a {@link BrowseResult} of assets based on the specified information.
+   * Returns a {@link PageResult} of assets based on the specified information.
    */
-  BrowseResult<Asset> browseAssets(final Repository repository,
+  PageResult<Asset> browseAssets(final Repository repository,
                                    final QueryOptions queryOptions);
 
   /**
-   * Returns a {@link BrowseResult} for previewing the specified repository based on an arbitrary content selector.
+   * Returns a {@link PageResult} for previewing the specified repository based on an arbitrary content selector.
    */
-  BrowseResult<Asset> previewAssets(final RepositorySelector selectedRepository,
+  PageResult<Asset> previewAssets(final RepositorySelector selectedRepository,
                                     final List<Repository> repositories,
                                     final String jexlExpression,
                                     final QueryOptions queryOptions);

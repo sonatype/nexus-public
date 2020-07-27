@@ -23,14 +23,13 @@ import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
+import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.Component;
-import org.sonatype.nexus.transaction.Transaction;
 import org.sonatype.nexus.transaction.Transactional;
-import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.inject.assistedinject.Assisted;
 
-import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
+import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttributeChange;
 
 /**
  * {@link Asset} store.
@@ -142,8 +141,17 @@ public class AssetStore<T extends AssetDAO>
    * @param asset the asset to update
    */
   @Transactional
-  public void updateAssetAttributes(final Asset asset) {
-    dao().updateAssetAttributes(asset);
+  public void updateAssetAttributes(final Asset asset,
+                                    final AttributeChange change,
+                                    final String key,
+                                    final @Nullable Object value)
+  {
+    dao().readAssetAttributes(asset).ifPresent(attributes -> {
+      ((AssetData) asset).setAttributes(attributes);
+      if (applyAttributeChange(attributes, change, key, value)) {
+        dao().updateAssetAttributes(asset);
+      }
+    });
   }
 
   /**
@@ -198,13 +206,10 @@ public class AssetStore<T extends AssetDAO>
   @Transactional
   public boolean deleteAssets(final int repositoryId) {
     log.debug("Deleting all assets in repository {}", repositoryId);
-    Transaction tx = UnitOfWork.currentTx();
     boolean deleted = false;
     while (dao().deleteAssets(repositoryId, deleteBatchSize())) {
-      tx.commit();
+      commitChangesSoFar();
       deleted = true;
-      tx.begin();
-      checkCancellation();
     }
     log.debug("Deleted all assets in repository {}", repositoryId);
     return deleted;

@@ -20,6 +20,7 @@ import java.util.Optional;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.datastore.api.DataSession;
+import org.sonatype.nexus.datastore.api.DuplicateKeyException;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.store.example.TestAssetBlobDAO;
 import org.sonatype.nexus.repository.content.store.example.TestAssetDAO;
@@ -27,7 +28,6 @@ import org.sonatype.nexus.repository.content.store.example.TestAssetData;
 import org.sonatype.nexus.repository.content.store.example.TestComponentDAO;
 import org.sonatype.nexus.repository.content.store.example.TestContentRepositoryDAO;
 
-import org.apache.ibatis.exceptions.PersistenceException;
 import org.hamcrest.collection.IsIterableContainingInAnyOrder;
 import org.hamcrest.collection.IsIterableContainingInOrder;
 import org.junit.Before;
@@ -146,7 +146,7 @@ public class AssetDAOTest
       session.getTransaction().commit();
       fail("Cannot create the same component twice");
     }
-    catch (PersistenceException e) {
+    catch (DuplicateKeyException e) {
       logger.debug("Got expected exception", e);
     }
 
@@ -599,7 +599,7 @@ public class AssetDAOTest
     try (DataSession<?> session = sessionRule.openSession("content")) {
       TestAssetDAO dao = session.access(TestAssetDAO.class);
 
-      dao.addTestSchema();
+      // our bespoke schema will be applied automatically via 'extendSchema'...
 
       dao.createAsset(asset1);
       dao.createAsset(asset2);

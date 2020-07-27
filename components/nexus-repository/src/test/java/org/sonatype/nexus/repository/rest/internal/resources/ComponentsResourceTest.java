@@ -23,9 +23,9 @@ import org.sonatype.nexus.common.entity.ContinuationTokenHelper;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityMetadata;
-import org.sonatype.nexus.repository.browse.BrowseResult;
-import org.sonatype.nexus.repository.browse.QueryOptions;
 import org.sonatype.nexus.repository.maintenance.MaintenanceService;
+import org.sonatype.nexus.repository.query.PageResult;
+import org.sonatype.nexus.repository.query.QueryOptions;
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
 import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO;
@@ -99,7 +99,7 @@ public class ComponentsResourceTest
   private EntityId componentOneEntityId;
 
   @Mock
-  private BrowseResult<Asset> componentOneBrowseResults;
+  private PageResult<Asset> componentOneBrowseResults;
 
   @Mock
   private Component componentTwo;
@@ -114,13 +114,13 @@ public class ComponentsResourceTest
   private EntityId componentTwoEntityId;
 
   @Mock
-  private BrowseResult<Asset> componentTwoBrowseResults;
+  private PageResult<Asset> componentTwoBrowseResults;
 
   @Captor
   private ArgumentCaptor<QueryOptions> queryOptionsCaptor;
 
   @Mock
-  private BrowseResult<Component> componentBrowseResult;
+  private PageResult<Component> componentBrowseResult;
 
   @Captor
   private ArgumentCaptor<DetachedEntityId> detachedEntityIdCaptor;

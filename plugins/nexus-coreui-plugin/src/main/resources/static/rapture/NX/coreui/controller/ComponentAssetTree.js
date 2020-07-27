@@ -124,8 +124,9 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
         },
         'nx-coreui-componentassettreefeature treepanel': {
           select: me.selectNode,
-          itemkeydown: me.itemKeyDown
-        },
+          itemkeydown: me.itemKeyDown,
+          itemexpand: me.itemExpand
+  },
         'nx-coreui-component-componentinfo button[action=deleteComponent]': {
           click: me.deleteComponent
         },
@@ -375,6 +376,29 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     }
   },
 
+  itemExpand: function(view) {
+    var childNodes = Ext.Array.filter(view.childNodes, function(node) {
+      return node.data.packageUrl;
+    });
+    var packageUrls = Ext.Array.map(childNodes, function(node) {
+      return node.data.packageUrl;
+    });
+    if (packageUrls.length > 0 && NX.direct.coreui_Vulnerability) {
+      NX.direct.coreui_Vulnerability.read(packageUrls, function(response) {
+        if (response.success && response.data) {
+          Ext.Array.each(view.childNodes, function(node) {
+            var report = response.data[node.data.packageUrl];
+            if (report && report.count > 0) {
+              node.set('vulnerable', true);
+              node.set('iconCls', 'nx-icon-vulnerability-x16');
+              node.commit();
+            }
+          })
+        }
+      });
+    }
+  },
+
   selectNode: function(view, node) {
     var me = this,
         componentInfoPanel,
@@ -440,14 +464,17 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
 
   handleVulnerabilitiesPanel: function(node, panel) {
     var me = this;
-    if('OSS' === NX.State.getEdition() && me.getCurrentRepository().get('type') === 'proxy') {
-      NX.direct.coreui_Vulnerability.read(me.getCurrentRepository().get('name'), node.get('componentId'),
+    if ('OSS' === NX.State.getEdition() && me.getCurrentRepository().get('type') === 'proxy' &&
+        NX.direct.coreui_Vulnerability) {
+      var packageUrl = node.get('packageUrl');
+      NX.direct.coreui_Vulnerability.read([packageUrl],
           function(response) {
             var vulnerabilityPanel = panel.getVulnerabilityPanel();
             if(response.success && response.data) {
               vulnerabilityPanel.setVisible(true);
-              me.setVulnerabilityInfo(vulnerabilityPanel, response.data);
-              me.updateVulnerabilitiesButton(panel, response.data);
+              var vulnReport = response.data[packageUrl];
+              me.setVulnerabilityInfo(vulnerabilityPanel, vulnReport);
+              me.updateVulnerabilitiesButton(panel, vulnReport);
             }
             else {
               vulnerabilityPanel.setVisible(false);

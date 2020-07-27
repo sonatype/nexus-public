@@ -21,6 +21,7 @@ import org.sonatype.nexus.repository.content.Asset;
 import com.google.common.base.Splitter;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.browse.node.BrowsePath.SLASH_CHAR;
 
 /**
  * Asset-led layout that assumes that components have the same path as their assets.
@@ -33,7 +34,7 @@ public abstract class AssetPathBrowseNodeGenerator
   @Override
   public List<BrowsePath> computeAssetPaths(final Asset asset) {
     checkNotNull(asset);
-    List<String> pathSegments = Splitter.on('/').omitEmptyStrings().splitToList(asset.path());
+    List<String> pathSegments = Splitter.on(SLASH_CHAR).omitEmptyStrings().splitToList(asset.path());
     return BrowsePathBuilder.fromPaths(pathSegments, false);
   }
 

@@ -87,7 +87,7 @@ Ext.define('NX.coreui.mixin.ComponentUtils', {
     var user = NX.State.getUser(),
         analyzeApplicationButton = this.getAnalyzeApplicationButton();
 
-    if (!componentModel) {
+    if (!componentModel || !NX.direct.ahc_Component) {
       analyzeApplicationButton.disable();
     }
     else if (user && user.authenticated) {

@@ -15,6 +15,8 @@ package org.sonatype.nexus.repository.browse.node;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.sonatype.nexus.repository.browse.node.BrowsePath.SLASH_CHAR;
+
 /**
  * Static methods for building {@link BrowsePath}.
  *
@@ -29,11 +31,11 @@ public class BrowsePathBuilder
   public static List<BrowsePath> fromPaths(List<String> paths, boolean trailingSlash) {
     List<BrowsePath> results = new ArrayList<>();
 
-    StringBuilder requestPath = new StringBuilder();
+    StringBuilder requestPath = new StringBuilder().append(SLASH_CHAR);
     for (int i = 0; i < paths.size(); i++) {
       requestPath.append(paths.get(i));
       if (trailingSlash || i < paths.size() - 1) {
-        requestPath.append("/");
+        requestPath.append(SLASH_CHAR);
       }
       results.add(new BrowsePath(paths.get(i), requestPath.toString()));
     }

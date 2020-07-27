@@ -14,6 +14,8 @@ package org.sonatype.nexus.repository.browse.node;
 
 import java.util.List;
 
+import org.sonatype.nexus.repository.Repository;
+
 /**
  * Store providing access to the browse tree.
  *
@@ -24,5 +26,10 @@ public interface BrowseNodeQueryService
   /**
    * Returns the {@link BrowseNode}s directly visible under the given path.
    */
-  Iterable<BrowseNode> getByPath(String repositoryName, List<String> path, int maxNodes);
+  Iterable<BrowseNode> getByPath(Repository repository, List<String> path, int maxNodes);
+
+  /**
+   * Converts {@link BrowseNode}s into {@link BrowseListItem}s for HTML browsing.
+   */
+  List<BrowseListItem> toListItems(Repository repository, Iterable<BrowseNode> nodes);
 }

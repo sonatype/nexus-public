@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.browse.internal;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.repository.browse.QueryOptions;
+import org.sonatype.nexus.repository.query.QueryOptions;
 import org.sonatype.nexus.repository.storage.ComponentEntityAdapter;
 
 import org.junit.Before;

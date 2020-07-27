@@ -15,7 +15,7 @@ package org.sonatype.nexus.cleanup.preview;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyPreviewXO;
 import org.sonatype.nexus.extdirect.model.PagedResponse;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.browse.QueryOptions;
+import org.sonatype.nexus.repository.query.QueryOptions;
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
 
 /**

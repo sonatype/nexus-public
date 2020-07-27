@@ -29,6 +29,6 @@ public class H2SqlTransformer
    */
   @Override
   protected Object visit(final ASTERNode node, final Object data) {
-    return transformOperator(node, "regexp", (SelectorSqlBuilder) data);
+    return transformMatchesOperator(node, "regexp", (SelectorSqlBuilder) data);
   }
 }

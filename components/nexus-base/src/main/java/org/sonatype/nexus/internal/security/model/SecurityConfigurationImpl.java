@@ -21,8 +21,10 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
+import org.sonatype.nexus.datastore.api.DataAccess;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
+import org.sonatype.nexus.datastore.api.DuplicateKeyException;
 import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.CRole;
 import org.sonatype.nexus.security.config.CUser;
@@ -37,12 +39,11 @@ import org.sonatype.nexus.security.user.NoSuchRoleMappingException;
 import org.sonatype.nexus.security.user.UserNotFoundException;
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.TransactionalStore;
+import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.collect.ImmutableList;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.datastore.DataAccessHelper.access;
-import static org.sonatype.nexus.datastore.DataAccessHelper.causedByDuplicateKey;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE_NAME;
 import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 
@@ -62,6 +63,37 @@ public class SecurityConfigurationImpl
   @Inject
   public SecurityConfigurationImpl(final DataSessionSupplier sessionSupplier) {
     this.sessionSupplier = checkNotNull(sessionSupplier);
+  }
+
+  // SESSION
+
+  @Override
+  public DataSession<?> openSession() {
+    return sessionSupplier.openSession(CONFIG_DATASTORE_NAME);
+  }
+
+  private DataSession<?> thisSession() {
+    return UnitOfWork.currentSession();
+  }
+
+  private <T extends DataAccess> T dao(final Class<T> daoClass) {
+    return thisSession().access(daoClass);
+  }
+
+  private CPrivilegeDAO privilegeDAO() {
+    return dao(CPrivilegeDAO.class);
+  }
+
+  private CRoleDAO roleDAO() {
+    return dao(CRoleDAO.class);
+  }
+
+  private CUserDAO userDAO() {
+    return dao(CUserDAO.class);
+  }
+
+  private CUserRoleMappingDAO userRoleMappingDAO() {
+    return dao(CUserRoleMappingDAO.class);
   }
 
   // PRIVILEGES
@@ -94,11 +126,8 @@ public class SecurityConfigurationImpl
       privilegeDAO().create(convert(privilege));
       return privilege;
     }
-    catch (RuntimeException e) {
-      if (causedByDuplicateKey(e)) {
-        throw new DuplicatePrivilegeException(privilege.getId());
-      }
-      throw e;
+    catch (DuplicateKeyException e) {
+      throw new DuplicatePrivilegeException(privilege.getId());
     }
   }
 
@@ -152,11 +181,8 @@ public class SecurityConfigurationImpl
     try {
       roleDAO().create(convert(role));
     }
-    catch (RuntimeException e) {
-      if (causedByDuplicateKey(e)) {
-        throw new DuplicateRoleException(role.getId());
-      }
-      throw e;
+    catch (DuplicateKeyException e) {
+      throw new DuplicateRoleException(role.getId());
     }
   }
 
@@ -210,11 +236,8 @@ public class SecurityConfigurationImpl
     try {
       userDAO().create(convert(user));
     }
-    catch (RuntimeException e) {
-      if (causedByDuplicateKey(e)) {
-        throw new DuplicateUserException(user.getId());
-      }
-      throw e;
+    catch (DuplicateKeyException e) {
+      throw new DuplicateUserException(user.getId());
     }
   }
 
@@ -333,13 +356,6 @@ public class SecurityConfigurationImpl
     return userRoleMappingDAO().delete(userId, source);
   }
 
-  // SESSION
-
-  @Override
-  public DataSession<?> openSession() {
-    return sessionSupplier.openSession(CONFIG_DATASTORE_NAME);
-  }
-
   private CPrivilegeData convert(final CPrivilege privilege) {
     if (privilege instanceof CPrivilegeData) {
       return (CPrivilegeData) privilege;
@@ -395,21 +411,5 @@ public class SecurityConfigurationImpl
     mappingData.setVersion(mapping.getVersion());
     mappingData.setRoles(mapping.getRoles());
     return mappingData;
-  }
-
-  private CPrivilegeDAO privilegeDAO() {
-    return access(CPrivilegeDAO.class);
-  }
-
-  private CRoleDAO roleDAO() {
-    return access(CRoleDAO.class);
-  }
-
-  private CUserDAO userDAO() {
-    return access(CUserDAO.class);
-  }
-
-  private CUserRoleMappingDAO userRoleMappingDAO() {
-    return access(CUserRoleMappingDAO.class);
   }
 }

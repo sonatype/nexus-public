@@ -39,7 +39,7 @@ import static org.junit.Assert.fail;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetBlobId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
-import static org.sonatype.nexus.repository.content.store.InternalIds.internalRepositoryId;
+import static org.sonatype.nexus.repository.content.store.InternalIds.contentRepositoryId;
 
 /**
  * Test {@link InternalIds}.
@@ -60,13 +60,13 @@ public class InternalIdsTest
     Component fluentComponent = new FluentComponentImpl(contentFacet, component);
     Asset fluentAsset = new FluentAssetImpl(contentFacet, asset);
 
-    checkIllegalState(() -> internalRepositoryId(repository));
-    checkIllegalState(() -> internalRepositoryId(component));
-    checkIllegalState(() -> internalRepositoryId(fluentComponent));
+    checkIllegalState(() -> contentRepositoryId(repository));
+    checkIllegalState(() -> contentRepositoryId(component));
+    checkIllegalState(() -> contentRepositoryId(fluentComponent));
     checkIllegalState(() -> internalComponentId(component));
     checkIllegalState(() -> internalComponentId(fluentComponent));
-    checkIllegalState(() -> internalRepositoryId(asset));
-    checkIllegalState(() -> internalRepositoryId(fluentAsset));
+    checkIllegalState(() -> contentRepositoryId(asset));
+    checkIllegalState(() -> contentRepositoryId(fluentAsset));
     checkIllegalState(() -> internalAssetId(asset));
     checkIllegalState(() -> internalAssetId(fluentAsset));
     checkIllegalState(() -> internalAssetBlobId(assetBlob));
@@ -96,13 +96,13 @@ public class InternalIdsTest
     Component fluentComponent = new FluentComponentImpl(contentFacet, component);
     Asset fluentAsset = new FluentAssetImpl(contentFacet, asset);
 
-    assertThat(internalRepositoryId(repository), is(1));
-    assertThat(internalRepositoryId(component), is(5));
-    assertThat(internalRepositoryId(fluentComponent), is(5));
+    assertThat(contentRepositoryId(repository), is(1));
+    assertThat(contentRepositoryId(component), is(5));
+    assertThat(contentRepositoryId(fluentComponent), is(5));
     assertThat(internalComponentId(component), is(2));
     assertThat(internalComponentId(fluentComponent), is(2));
-    assertThat(internalRepositoryId(asset), is(6));
-    assertThat(internalRepositoryId(fluentAsset), is(6));
+    assertThat(contentRepositoryId(asset), is(6));
+    assertThat(contentRepositoryId(fluentAsset), is(6));
     assertThat(internalAssetId(asset), is(3));
     assertThat(internalAssetId(fluentAsset), is(3));
     assertThat(internalAssetBlobId(assetBlob), is(4));

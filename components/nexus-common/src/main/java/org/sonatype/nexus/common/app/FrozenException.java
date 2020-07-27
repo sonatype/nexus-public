@@ -20,6 +20,8 @@ package org.sonatype.nexus.common.app;
 public class FrozenException
     extends NotWritableException
 {
+  private static final long serialVersionUID = -5328665935242655134L;
+
   public FrozenException(final String message) {
     super(message);
   }

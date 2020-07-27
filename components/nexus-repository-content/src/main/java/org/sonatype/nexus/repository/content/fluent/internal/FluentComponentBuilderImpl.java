@@ -19,6 +19,7 @@ import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponentBuilder;
 import org.sonatype.nexus.repository.content.store.ComponentData;
+import org.sonatype.nexus.repository.content.store.ComponentStore;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -32,6 +33,8 @@ public class FluentComponentBuilderImpl
 {
   private final ContentFacetSupport facet;
 
+  private final ComponentStore<?> componentStore;
+
   private final String name;
 
   private String kind = "";
@@ -40,8 +43,12 @@ public class FluentComponentBuilderImpl
 
   private String version = "";
 
-  public FluentComponentBuilderImpl(final ContentFacetSupport facet, final String name) {
+  public FluentComponentBuilderImpl(final ContentFacetSupport facet,
+                                    final ComponentStore<?> componentStore,
+                                    final String name)
+  {
     this.facet = checkNotNull(facet);
+    this.componentStore = checkNotNull(componentStore);
     this.name = checkNotNull(name);
   }
 
@@ -65,16 +72,16 @@ public class FluentComponentBuilderImpl
 
   @Override
   public FluentComponent getOrCreate() {
-    return new FluentComponentImpl(facet, facet.stores().componentStore
-        .readCoordinate(facet.contentRepositoryId(), namespace, name, version)
-        .orElseGet(this::createComponent));
+    return new FluentComponentImpl(facet, componentStore.getOrCreate(this::findComponent, this::createComponent));
   }
 
   @Override
   public Optional<FluentComponent> find() {
-    return facet.stores().componentStore
-        .readCoordinate(facet.contentRepositoryId(), namespace, name, version)
-        .map(component -> new FluentComponentImpl(facet, component));
+    return findComponent().map(component -> new FluentComponentImpl(facet, component));
+  }
+
+  private Optional<Component> findComponent() {
+    return componentStore.readCoordinate(facet.contentRepositoryId(), namespace, name, version);
   }
 
   private Component createComponent() {
@@ -85,7 +92,7 @@ public class FluentComponentBuilderImpl
     component.setKind(kind);
     component.setVersion(version);
 
-    facet.stores().componentStore.createComponent(component);
+    componentStore.createComponent(component);
 
     return component;
   }

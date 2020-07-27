@@ -65,6 +65,13 @@
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-repository-content</artifactId>
+      <optional>true</optional>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-rapture</artifactId>
       <scope>provided</scope>
     </dependency>

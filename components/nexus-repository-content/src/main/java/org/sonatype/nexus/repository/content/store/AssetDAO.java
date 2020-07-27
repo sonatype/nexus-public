@@ -17,6 +17,7 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.ContentDataAccess;
 import org.sonatype.nexus.datastore.api.Expects;
@@ -101,6 +102,14 @@ public interface AssetDAO
    * @since 3.25
    */
   void updateAssetKind(Asset asset);
+
+  /**
+   * Retrieves the latest attributes of the given asset in the content data store.
+   *
+   * @param asset the asset to read
+   * @return asset attributes if found
+   */
+  Optional<NestedAttributesMap> readAssetAttributes(Asset asset);
 
   /**
    * Updates the attributes of the given asset in the content data store.

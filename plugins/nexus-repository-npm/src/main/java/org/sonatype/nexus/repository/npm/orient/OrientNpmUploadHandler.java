@@ -24,16 +24,15 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.npm.NpmUploadHandler;
 import org.sonatype.nexus.repository.npm.internal.NpmAttributes;
-import org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmFormat;
-import org.sonatype.nexus.repository.npm.internal.orient.NpmHostedFacet;
 import org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageId;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageParser;
-
-import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils;
+import org.sonatype.nexus.repository.npm.internal.orient.NpmHostedFacet;
 import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
@@ -41,11 +40,12 @@ import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.storage.TempBlob;
-import org.sonatype.nexus.repository.upload.UploadHandlerSupport;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
+import org.sonatype.nexus.repository.upload.UploadHandlerSupport;
 import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.repository.view.Content;
+import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.StreamPayload;
 import org.sonatype.nexus.transaction.UnitOfWork;
@@ -92,8 +92,13 @@ public class OrientNpmUploadHandler
 
     StorageFacet storageFacet = repository.facet(StorageFacet.class);
 
-    try (TempBlob tempBlob = storageFacet.createTempBlob(upload.getAssetUploads().get(0).getPayload(),
-        NpmFacetUtils.HASH_ALGORITHMS)) {
+    PartPayload payload = upload.getAssetUploads().get(0).getPayload();
+
+    if (!payload.getName().endsWith(".tgz")) {
+      throw new IllegalArgumentException("Unsupported extension. Extension must be .tgz");
+    }
+
+    try (TempBlob tempBlob = storageFacet.createTempBlob(payload, NpmFacetUtils.HASH_ALGORITHMS)) {
       final Map<String, Object> packageJson = npmPackageParser.parsePackageJson(tempBlob);
       ensureNpmPermitted(repository, packageJson);
 

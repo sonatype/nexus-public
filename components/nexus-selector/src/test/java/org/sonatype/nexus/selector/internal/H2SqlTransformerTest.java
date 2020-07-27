@@ -41,6 +41,6 @@ public class H2SqlTransformerTest
 
     assertThat(builder.getQueryString(), is("a_alias regexp :param_0"));
     assertThat(builder.getQueryParameters().size(), is(1));
-    assertThat(builder.getQueryParameters().get("param_0"), is("woof"));
+    assertThat(builder.getQueryParameters().get("param_0"), is("^(woof)$"));
   }
 }

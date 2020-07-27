@@ -13,9 +13,11 @@
 package org.sonatype.nexus.content.maven.internal.recipe;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -40,9 +42,11 @@ import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.maven.LayoutPolicy;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
+import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.sonatype.nexus.repository.maven.VersionPolicy;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
+import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataRebuilder;
 import org.sonatype.nexus.repository.maven.internal.validation.MavenMetadataContentValidator;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
@@ -55,8 +59,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.singletonList;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
+import static org.sonatype.nexus.content.maven.MavenMetadataRebuildFacet.METADATA_REBUILD_KEY;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenArchetypeCatalogFacetImpl.MAVEN_ARCHETYPE_KIND;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.assetKind;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.getPackaging;
@@ -66,8 +72,10 @@ import static org.sonatype.nexus.repository.content.facet.WritePolicy.ALLOW;
 import static org.sonatype.nexus.repository.content.facet.WritePolicy.ALLOW_ONCE;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_INDEX;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
+import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Constants.METADATA_FILENAME;
 import static org.sonatype.nexus.repository.maven.internal.MavenModels.readModel;
+import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
 
 /**
  * A {@link MavenContentFacet} that persists to a {@link ContentFacet}.
@@ -97,6 +105,8 @@ public class MavenContentFacetImpl
 
   private MavenPathParser mavenPathParser;
 
+  private MetadataRebuilder metadataRebuilder;
+
   static class Config
   {
     @NotNull(groups = {HostedType.ValidationGroup.class, ProxyType.ValidationGroup.class})
@@ -120,13 +130,15 @@ public class MavenContentFacetImpl
       final Map<String, MavenPathParser> mavenPathParsers,
       final MavenMetadataContentValidator metadataValidator,
       final EventManager eventManager,
-      @Named("${nexus.maven.metadata.validation.enabled:-true}") final boolean metadataValidationEnabled)
+      @Named("${nexus.maven.metadata.validation.enabled:-true}") final boolean metadataValidationEnabled,
+      final MetadataRebuilder metadataRebuilder)
   {
     super(formatStoreManager);
     this.mavenPathParsers = checkNotNull(mavenPathParsers);
     this.metadataValidator = metadataValidator;
     this.eventManager = eventManager;
     this.metadataValidationEnabled = metadataValidationEnabled;
+    this.metadataRebuilder = checkNotNull(metadataRebuilder);
   }
 
   @Override
@@ -298,6 +310,26 @@ public class MavenContentFacetImpl
     return assetIsDeleted;
   }
 
+  @Override
+  public Set<String> deleteWithHashes(final MavenPath mavenPath) {
+    final Set<String> paths = new HashSet<>(HashType.values().length + 1);
+    if (delete(mavenPath.main())) {
+      paths.add(mavenPath.main().getPath());
+    }
+    for (HashType hashType : HashType.values()) {
+      MavenPath hashMavenPath = mavenPath.main().hash(hashType);
+      if (delete(hashMavenPath)) {
+        paths.add(hashMavenPath.getPath());
+      }
+    }
+    return paths;
+  }
+
+  @Override
+  public boolean exists(final MavenPath mavenPath) {
+    return findAsset(assetPath(mavenPath)).isPresent();
+  }
+
   private boolean deleteAsset(final MavenPath mavenPath) {
     return findAsset(assetPath(mavenPath))
         .map(FluentAsset::delete)
@@ -317,6 +349,38 @@ public class MavenContentFacetImpl
     if (component.assets().isEmpty()) {
       component.delete();
       publishEvents(component);
+      deleteMetadataAndAddRebuildFlagOrDeleteParentMetadata(component.namespace(), component.name(),
+          component.attributes(Maven2Format.NAME).get(P_BASE_VERSION, String.class));
+    }
+  }
+
+  private void deleteMetadataAndAddRebuildFlagOrDeleteParentMetadata(
+      final String groupId,
+      final String artifactId,
+      final String baseVersion)
+  {
+    metadataRebuilder.deleteMetadata(getRepository(), singletonList(new String[]{groupId, artifactId, baseVersion}));
+
+    boolean isGroupArtifactEmpty = components().versions(groupId, artifactId).isEmpty();
+    if (isGroupArtifactEmpty) {
+      metadataRebuilder.deleteMetadata(getRepository(), singletonList(new String[]{groupId, artifactId, null}));
+    }
+    else {
+      assets()
+          .path(assetPath(metadataPath(groupId, artifactId, null)))
+          .find()
+          .ifPresent(asset -> asset.withAttribute(METADATA_REBUILD_KEY, true));
+    }
+
+    boolean isGroupEmpty = components().names(groupId).isEmpty();
+    if (isGroupEmpty) {
+      metadataRebuilder.deleteMetadata(getRepository(), singletonList(new String[]{groupId, null, null}));
+    }
+    else {
+      assets()
+          .path(assetPath(metadataPath(groupId, null, null)))
+          .find()
+          .ifPresent(asset -> asset.withAttribute(METADATA_REBUILD_KEY, true));
     }
   }
 }

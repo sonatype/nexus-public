@@ -29,7 +29,7 @@ public interface TestAssetDAO
   /**
    * Adds extra asset test columns to the owning data store.
    */
-  void addTestSchema();
+  void extendSchema();
 
   /**
    * Browse all flagged assets in the given repository in a paged fashion.

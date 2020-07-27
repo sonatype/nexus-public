@@ -18,12 +18,12 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.content.maven.internal.index.MavenContentProxyIndexFacet;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.cache.NegativeCacheFacet;
 import org.sonatype.nexus.repository.cache.NegativeCacheHandler;
-import org.sonatype.nexus.repository.content.search.SearchFacet;
 import org.sonatype.nexus.repository.http.HttpMethods;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
@@ -67,7 +67,7 @@ public class MavenProxyRecipe
 
   private final ProxyHandler proxyHandler;
 
-  private final Provider<SearchFacet> searchFacet;
+  private final Provider<MavenContentProxyIndexFacet> mavenProxyIndexFacet;
 
   @Inject
   public MavenProxyRecipe(
@@ -79,7 +79,7 @@ public class MavenProxyRecipe
       final Provider<PurgeUnusedFacet> purgeUnusedFacet,
       final NegativeCacheHandler negativeCacheHandler,
       final ProxyHandler proxyHandler,
-      final Provider<SearchFacet> searchFacet)
+      final Provider<MavenContentProxyIndexFacet> mavenProxyIndexFacet)
   {
     super(type, format);
     this.httpClientFacet = checkNotNull(httpClientFacet);
@@ -88,7 +88,7 @@ public class MavenProxyRecipe
     this.purgeUnusedFacet = checkNotNull(purgeUnusedFacet);
     this.negativeCacheHandler = checkNotNull(negativeCacheHandler);
     this.proxyHandler = checkNotNull(proxyHandler);
-    this.searchFacet = checkNotNull(searchFacet);
+    this.mavenProxyIndexFacet = checkNotNull(mavenProxyIndexFacet);
   }
 
 
@@ -102,7 +102,9 @@ public class MavenProxyRecipe
     repository.attach(proxyFacet.get());
     repository.attach(getMavenContentFacet().get());
     repository.attach(purgeUnusedFacet.get());
-    repository.attach(searchFacet.get());
+    repository.attach(getSearchFacet().get());
+    repository.attach(getBrowseFacet().get());
+    repository.attach(mavenProxyIndexFacet.get());
   }
 
   private ViewFacet configure(final ConfigurableViewFacet facet) {

@@ -20,6 +20,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.hash.MultiHashingInputStream;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
@@ -52,8 +53,11 @@ public class FluentBlobsImpl
 {
   private final ContentFacetSupport facet;
 
-  public FluentBlobsImpl(final ContentFacetSupport facet) {
+  private final BlobStore blobStore;
+
+  public FluentBlobsImpl(final ContentFacetSupport facet, final BlobStore blobStore) {
     this.facet = checkNotNull(facet);
+    this.blobStore = checkNotNull(blobStore);
   }
 
   @Override
@@ -72,9 +76,9 @@ public class FluentBlobsImpl
     tempHeaders.put(CONTENT_TYPE_HEADER, ofNullable(contentType).orElse(APPLICATION_OCTET_STREAM));
 
     MultiHashingInputStream hashingStream = new MultiHashingInputStream(hashing, in);
-    Blob blob = facet.stores().blobStore.create(hashingStream, tempHeaders.build());
+    Blob blob = blobStore.create(hashingStream, tempHeaders.build());
 
-    return new TempBlob(blob, hashingStream.hashes(), true, facet.stores().blobStore);
+    return new TempBlob(blob, hashingStream.hashes(), true, blobStore);
   }
 
   @Override

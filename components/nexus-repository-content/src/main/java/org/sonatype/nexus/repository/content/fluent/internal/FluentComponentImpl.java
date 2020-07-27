@@ -17,9 +17,9 @@ import java.util.Collection;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
-import org.sonatype.nexus.repository.content.fluent.AttributeChange;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
@@ -28,7 +28,6 @@ import org.sonatype.nexus.repository.content.store.WrappedContent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Collections2.transform;
-import static org.sonatype.nexus.repository.content.fluent.internal.FluentAttributesHelper.applyAttributeChange;
 
 /**
  * {@link FluentComponent} implementation.
@@ -89,15 +88,13 @@ public class FluentComponentImpl
 
   @Override
   public FluentComponent attributes(final AttributeChange change, final String key, final Object value) {
-    if (applyAttributeChange(component, change, key, value)) {
-      facet.stores().componentStore.updateComponentAttributes(component);
-    }
+    facet.stores().componentStore.updateComponentAttributes(component, change, key, value);
     return this;
   }
 
   @Override
   public FluentAssetBuilder asset(final String path) {
-    return new FluentAssetBuilderImpl(facet, path).component(this);
+    return new FluentAssetBuilderImpl(facet, facet.stores().assetStore, path).component(this);
   }
 
   @Override

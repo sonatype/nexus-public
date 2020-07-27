@@ -28,7 +28,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.fail;
 
 /**
- * UT for {@link MetadataUpdater}
+ * UT for {@link AbstractMetadataUpdater}
  *
  * @since 3.0
  */

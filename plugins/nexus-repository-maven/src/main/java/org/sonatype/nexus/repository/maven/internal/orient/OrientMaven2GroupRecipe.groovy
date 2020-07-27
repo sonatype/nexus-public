@@ -28,7 +28,6 @@ import org.sonatype.nexus.repository.maven.PurgeUnusedSnapshotsFacet
 import org.sonatype.nexus.repository.maven.RemoveSnapshotsFacet
 import org.sonatype.nexus.repository.maven.internal.Maven2Format
 import org.sonatype.nexus.repository.maven.internal.MavenSecurityFacet
-import org.sonatype.nexus.repository.maven.internal.group.IndexGroupHandler
 import org.sonatype.nexus.repository.maven.internal.group.MavenGroupFacet
 import org.sonatype.nexus.repository.maven.internal.group.MergingGroupHandler
 import org.sonatype.nexus.repository.maven.internal.recipes.Maven2GroupRecipe
@@ -55,7 +54,7 @@ class OrientMaven2GroupRecipe
   Provider<MavenGroupFacet> mavenGroupFacet
 
   @Inject
-  Provider<IndexGroupFacet> mavenIndexFacet
+  Provider<OrientMavenGroupIndexFacet> mavenIndexFacet
 
   @Inject
   Provider<PurgeUnusedSnapshotsFacet> mavenPurgeSnapshotsFacet
@@ -67,7 +66,7 @@ class OrientMaven2GroupRecipe
   MergingGroupHandler mergingGroupHandler
 
   @Inject
-  IndexGroupHandler indexGroupHandler
+  OrientIndexGroupHandler indexGroupHandler
 
   @Inject
   Provider<RemoveSnapshotsFacet> removeSnapshotsFacet

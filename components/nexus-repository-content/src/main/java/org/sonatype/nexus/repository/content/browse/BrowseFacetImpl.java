@@ -14,16 +14,20 @@ package org.sonatype.nexus.repository.content.browse;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.goodies.packageurl.PackageUrl;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.repository.FacetSupport;
+import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.browse.node.BrowsePath;
+import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.browse.store.BrowseNodeDAO;
 import org.sonatype.nexus.repository.content.browse.store.BrowseNodeManager;
 import org.sonatype.nexus.repository.content.browse.store.BrowseNodeStore;
@@ -32,6 +36,7 @@ import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
+import org.sonatype.nexus.repository.ossindex.PackageUrlService;
 
 import com.google.common.base.Stopwatch;
 
@@ -55,7 +60,11 @@ public class BrowseFacetImpl
 
   private final Map<String, BrowseNodeGenerator> browseNodeGeneratorsByFormat;
 
+  private final PackageUrlService packageUrlService;
+
   private final int pageSize;
+
+  private String format;
 
   private BrowseNodeGenerator browseNodeGenerator;
 
@@ -64,10 +73,12 @@ public class BrowseFacetImpl
   @Inject
   public BrowseFacetImpl(final Map<String, FormatStoreManager> formatStoreManagersByFormat,
                          final Map<String, BrowseNodeGenerator> browseNodeGeneratorsByFormat,
+                         final PackageUrlService packageUrlService,
                          @Named("${nexus.browse.rebuild.pageSize:-1000}") final int pageSize)
   {
     this.formatStoreManagersByFormat = checkNotNull(formatStoreManagersByFormat);
     this.browseNodeGeneratorsByFormat = checkNotNull(browseNodeGeneratorsByFormat);
+    this.packageUrlService = checkNotNull(packageUrlService);
     this.pageSize = max(pageSize, 1);
   }
 
@@ -75,7 +86,7 @@ public class BrowseFacetImpl
   protected void doStart() throws Exception {
     ContentFacetSupport contentFacet = (ContentFacetSupport) getRepository().facet(ContentFacet.class);
 
-    String format = getRepository().getFormat().getValue();
+    format = getRepository().getFormat().getValue();
     String storeName = contentFacet.stores().contentStoreName;
     int repositoryId = contentFacet.contentRepositoryId();
 
@@ -87,6 +98,18 @@ public class BrowseFacetImpl
   }
 
   @Guarded(by = STARTED)
+  @Override
+  public List<BrowseNode> getByDisplayPath(
+      final List<String> displayPath,
+      final int limit,
+      final String filter,
+      final Map<String, Object> filterParams)
+  {
+    return browseNodeManager.getByDisplayPath(displayPath, limit, filter, filterParams);
+  }
+
+  @Guarded(by = STARTED)
+  @Override
   public void rebuildBrowseNodes() {
     log.info("Deleting browse nodes for repository {}", getRepository().getName());
 
@@ -141,12 +164,22 @@ public class BrowseFacetImpl
       browseNodeManager.createBrowseNodes(assetPaths, node -> node.setAsset(asset));
     }
 
-    if (asset.component().isPresent()) {
+    asset.component().ifPresent(component -> {
       List<BrowsePath> componentPaths = browseNodeGenerator.computeComponentPaths(asset);
       if (!componentPaths.isEmpty()) {
-        browseNodeManager.createBrowseNodes(componentPaths, node -> node.setComponent(asset.component().get()));
+        browseNodeManager.createBrowseNodes(componentPaths, node -> {
+          node.setComponent(component);
+          findPackageUrl(component).map(PackageUrl::toString).ifPresent(node::setPackageUrl);
+        });
       }
-    }
+    });
+  }
+
+  /**
+   * Finds the optional {@link PackageUrl} coordinates for the given component.
+   */
+  private Optional<PackageUrl> findPackageUrl(final Component component) {
+    return packageUrlService.getPackageUrl(format, component.namespace(), component.name(), component.version());
   }
 
   /**

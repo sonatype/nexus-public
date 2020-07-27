@@ -29,6 +29,6 @@ public class PostgresSqlTransformer
    */
   @Override
   protected Object visit(final ASTERNode node, final Object data) {
-    return transformOperator(node, "~", (SelectorSqlBuilder) data);
+    return transformMatchesOperator(node, "~", (SelectorSqlBuilder) data);
   }
 }

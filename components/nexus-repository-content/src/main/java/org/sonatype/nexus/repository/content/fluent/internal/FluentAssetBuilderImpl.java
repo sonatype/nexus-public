@@ -21,6 +21,7 @@ import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.store.AssetData;
+import org.sonatype.nexus.repository.content.store.AssetStore;
 import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -35,14 +36,17 @@ public class FluentAssetBuilderImpl
 {
   private final ContentFacetSupport facet;
 
+  private final AssetStore<?> assetStore;
+
   private final String path;
 
   private String kind = "";
 
   private Component component;
 
-  public FluentAssetBuilderImpl(final ContentFacetSupport facet, final String path) {
+  public FluentAssetBuilderImpl(final ContentFacetSupport facet, final AssetStore<?> assetStore, final String path) {
     this.facet = checkNotNull(facet);
+    this.assetStore = checkNotNull(assetStore);
     this.path = checkNotNull(path);
   }
 
@@ -60,16 +64,16 @@ public class FluentAssetBuilderImpl
 
   @Override
   public FluentAsset getOrCreate() {
-    return new FluentAssetImpl(facet,
-        facet.stores().assetStore.readPath(facet.contentRepositoryId(), path)
-        .orElseGet(this::createAsset));
+    return new FluentAssetImpl(facet, assetStore.getOrCreate(this::findAsset, this::createAsset));
   }
 
   @Override
   public Optional<FluentAsset> find() {
-    return facet.stores().assetStore
-        .readPath(facet.contentRepositoryId(), path)
-        .map(asset -> new FluentAssetImpl(facet, asset));
+    return findAsset().map(asset -> new FluentAssetImpl(facet, asset));
+  }
+
+  private Optional<Asset> findAsset() {
+    return assetStore.readPath(facet.contentRepositoryId(), path);
   }
 
   private Asset createAsset() {
@@ -83,7 +87,7 @@ public class FluentAssetBuilderImpl
       asset.setLastDownloaded(UTC.now());
     }
 
-    facet.stores().assetStore.createAsset(asset);
+    assetStore.createAsset(asset);
 
     return asset;
   }

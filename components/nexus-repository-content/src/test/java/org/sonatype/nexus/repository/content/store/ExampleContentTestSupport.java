@@ -28,6 +28,7 @@ import org.sonatype.nexus.common.entity.EntityUUID;
 import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.datastore.api.DataAccess;
 import org.sonatype.nexus.datastore.api.DataSession;
+import org.sonatype.nexus.datastore.api.DuplicateKeyException;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
@@ -42,7 +43,6 @@ import org.sonatype.nexus.testdb.DataSessionRule;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.apache.ibatis.exceptions.PersistenceException;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
@@ -266,58 +266,58 @@ public class ExampleContentTestSupport
       session.getTransaction().commit();
       return true;
     }
-    catch (PersistenceException e) {
+    catch (DuplicateKeyException e) {
       logger.debug("Skipping duplicate generated content", e);
       return false;
     }
   }
 
-  static Matcher<ContentRepository> sameConfigRepository(final ContentRepository expected) {
+  protected static Matcher<ContentRepository> sameConfigRepository(final ContentRepository expected) {
     return new FieldMatcher<>(expected, ContentRepository::configRepositoryId);
   }
 
-  static Matcher<Component> sameCoordinates(final Component expected) {
+  protected static Matcher<Component> sameCoordinates(final Component expected) {
     return new FieldMatcher<>(expected, Component::namespace, Component::name, Component::kind, Component::version);
   }
 
-  static Matcher<Component> sameKind(final Component expected) {
+  protected static Matcher<Component> sameKind(final Component expected) {
     return new FieldMatcher<>(expected, Component::kind);
   }
 
-  static Matcher<Asset> samePath(final Asset expected) {
+  protected static Matcher<Asset> samePath(final Asset expected) {
     return new FieldMatcher<>(expected, Asset::path);
   }
 
-  static Matcher<Asset> sameKind(final Asset expected) {
+  protected static Matcher<Asset> sameKind(final Asset expected) {
     return new FieldMatcher<>(expected, Asset::kind);
   }
 
-  static Matcher<Asset> sameBlob(final Asset expected) {
+  protected static Matcher<Asset> sameBlob(final Asset expected) {
     return new FieldMatcher<>(expected, (Function<Asset, ?>) asset -> asset.blob().map(AssetBlob::blobRef));
   }
 
-  static Matcher<AssetBlob> sameBlob(final AssetBlob expected) {
+  protected static Matcher<AssetBlob> sameBlob(final AssetBlob expected) {
     return new FieldMatcher<>(expected, AssetBlob::blobRef, AssetBlob::blobSize, AssetBlob::contentType,
         AssetBlob::blobCreated, AssetBlob::createdBy, AssetBlob::createdByIp);
   }
 
-  static Matcher<Asset> sameLastDownloaded(final Asset expected) {
+  protected static Matcher<Asset> sameLastDownloaded(final Asset expected) {
     return new FieldMatcher<>(expected, Asset::lastDownloaded);
   }
 
-  static Matcher<RepositoryContent> sameAttributes(final RepositoryContent expected) {
+  protected static Matcher<RepositoryContent> sameAttributes(final RepositoryContent expected) {
     return new FieldMatcher<>(expected, (Function<RepositoryContent, ?>) content -> content.attributes().backing());
   }
 
-  static Matcher<RepositoryContent> sameCreated(final RepositoryContent expected) {
+  protected static Matcher<RepositoryContent> sameCreated(final RepositoryContent expected) {
     return new FieldMatcher<>(expected, RepositoryContent::created);
   }
 
-  static Matcher<RepositoryContent> sameLastUpdated(final RepositoryContent expected) {
+  protected static Matcher<RepositoryContent> sameLastUpdated(final RepositoryContent expected) {
     return new FieldMatcher<>(expected, RepositoryContent::lastUpdated);
   }
 
-  static class FieldMatcher<T>
+  protected static class FieldMatcher<T>
       extends TypeSafeDiagnosingMatcher<T>
   {
     private final T expected;
@@ -325,7 +325,7 @@ public class ExampleContentTestSupport
     private final List<Function<T, ?>> extractors;
 
     @SafeVarargs
-    FieldMatcher(final T expected, final Function<T, ?>... extractors) {
+    public FieldMatcher(final T expected, final Function<T, ?>... extractors) {
       this.expected = checkNotNull(expected);
       this.extractors = asList(checkNotNull(extractors));
     }

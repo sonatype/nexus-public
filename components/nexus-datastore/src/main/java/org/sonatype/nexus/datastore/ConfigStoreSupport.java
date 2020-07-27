@@ -17,12 +17,12 @@ import org.sonatype.nexus.datastore.api.DataAccess;
 import org.sonatype.nexus.datastore.api.DataSession;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.transaction.TransactionalStore;
+import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.inject.TypeLiteral;
 import org.eclipse.sisu.inject.TypeArguments;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.datastore.DataAccessHelper.access;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.CONFIG_DATASTORE_NAME;
 
 /**
@@ -53,8 +53,12 @@ public abstract class ConfigStoreSupport<T extends DataAccess>
     this.daoClass = checkNotNull(daoClass);
   }
 
+  protected DataSession<?> thisSession() {
+    return UnitOfWork.currentSession();
+  }
+
   protected T dao() {
-    return access(daoClass);
+    return thisSession().access(daoClass);
   }
 
   @Override

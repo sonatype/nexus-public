@@ -16,7 +16,7 @@
  * @since 3.17
  */
 Ext.define('NX.onboarding.view.OnboardingCompleteScreen', {
-  extend: 'NX.wizard.Screen',
+  extend: 'NX.onboarding.view.OnboardingScreen',
   alias: 'widget.nx-onboarding-complete-screen',
   requires: [
     'NX.Conditions',
@@ -34,7 +34,7 @@ Ext.define('NX.onboarding.view.OnboardingCompleteScreen', {
 
       description: NX.I18n.render(me, 'Description'),
 
-      buttons: [{
+      buttons: ['->', {
         text: NX.I18n.render(me, 'Finish_Button'),
         action: 'finish',
         ui: 'nx-primary'

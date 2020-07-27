@@ -100,7 +100,7 @@ public class DeleteFolderServiceImpl
       String basePath = paths.poll();
       List<String> path = Arrays.asList(basePath.split("/"));
       Iterable<BrowseNode> nodes =
-          browseNodeQueryService.getByPath(repository.getName(), path, configuration.getMaxNodes());
+          browseNodeQueryService.getByPath(repository, path, configuration.getMaxNodes());
       Iterator<BrowseNode> nodeIterator = nodes.iterator();
 
       while (!cancelledCheck.getAsBoolean() && nodeIterator.hasNext()) {

@@ -16,7 +16,7 @@ import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.extdirect.model.PagedResponse;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.browse.QueryOptions;
+import org.sonatype.nexus.repository.query.QueryOptions;
 import org.sonatype.nexus.repository.storage.Component;
 
 /**

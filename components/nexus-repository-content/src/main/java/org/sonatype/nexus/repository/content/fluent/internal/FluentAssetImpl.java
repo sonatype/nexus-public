@@ -28,9 +28,9 @@ import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
+import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
-import org.sonatype.nexus.repository.content.fluent.AttributeChange;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.store.AssetBlobData;
 import org.sonatype.nexus.repository.content.store.AssetData;
@@ -56,8 +56,7 @@ import static org.sonatype.nexus.common.time.DateHelper.toOffsetDateTime;
 import static org.sonatype.nexus.repository.cache.CacheInfo.CACHE;
 import static org.sonatype.nexus.repository.cache.CacheInfo.CACHE_TOKEN;
 import static org.sonatype.nexus.repository.cache.CacheInfo.INVALIDATED;
-import static org.sonatype.nexus.repository.content.fluent.AttributeChange.OVERLAY;
-import static org.sonatype.nexus.repository.content.fluent.internal.FluentAttributesHelper.applyAttributeChange;
+import static org.sonatype.nexus.repository.content.AttributeChange.OVERLAY;
 import static org.sonatype.nexus.repository.view.Content.CONTENT;
 import static org.sonatype.nexus.repository.view.Content.CONTENT_ETAG;
 import static org.sonatype.nexus.repository.view.Content.CONTENT_LAST_MODIFIED;
@@ -126,9 +125,7 @@ public class FluentAssetImpl
 
   @Override
   public FluentAsset attributes(final AttributeChange change, final String key, final Object value) {
-    if (applyAttributeChange(asset, change, key, value)) {
-      facet.stores().assetStore.updateAssetAttributes(asset);
-    }
+    facet.stores().assetStore.updateAssetAttributes(asset, change, key, value);
     return this;
   }
 

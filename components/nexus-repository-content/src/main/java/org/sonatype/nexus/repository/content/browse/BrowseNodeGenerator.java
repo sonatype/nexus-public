@@ -17,6 +17,8 @@ import java.util.List;
 import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.content.Asset;
 
+import static org.sonatype.nexus.repository.browse.node.BrowsePath.SLASH_CHAR;
+
 /**
  * Defines the browse node layout for assets and their components of the same format.
  *
@@ -39,10 +41,10 @@ public interface BrowseNodeGenerator
    */
   default String lastSegment(final String path) {
     int lastNonSlash = path.length() - 1;
-    while (lastNonSlash >= 0 && path.charAt(lastNonSlash) == '/') {
+    while (lastNonSlash >= 0 && path.charAt(lastNonSlash) == SLASH_CHAR) {
       lastNonSlash--;
     }
-    int precedingSlash = path.lastIndexOf('/', lastNonSlash - 1);
+    int precedingSlash = path.lastIndexOf(SLASH_CHAR, lastNonSlash - 1);
     return path.substring(precedingSlash + 1, lastNonSlash + 1);
   }
 }
