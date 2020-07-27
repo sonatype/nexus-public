@@ -24,7 +24,7 @@ import org.sonatype.nexus.repository.MissingFacetException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
-import org.sonatype.nexus.repository.content.facet.ContentMaintenanceFacet;
+import org.sonatype.nexus.repository.content.maintenance.ContentMaintenanceFacet;
 import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
@@ -70,7 +70,7 @@ public class MaintenanceServiceImpl
       throw new AuthorizationException();
     }
 
-    return getContentMaintenanceFacet(repository).deleteAsset(asset);
+    return maintenanceFacet(repository).deleteAsset(asset);
   }
 
   @Override
@@ -82,7 +82,7 @@ public class MaintenanceServiceImpl
       throw new AuthorizationException();
     }
 
-    return getContentMaintenanceFacet(repository).deleteComponent(component);
+    return maintenanceFacet(repository).deleteComponent(component);
   }
 
   @Override
@@ -114,7 +114,7 @@ public class MaintenanceServiceImpl
     return repositoryPermissionChecker.userCanDeleteInRepository(repository);
   }
 
-  private ContentMaintenanceFacet getContentMaintenanceFacet(final Repository repository) {
+  private ContentMaintenanceFacet maintenanceFacet(final Repository repository) {
     try {
       return repository.facet(ContentMaintenanceFacet.class);
     }
