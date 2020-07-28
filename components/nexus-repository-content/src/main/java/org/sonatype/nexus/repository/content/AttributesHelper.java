@@ -40,10 +40,11 @@ public class AttributesHelper
   /**
    * Apply a change request to the {@link RepositoryContent}'s attributes.
    */
-  public static boolean applyAttributeChange(final RepositoryContent content,
-                                             final AttributeChange change,
-                                             final String key,
-                                             @Nullable final Object value)
+  public static boolean applyAttributeChange(
+      final RepositoryContent content,
+      final AttributeChange change,
+      final String key,
+      @Nullable final Object value)
   {
     return applyAttributeChange(content.attributes(), change, key, value);
   }
@@ -51,10 +52,11 @@ public class AttributesHelper
   /**
    * Apply a change request to the given {@link AttributesMap}.
    */
-  public static boolean applyAttributeChange(final AttributesMap attributes,
-                                             final AttributeChange change,
-                                             final String key,
-                                             @Nullable final Object value)
+  public static boolean applyAttributeChange(
+      final AttributesMap attributes,
+      final AttributeChange change,
+      final String key,
+      @Nullable final Object value)
   {
     switch (change) {
       case SET:

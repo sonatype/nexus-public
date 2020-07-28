@@ -22,7 +22,6 @@ import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.RepositoryContent;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
-import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
@@ -58,7 +57,7 @@ public class InternalIds
   }
 
   public static int contentRepositoryId(final Repository repository) {
-    return ((ContentFacetSupport) repository.facet(ContentFacet.class)).contentRepositoryId();
+    return repository.facet(ContentFacet.class).contentRepositoryId();
   }
 
   public static int contentRepositoryId(final RepositoryContent content) {
