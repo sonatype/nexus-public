@@ -20,15 +20,23 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.event.component.ComponentAttributesEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentCreateEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentDeleteEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentKindEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentPurgeEvent;
+import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryDeleteEvent;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
 
-import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttributeChange;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.stream;
+import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttributeChange;
 
 /**
  * {@link Component} store.
@@ -39,12 +47,16 @@ import static java.util.Arrays.stream;
 public class ComponentStore<T extends ComponentDAO>
     extends ContentStoreSupport<T>
 {
+  protected final EventManager eventManager;
+
   @Inject
   public ComponentStore(final DataSessionSupplier sessionSupplier,
+                        final EventManager eventManager,
                         @Assisted final String contentStoreName,
                         @Assisted final Class<T> daoClass)
   {
     super(sessionSupplier, contentStoreName, daoClass);
+    this.eventManager = checkNotNull(eventManager);
   }
 
   /**
@@ -126,6 +138,9 @@ public class ComponentStore<T extends ComponentDAO>
   @Transactional
   public void createComponent(final ComponentData component) {
     dao().createComponent(component);
+
+    thisSession().postCommit(
+        () -> eventManager.post(new ComponentCreateEvent(component)));
   }
 
   /**
@@ -165,6 +180,9 @@ public class ComponentStore<T extends ComponentDAO>
   @Transactional
   public void updateComponentKind(final Component component) {
     dao().updateComponentKind(component);
+
+    thisSession().postCommit(
+        () -> eventManager.post(new ComponentKindEvent(component)));
   }
 
   /**
@@ -178,10 +196,15 @@ public class ComponentStore<T extends ComponentDAO>
                                         final String key,
                                         final @Nullable Object value)
   {
+    // reload latest attributes, apply change, then update database if necessary
     dao().readComponentAttributes(component).ifPresent(attributes -> {
       ((ComponentData) component).setAttributes(attributes);
+
       if (applyAttributeChange(attributes, change, key, value)) {
         dao().updateComponentAttributes(component);
+
+        thisSession().postCommit(
+            () -> eventManager.post(new ComponentAttributesEvent(component, change, key, value)));
       }
     });
   }
@@ -193,11 +216,12 @@ public class ComponentStore<T extends ComponentDAO>
    * @return {@code true} if the component was deleted
    */
   @Transactional
-  public boolean deleteComponent(final Component component)
-  {
+  public boolean deleteComponent(final Component component) {
+    thisSession().preCommit(
+        () -> eventManager.post(new ComponentDeleteEvent(component)));
+
     return dao().deleteComponent(component);
   }
-
 
   /**
    * Deletes the component located at the given coordinate in the content data store.
@@ -214,11 +238,15 @@ public class ComponentStore<T extends ComponentDAO>
                                   final String name,
                                   final String version)
   {
-    return dao().deleteCoordinate(repositoryId, namespace, name, version);
+    return dao().readCoordinate(repositoryId, namespace, name, version)
+        .map(this::deleteComponent)
+        .orElse(false);
   }
 
   /**
    * Deletes all components in the given repository from the content data store.
+   *
+   * Events will not be sent for these deletes, instead listen for {@link ContentRepositoryDeleteEvent}.
    *
    * @param repositoryId the repository containing the components
    * @return {@code true} if any components were deleted
@@ -259,6 +287,10 @@ public class ComponentStore<T extends ComponentDAO>
       else {
         purged += dao().purgeSelectedComponents(componentIds);
       }
+
+      thisSession().preCommit(
+          () -> eventManager.post(new ComponentPurgeEvent(repositoryId, componentIds)));
+
       commitChangesSoFar();
     }
     return purged;

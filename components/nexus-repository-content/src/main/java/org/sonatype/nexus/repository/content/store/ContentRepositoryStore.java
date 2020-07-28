@@ -20,13 +20,18 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.EntityId;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.ContentRepository;
+import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryAttributesEvent;
+import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryCreateEvent;
+import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryDeleteEvent;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttributeChange;
 
 /**
@@ -38,12 +43,16 @@ import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttrib
 public class ContentRepositoryStore<T extends ContentRepositoryDAO>
     extends ContentStoreSupport<T>
 {
+  protected final EventManager eventManager;
+
   @Inject
   public ContentRepositoryStore(final DataSessionSupplier sessionSupplier,
+                                final EventManager eventManager,
                                 @Assisted final String contentStoreName,
                                 @Assisted final Class<T> daoClass)
   {
     super(sessionSupplier, contentStoreName, daoClass);
+    this.eventManager = checkNotNull(eventManager);
   }
 
   /**
@@ -62,6 +71,9 @@ public class ContentRepositoryStore<T extends ContentRepositoryDAO>
   @Transactional
   public void createContentRepository(final ContentRepositoryData contentRepository) {
     dao().createContentRepository(contentRepository);
+
+    thisSession().postCommit(
+        () -> eventManager.post(new ContentRepositoryCreateEvent(contentRepository)));
   }
 
   /**
@@ -86,12 +98,31 @@ public class ContentRepositoryStore<T extends ContentRepositoryDAO>
                                                 final String key,
                                                 final @Nullable Object value)
   {
+    // reload latest attributes, apply change, then update database if necessary
     dao().readContentRepositoryAttributes(contentRepository).ifPresent(attributes -> {
       ((ContentRepositoryData) contentRepository).setAttributes(attributes);
+
       if (applyAttributeChange(attributes, change, key, value)) {
         dao().updateContentRepositoryAttributes(contentRepository);
+
+        thisSession().postCommit(
+            () -> eventManager.post(new ContentRepositoryAttributesEvent(contentRepository, change, key, value)));
       }
     });
+  }
+
+  /**
+   * Deletes a content repository from the content data store.
+   *
+   * @param contentRepository the content repository to delete
+   * @return {@code true} if the content repository was deleted
+   */
+  @Transactional
+  public boolean deleteContentRepository(final ContentRepository contentRepository) {
+    thisSession().preCommit(
+        () -> eventManager.post(new ContentRepositoryDeleteEvent(contentRepository)));
+
+    return dao().deleteContentRepository(contentRepository);
   }
 
   /**
@@ -102,6 +133,8 @@ public class ContentRepositoryStore<T extends ContentRepositoryDAO>
    */
   @Transactional
   public boolean deleteContentRepository(final EntityId configRepositoryId) {
-    return dao().deleteContentRepository(configRepositoryId);
+    return dao().readContentRepository(configRepositoryId)
+        .map(this::deleteContentRepository)
+        .orElse(false);
   }
 }

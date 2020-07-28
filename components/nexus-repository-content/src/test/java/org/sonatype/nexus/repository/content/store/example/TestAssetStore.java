@@ -16,6 +16,7 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 
 import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.store.AssetStore;
@@ -30,8 +31,11 @@ public class TestAssetStore
     extends AssetStore<TestAssetDAO>
 {
   @Inject
-  public TestAssetStore(final DataSessionSupplier sessionSupplier, @Assisted final String storeName) {
-    super(sessionSupplier, storeName, TestAssetDAO.class);
+  public TestAssetStore(final DataSessionSupplier sessionSupplier,
+                        final EventManager eventManager,
+                        @Assisted final String storeName)
+  {
+    super(sessionSupplier, eventManager, storeName, TestAssetDAO.class);
   }
 
   /**

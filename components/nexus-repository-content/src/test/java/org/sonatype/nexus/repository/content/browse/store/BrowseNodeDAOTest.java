@@ -322,7 +322,7 @@ public class BrowseNodeDAOTest
       session.access(TestAssetDAO.class).deleteAsset(asset2);
       session.access(TestComponentDAO.class).deleteComponent(component1);
       session.access(TestComponentDAO.class).deleteComponent(component2);
-      session.access(TestContentRepositoryDAO.class).deleteContentRepository(contentRepository.configRepositoryId());
+      session.access(TestContentRepositoryDAO.class).deleteContentRepository(contentRepository);
       session.getTransaction().commit();
     }
 

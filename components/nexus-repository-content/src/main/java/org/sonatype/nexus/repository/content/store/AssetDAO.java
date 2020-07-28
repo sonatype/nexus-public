@@ -141,15 +141,6 @@ public interface AssetDAO
   boolean deleteAsset(Asset asset);
 
   /**
-   * Deletes the asset located at the given path in the content data store.
-   *
-   * @param repositoryId the repository containing the asset
-   * @param path the path of the asset
-   * @return {@code true} if the asset was deleted
-   */
-  boolean deletePath(@Param("repositoryId") int repositoryId, @Param("path") String path);
-
-  /**
    * Deletes all assets in the given repository from the content data store.
    *
    * @param repositoryId the repository containing the assets

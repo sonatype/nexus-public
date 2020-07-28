@@ -156,20 +156,6 @@ public interface ComponentDAO
   boolean deleteComponent(Component component);
 
   /**
-   * Deletes the component located at the given coordinate in the content data store.
-   *
-   * @param repositoryId the repository containing the component
-   * @param namespace the namespace of the component
-   * @param name the name of the component
-   * @param version the version of the component
-   * @return {@code true} if the component was deleted
-   */
-  boolean deleteCoordinate(@Param("repositoryId") int repositoryId,
-                           @Param("namespace") String namespace,
-                           @Param("name") String name,
-                           @Param("version") String version);
-
-  /**
    * Deletes all components in the given repository from the content data store.
    *
    * @param repositoryId the repository containing the components

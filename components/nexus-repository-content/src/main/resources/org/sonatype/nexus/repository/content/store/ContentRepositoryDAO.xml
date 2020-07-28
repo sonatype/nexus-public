@@ -65,8 +65,8 @@
         WHERE <include refid="repositoryMatch"/> AND attributes != #{attributes};
   </update>
 
-  <delete id="deleteContentRepository">
-    DELETE FROM ${format}_content_repository WHERE config_repository_id = #{configRepositoryId};
+  <delete id="deleteContentRepository" parameterType="ContentRepositoryData">
+    DELETE FROM ${format}_content_repository WHERE <include refid="repositoryMatch"/>;
   </delete>
 
 </mapper>

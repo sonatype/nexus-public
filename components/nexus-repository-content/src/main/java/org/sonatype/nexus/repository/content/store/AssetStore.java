@@ -20,17 +20,27 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.event.asset.AssetAttributesEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetCreateEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetDeleteEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetDownloadEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetKindEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetPurgeEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetUploadEvent;
+import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryDeleteEvent;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
 
-import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttributeChange;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.stream;
+import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttributeChange;
 
 /**
  * {@link Asset} store.
@@ -41,12 +51,16 @@ import static java.util.Arrays.stream;
 public class AssetStore<T extends AssetDAO>
     extends ContentStoreSupport<T>
 {
+  protected final EventManager eventManager;
+
   @Inject
   public AssetStore(final DataSessionSupplier sessionSupplier,
+                    final EventManager eventManager,
                     @Assisted final String contentStoreName,
                     @Assisted final Class<T> daoClass)
   {
     super(sessionSupplier, contentStoreName, daoClass);
+    this.eventManager = checkNotNull(eventManager);
   }
 
   /**
@@ -99,6 +113,9 @@ public class AssetStore<T extends AssetDAO>
   @Transactional
   public void createAsset(final AssetData asset) {
     dao().createAsset(asset);
+
+    thisSession().postCommit(
+        () -> eventManager.post(new AssetCreateEvent(asset)));
   }
 
   /**
@@ -134,6 +151,9 @@ public class AssetStore<T extends AssetDAO>
   @Transactional
   public void updateAssetKind(final Asset asset) {
     dao().updateAssetKind(asset);
+
+    thisSession().postCommit(
+        () -> eventManager.post(new AssetKindEvent(asset)));
   }
 
   /**
@@ -147,10 +167,15 @@ public class AssetStore<T extends AssetDAO>
                                     final String key,
                                     final @Nullable Object value)
   {
+    // reload latest attributes, apply change, then update database if necessary
     dao().readAssetAttributes(asset).ifPresent(attributes -> {
       ((AssetData) asset).setAttributes(attributes);
+
       if (applyAttributeChange(attributes, change, key, value)) {
         dao().updateAssetAttributes(asset);
+
+        thisSession().postCommit(
+            () -> eventManager.post(new AssetAttributesEvent(asset, change, key, value)));
       }
     });
   }
@@ -163,6 +188,9 @@ public class AssetStore<T extends AssetDAO>
   @Transactional
   public void updateAssetBlobLink(final Asset asset) {
     dao().updateAssetBlobLink(asset);
+
+    thisSession().postCommit(
+        () -> eventManager.post(new AssetUploadEvent(asset)));
   }
 
   /**
@@ -173,6 +201,9 @@ public class AssetStore<T extends AssetDAO>
   @Transactional
   public void markAsDownloaded(final Asset asset) {
     dao().markAsDownloaded(asset);
+
+    thisSession().postCommit(
+        () -> eventManager.post(new AssetDownloadEvent(asset)));
   }
 
   /**
@@ -183,6 +214,9 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public boolean deleteAsset(final Asset asset) {
+    thisSession().preCommit(
+        () -> eventManager.post(new AssetDeleteEvent(asset)));
+
     return dao().deleteAsset(asset);
   }
 
@@ -195,11 +229,15 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public boolean deletePath(final int repositoryId, final String path) {
-    return dao().deletePath(repositoryId, path);
+    return dao().readPath(repositoryId, path)
+        .map(this::deleteAsset)
+        .orElse(false);
   }
 
   /**
    * Deletes all assets in the given repository from the content data store.
+   *
+   * Events will not be sent for these deletes, instead listen for {@link ContentRepositoryDeleteEvent}.
    *
    * @param repositoryId the repository containing the assets
    * @return {@code true} if any assets were deleted
@@ -240,6 +278,10 @@ public class AssetStore<T extends AssetDAO>
       else {
         purged += dao().purgeSelectedAssets(assetIds);
       }
+
+      thisSession().preCommit(
+          () -> eventManager.post(new AssetPurgeEvent(repositoryId, assetIds)));
+
       commitChangesSoFar();
     }
     return purged;

@@ -150,10 +150,6 @@
     DELETE FROM ${format}_asset WHERE <include refid="assetMatch"/>;
   </delete>
 
-  <delete id="deletePath">
-    DELETE FROM ${format}_asset WHERE <include refid="assetPathMatch"/>;
-  </delete>
-
   <delete id="deleteAssets">
     DELETE FROM ${format}_asset WHERE
         repository_id = #{repositoryId}

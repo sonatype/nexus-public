@@ -274,7 +274,10 @@ public class AssetDAOTest
 
       assertThat(dao.browseAssets(repositoryId, null, 10, null), emptyIterable());
 
-      assertFalse(dao.deletePath(repositoryId, "test-path"));
+      AssetData candidate = new AssetData();
+      candidate.setRepositoryId(repositoryId);
+      candidate.setPath("/test-path");
+      assertFalse(dao.deleteAsset(candidate));
     }
   }
 

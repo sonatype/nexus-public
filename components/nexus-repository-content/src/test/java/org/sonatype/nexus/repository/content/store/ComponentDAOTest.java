@@ -271,7 +271,12 @@ public class ComponentDAOTest
 
       assertThat(dao.browseComponents(repositoryId, null, 10, null), emptyIterable());
 
-      assertFalse(dao.deleteCoordinate(repositoryId, "test-namespace", "test-name", "test-version"));
+      ComponentData candidate = new ComponentData();
+      candidate.setRepositoryId(repositoryId);
+      candidate.setNamespace("test-namespace");
+      candidate.setName("test-name");
+      candidate.setVersion("test-version");
+      assertFalse(dao.deleteComponent(candidate));
     }
   }
 
