@@ -30,6 +30,7 @@ import org.sonatype.nexus.transaction.Transactional;
 import com.google.inject.assistedinject.Assisted;
 
 import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttributeChange;
+import static java.util.Arrays.stream;
 
 /**
  * {@link Asset} store.
@@ -216,17 +217,31 @@ public class AssetStore<T extends AssetDAO>
   }
 
   /**
-   * Purge assets without component in the given repository last downloaded more than given number of days ago
+   * Purge assets without a component in the given repository last downloaded more than given number of days ago
    *
-   * @param repositoryId the repository to browse
-   * @param daysAgo last downloaded more than this
-   * @param limit at most items to delete
-   * @return number of assets deleted
+   * @param repositoryId the repository to check
+   * @param daysAgo the number of days ago to check
+   * @return number of purged assets
    *
    * @since 3.24
    */
   @Transactional
-  public int purgeNotRecentlyDownloaded(final int repositoryId, final int daysAgo, final int limit) {
-    return dao().purgeNotRecentlyDownloaded(repositoryId, daysAgo, limit);
+  public int purgeNotRecentlyDownloaded(final int repositoryId, final int daysAgo) {
+    int purged = 0;
+    while (true) {
+      int[] assetIds = dao().selectNotRecentlyDownloaded(repositoryId, daysAgo, deleteBatchSize());
+      if (assetIds.length == 0) {
+        break; // nothing left to purge
+      }
+      if ("H2".equals(thisSession().sqlDialect())) {
+        // workaround lack of primitive array support in H2 (should be fixed in H2 1.4.201?)
+        purged += dao().purgeSelectedAssets(stream(assetIds).boxed().toArray(Integer[]::new));
+      }
+      else {
+        purged += dao().purgeSelectedAssets(assetIds);
+      }
+      commitChangesSoFar();
+    }
+    return purged;
   }
 }

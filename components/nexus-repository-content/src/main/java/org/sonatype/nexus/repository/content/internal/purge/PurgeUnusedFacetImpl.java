@@ -25,7 +25,6 @@ import org.sonatype.nexus.repository.purge.PurgeUnusedFacet;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
-import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 
 /**
  * @since 3.24
@@ -36,40 +35,23 @@ public class PurgeUnusedFacetImpl
     extends FacetSupport
     implements PurgeUnusedFacet
 {
-  private static final int LIMIT = 1000;
-
   @Override
   @Guarded(by = STARTED)
   public void purgeUnused(final int numberOfDays) {
     checkArgument(numberOfDays > 0, "Number of days must be greater then zero");
     log.info("Purging unused components from repository {}", getRepository().getName());
-    ContentFacetSupport contentFacetSupport = (ContentFacetSupport) getRepository().facet(ContentFacet.class);
 
-    deleteComponentsOlderThan(numberOfDays, contentFacetSupport);
-    deleteAssetsOlderThan(numberOfDays, contentFacetSupport);
-  }
+    ContentFacetSupport contentFacet = (ContentFacetSupport) getRepository().facet(ContentFacet.class);
+    ComponentStore<?> componentStore = contentFacet.stores().componentStore;
+    AssetStore<?> assetStore = contentFacet.stores().assetStore;
+    int contentRepositoryId = contentFacet.contentRepositoryId();
 
-  private void deleteAssetsOlderThan(final int numberOfDays, final ContentFacetSupport contentFacetSupport) {
-    Integer contentRepositoryId = contentFacetSupport.contentRepositoryId();
-    AssetStore<?> assetStore = contentFacetSupport.stores().assetStore;
-    while (checkCancellation()) {
-      int deleted = assetStore.purgeNotRecentlyDownloaded(contentRepositoryId, numberOfDays, LIMIT);
-      log.debug("Deleted {} unused assets without components", deleted);
-      if (deleted == 0) {
-        return;
-      }
-    }
-  }
+    int purgedAssets = assetStore.purgeNotRecentlyDownloaded(contentRepositoryId, numberOfDays);
+    log.debug("Deleted {} unused assets without components", purgedAssets);
 
-  private void deleteComponentsOlderThan(final int numberOfDays, final ContentFacetSupport contentFacetSupport) {
-    Integer contentRepositoryId = contentFacetSupport.contentRepositoryId();
-    ComponentStore<?> componentStore = contentFacetSupport.stores().componentStore;
-    while (checkCancellation()) {
-      int deleted = componentStore.purgeNotRecentlyDownloaded(contentRepositoryId, numberOfDays, LIMIT);
-      log.debug("Deleted {} unused components with associated assets", deleted);
-      if (deleted == 0) {
-        return;
-      }
-    }
+    int purgedComponents = componentStore.purgeNotRecentlyDownloaded(contentRepositoryId, numberOfDays);
+    log.debug("Deleted {} unused components and their assets", purgedComponents);
+
+    log.info("Purged {} unused components from repository {}", getRepository().getName(), purgedComponents);
   }
 }

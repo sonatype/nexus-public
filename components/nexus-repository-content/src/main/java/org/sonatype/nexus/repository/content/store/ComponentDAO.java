@@ -179,23 +179,40 @@ public interface ComponentDAO
   boolean deleteComponents(@Param("repositoryId") int repositoryId, @Param("limit") int limit);
 
   /**
-   * Creates a temporary table local to the session for holding purge data.
+   * Selects components in the given repository whose assets were last downloaded more than given number of days ago.
    *
-   * @since 3.25
+   * @param repositoryId the repository to check
+   * @param daysAgo the number of days ago to check
+   * @param limit when positive limits the number of components selected per-call
+   * @return selected component ids
+   *
+   * @since 3.next
    */
-  void createTemporaryPurgeTable();
+  int[] selectNotRecentlyDownloaded(@Param("repositoryId") int repositoryId,
+                                    @Param("daysAgo") int daysAgo,
+                                    @Param("limit") int limit);
 
   /**
-   * Purge components in the given repository whose assets were last downloaded more than given number of days ago
+   * Purges the selected components along with their assets.
    *
-   * @param repositoryId the repository to browse
-   * @param daysAgo last downloaded more than this
-   * @param limit at most items to delete
-   * @return number of components deleted
+   * This version of the method is for databases that support primitive arrays.
    *
-   * @since 3.24
+   * @param componentIds the components to purge
+   * @return the number of purged components
+   *
+   * @since 3.next
    */
-  int purgeNotRecentlyDownloaded(@Param("repositoryId") int repositoryId,
-                                 @Param("daysAgo") int daysAgo,
-                                 @Param("limit") int limit);
+  int purgeSelectedComponents(@Param("componentIds") int[] componentIds);
+
+  /**
+   * Purges the selected components along with their assets.
+   *
+   * This version of the method is for databases that don't yet support primitive arrays.
+   *
+   * @param componentIds the components to purge
+   * @return the number of purged components
+   *
+   * @since 3.next
+   */
+  int purgeSelectedComponents(@Param("componentIds") Integer[] componentIds);
 }

@@ -159,16 +159,40 @@ public interface AssetDAO
   boolean deleteAssets(@Param("repositoryId") int repositoryId, @Param("limit") int limit);
 
   /**
-   * Purge assets without component in the given repository last downloaded more than given number of days ago
+   * Selects assets without a component in the given repository last downloaded more than given number of days ago.
    *
-   * @param repositoryId the repository to browse
-   * @param daysAgo last downloaded more than this
-   * @param limit at most items to delete
-   * @return number of assets deleted
+   * @param repositoryId the repository to check
+   * @param daysAgo the number of days ago to check
+   * @param limit when positive limits the number of assets selected per-call
+   * @return selected asset ids
    *
-   * @since 3.24
+   * @since 3.next
    */
-  int purgeNotRecentlyDownloaded(@Param("repositoryId") int repositoryId,
-                                 @Param("daysAgo") int daysAgo,
-                                 @Param("limit") int limit);
+  int[] selectNotRecentlyDownloaded(@Param("repositoryId") int repositoryId,
+                                    @Param("daysAgo") int daysAgo,
+                                    @Param("limit") int limit);
+
+  /**
+   * Purges the selected assets.
+   *
+   * This version of the method is for databases that support primitive arrays.
+   *
+   * @param assetIds the assets to purge
+   * @return the number of purged assets
+   *
+   * @since 3.next
+   */
+  int purgeSelectedAssets(@Param("assetIds") int[] assetIds);
+
+  /**
+   * Purges the selected assets.
+   *
+   * This version of the method is for databases that don't yet support primitive arrays.
+   *
+   * @param assetIds the assets to purge
+   * @return the number of purged assets
+   *
+   * @since 3.next
+   */
+  int purgeSelectedAssets(@Param("assetIds") Integer[] assetIds);
 }

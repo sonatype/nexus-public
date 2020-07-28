@@ -30,6 +30,7 @@ import org.hamcrest.collection.IsIterableContainingInOrder;
 import org.junit.Before;
 import org.junit.Test;
 
+import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.summingInt;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.allOf;
@@ -424,9 +425,15 @@ public class ComponentDAOTest
       assertTrue(assetDao.readPath(repositoryId, asset1.path()).isPresent());
       assertTrue(assetDao.readPath(repositoryId, asset2.path()).isPresent());
 
-      componentDao.createTemporaryPurgeTable();
-      int deleted = componentDao.purgeNotRecentlyDownloaded(repositoryId, 3, 10);
-      assertThat(deleted, is(1));
+      int[] componentIds = componentDao.selectNotRecentlyDownloaded(repositoryId, 3, 10);
+      assertThat(componentIds, is(new int[]{2}));
+
+      if ("H2".equals(session.sqlDialect())) {
+        componentDao.purgeSelectedComponents(stream(componentIds).boxed().toArray(Integer[]::new));
+      }
+      else {
+        componentDao.purgeSelectedComponents(componentIds);
+      }
 
       assertTrue(componentDao.readCoordinate(repositoryId,
           component1.namespace(), component1.name(), component1.version()).isPresent());

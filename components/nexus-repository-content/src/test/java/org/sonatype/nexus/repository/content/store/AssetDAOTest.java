@@ -33,6 +33,7 @@ import org.hamcrest.collection.IsIterableContainingInOrder;
 import org.junit.Before;
 import org.junit.Test;
 
+import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.summingInt;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.allOf;
@@ -679,8 +680,15 @@ public class AssetDAOTest
       assertTrue(dao.readPath(repositoryId, asset1.path()).isPresent());
       assertTrue(dao.readPath(repositoryId, asset2.path()).isPresent());
 
-      int deleted = dao.purgeNotRecentlyDownloaded(repositoryId, 3, 10);
-      assertThat(deleted, is(1));
+      int[] assetIds = dao.selectNotRecentlyDownloaded(repositoryId, 3, 10);
+      assertThat(assetIds, is(new int[]{2}));
+
+      if ("H2".equals(session.sqlDialect())) {
+        dao.purgeSelectedAssets(stream(assetIds).boxed().toArray(Integer[]::new));
+      }
+      else {
+        dao.purgeSelectedAssets(assetIds);
+      }
 
       assertTrue(dao.readPath(repositoryId, asset1.path()).isPresent());
       assertFalse(dao.readPath(repositoryId, asset2.path()).isPresent());
