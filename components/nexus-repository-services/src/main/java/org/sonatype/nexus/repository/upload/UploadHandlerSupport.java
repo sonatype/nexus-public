@@ -58,7 +58,7 @@ public abstract class UploadHandlerSupport
         componentFields.stream(),
         uploadDefinitionExtensions.stream().map(UploadDefinitionExtension::contribute)).collect(toList());
 
-    return new UploadDefinition(format, multipleUpload, componentFieldDefinitions, assetFields, regexMap);
+    return new UploadDefinition(format, supportsUiUpload(), multipleUpload, componentFieldDefinitions, assetFields, regexMap);
   }
 
   /**

@@ -49,7 +49,7 @@ class UploadComponentComponent
   @Timed
   @ExceptionMetered
   Collection<UploadDefinition> getUploadDefinitions() {
-    return uploadService.getAvailableDefinitions()
+    return uploadService.getAvailableDefinitions().findAll{ definition -> definition.isUiUpload() }
   }
 
   @Override
