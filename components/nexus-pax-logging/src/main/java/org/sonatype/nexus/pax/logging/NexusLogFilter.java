@@ -37,29 +37,24 @@ import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
  * - Must NOT have the TASK_LOG_ONLY marker. These are task log only events.
  * - Must NOT have TASK_LOG_ONLY_MDC in MDC. These are task log only events.
  *
- * Note: Pax-logging doesn't support markers :( However, they do store the marker in MDC for us to grab and do the work
- * ourselves
- *
  * @see org.ops4j.pax.logging.slf4j.Slf4jLogger#info(Marker, String)
  * @since 3.5
  */
 public class NexusLogFilter
     extends Filter<ILoggingEvent>
 {
-  static final String MDC_MARKER_ID = "slf4j.marker";
-
   private static final List<Marker> DENY_MARKERS = Arrays.asList(PROGRESS, TASK_LOG_ONLY, CLUSTER_LOG_ONLY, AUDIT_LOG_ONLY);
 
   @Override
   public FilterReply decide(final ILoggingEvent event) {
-    String marker = MDC.get(MDC_MARKER_ID);
+    Marker marker = event.getMarker();
 
-    if (MDC.get(TASK_LOG_WITH_PROGRESS_MDC) != null && INTERNAL_PROGRESS.getName().equals(marker)) {
+    if (MDC.get(TASK_LOG_WITH_PROGRESS_MDC) != null && INTERNAL_PROGRESS.equals(marker)) {
       // internal progress logs for TaskLogType.TASK_LOG_WITH_PROGRESS are wanted
       return NEUTRAL;
     }
 
-    if (DENY_MARKERS.stream().anyMatch(m -> m.getName().equals(marker)) || MDC.get(TASK_LOG_ONLY_MDC) != null) {
+    if (DENY_MARKERS.stream().anyMatch(m -> m.equals(marker)) || MDC.get(TASK_LOG_ONLY_MDC) != null) {
       return DENY;
     }
 

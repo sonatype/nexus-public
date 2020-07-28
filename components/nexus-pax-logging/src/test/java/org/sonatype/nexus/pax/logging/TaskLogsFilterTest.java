@@ -25,6 +25,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.slf4j.MDC;
+import org.slf4j.Marker;
 
 import static ch.qos.logback.core.spi.FilterReply.DENY;
 import static ch.qos.logback.core.spi.FilterReply.NEUTRAL;
@@ -36,7 +37,6 @@ import static org.sonatype.nexus.logging.task.TaskLogger.LOGBACK_TASK_DISCRIMINA
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.INTERNAL_PROGRESS;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.NEXUS_LOG_ONLY;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.PROGRESS;
-import static org.sonatype.nexus.pax.logging.NexusLogFilter.MDC_MARKER_ID;
 
 public class TaskLogsFilterTest
     extends TestSupport
@@ -50,18 +50,14 @@ public class TaskLogsFilterTest
 
   private TaskLogsFilter taskLogsFilter;
 
-  private ILoggingEvent event;
-
   @Before
   public void setUp() {
     taskLogsFilter = new TaskLogsFilter();
-    event = newTestLoggingEvent(TEST_MESSAGE, TEST_ARGS);
   }
 
   @After
   public void tearDown() {
     MDC.remove(LOGBACK_TASK_DISCRIMINATOR_ID);
-    MDC.remove(MDC_MARKER_ID);
     if (TaskLoggerHelper.get() != null) {
       TaskLoggerHelper.finish();
     }
@@ -71,28 +67,25 @@ public class TaskLogsFilterTest
   public void testNotATask() {
     // not a task
     MDC.remove(LOGBACK_TASK_DISCRIMINATOR_ID);
-    assertThat(taskLogsFilter.decide(event), equalTo(DENY));
+    assertThat(taskLogsFilter.decide(eventWithMarkerOf(null)), equalTo(DENY));
   }
 
   @Test
   public void testIsANexusLog() {
     startTask();
-    MDC.put(MDC_MARKER_ID, NEXUS_LOG_ONLY.getName());
-    assertThat(taskLogsFilter.decide(event), equalTo(DENY));
+    assertThat(taskLogsFilter.decide(eventWithMarkerOf(NEXUS_LOG_ONLY)), equalTo(DENY));
   }
 
   @Test
   public void testIsInternalProgress() {
     startTask();
-    MDC.put(MDC_MARKER_ID, INTERNAL_PROGRESS.getName());
-    assertThat(taskLogsFilter.decide(event), equalTo(DENY));
+    assertThat(taskLogsFilter.decide(eventWithMarkerOf(INTERNAL_PROGRESS)), equalTo(DENY));
   }
 
   @Test
   public void testIsProgress() {
     startTask();
-    MDC.put(MDC_MARKER_ID, PROGRESS.getName());
-    assertThat(taskLogsFilter.decide(event), equalTo(NEUTRAL));
+    assertThat(taskLogsFilter.decide(eventWithMarkerOf(PROGRESS)), equalTo(NEUTRAL));
     assertNotNull(TaskLoggerHelper.get());
 
     ArgumentCaptor<TaskLoggingEvent> argumentCaptor = ArgumentCaptor.forClass(TaskLoggingEvent.class);
@@ -106,7 +99,7 @@ public class TaskLogsFilterTest
   @Test
   public void testNotProgress() {
     startTask();
-    assertThat(taskLogsFilter.decide(event), equalTo(NEUTRAL));
+    assertThat(taskLogsFilter.decide(eventWithMarkerOf(null)), equalTo(NEUTRAL));
     assertNotNull(TaskLoggerHelper.get());
   }
 
@@ -117,32 +110,11 @@ public class TaskLogsFilterTest
     TaskLoggerHelper.start(taskLogger);
   }
 
-  private ILoggingEvent newTestLoggingEvent(final String message, final Object[] args) {
-    return new TestLoggingEvent(message, args);
-  }
-
-  private class TestLoggingEvent
-      extends LoggingEvent
-  {
-    private final String message;
-
-    private final Object[] args;
-
-    TestLoggingEvent(final String message,
-                     final Object[] args)
-    {
-      this.message = message;
-      this.args = args;
-    }
-
-    @Override
-    public String getMessage() {
-      return message;
-    }
-
-    @Override
-    public Object[] getArgumentArray() {
-      return args;
-    }
+  private ILoggingEvent eventWithMarkerOf(final Marker marker) {
+    LoggingEvent event = new LoggingEvent();
+    event.setMessage(TEST_MESSAGE);
+    event.setMarker(marker);
+    event.setArgumentArray(TEST_ARGS);
+    return event;
   }
 }

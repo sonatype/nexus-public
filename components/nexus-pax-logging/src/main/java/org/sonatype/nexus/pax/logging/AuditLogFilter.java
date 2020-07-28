@@ -15,12 +15,10 @@ package org.sonatype.nexus.pax.logging;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.filter.Filter;
 import ch.qos.logback.core.spi.FilterReply;
-import org.slf4j.MDC;
 
 import static ch.qos.logback.core.spi.FilterReply.ACCEPT;
 import static ch.qos.logback.core.spi.FilterReply.DENY;
 import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.AUDIT_LOG_ONLY;
-import static org.sonatype.nexus.pax.logging.NexusLogFilter.MDC_MARKER_ID;
 
 /**
  * Logback {@link Filter} for audit logs. Ensures that the audit logs get the appropriate entries.
@@ -32,6 +30,6 @@ public class AuditLogFilter
 {
   @Override
   public FilterReply decide(final ILoggingEvent event) {
-    return AUDIT_LOG_ONLY.getName().equals(MDC.get(MDC_MARKER_ID)) ? ACCEPT : DENY;
+    return AUDIT_LOG_ONLY.equals(event.getMarker()) ? ACCEPT : DENY;
   }
 }
