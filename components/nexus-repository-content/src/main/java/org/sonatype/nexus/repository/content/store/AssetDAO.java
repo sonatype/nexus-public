@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.store;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -38,29 +39,41 @@ import org.apache.ibatis.annotations.Param;
 public interface AssetDAO
     extends ContentDataAccess
 {
+  String FILTER_PARAMS = "filterParams";
+
   /**
    * Count all assets in the given repository.
    *
    * @param repositoryId the repository to count
+   * @param kind optional kind of assets to count
+   * @param filter optional filter to apply
+   * @param filterParams parameter map for the optional filter
    * @return count of assets in the repository
    */
-  int countAssets(@Param("repositoryId") int repositoryId);
+  int countAssets(@Param("repositoryId") int repositoryId,
+                  @Nullable @Param("kind") String kind,
+                  @Nullable @Param("filter") String filter,
+                  @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams);
 
   /**
    * Browse all assets in the given repository in a paged fashion.
    *
    * @param repositoryId the repository to browse
-   * @param kind the kind of assets to return
    * @param limit maximum number of assets to return
    * @param continuationToken optional token to continue from a previous request
+   * @param kind optional kind of assets to return
+   * @param filter optional filter to apply
+   * @param filterParams parameter map for the optional filter
    * @return collection of assets and the next continuation token
    *
    * @see Continuation#nextContinuationToken()
    */
   Continuation<Asset> browseAssets(@Param("repositoryId") int repositoryId,
-                                   @Param("kind") @Nullable String kind,
                                    @Param("limit") int limit,
-                                   @Param("continuationToken") @Nullable String continuationToken);
+                                   @Nullable @Param("continuationToken") String continuationToken,
+                                   @Nullable @Param("kind") String kind,
+                                   @Nullable @Param("filter") String filter,
+                                   @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams);
 
   /**
    * Browse all assets associated with the given logical component.

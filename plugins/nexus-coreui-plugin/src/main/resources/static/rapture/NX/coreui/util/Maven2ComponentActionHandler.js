@@ -34,7 +34,7 @@ Ext.define('NX.coreui.util.Maven2ComponentActionHandler', {
 
     id = componentModel.get('id');
     return (componentModel.get('format') === 'maven2') &&
-        id.indexOf('-SNAPSHOT') === (id.length - '-SNAPSHOT'.length);
+        id.slice(-'-SNAPSHOT'.length) === '-SNAPSHOT';
   },
 
   updateDeleteButtonVisibility: function(button, componentModel) {

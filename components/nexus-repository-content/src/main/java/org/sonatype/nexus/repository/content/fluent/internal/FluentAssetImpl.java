@@ -71,7 +71,7 @@ public class FluentAssetImpl
 {
   private final ContentFacetSupport facet;
 
-  private Asset asset;
+  private final Asset asset;
 
   public FluentAssetImpl(final ContentFacetSupport facet, final Asset asset) {
     this.facet = checkNotNull(facet);

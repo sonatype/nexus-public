@@ -13,11 +13,9 @@
 package org.sonatype.nexus.repository.content.fluent;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 
-import javax.annotation.Nullable;
-
-import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.content.Component;
 
@@ -27,6 +25,7 @@ import org.sonatype.nexus.repository.content.Component;
  * @since 3.21
  */
 public interface FluentComponents
+    extends FluentQuery<FluentComponent>
 {
   /**
    * Start building a component, beginning with its name.
@@ -39,21 +38,22 @@ public interface FluentComponents
   FluentComponent with(Component component);
 
   /**
-   * Count all components in the repository.
+   * Query components that have the given kind.
+   *
+   * @since 3.next
    */
-  int count();
+  FluentQuery<FluentComponent> byKind(String kind);
 
   /**
-   * Browse through all components in the repository.
+   * Query components that match the given filter.
+   * <p>
+   * A filter parameter of {@code foo} should be referred to in the filter string as <code>#{filterParams.foo}</code>
+   * <p>
+   * <b>WARNING</b> the filter string is appended to the query and should only contain trusted content!
+   *
+   * @since 3.next
    */
-  default Continuation<FluentComponent> browse(int limit, @Nullable String continuationToken) {
-    return browse(null, limit, continuationToken);
-  }
-
-  /**
-   * Browse through all components in the repository by kind.
-   */
-  Continuation<FluentComponent> browse(@Nullable String kind, int limit, @Nullable String continuationToken);
+  FluentQuery<FluentComponent> byFilter(String filter, Map<String, Object> filterParams);
 
   /**
    * List all namespaces of components in the repository.

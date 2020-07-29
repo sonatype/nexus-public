@@ -224,8 +224,8 @@ public class BrowseNodeQueryServiceImpl
    */
   @Nullable
   private String buildContentAuthFilter(final Repository repository,
-                                  final List<SelectorConfiguration> selectors,
-                                  final Map<String, Object> filterParameters)
+                                        final List<SelectorConfiguration> selectors,
+                                        final Map<String, Object> filterParameters)
   {
     if (selectors.isEmpty()) {
       return null;

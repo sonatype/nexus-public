@@ -83,17 +83,16 @@
   </select>
 
   <select id="countAssets" resultType="int">
-    SELECT COUNT(*) FROM ${format}_asset WHERE repository_id = #{repositoryId};
+    SELECT COUNT(*) FROM ${format}_asset WHERE repository_id = #{repositoryId}
+        <if test="kind != null"> AND kind = #{kind}</if>
+        <if test="filter != null"> AND ${filter}</if>;
   </select>
 
   <select id="browseAssets" resultMap="assetResult">
     SELECT * FROM ${format}_asset WHERE repository_id = #{repositoryId}
-    <if test="kind != null">
-      AND kind = #{kind}
-    </if>
-    <if test="continuationToken != null">
-      AND asset_id > #{continuationToken}
-    </if>
+        <if test="continuationToken != null"> AND asset_id > #{continuationToken}</if>
+        <if test="kind != null"> AND kind = #{kind}</if>
+        <if test="filter != null"> AND ${filter}</if>
     ORDER BY asset_id LIMIT #{limit};
   </select>
 

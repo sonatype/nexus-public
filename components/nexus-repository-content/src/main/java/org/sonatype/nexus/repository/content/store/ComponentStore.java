@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.store;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -63,31 +64,42 @@ public class ComponentStore<T extends ComponentDAO>
    * Count all components in the given repository.
    *
    * @param repositoryId the repository to count
+   * @param kind optional kind of components to count
+   * @param filter optional filter to apply
+   * @param filterParams parameter map for the optional filter
    * @return count of components in the repository
    */
   @Transactional
-  public int countComponents(final int repositoryId) {
-    return dao().countComponents(repositoryId);
+  public int countComponents(final int repositoryId,
+                             @Nullable final String kind,
+                             @Nullable final String filter,
+                             @Nullable final Map<String, Object> filterParams)
+  {
+    return dao().countComponents(repositoryId, kind, filter, filterParams);
   }
 
   /**
    * Browse all components in the given repository in a paged fashion.
    *
    * @param repositoryId the repository to browse
-   * @param kind the kind of components to return
    * @param limit maximum number of components to return
    * @param continuationToken optional token to continue from a previous request
+   * @param kind optional kind of components to return
+   * @param filter optional filter to apply
+   * @param filterParams parameter map for the optional filter
    * @return collection of components and the next continuation token
    *
    * @see Continuation#nextContinuationToken()
    */
   @Transactional
   public Continuation<Component> browseComponents(final int repositoryId,
-                                                  @Nullable final String kind,
                                                   final int limit,
-                                                  @Nullable final String continuationToken)
+                                                  @Nullable final String continuationToken,
+                                                  @Nullable final String kind,
+                                                  @Nullable final String filter,
+                                                  @Nullable final Map<String, Object> filterParams)
   {
-    return dao().browseComponents(repositoryId, kind, limit, continuationToken);
+    return dao().browseComponents(repositoryId, limit, continuationToken, kind, filter, filterParams);
   }
 
   /**

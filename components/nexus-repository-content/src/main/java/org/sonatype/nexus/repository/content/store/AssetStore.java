@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.store;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -67,31 +68,42 @@ public class AssetStore<T extends AssetDAO>
    * Count all assets in the given repository.
    *
    * @param repositoryId the repository to count
+   * @param kind optional kind of assets to count
+   * @param filter optional filter to apply
+   * @param filterParams parameter map for the optional filter
    * @return count of assets in the repository
    */
   @Transactional
-  public int countAssets(final int repositoryId) {
-    return dao().countAssets(repositoryId);
+  public int countAssets(final int repositoryId,
+                         @Nullable final String kind,
+                         @Nullable final String filter,
+                         @Nullable final Map<String, Object> filterParams)
+  {
+    return dao().countAssets(repositoryId, kind, filter, filterParams);
   }
 
   /**
    * Browse all assets in the given repository in a paged fashion.
    *
    * @param repositoryId the repository to browse
-   * @param kind the kind of assets to return
    * @param limit maximum number of assets to return
    * @param continuationToken optional token to continue from a previous request
+   * @param kind optional kind of assets to return
+   * @param filter optional filter to apply
+   * @param filterParams parameter map for the optional filter
    * @return collection of assets and the next continuation token
    *
    * @see Continuation#nextContinuationToken()
    */
   @Transactional
   public Continuation<Asset> browseAssets(final int repositoryId,
-                                          @Nullable final String kind,
                                           final int limit,
-                                          @Nullable final String continuationToken)
+                                          @Nullable final String continuationToken,
+                                          @Nullable final String kind,
+                                          @Nullable final String filter,
+                                          @Nullable final Map<String, Object> filterParams)
   {
-    return dao().browseAssets(repositoryId, kind, limit, continuationToken);
+    return dao().browseAssets(repositoryId, limit, continuationToken, kind, filter, filterParams);
   }
 
   /**

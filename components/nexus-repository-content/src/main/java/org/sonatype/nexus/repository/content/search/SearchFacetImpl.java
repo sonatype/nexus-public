@@ -36,6 +36,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.lang.Math.max;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
+import static org.sonatype.nexus.repository.content.store.InternalIds.toExternalId;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.FORMAT;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.REPOSITORY_NAME;
 import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
@@ -154,7 +155,7 @@ public class SearchFacetImpl
    * Returns the identifier for the given component in the repository's index.
    */
   private String identifier(final FluentComponent component) {
-    return Integer.toString(internalComponentId(component));
+    return toExternalId(internalComponentId(component)).getValue();
   }
 
   /**

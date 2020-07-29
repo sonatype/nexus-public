@@ -32,6 +32,7 @@ import org.sonatype.nexus.content.maven.internal.event.RebuildMavenArchetypeCata
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.fluent.FluentQuery;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.internal.Constants;
@@ -153,12 +154,11 @@ public class MavenArchetypeCatalogFacetImpl
   private Iterable<Archetype> getArchetypes() {
     List<Archetype> archetypes = new ArrayList<>();
 
-    Continuation<FluentComponent> components =
-        mavenContentFacet.components().browse(MAVEN_ARCHETYPE_KIND, componentPageSize, null);
+    FluentQuery<FluentComponent> archetypeQuery = mavenContentFacet.components().byKind(MAVEN_ARCHETYPE_KIND);
+    Continuation<FluentComponent> components = archetypeQuery.browse(componentPageSize, null);
     while (!components.isEmpty()) {
       archetypes.addAll(components.stream().map(this::toArchetype).collect(toList()));
-      components = mavenContentFacet.
-          components().browse(MAVEN_ARCHETYPE_KIND, componentPageSize, components.nextContinuationToken());
+      components = archetypeQuery.browse(componentPageSize, components.nextContinuationToken());
     }
     return archetypes;
   }
