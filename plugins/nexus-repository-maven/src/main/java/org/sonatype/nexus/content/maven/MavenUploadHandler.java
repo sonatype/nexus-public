@@ -10,10 +10,13 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.maven.internal.orient;
+package org.sonatype.nexus.content.maven;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -21,11 +24,12 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.hash.HashAlgorithm;
-import org.sonatype.nexus.orient.maven.MavenFacet;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.maven.MavenHostedFacet;
+import org.sonatype.nexus.repository.content.Asset;
+import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
+import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.MavenUploadHandlerSupport;
 import org.sonatype.nexus.repository.maven.VersionPolicy;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
@@ -35,21 +39,22 @@ import org.sonatype.nexus.repository.maven.internal.VersionPolicyValidator;
 import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
-import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.Payload;
+import org.sonatype.nexus.repository.view.payloads.StringPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
-import org.sonatype.nexus.transaction.UnitOfWork;
 
-import com.google.common.hash.HashCode;
 import org.joda.time.DateTime;
 
+import static org.sonatype.nexus.repository.maven.internal.Constants.CHECKSUM_CONTENT_TYPE;
+import static org.sonatype.nexus.repository.view.Content.CONTENT_LAST_MODIFIED;
+
 /**
- * Support for uploading components via UI & API
+ * Support for uploading maven components via UI & API
  *
- * @since 3.7
+ * @since 3.next
  */
 @Named(Maven2Format.NAME)
 @Singleton
@@ -72,30 +77,20 @@ public class MavenUploadHandler
   @Override
   protected ContentAndAssetPathResponseData getResponseContents(final Repository repository,
                                                                 final ComponentUpload componentUpload,
-                                                                final String basePath)
-      throws IOException
+                                                                final String basePath) throws IOException
   {
-    ContentAndAssetPathResponseData responseData;
-
-    StorageFacet storageFacet = repository.facet(StorageFacet.class);
-    UnitOfWork.begin(storageFacet.txSupplier());
-    try {
-      responseData = createAssets(repository, basePath, componentUpload.getAssetUploads());
-
-      maybeGeneratePom(repository, componentUpload, basePath, responseData);
-
-      updateMetadata(repository, responseData.getCoordinates());
-    }
-    finally {
-      UnitOfWork.end();
-    }
+    ContentAndAssetPathResponseData responseData =
+        createAssets(repository, basePath, componentUpload.getAssetUploads());
+    maybeGeneratePom(repository, componentUpload, basePath, responseData);
+    updateMetadata(repository, responseData.getCoordinates());
     return responseData;
   }
 
   private void updateMetadata(final Repository repository, final Coordinates coordinates) {
     if (coordinates != null) {
-      repository.facet(MavenHostedFacet.class)
-          .rebuildMetadata(coordinates.getGroupId(), coordinates.getArtifactId(), coordinates.getVersion(), false);
+      repository.facet(MavenMetadataRebuildFacet.class)
+          .rebuildMetadata(coordinates.getGroupId(), coordinates.getArtifactId(), coordinates.getVersion(),
+              false, false);
     }
     else {
       log.debug("Not updating metadata.xml files since coordinate could not be retrieved from path");
@@ -106,7 +101,7 @@ public class MavenUploadHandler
   protected Content doPut(final Repository repository, final MavenPath mavenPath, final Payload payload)
       throws IOException
   {
-    MavenFacet mavenFacet = repository.facet(MavenFacet.class);
+    MavenContentFacet mavenFacet = repository.facet(MavenContentFacet.class);
     Content asset = mavenFacet.put(mavenPath, payload);
     putChecksumFiles(mavenFacet, mavenPath, asset);
     return asset;
@@ -114,18 +109,33 @@ public class MavenUploadHandler
 
   @Override
   protected VersionPolicy getVersionPolicy(final Repository repository) {
-    return repository.facet(MavenFacet.class).getVersionPolicy();
+    return repository.facet(MavenContentFacet.class).getVersionPolicy();
   }
 
   @Override
-  protected TempBlob createTempBlob(final Repository repository, final PartPayload payload)
-  {
-    return repository.facet(StorageFacet.class).createTempBlob(payload, MavenPath.HashType.ALGORITHMS);
+  protected TempBlob createTempBlob(final Repository repository, final PartPayload payload) {
+    return repository.facet(MavenContentFacet.class).blobs().ingest(payload, MavenPath.HashType.ALGORITHMS);
   }
 
-  private void putChecksumFiles(final MavenFacet facet, final MavenPath path, final Content content) throws IOException {
-    DateTime dateTime = content.getAttributes().require(Content.CONTENT_LAST_MODIFIED, DateTime.class);
-    Map<HashAlgorithm, HashCode> hashes = MavenFacetUtils.getHashAlgorithmFromContent(content.getAttributes());
-    MavenFacetUtils.addHashes(facet, path, hashes, dateTime);
+  private void putChecksumFiles(final MavenContentFacet facet, final MavenPath path, final Content content)
+      throws IOException
+  {
+    DateTime dateTime = content.getAttributes().require(CONTENT_LAST_MODIFIED, DateTime.class);
+    for (Entry<String, String> e : getChecksumsFromContent(content).entrySet()) {
+      Optional<HashAlgorithm> hashAlgorithm = HashAlgorithm.getHashAlgorithm(e.getKey())
+        .filter(HashType.ALGORITHMS::contains);
+      if (hashAlgorithm.isPresent()) {
+        Content c = new Content(new StringPayload(e.getValue(), CHECKSUM_CONTENT_TYPE));
+        c.getAttributes().set(CONTENT_LAST_MODIFIED, dateTime);
+        facet.put(path.hash(HashType.valueOf(e.getKey().toUpperCase())), c);
+      }
+    }
+  }
+
+  private Map<String, String> getChecksumsFromContent(final Content content) {
+    return Optional.ofNullable(content.getAttributes().get(Asset.class))
+          .flatMap(Asset::blob)
+          .map(AssetBlob::checksums)
+          .orElse(Collections.emptyMap());
   }
 }
