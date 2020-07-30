@@ -15,8 +15,6 @@ package org.sonatype.nexus.repository.security.rest;
 import java.util.Map;
 
 import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -30,7 +28,6 @@ import org.sonatype.nexus.repository.security.RepositoryContentSelectorPrivilege
 import org.sonatype.nexus.repository.security.RepositoryViewPrivilegeDescriptor;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.security.SecuritySystem;
-import org.sonatype.nexus.security.internal.rest.SecurityApiResource;
 import org.sonatype.nexus.security.privilege.PrivilegeDescriptor;
 import org.sonatype.nexus.security.privilege.rest.PrivilegeApiResourceSupport;
 
@@ -42,17 +39,12 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 /**
  * @since 3.19
  */
-@Named
-@Singleton
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
-@Path(RepositoryPrivilegeApiResource.RESOURCE_URI)
 public class RepositoryPrivilegeApiResource
     extends PrivilegeApiResourceSupport
     implements Resource, RepositoryPrivilegeApiResourceDoc
 {
-  public static final String RESOURCE_URI = SecurityApiResource.RESOURCE_URI + "privileges";
-
   @Inject
   public RepositoryPrivilegeApiResource(final SecuritySystem securitySystem,
                                         final Map<String, PrivilegeDescriptor> privilegeDescriptors)

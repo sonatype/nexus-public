@@ -13,13 +13,10 @@
 package org.sonatype.nexus.security.anonymous.rest;
 
 import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 
 import org.sonatype.goodies.common.ComponentSupport;
@@ -27,7 +24,6 @@ import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
 import org.sonatype.nexus.security.anonymous.AnonymousManager;
-import org.sonatype.nexus.security.internal.rest.SecurityApiResource;
 
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -36,22 +32,16 @@ import org.apache.shiro.realm.Realm;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static org.sonatype.nexus.security.anonymous.rest.AnonymousAccessApiResource.RESOURCE_URI;
 
 /**
  * @since 3.24
  */
-@Named
-@Singleton
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
-@Path(RESOURCE_URI)
 public class AnonymousAccessApiResource
     extends ComponentSupport
     implements Resource, AnonymousAccessApiResourceDoc
 {
-  public static final String RESOURCE_URI = SecurityApiResource.RESOURCE_URI + "anonymous";
-
   private final AnonymousManager anonymousManager;
 
   private final RealmSecurityManager realmSecurityManager;

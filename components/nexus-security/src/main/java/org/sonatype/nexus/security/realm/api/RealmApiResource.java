@@ -18,8 +18,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -29,7 +27,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.rest.APIConstants;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.realm.RealmConfiguration;
@@ -44,20 +41,15 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * REST API for managing NXRM security realms
- * 
+ *
  * @since 3.20
  */
-@Path(RealmApiResource.RESOURCE_URL)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Named
-@Singleton
 public class RealmApiResource
     extends ComponentSupport
     implements RealmApiResourceDoc, Resource
 {
-  static final String RESOURCE_URL = APIConstants.BETA_API_PREFIX + "/security/realms";
-
   private final RealmManager realmManager;
 
   @Inject

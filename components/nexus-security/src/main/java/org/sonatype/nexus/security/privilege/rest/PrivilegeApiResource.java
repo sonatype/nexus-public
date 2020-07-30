@@ -18,8 +18,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -35,7 +33,6 @@ import javax.ws.rs.core.Response.Status;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.SecuritySystem;
-import org.sonatype.nexus.security.internal.rest.SecurityApiResource;
 import org.sonatype.nexus.security.privilege.ApplicationPrivilegeDescriptor;
 import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
 import org.sonatype.nexus.security.privilege.PrivilegeDescriptor;
@@ -50,17 +47,12 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 /**
  * @since 3.19
  */
-@Named
-@Singleton
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
-@Path(PrivilegeApiResource.RESOURCE_URI)
 public class PrivilegeApiResource
     extends PrivilegeApiResourceSupport
     implements Resource, PrivilegeApiResourceDoc
 {
-  public static final String RESOURCE_URI = SecurityApiResource.RESOURCE_URI + "privileges";
-
   @Inject
   public PrivilegeApiResource(final SecuritySystem securitySystem,
                               final Map<String, PrivilegeDescriptor> privilegeDescriptors)
