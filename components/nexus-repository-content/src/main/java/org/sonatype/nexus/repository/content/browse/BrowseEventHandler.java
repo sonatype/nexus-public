@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.content.browse;
 
 import java.util.function.BiConsumer;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -24,12 +23,9 @@ import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.event.asset.AssetCreateEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetUploadEvent;
-import org.sonatype.nexus.repository.content.facet.ContentFacetFinder;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Event handler that updates search indexes based on component/asset events.
@@ -42,13 +38,6 @@ public class BrowseEventHandler
     extends ComponentSupport
     implements EventAware, EventAware.Asynchronous
 {
-  private final ContentFacetFinder contentFacetFinder;
-
-  @Inject
-  public BrowseEventHandler(final ContentFacetFinder contentFacetFinder) {
-    this.contentFacetFinder = checkNotNull(contentFacetFinder);
-  }
-
   @AllowConcurrentEvents
   @Subscribe
   public void on(final AssetCreateEvent event) {
@@ -62,8 +51,7 @@ public class BrowseEventHandler
   }
 
   private void apply(final AssetEvent event, final BiConsumer<BrowseFacet, Asset> request) {
-    contentFacetFinder.findRepository(event.getAsset()).ifPresent(
-        repository -> repository.optionalFacet(BrowseFacet.class).ifPresent(
-            browseFacet -> request.accept(browseFacet, event.getAsset())));
+    event.getRepository().optionalFacet(BrowseFacet.class).ifPresent(
+        browseFacet -> request.accept(browseFacet, event.getAsset()));
   }
 }

@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.content.ContentRepository;
 public class ContentRepositoryUpdateEvent
     extends ContentRepositoryEvent
 {
-  public ContentRepositoryUpdateEvent(final ContentRepository contentRepository) {
+  protected ContentRepositoryUpdateEvent(final ContentRepository contentRepository) {
     super(contentRepository);
   }
 }

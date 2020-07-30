@@ -12,11 +12,10 @@
  */
 package org.sonatype.nexus.repository.content.event.asset;
 
-import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
+import org.sonatype.nexus.repository.content.store.ContentStoreEvent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.content.store.InternalIds.contentRepositoryId;
 
 /**
  * Event sent whenever a large number of {@link Asset}s are purged.
@@ -24,25 +23,16 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.contentRep
  * @since 3.next
  */
 public class AssetPurgeEvent
+    extends ContentStoreEvent
 {
-  private final int contentRepositoryId;
-
   private final int[] assetIds;
 
   public AssetPurgeEvent(final int contentRepositoryId, final int[] assetIds) { // NOSONAR
-    this.contentRepositoryId = contentRepositoryId;
+    super(contentRepositoryId);
     this.assetIds = checkNotNull(assetIds);
-  }
-
-  public int getContentRepositoryId() {
-    return contentRepositoryId;
   }
 
   public int[] getAssetIds() {
     return assetIds; // NOSONAR
-  }
-
-  public boolean fromRepository(final Repository repository) {
-    return contentRepositoryId == contentRepositoryId(repository);
   }
 }

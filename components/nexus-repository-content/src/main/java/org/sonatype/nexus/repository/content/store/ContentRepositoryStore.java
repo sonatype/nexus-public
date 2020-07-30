@@ -20,7 +20,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.ContentRepository;
@@ -43,16 +42,16 @@ import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttrib
 public class ContentRepositoryStore<T extends ContentRepositoryDAO>
     extends ContentStoreSupport<T>
 {
-  protected final EventManager eventManager;
+  private final ContentStoreEventSender eventSender;
 
   @Inject
   public ContentRepositoryStore(final DataSessionSupplier sessionSupplier,
-                                final EventManager eventManager,
+                                final ContentStoreEventSender eventSender,
                                 @Assisted final String contentStoreName,
                                 @Assisted final Class<T> daoClass)
   {
     super(sessionSupplier, contentStoreName, daoClass);
-    this.eventManager = checkNotNull(eventManager);
+    this.eventSender = checkNotNull(eventSender);
   }
 
   /**
@@ -72,8 +71,8 @@ public class ContentRepositoryStore<T extends ContentRepositoryDAO>
   public void createContentRepository(final ContentRepositoryData contentRepository) {
     dao().createContentRepository(contentRepository);
 
-    thisSession().postCommit(
-        () -> eventManager.post(new ContentRepositoryCreateEvent(contentRepository)));
+    eventSender.postCommit(
+        () -> new ContentRepositoryCreateEvent(contentRepository));
   }
 
   /**
@@ -105,8 +104,8 @@ public class ContentRepositoryStore<T extends ContentRepositoryDAO>
       if (applyAttributeChange(attributes, change, key, value)) {
         dao().updateContentRepositoryAttributes(contentRepository);
 
-        thisSession().postCommit(
-            () -> eventManager.post(new ContentRepositoryAttributesEvent(contentRepository, change, key, value)));
+        eventSender.postCommit(
+            () -> new ContentRepositoryAttributesEvent(contentRepository, change, key, value));
       }
     });
   }
@@ -119,8 +118,8 @@ public class ContentRepositoryStore<T extends ContentRepositoryDAO>
    */
   @Transactional
   public boolean deleteContentRepository(final ContentRepository contentRepository) {
-    thisSession().preCommit(
-        () -> eventManager.post(new ContentRepositoryDeleteEvent(contentRepository)));
+    eventSender.preCommit(
+        () -> new ContentRepositoryDeleteEvent(contentRepository));
 
     return dao().deleteContentRepository(contentRepository);
   }

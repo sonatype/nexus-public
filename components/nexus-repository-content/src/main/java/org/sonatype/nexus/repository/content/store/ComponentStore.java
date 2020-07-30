@@ -21,7 +21,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.Continuation;
-import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.Component;
@@ -48,16 +47,16 @@ import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttrib
 public class ComponentStore<T extends ComponentDAO>
     extends ContentStoreSupport<T>
 {
-  protected final EventManager eventManager;
+  private final ContentStoreEventSender eventSender;
 
   @Inject
   public ComponentStore(final DataSessionSupplier sessionSupplier,
-                        final EventManager eventManager,
+                        final ContentStoreEventSender eventSender,
                         @Assisted final String contentStoreName,
                         @Assisted final Class<T> daoClass)
   {
     super(sessionSupplier, contentStoreName, daoClass);
-    this.eventManager = checkNotNull(eventManager);
+    this.eventSender = checkNotNull(eventSender);
   }
 
   /**
@@ -151,8 +150,8 @@ public class ComponentStore<T extends ComponentDAO>
   public void createComponent(final ComponentData component) {
     dao().createComponent(component);
 
-    thisSession().postCommit(
-        () -> eventManager.post(new ComponentCreateEvent(component)));
+    eventSender.postCommit(
+        () -> new ComponentCreateEvent(component));
   }
 
   /**
@@ -193,8 +192,8 @@ public class ComponentStore<T extends ComponentDAO>
   public void updateComponentKind(final Component component) {
     dao().updateComponentKind(component);
 
-    thisSession().postCommit(
-        () -> eventManager.post(new ComponentKindEvent(component)));
+    eventSender.postCommit(
+        () -> new ComponentKindEvent(component));
   }
 
   /**
@@ -215,8 +214,8 @@ public class ComponentStore<T extends ComponentDAO>
       if (applyAttributeChange(attributes, change, key, value)) {
         dao().updateComponentAttributes(component);
 
-        thisSession().postCommit(
-            () -> eventManager.post(new ComponentAttributesEvent(component, change, key, value)));
+        eventSender.postCommit(
+            () -> new ComponentAttributesEvent(component, change, key, value));
       }
     });
   }
@@ -229,8 +228,8 @@ public class ComponentStore<T extends ComponentDAO>
    */
   @Transactional
   public boolean deleteComponent(final Component component) {
-    thisSession().preCommit(
-        () -> eventManager.post(new ComponentDeleteEvent(component)));
+    eventSender.preCommit(
+        () -> new ComponentDeleteEvent(component));
 
     return dao().deleteComponent(component);
   }
@@ -300,8 +299,8 @@ public class ComponentStore<T extends ComponentDAO>
         purged += dao().purgeSelectedComponents(componentIds);
       }
 
-      thisSession().preCommit(
-          () -> eventManager.post(new ComponentPurgeEvent(repositoryId, componentIds)));
+      eventSender.preCommit(
+          () -> new ComponentPurgeEvent(repositoryId, componentIds));
 
       commitChangesSoFar();
     }

@@ -16,10 +16,10 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 
 import org.sonatype.nexus.common.entity.Continuation;
-import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.store.AssetStore;
+import org.sonatype.nexus.repository.content.store.ContentStoreEventSender;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
@@ -32,10 +32,10 @@ public class TestAssetStore
 {
   @Inject
   public TestAssetStore(final DataSessionSupplier sessionSupplier,
-                        final EventManager eventManager,
+                        final ContentStoreEventSender eventSender,
                         @Assisted final String storeName)
   {
-    super(sessionSupplier, eventManager, storeName, TestAssetDAO.class);
+    super(sessionSupplier, eventSender, storeName, TestAssetDAO.class);
   }
 
   /**

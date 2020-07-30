@@ -64,6 +64,10 @@ public class InternalIds
     return checkInternalId(((AbstractRepositoryContent) unwrap(content)).repositoryId);
   }
 
+  public static int contentRepositoryId(final ContentStoreEvent event) {
+    return event.contentRepositoryId;
+  }
+
   public static int internalComponentId(final Component component) {
     return checkInternalId(((ComponentData) unwrap(component)).componentId);
   }

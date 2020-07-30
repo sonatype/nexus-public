@@ -10,32 +10,35 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.event.repository;
+package org.sonatype.nexus.repository.content.store;
 
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.content.RepositoryContent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.content.store.InternalIds.contentRepositoryId;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
- * Base {@link RepositoryContent} event.
+ * Base event emitted by content stores.
  *
  * @since 3.next
  */
-public class RepositoryContentEvent
+public class ContentStoreEvent
 {
-  protected final RepositoryContent content;
+  final int contentRepositoryId;
 
-  public RepositoryContentEvent(final RepositoryContent content) {
-    this.content = checkNotNull(content);
+  private Repository repository;
+
+  protected ContentStoreEvent(final int contentRepositoryId) {
+    this.contentRepositoryId = contentRepositoryId;
   }
 
-  public RepositoryContent getContent() {
-    return content;
+  public Repository getRepository() {
+    checkState(this.repository != null, "Repository has not been set");
+    return repository;
   }
 
-  public boolean fromRepository(final Repository repository) {
-    return contentRepositoryId(content) == contentRepositoryId(repository);
+  void setRepository(final Repository repository) {
+    checkState(this.repository == null, "Repository is already set");
+    this.repository = checkNotNull(repository);
   }
 }

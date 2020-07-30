@@ -25,6 +25,7 @@ import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.content.testsuite.groups.SQLTestGroup;
 import org.sonatype.nexus.datastore.api.ContentDataAccess;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.event.asset.AssetAttributesEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetCreateEvent;
@@ -38,6 +39,7 @@ import org.sonatype.nexus.repository.content.event.component.ComponentDeleteEven
 import org.sonatype.nexus.repository.content.event.component.ComponentKindEvent;
 import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryCreateEvent;
 import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryDeleteEvent;
+import org.sonatype.nexus.repository.content.facet.ContentFacetFinder;
 import org.sonatype.nexus.repository.content.store.example.TestAssetBlobDAO;
 import org.sonatype.nexus.repository.content.store.example.TestAssetDAO;
 import org.sonatype.nexus.repository.content.store.example.TestAssetData;
@@ -58,6 +60,7 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
 import org.eclipse.sisu.wire.WireModule;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -70,9 +73,11 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isA;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.datastore.mybatis.CombUUID.combUUID;
 import static org.sonatype.nexus.repository.content.AttributeChange.SET;
 
@@ -92,6 +97,12 @@ public class FormatStoreManagerTest
       .access(TestAssetDAO.class);
 
   @Mock
+  Repository repository;
+
+  @Mock
+  ContentFacetFinder contentFacetFinder;
+
+  @Mock
   EventManager eventManager;
 
   class SessionModule
@@ -100,8 +111,14 @@ public class FormatStoreManagerTest
     @Override
     protected void configure() {
       bind(DataSessionSupplier.class).toInstance(sessionRule);
+      bind(ContentFacetFinder.class).toInstance(contentFacetFinder);
       bind(EventManager.class).toInstance(eventManager);
     }
+  }
+
+  @Before
+  public void setUp() {
+    when(contentFacetFinder.findRepository(anyInt())).thenReturn(Optional.of(repository));
   }
 
   @Test

@@ -12,11 +12,10 @@
  */
 package org.sonatype.nexus.repository.content.event.component;
 
-import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.store.ContentStoreEvent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.content.store.InternalIds.contentRepositoryId;
 
 /**
  * Event sent whenever a large number of {@link Component}s are purged.
@@ -24,25 +23,16 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.contentRep
  * @since 3.next
  */
 public class ComponentPurgeEvent
+    extends ContentStoreEvent
 {
-  private final int contentRepositoryId;
-
   private final int[] componentIds;
 
   public ComponentPurgeEvent(final int contentRepositoryId, final int[] componentIds) { // NOSONAR
-    this.contentRepositoryId = contentRepositoryId;
+    super(contentRepositoryId);
     this.componentIds = checkNotNull(componentIds);
-  }
-
-  public int getContentRepositoryId() {
-    return contentRepositoryId;
   }
 
   public int[] getComponentIds() {
     return componentIds; // NOSONAR
-  }
-
-  public boolean fromRepository(final Repository repository) {
-    return contentRepositoryId == contentRepositoryId(repository);
   }
 }

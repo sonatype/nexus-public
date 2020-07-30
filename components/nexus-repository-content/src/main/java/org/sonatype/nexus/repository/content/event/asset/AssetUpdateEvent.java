@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.content.Asset;
 public class AssetUpdateEvent
     extends AssetEvent
 {
-  public AssetUpdateEvent(final Asset asset) {
+  protected AssetUpdateEvent(final Asset asset) {
     super(asset);
   }
 }

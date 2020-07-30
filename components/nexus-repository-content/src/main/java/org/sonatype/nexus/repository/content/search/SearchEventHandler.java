@@ -16,7 +16,6 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -32,12 +31,10 @@ import org.sonatype.nexus.repository.content.event.component.ComponentDeleteEven
 import org.sonatype.nexus.repository.content.event.component.ComponentEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentPurgeEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentUpdateEvent;
-import org.sonatype.nexus.repository.content.facet.ContentFacetFinder;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
 
 /**
@@ -51,13 +48,6 @@ public class SearchEventHandler
     extends ComponentSupport
     implements EventAware, EventAware.Asynchronous
 {
-  private final ContentFacetFinder contentFacetFinder;
-
-  @Inject
-  public SearchEventHandler(final ContentFacetFinder contentFacetFinder) {
-    this.contentFacetFinder = checkNotNull(contentFacetFinder);
-  }
-
   @AllowConcurrentEvents
   @Subscribe
   public void on(final ComponentCreateEvent event) {
@@ -79,7 +69,7 @@ public class SearchEventHandler
   @AllowConcurrentEvents
   @Subscribe
   public void on(final ComponentPurgeEvent event) {
-    apply(event.getContentRepositoryId(), search -> search.purge(event.getComponentIds()));
+    apply(event, search -> search.purge(event.getComponentIds()));
   }
 
   @AllowConcurrentEvents
@@ -101,23 +91,20 @@ public class SearchEventHandler
   }
 
   private void apply(final ComponentEvent event, final BiConsumer<SearchFacet, Component> request) {
-    contentFacetFinder.findRepository(event.getComponent()).ifPresent(
-        repository -> repository.optionalFacet(SearchFacet.class).ifPresent(
-            searchFacet -> request.accept(searchFacet, event.getComponent())));
+    event.getRepository().optionalFacet(SearchFacet.class).ifPresent(
+        searchFacet -> request.accept(searchFacet, event.getComponent()));
   }
 
   private void apply(final AssetEvent event, final BiConsumer<SearchFacet, Component> request) {
     Optional<Component> component = event.getAsset().component();
     if (component.isPresent()) {
-      contentFacetFinder.findRepository(event.getAsset()).ifPresent(
-          repository -> repository.optionalFacet(SearchFacet.class).ifPresent(
-              searchFacet -> request.accept(searchFacet, component.get())));
+      event.getRepository().optionalFacet(SearchFacet.class).ifPresent(
+          searchFacet -> request.accept(searchFacet, component.get()));
     }
   }
 
-  private void apply(final int contentRepositoryId, final Consumer<SearchFacet> request) {
-    contentFacetFinder.findRepository(contentRepositoryId).ifPresent(
-        repository -> repository.optionalFacet(SearchFacet.class).ifPresent(
-            searchFacet -> request.accept(searchFacet)));
+  private void apply(final ComponentPurgeEvent event, final Consumer<SearchFacet> request) {
+    event.getRepository().optionalFacet(SearchFacet.class).ifPresent(
+        searchFacet -> request.accept(searchFacet));
   }
 }

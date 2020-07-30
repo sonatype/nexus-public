@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.content.Component;
 public class ComponentUpdateEvent
     extends ComponentEvent
 {
-  public ComponentUpdateEvent(final Component component) {
+  protected ComponentUpdateEvent(final Component component) {
     super(component);
   }
 }
