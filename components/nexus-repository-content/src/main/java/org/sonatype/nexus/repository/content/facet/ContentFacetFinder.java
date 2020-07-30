@@ -49,14 +49,28 @@ public class ContentFacetFinder
    * Finds the repository the given content was uploaded to.
    */
   public Optional<Repository> findRepository(final RepositoryContent content) {
-    return ofNullable(repositoriesByContentId.get(contentRepositoryId(content)));
+    return findRepository(contentRepositoryId(content));
   }
 
   /**
    * Finds the {@link ContentFacet} of the repository the given content was uploaded to.
    */
   public Optional<ContentFacet> findContentFacet(final RepositoryContent content) {
-    return findRepository(content).map(r -> r.facet(ContentFacet.class));
+    return findContentFacet(contentRepositoryId(content));
+  }
+
+  /**
+   * Finds the repository with the given contentRepositoryId.
+   */
+  public Optional<Repository> findRepository(final int contentRepositoryId) {
+    return ofNullable(repositoriesByContentId.get(contentRepositoryId));
+  }
+
+  /**
+   * Finds the {@link ContentFacet} of the repository with the given contentRepositoryId.
+   */
+  public Optional<ContentFacet> findContentFacet(final int contentRepositoryId) {
+    return findRepository(contentRepositoryId).map(r -> r.facet(ContentFacet.class));
   }
 
   @AllowConcurrentEvents

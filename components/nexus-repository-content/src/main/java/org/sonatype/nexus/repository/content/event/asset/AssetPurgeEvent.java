@@ -34,6 +34,10 @@ public class AssetPurgeEvent
     this.assetIds = checkNotNull(assetIds);
   }
 
+  public int getContentRepositoryId() {
+    return contentRepositoryId;
+  }
+
   public int[] getAssetIds() {
     return assetIds; // NOSONAR
   }

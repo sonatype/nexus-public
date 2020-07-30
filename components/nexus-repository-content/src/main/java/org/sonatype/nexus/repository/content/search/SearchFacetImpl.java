@@ -23,17 +23,21 @@ import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 import org.sonatype.nexus.repository.search.index.SearchIndexService;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.lang.Math.max;
+import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toExternalId;
@@ -57,6 +61,8 @@ public class SearchFacetImpl
 
   private final int pageSize;
 
+  private final boolean bulkProcessing;
+
   private SearchDocumentProducer searchDocumentProducer;
 
   private Map<String, Object> repositoryFields;
@@ -64,11 +70,13 @@ public class SearchFacetImpl
   @Inject
   public SearchFacetImpl(final SearchIndexService searchIndexService,
                          final Map<String, SearchDocumentProducer> searchDocumentProducersByFormat,
-                         @Named("${nexus.elasticsearch.reindex.pageSize:-1000}") final int pageSize)
+                         @Named("${nexus.elasticsearch.reindex.pageSize:-1000}") final int pageSize,
+                         @Named("${nexus.elasticsearch.bulkProcessing:-true}") final boolean bulkProcessing)
   {
     this.searchIndexService = checkNotNull(searchIndexService);
     this.searchDocumentProducersByFormat = checkNotNull(searchDocumentProducersByFormat);
     this.pageSize = max(pageSize, 1);
+    this.bulkProcessing = bulkProcessing;
   }
 
   @Override
@@ -91,8 +99,26 @@ public class SearchFacetImpl
     searchIndexService.deleteIndex(getRepository());
   }
 
-  @Override
   @Guarded(by = STARTED)
+  @Override
+  public void index(final Component component) {
+    FluentComponent source = facet(ContentFacet.class).components().with(component);
+    if (bulkProcessing) {
+      searchIndexService.bulkPut(getRepository(), ImmutableList.of(source), this::identifier, this::document);
+    }
+    else {
+      searchIndexService.put(getRepository(), identifier(source), document(source));
+    }
+  }
+
+  @Guarded(by = STARTED)
+  @Override
+  public void purge(final int... componentIds) {
+    searchIndexService.bulkDelete(getRepository(), stream(componentIds).mapToObj(this::identifier).collect(toList()));
+  }
+
+  @Guarded(by = STARTED)
+  @Override
   public void rebuildIndex() {
     log.info("Rebuilding index of repository {}", getRepository().getName());
 
@@ -155,7 +181,14 @@ public class SearchFacetImpl
    * Returns the identifier for the given component in the repository's index.
    */
   private String identifier(final FluentComponent component) {
-    return toExternalId(internalComponentId(component)).getValue();
+    return identifier(internalComponentId(component));
+  }
+
+  /**
+   * Returns the identifier for the given component in the repository's index.
+   */
+  private String identifier(final int internalComponentId) {
+    return toExternalId(internalComponentId).getValue();
   }
 
   /**

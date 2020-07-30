@@ -12,11 +12,8 @@
  */
 package org.sonatype.nexus.repository.content.event.asset;
 
-import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.content.store.InternalIds.contentRepositoryId;
+import org.sonatype.nexus.repository.content.event.repository.RepositoryContentEvent;
 
 /**
  * Base {@link Asset} event.
@@ -24,18 +21,13 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.contentRep
  * @since 3.next
  */
 public class AssetEvent
+    extends RepositoryContentEvent
 {
-  private final Asset asset;
-
   public AssetEvent(final Asset asset) {
-    this.asset = checkNotNull(asset);
+    super(asset);
   }
 
   public Asset getAsset() {
-    return asset;
-  }
-
-  public boolean fromRepository(final Repository repository) {
-    return contentRepositoryId(asset) == contentRepositoryId(repository);
+    return (Asset) content;
   }
 }

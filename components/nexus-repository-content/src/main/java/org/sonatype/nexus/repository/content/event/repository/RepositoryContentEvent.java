@@ -12,21 +12,30 @@
  */
 package org.sonatype.nexus.repository.content.event.repository;
 
-import org.sonatype.nexus.repository.content.ContentRepository;
+import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.RepositoryContent;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.content.store.InternalIds.contentRepositoryId;
 
 /**
- * Base {@link ContentRepository} event.
+ * Base {@link RepositoryContent} event.
  *
  * @since 3.next
  */
-public class ContentRepositoryEvent
-    extends RepositoryContentEvent
+public class RepositoryContentEvent
 {
-  public ContentRepositoryEvent(final ContentRepository contentRepository) {
-    super(contentRepository);
+  protected final RepositoryContent content;
+
+  public RepositoryContentEvent(final RepositoryContent content) {
+    this.content = checkNotNull(content);
   }
 
-  public ContentRepository getContentRepository() {
-    return (ContentRepository) content;
+  public RepositoryContent getContent() {
+    return content;
+  }
+
+  public boolean fromRepository(final Repository repository) {
+    return contentRepositoryId(content) == contentRepositoryId(repository);
   }
 }

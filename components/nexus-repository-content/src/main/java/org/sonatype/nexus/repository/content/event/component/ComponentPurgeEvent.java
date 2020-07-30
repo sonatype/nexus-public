@@ -34,6 +34,10 @@ public class ComponentPurgeEvent
     this.componentIds = checkNotNull(componentIds);
   }
 
+  public int getContentRepositoryId() {
+    return contentRepositoryId;
+  }
+
   public int[] getComponentIds() {
     return componentIds; // NOSONAR
   }
