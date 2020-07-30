@@ -116,6 +116,18 @@ trait ConfigurationRecipes
                             final String recipeName,
                             final String... members)
   {
+    createGroup(name, recipeName, 'None', members)
+  }
+
+  /**
+   * Create a group configuration for the given recipeName.
+   */
+  @Nonnull
+  Configuration createGroup(final String name,
+                            final String recipeName,
+                            final String groupWriteMember,
+                            final String... members)
+  {
     checkNotNull(name)
     checkArgument(recipeName && recipeName.endsWith('-group'))
 
@@ -125,6 +137,7 @@ trait ConfigurationRecipes
         online: true,
         attributes: [
             group  : [
+                groupWriteMember: groupWriteMember,
                 memberNames: members.toList()
             ] as Map<String, Object>,
             storage: [
