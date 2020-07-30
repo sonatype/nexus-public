@@ -12,16 +12,9 @@
  */
 package org.sonatype.nexus.repository.rest.api;
 
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -29,8 +22,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 
@@ -41,37 +32,22 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
-import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
 /**
  * @since 3.20
  */
-@Named
-@Singleton
-@Path(RepositoriesApiResource.RESOURCE_URI)
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
 public class RepositoriesApiResource
     extends ComponentSupport
     implements Resource, RepositoriesApiResourceDoc
 {
-  public static final String RESOURCE_URI = BETA_API_PREFIX + "/repositories";
-
   private final AuthorizingRepositoryManager authorizingRepositoryManager;
 
-  private final Map<String, ApiRepositoryAdapter> convertersByFormat;
-
-  private final ApiRepositoryAdapter defaultAdapter;
-
   @Inject
-  public RepositoriesApiResource(
-      final AuthorizingRepositoryManager authorizingRepositoryManager,
-      @Named("default") final ApiRepositoryAdapter defaultAdapter,
-      final Map<String, ApiRepositoryAdapter> convertersByFormat)
+  public RepositoriesApiResource(final AuthorizingRepositoryManager authorizingRepositoryManager)
   {
     this.authorizingRepositoryManager = checkNotNull(authorizingRepositoryManager);
-    this.defaultAdapter = checkNotNull(defaultAdapter);
-    this.convertersByFormat = checkNotNull(convertersByFormat);
   }
 
   @Override
@@ -81,18 +57,6 @@ public class RepositoriesApiResource
   public Response deleteRepository(@PathParam("repositoryName") final String repositoryName) throws Exception {
     boolean isDeleted = authorizingRepositoryManager.delete(repositoryName);
     return Response.status(isDeleted ? NO_CONTENT : NOT_FOUND).build();
-  }
-
-  @Override
-  @RequiresAuthentication
-  @GET
-  public List<AbstractApiRepository> getRepositories() {
-    return authorizingRepositoryManager.getRepositoriesWithAdmin().stream().map(this::convert)
-        .collect(Collectors.toList());
-  }
-
-  private AbstractApiRepository convert(final Repository repository) {
-    return convertersByFormat.getOrDefault(repository.getFormat().toString(), defaultAdapter).adapt(repository);
   }
 
   @POST
