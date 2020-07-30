@@ -56,6 +56,16 @@ public interface BrowseNodeDAO
                                     @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams);
 
   /**
+   * Does a browse node already exist for this component?
+   */
+  boolean hasComponentNode(@Param("componentId") int componentId);
+
+  /**
+   * Does a browse node already exist for this asset?
+   */
+  boolean hasAssetNode(@Param("assetId") int assetId);
+
+  /**
    * Merges the given browse node with the tree of nodes in the content data store.
    *
    * @param browseNode the node to merge

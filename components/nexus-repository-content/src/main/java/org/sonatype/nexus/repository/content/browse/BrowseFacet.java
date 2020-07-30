@@ -19,6 +19,7 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
+import org.sonatype.nexus.repository.content.Asset;
 
 /**
  * Browse {@link Facet} that maintains the browse tree.
@@ -43,6 +44,13 @@ public interface BrowseFacet
       int limit,
       @Nullable String filter,
       @Nullable Map<String, Object> filterParams);
+
+  /**
+   * Adds the necessary browse nodes leading up to this asset and its component.
+   *
+   * @param asset the asset to add
+   */
+  void addPathToAsset(Asset asset);
 
   /**
    * Rebuilds the browse node tree for this repository.

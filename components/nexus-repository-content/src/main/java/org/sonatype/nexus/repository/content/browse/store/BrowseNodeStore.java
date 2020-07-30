@@ -65,6 +65,22 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
   }
 
   /**
+   * Does a browse node already exist for this component?
+   */
+  @Transactional
+  public boolean hasComponentNode(final int componentId) {
+    return dao().hasComponentNode(componentId);
+  }
+
+  /**
+   * Does a browse node already exist for this asset?
+   */
+  @Transactional
+  public boolean hasAssetNode(final int assetId) {
+    return dao().hasAssetNode(assetId);
+  }
+
+  /**
    * Merges the given browse node with the tree of nodes in the content data store.
    *
    * @param browseNode the node to merge

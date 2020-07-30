@@ -54,22 +54,19 @@
     <!-- non-standard field mappings -->
     <result property="dbComponentId" column="component_id"/>
     <result property="dbAssetId" column="asset_id"/>
-    <!-- lazy getters -->
-    <association property="component" column="component_id" select="fetchComponent" fetchType="lazy"/>
-    <association property="asset" column="asset_id" select="fetchAsset" fetchType="lazy"/>
   </resultMap>
-
-  <select id="fetchComponent" resultType="ComponentData">
-    SELECT * FROM ${format}_component WHERE component_id = #{component_id}
-  </select>
-
-  <select id="fetchAsset" resultType="AssetData">
-    SELECT * FROM ${format}_asset WHERE asset_id = #{asset_id}
-  </select>
 
   <sql id="hasChild">
     SELECT 1 FROM ${format}_browse_node C WHERE C.repository_id = #{repositoryId} AND C.parent_id = B.node_id LIMIT 1
   </sql>
+
+  <select id="hasComponentNode" resultType="boolean">
+    SELECT EXISTS(SELECT 1 FROM ${format}_browse_node WHERE component_id = #{componentId});
+  </select>
+
+  <select id="hasAssetNode" resultType="boolean">
+    SELECT EXISTS(SELECT 1 FROM ${format}_browse_node WHERE asset_id = #{assetId});
+  </select>
 
   <select id="getByDisplayPath" resultMap="browseNodeResult">
     SELECT B.*, NOT EXISTS (<include refid="hasChild"/>) as leaf FROM

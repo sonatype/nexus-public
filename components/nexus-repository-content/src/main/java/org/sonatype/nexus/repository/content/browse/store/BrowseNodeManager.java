@@ -18,10 +18,15 @@ import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.browse.node.BrowsePath;
+import org.sonatype.nexus.repository.content.Asset;
+import org.sonatype.nexus.repository.content.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetId;
+import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
 
 /**
  * Manages browse nodes for a specific repository.
@@ -29,6 +34,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.next
  */
 public class BrowseNodeManager
+    extends ComponentSupport
 {
   private final BrowseNodeStore<BrowseNodeDAO> browseNodeStore;
 
@@ -55,6 +61,20 @@ public class BrowseNodeManager
       @Nullable final Map<String, Object> filterParams)
   {
     return browseNodeStore.getByDisplayPath(repositoryId, displayPath, limit, filter, filterParams);
+  }
+
+  /**
+   * Does a browse node already exist for this component?
+   */
+  public boolean hasComponentNode(final Component component) {
+    return browseNodeStore.hasComponentNode(internalComponentId(component));
+  }
+
+  /**
+   * Does a browse node already exist for this asset?
+   */
+  public boolean hasAssetNode(final Asset asset) {
+    return browseNodeStore.hasAssetNode(internalAssetId(asset));
   }
 
   /**
