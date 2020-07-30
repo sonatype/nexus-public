@@ -27,7 +27,7 @@ import org.apache.shiro.mgt.RealmSecurityManager;
 import static org.sonatype.nexus.security.anonymous.rest.AnonymousAccessApiResourceBeta.RESOURCE_URI;
 
 /**
- * @since 3.26
+ * @since 3.next
  * @deprecated beta prefix is being phased out, prefer starting new APIs with {@link APIConstants#V1_API_PREFIX} instead
  */
 @Api(hidden = true)

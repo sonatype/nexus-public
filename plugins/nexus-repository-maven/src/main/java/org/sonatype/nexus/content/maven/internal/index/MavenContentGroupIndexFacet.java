@@ -28,7 +28,7 @@ import org.apache.maven.index.reader.Record;
 /**
  * Group implementation of {@link MavenIndexFacet}.
  *
- * @since 3.26
+ * @since 3.next
  */
 @Named
 public class MavenContentGroupIndexFacet

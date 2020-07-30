@@ -16,7 +16,7 @@ import React from 'react';
 import './PageActions.scss';
 
 /**
- * @since 3.26
+ * @since 3.next
  */
 export default function PageActions({children}) {
   return <div className="nxrm-page-actions">{children}</div>;

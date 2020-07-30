@@ -33,7 +33,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * Also makes sure each event has its {@link Repository} set if available.
  *
- * @since 3.26
+ * @since 3.next
  */
 @Named
 @Singleton

@@ -31,7 +31,7 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.internalCo
 /**
  * Manages browse nodes for a specific repository.
  *
- * @since 3.26
+ * @since 3.next
  */
 public class BrowseNodeManager
     extends ComponentSupport

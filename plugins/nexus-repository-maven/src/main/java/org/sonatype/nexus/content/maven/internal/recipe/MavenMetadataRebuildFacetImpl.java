@@ -36,7 +36,7 @@ import static java.lang.Boolean.TRUE;
 import static org.sonatype.nexus.repository.maven.internal.Constants.METADATA_FILENAME;
 
 /**
- * @since 3.26
+ * @since 3.next
  */
 @Named
 public class MavenMetadataRebuildFacetImpl

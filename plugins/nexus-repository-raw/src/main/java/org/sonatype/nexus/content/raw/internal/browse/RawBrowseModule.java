@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.raw.internal.RawFormat;
 /**
  * Configures the browse bindings for the raw format.
  *
- * @since 3.26
+ * @since 3.next
  */
 @Named(RawFormat.NAME)
 public class RawBrowseModule

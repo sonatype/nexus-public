@@ -31,7 +31,7 @@ import org.sonatype.nexus.repository.view.Context;
 /**
  * Maven specific implementation of {@link ProxyFacetSupport}.
  *
- * @since 3.26
+ * @since 3.next
  */
 @Named
 public class MavenProxyFacet

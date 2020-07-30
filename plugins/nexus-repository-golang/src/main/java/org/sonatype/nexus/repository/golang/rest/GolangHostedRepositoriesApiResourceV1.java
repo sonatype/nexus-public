@@ -27,7 +27,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_GOLANG_HOSTED;
 import static org.sonatype.nexus.repository.golang.rest.GolangHostedRepositoriesApiResourceV1.RESOURCE_URI;
 
 /**
- * @since 3.26
+ * @since 3.next
  */
 @FeatureFlag(name = FEATURE_GOLANG_HOSTED)
 @Named

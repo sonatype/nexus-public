@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 /**
  * Configures the browse bindings for the maven format.
  *
- * @since 3.26
+ * @since 3.next
  */
 @Named(Maven2Format.NAME)
 public class Maven2BrowseModule

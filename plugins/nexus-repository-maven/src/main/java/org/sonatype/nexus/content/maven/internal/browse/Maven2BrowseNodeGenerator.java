@@ -57,7 +57,7 @@ import static org.sonatype.nexus.repository.browse.node.BrowsePathBuilder.fromPa
  *
  * But note they still retain their real asset path as the 'request' path for permissions checks.
  *
- * @since 3.26
+ * @since 3.next
  */
 @Singleton
 @Named(Maven2Format.NAME)

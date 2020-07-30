@@ -54,7 +54,7 @@ import static org.sonatype.nexus.repository.view.Content.CONTENT_LAST_MODIFIED;
 /**
  * Support for uploading maven components via UI & API
  *
- * @since 3.26
+ * @since 3.next
  */
 @Named(Maven2Format.NAME)
 @Singleton

@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Factory that creates content stores for a format-specific DAO.
  *
- * @since 3.26
+ * @since 3.next
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
 class FormatStoreFactory

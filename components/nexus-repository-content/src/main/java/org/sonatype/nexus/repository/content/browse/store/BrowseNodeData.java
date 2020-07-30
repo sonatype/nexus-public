@@ -31,7 +31,7 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.toExternal
  * the external id getters {@link #getComponentId} and {@link #getAssetId} from {@link BrowseNode}
  * which return a different incompatible type.
  *
- * @since 3.26
+ * @since 3.next
  */
 public class BrowseNodeData
     implements BrowseNode

@@ -26,7 +26,7 @@ import static org.sonatype.nexus.rest.ApiDocConstants.AUTHENTICATION_REQUIRED;
 import static org.sonatype.nexus.rest.ApiDocConstants.INSUFFICIENT_PERMISSIONS;
 
 /**
- * @since 3.26
+ * @since 3.next
  */
 @Api(value = API_REPOSITORY_MANAGEMENT)
 public interface RepositorySettingsApiResourceDoc

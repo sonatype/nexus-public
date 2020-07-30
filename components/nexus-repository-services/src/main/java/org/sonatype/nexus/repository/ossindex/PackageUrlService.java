@@ -19,7 +19,7 @@ import org.sonatype.goodies.packageurl.PackageUrl;
 /**
  * {@link PackageUrl} lookup service.
  *
- * @since 3.26
+ * @since 3.next
  */
 public interface PackageUrlService
 {

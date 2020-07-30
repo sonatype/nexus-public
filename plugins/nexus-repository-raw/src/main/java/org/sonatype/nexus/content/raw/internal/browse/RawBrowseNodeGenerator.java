@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.raw.internal.RawFormat;
 /**
  * RAW places components at the same level as their assets.
  *
- * @since 3.26
+ * @since 3.next
  */
 @Singleton
 @Named(RawFormat.NAME)

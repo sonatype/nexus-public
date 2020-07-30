@@ -23,7 +23,7 @@ import org.sonatype.nexus.repository.content.Component;
 /**
  * {@link ContentMaintenanceFacet} for formats where components have a one-to-one association with assets.
  *
- * @since 3.26
+ * @since 3.next
  */
 @Named
 public class SingleAssetMaintenanceFacet

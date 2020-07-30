@@ -15,7 +15,7 @@ package org.sonatype.nexus.content.maven.internal.event;
 /**
  * Event used to indicate when the archetype catalog for a given maven repository should be rebuilt.
  *
- * @since 3.26
+ * @since 3.next
  */
 public final class RebuildMavenArchetypeCatalogEvent
 {

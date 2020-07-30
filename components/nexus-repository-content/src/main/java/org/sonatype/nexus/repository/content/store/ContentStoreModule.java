@@ -30,7 +30,7 @@ import static org.sonatype.nexus.common.text.Strings2.capitalize;
 /**
  * Support class to help create format-specific store instances in different data stores.
  *
- * @since 3.26
+ * @since 3.next
  */
 public abstract class ContentStoreModule<STORE extends ContentStoreSupport<?>>
     extends AbstractModule

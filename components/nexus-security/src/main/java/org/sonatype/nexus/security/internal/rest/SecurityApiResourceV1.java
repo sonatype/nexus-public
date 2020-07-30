@@ -24,7 +24,7 @@ import org.sonatype.nexus.security.user.UserManager;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 
 /**
- * @since 3.26
+ * @since 3.next
  */
 @Named
 @Singleton

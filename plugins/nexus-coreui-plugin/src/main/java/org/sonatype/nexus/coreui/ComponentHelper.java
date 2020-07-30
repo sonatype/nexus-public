@@ -24,7 +24,7 @@ import org.sonatype.nexus.repository.security.RepositorySelector;
 /**
  * Helper for {@link ComponentComponent}.
  *
- * @since 3.26
+ * @since 3.next
  */
 public interface ComponentHelper
 {

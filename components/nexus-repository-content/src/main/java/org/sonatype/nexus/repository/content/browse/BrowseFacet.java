@@ -24,7 +24,7 @@ import org.sonatype.nexus.repository.content.Asset;
 /**
  * Browse {@link Facet} that maintains the browse tree.
  *
- * @since 3.26
+ * @since 3.next
  */
 @Facet.Exposed
 public interface BrowseFacet

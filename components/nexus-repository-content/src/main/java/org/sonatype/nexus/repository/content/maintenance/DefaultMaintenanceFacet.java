@@ -28,7 +28,7 @@ import com.google.common.collect.ImmutableSet;
 /**
  * Default {@link ContentMaintenanceFacet} for formats that don't need additional bookkeeping.
  *
- * @since 3.26
+ * @since 3.next
  */
 @Named
 public class DefaultMaintenanceFacet

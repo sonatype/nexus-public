@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 /**
  * Helper to find components that match a particular UI model.
  *
- * @since 3.26
+ * @since 3.next
  */
 public interface ComponentFinder
 {

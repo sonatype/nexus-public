@@ -27,7 +27,7 @@ import org.sonatype.nexus.validation.ConstraintViolationFactory;
 import static org.sonatype.nexus.repository.golang.rest.GolangGroupRepositoriesApiResourceV1.RESOURCE_URI;
 
 /**
- * @since 3.26
+ * @since 3.next
  */
 @Named
 @Singleton

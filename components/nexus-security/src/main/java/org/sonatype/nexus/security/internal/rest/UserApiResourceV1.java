@@ -23,7 +23,7 @@ import org.sonatype.nexus.security.config.AdminPasswordFileManager;
 import static org.sonatype.nexus.security.internal.rest.UserApiResourceV1.RESOURCE_URI;
 
 /**
- * @since 3.26
+ * @since 3.next
  */
 @Named
 @Singleton

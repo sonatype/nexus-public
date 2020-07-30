@@ -27,7 +27,7 @@ import io.swagger.annotations.Api;
 import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
 
 /**
- * @since 3.26
+ * @since 3.next
  * @deprecated beta prefix is being phased out, prefer starting new APIs with {@link APIConstants#V1_API_PREFIX} instead
  */
 @Api(hidden = true)

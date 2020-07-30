@@ -70,7 +70,7 @@ import static org.sonatype.nexus.repository.view.Content.CONTENT_LAST_MODIFIED;
 /**
  * Maven index publishing for non-orient.
  *
- * @since 3.26
+ * @since 3.next
  */
 @Named
 @Singleton

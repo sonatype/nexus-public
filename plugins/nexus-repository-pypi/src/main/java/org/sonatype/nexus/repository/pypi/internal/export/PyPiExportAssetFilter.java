@@ -27,7 +27,7 @@ import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_K
 /**
  * Filter to exclude indexes from export, as they need to be regenerated on import
  *
- * @since 3.26
+ * @since 3.next
  */
 @Singleton
 @Named(PyPiFormat.NAME)

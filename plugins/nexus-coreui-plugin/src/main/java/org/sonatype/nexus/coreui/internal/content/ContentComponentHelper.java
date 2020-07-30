@@ -70,7 +70,7 @@ import static org.sonatype.nexus.security.BreadActions.BROWSE;
 /**
  * Content-based {@link ComponentHelper}.
  *
- * @since 3.26
+ * @since 3.next
  */
 @Named
 @Singleton

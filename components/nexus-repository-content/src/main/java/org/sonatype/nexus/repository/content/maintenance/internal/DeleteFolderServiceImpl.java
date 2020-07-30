@@ -48,7 +48,7 @@ import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 import static org.sonatype.nexus.security.BreadActions.DELETE;
 
 /**
- * @since 3.26
+ * @since 3.next
  */
 @Named
 @Singleton

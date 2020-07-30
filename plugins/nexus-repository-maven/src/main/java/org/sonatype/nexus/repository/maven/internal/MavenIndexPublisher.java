@@ -70,7 +70,7 @@ import static org.sonatype.nexus.repository.maven.internal.Constants.INDEX_PROPE
 /**
  * General logic for Maven index publishing.
  *
- * @since 3.26
+ * @since 3.next
  */
 public abstract class MavenIndexPublisher extends ComponentSupport
 {

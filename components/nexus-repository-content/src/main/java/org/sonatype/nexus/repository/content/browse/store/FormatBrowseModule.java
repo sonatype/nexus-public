@@ -27,7 +27,7 @@ import org.sonatype.nexus.repository.content.store.ContentStoreModule;
  * }
  * </pre></code>
  *
- * @since 3.26
+ * @since 3.next
  */
 public abstract class FormatBrowseModule<DAO extends BrowseNodeDAO>
     extends ContentStoreModule<BrowseNodeStore<DAO>>

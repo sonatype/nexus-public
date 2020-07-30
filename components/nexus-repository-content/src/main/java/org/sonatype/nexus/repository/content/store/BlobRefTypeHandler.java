@@ -71,7 +71,7 @@ public class BlobRefTypeHandler
   /**
    * @return the {@link BlobRef} encoded as a string, using the syntax {@code store:blob-id@node}
    *
-   * @since 3.26
+   * @since 3.next
    */
   public String toPersistableString(final BlobRef blobRef) {
     return String.format("%s:%s@%s", blobRef.getStore(), blobRef.getBlob(), blobRef.getNode());
@@ -80,7 +80,7 @@ public class BlobRefTypeHandler
   /**
    * Parse a string representation of a {@link BlobRef}, using the syntax {@code store:blob-id@node}
    *
-   * @since 3.26
+   * @since 3.next
    */
   public static BlobRef parsePersistableFormat(final String spec) {
     int colon = spec.indexOf(':');

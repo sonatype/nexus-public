@@ -113,7 +113,7 @@ public interface UploadHandler
 
   /**
    * Denote if the format is supported using upload through the UI
-   * @since 3.26
+   * @since 3.next
    */
   default boolean supportsUiUpload() {
     return true;

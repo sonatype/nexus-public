@@ -19,7 +19,7 @@ import org.sonatype.nexus.common.entity.Continuation;
 /**
  * Fluent API to count/browse elements in a repository.
  *
- * @since 3.26
+ * @since 3.next
  */
 public interface FluentQuery<T>
 {

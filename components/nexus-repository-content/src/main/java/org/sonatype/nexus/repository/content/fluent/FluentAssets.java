@@ -39,7 +39,7 @@ public interface FluentAssets
   /**
    * Query assets that have the given kind.
    *
-   * @since 3.26
+   * @since 3.next
    */
   FluentQuery<FluentAsset> byKind(String kind);
 
@@ -50,14 +50,14 @@ public interface FluentAssets
    * <p>
    * <b>WARNING</b> the filter string is appended to the query and should only contain trusted content!
    *
-   * @since 3.26
+   * @since 3.next
    */
   FluentQuery<FluentAsset> byFilter(String filter, Map<String, Object> filterParams);
 
   /**
    * Find if an asset exists that has the given external id.
    *
-   * @since 3.26
+   * @since 3.next
    */
   Optional<FluentAsset> find(EntityId externalId);
 }

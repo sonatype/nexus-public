@@ -40,7 +40,7 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.internalCo
 /**
  * Event handler that updates search indexes based on component/asset events.
  *
- * @since 3.26
+ * @since 3.next
  */
 @Named
 @Singleton

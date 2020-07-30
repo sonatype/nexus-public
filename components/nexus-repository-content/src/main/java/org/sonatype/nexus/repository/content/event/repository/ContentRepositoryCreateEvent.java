@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.content.ContentRepository;
 /**
  * Event sent whenever a {@link ContentRepository} is created.
  *
- * @since 3.26
+ * @since 3.next
  */
 public class ContentRepositoryCreateEvent
     extends ContentRepositoryEvent

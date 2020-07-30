@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * Base event emitted by content stores.
  *
- * @since 3.26
+ * @since 3.next
  */
 public class ContentStoreEvent
 {

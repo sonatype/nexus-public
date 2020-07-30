@@ -24,7 +24,7 @@ import org.sonatype.nexus.datastore.api.ContentDataAccess;
  *
  * @see FormatStoreFactory
  *
- * @since 3.26
+ * @since 3.next
  */
 interface ContentStoreFactory<STORE extends ContentStoreSupport<DAO>, DAO extends ContentDataAccess>
 {

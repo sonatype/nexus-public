@@ -25,7 +25,7 @@ import static java.util.Optional.ofNullable;
 /**
  * Event sent whenever a {@link Component}'s attributes change.
  *
- * @since 3.26
+ * @since 3.next
  */
 public class ComponentAttributesEvent
     extends ComponentUpdateEvent

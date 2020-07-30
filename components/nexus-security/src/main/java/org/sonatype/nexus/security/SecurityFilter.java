@@ -30,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.apache.commons.lang.StringUtils.removeStart;
 import static org.apache.shiro.web.util.WebUtils.INCLUDE_SERVLET_PATH_ATTRIBUTE;
 
 /**
@@ -88,9 +87,7 @@ public class SecurityFilter
        * and
        * security url processing: {@link org.apache.shiro.web.util.WebUtils#getPathWithinApplication}
        */
-      String contextPath = httpRequest.getContextPath();
-      String requestURI = httpRequest.getRequestURI();
-      request.setAttribute(INCLUDE_SERVLET_PATH_ATTRIBUTE, removeStart(requestURI, contextPath));
+      request.setAttribute(INCLUDE_SERVLET_PATH_ATTRIBUTE, httpRequest.getRequestURI());
     }
 
     super.executeChain(request, response, origChain);

@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.content.Component;
 /**
  * A service for executing maintenance operations (such as a 'delete') on assets in a repository.
  *
- * @since 3.26
+ * @since 3.next
  */
 public interface MaintenanceService
 {

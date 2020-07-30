@@ -15,7 +15,7 @@ package org.sonatype.nexus.datastore.api;
 /**
  * Base exception for any issues relating to data access/updates.
  *
- * @since 3.26
+ * @since 3.next
  */
 public class DataAccessException
     extends RuntimeException

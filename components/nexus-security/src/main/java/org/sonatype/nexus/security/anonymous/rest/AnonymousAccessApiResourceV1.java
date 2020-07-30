@@ -25,7 +25,7 @@ import org.apache.shiro.mgt.RealmSecurityManager;
 import static org.sonatype.nexus.security.anonymous.rest.AnonymousAccessApiResourceV1.RESOURCE_URI;
 
 /**
- * @since 3.26
+ * @since 3.next
  */
 @Named
 @Singleton

@@ -24,7 +24,7 @@ import org.sonatype.nexus.security.internal.rest.SecurityApiResourceV1;
 import org.sonatype.nexus.security.privilege.PrivilegeDescriptor;
 
 /**
- * @since 3.26
+ * @since 3.next
  */
 @Named
 @Singleton

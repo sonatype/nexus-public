@@ -36,7 +36,7 @@ import org.apache.ibatis.transaction.TransactionFactory;
  * re-wraps them with {@link DataAccessException}. Some application state exceptions like
  * {@link FrozenException} thrown by our {@link EntityExecutor} are propagated unchanged.
  *
- * @since 3.26
+ * @since 3.next
  */
 final class DataAccessSqlSession
     extends DefaultSqlSession

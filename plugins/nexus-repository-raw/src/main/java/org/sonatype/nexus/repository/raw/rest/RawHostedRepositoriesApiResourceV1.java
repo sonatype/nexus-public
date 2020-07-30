@@ -24,7 +24,7 @@ import org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceV1;
 import static org.sonatype.nexus.repository.raw.rest.RawHostedRepositoriesApiResourceV1.RESOURCE_URI;
 
 /**
- * @since 3.26
+ * @since 3.next
  */
 @Named
 @Singleton

@@ -19,7 +19,7 @@ import {NxFontAwesomeIcon} from "@sonatype/react-shared-components";
 import './PageTitle.scss';
 
 /**
- * @since 3.26
+ * @since 3.next
  */
 export default function PageTitle({className, icon, text, description, ...rest}) {
   const classes = classNames("nxrm-page-title", className);

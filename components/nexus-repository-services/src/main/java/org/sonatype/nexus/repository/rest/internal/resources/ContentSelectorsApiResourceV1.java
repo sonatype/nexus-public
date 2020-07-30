@@ -24,7 +24,7 @@ import org.sonatype.nexus.selector.SelectorManager;
 import static org.sonatype.nexus.repository.rest.internal.resources.ContentSelectorsApiResourceV1.RESOURCE_URI;
 
 /**
- * @since 3.26
+ * @since 3.next
  */
 @Named
 @Singleton

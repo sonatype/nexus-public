@@ -185,7 +185,7 @@ public interface ComponentDAO
    * @param limit when positive limits the number of components selected per-call
    * @return selected component ids
    *
-   * @since 3.26
+   * @since 3.next
    */
   int[] selectNotRecentlyDownloaded(@Param("repositoryId") int repositoryId,
                                     @Param("daysAgo") int daysAgo,
@@ -199,7 +199,7 @@ public interface ComponentDAO
    * @param componentIds the components to purge
    * @return the number of purged components
    *
-   * @since 3.26
+   * @since 3.next
    */
   int purgeSelectedComponents(@Param("componentIds") int[] componentIds);
 
@@ -211,7 +211,7 @@ public interface ComponentDAO
    * @param componentIds the components to purge
    * @return the number of purged components
    *
-   * @since 3.26
+   * @since 3.next
    */
   int purgeSelectedComponents(@Param("componentIds") Integer[] componentIds);
 }

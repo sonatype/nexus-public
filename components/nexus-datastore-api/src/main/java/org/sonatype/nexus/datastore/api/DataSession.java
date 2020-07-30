@@ -31,28 +31,28 @@ public interface DataSession<T extends Transaction>
   /**
    * Registers a hook to run before any changes are committed in this session.
    *
-   * @since 3.26
+   * @since 3.next
    */
   void preCommit(Runnable hook);
 
   /**
    * Registers a hook to run after changes have been committed in this session.
    *
-   * @since 3.26
+   * @since 3.next
    */
   void postCommit(Runnable hook);
 
   /**
    * Registers a hook to run after changes have been rolled back in this session.
    *
-   * @since 3.26
+   * @since 3.next
    */
   void onRollback(Runnable hook);
 
   /**
    * Returns the SQL dialect of the database backing this session.
    *
-   * @since 3.26
+   * @since 3.next
    */
   String sqlDialect();
 }

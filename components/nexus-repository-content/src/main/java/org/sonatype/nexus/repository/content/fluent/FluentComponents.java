@@ -40,7 +40,7 @@ public interface FluentComponents
   /**
    * Query components that have the given kind.
    *
-   * @since 3.26
+   * @since 3.next
    */
   FluentQuery<FluentComponent> byKind(String kind);
 
@@ -51,7 +51,7 @@ public interface FluentComponents
    * <p>
    * <b>WARNING</b> the filter string is appended to the query and should only contain trusted content!
    *
-   * @since 3.26
+   * @since 3.next
    */
   FluentQuery<FluentComponent> byFilter(String filter, Map<String, Object> filterParams);
 
@@ -73,7 +73,7 @@ public interface FluentComponents
   /**
    * Find if a component exists that has the given external id.
    *
-   * @since 3.26
+   * @since 3.next
    */
   Optional<FluentComponent> find(EntityId externalId);
 }

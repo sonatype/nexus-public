@@ -23,7 +23,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * {@link FluentQuery} implementation for {@link FluentAsset}s.
  *
- * @since 3.26
+ * @since 3.next
  */
 public class FluentAssetQueryImpl
     implements FluentQuery<FluentAsset>
