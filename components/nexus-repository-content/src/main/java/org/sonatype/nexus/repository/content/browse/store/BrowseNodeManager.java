@@ -23,6 +23,7 @@ import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.browse.node.BrowsePath;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.transaction.Transactional;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetId;
@@ -81,6 +82,13 @@ public class BrowseNodeManager
    * Creates browse nodes for the path, applying a final step to the last node.
    */
   public void createBrowseNodes(final List<BrowsePath> paths, final Consumer<BrowseNodeData> finalStep) {
+    Transactional.operation.withStore(browseNodeStore).run(() -> doCreateBrowseNodes(paths, finalStep));
+  }
+
+  /**
+   * Creates browse nodes for the path (runs in a single transaction).
+   */
+  protected void doCreateBrowseNodes(final List<BrowsePath> paths, final Consumer<BrowseNodeData> finalStep) {
     Integer parentId = null;
     for (int i = 0; i < paths.size(); i++) {
       BrowseNodeData node = new BrowseNodeData();
@@ -96,6 +104,13 @@ public class BrowseNodeManager
       browseNodeStore.mergeBrowseNode(node);
       parentId = node.nodeId;
     }
+  }
+
+  /**
+   * Trims any dangling browse nodes from the repository.
+   */
+  public void trimBrowseNodes() {
+    browseNodeStore.trimBrowseNodes(repositoryId);
   }
 
   /**

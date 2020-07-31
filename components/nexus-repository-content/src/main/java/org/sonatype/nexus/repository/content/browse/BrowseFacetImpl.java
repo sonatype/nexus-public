@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.browse;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,12 +23,12 @@ import javax.inject.Named;
 
 import org.sonatype.goodies.packageurl.PackageUrl;
 import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
 import org.sonatype.nexus.repository.browse.node.BrowsePath;
-import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.browse.store.BrowseNodeDAO;
 import org.sonatype.nexus.repository.content.browse.store.BrowseNodeManager;
@@ -111,8 +112,20 @@ public class BrowseFacetImpl
 
   @Guarded(by = STARTED)
   @Override
-  public void addPathToAsset(final Asset asset) {
-    createBrowseNodes(facet(ContentFacet.class).assets().with(asset));
+  public void addPathsToAssets(Collection<EntityId> assetIds) {
+    FluentAssets lookup = facet(ContentFacet.class).assets();
+
+    assetIds.stream()
+        .map(lookup::find)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .forEach(this::createBrowseNodes);
+  }
+
+  @Guarded(by = STARTED)
+  @Override
+  public void trimBrowseNodes() {
+    browseNodeManager.trimBrowseNodes();
   }
 
   @Guarded(by = STARTED)

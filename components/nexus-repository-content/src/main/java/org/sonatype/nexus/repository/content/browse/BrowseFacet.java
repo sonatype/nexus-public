@@ -12,14 +12,15 @@
  */
 package org.sonatype.nexus.repository.content.browse;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nullable;
 
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.browse.node.BrowseNode;
-import org.sonatype.nexus.repository.content.Asset;
 
 /**
  * Browse {@link Facet} that maintains the browse tree.
@@ -46,11 +47,16 @@ public interface BrowseFacet
       @Nullable Map<String, Object> filterParams);
 
   /**
-   * Adds the necessary browse nodes leading up to this asset and its component.
+   * Adds the necessary browse nodes leading up to these assets and their components.
    *
-   * @param asset the asset to add
+   * @param assetIds the assets to add
    */
-  void addPathToAsset(Asset asset);
+  void addPathsToAssets(Collection<EntityId> assetIds);
+
+  /**
+   * Trims any dangling browse nodes from this repository.
+   */
+  void trimBrowseNodes();
 
   /**
    * Rebuilds the browse node tree for this repository.

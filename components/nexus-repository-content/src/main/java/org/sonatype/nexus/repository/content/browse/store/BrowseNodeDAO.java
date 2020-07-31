@@ -73,6 +73,14 @@ public interface BrowseNodeDAO
   void mergeBrowseNode(BrowseNodeData browseNode);
 
   /**
+   * Trims leaf browse nodes in the given repository that no longer have a component or asset.
+   *
+   * @param repositoryId the repository containing the browse nodes
+   * @return {@code true} if any nodes were trimmed from the tree
+   */
+  boolean trimBrowseNodes(@Param("repositoryId") int repositoryId);
+
+  /**
    * Deletes all browse nodes in the given repository from the content data store.
    *
    * @param repositoryId the repository containing the browse nodes
