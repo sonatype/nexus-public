@@ -74,6 +74,7 @@ import static org.hamcrest.Matchers.isA;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -118,7 +119,7 @@ public class FormatStoreManagerTest
 
   @Before
   public void setUp() {
-    when(contentFacetFinder.findRepository(anyInt())).thenReturn(Optional.of(repository));
+    when(contentFacetFinder.findRepository(eq("test"), anyInt())).thenReturn(Optional.of(repository));
   }
 
   @Test

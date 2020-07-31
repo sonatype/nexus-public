@@ -34,7 +34,6 @@ import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.stream;
 import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttributeChange;
 
@@ -45,18 +44,14 @@ import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttrib
  */
 @Named
 public class ComponentStore<T extends ComponentDAO>
-    extends ContentStoreSupport<T>
+    extends ContentStoreEventSupport<T>
 {
-  private final ContentStoreEventSender eventSender;
-
   @Inject
   public ComponentStore(final DataSessionSupplier sessionSupplier,
-                        final ContentStoreEventSender eventSender,
                         @Assisted final String contentStoreName,
                         @Assisted final Class<T> daoClass)
   {
     super(sessionSupplier, contentStoreName, daoClass);
-    this.eventSender = checkNotNull(eventSender);
   }
 
   /**
@@ -150,8 +145,7 @@ public class ComponentStore<T extends ComponentDAO>
   public void createComponent(final ComponentData component) {
     dao().createComponent(component);
 
-    eventSender.postCommit(
-        () -> new ComponentCreateEvent(component));
+    postCommitEvent(() -> new ComponentCreateEvent(component));
   }
 
   /**
@@ -192,8 +186,7 @@ public class ComponentStore<T extends ComponentDAO>
   public void updateComponentKind(final Component component) {
     dao().updateComponentKind(component);
 
-    eventSender.postCommit(
-        () -> new ComponentKindEvent(component));
+    postCommitEvent(() -> new ComponentKindEvent(component));
   }
 
   /**
@@ -214,8 +207,7 @@ public class ComponentStore<T extends ComponentDAO>
       if (applyAttributeChange(attributes, change, key, value)) {
         dao().updateComponentAttributes(component);
 
-        eventSender.postCommit(
-            () -> new ComponentAttributesEvent(component, change, key, value));
+        postCommitEvent(() -> new ComponentAttributesEvent(component, change, key, value));
       }
     });
   }
@@ -228,8 +220,7 @@ public class ComponentStore<T extends ComponentDAO>
    */
   @Transactional
   public boolean deleteComponent(final Component component) {
-    eventSender.preCommit(
-        () -> new ComponentDeleteEvent(component));
+    preCommitEvent(() -> new ComponentDeleteEvent(component));
 
     return dao().deleteComponent(component);
   }
@@ -299,8 +290,7 @@ public class ComponentStore<T extends ComponentDAO>
         purged += dao().purgeSelectedComponents(componentIds);
       }
 
-      eventSender.preCommit(
-          () -> new ComponentPurgeEvent(repositoryId, componentIds));
+      preCommitEvent(() -> new ComponentPurgeEvent(repositoryId, componentIds));
 
       commitChangesSoFar();
     }

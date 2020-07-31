@@ -43,47 +43,60 @@ public class ContentFacetFinder
     extends ComponentSupport
     implements EventAware
 {
-  private final Map<Integer, Repository> repositoriesByContentId = new ConcurrentHashMap<>();
+  private final Map<String, Repository> repositoriesByContentId = new ConcurrentHashMap<>();
 
   /**
    * Finds the repository the given content was uploaded to.
    */
-  public Optional<Repository> findRepository(final RepositoryContent content) {
-    return findRepository(contentRepositoryId(content));
+  public Optional<Repository> findRepository(final String format, final RepositoryContent content) {
+    return findRepository(format, contentRepositoryId(content));
   }
 
   /**
    * Finds the {@link ContentFacet} of the repository the given content was uploaded to.
    */
-  public Optional<ContentFacet> findContentFacet(final RepositoryContent content) {
-    return findContentFacet(contentRepositoryId(content));
+  public Optional<ContentFacet> findContentFacet(final String format, final RepositoryContent content) {
+    return findContentFacet(format, contentRepositoryId(content));
   }
 
   /**
    * Finds the repository with the given contentRepositoryId.
    */
-  public Optional<Repository> findRepository(final int contentRepositoryId) {
-    return ofNullable(repositoriesByContentId.get(contentRepositoryId));
+  public Optional<Repository> findRepository(final String format, final int contentRepositoryId) {
+    return ofNullable(repositoriesByContentId.get(cacheKey(format, contentRepositoryId)));
   }
 
   /**
    * Finds the {@link ContentFacet} of the repository with the given contentRepositoryId.
    */
-  public Optional<ContentFacet> findContentFacet(final int contentRepositoryId) {
-    return findRepository(contentRepositoryId).map(r -> r.facet(ContentFacet.class));
+  public Optional<ContentFacet> findContentFacet(final String format, final int contentRepositoryId) {
+    return findRepository(format, contentRepositoryId).map(r -> r.facet(ContentFacet.class));
   }
 
   @AllowConcurrentEvents
   @Subscribe
   public void on(final RepositoryStartedEvent event) {
-    event.getRepository().optionalFacet(ContentFacet.class)
-        .ifPresent(facet -> repositoriesByContentId.put(facet.contentRepositoryId(), event.getRepository()));
+    Repository repository = event.getRepository();
+    String format = repository.getFormat().getValue();
+
+    repository.optionalFacet(ContentFacet.class).ifPresent(
+        facet -> repositoriesByContentId.put(cacheKey(format, facet.contentRepositoryId()), repository));
   }
 
   @AllowConcurrentEvents
   @Subscribe
   public void on(final RepositoryStoppedEvent event) {
-    event.getRepository().optionalFacet(ContentFacet.class)
-        .ifPresent(facet -> repositoriesByContentId.remove(facet.contentRepositoryId()));
+    Repository repository = event.getRepository();
+    String format = repository.getFormat().getValue();
+
+    repository.optionalFacet(ContentFacet.class).ifPresent(
+        facet -> repositoriesByContentId.remove(cacheKey(format, facet.contentRepositoryId())));
+  }
+
+  /**
+   * Bind format and repository id to get a unique key across all formats.
+   */
+  private String cacheKey(final String format, final int contentRepositoryId) {
+    return format + ':' + contentRepositoryId;
   }
 }

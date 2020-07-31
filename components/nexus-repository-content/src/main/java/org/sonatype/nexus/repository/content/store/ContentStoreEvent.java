@@ -32,6 +32,10 @@ public class ContentStoreEvent
     this.contentRepositoryId = contentRepositoryId;
   }
 
+  public String getFormat() {
+    return getRepository().getFormat().getValue();
+  }
+
   public Repository getRepository() {
     checkState(this.repository != null, "Repository has not been set");
     return repository;

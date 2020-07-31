@@ -87,7 +87,7 @@ public class AssetPermissionChecker
     VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(format);
 
     // only do this once - assumes all assets passed in were uploaded to the same repository
-    List<String> containingRepositoryNames = containingRepositoryNames(assets.iterator().next());
+    List<String> containingRepositoryNames = containingRepositoryNames(format, assets.iterator().next());
 
     return assets.stream().map(asset -> {
       VariableSource source = variableResolverAdapter.fromPath(asset.path(), format);
@@ -107,7 +107,7 @@ public class AssetPermissionChecker
   public Optional<String> isPermitted(final Asset asset, final String format, final String action) {
     VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(format);
 
-    List<String> containingRepositoryNames = containingRepositoryNames(asset);
+    List<String> containingRepositoryNames = containingRepositoryNames(format, asset);
     VariableSource source = variableResolverAdapter.fromPath(asset.path(), format);
 
     return findPermittingRepository(containingRepositoryNames, format, action, source);
@@ -132,8 +132,8 @@ public class AssetPermissionChecker
   /**
    * Returns the list of repositories that contain the given content by virtue of group membership.
    */
-  private List<String> containingRepositoryNames(final RepositoryContent repositoryContent) {
-    Optional<Repository> repository = contentFacetFinder.findRepository(repositoryContent);
+  private List<String> containingRepositoryNames(final String format, final RepositoryContent repositoryContent) {
+    Optional<Repository> repository = contentFacetFinder.findRepository(format, repositoryContent);
     if (!repository.isPresent()) {
       return ImmutableList.of();
     }

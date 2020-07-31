@@ -30,7 +30,6 @@ import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttributeChange;
 
 /**
@@ -40,18 +39,14 @@ import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttrib
  */
 @Named
 public class ContentRepositoryStore<T extends ContentRepositoryDAO>
-    extends ContentStoreSupport<T>
+    extends ContentStoreEventSupport<T>
 {
-  private final ContentStoreEventSender eventSender;
-
   @Inject
   public ContentRepositoryStore(final DataSessionSupplier sessionSupplier,
-                                final ContentStoreEventSender eventSender,
                                 @Assisted final String contentStoreName,
                                 @Assisted final Class<T> daoClass)
   {
     super(sessionSupplier, contentStoreName, daoClass);
-    this.eventSender = checkNotNull(eventSender);
   }
 
   /**
@@ -71,8 +66,7 @@ public class ContentRepositoryStore<T extends ContentRepositoryDAO>
   public void createContentRepository(final ContentRepositoryData contentRepository) {
     dao().createContentRepository(contentRepository);
 
-    eventSender.postCommit(
-        () -> new ContentRepositoryCreateEvent(contentRepository));
+    postCommitEvent(() -> new ContentRepositoryCreateEvent(contentRepository));
   }
 
   /**
@@ -104,8 +98,7 @@ public class ContentRepositoryStore<T extends ContentRepositoryDAO>
       if (applyAttributeChange(attributes, change, key, value)) {
         dao().updateContentRepositoryAttributes(contentRepository);
 
-        eventSender.postCommit(
-            () -> new ContentRepositoryAttributesEvent(contentRepository, change, key, value));
+        postCommitEvent(() -> new ContentRepositoryAttributesEvent(contentRepository, change, key, value));
       }
     });
   }
@@ -118,8 +111,7 @@ public class ContentRepositoryStore<T extends ContentRepositoryDAO>
    */
   @Transactional
   public boolean deleteContentRepository(final ContentRepository contentRepository) {
-    eventSender.preCommit(
-        () -> new ContentRepositoryDeleteEvent(contentRepository));
+    preCommitEvent(() -> new ContentRepositoryDeleteEvent(contentRepository));
 
     return dao().deleteContentRepository(contentRepository);
   }
