@@ -10,19 +10,29 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.event.component;
+package org.sonatype.nexus.repository.content.event.asset;
 
-import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.Asset;
+import org.sonatype.nexus.repository.content.store.ContentStoreEvent;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Event sent whenever a {@link Component} is updated.
+ * Event sent just before a large number of {@link Asset}s are purged.
  *
  * @since 3.next
  */
-public class ComponentUpdateEvent
-    extends ComponentEvent
+public class AssetPrePurgeEvent
+    extends ContentStoreEvent
 {
-  protected ComponentUpdateEvent(final Component component) {
-    super(component);
+  private final int[] assetIds;
+
+  public AssetPrePurgeEvent(final int contentRepositoryId, final int[] assetIds) { // NOSONAR
+    super(contentRepositoryId);
+    this.assetIds = checkNotNull(assetIds);
+  }
+
+  public int[] getAssetIds() {
+    return assetIds; // NOSONAR
   }
 }

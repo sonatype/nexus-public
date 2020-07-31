@@ -27,13 +27,15 @@ import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.event.asset.AssetAttributesEvent;
-import org.sonatype.nexus.repository.content.event.asset.AssetCreateEvent;
-import org.sonatype.nexus.repository.content.event.asset.AssetDeleteEvent;
-import org.sonatype.nexus.repository.content.event.asset.AssetDownloadEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetDownloadedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetKindEvent;
-import org.sonatype.nexus.repository.content.event.asset.AssetPurgeEvent;
-import org.sonatype.nexus.repository.content.event.asset.AssetUploadEvent;
-import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryDeleteEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetPreDeleteEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetPrePurgeEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetPurgedEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetUploadedEvent;
+import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryDeletedEvent;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
@@ -120,7 +122,7 @@ public class AssetStore<T extends AssetDAO>
   public void createAsset(final AssetData asset) {
     dao().createAsset(asset);
 
-    postCommitEvent(() -> new AssetCreateEvent(asset));
+    postCommitEvent(() -> new AssetCreatedEvent(asset));
   }
 
   /**
@@ -192,7 +194,7 @@ public class AssetStore<T extends AssetDAO>
   public void updateAssetBlobLink(final Asset asset) {
     dao().updateAssetBlobLink(asset);
 
-    postCommitEvent(() -> new AssetUploadEvent(asset));
+    postCommitEvent(() -> new AssetUploadedEvent(asset));
   }
 
   /**
@@ -204,7 +206,7 @@ public class AssetStore<T extends AssetDAO>
   public void markAsDownloaded(final Asset asset) {
     dao().markAsDownloaded(asset);
 
-    postCommitEvent(() -> new AssetDownloadEvent(asset));
+    postCommitEvent(() -> new AssetDownloadedEvent(asset));
   }
 
   /**
@@ -215,7 +217,8 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public boolean deleteAsset(final Asset asset) {
-    preCommitEvent(() -> new AssetDeleteEvent(asset));
+    preCommitEvent(() -> new AssetPreDeleteEvent(asset));
+    postCommitEvent(() -> new AssetDeletedEvent(asset));
 
     return dao().deleteAsset(asset);
   }
@@ -237,7 +240,7 @@ public class AssetStore<T extends AssetDAO>
   /**
    * Deletes all assets in the given repository from the content data store.
    *
-   * Events will not be sent for these deletes, instead listen for {@link ContentRepositoryDeleteEvent}.
+   * Events will not be sent for these deletes, instead listen for {@link ContentRepositoryDeletedEvent}.
    *
    * @param repositoryId the repository containing the assets
    * @return {@code true} if any assets were deleted
@@ -279,7 +282,8 @@ public class AssetStore<T extends AssetDAO>
         purged += dao().purgeSelectedAssets(assetIds);
       }
 
-      preCommitEvent(() -> new AssetPurgeEvent(repositoryId, assetIds));
+      preCommitEvent(() -> new AssetPrePurgeEvent(repositoryId, assetIds));
+      postCommitEvent(() -> new AssetPurgedEvent(repositoryId, assetIds));
 
       commitChangesSoFar();
     }

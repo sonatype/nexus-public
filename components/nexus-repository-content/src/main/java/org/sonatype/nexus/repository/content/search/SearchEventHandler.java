@@ -22,15 +22,15 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.repository.content.Component;
-import org.sonatype.nexus.repository.content.event.asset.AssetCreateEvent;
-import org.sonatype.nexus.repository.content.event.asset.AssetDeleteEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetEvent;
-import org.sonatype.nexus.repository.content.event.asset.AssetUpdateEvent;
-import org.sonatype.nexus.repository.content.event.component.ComponentCreateEvent;
-import org.sonatype.nexus.repository.content.event.component.ComponentDeleteEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetUpdatedEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentCreatedEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentDeletedEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentEvent;
-import org.sonatype.nexus.repository.content.event.component.ComponentPurgeEvent;
-import org.sonatype.nexus.repository.content.event.component.ComponentUpdateEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentPurgedEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentUpdatedEvent;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
@@ -50,43 +50,43 @@ public class SearchEventHandler
 {
   @AllowConcurrentEvents
   @Subscribe
-  public void on(final ComponentCreateEvent event) {
+  public void on(final ComponentCreatedEvent event) {
     apply(event, SearchFacet::index);
   }
 
   @AllowConcurrentEvents
   @Subscribe
-  public void on(final ComponentUpdateEvent event) {
+  public void on(final ComponentUpdatedEvent event) {
     apply(event, SearchFacet::index);
   }
 
   @AllowConcurrentEvents
   @Subscribe
-  public void on(final ComponentDeleteEvent event) {
+  public void on(final ComponentDeletedEvent event) {
     apply(event, (search, component) -> search.purge(internalComponentId(component)));
   }
 
   @AllowConcurrentEvents
   @Subscribe
-  public void on(final ComponentPurgeEvent event) {
+  public void on(final ComponentPurgedEvent event) {
     apply(event, search -> search.purge(event.getComponentIds()));
   }
 
   @AllowConcurrentEvents
   @Subscribe
-  public void on(final AssetCreateEvent event) {
+  public void on(final AssetCreatedEvent event) {
     apply(event, SearchFacet::index);
   }
 
   @AllowConcurrentEvents
   @Subscribe
-  public void on(final AssetUpdateEvent event) {
+  public void on(final AssetUpdatedEvent event) {
     apply(event, SearchFacet::index);
   }
 
   @AllowConcurrentEvents
   @Subscribe
-  public void on(final AssetDeleteEvent event) {
+  public void on(final AssetDeletedEvent event) {
     apply(event, SearchFacet::index);
   }
 
@@ -103,7 +103,7 @@ public class SearchEventHandler
     }
   }
 
-  private void apply(final ComponentPurgeEvent event, final Consumer<SearchFacet> request) {
+  private void apply(final ComponentPurgedEvent event, final Consumer<SearchFacet> request) {
     event.getRepository().optionalFacet(SearchFacet.class).ifPresent(
         searchFacet -> request.accept(searchFacet));
   }

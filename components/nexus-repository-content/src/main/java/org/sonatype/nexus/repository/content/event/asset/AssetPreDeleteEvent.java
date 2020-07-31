@@ -13,26 +13,16 @@
 package org.sonatype.nexus.repository.content.event.asset;
 
 import org.sonatype.nexus.repository.content.Asset;
-import org.sonatype.nexus.repository.content.store.ContentStoreEvent;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Event sent whenever a large number of {@link Asset}s are purged.
+ * Event sent just before an {@link Asset} is deleted.
  *
  * @since 3.next
  */
-public class AssetPurgeEvent
-    extends ContentStoreEvent
+public class AssetPreDeleteEvent
+    extends AssetEvent
 {
-  private final int[] assetIds;
-
-  public AssetPurgeEvent(final int contentRepositoryId, final int[] assetIds) { // NOSONAR
-    super(contentRepositoryId);
-    this.assetIds = checkNotNull(assetIds);
-  }
-
-  public int[] getAssetIds() {
-    return assetIds; // NOSONAR
+  public AssetPreDeleteEvent(final Asset asset) {
+    super(asset);
   }
 }

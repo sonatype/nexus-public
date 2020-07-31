@@ -15,14 +15,14 @@ package org.sonatype.nexus.repository.content.event.component;
 import org.sonatype.nexus.repository.content.Component;
 
 /**
- * Event sent whenever a {@link Component}'s kind is updated.
+ * Event sent whenever a {@link Component} is deleted.
  *
  * @since 3.next
  */
-public class ComponentKindEvent
-    extends ComponentUpdatedEvent
+public class ComponentDeletedEvent
+    extends ComponentEvent
 {
-  public ComponentKindEvent(final Component component) {
+  public ComponentDeletedEvent(final Component component) {
     super(component);
   }
 }

@@ -20,9 +20,9 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.repository.content.Asset;
-import org.sonatype.nexus.repository.content.event.asset.AssetCreateEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetEvent;
-import org.sonatype.nexus.repository.content.event.asset.AssetUploadEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetUploadedEvent;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
@@ -40,13 +40,13 @@ public class BrowseEventHandler
 {
   @AllowConcurrentEvents
   @Subscribe
-  public void on(final AssetCreateEvent event) {
+  public void on(final AssetCreatedEvent event) {
     apply(event, BrowseFacet::addPathToAsset);
   }
 
   @AllowConcurrentEvents
   @Subscribe
-  public void on(final AssetUploadEvent event) {
+  public void on(final AssetUploadedEvent event) {
     apply(event, BrowseFacet::addPathToAsset);
   }
 

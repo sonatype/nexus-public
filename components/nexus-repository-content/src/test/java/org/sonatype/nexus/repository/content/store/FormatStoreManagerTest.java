@@ -28,17 +28,20 @@ import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.event.asset.AssetAttributesEvent;
-import org.sonatype.nexus.repository.content.event.asset.AssetCreateEvent;
-import org.sonatype.nexus.repository.content.event.asset.AssetDeleteEvent;
-import org.sonatype.nexus.repository.content.event.asset.AssetDownloadEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetDownloadedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetKindEvent;
-import org.sonatype.nexus.repository.content.event.asset.AssetUpdateEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetPreDeleteEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetUpdatedEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentAttributesEvent;
-import org.sonatype.nexus.repository.content.event.component.ComponentCreateEvent;
-import org.sonatype.nexus.repository.content.event.component.ComponentDeleteEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentCreatedEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentDeletedEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentKindEvent;
-import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryCreateEvent;
-import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryDeleteEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentPreDeleteEvent;
+import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryCreatedEvent;
+import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryDeletedEvent;
+import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryPreDeleteEvent;
 import org.sonatype.nexus.repository.content.facet.ContentFacetFinder;
 import org.sonatype.nexus.repository.content.store.example.TestAssetBlobDAO;
 import org.sonatype.nexus.repository.content.store.example.TestAssetDAO;
@@ -316,22 +319,25 @@ public class FormatStoreManagerTest
 
     ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
 
-    verify(eventManager, times(12)).post(eventCaptor.capture());
+    verify(eventManager, times(15)).post(eventCaptor.capture());
 
     List<Object> events = eventCaptor.getAllValues();
 
-    assertThat(events.get(0), instanceOf(ContentRepositoryCreateEvent.class));
-    assertThat(events.get(1), instanceOf(ComponentCreateEvent.class));
-    assertThat(events.get(2), instanceOf(AssetCreateEvent.class));
+    assertThat(events.get(0), instanceOf(ContentRepositoryCreatedEvent.class));
+    assertThat(events.get(1), instanceOf(ComponentCreatedEvent.class));
+    assertThat(events.get(2), instanceOf(AssetCreatedEvent.class));
     assertThat(events.get(3), instanceOf(AssetAttributesEvent.class));
     assertThat(events.get(4), instanceOf(AssetKindEvent.class));
-    assertThat(events.get(5), instanceOf(AssetUpdateEvent.class));
-    assertThat(events.get(6), instanceOf(AssetDownloadEvent.class));
+    assertThat(events.get(5), instanceOf(AssetUpdatedEvent.class));
+    assertThat(events.get(6), instanceOf(AssetDownloadedEvent.class));
     assertThat(events.get(7), instanceOf(ComponentAttributesEvent.class));
     assertThat(events.get(8), instanceOf(ComponentKindEvent.class));
-    assertThat(events.get(9), instanceOf(AssetDeleteEvent.class));
-    assertThat(events.get(10), instanceOf(ComponentDeleteEvent.class));
-    assertThat(events.get(11), instanceOf(ContentRepositoryDeleteEvent.class));
+    assertThat(events.get(9), instanceOf(AssetPreDeleteEvent.class));
+    assertThat(events.get(10), instanceOf(AssetDeletedEvent.class));
+    assertThat(events.get(11), instanceOf(ComponentPreDeleteEvent.class));
+    assertThat(events.get(12), instanceOf(ComponentDeletedEvent.class));
+    assertThat(events.get(13), instanceOf(ContentRepositoryPreDeleteEvent.class));
+    assertThat(events.get(14), instanceOf(ContentRepositoryDeletedEvent.class));
 
     verifyNoMoreInteractions(eventManager);
   }

@@ -15,14 +15,14 @@ package org.sonatype.nexus.repository.content.event.repository;
 import org.sonatype.nexus.repository.content.ContentRepository;
 
 /**
- * Event sent whenever a {@link ContentRepository} is created.
+ * Event sent whenever a {@link ContentRepository} is deleted.
  *
  * @since 3.next
  */
-public class ContentRepositoryCreateEvent
+public class ContentRepositoryDeletedEvent
     extends ContentRepositoryEvent
 {
-  public ContentRepositoryCreateEvent(final ContentRepository contentRepository) {
+  public ContentRepositoryDeletedEvent(final ContentRepository contentRepository) {
     super(contentRepository);
   }
 }

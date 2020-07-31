@@ -15,14 +15,14 @@ package org.sonatype.nexus.repository.content.event.asset;
 import org.sonatype.nexus.repository.content.Asset;
 
 /**
- * Event sent whenever an {@link Asset} is updated.
+ * Event sent whenever an {@link Asset} is uploaded.
  *
  * @since 3.next
  */
-public class AssetUpdateEvent
-    extends AssetEvent
+public class AssetUploadedEvent
+    extends AssetUpdatedEvent
 {
-  protected AssetUpdateEvent(final Asset asset) {
+  public AssetUploadedEvent(final Asset asset) {
     super(asset);
   }
 }

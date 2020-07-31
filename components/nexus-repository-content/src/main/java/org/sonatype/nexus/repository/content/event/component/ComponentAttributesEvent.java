@@ -28,7 +28,7 @@ import static java.util.Optional.ofNullable;
  * @since 3.next
  */
 public class ComponentAttributesEvent
-    extends ComponentUpdateEvent
+    extends ComponentUpdatedEvent
 {
   private final AttributeChange change;
 

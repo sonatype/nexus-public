@@ -25,11 +25,13 @@ import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.event.component.ComponentAttributesEvent;
-import org.sonatype.nexus.repository.content.event.component.ComponentCreateEvent;
-import org.sonatype.nexus.repository.content.event.component.ComponentDeleteEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentCreatedEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentDeletedEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentKindEvent;
-import org.sonatype.nexus.repository.content.event.component.ComponentPurgeEvent;
-import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryDeleteEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentPreDeleteEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentPrePurgeEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentPurgedEvent;
+import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryDeletedEvent;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
@@ -145,7 +147,7 @@ public class ComponentStore<T extends ComponentDAO>
   public void createComponent(final ComponentData component) {
     dao().createComponent(component);
 
-    postCommitEvent(() -> new ComponentCreateEvent(component));
+    postCommitEvent(() -> new ComponentCreatedEvent(component));
   }
 
   /**
@@ -220,7 +222,8 @@ public class ComponentStore<T extends ComponentDAO>
    */
   @Transactional
   public boolean deleteComponent(final Component component) {
-    preCommitEvent(() -> new ComponentDeleteEvent(component));
+    preCommitEvent(() -> new ComponentPreDeleteEvent(component));
+    postCommitEvent(() -> new ComponentDeletedEvent(component));
 
     return dao().deleteComponent(component);
   }
@@ -248,7 +251,7 @@ public class ComponentStore<T extends ComponentDAO>
   /**
    * Deletes all components in the given repository from the content data store.
    *
-   * Events will not be sent for these deletes, instead listen for {@link ContentRepositoryDeleteEvent}.
+   * Events will not be sent for these deletes, instead listen for {@link ContentRepositoryDeletedEvent}.
    *
    * @param repositoryId the repository containing the components
    * @return {@code true} if any components were deleted
@@ -290,7 +293,8 @@ public class ComponentStore<T extends ComponentDAO>
         purged += dao().purgeSelectedComponents(componentIds);
       }
 
-      preCommitEvent(() -> new ComponentPurgeEvent(repositoryId, componentIds));
+      preCommitEvent(() -> new ComponentPrePurgeEvent(repositoryId, componentIds));
+      postCommitEvent(() -> new ComponentPurgedEvent(repositoryId, componentIds));
 
       commitChangesSoFar();
     }

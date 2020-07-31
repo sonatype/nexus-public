@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.content.Asset;
  * @since 3.next
  */
 public class AssetKindEvent
-    extends AssetUpdateEvent
+    extends AssetUpdatedEvent
 {
   public AssetKindEvent(final Asset asset) {
     super(asset);

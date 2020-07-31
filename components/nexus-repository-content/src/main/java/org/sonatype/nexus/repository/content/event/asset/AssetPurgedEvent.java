@@ -12,53 +12,27 @@
  */
 package org.sonatype.nexus.repository.content.event.asset;
 
-import java.util.Optional;
-
-import javax.annotation.Nullable;
-
 import org.sonatype.nexus.repository.content.Asset;
-import org.sonatype.nexus.repository.content.AttributeChange;
+import org.sonatype.nexus.repository.content.store.ContentStoreEvent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Optional.ofNullable;
 
 /**
- * Event sent whenever an {@link Asset}'s attributes change.
+ * Event sent whenever a large number of {@link Asset}s are purged.
  *
  * @since 3.next
  */
-public class AssetAttributesEvent
-    extends AssetUpdatedEvent
+public class AssetPurgedEvent
+    extends ContentStoreEvent
 {
-  private final AttributeChange change;
+  private final int[] assetIds;
 
-  private final String key;
-
-  @Nullable
-  private final Object value;
-
-  public AssetAttributesEvent(
-      final Asset asset,
-      final AttributeChange change,
-      final String key,
-      @Nullable final Object value)
-  {
-    super(asset);
-    this.change = checkNotNull(change);
-    this.key = checkNotNull(key);
-    this.value = value;
+  public AssetPurgedEvent(final int contentRepositoryId, final int[] assetIds) { // NOSONAR
+    super(contentRepositoryId);
+    this.assetIds = checkNotNull(assetIds);
   }
 
-  public AttributeChange getChange() {
-    return change;
-  }
-
-  public String getKey() {
-    return key;
-  }
-
-  @SuppressWarnings("unchecked")
-  public <T> Optional<T> getValue() {
-    return ofNullable((T) value);
+  public int[] getAssetIds() {
+    return assetIds; // NOSONAR
   }
 }

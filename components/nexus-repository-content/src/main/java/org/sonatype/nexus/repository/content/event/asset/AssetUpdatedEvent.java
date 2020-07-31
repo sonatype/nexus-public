@@ -10,19 +10,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.content.event.repository;
+package org.sonatype.nexus.repository.content.event.asset;
 
-import org.sonatype.nexus.repository.content.ContentRepository;
+import org.sonatype.nexus.repository.content.Asset;
 
 /**
- * Event sent whenever a {@link ContentRepository} is deleted.
+ * Event sent whenever an {@link Asset} is updated.
  *
  * @since 3.next
  */
-public class ContentRepositoryDeleteEvent
-    extends ContentRepositoryEvent
+public class AssetUpdatedEvent
+    extends AssetEvent
 {
-  public ContentRepositoryDeleteEvent(final ContentRepository contentRepository) {
-    super(contentRepository);
+  protected AssetUpdatedEvent(final Asset asset) {
+    super(asset);
   }
 }

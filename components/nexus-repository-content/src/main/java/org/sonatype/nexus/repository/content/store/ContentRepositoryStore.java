@@ -24,8 +24,9 @@ import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.ContentRepository;
 import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryAttributesEvent;
-import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryCreateEvent;
-import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryDeleteEvent;
+import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryCreatedEvent;
+import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryDeletedEvent;
+import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryPreDeleteEvent;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
@@ -66,7 +67,7 @@ public class ContentRepositoryStore<T extends ContentRepositoryDAO>
   public void createContentRepository(final ContentRepositoryData contentRepository) {
     dao().createContentRepository(contentRepository);
 
-    postCommitEvent(() -> new ContentRepositoryCreateEvent(contentRepository));
+    postCommitEvent(() -> new ContentRepositoryCreatedEvent(contentRepository));
   }
 
   /**
@@ -111,7 +112,8 @@ public class ContentRepositoryStore<T extends ContentRepositoryDAO>
    */
   @Transactional
   public boolean deleteContentRepository(final ContentRepository contentRepository) {
-    preCommitEvent(() -> new ContentRepositoryDeleteEvent(contentRepository));
+    preCommitEvent(() -> new ContentRepositoryPreDeleteEvent(contentRepository));
+    postCommitEvent(() -> new ContentRepositoryDeletedEvent(contentRepository));
 
     return dao().deleteContentRepository(contentRepository);
   }

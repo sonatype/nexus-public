@@ -13,16 +13,26 @@
 package org.sonatype.nexus.repository.content.event.component;
 
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.store.ContentStoreEvent;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Event sent whenever a {@link Component}'s kind is updated.
+ * Event sent whenever a large number of {@link Component}s are purged.
  *
  * @since 3.next
  */
-public class ComponentKindEvent
-    extends ComponentUpdatedEvent
+public class ComponentPurgedEvent
+    extends ContentStoreEvent
 {
-  public ComponentKindEvent(final Component component) {
-    super(component);
+  private final int[] componentIds;
+
+  public ComponentPurgedEvent(final int contentRepositoryId, final int[] componentIds) { // NOSONAR
+    super(contentRepositoryId);
+    this.componentIds = checkNotNull(componentIds);
+  }
+
+  public int[] getComponentIds() {
+    return componentIds; // NOSONAR
   }
 }

@@ -28,7 +28,7 @@ import static java.util.Optional.ofNullable;
  * @since 3.next
  */
 public class ContentRepositoryAttributesEvent
-    extends ContentRepositoryUpdateEvent
+    extends ContentRepositoryUpdatedEvent
 {
   private final AttributeChange change;
 
