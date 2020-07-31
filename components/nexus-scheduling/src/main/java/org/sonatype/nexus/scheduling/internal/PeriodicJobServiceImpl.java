@@ -60,7 +60,7 @@ public class PeriodicJobServiceImpl
 
   @Override
   protected void doStart() throws Exception {
-    executor = Executors.newScheduledThreadPool(1, new NexusThreadFactory("blobstore-metrics", "blobstore"));
+    executor = Executors.newScheduledThreadPool(1, new NexusThreadFactory("periodic", "scheduling"));
   }
 
   @Override

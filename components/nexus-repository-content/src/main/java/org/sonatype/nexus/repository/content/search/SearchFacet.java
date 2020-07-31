@@ -12,8 +12,10 @@
  */
 package org.sonatype.nexus.repository.content.search;
 
+import java.util.Collection;
+
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Facet;
-import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.search.index.SearchIndexFacet;
 
 /**
@@ -26,16 +28,16 @@ public interface SearchFacet
     extends SearchIndexFacet
 {
   /**
-   * Adds the given component to the search index.
+   * Adds the given components to the search index.
    *
-   * @param component the component to index
+   * @param componentIds the components to index
    */
-  void index(Component component);
+  void index(Collection<EntityId> componentIds);
 
   /**
    * Removes the given components from the search index.
    *
    * @param componentIds the components to purge
    */
-  void purge(int... componentIds);
+  void purge(Collection<EntityId> componentIds);
 }

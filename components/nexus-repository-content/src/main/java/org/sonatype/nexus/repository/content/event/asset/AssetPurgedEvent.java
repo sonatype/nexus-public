@@ -18,7 +18,7 @@ import org.sonatype.nexus.repository.content.store.ContentStoreEvent;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Event sent whenever a large number of {@link Asset}s are purged.
+ * Event sent whenever a large number of {@link Asset}s without components are purged.
  *
  * @since 3.next
  */
