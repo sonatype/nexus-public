@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import java.util.Optional;
 import java.util.OptionalInt;
 
 import org.sonatype.nexus.common.entity.EntityHelper;
@@ -56,8 +57,8 @@ public class InternalIds
     return (int) (parseUnsignedInt(externalId.getValue(), 16) * TO_INTERNAL); // NOSONAR: we want truncation
   }
 
-  public static int contentRepositoryId(final Repository repository) {
-    return repository.facet(ContentFacet.class).contentRepositoryId();
+  public static Optional<Integer> contentRepositoryId(final Repository repository) {
+    return repository.optionalFacet(ContentFacet.class).map(ContentFacet::contentRepositoryId);
   }
 
   public static int contentRepositoryId(final RepositoryContent content) {

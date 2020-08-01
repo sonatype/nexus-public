@@ -61,6 +61,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static org.sonatype.nexus.repository.content.facet.ContentFacetFinder.findContentFacets;
 import static org.sonatype.nexus.repository.content.store.AssetDAO.FILTER_PARAMS;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
@@ -263,11 +264,21 @@ public class ContentComponentHelper
   }
 
   private Optional<FluentComponent> findComponentById(final Repository repository, final EntityId componentId) {
-    return repository.facet(ContentFacet.class).components().find(componentId);
+    return findContentFacets(repository)
+        .map(ContentFacet::components)
+        .map(facet -> facet.find(componentId))
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .findFirst();
   }
 
   private Optional<FluentAsset> findAssetById(final Repository repository, final EntityId assetId) {
-    return repository.facet(ContentFacet.class).assets().find(assetId);
+    return findContentFacets(repository)
+        .map(ContentFacet::assets)
+        .map(facet -> facet.find(assetId))
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .findFirst();
   }
 
   private static ComponentXO toComponentXO(

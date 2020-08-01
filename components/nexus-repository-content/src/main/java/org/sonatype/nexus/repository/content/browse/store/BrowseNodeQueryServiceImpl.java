@@ -62,12 +62,12 @@ import com.google.common.collect.ImmutableList;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
-import static java.util.Optional.empty;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.repository.browse.node.BrowsePath.SLASH;
 import static org.sonatype.nexus.repository.browse.node.BrowsePath.SLASH_CHAR;
 import static org.sonatype.nexus.repository.content.browse.store.BrowseNodeDAO.FILTER_PARAMS;
+import static org.sonatype.nexus.repository.content.facet.ContentFacetFinder.findContentFacets;
 import static org.sonatype.nexus.repository.content.store.InternalIds.contentRepositoryId;
 
 /**
@@ -141,7 +141,7 @@ public class BrowseNodeQueryServiceImpl
 
     List<BrowseNode> results;
     if (repository.getType() instanceof GroupType) {
-      int repositoryId = contentRepositoryId(repository);
+      int repositoryId = contentRepositoryId(repository).orElse(-1); // -1 if no content facet, like a plain group
 
       BrowseNodeIdentity identity = browseNodeIdentities.getOrDefault(format, BrowseNode::getName);
       Equivalence<BrowseNode> browseNodeEquivalence = Equivalence.equals().onResultOf(identity::identity);
@@ -333,8 +333,16 @@ public class BrowseNodeQueryServiceImpl
   /**
    * Retrieves the asset associated with the external id.
    */
-  private Optional<FluentAsset> getAssetById(final Repository repository, final EntityId assetId) {
-    return assetId != null ? repository.facet(ContentFacet.class).assets().find(assetId) : empty();
+  private Optional<FluentAsset> getAssetById(final Repository repository, @Nullable final EntityId assetId) {
+    if (assetId == null) {
+      return Optional.empty();
+    }
+    return findContentFacets(repository)
+        .map(ContentFacet::assets)
+        .map(facet -> facet.find(assetId))
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .findFirst();
   }
 
   /**

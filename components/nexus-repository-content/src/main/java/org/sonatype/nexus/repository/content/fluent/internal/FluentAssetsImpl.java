@@ -26,6 +26,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 import org.sonatype.nexus.repository.content.fluent.FluentQuery;
 import org.sonatype.nexus.repository.content.store.AssetStore;
+import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.types.GroupType;
 
@@ -117,7 +118,10 @@ public class FluentAssetsImpl
     }
     else if (facet.repository().getType() instanceof GroupType) {
       return facet.repository().facet(GroupFacet.class).allMembers().stream()
-          .anyMatch(r -> expectedContentRepositoryId == contentRepositoryId(r));
+          .map(InternalIds::contentRepositoryId)
+          .filter(Optional::isPresent)
+          .map(Optional::get)
+          .anyMatch(id -> id == expectedContentRepositoryId);
     }
     return false;
   }

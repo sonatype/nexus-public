@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.content.facet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -25,7 +26,9 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryStartedEvent;
 import org.sonatype.nexus.repository.RepositoryStoppedEvent;
 import org.sonatype.nexus.repository.content.RepositoryContent;
+import org.sonatype.nexus.repository.group.GroupFacet;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 
@@ -71,6 +74,25 @@ public class ContentFacetFinder
    */
   public Optional<ContentFacet> findContentFacet(final String format, final int contentRepositoryId) {
     return findRepository(format, contentRepositoryId).map(r -> r.facet(ContentFacet.class));
+  }
+
+  /**
+   * Finds the upper-most {@link ContentFacet}s contained within the given repository
+   */
+  public static Stream<ContentFacet> findContentFacets(final Repository repository) {
+
+    // repository at this level has a content facet, use that
+    Optional<ContentFacet> contentFacet = repository.optionalFacet(ContentFacet.class);
+    if (contentFacet.isPresent()) {
+      return Stream.of(contentFacet.get());
+    }
+
+    // otherwise repeat this search for any next-level repositories and merge the results
+    return repository.optionalFacet(GroupFacet.class)
+        .map(GroupFacet::members)
+        .orElse(ImmutableList.of())
+        .stream()
+        .flatMap(ContentFacetFinder::findContentFacets);
   }
 
   @AllowConcurrentEvents
