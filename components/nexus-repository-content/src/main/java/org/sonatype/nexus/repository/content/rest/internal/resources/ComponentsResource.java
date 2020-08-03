@@ -54,6 +54,8 @@ import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 
+import com.google.common.collect.ImmutableList;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
@@ -117,6 +119,10 @@ public class ComponentsResource
     ContentFacet contentFacet = repository.facet(ContentFacet.class);
 
     Continuation<FluentComponent> componentBrowseResult = contentFacet.components().browse(10, continuationToken);
+    if (componentBrowseResult.isEmpty()) {
+      return new Page<>(ImmutableList.of(), null);
+    }
+
     List<ComponentXO> componentXOs = componentBrowseResult.stream()
         .map(component -> fromComponent(component, repository))
         .collect(toList());
