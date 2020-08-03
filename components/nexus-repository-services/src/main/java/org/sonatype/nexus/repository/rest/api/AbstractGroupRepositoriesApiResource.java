@@ -25,7 +25,6 @@ import javax.ws.rs.core.Response;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.rest.GroupRepositoryApiRequestToConfigurationConverter;
 import org.sonatype.nexus.repository.rest.api.model.GroupRepositoryApiRequest;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 import org.sonatype.nexus.validation.Validate;
@@ -43,21 +42,20 @@ import static org.sonatype.nexus.validation.ConstraintViolations.maybePropagate;
 public abstract class AbstractGroupRepositoriesApiResource<T extends GroupRepositoryApiRequest>
     extends AbstractRepositoriesApiResource<T>
 {
-  private final ConstraintViolationFactory constraintViolationFactory;
+  private ConstraintViolationFactory constraintViolationFactory;
 
-  private final RepositoryManager repositoryManager;
+  private RepositoryManager repositoryManager;
 
   @Inject
-  public AbstractGroupRepositoriesApiResource(
-      final AuthorizingRepositoryManager authorizingRepositoryManager,
-      final GroupRepositoryApiRequestToConfigurationConverter<T> configurationAdapter,
-      final ConstraintViolationFactory constraintViolationFactory,
-      final RepositoryManager repositoryManager)
-  {
-    super(authorizingRepositoryManager, configurationAdapter);
+  public void setConstraintViolationFactory(final ConstraintViolationFactory constraintViolationFactory) {
     this.constraintViolationFactory = checkNotNull(constraintViolationFactory);
+  }
+
+  @Inject
+  public void setRepositoryManager(final RepositoryManager repositoryManager) {
     this.repositoryManager = checkNotNull(repositoryManager);
   }
+
 
   @POST
   @RequiresAuthentication

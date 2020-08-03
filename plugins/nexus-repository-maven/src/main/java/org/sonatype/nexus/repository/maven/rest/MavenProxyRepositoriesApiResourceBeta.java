@@ -12,13 +12,10 @@
  */
 package org.sonatype.nexus.repository.maven.rest;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.Path;
 
-import org.sonatype.nexus.repository.rest.api.AbstractRepositoryApiRequestToConfigurationConverter;
-import org.sonatype.nexus.repository.rest.api.AuthorizingRepositoryManager;
 import org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceBeta;
 import org.sonatype.nexus.rest.APIConstants;
 
@@ -40,12 +37,4 @@ public class MavenProxyRepositoriesApiResourceBeta
     extends MavenProxyRepositoriesApiResource
 {
   static final String RESOURCE_URI = RepositoriesApiResourceBeta.RESOURCE_URI + "/maven/proxy";
-
-  @Inject
-  public MavenProxyRepositoriesApiResourceBeta(
-      final AuthorizingRepositoryManager authorizingRepositoryManager,
-      final AbstractRepositoryApiRequestToConfigurationConverter<MavenProxyRepositoryApiRequest> configurationAdapter)
-  {
-    super(authorizingRepositoryManager, configurationAdapter);
-  }
 }

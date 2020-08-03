@@ -12,14 +12,10 @@
  */
 package org.sonatype.nexus.repository.golang.rest;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.Path;
 
-import org.sonatype.nexus.repository.golang.rest.model.GolangProxyRepositoryApiRequest;
-import org.sonatype.nexus.repository.rest.api.AbstractRepositoryApiRequestToConfigurationConverter;
-import org.sonatype.nexus.repository.rest.api.AuthorizingRepositoryManager;
 import org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceV1;
 
 import static org.sonatype.nexus.repository.golang.rest.GolangProxyRepositoriesApiResourceV1.RESOURCE_URI;
@@ -34,12 +30,4 @@ public class GolangProxyRepositoriesApiResourceV1
     extends GolangProxyRepositoriesApiResource
 {
   static final String RESOURCE_URI = RepositoriesApiResourceV1.RESOURCE_URI + "/go/proxy";
-
-  @Inject
-  public GolangProxyRepositoriesApiResourceV1(
-      final AuthorizingRepositoryManager authorizingRepositoryManager,
-      final AbstractRepositoryApiRequestToConfigurationConverter<GolangProxyRepositoryApiRequest> configurationAdapter)
-  {
-    super(authorizingRepositoryManager, configurationAdapter);
-  }
 }

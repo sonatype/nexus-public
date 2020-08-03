@@ -12,18 +12,12 @@
  */
 package org.sonatype.nexus.repository.golang.rest;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.Path;
 
-import org.sonatype.nexus.repository.golang.rest.model.GolangGroupRepositoryApiRequest;
-import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.rest.GroupRepositoryApiRequestToConfigurationConverter;
-import org.sonatype.nexus.repository.rest.api.AuthorizingRepositoryManager;
 import org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceBeta;
 import org.sonatype.nexus.rest.APIConstants;
-import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import io.swagger.annotations.Api;
 
@@ -43,14 +37,4 @@ public class GolangGroupRepositoriesApiResourceBeta
     extends GolangGroupRepositoriesApiResource
 {
   static final String RESOURCE_URI = RepositoriesApiResourceBeta.RESOURCE_URI + "/go/group";
-
-  @Inject
-  public GolangGroupRepositoriesApiResourceBeta(
-      final AuthorizingRepositoryManager authorizingRepositoryManager,
-      final GroupRepositoryApiRequestToConfigurationConverter<GolangGroupRepositoryApiRequest> configurationAdapter,
-      final ConstraintViolationFactory constraintViolationFactory,
-      final RepositoryManager repositoryManager)
-  {
-    super(authorizingRepositoryManager, configurationAdapter, constraintViolationFactory, repositoryManager);
-  }
 }

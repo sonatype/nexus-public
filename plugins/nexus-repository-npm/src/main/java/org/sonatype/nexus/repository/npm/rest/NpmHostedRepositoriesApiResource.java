@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.npm.rest;
 
-import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -20,8 +19,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
 import org.sonatype.nexus.repository.rest.api.AbstractRepositoriesApiResource;
-import org.sonatype.nexus.repository.rest.api.AbstractRepositoryApiRequestToConfigurationConverter;
-import org.sonatype.nexus.repository.rest.api.AuthorizingRepositoryManager;
 import org.sonatype.nexus.validation.Validate;
 
 import io.swagger.annotations.Api;
@@ -44,14 +41,6 @@ import static org.sonatype.nexus.rest.ApiDocConstants.REPOSITORY_UPDATED;
 public abstract class NpmHostedRepositoriesApiResource
     extends AbstractRepositoriesApiResource<NpmHostedRepositoryApiRequest>
 {
-  @Inject
-  public NpmHostedRepositoriesApiResource(
-      final AuthorizingRepositoryManager authorizingRepositoryManager,
-      final AbstractRepositoryApiRequestToConfigurationConverter<NpmHostedRepositoryApiRequest> configurationAdapter
-  )
-  {
-    super(authorizingRepositoryManager, configurationAdapter);
-  }
 
   @ApiOperation("Create npm hosted repository")
   @ApiResponses(value = {

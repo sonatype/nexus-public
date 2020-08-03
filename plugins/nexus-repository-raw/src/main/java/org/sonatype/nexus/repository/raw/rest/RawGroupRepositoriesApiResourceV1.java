@@ -12,16 +12,11 @@
  */
 package org.sonatype.nexus.repository.raw.rest;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.Path;
 
-import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.rest.GroupRepositoryApiRequestToConfigurationConverter;
-import org.sonatype.nexus.repository.rest.api.AuthorizingRepositoryManager;
 import org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceV1;
-import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import static org.sonatype.nexus.repository.raw.rest.RawGroupRepositoriesApiResourceV1.RESOURCE_URI;
 
@@ -35,14 +30,4 @@ public class RawGroupRepositoriesApiResourceV1
     extends RawGroupRepositoriesApiResource
 {
   static final String RESOURCE_URI = RepositoriesApiResourceV1.RESOURCE_URI + "/raw/group";
-
-  @Inject
-  public RawGroupRepositoriesApiResourceV1(
-      final AuthorizingRepositoryManager authorizingRepositoryManager,
-      final GroupRepositoryApiRequestToConfigurationConverter<RawGroupRepositoryApiRequest> configurationAdapter,
-      final ConstraintViolationFactory constraintViolationFactory,
-      final RepositoryManager repositoryManager)
-  {
-    super(authorizingRepositoryManager, configurationAdapter, constraintViolationFactory, repositoryManager);
-  }
 }
