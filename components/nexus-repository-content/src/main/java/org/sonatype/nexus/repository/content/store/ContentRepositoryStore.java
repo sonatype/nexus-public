@@ -23,6 +23,10 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.ContentRepository;
+import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryAttributesEvent;
+import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryCreatedEvent;
+import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryDeletedEvent;
+import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryPreDeleteEvent;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
@@ -36,7 +40,7 @@ import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttrib
  */
 @Named
 public class ContentRepositoryStore<T extends ContentRepositoryDAO>
-    extends ContentStoreSupport<T>
+    extends ContentStoreEventSupport<T>
 {
   @Inject
   public ContentRepositoryStore(final DataSessionSupplier sessionSupplier,
@@ -62,6 +66,8 @@ public class ContentRepositoryStore<T extends ContentRepositoryDAO>
   @Transactional
   public void createContentRepository(final ContentRepositoryData contentRepository) {
     dao().createContentRepository(contentRepository);
+
+    postCommitEvent(() -> new ContentRepositoryCreatedEvent(contentRepository));
   }
 
   /**
@@ -86,12 +92,30 @@ public class ContentRepositoryStore<T extends ContentRepositoryDAO>
                                                 final String key,
                                                 final @Nullable Object value)
   {
+    // reload latest attributes, apply change, then update database if necessary
     dao().readContentRepositoryAttributes(contentRepository).ifPresent(attributes -> {
       ((ContentRepositoryData) contentRepository).setAttributes(attributes);
+
       if (applyAttributeChange(attributes, change, key, value)) {
         dao().updateContentRepositoryAttributes(contentRepository);
+
+        postCommitEvent(() -> new ContentRepositoryAttributesEvent(contentRepository, change, key, value));
       }
     });
+  }
+
+  /**
+   * Deletes a content repository from the content data store.
+   *
+   * @param contentRepository the content repository to delete
+   * @return {@code true} if the content repository was deleted
+   */
+  @Transactional
+  public boolean deleteContentRepository(final ContentRepository contentRepository) {
+    preCommitEvent(() -> new ContentRepositoryPreDeleteEvent(contentRepository));
+    postCommitEvent(() -> new ContentRepositoryDeletedEvent(contentRepository));
+
+    return dao().deleteContentRepository(contentRepository);
   }
 
   /**
@@ -102,6 +126,8 @@ public class ContentRepositoryStore<T extends ContentRepositoryDAO>
    */
   @Transactional
   public boolean deleteContentRepository(final EntityId configRepositoryId) {
-    return dao().deleteContentRepository(configRepositoryId);
+    return dao().readContentRepository(configRepositoryId)
+        .map(this::deleteContentRepository)
+        .orElse(false);
   }
 }

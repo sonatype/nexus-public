@@ -65,6 +65,22 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
   }
 
   /**
+   * Does a browse node already exist for this component?
+   */
+  @Transactional
+  public boolean hasComponentNode(final int componentId) {
+    return dao().hasComponentNode(componentId);
+  }
+
+  /**
+   * Does a browse node already exist for this asset?
+   */
+  @Transactional
+  public boolean hasAssetNode(final int assetId) {
+    return dao().hasAssetNode(assetId);
+  }
+
+  /**
    * Merges the given browse node with the tree of nodes in the content data store.
    *
    * @param browseNode the node to merge
@@ -72,6 +88,24 @@ public class BrowseNodeStore<T extends BrowseNodeDAO>
   @Transactional
   public void mergeBrowseNode(final BrowseNodeData browseNode) {
     dao().mergeBrowseNode(browseNode);
+  }
+
+  /**
+   * Trims any dangling browse nodes from the given repository.
+   *
+   * @param repositoryId the repository containing the browse nodes
+   * @return {@code true} if any nodes were trimmed from the tree
+   */
+  @Transactional
+  public boolean trimBrowseNodes(final int repositoryId) {
+    log.debug("Removing unused browse nodes in repository {}", repositoryId);
+    boolean trimmed = false;
+    while (dao().trimBrowseNodes(repositoryId)) {
+      commitChangesSoFar();
+      trimmed = true;
+    }
+    log.debug("Removed unused browse nodes in repository {}", repositoryId);
+    return trimmed;
   }
 
   /**

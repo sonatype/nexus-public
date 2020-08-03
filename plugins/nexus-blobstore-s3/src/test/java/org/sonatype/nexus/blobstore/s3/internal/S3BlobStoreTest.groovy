@@ -59,8 +59,8 @@ class S3BlobStoreTest
 
   AmazonS3 s3 = Mock()
 
-  S3BlobStore blobStore = new S3BlobStore(amazonS3Factory, locationResolver, uploader, copier, storeMetrics,
-      dryRunPrefix, bucketManager)
+  S3BlobStore blobStore = new S3BlobStore(amazonS3Factory, locationResolver, uploader, copier, false,
+      storeMetrics, dryRunPrefix, bucketManager)
 
   def config = new MockBlobStoreConfiguration()
 

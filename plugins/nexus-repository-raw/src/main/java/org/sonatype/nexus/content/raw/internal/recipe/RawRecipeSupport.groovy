@@ -20,6 +20,7 @@ import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.RecipeSupport
 import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.content.browse.BrowseFacet
+import org.sonatype.nexus.repository.content.maintenance.SingleAssetMaintenanceFacet
 import org.sonatype.nexus.repository.content.search.SearchFacet
 import org.sonatype.nexus.repository.http.PartialFetchHandler
 import org.sonatype.nexus.repository.raw.internal.RawSecurityFacet
@@ -47,6 +48,9 @@ abstract class RawRecipeSupport
 
   @Inject
   Provider<RawContentFacet> contentFacet
+
+  @Inject
+  Provider<SingleAssetMaintenanceFacet> maintenanceFacet
 
   @Inject
   Provider<SearchFacet> searchFacet

@@ -10,25 +10,35 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.selector.internal;
+package org.sonatype.nexus.security.privilege.rest;
 
+import java.util.Map;
+
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import javax.ws.rs.Path;
 
-import org.sonatype.nexus.selector.SelectorSqlBuilder;
+import org.sonatype.nexus.security.SecuritySystem;
+import org.sonatype.nexus.security.internal.rest.SecurityApiResourceV1;
+import org.sonatype.nexus.security.privilege.PrivilegeDescriptor;
 
-import org.apache.commons.jexl3.parser.ASTERNode;
-
-@Named("PostgreSQL")
+/**
+ * @since 3.next
+ */
+@Named
 @Singleton
-public class PostgresSqlTransformer
-    extends DatastoreSqlTransformer
+@Path(PrivilegeApiResourceV1.RESOURCE_URI)
+public class PrivilegeApiResourceV1
+    extends PrivilegeApiResource
 {
-  /**
-   * Transform `a =~ "regex"` into the equivalent of `a matches "regex"` for PostgreSQL
-   */
-  @Override
-  protected Object visit(final ASTERNode node, final Object data) {
-    return transformMatchesOperator(node, "~", (SelectorSqlBuilder) data);
+  static final String RESOURCE_URI = SecurityApiResourceV1.V1_RESOURCE_URI + "privileges";
+
+  @Inject
+  public PrivilegeApiResourceV1(
+      final SecuritySystem securitySystem,
+      final Map<String, PrivilegeDescriptor> privilegeDescriptors)
+  {
+    super(securitySystem, privilegeDescriptors);
   }
 }

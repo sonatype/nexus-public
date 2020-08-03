@@ -36,6 +36,10 @@ public class UploadResponse
     this(assetPaths);
   }
 
+  public UploadResponse(final Content content, final List<String> assetPaths) {
+    this(assetPaths);
+  }
+
   public List<String> getAssetPaths() {
     return assetPaths;
   }

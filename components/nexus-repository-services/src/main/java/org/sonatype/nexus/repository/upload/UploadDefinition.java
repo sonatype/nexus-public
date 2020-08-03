@@ -28,6 +28,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class UploadDefinition
 {
 
+  private final boolean uiUpload;
+
   private final boolean multipleUpload;
 
   private final String format;
@@ -39,11 +41,13 @@ public class UploadDefinition
   private final UploadRegexMap regexMap;
 
   public UploadDefinition(final String format,
+                          final boolean uiUpload,
                           final boolean multipleUpload,
                           final List<UploadFieldDefinition> componentFields,
                           final List<UploadFieldDefinition> assetFields,
                           final UploadRegexMap regexMap)
   {
+    this.uiUpload = uiUpload;
     this.multipleUpload = multipleUpload;
     this.format = checkNotNull(format);
     this.componentFields = Collections.unmodifiableList(checkNotNull(componentFields));
@@ -52,11 +56,19 @@ public class UploadDefinition
   }
 
   public UploadDefinition(final String format,
+                          final boolean uiUpload,
                           final boolean multipleUpload,
                           final List<UploadFieldDefinition> componentFields,
                           final List<UploadFieldDefinition> assetFields)
   {
-    this(format, multipleUpload, componentFields, assetFields, null);
+    this(format, uiUpload, multipleUpload, componentFields, assetFields, null);
+  }
+
+  /**
+   * Whether uploads through the UI are allowed by the available handler.
+   */
+  public boolean isUiUpload() {
+    return uiUpload;
   }
 
   /**

@@ -83,17 +83,16 @@
   </select>
 
   <select id="countAssets" resultType="int">
-    SELECT COUNT(*) FROM ${format}_asset WHERE repository_id = #{repositoryId};
+    SELECT COUNT(*) FROM ${format}_asset WHERE repository_id = #{repositoryId}
+        <if test="kind != null"> AND kind = #{kind}</if>
+        <if test="filter != null"> AND ${filter}</if>;
   </select>
 
   <select id="browseAssets" resultMap="assetResult">
     SELECT * FROM ${format}_asset WHERE repository_id = #{repositoryId}
-    <if test="kind != null">
-      AND kind = #{kind}
-    </if>
-    <if test="continuationToken != null">
-      AND asset_id > #{continuationToken}
-    </if>
+        <if test="continuationToken != null"> AND asset_id > #{continuationToken}</if>
+        <if test="kind != null"> AND kind = #{kind}</if>
+        <if test="filter != null"> AND ${filter}</if>
     ORDER BY asset_id LIMIT #{limit};
   </select>
 
@@ -150,10 +149,6 @@
     DELETE FROM ${format}_asset WHERE <include refid="assetMatch"/>;
   </delete>
 
-  <delete id="deletePath">
-    DELETE FROM ${format}_asset WHERE <include refid="assetPathMatch"/>;
-  </delete>
-
   <delete id="deleteAssets">
     DELETE FROM ${format}_asset WHERE
         repository_id = #{repositoryId}
@@ -167,21 +162,19 @@
         <if test="limit gt 0"> LIMIT #{limit})</if>;
   </delete>
 
-  <delete id="purgeNotRecentlyDownloaded">
-    DELETE FROM ${format}_asset WHERE
-        repository_id = #{repositoryId}
-        AND component_id IS NULL
+  <select id="selectNotRecentlyDownloaded" resultType="int">
+    SELECT asset_id FROM ${format}_asset
+        WHERE repository_id = #{repositoryId} AND component_id IS NULL
         AND last_downloaded &lt;= CURRENT_TIMESTAMP - CAST(#{daysAgo} AS INT) * INTERVAL '1' DAY
         <if test="limit gt 0"> LIMIT #{limit}</if>;
+  </select>
+
+  <delete id="purgeSelectedAssets">
+    DELETE FROM ${format}_asset WHERE asset_id = ANY(#{assetIds});
   </delete>
 
-  <delete id="purgeNotRecentlyDownloaded" databaseId="PostgreSQL">
-    DELETE FROM ${format}_asset WHERE
-        <if test="limit gt 0"> asset_id IN (SELECT asset_id FROM ${format}_asset WHERE </if>
-        repository_id = #{repositoryId}
-        AND component_id IS NULL
-        AND last_downloaded &lt;= CURRENT_TIMESTAMP - CAST(#{daysAgo} AS INT) * INTERVAL '1' DAY
-        <if test="limit gt 0"> LIMIT #{limit})</if>;
+  <delete id="purgeSelectedAssets" databaseId="PostgreSQL">
+    DELETE FROM ${format}_asset WHERE asset_id = ANY(#{assetIds}::int[]);
   </delete>
 
 </mapper>

@@ -15,8 +15,6 @@ package org.sonatype.nexus.repository.rest.internal.resources;
 import java.util.List;
 
 import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -33,7 +31,6 @@ import org.sonatype.nexus.repository.rest.api.ContentSelectorApiUpdateRequest;
 import org.sonatype.nexus.repository.rest.internal.resources.doc.ContentSelectorsResourceDoc;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
-import org.sonatype.nexus.security.internal.rest.SecurityApiResource;
 import org.sonatype.nexus.selector.CselSelector;
 import org.sonatype.nexus.selector.SelectorConfiguration;
 import org.sonatype.nexus.selector.SelectorFactory;
@@ -53,16 +50,11 @@ import static org.sonatype.nexus.selector.SelectorConfiguration.EXPRESSION;
 /**
  * @since 3.19
  */
-@Named
-@Singleton
-@Path(ContentSelectorsApiResource.RESOURCE_URI)
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
 public class ContentSelectorsApiResource
     implements Resource, ContentSelectorsResourceDoc
 {
-  public static final String RESOURCE_URI = SecurityApiResource.RESOURCE_URI + "content-selectors";
-
   private final SelectorFactory selectorFactory;
 
   private final SelectorManager selectorManager;

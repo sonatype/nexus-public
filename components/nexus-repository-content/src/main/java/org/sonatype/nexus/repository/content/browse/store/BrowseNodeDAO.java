@@ -45,16 +45,25 @@ public interface BrowseNodeDAO
    * @param repositoryId the repository containing the browse nodes
    * @param displayPath the hierarchical path leading up to the browse nodes
    * @param limit when positive limits the number of browse nodes returned
-   * @param filter optional filter to apply to the browse nodes
+   * @param filter optional filter to apply
    * @param filterParams parameter map for the optional filter
    * @return browse nodes found directly under the display path
    */
-  List<BrowseNode> getByDisplayPath(
-      @Param("repositoryId") int repositoryId,
-      @Param("displayPath") List<String> displayPath,
-      @Param("limit") int limit,
-      @Nullable @Param("filter") String filter,
-      @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams);
+  List<BrowseNode> getByDisplayPath(@Param("repositoryId") int repositoryId,
+                                    @Param("displayPath") List<String> displayPath,
+                                    @Param("limit") int limit,
+                                    @Nullable @Param("filter") String filter,
+                                    @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams);
+
+  /**
+   * Does a browse node already exist for this component?
+   */
+  boolean hasComponentNode(@Param("componentId") int componentId);
+
+  /**
+   * Does a browse node already exist for this asset?
+   */
+  boolean hasAssetNode(@Param("assetId") int assetId);
 
   /**
    * Merges the given browse node with the tree of nodes in the content data store.
@@ -62,6 +71,14 @@ public interface BrowseNodeDAO
    * @param browseNode the node to merge
    */
   void mergeBrowseNode(BrowseNodeData browseNode);
+
+  /**
+   * Trims leaf browse nodes in the given repository that no longer have a component or asset.
+   *
+   * @param repositoryId the repository containing the browse nodes
+   * @return {@code true} if any nodes were trimmed from the tree
+   */
+  boolean trimBrowseNodes(@Param("repositoryId") int repositoryId);
 
   /**
    * Deletes all browse nodes in the given repository from the content data store.

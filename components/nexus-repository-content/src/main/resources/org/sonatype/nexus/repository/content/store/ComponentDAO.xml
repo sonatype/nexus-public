@@ -63,17 +63,16 @@
   </sql>
 
   <select id="countComponents" resultType="int">
-    SELECT COUNT(*) FROM ${format}_component WHERE repository_id = #{repositoryId};
+    SELECT COUNT(*) FROM ${format}_component WHERE repository_id = #{repositoryId}
+        <if test="kind != null"> AND kind = #{kind}</if>
+        <if test="filter != null"> AND ${filter}</if>;
   </select>
 
   <select id="browseComponents" resultType="ComponentData">
     SELECT * FROM ${format}_component WHERE repository_id = #{repositoryId}
-    <if test="kind != null">
-      AND kind = #{kind}
-    </if>
-    <if test="continuationToken != null">
-      AND component_id > #{continuationToken}
-    </if>
+        <if test="continuationToken != null"> AND component_id > #{continuationToken}</if>
+        <if test="kind != null"> AND kind = #{kind}</if>
+        <if test="filter != null"> AND ${filter}</if>
     ORDER BY component_id LIMIT #{limit};
   </select>
 
@@ -120,10 +119,6 @@
     DELETE FROM ${format}_component WHERE <include refid="componentMatch"/>;
   </delete>
 
-  <delete id="deleteCoordinate">
-    DELETE FROM ${format}_component WHERE <include refid="componentCoordinateMatch"/>;
-  </delete>
-
   <delete id="deleteComponents">
     DELETE FROM ${format}_component WHERE repository_id = #{repositoryId}<if test="limit gt 0"> LIMIT #{limit}</if>;
   </delete>
@@ -135,26 +130,22 @@
         <if test="limit gt 0"> LIMIT #{limit})</if>;
   </delete>
 
-  <update id="createTemporaryPurgeTable">
-    -- store purged component ids in a temporary table local to our session
-    CREATE LOCAL TEMPORARY TABLE IF NOT EXISTS purged_component_ids (component_id INT NOT NULL UNIQUE)
-        <if test="_databaseId == 'H2'">NOT PERSISTENT</if>;
-  </update>
-
-  <delete id="purgeNotRecentlyDownloaded">
-    INSERT INTO purged_component_ids (component_id)
-        SELECT component_id FROM ${format}_asset
-            WHERE repository_id = #{repositoryId} AND component_id IS NOT NULL
-        GROUP BY component_id
-            HAVING MAX(last_downloaded) &lt;= CURRENT_TIMESTAMP - CAST(#{daysAgo} AS INT) * INTERVAL '1' DAY
+  <select id="selectNotRecentlyDownloaded" resultType="int">
+    SELECT component_id FROM ${format}_asset
+        WHERE repository_id = #{repositoryId} AND component_id IS NOT NULL
+    GROUP BY component_id
+        HAVING MAX(last_downloaded) &lt;= CURRENT_TIMESTAMP - CAST(#{daysAgo} AS INT) * INTERVAL '1' DAY
         <if test="limit gt 0"> LIMIT #{limit}</if>;
+  </select>
 
-    DELETE FROM ${format}_asset WHERE component_id IN (SELECT component_id FROM purged_component_ids);
-    DELETE FROM ${format}_component WHERE component_id IN (SELECT component_id FROM purged_component_ids);
+  <delete id="purgeSelectedComponents">
+    DELETE FROM ${format}_asset WHERE component_id = ANY(#{componentIds});
+    DELETE FROM ${format}_component WHERE component_id = ANY(#{componentIds});
+  </delete>
 
-    -- we want to return number of deleted components so we can't simply drop the table
-    -- (also means we can re-use the purge table for repeated calls in the same session)
-    DELETE FROM purged_component_ids;
+  <delete id="purgeSelectedComponents" databaseId="PostgreSQL">
+    DELETE FROM ${format}_asset WHERE component_id = ANY(#{componentIds}::int[]);
+    DELETE FROM ${format}_component WHERE component_id = ANY(#{componentIds}::int[]);
   </delete>
 
 </mapper>

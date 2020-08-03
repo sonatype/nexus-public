@@ -13,8 +13,6 @@
 package org.sonatype.nexus.repository.apt.rest;
 
 import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -24,7 +22,6 @@ import javax.ws.rs.core.Response;
 import org.sonatype.nexus.repository.rest.api.AbstractRepositoriesApiResource;
 import org.sonatype.nexus.repository.rest.api.AbstractRepositoryApiRequestToConfigurationConverter;
 import org.sonatype.nexus.repository.rest.api.AuthorizingRepositoryManager;
-import org.sonatype.nexus.repository.rest.api.RepositoriesApiResource;
 import org.sonatype.nexus.validation.Validate;
 
 import io.swagger.annotations.Api;
@@ -45,14 +42,9 @@ import static org.sonatype.nexus.rest.ApiDocConstants.REPOSITORY_UPDATED;
  * @since 3.20
  */
 @Api(value = API_REPOSITORY_MANAGEMENT)
-@Named
-@Singleton
-@Path(AptHostedRepositoriesApiResource.RESOURCE_URI)
-public class AptHostedRepositoriesApiResource
+public abstract class AptHostedRepositoriesApiResource
     extends AbstractRepositoriesApiResource<AptHostedRepositoryApiRequest>
 {
-  public static final String RESOURCE_URI = RepositoriesApiResource.RESOURCE_URI + "/apt/hosted";
-
   @Inject
   public AptHostedRepositoriesApiResource(
       final AuthorizingRepositoryManager authorizingRepositoryManager,

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.browse;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,6 +23,7 @@ import javax.inject.Named;
 
 import org.sonatype.goodies.packageurl.PackageUrl;
 import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.repository.FacetSupport;
@@ -110,6 +112,24 @@ public class BrowseFacetImpl
 
   @Guarded(by = STARTED)
   @Override
+  public void addPathsToAssets(Collection<EntityId> assetIds) {
+    FluentAssets lookup = facet(ContentFacet.class).assets();
+
+    assetIds.stream()
+        .map(lookup::find)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .forEach(this::createBrowseNodes);
+  }
+
+  @Guarded(by = STARTED)
+  @Override
+  public void trimBrowseNodes() {
+    browseNodeManager.trimBrowseNodes();
+  }
+
+  @Guarded(by = STARTED)
+  @Override
   public void rebuildBrowseNodes() {
     log.info("Deleting browse nodes for repository {}", getRepository().getName());
 
@@ -159,18 +179,22 @@ public class BrowseFacetImpl
   }
 
   private void createBrowseNodes(final FluentAsset asset) {
-    List<BrowsePath> assetPaths = browseNodeGenerator.computeAssetPaths(asset);
-    if (!assetPaths.isEmpty()) {
-      browseNodeManager.createBrowseNodes(assetPaths, node -> node.setAsset(asset));
+    if (!browseNodeManager.hasAssetNode(asset)) {
+      List<BrowsePath> assetPaths = browseNodeGenerator.computeAssetPaths(asset);
+      if (!assetPaths.isEmpty()) {
+        browseNodeManager.createBrowseNodes(assetPaths, node -> node.setAsset(asset));
+      }
     }
 
     asset.component().ifPresent(component -> {
-      List<BrowsePath> componentPaths = browseNodeGenerator.computeComponentPaths(asset);
-      if (!componentPaths.isEmpty()) {
-        browseNodeManager.createBrowseNodes(componentPaths, node -> {
-          node.setComponent(component);
-          findPackageUrl(component).map(PackageUrl::toString).ifPresent(node::setPackageUrl);
-        });
+      if (!browseNodeManager.hasComponentNode(component)) {
+        List<BrowsePath> componentPaths = browseNodeGenerator.computeComponentPaths(asset);
+        if (!componentPaths.isEmpty()) {
+          browseNodeManager.createBrowseNodes(componentPaths, node -> {
+            node.setComponent(component);
+            findPackageUrl(component).map(PackageUrl::toString).ifPresent(node::setPackageUrl);
+          });
+        }
       }
     });
   }

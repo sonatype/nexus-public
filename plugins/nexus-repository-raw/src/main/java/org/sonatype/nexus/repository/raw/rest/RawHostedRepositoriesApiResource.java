@@ -13,8 +13,6 @@
 package org.sonatype.nexus.repository.raw.rest;
 
 import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -24,7 +22,6 @@ import javax.ws.rs.core.Response;
 import org.sonatype.nexus.repository.rest.api.AbstractRepositoriesApiResource;
 import org.sonatype.nexus.repository.rest.api.AbstractRepositoryApiRequestToConfigurationConverter;
 import org.sonatype.nexus.repository.rest.api.AuthorizingRepositoryManager;
-import org.sonatype.nexus.repository.rest.api.RepositoriesApiResource;
 import org.sonatype.nexus.validation.Validate;
 
 import io.swagger.annotations.Api;
@@ -34,7 +31,6 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 
-import static org.sonatype.nexus.repository.raw.rest.RawHostedRepositoriesApiResource.RESOURCE_URI;
 import static org.sonatype.nexus.rest.ApiDocConstants.API_REPOSITORY_MANAGEMENT;
 import static org.sonatype.nexus.rest.ApiDocConstants.AUTHENTICATION_REQUIRED;
 import static org.sonatype.nexus.rest.ApiDocConstants.INSUFFICIENT_PERMISSIONS;
@@ -45,14 +41,9 @@ import static org.sonatype.nexus.rest.ApiDocConstants.REPOSITORY_UPDATED;
  * @since 3.24
  */
 @Api(value = API_REPOSITORY_MANAGEMENT)
-@Named
-@Singleton
-@Path(RESOURCE_URI)
-public class RawHostedRepositoriesApiResource
+public abstract class RawHostedRepositoriesApiResource
     extends AbstractRepositoriesApiResource<RawHostedRepositoryApiRequest>
 {
-  public static final String RESOURCE_URI = RepositoriesApiResource.RESOURCE_URI + "/raw/hosted";
-
   @Inject
   public RawHostedRepositoriesApiResource(
       final AuthorizingRepositoryManager authorizingRepositoryManager,

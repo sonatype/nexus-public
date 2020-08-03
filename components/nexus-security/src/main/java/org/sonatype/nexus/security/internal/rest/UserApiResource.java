@@ -19,8 +19,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -61,17 +59,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 3.17
  */
-@Named
-@Singleton
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
-@Path(UserApiResource.RESOURCE_URI)
 public class UserApiResource
     extends ComponentSupport
     implements Resource, UserApiResourceDoc
 {
   public static final String ADMIN_USER_ID = "admin";
-  public static final String RESOURCE_URI = SecurityApiResource.RESOURCE_URI + "users/";
 
   private final SecuritySystem securitySystem;
 

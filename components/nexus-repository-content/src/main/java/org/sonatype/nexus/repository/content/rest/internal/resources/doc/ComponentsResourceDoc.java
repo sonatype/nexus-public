@@ -16,6 +16,9 @@ import java.io.IOException;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.sonatype.nexus.repository.rest.api.ComponentXO;
+import org.sonatype.nexus.rest.Page;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -31,6 +34,44 @@ import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
 @Api(value = "components")
 public interface ComponentsResourceDoc
 {
+  /**
+   * @since 3.next
+   */
+  @ApiOperation("List components")
+  @ApiResponses(value = {
+      @ApiResponse(code = 403, message = "Insufficient permissions to list components"),
+      @ApiResponse(code = 422, message = "Parameter 'repository' is required")
+  })
+  Page<ComponentXO> getComponents(
+      @ApiParam(value = "A token returned by a prior request. If present, the next page of results are returned")
+      final String continuationToken,
+
+      @ApiParam(value = "Repository from which you would like to retrieve components", required = true)
+      final String repository);
+
+  /**
+   * @since 3.next
+   */
+  @ApiOperation("Get a single component")
+  @ApiResponses(value = {
+      @ApiResponse(code = 403, message = "Insufficient permissions to get component"),
+      @ApiResponse(code = 404, message = "Component not found"),
+      @ApiResponse(code = 422, message = "Malformed ID")
+  })
+  ComponentXO getComponentById(@ApiParam(value = "ID of the component to retrieve") final String id);
+
+  /**
+   * @since 3.next
+   */
+  @ApiOperation(value = "Delete a single component")
+  @ApiResponses(value = {
+      @ApiResponse(code = 204, message = "Component was successfully deleted"),
+      @ApiResponse(code = 403, message = "Insufficient permissions to delete component"),
+      @ApiResponse(code = 404, message = "Component not found"),
+      @ApiResponse(code = 422, message = "Malformed ID")
+  })
+  void deleteComponent(@ApiParam(value = "ID of the component to delete") final String id);
+
   @ApiOperation(value = "Upload a single component")
   @ApiResponses(value = {
       @ApiResponse(code = 403, message = "Insufficient permissions to upload a component"),

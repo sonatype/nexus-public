@@ -17,6 +17,8 @@ import javax.servlet.http.HttpServletRequest;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
+import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
 import org.sonatype.nexus.repository.upload.UploadConfiguration;
 import org.sonatype.nexus.repository.upload.UploadManager;
@@ -52,10 +54,16 @@ public class ComponentsResourceTest
   private RepositoryManagerRESTAdapter repositoryManagerRESTAdapter;
 
   @Mock
+  private MaintenanceService maintenanceService;
+
+  @Mock
   private UploadManager uploadManager;
 
   @Mock
   private UploadConfiguration uploadConfiguration;
+
+  @Mock
+  private ComponentXOFactory componentXOFactory;
 
   @Before
   public void setUp() throws Exception {
@@ -63,7 +71,8 @@ public class ComponentsResourceTest
 
     when(uploadConfiguration.isEnabled()).thenReturn(true);
 
-    underTest = new ComponentsResource(repositoryManagerRESTAdapter, uploadManager, uploadConfiguration);
+    underTest = new ComponentsResource(repositoryManagerRESTAdapter, maintenanceService, uploadManager,
+        uploadConfiguration, componentXOFactory);
   }
 
   @SuppressWarnings("java:S2699")

@@ -41,7 +41,6 @@ import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterables;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -66,11 +65,9 @@ public class GroupFacetImpl
 
   private final ConstraintViolationFactory constraintViolationFactory;
 
-  @VisibleForTesting
-  static final String CONFIG_KEY = "group";
+  public static final String CONFIG_KEY = "group";
 
-  @VisibleForTesting
-  static class Config
+  public static class Config
   {
     @NotNull
     @JsonDeserialize(as = LinkedHashSet.class) // retain order

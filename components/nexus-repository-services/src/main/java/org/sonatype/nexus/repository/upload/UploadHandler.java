@@ -112,6 +112,14 @@ public interface UploadHandler
   }
 
   /**
+   * Denote if the format is supported using upload through the UI
+   * @since 3.next
+   */
+  default boolean supportsUiUpload() {
+    return true;
+  }
+
+  /**
    * Denote if the format is supported using the export/import task
    * @since 3.24
    */

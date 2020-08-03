@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.store;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -38,29 +39,41 @@ import org.apache.ibatis.annotations.Param;
 public interface AssetDAO
     extends ContentDataAccess
 {
+  String FILTER_PARAMS = "filterParams";
+
   /**
    * Count all assets in the given repository.
    *
    * @param repositoryId the repository to count
+   * @param kind optional kind of assets to count
+   * @param filter optional filter to apply
+   * @param filterParams parameter map for the optional filter
    * @return count of assets in the repository
    */
-  int countAssets(@Param("repositoryId") int repositoryId);
+  int countAssets(@Param("repositoryId") int repositoryId,
+                  @Nullable @Param("kind") String kind,
+                  @Nullable @Param("filter") String filter,
+                  @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams);
 
   /**
    * Browse all assets in the given repository in a paged fashion.
    *
    * @param repositoryId the repository to browse
-   * @param kind the kind of assets to return
    * @param limit maximum number of assets to return
    * @param continuationToken optional token to continue from a previous request
+   * @param kind optional kind of assets to return
+   * @param filter optional filter to apply
+   * @param filterParams parameter map for the optional filter
    * @return collection of assets and the next continuation token
    *
    * @see Continuation#nextContinuationToken()
    */
   Continuation<Asset> browseAssets(@Param("repositoryId") int repositoryId,
-                                   @Param("kind") @Nullable String kind,
                                    @Param("limit") int limit,
-                                   @Param("continuationToken") @Nullable String continuationToken);
+                                   @Nullable @Param("continuationToken") String continuationToken,
+                                   @Nullable @Param("kind") String kind,
+                                   @Nullable @Param("filter") String filter,
+                                   @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams);
 
   /**
    * Browse all assets associated with the given logical component.
@@ -141,15 +154,6 @@ public interface AssetDAO
   boolean deleteAsset(Asset asset);
 
   /**
-   * Deletes the asset located at the given path in the content data store.
-   *
-   * @param repositoryId the repository containing the asset
-   * @param path the path of the asset
-   * @return {@code true} if the asset was deleted
-   */
-  boolean deletePath(@Param("repositoryId") int repositoryId, @Param("path") String path);
-
-  /**
    * Deletes all assets in the given repository from the content data store.
    *
    * @param repositoryId the repository containing the assets
@@ -159,16 +163,40 @@ public interface AssetDAO
   boolean deleteAssets(@Param("repositoryId") int repositoryId, @Param("limit") int limit);
 
   /**
-   * Purge assets without component in the given repository last downloaded more than given number of days ago
+   * Selects assets without a component in the given repository last downloaded more than given number of days ago.
    *
-   * @param repositoryId the repository to browse
-   * @param daysAgo last downloaded more than this
-   * @param limit at most items to delete
-   * @return number of assets deleted
+   * @param repositoryId the repository to check
+   * @param daysAgo the number of days ago to check
+   * @param limit when positive limits the number of assets selected per-call
+   * @return selected asset ids
    *
-   * @since 3.24
+   * @since 3.next
    */
-  int purgeNotRecentlyDownloaded(@Param("repositoryId") int repositoryId,
-                                 @Param("daysAgo") int daysAgo,
-                                 @Param("limit") int limit);
+  int[] selectNotRecentlyDownloaded(@Param("repositoryId") int repositoryId,
+                                    @Param("daysAgo") int daysAgo,
+                                    @Param("limit") int limit);
+
+  /**
+   * Purges the selected assets.
+   *
+   * This version of the method is for databases that support primitive arrays.
+   *
+   * @param assetIds the assets to purge
+   * @return the number of purged assets
+   *
+   * @since 3.next
+   */
+  int purgeSelectedAssets(@Param("assetIds") int[] assetIds);
+
+  /**
+   * Purges the selected assets.
+   *
+   * This version of the method is for databases that don't yet support primitive arrays.
+   *
+   * @param assetIds the assets to purge
+   * @return the number of purged assets
+   *
+   * @since 3.next
+   */
+  int purgeSelectedAssets(@Param("assetIds") Integer[] assetIds);
 }

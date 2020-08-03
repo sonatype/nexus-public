@@ -15,8 +15,6 @@ package org.sonatype.nexus.script.plugin.internal.rest;
 import java.util.Map;
 
 import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -28,7 +26,6 @@ import javax.ws.rs.core.Response;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.script.plugin.internal.security.ScriptPrivilegeDescriptor;
 import org.sonatype.nexus.security.SecuritySystem;
-import org.sonatype.nexus.security.internal.rest.SecurityApiResource;
 import org.sonatype.nexus.security.privilege.PrivilegeDescriptor;
 import org.sonatype.nexus.security.privilege.rest.PrivilegeApiResourceSupport;
 
@@ -40,17 +37,12 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 /**
  * @since 3.19
  */
-@Named
-@Singleton
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
-@Path(ScriptPrivilegeApiResource.RESOURCE_URI)
 public class ScriptPrivilegeApiResource
     extends PrivilegeApiResourceSupport
     implements Resource, ScriptPrivilegeApiResourceDoc
 {
-  public static final String RESOURCE_URI = SecurityApiResource.RESOURCE_URI + "privileges";
-
   @Inject
   public ScriptPrivilegeApiResource(final SecuritySystem securitySystem,
                                     final Map<String, PrivilegeDescriptor> privilegeDescriptors)

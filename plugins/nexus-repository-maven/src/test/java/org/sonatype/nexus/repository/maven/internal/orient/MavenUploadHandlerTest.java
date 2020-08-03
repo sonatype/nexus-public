@@ -364,7 +364,7 @@ public class MavenUploadHandlerTest
     catch (ValidationErrorsException e) {
       assertThat(e.getValidationErrors().size(), is(1));
       assertThat(e.getValidationErrors().get(0).getMessage(),
-          is("Version policy mismatch, cannot upload SNAPSHOT content to RELEASE repositories for file '0'"));
+          is("Version policy mismatch, cannot upload SNAPSHOT content to RELEASE repositories for file 'org/apache/maven/tomcat/5.0.28-SNAPSHOT/tomcat-5.0.28-SNAPSHOT.jar'"));
     }
   }
 
@@ -471,7 +471,7 @@ public class MavenUploadHandlerTest
   }
 
   @Test
-  public void testValidatPom() {
+  public void testValidatePom() {
     Model model = new Model();
     model.setGroupId("testGroup");
     model.setArtifactId("testArtifact");
@@ -481,7 +481,7 @@ public class MavenUploadHandlerTest
   }
 
   @Test
-  public void testValidatPom_parentGroup() {
+  public void testValidatePom_parentGroup() {
     Model model = new Model();
     model.setParent(new Parent());
     model.getParent().setGroupId("parentGroup");
@@ -492,7 +492,7 @@ public class MavenUploadHandlerTest
   }
 
   @Test
-  public void testValidatPom_parentVersion() {
+  public void testValidatePom_parentVersion() {
     Model model = new Model();
     model.setParent(new Parent());
     model.getParent().setVersion("2.0");

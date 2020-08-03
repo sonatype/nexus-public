@@ -68,10 +68,10 @@ public interface ContentRepositoryDAO
   void updateContentRepositoryAttributes(ContentRepository contentRepository);
 
   /**
-   * Deletes a content repository from the content data store based on its config identity.
+   * Deletes a content repository from the content data store.
    *
-   * @param configRepositoryId the config repository id
+   * @param contentRepository the content repository to delete
    * @return {@code true} if the content repository was deleted
    */
-  boolean deleteContentRepository(@Param("configRepositoryId") EntityId configRepositoryId);
+  boolean deleteContentRepository(ContentRepository contentRepository);
 }

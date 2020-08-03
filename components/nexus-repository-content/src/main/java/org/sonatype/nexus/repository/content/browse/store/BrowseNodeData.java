@@ -12,8 +12,6 @@
  */
 package org.sonatype.nexus.repository.content.browse.store;
 
-import java.util.Optional;
-
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.EntityId;
@@ -22,7 +20,6 @@ import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toExternalId;
@@ -55,13 +52,7 @@ public class BrowseNodeData
   Integer dbComponentId; // NOSONAR: internal id
 
   @Nullable
-  private Component component;
-
-  @Nullable
   Integer dbAssetId; // NOSONAR: internal id
-
-  @Nullable
-  private Asset asset;
 
   @Nullable
   private String packageUrl;
@@ -97,16 +88,6 @@ public class BrowseNodeData
   @Override
   public String getPackageUrl() {
     return packageUrl;
-  }
-
-  // Content-specific API
-
-  public Optional<Component> component() {
-    return ofNullable(getComponent()); // trigger lazy-loading by calling getter
-  }
-
-  public Optional<Asset> asset() {
-    return ofNullable(getAsset()); // trigger lazy-loading by calling getter
   }
 
   // MyBatis setters + validation
@@ -156,7 +137,6 @@ public class BrowseNodeData
     else {
       this.dbComponentId = null;
     }
-    this.component = component;
   }
 
   /**
@@ -169,7 +149,6 @@ public class BrowseNodeData
     else {
       this.dbAssetId = null;
     }
-    this.asset = asset;
   }
 
   /**
@@ -177,17 +156,5 @@ public class BrowseNodeData
    */
   public void setPackageUrl(@Nullable final String packageUrl) {
     this.packageUrl = packageUrl;
-  }
-
-  // Getters to support lazy-loading (MyBatis will intercept them)
-
-  @Nullable
-  protected Component getComponent() {
-    return component;
-  }
-
-  @Nullable
-  protected Asset getAsset() {
-    return asset;
   }
 }

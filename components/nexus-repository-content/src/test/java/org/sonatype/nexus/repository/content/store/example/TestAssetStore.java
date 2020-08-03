@@ -30,7 +30,9 @@ public class TestAssetStore
     extends AssetStore<TestAssetDAO>
 {
   @Inject
-  public TestAssetStore(final DataSessionSupplier sessionSupplier, @Assisted final String storeName) {
+  public TestAssetStore(final DataSessionSupplier sessionSupplier,
+                        @Assisted final String storeName)
+  {
     super(sessionSupplier, storeName, TestAssetDAO.class);
   }
 

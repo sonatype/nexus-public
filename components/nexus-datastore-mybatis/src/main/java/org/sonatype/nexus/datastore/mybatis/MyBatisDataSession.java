@@ -71,6 +71,11 @@ public final class MyBatisDataSession
   }
 
   @Override
+  public String sqlDialect() {
+    return session.getConfiguration().getDatabaseId();
+  }
+
+  @Override
   protected void doCommit() {
     callHooks(preCommit);
     session.commit();

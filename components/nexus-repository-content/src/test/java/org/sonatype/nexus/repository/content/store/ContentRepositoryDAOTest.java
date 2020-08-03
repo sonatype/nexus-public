@@ -189,17 +189,21 @@ public class ContentRepositoryDAOTest
 
     try (DataSession<?> session = sessionRule.openSession("content")) {
       ContentRepositoryDAO dao = session.access(TestContentRepositoryDAO.class);
+      ContentRepositoryData candidate = new ContentRepositoryData();
 
-      assertTrue(dao.deleteContentRepository(configRepositoryId1));
+      candidate.setConfigRepositoryId(configRepositoryId1);
+      assertTrue(dao.deleteContentRepository(candidate));
 
       assertThat(dao.browseContentRepositories(),
           contains(allOf(sameConfigRepository(contentRepository2), sameAttributes(contentRepository2))));
 
-      assertTrue(dao.deleteContentRepository(configRepositoryId2));
+      candidate.setConfigRepositoryId(configRepositoryId2);
+      assertTrue(dao.deleteContentRepository(candidate));
 
       assertThat(dao.browseContentRepositories(), emptyIterable());
 
-      assertFalse(dao.deleteContentRepository(new EntityUUID(new UUID(0, 0))));
+      candidate.setConfigRepositoryId(new EntityUUID(new UUID(0, 0)));
+      assertFalse(dao.deleteContentRepository(candidate));
     }
   }
 }

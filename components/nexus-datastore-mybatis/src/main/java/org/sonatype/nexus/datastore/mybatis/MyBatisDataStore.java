@@ -475,7 +475,7 @@ public class MyBatisDataStore
     else {
       registerSimpleMapper(accessType);
     }
-    info(REGISTERED_MESSAGE, accessType.getSimpleName());
+    debug(REGISTERED_MESSAGE, accessType.getSimpleName());
   }
 
   /**
@@ -652,7 +652,7 @@ public class MyBatisDataStore
   @VisibleForTesting
   public void register(final Interceptor interceptor) {
     mybatisConfig.addInterceptor(interceptor);
-    info(REGISTERED_MESSAGE, interceptor.getClass().getSimpleName());
+    debug(REGISTERED_MESSAGE, interceptor.getClass().getSimpleName());
   }
 
   /**
@@ -661,7 +661,7 @@ public class MyBatisDataStore
   @VisibleForTesting
   public void register(final TypeHandler<?> handler) {
     prepare(handler).register(handler);
-    info(REGISTERED_MESSAGE, handler.getClass().getSimpleName());
+    debug(REGISTERED_MESSAGE, handler.getClass().getSimpleName());
   }
 
   /**
@@ -669,7 +669,7 @@ public class MyBatisDataStore
    */
   private <T> void register(final Class<T> type, final TypeHandler<? extends T> handler) {
     prepare(handler).register(type, handler);
-    info(REGISTERED_MESSAGE, handler.getClass().getSimpleName() + " (" + type.getSimpleName() + ")");
+    debug(REGISTERED_MESSAGE, handler.getClass().getSimpleName() + " (" + type.getSimpleName() + ")");
   }
 
   /**
@@ -677,12 +677,7 @@ public class MyBatisDataStore
    */
   private <T> void registerDetached(final TypeHandler<? extends T> handler) {
     prepare(handler).register(null, null, handler);
-    info(REGISTERED_MESSAGE, handler.getClass().getSimpleName() + " (detached)");
-  }
-
-  @Override
-  public String getDatabaseId() {
-    return mybatisConfig.getDatabaseId();
+    debug(REGISTERED_MESSAGE, handler.getClass().getSimpleName() + " (detached)");
   }
 
   /**

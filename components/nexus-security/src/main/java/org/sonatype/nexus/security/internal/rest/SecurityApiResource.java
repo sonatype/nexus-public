@@ -18,8 +18,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -33,22 +31,15 @@ import org.sonatype.nexus.security.user.UserManager;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
-import static org.sonatype.nexus.rest.APIConstants.BETA_API_PREFIX;
-
 /**
  * @since 3.17
  */
-@Named
-@Singleton
 @RequiresAuthentication
-@Path(SecurityApiResource.RESOURCE_URI)
 @Produces(MediaType.APPLICATION_JSON)
 public class SecurityApiResource
     extends ComponentSupport
     implements Resource, SecurityApiResourceDoc
 {
-  public static final String RESOURCE_URI = BETA_API_PREFIX + "/security/";
-
   private final Map<String, UserManager> userManagers;
 
   @Inject

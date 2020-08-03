@@ -139,7 +139,7 @@ public class SearchResource
       repoQuery.timeout(Duration.ofSeconds(seconds));
     }
 
-    SearchResponse response = searchQueryService.search(query, from, getPageSize());
+    SearchResponse response = searchQueryService.search(repoQuery, from, getPageSize());
 
     List<ComponentXO> componentXOs = Arrays.stream(response.getHits().hits())
         .map(this::toComponent)
@@ -203,7 +203,7 @@ public class SearchResource
       repoQuery.timeout(Duration.ofSeconds(seconds));
     }
 
-    SearchResponse componentResponse = searchQueryService.search(query, from, getPageSize());
+    SearchResponse componentResponse = searchQueryService.search(repoQuery, from, getPageSize());
 
     List<AssetXO> assetXOs = retrieveAssets(componentResponse, uriInfo);
     return new Page<>(assetXOs, componentResponse.getHits().hits().length == getPageSize() ?
@@ -250,7 +250,7 @@ public class SearchResource
       repoQuery.timeout(Duration.ofSeconds(seconds));
     }
 
-    return this.retrieveAssets(searchQueryService.search(query, from, getPageSize()), uriInfo);
+    return this.retrieveAssets(searchQueryService.search(repoQuery, from, getPageSize()), uriInfo);
   }
 
   private List<AssetXO> retrieveAssets(final QueryBuilder query,

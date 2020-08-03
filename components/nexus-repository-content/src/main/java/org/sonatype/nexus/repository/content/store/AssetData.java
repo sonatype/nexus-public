@@ -98,8 +98,8 @@ public class AssetData
    * Sets the asset path; asset paths must start with a slash.
    */
   public void setPath(final String path) {
-    checkArgument(path.charAt(0) == '/');
-    this.path = checkNotNull(path);
+    checkArgument(path != null && path.charAt(0) == '/', "Paths must start with a slash");
+    this.path = path;
   }
 
   /**

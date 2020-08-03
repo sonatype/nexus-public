@@ -110,7 +110,7 @@ public class UploadDefinitionResourceTest
   }
 
   private UploadDefinition createUploadDefinition(String format) {
-    return new UploadDefinition(format, false,
+    return new UploadDefinition(format, true, false,
         Collections.singletonList(new UploadFieldDefinition("testField", true, UploadFieldDefinition.Type.STRING)),
         Collections.singletonList(new UploadFieldDefinition("testField", true, UploadFieldDefinition.Type.STRING)));
   }

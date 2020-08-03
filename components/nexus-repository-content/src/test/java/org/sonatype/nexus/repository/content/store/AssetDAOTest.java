@@ -33,6 +33,7 @@ import org.hamcrest.collection.IsIterableContainingInOrder;
 import org.junit.Before;
 import org.junit.Test;
 
+import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.summingInt;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.allOf;
@@ -43,6 +44,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.sonatype.nexus.repository.content.store.ComponentDAOTest.browseComponents;
+import static org.sonatype.nexus.repository.content.store.ComponentDAOTest.countComponents;
 
 /**
  * Test {@link AssetDAO}.
@@ -99,11 +102,11 @@ public class AssetDAOTest
     try (DataSession<?> session = sessionRule.openSession("content")) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
-      assertThat(dao.browseAssets(repositoryId, null, 10, null), emptyIterable());
+      assertThat(browseAssets(dao, repositoryId, null, 10, null), emptyIterable());
 
       dao.createAsset(asset1);
 
-      assertThat(dao.browseAssets(repositoryId, null, 10, null), contains(
+      assertThat(browseAssets(dao, repositoryId, null, 10, null), contains(
           allOf(samePath(asset1), sameKind(asset1), sameAttributes(asset1))));
 
       dao.createAsset(asset2);
@@ -112,7 +115,7 @@ public class AssetDAOTest
       dao.createAsset(asset5);
 
       //browse all assets
-      assertThat(dao.browseAssets(repositoryId, null, 10, null), contains(
+      assertThat(browseAssets(dao, repositoryId, null, 10, null), contains(
           allOf(samePath(asset1), sameKind(asset1), sameAttributes(asset1)),
           allOf(samePath(asset2), sameKind(asset2), sameAttributes(asset2)),
           allOf(samePath(asset3), sameKind(asset3), sameAttributes(asset3)),
@@ -120,10 +123,10 @@ public class AssetDAOTest
           allOf(samePath(asset5), sameKind(asset5), sameAttributes(asset5))));
 
       //browse by kind
-      assertThat(dao.browseAssets(repositoryId, aKind, 10, null), contains(
+      assertThat(browseAssets(dao, repositoryId, aKind, 10, null), contains(
           allOf(samePath(asset3), sameKind(asset3), sameAttributes(asset3))));
 
-      assertThat(dao.browseAssets(repositoryId, anotherKind, 10, null), contains(
+      assertThat(browseAssets(dao, repositoryId, anotherKind, 10, null), contains(
           allOf(samePath(asset4), sameKind(asset4), sameAttributes(asset4)),
           allOf(samePath(asset5), sameKind(asset5), sameAttributes(asset5))));
 
@@ -263,7 +266,7 @@ public class AssetDAOTest
 
       assertTrue(dao.deleteAsset(asset1));
 
-      assertThat(dao.browseAssets(repositoryId, null, 10, null), contains(
+      assertThat(browseAssets(dao, repositoryId, null, 10, null), contains(
           allOf(samePath(asset2), sameKind(asset2), sameAttributes(asset2)),
           allOf(samePath(asset3), sameKind(asset3), sameAttributes(asset3)),
           allOf(samePath(asset4), sameKind(asset4), sameAttributes(asset4)),
@@ -271,9 +274,12 @@ public class AssetDAOTest
 
       assertTrue(dao.deleteAssets(repositoryId, 0));
 
-      assertThat(dao.browseAssets(repositoryId, null, 10, null), emptyIterable());
+      assertThat(browseAssets(dao, repositoryId, null, 10, null), emptyIterable());
 
-      assertFalse(dao.deletePath(repositoryId, "test-path"));
+      AssetData candidate = new AssetData();
+      candidate.setRepositoryId(repositoryId);
+      candidate.setPath("/test-path");
+      assertFalse(dao.deleteAsset(candidate));
     }
   }
 
@@ -516,15 +522,15 @@ public class AssetDAOTest
 
       assertThat(generatedRepositories().stream()
           .map(ContentRepositoryData::contentRepositoryId)
-          .collect(summingInt(assetDao::countAssets)), is(100));
+          .collect(summingInt(r -> countAssets(assetDao, r))), is(100));
 
       assertThat(generatedRepositories().stream()
           .map(ContentRepositoryData::contentRepositoryId)
-          .collect(summingInt(componentDAO::countComponents)), is(10));
+          .collect(summingInt(r -> countComponents(componentDAO, r))), is(10));
 
       // now gather them back by browsing
       generatedRepositories().forEach(r ->
-          componentDAO.browseComponents(r.repositoryId, null, 10, null).stream()
+          browseComponents(componentDAO, r.repositoryId, null, 10, null).stream()
               .map(ComponentData.class::cast)
               .map(assetDao::browseComponentAssets)
               .forEach(browsedAssets::addAll));
@@ -565,11 +571,11 @@ public class AssetDAOTest
     try (DataSession<?> session = sessionRule.openSession("content")) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
-      assertThat(dao.countAssets(repositoryId), is(1000));
+      assertThat(countAssets(dao, repositoryId), is(1000));
 
       int page = 0;
 
-      Continuation<Asset> assets = dao.browseAssets(repositoryId, null, 10, null);
+      Continuation<Asset> assets = browseAssets(dao, repositoryId, null, 10, null);
       while (!assets.isEmpty()) {
 
         // verify we got the expected slice
@@ -580,7 +586,7 @@ public class AssetDAOTest
                 .map(ExampleContentTestSupport::samePath)
                 .collect(toList())));
 
-        assets = dao.browseAssets(repositoryId, null, 10, assets.nextContinuationToken());
+        assets = browseAssets(dao, repositoryId, null, 10, assets.nextContinuationToken());
 
         page++;
       }
@@ -635,25 +641,25 @@ public class AssetDAOTest
     try (DataSession<?> session = sessionRule.openSession("content")) {
       AssetDAO dao = session.access(TestAssetDAO.class);
 
-      assertThat(dao.countAssets(repositoryId), is(100));
+      assertThat(countAssets(dao, repositoryId), is(100));
 
-      assertThat(dao.browseAssets(repositoryId, null, 100, null).size(), is(100));
+      assertThat(browseAssets(dao, repositoryId, null, 100, null).size(), is(100));
 
       dao.deleteAssets(repositoryId, 20);
 
-      assertThat(dao.browseAssets(repositoryId, null, 100, null).size(), is(80));
+      assertThat(browseAssets(dao, repositoryId, null, 100, null).size(), is(80));
 
       dao.deleteAssets(repositoryId, 10);
 
-      assertThat(dao.browseAssets(repositoryId, null, 100, null).size(), is(70));
+      assertThat(browseAssets(dao, repositoryId, null, 100, null).size(), is(70));
 
       dao.deleteAssets(repositoryId, 0);
 
-      assertThat(dao.browseAssets(repositoryId, null, 100, null).size(), is(0));
+      assertThat(browseAssets(dao, repositoryId, null, 100, null).size(), is(0));
 
       dao.deleteAssets(repositoryId, -1);
 
-      assertThat(dao.browseAssets(repositoryId, null, 100, null).size(), is(0));
+      assertThat(browseAssets(dao, repositoryId, null, 100, null).size(), is(0));
     }
   }
 
@@ -679,8 +685,15 @@ public class AssetDAOTest
       assertTrue(dao.readPath(repositoryId, asset1.path()).isPresent());
       assertTrue(dao.readPath(repositoryId, asset2.path()).isPresent());
 
-      int deleted = dao.purgeNotRecentlyDownloaded(repositoryId, 3, 10);
-      assertThat(deleted, is(1));
+      int[] assetIds = dao.selectNotRecentlyDownloaded(repositoryId, 3, 10);
+      assertThat(assetIds, is(new int[]{2}));
+
+      if ("H2".equals(session.sqlDialect())) {
+        dao.purgeSelectedAssets(stream(assetIds).boxed().toArray(Integer[]::new));
+      }
+      else {
+        dao.purgeSelectedAssets(assetIds);
+      }
 
       assertTrue(dao.readPath(repositoryId, asset1.path()).isPresent());
       assertFalse(dao.readPath(repositoryId, asset2.path()).isPresent());
@@ -715,5 +728,19 @@ public class AssetDAOTest
       assertThat(tempResult, sameKind(asset2));
       assertThat(tempResult, sameAttributes(asset2));
     }
+  }
+
+
+  static int countAssets(final AssetDAO dao, final int repositoryId) {
+    return dao.countAssets(repositoryId, null, null, null);
+  }
+
+  static Continuation<Asset> browseAssets(final AssetDAO dao,
+                                          final int repositoryId,
+                                          final String kind,
+                                          final int limit,
+                                          final String continuationToken)
+  {
+    return dao.browseAssets(repositoryId, limit, continuationToken, kind, null, null);
   }
 }

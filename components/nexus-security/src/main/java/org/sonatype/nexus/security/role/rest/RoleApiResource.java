@@ -16,8 +16,6 @@ import java.util.Comparator;
 import java.util.List;
 
 import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -39,7 +37,6 @@ import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authz.AuthorizationManager;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
-import org.sonatype.nexus.security.internal.rest.SecurityApiResource;
 import org.sonatype.nexus.security.privilege.NoSuchPrivilegeException;
 import org.sonatype.nexus.security.role.DuplicateRoleException;
 import org.sonatype.nexus.security.role.NoSuchRoleException;
@@ -60,17 +57,12 @@ import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 /**
  * @since 3.19
  */
-@Named
-@Singleton
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
-@Path(RoleApiResource.RESOURCE_URI)
 public class RoleApiResource
     extends ComponentSupport
     implements Resource, RoleApiResourceDoc
 {
-  public static final String RESOURCE_URI = SecurityApiResource.RESOURCE_URI + "roles";
-
   public static final String SOURCE_NOT_FOUND = "\"Source '%s' not found.\"";
 
   public static final String ROLE_NOT_FOUND = "\"Role '%s' not found.\"";

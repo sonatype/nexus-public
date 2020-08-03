@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.store;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -25,10 +26,21 @@ import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.event.asset.AssetAttributesEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetDownloadedEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetKindEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetPreDeleteEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetPrePurgeEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetPurgedEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetUploadedEvent;
+import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryDeletedEvent;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
 
+import static java.util.Arrays.stream;
 import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttributeChange;
 
 /**
@@ -38,7 +50,7 @@ import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttrib
  */
 @Named
 public class AssetStore<T extends AssetDAO>
-    extends ContentStoreSupport<T>
+    extends ContentStoreEventSupport<T>
 {
   @Inject
   public AssetStore(final DataSessionSupplier sessionSupplier,
@@ -52,31 +64,42 @@ public class AssetStore<T extends AssetDAO>
    * Count all assets in the given repository.
    *
    * @param repositoryId the repository to count
+   * @param kind optional kind of assets to count
+   * @param filter optional filter to apply
+   * @param filterParams parameter map for the optional filter
    * @return count of assets in the repository
    */
   @Transactional
-  public int countAssets(final int repositoryId) {
-    return dao().countAssets(repositoryId);
+  public int countAssets(final int repositoryId,
+                         @Nullable final String kind,
+                         @Nullable final String filter,
+                         @Nullable final Map<String, Object> filterParams)
+  {
+    return dao().countAssets(repositoryId, kind, filter, filterParams);
   }
 
   /**
    * Browse all assets in the given repository in a paged fashion.
    *
    * @param repositoryId the repository to browse
-   * @param kind the kind of assets to return
    * @param limit maximum number of assets to return
    * @param continuationToken optional token to continue from a previous request
+   * @param kind optional kind of assets to return
+   * @param filter optional filter to apply
+   * @param filterParams parameter map for the optional filter
    * @return collection of assets and the next continuation token
    *
    * @see Continuation#nextContinuationToken()
    */
   @Transactional
   public Continuation<Asset> browseAssets(final int repositoryId,
-                                          @Nullable final String kind,
                                           final int limit,
-                                          @Nullable final String continuationToken)
+                                          @Nullable final String continuationToken,
+                                          @Nullable final String kind,
+                                          @Nullable final String filter,
+                                          @Nullable final Map<String, Object> filterParams)
   {
-    return dao().browseAssets(repositoryId, kind, limit, continuationToken);
+    return dao().browseAssets(repositoryId, limit, continuationToken, kind, filter, filterParams);
   }
 
   /**
@@ -98,6 +121,8 @@ public class AssetStore<T extends AssetDAO>
   @Transactional
   public void createAsset(final AssetData asset) {
     dao().createAsset(asset);
+
+    postCommitEvent(() -> new AssetCreatedEvent(asset));
   }
 
   /**
@@ -133,6 +158,8 @@ public class AssetStore<T extends AssetDAO>
   @Transactional
   public void updateAssetKind(final Asset asset) {
     dao().updateAssetKind(asset);
+
+    postCommitEvent(() -> new AssetKindEvent(asset));
   }
 
   /**
@@ -146,10 +173,14 @@ public class AssetStore<T extends AssetDAO>
                                     final String key,
                                     final @Nullable Object value)
   {
+    // reload latest attributes, apply change, then update database if necessary
     dao().readAssetAttributes(asset).ifPresent(attributes -> {
       ((AssetData) asset).setAttributes(attributes);
+
       if (applyAttributeChange(attributes, change, key, value)) {
         dao().updateAssetAttributes(asset);
+
+        postCommitEvent(() -> new AssetAttributesEvent(asset, change, key, value));
       }
     });
   }
@@ -162,6 +193,8 @@ public class AssetStore<T extends AssetDAO>
   @Transactional
   public void updateAssetBlobLink(final Asset asset) {
     dao().updateAssetBlobLink(asset);
+
+    postCommitEvent(() -> new AssetUploadedEvent(asset));
   }
 
   /**
@@ -172,6 +205,8 @@ public class AssetStore<T extends AssetDAO>
   @Transactional
   public void markAsDownloaded(final Asset asset) {
     dao().markAsDownloaded(asset);
+
+    postCommitEvent(() -> new AssetDownloadedEvent(asset));
   }
 
   /**
@@ -182,6 +217,9 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public boolean deleteAsset(final Asset asset) {
+    preCommitEvent(() -> new AssetPreDeleteEvent(asset));
+    postCommitEvent(() -> new AssetDeletedEvent(asset));
+
     return dao().deleteAsset(asset);
   }
 
@@ -194,11 +232,15 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public boolean deletePath(final int repositoryId, final String path) {
-    return dao().deletePath(repositoryId, path);
+    return dao().readPath(repositoryId, path)
+        .map(this::deleteAsset)
+        .orElse(false);
   }
 
   /**
    * Deletes all assets in the given repository from the content data store.
+   *
+   * Events will not be sent for these deletes, instead listen for {@link ContentRepositoryDeletedEvent}.
    *
    * @param repositoryId the repository containing the assets
    * @return {@code true} if any assets were deleted
@@ -216,17 +258,35 @@ public class AssetStore<T extends AssetDAO>
   }
 
   /**
-   * Purge assets without component in the given repository last downloaded more than given number of days ago
+   * Purge assets without a component in the given repository last downloaded more than given number of days ago
    *
-   * @param repositoryId the repository to browse
-   * @param daysAgo last downloaded more than this
-   * @param limit at most items to delete
-   * @return number of assets deleted
+   * @param repositoryId the repository to check
+   * @param daysAgo the number of days ago to check
+   * @return number of purged assets
    *
    * @since 3.24
    */
   @Transactional
-  public int purgeNotRecentlyDownloaded(final int repositoryId, final int daysAgo, final int limit) {
-    return dao().purgeNotRecentlyDownloaded(repositoryId, daysAgo, limit);
+  public int purgeNotRecentlyDownloaded(final int repositoryId, final int daysAgo) {
+    int purged = 0;
+    while (true) {
+      int[] assetIds = dao().selectNotRecentlyDownloaded(repositoryId, daysAgo, deleteBatchSize());
+      if (assetIds.length == 0) {
+        break; // nothing left to purge
+      }
+      if ("H2".equals(thisSession().sqlDialect())) {
+        // workaround lack of primitive array support in H2 (should be fixed in H2 1.4.201?)
+        purged += dao().purgeSelectedAssets(stream(assetIds).boxed().toArray(Integer[]::new));
+      }
+      else {
+        purged += dao().purgeSelectedAssets(assetIds);
+      }
+
+      preCommitEvent(() -> new AssetPrePurgeEvent(repositoryId, assetIds));
+      postCommitEvent(() -> new AssetPurgedEvent(repositoryId, assetIds));
+
+      commitChangesSoFar();
+    }
+    return purged;
   }
 }

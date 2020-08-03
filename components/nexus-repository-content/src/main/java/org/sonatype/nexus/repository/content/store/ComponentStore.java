@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.store;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -23,10 +24,19 @@ import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.event.component.ComponentAttributesEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentCreatedEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentDeletedEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentKindEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentPreDeleteEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentPrePurgeEvent;
+import org.sonatype.nexus.repository.content.event.component.ComponentPurgedEvent;
+import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryDeletedEvent;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
 
+import static java.util.Arrays.stream;
 import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttributeChange;
 
 /**
@@ -36,7 +46,7 @@ import static org.sonatype.nexus.repository.content.AttributesHelper.applyAttrib
  */
 @Named
 public class ComponentStore<T extends ComponentDAO>
-    extends ContentStoreSupport<T>
+    extends ContentStoreEventSupport<T>
 {
   @Inject
   public ComponentStore(final DataSessionSupplier sessionSupplier,
@@ -50,31 +60,42 @@ public class ComponentStore<T extends ComponentDAO>
    * Count all components in the given repository.
    *
    * @param repositoryId the repository to count
+   * @param kind optional kind of components to count
+   * @param filter optional filter to apply
+   * @param filterParams parameter map for the optional filter
    * @return count of components in the repository
    */
   @Transactional
-  public int countComponents(final int repositoryId) {
-    return dao().countComponents(repositoryId);
+  public int countComponents(final int repositoryId,
+                             @Nullable final String kind,
+                             @Nullable final String filter,
+                             @Nullable final Map<String, Object> filterParams)
+  {
+    return dao().countComponents(repositoryId, kind, filter, filterParams);
   }
 
   /**
    * Browse all components in the given repository in a paged fashion.
    *
    * @param repositoryId the repository to browse
-   * @param kind the kind of components to return
    * @param limit maximum number of components to return
    * @param continuationToken optional token to continue from a previous request
+   * @param kind optional kind of components to return
+   * @param filter optional filter to apply
+   * @param filterParams parameter map for the optional filter
    * @return collection of components and the next continuation token
    *
    * @see Continuation#nextContinuationToken()
    */
   @Transactional
   public Continuation<Component> browseComponents(final int repositoryId,
-                                                  @Nullable final String kind,
                                                   final int limit,
-                                                  @Nullable final String continuationToken)
+                                                  @Nullable final String continuationToken,
+                                                  @Nullable final String kind,
+                                                  @Nullable final String filter,
+                                                  @Nullable final Map<String, Object> filterParams)
   {
-    return dao().browseComponents(repositoryId, kind, limit, continuationToken);
+    return dao().browseComponents(repositoryId, limit, continuationToken, kind, filter, filterParams);
   }
 
   /**
@@ -125,6 +146,8 @@ public class ComponentStore<T extends ComponentDAO>
   @Transactional
   public void createComponent(final ComponentData component) {
     dao().createComponent(component);
+
+    postCommitEvent(() -> new ComponentCreatedEvent(component));
   }
 
   /**
@@ -164,6 +187,8 @@ public class ComponentStore<T extends ComponentDAO>
   @Transactional
   public void updateComponentKind(final Component component) {
     dao().updateComponentKind(component);
+
+    postCommitEvent(() -> new ComponentKindEvent(component));
   }
 
   /**
@@ -177,10 +202,14 @@ public class ComponentStore<T extends ComponentDAO>
                                         final String key,
                                         final @Nullable Object value)
   {
+    // reload latest attributes, apply change, then update database if necessary
     dao().readComponentAttributes(component).ifPresent(attributes -> {
       ((ComponentData) component).setAttributes(attributes);
+
       if (applyAttributeChange(attributes, change, key, value)) {
         dao().updateComponentAttributes(component);
+
+        postCommitEvent(() -> new ComponentAttributesEvent(component, change, key, value));
       }
     });
   }
@@ -192,11 +221,12 @@ public class ComponentStore<T extends ComponentDAO>
    * @return {@code true} if the component was deleted
    */
   @Transactional
-  public boolean deleteComponent(final Component component)
-  {
+  public boolean deleteComponent(final Component component) {
+    preCommitEvent(() -> new ComponentPreDeleteEvent(component));
+    postCommitEvent(() -> new ComponentDeletedEvent(component));
+
     return dao().deleteComponent(component);
   }
-
 
   /**
    * Deletes the component located at the given coordinate in the content data store.
@@ -213,11 +243,15 @@ public class ComponentStore<T extends ComponentDAO>
                                   final String name,
                                   final String version)
   {
-    return dao().deleteCoordinate(repositoryId, namespace, name, version);
+    return dao().readCoordinate(repositoryId, namespace, name, version)
+        .map(this::deleteComponent)
+        .orElse(false);
   }
 
   /**
    * Deletes all components in the given repository from the content data store.
+   *
+   * Events will not be sent for these deletes, instead listen for {@link ContentRepositoryDeletedEvent}.
    *
    * @param repositoryId the repository containing the components
    * @return {@code true} if any components were deleted
@@ -237,16 +271,33 @@ public class ComponentStore<T extends ComponentDAO>
   /**
    * Purge components in the given repository whose assets were last downloaded more than given number of days ago
    *
-   * @param repositoryId the repository to browse
-   * @param daysAgo last downloaded more than this
-   * @param limit at most items to delete
-   * @return number of components deleted
+   * @param repositoryId the repository to check
+   * @param daysAgo the number of days ago to check
+   * @return number of purged components
    *
    * @since 3.24
    */
   @Transactional
-  public int purgeNotRecentlyDownloaded(final int repositoryId, final int daysAgo, final int limit) {
-    dao().createTemporaryPurgeTable();
-    return dao().purgeNotRecentlyDownloaded(repositoryId, daysAgo, limit);
+  public int purgeNotRecentlyDownloaded(final int repositoryId, final int daysAgo) {
+    int purged = 0;
+    while (true) {
+      int[] componentIds = dao().selectNotRecentlyDownloaded(repositoryId, daysAgo, deleteBatchSize());
+      if (componentIds.length == 0) {
+        break; // nothing left to purge
+      }
+      if ("H2".equals(thisSession().sqlDialect())) {
+        // workaround lack of primitive array support in H2 (should be fixed in H2 1.4.201?)
+        purged += dao().purgeSelectedComponents(stream(componentIds).boxed().toArray(Integer[]::new));
+      }
+      else {
+        purged += dao().purgeSelectedComponents(componentIds);
+      }
+
+      preCommitEvent(() -> new ComponentPrePurgeEvent(repositoryId, componentIds));
+      postCommitEvent(() -> new ComponentPurgedEvent(repositoryId, componentIds));
+
+      commitChangesSoFar();
+    }
+    return purged;
   }
 }

@@ -30,6 +30,7 @@ import org.hamcrest.collection.IsIterableContainingInOrder;
 import org.junit.Before;
 import org.junit.Test;
 
+import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.summingInt;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.allOf;
@@ -104,24 +105,24 @@ public class ComponentDAOTest
     try (DataSession<?> session = sessionRule.openSession("content")) {
       ComponentDAO dao = session.access(TestComponentDAO.class);
 
-      assertThat(dao.browseComponents(repositoryId, null, 10, null), emptyIterable());
+      assertThat(browseComponents(dao, repositoryId, null, 10, null), emptyIterable());
 
       dao.createComponent(component1);
 
-      assertThat(dao.browseComponents(repositoryId, null, 10, null),
+      assertThat(browseComponents(dao, repositoryId, null, 10, null),
           contains(allOf(sameCoordinates(component1), sameKind(component1), sameAttributes(component1))));
 
       dao.createComponent(component2);
       dao.createComponent(component3);
 
       //browse all components
-      assertThat(dao.browseComponents(repositoryId, null, 10, null),
+      assertThat(browseComponents(dao, repositoryId, null, 10, null),
           contains(allOf(sameCoordinates(component1), sameKind(component1), sameAttributes(component1)),
               allOf(sameCoordinates(component2), sameKind(component2), sameAttributes(component2)),
               allOf(sameCoordinates(component3), sameKind(component3), sameAttributes(component3))));
 
       //browse by kind
-      assertThat(dao.browseComponents(repositoryId, anotherKind, 10, null),
+      assertThat(browseComponents(dao, repositoryId, anotherKind, 10, null),
           contains(allOf(sameCoordinates(component2), sameKind(component2), sameAttributes(component2)),
               allOf(sameCoordinates(component3), sameKind(component3), sameAttributes(component3))));
 
@@ -262,15 +263,20 @@ public class ComponentDAOTest
 
       assertTrue(dao.deleteComponent(component1));
 
-      assertThat(dao.browseComponents(repositoryId, null, 10, null),
+      assertThat(browseComponents(dao, repositoryId, null, 10, null),
           contains(allOf(sameCoordinates(component2), sameKind(component2), sameAttributes(component2)),
               allOf(sameCoordinates(component3), sameKind(component3), sameAttributes(component3))));
 
       assertTrue(dao.deleteComponents(repositoryId, 0));
 
-      assertThat(dao.browseComponents(repositoryId, null, 10, null), emptyIterable());
+      assertThat(browseComponents(dao, repositoryId, null, 10, null), emptyIterable());
 
-      assertFalse(dao.deleteCoordinate(repositoryId, "test-namespace", "test-name", "test-version"));
+      ComponentData candidate = new ComponentData();
+      candidate.setRepositoryId(repositoryId);
+      candidate.setNamespace("test-namespace");
+      candidate.setName("test-name");
+      candidate.setVersion("test-version");
+      assertFalse(dao.deleteComponent(candidate));
     }
   }
 
@@ -288,7 +294,7 @@ public class ComponentDAOTest
 
       assertThat(generatedRepositories().stream()
           .map(ContentRepositoryData::contentRepositoryId)
-          .collect(summingInt(dao::countComponents)), is(10));
+          .collect(summingInt(r -> countComponents(dao, r))), is(10));
 
       // now gather them back by browsing
       generatedRepositories().forEach(r ->
@@ -323,11 +329,11 @@ public class ComponentDAOTest
     try (DataSession<?> session = sessionRule.openSession("content")) {
       ComponentDAO dao = session.access(TestComponentDAO.class);
 
-      assertThat(dao.countComponents(repositoryId), is(1000));
+      assertThat(countComponents(dao, repositoryId), is(1000));
 
       int page = 0;
 
-      Continuation<Component> components = dao.browseComponents(repositoryId, null, 10, null);
+      Continuation<Component> components = browseComponents(dao, repositoryId, null, 10, null);
       while (!components.isEmpty()) {
 
         // verify we got the expected slice
@@ -338,7 +344,7 @@ public class ComponentDAOTest
                 .map(ExampleContentTestSupport::sameCoordinates)
                 .collect(toList())));
 
-        components = dao.browseComponents(repositoryId, null, 10, components.nextContinuationToken());
+        components = browseComponents(dao, repositoryId, null, 10, components.nextContinuationToken());
 
         page++;
       }
@@ -358,28 +364,28 @@ public class ComponentDAOTest
     try (DataSession<?> session = sessionRule.openSession("content")) {
       ComponentDAO dao = session.access(TestComponentDAO.class);
 
-      assertThat(dao.countComponents(repositoryId), is(100));
+      assertThat(countComponents(dao, repositoryId), is(100));
 
-      assertThat(dao.browseComponents(repositoryId, null, 100, null).size(), is(100));
+      assertThat(browseComponents(dao, repositoryId, null, 100, null).size(), is(100));
 
       // must delete assets before we start deleting their components
       session.access(TestAssetDAO.class).deleteAssets(repositoryId, 100);
 
       dao.deleteComponents(repositoryId, 20);
 
-      assertThat(dao.browseComponents(repositoryId, null, 100, null).size(), is(80));
+      assertThat(browseComponents(dao, repositoryId, null, 100, null).size(), is(80));
 
       dao.deleteComponents(repositoryId, 10);
 
-      assertThat(dao.browseComponents(repositoryId, null, 100, null).size(), is(70));
+      assertThat(browseComponents(dao, repositoryId, null, 100, null).size(), is(70));
 
       dao.deleteComponents(repositoryId, 0);
 
-      assertThat(dao.browseComponents(repositoryId, null, 100, null).size(), is(0));
+      assertThat(browseComponents(dao, repositoryId, null, 100, null).size(), is(0));
 
       dao.deleteComponents(repositoryId, -1);
 
-      assertThat(dao.browseComponents(repositoryId, null, 100, null).size(), is(0));
+      assertThat(browseComponents(dao, repositoryId, null, 100, null).size(), is(0));
     }
   }
 
@@ -424,9 +430,15 @@ public class ComponentDAOTest
       assertTrue(assetDao.readPath(repositoryId, asset1.path()).isPresent());
       assertTrue(assetDao.readPath(repositoryId, asset2.path()).isPresent());
 
-      componentDao.createTemporaryPurgeTable();
-      int deleted = componentDao.purgeNotRecentlyDownloaded(repositoryId, 3, 10);
-      assertThat(deleted, is(1));
+      int[] componentIds = componentDao.selectNotRecentlyDownloaded(repositoryId, 3, 10);
+      assertThat(componentIds, is(new int[]{2}));
+
+      if ("H2".equals(session.sqlDialect())) {
+        componentDao.purgeSelectedComponents(stream(componentIds).boxed().toArray(Integer[]::new));
+      }
+      else {
+        componentDao.purgeSelectedComponents(componentIds);
+      }
 
       assertTrue(componentDao.readCoordinate(repositoryId,
           component1.namespace(), component1.name(), component1.version()).isPresent());
@@ -466,5 +478,18 @@ public class ComponentDAOTest
       assertThat(tempResult, sameKind(component2));
       assertThat(tempResult, sameAttributes(component2));
     }
+  }
+
+  static int countComponents(final ComponentDAO dao, final int repositoryId) {
+    return dao.countComponents(repositoryId, null, null, null);
+  }
+
+  static Continuation<Component> browseComponents(final ComponentDAO dao,
+                                                  final int repositoryId,
+                                                  final String kind,
+                                                  final int limit,
+                                                  final String continuationToken)
+  {
+    return dao.browseComponents(repositoryId, limit, continuationToken, kind, null, null);
   }
 }

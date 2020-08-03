@@ -22,8 +22,6 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import javax.naming.InvalidNameException;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.DELETE;
@@ -44,7 +42,6 @@ import com.sonatype.nexus.ssl.plugin.internal.CertificateRetriever;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
-import org.sonatype.nexus.security.internal.rest.SecurityApiResource;
 import org.sonatype.nexus.ssl.CertificateUtil;
 import org.sonatype.nexus.ssl.KeyNotFoundException;
 import org.sonatype.nexus.ssl.KeystoreException;
@@ -61,9 +58,6 @@ import org.hibernate.validator.constraints.NotEmpty;
 /**
  * @since 3.19
  */
-@Named
-@Singleton
-@Path(CertificateApiResource.RESOURCE_URI)
 @Produces(MediaType.APPLICATION_JSON)
 public class CertificateApiResource
     extends ComponentSupport
@@ -72,8 +66,6 @@ public class CertificateApiResource
   private static final String KEY_STORE_ERROR_MESSAGE = "An error occurred accessing the trust store.";
 
   private static final String CERTIFICATE_MISSING_MESSAGE = "No certificate with alias '%s' in trust store.";
-
-  public static final String RESOURCE_URI = SecurityApiResource.RESOURCE_URI + "ssl/";
 
   private TrustStore trustStore;
 

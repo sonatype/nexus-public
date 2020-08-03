@@ -13,8 +13,6 @@
 package org.sonatype.nexus.repository.pypi.rest;
 
 import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -25,7 +23,6 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.rest.GroupRepositoryApiRequestToConfigurationConverter;
 import org.sonatype.nexus.repository.rest.api.AbstractGroupRepositoriesApiResource;
 import org.sonatype.nexus.repository.rest.api.AuthorizingRepositoryManager;
-import org.sonatype.nexus.repository.rest.api.RepositoriesApiResource;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 import org.sonatype.nexus.validation.Validate;
 
@@ -36,7 +33,6 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 
-import static org.sonatype.nexus.repository.pypi.rest.PypiGroupRepositoriesApiResource.RESOURCE_URI;
 import static org.sonatype.nexus.rest.ApiDocConstants.API_REPOSITORY_MANAGEMENT;
 import static org.sonatype.nexus.rest.ApiDocConstants.AUTHENTICATION_REQUIRED;
 import static org.sonatype.nexus.rest.ApiDocConstants.INSUFFICIENT_PERMISSIONS;
@@ -47,14 +43,9 @@ import static org.sonatype.nexus.rest.ApiDocConstants.REPOSITORY_UPDATED;
  * @since 3.22
  */
 @Api(value = API_REPOSITORY_MANAGEMENT)
-@Named
-@Singleton
-@Path(RESOURCE_URI)
-public class PypiGroupRepositoriesApiResource
+public abstract class PypiGroupRepositoriesApiResource
     extends AbstractGroupRepositoriesApiResource<PypiGroupRepositoryApiRequest>
 {
-  public static final String RESOURCE_URI = RepositoriesApiResource.RESOURCE_URI + "/pypi/group";
-
   @Inject
   public PypiGroupRepositoriesApiResource(
       final AuthorizingRepositoryManager authorizingRepositoryManager,

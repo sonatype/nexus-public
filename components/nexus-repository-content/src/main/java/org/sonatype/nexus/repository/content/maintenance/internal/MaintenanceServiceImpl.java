@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.maintenance.internal;
 
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -24,16 +25,25 @@ import org.sonatype.nexus.repository.MissingFacetException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
-import org.sonatype.nexus.repository.content.facet.ContentMaintenanceFacet;
+import org.sonatype.nexus.repository.content.facet.ContentFacet;
+import org.sonatype.nexus.repository.content.maintenance.ContentMaintenanceFacet;
 import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker;
+import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 import org.sonatype.nexus.repository.security.VariableResolverAdapterManager;
+import org.sonatype.nexus.selector.VariableSource;
+import org.sonatype.nexus.thread.NexusThreadFactory;
 
 import org.apache.shiro.authz.AuthorizationException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
+import static java.lang.Thread.MIN_PRIORITY;
+import static java.time.OffsetDateTime.now;
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
+import static org.sonatype.nexus.security.BreadActions.DELETE;
+import static org.sonatype.nexus.thread.NexusExecutorService.forCurrentSubject;
 
 /**
  * @since 3.next
@@ -50,15 +60,25 @@ public class MaintenanceServiceImpl
 
   private final RepositoryPermissionChecker repositoryPermissionChecker;
 
+  private final DeleteFolderService deleteFolderService;
+
+  private final ExecutorService executorService;
+
   @Inject
   public MaintenanceServiceImpl(
       final ContentPermissionChecker contentPermissionChecker,
       final VariableResolverAdapterManager variableResolverAdapterManager,
-      final RepositoryPermissionChecker repositoryPermissionChecker)
+      final RepositoryPermissionChecker repositoryPermissionChecker,
+      final DeleteFolderService deleteFolderService,
+      final ExecutorService executorService)
   {
     this.contentPermissionChecker = checkNotNull(contentPermissionChecker);
     this.variableResolverAdapterManager = checkNotNull(variableResolverAdapterManager);
     this.repositoryPermissionChecker = checkNotNull(repositoryPermissionChecker);
+    this.deleteFolderService = checkNotNull(deleteFolderService);
+
+    this.executorService = forCurrentSubject(newSingleThreadExecutor(
+        new NexusThreadFactory("delete-path", "Delete path in Tree Browse View", MIN_PRIORITY)));
   }
 
   @Override
@@ -70,7 +90,7 @@ public class MaintenanceServiceImpl
       throw new AuthorizationException();
     }
 
-    return getContentMaintenanceFacet(repository).deleteAsset(asset);
+    return maintenanceFacet(repository).deleteAsset(asset);
   }
 
   @Override
@@ -82,7 +102,7 @@ public class MaintenanceServiceImpl
       throw new AuthorizationException();
     }
 
-    return getContentMaintenanceFacet(repository).deleteComponent(component);
+    return maintenanceFacet(repository).deleteComponent(component);
   }
 
   @Override
@@ -94,19 +114,37 @@ public class MaintenanceServiceImpl
       throw new AuthorizationException();
     }
 
-    log.warn("NOT YET IMPLEMENTED: deleteFolder({}, {})", repository.getName(), path);
+    executorService.submit(() -> deleteFolderService.deleteFolder(repository, path, now()));
   }
 
   @Override
   public boolean canDeleteComponent(final Repository repository, final Component component) {
-    log.warn("NOT YET IMPLEMENTED: canDeleteComponent({}, {})", repository.getName(), component.name());
-    return false;
+    boolean canDeleteComponent = true;
+
+    ContentFacet contentFacet = repository.facet(ContentFacet.class);
+
+    String repositoryName = repository.getName();
+    String format = repository.getFormat().getValue();
+
+    VariableResolverAdapter variableResolverAdapter = variableResolverAdapterManager.get(format);
+
+    for (Asset asset : contentFacet.components().with(component).assets()) {
+      if (!canDeleteAssetInRepository(repositoryName, format, variableResolverAdapter, asset)) {
+        canDeleteComponent = false;
+        break;
+      }
+    }
+
+    return canDeleteComponent;
   }
 
   @Override
   public boolean canDeleteAsset(final Repository repository, final Asset asset) {
-    log.warn("NOT YET IMPLEMENTED: canDeleteAsset({}, {})", repository.getName(), asset.path());
-    return false;
+
+    String repositoryName = repository.getName();
+    String format = repository.getFormat().getValue();
+
+    return canDeleteAssetInRepository(repositoryName, format, variableResolverAdapterManager.get(format), asset);
   }
 
   @Override
@@ -114,7 +152,17 @@ public class MaintenanceServiceImpl
     return repositoryPermissionChecker.userCanDeleteInRepository(repository);
   }
 
-  private ContentMaintenanceFacet getContentMaintenanceFacet(final Repository repository) {
+  private boolean canDeleteAssetInRepository(
+      final String repositoryName,
+      final String format,
+      final VariableResolverAdapter variableResolverAdapter,
+      final Asset asset)
+  {
+    VariableSource source = variableResolverAdapter.fromPath(asset.path(), format);
+    return contentPermissionChecker.isPermitted(repositoryName, format, DELETE, source);
+  }
+
+  private ContentMaintenanceFacet maintenanceFacet(final Repository repository) {
     try {
       return repository.facet(ContentMaintenanceFacet.class);
     }

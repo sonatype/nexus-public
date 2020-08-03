@@ -37,6 +37,7 @@ import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+import org.sonatype.nexus.repository.content.fluent.FluentQuery;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.SignatureType;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
@@ -143,12 +144,11 @@ public class MavenContentIndexPublisher
     List<Record> records = new ArrayList<>();
     MavenContentFacet mavenContentFacet = repository.facet(MavenContentFacet.class);
 
-    Continuation<FluentAsset> assets = mavenContentFacet.assets().browse(ARTIFACT.name(), browseAssetsPageSize, null);
+    FluentQuery<FluentAsset> artifactQuery = mavenContentFacet.assets().byKind(ARTIFACT.name());
+    Continuation<FluentAsset> assets = artifactQuery.browse(browseAssetsPageSize, null);
     while (!assets.isEmpty()) {
       records.addAll(assetsToRecords(assets, mavenContentFacet, duplicateDetectionStrategy));
-      assets = mavenContentFacet
-          .assets()
-          .browse(ARTIFACT.name(), browseAssetsPageSize, assets.nextContinuationToken());
+      assets = artifactQuery.browse(browseAssetsPageSize, assets.nextContinuationToken());
     }
 
     return records;

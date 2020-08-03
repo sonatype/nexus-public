@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.store;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -36,29 +37,41 @@ import org.apache.ibatis.annotations.Param;
 public interface ComponentDAO
     extends ContentDataAccess
 {
+  String FILTER_PARAMS = "filterParams";
+
   /**
    * Count all components in the given repository.
    *
    * @param repositoryId the repository to count
+   * @param kind optional kind of components to count
+   * @param filter optional filter to apply
+   * @param filterParams parameter map for the optional filter
    * @return count of components in the repository
    */
-  int countComponents(@Param("repositoryId") int repositoryId);
+  int countComponents(@Param("repositoryId") int repositoryId,
+                      @Nullable @Param("kind") String kind,
+                      @Nullable @Param("filter") String filter,
+                      @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams);
 
   /**
    * Browse all components in the given repository in a paged fashion.
    *
    * @param repositoryId the repository to browse
-   * @param kind the kind of components to return
    * @param limit maximum number of components to return
    * @param continuationToken optional token to continue from a previous request
+   * @param kind optional kind of components to return
+   * @param filter optional filter to apply
+   * @param filterParams parameter map for the optional filter
    * @return collection of components and the next continuation token
    *
    * @see Continuation#nextContinuationToken()
    */
   Continuation<Component> browseComponents(@Param("repositoryId") int repositoryId,
-                                           @Param("kind") @Nullable String kind,
                                            @Param("limit") int limit,
-                                           @Param("continuationToken") @Nullable String continuationToken);
+                                           @Nullable @Param("continuationToken") String continuationToken,
+                                           @Nullable @Param("kind") String kind,
+                                           @Nullable @Param("filter") String filter,
+                                           @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams);
 
   /**
    * Browse all component namespaces in the given repository.
@@ -156,20 +169,6 @@ public interface ComponentDAO
   boolean deleteComponent(Component component);
 
   /**
-   * Deletes the component located at the given coordinate in the content data store.
-   *
-   * @param repositoryId the repository containing the component
-   * @param namespace the namespace of the component
-   * @param name the name of the component
-   * @param version the version of the component
-   * @return {@code true} if the component was deleted
-   */
-  boolean deleteCoordinate(@Param("repositoryId") int repositoryId,
-                           @Param("namespace") String namespace,
-                           @Param("name") String name,
-                           @Param("version") String version);
-
-  /**
    * Deletes all components in the given repository from the content data store.
    *
    * @param repositoryId the repository containing the components
@@ -179,23 +178,40 @@ public interface ComponentDAO
   boolean deleteComponents(@Param("repositoryId") int repositoryId, @Param("limit") int limit);
 
   /**
-   * Creates a temporary table local to the session for holding purge data.
+   * Selects components in the given repository whose assets were last downloaded more than given number of days ago.
    *
-   * @since 3.25
+   * @param repositoryId the repository to check
+   * @param daysAgo the number of days ago to check
+   * @param limit when positive limits the number of components selected per-call
+   * @return selected component ids
+   *
+   * @since 3.next
    */
-  void createTemporaryPurgeTable();
+  int[] selectNotRecentlyDownloaded(@Param("repositoryId") int repositoryId,
+                                    @Param("daysAgo") int daysAgo,
+                                    @Param("limit") int limit);
 
   /**
-   * Purge components in the given repository whose assets were last downloaded more than given number of days ago
+   * Purges the selected components along with their assets.
    *
-   * @param repositoryId the repository to browse
-   * @param daysAgo last downloaded more than this
-   * @param limit at most items to delete
-   * @return number of components deleted
+   * This version of the method is for databases that support primitive arrays.
    *
-   * @since 3.24
+   * @param componentIds the components to purge
+   * @return the number of purged components
+   *
+   * @since 3.next
    */
-  int purgeNotRecentlyDownloaded(@Param("repositoryId") int repositoryId,
-                                 @Param("daysAgo") int daysAgo,
-                                 @Param("limit") int limit);
+  int purgeSelectedComponents(@Param("componentIds") int[] componentIds);
+
+  /**
+   * Purges the selected components along with their assets.
+   *
+   * This version of the method is for databases that don't yet support primitive arrays.
+   *
+   * @param componentIds the components to purge
+   * @return the number of purged components
+   *
+   * @since 3.next
+   */
+  int purgeSelectedComponents(@Param("componentIds") Integer[] componentIds);
 }

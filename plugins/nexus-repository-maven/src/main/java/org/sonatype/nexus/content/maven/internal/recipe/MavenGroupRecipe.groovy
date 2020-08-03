@@ -82,6 +82,7 @@ class MavenGroupRecipe
     repository.attach(mavenContentFacet.get())
     repository.attach(mavenGroupIndexFacet.get())
     repository.attach(configure(viewFacet.get()))
+    repository.attach(lastAssetMaintenanceFacet.get())
   }
 
   private ViewFacet configure(final ConfigurableViewFacet facet) {

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import java.util.Optional;
 import java.util.OptionalInt;
 
 import org.sonatype.nexus.common.entity.EntityHelper;
@@ -22,7 +23,6 @@ import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.RepositoryContent;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
-import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
@@ -57,12 +57,16 @@ public class InternalIds
     return (int) (parseUnsignedInt(externalId.getValue(), 16) * TO_INTERNAL); // NOSONAR: we want truncation
   }
 
-  public static int contentRepositoryId(final Repository repository) {
-    return ((ContentFacetSupport) repository.facet(ContentFacet.class)).contentRepositoryId();
+  public static Optional<Integer> contentRepositoryId(final Repository repository) {
+    return repository.optionalFacet(ContentFacet.class).map(ContentFacet::contentRepositoryId);
   }
 
   public static int contentRepositoryId(final RepositoryContent content) {
     return checkInternalId(((AbstractRepositoryContent) unwrap(content)).repositoryId);
+  }
+
+  public static int contentRepositoryId(final ContentStoreEvent event) {
+    return event.contentRepositoryId;
   }
 
   public static int internalComponentId(final Component component) {
