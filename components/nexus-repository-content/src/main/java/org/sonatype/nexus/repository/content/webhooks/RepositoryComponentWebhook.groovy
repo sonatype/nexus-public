@@ -10,57 +10,64 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.webhooks.internal
+package org.sonatype.nexus.repository.content.webhooks
 
-import javax.annotation.Priority
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
 
 import org.sonatype.nexus.audit.InitiatorProvider
 import org.sonatype.nexus.common.app.FeatureFlag
+import org.sonatype.nexus.common.entity.EntityId
 import org.sonatype.nexus.common.node.NodeAccess
+import org.sonatype.nexus.repository.Repository
+import org.sonatype.nexus.repository.content.Component
+import org.sonatype.nexus.repository.content.event.component.ComponentCreatedEvent
+import org.sonatype.nexus.repository.content.event.component.ComponentDeletedEvent
+import org.sonatype.nexus.repository.content.event.component.ComponentEvent
+import org.sonatype.nexus.repository.content.event.component.ComponentUpdatedEvent
+import org.sonatype.nexus.repository.content.store.InternalIds
 import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO
-import org.sonatype.nexus.repository.storage.Component
-import org.sonatype.nexus.repository.storage.ComponentCreatedEvent
-import org.sonatype.nexus.repository.storage.ComponentDeletedEvent
-import org.sonatype.nexus.repository.storage.ComponentEvent
-import org.sonatype.nexus.repository.storage.ComponentUpdatedEvent
 import org.sonatype.nexus.repository.webhooks.RepositoryWebhook
-import org.sonatype.nexus.repository.webhooks.RepositoryWebhook.Configuration
 import org.sonatype.nexus.webhooks.Webhook
 import org.sonatype.nexus.webhooks.WebhookPayload
 import org.sonatype.nexus.webhooks.WebhookRequest
 
 import com.google.common.eventbus.AllowConcurrentEvents
 import com.google.common.eventbus.Subscribe
+import org.apache.commons.lang.StringUtils
+
+import static com.google.common.base.Preconditions.checkNotNull
 
 /**
  * Repository {@link Component} {@link Webhook}.
  *
- * @since 3.1
+ * @since 3.next
  */
-@FeatureFlag(name = "nexus.orient.store.content")
+@FeatureFlag(name = "nexus.datastore.enabled")
 @Named
 @Singleton
-@Priority(Integer.MAX_VALUE)
 class RepositoryComponentWebhook
     extends RepositoryWebhook
 {
-  public static final String NAME = 'component'
+  public static final String NAME = "component";
 
-  @Inject
-  NodeAccess nodeAccess
+  private NodeAccess nodeAccess;
 
-  @Inject
-  InitiatorProvider initiatorProvider
+  private InitiatorProvider initiatorProvider;
 
   @Override
-  String getName() {
-    return NAME
+  public String getName() {
+    return NAME;
   }
 
-  private static enum EventAction
+  @Inject
+  public RepositoryComponentWebhook(final NodeAccess nodeAccess, final InitiatorProvider initiatorProvider) {
+    this.nodeAccess = checkNotNull(nodeAccess);
+    this.initiatorProvider = checkNotNull(initiatorProvider);
+  }
+
+  private enum EventAction
   {
     CREATED,
     UPDATED,
@@ -89,32 +96,31 @@ class RepositoryComponentWebhook
    * Maybe queue {@link WebhookRequest} for event matching subscriptions.
    */
   private void maybeQueue(final ComponentEvent event, final EventAction eventAction) {
-    if (event.local) {
+    Repository repository = event.repository
+    Component component = event.component
+    EntityId componentId = InternalIds.toExternalId(InternalIds.internalComponentId(component))
 
-      Component component = event.component
-      def payload = new RepositoryComponentWebhookPayload(
-          nodeId: nodeAccess.getId(),
-          timestamp: new Date(),
-          initiator: initiatorProvider.get(),
-          repositoryName: event.repositoryName,
-          action: eventAction
-      )
+    def payload = new RepositoryComponentWebhookPayload(
+        nodeId: nodeAccess.getId(),
+        timestamp: new Date(),
+        initiator: initiatorProvider.get(),
+        repositoryName: repository.name,
+        action: eventAction
+    )
 
-      payload.component = new RepositoryComponentWebhookPayload.RepositoryComponent(
-          id: component.entityMetadata.id.value,
-          componentId: new RepositoryItemIDXO(event.repositoryName, component.entityMetadata.id.value).value,
-          format: component.format(),
-          name: component.name(),
-          group: component.group(),
-          version: component.version()
-      )
+    payload.component = new RepositoryComponentWebhookPayload.RepositoryComponent(
+        id: componentId.value,
+        componentId: new RepositoryItemIDXO(repository.name, componentId.value).value,
+        format: repository.format,
+        name: StringUtils.stripStart(component.name(), "/"),
+        group: component.namespace(),
+        version: component.version()
+    )
 
-      subscriptions.each {
-        def configuration = it.configuration as RepositoryWebhook.Configuration
-        if (configuration.repository == event.repositoryName) {
-          // TODO: discriminate on content-selector
-          queue(it, payload)
-        }
+    subscriptions.each {
+      def configuration = it.configuration as RepositoryWebhook.Configuration
+      if (configuration.repository == repository.name) {
+        queue(it, payload)
       }
     }
   }
