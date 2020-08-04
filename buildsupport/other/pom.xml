@@ -350,7 +350,7 @@
       <dependency>
         <groupId>org.keycloak</groupId>
         <artifactId>keycloak-saml-servlet-filter-adapter</artifactId>
-        <version>8.0.1</version>
+        <version>11.0.0</version>
         <exclusions>
           <exclusion>
             <groupId>org.bouncycastle</groupId>
