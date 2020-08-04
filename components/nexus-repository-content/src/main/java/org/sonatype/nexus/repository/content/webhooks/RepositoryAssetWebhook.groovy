@@ -10,40 +10,41 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.webhooks.internal
+package org.sonatype.nexus.repository.content.webhooks
 
-import javax.annotation.Priority
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
 
 import org.sonatype.nexus.audit.InitiatorProvider
 import org.sonatype.nexus.common.app.FeatureFlag
+import org.sonatype.nexus.common.entity.EntityId
 import org.sonatype.nexus.common.node.NodeAccess
+import org.sonatype.nexus.repository.Repository
+import org.sonatype.nexus.repository.content.Asset
+import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent
+import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent
+import org.sonatype.nexus.repository.content.event.asset.AssetEvent
+import org.sonatype.nexus.repository.content.event.asset.AssetUpdatedEvent
+import org.sonatype.nexus.repository.content.store.InternalIds
 import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO
-import org.sonatype.nexus.repository.storage.Asset
-import org.sonatype.nexus.repository.storage.AssetCreatedEvent
-import org.sonatype.nexus.repository.storage.AssetDeletedEvent
-import org.sonatype.nexus.repository.storage.AssetEvent
-import org.sonatype.nexus.repository.storage.AssetUpdatedEvent
 import org.sonatype.nexus.repository.webhooks.RepositoryWebhook
-import org.sonatype.nexus.repository.webhooks.RepositoryWebhook.Configuration
 import org.sonatype.nexus.webhooks.Webhook
 import org.sonatype.nexus.webhooks.WebhookPayload
 import org.sonatype.nexus.webhooks.WebhookRequest
 
 import com.google.common.eventbus.AllowConcurrentEvents
 import com.google.common.eventbus.Subscribe
+import org.apache.commons.lang.StringUtils
 
 /**
  * Repository {@link Asset} {@link Webhook}.
  *
- * @since 3.1
+ * @since 3.next
  */
-@FeatureFlag(name = "nexus.orient.store.content")
+@FeatureFlag(name = "nexus.datastore.enabled")
 @Named
 @Singleton
-@Priority(Integer.MAX_VALUE)
 class RepositoryAssetWebhook
     extends RepositoryWebhook
 {
@@ -89,30 +90,29 @@ class RepositoryAssetWebhook
    * Maybe queue {@link WebhookRequest} for event matching subscriptions.
    */
   private void maybeQueue(final AssetEvent event, final EventAction eventAction) {
-    if (event.local) {
+    Repository repository = event.repository
+    Asset asset = event.asset
+    EntityId assetId = InternalIds.toExternalId(InternalIds.internalAssetId(asset))
 
-      Asset asset = event.asset
-      def payload = new RepositoryAssetWebhookPayload(
-          nodeId: nodeAccess.getId(),
-          timestamp: new Date(),
-          initiator: initiatorProvider.get(),
-          repositoryName: event.repositoryName,
-          action: eventAction
-      )
+    def payload = new RepositoryAssetWebhookPayload(
+        nodeId: nodeAccess.getId(),
+        timestamp: new Date(),
+        initiator: initiatorProvider.get(),
+        repositoryName: repository.name,
+        action: eventAction
+    )
 
-      payload.asset = new RepositoryAssetWebhookPayload.RepositoryAsset(
-          id: asset.entityMetadata.id.value,
-          assetId: new RepositoryItemIDXO(event.repositoryName, asset.entityMetadata.id.value).value,
-          format: asset.format(),
-          name: asset.name()
-      )
+    payload.asset = new RepositoryAssetWebhookPayload.RepositoryAsset(
+        id: assetId.value,
+        assetId: new RepositoryItemIDXO(repository.name, assetId.value).value,
+        format: repository.format,
+        name: StringUtils.stripStart(asset.path(), "/")
+    )
 
-      subscriptions.each {
-        def configuration = it.configuration as RepositoryWebhook.Configuration
-        if (configuration.repository == event.repositoryName) {
-          // TODO: discriminate on content-selector
-          queue(it, payload)
-        }
+    subscriptions.each {
+      def configuration = it.configuration as RepositoryWebhook.Configuration
+      if (configuration.repository == repository.name) {
+        queue(it, payload)
       }
     }
   }
