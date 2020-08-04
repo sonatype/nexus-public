@@ -25,6 +25,7 @@ import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.vulnerability.exceptions.CompatibilityException;
 import org.sonatype.nexus.repository.vulnerability.exceptions.ConfigurationException;
+import org.sonatype.nexus.repository.vulnerability.exceptions.IQServerException;
 import org.sonatype.nexus.repository.vulnerability.exceptions.InternalException;
 import org.sonatype.nexus.repository.vulnerability.exceptions.TarballLoadingException;
 import org.sonatype.nexus.repository.vulnerability.exceptions.VulnerabilityFetchingException;
@@ -52,7 +53,11 @@ public class NpmAuditErrorHandler
 
   private static final String USER_ERROR_MSG =
       "Error fetching npm audit data. " + lineSeparator() +
-      "See NXRM logs for more details or contact your NXRM administrator.";
+      "See nexus.log for more details or contact your Nexus Repository Manager administrator.";
+
+  private static final String USER_IQ_ERROR_MSG =
+      "Error fetching data from IQ Server. " + lineSeparator() +
+          "From the IQ server: ";
 
   @Nonnull
   @Override
@@ -101,6 +106,10 @@ public class NpmAuditErrorHandler
         log.warn(cause.getMessage(), log.isDebugEnabled() ? e : null);
       }
       return NpmResponses.npmErrorAuditResponse(BAD_REQUEST, cause.getMessage());
+    }
+    else if (cause instanceof IQServerException) {
+      log.warn(cause.getMessage(), e);
+      return NpmResponses.npmErrorAuditResponse(INTERNAL_SERVER_ERROR, USER_IQ_ERROR_MSG + cause.getMessage());
     }
     else {
       log.error(e.getMessage(), e);
