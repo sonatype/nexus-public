@@ -242,4 +242,16 @@ public abstract class MavenTestHelper
   public abstract void deleteComponents(final Repository repository, final String version, final int expectedNumber);
 
   public abstract void deleteAssets(final Repository repository, final String version, final int expectedNumber);
+
+
+  /**
+   * Create component with given GAV and attached JAR asset
+   *
+   * @return componentId
+   */
+  public abstract String createComponent(
+      final Repository repository,
+      final String groupId,
+      final String artifactId,
+      final String version);
 }
