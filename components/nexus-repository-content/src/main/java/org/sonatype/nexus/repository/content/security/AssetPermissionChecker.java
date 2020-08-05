@@ -41,7 +41,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * {@link Asset} permission checks.
  *
- * @since 3.next
+ * @since 3.26
  */
 @Named
 @Singleton

@@ -55,7 +55,7 @@ import static org.sonatype.nexus.repository.storage.DefaultComponentFinder.DEFAU
 /**
  * Orient {@link ComponentHelper}.
  *
- * @since 3.next
+ * @since 3.26
  */
 @Priority(Integer.MAX_VALUE) // make sure this implementation appears above the datastore one in mixed-mode
 @Named

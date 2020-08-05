@@ -27,7 +27,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * {@link MavenIndexFacet} support.
  *
- * @since 3.next
+ * @since 3.26
  */
 public abstract class MavenContentIndexFacetSupport
     extends FacetSupport

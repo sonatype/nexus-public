@@ -29,7 +29,7 @@ import static com.google.common.base.Strings.nullToEmpty;
 import static java.util.Optional.empty;
 
 /**
- * @since 3.next
+ * @since 3.26
  */
 @Named
 @Singleton

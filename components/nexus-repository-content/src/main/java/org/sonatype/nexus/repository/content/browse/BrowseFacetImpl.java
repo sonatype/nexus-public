@@ -50,7 +50,7 @@ import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 /**
  * Default {@link BrowseFacet} implementation.
  *
- * @since 3.next
+ * @since 3.26
  */
 @Named
 public class BrowseFacetImpl

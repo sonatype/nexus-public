@@ -54,7 +54,7 @@ import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.Metad
 import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 
 /**
- * @since 3.next
+ * @since 3.26
  */
 @Singleton
 @Named

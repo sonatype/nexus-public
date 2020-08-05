@@ -67,7 +67,7 @@ public interface OrientPyPiHostedFacet
   /**
    * Perform a signature file upload
    *
-   * @since 3.next
+   * @since 3.26
    * @param name the package name
    * @param version the package version
    * @param payload uploaded file content

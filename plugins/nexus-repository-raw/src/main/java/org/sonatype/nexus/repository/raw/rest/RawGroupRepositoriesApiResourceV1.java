@@ -26,7 +26,7 @@ import org.sonatype.nexus.validation.ConstraintViolationFactory;
 import static org.sonatype.nexus.repository.raw.rest.RawGroupRepositoriesApiResourceV1.RESOURCE_URI;
 
 /**
- * @since 3.next
+ * @since 3.26
  */
 @Named
 @Singleton

@@ -30,7 +30,7 @@ import com.google.common.eventbus.Subscribe;
 /**
  * Event handler that updates search indexes based on component/asset events.
  *
- * @since 3.next
+ * @since 3.26
  */
 @Named
 @Singleton

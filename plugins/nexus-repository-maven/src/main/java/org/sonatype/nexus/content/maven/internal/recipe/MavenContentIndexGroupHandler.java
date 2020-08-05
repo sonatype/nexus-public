@@ -25,7 +25,7 @@ import org.sonatype.nexus.repository.view.Response;
 /**
  * Group specific handler of Maven indexes: it serves up merged group index, if present.
  *
- * @since 3.next
+ * @since 3.26
  */
 class MavenContentIndexGroupHandler
     extends ComponentSupport

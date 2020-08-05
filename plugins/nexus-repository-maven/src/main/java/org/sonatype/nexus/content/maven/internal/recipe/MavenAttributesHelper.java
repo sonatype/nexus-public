@@ -43,7 +43,7 @@ import static org.sonatype.nexus.repository.maven.internal.Maven2Format.NAME;
 /**
  * Helper class used by {@link MavenContentFacetImpl} for setting Asset and Component attributes
  *
- * @since 3.next
+ * @since 3.26
  */
 final class MavenAttributesHelper
 {

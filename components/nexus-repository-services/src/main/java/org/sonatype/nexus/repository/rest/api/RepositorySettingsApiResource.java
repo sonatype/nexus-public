@@ -33,7 +33,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
- * @since 3.next
+ * @since 3.26
  */
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)

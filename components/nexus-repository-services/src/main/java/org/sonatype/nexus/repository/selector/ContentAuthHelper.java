@@ -28,7 +28,7 @@ import static org.sonatype.nexus.security.BreadActions.BROWSE;
 /**
  * Provides various content related auth checks.
  *
- * @since 3.next
+ * @since 3.26
  */
 @Named
 @Singleton

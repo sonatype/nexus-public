@@ -23,7 +23,7 @@ import static java.util.Optional.of;
 /**
  * Support for {@link PackageUrlMapping}s.
  *
- * @since 3.next
+ * @since 3.26
  */
 public abstract class PackageUrlMappingSupport
     implements PackageUrlMapping

@@ -25,7 +25,7 @@ import static java.util.Optional.ofNullable;
 /**
  * Event sent whenever an {@link Asset}'s attributes change.
  *
- * @since 3.next
+ * @since 3.26
  */
 public class AssetAttributesEvent
     extends AssetUpdateEvent

@@ -23,7 +23,7 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.toExternal
 /**
  * Builds asset transfer objects for REST APIs.
  *
- * @since 3.next
+ * @since 3.26
  */
 class AssetXOBuilder
 {
