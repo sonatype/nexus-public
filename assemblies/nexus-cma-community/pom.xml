@@ -27,10 +27,10 @@
   <packaging>feature</packaging>
 
   <properties>
-    <p2.format.version>1.1.6</p2.format.version>
-    <r.format.version>1.1.14</r.format.version>
-    <helm.format.version>1.0.14</helm.format.version>
-    <conan.format.version>1.0.14</conan.format.version>
+    <p2.format.version>1.1.9</p2.format.version>
+    <r.format.version>1.1.17</r.format.version>
+    <helm.format.version>1.0.17</helm.format.version>
+    <conan.format.version>1.0.18</conan.format.version>
   </properties>
 
   <dependencies>

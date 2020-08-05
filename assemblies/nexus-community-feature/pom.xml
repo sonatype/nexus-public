@@ -27,7 +27,7 @@
   <packaging>feature</packaging>
 
   <properties>
-    <helm.format.version>1.0.14</helm.format.version>
+    <helm.format.version>1.0.17</helm.format.version>
   </properties>
 
   <dependencies>
