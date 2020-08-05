@@ -29,7 +29,7 @@ import com.google.inject.assistedinject.Assisted;
 /**
  * Browse node store.
  *
- * @since 3.next
+ * @since 3.26
  */
 @Named
 public class BrowseNodeStore<T extends BrowseNodeDAO>

@@ -28,7 +28,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Provides annotation support for {@code CachedGauges} which were missing from the metrics guice package
- * @since 3.next
+ * @since 3.26
  */
 public class CachedGaugeTypeListener
     implements TypeListener

@@ -24,7 +24,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 /**
  * {@link ContentMaintenanceFacet} for formats where components should be deleted along with their last asset.
  *
- * @since 3.next
+ * @since 3.26
  */
 @Named
 public class LastAssetMaintenanceFacet

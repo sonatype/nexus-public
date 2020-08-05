@@ -33,7 +33,7 @@ import static java.util.Comparator.reverseOrder;
 /**
  * Maven {@link ComponentFinder} that also includes all snapshots with the same base version.
  *
- * @since 3.next
+ * @since 3.26
  */
 @Singleton
 @Named(Maven2Format.NAME)

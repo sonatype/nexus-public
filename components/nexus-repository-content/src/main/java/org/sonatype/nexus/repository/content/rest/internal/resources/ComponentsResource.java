@@ -112,7 +112,7 @@ public class ComponentsResource
   }
 
   /**
-   * @since 3.next
+   * @since 3.26
    */
   @Override
   @GET
@@ -154,7 +154,7 @@ public class ComponentsResource
   }
 
   /**
-   * @since 3.next
+   * @since 3.26
    */
   @Override
   @GET
@@ -180,7 +180,7 @@ public class ComponentsResource
   }
 
   /**
-   * @since 3.next
+   * @since 3.26
    */
   @Override
   @DELETE

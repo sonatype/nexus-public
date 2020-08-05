@@ -21,7 +21,7 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.contentRep
 /**
  * Base {@link ContentRepository} event.
  *
- * @since 3.next
+ * @since 3.26
  */
 public class ContentRepositoryEvent
     extends ContentStoreEvent

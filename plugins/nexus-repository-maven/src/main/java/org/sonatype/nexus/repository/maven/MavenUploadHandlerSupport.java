@@ -68,7 +68,7 @@ import static org.sonatype.nexus.common.text.Strings2.isBlank;
 /**
  * Common base for maven upload handlers
  *
- * @since 3.next
+ * @since 3.26
  */
 public abstract class MavenUploadHandlerSupport
     extends UploadHandlerSupport

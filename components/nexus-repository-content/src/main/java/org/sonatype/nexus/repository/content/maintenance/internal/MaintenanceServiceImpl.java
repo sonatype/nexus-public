@@ -46,7 +46,7 @@ import static org.sonatype.nexus.security.BreadActions.DELETE;
 import static org.sonatype.nexus.thread.NexusExecutorService.forCurrentSubject;
 
 /**
- * @since 3.next
+ * @since 3.26
  */
 @Named
 @Singleton

@@ -30,7 +30,7 @@ import org.apache.ibatis.annotations.Param;
 /**
  * Browse node {@link ContentDataAccess}.
  *
- * @since 3.next
+ * @since 3.26
  */
 @Expects({ ContentRepositoryDAO.class, ComponentDAO.class, AssetDAO.class })
 @SchemaTemplate("format")

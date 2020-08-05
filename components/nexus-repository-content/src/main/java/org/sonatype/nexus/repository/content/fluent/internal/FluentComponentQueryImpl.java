@@ -23,7 +23,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * {@link FluentQuery} implementation for {@link FluentComponent}s.
  *
- * @since 3.next
+ * @since 3.26
  */
 public class FluentComponentQueryImpl
     implements FluentQuery<FluentComponent>

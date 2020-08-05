@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.content.Component;
 /**
  * Event sent whenever a {@link Component} is updated.
  *
- * @since 3.next
+ * @since 3.26
  */
 public class ComponentUpdatedEvent
     extends ComponentEvent

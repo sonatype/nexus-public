@@ -26,7 +26,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_GOLANG_HOSTED;
 import static org.sonatype.nexus.repository.golang.rest.GolangHostedRepositoriesApiResourceBeta.RESOURCE_URI;
 
 /**
- * @since 3.next
+ * @since 3.26
  * @deprecated the 'beta' prefix is being phased out, prefer starting new APIs with {@link APIConstants#V1_API_PREFIX}
  * instead. Support backward compatibility.
  */

@@ -35,7 +35,7 @@ import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
 public interface ComponentsResourceDoc
 {
   /**
-   * @since 3.next
+   * @since 3.26
    */
   @ApiOperation("List components")
   @ApiResponses(value = {
@@ -50,7 +50,7 @@ public interface ComponentsResourceDoc
       final String repository);
 
   /**
-   * @since 3.next
+   * @since 3.26
    */
   @ApiOperation("Get a single component")
   @ApiResponses(value = {
@@ -61,7 +61,7 @@ public interface ComponentsResourceDoc
   ComponentXO getComponentById(@ApiParam(value = "ID of the component to retrieve") final String id);
 
   /**
-   * @since 3.next
+   * @since 3.26
    */
   @ApiOperation(value = "Delete a single component")
   @ApiResponses(value = {

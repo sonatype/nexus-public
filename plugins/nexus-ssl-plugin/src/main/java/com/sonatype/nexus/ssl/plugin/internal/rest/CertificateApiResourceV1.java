@@ -23,7 +23,7 @@ import org.sonatype.nexus.security.internal.rest.SecurityApiResourceV1;
 import org.sonatype.nexus.ssl.TrustStore;
 
 /**
- * @since 3.next
+ * @since 3.26
  */
 @Named
 @Singleton

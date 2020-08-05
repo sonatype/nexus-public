@@ -73,7 +73,7 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.contentRep
 /**
  * New-DB implementation of {@link BrowseNodeQueryService}.
  *
- * @since 3.next
+ * @since 3.26
  */
 @Named
 @Singleton

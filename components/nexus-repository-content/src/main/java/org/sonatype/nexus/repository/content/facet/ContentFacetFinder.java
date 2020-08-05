@@ -38,7 +38,7 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.contentRep
 /**
  * Provides various methods for finding {@link ContentFacet}s and their repositories.
  *
- * @since 3.next
+ * @since 3.26
  */
 @Named
 @Singleton

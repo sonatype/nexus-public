@@ -36,7 +36,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
- * @since 3.next
+ * @since 3.26
  */
 public class DatastoreMetadataUpdater
     extends AbstractMetadataUpdater

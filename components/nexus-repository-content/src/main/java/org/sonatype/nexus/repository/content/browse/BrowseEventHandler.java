@@ -63,7 +63,7 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.toExternal
  *
  * Trimming of dangling nodes from the browse tree is only done by the scheduled task.
  *
- * @since 3.next
+ * @since 3.26
  */
 @ManagedLifecycle(phase = SERVICES)
 @Named
