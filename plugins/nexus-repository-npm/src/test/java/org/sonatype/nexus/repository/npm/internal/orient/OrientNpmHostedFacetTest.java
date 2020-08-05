@@ -20,6 +20,7 @@ import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
@@ -62,7 +63,6 @@ import org.mockito.Mock;
 import static java.util.Collections.emptyMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
@@ -83,7 +83,7 @@ public class OrientNpmHostedFacetTest
   @Rule
   public TemporaryFolder tempFolderRule = new TemporaryFolder();
 
-  private OrientNpmHostedFacet underTest;
+  private OrientNpmHostedFacetImpl underTest;
 
   @Mock
   private NpmFacet npmFacet;
@@ -117,7 +117,7 @@ public class OrientNpmHostedFacetTest
 
   @Before
   public void setup() throws Exception {
-    underTest = new OrientNpmHostedFacet(npmRequestParser);
+    underTest = new OrientNpmHostedFacetImpl(npmRequestParser);
     underTest.attach(repository);
 
     when(npmFacet.putTarball(any(), any(), any(), any())).thenReturn(mockAsset);
@@ -194,9 +194,9 @@ public class OrientNpmHostedFacetTest
 
   @Test
   public void getDistTagNoResponseWhenPackageRootNotFound() {
-    Content content = underTest.getDistTags(NpmPackageId.parse("package"));
+    Optional<Content> content = underTest.getDistTags(NpmPackageId.parse("package"));
 
-    assertThat(content, is(nullValue()));
+    assertThat(content.isPresent(), is(false));
   }
 
   @Test
@@ -210,9 +210,9 @@ public class OrientNpmHostedFacetTest
     when(storageTx.requireBlob(asset.requireBlobRef())).thenReturn(blob);
     when(blob.getInputStream()).thenReturn(bis);
 
-    final Content content = underTest.getDistTags(NpmPackageId.parse("package"));
+    final Optional<Content> content = underTest.getDistTags(NpmPackageId.parse("package"));
 
-    final String actual = IOUtils.toString(content.openInputStream());
+    final String actual = IOUtils.toString(content.get().openInputStream());
     assertThat(actual, is("{\"latest\":\"1.0.0\"}"));
   }
 

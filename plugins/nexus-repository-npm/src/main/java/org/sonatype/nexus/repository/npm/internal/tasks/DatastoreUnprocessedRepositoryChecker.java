@@ -10,29 +10,25 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.npm.internal.orient;
+package org.sonatype.nexus.repository.npm.internal.tasks;
 
-import java.io.IOException;
-import java.util.Map;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-import org.sonatype.nexus.repository.Facet;
-import org.sonatype.nexus.repository.npm.internal.NpmHostedFacet;
-import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.TempBlob;
+import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.npm.internal.tasks.ReindexNpmRepositoryManager.UnprocessedRepositoryChecker;
 
 /**
- * npm hosted facet.
- *
- * @since 3.0
+ * @since 3.next
  */
-@Facet.Exposed
-public interface OrientNpmHostedFacet
-    extends Facet, NpmHostedFacet
+@Named
+@Singleton
+public class DatastoreUnprocessedRepositoryChecker
+    implements UnprocessedRepositoryChecker
 {
-  /**
-   * Add the package using the package.json and <code>TempBlob</code>.
-   *
-   * @since 3.7
-   */
-  Asset putPackage(Map<String, Object> packageJson, TempBlob tempBlob) throws IOException;
+  @Override
+  public boolean isUnprocessedNpmRepository(final Repository repository) {
+    // TODO
+    return false;
+  }
 }

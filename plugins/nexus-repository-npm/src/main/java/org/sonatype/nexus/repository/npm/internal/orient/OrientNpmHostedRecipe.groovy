@@ -26,8 +26,8 @@ import org.sonatype.nexus.repository.npm.internal.NpmFormat
 import org.sonatype.nexus.repository.npm.internal.NpmHandlers
 import org.sonatype.nexus.repository.npm.internal.NpmPingHandler
 import org.sonatype.nexus.repository.npm.internal.NpmWhoamiHandler
-import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexFacetHosted
 import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchFacetHosted
+import org.sonatype.nexus.repository.npm.orient.internal.search.legacy.NpmSearchIndexFacetHosted
 import org.sonatype.nexus.repository.types.HostedType
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
 import org.sonatype.nexus.repository.view.Router
@@ -38,6 +38,7 @@ import static org.sonatype.nexus.repository.http.HttpMethods.DELETE
 import static org.sonatype.nexus.repository.http.HttpMethods.GET
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD
 import static org.sonatype.nexus.repository.http.HttpMethods.PUT
+import static org.sonatype.nexus.repository.npm.internal.NpmPaths.*
 
 /**
  * npm hosted repository recipe.
@@ -55,7 +56,7 @@ class OrientNpmHostedRecipe
   ContentHeadersHandler contentHeadersHandler
 
   @Inject
-  Provider<NpmHostedFacet> npmHostedFacet
+  Provider<OrientNpmHostedFacet> npmHostedFacet
 
   @Inject
   Provider<NpmHostedComponentMaintenanceImpl> npmHostedComponentMaintenanceProvider

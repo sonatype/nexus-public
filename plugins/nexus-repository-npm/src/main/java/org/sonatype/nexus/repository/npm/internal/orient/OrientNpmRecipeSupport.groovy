@@ -35,21 +35,17 @@ import org.sonatype.nexus.repository.storage.StorageFacet
 import org.sonatype.nexus.repository.storage.UnitOfWorkHandler
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
 import org.sonatype.nexus.repository.view.Handler
-import org.sonatype.nexus.repository.view.Route.Builder
 import org.sonatype.nexus.repository.view.Router
 import org.sonatype.nexus.repository.view.handlers.ConditionalRequestHandler
 import org.sonatype.nexus.repository.view.handlers.HandlerContributor
 import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler
 import org.sonatype.nexus.repository.view.handlers.TimingHandler
-import org.sonatype.nexus.repository.view.matchers.ActionMatcher
-import org.sonatype.nexus.repository.view.matchers.LiteralMatcher
-import org.sonatype.nexus.repository.view.matchers.logic.LogicMatchers
-import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher
 
 import static org.sonatype.nexus.repository.http.HttpMethods.DELETE
-import static org.sonatype.nexus.repository.http.HttpMethods.GET
-import static org.sonatype.nexus.repository.http.HttpMethods.POST
 import static org.sonatype.nexus.repository.http.HttpMethods.PUT
+import static org.sonatype.nexus.repository.npm.internal.NpmPaths.tokenMatcher
+import static org.sonatype.nexus.repository.npm.internal.NpmPaths.userMatcher
+
 /**
  * Common configuration aspects for npm repositories.
  * @since 3.0
@@ -141,199 +137,5 @@ abstract class OrientNpmRecipeSupport
         .handler(NpmHandlers.npmErrorHandler)
         .handler(NpmHandlers.deleteToken)
         .create())
-  }
-
-  /**
-   * Matcher for npm package search index.
-   */
-  static Builder searchIndexMatcher() {
-    new Builder().matcher(
-        LogicMatchers.and(
-            new ActionMatcher(GET),
-            LogicMatchers.or(
-                new LiteralMatcher('/-/all'),
-                new LiteralMatcher('/-/all/since')
-            )
-        )
-    )
-  }
-
-  /**
-   * Matcher for npm package v1 search.
-   */
-  static Builder searchV1Matcher() {
-    new Builder().matcher(
-        LogicMatchers.and(
-            new ActionMatcher(GET),
-            new LiteralMatcher('/-/v1/search')
-        )
-      )
-  }
-
-  /**
-   * Matcher for npm whoami command.
-   */
-  static Builder whoamiMatcher() {
-    new Builder().matcher(
-        LogicMatchers.and(
-            new ActionMatcher(GET),
-            new LiteralMatcher('/-/whoami')
-        )
-    )
-  }
-
-  /**
-   * Matcher for npm ping command.
-   */
-  static Builder pingMatcher() {
-    new Builder().matcher(
-        LogicMatchers.and(
-            new ActionMatcher(GET),
-            new LiteralMatcher('/-/ping')
-        )
-    )
-  }
-
-  /**
-   * Matcher for npm package metadata.
-   */
-  static Builder packageMatcher(String ...httpMethod) {
-    new Builder().matcher(
-        LogicMatchers.and(
-            new ActionMatcher(httpMethod),
-            LogicMatchers.or(
-                new TokenMatcher('/{' + NpmHandlers.T_PACKAGE_NAME + '}'),
-                new TokenMatcher('/@{' + NpmHandlers.T_PACKAGE_SCOPE + '}/{' + NpmHandlers.T_PACKAGE_NAME + '}'),
-                new TokenMatcher('/{' + NpmHandlers.T_PACKAGE_NAME + '}/{' + NpmHandlers.T_PACKAGE_VERSION + '}')
-            )
-        )
-    )
-  }
-
-  /**
-   * Matcher for npm package metadata.
-   */
-  static Builder packageMatcherWithRevision(String httpMethod) {
-    new Builder().matcher(
-        LogicMatchers.and(
-            new ActionMatcher(httpMethod),
-            LogicMatchers.or(
-                new TokenMatcher('/{' + NpmHandlers.T_PACKAGE_NAME + '}/-rev/{' + NpmHandlers.T_REVISION + '}'),
-                new TokenMatcher('/@{' + NpmHandlers.T_PACKAGE_SCOPE + '}/{' + NpmHandlers.T_PACKAGE_NAME + '}/-rev/{' +
-                    NpmHandlers.T_REVISION + '}')
-            )
-        )
-    )
-  }
-
-  /**
-   * Matcher for npm package tarballs.
-   */
-  static Builder tarballMatcher(String ...httpMethod) {
-    new Builder().matcher(
-        LogicMatchers.and(
-            new ActionMatcher(httpMethod),
-            LogicMatchers.or(
-                new TokenMatcher('/{' + NpmHandlers.T_PACKAGE_NAME + '}/-/{' + NpmHandlers.T_TARBALL_NAME + '}'),
-                new TokenMatcher('/@{' + NpmHandlers.T_PACKAGE_SCOPE + '}/{' + NpmHandlers.T_PACKAGE_NAME + '}/-/{' +
-                    NpmHandlers.T_TARBALL_NAME + '}'),
-            )
-        )
-    )
-  }
-
-  /**
-   * Matcher for npm package dist-tags.
-   */
-  static Builder distTagsMatcher(String httpMethod) {
-    new Builder().matcher(
-        LogicMatchers.and(
-            new ActionMatcher(httpMethod),
-            LogicMatchers.or(
-                new TokenMatcher('/-/package/{' + NpmHandlers.T_PACKAGE_NAME + '}/dist-tags'),
-                new TokenMatcher('/-/package/@{' + NpmHandlers.T_PACKAGE_SCOPE + '}/{' + NpmHandlers.T_PACKAGE_NAME + '}/dist-tags'),
-            )
-        )
-    )
-  }
-
-  /**
-   * Matcher for npm package dist-tags.
-   */
-  static Builder distTagsUpdateMatcher(String httpMethod) {
-    new Builder().matcher(
-        LogicMatchers.and(
-            new ActionMatcher(httpMethod),
-            LogicMatchers.or(
-                new TokenMatcher('/-/package/{' + NpmHandlers.T_PACKAGE_NAME + '}/dist-tags/{' + NpmHandlers.T_PACKAGE_TAG +'}'),
-                new TokenMatcher('/-/package/@{' + NpmHandlers.T_PACKAGE_SCOPE + '}/{' + NpmHandlers.T_PACKAGE_NAME + '}/dist-tags/{' + NpmHandlers.T_PACKAGE_TAG + '}'),
-            )
-        )
-    )
-  }
-
-  /**
-   * Matcher for npm package tarballs.
-   */
-  static Builder tarballMatcherWithRevision(String httpMethod) {
-    new Builder().matcher(
-        LogicMatchers.and(
-            new ActionMatcher(httpMethod),
-            LogicMatchers.or(
-                new TokenMatcher('/{' + NpmHandlers.T_PACKAGE_NAME + '}/-/{' + NpmHandlers.T_TARBALL_NAME + '}/-rev/{' +
-                    NpmHandlers.T_REVISION + '}'),
-                new TokenMatcher('/@{' + NpmHandlers.T_PACKAGE_SCOPE + '}/{' + NpmHandlers.T_PACKAGE_NAME + '}/-/{' +
-                    NpmHandlers.T_TARBALL_NAME + '}/-rev/{' + NpmHandlers.T_REVISION + '}')
-            )
-        )
-    )
-  }
-
-  /**
-   * Matcher for {@code npm adduser}.
-   */
-  static Builder userMatcher(String httpMethod) {
-    new Builder().matcher(
-        LogicMatchers.and(
-            new ActionMatcher(httpMethod),
-            new TokenMatcher(NpmHandlers.USER_LOGIN_PREFIX + '{' + NpmHandlers.T_USERNAME + '}')
-        )
-    )
-  }
-
-  /**
-   * Matcher for {@code npm logout}.
-   */
-  static Builder tokenMatcher(String httpMethod) {
-    new Builder().matcher(
-        LogicMatchers.and(
-            new ActionMatcher(httpMethod),
-            new TokenMatcher('/-/user/token/{' + NpmHandlers.T_TOKEN + '}')
-        )
-    )
-  }
-
-  /**
-   * Matcher for {@code npm audit}.
-   */
-  static Builder auditMatcher() {
-    new Builder().matcher(
-        LogicMatchers.and(
-            new ActionMatcher(POST),
-            new LiteralMatcher('/-/npm/v1/security/audits') // is used while npm audit
-        )
-    )
-  }
-
-  /**
-   * Matcher for {@code npm audit quick}.
-   */
-  static Builder auditQuickMatcher() {
-    new Builder().matcher(
-        LogicMatchers.and(
-            new ActionMatcher(POST),
-            new LiteralMatcher('/-/npm/v1/security/audits/quick') // is used while npm install
-        )
-    )
   }
 }

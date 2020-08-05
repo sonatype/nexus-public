@@ -24,6 +24,8 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.npm.internal.NpmPublishParser;
+import org.sonatype.nexus.repository.npm.internal.NpmPublishRequest;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.view.Payload;
@@ -115,6 +117,6 @@ public class NpmRequestParser
 
   @VisibleForTesting
   NpmPublishParser npmPublishParserFor(final JsonParser jsonParser, final StorageFacet storageFacet) {
-    return new NpmPublishParser(jsonParser, storageFacet, HASH_ALGORITHMS);
+    return new NpmPublishParser(jsonParser, storageFacet::createTempBlob, HASH_ALGORITHMS);
   }
 }

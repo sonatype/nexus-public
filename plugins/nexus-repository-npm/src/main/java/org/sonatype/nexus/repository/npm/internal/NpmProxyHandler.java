@@ -29,7 +29,7 @@ public class NpmProxyHandler
   @Override
   protected Response buildNotFoundResponse(final Context context) {
     State state = context.getAttributes().require(TokenMatcher.State.class);
-    NpmPackageId packageId = NpmHandlers.packageId(state);
+    NpmPackageId packageId = NpmPaths.packageId(state);
     return NpmResponses.packageNotFound(packageId);
   }
 }

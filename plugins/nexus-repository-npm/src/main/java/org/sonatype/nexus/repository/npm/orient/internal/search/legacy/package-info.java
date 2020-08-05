@@ -10,29 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.npm.internal.orient;
+@FeatureFlag(name = "nexus.orient.store.content")
+package org.sonatype.nexus.repository.npm.orient.internal.search.legacy;
 
-import java.io.IOException;
-import java.util.Map;
-
-import org.sonatype.nexus.repository.Facet;
-import org.sonatype.nexus.repository.npm.internal.NpmHostedFacet;
-import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.TempBlob;
-
-/**
- * npm hosted facet.
- *
- * @since 3.0
- */
-@Facet.Exposed
-public interface OrientNpmHostedFacet
-    extends Facet, NpmHostedFacet
-{
-  /**
-   * Add the package using the package.json and <code>TempBlob</code>.
-   *
-   * @since 3.7
-   */
-  Asset putPackage(Map<String, Object> packageJson, TempBlob tempBlob) throws IOException;
-}
+import org.sonatype.nexus.common.app.FeatureFlag;

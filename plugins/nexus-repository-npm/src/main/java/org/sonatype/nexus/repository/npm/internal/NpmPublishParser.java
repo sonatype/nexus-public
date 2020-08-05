@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.npm.internal.orient;
+package org.sonatype.nexus.repository.npm.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,15 +21,15 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import javax.annotation.Nullable;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
-import org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils;
-import org.sonatype.nexus.repository.storage.StorageFacet;
-import org.sonatype.nexus.repository.storage.TempBlob;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.thread.io.StreamCopier;
 
 import com.fasterxml.jackson.core.JsonParser;
@@ -73,24 +73,23 @@ public class NpmPublishParser
 
   private final JsonParser jsonParser;
 
-  private final StorageFacet storageFacet;
-
-  private final List<HashAlgorithm> hashAlgorithms;
-
   private final Map<String, TempBlob> tempBlobs = new LinkedHashMap<>();
+
+  private final Function<InputStream, TempBlob> tempBlobCreator;
 
   /**
    * @param jsonParser     json parser containing the content
    * @param storageFacet   storage facet for creating temp blobs (if needed)
    * @param hashAlgorithms hash algorithms to apply to the temp blobs (if any are created)
    */
-  public NpmPublishParser(final JsonParser jsonParser,
-                          final StorageFacet storageFacet,
-                          final List<HashAlgorithm> hashAlgorithms)
+  public NpmPublishParser(
+      final JsonParser jsonParser,
+      final BiFunction<InputStream, List<HashAlgorithm>, TempBlob> tempBlobCreator,
+      final List<HashAlgorithm> hashAlgorithms)
   {
     this.jsonParser = checkNotNull(jsonParser);
-    this.storageFacet = checkNotNull(storageFacet);
-    this.hashAlgorithms = checkNotNull(hashAlgorithms);
+    checkNotNull(tempBlobCreator);
+    this.tempBlobCreator = in -> tempBlobCreator.apply(in, hashAlgorithms);
   }
 
   /**
@@ -187,7 +186,7 @@ public class NpmPublishParser
     latestEntry.put(NAME, currentUserId);
   }
 
-  private void updateMaintainerAsString(final List<String> maintainers, String currentId) {
+  private void updateMaintainerAsString(final List<String> maintainers, final String currentId) {
     maintainers.set(0, currentId);
   }
 
@@ -402,7 +401,7 @@ public class NpmPublishParser
   }
 
   private TempBlob readBinaryValueIntoTempBlob() {
-    return new StreamCopier<>(this::readBinaryValue, this::createTempBlob).read();
+    return new StreamCopier<>(this::readBinaryValue, tempBlobCreator).read();
   }
 
   private void readBinaryValue(final OutputStream outputStream) {
@@ -413,10 +412,6 @@ public class NpmPublishParser
     catch (IOException e) {
       throw new RuntimeException("Unable to read binary value", e);
     }
-  }
-
-  private TempBlob createTempBlob(final InputStream inputStream) {
-    return storageFacet.createTempBlob(inputStream, hashAlgorithms);
   }
 
   /**

@@ -17,30 +17,26 @@ import java.util.LinkedHashMap;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
-import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.npm.internal.NpmFormatAttributesExtractor;
 
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.when;
 
 public class NpmFormatAttributesExtractorTest
     extends TestSupport
 {
-  @Mock
-  Asset asset;
+  private NestedAttributesMap formatAttributes;
 
   @Before
   public void setUp() {
-    NestedAttributesMap formatAttributes = new NestedAttributesMap("format", new LinkedHashMap<>());
-    when(asset.formatAttributes()).thenReturn(formatAttributes);
+    formatAttributes = new NestedAttributesMap("format", new LinkedHashMap<>());
   }
 
   @Test
@@ -73,29 +69,29 @@ public class NpmFormatAttributesExtractorTest
                 .build())
             .build());
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("author"), is("Foo <foo@example.com> (http://www.example.com/foo)"));
-    assertThat(asset.formatAttributes().get("contributors"), is(asList(
+    assertThat(formatAttributes.get("author"), is("Foo <foo@example.com> (http://www.example.com/foo)"));
+    assertThat(formatAttributes.get("contributors"), is(asList(
         "Contributor One <contrib1@example.com> (http://www.example.com/contrib1)",
         "Contributor Two <contrib2@example.com> (http://www.example.com/contrib2)")));
-    assertThat(asset.formatAttributes().get("keywords"), is("one two"));
-    assertThat(asset.formatAttributes().get("os"), is("darwin linux"));
-    assertThat(asset.formatAttributes().get("cpu"), is("x64 ia32"));
-    assertThat(asset.formatAttributes().child("engines").get("engine1"), is("1.0.0"));
-    assertThat(asset.formatAttributes().child("engines").get("engine2"), is("2.0.0"));
-    assertThat(asset.formatAttributes().get("name"), is("foo"));
-    assertThat(asset.formatAttributes().get("version"), is("1.2.3"));
-    assertThat(asset.formatAttributes().get("description"), is("This is a test."));
-    assertThat(asset.formatAttributes().get("license"), is("(MIT OR Apache-2.0)"));
-    assertThat(asset.formatAttributes().get("homepage"), is("https://www.example.com/homepage"));
-    assertThat(asset.formatAttributes().get("repository_url"), is("https://www.example.com/repository.git"));
-    assertThat(asset.formatAttributes().get("repository_type"), is("git"));
-    assertThat(asset.formatAttributes().get("bugs_url"), is("https://www.example.com/bugs"));
-    assertThat(asset.formatAttributes().get("bugs_email"), is("bugs@example.com"));
-    assertThat(asset.formatAttributes().get("tagged_is"), is(""));
-    assertThat(asset.formatAttributes().get("tagged_not"), is("unstable"));
-    assertThat(asset.formatAttributes().get("search_normalized_version"), is("00001.00002.00003"));
+    assertThat(formatAttributes.get("keywords"), is("one two"));
+    assertThat(formatAttributes.get("os"), is("darwin linux"));
+    assertThat(formatAttributes.get("cpu"), is("x64 ia32"));
+    assertThat(formatAttributes.child("engines").get("engine1"), is("1.0.0"));
+    assertThat(formatAttributes.child("engines").get("engine2"), is("2.0.0"));
+    assertThat(formatAttributes.get("name"), is("foo"));
+    assertThat(formatAttributes.get("version"), is("1.2.3"));
+    assertThat(formatAttributes.get("description"), is("This is a test."));
+    assertThat(formatAttributes.get("license"), is("(MIT OR Apache-2.0)"));
+    assertThat(formatAttributes.get("homepage"), is("https://www.example.com/homepage"));
+    assertThat(formatAttributes.get("repository_url"), is("https://www.example.com/repository.git"));
+    assertThat(formatAttributes.get("repository_type"), is("git"));
+    assertThat(formatAttributes.get("bugs_url"), is("https://www.example.com/bugs"));
+    assertThat(formatAttributes.get("bugs_email"), is("bugs@example.com"));
+    assertThat(formatAttributes.get("tagged_is"), is(""));
+    assertThat(formatAttributes.get("tagged_not"), is("unstable"));
+    assertThat(formatAttributes.get("search_normalized_version"), is("00001.00002.00003"));
   }
 
   @Test
@@ -105,10 +101,10 @@ public class NpmFormatAttributesExtractorTest
             .put("name", "thename")
             .build());
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("name"), is("thename"));
-    assertThat(asset.formatAttributes().get("scope"), is(nullValue()));
+    assertThat(formatAttributes.get("name"), is("thename"));
+    assertThat(formatAttributes.get("scope"), is(nullValue()));
   }
 
   @Test
@@ -118,10 +114,10 @@ public class NpmFormatAttributesExtractorTest
             .put("name", "@thescope/thename")
             .build());
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("name"), is("@thescope/thename"));
-    assertThat(asset.formatAttributes().get("scope"), is("thescope"));
+    assertThat(formatAttributes.get("name"), is("@thescope/thename"));
+    assertThat(formatAttributes.get("scope"), is("thescope"));
   }
 
   @Test
@@ -131,9 +127,9 @@ public class NpmFormatAttributesExtractorTest
             .put("author", "Foo <foo@example.com> (http://www.example.com/foo)")
             .build());
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("author"), is("Foo <foo@example.com> (http://www.example.com/foo)"));
+    assertThat(formatAttributes.get("author"), is("Foo <foo@example.com> (http://www.example.com/foo)"));
   }
 
   @Test
@@ -147,9 +143,9 @@ public class NpmFormatAttributesExtractorTest
             .build())
         .build());
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("author"), is("Foo <foo@example.com> (http://www.example.com/foo)"));
+    assertThat(formatAttributes.get("author"), is("Foo <foo@example.com> (http://www.example.com/foo)"));
   }
 
   @Test
@@ -159,9 +155,9 @@ public class NpmFormatAttributesExtractorTest
             .put("contributors", "Foo <foo@example.com> (http://www.example.com/foo)")
             .build());
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("contributors"),
+    assertThat(formatAttributes.get("contributors"),
         is(singletonList("Foo <foo@example.com> (http://www.example.com/foo)")));
   }
 
@@ -176,9 +172,9 @@ public class NpmFormatAttributesExtractorTest
                 .build())
             .build());
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("contributors"),
+    assertThat(formatAttributes.get("contributors"),
         is(singletonList("Foo <foo@example.com> (http://www.example.com/foo)")));
   }
 
@@ -195,9 +191,9 @@ public class NpmFormatAttributesExtractorTest
                 ))
             .build());
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("contributors"), is(asList(
+    assertThat(formatAttributes.get("contributors"), is(asList(
         "Foo <foo@example.com> (http://www.example.com/foo)",
         "Bar <bar@example.com> (http://www.example.com/bar)")));
   }
@@ -207,9 +203,9 @@ public class NpmFormatAttributesExtractorTest
     NpmFormatAttributesExtractor underTest =
         getContributorAttributesExtractor(null, "foo@example.com", "http://www.example.com/foo");
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("contributors"),
+    assertThat(formatAttributes.get("contributors"),
         is(singletonList("null <foo@example.com> (http://www.example.com/foo)")));
   }
 
@@ -218,9 +214,9 @@ public class NpmFormatAttributesExtractorTest
     NpmFormatAttributesExtractor underTest =
         getContributorAttributesExtractor("Foo", null, "http://www.example.com/foo");
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("contributors"),
+    assertThat(formatAttributes.get("contributors"),
         is(singletonList("Foo <null> (http://www.example.com/foo)")));
   }
 
@@ -229,9 +225,9 @@ public class NpmFormatAttributesExtractorTest
     NpmFormatAttributesExtractor underTest =
         getContributorAttributesExtractor("Foo", "foo@example.com", null);
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("contributors"),
+    assertThat(formatAttributes.get("contributors"),
         is(singletonList("Foo <foo@example.com> (null)")));
   }
 
@@ -255,9 +251,9 @@ public class NpmFormatAttributesExtractorTest
         .put("keywords", "one")
         .build());
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("keywords"), is("one"));
+    assertThat(formatAttributes.get("keywords"), is("one"));
   }
 
   @Test
@@ -267,9 +263,9 @@ public class NpmFormatAttributesExtractorTest
         .put("keywords", asList("one", "two"))
         .build());
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("keywords"), is("one two"));
+    assertThat(formatAttributes.get("keywords"), is("one two"));
   }
 
   @Test
@@ -278,9 +274,9 @@ public class NpmFormatAttributesExtractorTest
         .put("os", "darwin")
         .build());
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("os"), is("darwin"));
+    assertThat(formatAttributes.get("os"), is("darwin"));
   }
 
   @Test
@@ -290,9 +286,9 @@ public class NpmFormatAttributesExtractorTest
             .put("os", asList("darwin", "linux"))
             .build());
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("os"), is("darwin linux"));
+    assertThat(formatAttributes.get("os"), is("darwin linux"));
   }
 
   @Test
@@ -301,9 +297,9 @@ public class NpmFormatAttributesExtractorTest
         .put("cpu", "x64")
         .build());
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("cpu"), is("x64"));
+    assertThat(formatAttributes.get("cpu"), is("x64"));
   }
 
   @Test
@@ -313,9 +309,9 @@ public class NpmFormatAttributesExtractorTest
             .put("cpu", asList("x64", "ia32"))
             .build());
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("cpu"), is("x64 ia32"));
+    assertThat(formatAttributes.get("cpu"), is("x64 ia32"));
   }
 
   @Test
@@ -324,9 +320,9 @@ public class NpmFormatAttributesExtractorTest
         .put("license", "(MIT OR Apache-2.0)")
         .build());
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("license"), is("(MIT OR Apache-2.0)"));
+    assertThat(formatAttributes.get("license"), is("(MIT OR Apache-2.0)"));
   }
 
   @Test
@@ -338,9 +334,9 @@ public class NpmFormatAttributesExtractorTest
             .build())
         .build());
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("license"), is("ISC"));
+    assertThat(formatAttributes.get("license"), is("ISC"));
   }
 
   @Test
@@ -349,9 +345,9 @@ public class NpmFormatAttributesExtractorTest
         .put("homepage", "https://www.example.com/homepage")
         .build());
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("homepage"), is("https://www.example.com/homepage"));
+    assertThat(formatAttributes.get("homepage"), is("https://www.example.com/homepage"));
   }
 
   @Test
@@ -363,10 +359,10 @@ public class NpmFormatAttributesExtractorTest
             .build())
         .build());
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("repository_url"), is("https://www.example.com/repository.git"));
-    assertThat(asset.formatAttributes().get("repository_type"), is("git"));
+    assertThat(formatAttributes.get("repository_url"), is("https://www.example.com/repository.git"));
+    assertThat(formatAttributes.get("repository_type"), is("git"));
   }
 
   @Test
@@ -378,10 +374,10 @@ public class NpmFormatAttributesExtractorTest
             .build())
         .build());
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("bugs_url"), is("https://www.example.com/bugs"));
-    assertThat(asset.formatAttributes().get("bugs_email"), is("bugs@example.com"));
+    assertThat(formatAttributes.get("bugs_url"), is("https://www.example.com/bugs"));
+    assertThat(formatAttributes.get("bugs_email"), is("bugs@example.com"));
   }
 
   @Test
@@ -390,10 +386,10 @@ public class NpmFormatAttributesExtractorTest
         .put("version", "0.1.1")
         .build());
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("tagged_is"), is("unstable"));
-    assertThat(asset.formatAttributes().get("tagged_not"), is(""));
+    assertThat(formatAttributes.get("tagged_is"), is("unstable"));
+    assertThat(formatAttributes.get("tagged_not"), is(""));
   }
 
   @Test
@@ -402,10 +398,10 @@ public class NpmFormatAttributesExtractorTest
         .put("version", "1.0.0")
         .build());
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("tagged_is"), is(""));
-    assertThat(asset.formatAttributes().get("tagged_not"), is("unstable"));
+    assertThat(formatAttributes.get("tagged_is"), is(""));
+    assertThat(formatAttributes.get("tagged_not"), is("unstable"));
   }
 
   @Test
@@ -414,10 +410,10 @@ public class NpmFormatAttributesExtractorTest
         .put("version", "1.0.1")
         .build());
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("tagged_is"), is(""));
-    assertThat(asset.formatAttributes().get("tagged_not"), is("unstable"));
+    assertThat(formatAttributes.get("tagged_is"), is(""));
+    assertThat(formatAttributes.get("tagged_not"), is("unstable"));
   }
 
   @Test
@@ -426,9 +422,9 @@ public class NpmFormatAttributesExtractorTest
         .put("version", "10.20.1")
         .build());
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("search_normalized_version"), is("00010.00020.00001"));
+    assertThat(formatAttributes.get("search_normalized_version"), is("00010.00020.00001"));
   }
 
   @Test
@@ -437,9 +433,9 @@ public class NpmFormatAttributesExtractorTest
         .put("version", "1.2.3-foo")
         .build());
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("search_normalized_version"), is("00001.00002.00003-foo"));
+    assertThat(formatAttributes.get("search_normalized_version"), is("00001.00002.00003-foo"));
   }
 
   @Test
@@ -448,9 +444,9 @@ public class NpmFormatAttributesExtractorTest
         .put("version", "1.2.3+foo")
         .build());
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("search_normalized_version"), is("00001.00002.00003+foo"));
+    assertThat(formatAttributes.get("search_normalized_version"), is("00001.00002.00003+foo"));
   }
 
   @Test
@@ -459,9 +455,9 @@ public class NpmFormatAttributesExtractorTest
         .put("version", "foo-1.2.3")
         .build());
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("search_normalized_version"), is("foo-00001.00002.00003"));
+    assertThat(formatAttributes.get("search_normalized_version"), is("foo-00001.00002.00003"));
   }
 
   @Test
@@ -470,9 +466,9 @@ public class NpmFormatAttributesExtractorTest
         .put("version", "1b2b3")
         .build());
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("search_normalized_version"), is("00001b00002b00003"));
+    assertThat(formatAttributes.get("search_normalized_version"), is("00001b00002b00003"));
   }
 
   @Test
@@ -481,8 +477,8 @@ public class NpmFormatAttributesExtractorTest
         .put("bugs", "https://www.example.com/bugString")
         .build());
 
-    underTest.copyFormatAttributes(asset);
+    underTest.copyFormatAttributes(formatAttributes);
 
-    assertThat(asset.formatAttributes().get("bugs_url"), is("https://www.example.com/bugString"));
+    assertThat(formatAttributes.get("bugs_url"), is("https://www.example.com/bugString"));
   }
 }

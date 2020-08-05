@@ -71,7 +71,7 @@ public class NpmComponentDirector
 
   @Override
   public Component afterMove(final Component component, final Repository destination) {
-    destination.optionalFacet(NpmHostedFacet.class).ifPresent(npmHostedFacet -> {
+    destination.optionalFacet(OrientNpmHostedFacet.class).ifPresent(npmHostedFacet -> {
 
       UnitOfWork.begin(destination.facet(StorageFacet.class).txSupplier());
       try {
@@ -86,7 +86,7 @@ public class NpmComponentDirector
   }
 
   @Transactional
-  protected void updatePackageRoot(final NpmHostedFacet npmHostedFacet,
+  protected void updatePackageRoot(final OrientNpmHostedFacet npmHostedFacet,
                                    final Component component,
                                    final Repository destination)
   {

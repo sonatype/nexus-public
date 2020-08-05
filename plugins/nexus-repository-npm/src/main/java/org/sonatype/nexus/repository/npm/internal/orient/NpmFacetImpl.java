@@ -24,10 +24,11 @@ import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind;
+import org.sonatype.nexus.repository.npm.internal.NpmFormatAttributesExtractor;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageId;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageParser;
-import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexInvalidatedEvent;
 import org.sonatype.nexus.repository.npm.orient.NpmFacet;
+import org.sonatype.nexus.repository.npm.orient.internal.search.legacy.NpmSearchIndexInvalidatedEvent;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;
@@ -177,7 +178,7 @@ public class NpmFacetImpl
     }
     else {
       NpmFormatAttributesExtractor formatAttributesExtractor = new NpmFormatAttributesExtractor(formatAttributes);
-      formatAttributesExtractor.copyFormatAttributes(asset);
+      formatAttributesExtractor.copyFormatAttributes(asset.formatAttributes());
     }
   }
 }

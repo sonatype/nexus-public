@@ -21,21 +21,19 @@ import org.junit.Test
 /**
  * UT for {@link NpmHandlers}
  */
-class NpmHandlersTest
+class NpmPathsTest
     extends TestSupport
 {
-  NpmHandlers handlers = new NpmHandlers()
-
   @Test
   void 'Test incremental index request with null params'() {
-    DateTime time = handlers.indexSince(null)
+    DateTime time = NpmPaths.indexSince(null)
     assert time == null
   }
 
   @Test
   void 'Test incremental index request with no params'() {
     Parameters params = new Parameters()
-    DateTime time = handlers.indexSince(params)
+    DateTime time = NpmPaths.indexSince(params)
     assert time == null
   }
 
@@ -45,7 +43,7 @@ class NpmHandlersTest
     Parameters params = new Parameters()
     params.set("stale", "update_after")
     params.set("startkey", String.valueOf(now.millis))
-    DateTime time = handlers.indexSince(params)
+    DateTime time = NpmPaths.indexSince(params)
     assert time == now
   }
 }

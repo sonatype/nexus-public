@@ -23,7 +23,7 @@ import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.npm.internal.ArchiveUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmFormat;
-import org.sonatype.nexus.repository.npm.internal.orient.NpmHostedFacet;
+import org.sonatype.nexus.repository.npm.internal.orient.OrientNpmHostedFacet;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageParser;
 import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
@@ -81,7 +81,7 @@ public class OrientNpmUploadHandlerTest
   Repository repository;
 
   @Mock
-  NpmHostedFacet npmFacet;
+  OrientNpmHostedFacet npmFacet;
 
   @Mock
   PartPayload payload;
@@ -110,7 +110,7 @@ public class OrientNpmUploadHandlerTest
 
     underTest = new OrientNpmUploadHandler(contentPermissionChecker, new SimpleVariableResolverAdapter(),
         new NpmPackageParser(), emptySet());
-    when(repository.facet(NpmHostedFacet.class)).thenReturn(npmFacet);
+    when(repository.facet(OrientNpmHostedFacet.class)).thenReturn(npmFacet);
 
     packageJson = new File(OrientNpmUploadHandlerTest.class.getResource("../internal/package.json").toURI());
     when(storageFacet.createTempBlob(any(PartPayload.class), any())).thenAnswer(invocation -> {

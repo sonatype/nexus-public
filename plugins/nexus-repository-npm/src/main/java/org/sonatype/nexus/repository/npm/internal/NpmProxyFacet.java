@@ -38,7 +38,7 @@ public interface NpmProxyFacet extends Facet
 
   void invalidateProxyCaches();
 
-  enum ProxyTarget
+  public enum ProxyTarget
   {
     SEARCH_INDEX(CacheControllerHolder.METADATA),
     SEARCH_V1_RESULTS(CacheControllerHolder.METADATA),

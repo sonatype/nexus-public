@@ -14,17 +14,17 @@ package org.sonatype.nexus.repository.npm.internal.orient;
 
 import java.io.IOException;
 
+import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
-
-import org.sonatype.nexus.repository.npm.internal.NpmJsonUtils;
-import org.sonatype.nexus.repository.npm.internal.NpmResponses;
-import org.sonatype.nexus.repository.npm.internal.NpmTokenFacet;
-import org.sonatype.nexus.repository.npm.internal.security.NpmTokenManager;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.http.HttpResponses;
+import org.sonatype.nexus.repository.npm.internal.NpmJsonUtils;
+import org.sonatype.nexus.repository.npm.internal.NpmResponses;
+import org.sonatype.nexus.repository.npm.internal.NpmTokenFacet;
+import org.sonatype.nexus.repository.npm.internal.security.NpmTokenManager;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.view.ContentTypes;
@@ -43,6 +43,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @since 3.0
  */
 @Named
+@Priority(Integer.MAX_VALUE)
 public class NpmTokenFacetImpl
     extends FacetSupport
     implements NpmTokenFacet

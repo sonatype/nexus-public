@@ -104,7 +104,7 @@ public class NpmHostedComponentMaintenanceImpl
    * Deletes package and all related tarballs too.
    */
   private Set<String> deletePackageRoot(final NpmPackageId packageId, final boolean deleteBlob) throws IOException {
-    return getRepository().facet(NpmHostedFacet.class).deletePackage(packageId, null, deleteBlob);
+    return getRepository().facet(OrientNpmHostedFacet.class).deletePackage(packageId, null, deleteBlob);
   }
 
   /**
@@ -127,7 +127,7 @@ public class NpmHostedComponentMaintenanceImpl
     }
     packageRoot.child(NpmMetadataUtils.VERSIONS).remove(version.getKey());
     if (packageRoot.child(NpmMetadataUtils.VERSIONS).isEmpty()) {
-      return getRepository().facet(NpmHostedFacet.class).deletePackage(packageId, null, deleteBlob);
+      return getRepository().facet(OrientNpmHostedFacet.class).deletePackage(packageId, null, deleteBlob);
     }
     else {
       NpmFacetUtils.removeDistTagsFromTagsWithVersion(packageRoot, version.getKey());
@@ -135,7 +135,7 @@ public class NpmHostedComponentMaintenanceImpl
       packageRoot.child(NpmMetadataUtils.TIME).remove(version.getKey());
       NpmMetadataUtils.maintainTime(packageRoot);
       NpmFacetUtils.savePackageRoot(UnitOfWork.currentTx(), packageRootAsset, packageRoot);
-      return getRepository().facet(NpmHostedFacet.class).deleteTarball(packageId, tarballName, deleteBlob);
+      return getRepository().facet(OrientNpmHostedFacet.class).deleteTarball(packageId, tarballName, deleteBlob);
     }
   }
 }

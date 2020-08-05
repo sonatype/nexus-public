@@ -61,8 +61,8 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toList;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
+import static org.sonatype.nexus.repository.npm.internal.NpmPaths.tarballMatcher;
 import static org.sonatype.nexus.repository.npm.internal.NpmProxyFacet.ProxyTarget.TARBALL;
-import static org.sonatype.nexus.repository.npm.internal.orient.OrientNpmRecipeSupport.tarballMatcher;
 import static org.sonatype.nexus.repository.view.Content.CONTENT_HASH_CODES_MAP;
 import static org.sonatype.nexus.repository.view.Content.T_CONTENT_HASH_CODES_MAP;
 

@@ -15,7 +15,6 @@ package org.sonatype.nexus.repository.npm.internal.orient;
 import java.util.List;
 
 import org.sonatype.nexus.repository.npm.internal.NpmFieldMatcher;
-import org.sonatype.nexus.repository.npm.internal.NpmStreamPayload;
 import org.sonatype.nexus.repository.storage.MissingAssetBlobException;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.payloads.StreamPayload.InputStreamFunction;

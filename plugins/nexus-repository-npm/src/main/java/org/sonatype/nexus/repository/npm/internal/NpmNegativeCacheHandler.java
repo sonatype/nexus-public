@@ -33,7 +33,7 @@ public class NpmNegativeCacheHandler
   protected Response buildResponse(final Status status, final Context context) {
     if (status.getCode() == HttpStatus.SC_NOT_FOUND) {
       State state = context.getAttributes().require(TokenMatcher.State.class);
-      NpmPackageId packageId = NpmHandlers.packageId(state);
+      NpmPackageId packageId = NpmPaths.packageId(state);
       return NpmResponses.packageNotFound(packageId);
     }
     return super.buildResponse(status, context);

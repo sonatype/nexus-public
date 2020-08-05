@@ -30,8 +30,8 @@ import org.sonatype.nexus.repository.npm.internal.NpmGroupAuditQuickHandler
 import org.sonatype.nexus.repository.npm.internal.NpmHandlers
 import org.sonatype.nexus.repository.npm.internal.NpmPingHandler
 import org.sonatype.nexus.repository.npm.internal.NpmWhoamiHandler
-import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexFacetGroup
 import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchGroupHandler
+import org.sonatype.nexus.repository.npm.orient.internal.search.legacy.NpmSearchIndexFacetGroup
 import org.sonatype.nexus.repository.types.GroupType
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
 import org.sonatype.nexus.repository.view.Handler
@@ -40,6 +40,7 @@ import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler
 
 import static org.sonatype.nexus.repository.http.HttpMethods.GET
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD
+import static org.sonatype.nexus.repository.npm.internal.NpmPaths.*
 
 /**
  * npm group repository recipe.
@@ -193,6 +194,4 @@ class OrientNpmGroupRecipe
 
     return facet
   }
-
-
 }

@@ -10,29 +10,19 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.npm.internal.orient;
+package org.sonatype.nexus.repository.npm.internal.tasks;
 
-import java.io.IOException;
-import java.util.Map;
-
-import org.sonatype.nexus.repository.Facet;
-import org.sonatype.nexus.repository.npm.internal.NpmHostedFacet;
-import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.TempBlob;
+import org.sonatype.nexus.scheduling.Task;
 
 /**
- * npm hosted facet.
+ * Task that reindexes npm proxy and hosted repositories by opening each tarball and extracting the contents of the
+ * {@code package.json} as format attributes. This task is necessary to "upgrade" existing npm repositories to contain
+ * the search-indexed format attributes necessary for npm v1 search.
  *
- * @since 3.0
+ * @since 3.7
  */
-@Facet.Exposed
-public interface OrientNpmHostedFacet
-    extends Facet, NpmHostedFacet
+public interface ReindexNpmRepositoryTask
+    extends Task
 {
-  /**
-   * Add the package using the package.json and <code>TempBlob</code>.
-   *
-   * @since 3.7
-   */
-  Asset putPackage(Map<String, Object> packageJson, TempBlob tempBlob) throws IOException;
+  public static final String NPM_V1_SEARCH_UNSUPPORTED = "npm_v1_search_unsupported";
 }

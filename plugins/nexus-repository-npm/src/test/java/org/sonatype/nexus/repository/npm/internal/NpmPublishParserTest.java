@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.npm.internal.orient;
+package org.sonatype.nexus.repository.npm.internal;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -21,14 +21,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
-import org.sonatype.nexus.repository.storage.StorageFacet;
-import org.sonatype.nexus.repository.storage.TempBlob;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
@@ -77,7 +77,7 @@ public class NpmPublishParserTest
   BlobId blobId;
 
   @Mock
-  StorageFacet storageFacet;
+  BiFunction<InputStream, List<HashAlgorithm>, TempBlob> tempBlobCreator;
 
   String contentHash;
 
@@ -87,7 +87,7 @@ public class NpmPublishParserTest
     when(tempBlob.getBlob()).thenReturn(blob);
     when(blob.getId()).thenReturn(blobId);
     when(blobId.toString()).thenReturn("blob-id");
-    when(storageFacet.createTempBlob(any(InputStream.class), any())).thenAnswer(invocation -> {
+    when(tempBlobCreator.apply(any(), any())).thenAnswer(invocation -> {
       byte[] content = ByteStreams.toByteArray((InputStream) invocation.getArguments()[0]);
       Hasher hasher = Hashing.sha1().newHasher().putBytes(content);
       contentHash = hasher.hash().toString();
@@ -97,7 +97,7 @@ public class NpmPublishParserTest
 
   @Test
   public void parsePublishJson() throws Exception {
-    String file = "../publish.json";
+    String file = "publish.json";
     String url = "http://localhost:10004/repository/search/foo/-/foo-1.0.tgz";
     String name = "foo";
     String version = "1.0";
@@ -106,7 +106,7 @@ public class NpmPublishParserTest
 
   @Test
   public void parseDeleteJson() throws Exception {
-    String file = "../delete.json";
+    String file = "delete.json";
     String url = "http://localhost:10004/repository/deletePackage1x/deletePackage1x/-/deletePackage1x-1.0.tgz";
     String name = "deletePackage1x";
     String version = "1.0";
@@ -115,7 +115,7 @@ public class NpmPublishParserTest
 
   @Test
   public void parsePublishLocalJson() throws Exception {
-    String file = "../publish-local.json";
+    String file = "publish-local.json";
     String url = "http://localhost:10004/repository/search/foo/-/foo-1.0.tgz";
     String name = "foo";
     String version = "1.0";
@@ -124,7 +124,7 @@ public class NpmPublishParserTest
 
   @Test
   public void parsePublishLocalJsonWithUser() throws Exception {
-    String file = "../publish-local.json";
+    String file = "publish-local.json";
     String url = "http://localhost:10004/repository/search/foo/-/foo-1.0.tgz";
     String name = "foo";
     String version = "1.0";
@@ -133,7 +133,7 @@ public class NpmPublishParserTest
 
   @Test
   public void parsePublishLocalJsonMaintainerNotArray() throws Exception {
-    String file = "../publish-local-maintainer-not-array.json";
+    String file = "publish-local-maintainer-not-array.json";
     String url = "http://localhost:10004/repository/search/foo/-/foo-1.0.tgz";
     String name = "foo";
     String version = "1.0";
@@ -142,7 +142,7 @@ public class NpmPublishParserTest
 
   @Test
   public void parsePublishLocalJsonMaintainerNotArrayWithUser() throws Exception {
-    String file = "../publish-local-maintainer-not-array.json";
+    String file = "publish-local-maintainer-not-array.json";
     String url = "http://localhost:10004/repository/search/foo/-/foo-1.0.tgz";
     String name = "foo";
     String version = "1.0";
@@ -151,7 +151,7 @@ public class NpmPublishParserTest
 
   @Test
   public void parsePublishLocalJsonMaintainerShortenedArray() throws Exception {
-    String file = "../publish-local-maintainer-shortened-array.json";
+    String file = "publish-local-maintainer-shortened-array.json";
     String url = "http://localhost:10004/repository/search/foo/-/foo-1.0.tgz";
     String name = "foo";
     String version = "1.0";
@@ -160,7 +160,7 @@ public class NpmPublishParserTest
 
   @Test
   public void parsePublishLocalJsonMaintainerShortenedArrayWithUser() throws Exception {
-    String file = "../publish-local-maintainer-shortened-array.json";
+    String file = "publish-local-maintainer-shortened-array.json";
     String url = "http://localhost:10004/repository/search/foo/-/foo-1.0.tgz";
     String name = "foo";
     String version = "1.0";
@@ -170,16 +170,16 @@ public class NpmPublishParserTest
 
   @Test
   public void parsePublishLocalJsonWithUserToken() throws Exception {
-    String file = "../publish-local-usertoken.json";
+    String file = "publish-local-usertoken.json";
     String name = "admin";
     parseFileAndAssertMaintainers(file, name);
   }
 
   @Test
   public void cleanUpOnFailure() throws Exception {
-    try (InputStream in = getClass().getResourceAsStream("../broken.json")) {
+    try (InputStream in = getClass().getResourceAsStream("broken.json")) {
       try (JsonParser jsonParser = jsonFactory.createParser(in)) {
-        NpmPublishParser underTest = new NpmPublishParser(jsonParser, storageFacet, HASH_ALGORITHMS);
+        NpmPublishParser underTest = new NpmPublishParser(jsonParser, tempBlobCreator, HASH_ALGORITHMS);
         underTest.parse(NO_USER);
         fail(); // exception should be thrown on parse
       }
@@ -196,7 +196,7 @@ public class NpmPublishParserTest
     exception.expect(JsonParseException.class);
     try (InputStream in = new ByteArrayInputStream("{\"name\":\"foo\",\"author\":\"bé\"}".getBytes(ISO_8859_1))) {
       try (JsonParser jsonParser = jsonFactory.createParser(in)) {
-        NpmPublishParser underTest = new NpmPublishParser(jsonParser, storageFacet, HASH_ALGORITHMS);
+        NpmPublishParser underTest = new NpmPublishParser(jsonParser, tempBlobCreator, HASH_ALGORITHMS);
         underTest.parse(NO_USER);
         fail(); // exception should be thrown on parse
       }
@@ -208,7 +208,7 @@ public class NpmPublishParserTest
     try (InputStream in = new ByteArrayInputStream("{\"name\":\"foo\",\"author\":\"bé\"}".getBytes(ISO_8859_1));
          InputStreamReader reader = new InputStreamReader(in, ISO_8859_1);
          JsonParser jsonParser = jsonFactory.createParser(reader)) {
-          NpmPublishParser underTest = new NpmPublishParser(jsonParser, storageFacet, HASH_ALGORITHMS);
+          NpmPublishParser underTest = new NpmPublishParser(jsonParser, tempBlobCreator, HASH_ALGORITHMS);
           assertThat(underTest.parse(NO_USER), notNullValue());
     }
   }
@@ -218,7 +218,7 @@ public class NpmPublishParserTest
   {
     try (InputStream in = getClass().getResourceAsStream(file)) {
       try (JsonParser jsonParser = jsonFactory.createParser(in)) {
-        NpmPublishParser underTest = new NpmPublishParser(jsonParser, storageFacet, HASH_ALGORITHMS);
+        NpmPublishParser underTest = new NpmPublishParser(jsonParser, tempBlobCreator, HASH_ALGORITHMS);
         try (NpmPublishRequest request = underTest.parse(name)) {
           assertMaintainers(request, name);
         }
@@ -248,7 +248,7 @@ public class NpmPublishParserTest
   {
     try (InputStream in = getClass().getResourceAsStream(file)) {
       try (JsonParser jsonParser = jsonFactory.createParser(in)) {
-        NpmPublishParser underTest = new NpmPublishParser(jsonParser, storageFacet, HASH_ALGORITHMS);
+        NpmPublishParser underTest = new NpmPublishParser(jsonParser, tempBlobCreator, HASH_ALGORITHMS);
         try (NpmPublishRequest request = underTest.parse(currentUser)) {
           assertRequestContents(request, name, version, url);
         }

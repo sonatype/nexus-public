@@ -17,10 +17,8 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.ManagedLifecycle;
-import org.sonatype.nexus.common.collect.ImmutableNestedAttributesMap;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.attributes.AttributesFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskScheduler;
@@ -28,9 +26,7 @@ import org.sonatype.nexus.scheduling.TaskScheduler;
 import com.google.common.collect.ImmutableMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.Boolean.TRUE;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.TASKS;
-import static org.sonatype.nexus.repository.npm.internal.tasks.orient.OrientReindexNpmRepositoryTask.NPM_V1_SEARCH_UNSUPPORTED;
 import static org.sonatype.nexus.repository.npm.internal.tasks.ReindexNpmRepositoryTaskDescriptor.REPOSITORY_NAME_FIELD_ID;
 
 /**
@@ -52,13 +48,17 @@ public class ReindexNpmRepositoryManager
 
   private final boolean enabled;
 
+  private final UnprocessedRepositoryChecker unprocessedRepositoryChecker;
+
   @Inject
   public ReindexNpmRepositoryManager(final TaskScheduler taskScheduler,
                                      final RepositoryManager repositoryManager,
+                                     final UnprocessedRepositoryChecker unprocessedRepositoryChecker,
                                      @Named("${nexus.npm.reindexOnStartup.enabled:-true}") final boolean enabled)
   {
     this.taskScheduler = checkNotNull(taskScheduler);
     this.repositoryManager = checkNotNull(repositoryManager);
+    this.unprocessedRepositoryChecker = checkNotNull(unprocessedRepositoryChecker);
     this.enabled = enabled;
   }
 
@@ -69,7 +69,7 @@ public class ReindexNpmRepositoryManager
     }
     try {
       for (Repository repository : repositoryManager.browse()) {
-        if (isUnprocessedNpmRepository(repository)) {
+        if (unprocessedRepositoryChecker.isUnprocessedNpmRepository(repository)) {
           boolean existingTask = taskScheduler.findAndSubmit(ReindexNpmRepositoryTaskDescriptor.TYPE_ID,
               ImmutableMap.of(REPOSITORY_NAME_FIELD_ID, repository.getName()));
           if (!existingTask) {
@@ -97,9 +97,7 @@ public class ReindexNpmRepositoryManager
   /**
    * Returns whether or not the specified repository has not yet been processed to support npm v1 search.
    */
-  private boolean isUnprocessedNpmRepository(final Repository repository) {
-    AttributesFacet attributesFacet = repository.facet(AttributesFacet.class);
-    ImmutableNestedAttributesMap attributes = attributesFacet.getAttributes();
-    return TRUE.equals(attributes.get(NPM_V1_SEARCH_UNSUPPORTED));
+  public interface UnprocessedRepositoryChecker {
+    boolean isUnprocessedNpmRepository(final Repository repository);
   }
 }

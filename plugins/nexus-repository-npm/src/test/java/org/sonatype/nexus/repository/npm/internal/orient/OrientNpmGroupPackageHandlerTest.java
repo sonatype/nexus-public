@@ -22,7 +22,6 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.group.GroupHandler.DispatchedRepositories;
 import org.sonatype.nexus.repository.npm.internal.NpmJsonUtils;
-import org.sonatype.nexus.repository.npm.internal.NpmStreamPayload;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.MissingAssetBlobException;
 import org.sonatype.nexus.repository.storage.StorageFacet;

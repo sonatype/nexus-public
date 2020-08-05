@@ -16,15 +16,12 @@ import java.io.IOException;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.npm.internal.orient.NpmHostedFacet;
 import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexFacet;
 import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchFacet;
-import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Parameters;
@@ -32,12 +29,9 @@ import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher.State;
 
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.common.text.Strings2.isBlank;
 import static org.sonatype.nexus.repository.http.HttpMethods.PUT;
 
 /**
@@ -53,72 +47,7 @@ public final class NpmHandlers
 
   private static final Logger log = LoggerFactory.getLogger(NpmHandlers.class);
 
-  public static final String T_PACKAGE_NAME = "packageName";
-
-  static final String T_PACKAGE_VERSION = "packageVersion";
-
-  static final String T_PACKAGE_TAG = "packageTag";
-
-  static final String T_PACKAGE_SCOPE = "packageScope";
-
-  static final String T_REVISION = "revision";
-
-  static final String T_TARBALL_NAME = "tarballName";
-
-  static final String T_USERNAME = "userName";
-
-  static final String USER_LOGIN_PREFIX = "/-/user/org.couchdb.user:";
-
-  static final String T_TOKEN = "token";
-
-  @Nonnull
-  public static NpmPackageId packageId(final TokenMatcher.State state) {
-    checkNotNull(state);
-    String packageName = state.getTokens().get(T_PACKAGE_NAME);
-    checkNotNull(packageName);
-
-    String version = state.getTokens().get(T_PACKAGE_VERSION);
-    if (!isBlank(version)) {
-      packageName += "-" + version;
-    }
-
-    String packageScope = state.getTokens().get(T_PACKAGE_SCOPE);
-    return new NpmPackageId(packageScope, packageName);
-  }
-
-  @Nonnull
-  public static String tarballName(final TokenMatcher.State state) {
-    checkNotNull(state);
-    String tarballName = state.getTokens().get(T_TARBALL_NAME);
-    checkNotNull(tarballName);
-    return tarballName;
-  }
-
-  @Nullable
-  public static DateTime indexSince(final Parameters parameters) {
-    // npm "incremental" index support: tells when it did last updated index
-    // GET /-/all/since?stale=update_after&startkey=1441712501000
-    if (parameters != null && "update_after".equals(parameters.get("stale"))) {
-      String tsStr = parameters.get("startkey");
-      if (!isBlank(tsStr)) {
-        try {
-          return new DateTime(Long.parseLong(tsStr));
-        }
-        catch (NumberFormatException e) {
-          // ignore
-        }
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static String revision(final TokenMatcher.State state) {
-    checkNotNull(state);
-    return state.getTokens().get(T_REVISION);
-  }
-
-  static Handler npmErrorHandler = new Handler()
+  public static Handler npmErrorHandler = new Handler()
   {
     @Nonnull
     @Override
@@ -155,7 +84,7 @@ public final class NpmHandlers
     }
   };
 
-  static Handler getPackage = new Handler()
+  public static Handler getPackage = new Handler()
   {
     @Nonnull
     @Override
@@ -164,19 +93,15 @@ public final class NpmHandlers
       Repository repository = context.getRepository();
       log.debug("[getPackage] repository: {} tokens: {}", repository.getName(), state.getTokens());
 
-      NpmPackageId packageId = packageId(state);
-      Content content = repository.facet(NpmHostedFacet.class)
-          .getPackage(packageId);
-      if (content != null) {
-        return NpmResponses.ok(content);
-      }
-      else {
-        return NpmResponses.packageNotFound(packageId);
-      }
+      NpmPackageId packageId = NpmPaths.packageId(state);
+      return repository.facet(NpmHostedFacet.class)
+          .getPackage(packageId)
+          .map(NpmResponses::ok)
+          .orElseGet(() -> NpmResponses.packageNotFound(packageId));
     }
   };
 
-  static Handler putPackage = new Handler()
+  public static Handler putPackage = new Handler()
   {
     @Nonnull
     @Override
@@ -186,12 +111,12 @@ public final class NpmHandlers
       log.debug("[putPackage] repository: {} tokens: {}", repository.getName(), state.getTokens());
 
       repository.facet(NpmHostedFacet.class)
-          .putPackage(packageId(state), revision(state), context.getRequest().getPayload());
+          .putPackage(NpmPaths.packageId(state), NpmPaths.revision(state), context.getRequest().getPayload());
       return NpmResponses.ok();
     }
   };
 
-  static Handler deletePackage = new Handler()
+  public static Handler deletePackage = new Handler()
   {
     @Nonnull
     @Override
@@ -200,8 +125,8 @@ public final class NpmHandlers
       Repository repository = context.getRepository();
       log.debug("[deletePackage] repository: {} tokens: {}", repository.getName(), state.getTokens());
 
-      NpmPackageId packageId = packageId(state);
-      Set<String> deleted = repository.facet(NpmHostedFacet.class).deletePackage(packageId, revision(state));
+      NpmPackageId packageId = NpmPaths.packageId(state);
+      Set<String> deleted = repository.facet(NpmHostedFacet.class).deletePackage(packageId, NpmPaths.revision(state));
       if (!deleted.isEmpty()) {
         return NpmResponses.ok();
       }
@@ -211,7 +136,7 @@ public final class NpmHandlers
     }
   };
 
-  static Handler getTarball = new Handler()
+  public static Handler getTarball = new Handler()
   {
     @Nonnull
     @Override
@@ -220,19 +145,16 @@ public final class NpmHandlers
       Repository repository = context.getRepository();
       log.debug("[getTarball] repository: {} tokens: {}", repository.getName(), state.getTokens());
 
-      NpmPackageId packageId = packageId(state);
-      String tarballName = tarballName(state);
-      Content content = repository.facet(NpmHostedFacet.class).getTarball(packageId, tarballName);
-      if (content != null) {
-        return NpmResponses.ok(content);
-      }
-      else {
-        return NpmResponses.tarballNotFound(packageId, tarballName);
-      }
+      NpmPackageId packageId = NpmPaths.packageId(state);
+      String tarballName = NpmPaths.tarballName(state);
+      return repository.facet(NpmHostedFacet.class)
+          .getTarball(packageId, tarballName)
+          .map(NpmResponses::ok)
+          .orElseGet(() -> NpmResponses.packageNotFound(packageId));
     }
   };
 
-  static Handler deleteTarball = new Handler()
+  public static Handler deleteTarball = new Handler()
   {
     @Nonnull
     @Override
@@ -241,8 +163,8 @@ public final class NpmHandlers
       Repository repository = context.getRepository();
       log.debug("[deleteTarball] repository: {} tokens: {}", repository.getName(), state.getTokens());
 
-      NpmPackageId packageId = packageId(state);
-      String tarballName = tarballName(state);
+      NpmPackageId packageId = NpmPaths.packageId(state);
+      String tarballName = NpmPaths.tarballName(state);
       Set<String> deleted = repository.facet(NpmHostedFacet.class).deleteTarball(packageId, tarballName);
       if (!deleted.isEmpty()) {
         return NpmResponses.ok();
@@ -257,7 +179,7 @@ public final class NpmHandlers
    * @deprecated No longer actively used by npm upstream, replaced by v1 search api (NEXUS-13150).
    */
   @Deprecated
-  static Handler searchIndex = new Handler()
+  public static Handler searchIndex = new Handler()
   {
     @Nonnull
     @Override
@@ -266,11 +188,11 @@ public final class NpmHandlers
       Parameters parameters = context.getRequest().getParameters();
       log.debug("[searchIndex] repository: {} parameters: {}", repository.getName(), parameters);
 
-      return NpmResponses.ok(repository.facet(NpmSearchIndexFacet.class).searchIndex(indexSince(parameters)));
+      return NpmResponses.ok(repository.facet(NpmSearchIndexFacet.class).searchIndex(NpmPaths.indexSince(parameters)));
     }
   };
 
-  static Handler searchV1 = new Handler()
+  public static Handler searchV1 = new Handler()
   {
     @Nonnull
     @Override
@@ -283,7 +205,7 @@ public final class NpmHandlers
     }
   };
 
-  static Handler createToken = new Handler()
+  public static Handler createToken = new Handler()
   {
     @Nonnull
     @Override
@@ -296,7 +218,7 @@ public final class NpmHandlers
     }
   };
 
-  static Handler deleteToken = new Handler()
+  public static Handler deleteToken = new Handler()
   {
     @Nonnull
     @Override
@@ -309,7 +231,7 @@ public final class NpmHandlers
     }
   };
 
-  static Handler getDistTags = new Handler()
+  public static Handler getDistTags = new Handler()
   {
     @Nonnull
     @Override
@@ -318,19 +240,15 @@ public final class NpmHandlers
       Repository repository = context.getRepository();
       log.debug("[getPackage] repository: {} tokens: {}", repository.getName(), state.getTokens());
 
-      NpmPackageId packageId = packageId(state);
-      Content content = repository.facet(NpmHostedFacet.class)
-          .getDistTags(packageId);
-      if (content != null) {
-        return NpmResponses.ok(content);
-      }
-      else {
-        return NpmResponses.packageNotFound(packageId);
-      }
+      NpmPackageId packageId = NpmPaths.packageId(state);
+      return repository.facet(NpmHostedFacet.class)
+          .getDistTags(packageId)
+          .map(NpmResponses::ok)
+          .orElseGet(() -> NpmResponses.packageNotFound(packageId));
     }
   };
 
-  static Handler putDistTags = new Handler()
+  public static Handler putDistTags = new Handler()
   {
     @Nonnull
     @Override
@@ -341,7 +259,7 @@ public final class NpmHandlers
 
       try {
         repository.facet(NpmHostedFacet.class)
-            .putDistTags(packageId(state), state.getTokens().get(T_PACKAGE_TAG), context.getRequest().getPayload());
+            .putDistTags(NpmPaths.packageId(state), state.getTokens().get(NpmPaths.T_PACKAGE_TAG), context.getRequest().getPayload());
         return NpmResponses.ok();
       }
       catch (IOException e) { //NOSONAR
@@ -350,7 +268,7 @@ public final class NpmHandlers
     }
   };
 
-  static Handler deleteDistTags = new Handler()
+  public static Handler deleteDistTags = new Handler()
   {
     @Nonnull
     @Override
@@ -361,7 +279,7 @@ public final class NpmHandlers
 
       try {
         repository.facet(NpmHostedFacet.class)
-            .deleteDistTags(packageId(state), state.getTokens().get(T_PACKAGE_TAG), context.getRequest().getPayload());
+            .deleteDistTags(NpmPaths.packageId(state), state.getTokens().get(NpmPaths.T_PACKAGE_TAG), context.getRequest().getPayload());
         return NpmResponses.ok();
       }
       catch (IOException e) { //NOSONAR

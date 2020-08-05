@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.npm.internal.tasks.orient;
 import java.util.Map;
 
 import javax.annotation.Nullable;
+import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -24,9 +25,10 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryTaskSupport;
 import org.sonatype.nexus.repository.attributes.AttributesFacet;
 import org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind;
+import org.sonatype.nexus.repository.npm.internal.NpmFormatAttributesExtractor;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageParser;
-import org.sonatype.nexus.repository.npm.internal.orient.NpmFormatAttributesExtractor;
 import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchFacet;
+import org.sonatype.nexus.repository.npm.internal.tasks.ReindexNpmRepositoryTask;
 import org.sonatype.nexus.repository.search.index.SearchIndexFacet;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
@@ -52,9 +54,10 @@ import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_K
  * @since 3.7
  */
 @Named
+@Priority(Integer.MAX_VALUE)
 public class OrientReindexNpmRepositoryTask
     extends RepositoryTaskSupport
-    implements Cancelable
+    implements Cancelable, ReindexNpmRepositoryTask
 {
   public static final String NPM_V1_SEARCH_UNSUPPORTED = "npm_v1_search_unsupported";
 
@@ -98,7 +101,7 @@ public class OrientReindexNpmRepositoryTask
 
     // once processed (as best we could) the repository should no longer be flagged (if it ever was)
     repository.facet(AttributesFacet.class)
-        .modifyAttributes((NestedAttributesMap attributes) -> attributes.remove(NPM_V1_SEARCH_UNSUPPORTED));
+        .modifyAttributes((final NestedAttributesMap attributes) -> attributes.remove(NPM_V1_SEARCH_UNSUPPORTED));
   }
 
   /**
@@ -158,7 +161,7 @@ public class OrientReindexNpmRepositoryTask
       }
       else {
         NpmFormatAttributesExtractor formatAttributesExtractor = new NpmFormatAttributesExtractor(formatAttributes);
-        formatAttributesExtractor.copyFormatAttributes(asset);
+        formatAttributesExtractor.copyFormatAttributes(asset.formatAttributes());
         storageTx.saveAsset(asset);
       }
     }

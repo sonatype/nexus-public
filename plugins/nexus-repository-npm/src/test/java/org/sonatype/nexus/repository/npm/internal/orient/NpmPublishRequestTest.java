@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.npm.internal.orient;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.repository.npm.internal.NpmPublishRequest;
 import org.sonatype.nexus.repository.storage.TempBlob;
 
 import com.google.common.collect.ImmutableMap;
