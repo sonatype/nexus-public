@@ -29,6 +29,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.entity.ContinuationTokenHelper;
 import org.sonatype.nexus.common.entity.ContinuationTokenHelper.ContinuationTokenException;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
@@ -61,6 +62,7 @@ import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 /**
  * @since 3.3
  */
+@FeatureFlag(name = "nexus.orient.store.content")
 @Named
 @Singleton
 @Path(AssetsResource.RESOURCE_URI)
