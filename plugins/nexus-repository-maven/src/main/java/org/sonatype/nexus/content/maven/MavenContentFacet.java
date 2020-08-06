@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.maven.LayoutPolicy;
@@ -34,19 +36,59 @@ import org.sonatype.nexus.repository.view.Payload;
 public interface MavenContentFacet
     extends ContentFacet
 {
+  /**
+   * Get a maven asset
+   *
+   * @param mavenPath Path of asset to get
+   */
   Optional<Content> get(MavenPath mavenPath) throws IOException;
 
+  /**
+   * Put a maven asset
+   *
+   * @param path    The path of the asset to put
+   * @param content The content to put
+   */
   Content put(MavenPath path, Payload content) throws IOException;
 
+  /**
+   * Delete a maven asset
+   *
+   * @param path The path of the asset to delete.
+   * @return True if asset was deleted or false if not.
+   */
   boolean delete(MavenPath path) throws IOException;
 
+  /**
+   * Delete the specified maven asset and its hashes
+   *
+   * @param path The path of the asset to delete
+   * @return The paths of the assets deleted
+   */
   Set<String> deleteWithHashes(MavenPath path) throws IOException;
 
+  /**
+   * Check whether a maven asset exists.
+   *
+   * @param mavenPath The path of the asset to check
+   * @return True if it exists
+   */
   boolean exists(MavenPath mavenPath);
 
+  /**
+   * Returns the format specific {@link MavenPathParser}.
+   */
+  @Nonnull
   MavenPathParser getMavenPathParser();
 
+  /**
+   * Returns the layout policy in effect for this repository.
+   */
   LayoutPolicy layoutPolicy();
 
+  /**
+   * Returns the version policy in effect for this repository.
+   */
+  @Nonnull
   VersionPolicy getVersionPolicy();
 }
