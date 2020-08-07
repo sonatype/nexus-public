@@ -31,7 +31,7 @@ import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.LIMIT_KEY
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.ROOT_KEY
 import static org.sonatype.nexus.blobstore.quota.BlobStoreQuotaSupport.TYPE_KEY
 import static org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.*
-import static S3BlobStoreApiModelMapper.ONE_MILLION
+import static org.sonatype.nexus.blobstore.s3.rest.internal.S3BlobStoreApiModelMapper.ONE_MILLION
 
 class S3BlobStoreApiModelMapperTest
     extends Specification
