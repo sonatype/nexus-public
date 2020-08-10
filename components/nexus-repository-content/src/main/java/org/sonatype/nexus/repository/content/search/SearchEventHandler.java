@@ -62,7 +62,7 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.toExternal
  * If too many components build up events will start to be posted to flush additional pages.
  * These events are handled by an asynchronous receiver using threads from the event pool.
  *
- * @since 3.next
+ * @since 3.26
  */
 @ManagedLifecycle(phase = SERVICES)
 @Named

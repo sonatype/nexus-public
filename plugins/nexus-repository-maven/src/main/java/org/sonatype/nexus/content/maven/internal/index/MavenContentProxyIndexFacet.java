@@ -35,7 +35,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Proxy implementation of {@link MavenIndexFacet}.
  *
- * @since 3.next
+ * @since 3.26
  */
 @Named
 public class MavenContentProxyIndexFacet

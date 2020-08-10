@@ -170,7 +170,7 @@ public interface AssetDAO
    * @param limit when positive limits the number of assets selected per-call
    * @return selected asset ids
    *
-   * @since 3.next
+   * @since 3.26
    */
   int[] selectNotRecentlyDownloaded(@Param("repositoryId") int repositoryId,
                                     @Param("daysAgo") int daysAgo,
@@ -184,7 +184,7 @@ public interface AssetDAO
    * @param assetIds the assets to purge
    * @return the number of purged assets
    *
-   * @since 3.next
+   * @since 3.26
    */
   int purgeSelectedAssets(@Param("assetIds") int[] assetIds);
 
@@ -196,7 +196,7 @@ public interface AssetDAO
    * @param assetIds the assets to purge
    * @return the number of purged assets
    *
-   * @since 3.next
+   * @since 3.26
    */
   int purgeSelectedAssets(@Param("assetIds") Integer[] assetIds);
 }

@@ -17,7 +17,6 @@ import javax.inject.Inject
 import org.sonatype.nexus.common.collect.NestedAttributesMap
 import org.sonatype.nexus.common.log.LogManager
 import org.sonatype.nexus.repository.Repository
-import org.sonatype.nexus.repository.storage.WritePolicy
 import org.sonatype.nexus.testsuite.testsupport.RepositoryITSupport
 
 import com.google.common.collect.ImmutableSet
@@ -45,12 +44,12 @@ class NpmITSupport
     testData.addDirectory(resolveBaseFile("target/it-resources/npm"))
   }
 
-  Repository createNpmHostedRepository(String name, WritePolicy writePolicy = WritePolicy.ALLOW_ONCE) {
-    return repos.createNpmHosted(name, writePolicy.toString())
+  Repository createNpmHostedRepository(String name, String writePolicy = 'ALLOW_ONCE') {
+    return repos.createNpmHosted(name, writePolicy)
   }
 
-  Repository createNpmHostedRepository(String name, String blobStoreName) {
-    return repos.createNpmHosted(name, WritePolicy.ALLOW_ONCE.toString(), blobStoreName)
+  Repository createNpmHostedRepositoryWithBlobstore(String name, String blobStoreName) {
+    return repos.createNpmHosted(name, 'ALLOW_ONCE', blobStoreName)
   }
 
   Repository createNpmGroupRepository(String repositoryName, String... members) {

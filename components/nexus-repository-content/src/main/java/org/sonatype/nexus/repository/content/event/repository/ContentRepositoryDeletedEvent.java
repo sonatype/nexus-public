@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.content.ContentRepository;
 /**
  * Event sent whenever a {@link ContentRepository} is deleted.
  *
- * @since 3.next
+ * @since 3.26
  */
 public class ContentRepositoryDeletedEvent
     extends ContentRepositoryEvent

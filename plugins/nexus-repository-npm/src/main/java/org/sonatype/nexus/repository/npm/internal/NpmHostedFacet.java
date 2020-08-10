@@ -10,19 +10,16 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.npm.internal.orient;
+package org.sonatype.nexus.repository.npm.internal;
 
 import java.io.IOException;
-import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Facet;
-import org.sonatype.nexus.repository.npm.internal.NpmPackageId;
-import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 
@@ -36,22 +33,14 @@ public interface NpmHostedFacet
     extends Facet
 {
   /**
-   * Returns the package metadata or {@code null}.
+   * Returns the package metadata.
    */
-  @Nullable
-  Content getPackage(NpmPackageId packageId) throws IOException;
+  Optional<Content> getPackage(NpmPackageId packageId) throws IOException;
 
   /**
    * Performs a "publish" of a package as sent by npm CLI.
    */
   void putPackage(NpmPackageId packageId, @Nullable String revision, Payload payload) throws IOException;
-
-  /**
-   * Add the package using the package.json and <code>TempBlob</code>.
-   *
-   * @since 3.7
-   */
-  Asset putPackage(Map<String, Object> packageJson, TempBlob tempBlob) throws IOException;
 
   /**
    * Deletes complete package along with all belonging tarballs too (if any).
@@ -70,10 +59,9 @@ public interface NpmHostedFacet
   Set<String> deletePackage(NpmPackageId packageId, @Nullable String revision, boolean deleteBlobs) throws IOException;
 
   /**
-   * Returns the tarball content or {@code null}.
+   * Returns the tarball content.
    */
-  @Nullable
-  Content getTarball(NpmPackageId packageId, String tarballName) throws IOException;
+  Optional<Content> getTarball(NpmPackageId packageId, String tarballName) throws IOException;
 
   /**
    * Deletes given tarball, if exists.
@@ -104,10 +92,9 @@ public interface NpmHostedFacet
                       final NestedAttributesMap newPackageRoot) throws IOException;
 
   /**
-   * Returns the package metadata or {@code null}.
+   * Returns the package metadata.
    */
-  @Nullable
-  Content getDistTags(NpmPackageId packageId) throws IOException;
+  Optional<Content> getDistTags(NpmPackageId packageId) throws IOException;
 
   /**
    * Performs a "publish" of a dist-tag.

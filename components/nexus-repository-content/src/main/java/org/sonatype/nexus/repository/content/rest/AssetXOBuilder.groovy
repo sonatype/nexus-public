@@ -23,14 +23,14 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.toExternal
 /**
  * Builds asset transfer objects for REST APIs.
  *
- * @since 3.next
+ * @since 3.26
  */
 class AssetXOBuilder
 {
   static AssetXO fromAsset(final Asset asset, final Repository repository) {
     String externalId = toExternalId(internalAssetId(asset)).value
 
-    Map checksum = asset.attributes().child("checksum").backing()
+    Map checksum = asset.blob().map({ blob -> blob.checksums() }).orElse([:])
 
     return AssetXO.builder()
         .path(asset.path())

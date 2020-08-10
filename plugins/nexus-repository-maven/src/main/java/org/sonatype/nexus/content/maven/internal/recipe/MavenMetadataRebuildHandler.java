@@ -28,7 +28,7 @@ import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
 
 /**
- * @since 3.next
+ * @since 3.26
  */
 @Named
 @Singleton

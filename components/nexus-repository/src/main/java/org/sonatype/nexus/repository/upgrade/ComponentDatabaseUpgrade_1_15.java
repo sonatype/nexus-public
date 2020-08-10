@@ -28,7 +28,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Drop the browse node table so it can be rebuilt with the new parameters
  *
- * @since 3.next
+ * @since 3.26
  */
 @Named
 @Singleton

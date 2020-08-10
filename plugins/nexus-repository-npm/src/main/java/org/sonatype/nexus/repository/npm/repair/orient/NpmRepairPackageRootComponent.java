@@ -28,7 +28,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.npm.internal.NpmFormat;
-import org.sonatype.nexus.repository.npm.internal.orient.NpmHostedFacet;
+import org.sonatype.nexus.repository.npm.internal.orient.OrientNpmHostedFacet;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageId;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageParser;
 import org.sonatype.nexus.repository.repair.RepairMetadataComponent;
@@ -125,7 +125,7 @@ public class NpmRepairPackageRootComponent
                                                final NpmPackageId packageId,
                                                final String packageVersion)
   {
-    NpmHostedFacet hostedFacet = repository.facet(NpmHostedFacet.class);
+    OrientNpmHostedFacet hostedFacet = repository.facet(OrientNpmHostedFacet.class);
     try {
       NestedAttributesMap oldPackageRoot = getPackageRoot(UnitOfWork.currentTx(), repository, packageId);
       if (oldPackageRoot != null) {

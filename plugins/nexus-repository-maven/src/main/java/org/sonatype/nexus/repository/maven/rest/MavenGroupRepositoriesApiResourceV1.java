@@ -12,21 +12,16 @@
  */
 package org.sonatype.nexus.repository.maven.rest;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.Path;
 
-import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.rest.GroupRepositoryApiRequestToConfigurationConverter;
-import org.sonatype.nexus.repository.rest.api.AuthorizingRepositoryManager;
 import org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceV1;
-import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import static org.sonatype.nexus.repository.maven.rest.MavenGroupRepositoriesApiResourceV1.RESOURCE_URI;
 
 /**
- * @since 3.next
+ * @since 3.26
  */
 @Named
 @Singleton
@@ -35,14 +30,4 @@ public class MavenGroupRepositoriesApiResourceV1
     extends MavenGroupRepositoriesApiResource
 {
   static final String RESOURCE_URI = RepositoriesApiResourceV1.RESOURCE_URI + "/maven/group";
-
-  @Inject
-  public MavenGroupRepositoriesApiResourceV1(
-      final AuthorizingRepositoryManager authorizingRepositoryManager,
-      final GroupRepositoryApiRequestToConfigurationConverter<MavenGroupRepositoryApiRequest> configurationAdapter,
-      final ConstraintViolationFactory constraintViolationFactory,
-      final RepositoryManager repositoryManager)
-  {
-    super(authorizingRepositoryManager, configurationAdapter, constraintViolationFactory, repositoryManager);
-  }
 }

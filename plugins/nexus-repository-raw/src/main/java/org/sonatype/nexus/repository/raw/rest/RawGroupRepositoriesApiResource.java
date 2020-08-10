@@ -12,18 +12,13 @@
  */
 package org.sonatype.nexus.repository.raw.rest;
 
-import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
-import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.rest.GroupRepositoryApiRequestToConfigurationConverter;
 import org.sonatype.nexus.repository.rest.api.AbstractGroupRepositoriesApiResource;
-import org.sonatype.nexus.repository.rest.api.AuthorizingRepositoryManager;
-import org.sonatype.nexus.validation.ConstraintViolationFactory;
 import org.sonatype.nexus.validation.Validate;
 
 import io.swagger.annotations.Api;
@@ -46,16 +41,6 @@ import static org.sonatype.nexus.rest.ApiDocConstants.REPOSITORY_UPDATED;
 public abstract class RawGroupRepositoriesApiResource
     extends AbstractGroupRepositoriesApiResource<RawGroupRepositoryApiRequest>
 {
-  @Inject
-  public RawGroupRepositoriesApiResource(
-      final AuthorizingRepositoryManager authorizingRepositoryManager,
-      final GroupRepositoryApiRequestToConfigurationConverter<RawGroupRepositoryApiRequest> configurationAdapter,
-      final ConstraintViolationFactory constraintViolationFactory,
-      final RepositoryManager repositoryManager)
-  {
-    super(authorizingRepositoryManager, configurationAdapter, constraintViolationFactory, repositoryManager);
-  }
-
   @ApiOperation("Create raw group repository")
   @ApiResponses(value = {
       @ApiResponse(code = 201, message = REPOSITORY_CREATED),

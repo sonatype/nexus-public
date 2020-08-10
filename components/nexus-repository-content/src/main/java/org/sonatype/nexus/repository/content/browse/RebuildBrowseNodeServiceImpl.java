@@ -23,7 +23,7 @@ import groovy.lang.Singleton;
 /**
  * Rebuild browse node service for content repositories.
  *
- * @since 3.next
+ * @since 3.26
  */
 @Named
 @Singleton

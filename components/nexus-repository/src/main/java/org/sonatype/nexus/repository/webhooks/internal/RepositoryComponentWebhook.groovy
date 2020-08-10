@@ -12,11 +12,13 @@
  */
 package org.sonatype.nexus.repository.webhooks.internal
 
+import javax.annotation.Priority
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
 
 import org.sonatype.nexus.audit.InitiatorProvider
+import org.sonatype.nexus.common.app.FeatureFlag
 import org.sonatype.nexus.common.node.NodeAccess
 import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO
 import org.sonatype.nexus.repository.storage.Component
@@ -38,8 +40,10 @@ import com.google.common.eventbus.Subscribe
  *
  * @since 3.1
  */
+@FeatureFlag(name = "nexus.orient.store.content")
 @Named
 @Singleton
+@Priority(Integer.MAX_VALUE)
 class RepositoryComponentWebhook
     extends RepositoryWebhook
 {

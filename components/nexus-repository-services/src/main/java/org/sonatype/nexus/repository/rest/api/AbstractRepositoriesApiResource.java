@@ -52,16 +52,17 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
     extends ComponentSupport
     implements Resource
 {
-  private final AuthorizingRepositoryManager authorizingRepositoryManager;
+  private AuthorizingRepositoryManager authorizingRepositoryManager;
 
-  private final AbstractRepositoryApiRequestToConfigurationConverter<T> configurationAdapter;
+  private AbstractRepositoryApiRequestToConfigurationConverter<T> configurationAdapter;
 
   @Inject
-  public AbstractRepositoriesApiResource(
-      final AuthorizingRepositoryManager authorizingRepositoryManager,
-      final AbstractRepositoryApiRequestToConfigurationConverter<T> configurationAdapter)
-  {
+  public void setAuthorizingRepositoryManager(final AuthorizingRepositoryManager authorizingRepositoryManager) {
     this.authorizingRepositoryManager = checkNotNull(authorizingRepositoryManager);
+  }
+
+  @Inject
+  public void setConfigurationAdapter(final AbstractRepositoryApiRequestToConfigurationConverter<T> configurationAdapter) {
     this.configurationAdapter = checkNotNull(configurationAdapter);
   }
 

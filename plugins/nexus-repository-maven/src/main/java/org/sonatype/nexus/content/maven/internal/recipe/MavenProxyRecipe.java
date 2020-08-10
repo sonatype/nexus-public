@@ -48,7 +48,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.http.HttpHandlers.notFound;
 
 /**
- * @since 3.next
+ * @since 3.26
  */
 @Named(Maven2ProxyRecipe.NAME)
 @Singleton

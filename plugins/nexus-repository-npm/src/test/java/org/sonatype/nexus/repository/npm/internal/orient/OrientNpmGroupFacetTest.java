@@ -37,6 +37,7 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.npm.internal.NpmFormat;
 import org.sonatype.nexus.repository.npm.internal.NpmJsonUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageId;
+import org.sonatype.nexus.repository.npm.internal.NpmPaths;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.MissingAssetBlobException;
@@ -81,7 +82,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.internal.verification.VerificationModeFactory.atMost;
-import static org.sonatype.nexus.repository.npm.internal.NpmHandlers.T_PACKAGE_NAME;
 import static org.sonatype.nexus.repository.npm.internal.NpmJsonUtils.bytes;
 import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.VERSIONS;
 
@@ -164,7 +164,7 @@ public class OrientNpmGroupFacetTest
     setupNpmGroupFacet();
     underTest.attach(groupRepository);
 
-    when(state.getTokens()).thenReturn(ImmutableMap.of(T_PACKAGE_NAME, "test"));
+    when(state.getTokens()).thenReturn(ImmutableMap.of(NpmPaths.T_PACKAGE_NAME, "test"));
 
     AttributesMap attributesMap = new AttributesMap();
     attributesMap.set(TokenMatcher.State.class, state);

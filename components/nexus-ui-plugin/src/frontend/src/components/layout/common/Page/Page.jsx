@@ -16,7 +16,7 @@ import React from 'react';
 import classNames from 'classnames';
 
 /**
- * @since 3.next
+ * @since 3.26
  */
 export default function Page({className, ...attrs}) {
   return <div className={classNames("nxrm-page", className)} {...attrs}/>;

@@ -24,7 +24,7 @@ import org.sonatype.goodies.packageurl.PackageUrl;
  * All formats should implement this to get vulnerability information
  * @see https://ossindex.sonatype.org/ecosystems
  *
- * @since 3.next
+ * @since 3.26
  */
 public interface PackageUrlMapping
 {

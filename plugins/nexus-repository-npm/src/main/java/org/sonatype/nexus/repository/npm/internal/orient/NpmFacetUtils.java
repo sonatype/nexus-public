@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
@@ -42,7 +43,6 @@ import org.sonatype.nexus.repository.npm.internal.NpmFormat;
 import org.sonatype.nexus.repository.npm.internal.NpmJsonUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageId;
-import org.sonatype.nexus.repository.npm.internal.NpmStreamPayload;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;
@@ -438,21 +438,21 @@ public final class NpmFacetUtils
   /**
    * Returns the tarball content.
    */
-  @Nullable
-  static Content getTarballContent(final StorageTx tx,
-                                   final Bucket bucket,
-                                   final NpmPackageId packageId,
-                                   final String tarballName)
+  static Optional<Content> getTarballContent(
+      final StorageTx tx,
+      final Bucket bucket,
+      final NpmPackageId packageId,
+      final String tarballName)
   {
     Asset asset = findTarballAsset(tx, bucket, packageId, tarballName);
     if (asset == null) {
-      return null;
+      return Optional.empty();
     }
 
     Blob blob = tx.requireBlob(asset.requireBlobRef());
     Content content = new Content(new BlobPayload(blob, asset.requireContentType()));
     Content.extractFromAsset(asset, HASH_ALGORITHMS, content.getAttributes());
-    return content;
+    return Optional.of(content);
   }
 
   /**

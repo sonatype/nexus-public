@@ -12,19 +12,16 @@
  */
 package org.sonatype.nexus.repository.cocoapods.rest;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.Path;
 
-import org.sonatype.nexus.repository.rest.api.AbstractRepositoryApiRequestToConfigurationConverter;
-import org.sonatype.nexus.repository.rest.api.AuthorizingRepositoryManager;
 import org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceV1;
 
 import static org.sonatype.nexus.repository.cocoapods.rest.CocoapodsProxyRepositoriesApiResourceV1.RESOURCE_URI;
 
 /**
- * @since 3.next
+ * @since 3.26
  */
 @Named
 @Singleton
@@ -33,12 +30,4 @@ public class CocoapodsProxyRepositoriesApiResourceV1
     extends CocoapodsProxyRepositoriesApiResource
 {
   static final String RESOURCE_URI = RepositoriesApiResourceV1.RESOURCE_URI + "/cocoapods/proxy";
-
-  @Inject
-  public CocoapodsProxyRepositoriesApiResourceV1(
-      final AuthorizingRepositoryManager authorizingRepositoryManager,
-      final AbstractRepositoryApiRequestToConfigurationConverter<CocoapodsProxyRepositoryApiRequest> configurationAdapter)
-  {
-    super(authorizingRepositoryManager, configurationAdapter);
-  }
 }

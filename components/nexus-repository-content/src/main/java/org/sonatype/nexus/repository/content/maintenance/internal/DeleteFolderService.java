@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.Repository;
 /**
  * Deletes assets under a given path, created before a given timestamp, in a repository based on a user's privileges.
  *
- * @since 3.next
+ * @since 3.26
  */
 public interface DeleteFolderService
 {

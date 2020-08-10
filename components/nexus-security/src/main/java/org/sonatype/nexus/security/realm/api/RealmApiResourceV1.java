@@ -21,7 +21,7 @@ import org.sonatype.nexus.rest.APIConstants;
 import org.sonatype.nexus.security.realm.RealmManager;
 
 /**
- * @since 3.next
+ * @since 3.26
  */
 @Named
 @Singleton

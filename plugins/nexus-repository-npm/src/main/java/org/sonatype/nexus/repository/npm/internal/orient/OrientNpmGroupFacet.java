@@ -35,6 +35,7 @@ import org.sonatype.nexus.repository.group.GroupFacetImpl;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageId;
+import org.sonatype.nexus.repository.npm.internal.NpmPaths;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetDeletedEvent;
 import org.sonatype.nexus.repository.storage.AssetEvent;
@@ -73,7 +74,6 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 import static org.sonatype.nexus.repository.cache.CacheInfo.invalidateAsset;
 import static org.sonatype.nexus.repository.npm.internal.NpmFieldFactory.REMOVE_DEFAULT_FIELDS_MATCHERS;
 import static org.sonatype.nexus.repository.npm.internal.NpmFieldFactory.rewriteTarballUrlMatcher;
-import static org.sonatype.nexus.repository.npm.internal.NpmHandlers.packageId;
 import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.mergeContents;
 import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.parseContent;
 import static org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils.errorInputStream;
@@ -229,7 +229,7 @@ public class OrientNpmGroupFacet
     checkNotNull(context);
 
     StorageTx tx = UnitOfWork.currentTx();
-    return findPackageRootAsset(tx, tx.findBucket(getRepository()), packageId(matcherState(context)));
+    return findPackageRootAsset(tx, tx.findBucket(getRepository()), NpmPaths.packageId(matcherState(context)));
   }
 
   @Nullable
@@ -251,7 +251,7 @@ public class OrientNpmGroupFacet
         .values().stream().map(response -> (Content) response.getPayload()).collect(toList());
 
     NestedAttributesMap result;
-    NpmPackageId packageId = packageId(matcherState(context));
+    NpmPackageId packageId = NpmPaths.packageId(matcherState(context));
 
     if (shouldServeFirstResult(contents, packageId)) {
       result = parseContent(contents.get(0));

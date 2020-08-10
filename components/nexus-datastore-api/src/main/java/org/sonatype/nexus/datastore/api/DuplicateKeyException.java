@@ -15,7 +15,7 @@ package org.sonatype.nexus.datastore.api;
 /**
  * Thrown when inserting/updating would break a unique key constraint.
  *
- * @since 3.next
+ * @since 3.26
  */
 public class DuplicateKeyException
     extends DataAccessException

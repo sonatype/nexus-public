@@ -28,13 +28,13 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
-import org.sonatype.nexus.repository.npm.internal.NpmHandlers;
 import org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageId;
+import org.sonatype.nexus.repository.npm.internal.NpmPaths;
 import org.sonatype.nexus.repository.npm.internal.NpmProxyFacet;
 import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexFilter;
-import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexInvalidatedEvent;
 import org.sonatype.nexus.repository.npm.orient.NpmFacet;
+import org.sonatype.nexus.repository.npm.orient.internal.search.legacy.NpmSearchIndexInvalidatedEvent;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
 import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
 import org.sonatype.nexus.repository.storage.Asset;
@@ -73,8 +73,6 @@ import static java.util.Objects.nonNull;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.P_NAME;
 import static org.sonatype.nexus.repository.npm.internal.NpmFieldFactory.rewriteTarballUrlMatcher;
-import static org.sonatype.nexus.repository.npm.internal.NpmHandlers.packageId;
-import static org.sonatype.nexus.repository.npm.internal.NpmHandlers.tarballName;
 import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.DIST_TAGS;
 import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.VERSIONS;
 import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.merge;
@@ -93,7 +91,7 @@ public class OrientNpmProxyFacet
 {
   @Override
   @Nullable
-  protected Content fetch(final Context context, Content stale) throws IOException {
+  protected Content fetch(final Context context, final Content stale) throws IOException {
     try {
       return super.fetch(context, stale);
     }
@@ -106,6 +104,7 @@ public class OrientNpmProxyFacet
   /**
    * Execute http client request.
    */
+  @Override
   protected HttpResponse execute(final Context context, final HttpClient client, final HttpRequestBase request)
       throws IOException
   {
@@ -125,14 +124,14 @@ public class OrientNpmProxyFacet
       return null; // we do not cache search results
     }
     else if (ProxyTarget.PACKAGE == proxyTarget) {
-      return getPackageRoot(context, packageId(matcherState(context)));
+      return getPackageRoot(context, NpmPaths.packageId(matcherState(context)));
     }
     else if (ProxyTarget.DIST_TAGS == proxyTarget) {
-      return getDistTags(packageId(matcherState(context)));
+      return getDistTags(NpmPaths.packageId(matcherState(context)));
     }
     else if (ProxyTarget.TARBALL == proxyTarget) {
       TokenMatcher.State state = matcherState(context);
-      return getTarball(packageId(state), tarballName(state));
+      return getTarball(NpmPaths.packageId(state), NpmPaths.tarballName(state));
     }
     else if (ProxyTarget.SEARCH_INDEX == proxyTarget) {
       Content fullIndex = getRepositoryRoot();
@@ -140,7 +139,7 @@ public class OrientNpmProxyFacet
         return null;
       }
       return NpmSearchIndexFilter.filterModifiedSince(
-          fullIndex, NpmHandlers.indexSince(context.getRequest().getParameters()));
+          fullIndex, NpmPaths.indexSince(context.getRequest().getParameters()));
     }
     throw new IllegalStateException();
   }
@@ -162,20 +161,20 @@ public class OrientNpmProxyFacet
     StorageFacet storageFacet = facet(StorageFacet.class);
     try (TempBlob tempBlob = storageFacet.createTempBlob(content, NpmFacetUtils.HASH_ALGORITHMS)) {
       if (ProxyTarget.PACKAGE == proxyTarget) {
-        return putPackageRoot(packageId(matcherState(context)), tempBlob, content);
+        return putPackageRoot(NpmPaths.packageId(matcherState(context)), tempBlob, content);
       }
       else if (ProxyTarget.DIST_TAGS == proxyTarget) {
-        putPackageRoot(packageId(matcherState(context)), tempBlob, content);
-        return getDistTags(packageId(matcherState(context)));
+        putPackageRoot(NpmPaths.packageId(matcherState(context)), tempBlob, content);
+        return getDistTags(NpmPaths.packageId(matcherState(context)));
       }
       else if (ProxyTarget.TARBALL == proxyTarget) {
         TokenMatcher.State state = matcherState(context);
-        return putTarball(packageId(state), tarballName(state), tempBlob, content, context);
+        return putTarball(NpmPaths.packageId(state), NpmPaths.tarballName(state), tempBlob, content, context);
       }
       else if (ProxyTarget.SEARCH_INDEX == proxyTarget) {
         Content fullIndex = putRepositoryRoot(tempBlob, content);
         return NpmSearchIndexFilter.filterModifiedSince(
-            fullIndex, NpmHandlers.indexSince(context.getRequest().getParameters()));
+            fullIndex, NpmPaths.indexSince(context.getRequest().getParameters()));
       }
       throw new IllegalStateException();
     }
@@ -199,7 +198,7 @@ public class OrientNpmProxyFacet
     if (ProxyTarget.TARBALL == proxyTarget) {
       TokenMatcher.State state = matcherState(context);
       try {
-        NestedAttributesMap packageVersion = retrievePackageVersion(packageId(state), tarballName(state), context);
+        NestedAttributesMap packageVersion = retrievePackageVersion(NpmPaths.packageId(state), NpmPaths.tarballName(state), context);
         url = packageVersion.child(NpmMetadataUtils.DIST).get(NpmMetadataUtils.TARBALL, String.class);
       }
       catch (IOException e) {
@@ -207,7 +206,7 @@ public class OrientNpmProxyFacet
       }
     }
     else if (ProxyTarget.PACKAGE == proxyTarget) {
-      NpmPackageId packageId = packageId(matcherState(context));
+      NpmPackageId packageId = NpmPaths.packageId(matcherState(context));
       if (packageId.scope() != null) {
         String newUrl = "@" + packageId.scope() + "%2f" + packageId.name();
         log.trace("Scoped package URL fix: {} -> {}", url, newUrl);
@@ -215,7 +214,7 @@ public class OrientNpmProxyFacet
       }
     }
     else if (ProxyTarget.DIST_TAGS == proxyTarget) {
-      NpmPackageId packageId = packageId(matcherState(context));
+      NpmPackageId packageId = NpmPaths.packageId(matcherState(context));
       if (packageId.scope() != null) {
         String newUrl = "@" + packageId.scope() + "%2f" + packageId.name();
         log.trace("Scoped package URL fix: {} -> {}", url, newUrl);
@@ -234,6 +233,7 @@ public class OrientNpmProxyFacet
     return url;
   }
 
+  @Override
   @TransactionalTouchMetadata
   public void setCacheInfo(final Content content, final CacheInfo cacheInfo) throws IOException {
     StorageTx tx = UnitOfWork.currentTx();
@@ -251,6 +251,7 @@ public class OrientNpmProxyFacet
     tx.saveAsset(asset);
   }
 
+  @Override
   @Nullable
   @TransactionalTouchBlob
   public Content getPackageRoot(final Context context, final NpmPackageId packageId) throws IOException {
@@ -385,13 +386,14 @@ public class OrientNpmProxyFacet
     return cachedVersionsRemovedFromRemote;
   }
 
+  @Override
   @Nullable
   @TransactionalTouchBlob
   public Content getTarball(final NpmPackageId packageId, final String tarballName) throws IOException {
     checkNotNull(packageId);
     checkNotNull(tarballName);
     StorageTx tx = UnitOfWork.currentTx();
-    return NpmFacetUtils.getTarballContent(tx, tx.findBucket(getRepository()), packageId, tarballName);
+    return NpmFacetUtils.getTarballContent(tx, tx.findBucket(getRepository()), packageId, tarballName).orElse(null);
   }
 
   private Content putTarball(final NpmPackageId packageId,
@@ -420,7 +422,7 @@ public class OrientNpmProxyFacet
     NpmFacet npmFacet = facet(NpmFacet.class);
     npmFacet.putTarball(packageId.id(), tarballName, assetBlob, content.getAttributes());
 
-    return NpmFacetUtils.getTarballContent(tx, tx.findBucket(getRepository()), packageId, tarballName);
+    return NpmFacetUtils.getTarballContent(tx, tx.findBucket(getRepository()), packageId, tarballName).orElse(null);
   }
 
   private Content putRepositoryRoot(final TempBlob tempBlob,
@@ -433,6 +435,7 @@ public class OrientNpmProxyFacet
     return result;
   }
 
+  @Override
   @Nullable
   @TransactionalTouchBlob
   public Content getRepositoryRoot() throws IOException {

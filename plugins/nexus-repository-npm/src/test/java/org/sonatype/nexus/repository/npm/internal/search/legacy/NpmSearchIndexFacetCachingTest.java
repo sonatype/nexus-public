@@ -26,6 +26,8 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils;
+import org.sonatype.nexus.repository.npm.orient.internal.search.legacy.NpmSearchIndexFacetCaching;
+import org.sonatype.nexus.repository.npm.orient.internal.search.legacy.NpmSearchIndexInvalidatedEvent;
 import org.sonatype.nexus.repository.npm.internal.NpmFormat;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;

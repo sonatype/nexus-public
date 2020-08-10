@@ -29,7 +29,7 @@ import static org.sonatype.nexus.repository.maven.internal.Constants.SNAPSHOT_VE
 /**
  * Maven implementation of {@link DefaultSearchDocumentProducer}
  *
- * @since 3.next
+ * @since 3.26
  */
 @Singleton
 @Named(Maven2Format.NAME)

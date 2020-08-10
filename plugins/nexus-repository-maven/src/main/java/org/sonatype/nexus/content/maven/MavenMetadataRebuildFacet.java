@@ -17,7 +17,7 @@ import java.io.IOException;
 import org.sonatype.nexus.repository.Facet;
 
 /**
- * @since 3.next
+ * @since 3.26
  */
 @Facet.Exposed
 public interface MavenMetadataRebuildFacet

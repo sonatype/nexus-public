@@ -17,6 +17,7 @@ import org.sonatype.nexus.common.collect.ImmutableNestedAttributesMap;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.attributes.AttributesFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.npm.internal.tasks.orient.OrientUnprocessedRepositoryChecker;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 
@@ -34,9 +35,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.repository.npm.internal.tasks.orient.OrientReindexNpmRepositoryTask.NPM_V1_SEARCH_UNSUPPORTED;
 import static org.sonatype.nexus.repository.npm.internal.tasks.ReindexNpmRepositoryTaskDescriptor.REPOSITORY_NAME_FIELD_ID;
 import static org.sonatype.nexus.repository.npm.internal.tasks.ReindexNpmRepositoryTaskDescriptor.TYPE_ID;
+import static org.sonatype.nexus.repository.npm.internal.tasks.orient.OrientReindexNpmRepositoryTask.NPM_V1_SEARCH_UNSUPPORTED;
 
 public class ReindexNpmRepositoryManagerTest
     extends TestSupport
@@ -73,7 +74,7 @@ public class ReindexNpmRepositoryManagerTest
     when(attributesFacet.getAttributes()).thenReturn(repositoryAttributes);
     when(repositoryAttributes.get(NPM_V1_SEARCH_UNSUPPORTED)).thenReturn(true);
 
-    underTest = new ReindexNpmRepositoryManager(taskScheduler, repositoryManager, true);
+    underTest = new ReindexNpmRepositoryManager(taskScheduler, repositoryManager, new OrientUnprocessedRepositoryChecker(), true);
   }
 
   @Test
@@ -90,7 +91,7 @@ public class ReindexNpmRepositoryManagerTest
 
   @Test
   public void skipProcessingWhenNotEnabled() {
-    underTest = new ReindexNpmRepositoryManager(taskScheduler, repositoryManager, false);
+    underTest = new ReindexNpmRepositoryManager(taskScheduler, repositoryManager, new OrientUnprocessedRepositoryChecker(), false);
 
     underTest.doStart();
 

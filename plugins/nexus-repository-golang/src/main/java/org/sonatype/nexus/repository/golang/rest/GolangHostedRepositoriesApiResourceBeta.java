@@ -12,15 +12,11 @@
  */
 package org.sonatype.nexus.repository.golang.rest;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.Path;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
-import org.sonatype.nexus.repository.golang.rest.model.GolangHostedRepositoryApiRequest;
-import org.sonatype.nexus.repository.rest.api.AbstractRepositoryApiRequestToConfigurationConverter;
-import org.sonatype.nexus.repository.rest.api.AuthorizingRepositoryManager;
 import org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceBeta;
 import org.sonatype.nexus.rest.APIConstants;
 
@@ -30,7 +26,7 @@ import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_GOLANG_HOSTED;
 import static org.sonatype.nexus.repository.golang.rest.GolangHostedRepositoriesApiResourceBeta.RESOURCE_URI;
 
 /**
- * @since 3.next
+ * @since 3.26
  * @deprecated the 'beta' prefix is being phased out, prefer starting new APIs with {@link APIConstants#V1_API_PREFIX}
  * instead. Support backward compatibility.
  */
@@ -44,12 +40,4 @@ public class GolangHostedRepositoriesApiResourceBeta
     extends GolangHostedRepositoriesApiResource
 {
   static final String RESOURCE_URI = RepositoriesApiResourceBeta.RESOURCE_URI + "/go/hosted";
-
-  @Inject
-  public GolangHostedRepositoriesApiResourceBeta(
-      final AuthorizingRepositoryManager authorizingRepositoryManager,
-      final AbstractRepositoryApiRequestToConfigurationConverter<GolangHostedRepositoryApiRequest> configurationAdapter)
-  {
-    super(authorizingRepositoryManager, configurationAdapter);
-  }
 }

@@ -32,11 +32,14 @@ import org.sonatype.nexus.content.maven.MavenMetadataRebuildFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
+import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
+import org.sonatype.nexus.repository.raw.RawCoordinatesHelper;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
@@ -185,5 +188,23 @@ public class DataStoreMavenTestHelper
         .stream()
         .filter(component -> component.namespace().equals("org.sonatype.nexus.testsuite"))
         .filter(component -> version.equals(component.attributes("maven2").get("baseVersion")));
+  }
+
+  @Override
+  public String createComponent(
+      final Repository repository,
+      final String groupId,
+      final String artifactId,
+      final String version)
+  {
+    String path = String.format("/%s/%s/%s/%s-%s.jar", groupId, artifactId, version, artifactId, version);
+    FluentAsset asset = repository.facet(ContentFacet.class).assets()
+        .path(path)
+        .component(repository.facet(ContentFacet.class).components()
+            .name(path)
+            .namespace(RawCoordinatesHelper.getGroup(path))
+            .getOrCreate())
+        .getOrCreate();
+    return InternalIds.toExternalId(InternalIds.internalComponentId(asset).getAsInt()).getValue();
   }
 }

@@ -32,7 +32,7 @@ import org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageId;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageParser;
 import org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils;
-import org.sonatype.nexus.repository.npm.internal.orient.NpmHostedFacet;
+import org.sonatype.nexus.repository.npm.internal.orient.OrientNpmHostedFacet;
 import org.sonatype.nexus.repository.rest.UploadDefinitionExtension;
 import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.security.VariableResolverAdapter;
@@ -88,7 +88,7 @@ public class OrientNpmUploadHandler
 
   @Override
   public UploadResponse handle(final Repository repository, final ComponentUpload upload) throws IOException {
-    NpmHostedFacet facet = repository.facet(NpmHostedFacet.class);
+    OrientNpmHostedFacet facet = repository.facet(OrientNpmHostedFacet.class);
 
     StorageFacet storageFacet = repository.facet(StorageFacet.class);
 
@@ -119,7 +119,7 @@ public class OrientNpmUploadHandler
       final String path)
       throws IOException
   {
-    NpmHostedFacet npmFacet = repository.facet(NpmHostedFacet.class);
+    OrientNpmHostedFacet npmFacet = repository.facet(OrientNpmHostedFacet.class);
     StorageFacet storageFacet = repository.facet(StorageFacet.class);
 
     Path contentPath = content.toPath();

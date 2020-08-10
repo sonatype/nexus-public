@@ -26,6 +26,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.collect.AttributesMap;
+import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.orient.maven.MavenFacet;
 import org.sonatype.nexus.repository.Repository;
@@ -35,6 +36,7 @@ import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.maven.internal.MavenMimeRulesSource;
 import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentMaintenance;
 import org.sonatype.nexus.repository.storage.Query;
@@ -207,6 +209,29 @@ public class OrientMavenTestHelper
       Asset asset = tx.findAssetWithProperty(P_NAME, mavenPath.getPath(), tx.findBucket(repository));
 
       return asset.lastDownloaded();
+    }
+  }
+
+  @Override
+  public String createComponent(
+      final Repository repository,
+      final String groupId,
+      final String artifactId,
+      final String version)
+  {
+    try (StorageTx storageTx = repository.facet(StorageFacet.class).txSupplier().get()) {
+      storageTx.begin();
+      Bucket bucket = storageTx.findBucket(repository);
+      Component component = storageTx.createComponent(bucket, repository.getFormat())
+          .name(artifactId)
+          .group(groupId)
+          .version(version);
+      storageTx.saveComponent(component);
+      String path = String.format("%s/%s/%s/%s-%s.jar", groupId, artifactId, version, artifactId, version);
+      Asset asset = storageTx.createAsset(bucket, component).name(path);
+      storageTx.saveAsset(asset);
+      storageTx.commit();
+      return EntityHelper.id(component).getValue();
     }
   }
 }

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.npm.internal.orient;
+package org.sonatype.nexus.repository.npm.internal;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,8 +23,6 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.app.VersionComparator;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
-import org.sonatype.nexus.repository.npm.internal.NpmVersionComparator;
-import org.sonatype.nexus.repository.storage.Asset;
 
 import org.elasticsearch.common.Strings;
 
@@ -93,8 +91,7 @@ public class NpmFormatAttributesExtractor
   /**
    * Copies the relevant format attributes into the asset's format attributes.
    */
-  public void copyFormatAttributes(final Asset asset) {
-    NestedAttributesMap assetFormatAttributes = asset.formatAttributes();
+  public void copyFormatAttributes(final NestedAttributesMap assetFormatAttributes) {
     copyIfExists(assetFormatAttributes, P_SCOPE, getScope());
     copyIfExists(assetFormatAttributes, P_NAME, packageJson.get(NAME));
     copyIfExists(assetFormatAttributes, P_VERSION, packageJson.get(VERSION));

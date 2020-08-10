@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.content.Asset;
 /**
  * Event sent whenever an {@link Asset}'s kind is updated.
  *
- * @since 3.next
+ * @since 3.26
  */
 public class AssetKindEvent
     extends AssetUpdatedEvent

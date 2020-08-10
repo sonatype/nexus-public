@@ -44,6 +44,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.any;
 import static com.google.common.collect.Lists.reverse;
+import static java.util.Optional.ofNullable;
 import static org.joda.time.DateTime.now;
 import static org.joda.time.DateTime.parse;
 import static org.joda.time.DateTimeZone.UTC;
@@ -169,12 +170,14 @@ public class LocalFreezeService
   }
 
   private FreezeRequest newRequest(@Nullable final String token, final String reason) {
-    ClientInfo clientInfo = clientInfoProvider.getCurrentThreadClientInfo();
-    return new FreezeRequest(token, reason, now(UTC), clientInfo.getUserid(), clientInfo.getRemoteIP());
+    Optional<ClientInfo> clientInfo = ofNullable(clientInfoProvider.getCurrentThreadClientInfo());
+    return new FreezeRequest(token, reason, now(UTC),
+        clientInfo.map(ClientInfo::getUserid).orElse(null),
+        clientInfo.map(ClientInfo::getRemoteIP).orElse(null));
   }
 
   private static Predicate<FreezeRequest> sameToken(@Nullable final String token) {
-    Optional<String> optionalToken = Optional.ofNullable(token);
+    Optional<String> optionalToken = ofNullable(token);
     return request -> optionalToken.equals(request.token());
   }
 

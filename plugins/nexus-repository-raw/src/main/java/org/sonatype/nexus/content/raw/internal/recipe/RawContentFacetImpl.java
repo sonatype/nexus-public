@@ -23,6 +23,7 @@ import org.sonatype.nexus.content.raw.RawContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+import org.sonatype.nexus.repository.content.maintenance.ContentMaintenanceFacet;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.raw.RawCoordinatesHelper;
 import org.sonatype.nexus.repository.raw.internal.RawFormat;
@@ -75,6 +76,8 @@ public class RawContentFacetImpl
 
   @Override
   public boolean delete(final String path) throws IOException {
-    return assets().path(path).find().map(FluentAsset::delete).orElse(false);
+    return assets().path(path).find()
+        .map(asset -> repository().facet(ContentMaintenanceFacet.class).deleteAsset(asset).contains(path))
+        .orElse(false);
   }
 }
