@@ -12,7 +12,7 @@
  */
 import React from 'react';
 import {useMachine} from '@xstate/react';
-import {Button, NxLoadWrapper, Page, PageHeader, PageTitle, Section, SectionFooter, ContentBody} from 'nexus-ui-plugin';
+import {NxButton, NxLoadWrapper, Page, PageHeader, PageTitle, Section, SectionFooter, ContentBody} from 'nexus-ui-plugin';
 import {NxFontAwesomeIcon, NxModal} from '@sonatype/react-shared-components';
 import {faKey, faLock} from '@fortawesome/free-solid-svg-icons';
 
@@ -45,14 +45,13 @@ export default function NuGetApiToken() {
         <NxLoadWrapper isLoading={isLoading}>
           <p> {UIStrings.NUGET_API_KEY.INSTRUCTIONS} </p>
           <SectionFooter>
-            <Button variant='primary' onClick={handleAccessKey}>
-              <NxFontAwesomeIcon icon={faLock}/>
+            <NxButton variant='primary' onClick={handleAccessKey}>
               <span>{UIStrings.NUGET_API_KEY.ACCESS.BUTTON}</span>
-            </Button>
-            <Button onClick={handleResetKey}>
+            </NxButton>
+            <NxButton onClick={handleResetKey}>
               <NxFontAwesomeIcon icon={faLock}/>
               <span>{UIStrings.NUGET_API_KEY.RESET.BUTTON}</span>
-            </Button>
+            </NxButton>
           </SectionFooter>
 
           {showNugetModal && <NuGetApiTokenModal apiKey={state.context.token.apiKey} onCloseClick={handleCloseKey}/>}

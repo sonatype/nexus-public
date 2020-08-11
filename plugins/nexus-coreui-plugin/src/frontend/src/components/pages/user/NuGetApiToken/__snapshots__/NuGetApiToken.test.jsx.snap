@@ -2,21 +2,21 @@
 
 exports[`NuGetApiToken renders correctly: baseline 1`] = `
 <div>
-  <div
-    class="nxrm-page"
+  <main
+    class="nx-page-main"
   >
     <div
       class="nxrm-page-header"
     >
       <div
-        class="nxrm-page-title"
+        class="nx-page-title"
       >
         <h1
-          class="title"
+          class="nx-h1 nx-feature-name"
         >
           <svg
             aria-hidden="true"
-            class="svg-inline--fa fa-key fa-w-16 nx-icon"
+            class="svg-inline--fa fa-key fa-w-16 nx-page-title__page-icon nx-icon"
             data-icon="key"
             data-prefix="fas"
             focusable="false"
@@ -29,14 +29,12 @@ exports[`NuGetApiToken renders correctly: baseline 1`] = `
               fill="currentColor"
             />
           </svg>
-          <span
-            class="nx-feature-name"
-          >
+          <span>
             NuGet API Key
           </span>
         </h1>
         <p
-          class="description nx-feature-description"
+          class="nx-page-title__description nx-feature-description"
         >
           Configure credentials for NuGet repositories
         </p>
@@ -58,30 +56,13 @@ exports[`NuGetApiToken renders correctly: baseline 1`] = `
         >
           <button
             class="nx-btn nx-btn--primary"
-            type="input"
           >
-            <svg
-              aria-hidden="true"
-              class="svg-inline--fa fa-lock fa-w-14 nx-icon"
-              data-icon="lock"
-              data-prefix="fas"
-              focusable="false"
-              role="img"
-              viewBox="0 0 448 512"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M400 224h-24v-72C376 68.2 307.8 0 224 0S72 68.2 72 152v72H48c-26.5 0-48 21.5-48 48v192c0 26.5 21.5 48 48 48h352c26.5 0 48-21.5 48-48V272c0-26.5-21.5-48-48-48zm-104 0H152v-72c0-39.7 32.3-72 72-72s72 32.3 72 72v72z"
-                fill="currentColor"
-              />
-            </svg>
             <span>
               Access API Key
             </span>
           </button>
           <button
             class="nx-btn"
-            type="input"
           >
             <svg
               aria-hidden="true"
@@ -105,27 +86,27 @@ exports[`NuGetApiToken renders correctly: baseline 1`] = `
         </div>
       </div>
     </div>
-  </div>
+  </main>
 </div>
 `;
 
 exports[`NuGetApiToken renders correctly: nugetKeyPresent 1`] = `
 <div>
-  <div
-    class="nxrm-page"
+  <main
+    class="nx-page-main"
   >
     <div
       class="nxrm-page-header"
     >
       <div
-        class="nxrm-page-title"
+        class="nx-page-title"
       >
         <h1
-          class="title"
+          class="nx-h1 nx-feature-name"
         >
           <svg
             aria-hidden="true"
-            class="svg-inline--fa fa-key fa-w-16 nx-icon"
+            class="svg-inline--fa fa-key fa-w-16 nx-page-title__page-icon nx-icon"
             data-icon="key"
             data-prefix="fas"
             focusable="false"
@@ -138,14 +119,12 @@ exports[`NuGetApiToken renders correctly: nugetKeyPresent 1`] = `
               fill="currentColor"
             />
           </svg>
-          <span
-            class="nx-feature-name"
-          >
+          <span>
             NuGet API Key
           </span>
         </h1>
         <p
-          class="description nx-feature-description"
+          class="nx-page-title__description nx-feature-description"
         >
           Configure credentials for NuGet repositories
         </p>
@@ -167,30 +146,13 @@ exports[`NuGetApiToken renders correctly: nugetKeyPresent 1`] = `
         >
           <button
             class="nx-btn nx-btn--primary"
-            type="input"
           >
-            <svg
-              aria-hidden="true"
-              class="svg-inline--fa fa-lock fa-w-14 nx-icon"
-              data-icon="lock"
-              data-prefix="fas"
-              focusable="false"
-              role="img"
-              viewBox="0 0 448 512"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M400 224h-24v-72C376 68.2 307.8 0 224 0S72 68.2 72 152v72H48c-26.5 0-48 21.5-48 48v192c0 26.5 21.5 48 48 48h352c26.5 0 48-21.5 48-48V272c0-26.5-21.5-48-48-48zm-104 0H152v-72c0-39.7 32.3-72 72-72s72 32.3 72 72v72z"
-                fill="currentColor"
-              />
-            </svg>
             <span>
               Access API Key
             </span>
           </button>
           <button
             class="nx-btn"
-            type="input"
           >
             <svg
               aria-hidden="true"
@@ -216,7 +178,7 @@ exports[`NuGetApiToken renders correctly: nugetKeyPresent 1`] = `
           class="nx-modal-backdrop"
         >
           <div
-            class="nx-modal"
+            class="nx-modal nx-modal--wide"
             id="nuget-api-key-modal"
           >
             <header
@@ -242,6 +204,7 @@ exports[`NuGetApiToken renders correctly: nugetKeyPresent 1`] = `
                 </svg>
                 <span>
                    
+                  NuGet API Key
                    
                 </span>
               </h2>
@@ -263,37 +226,48 @@ exports[`NuGetApiToken renders correctly: nugetKeyPresent 1`] = `
                 </span>
                  
                 <br />
-                <span>
-                   
-                  Your NuGet API Key is:
-                   
-                </span>
-                 
-                <br />
-                <code
+              </p>
+              <div
+                class="field-wrapper"
+              >
+                <label
+                  class="field-wrapper-label nx-label"
+                >
+                  <span
+                    class="nx-label__text"
+                  >
+                    Your NuGet API Key is:
+                  </span>
+                </label>
+                <textarea
+                  class="nxrm-code"
                   id="nuget-api-key"
+                  readonly=""
                 >
-                   
                   testApiKey
-                   
-                </code>
-                 
-                <br />
-                <span>
-                   
-                  You can register this key for a given repository with the following command:
-                   
-                </span>
-                 
-                <br />
-                <code
-                  id="nuget-example-command"
+                </textarea>
+              </div>
+              <div
+                class="field-wrapper"
+              >
+                <label
+                  class="field-wrapper-label nx-label"
                 >
-                   
+                  <span
+                    class="nx-label__text"
+                  >
+                    You can register this key for a given repository with the following command:
+                  </span>
+                </label>
+                <textarea
+                  class="nxrm-code"
+                  id="nuget-example-command"
+                  readonly=""
+                >
                   nuget setapikey testApiKey -source http://localhost:4242/repository/fakeUrl
-                </code>
-                 
-                <br />
+                </textarea>
+              </div>
+              <p>
                 <span>
                    
                   This window will automatically close after one minute.
@@ -307,7 +281,6 @@ exports[`NuGetApiToken renders correctly: nugetKeyPresent 1`] = `
             >
               <button
                 class="nx-btn"
-                type="input"
               >
                 Close
               </button>
@@ -316,6 +289,6 @@ exports[`NuGetApiToken renders correctly: nugetKeyPresent 1`] = `
         </div>
       </div>
     </div>
-  </div>
+  </main>
 </div>
 `;

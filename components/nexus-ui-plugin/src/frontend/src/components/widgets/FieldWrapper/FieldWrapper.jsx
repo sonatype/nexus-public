@@ -13,14 +13,18 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import classNames from 'classnames';
 
 import './FieldWrapper.scss';
 
-export default function FieldWrapper({labelText, descriptionText, children}) {
+export default function FieldWrapper({labelText, descriptionText, isOptional, children}) {
   const fieldName = React.Children.only(children).props.name;
+  const classes = classNames('field-wrapper-label', 'nx-label', {
+    'nx-label--optional': isOptional
+  });
 
   return <div className='field-wrapper'>
-    {labelText ? <label htmlFor={fieldName} className='field-wrapper-label'>{labelText}</label> : null}
+    {labelText ? <label htmlFor={fieldName} className={classes}><span className="nx-label__text">{labelText}</span></label> : null}
     {descriptionText ? <span className='field-wrapper-description'>{descriptionText}</span> : null}
     {children}
   </div>;

@@ -10,35 +10,33 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import classNames from 'classnames';
-import PropTypes from 'prop-types';
 import React, {forwardRef} from 'react';
-
-import './Textarea.scss';
-
-import FieldErrorMessage from '../FieldErrorMessage/FieldErrorMessage';
-import {hasValidationErrors, getFirstValidationError} from '@sonatype/react-shared-components/util/validationUtil';
+import PropTypes from 'prop-types';
+import {NxTextInput} from "@sonatype/react-shared-components";
 
 /**
  * @since 3.22
  */
-const Textarea = forwardRef(({value, className, name, id, validationErrors, ...attrs}, ref) => {
-
-  const isInvalid = hasValidationErrors(validationErrors);
-  const classes = classNames('nxrm-textarea', className, {
-    'invalid': isInvalid
-  });
-  return <>
-    <textarea
-        id={id || name}
-        name={name}
-        value={value}
-        className={classes}
-        ref={ref}
-        {...attrs}
-    />
-    {isInvalid ? <FieldErrorMessage message={getFirstValidationError(validationErrors)}/> : null}
-  </>;
+const Textarea = forwardRef(({name, id, onChange, ...attrs}, ref) => {
+  const handleChange = (value) => {
+    if (onChange) {
+      onChange({
+        target: {
+          id: id || name,
+          name: name,
+          type: "textarea",
+          value
+        }
+      });
+    }
+  };
+  return <NxTextInput id={id || name}
+                      name={name}
+                      ref={ref}
+                      type="textarea"
+                      isPristine={false}
+                      onChange={handleChange}
+                      {...attrs} />;
 });
 
 Textarea.propTypes = {

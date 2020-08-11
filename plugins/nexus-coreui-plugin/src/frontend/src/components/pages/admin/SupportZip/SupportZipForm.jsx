@@ -12,7 +12,7 @@
  */
 import React from 'react';
 import UIStrings from '../../../../constants/UIStrings';
-import {Button, Checkbox, CheckboxGroup, NxFontAwesomeIcon} from "nexus-ui-plugin";
+import {Checkbox, CheckboxGroup, NxButton, NxFontAwesomeIcon} from "nexus-ui-plugin";
 import {faFileArchive} from '@fortawesome/free-solid-svg-icons';
 
 export default function SupportZipForm({params, setParams, submit, clustered, hazips}) {
@@ -99,15 +99,15 @@ export default function SupportZipForm({params, setParams, submit, clustered, ha
         {UIStrings.SUPPORT_ZIP.LIMITZIPSIZE_LABEL}
        </Checkbox>
     </CheckboxGroup>
-    <Button variant='primary' onClick={submit} type='submit'>
+    <NxButton variant='primary' onClick={submit} type='submit'>
       <NxFontAwesomeIcon icon={faFileArchive}/>
       <span>Create support ZIP</span>
-    </Button>
+    </NxButton>
     {clustered &&
-      <Button variant='primary' onClick={hazips} type='submit'>
+      <NxButton variant='primary' onClick={hazips} type='submit'>
         <NxFontAwesomeIcon icon={faFileArchive}/>
         <span>Create support ZIP (all nodes)</span>
-      </Button>
+      </NxButton>
     }
   </>;
 }

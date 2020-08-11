@@ -15,9 +15,8 @@ import React, {useState, useEffect} from 'react';
 import {faDownload, faGlobe} from '@fortawesome/free-solid-svg-icons';
 import Axios from 'axios';
 import {
-  Button,
   ContentBody,
-  NxFontAwesomeIcon,
+  NxButton,
   NxLoadWrapper,
   Page,
   PageActions,
@@ -58,10 +57,9 @@ export default function SystemInformation() {
     <PageHeader>
       <PageTitle icon={faGlobe} {...UIStrings.SYSTEM_INFORMATION.MENU}/>
       <PageActions>
-        <Button variant="primary" onClick={() => downloadSystemInformation()} disabled={!isLoaded}>
-          <NxFontAwesomeIcon icon={faDownload}/>
+        <NxButton variant="primary" onClick={() => downloadSystemInformation()} disabled={!isLoaded}>
           <span>{UIStrings.SYSTEM_INFORMATION.ACTIONS.download}</span>
-        </Button>
+        </NxButton>
       </PageActions>
     </PageHeader>
     <ContentBody className="nxrm-system-information">

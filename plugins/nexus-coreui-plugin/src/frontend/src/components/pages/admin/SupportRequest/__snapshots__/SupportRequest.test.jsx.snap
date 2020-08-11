@@ -2,21 +2,21 @@
 
 exports[`SystemInformation renders correctly 1`] = `
 <div>
-  <div
-    class="nxrm-page"
+  <main
+    class="nx-page-main"
   >
     <div
       class="nxrm-page-header"
     >
       <div
-        class="nxrm-page-title"
+        class="nx-page-title"
       >
         <h1
-          class="title"
+          class="nx-h1 nx-feature-name"
         >
           <svg
             aria-hidden="true"
-            class="svg-inline--fa fa-user-circle fa-w-16 nx-icon"
+            class="svg-inline--fa fa-user-circle fa-w-16 nx-page-title__page-icon nx-icon"
             data-icon="user-circle"
             data-prefix="fas"
             focusable="false"
@@ -29,14 +29,12 @@ exports[`SystemInformation renders correctly 1`] = `
               fill="currentColor"
             />
           </svg>
-          <span
-            class="nx-feature-name"
-          >
+          <span>
             Support Request
           </span>
         </h1>
         <p
-          class="description nx-feature-description"
+          class="nx-page-title__description nx-feature-description"
         >
           Submit a support request to Sonatype
         </p>
@@ -60,7 +58,6 @@ exports[`SystemInformation renders correctly 1`] = `
         </p>
         <button
           class="nx-btn nx-btn--primary"
-          type="input"
         >
           <svg
             aria-hidden="true"
@@ -83,6 +80,6 @@ exports[`SystemInformation renders correctly 1`] = `
         </button>
       </div>
     </div>
-  </div>
+  </main>
 </div>
 `;

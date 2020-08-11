@@ -80,7 +80,7 @@ Ext.define('NX.coreui.view.search.SearchResultList', {
           header: NX.I18n.get('Search_SearchResultList_Format_Header'),
           dataIndex: 'format',
           stateId: 'format',
-          width: 70,
+          width: 100,
           renderer: Ext.htmlEncode
         },
         {

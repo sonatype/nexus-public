@@ -1129,10 +1129,10 @@
   resolved "https://registry.yarnpkg.com/@sheerun/mutationobserver-shim/-/mutationobserver-shim-0.3.2.tgz#8013f2af54a2b7d735f71560ff360d3a8176a87b"
   integrity sha512-vTCdPp/T/Q3oSqwHmZ5Kpa9oI7iLtGl3RQaA/NyLHikvcrPxACkkKVr/XzkSPJWXHRhKGzVvb0urJsbMlRxi1Q==
 
-"@sonatype/react-shared-components@=0.45.11":
-  version "0.45.11"
-  resolved "https://registry.yarnpkg.com/@sonatype/react-shared-components/-/react-shared-components-0.45.11.tgz#cb7a00a50957f5597b8d298193594ea6849fe4ea"
-  integrity sha512-HwOaQCfPD3f1DTtza7APL1uP1hBkh6BmnD7mMgtrSxXvJJtsR91kpb9ynr8lSufcGJMMKOdD/OKPwTicA+O4Pw==
+"@sonatype/react-shared-components@=1.2.1":
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/@sonatype/react-shared-components/-/react-shared-components-1.2.1.tgz#4669b1eb3075c2ddb8a31edec0886f0d08091b0c"
+  integrity sha512-b1/UUPXhaLRwJmBCgvpmZbu6PlzfhPBXNcPkl7Le2FzYborDAL1LeUL4MHFpSyuJBDddkZiYv8v0kiw4bx6agA==
   dependencies:
     "@fortawesome/fontawesome-svg-core" "1.2.17"
     "@fortawesome/free-solid-svg-icons" "=5.8.1"
@@ -1142,7 +1142,7 @@
     "@types/prop-types" "15.7.1"
     "@types/ramda" "0.26.8"
     classnames "=2.2.6"
-    fuse.js "3.4.5"
+    fuse.js "6.4.0"
     prop-types "15.7.2"
     ramda "0.26.1"
     react-commonmark "3.0.0"
@@ -3666,10 +3666,10 @@ function-bind@^1.1.1:
   resolved "https://registry.yarnpkg.com/function-bind/-/function-bind-1.1.1.tgz#a56899d3ea3c9bab874bb9773b7c5ede92f4895d"
   integrity sha512-yIovAzMX49sF8Yl58fSCWJ5svSLuaibPxXQJFLmBObTuCr0Mf1KiPopGM9NiFjiYBCbfaa2Fh6breQ6ANVTI0A==
 
-fuse.js@3.4.5:
-  version "3.4.5"
-  resolved "https://registry.yarnpkg.com/fuse.js/-/fuse.js-3.4.5.tgz#8954fb43f9729bd5dbcb8c08f251db552595a7a6"
-  integrity sha512-s9PGTaQIkT69HaeoTVjwGsLfb8V8ScJLx5XGFcKHg0MqLUH/UZ4EKOtqtXX9k7AFqCGxD1aJmYb8Q5VYDibVRQ==
+fuse.js@6.4.0:
+  version "6.4.0"
+  resolved "https://registry.yarnpkg.com/fuse.js/-/fuse.js-6.4.0.tgz#a8db8b1c301cdb313f2ebb6812b31aa7dc2a6a14"
+  integrity sha512-MagWS1i3kj58BgF9xymo+n2ZiSs9MoyVfxkCcr11+mzMpNEyTDyLtbU3DyrVjHsy0Gkjf58FH1n+TaihylFcIA==
 
 gauge@~2.7.3:
   version "2.7.4"

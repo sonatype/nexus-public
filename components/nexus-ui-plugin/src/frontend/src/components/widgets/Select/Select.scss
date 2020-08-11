@@ -14,21 +14,20 @@
  * @since 3.21
  */
 @import '../../../styles/colors';
+@import '~@sonatype/react-shared-components/scss-shared/nx-variables';
 
 .nxrm-select {
+  color: $nx-text-color-light;
+  font-size: $nx-font-size;
+  line-height: $nx-line-height;
+  border-radius: $nx-border-radius;
+  padding: $nx-spacing-xs $nx-spacing-l $nx-spacing-xs $nx-spacing-md;
+  width: $nx-form-element-width-normal;
+
   -moz-appearance: none;
   -webkit-appearance: none;
   appearance: none;
   background: no-repeat 100% 50% url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0Ljk1IDEwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWF4WU1pZCI+PGRlZnM+PHN0eWxlPi5jbHMtMXtmaWxsOiNmZmY7fS5jbHMtMntmaWxsOiM0NDQ7fTwvc3R5bGU+PC9kZWZzPjx0aXRsZT5hcnJvd3M8L3RpdGxlPjxyZWN0IGNsYXNzPSJjbHMtMSIgd2lkdGg9IjQuOTUiIGhlaWdodD0iMTAiLz48cG9seWdvbiBjbGFzcz0iY2xzLTIiIHBvaW50cz0iMS40MSA0LjY3IDIuNDggMy4xOCAzLjU0IDQuNjcgMS40MSA0LjY3Ii8+PHBvbHlnb24gY2xhc3M9ImNscy0yIiBwb2ludHM9IjMuNTQgNS4zMyAyLjQ4IDYuODIgMS40MSA1LjMzIDMuNTQgNS4zMyIvPjwvc3ZnPg==);
-  border: 1px solid $nxrm-input-enabled-dark;
-  border-right-color: $nxrm-input-enabled-light;
-  border-bottom-color: $nxrm-input-enabled-light;
-  border-radius: 0;
-  display: block;
-  font-size: 1em;
-  height: 2em;
-  padding-left: 0.4em;
-  width: 100%;
 
   &::-ms-expand {
     /* Hide dropdown button on ie11 */
@@ -36,11 +35,11 @@
   }
 
   &:focus, &:active {
-    border-color: $light-blue;
+    border-color: #43cbf5;
   }
 
   &.invalid {
-    border-color: $red;
+    border-color: $nx-invalid-color;
   }
 
   &:disabled {

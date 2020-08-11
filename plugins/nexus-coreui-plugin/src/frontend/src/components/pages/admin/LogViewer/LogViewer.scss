@@ -15,46 +15,38 @@
  */
 
 @import "~nexus-ui-plugin/dist/styles/colors";
+@import "~@sonatype/react-shared-components/scss-shared/nx-variables";
 
 .nxrm-log-viewer {
-  display: flex;
-  flex-direction: column;
   height: 100%;
 
   .nxrm-log-viewer-mark-text {
-    width: 200px;
-    display: inline-block;
+    min-width: 216px;
+
+    .nx-text-input__invalid-message {
+      display: none;
+    }
   }
 
-  #insertMark {
-    margin-bottom: 3px;
+  .spacer {
+    flex: 1;
   }
 
   .nxrm-select-action {
-    display: inline-block;
-    padding-left: 10px;
-
-    select {
-      padding-right: 20px;
-    }
+    margin-left: $nx-spacing-xxs;
   }
 
   .nxrm-content-body {
-    flex: 1;
+    height: calc(100% - 95px);
 
     .nxrm-section {
       height: 100%;
-      padding-bottom: 59px;
-
-      textarea {
-        background-color: $white;
-        color: $nx-text-color-light;
-        font-family: 'Courier New', Courier, monospace;
-        font-size: 13px;
-        resize: none;
-        width: 100%;
-        height: 100%;
-      }
+      display: flex;
+      flex-direction: column;
     }
+  }
+
+  .nxrm-code {
+    flex: 1
   }
 }

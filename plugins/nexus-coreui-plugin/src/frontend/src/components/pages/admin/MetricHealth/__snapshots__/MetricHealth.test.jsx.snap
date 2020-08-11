@@ -2,21 +2,21 @@
 
 exports[`MetricHealth renders a loading spinner 1`] = `
 <div>
-  <div
-    class="nxrm-page"
+  <main
+    class="nx-page-main"
   >
     <div
       class="nxrm-page-header"
     >
       <div
-        class="nxrm-page-title"
+        class="nx-page-title"
       >
         <h1
-          class="title"
+          class="nx-h1 nx-feature-name"
         >
           <svg
             aria-hidden="true"
-            class="svg-inline--fa fa-medkit fa-w-16 nx-icon"
+            class="svg-inline--fa fa-medkit fa-w-16 nx-page-title__page-icon nx-icon"
             data-icon="medkit"
             data-prefix="fas"
             focusable="false"
@@ -29,14 +29,12 @@ exports[`MetricHealth renders a loading spinner 1`] = `
               fill="currentColor"
             />
           </svg>
-          <span
-            class="nx-feature-name"
-          >
+          <span>
             Status
           </span>
         </h1>
         <p
-          class="description nx-feature-description"
+          class="nx-page-title__description nx-feature-description"
         >
           System status checks
         </p>
@@ -189,27 +187,27 @@ exports[`MetricHealth renders a loading spinner 1`] = `
         </table>
       </div>
     </div>
-  </div>
+  </main>
 </div>
 `;
 
 exports[`MetricHealth renders an error message 1`] = `
 <div>
-  <div
-    class="nxrm-page"
+  <main
+    class="nx-page-main"
   >
     <div
       class="nxrm-page-header"
     >
       <div
-        class="nxrm-page-title"
+        class="nx-page-title"
       >
         <h1
-          class="title"
+          class="nx-h1 nx-feature-name"
         >
           <svg
             aria-hidden="true"
-            class="svg-inline--fa fa-medkit fa-w-16 nx-icon"
+            class="svg-inline--fa fa-medkit fa-w-16 nx-page-title__page-icon nx-icon"
             data-icon="medkit"
             data-prefix="fas"
             focusable="false"
@@ -222,14 +220,12 @@ exports[`MetricHealth renders an error message 1`] = `
               fill="currentColor"
             />
           </svg>
-          <span
-            class="nx-feature-name"
-          >
+          <span>
             Status
           </span>
         </h1>
         <p
-          class="description nx-feature-description"
+          class="nx-page-title__description nx-feature-description"
         >
           System status checks
         </p>
@@ -378,27 +374,27 @@ exports[`MetricHealth renders an error message 1`] = `
         </table>
       </div>
     </div>
-  </div>
+  </main>
 </div>
 `;
 
 exports[`MetricHealth renders the resolved data 1`] = `
 <div>
-  <div
-    class="nxrm-page"
+  <main
+    class="nx-page-main"
   >
     <div
       class="nxrm-page-header"
     >
       <div
-        class="nxrm-page-title"
+        class="nx-page-title"
       >
         <h1
-          class="title"
+          class="nx-h1 nx-feature-name"
         >
           <svg
             aria-hidden="true"
-            class="svg-inline--fa fa-medkit fa-w-16 nx-icon"
+            class="svg-inline--fa fa-medkit fa-w-16 nx-page-title__page-icon nx-icon"
             data-icon="medkit"
             data-prefix="fas"
             focusable="false"
@@ -411,14 +407,12 @@ exports[`MetricHealth renders the resolved data 1`] = `
               fill="currentColor"
             />
           </svg>
-          <span
-            class="nx-feature-name"
-          >
+          <span>
             Status
           </span>
         </h1>
         <p
-          class="description nx-feature-description"
+          class="nx-page-title__description nx-feature-description"
         >
           System status checks
         </p>
@@ -626,6 +620,6 @@ exports[`MetricHealth renders the resolved data 1`] = `
         </table>
       </div>
     </div>
-  </div>
+  </main>
 </div>
 `;

@@ -10,40 +10,32 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import React from 'react';
-
-import './Textfield.scss';
-
-import FieldErrorMessage from '../FieldErrorMessage/FieldErrorMessage';
-import {hasValidationErrors, getFirstValidationError} from '@sonatype/react-shared-components/util/validationUtil';
+import {NxTextInput} from '@sonatype/react-shared-components';
 
 /**
  * @since 3.21
  */
-export default function Textfield({id, name, value, onChange, className, validationErrors, ...attrs}) {
-  const isInvalid = hasValidationErrors(validationErrors);
-  const classes = classNames('nxrm-textfield', className, {
-    'invalid': isInvalid
-  });
-  return <>
-    <input
-        id={id || name}
-        name={name}
-        type='text'
-        value={value}
-        onChange={onChange}
-        className={classes}
-        {...attrs}
-    />
-    {isInvalid ? <FieldErrorMessage message={getFirstValidationError(validationErrors)}/> : null}
-  </>;
+export default function Textfield({id, name, type = "text", onChange, ...attrs}) {
+  const handleChange = (value) => {
+    if (onChange) {
+      onChange({
+        target: {
+          id: id || name,
+          name: name,
+          type,
+          value
+        }
+      });
+    }
+  };
+  return <NxTextInput id={id || name} name={name} type={type} isPristine={false} validatable={true} onChange={handleChange} {...attrs} />;
 }
 
 Textfield.propTypes = {
+  id: PropTypes.string,
   name: PropTypes.string,
   value: PropTypes.string,
-  onChange: PropTypes.func,
   validationErrors: PropTypes.oneOfType([PropTypes.string, PropTypes.array])
 };

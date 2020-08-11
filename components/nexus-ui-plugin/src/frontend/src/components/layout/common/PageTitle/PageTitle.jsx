@@ -22,14 +22,14 @@ import './PageTitle.scss';
  * @since 3.26
  */
 export default function PageTitle({className, icon, text, description, ...rest}) {
-  const classes = classNames("nxrm-page-title", className);
+  const classes = classNames('nx-page-title', className);
 
   return <div className={classes} {...rest}>
-    <h1 className="title">
-      {icon && <NxFontAwesomeIcon icon={icon}/>}
-      <span className="nx-feature-name">{text}</span>
+    <h1 className="nx-h1 nx-feature-name">
+      {icon && <NxFontAwesomeIcon icon={icon} className="nx-page-title__page-icon"/>}
+      <span>{text}</span>
     </h1>
-    {description && <p className="description nx-feature-description">{description}</p>}
+    {description && <p className="nx-page-title__description nx-feature-description">{description}</p>}
   </div>;
 }
 

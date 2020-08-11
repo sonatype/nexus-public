@@ -1,9 +1,0 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
-
-exports[`Textarea renders correctly without an error message 1`] = `
-<div>
-  <textarea
-    class="nxrm-textarea"
-  />
-</div>
-`;

@@ -970,16 +970,16 @@
 
 .x-tree-icon {
     width: 16px;
-    height: 24px;
-    line-height: 24px;
+    height: 27px;
+    line-height: 27px;
     color: #b0b0b0;
     font-size: 16px;
 }
 
 .x-tree-elbow-img {
     width: 18px;
-    height: 24px;
-    line-height: 24px;
+    height: 27px;
+    line-height: 27px;
     margin-right: 2px;
 }
 
@@ -1029,7 +1029,7 @@
 
 .x-tree-checkbox {
     margin-right: 4px;
-    top: 5px;
+    top: 6px;
     width: 15px;
     height: 15px;
     background-image: url(images/form/checkbox.png);
@@ -1244,7 +1244,7 @@
 }
 
 .x-btn-inner-plain-toolbar-small {
-    font: 600 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 16px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #575757;
     padding: 0 5px;
     max-width: 100%;
@@ -1681,8 +1681,8 @@
 }
 
 .x-button-plain-toolbar-small-cell > .x-grid-cell-inner {
-    padding-top: 0px;
-    padding-bottom: 0px;
+    padding-top: 2px;
+    padding-bottom: 1px;
 }
 
 .x-button-plain-toolbar-small-cell > .x-grid-cell-inner >.x-btn-plain-toolbar-small {
@@ -2814,7 +2814,7 @@
 }
 
 .x-panel-header-light {
-    font-size: 13px;
+    font-size: 16px;
     border: 1px solid #e5e5e5;
 }
 
@@ -2886,7 +2886,7 @@
 
 .x-panel-header-title-light {
     color: #666;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: bold;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     line-height: 16px;
@@ -2971,7 +2971,7 @@
     background: transparent;
     border-color: #e5e5e5;
     color: #333;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: normal;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     border-width: 1px;
@@ -3191,7 +3191,7 @@
 }
 
 .x-panel-header-light-framed {
-    font-size: 13px;
+    font-size: 16px;
     border: 2px solid #e5e5e5;
 }
 
@@ -3263,7 +3263,7 @@
 
 .x-panel-header-title-light-framed {
     color: #666;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: bold;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     line-height: 16px;
@@ -3348,7 +3348,7 @@
     background: #fff;
     border-color: #e5e5e5;
     color: #333;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: normal;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     border-width: 1px;
@@ -4885,7 +4885,7 @@
 }
 
 .x-btn-inner-default-small {
-    font: 600 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 16px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #575757;
     padding: 0 5px;
     max-width: 100%;
@@ -5342,8 +5342,8 @@
 }
 
 .x-button-default-small-cell > .x-grid-cell-inner {
-    padding-top: 0px;
-    padding-bottom: 0px;
+    padding-top: 2px;
+    padding-bottom: 1px;
 }
 
 .x-button-default-small-cell > .x-grid-cell-inner >.x-btn-default-small {
@@ -5478,7 +5478,7 @@
 }
 
 .x-btn-inner-nx-plain-small {
-    font: 600 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 16px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #575757;
     padding: 0 5px;
     max-width: 100%;
@@ -5935,8 +5935,8 @@
 }
 
 .x-button-nx-plain-small-cell > .x-grid-cell-inner {
-    padding-top: 0px;
-    padding-bottom: 0px;
+    padding-top: 2px;
+    padding-bottom: 1px;
 }
 
 .x-button-nx-plain-small-cell > .x-grid-cell-inner >.x-btn-nx-plain-small {
@@ -6071,7 +6071,7 @@
 }
 
 .x-btn-inner-nx-primary-small {
-    font: 600 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 16px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #fefefe;
     padding: 0 5px;
     max-width: 100%;
@@ -6523,8 +6523,8 @@
 }
 
 .x-button-nx-primary-small-cell > .x-grid-cell-inner {
-    padding-top: 0px;
-    padding-bottom: 0px;
+    padding-top: 2px;
+    padding-bottom: 1px;
 }
 
 .x-button-nx-primary-small-cell > .x-grid-cell-inner >.x-btn-nx-primary-small {
@@ -6659,7 +6659,7 @@
 }
 
 .x-btn-inner-nx-danger-small {
-    font: 600 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 16px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #fefefe;
     padding: 0 5px;
     max-width: 100%;
@@ -7111,8 +7111,8 @@
 }
 
 .x-button-nx-danger-small-cell > .x-grid-cell-inner {
-    padding-top: 0px;
-    padding-bottom: 0px;
+    padding-top: 2px;
+    padding-bottom: 1px;
 }
 
 .x-button-nx-danger-small-cell > .x-grid-cell-inner >.x-btn-nx-danger-small {
@@ -7247,7 +7247,7 @@
 }
 
 .x-btn-inner-nx-warning-small {
-    font: 600 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 16px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #575757;
     padding: 0 5px;
     max-width: 100%;
@@ -7704,8 +7704,8 @@
 }
 
 .x-button-nx-warning-small-cell > .x-grid-cell-inner {
-    padding-top: 0px;
-    padding-bottom: 0px;
+    padding-top: 2px;
+    padding-bottom: 1px;
 }
 
 .x-button-nx-warning-small-cell > .x-grid-cell-inner >.x-btn-nx-warning-small {
@@ -7840,7 +7840,7 @@
 }
 
 .x-btn-inner-nx-success-small {
-    font: 600 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 16px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #575757;
     padding: 0 5px;
     max-width: 100%;
@@ -8297,8 +8297,8 @@
 }
 
 .x-button-nx-success-small-cell > .x-grid-cell-inner {
-    padding-top: 0px;
-    padding-bottom: 0px;
+    padding-top: 2px;
+    padding-bottom: 1px;
 }
 
 .x-button-nx-success-small-cell > .x-grid-cell-inner >.x-btn-nx-success-small {
@@ -8311,7 +8311,7 @@
 .x-btn-danger-small .x-btn-glyph,
 .x-btn-warning-small .x-btn-glyph,
 .x-btn-success-small .x-btn-glyph {
-    font-size: 13px;
+    font-size: 16px;
 }
 
 .x-btn-nx-primary-small .x-btn-glyph,
@@ -8331,7 +8331,7 @@
 }
 
 .x-panel-header-nx-inset {
-    font-size: 13px;
+    font-size: 16px;
     border: 1px solid #444;
 }
 
@@ -8395,7 +8395,7 @@
 
 .x-panel-header-title-nx-inset {
     color: #fff;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: bold;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     line-height: 16px;
@@ -8480,7 +8480,7 @@
     background: transparent;
     border-color: #c2c2c2;
     color: #333;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: normal;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     border-width: 1px;
@@ -8708,7 +8708,7 @@
 }
 
 .x-panel-header-nx-warning {
-    font-size: 13px;
+    font-size: 16px;
     border: 1px solid #444;
 }
 
@@ -8772,7 +8772,7 @@
 
 .x-panel-header-title-nx-warning {
     color: #fff;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: bold;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     line-height: 16px;
@@ -8857,7 +8857,7 @@
     background: transparent;
     border-color: #c2c2c2;
     color: #fff;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: normal;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     border-width: 1px;
@@ -9106,7 +9106,7 @@
 }
 
 .x-panel-header-nx-subsection {
-    font-size: 18px;
+    font-size: 14px;
     border: 1px solid #444;
 }
 
@@ -9170,7 +9170,7 @@
 
 .x-panel-header-title-nx-subsection {
     color: #333;
-    font-size: 18px;
+    font-size: 14px;
     font-weight: bold;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     line-height: 22px;
@@ -9255,7 +9255,7 @@
     background: transparent;
     border-color: #c2c2c2;
     color: #333;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: normal;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     border-width: 1px;
@@ -9475,7 +9475,7 @@
 }
 
 .x-panel-header-nx-subsection-framed {
-    font-size: 18px;
+    font-size: 14px;
 }
 
 .x-panel-header-nx-subsection-framed .x-tool-tool-el {
@@ -9523,7 +9523,7 @@
 
 .x-panel-header-title-nx-subsection-framed {
     color: #333;
-    font-size: 18px;
+    font-size: 14px;
     font-weight: bold;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     line-height: 22px;
@@ -9608,7 +9608,7 @@
     background: #fff;
     border-color: #c2c2c2;
     color: #333;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: normal;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
@@ -9818,7 +9818,7 @@
 }
 
 .x-panel-header-nx-subsection-with-background-framed {
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .x-panel-header-nx-subsection-with-background-framed .x-tool-tool-el {
@@ -9866,7 +9866,7 @@
 
 .x-panel-header-title-nx-subsection-with-background-framed {
     color: #333;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: bold;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     line-height: 17px;
@@ -9951,7 +9951,7 @@
     background: #f4f4f4;
     border-color: #c2c2c2;
     color: #333;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: normal;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
@@ -10152,7 +10152,7 @@
 }
 
 .x-panel-header-nx-info-message {
-    font-size: 13px;
+    font-size: 16px;
     border: 1px solid #444;
 }
 
@@ -10216,7 +10216,7 @@
 
 .x-panel-header-title-nx-info-message {
     color: #333;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: bold;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     line-height: 16px;
@@ -10301,7 +10301,7 @@
     background: transparent;
     border-color: #c2c2c2;
     color: #333;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: normal;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     border-width: 1px;
@@ -10643,13 +10643,13 @@
     border-style: solid;
     background: #fff;
     color: #000;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: normal;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 .x-window-header-nx-inset {
-    font-size: 18px;
+    font-size: 14px;
     border-color: #606060;
     background-color: #ebebeb;
 }
@@ -10676,7 +10676,7 @@
 
 .x-window-header-title-nx-inset {
     color: #333;
-    font-size: 18px;
+    font-size: 14px;
     font-weight: bold;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     line-height: 22px;
@@ -11985,7 +11985,7 @@
     /**
  * Styling for the boxlabel of form fields
  */
-    font-size: 10px;
+    font-size: 12px;
 }
 
 ::-ms-clear {
@@ -12026,7 +12026,7 @@ fieldset.nx-form-section {
 }
 
 fieldset.nx-form-section > .x-fieldset-header > .x-fieldset-header-text {
-    font-size: 18px;
+    font-size: 14px;
     line-height: 22px;
 }
 
@@ -12053,7 +12053,7 @@ fieldset.x-fieldset {
  * @class Ext.form.Label
  */
     font-family: "Courier New", Courier, monospace;
-    font-size: 13px;
+    font-size: 16px;
 }
 
 .x-panel-borderless {
@@ -12066,7 +12066,7 @@ fieldset.x-fieldset {
 }
 
 .x-panel-header-borderless {
-    font-size: 13px;
+    font-size: 16px;
     border: 1px solid #444;
 }
 
@@ -12130,7 +12130,7 @@ fieldset.x-fieldset {
 
 .x-panel-header-title-borderless {
     color: #fff;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: bold;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     line-height: 16px;
@@ -12215,7 +12215,7 @@ fieldset.x-fieldset {
     background: transparent;
     border-color: #c2c2c2;
     color: #333;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: normal;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     border-width: 0;
@@ -12671,7 +12671,7 @@ fieldset.x-fieldset {
     background: transparent;
     border-color: #c2c2c2;
     color: #333;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: normal;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     border-width: 1px;
@@ -13468,7 +13468,7 @@ fieldset.x-fieldset {
 }
 
 .x-tab-inner-nx-light {
-    font: normal 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: normal 16px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #006bbf;
     max-width: 100%;
 }

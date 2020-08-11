@@ -44,7 +44,7 @@ Ext.define('NX.view.feature.Group', {
         '<tpl for=".">',
         '<div class="item-wrap">',
         '<tpl if="iconCls">',
-        '<i class="fa {[values.iconCls]} fa-2x"></i>',
+        '<i class="fa {[values.iconCls]} fa-2x fa-fw"></i>',
         '<span class="x-fa-icon-text">{text}</span>',
         '<tpl elseif="iconName">',
         '{[ NX.Icons.img(values.iconName, "x32") ]}',

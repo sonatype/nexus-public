@@ -1,4 +1,4 @@
-/*
+/**
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
  * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
@@ -11,20 +11,16 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-import React from 'react';
-import classNames from 'classnames';
+#nuget-api-key-modal {
+  .nxrm-code {
+    width: 700px;
+  }
 
-import './TabPanel.scss';
+  #nuget-api-key {
+    height: 44px;
+  }
 
-/**
- * @since 3.25
- */
-export default function TabLabel({active, className, children, ...attrs}) {
-  const classes = classNames('nxrm-tab-panel-header-item', className, {
-    'nxrm-tab-panel-header-active': active
-  });
-
-  return <li className={classes} {...attrs}>
-    {children}
-  </li>;
+  #nuget-example-command {
+    height: 62px;
+  }
 }

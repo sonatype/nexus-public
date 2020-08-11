@@ -14,11 +14,13 @@ import React from 'react';
 import {useMachine} from '@xstate/react';
 
 import {
-  Button, ContentBody,
+  ContentBody,
   FieldWrapper,
   NxErrorAlert,
+  NxButton,
   NxLoadWrapper,
   NxSubmitMask,
+  NxTooltip,
   Page,
   PageHeader,
   PageTitle,
@@ -81,9 +83,9 @@ export default function LoggingConfigurationForm({itemId, onDone}) {
     send('RESET');
   }
 
-  return <Page>
+  return <Page className="nxrm-logging-configuration">
     <PageHeader><PageTitle icon={faScroll} {...UIStrings.LOGGING.MENU}/></PageHeader>
-    <ContentBody className="nxrm-logging-configuration">
+    <ContentBody>
       <Section className="nxrm-logging-configuration-form" onKeyPress={handleEnter}>
         <NxLoadWrapper loading={isLoading} error={loadError ? `${loadError}` : null}>
       {hasData && <>
@@ -93,11 +95,9 @@ export default function LoggingConfigurationForm({itemId, onDone}) {
 
         <FieldWrapper labelText={UIStrings.LOGGING.NAME_LABEL}>
           <Textfield
-              name="name"
+              {...Utils.fieldProps('name', current)}
               disabled={pristineData.name}
-              value={data.name}
-              onChange={update}
-              validationErrors={validationErrors.name}/>
+              onChange={update}/>
         </FieldWrapper>
         <FieldWrapper labelText={UIStrings.LOGGING.LEVEL_LABEL}>
           <Select name="level" value={data.level} onChange={update}>
@@ -108,11 +108,13 @@ export default function LoggingConfigurationForm({itemId, onDone}) {
         </FieldWrapper>
 
         <SectionFooter>
-          <Button variant="primary" disabled={isPristine || isInvalid} onClick={save} type="submit">
-            {UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
-          </Button>
-          <Button onClick={cancel}>{UIStrings.SETTINGS.CANCEL_BUTTON_LABEL}</Button>
-          {itemId && <Button variant="error" onClick={reset}>{UIStrings.LOGGING.RESET_BUTTON}</Button>}
+          <NxTooltip title={Utils.saveTooltip({isPristine, isInvalid})}>
+            <NxButton variant="primary" className={(isPristine || isInvalid) && 'disabled'} onClick={save} type="submit">
+              {UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
+            </NxButton>
+          </NxTooltip>
+          <NxButton onClick={cancel}>{UIStrings.SETTINGS.CANCEL_BUTTON_LABEL}</NxButton>
+          {itemId && <NxButton variant="error" onClick={reset}>{UIStrings.LOGGING.RESET_BUTTON}</NxButton>}
         </SectionFooter>
       </>}
         </NxLoadWrapper>

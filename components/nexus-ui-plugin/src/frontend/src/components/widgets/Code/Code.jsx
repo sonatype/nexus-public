@@ -10,14 +10,14 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
+import React, {forwardRef} from 'react';
 import classNames from 'classnames';
 
+import './Code.scss';
+
 /**
- * @since 3.24
- *
- * This component must be used within a Section component.
+ * @since 3.next
  */
-export default function SectionActions({className, children, ...rest}) {
-  return <div className={classNames("nxrm-section-actions", "nx-tile__actions", className)} {...rest}>{children}</div>;
-}
+export default forwardRef(({id, name, className, ...attrs}, ref) => {
+  return <textarea id={id || name} name={name} className={classNames('nxrm-code', className)} ref={ref} {...attrs} />;
+});

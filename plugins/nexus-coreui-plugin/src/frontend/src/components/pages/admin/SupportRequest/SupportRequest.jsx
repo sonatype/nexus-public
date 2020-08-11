@@ -11,7 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {Button, ContentBody, NxFontAwesomeIcon, Page, PageHeader, PageTitle, Section} from 'nexus-ui-plugin';
+import {ContentBody, NxButton, NxFontAwesomeIcon, Page, PageHeader, PageTitle, Section} from 'nexus-ui-plugin';
 import {faExternalLinkAlt, faUserCircle} from '@fortawesome/free-solid-svg-icons';
 
 import UIStrings from '../../../../constants/UIStrings';
@@ -28,10 +28,10 @@ export default function SupportRequest() {
       <Section>
         <p>{UIStrings.SUPPORT_REQUEST.DESCRIPTION}</p>
         <p><a href="#admin/support/supportzip">{UIStrings.SUPPORT_REQUEST.ATTACH_SUPPORT_ZIP}</a></p>
-        <Button variant="primary" onClick={() => openSupportRequestPage()}>
+        <NxButton variant="primary" onClick={() => openSupportRequestPage()}>
           <NxFontAwesomeIcon icon={faExternalLinkAlt}/>
           <span>{UIStrings.SUPPORT_REQUEST.ACTIONS.submitRequest}</span>
-        </Button>
+        </NxButton>
       </Section>
     </ContentBody>
   </Page>;

@@ -22,9 +22,8 @@ export { default as Utils } from './interface/Utils';
 export { default as BreadcrumbActions } from './components/layout/common/BreadcrumbActions/BreadcrumbActions';
 export { default as ContentBody } from './components/layout/common/ContentBody/ContentBody';
 export { default as Section } from './components/layout/common/Section/Section';
-export { default as SectionActions } from './components/layout/common/SectionActions/SectionActions';
 export { default as SectionFooter } from './components/layout/common/SectionFooter/SectionFooter';
-export { default as SectionHeader } from './components/layout/common/SectionHeader/SectionHeader';
+export { default as SectionToolbar } from './components/layout/common/SectionToolbar/SectionToolbar';
 export { default as MasterDetail } from './components/layout/common/MasterDetail/MasterDetail';
 export { default as Master } from './components/layout/common/MasterDetail/Master';
 export { default as Detail } from './components/layout/common/MasterDetail/Detail';
@@ -32,15 +31,11 @@ export { default as Page } from './components/layout/common/Page/Page';
 export { default as PageActions } from './components/layout/common/PageActions/PageActions';
 export { default as PageHeader } from './components/layout/common/PageHeader/PageHeader';
 export { default as PageTitle } from './components/layout/common/PageTitle/PageTitle';
-export { default as Tab } from './components/layout/common/TabPanel/Tab';
-export { default as TabLabel } from './components/layout/common/TabPanel/TabLabel';
-export { default as TabList } from './components/layout/common/TabPanel/TabList';
-export { default as TabPanel } from './components/layout/common/TabPanel/TabPanel';
 
 export { default as Alert } from './components/widgets/Alert/Alert';
-export { default as Button } from './components/widgets/Button/Button';
 export { default as Checkbox } from './components/widgets/Checkbox/Checkbox';
 export { default as CheckboxGroup } from './components/widgets/CheckboxGroup/CheckboxGroup';
+export { default as Code } from './components/widgets/Code/Code';
 export { default as FieldErrorMessage } from './components/widgets/FieldErrorMessage/FieldErrorMessage';
 export { default as FieldWrapper } from './components/widgets/FieldWrapper/FieldWrapper';
 export { default as Information } from './components/widgets/Information/Information';
@@ -52,15 +47,22 @@ export { default as TokenMachine } from './components/machines/TokenMachine';
 
 // Direct RSC exports
 export {
+  NxButton,
   NxErrorAlert,
   NxFilterInput,
   NxFontAwesomeIcon,
   NxLoadingSpinner,
   NxLoadWrapper,
   NxSubmitMask,
+  NxTabs,
+  NxTabList,
+  NxTab,
+  NxTabPanel,
   NxTable,
+  NxStatefulTabs,
   NxTableBody,
   NxTableCell,
   NxTableHead,
-  NxTableRow
+  NxTableRow,
+  NxTooltip
 } from '@sonatype/react-shared-components';

@@ -16,25 +16,18 @@
 */
 
 @import "colors";
+@import "~@sonatype/react-shared-components/scss-shared/nx-variables";
 
-.nx-tile {
-  border-color: $light-gray !important;
-}
+.x-body {
+  line-height: $nx-line-height;
 
-.nx-filter-input {
-  .nx-filter-input__add-on {
-    padding: 2px !important;
-    height: 24px !important;
-    box-sizing: border-box !important;
+  .nx-tile-footer {
+    text-align: left !important;
   }
-  .nx-filter-text-input {
-    height: 24px !important;
-    box-sizing: border-box !important;
-  }
-}
 
-.x-body .nx-btn {
-  height: 24px;
-  min-width: 75px;
-  font-weight: normal;
+  .nx-checkbox__box {
+    box-sizing: content-box;
+    -moz-box-sizing: content-box;
+    -webkit-box-sizing: content-box;
+  }
 }

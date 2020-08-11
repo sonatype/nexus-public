@@ -15,17 +15,6 @@
  */
 @import '../../../../styles/colors';
 
-.nxrm-page-title {
+.nx-page-title {
   flex: 1;
-
-  > .title {
-    font-size: 32px;
-    margin: 0;
-  }
-
-  > .description {
-    margin-top: 8px;
-    margin-left: 8px;
-    margin-bottom: 0;
-  }
 }
