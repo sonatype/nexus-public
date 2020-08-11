@@ -51,9 +51,10 @@ class SecurityApiImplTest
       !updatedConfiguration.enabled
   }
 
-  def 'No save is made when anonymous settings already match'() {
+  def 'No save is made when configured and anonymous settings already match'() {
     given:
       def configuration = new TestAnonymousConfiguration(enabled: true)
+      anonymousManager.isConfigured() >> true
 
     when:
       def updatedConfiguration = api.setAnonymousAccess(true)
@@ -62,6 +63,20 @@ class SecurityApiImplTest
       1 * anonymousManager.getConfiguration() >> configuration
       0 * anonymousManager.setConfiguration(_)
       updatedConfiguration.enabled
+  }
+
+  def 'One save is made when unconfigured and anonymous settings already match'() {
+    given:
+      def configuration = new TestAnonymousConfiguration(enabled: false)
+      anonymousManager.isConfigured() >> false
+
+    when:
+      def updatedConfiguration = api.setAnonymousAccess(false)
+
+    then:
+      1 * anonymousManager.getConfiguration() >> configuration
+      1 * anonymousManager.setConfiguration(_)
+      !updatedConfiguration.enabled
   }
 
   def 'Can add a new User'() {
