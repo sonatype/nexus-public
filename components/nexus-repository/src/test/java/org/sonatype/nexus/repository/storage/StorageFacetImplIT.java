@@ -866,7 +866,8 @@ public class StorageFacetImplIT
         mimeRulesSourceSelector,
         storageFacetManager,
         componentFactory,
-        mock(ConstraintViolationFactory.class));
+        mock(ConstraintViolationFactory.class),
+        () -> null);
     storageFacetImpl.installDependencies(mock(EventManager.class));
 
     storageFacetImpl.attach(repository);

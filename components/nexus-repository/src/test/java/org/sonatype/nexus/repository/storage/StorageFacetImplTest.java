@@ -176,7 +176,8 @@ public class StorageFacetImplTest
         mimeRulesSourceSelector,
         storageFacetManager,
         componentFactory,
-        violationFactory
+        violationFactory,
+        () -> null
     );
     underTest.attach(repository);
   }

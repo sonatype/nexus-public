@@ -25,6 +25,7 @@ import java.util.Set;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.inject.Provider;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobRef;
@@ -43,6 +44,7 @@ import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.move.RepositoryMoveStore;
 import org.sonatype.nexus.repository.mime.ContentValidator;
 import org.sonatype.nexus.transaction.RetryController;
 
@@ -115,6 +117,8 @@ public class StorageTxImpl
 
   private final ComponentFactory componentFactory;
 
+  private final Provider<RepositoryMoveStore> repositoryMoveStoreProvider;
+
   private int retries = 0;
 
   private String reason = DEFAULT_REASON;
@@ -132,7 +136,8 @@ public class StorageTxImpl
                        final boolean strictContentValidation,
                        final ContentValidator contentValidator,
                        final MimeRulesSource mimeRulesSource,
-                       final ComponentFactory componentFactory)
+                       final ComponentFactory componentFactory,
+                       final Provider<RepositoryMoveStore> repositoryMoveStoreProvider)
   {
     this.createdBy = checkNotNull(createdBy);
     this.createdByIp = checkNotNull(createdByIp);
@@ -148,6 +153,7 @@ public class StorageTxImpl
     this.contentValidator = checkNotNull(contentValidator);
     this.mimeRulesSource = checkNotNull(mimeRulesSource);
     this.componentFactory = checkNotNull(componentFactory);
+    this.repositoryMoveStoreProvider = checkNotNull(repositoryMoveStoreProvider);
 
     // This is only here for now to yell in case of nested TX
     // To be discussed in future, or at the point when we will have need for nested TX
@@ -953,8 +959,12 @@ public class StorageTxImpl
   @Guarded(by = ACTIVE)
   public Blob getBlob(final BlobRef blobRef) {
     checkNotNull(blobRef);
-
-    return blobTx.get(blobRef);
+    Blob blob = blobTx.get(blobRef);
+    if (blob == null && repositoryMoveStoreProvider.get() != null) {
+      // this blob is outside the blobTx!!
+      blob = repositoryMoveStoreProvider.get().getIfBeingMoved(blobRef, repositoryName);
+    }
+    return blob;
   }
 
   @Override
