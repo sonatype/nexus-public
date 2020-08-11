@@ -39,6 +39,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.commons.lang.StringUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Long.parseLong;
@@ -88,7 +89,7 @@ public class DefaultSearchDocumentProducer
 
     Map<String, Object> componentDoc = new HashMap<>();
     componentDoc.put(GROUP, component.namespace());
-    componentDoc.put(NAME, component.name());
+    componentDoc.put(NAME, StringUtils.stripStart(component.name(), "/"));
     componentDoc.put(VERSION, component.version());
     componentDoc.put(ATTRIBUTES, component.attributes().backing());
 
@@ -104,7 +105,7 @@ public class DefaultSearchDocumentProducer
     for (Asset asset : assets) {
       Map<String, Object> assetDoc = new HashMap<>();
       assetDoc.put(ID, internalAssetId(asset));
-      assetDoc.put(NAME, asset.path());
+      assetDoc.put(NAME, StringUtils.stripStart(asset.path(), "/"));
       Map<String, Object> attributes = new HashMap<>(asset.attributes().backing());
       assetDoc.put(CONTENT_TYPE, "");
       asset.blob().ifPresent(blob -> {
