@@ -62,6 +62,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
+import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
 import static org.sonatype.nexus.blobstore.restore.DefaultIntegrityCheckStrategy.DEFAULT_NAME;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.DRY_RUN;
@@ -69,7 +70,6 @@ import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.RESTORE_BLOBS;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.TYPE_ID;
 import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.UNDELETE_BLOBS;
-import static org.sonatype.nexus.repository.storage.Bucket.REPO_NAME_HEADER;
 
 public class RestoreMetadataTaskTest
     extends TestSupport

@@ -43,7 +43,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
-import static org.sonatype.nexus.repository.storage.Bucket.REPO_NAME_HEADER;
+import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
 
 @Category(OrientTestGroup.class)
 public class RawRestoreBlobIT

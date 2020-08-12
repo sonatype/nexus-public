@@ -44,8 +44,8 @@ import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.move.RepositoryMoveStore;
 import org.sonatype.nexus.repository.mime.ContentValidator;
+import org.sonatype.nexus.repository.move.RepositoryMoveStore;
 import org.sonatype.nexus.transaction.RetryController;
 
 import com.google.common.base.Supplier;
@@ -718,7 +718,7 @@ public class StorageTxImpl
         "skipContentVerification set true but no declaredContentType provided"
     );
     Builder<String, String> storageHeaders = ImmutableMap.builder();
-    storageHeaders.put(Bucket.REPO_NAME_HEADER, repositoryName);
+    storageHeaders.put(BlobStore.REPO_NAME_HEADER, repositoryName);
     storageHeaders.put(BlobStore.BLOB_NAME_HEADER, blobName);
     storageHeaders.put(BlobStore.CREATED_BY_HEADER, createdBy);
     storageHeaders.put(BlobStore.CREATED_BY_IP_HEADER, createdByIp);

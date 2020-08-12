@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
-import static org.sonatype.nexus.repository.storage.Bucket.REPO_NAME_HEADER;
+import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
 
 /**
  * Simple structure for relevant data for a blob during metadata restoration

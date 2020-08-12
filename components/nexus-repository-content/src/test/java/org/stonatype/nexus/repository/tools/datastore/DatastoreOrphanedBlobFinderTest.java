@@ -52,6 +52,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
+import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
 
 @Named
 public class DatastoreOrphanedBlobFinderTest
@@ -237,7 +239,7 @@ public class DatastoreOrphanedBlobFinderTest
 
     @Override
     public Map<String, String> getHeaders() {
-      return of("Bucket.repo-name", REPOSITORY_NAME, "BlobStore.blob-name", ASSET_NAME);
+      return of(REPO_NAME_HEADER, REPOSITORY_NAME, BLOB_NAME_HEADER, ASSET_NAME);
     }
 
     @Override

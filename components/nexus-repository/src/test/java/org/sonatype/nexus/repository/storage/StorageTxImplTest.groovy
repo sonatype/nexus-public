@@ -96,7 +96,7 @@ extends TestSupport
   }
   private DefaultContentValidator defaultContentValidator = mock(DefaultContentValidator)
   private Map<String, String> headers = [:]
-  private Map<String, String> expectedHeaders = [(Bucket.REPO_NAME_HEADER) : 'testRepo', (BlobStore.BLOB_NAME_HEADER) : 'testBlob.txt', (BlobStore.CREATED_BY_HEADER) : 'test',  (BlobStore.CREATED_BY_IP_HEADER) : '127.0.0.1', (BlobStore.CONTENT_TYPE_HEADER) : 'text/plain']
+  private Map<String, String> expectedHeaders = [(BlobStore.REPO_NAME_HEADER) : 'testRepo', (BlobStore.BLOB_NAME_HEADER) : 'testBlob.txt', (BlobStore.CREATED_BY_HEADER) : 'test',  (BlobStore.CREATED_BY_IP_HEADER) : '127.0.0.1', (BlobStore.CONTENT_TYPE_HEADER) : 'text/plain']
   private Iterable<HashAlgorithm> hashAlgorithms = []
 
   @Before
