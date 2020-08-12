@@ -59,8 +59,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
-import static org.sonatype.nexus.repository.storage.StorageFacetConstants.STORAGE;
 
 /**
  * Unit tests for {@link StorageFacetImpl}.

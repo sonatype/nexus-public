@@ -60,8 +60,8 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
 import static org.sonatype.nexus.repository.FacetSupport.State.ATTACHED;
 import static org.sonatype.nexus.repository.FacetSupport.State.INITIALISED;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
-import static org.sonatype.nexus.repository.storage.StorageFacetConstants.STORAGE;
 import static org.sonatype.nexus.validation.ConstraintViolations.maybeAdd;
 import static org.sonatype.nexus.validation.ConstraintViolations.maybePropagate;
 
