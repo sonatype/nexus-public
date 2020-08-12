@@ -111,7 +111,6 @@ public class ConnectorManager
     serverConnector.setHost(connectorPrototype.getHost());
     serverConnector.setPort(connectorConfiguration.getPort());
     serverConnector.setIdleTimeout(connectorPrototype.getIdleTimeout());
-    serverConnector.setSoLingerTime(connectorPrototype.getSoLingerTime());
     serverConnector.setAcceptorPriorityDelta(connectorPrototype.getAcceptorPriorityDelta());
     serverConnector.setAcceptQueueSize(connectorPrototype.getAcceptQueueSize());
 
