@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.move;
 
-import java.sql.Date;
+import java.util.Date;
 
 /**
  *
