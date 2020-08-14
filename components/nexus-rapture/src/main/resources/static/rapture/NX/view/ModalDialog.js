@@ -32,7 +32,7 @@ Ext.define('NX.view.ModalDialog', {
   statics: {
     SMALL_MODAL: 320,
     MEDIUM_MODAL: 480,
-    LARGE_MODAL: 640
+    LARGE_MODAL: 700
   },
   onHide: function() {
     var me = this, el;
