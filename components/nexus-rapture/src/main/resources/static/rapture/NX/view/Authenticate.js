@@ -62,7 +62,7 @@ Ext.define('NX.view.Authenticate', {
             cls: 'message',
             items: [
               { xtype: 'component', html: NX.Icons.img('authenticate', 'x32') },
-              { xtype: 'component', html: '<div>' + me.message + '</div>' }
+              { xtype: 'label', height: 48, html: '<div>' + me.message + '</div>' }
             ]
           },
           {
