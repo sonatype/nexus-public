@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.rest.internal.api;
 
 import java.util.List;
+import java.util.Optional;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -36,6 +37,7 @@ import org.sonatype.nexus.scheduling.TaskConfiguration;
 import org.sonatype.nexus.scheduling.TaskScheduler;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.singletonList;
 import static org.sonatype.nexus.security.BreadActions.ADD;
 import static org.sonatype.nexus.security.BreadActions.DELETE;
 import static org.sonatype.nexus.security.BreadActions.EDIT;
@@ -103,6 +105,16 @@ public class AuthorizingRepositoryManagerImpl
    */
   public List<Repository> getRepositoriesWithAdmin() {
     return repositoryPermissionChecker.userHasRepositoryAdminPermission(repositoryManager.browse(), READ);
+  }
+
+  @Override
+  public Optional<Repository> getRepositoryWithAdmin(final String repositoryName) {
+    Repository repository = repositoryManager.get(repositoryName);
+    if (repository == null) {
+      return Optional.empty();
+    }
+    return repositoryPermissionChecker.userHasRepositoryAdminPermission(singletonList(repository), READ).stream()
+        .findFirst();
   }
 
   private void ensureHostedOrProxy(final Repository repository) throws IncompatibleRepositoryException {
