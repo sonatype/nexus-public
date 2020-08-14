@@ -33,6 +33,7 @@ import org.hamcrest.collection.IsIterableContainingInOrder;
 import org.junit.Before;
 import org.junit.Test;
 
+import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.summingInt;
 import static java.util.stream.Collectors.toList;
@@ -61,11 +62,7 @@ public class AssetDAOTest
   public void setupContent() {
     contentRepository = randomContentRepository();
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
-      ContentRepositoryDAO dao = session.access(TestContentRepositoryDAO.class);
-      dao.createContentRepository(contentRepository);
-      session.getTransaction().commit();
-    }
+    createContentRepository(contentRepository);
 
     repositoryId = contentRepository.repositoryId;
 
@@ -73,6 +70,14 @@ public class AssetDAOTest
     generateRandomNames(100);
     generateRandomVersions(100);
     generateRandomPaths(100);
+  }
+
+  private void createContentRepository(final ContentRepositoryData contentRepository) {
+    try (DataSession<?> session = sessionRule.openSession("content")) {
+      ContentRepositoryDAO dao = session.access(TestContentRepositoryDAO.class);
+      dao.createContentRepository(contentRepository);
+      session.getTransaction().commit();
+    }
   }
 
   @Test
@@ -730,6 +735,49 @@ public class AssetDAOTest
     }
   }
 
+  @Test
+  public void testBrowseAssetsInRepositories() {
+    ContentRepositoryData anotherContentRepository = randomContentRepository();
+    createContentRepository(anotherContentRepository);
+    int anotherRepositoryId = anotherContentRepository.repositoryId;
+    AssetData asset1 = randomAsset(repositoryId);
+    AssetData asset2 = randomAsset(repositoryId);
+    AssetData asset3 = randomAsset(anotherRepositoryId);
+    AssetData asset4 = randomAsset(anotherRepositoryId);
+
+    // make sure paths are different
+    asset2.setPath(asset1.path() + "/2");
+    asset3.setPath(asset1.path() + "/3");
+    asset4.setPath(asset1.path() + "/4");
+
+    // CREATE
+
+    try (DataSession<?> session = sessionRule.openSession("content")) {
+      AssetDAO dao = session.access(TestAssetDAO.class);
+
+      assertThat(
+          dao.browseAssetsInRepositories(newHashSet(repositoryId, anotherRepositoryId), 10, null),
+          emptyIterable());
+
+      dao.createAsset(asset1);
+
+      assertThat(
+          dao.browseAssetsInRepositories(newHashSet(repositoryId, anotherRepositoryId), 10, null),
+          contains(allOf(samePath(asset1), sameAttributes(asset1))));
+
+      dao.createAsset(asset2);
+      dao.createAsset(asset3);
+      dao.createAsset(asset4);
+
+      //browse all assets
+      assertThat(
+          dao.browseAssetsInRepositories(newHashSet(repositoryId, anotherRepositoryId), 10, null),
+          contains(allOf(samePath(asset1), sameAttributes(asset1)), allOf(samePath(asset2), sameAttributes(asset2)),
+              allOf(samePath(asset3), sameAttributes(asset3)), allOf(samePath(asset4), sameAttributes(asset4))));
+
+      session.getTransaction().commit();
+    }
+  }
 
   static int countAssets(final AssetDAO dao, final int repositoryId) {
     return dao.countAssets(repositoryId, null, null, null);

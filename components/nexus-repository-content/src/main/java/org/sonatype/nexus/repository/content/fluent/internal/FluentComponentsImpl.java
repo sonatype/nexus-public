@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.content.fluent.internal;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -32,6 +33,8 @@ import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.types.GroupType;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.content.fluent.internal.RepositoryContentUtil.getLeafRepositoryIds;
+import static org.sonatype.nexus.repository.content.fluent.internal.RepositoryContentUtil.isGroupRepository;
 import static org.sonatype.nexus.repository.content.store.InternalIds.contentRepositoryId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toInternalId;
 
@@ -86,10 +89,15 @@ public class FluentComponentsImpl
                                          @Nullable final String filter,
                                          @Nullable final Map<String, Object> filterParams)
   {
-    return new FluentContinuation<>(
-        componentStore.browseComponents(facet.contentRepositoryId(),
-            limit, continuationToken, kind, filter, filterParams),
-        this::with);
+    if (isGroupRepository(facet.repository())) {
+      Set<Integer> leafRepositoryIds = getLeafRepositoryIds(facet.repository());
+      if (!leafRepositoryIds.isEmpty()) {
+        return new FluentContinuation<>(componentStore.browseComponents(
+            leafRepositoryIds, limit, continuationToken), this::with);
+      }
+    }
+    return new FluentContinuation<>(componentStore.browseComponents(facet.contentRepositoryId(),
+        limit, continuationToken, kind, filter, filterParams), this::with);
   }
 
   @Override

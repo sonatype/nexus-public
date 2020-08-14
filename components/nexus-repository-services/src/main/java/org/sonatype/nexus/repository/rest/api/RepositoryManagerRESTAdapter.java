@@ -36,4 +36,9 @@ public interface RepositoryManagerRESTAdapter
    * Retrieve all repositories that the user access to.
    */
   List<Repository> getRepositories();
+
+  /**
+   * Retrieves all group repository names that the specified repository is a member of.
+   */
+  List<String> findContainingGroups(String repositoryName);
 }

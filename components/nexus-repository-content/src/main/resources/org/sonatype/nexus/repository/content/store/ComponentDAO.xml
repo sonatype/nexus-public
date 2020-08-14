@@ -76,6 +76,17 @@
     ORDER BY component_id LIMIT #{limit};
   </select>
 
+  <select id="browseComponentsInRepositories" resultType="ComponentData">
+    SELECT * FROM ${format}_component
+    WHERE repository_id IN
+    <foreach item="repositoryId" index="index" collection="repositoryIds"
+             open="(" separator="," close=")">
+      #{repositoryId}
+    </foreach>
+    <if test="continuationToken != null"> AND component_id > #{continuationToken}</if>
+    ORDER BY component_id LIMIT #{limit};
+  </select>
+
   <select id="browseNamespaces" resultType="String">
     SELECT DISTINCT(namespace) FROM ${format}_component WHERE repository_id = #{repositoryId};
   </select>
