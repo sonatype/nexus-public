@@ -105,7 +105,7 @@ public class TaskSchedulerImpl
     TaskDescriptor descriptor = taskFactory.findDescriptor(typeId);
     checkArgument(descriptor != null, "Missing descriptor for task with type-id: %s", typeId);
 
-    TaskConfiguration config = new TaskConfiguration();
+    TaskConfiguration config = descriptor.createTaskConfiguration();
     descriptor.initializeConfiguration(config); // in case any hardcode values need to be inserted
     config.setId(UUID.randomUUID().toString());
     config.setTypeId(descriptor.getId());
