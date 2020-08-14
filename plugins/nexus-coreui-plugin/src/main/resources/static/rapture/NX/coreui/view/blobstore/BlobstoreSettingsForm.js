@@ -26,11 +26,8 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
   ],
 
   loadRecord: function(model) {
-    var me = this;
-    var state = me.down('[name=state]');
-    state.setText(model.data.unavailable === true ? NX.I18n.get('Blobstore_BlobstoreList_Failed') :
-        NX.I18n.get('Blobstore_BlobstoreList_Started'));
-    me.callParent(arguments);
+    // Removing this causes an NPE in the editable condition code due to the blobstoreTypeModel being null
+    this.callParent(arguments);
   },
 
   initComponent: function() {
@@ -95,34 +92,12 @@ Ext.define('NX.coreui.view.blobstore.BlobstoreSettingsForm', {
         enforceMaxLength: true
       },
       {
-        xtype: 'container',
-        layout: 'vbox',
-        style: {
-          'padding-top': '5px',
-          'padding-bottom': '5px'
-        },
-        items: [
-          {
-            xtype: 'label',
-            text: NX.I18n.get('Blobstore_BlobstoreSettingsForm_State_FieldLabel'),
-            style: {
-              'font-weight': 700,
-              'font-size': '13px'
-            },
-            readOnly: true
-          },
-          {
-            xtype: 'label',
-            name: 'state',
-            style: {
-              'font-size': '13px',
-              'padding-left': '6px',
-              'padding-top': '5px',
-              'padding-bottom': '4px'
-            },
-            readOnly: true
-          }
-        ]
+        xtype: 'textfield',
+        name: 'state',
+        itemId: 'state',
+        fieldLabel: NX.I18n.get('Blobstore_BlobstoreSettingsForm_State_FieldLabel'),
+        readOnly: true,
+        allowBlank: true
       },
       {
         xtype: 'checkbox',

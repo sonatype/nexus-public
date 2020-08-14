@@ -36,6 +36,18 @@ Ext.define('NX.coreui.model.Blobstore', {
     {name: 'inUse', type: 'boolean'},
     {name: 'promotable', type: 'boolean'},
     {name: 'groupName', type: 'string'},
-    {name: 'unavailable', type: 'boolean'}
+    {name: 'unavailable', type: 'boolean'},
+    {
+      name: 'state',
+      type: 'string',
+      calculate: function(data) {
+        if (data.unavailable) {
+          return NX.I18n.get('Blobstore_BlobstoreList_Failed');
+        }
+        else {
+          return NX.I18n.get('Blobstore_BlobstoreList_Started');
+        }
+      }
+    }
   ]
 });
