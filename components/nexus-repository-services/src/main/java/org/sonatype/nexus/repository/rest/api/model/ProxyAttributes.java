@@ -14,6 +14,8 @@ package org.sonatype.nexus.repository.rest.api.model;
 
 import javax.validation.constraints.NotNull;
 
+import org.sonatype.nexus.validation.constraint.UriString;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
@@ -27,6 +29,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 public class ProxyAttributes
 {
   @ApiModelProperty(value = "Location of the remote repository being proxied", example = "https://remote.repository.com")
+  @UriString
   @NotEmpty
   protected final String remoteUrl;
 
