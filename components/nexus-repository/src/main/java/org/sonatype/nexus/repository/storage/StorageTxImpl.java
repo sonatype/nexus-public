@@ -310,6 +310,18 @@ public class StorageTxImpl
 
   @Override
   @Guarded(by = ACTIVE)
+  public Iterable<Asset> browseAssets(
+      final Query query,
+      final Bucket bucket,
+      final int bufferSize,
+      final int bufferTimeoutSeconds)
+  {
+    return assetEntityAdapter.browseByQueryAsync(db, query.getWhere(), query.getParameters(), ImmutableList.of(bucket),
+        query.getQuerySuffix(), bufferSize, bufferTimeoutSeconds);
+  }
+
+  @Override
+  @Guarded(by = ACTIVE)
   public Asset firstAsset(final Component component) {
     return Iterables.getFirst(browseAssets(component), null);
   }
