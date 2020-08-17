@@ -18,11 +18,13 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.event.EventAware;
@@ -46,9 +48,13 @@ import com.google.common.collect.Multimap;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.Integer.parseInt;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
+import static org.sonatype.nexus.repository.content.search.SearchEventHandler.RequestType.INDEX;
+import static org.sonatype.nexus.repository.content.search.SearchEventHandler.RequestType.PURGE;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalComponentId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toExternalId;
 
@@ -64,18 +70,26 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.toExternal
  *
  * @since 3.26
  */
+@FeatureFlag(name = "nexus.datastore.enabled")
 @ManagedLifecycle(phase = SERVICES)
 @Named
 @Singleton
 public class SearchEventHandler
     extends LifecycleSupport
-    implements EventAware
+    implements EventAware // warning: don't make this EventAware.Asynchronous
 {
-  private static final String INDEX_TAG = "index:";
+  private static final String HANDLER_KEY_PREFIX = "nexus.search.event.handler.";
 
-  private static final String PURGE_TAG = "purge:"; // must be same length as index tag
+  private static final String FLUSH_ON_COUNT_KEY = HANDLER_KEY_PREFIX + "flushOnCount";
 
-  private static final int TAG_LENGTH = INDEX_TAG.length();
+  private static final String FLUSH_ON_SECONDS_KEY = HANDLER_KEY_PREFIX + "flushOnSeconds";
+
+  private static final String NO_PURGE_DELAY_KEY = HANDLER_KEY_PREFIX + "noPurgeDelay";
+
+  enum RequestType
+  {
+    INDEX, PURGE
+  }
 
   private final RepositoryManager repositoryManager;
 
@@ -87,11 +101,15 @@ public class SearchEventHandler
 
   private final int flushOnSeconds;
 
+  private final boolean noPurgeDelay;
+
   private final FlushEventReceiver flushEventReceiver = new FlushEventReceiver();
 
   private final Map<String, String> pendingRequests = new ConcurrentHashMap<>();
 
   private final AtomicInteger pendingCount = new AtomicInteger();
+
+  private Object flushMutex = new Object();
 
   private PeriodicJob flushTask;
 
@@ -100,124 +118,146 @@ public class SearchEventHandler
       final RepositoryManager repositoryManager,
       final PeriodicJobService periodicJobService,
       final EventManager eventManager,
-      @Named("${nexus.search.event.handler.flushOnCount:-100}") final int flushOnCount,
-      @Named("${nexus.search.event.handler.flushOnSeconds:-2}") final int flushOnSeconds)
+      @Named("${" + FLUSH_ON_COUNT_KEY + ":-100}") final int flushOnCount,
+      @Named("${" + FLUSH_ON_SECONDS_KEY + ":-2}") final int flushOnSeconds,
+      @Named("${" + NO_PURGE_DELAY_KEY + ":-true}") final boolean noPurgeDelay)
   {
     this.repositoryManager = checkNotNull(repositoryManager);
     this.periodicJobService = checkNotNull(periodicJobService);
     this.eventManager = checkNotNull(eventManager);
+    checkArgument(flushOnCount > 0, FLUSH_ON_COUNT_KEY + " must be positive");
     this.flushOnCount = flushOnCount;
+    checkArgument(flushOnSeconds > 0, FLUSH_ON_SECONDS_KEY + " must be positive");
     this.flushOnSeconds = flushOnSeconds;
+    this.noPurgeDelay = noPurgeDelay;
 
     eventManager.register(flushEventReceiver);
   }
 
   @Override
   protected void doStart() throws Exception {
-    periodicJobService.startUsing();
-
-    flushTask = periodicJobService.schedule(this::pollPendingComponents, flushOnSeconds);
+    if (flushOnCount > 1) {
+      periodicJobService.startUsing();
+      flushTask = periodicJobService.schedule(this::pollSearchUpdateRequest, flushOnSeconds);
+    }
   }
 
   @Override
   protected void doStop() throws Exception {
-    flushTask.cancel();
-
-    periodicJobService.stopUsing();
+    if (flushOnCount > 1) {
+      flushTask.cancel();
+      periodicJobService.stopUsing();
+    }
   }
 
   @AllowConcurrentEvents
   @Subscribe
   public void on(final ComponentCreatedEvent event) {
-    index(event);
+    requestIndex(event);
   }
 
   @AllowConcurrentEvents
   @Subscribe
   public void on(final ComponentUpdatedEvent event) {
-    index(event);
+    requestIndex(event);
   }
 
   @AllowConcurrentEvents
   @Subscribe
   public void on(final ComponentDeletedEvent event) {
-    purge(event);
+    requestPurge(event);
+  }
+
+  @AllowConcurrentEvents
+  @Subscribe
+  public void on(final AssetCreatedEvent event) {
+    requestIndex(event);
+  }
+
+  @AllowConcurrentEvents
+  @Subscribe
+  public void on(final AssetUpdatedEvent event) {
+    requestIndex(event);
+  }
+
+  @AllowConcurrentEvents
+  @Subscribe
+  public void on(final AssetDeletedEvent event) {
+    requestIndex(event); // update the component search document on asset delete
   }
 
   @AllowConcurrentEvents
   @Subscribe
   public void on(final ComponentPurgedEvent event) {
     Repository repository = event.getRepository();
+
     String format = repository.getFormat().getValue();
+    String repoTag = repoTag(PURGE, repository);
+
     for (int componentId : event.getComponentIds()) {
-      purge(format, componentId, repository);
+      markComponentAsPending(requestKey(format, componentId), repoTag);
     }
+
+    maybeTriggerAsyncPurge();
   }
 
   // no need to watch for AssetPurgeEvent because that's only sent when purging assets without components
 
-  @AllowConcurrentEvents
-  @Subscribe
-  public void on(final AssetCreatedEvent event) {
-    index(event);
+  private void requestIndex(final ComponentEvent event) {
+    requestIndex(event.getFormat(), internalComponentId(event.getComponent()), event.getRepository());
   }
 
-  @AllowConcurrentEvents
-  @Subscribe
-  public void on(final AssetUpdatedEvent event) {
-    index(event);
+  private void requestPurge(final ComponentDeletedEvent event) {
+    requestPurge(event.getFormat(), internalComponentId(event.getComponent()), event.getRepository());
   }
 
-  @AllowConcurrentEvents
-  @Subscribe
-  public void on(final AssetDeletedEvent event) {
-    index(event);
+  private void requestIndex(final AssetEvent event) {
+    requestIndex(event.getFormat(), internalComponentId(event.getAsset()).orElse(-1), event.getRepository());
   }
 
-  private void index(final ComponentEvent event) {
-    index(event.getFormat(), internalComponentId(event.getComponent()), event.getRepository());
-  }
-
-  private void purge(final ComponentDeletedEvent event) {
-    purge(event.getFormat(), internalComponentId(event.getComponent()), event.getRepository());
-  }
-
-  private void index(final AssetEvent event) {
-    index(event.getFormat(), internalComponentId(event.getAsset()).orElse(-1), event.getRepository());
-  }
-
-  private void index(final String format, final int componentId, final Repository repository) {
+  private void requestIndex(final String format, final int componentId, final Repository repository) {
     if (componentId > 0) {
-      markComponentAsPending(requestKey(format, componentId), INDEX_TAG + repository.getName());
+      markComponentAsPending(requestKey(format, componentId), repoTag(INDEX, repository));
+      maybeTriggerAsyncFlush();
     }
   }
 
-  private void purge(final String format, final int componentId, final Repository repository) {
+  private void requestPurge(final String format, final int componentId, final Repository repository) {
     if (componentId > 0) {
-      markComponentAsPending(requestKey(format, componentId), PURGE_TAG + repository.getName());
+      markComponentAsPending(requestKey(format, componentId), repoTag(PURGE, repository));
+      maybeTriggerAsyncPurge();
     }
   }
 
-  /**
-   * Marks component format+id as requiring indexing along with a flag based on the content repository id.
-   *
-   * @param repoTag tagged repository name
-   */
   private void markComponentAsPending(final String requestKey, final String repoTag) {
-
-    // bump count if this is the first time we've seen this component formatAndId in this batch
+    // bump count if this is the first time we've seen this request key in this batch
     if (pendingRequests.put(requestKey, repoTag) == null) {
       pendingCount.getAndIncrement();
     }
+  }
 
-    // if we're over the limit then reduce it by a page and trigger an asynchronous flush event
+  private boolean maybeTriggerAsyncFlush() {
+    // if there are lots of pending requests then reduce count by a page and
+    // trigger an asynchronous flush event (which will actually do the work)
     if (pendingCount.getAndUpdate(c -> c >= flushOnCount ? c - flushOnCount : c) >= flushOnCount) {
       eventManager.post(new FlushEvent());
+      return true;
     }
+    return false;
+  }
+
+  private boolean maybeTriggerAsyncPurge() {
+    // if it's still too early to flush requests, but we don't want to delay
+    // outstanding purge requests then trigger an asynchronous purge event
+    if (!maybeTriggerAsyncFlush() && noPurgeDelay) {
+      eventManager.post(new PurgeEvent());
+      return true;
+    }
+    return false;
   }
 
   /**
-   * Marker event that indicates another page of components should be indexed.
+   * Marker event that indicates another page of components should be flushed.
    */
   private static class FlushEvent
   {
@@ -225,7 +265,15 @@ public class SearchEventHandler
   }
 
   /**
-   * Asynchronous receiver of {@link FlushEvent}s.
+   * Marker event that indicates another page of components should be purged.
+   */
+  private static class PurgeEvent
+  {
+    // this event is a marker only
+  }
+
+  /**
+   * Asynchronous receiver of {@link FlushEvent}s and {@link PurgeEvent}s.
    */
   private class FlushEventReceiver
       implements EventAware.Asynchronous
@@ -233,40 +281,55 @@ public class SearchEventHandler
     @AllowConcurrentEvents
     @Subscribe
     public void on(final FlushEvent event) {
-      indexPageOfComponents();
+      flushPageOfComponents(null);
+    }
+
+    @AllowConcurrentEvents
+    @Subscribe
+    public void on(final PurgeEvent event) {
+      flushPageOfComponents(PURGE);
     }
   }
 
   /**
-   * Used by scheduled flush task to only attempt indexing when there are pending components.
+   * Used by scheduled flush task to poll for work.
    */
-  void pollPendingComponents() {
+  void pollSearchUpdateRequest() {
     if (pendingCount.get() > 0) {
-      indexPageOfComponents();
+      flushPageOfComponents(null);
     }
   }
 
   /**
-   * Grabs a page of components and sends them to be indexed.
+   * Grabs a page of components and sends them to the appropriate {@link SearchFacet}.
+   *
+   * @param requestType optional request type to filter on
    */
-  void indexPageOfComponents() {
-
-    // remove page and invert it to get mapping from repository to components
+  void flushPageOfComponents(@Nullable final RequestType requestType) {
     Multimap<String, EntityId> requestsByRepository = ArrayListMultimap.create();
-    Iterator<Entry<String, String>> itr = pendingRequests.entrySet().iterator();
-    for (int i = 0; i < flushOnCount && itr.hasNext(); i++) {
-      Entry<String, String> entry = itr.next();
-      // these requests are scoped per-repository so it is safe to drop the format here
-      requestsByRepository.put(entry.getValue(), componentId(entry.getKey()));
-      itr.remove();
+
+    // only allow one thread to remove entries at a time while still allowing other threads to add entries
+    synchronized (flushMutex) {
+
+      // remove page and invert it to get mapping from repository to components
+      Iterator<Entry<String, String>> itr = pendingRequests.entrySet().iterator();
+      for (int i = 0; i < flushOnCount && itr.hasNext(); i++) {
+        Entry<String, String> entry = itr.next();
+
+        if (requestType == null || entry.getValue().startsWith(requestType.name())) {
+          // requests are scoped per-repository so it's safe to drop the format here
+          requestsByRepository.put(entry.getValue(), componentId(entry.getKey()));
+          itr.remove();
+        }
+      }
     }
 
     // deliver index/purge requests to the relevant repositories
     requestsByRepository.asMap().forEach(
-        (repoTag, componentIds) -> ofNullable(repositoryManager.get(repoTag.substring(TAG_LENGTH))).ifPresent(
+        (repoTag, componentIds) -> ofNullable(repositoryManager.get(repositoryName(repoTag))).ifPresent(
             repository -> repository.optionalFacet(SearchFacet.class).ifPresent(
                 searchFacet -> {
-                  if (repoTag.startsWith(INDEX_TAG)) {
+                  if (repoTag.startsWith(INDEX.name())) {
                     searchFacet.index(componentIds);
                   }
                   else {
@@ -278,14 +341,28 @@ public class SearchEventHandler
   /**
    * Binds the format with the component id to get a unique request key.
    */
-  private String requestKey(final String format, final int componentId) {
+  private static String requestKey(final String format, final int componentId) {
     return format + ':' + componentId;
   }
 
   /**
    * Extracts the external component id from the request key; this should only be done in the context of a repository/format.
    */
-  private EntityId componentId(final String requestKey) {
-    return toExternalId(Integer.parseInt(requestKey.substring(requestKey.indexOf(':') + 1)));
+  private static EntityId componentId(final String requestKey) {
+    return toExternalId(parseInt(requestKey.substring(requestKey.indexOf(':') + 1)));
+  }
+
+  /**
+   * Binds the request type with the repository name to get the repository tag.
+   */
+  private static String repoTag(final RequestType requestType, final Repository repository) {
+    return requestType.name() + ':' + repository.getName();
+  }
+
+  /**
+   * Extracts the repository name from the repository tag.
+   */
+  private static String repositoryName(final String repoTag) {
+    return repoTag.substring(repoTag.indexOf(':') + 1);
   }
 }
