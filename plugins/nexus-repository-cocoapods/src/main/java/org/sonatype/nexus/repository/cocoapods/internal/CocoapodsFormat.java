@@ -30,6 +30,12 @@ public class CocoapodsFormat
 
   public static final String NAME = "cocoapods";
 
+  public static final String POD_REMOTE_ATTRIBUTE_NAME = "ccp_remote";
+
+  public static final String PACKAGE_NAME_KEY = "package_name";
+
+  public static final String PACKAGE_VERSION_KEY = "package_version";
+
   public CocoapodsFormat() {
     super(NAME);
   }

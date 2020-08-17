@@ -15,16 +15,15 @@ package org.sonatype.nexus.repository.cocoapods.internal;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.annotation.Nullable;
-import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.cocoapods.CocoapodsFacet;
-import org.sonatype.nexus.repository.cocoapods.internal.pod.PodInfo;
-import org.sonatype.nexus.repository.cocoapods.internal.pod.PodPathParser;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
@@ -41,7 +40,9 @@ import org.sonatype.nexus.repository.view.payloads.BlobPayload;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.collect.Iterables;
+import org.apache.commons.lang.StringUtils;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singletonList;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
@@ -60,14 +61,6 @@ public class CocoapodsFacetImpl
 {
   private static final List<HashAlgorithm> HASH_ALGORITHMS = Arrays.asList(MD5, SHA1, SHA256);
 
-
-  private PodPathParser podPathParser;
-
-  @Inject
-  public CocoapodsFacetImpl(final PodPathParser podPathParser) {
-    this.podPathParser = podPathParser;
-  }
-
   @Override
   protected void doInit(final Configuration configuration) throws Exception {
     super.doInit(configuration);
@@ -77,9 +70,9 @@ public class CocoapodsFacetImpl
   @Override
   @Nullable
   @TransactionalTouchBlob
-  public Content get(final String path) {
+  public Content get(final String assetPath) {
     final StorageTx tx = UnitOfWork.currentTx();
-    final Asset asset = tx.findAssetWithProperty(P_NAME, path, tx.findBucket(getRepository()));
+    final Asset asset = tx.findAssetWithProperty(P_NAME, assetPath, tx.findBucket(getRepository()));
     if (asset == null) {
       return null;
     }
@@ -90,33 +83,73 @@ public class CocoapodsFacetImpl
 
   @Override
   @TransactionalDeleteBlob
-  public boolean delete(final String path) throws IOException {
+  public boolean delete(final String assetPath) throws IOException {
     //to be implemented
     return false;
   }
 
   @Override
   @TransactionalStoreBlob
-  public Content getOrCreateAsset(final String path, final Content content, boolean toAttachComponent)
+  public Content getOrCreateAsset(final String assetPath,
+                                  final Content content,
+                                  final String componentName,
+                                  final String componentVersion)
       throws IOException
   {
+    return getOrCreateAsset(assetPath, content, componentName, componentVersion, null);
+  }
+
+  @Override
+  @TransactionalStoreBlob
+  public Content getOrCreateAsset(final String assetPath,
+                                  final Content content)
+      throws IOException
+  {
+    return getOrCreateAsset(assetPath, content, null, null, null);
+  }
+
+  @Override
+  @TransactionalStoreBlob
+  public Content getOrCreateAsset(final String assetPath,
+                                  final Content content,
+                                  @Nullable final Map<String, String> formatAttributes)
+      throws IOException
+  {
+    return getOrCreateAsset(assetPath, content, null, null, formatAttributes);
+  }
+
+  private Content getOrCreateAsset(final String assetPath,
+                                   final Content content,
+                                   @Nullable final String componentName,
+                                   @Nullable final String componentVersion,
+                                   @Nullable final Map<String, String> formatAttributes)
+      throws IOException
+  {
+    checkNotNull(assetPath);
+    checkNotNull(content);
+
     StorageFacet storageFacet = facet(StorageFacet.class);
     try (final TempBlob tempBlob = storageFacet.createTempBlob(content, HASH_ALGORITHMS)) {
       StorageTx tx = UnitOfWork.currentTx();
       Bucket bucket = tx.findBucket(getRepository());
 
-      Asset asset = tx.findAssetWithProperty(P_NAME, path, bucket);
+      Asset asset = tx.findAssetWithProperty(P_NAME, assetPath, bucket);
       if (asset == null) {
-        if (toAttachComponent) {
-          Component component = findOrCreateComponent(tx, bucket, path);
-          asset = tx.createAsset(bucket, component).name(path);
+        if (StringUtils.isNotEmpty(componentName)) {
+          Component component = findOrCreateComponent(tx, bucket, componentName, componentVersion);
+          asset = tx.createAsset(bucket, component).name(assetPath);
         }
         else {
-          asset = tx.createAsset(bucket, getRepository().getFormat()).name(path);
+          asset = tx.createAsset(bucket, getRepository().getFormat()).name(assetPath);
         }
       }
       Content.applyToAsset(asset, content.getAttributes());
-      AssetBlob blob = tx.setBlob(asset, path, tempBlob, HASH_ALGORITHMS, null, null, false);
+      if (formatAttributes != null) {
+        for (Entry<String, String> pair : formatAttributes.entrySet()) {
+          asset.formatAttributes().set(pair.getKey(), pair.getValue());
+        }
+      }
+      AssetBlob blob = tx.setBlob(asset, assetPath, tempBlob, HASH_ALGORITHMS, null, null, false);
       tx.saveAsset(asset);
 
       final Content updatedContent = new Content(new BlobPayload(blob.getBlob(), asset.requireContentType()));
@@ -125,13 +158,31 @@ public class CocoapodsFacetImpl
     }
   }
 
-  private Component findOrCreateComponent(final StorageTx tx, final Bucket bucket, final String path) {
-    PodInfo podInfo = podPathParser.parse(path);
+  @Override
+  @Nullable
+  @TransactionalTouchBlob
+  public <T> T getAssetFormatAttribute(final String assetPath, final String attributeName) {
+    checkNotNull(assetPath);
+    checkNotNull(attributeName);
 
+    final StorageTx tx = UnitOfWork.currentTx();
+    final Asset asset = tx.findAssetWithProperty(P_NAME, assetPath, tx.findBucket(getRepository()));
+    if (asset == null) {
+      return null;
+    }
+
+    return (T) asset.formatAttributes().get(attributeName);
+  }
+
+  private Component findOrCreateComponent(final StorageTx tx,
+                                          final Bucket bucket,
+                                          final String componentName,
+                                          final String componentVersion)
+  {
     Iterable<Component> components = tx.findComponents(
         builder()
-            .where(P_NAME).eq(podInfo.getName())
-            .and(P_VERSION).eq(podInfo.getVersion())
+            .where(P_NAME).eq(componentName)
+            .and(P_VERSION).eq(componentVersion)
             .build(),
         singletonList(getRepository())
     );
@@ -139,8 +190,8 @@ public class CocoapodsFacetImpl
     Component component = Iterables.getFirst(components, null); // NOSONAR
     if (component == null) {
       component = tx.createComponent(bucket, getRepository().getFormat())
-          .name(podInfo.getName())
-          .version(podInfo.getVersion());
+          .name(componentName)
+          .version(componentVersion);
       tx.saveComponent(component);
     }
     return component;

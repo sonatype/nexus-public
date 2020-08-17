@@ -21,8 +21,9 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.sonatype.nexus.repository.cocoapods.internal.pod.PodPathProvider;
-import org.sonatype.nexus.repository.cocoapods.internal.pod.git.GitRepoUriParser;
+import org.sonatype.nexus.repository.cocoapods.internal.PathUtils;
+import org.sonatype.nexus.repository.cocoapods.internal.git.GitApiHelper;
+import org.sonatype.nexus.repository.cocoapods.internal.git.GitRepoUriParser;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,7 +33,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * @since 3.19
  */
 @Named
-public class SpecTransformer
+public class SpecFileProcessor
 {
   private static final String POD_NAME_FIELD = "name";
 
@@ -52,11 +53,11 @@ public class SpecTransformer
 
   private static final ObjectMapper mapper = new ObjectMapper();
 
-  private PodPathProvider podPathProvider;
+  private GitApiHelper gitApiHelper;
 
   @Inject
-  public SpecTransformer(final PodPathProvider podPathProvider) {
-    this.podPathProvider = podPathProvider;
+  public SpecFileProcessor(final GitApiHelper gitApiHelper) {
+    this.gitApiHelper = gitApiHelper;
   }
 
   public String toProxiedSpec(final String specFile, final URI repoUri) throws InvalidSpecFileException {
@@ -66,6 +67,16 @@ public class SpecTransformer
     catch (IOException ioe) {
       throw new InvalidSpecFileException(specFile, ioe);
     }
+  }
+
+  public URI extractExternalUri(final String specFile) throws IOException, InvalidSpecFileException {
+    ObjectNode jsonSpec = (ObjectNode) mapper.readTree(specFile);
+
+    if (!jsonSpec.has(SOURCE_NODE_NAME)) {
+      throw new InvalidSpecFileException("Spec file without Source");
+    }
+
+    return getExternalURI(jsonSpec.get(SOURCE_NODE_NAME));
   }
 
   private String transformSpec(final String specFile, final URI repoUri) throws IOException, InvalidSpecFileException {
@@ -84,7 +95,12 @@ public class SpecTransformer
     final String name = jsonSpec.get(POD_NAME_FIELD).asText();
     final String version = jsonSpec.get(POD_VERSION_FIELD).asText().trim();
 
-    URI sourceUri = buidProxiedUri(jsonSpec.get(SOURCE_NODE_NAME), name, version, repoUri);
+
+    URI extDownloadUri = getExternalURI(jsonSpec.get(SOURCE_NODE_NAME));
+
+    String nxrmPodUri = PathUtils.buildNxrmPodPath(name, version, extDownloadUri);
+
+    URI sourceUri = repoUri.resolve(nxrmPodUri);
 
     final ObjectNode sourceNode = mapper.createObjectNode();
     sourceNode.put(HTTP_NODE_NAME, sourceUri.toString());
@@ -93,7 +109,8 @@ public class SpecTransformer
     return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonSpec);
   }
 
-  private URI buidProxiedUri(final JsonNode sourceNode, String name, String version, final URI repoUri)
+
+  private URI getExternalURI(final JsonNode sourceNode)
       throws InvalidSpecFileException
   {
     if (sourceNode.has(GIT_NODE_NAME)) {
@@ -105,7 +122,7 @@ public class SpecTransformer
       URI gitRepoUri = parseGitRepoUri(gitRepo);
       String ref = extractGitRef(sourceNode);
 
-      return repoUri.resolve(podPathProvider.buildNxrmPath(name, version, gitRepoUri, ref));
+      return gitApiHelper.buildDownloadURI(gitRepoUri, ref);
     }
 
     if (sourceNode.has(HTTP_NODE_NAME)) {
@@ -113,7 +130,8 @@ public class SpecTransformer
       if (httpDownloadUri == null) {
         throw new InvalidSpecFileException("null repository Uri");
       }
-      return repoUri.resolve(podPathProvider.buildNxrmPath(name, version, httpDownloadUri));
+
+      return URI.create(httpDownloadUri);
     }
 
     throw new InvalidSpecFileException("Invalid source: " + sourceNode.toString());
@@ -123,9 +141,9 @@ public class SpecTransformer
   private String extractGitRef(final JsonNode sourceNode) {
     String[] refNodes = {COMMIT_NODE_NAME, TAG_NODE_NAME, BRANCH_NODE_NAME};
     return Arrays.stream(refNodes)
-        .map(refNodeName -> sourceNode.get(refNodeName))
+        .map(sourceNode::get)
         .filter(refNode -> refNode != null && refNode.isTextual())
-        .map(refNode -> refNode.textValue())
+        .map(JsonNode::textValue)
         .findFirst().orElse(null);
   }
 

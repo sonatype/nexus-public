@@ -14,7 +14,7 @@ package org.sonatype.nexus.repository.cocoapods.internal.proxy;
 
 import java.net.URI;
 
-import org.sonatype.nexus.repository.cocoapods.internal.pod.PodPathProvider;
+import org.sonatype.nexus.repository.cocoapods.internal.git.GitApiHelper;
 
 import org.junit.Test;
 
@@ -24,10 +24,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 /**
  * @since 3.19
  */
-public class SpecTransformerTest
+public class SpecFileProcessorTest
 {
-  private PodPathProvider podPathProvider =
-      new PodPathProvider("https://api.github.com", "https://bitbucket.org", "https://gitlab.com");
+  private GitApiHelper gitApiHelper =
+      new GitApiHelper("https://api.github.com", "https://bitbucket.org", "https://gitlab.com");
 
   @Test
   public void gitHubToProxiedSpecPositiveTest() throws Exception {
@@ -44,13 +44,13 @@ public class SpecTransformerTest
         "  \"name\" : \"MasonryHidden\",\n" +
         "  \"version\" : \"1.0.0\",\n" +
         "  \"source\" : {\n" +
-        "    \"http\" : \"http://repouri/pods/MasonryHidden/1.0.0/https/api.github.com/repos/SunnySunning/MasonryHidden/tarball/0.5.0.tar.gz\"\n" +
+        "    \"http\" : \"http://repouri/pods/MasonryHidden/1.0.0/0.5.0.tar.gz\"\n" +
         "  }\n" +
         "}";
 
     URI repoUri = URI.create("http://repouri/");
 
-    String res = new SpecTransformer(podPathProvider).toProxiedSpec(spec, repoUri);
+    String res = new SpecFileProcessor(gitApiHelper).toProxiedSpec(spec, repoUri);
     assertThat(res, is(transformedSpec));
   }
 
@@ -69,13 +69,13 @@ public class SpecTransformerTest
         "  \"name\" : \"MasonryHidden\",\n" +
         "  \"version\" : \"1.0.0\",\n" +
         "  \"source\" : {\n" +
-        "    \"http\" : \"http://repouri/pods/MasonryHidden/1.0.0/https/api.github.com/repos/SunnySunning/MasonryHidden/tarball/.tar.gz\"\n" +
+        "    \"http\" : \"http://repouri/pods/MasonryHidden/1.0.0/1.0.0.tar.gz\"\n" +
         "  }\n" +
         "}";
 
     URI repoUri = URI.create("http://repouri/");
 
-    String res = new SpecTransformer(podPathProvider).toProxiedSpec(spec, repoUri);
+    String res = new SpecFileProcessor(gitApiHelper).toProxiedSpec(spec, repoUri);
     assertThat(res, is(transformedSpec));
   }
 
@@ -93,13 +93,13 @@ public class SpecTransformerTest
         "  \"name\" : \"AppSpectorTVSDK\",\n" +
         "  \"version\" : \"1.0.0\",\n" +
         "  \"source\" : {\n" +
-        "    \"http\" : \"http://repouri/pods/AppSpectorTVSDK/1.0.0/https/github.com/appspector/ios-sdk/blob/master/AppSpectorTVSDK.zip?raw=true\"\n" +
+        "    \"http\" : \"http://repouri/pods/AppSpectorTVSDK/1.0.0/AppSpectorTVSDK.zip\"\n" +
         "  }\n" +
         "}";
 
     URI repoUri = URI.create("http://repouri/");
 
-    String res = new SpecTransformer(podPathProvider).toProxiedSpec(spec, repoUri);
+    String res = new SpecFileProcessor(gitApiHelper).toProxiedSpec(spec, repoUri);
     assertThat(res, is(transformedSpec));
   }
 
@@ -116,12 +116,12 @@ public class SpecTransformerTest
 
     URI repoUri = URI.create("http://repouri/");
 
-    new SpecTransformer(podPathProvider).toProxiedSpec(spec, repoUri);
+    new SpecFileProcessor(gitApiHelper).toProxiedSpec(spec, repoUri);
   }
 
   @Test(expected = InvalidSpecFileException.class)
   public void testInvalidJson() throws Exception {
-    new SpecTransformer(podPathProvider).toProxiedSpec("invalid_json", URI.create("http://repouri/"));
+    new SpecFileProcessor(gitApiHelper).toProxiedSpec("invalid_json", URI.create("http://repouri/"));
   }
 
   @Test(expected = InvalidSpecFileException.class)
@@ -130,7 +130,7 @@ public class SpecTransformerTest
 
     URI repoUri = URI.create("http://repouri/");
 
-    new SpecTransformer(podPathProvider).toProxiedSpec(spec, repoUri);
+    new SpecFileProcessor(gitApiHelper).toProxiedSpec(spec, repoUri);
   }
 
   @Test(expected = InvalidSpecFileException.class)
@@ -145,7 +145,7 @@ public class SpecTransformerTest
 
     URI repoUri = URI.create("http://repouri/");
 
-    new SpecTransformer(podPathProvider).toProxiedSpec(spec, repoUri);
+    new SpecFileProcessor(gitApiHelper).toProxiedSpec(spec, repoUri);
   }
 
   @Test(expected = InvalidSpecFileException.class)
@@ -160,7 +160,7 @@ public class SpecTransformerTest
 
     URI repoUri = URI.create("http://repouri/");
 
-    new SpecTransformer(podPathProvider).toProxiedSpec(spec, repoUri);
+    new SpecFileProcessor(gitApiHelper).toProxiedSpec(spec, repoUri);
   }
 
 
@@ -177,7 +177,7 @@ public class SpecTransformerTest
 
     URI repoUri = URI.create("http://repouri/");
 
-    String res = new SpecTransformer(podPathProvider).toProxiedSpec(spec, repoUri);
+    String res = new SpecFileProcessor(gitApiHelper).toProxiedSpec(spec, repoUri);
     assertThat(res.contains("/Realm/0.92.3/"), is(true));
   }
 }

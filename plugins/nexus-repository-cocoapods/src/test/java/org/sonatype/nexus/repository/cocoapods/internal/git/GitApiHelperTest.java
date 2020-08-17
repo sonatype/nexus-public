@@ -10,9 +10,9 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.cocoapods.internal.pod.git;
+package org.sonatype.nexus.repository.cocoapods.internal.git;
 
-import org.sonatype.nexus.repository.cocoapods.internal.CocoapodsConfig;
+import java.net.URI;
 
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
@@ -31,43 +31,41 @@ public class GitApiHelperTest
   @Test
   @Parameters(method = "provideTestGenerateGitHubApiUriParams")
   public void testGenerateGitHubApiUri(
-      final String host,
-      final String vendor,
-      final String repository,
+      final String gitUri,
       final String ref,
-      final String apiUri)
+      final String downloadUri)
   {
-    CocoapodsConfig config =
-        new CocoapodsConfig("https://api.github.com", "https://bitbucket.org", "https://gitlab.com");
-    GitArtifactInfo info = new GitArtifactInfo(host, vendor, repository, ref);
-    assertThat(GitApiHelper.buildApiUri(info, config).toString(), is(apiUri));
+    GitApiHelper gitApiHelper =
+        new GitApiHelper("https://api.github.com", "https://bitbucket.org", "https://gitlab.com");
+
+    assertThat(gitApiHelper.buildDownloadURI(URI.create(gitUri), ref).toString(), is(downloadUri));
   }
 
   private static Object[] provideTestGenerateGitHubApiUriParams() {
     return new Object[]{
         new Object[]{
-            "github.com", "mycheck888", "MyCheckWalletUI", "1.2.3",
+            "https://github.com/mycheck888/MyCheckWalletUI.git", "1.2.3",
             "https://api.github.com/repos/mycheck888/MyCheckWalletUI/tarball/1.2.3"
         },
         new Object[]{
-            "github.com", "mycheck888", "MyCheckWalletUI", null,
+            "https://github.com/mycheck888/MyCheckWalletUI.git", null,
             "https://api.github.com/repos/mycheck888/MyCheckWalletUI/tarball/"
         },
         new Object[]{
-            "bitbucket.org", "jefrydagucci", "asbaseiosproject", "v0.9.2",
+            "https://bitbucket.org/jefrydagucci/asbaseiosproject.git", "v0.9.2",
             "https://bitbucket.org/jefrydagucci/asbaseiosproject/get/v0.9.2.tar.gz"
         },
         new Object[]{
-            "bitbucket.org", "jefrydagucci", "asbaseiosproject", null,
+            "https://bitbucket.org/jefrydagucci/asbaseiosproject.git", null,
             "https://bitbucket.org/jefrydagucci/asbaseiosproject/get/master.tar.gz"
         },
         new Object[]{
-            "gitlab.com", "abtasty-public", "mobile/abtastysdkios", "1.1",
-            "https://gitlab.com/abtasty-public/mobile/abtastysdkios/-/archive/1.1/1.1.tar.gz"
+            "https://gitlab.com/streethawk/sdks/streethawk-sdk-ios.git", "1.10.2",
+            "https://gitlab.com/streethawk/sdks/streethawk-sdk-ios/-/archive/1.10.2/1.10.2.tar.gz"
         },
         new Object[]{
-            "gitlab.com", "abtasty-public", "mobile/abtastysdkios", null,
-            "https://gitlab.com/abtasty-public/mobile/abtastysdkios/-/archive/master/master.tar.gz"
+            "https://gitlab.com/streethawk/sdks/streethawk-sdk-ios.git", null,
+            "https://gitlab.com/streethawk/sdks/streethawk-sdk-ios/-/archive/master/master.tar.gz"
         }
     };
   }

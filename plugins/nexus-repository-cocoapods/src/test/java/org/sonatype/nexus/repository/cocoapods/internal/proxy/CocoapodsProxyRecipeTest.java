@@ -208,7 +208,7 @@ public class CocoapodsProxyRecipeTest
    */
   @Test
   public void testPodHandling() throws Exception {
-    when(request.getPath()).thenReturn("/pods/any.tar.gz");
+    when(request.getPath()).thenReturn("/pods/name/version/filename.tar.gz");
     cocoapodsViewFacet.dispatch(request, context);
     verify(securityHandler, times(1)).handle(any());
   }
@@ -288,7 +288,9 @@ public class CocoapodsProxyRecipeTest
         new Object[]{"prefix/all_pods_any_suffix.txt", "true"},
         new Object[]{"/all_pods_any_suffix.avi", "false"},
 
-        new Object[]{"/pods/any_suffix", "true"},
+        new Object[]{"/pods/name/version/file", "true"},
+        new Object[]{"/pods/name/version/file/", "false"},
+        new Object[]{"/pods/name/version/file/segment", "false"},
         new Object[]{"/unknown_segment/any_suffix", "false"},
 
         new Object[]{"/unknown_route", "false"},
