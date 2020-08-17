@@ -47,6 +47,10 @@ public class HttpClientConfigurationData
   @Nullable
   private AuthenticationStrategy authenticationStrategy;
 
+  @Valid
+  @Nullable
+  private Boolean disableContentCompression;
+
   /**
    * @see AuthenticationConfigurationDeserializer
    */
@@ -126,6 +130,16 @@ public class HttpClientConfigurationData
   }
 
   @Override
+  public Boolean getDisableContentCompression() {
+    return disableContentCompression;
+  }
+
+  @Override
+  public void setDisableContentCompression(final Boolean disableContentCompression) {
+    this.disableContentCompression = disableContentCompression;
+  }
+
+  @Override
   public HttpClientConfigurationData copy() {
     try {
       HttpClientConfigurationData copy = (HttpClientConfigurationData) clone();
@@ -145,6 +159,9 @@ public class HttpClientConfigurationData
       if (authenticationStrategy != null) {
         // no real cloning/copying needed, as we are allowed to use a singleton instance
         copy.authenticationStrategy = authenticationStrategy;
+      }
+      if (disableContentCompression != null) {
+        copy.disableContentCompression = disableContentCompression;
       }
       return copy;
     }

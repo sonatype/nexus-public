@@ -20,6 +20,7 @@ import javax.inject.Named;
 import org.sonatype.nexus.httpclient.HttpClientManager;
 import org.sonatype.nexus.httpclient.config.HttpClientConfiguration;
 import org.sonatype.nexus.repository.httpclient.AutoBlockConfiguration;
+import org.sonatype.nexus.repository.httpclient.ContentCompressionStrategy;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.httpclient.NormalizationStrategy;
 import org.sonatype.nexus.repository.httpclient.RequestHeaderAuthenticationStrategy;
@@ -46,9 +47,11 @@ public class HttpClientCustomConfigFacetImpl
       final Map<String, AutoBlockConfiguration> autoBlockConfiguration,
       final Map<String, RedirectStrategy> redirectStrategy,
       final Map<String, NormalizationStrategy> normalizationStrategies,
-      final RequestHeaderAuthenticationStrategy requestHeaderAuthenticationStrategy)
+      final RequestHeaderAuthenticationStrategy requestHeaderAuthenticationStrategy,
+      final Map<String, ContentCompressionStrategy> contentCompressionStrategies)
   {
-    super(httpClientManager, autoBlockConfiguration, redirectStrategy, normalizationStrategies);
+    super(httpClientManager, autoBlockConfiguration, redirectStrategy, normalizationStrategies,
+        contentCompressionStrategies);
     this.requestHeaderAuthenticationStrategy = requestHeaderAuthenticationStrategy;
   }
 
@@ -56,7 +59,8 @@ public class HttpClientCustomConfigFacetImpl
   @VisibleForTesting
   protected HttpClientConfiguration getHttpClientConfiguration(
       final HttpClientManager httpClientManager,
-      final Config config) {
+      final Config config)
+  {
     // construct http client delegate
     HttpClientConfiguration delegateConfig = httpClientManager.newConfiguration();
     delegateConfig.setConnection(config.connection);
@@ -64,6 +68,7 @@ public class HttpClientCustomConfigFacetImpl
     delegateConfig.setRedirectStrategy(getRedirectStrategy());
     setNormalizationStrategy(delegateConfig);
     delegateConfig.setAuthenticationStrategy(requestHeaderAuthenticationStrategy);
+    setContentCompressionStrategy(delegateConfig);
     return delegateConfig;
   }
 }

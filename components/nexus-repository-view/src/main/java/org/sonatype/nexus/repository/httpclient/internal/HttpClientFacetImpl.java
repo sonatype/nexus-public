@@ -34,6 +34,7 @@ import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.httpclient.AutoBlockConfiguration;
+import org.sonatype.nexus.repository.httpclient.ContentCompressionStrategy;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.httpclient.NormalizationStrategy;
 import org.sonatype.nexus.repository.httpclient.RemoteConnectionStatus;
@@ -80,6 +81,8 @@ public class HttpClientFacetImpl
 
   private final Map<String, NormalizationStrategy> normalizationStrategies;
 
+  private final Map<String, ContentCompressionStrategy> contentCompressionStrategies;
+
   @VisibleForTesting
   static class Config
   {
@@ -107,12 +110,14 @@ public class HttpClientFacetImpl
   public HttpClientFacetImpl(final HttpClientManager httpClientManager,
                              final Map<String, AutoBlockConfiguration> autoBlockConfiguration,
                              final Map<String, RedirectStrategy> redirectStrategy,
-                             final Map<String, NormalizationStrategy> normalizationStrategies)
+                             final Map<String, NormalizationStrategy> normalizationStrategies,
+                             final Map<String, ContentCompressionStrategy> contentCompressionStrategies)
   {
     this.httpClientManager = checkNotNull(httpClientManager);
     this.autoBlockConfiguration = checkNotNull(autoBlockConfiguration);
     this.redirectStrategy = checkNotNull(redirectStrategy);
     this.normalizationStrategies = checkNotNull(normalizationStrategies);
+    this.contentCompressionStrategies = checkNotNull(contentCompressionStrategies);
   }
 
   @VisibleForTesting
@@ -120,8 +125,11 @@ public class HttpClientFacetImpl
                       final Map<String, AutoBlockConfiguration> autoBlockConfiguration,
                       final Map<String, RedirectStrategy> redirectStrategy,
                       final Map<String, NormalizationStrategy> normalizationStrategy,
-                      final Config config) {
-    this(httpClientManager, autoBlockConfiguration, redirectStrategy, normalizationStrategy);
+                      final Map<String, ContentCompressionStrategy> contentCompressionStrategies,
+                      final Config config)
+  {
+    this(httpClientManager, autoBlockConfiguration, redirectStrategy, normalizationStrategy,
+        contentCompressionStrategies);
     this.config = checkNotNull(config);
     checkNotNull(autoBlockConfiguration.get(DEFAULT));
   }
@@ -275,16 +283,17 @@ public class HttpClientFacetImpl
     delegateConfig.setAuthentication(config.authentication);
     delegateConfig.setRedirectStrategy(getRedirectStrategy());
     setNormalizationStrategy(delegateConfig);
+    setContentCompressionStrategy(delegateConfig);
     return delegateConfig;
   }
 
   private AutoBlockConfiguration getAutoBlockConfiguration() {
     AutoBlockConfiguration config = this.autoBlockConfiguration.get(getRepository().getFormat().getValue());
-    
+
     if (config == null) {
       config = autoBlockConfiguration.get(DEFAULT);
     }
-    
+
     return config;
   }
 
@@ -292,9 +301,15 @@ public class HttpClientFacetImpl
     return this.redirectStrategy.get(getRepository().getFormat().getValue());
   }
 
-  protected void setNormalizationStrategy(HttpClientConfiguration delegateConfig) {
+  protected void setNormalizationStrategy(final HttpClientConfiguration delegateConfig) {
     ofNullable(normalizationStrategies.get(getRepository().getFormat().getValue()))
         .ifPresent(strategy -> delegateConfig.setNormalizeUri(strategy.shouldNormalizeUri()));
+  }
+
+  protected void setContentCompressionStrategy(final HttpClientConfiguration delegateConfig) {
+    ofNullable(contentCompressionStrategies.get(getRepository().getFormat().getValue()))
+        .ifPresent(strategy -> delegateConfig
+            .setDisableContentCompression(strategy.shouldDisableContentCompression(getRepository().getName())));
   }
 
   private void closeHttpClient() throws IOException {

@@ -62,7 +62,8 @@ class ConfigurationCustomizerTest
 
   @Test
   void 'plan is updated with circular redirect and cookie settings from configuration'() {
-    when(httpClientConfiguration.getConnection()).thenReturn(new ConnectionConfiguration(enableCircularRedirects: true, enableCookies: true))
+    when(httpClientConfiguration.getConnection()).
+        thenReturn(new ConnectionConfiguration(enableCircularRedirects: true, enableCookies: true))
     HttpClientPlan plan = new HttpClientPlan()
     configurationCustomizer.customize(plan)
     assertThat(plan.request.circularRedirectsAllowed, equalTo(true))
@@ -106,11 +107,13 @@ class ConfigurationCustomizerTest
 
   @Test
   void 'custom nonProxyHosts'() {
-    NexusHttpRoutePlanner planner = create(['*.sonatype.*', '*.example.com', 'localhost', '10.*', '[:*', '*:8]'] as String[])
+    NexusHttpRoutePlanner planner =
+        create(['*.sonatype.*', '*.example.com', 'localhost', '10.*', '[:*', '*:8]'] as String[])
     HttpRoute route
 
     // must not have proxy used
-    for (String host : ['www.sonatype.org', 'www.sonatype.com', 'smtp.example.com', 'localhost', '10.0.0.1', '[::8]', '[::9]']) {
+    for (String host :
+        ['www.sonatype.org', 'www.sonatype.com', 'smtp.example.com', 'localhost', '10.0.0.1', '[::8]', '[::9]']) {
       HttpHost target = new HttpHost(host, 80)
       route = planner.determineRoute(target, mock(HttpRequest), mock(HttpContext))
       assertThat(route.getHopTarget(0), equalTo(target))
@@ -165,5 +168,20 @@ class ConfigurationCustomizerTest
       route = planner.determineRoute(target, mock(HttpRequest), mock(HttpContext))
       assertThat(route.getHopTarget(0), equalTo(httpProxyHost))
     }
+  }
+
+  @Test
+  void 'plan is updated with disableContentCompression'() {
+    checkContentDisableCompressionPropagation(true)
+    checkContentDisableCompressionPropagation(false)
+    checkContentDisableCompressionPropagation(null)
+  }
+
+  void checkContentDisableCompressionPropagation(final Boolean disableConttentCompression) {
+    when(httpClientConfiguration.getDisableContentCompression()).thenReturn(disableConttentCompression)
+    HttpClientPlan plan = new HttpClientPlan()
+    configurationCustomizer.customize(plan)
+    assertThat(plan.client.contentCompressionDisabled,
+        equalTo(disableConttentCompression == null ? false : disableConttentCompression))
   }
 }

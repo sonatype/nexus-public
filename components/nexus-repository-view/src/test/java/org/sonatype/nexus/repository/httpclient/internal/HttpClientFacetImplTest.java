@@ -26,9 +26,11 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.httpclient.AutoBlockConfiguration;
+import org.sonatype.nexus.repository.httpclient.ContentCompressionStrategy;
 import org.sonatype.nexus.repository.httpclient.NormalizationStrategy;
 import org.sonatype.nexus.repository.httpclient.internal.HttpClientFacetImpl.Config;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -42,6 +44,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.httpclient.internal.HttpClientFacetImpl.CONFIG_KEY;
 
@@ -57,41 +60,46 @@ public class HttpClientFacetImplTest
 
   private static final String DOCKER = "docker";
 
+  private static final String YUM = "yum";
+
   private HttpClientFacetImpl underTest;
 
   @Mock
   private HttpClientManager httpClientManager;
-  
+
   @Mock
   private Configuration configuration;
-  
+
   @Mock
   private Repository repository;
-  
+
   @Mock
   private ConfigurationFacet configurationFacet;
-  
+
   @Mock
   private AutoBlockConfiguration defaultAutoBlockConfiguration;
 
   @Mock
   private AutoBlockConfiguration npmAutoBlockConfiguration;
-  
+
   @Mock
   private Format npmFormat;
-  
+
+  @Mock
+  private Format yumFormat;
+
   @Mock
   private Format unknownFormat;
-  
+
   @Mock
   private CloseableHttpClient closeableHttpClient;
-  
+
   @Mock
   private EventManager eventManager;
 
   @Mock
   HttpClientConfiguration httpClientConfiguration;
-  
+
   private HttpClientFacetImpl.Config config = new HttpClientFacetImpl.Config();
 
   private UsernameAuthenticationConfiguration usernameAuthentication = new UsernameAuthenticationConfiguration();
@@ -105,26 +113,28 @@ public class HttpClientFacetImplTest
 
   private static final String PASSWORD = "password";
 
+  private boolean disableCompression;
+
   @Before
   public void setUp() throws Exception {
     Map<String, AutoBlockConfiguration> autoBlockConfiguration = new HashMap<>();
     autoBlockConfiguration.put(DEFAULT, defaultAutoBlockConfiguration);
     autoBlockConfiguration.put(NPM, npmAutoBlockConfiguration);
 
-    Map<String, NormalizationStrategy> normalizationStrategies = new HashMap<>();
-    normalizationStrategies.put(DOCKER, new NormalizationStrategy() {
-      @Override
-      public boolean shouldNormalizeUri() {
-        return true;
-      }
-    });
-    
-    underTest = new HttpClientFacetImpl(httpClientManager, autoBlockConfiguration, newHashMap(), normalizationStrategies, config);
+    Map<String, NormalizationStrategy> normalizationStrategies = ImmutableMap.of(DOCKER, () -> true);
+
+    Map<String, ContentCompressionStrategy> contentCompressionStrategiesMap =
+        ImmutableMap.of(YUM, (r) -> disableCompression);
+
+    underTest =
+        new HttpClientFacetImpl(httpClientManager, autoBlockConfiguration, newHashMap(), normalizationStrategies,
+            contentCompressionStrategiesMap, config);
     underTest.attach(repository);
     underTest.installDependencies(eventManager);
     when(configurationFacet.readSection(configuration, CONFIG_KEY, Config.class)).thenReturn(config);
-    
+
     when(npmFormat.getValue()).thenReturn(NPM);
+    when(yumFormat.getValue()).thenReturn(YUM);
     when(unknownFormat.getValue()).thenReturn("unknown");
 
     usernameAuthentication.setUsername(USERNAME);
@@ -167,6 +177,13 @@ public class HttpClientFacetImplTest
     assertConfigurationPassedToBlockingClient(unknownFormat, defaultAutoBlockConfiguration);
   }
 
+  @Test
+  public void passDisableCompression() throws Exception {
+    assertDisableCompressionPassedToCustomizer(yumFormat, true);
+    assertDisableCompressionPassedToCustomizer(yumFormat, false);
+    assertDisableCompressionPassedToCustomizer(npmFormat, false);
+  }
+
   private void assertConfigurationPassedToBlockingClient(final Format format,
                                                          final AutoBlockConfiguration autoBlockConfiguration)
       throws Exception
@@ -181,5 +198,23 @@ public class HttpClientFacetImplTest
     underTest.doConfigure(configuration);
 
     assertThat(underTest.httpClient.autoBlockConfiguration, is(equalTo(autoBlockConfiguration)));
+  }
+
+  private void assertDisableCompressionPassedToCustomizer(final Format format,
+                                                          final Boolean disableCompression)
+      throws Exception
+  {
+    this.disableCompression = disableCompression;
+
+    when(httpClientManager.create(any())).thenReturn(closeableHttpClient);
+    when(httpClientManager.newConfiguration()).thenReturn(httpClientConfiguration);
+    when(repository.facet(ConfigurationFacet.class)).thenReturn(configurationFacet);
+
+    when(repository.getConfiguration()).thenReturn(configuration);
+    when(repository.getFormat()).thenReturn(format);
+
+    underTest.doConfigure(configuration);
+
+    verify(httpClientConfiguration).setDisableContentCompression(disableCompression);
   }
 }

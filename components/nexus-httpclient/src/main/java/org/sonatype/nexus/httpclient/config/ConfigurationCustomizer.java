@@ -132,6 +132,9 @@ public class ConfigurationCustomizer
     if (configuration.getNormalizeUri() != null) {
       plan.getRequest().setNormalizeUri(configuration.getNormalizeUri());
     }
+    if (Boolean.TRUE.equals(configuration.getDisableContentCompression())) {
+      plan.getClient().disableContentCompression();
+    }
   }
 
   /**
