@@ -68,7 +68,7 @@ Ext.define('NX.coreui.view.routing.RoutingRulesSettingsForm', {
                   xtype: 'combo',
                   name: 'mode',
                   editable: false,
-                  width: '80px',
+                  width: '90px',
                   store: [
                     ['BLOCK', NX.I18n.get('RoutingRules_Mode_Block_Text')],
                     ['ALLOW', NX.I18n.get('RoutingRules_Mode_Allow_Text')]

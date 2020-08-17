@@ -26,10 +26,14 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
+import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
+import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetUploadedEvent;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.group.GroupFacetImpl;
@@ -53,6 +57,8 @@ import org.sonatype.nexus.thread.io.StreamCopier;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import com.google.common.collect.Maps;
+import com.google.common.eventbus.AllowConcurrentEvents;
+import com.google.common.eventbus.Subscribe;
 import com.google.common.hash.HashCode;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -60,10 +66,15 @@ import static com.google.common.io.ByteStreams.toByteArray;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
 
+/**
+ * Maven2 specific implementation of {@link GroupFacetImpl} using the content store.
+ *
+ * @since 3.next
+ */
 @Named
 public class MavenContentGroupFacetImpl
     extends GroupFacetImpl
-    implements MavenGroupFacet
+    implements MavenGroupFacet, EventAware.Asynchronous
 {
 
   private final RepositoryMetadataMerger repositoryMetadataMerger;
@@ -245,6 +256,40 @@ public class MavenContentGroupFacetImpl
     HashCode sha1HashCode = hashCodes.get(HashAlgorithm.SHA1);
     if (sha1HashCode != null) {
       attributesMap.set(Content.CONTENT_ETAG, "{SHA1{" + sha1HashCode + "}}");
+    }
+  }
+
+  @Subscribe
+  @AllowConcurrentEvents
+  public void onAssetUploadedEvent(AssetUploadedEvent event) {
+    handleAssetEvent(event, false);
+  }
+
+  @Subscribe
+  @AllowConcurrentEvents
+  public void onAssetDeletedEvent(AssetDeletedEvent event) {
+    handleAssetEvent(event, true);
+  }
+
+  private void handleAssetEvent(AssetEvent event, boolean delete) {
+    if (!event.getAsset().component().isPresent() && member(event.getRepository())) {
+      final String path = event.getAsset().path();
+      final MavenPath mavenPath = getRepository().facet(MavenContentFacet.class).getMavenPathParser().parsePath(path);
+
+      // only trigger eviction on main metadata artifact (which may go on to evict its hashes)
+      if (!mavenPath.isHash()) {
+        if (delete) {
+          try {
+            getRepository().facet(MavenContentFacet.class).deleteWithHashes(mavenPath);
+            return;
+          }
+          catch (Exception e) {
+            log.warn("Problem deleting cached content {} : {}, will invalidate instead",
+                getRepository().getName(), mavenPath.getPath(), e);
+          }
+        }
+        getRepository().facet(ContentFacet.class).assets().with(event.getAsset()).markAsStale();
+      }
     }
   }
 }

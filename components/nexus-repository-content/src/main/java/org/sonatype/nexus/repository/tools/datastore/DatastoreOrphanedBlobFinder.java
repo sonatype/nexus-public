@@ -35,6 +35,10 @@ import org.sonatype.nexus.repository.tools.OrphanedBlobFinder;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
+import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
+import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.BLOB_STORE_NAME;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 
 /**
  * Detects orphaned blobs (i.e. nn-deleted blobs that exist in the blobstore but not the asset table)
@@ -46,14 +50,6 @@ public class DatastoreOrphanedBlobFinder
     extends ComponentSupport
     implements OrphanedBlobFinder
 {
-  private static final String REPOSITORY_NAME_KEY = "Bucket.repo-name";
-
-  private static final String ASSET_NAME_KEY = "BlobStore.blob-name";
-
-  private static final String STORAGE_KEY = "storage";
-
-  private static final String BLOB_STORE_NAME_KEY = "blobStoreName";
-
   private final RepositoryManager repositoryManager;
 
   private final BlobStoreManager blobStoreManager;
@@ -126,10 +122,10 @@ public class DatastoreOrphanedBlobFinder
   }
 
   private void checkIfOrphaned(final Consumer<String> handler, final BlobId id, final BlobAttributes attributes) {
-    String repositoryName = attributes.getHeaders().get(REPOSITORY_NAME_KEY);
+    String repositoryName = attributes.getHeaders().get(REPO_NAME_HEADER);
 
     if (repositoryName != null) {
-      String assetName = attributes.getHeaders().get(ASSET_NAME_KEY);
+      String assetName = attributes.getHeaders().get(BLOB_NAME_HEADER);
 
       Repository repository = repositoryManager.get(repositoryName);
       if (repository == null) {
@@ -156,8 +152,8 @@ public class DatastoreOrphanedBlobFinder
   }
 
   private BlobStore getBlobStoreForRepository(final Repository repository) {
-    String blobStoreName = (String) repository.getConfiguration().getAttributes().get(STORAGE_KEY)
-        .get(BLOB_STORE_NAME_KEY);
+    String blobStoreName = (String) repository.getConfiguration().getAttributes().get(STORAGE)
+        .get(BLOB_STORE_NAME);
 
     return blobStoreManager.get(blobStoreName);
   }
@@ -169,10 +165,10 @@ public class DatastoreOrphanedBlobFinder
   private void validateRepositoryConfiguration(final Repository repository) {
     checkArgument(repository.getConfiguration().getAttributes() != null,
         "Repository configuration not found " + repository.getName());
-    checkArgument(repository.getConfiguration().getAttributes().get(STORAGE_KEY) != null,
+    checkArgument(repository.getConfiguration().getAttributes().get(STORAGE) != null,
         "No storage configuration found for the repository " + repository.getName());
     checkArgument(
-        isNotBlank((String) repository.getConfiguration().getAttributes().get(STORAGE_KEY).get(BLOB_STORE_NAME_KEY)),
+        isNotBlank((String) repository.getConfiguration().getAttributes().get(STORAGE).get(BLOB_STORE_NAME)),
         "Blob store name not set for repository " + repository.getName());
   }
 }

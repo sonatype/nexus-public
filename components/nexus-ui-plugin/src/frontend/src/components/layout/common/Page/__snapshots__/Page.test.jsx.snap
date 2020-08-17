@@ -2,10 +2,10 @@
 
 exports[`Page renders with custom class 1`] = `
 <div>
-  <div
-    class="nxrm-page test"
+  <main
+    class="nx-page-main test"
   >
     test
-  </div>
+  </main>
 </div>
 `;

@@ -13,17 +13,13 @@
 import React from 'react';
 import {useMachine} from '@xstate/react';
 import PasswordChangeMachine from './PasswordChangeMachine';
-import {Button, FieldWrapper, SectionFooter, Section, Textfield, Utils} from 'nexus-ui-plugin';
+import {FieldWrapper, NxButton, NxTooltip, SectionFooter, Section, Textfield, Utils} from 'nexus-ui-plugin';
 import UIStrings from '../../../../constants/UIStrings';
 
 export default function PasswordChangeForm({userId}) {
   const [current, send] = useMachine(PasswordChangeMachine, {devTools: true});
-  const {data, isPristine, validationErrors} = current.context;
-  const {passwordCurrent, passwordNew, passwordNewConfirm} = data;
+  const {isPristine, validationErrors} = current.context;
   const isInvalid = Utils.isInvalid(validationErrors);
-  if (Object.keys(data).length === 0) {
-    console.trace();
-  }
 
   function update(event) {
     send('UPDATE', {data: {[event.target.name]: event.target.value}});
@@ -39,46 +35,25 @@ export default function PasswordChangeForm({userId}) {
 
   return <Section>
     <FieldWrapper labelText={UIStrings.USER_ACCOUNT.PASSWORD_CURRENT_FIELD_LABEL}>
-      <Textfield
-          name='passwordCurrent'
-          type='password'
-          value={passwordCurrent}
-          onChange={update}
-          validationErrors={validationErrors.passwordCurrent}
-      />
+      <Textfield {...Utils.fieldProps('passwordCurrent', current)} type="password" onChange={update}/>
     </FieldWrapper>
     <FieldWrapper labelText={UIStrings.USER_ACCOUNT.PASSWORD_NEW_FIELD_LABEL}>
-      <Textfield
-          name='passwordNew'
-          type='password'
-          value={passwordNew}
-          validationErrors={validationErrors.passwordNew}
-          onChange={update}
-      />
+      <Textfield {...Utils.fieldProps('passwordNew', current)} type="password" onChange={update} />
     </FieldWrapper>
     <FieldWrapper labelText={UIStrings.USER_ACCOUNT.PASSWORD_NEW_CONFIRM_FIELD_LABEL}>
-      <Textfield
-          name='passwordNewConfirm'
-          type='password'
-          value={passwordNewConfirm}
-          validationErrors={validationErrors.passwordNewConfirm}
-          onChange={update}
-      />
+      <Textfield {...Utils.fieldProps('passwordNewConfirm', current)} type="password" onChange={update} />
     </FieldWrapper>
     <SectionFooter>
-      <Button
-          variant='primary'
-          disabled={isInvalid}
-          onClick={handlePasswordSubmit}
-      >
-        {UIStrings.USER_ACCOUNT.ACTIONS.changePassword}
-      </Button>
-      <Button
-          disabled={isPristine}
-          onClick={handlePasswordDiscard}
-      >
-        {UIStrings.USER_ACCOUNT.ACTIONS.discardChangePassword}
-      </Button>
+      <NxTooltip text={Utils.saveTooltip({isInvalid})}>
+        <NxButton variant='primary' className={isInvalid && 'disabled'} onClick={handlePasswordSubmit}>
+          {UIStrings.USER_ACCOUNT.ACTIONS.changePassword}
+        </NxButton>
+      </NxTooltip>
+      <NxTooltip text={Utils.discardTooltip({isPristine})}>
+        <NxButton className={isPristine && 'disabled'} onClick={handlePasswordDiscard}>
+          {UIStrings.USER_ACCOUNT.ACTIONS.discardChangePassword}
+        </NxButton>
+      </NxTooltip>
     </SectionFooter>
   </Section>;
 }

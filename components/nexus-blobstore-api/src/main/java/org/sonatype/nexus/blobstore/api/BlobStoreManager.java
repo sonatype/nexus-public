@@ -104,4 +104,12 @@ public interface BlobStoreManager
    * @since 3.20
    */
   BlobStoreConfiguration newConfiguration();
+
+  /**
+   * Moves a blob from one blobstore to another
+   * @param blobId
+   * @param srcBlobStore
+   * @param destBlobStore
+   */
+  void moveBlob(final BlobId blobId, final BlobStore srcBlobStore, final BlobStore destBlobStore);
 }

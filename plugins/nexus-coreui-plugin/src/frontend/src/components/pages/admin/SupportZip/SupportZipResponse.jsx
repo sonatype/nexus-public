@@ -12,7 +12,7 @@
  */
 import React from 'react';
 import UIStrings from '../../../../constants/UIStrings';
-import {Button, FieldWrapper, NxFontAwesomeIcon, SectionFooter, Textfield} from "nexus-ui-plugin";
+import {FieldWrapper, NxButton, NxFontAwesomeIcon, SectionFooter, Textfield} from "nexus-ui-plugin";
 import {faDownload} from '@fortawesome/free-solid-svg-icons';
 
 export default function SupportZipResponse({response, download}) {
@@ -42,10 +42,10 @@ export default function SupportZipResponse({response, download}) {
       />
     </FieldWrapper>
     <SectionFooter>
-      <Button variant="primary" onClick={(event) => download(event, response.name)} type="submit">
+      <NxButton variant="primary" onClick={(event) => download(event, response.name)} type="submit">
         <NxFontAwesomeIcon icon={faDownload}/>
         <span>{UIStrings.SUPPORT_ZIP.CREATED_DOWNLOAD_BUTTON}</span>
-      </Button>
+      </NxButton>
     </SectionFooter>
   </div>;
 }

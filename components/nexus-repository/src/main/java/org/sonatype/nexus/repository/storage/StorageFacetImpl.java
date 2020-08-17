@@ -40,6 +40,7 @@ import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
+import org.sonatype.nexus.repository.move.RepositoryMoveStore;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlobPartPayload;
@@ -59,8 +60,8 @@ import static org.sonatype.nexus.orient.transaction.OrientTransactional.inTxRetr
 import static org.sonatype.nexus.repository.FacetSupport.State.ATTACHED;
 import static org.sonatype.nexus.repository.FacetSupport.State.INITIALISED;
 import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_ATTRIBUTES;
-import static org.sonatype.nexus.repository.storage.StorageFacetConstants.STORAGE;
 import static org.sonatype.nexus.validation.ConstraintViolations.maybeAdd;
 import static org.sonatype.nexus.validation.ConstraintViolations.maybePropagate;
 
@@ -100,6 +101,8 @@ public class StorageFacetImpl
 
   private final ConstraintViolationFactory constraintViolationFactory;
 
+  private final Provider<RepositoryMoveStore> repositoryMoveStoreProvider;
+
   @VisibleForTesting
   static class Config
   {
@@ -138,7 +141,8 @@ public class StorageFacetImpl
                           final MimeRulesSourceSelector mimeRulesSourceSelector,
                           final StorageFacetManager storageFacetManager,
                           final ComponentFactory componentFactory,
-                          final ConstraintViolationFactory constraintViolationFactory)
+                          final ConstraintViolationFactory constraintViolationFactory,
+                          final Provider<RepositoryMoveStore> repositoryMoveStoreProvider)
   {
     this.nodeAccess = checkNotNull(nodeAccess);
     this.blobStoreManager = checkNotNull(blobStoreManager);
@@ -153,6 +157,7 @@ public class StorageFacetImpl
     this.storageFacetManager = checkNotNull(storageFacetManager);
     this.componentFactory = checkNotNull(componentFactory);
     this.constraintViolationFactory = checkNotNull(constraintViolationFactory);
+    this.repositoryMoveStoreProvider = checkNotNull(repositoryMoveStoreProvider);
 
     this.txSupplier = () -> openStorageTx(databaseInstanceProvider.get().acquire());
   }
@@ -302,7 +307,8 @@ public class StorageFacetImpl
             config.strictContentTypeValidation,
             contentValidatorSelector.validator(getRepository()),
             mimeRulesSourceSelector.ruleSource(getRepository()),
-            componentFactory
+            componentFactory,
+            repositoryMoveStoreProvider
         )
     );
   }

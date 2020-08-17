@@ -23,13 +23,9 @@ import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
-import org.sonatype.nexus.repository.storage.AssetEvent;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.thread.io.StreamCopier;
-
-import com.google.common.eventbus.AllowConcurrentEvents;
-import com.google.common.eventbus.Subscribe;
 
 @Facet.Exposed
 public interface MavenGroupFacet

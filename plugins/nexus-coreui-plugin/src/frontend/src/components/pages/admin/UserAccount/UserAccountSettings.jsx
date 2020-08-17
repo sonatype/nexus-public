@@ -14,10 +14,11 @@ import React from 'react';
 import {useService} from '@xstate/react';
 import {
   Alert,
-  Button,
   FieldWrapper,
+  NxButton,
   NxLoadWrapper,
   NxSubmitMask,
+  NxTooltip,
   Section,
   SectionFooter,
   Textfield,
@@ -84,36 +85,37 @@ export default function UserAccountSettings({service}) {
           <Textfield name="userId" readOnly disabled value={data.userId}/>
         </FieldWrapper>
         <FieldWrapper labelText={UIStrings.USER_ACCOUNT.FIRST_FIELD_LABEL}>
-          <Textfield {...buildFieldProps('firstName', data, validationErrors, handleChange)}/>
+          <Textfield {...buildFieldProps('firstName', current, handleChange)}/>
         </FieldWrapper>
         <FieldWrapper labelText={UIStrings.USER_ACCOUNT.LAST_FIELD_LABEL}>
-          <Textfield {...buildFieldProps('lastName', data, validationErrors, handleChange)}/>
+          <Textfield {...buildFieldProps('lastName', current, handleChange)}/>
         </FieldWrapper>
         <FieldWrapper labelText={UIStrings.USER_ACCOUNT.EMAIL_FIELD_LABEL}>
-          <Textfield {...buildFieldProps('email', data, validationErrors, handleChange)}/>
+          <Textfield {...buildFieldProps('email', current, handleChange)}/>
         </FieldWrapper>
         <SectionFooter>
-          <Button variant='primary' disabled={external || isPristine || isInvalid} onClick={handleSave}>
-            {UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
-          </Button>
-          <Button disabled={external || isPristine} onClick={handleDiscard}>
-            {UIStrings.SETTINGS.DISCARD_BUTTON_LABEL}
-          </Button>
+          <NxTooltip title={Utils.saveTooltip({isPristine, isInvalid})}>
+            <NxButton variant='primary' className={(isPristine || isInvalid) && 'disabled'} disabled={external} onClick={handleSave}>
+              {UIStrings.SETTINGS.SAVE_BUTTON_LABEL}
+            </NxButton>
+          </NxTooltip>
+          <NxTooltip title={Utils.discardTooltip({isPristine})}>
+            <NxButton disabled={external} className={isPristine && 'disabled'} onClick={handleDiscard}>
+              {UIStrings.SETTINGS.DISCARD_BUTTON_LABEL}
+            </NxButton>
+          </NxTooltip>
         </SectionFooter>
       </>}
     </NxLoadWrapper>
   </Section>;
 }
 
-function buildFieldProps(name, data, validationErrors, handleChange) {
-  const readOnly = data.external;
+function buildFieldProps(name, current, handleChange) {
+  const readOnly = current.context.data?.external;
   return {
-    name,
-    value: data[name],
+    ...Utils.fieldProps(name, current),
     disabled: readOnly,
-    readOnly: readOnly,
-    onChange: handleChange,
-    required: !readOnly,
-    validationErrors: validationErrors[name]
-  };
+    readOnly,
+    onChange: handleChange
+  }
 }

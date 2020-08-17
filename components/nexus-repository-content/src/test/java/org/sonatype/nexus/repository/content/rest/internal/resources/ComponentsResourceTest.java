@@ -20,6 +20,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
+import org.sonatype.nexus.repository.selector.ContentAuthHelper;
 import org.sonatype.nexus.repository.upload.UploadConfiguration;
 import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.repository.upload.UploadResponse;
@@ -45,7 +46,7 @@ public class ComponentsResourceTest
   public ExpectedException thrown = ExpectedException.none();
 
   @Mock
-  Format format;
+  private Format format;
 
   @Mock
   private Repository testRepo;
@@ -65,6 +66,9 @@ public class ComponentsResourceTest
   @Mock
   private ComponentXOFactory componentXOFactory;
 
+  @Mock
+  private ContentAuthHelper contentAuthHelper;
+
   @Before
   public void setUp() throws Exception {
     configureMockedRepository(testRepo, testRepoName, "http://localhost:8081/repository/test-repo");
@@ -72,7 +76,7 @@ public class ComponentsResourceTest
     when(uploadConfiguration.isEnabled()).thenReturn(true);
 
     underTest = new ComponentsResource(repositoryManagerRESTAdapter, maintenanceService, uploadManager,
-        uploadConfiguration, componentXOFactory);
+        uploadConfiguration, componentXOFactory, contentAuthHelper);
   }
 
   @SuppressWarnings("java:S2699")

@@ -10,14 +10,62 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
-import classNames from 'classnames';
+package org.sonatype.nexus.repository.move;
+
+import java.util.Date;
 
 /**
- * @since 3.24
  *
- * This component must be used within a Section component.
+ * @since 3.next
  */
-export default function SectionActions({className, children, ...rest}) {
-  return <div className={classNames("nxrm-section-actions", "nx-tile__actions", className)} {...rest}>{children}</div>;
+public interface RepositoryMoveConfiguration
+{
+  /**
+   *
+   * @return
+   */
+  String getSourceRepositoryName();
+
+  /**
+   *
+   * @param sourceRepositoryName
+   */
+  void setSourceRepositoryName(String sourceRepositoryName);
+
+  /**
+   *
+   * @return
+   */
+  String getTargetBlobstoreName();
+
+  /**
+   *
+   * @param targetBlobstoreName
+   */
+  void setTargetBlobstoreName(String targetBlobstoreName);
+
+  /**
+   *
+   * @return
+   */
+  Date getProcessStartDate();
+
+  /**
+   *
+   * @param processStartDate
+   */
+  void setProcessStartDate(Date processStartDate);
+
+  /**
+   *
+   * @return
+   */
+  String getExecutingNodeId();
+
+  /**
+   *
+   */
+  void setExecutingNodeId(String executingNodeId);
+
+
 }

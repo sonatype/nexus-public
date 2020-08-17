@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.content.store;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -100,6 +101,27 @@ public class AssetStore<T extends AssetDAO>
                                           @Nullable final Map<String, Object> filterParams)
   {
     return dao().browseAssets(repositoryId, limit, continuationToken, kind, filter, filterParams);
+  }
+
+  /**
+   * Browse all assets in the given repositories in a paged fashion. The returned assets will be sorted
+   * by asset id in ascending order.
+   *
+   * @param repositoryIds     the repositories to browse
+   * @param limit             maximum number of assets to return
+   * @param continuationToken optional token to continue from a previous request
+   * @return collection of assets and the next continuation token
+   * @see Continuation#nextContinuationToken()
+   *
+   * @since 3.next
+   */
+  @Transactional
+  public Continuation<Asset> browseAssets(
+      final Set<Integer> repositoryIds,
+      final int limit,
+      @Nullable final String continuationToken)
+  {
+    return dao().browseAssetsInRepositories(repositoryIds, limit, continuationToken);
   }
 
   /**

@@ -16,6 +16,7 @@ package org.sonatype.nexus.repository.storage;
  * Repository configuration attribute constants related to {@link StorageFacet}.
  *
  * @since 3.11
+ * @deprecated use {@link org.sonatype.nexus.repository.config.ConfigurationConstants}
  */
 public class StorageFacetConstants
 {

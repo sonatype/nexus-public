@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.content.store;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -72,6 +73,21 @@ public interface ComponentDAO
                                            @Nullable @Param("kind") String kind,
                                            @Nullable @Param("filter") String filter,
                                            @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams);
+
+  /**
+   * Browse all components in the given repository ids in a paged fashion.
+   *
+   * @param repositoryIds the ids repositories to browse
+   * @param limit maximum number of components to return
+   * @param continuationToken optional token to continue from a previous request
+   * @return collection of components and the next continuation token
+   *
+   * @see Continuation#nextContinuationToken()
+   */
+  Continuation<Component> browseComponentsInRepositories(
+      @Param("repositoryIds") Set<Integer> repositoryIds,
+      @Param("limit") int limit,
+      @Nullable @Param("continuationToken") String continuationToken);
 
   /**
    * Browse all component namespaces in the given repository.

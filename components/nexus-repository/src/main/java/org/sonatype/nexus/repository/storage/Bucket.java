@@ -31,6 +31,8 @@ public class Bucket
 {
   /**
    * An identifying name for disaster recovery purposes (which isn't required to be strictly unique)
+   *
+   * @deprecated use {@link org.sonatype.nexus.blobstore.api.BlobStore#REPO_NAME_HEADER}
    */
   public static final String REPO_NAME_HEADER = "Bucket.repo-name";
 

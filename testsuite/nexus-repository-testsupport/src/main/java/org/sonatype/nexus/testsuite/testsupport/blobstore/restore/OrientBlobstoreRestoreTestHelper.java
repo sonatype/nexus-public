@@ -29,7 +29,6 @@ import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
-import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.Query;
 import org.sonatype.nexus.repository.storage.StorageFacet;
@@ -169,7 +168,7 @@ public class OrientBlobstoreRestoreTestHelper
       Asset asset = tx.findAssetWithProperty(AssetEntityAdapter.P_NAME, name, tx.findBucket(repository));
       Blob blob = tx.requireBlob(asset.blobRef());
 
-      assertThat(repository.getName(), equalTo(blob.getHeaders().get(Bucket.REPO_NAME_HEADER)));
+      assertThat(repository.getName(), equalTo(blob.getHeaders().get(BlobStore.REPO_NAME_HEADER)));
       assertThat(asset.name(), equalTo(blob.getHeaders().get(BlobStore.BLOB_NAME_HEADER)));
       assertThat(asset.createdBy(), equalTo(blob.getHeaders().get(BlobStore.CREATED_BY_HEADER)));
       assertThat(asset.createdByIp(), equalTo(blob.getHeaders().get(BlobStore.CREATED_BY_IP_HEADER)));
@@ -248,7 +247,7 @@ public class OrientBlobstoreRestoreTestHelper
         Asset asset = tx.findAssetWithProperty(AssetEntityAdapter.P_NAME, name, tx.findBucket(repository));
         Blob blob = tx.requireBlob(asset.blobRef());
 
-        assertThat(repository.getName(), equalTo(blob.getHeaders().get(Bucket.REPO_NAME_HEADER)));
+        assertThat(repository.getName(), equalTo(blob.getHeaders().get(BlobStore.REPO_NAME_HEADER)));
         assertThat(asset.name(), equalTo(blob.getHeaders().get(BlobStore.BLOB_NAME_HEADER)));
         assertThat(asset.createdBy(), equalTo(blob.getHeaders().get(BlobStore.CREATED_BY_HEADER)));
         assertThat(asset.createdByIp(), equalTo(blob.getHeaders().get(BlobStore.CREATED_BY_IP_HEADER)));

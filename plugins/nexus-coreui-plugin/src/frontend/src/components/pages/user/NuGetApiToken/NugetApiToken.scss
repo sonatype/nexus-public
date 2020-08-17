@@ -1,4 +1,4 @@
-/*
+/**
  * Sonatype Nexus (TM) Open Source Version
  * Copyright (c) 2008-present Sonatype, Inc.
  * All rights reserved. Includes the third-party code listed at http://links.sonatype.com/products/nexus/oss/attributions.
@@ -10,17 +10,17 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React from 'react';
-import {render} from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
 
-import SectionHeader from './SectionHeader';
+#nuget-api-key-modal {
+  .nxrm-code {
+    width: 700px;
+  }
 
-describe('SectionHeader', () => {
-  it('renders correctly', () => {
-    const {container} = render(
-        <SectionHeader>header</SectionHeader>
-    );
-    expect(container).toMatchSnapshot();
-  });
-});
+  #nuget-api-key {
+    height: 44px;
+  }
+
+  #nuget-example-command {
+    height: 62px;
+  }
+}

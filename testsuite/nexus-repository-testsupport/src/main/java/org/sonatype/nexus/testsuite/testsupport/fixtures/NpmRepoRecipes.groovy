@@ -20,8 +20,8 @@ import org.sonatype.nexus.repository.config.Configuration
 import groovy.transform.CompileStatic
 
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME
-import static org.sonatype.nexus.repository.storage.StorageFacetConstants.BLOB_STORE_NAME
-import static org.sonatype.nexus.repository.storage.StorageFacetConstants.STORAGE
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.BLOB_STORE_NAME
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE
 
 /**
  * Factory for Npm {@link Repository} {@link Configuration}

@@ -39,15 +39,6 @@ Ext.define('NX.app.Application', {
   },
 
   uses: [
-    // framework patches
-    'Ext.patch.Ticket_15227',
-    'Ext.patch.Ticket_17866',
-    'Ext.patch.Ticket_18960',
-    'Ext.patch.Ticket_18964',
-    'Ext.patch.Ticket_21425',
-    'Ext.patch.Ticket_22557_1',
-    'Ext.patch.Ticket_22557_2',
-
     // direct overrides
     'NX.ext.direct.RemotingProvider',
     'NX.ext.form.action.DirectLoad',

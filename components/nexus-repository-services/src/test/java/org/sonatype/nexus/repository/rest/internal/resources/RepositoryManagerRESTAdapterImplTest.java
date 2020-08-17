@@ -12,7 +12,7 @@
  */
 package org.sonatype.nexus.repository.rest.internal.resources;
 
-import java.util.Arrays;
+import java.util.List;
 
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
@@ -27,6 +27,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
@@ -78,7 +79,7 @@ public class RepositoryManagerRESTAdapterImplTest
   @Before
   public void setUp() throws Exception {
     when(repositoryManager.get(REPOSITORY_NAME)).thenReturn(repository);
-    when(repositoryManager.browse()).thenReturn(Arrays.asList(repository, repository2, repository3));
+    when(repositoryManager.browse()).thenReturn(asList(repository, repository2, repository3));
 
     when(repository.getFormat()).thenReturn(repositoryFormat);
     when(repository2.getFormat()).thenReturn(repositoryFormat2);
@@ -154,9 +155,20 @@ public class RepositoryManagerRESTAdapterImplTest
 
   @Test
   public void getRepositories() {
-    when(repositoryPermissionChecker.userCanBrowseRepositories(Arrays.asList(repository, repository2, repository3)))
-        .thenReturn(Arrays.asList(repository, repository2));
+    when(repositoryPermissionChecker.userCanBrowseRepositories(asList(repository, repository2, repository3)))
+        .thenReturn(asList(repository, repository2));
 
-    assertThat(underTest.getRepositories(), is(Arrays.asList(repository, repository2)));
+    assertThat(underTest.getRepositories(), is(asList(repository, repository2)));
+  }
+
+  @Test
+  public void findContainingGroupsShouldDelegateToRepositoryManager() {
+    String repositoryName = "aRepository";
+    List<String> repositoryNames = asList("group1", "group2");
+    when(repositoryManager.findContainingGroups(repositoryName)).thenReturn(repositoryNames);
+
+    List<String> containingGroups = underTest.findContainingGroups(repositoryName);
+
+    assertThat(containingGroups, is(repositoryNames));
   }
 }

@@ -27,7 +27,7 @@
     </Call>
   </New>
 
-  <New id="sslContextFactory" class="org.eclipse.jetty.util.ssl.SslContextFactory">
+  <New id="sslContextFactory" class="org.eclipse.jetty.util.ssl.SslContextFactory$Server">
     <Set name="KeyStorePath"><Property name="ssl.etc"/>/keystore.jks</Set>
     <Set name="KeyStorePassword">password</Set>
     <Set name="KeyManagerPassword">password</Set>
@@ -78,7 +78,6 @@
         <Set name="host"><Property name="application-host" /></Set>
         <Set name="port"><Property name="application-port-ssl" /></Set>
         <Set name="idleTimeout"><Property name="jetty.https.timeout" default="30000"/></Set>
-        <Set name="soLingerTime"><Property name="jetty.https.soLingerTime" default="-1"/></Set>
         <Set name="acceptorPriorityDelta"><Property name="jetty.https.acceptorPriorityDelta" default="0"/></Set>
         <Set name="acceptQueueSize"><Property name="jetty.https.acceptQueueSize" default="0"/></Set>
       </New>

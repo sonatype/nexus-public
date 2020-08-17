@@ -13,11 +13,11 @@
 import React from 'react';
 import {useMachine} from '@xstate/react';
 
-import {faChevronRight, faPlusCircle, faRedo, faScroll} from '@fortawesome/free-solid-svg-icons';
+import {faChevronRight, faRedo, faScroll} from '@fortawesome/free-solid-svg-icons';
 
 import {
-  Button,
   ContentBody,
+  NxButton,
   NxFilterInput,
   NxFontAwesomeIcon,
   NxTable,
@@ -30,12 +30,13 @@ import {
   PageHeader,
   PageTitle,
   Section,
-  SectionActions
+  SectionToolbar
 } from 'nexus-ui-plugin';
 
 import LoggingConfigurationListMachine, {ASC} from './LoggingConfigurationListMachine';
 
 import UIStrings from '../../../../constants/UIStrings';
+import './LoggingConfigurationList.scss';
 
 export default function LoggingConfigurationList({onCreate, onEdit}) {
   const [current, send] = useMachine(LoggingConfigurationListMachine, {devTools: true});
@@ -58,38 +59,33 @@ export default function LoggingConfigurationList({onCreate, onEdit}) {
     send('FILTER', {filter: value});
   }
 
-  function clearFilter() {
-    send('FILTER', {filter: ''});
-  }
-
   function reset() {
     send('RESET');
   }
 
-  return <Page>
+  return <Page className="nxrm-logging-configuration">
     <PageHeader>
       <PageTitle icon={faScroll} {...UIStrings.LOGGING.MENU}/>
       <PageActions>
-        <Button variant="primary" onClick={onCreate}>
-          <NxFontAwesomeIcon icon={faPlusCircle}/>
-          <span>{UIStrings.LOGGING.CREATE_BUTTON}</span>
-        </Button>
-        <Button onClick={reset}>
+        <NxButton variant="tertiary" onClick={reset}>
           <NxFontAwesomeIcon icon={faRedo}/>
           <span>{UIStrings.LOGGING.RESET_ALL_BUTTON}</span>
-        </Button>
+        </NxButton>
+        <NxButton variant="primary" onClick={onCreate}>
+          <span>{UIStrings.LOGGING.CREATE_BUTTON}</span>
+        </NxButton>
       </PageActions>
     </PageHeader>
-    <ContentBody className="nxrm-logging-configuration">
+    <ContentBody>
       <Section className="nxrm-logging-configuration-list">
-        <SectionActions>
+        <SectionToolbar>
+          <div className="spacer" />
           <NxFilterInput
               inputId="filter"
               onChange={filter}
-              onClear={clearFilter}
               value={filterText}
               placeholder={UIStrings.LOGGING.FILTER_PLACEHOLDER}/>
-        </SectionActions>
+        </SectionToolbar>
         <NxTable>
           <NxTableHead>
             <NxTableRow>

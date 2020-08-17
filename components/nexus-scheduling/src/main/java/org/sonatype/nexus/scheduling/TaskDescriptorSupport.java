@@ -140,6 +140,11 @@ public abstract class TaskDescriptorSupport
   }
 
   @Override
+  public TaskConfiguration createTaskConfiguration() {
+    return new TaskConfiguration();
+  }
+
+  @Override
   public void initializeConfiguration(final TaskConfiguration configuration) {
     // no-op
   }

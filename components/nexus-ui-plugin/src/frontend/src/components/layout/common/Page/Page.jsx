@@ -19,5 +19,5 @@ import classNames from 'classnames';
  * @since 3.26
  */
 export default function Page({className, ...attrs}) {
-  return <div className={classNames("nxrm-page", className)} {...attrs}/>;
+  return <main className={classNames("nx-page-main", className)} {...attrs}/>;
 }

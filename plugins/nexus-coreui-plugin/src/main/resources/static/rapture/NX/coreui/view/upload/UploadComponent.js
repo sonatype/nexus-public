@@ -68,7 +68,7 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
             }],
             items: [{
               xtype: 'fieldcontainer',
-              width: 700,
+              width: 800,
               items: [{
                 xtype: 'fieldset',
                 cls: 'nx-form-section',
@@ -212,7 +212,7 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
 
     createAssetField: function(field) {
       var me = this;
-      return me.createField(field, true, '140px', 'nx-float-left', me.validateUniqueAsset);
+      return me.createField(field, true, '180px', 'nx-float-left', me.validateUniqueAsset);
     },
 
     createField: function (field, hideLabel, width, cls, validator) {

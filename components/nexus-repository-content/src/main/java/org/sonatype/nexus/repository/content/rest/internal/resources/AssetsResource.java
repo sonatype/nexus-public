@@ -26,10 +26,9 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.FeatureFlag;
-import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
@@ -40,13 +39,18 @@ import org.sonatype.nexus.repository.content.rest.internal.resources.doc.AssetsR
 import org.sonatype.nexus.repository.rest.api.AssetXO;
 import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
+import org.sonatype.nexus.repository.selector.ContentAuthHelper;
 import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.Resource;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.sonatype.nexus.repository.content.rest.AssetXOBuilder.fromAsset;
+import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetId;
+import static org.sonatype.nexus.repository.content.store.InternalIds.toExternalId;
+import static org.sonatype.nexus.repository.http.HttpStatus.UNPROCESSABLE_ENTITY;
 import static org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO.fromString;
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 
@@ -60,12 +64,12 @@ import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
 public class AssetsResource
-    extends ComponentSupport
+    extends AssetsResourceSupport
     implements Resource, AssetsResourceDoc
 {
   static final String RESOURCE_URI = V1_API_PREFIX + "/assets";
 
-  protected static final int PAGE_SIZE = 10;
+  static final int PAGE_SIZE = 10;
 
   private final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter;
 
@@ -74,8 +78,10 @@ public class AssetsResource
   @Inject
   public AssetsResource(
       final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter,
-      final MaintenanceService maintenanceService)
+      final MaintenanceService maintenanceService,
+      final ContentAuthHelper contentAuthHelper)
   {
+    super(contentAuthHelper);
     this.repositoryManagerRESTAdapter = checkNotNull(repositoryManagerRESTAdapter);
     this.maintenanceService = checkNotNull(maintenanceService);
   }
@@ -87,16 +93,8 @@ public class AssetsResource
       @QueryParam("repository") final String repositoryId)
   {
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryId);
-    ContentFacet contentFacet = repository.facet(ContentFacet.class);
-    Continuation<FluentAsset> assetContinuation = contentFacet.assets().browse(PAGE_SIZE, continuationToken);
-    List<AssetXO> assetXOs = assetContinuation.stream()
-        .map(asset -> fromAsset(asset, repository))
-        .collect(toList());
-    return new Page<>(assetXOs, noAssetsLeft(assetContinuation) ? null : assetContinuation.nextContinuationToken());
-  }
-
-  private boolean noAssetsLeft(final Continuation<FluentAsset> assetContinuation) {
-    return assetContinuation.isEmpty() || assetContinuation.size() < PAGE_SIZE;
+    List<FluentAsset> assets = browse(repository,continuationToken);
+    return new Page<>(toAssetXOs(repository, assets), nextContinuationToken(assets));
   }
 
   @GET
@@ -123,9 +121,26 @@ public class AssetsResource
 
   private Asset getAsset(final String id, final Repository repository, final DetachedEntityId entityId)
   {
-    ContentFacet contentFacet = repository.facet(ContentFacet.class);
-    return contentFacet.assets()
-        .find(entityId)
-        .orElseThrow(() -> new NotFoundException("Unable to locate asset with id " + id));
+    try {
+      return repository.facet(ContentFacet.class).assets()
+          .find(entityId)
+          .filter(assetPermitted(repository.getFormat().getValue(), repository.getName()))
+          .orElseThrow(() -> new NotFoundException("Unable to locate asset with id " + id));
+    }
+    catch (IllegalArgumentException e) {
+      log.debug("IllegalArgumentException caught retrieving asset with id {}", entityId, e);
+      throw new WebApplicationException(format("Unable to process asset with id %s", entityId), UNPROCESSABLE_ENTITY);
+    }
+  }
+
+  private static List<AssetXO> toAssetXOs(final Repository repository, final List<FluentAsset> assets) {
+    return assets.stream()
+        .map(asset -> fromAsset(asset, repository))
+        .collect(toList());
+  }
+
+  private static String nextContinuationToken(final List<FluentAsset> assets) {
+    int size = assets.size();
+    return size < PAGE_SIZE ? null : toExternalId(internalAssetId(assets.get(size - 1))).getValue();
   }
 }

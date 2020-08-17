@@ -11,25 +11,15 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {render} from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
+import classNames from 'classnames';
 
-import Textarea from './Textarea';
-import UIStrings from "../../../constants/UIStrings";
+import './SectionToolbar.scss';
 
-describe('Textarea', () => {
-  it('renders correctly without an error message', () => {
-    const {container, queryByText} = render(<Textarea />);
-
-    expect(queryByText(UIStrings.ERROR.FIELD_REQUIRED)).not.toBeInTheDocument();
-
-    expect(container).toMatchSnapshot();
-  });
-
-  it('renders with the first error message', () => {
-    const {queryByText} = render(<Textarea validationErrors={[UIStrings.ERROR.FIELD_REQUIRED, "ERROR_MESSAGE"]} />);
-
-    expect(queryByText(UIStrings.ERROR.FIELD_REQUIRED)).toBeInTheDocument();
-    expect(queryByText("ERROR_MESSAGE")).not.toBeInTheDocument();
-  });
-});
+/**
+ * @since 3.next
+ *
+ * This component must be used within a Section component.
+ */
+export default function SectionToolbar({className, children, ...rest}) {
+  return <div className={classNames("nxrm-section-toolbar", className)} {...rest}>{children}</div>;
+}

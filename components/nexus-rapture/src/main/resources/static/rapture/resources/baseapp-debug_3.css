@@ -5367,7 +5367,7 @@ tr.x-grid-subtable-row {
 .x-grid-subtable-header {
     border: 1px solid #c2c2c2;
     color: #666;
-    font: bold 13px/15px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: bold 16px/18px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     background-image: none;
     background-color: #f5f5f5;
     padding: 6px 10px 6px 10px;
@@ -5473,9 +5473,9 @@ tr.x-grid-subtable-row {
     background: rgba(255, 255, 255, 0);
     max-width: 16em;
     min-width: 0;
-    font-size: 13px;
+    font-size: 16px;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    line-height: 13px;
+    line-height: 16px;
     font-weight: normal;
     white-space: nowrap;
     overflow: hidden;
@@ -5584,7 +5584,7 @@ tr.x-grid-subtable-row {
 
 .nx-searchbox .has-icon input {
     display: inline-block;
-    width: calc(100% - 16px);
+    width: calc(100% - 20px);
 }
 
 .nx-searchbox input {
@@ -6385,9 +6385,9 @@ tr.x-grid-subtable-row {
 }
 
 .nx-header-panel .x-btn-icon-el-nx-header-medium {
-    font-size: 20px;
-    line-height: 20px;
-    height: 20px;
+    font-size: 22px;
+    line-height: 22px;
+    height: 22px;
 }
 
 .nx-header-panel .nx-health-button-red span span {
@@ -6989,7 +6989,7 @@ tr.x-grid-subtable-row {
 }
 
 .x-panel-header-nx-feature-menu {
-    font-size: 13px;
+    font-size: 16px;
     border: 1px solid #444;
 }
 
@@ -7053,7 +7053,7 @@ tr.x-grid-subtable-row {
 
 .x-panel-header-title-nx-feature-menu {
     color: #fff;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: bold;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     line-height: 16px;
@@ -7138,7 +7138,7 @@ tr.x-grid-subtable-row {
     background: #ddd;
     border-color: #c2c2c2;
     color: #333;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: normal;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     border-width: 1px;
@@ -7495,7 +7495,7 @@ tr.x-grid-subtable-row {
 }
 
 .x-panel-header-nx-feature-content {
-    font-size: 13px;
+    font-size: 16px;
     border: 1px solid #444;
 }
 
@@ -7563,7 +7563,7 @@ tr.x-grid-subtable-row {
 
 .x-panel-header-title-nx-feature-content {
     color: #fff;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: bold;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     line-height: 16px;
@@ -7648,7 +7648,7 @@ tr.x-grid-subtable-row {
     background: #f4f4f4;
     border-color: #c2c2c2;
     color: #333;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: normal;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     border-width: 1px;
@@ -7872,7 +7872,7 @@ tr.x-grid-subtable-row {
 }
 
 .x-panel-header-nx-feature-header {
-    font-size: 13px;
+    font-size: 16px;
     border: 1px solid #444;
 }
 
@@ -7936,7 +7936,7 @@ tr.x-grid-subtable-row {
 
 .x-panel-header-title-nx-feature-header {
     color: #fff;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: bold;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     line-height: 16px;
@@ -8021,7 +8021,7 @@ tr.x-grid-subtable-row {
     background: #fff;
     border-color: #c2c2c2;
     color: #333;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: normal;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     border-width: 1px;
@@ -8269,20 +8269,20 @@ tr.x-grid-subtable-row {
 }
 
 .nx-feature-header .nx-icon {
-    font-size: 26px;
+    font-size: 22px;
     line-height: 32px;
     text-align: center;
 }
 
 .nx-feature-name {
-    font-size: 26px;
+    font-size: 22px;
     font-weight: bold;
     top: 8px !important;
     padding-left: 6px;
 }
 
 .nx-feature-description {
-    font-size: 13px;
+    font-size: 16px;
     font-weight: normal;
     top: 12px !important;
     white-space: nowrap;
@@ -8330,13 +8330,12 @@ tr.x-grid-subtable-row {
 .nx-feature-group .x-fa {
     margin-top: 2px;
     margin-right: 5px;
-    width: 32px;
     text-align: center;
 }
 
 .nx-feature-group .x-fa-icon-text {
     position: relative;
-    top: -2px;
+    top: -7px;
 }
 
 .nx-feature-notfound {
@@ -8387,7 +8386,7 @@ tr.x-grid-subtable-row {
 }
 
 .x-panel-header-nx-developer {
-    font-size: 13px;
+    font-size: 16px;
     border: 1px solid #444;
 }
 
@@ -8451,7 +8450,7 @@ tr.x-grid-subtable-row {
 
 .x-panel-header-title-nx-developer {
     color: #fff;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: bold;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     line-height: 16px;
@@ -8532,7 +8531,7 @@ tr.x-grid-subtable-row {
     background: #fff;
     border-color: #c2c2c2;
     color: #333;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: normal;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     border-width: 1px;
@@ -8759,13 +8758,13 @@ tr.x-grid-subtable-row {
 }
 
 .x-panel-nx-developer .nx-section-header {
-    font-size: 13px;
+    font-size: 12px;
     padding-bottom: 5px;
     text-transform: uppercase;
 }
 
 .x-panel-nx-developer table thead th {
-    font-size: 13px;
+    font-size: 12px;
     text-transform: uppercase;
     text-align: left;
 }
@@ -8795,43 +8794,43 @@ tr.x-grid-subtable-row {
     /*
    * Visual style sheet type styles
    */
-    font-size: 20px;
+    font-size: 32px;
     font-weight: 100;
 }
 
 .x-panel-nx-developer .nx-sample-h2 {
-    font-size: 26px;
-    font-weight: bold;
-}
-
-.x-panel-nx-developer .nx-sample-h3 {
     font-size: 22px;
     font-weight: bold;
 }
 
+.x-panel-nx-developer .nx-sample-h3 {
+    font-size: 16px;
+    font-weight: bold;
+}
+
 .x-panel-nx-developer .nx-sample-h4 {
-    font-size: 18px;
+    font-size: 14px;
     font-weight: bold;
 }
 
 .x-panel-nx-developer .nx-sample-h5 {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: bold;
 }
 
 .x-panel-nx-developer .nx-sample-body {
-    font-size: 13px;
+    font-size: 16px;
     font-weight: normal;
 }
 
 .x-panel-nx-developer .nx-sample-code {
-    font-size: 13px;
+    font-size: 16px;
     font-weight: normal;
     font-family: "Courier New", Courier, monospace;
 }
 
 .x-panel-nx-developer .nx-sample-utility {
-    font-size: 10px;
+    font-size: 12px;
     font-weight: normal;
 }
 
@@ -9140,7 +9139,7 @@ tr.x-grid-subtable-row {
 }
 
 .x-panel-header-nx-drilldown-message {
-    font-size: 13px;
+    font-size: 16px;
     border: 1px solid #444;
 }
 
@@ -9204,7 +9203,7 @@ tr.x-grid-subtable-row {
 
 .x-panel-header-title-nx-drilldown-message {
     color: #333;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: bold;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     line-height: 16px;
@@ -9289,7 +9288,7 @@ tr.x-grid-subtable-row {
     background: transparent;
     border-color: #c2c2c2;
     color: #333;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: normal;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     border-width: 1px;
@@ -9642,7 +9641,7 @@ tr.x-grid-subtable-row {
 }
 
 .x-btn-inner-nx-drilldown-large {
-    font: bold 26px/26px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: bold 22px/22px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #006bbf;
     max-width: 100%;
 }
@@ -10185,7 +10184,7 @@ tr.x-grid-subtable-row {
 }
 
 .x-btn-inner-nx-drilldown-medium {
-    font: 600 18px/18px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 14px/18px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #006bbf;
     max-width: 100%;
 }
@@ -10734,7 +10733,7 @@ tr.x-grid-subtable-row {
 }
 
 .x-btn-inner-nx-drilldown-toolbar-small {
-    font: 600 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 16px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #006bbf;
     max-width: 100%;
 }
@@ -11159,8 +11158,8 @@ tr.x-grid-subtable-row {
 }
 
 .x-button-nx-drilldown-toolbar-small-cell > .x-grid-cell-inner {
-    padding-top: 0px;
-    padding-bottom: 0px;
+    padding-top: 2px;
+    padding-bottom: 1px;
 }
 
 .x-button-nx-drilldown-toolbar-small-cell > .x-grid-cell-inner >.x-btn-nx-drilldown-toolbar-small {
@@ -11168,7 +11167,7 @@ tr.x-grid-subtable-row {
 }
 
 .nx-breadcrumb-separator {
-    font-size: 18px;
+    font-size: 14px;
     top: 7px !important;
     padding-left: 12px;
 }
@@ -11200,16 +11199,16 @@ tr.x-grid-subtable-row {
 .nx-wizard-panel .screenheader {
     padding: 7px 8px 0 8px !important;
     border-bottom: 0 !important;
-    line-height: 22px;
+    line-height: 16px;
 }
 
 .nx-wizard-panel .screenheader .title {
-    font-size: 22px;
+    font-size: 16px;
     font-weight: bold;
 }
 
 .nx-wizard-panel .screenheader .progress {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: bold;
     color: #777;
 }
@@ -11379,8 +11378,9 @@ tr.x-grid-subtable-row {
 
 .nx-routing-rules-test-path-container .nx-routing-rules-path-prefix {
     color: #777;
-    font-size: 1.8em;
-    padding: 4px 0 0 5px;
+    font-size: 1.2em;
+    font-weight: bold;
+    padding: 1px 0 0 5px;
     display: inline-block;
 }
 
@@ -11490,5 +11490,5 @@ fieldset.nx-coreui-routing-rules-settings-form-matchers .nx-matcher-remove-butto
  */
     padding: 2px;
     font-family: "Courier New", Courier, monospace;
-    font-size: 13px;
+    font-size: 16px;
 }

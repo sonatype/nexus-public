@@ -72,4 +72,9 @@ public class RepositoryManagerRESTAdapterImpl
   public List<Repository> getRepositories() {
     return repositoryPermissionChecker.userCanBrowseRepositories(repositoryManager.browse());
   }
+
+  @Override
+  public List<String> findContainingGroups(final String repositoryName) {
+    return repositoryManager.findContainingGroups(repositoryName);
+  }
 }

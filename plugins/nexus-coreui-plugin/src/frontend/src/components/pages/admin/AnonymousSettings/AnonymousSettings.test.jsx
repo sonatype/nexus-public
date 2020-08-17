@@ -94,8 +94,8 @@ describe('AnonymousSettings', () => {
     expect(enabledField()).toBeChecked();
     expect(userIdField()).toHaveValue('testUser');
     expect(realmField()).toHaveValue('r2');
-    expect(saveButton()).toBeDisabled();
-    expect(discardButton()).toBeDisabled();
+    expect(saveButton()).toHaveClass('disabled');
+    expect(discardButton()).toHaveClass('disabled');
   });
 
   it('Sends changes to the API on save', async () => {
@@ -131,8 +131,8 @@ describe('AnonymousSettings', () => {
         }
     );
 
-    expect(saveButton()).not.toBeEnabled();
-    expect(discardButton()).not.toBeEnabled();
+    expect(saveButton()).toHaveClass('disabled');
+    expect(discardButton()).toHaveClass('disabled');
   });
 
   it('Resets the form on discard', async () => {
@@ -145,14 +145,14 @@ describe('AnonymousSettings', () => {
     fireEvent.change(userIdField(), {target: {value: ''}})
     await wait(() => expect(userIdField()).toHaveValue(''));
 
-    expect(saveButton()).not.toBeEnabled();
+    expect(saveButton()).toHaveClass('disabled');
     expect(discardButton()).toBeEnabled();
 
     fireEvent.click(discardButton());
 
     expect(userIdField()).toHaveValue('testUser');
-    expect(saveButton()).not.toBeEnabled();
-    expect(discardButton()).not.toBeEnabled();
+    expect(saveButton()).toHaveClass('disabled');
+    expect(discardButton()).toHaveClass('disabled');
   });
 
   it('Sets the dirty flag appropriately', async () => {

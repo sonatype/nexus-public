@@ -180,6 +180,17 @@ public abstract class MetadataNodeEntityAdapter<T extends MetadataNode<?>>
     return browseByQuery(db, whereClause, parameters, buckets, querySuffix, true);
   }
 
+  Iterable<T> browseByQueryAsync(final ODatabaseDocumentTx db,
+                                 @Nullable final String whereClause,
+                                 @Nullable final Map<String, Object> parameters,
+                                 @Nullable final Iterable<Bucket> buckets,
+                                 @Nullable final String querySuffix,
+                                 final int bufferSize,
+                                 final int bufferTimeoutSeconds)
+  {
+    return browseByQuery(db, whereClause, parameters, buckets, querySuffix, true, bufferSize, bufferTimeoutSeconds);
+  }
+
   private Iterable<T> browseByQuery(final ODatabaseDocumentTx db,
                                     @Nullable final String whereClause,
                                     @Nullable final Map<String, Object> parameters,
@@ -198,6 +209,33 @@ public abstract class MetadataNodeEntityAdapter<T extends MetadataNode<?>>
 
     if (async) {
       return transform(OrientAsyncHelper.asyncIterable(db, query, parameters));
+    }
+    else {
+      Iterable<ODocument> docs = db.command(new OCommandSQL(query)).execute(parameters);
+      return transform(docs);
+    }
+  }
+
+  private Iterable<T> browseByQuery(final ODatabaseDocumentTx db,
+                                    @Nullable final String whereClause,
+                                    @Nullable final Map<String, Object> parameters,
+                                    @Nullable final Iterable<Bucket> buckets,
+                                    @Nullable final String querySuffix,
+                                    final boolean async,
+                                    final int bufferSize,
+                                    final int bufferTimeoutSeconds)
+  {
+    String query = buildQuery(false, whereClause, buckets, querySuffix);
+
+    if (isBlank(query)) {
+      log.debug("Skipped finding {}s as query is empty, parameters: {}", getTypeName(), parameters);
+      return Collections.emptyList();
+    }
+
+    log.debug("Finding {}s with query: {}, parameters: {}", getTypeName(), query, parameters);
+
+    if (async) {
+      return transform(OrientAsyncHelper.asyncIterable(db, query, parameters, bufferSize, bufferTimeoutSeconds));
     }
     else {
       Iterable<ODocument> docs = db.command(new OCommandSQL(query)).execute(parameters);

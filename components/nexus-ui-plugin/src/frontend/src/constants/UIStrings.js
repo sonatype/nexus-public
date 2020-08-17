@@ -22,6 +22,9 @@ export default {
 
   SAVING: 'Saving...',
 
+  PRISTINE_TOOLTIP: 'There are no changes',
+  INVALID_TOOLTIP: 'Validation errors are present',
+
   ERROR: {
     FIELD_REQUIRED: 'This field is required',
     LOAD_ERROR: 'An error occurred while loading the form',

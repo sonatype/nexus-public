@@ -10,7 +10,7 @@
     "@fortawesome/fontawesome-svg-core": "=1.2.25",
     "@fortawesome/free-solid-svg-icons": "=5.11.2",
     "@fortawesome/react-fontawesome": "=0.1.4",
-    "@sonatype/react-shared-components": "=0.45.11",
+    "@sonatype/react-shared-components": "=1.2.1",
     "classnames": "=2.2.6"
   },
   "peerDependencies": {

@@ -13,18 +13,7 @@
 /**
  * @since 3.21
  */
-@import '../../../../styles/colors';
-
 .nxrm-content-body {
-  padding: 1em;
-}
-
-// RSC Overrides
-
-.nxrm-content-body > .nxrm-section:first-child {
-  margin-top: 0;
-}
-
-.nxrm-content-body > .nxrm-section:last-child {
-  margin-bottom: 0;
+  // NxSubmitMask needs a parent with position: relative to mask, fall back to content body if no lower parent was found
+  position: relative;
 }

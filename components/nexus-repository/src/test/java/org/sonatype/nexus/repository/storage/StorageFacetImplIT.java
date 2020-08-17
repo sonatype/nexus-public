@@ -71,8 +71,8 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.common.entity.EntityHelper.id;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
-import static org.sonatype.nexus.repository.storage.StorageFacetConstants.STORAGE;
 
 /**
  * Integration tests for {@link StorageFacetImpl}.
@@ -866,7 +866,8 @@ public class StorageFacetImplIT
         mimeRulesSourceSelector,
         storageFacetManager,
         componentFactory,
-        mock(ConstraintViolationFactory.class));
+        mock(ConstraintViolationFactory.class),
+        () -> null);
     storageFacetImpl.installDependencies(mock(EventManager.class));
 
     storageFacetImpl.attach(repository);

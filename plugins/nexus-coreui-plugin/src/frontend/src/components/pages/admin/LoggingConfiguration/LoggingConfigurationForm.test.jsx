@@ -45,7 +45,10 @@ jest.mock('nexus-ui-plugin', () => ({
     },
     isInvalid: jest.requireActual('nexus-ui-plugin').Utils.isInvalid,
     isBlank: jest.requireActual('nexus-ui-plugin').Utils.isBlank,
-    notBlank: jest.requireActual('nexus-ui-plugin').Utils.notBlank
+    notBlank: jest.requireActual('nexus-ui-plugin').Utils.notBlank,
+    fieldProps: jest.requireActual('nexus-ui-plugin').Utils.fieldProps,
+    saveTooltip: jest.requireActual('nexus-ui-plugin').Utils.saveTooltip,
+    discardTooltip: jest.requireActual('nexus-ui-plugin').Utils.discardTooltip
   }
 }));
 
@@ -99,7 +102,7 @@ describe('LoggingConfigurationForm', function() {
 
     expect(name()).toHaveValue('ROOT');
     expect(level()).toHaveValue('INFO');
-    expect(saveButton()).toBeDisabled();
+    expect(saveButton()).toHaveClass('disabled');
     expect(container).toMatchSnapshot();
   });
 
@@ -122,12 +125,12 @@ describe('LoggingConfigurationForm', function() {
 
     expect(container).toMatchSnapshot();
 
-    expect(saveButton()).toBeDisabled();
+    expect(saveButton()).toHaveClass('disabled');
     expect(level()).toHaveValue('INFO');
 
     await changeFieldAndAssertValue(name, 'name');
 
-    expect(saveButton()).toBeEnabled();
+    expect(saveButton()).not.toHaveClass('disabled');
   });
 
   it('fires onDone when cancelled', async function() {
@@ -149,7 +152,7 @@ describe('LoggingConfigurationForm', function() {
 
     await changeFieldAndAssertValue(name, 'name');
     await changeFieldAndAssertValue(level, 'DEBUG');
-    expect(saveButton()).toBeEnabled();
+    expect(saveButton()).not.toHaveClass('disabled');
 
     axios.get.mockReturnValue(OVERRIDDEN_LOGGER);
     ExtJS.requestConfirmation.mockReturnValue(CONFIRM);

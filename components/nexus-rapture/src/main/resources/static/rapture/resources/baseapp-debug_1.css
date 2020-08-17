@@ -569,7 +569,7 @@ td:not([class|=x]):last-child {
 .x-treelist-item-icon:before,
 .x-treelist-item-tool:before,
 .x-treelist-item-expander {
-    line-height: 24px;
+    line-height: 27px;
 }
 
 .x-treelist-item-icon,
@@ -604,20 +604,20 @@ td:not([class|=x]):last-child {
 
 .x-treelist-item-expander:after {
     content: '\f0da';
-    font: 16px/24px 'Font Awesome 5 Free';
+    font: 16px/27px 'Font Awesome 5 Free';
 }
 
 .x-treelist-item-expanded > * > * > .x-treelist-item-expander:after {
     content: '\f0d7';
-    font: 16px/24px 'Font Awesome 5 Free';
+    font: 16px/27px 'Font Awesome 5 Free';
 }
 
 .x-treelist-item-text {
     color: #333;
     margin-left: 20px;
     margin-right: 18px;
-    font-size: 13px;
-    line-height: 24px;
+    font-size: 16px;
+    line-height: 27px;
     text-overflow: ellipsis;
 }
 
@@ -3569,7 +3569,7 @@ the height of a multi-line element */
 
 .x-body {
     color: #333;
-    font-size: 13px;
+    font-size: 16px;
     line-height: 17px;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     background: #f5f5f5;
@@ -3622,7 +3622,7 @@ the height of a multi-line element */
     padding: 0;
     background-color: transparent;
     color: #666;
-    font: normal 13px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: normal 16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 .x-mask-msg-text {
@@ -3652,7 +3652,7 @@ the height of a multi-line element */
 .x-progress-default .x-progress-text {
     color: #666;
     font-weight: bold;
-    font-size: 13px;
+    font-size: 16px;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     text-align: center;
     line-height: 20px;
@@ -3677,8 +3677,8 @@ the height of a multi-line element */
 .x-progressbar-default-cell > .x-grid-cell-inner,
 .x-progress-default-cell > .x-grid-cell-inner,
 .x-progressbarwidget-default-cell > .x-grid-cell-inner {
-    padding-top: 2px;
-    padding-bottom: 2px;
+    padding-top: 4px;
+    padding-bottom: 3px;
 }
 
 .x-progressbar-default-cell > .x-grid-cell-inner .x-progress-default,
@@ -3815,7 +3815,7 @@ the height of a multi-line element */
 }
 
 .x-btn-inner-default-small {
-    font: 600 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 16px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #575757;
     padding: 0 5px;
     max-width: 100%;
@@ -4256,8 +4256,8 @@ the height of a multi-line element */
 }
 
 .x-button-default-small-cell > .x-grid-cell-inner {
-    padding-top: 0px;
-    padding-bottom: 0px;
+    padding-top: 2px;
+    padding-bottom: 1px;
 }
 
 .x-button-default-small-cell > .x-grid-cell-inner >.x-btn-default-small {
@@ -5546,7 +5546,7 @@ the height of a multi-line element */
 }
 
 .x-btn-inner-default-toolbar-small {
-    font: 600 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 16px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #575757;
     padding: 0 5px;
     max-width: 100%;
@@ -5996,8 +5996,8 @@ the height of a multi-line element */
 }
 
 .x-button-default-toolbar-small-cell > .x-grid-cell-inner {
-    padding-top: 0px;
-    padding-bottom: 0px;
+    padding-top: 2px;
+    padding-bottom: 1px;
 }
 
 .x-button-default-toolbar-small-cell > .x-grid-cell-inner >.x-btn-default-toolbar-small {
@@ -7554,7 +7554,7 @@ the height of a multi-line element */
 .x-toolbar-text-default {
     padding: 0 4px;
     color: #313131;
-    font: normal 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: normal 16px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 .x-toolbar-spacer-default {
@@ -7723,7 +7723,7 @@ the height of a multi-line element */
 .x-toolbar-text-footer {
     padding: 0 4px;
     color: #313131;
-    font: normal 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: normal 16px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 .x-toolbar-spacer-footer {
@@ -7802,7 +7802,7 @@ the height of a multi-line element */
 
 .x-dd-drag-proxy {
     color: #333;
-    font: normal 13px/17px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: normal 16px/17px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     border: 1px solid #e1e1e1;
     background-color: #fff;
 }
@@ -7853,7 +7853,7 @@ the height of a multi-line element */
 }
 
 .x-panel-header-default {
-    font-size: 13px;
+    font-size: 16px;
     border: 1px solid #444;
 }
 
@@ -7917,7 +7917,7 @@ the height of a multi-line element */
 
 .x-panel-header-title-default {
     color: #fff;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: bold;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     line-height: 16px;
@@ -8002,7 +8002,7 @@ the height of a multi-line element */
     background: transparent;
     border-color: #c2c2c2;
     color: #333;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: normal;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     border-width: 1px;
@@ -8222,7 +8222,7 @@ the height of a multi-line element */
 }
 
 .x-panel-header-default-framed {
-    font-size: 13px;
+    font-size: 16px;
     border: 2px solid #444;
 }
 
@@ -8286,7 +8286,7 @@ the height of a multi-line element */
 
 .x-panel-header-title-default-framed {
     color: #fff;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: bold;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     line-height: 16px;
@@ -8371,7 +8371,7 @@ the height of a multi-line element */
     background: #fff;
     border-color: #c2c2c2;
     color: #333;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: normal;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     border-width: 1px;
@@ -9664,7 +9664,7 @@ the height of a multi-line element */
 }
 
 .x-btn-group-header-title-default {
-    font: normal 13px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: normal 16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     line-height: 16px;
     color: #666;
 }
@@ -9912,7 +9912,7 @@ the height of a multi-line element */
 }
 
 .x-btn-group-header-title-default-framed {
-    font: normal 13px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: normal 16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     line-height: 16px;
     color: #666;
 }
@@ -10083,13 +10083,13 @@ the height of a multi-line element */
     border-style: solid;
     background: #fff;
     color: #000;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: normal;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 .x-window-header-default {
-    font-size: 18px;
+    font-size: 14px;
     border-color: #606060;
     background-color: #ebebeb;
 }
@@ -10116,7 +10116,7 @@ the height of a multi-line element */
 
 .x-window-header-title-default {
     color: #333;
-    font-size: 18px;
+    font-size: 14px;
     font-weight: bold;
     font-family: 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     line-height: 22px;
@@ -11270,7 +11270,7 @@ the height of a multi-line element */
 
 .x-form-item-label-default {
     color: #333;
-    font: normal 13px/17px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: normal 16px/17px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     min-height: 24px;
     padding-top: 4px;
     padding-right: 5px;
@@ -11312,7 +11312,7 @@ the height of a multi-line element */
 .x-form-invalid-under-default {
     padding: 2px 2px 2px 20px;
     color: #cf4c35;
-    font: normal 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: normal 16px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     background: no-repeat 0 2px;
     background-image: url(images/form/exclamation.png);
 }
@@ -11356,7 +11356,7 @@ the height of a multi-line element */
     color: #333;
     padding: 3px 6px 2px;
     background-color: #fff;
-    font: normal 13px/17px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: normal 16px/17px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     min-height: 22px;
 }
 
@@ -11365,12 +11365,12 @@ the height of a multi-line element */
 }
 
 .x-form-text-default.x-form-textarea {
-    line-height: 15px;
-    min-height: 60px;
+    line-height: 18px;
+    min-height: 72px;
 }
 
 .x-ie8 .x-form-text-default.x-form-textarea {
-    min-height: 55px;
+    min-height: 67px;
 }
 
 .x-form-text-default.x-form-text-file {
@@ -11423,8 +11423,8 @@ the height of a multi-line element */
 }
 
 .x-textfield-default-cell > .x-grid-cell-inner {
-    padding-top: 0px;
-    padding-bottom: 0px;
+    padding-top: 2px;
+    padding-bottom: 1px;
 }
 
 .x-form-clear-trigger {
@@ -11534,7 +11534,7 @@ the height of a multi-line element */
 
 .x-form-cb-label-default {
     margin-top: 4px;
-    font: normal 13px/17px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: normal 16px/17px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #333;
 }
 
@@ -11557,8 +11557,8 @@ the height of a multi-line element */
 }
 
 .x-checkbox-default-cell > .x-grid-cell-inner {
-    padding-top: 0px;
-    padding-bottom: 0px;
+    padding-top: 2px;
+    padding-bottom: 1px;
 }
 
 .x-form-item-body-default.x-form-checkboxgroup-body {
@@ -11591,7 +11591,7 @@ the height of a multi-line element */
 }
 
 .x-fieldset-header-default > .x-fieldset-header-text {
-    font: bold 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: bold 12px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #333;
     padding: 1px 0;
 }
@@ -11762,7 +11762,7 @@ the height of a multi-line element */
 
 .x-boundlist-item {
     padding: 0 6px;
-    font: normal 13px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: normal 16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     line-height: 22px;
     cursor: pointer;
     cursor: hand;
@@ -11878,13 +11878,13 @@ div.x-datepicker-arrow:hover {
 }
 
 .x-datepicker-month .x-btn-inner {
-    font-size: 13px;
+    font-size: 16px;
 }
 
 .x-datepicker-column-header {
     width: 30px;
     color: #333;
-    font: bold 13px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: bold 16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     text-align: right;
     background-color: #fff;
 }
@@ -11901,7 +11901,7 @@ div.x-datepicker-arrow:hover {
 
 .x-datepicker-date {
     padding: 0 7px 0 0;
-    font: normal 13px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: normal 16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #333;
     cursor: pointer;
     line-height: 23px;
@@ -11985,7 +11985,7 @@ div.x-datepicker-date:hover {
 
 .x-monthpicker-item {
     margin: 5px 0 5px;
-    font: normal 13px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: normal 16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     text-align: center;
 }
 
@@ -12075,7 +12075,7 @@ a.x-monthpicker-yearnav-button:hover {
 
 .x-form-display-field-default {
     min-height: 24px;
-    font: normal 13px/17px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: normal 16px/17px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #333;
     margin-top: 4px;
 }
@@ -12245,14 +12245,14 @@ a.x-monthpicker-yearnav-button:hover {
 
 .x-tip-header-title-default {
     color: #000;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: bold;
 }
 
 .x-tip-body-default {
     padding: 3px;
     color: #000;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: normal;
 }
 
@@ -12463,14 +12463,14 @@ a.x-monthpicker-yearnav-button:hover {
 
 .x-tip-header-title-form-invalid {
     color: #000;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: bold;
 }
 
 .x-tip-body-form-invalid {
     padding: 3px 3px 3px 22px;
     color: #000;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: normal;
 }
 
@@ -12684,12 +12684,12 @@ a.x-color-picker-item:hover {
 }
 
 .x-html-editor-tb .x-font-select {
-    font-size: 13px;
+    font-size: 16px;
     font-family: inherit;
 }
 
 .x-html-editor-wrap textarea {
-    font: normal 13px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: normal 16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     background-color: #fff;
     resize: none;
 }
@@ -12780,7 +12780,7 @@ a.x-color-picker-item:hover {
 }
 
 .x-theme-row-height-el {
-    height: 24px;
+    height: 27px;
 }
 
 .x-grid-body {
@@ -12794,12 +12794,12 @@ a.x-color-picker-item:hover {
     padding: 10px;
     color: grey;
     background-color: transparent;
-    font: normal 13px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: normal 16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 .x-grid-item {
     color: #333;
-    font: normal 13px/15px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: normal 16px/18px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     background-color: #fff;
 }
 
@@ -13015,7 +13015,7 @@ a.x-color-picker-item:hover {
 .x-column-header {
     border-right: 1px solid #c2c2c2;
     color: #666;
-    font: bold 13px/15px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: bold 16px/18px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     outline: 0;
     background-color: #f5f5f5;
 }
@@ -13131,7 +13131,7 @@ a.x-color-picker-item:hover {
 }
 
 .x-grid-cell-inner-action-col {
-    padding: 4px 4px 4px 4px;
+    padding: 6px 4px 5px 4px;
 }
 
 .x-action-col-cell .x-item-disabled {
@@ -13149,7 +13149,7 @@ a.x-color-picker-item:hover {
 
 .x-column-header-checkbox .x-column-header-inner,
 .x-grid-checkcolumn-cell-inner {
-    padding: 5px 4px 4px 4px;
+    padding: 6px 4px 6px 4px;
     text-overflow: clip;
 }
 
@@ -13326,7 +13326,7 @@ a.x-color-picker-item:hover {
 }
 
 .x-btn-inner-grid-cell-small {
-    font: 600 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: 600 16px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #575757;
     padding: 0 5px;
     max-width: 100%;
@@ -13726,8 +13726,8 @@ a.x-color-picker-item:hover {
 }
 
 .x-button-grid-cell-small-cell > .x-grid-cell-inner {
-    padding-top: 0px;
-    padding-bottom: 0px;
+    padding-top: 2px;
+    padding-bottom: 1px;
 }
 
 .x-button-grid-cell-small-cell > .x-grid-cell-inner >.x-btn-grid-cell-small {
@@ -13763,7 +13763,7 @@ a.x-color-picker-item:hover {
 
 .x-grid-group-title {
     color: #666;
-    font: bold 13px/15px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: bold 16px/18px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 .x-grid-group-hd-collapsed .x-grid-group-title {
@@ -13775,7 +13775,7 @@ a.x-color-picker-item:hover {
 }
 
 .x-grid-rowbody {
-    font: normal 13px/15px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: normal 16px/18px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     padding: 5px 10px 5px 10px;
 }
 
@@ -13796,7 +13796,7 @@ a.x-color-picker-item:hover {
     border-color: #ededed;
     background-color: transparent !important;
     border-top: 1px solid #ededed;
-    font: normal 13px/15px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: normal 16px/18px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 .x-docked-summary .x-grid-item,
@@ -13884,7 +13884,7 @@ a.x-color-picker-item:hover {
 }
 
 .x-menu-item-default .x-form-item-label {
-    font-size: 13px;
+    font-size: 16px;
     color: #000;
 }
 
@@ -13894,7 +13894,7 @@ a.x-color-picker-item:hover {
 }
 
 .x-menu-item-text-default {
-    font: normal 13px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: normal 16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     line-height: 23px;
     padding-top: 1px;
     color: #000;
@@ -14178,7 +14178,7 @@ a.x-color-picker-item:hover {
 }
 
 .x-menu-item-default-menubar .x-form-item-label {
-    font-size: 13px;
+    font-size: 16px;
     color: #000;
 }
 
@@ -14188,7 +14188,7 @@ a.x-color-picker-item:hover {
 }
 
 .x-menu-item-text-default-menubar {
-    font: normal 13px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: normal 16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     line-height: 23px;
     padding-top: 1px;
     color: #000;
@@ -14530,7 +14530,7 @@ a.x-color-picker-item:hover {
 }
 
 .x-grid-editor .x-form-action-col-field {
-    padding: 4px 4px 4px 4px;
+    padding: 6px 4px 5px 4px;
 }
 
 .x-grid-editor .x-form-text {
@@ -14549,11 +14549,11 @@ a.x-color-picker-item:hover {
 
 .x-grid-row-editor .x-form-display-field {
     padding: 5px 8px 4px 8px;
-    line-height: 15px;
+    line-height: 18px;
 }
 
 .x-ie9m .x-grid-row-editor .x-form-display-field {
-    min-height: 15px;
+    min-height: 18px;
 }
 
 .x-grid-row-editor .x-form-action-col-field {
@@ -14846,7 +14846,7 @@ a.x-color-picker-item:hover {
 }
 
 .x-grid-cell-inner-row-expander {
-    padding: 7px 6px 6px 6px;
+    padding: 8px 6px 8px 6px;
 }
 
 .x-grid-row-expander {
@@ -15307,8 +15307,8 @@ div.x-border-layout-ct {
 
 .x-slider-default-cell > .x-grid-cell-inner,
 .x-sliderwidget-default-cell > .x-grid-cell-inner {
-    padding-top: 0;
-    padding-bottom: 1px;
+    padding-top: 1px;
+    padding-bottom: 2px;
 }
 
 .x-tab-default-top {
@@ -15905,7 +15905,7 @@ div.x-border-layout-ct {
 }
 
 .x-tab-inner-default {
-    font: bold 13px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font: bold 16px/16px 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: #fff;
     max-width: 100%;
 }

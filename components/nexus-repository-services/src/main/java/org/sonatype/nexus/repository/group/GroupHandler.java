@@ -52,6 +52,9 @@ public class GroupHandler
 {
   public static final String USE_DISPATCHED_RESPONSE = "USE_DISPATCHED_RESPONSE";
 
+  public static final String INSUFFICIENT_LICENSE =
+      "Deploying to groups is a PRO-licensed feature. See https://links.sonatype.com/product-nexus-repository";
+
   /**
    * Request-context state container for set of repositories already dispatched to.
    */

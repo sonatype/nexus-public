@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.rest.api;
 
+import java.util.Map;
 import java.util.StringJoiner;
 
 import javax.inject.Inject;
@@ -19,6 +20,7 @@ import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -29,6 +31,7 @@ import javax.ws.rs.core.Response.Status;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
 import org.sonatype.nexus.repository.rest.api.model.AbstractRepositoryApiRequest;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.ValidationErrorsException;
@@ -42,6 +45,7 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 /**
  * @since 3.20
@@ -56,6 +60,10 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
 
   private AbstractRepositoryApiRequestToConfigurationConverter<T> configurationAdapter;
 
+  private Map<String, ApiRepositoryAdapter> convertersByFormat;
+
+  private ApiRepositoryAdapter defaultAdapter;
+
   @Inject
   public void setAuthorizingRepositoryManager(final AuthorizingRepositoryManager authorizingRepositoryManager) {
     this.authorizingRepositoryManager = checkNotNull(authorizingRepositoryManager);
@@ -64,6 +72,16 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
   @Inject
   public void setConfigurationAdapter(final AbstractRepositoryApiRequestToConfigurationConverter<T> configurationAdapter) {
     this.configurationAdapter = checkNotNull(configurationAdapter);
+  }
+
+  @Inject
+  public void setConvertersByFormat(final Map<String, ApiRepositoryAdapter> convertersByFormat) {
+    this.convertersByFormat = checkNotNull(convertersByFormat);
+  }
+
+  @Inject
+  public void setDefaultAdapter(final ApiRepositoryAdapter defaultAdapter) {
+    this.defaultAdapter = checkNotNull(defaultAdapter);
   }
 
   @POST
@@ -117,6 +135,17 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
       log.debug("Failed to edit a repository via REST: {}", message, e);
       throw new WebApplicationMessageException(BAD_REQUEST, message, APPLICATION_JSON);
     }
+  }
+
+  @GET
+  @Path("/{repositoryName}")
+  @RequiresAuthentication
+  @Validate
+  public AbstractApiRepository getRepository(@PathParam("repositoryName") final String repositoryName)
+  {
+    return authorizingRepositoryManager.getRepositoryWithAdmin(repositoryName)
+        .map(r -> convertersByFormat.getOrDefault(r.getFormat().toString(), defaultAdapter).adapt(r))
+        .orElseThrow(() -> new WebApplicationMessageException(NOT_FOUND, "\"Repository not found\"", APPLICATION_JSON));
   }
 
   private void ensureRepositoryNameMatches(final T request, final String repositoryName) {

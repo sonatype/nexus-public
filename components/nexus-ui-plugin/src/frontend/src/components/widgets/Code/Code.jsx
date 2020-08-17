@@ -10,21 +10,14 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-
-import React from 'react';
+import React, {forwardRef} from 'react';
 import classNames from 'classnames';
 
-import './TabPanel.scss';
+import './Code.scss';
 
 /**
- * @since 3.25
+ * @since 3.next
  */
-export default function TabLabel({active, className, children, ...attrs}) {
-  const classes = classNames('nxrm-tab-panel-header-item', className, {
-    'nxrm-tab-panel-header-active': active
-  });
-
-  return <li className={classes} {...attrs}>
-    {children}
-  </li>;
-}
+export default forwardRef(({id, name, className, ...attrs}, ref) => {
+  return <textarea id={id || name} name={name} className={classNames('nxrm-code', className)} ref={ref} {...attrs} />;
+});

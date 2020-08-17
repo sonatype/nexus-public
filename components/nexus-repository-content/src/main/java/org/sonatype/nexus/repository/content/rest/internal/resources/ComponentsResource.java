@@ -34,9 +34,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.app.FeatureFlag;
-import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.Repository;
@@ -48,13 +46,12 @@ import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
 import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
+import org.sonatype.nexus.repository.selector.ContentAuthHelper;
 import org.sonatype.nexus.repository.upload.UploadConfiguration;
 import org.sonatype.nexus.repository.upload.UploadManager;
 import org.sonatype.nexus.rest.Page;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
-
-import com.google.common.collect.ImmutableList;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
@@ -79,12 +76,12 @@ import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 @Produces(APPLICATION_JSON)
 @Consumes(APPLICATION_JSON)
 public class ComponentsResource
-    extends ComponentSupport
+    extends ComponentsResourceSupport
     implements Resource, ComponentsResourceDoc
 {
   public static final String RESOURCE_URI = V1_API_PREFIX + "/components";
 
-  private static final int PAGE_SIZE = 10;
+  static final int PAGE_SIZE = 10;
 
   private final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter;
 
@@ -102,8 +99,10 @@ public class ComponentsResource
       final MaintenanceService maintenanceService,
       final UploadManager uploadManager,
       final UploadConfiguration uploadConfiguration,
-      final ComponentXOFactory componentXOFactory)
+      final ComponentXOFactory componentXOFactory,
+      final ContentAuthHelper contentAuthHelper)
   {
+    super(contentAuthHelper, repositoryManagerRESTAdapter);
     this.repositoryManagerRESTAdapter = checkNotNull(repositoryManagerRESTAdapter);
     this.maintenanceService = checkNotNull(maintenanceService);
     this.uploadManager = checkNotNull(uploadManager);
@@ -120,37 +119,8 @@ public class ComponentsResource
                                          @QueryParam("repository") final String repositoryId)
   {
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryId);
-    ContentFacet contentFacet = repository.facet(ContentFacet.class);
-
-    Continuation<FluentComponent> components = contentFacet.components().browse(PAGE_SIZE, continuationToken);
-    if (components.isEmpty()) {
-      return new Page<>(ImmutableList.of(), null);
-    }
-
-    List<ComponentXO> componentXOs = components.stream()
-        .map(component -> fromComponent(component, repository))
-        .collect(toList());
-
-    return new Page<>(componentXOs, components.size() < PAGE_SIZE ? null : components.nextContinuationToken());
-  }
-
-  private ComponentXO fromComponent(final FluentComponent component, final Repository repository) {
-    String externalId = toExternalId(internalComponentId(component)).getValue();
-
-    ComponentXO componentXO = componentXOFactory.createComponentXO();
-
-    componentXO.setAssets(component.assets().stream()
-        .map(asset -> fromAsset(asset, repository))
-        .collect(Collectors.toList()));
-
-    componentXO.setGroup(component.namespace());
-    componentXO.setName(component.name());
-    componentXO.setVersion(component.version());
-    componentXO.setId(new RepositoryItemIDXO(repository.getName(), externalId).getValue());
-    componentXO.setRepository(repository.getName());
-    componentXO.setFormat(repository.getFormat().getValue());
-
-    return componentXO;
+    List<FluentComponent> components = browse(repository, continuationToken);
+    return new Page<>(toComponentXOs(components, repository), nextContinuationToken(components));
   }
 
   /**
@@ -169,6 +139,7 @@ public class ComponentsResource
     try {
       return repository.facet(ContentFacet.class).components()
           .find(new DetachedEntityId(repositoryItemIDXO.getId()))
+          .filter(componentPermitted(repository.getFormat().getValue(), repository.getName()))
           .orElseThrow(() ->
               new NotFoundException("Unable to locate component with id " + repositoryItemIDXO.getValue()));
     }
@@ -212,5 +183,35 @@ public class ComponentsResource
     } catch (IllegalOperationException e) {
       throw new WebApplicationMessageException(Status.BAD_REQUEST, e.getMessage());
     }
+  }
+  private List<ComponentXO> toComponentXOs(final List<FluentComponent> components, final Repository repository) {
+    return components.stream()
+        .map(component -> fromComponent(component, repository))
+        .collect(toList());
+  }
+
+  private ComponentXO fromComponent(final FluentComponent component, final Repository repository) {
+    String externalId = toExternalId(internalComponentId(component)).getValue();
+
+    ComponentXO componentXO = componentXOFactory.createComponentXO();
+
+    componentXO.setAssets(component.assets().stream()
+        .filter(assetPermitted(repository))
+        .map(asset -> fromAsset(asset, repository))
+        .collect(Collectors.toList()));
+
+    componentXO.setGroup(component.namespace());
+    componentXO.setName(component.name());
+    componentXO.setVersion(component.version());
+    componentXO.setId(new RepositoryItemIDXO(repository.getName(), externalId).getValue());
+    componentXO.setRepository(repository.getName());
+    componentXO.setFormat(repository.getFormat().getValue());
+
+    return componentXO;
+  }
+
+  private static String nextContinuationToken(final List<FluentComponent> components) {
+    int size = components.size();
+    return size < PAGE_SIZE ? null : toExternalId(internalComponentId(components.get(size - 1))).getValue();
   }
 }

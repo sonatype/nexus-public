@@ -51,8 +51,8 @@ describe('PasswordChangeForm', () => {
     expect(passwordCurrent()).toHaveValue('');
     expect(passwordNew()).toHaveValue('');
     expect(passwordNewConfirm()).toHaveValue('');
-    expect(changePasswordButton()).not.toBeEnabled();
-    expect(discardButton()).not.toBeEnabled();
+    expect(changePasswordButton()).toHaveClass('disabled');
+    expect(discardButton()).toHaveClass('disabled');
   });
 
   it('prevents password change when new matches current', async () => {
@@ -64,8 +64,8 @@ describe('PasswordChangeForm', () => {
 
     await TestUtils.changeField(passwordNewConfirm, 'foobar');
 
-    expect(changePasswordButton()).not.toBeEnabled();
-    expect(discardButton()).toBeEnabled();
+    expect(changePasswordButton()).toHaveClass('disabled');
+    expect(discardButton()).not.toHaveClass('disabled');
   });
 
   it('prevents password change when new does not match confirm', async () => {
@@ -77,8 +77,8 @@ describe('PasswordChangeForm', () => {
 
     await TestUtils.changeField(passwordNewConfirm, 'bazzl');
 
-    expect(changePasswordButton()).not.toBeEnabled();
-    expect(discardButton()).toBeEnabled();
+    expect(changePasswordButton()).toHaveClass('disabled');
+    expect(discardButton()).not.toHaveClass('disabled');
   });
 
   it('sends the correct password change request', async () => {
@@ -90,8 +90,8 @@ describe('PasswordChangeForm', () => {
 
     await TestUtils.changeField(passwordNewConfirm, 'bazzle');
 
-    expect(changePasswordButton()).toBeEnabled();
-    expect(discardButton()).toBeEnabled();
+    expect(changePasswordButton()).not.toHaveClass('disabled');
+    expect(discardButton()).not.toHaveClass('disabled');
 
     await act(async () => fireEvent.click(changePasswordButton()));
 
@@ -106,8 +106,8 @@ describe('PasswordChangeForm', () => {
     expect(passwordCurrent()).toHaveValue('');
     expect(passwordNew()).toHaveValue('');
     expect(passwordNewConfirm()).toHaveValue('');
-    expect(changePasswordButton()).toBeDisabled();
-    expect(discardButton()).toBeDisabled();
+    expect(changePasswordButton()).toHaveClass('disabled');
+    expect(discardButton()).toHaveClass('disabled');
   });
 
   it('resets the form on discard', async () => {
@@ -119,15 +119,15 @@ describe('PasswordChangeForm', () => {
 
     await TestUtils.changeField(passwordNewConfirm, 'bazzle');
 
-    expect(changePasswordButton()).toBeEnabled();
-    expect(discardButton()).toBeEnabled();
+    expect(changePasswordButton()).not.toHaveClass('disabled');
+    expect(discardButton()).not.toHaveClass('disabled');
 
     await act(async () => fireEvent.click(discardButton()));
 
     expect(passwordCurrent()).toHaveValue('');
     expect(passwordNew()).toHaveValue('');
     expect(passwordNewConfirm()).toHaveValue('');
-    expect(changePasswordButton()).not.toBeEnabled();
-    expect(discardButton()).not.toBeEnabled();
+    expect(changePasswordButton()).toHaveClass('disabled');
+    expect(discardButton()).toHaveClass('disabled');
   });
 });

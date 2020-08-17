@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.content.store;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -74,6 +75,22 @@ public interface AssetDAO
                                    @Nullable @Param("kind") String kind,
                                    @Nullable @Param("filter") String filter,
                                    @Nullable @Param(FILTER_PARAMS) Map<String, Object> filterParams);
+
+  /**
+   * Browse all assets in the given repositories in a paged fashion. The returned assets will be sorted
+   * by asset id in ascending order.
+   *
+   * @param repositoryIds the ids of the repositories to browse
+   * @param limit maximum number of assets to return
+   * @param continuationToken optional token to continue from a previous request
+   * @return collection of assets from the specified repositories and the next continuation token
+   *
+   * @see Continuation#nextContinuationToken()
+   */
+  Continuation<Asset> browseAssetsInRepositories(
+      @Param("repositoryIds") Set<Integer> repositoryIds,
+      @Param("limit") int limit,
+      @Nullable @Param("continuationToken") String continuationToken);
 
   /**
    * Browse all assets associated with the given logical component.

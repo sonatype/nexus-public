@@ -30,6 +30,7 @@ import org.hamcrest.collection.IsIterableContainingInOrder;
 import org.junit.Before;
 import org.junit.Test;
 
+import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.summingInt;
 import static java.util.stream.Collectors.toList;
@@ -56,11 +57,7 @@ public class ComponentDAOTest
   public void setupContent() {
     contentRepository = randomContentRepository();
 
-    try (DataSession<?> session = sessionRule.openSession("content")) {
-      ContentRepositoryDAO dao = session.access(TestContentRepositoryDAO.class);
-      dao.createContentRepository(contentRepository);
-      session.getTransaction().commit();
-    }
+    createContentRepository(contentRepository);
 
     repositoryId = contentRepository.repositoryId;
 
@@ -68,6 +65,14 @@ public class ComponentDAOTest
     generateRandomNames(100);
     generateRandomVersions(100);
     generateRandomPaths(100);
+  }
+
+  private void createContentRepository(final ContentRepositoryData contentRepository) {
+    try (DataSession<?> session = sessionRule.openSession("content")) {
+      ContentRepositoryDAO dao = session.access(TestContentRepositoryDAO.class);
+      dao.createContentRepository(contentRepository);
+      session.getTransaction().commit();
+    }
   }
 
   @Test
@@ -477,6 +482,52 @@ public class ComponentDAOTest
       assertThat(tempResult, sameCoordinates(component2));
       assertThat(tempResult, sameKind(component2));
       assertThat(tempResult, sameAttributes(component2));
+    }
+  }
+
+  @Test
+  public void testBrowseComponentsInRepositories() {
+    ContentRepositoryData anotherContentRepository = randomContentRepository();
+    createContentRepository(anotherContentRepository);
+    int anotherRepositoryId = anotherContentRepository.repositoryId;
+
+    ComponentData component1 = randomComponent(repositoryId);
+    ComponentData component2 = randomComponent(anotherRepositoryId);
+
+    String akind = "kind1";
+    String anotherKind = "kind2";
+    component1.setNamespace("");
+    component1.setVersion("1.1");
+    component1.setKind(akind);
+    component2.setNamespace("demo");
+    component2.setVersion("1.2");
+    component2.setKind(anotherKind);
+
+
+    // CREATE
+
+    try (DataSession<?> session = sessionRule.openSession("content")) {
+      ComponentDAO dao = session.access(TestComponentDAO.class);
+
+      assertThat(
+          dao.browseComponentsInRepositories(newHashSet(repositoryId, anotherRepositoryId), 10, null),
+          emptyIterable());
+
+      dao.createComponent(component1);
+
+      assertThat(
+          dao.browseComponentsInRepositories(newHashSet(repositoryId, anotherRepositoryId), 10, null),
+          contains(allOf(sameCoordinates(component1), sameKind(component1), sameAttributes(component1))));
+
+      dao.createComponent(component2);
+
+      //browse all components
+      assertThat(
+          dao.browseComponentsInRepositories(newHashSet(repositoryId, anotherRepositoryId), 10, null),
+          contains(allOf(sameCoordinates(component1), sameKind(component1), sameAttributes(component1)),
+              allOf(sameCoordinates(component2), sameKind(component2), sameAttributes(component2))));
+
+      session.getTransaction().commit();
     }
   }
 

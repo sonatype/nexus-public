@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.internal.blobstore;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -24,6 +25,9 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.BlobStoreDescriptor;
+import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobAttributes;
+import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobSession;
 import org.sonatype.nexus.blobstore.api.BlobSessionSupplier;
 import org.sonatype.nexus.blobstore.api.BlobStore;
@@ -53,6 +57,7 @@ import com.google.common.eventbus.Subscribe;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.lang.String.format;
 import static java.util.Optional.empty;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
@@ -392,4 +397,59 @@ public class BlobStoreManagerImpl
   public BlobSession<?> openSession(final String storeName) {
     return ofNullable(get(storeName)).orElseThrow(() -> new BlobStoreNotFoundException(storeName)).openSession();
   }
+
+  @Override
+  public void moveBlob(final BlobId blobId, final BlobStore srcBlobStore, final BlobStore destBlobStore) {
+    checkNotNull(srcBlobStore);
+    checkNotNull(destBlobStore);
+
+    BlobAttributes srcBlobAttributes = srcBlobStore.getBlobAttributes(blobId);
+    boolean isSrcDelted = srcBlobAttributes.isDeleted();
+
+    Map<String, String> headers = srcBlobAttributes.getHeaders();
+    InputStream srcInputStream = inputStreamOfBlob(srcBlobStore, blobId);
+    destBlobStore.create(srcInputStream, headers, blobId);
+    destBlobStore.setBlobAttributes(blobId, srcBlobAttributes);
+
+    ensureDeletedStateTransferred(blobId, srcBlobStore, destBlobStore, isSrcDelted);
+    log.info("Created blobId {} in blob store '{}'", blobId, destBlobStore.getBlobStoreConfiguration().getName());
+
+    try {
+      srcBlobStore.deleteHard(blobId);
+      log.info("Removed blobId {} from blob store '{}'", blobId, srcBlobStore.getBlobStoreConfiguration().getName());
+    }
+    catch (BlobStoreException e) {
+      log.warn("Failed to remove blobId {} from blob store '{}'", blobId, srcBlobStore.getBlobStoreConfiguration().getName(), e);
+    }
+  }
+
+  /**
+   * A blob may be deleted or un-deleted while it is being copied. To ensure that this is captured we need to
+   * propagate the change to the destination blob store. Once the copy is complete all updates should be routed to
+   * the blob in its new member blob store so it can be assumed that it will no longer change in the source and can be
+   * safely deleted.
+   */
+  private void ensureDeletedStateTransferred(final BlobId blobId,
+                                             final BlobStore srcBlobStore,
+                                             final BlobStore destBlobStore,
+                                             final boolean isSrcDeleted)
+  {
+    BlobAttributes currentSrcAttributes = srcBlobStore.getBlobAttributes(blobId);
+    if (currentSrcAttributes != null && currentSrcAttributes.isDeleted() != isSrcDeleted) {
+      BlobAttributes outOfDateAttributes = destBlobStore.getBlobAttributes(blobId);
+      outOfDateAttributes.setDeleted(!isSrcDeleted);
+      destBlobStore.setBlobAttributes(blobId, outOfDateAttributes);
+    }
+  }
+
+  private InputStream inputStreamOfBlob(final BlobStore blobStore, final BlobId blobId) {
+    return Optional.of(blobId)
+        .map(r -> blobStore.get(r, true))
+        .map(Blob::getInputStream)
+        .orElseThrow(() ->
+            new IllegalStateException(format("Unable to get input stream from source %S with blobId: %s",
+                blobStore.getBlobStoreConfiguration().getName(),
+                blobId)));
+  }
+
 }

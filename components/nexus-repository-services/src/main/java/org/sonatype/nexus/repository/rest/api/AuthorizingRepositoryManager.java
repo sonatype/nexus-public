@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.rest.api;
 
 import java.util.List;
+import java.util.Optional;
 
 import javax.annotation.Nonnull;
 
@@ -36,6 +37,13 @@ public interface AuthorizingRepositoryManager
    * Returns the repositories which the user has an administrative read privilege.
    */
   List<Repository> getRepositoriesWithAdmin();
+
+  /**
+   * Returns the repository if the user has administrative read privileges.
+   *
+   * @since 3.next
+   */
+  Optional<Repository> getRepositoryWithAdmin(String repositoryName);
 
   /**
    * Trigger rebuild index task for given repository.

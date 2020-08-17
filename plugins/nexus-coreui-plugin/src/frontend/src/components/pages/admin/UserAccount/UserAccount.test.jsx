@@ -11,8 +11,7 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {act} from 'react-dom/test-utils';
-import {fireEvent, render, wait} from '@testing-library/react';
+import {fireEvent, wait} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import TestUtils from 'nexus-ui-plugin/src/frontend/src/interface/TestUtils';
 
@@ -76,7 +75,7 @@ describe('UserAccount', () => {
       lastNameField: () => getByLabelText(UIStrings.USER_ACCOUNT.LAST_FIELD_LABEL),
       emailField: () => getByLabelText(UIStrings.USER_ACCOUNT.EMAIL_FIELD_LABEL),
       saveButton: () => getByText(UIStrings.SETTINGS.SAVE_BUTTON_LABEL),
-      discardButton: () => getByText(UIStrings.SETTINGS.SAVE_BUTTON_LABEL)
+      discardButton: () => getByText(UIStrings.SETTINGS.DISCARD_BUTTON_LABEL)
     }));
   }
 
@@ -103,8 +102,8 @@ describe('UserAccount', () => {
     expect(lastNameField().hasAttribute('readonly','true')).toBe(true);
     expect(emailField().hasAttribute('readonly','true')).toBe(true);
 
-    expect(saveButton()).toBeDisabled();
-    expect(discardButton()).toBeDisabled();
+    expect(saveButton()).toHaveClass('disabled');
+    expect(discardButton()).toHaveClass('disabled');
 
     expect(container).toMatchSnapshot('externalUser');
   });
@@ -122,8 +121,8 @@ describe('UserAccount', () => {
     expect(firstNameField()).toHaveValue('User');
     expect(lastNameField()).toHaveValue('Admin');
     expect(emailField()).toHaveValue('admin@example.com');
-    expect(saveButton()).toBeDisabled();
-    expect(discardButton()).toBeDisabled();
+    expect(saveButton()).toHaveClass('disabled');
+    expect(discardButton()).toHaveClass('disabled');
   });
 
   it('Sends changes to the API on save', async () => {
@@ -136,12 +135,15 @@ describe('UserAccount', () => {
     fireEvent.change(lastNameField(), {target: {value: 'FooBar'}});
     await wait(() => expect(lastNameField()).toHaveValue('FooBar'));
 
-    expect(saveButton()).toBeEnabled();
-    expect(discardButton()).toBeEnabled();
+    expect(saveButton()).not.toHaveClass('disabled');
+    expect(discardButton()).not.toHaveClass('disabled');
 
     expect(Axios.put).toHaveBeenCalledTimes(0);
 
-    await act(async () => fireEvent.click(saveButton()));
+    fireEvent.click(saveButton());
+
+    await wait(() => expect(saveButton()).toHaveClass('disabled'));
+    expect(discardButton()).toHaveClass('disabled');
 
     expect(Axios.put).toHaveBeenCalledTimes(1);
     expect(Axios.put).toHaveBeenCalledWith(
@@ -154,9 +156,6 @@ describe('UserAccount', () => {
           external: false
         }
     );
-
-    expect(saveButton()).not.toBeEnabled();
-    expect(discardButton()).not.toBeEnabled();
   });
 
   it('Resets the form on discard', async () => {
@@ -169,14 +168,15 @@ describe('UserAccount', () => {
     fireEvent.change(lastNameField(), {target: {value: 'FooBar'}});
     await wait(() => expect(lastNameField()).toHaveValue('FooBar'));
 
-    expect(saveButton()).toBeEnabled();
-    expect(discardButton()).toBeEnabled();
+    expect(saveButton()).not.toHaveClass('disabled');
+    expect(discardButton()).not.toHaveClass('disabled');
 
     fireEvent.click(discardButton());
+    await wait(() => expect(discardButton()).toHaveClass('disabled'));
 
-    await wait(() => expect(lastNameField()).toHaveValue('Admin'));
-    expect(saveButton()).not.toBeEnabled();
-    expect(discardButton()).not.toBeEnabled();
+    expect(lastNameField()).toHaveValue('Admin');
+    expect(saveButton()).toHaveClass('disabled');
+    expect(discardButton()).toHaveClass('disabled');
   });
 
   it('Sets the dirty flag appropriately', async () => {

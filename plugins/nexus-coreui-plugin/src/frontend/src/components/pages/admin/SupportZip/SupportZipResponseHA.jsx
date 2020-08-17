@@ -10,35 +10,23 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import React, {useState} from 'react';
-import {Tab, TabPanel, TabLabel, TabList} from "nexus-ui-plugin";
+import React from 'react';
+import {NxStatefulTabs, NxTabList, NxTab, NxTabPanel} from "nexus-ui-plugin";
 
 import NodeSupportZipResponse from "./NodeSupportZipResponse";
 
 export default function SupportZipResponseHA({response, download}) {
-  const [activeTabId, setActiveTabId] = useState(response[0].nodeId);
-
-  function onTabClicked(tabId) {
-    setActiveTabId(tabId);
-  }
-
-  return <TabPanel>
-    <TabList>
+  return <NxStatefulTabs defaultActiveTab={0}>
+    <NxTabList>
      {response.map((nodeZip) =>
-       <TabLabel
-         id={nodeZip.nodeId} 
-         active={activeTabId == nodeZip.nodeId}
-         key={nodeZip.nodeId}
-         onClick={() => onTabClicked(nodeZip.nodeId)}
-       >
+       <NxTab id={nodeZip.nodeId} key={nodeZip.nodeId}>
          {nodeZip.nodeAlias}
-       </TabLabel>)}
-    </TabList>
+       </NxTab>)}
+    </NxTabList>
     {response.map((nodeZip) =>
-      activeTabId == nodeZip.nodeId &&
-        <Tab id={nodeZip.nodeId} key={nodeZip.nodeId}>
+        <NxTabPanel id={nodeZip.nodeId} key={nodeZip.nodeId}>
           <NodeSupportZipResponse response={nodeZip} download={download} />
-        </Tab>)}
-  </TabPanel>;
-
+        </NxTabPanel>
+    )}
+  </NxStatefulTabs>;
 }

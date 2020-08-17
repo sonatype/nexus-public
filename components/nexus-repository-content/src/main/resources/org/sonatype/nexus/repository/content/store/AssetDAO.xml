@@ -96,6 +96,17 @@
     ORDER BY asset_id LIMIT #{limit};
   </select>
 
+  <select id="browseAssetsInRepositories" resultMap="assetResult">
+    SELECT * FROM ${format}_asset
+    WHERE repository_id IN
+      <foreach item="repositoryId" index="index" collection="repositoryIds"
+               open="(" separator="," close=")">
+        #{repositoryId}
+      </foreach>
+      <if test="continuationToken != null"> AND asset_id > #{continuationToken}</if>
+    ORDER BY asset_id LIMIT #{limit};
+  </select>
+
   <select id="browseComponentAssets" resultMap="assetResult" parameterType="ComponentData">
     <choose>
       <when test="componentId != null">
