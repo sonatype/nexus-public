@@ -8277,14 +8277,14 @@ tr.x-grid-subtable-row {
 .nx-feature-name {
     font-size: 22px;
     font-weight: bold;
-    top: 8px !important;
+    top: -1px !important;
     padding-left: 6px;
 }
 
 .nx-feature-description {
     font-size: 16px;
     font-weight: normal;
-    top: 12px !important;
+    top: 5px !important;
     white-space: nowrap;
     padding-left: 6px;
 }

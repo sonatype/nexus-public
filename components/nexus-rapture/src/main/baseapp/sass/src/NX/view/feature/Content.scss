@@ -60,14 +60,14 @@
 .nx-feature-name {
   font-size: $font-size-h2;
   font-weight: $font-weight-h2;
-  top: 8px !important;
+  top: -1px !important;
   padding-left: 6px;
 }
 
 .nx-feature-description {
   font-size: $font-size-body;
   font-weight: $font-weight-body;
-  top: 12px !important;
+  top: 5px !important;
   white-space: nowrap;
   padding-left: 6px;
 }
