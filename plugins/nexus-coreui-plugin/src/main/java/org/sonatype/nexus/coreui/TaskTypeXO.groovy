@@ -33,6 +33,9 @@ class TaskTypeXO
 
   @NotNull
   Boolean exposed
+
+  @NotNull
+  Boolean concurrentRun
   
   List<FormFieldXO> formFields
 }

@@ -139,6 +139,11 @@ Ext.define('NX.coreui.view.task.TaskSettingsForm', {
 
     if (taskTypeModel) {
       formFields = taskTypeModel.get('formFields');
+      if (!taskTypeModel.get('concurrentRun')) {
+        var scheduleFieldSetCombo = this.down('combo[name="schedule"]');
+        scheduleFieldSetCombo.setStore([['manual', NX.I18n.get('Task_TaskScheduleFieldSet_Recurrence_ManualItem')],
+          ['once', NX.I18n.get('Task_TaskScheduleFieldSet_Recurrence_OnceItem')]]);
+      }
 
       Ext.each(formFields, function(field) {
         var properties = model.get('properties');

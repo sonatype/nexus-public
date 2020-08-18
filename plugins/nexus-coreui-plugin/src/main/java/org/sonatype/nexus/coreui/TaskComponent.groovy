@@ -116,6 +116,7 @@ class TaskComponent
           id: descriptor.id,
           name: descriptor.name,
           exposed: descriptor.exposed,
+          concurrentRun: descriptor.allowConcurrentRun(),
           formFields: descriptor.formFields?.collect { FormFieldXO.create(it) }
       )
       return result
