@@ -45,7 +45,7 @@ public class PackageLockParser
       final Map<String, List<PackageLockNode>> npmDependencies)
   {
     packageLockNode.setParentNodeName(parentNode);
-    npmDependencies.computeIfAbsent(key.toLowerCase(), k -> new ArrayList<>()).add(packageLockNode);
+    npmDependencies.computeIfAbsent(key, k -> new ArrayList<>()).add(packageLockNode);
     if (packageLockNode.getDependencies() != null) {
       packageLockNode.getDependencies().forEach((dependencyKey, dependencyValue) -> {
             String parentKey = !ROOT.equals(key) ? key : null;
