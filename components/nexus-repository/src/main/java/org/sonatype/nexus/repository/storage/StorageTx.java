@@ -143,7 +143,7 @@ public interface StorageTx
    *
    * @see OrientAsyncHelper
    *
-   * @since 3.27
+   * @since 3.next
    */
   Iterable<Asset> browseAssets(Query query, Bucket bucket, int bufferSize, int bufferTimeoutSeconds);
 

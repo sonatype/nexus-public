@@ -19,7 +19,7 @@
   <parent>
     <groupId>org.sonatype.nexus.assemblies</groupId>
     <artifactId>nexus-assemblies</artifactId>
-    <version>3.27.0-03</version>
+    <version>3.28.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-cma-community</artifactId>
@@ -27,10 +27,10 @@
   <packaging>feature</packaging>
 
   <properties>
-    <p2.format.version>1.1.12</p2.format.version>
-    <r.format.version>1.1.20</r.format.version>
-    <helm.format.version>1.0.20</helm.format.version>
-    <conan.format.version>1.0.21</conan.format.version>
+    <p2.format.version>1.1.10</p2.format.version>
+    <r.format.version>1.1.18</r.format.version>
+    <helm.format.version>1.0.18</helm.format.version>
+    <conan.format.version>1.0.19</conan.format.version>
   </properties>
 
   <dependencies>

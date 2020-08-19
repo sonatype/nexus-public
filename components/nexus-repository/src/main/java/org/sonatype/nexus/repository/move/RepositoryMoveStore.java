@@ -19,7 +19,7 @@ import org.sonatype.nexus.blobstore.api.BlobRef;
 
 /**
  *
- * @since 3.27
+ * @since 3.next
  */
 public interface RepositoryMoveStore
 {

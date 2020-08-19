@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.maven.internal.orient;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
@@ -29,13 +30,10 @@ import org.sonatype.nexus.repository.maven.internal.Constants;
 import org.sonatype.nexus.repository.maven.internal.MavenMimeRulesSource;
 import org.sonatype.nexus.repository.maven.internal.MavenModels;
 import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.StorageFacet;
-import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.payloads.BytesPayload;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
-import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.collect.Sets;
@@ -49,6 +47,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.lang.Boolean.TRUE;
 import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.repository.cache.CacheInfo.extractFromAsset;
+import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
 
 /**
  * Utility class containing shared (orient specific) methods for Maven metadata.
@@ -134,22 +133,23 @@ public final class OrientMetadataUtils
    * @return Set of paths that were deleted. If asset was just marked for rebuild it will not be part of this set.
    * @throws IOException
    */
-  public static Set<String> deleteAndAddRebuildFlag(
+  public static Set<String> deleteAndAddRebuildFlagToParents(
       final Repository repository,
       final String groupId,
       final String artifactId,
       final String baseVersion) throws IOException
   {
-    return Transactional.operation.throwing(IOException.class).withDb(repository.facet(StorageFacet.class).txSupplier())
-        .call(() -> {
-          Set<String> deletedPaths = Sets.newHashSet();
-          final StorageTx tx = UnitOfWork.currentTx();
-          Bucket bucket = tx.findBucket(repository);
-          deletedPaths.addAll(repository.facet(MavenFacet.class).maybeDeleteOrFlagToRebuildMetadata(bucket, groupId, artifactId, baseVersion));
-          deletedPaths.addAll(repository.facet(MavenFacet.class).maybeDeleteOrFlagToRebuildMetadata(bucket, groupId, artifactId));
-          deletedPaths.addAll(repository.facet(MavenFacet.class).maybeDeleteOrFlagToRebuildMetadata(bucket, groupId));
-          return deletedPaths;
-        });
+    UnitOfWork.begin(repository.facet(StorageFacet.class).txSupplier());
+    Set<String> deletedPaths = Sets.newHashSet();
+    try {
+      deletedPaths.addAll(delete(repository, metadataPath(groupId, artifactId, baseVersion)));
+      deletedPaths.addAll(repository.facet(MavenFacet.class).maybeDeleteOrFlagToRebuildMetadata(
+          Arrays.asList(metadataPath(groupId, artifactId, null), metadataPath(groupId, null, null))));
+    }
+    finally {
+      UnitOfWork.end();
+    }
+    return deletedPaths;
   }
 
   public static void addRebuildFlag(final Asset metadataAsset) {

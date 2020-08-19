@@ -23,14 +23,9 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
-import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.group.GroupHandler;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.rest.api.model.GroupAttributes;
-import org.sonatype.nexus.repository.rest.api.model.GroupDeployAttributes;
 import org.sonatype.nexus.repository.rest.api.model.GroupRepositoryApiRequest;
-import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 import org.sonatype.nexus.validation.Validate;
 
@@ -47,13 +42,9 @@ import static org.sonatype.nexus.validation.ConstraintViolations.maybePropagate;
 public abstract class AbstractGroupRepositoriesApiResource<T extends GroupRepositoryApiRequest>
     extends AbstractRepositoriesApiResource<T>
 {
-  private static final String WRITABLE_MEMBER = "writableMember";
-
   private ConstraintViolationFactory constraintViolationFactory;
 
   private RepositoryManager repositoryManager;
-
-  private ApplicationVersion applicationVersion;
 
   @Inject
   public void setConstraintViolationFactory(final ConstraintViolationFactory constraintViolationFactory) {
@@ -65,16 +56,12 @@ public abstract class AbstractGroupRepositoriesApiResource<T extends GroupReposi
     this.repositoryManager = checkNotNull(repositoryManager);
   }
 
-  @Inject
-  public void setApplicationVersion(final ApplicationVersion applicationVersion) {
-    this.applicationVersion = applicationVersion;
-  }
 
   @POST
   @RequiresAuthentication
   @Validate
   public Response createRepository(final T request) {
-    validateRequest(request);
+    validateGroupMembers(request);
     return super.createRepository(request);
   }
 
@@ -86,11 +73,11 @@ public abstract class AbstractGroupRepositoriesApiResource<T extends GroupReposi
       final T request,
       @PathParam("repositoryName") final String repositoryName)
   {
-    validateRequest(request);
+    validateGroupMembers(request);
     return super.updateRepository(request, repositoryName);
   }
 
-  private void validateRequest(T request) {
+  private void validateGroupMembers(T request) {
     String groupFormat = request.getFormat();
     Set<ConstraintViolation<?>> violations = Sets.newHashSet();
     Collection<String> memberNames = request.getGroup().getMemberNames();
@@ -108,49 +95,6 @@ public abstract class AbstractGroupRepositoriesApiResource<T extends GroupReposi
             "Member repository does not exist: " + repositoryName));
       }
     }
-    validateGroupDeploy(request, violations);
     maybePropagate(violations, log);
-  }
-
-  private void validateGroupDeploy(T request, Set<ConstraintViolation<?>> violations) {
-    GroupAttributes group = request.getGroup();
-    if (group instanceof GroupDeployAttributes) {
-      GroupDeployAttributes groupDeployAttributes = (GroupDeployAttributes) group;
-      final String writableMember = groupDeployAttributes.getWritableMember();
-      if (writableMember == null || writableMember.isEmpty()) {
-        return;
-      }
-      Repository writableMemberRepository = repositoryManager.get(writableMember);
-      if (!"PRO".equals(applicationVersion.getEdition())) {
-        violations.add(constraintViolationFactory.createViolation(
-            WRITABLE_MEMBER,
-            GroupHandler.INSUFFICIENT_LICENSE
-        ));
-      }
-      else if (writableMemberRepository == null) {
-        violations.add(constraintViolationFactory.createViolation(
-            WRITABLE_MEMBER,
-            "Writable member repository does not exist"
-        ));
-      }
-      else if (!writableMemberRepository.getType().getValue().equals(HostedType.NAME)) {
-        violations.add(constraintViolationFactory.createViolation(
-            WRITABLE_MEMBER,
-            "Writable member must be a hosted repository"
-        ));
-      }
-      else if (!writableMemberRepository.getFormat().getValue().equals(request.getFormat())) {
-        violations.add(constraintViolationFactory.createViolation(
-            WRITABLE_MEMBER,
-            "Writable member repository format does not match group repository format: " + writableMember
-        ));
-      }
-      else if (!request.getGroup().getMemberNames().contains(writableMember)) {
-        violations.add(constraintViolationFactory.createViolation(
-            WRITABLE_MEMBER,
-            "Writable member must be a member of the group"
-        ));
-      }
-    }
   }
 }

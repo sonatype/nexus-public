@@ -34,7 +34,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
 /**
  * Enable H2 web console.
  *
- * @since 3.27
+ * @since 3.next
  */
 @Named
 @Singleton

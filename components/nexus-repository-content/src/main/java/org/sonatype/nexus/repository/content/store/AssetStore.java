@@ -113,7 +113,7 @@ public class AssetStore<T extends AssetDAO>
    * @return collection of assets and the next continuation token
    * @see Continuation#nextContinuationToken()
    *
-   * @since 3.27
+   * @since 3.next
    */
   @Transactional
   public Continuation<Asset> browseAssets(

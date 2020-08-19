@@ -216,7 +216,6 @@ public class BlobStoreGroup
     if (includeDeleted) {
       // check directly without using cache
       return members.get().stream()
-          .filter((BlobStore member) -> member.exists(blobId))
           .map((BlobStore member) -> member.get(blobId, true))
           .filter(Objects::nonNull)
           .findAny()

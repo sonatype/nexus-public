@@ -19,7 +19,7 @@
   <parent>
     <groupId>org.sonatype.nexus.assemblies</groupId>
     <artifactId>nexus-assemblies</artifactId>
-    <version>3.27.0-03</version>
+    <version>3.28.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-community-feature</artifactId>
@@ -27,7 +27,7 @@
   <packaging>feature</packaging>
 
   <properties>
-    <helm.format.version>1.0.20</helm.format.version>
+    <helm.format.version>1.0.18</helm.format.version>
   </properties>
 
   <dependencies>

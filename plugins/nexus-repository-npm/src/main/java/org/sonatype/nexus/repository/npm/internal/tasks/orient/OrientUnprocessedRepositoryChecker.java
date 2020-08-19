@@ -25,7 +25,7 @@ import static java.lang.Boolean.TRUE;
 import static org.sonatype.nexus.repository.npm.internal.tasks.orient.OrientReindexNpmRepositoryTask.NPM_V1_SEARCH_UNSUPPORTED;
 
 /**
- * @since 3.27
+ * @since 3.next
  */
 @Named
 @Singleton

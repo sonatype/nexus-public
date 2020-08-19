@@ -34,7 +34,7 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.toInternal
  * Support class for {@link AssetsResource} which fetches and returns only assets that the user is permitted
  * to view according to {@link ContentAuthHelper#checkPathPermissions(String, String, String...)}
  *
- * @since 3.27
+ * @since 3.next
  */
 abstract class AssetsResourceSupport
     extends ComponentSupport

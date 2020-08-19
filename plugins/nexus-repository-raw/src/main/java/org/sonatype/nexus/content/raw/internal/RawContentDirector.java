@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.director.ContentDirector;
 
 /**
- * @since 3.27
+ * @since 3.next
  */
 @Named("raw")
 @Singleton

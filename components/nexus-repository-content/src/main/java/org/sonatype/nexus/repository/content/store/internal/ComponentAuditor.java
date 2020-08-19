@@ -38,7 +38,7 @@ import static java.lang.String.format;
 /**
  * Repository component auditor.
  *
- * @since 3.27
+ * @since 3.next
  */
 @Named
 @Singleton

@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.content.ContentRepository;
 /**
  * Event sent just before a {@link ContentRepository} is deleted.
  *
- * @since 3.27
+ * @since 3.next
  */
 public class ContentRepositoryPreDeleteEvent
     extends ContentRepositoryEvent

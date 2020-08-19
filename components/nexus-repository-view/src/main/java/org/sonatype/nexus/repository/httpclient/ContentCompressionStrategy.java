@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.httpclient;
 /**
  * Strategy to disable in the HttpClient automatic content compression/decompression
  *
- * @since 3.27
+ * @since 3.next
  */
 public interface ContentCompressionStrategy
 {

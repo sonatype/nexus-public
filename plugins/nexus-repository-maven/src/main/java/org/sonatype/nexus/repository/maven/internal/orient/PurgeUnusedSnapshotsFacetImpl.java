@@ -24,10 +24,10 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.stateguard.Guarded;
-import org.sonatype.nexus.orient.maven.MavenFacet;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
+import org.sonatype.nexus.orient.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.PurgeUnusedSnapshotsFacet;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.maven.internal.group.MavenGroupFacet;
@@ -62,6 +62,7 @@ import static org.sonatype.nexus.repository.FacetSupport.State.STARTED;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_ARTIFACT_ID;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_GROUP_ID;
+import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_COMPONENT;
 import static org.sonatype.nexus.repository.storage.Query.builder;
 
@@ -251,15 +252,15 @@ public class PurgeUnusedSnapshotsFacetImpl
     try {
       Bucket bucket = tx.findBucket(getRepository());
 
-      getRepository().facet(MavenFacet.class).maybeDeleteOrFlagToRebuildMetadata(bucket, groupId, artifactId, baseVersion);
+      getRepository().facet(MavenFacet.class).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath(groupId, artifactId, baseVersion));
 
       //for GA metadata, if there are no other GAVs matching the GA, delete it, otherwise mark as invalid so it will
       //be rebuilt on request
-      getRepository().facet(MavenFacet.class).maybeDeleteOrFlagToRebuildMetadata(bucket, groupId, artifactId);
+      getRepository().facet(MavenFacet.class).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath(groupId, artifactId, null));
 
       //for G metadata, if there are no other GAs matching the G, delete it, otherwise mark as invalid so it will
       //be rebuilt on request
-      getRepository().facet(MavenFacet.class).maybeDeleteOrFlagToRebuildMetadata(bucket, groupId);
+      getRepository().facet(MavenFacet.class).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath(groupId, null, null));
     }
     catch (IOException e) {
       throw new RuntimeException(e);

@@ -38,12 +38,6 @@ Ext.define('NX.coreui.view.repository.facet.GroupFacet', {
   supportsGroupWrite: false,
 
   /**
-   * @cfg String
-   * Set the help hint for insert in Group Deployment section.
-   */
-  helpHint: undefined,
-
-  /**
    * @override
    */
   initComponent: function() {
@@ -117,12 +111,7 @@ Ext.define('NX.coreui.view.repository.facet.GroupFacet', {
           displayField: 'name',
           emptyText: 'Select...',
           queryMode: 'local',
-          valueField: 'name',
-          triggers: {
-            clear: {
-              cls: 'x-form-clear-trigger', weight: -1, handler: Ext.form.field.ComboBox.prototype.clearValue,
-            }
-          }
+          valueField: 'name'
         };
 
     var groupMembersConfig = {
@@ -147,24 +136,6 @@ Ext.define('NX.coreui.view.repository.facet.GroupFacet', {
 
     };
 
-    const helpLabelElement =
-        {
-          xtype: 'nx-responsive-panel',
-          layout: {
-            type: 'hbox',
-            align: 'center',
-            pack: 'center'
-          },
-          items: [
-            {
-              xtype: 'panel',
-              bodypadding: '10px',
-              width: '85%',
-              html: me.helpHint
-            }
-          ]
-        };
-
     var fieldSetItems = [];
     if (writableEnabled) {
       groupMembersConfig.listeners = {
@@ -176,13 +147,10 @@ Ext.define('NX.coreui.view.repository.facet.GroupFacet', {
           }
           me.selectableHostedRepos.filterBy(me.selectableFilter);
         }
-      };
-      fieldSetItems.push(writableComboConfig);
-      if (me.helpHint) {
-        fieldSetItems.push(helpLabelElement);
       }
+      fieldSetItems.push(writableComboConfig);
     }
-    fieldSetItems.push(groupMembersConfig);
+    fieldSetItems.push(groupMembersConfig)
 
     me.items = [
       {

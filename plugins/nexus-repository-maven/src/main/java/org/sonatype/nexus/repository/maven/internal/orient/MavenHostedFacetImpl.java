@@ -135,7 +135,7 @@ public class MavenHostedFacetImpl
     log.debug("Deleting Maven2 hosted repository metadata: repository={}, g={}, a={}, bV={}", getRepository().getName(),
         groupId, artifactId, baseVersion);
     try {
-      return OrientMetadataUtils.deleteAndAddRebuildFlag(getRepository(), groupId, artifactId, baseVersion);
+      return OrientMetadataUtils.deleteAndAddRebuildFlagToParents(getRepository(), groupId, artifactId, baseVersion);
     }
     catch (IOException e) {
       log.error("Failed to delete maven-metadata.xml of {}:{}:{}", groupId, artifactId, baseVersion, e);

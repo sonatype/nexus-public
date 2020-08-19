@@ -27,7 +27,6 @@ import org.sonatype.nexus.repository.config.ConfigurationConstants;
 import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
 import org.sonatype.nexus.repository.rest.api.model.CleanupPolicyAttributes;
 import org.sonatype.nexus.repository.rest.api.model.GroupAttributes;
-import org.sonatype.nexus.repository.rest.api.model.GroupDeployAttributes;
 import org.sonatype.nexus.repository.rest.api.model.HostedStorageAttributes;
 import org.sonatype.nexus.repository.rest.api.model.HttpClientAttributes;
 import org.sonatype.nexus.repository.rest.api.model.HttpClientConnectionAttributes;
@@ -123,14 +122,6 @@ public class SimpleApiRepositoryAdapter
         {
         });
     return new GroupAttributes(memberNames);
-  }
-
-  protected GroupDeployAttributes getGroupDeployAttributes(final Repository repository) {
-    checkNotNull(repository);
-    GroupAttributes groupAttributes = getGroupAttributes(repository);
-    NestedAttributesMap group = repository.getConfiguration().attributes("group");
-    String groupWriteMember = group.get("groupWriteMember", String.class);
-    return new GroupDeployAttributes(groupAttributes.getMemberNames(), groupWriteMember);
   }
 
   protected CleanupPolicyAttributes getCleanupPolicyAttributes(final Repository repository) {

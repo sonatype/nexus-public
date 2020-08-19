@@ -32,7 +32,7 @@ import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.POST;
 
 /**
- * @since 3.27
+ * @since 3.next
  */
 public final class NpmPaths
 {
