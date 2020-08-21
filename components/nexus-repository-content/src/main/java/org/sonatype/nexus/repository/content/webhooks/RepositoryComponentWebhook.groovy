@@ -25,6 +25,7 @@ import org.sonatype.nexus.repository.content.Component
 import org.sonatype.nexus.repository.content.event.component.ComponentCreatedEvent
 import org.sonatype.nexus.repository.content.event.component.ComponentDeletedEvent
 import org.sonatype.nexus.repository.content.event.component.ComponentEvent
+import org.sonatype.nexus.repository.content.event.component.ComponentPurgedEvent
 import org.sonatype.nexus.repository.content.event.component.ComponentUpdatedEvent
 import org.sonatype.nexus.repository.content.store.InternalIds
 import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO
@@ -50,28 +51,29 @@ import static com.google.common.base.Preconditions.checkNotNull
 class RepositoryComponentWebhook
     extends RepositoryWebhook
 {
-  public static final String NAME = "component";
+  public static final String NAME = "component"
 
-  private NodeAccess nodeAccess;
+  private NodeAccess nodeAccess
 
-  private InitiatorProvider initiatorProvider;
+  private InitiatorProvider initiatorProvider
 
   @Override
-  public String getName() {
-    return NAME;
+  String getName() {
+    return NAME
   }
 
   @Inject
-  public RepositoryComponentWebhook(final NodeAccess nodeAccess, final InitiatorProvider initiatorProvider) {
-    this.nodeAccess = checkNotNull(nodeAccess);
-    this.initiatorProvider = checkNotNull(initiatorProvider);
+  RepositoryComponentWebhook(final NodeAccess nodeAccess, final InitiatorProvider initiatorProvider) {
+    this.nodeAccess = checkNotNull(nodeAccess)
+    this.initiatorProvider = checkNotNull(initiatorProvider)
   }
 
   private enum EventAction
   {
     CREATED,
     UPDATED,
-    DELETED
+    DELETED,
+    PURGED
   }
 
   @Subscribe
@@ -92,22 +94,46 @@ class RepositoryComponentWebhook
     maybeQueue(event, EventAction.DELETED)
   }
 
+  @Subscribe
+  @AllowConcurrentEvents
+  void on(final ComponentPurgedEvent event) {
+    maybeQueue(getPayload(event, EventAction.PURGED))
+  }
+
   /**
    * Maybe queue {@link WebhookRequest} for event matching subscriptions.
    */
   private void maybeQueue(final ComponentEvent event, final EventAction eventAction) {
-    Repository repository = event.repository
-    Component component = event.component
-    EntityId componentId = InternalIds.toExternalId(InternalIds.internalComponentId(component))
+    maybeQueue(getPayload(event, eventAction))
+  }
 
-    def payload = new RepositoryComponentWebhookPayload(
+  /**
+   * Maybe queue {@link WebhookRequest} for event matching subscriptions.
+   */
+  private void maybeQueue(final RepositoryComponentWebhookPayload payload) {
+    subscriptions.each {
+      def configuration = it.configuration as RepositoryWebhook.Configuration
+      if (configuration.repository == payload.repositoryName) {
+        queue(it, payload)
+      }
+    }
+  }
+
+  private RepositoryComponentWebhookPayload getPayload(final Repository repository, final EventAction eventAction) {
+    new RepositoryComponentWebhookPayload(
         nodeId: nodeAccess.getId(),
         timestamp: new Date(),
         initiator: initiatorProvider.get(),
         repositoryName: repository.name,
         action: eventAction
     )
+  }
 
+  private RepositoryComponentWebhookPayload getPayload(final ComponentEvent event, final EventAction eventAction) {
+    Repository repository = event.repository
+    Component component = event.component
+    EntityId componentId = InternalIds.toExternalId(InternalIds.internalComponentId(component))
+    def payload = getPayload(repository, eventAction)
     payload.component = new RepositoryComponentWebhookPayload.RepositoryComponent(
         id: componentId.value,
         componentId: new RepositoryItemIDXO(repository.name, componentId.value).value,
@@ -116,13 +142,16 @@ class RepositoryComponentWebhook
         group: component.namespace(),
         version: component.version()
     )
+    return payload
+  }
 
-    subscriptions.each {
-      def configuration = it.configuration as RepositoryWebhook.Configuration
-      if (configuration.repository == repository.name) {
-        queue(it, payload)
-      }
-    }
+  private RepositoryComponentWebhookPayload getPayload(
+      final ComponentPurgedEvent event,
+      final EventAction eventAction)
+  {
+    def payload = getPayload(event.repository, eventAction)
+    payload.components = event.componentIds.collect {InternalIds.toExternalId(it).value }
+    return payload
   }
 
   static class RepositoryComponentWebhookPayload
@@ -133,6 +162,8 @@ class RepositoryComponentWebhook
     EventAction action
 
     RepositoryComponent component
+
+    String[] components
 
     static class RepositoryComponent
     {
