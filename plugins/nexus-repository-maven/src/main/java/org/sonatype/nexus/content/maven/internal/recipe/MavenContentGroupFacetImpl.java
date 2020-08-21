@@ -26,13 +26,16 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
+import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.event.EventAware;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
+import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetEvent;
+import org.sonatype.nexus.repository.content.event.asset.AssetPurgedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetUploadedEvent;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
@@ -63,6 +66,7 @@ import com.google.common.hash.HashCode;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.io.ByteStreams.toByteArray;
+import static java.lang.String.valueOf;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
 
@@ -272,8 +276,24 @@ public class MavenContentGroupFacetImpl
   }
 
   private void handleAssetEvent(AssetEvent event, boolean delete) {
-    if (!event.getAsset().component().isPresent() && member(event.getRepository())) {
-      final String path = event.getAsset().path();
+    maybeEvict(event.getRepository(), event.getAsset(), delete);
+  }
+
+  @Subscribe
+  @AllowConcurrentEvents
+  public void onAssetPurgedEvent(final AssetPurgedEvent event) {
+    Repository repository = event.getRepository();
+    for (int assetId: event.getAssetIds()) {
+      repository.facet(ContentFacet.class)
+          .assets()
+          .find(new DetachedEntityId(valueOf(assetId)))
+          .ifPresent(asset -> maybeEvict(repository, asset, true));
+    }
+  }
+
+  private void maybeEvict(final Repository repository, final Asset asset, final boolean delete) {
+    if (!asset.component().isPresent() && member(repository)) {
+      final String path = asset.path();
       final MavenPath mavenPath = getRepository().facet(MavenContentFacet.class).getMavenPathParser().parsePath(path);
 
       // only trigger eviction on main metadata artifact (which may go on to evict its hashes)
@@ -288,7 +308,7 @@ public class MavenContentGroupFacetImpl
                 getRepository().getName(), mavenPath.getPath(), e);
           }
         }
-        getRepository().facet(ContentFacet.class).assets().with(event.getAsset()).markAsStale();
+        getRepository().facet(ContentFacet.class).assets().with(asset).markAsStale();
       }
     }
   }
