@@ -36,7 +36,6 @@ import org.sonatype.nexus.webhooks.WebhookRequest
 
 import com.google.common.eventbus.AllowConcurrentEvents
 import com.google.common.eventbus.Subscribe
-import org.apache.commons.lang.StringUtils
 
 /**
  * Repository {@link Asset} {@link Webhook}.
@@ -132,7 +131,7 @@ class RepositoryAssetWebhook
         id: assetId.value,
         assetId: new RepositoryItemIDXO(repository.name, assetId.value).value,
         format: repository.format,
-        name: StringUtils.stripStart(asset.path(), "/")
+        name: asset.path()
     )
     return payload
   }

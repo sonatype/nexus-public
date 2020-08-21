@@ -45,6 +45,7 @@ import org.joda.time.DateTime;
 import static com.google.common.collect.Lists.newArrayList;
 import static java.time.LocalDate.now;
 import static java.util.stream.Collectors.toList;
+import static org.apache.commons.lang.StringUtils.stripStart;
 import static org.apache.commons.lang3.StringUtils.endsWith;
 import static org.apache.commons.lang3.StringUtils.indexOf;
 import static org.apache.commons.lang3.StringUtils.startsWith;
@@ -273,5 +274,10 @@ public class OrientComponentAssetTestHelper
   @Override
   public boolean assetWithoutComponentExists(final Repository repository, final String path) {
     return !findAssetByName(repository, path).map(Asset::componentId).isPresent();
+  }
+
+  @Override
+  public String adjustedPath(final String path) {
+    return stripStart(path, "/");
   }
 }
