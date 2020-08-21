@@ -55,7 +55,6 @@ import org.sonatype.nexus.selector.SelectorFactory;
 import org.sonatype.nexus.selector.SelectorSqlBuilder;
 
 import com.google.common.collect.ImmutableSet;
-import org.apache.commons.lang.StringUtils;
 import org.apache.shiro.authz.AuthorizationException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -293,7 +292,7 @@ public class ContentComponentHelper
 
     componentXO.setId(componentId(component));
     componentXO.setGroup(component.namespace());
-    componentXO.setName(StringUtils.stripStart(component.name(), "/"));
+    componentXO.setName(component.name());
     componentXO.setVersion(component.version());
 
     return componentXO;
@@ -312,7 +311,7 @@ public class ContentComponentHelper
     assetXO.setFormat(format);
 
     assetXO.setId(assetId(asset));
-    assetXO.setName(StringUtils.stripStart(asset.path(), "/"));
+    assetXO.setName(asset.path());
 
     asset.component().ifPresent(component -> assetXO.setComponentId(componentId(component)));
 

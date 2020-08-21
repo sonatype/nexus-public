@@ -36,7 +36,6 @@ import org.sonatype.nexus.webhooks.WebhookRequest
 
 import com.google.common.eventbus.AllowConcurrentEvents
 import com.google.common.eventbus.Subscribe
-import org.apache.commons.lang.StringUtils
 
 import static com.google.common.base.Preconditions.checkNotNull
 
@@ -138,7 +137,7 @@ class RepositoryComponentWebhook
         id: componentId.value,
         componentId: new RepositoryItemIDXO(repository.name, componentId.value).value,
         format: repository.format,
-        name: StringUtils.stripStart(component.name(), "/"),
+        name: component.name(),
         group: component.namespace(),
         version: component.version()
     )
