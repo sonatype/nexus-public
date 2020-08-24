@@ -63,6 +63,10 @@ public class OrientHttpClientConfiguration
   @Nullable
   private Boolean shouldNormalizeUri;
 
+  @Valid
+  @Nullable
+  private Boolean disableContentCompression;
+
   @Nullable
   public ConnectionConfiguration getConnection() {
     return connection;
@@ -122,6 +126,16 @@ public class OrientHttpClientConfiguration
     this.shouldNormalizeUri = normalizeUri;
   }
 
+  @Override
+  public Boolean getDisableContentCompression() {
+    return disableContentCompression;
+  }
+
+  @Override
+  public void setDisableContentCompression(final Boolean disableContentCompression) {
+    this.disableContentCompression = disableContentCompression;
+  }
+
   public OrientHttpClientConfiguration copy() {
     try {
       OrientHttpClientConfiguration copy = (OrientHttpClientConfiguration) clone();
@@ -139,6 +153,7 @@ public class OrientHttpClientConfiguration
         copy.redirectStrategy = redirectStrategy;
       }
       copy.shouldNormalizeUri = shouldNormalizeUri;
+      copy.disableContentCompression = disableContentCompression;
       return copy;
     }
     catch (CloneNotSupportedException e) {

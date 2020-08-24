@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.view;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.ListIterator;
 
@@ -19,12 +21,16 @@ import javax.annotation.Nonnull;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.view.Request.Builder;
+import org.sonatype.nexus.repository.view.payloads.BytesPayload;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static org.sonatype.nexus.repository.view.ViewUtils.copyLocalContextAttributes;
 
 /**
  * View context.
@@ -95,6 +101,29 @@ public class Context
     // Insert the handler so that the next proceed() call will encounter it
     handlers.add(handler);
     handlers.previous();
+  }
+
+  /**
+   * Builds a context that contains a request that can be "replayed" with its post body content. We need to have a new
+   * request instance with a payload we can read multiple times.
+   */
+  public Context replayable() throws IOException {
+    Payload payload = checkNotNull(request.getPayload());
+    try (InputStream in = payload.openInputStream()) {
+      byte[] content = IOUtils.toByteArray(in);
+      Context replayableContext = new Context(repository,
+          new Builder()
+              .attributes(request.getAttributes())
+              .headers(request.getHeaders())
+              .action(request.getAction())
+              .path(request.getPath())
+              .parameters(request.getParameters())
+              .payload(new BytesPayload(content, payload.getContentType()))
+              .build());
+      copyLocalContextAttributes(this, replayableContext);
+
+      return replayableContext;
+    }
   }
 
   //

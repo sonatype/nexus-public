@@ -25,6 +25,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.lifecycle.LifecycleSupport;
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.event.EventAware;
@@ -46,7 +47,9 @@ import com.google.common.collect.Multimap;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.Integer.parseInt;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
 import static org.sonatype.nexus.repository.content.store.InternalIds.internalAssetId;
 import static org.sonatype.nexus.repository.content.store.InternalIds.toExternalId;
@@ -61,17 +64,24 @@ import static org.sonatype.nexus.repository.content.store.InternalIds.toExternal
  * If the pending map gets too big events will start to be posted to flush additional pages.
  * These events are handled by an asynchronous receiver using threads from the event pool.
  *
- * Trimming of dangling nodes from the browse tree is only done by the scheduled task.
- *
  * @since 3.26
  */
+@FeatureFlag(name = "nexus.datastore.enabled")
 @ManagedLifecycle(phase = SERVICES)
 @Named
 @Singleton
 public class BrowseEventHandler
     extends LifecycleSupport
-    implements EventAware
+    implements EventAware // warning: don't make this EventAware.Asynchronous
 {
+  private static final String HANDLER_KEY_PREFIX = "nexus.browse.event.handler.";
+
+  private static final String FLUSH_ON_COUNT_KEY = HANDLER_KEY_PREFIX + "flushOnCount";
+
+  private static final String FLUSH_ON_SECONDS_KEY = HANDLER_KEY_PREFIX + "flushOnSeconds";
+
+  private static final String NO_PURGE_DELAY_KEY = HANDLER_KEY_PREFIX + "noPurgeDelay";
+
   private final PeriodicJobService periodicJobService;
 
   private final EventManager eventManager;
@@ -79,6 +89,8 @@ public class BrowseEventHandler
   private final int flushOnCount;
 
   private final int flushOnSeconds;
+
+  private final boolean noPurgeDelay;
 
   private final FlushEventReceiver flushEventReceiver = new FlushEventReceiver();
 
@@ -90,35 +102,43 @@ public class BrowseEventHandler
 
   private final AtomicBoolean needsTrim = new AtomicBoolean();
 
+  private Object flushMutex = new Object();
+
   private PeriodicJob flushTask;
 
   @Inject
   public BrowseEventHandler(
       final PeriodicJobService periodicJobService,
       final EventManager eventManager,
-      @Named("${nexus.browse.event.handler.flushOnCount:-100}") final int flushOnCount,
-      @Named("${nexus.browse.event.handler.flushOnSeconds:-2}") final int flushOnSeconds)
+      @Named("${" + FLUSH_ON_COUNT_KEY + ":-100}") final int flushOnCount,
+      @Named("${" + FLUSH_ON_SECONDS_KEY + ":-2}") final int flushOnSeconds,
+      @Named("${" + NO_PURGE_DELAY_KEY + ":-true}") final boolean noPurgeDelay)
   {
     this.periodicJobService = checkNotNull(periodicJobService);
     this.eventManager = checkNotNull(eventManager);
+    checkArgument(flushOnCount > 0, FLUSH_ON_COUNT_KEY + " must be positive");
     this.flushOnCount = flushOnCount;
+    checkArgument(flushOnSeconds > 0, FLUSH_ON_SECONDS_KEY + " must be positive");
     this.flushOnSeconds = flushOnSeconds;
+    this.noPurgeDelay = noPurgeDelay;
 
     eventManager.register(flushEventReceiver);
   }
 
   @Override
   protected void doStart() throws Exception {
-    periodicJobService.startUsing();
-
-    flushTask = periodicJobService.schedule(this::pollBrowseTreeChanges, flushOnSeconds);
+    if (flushOnCount > 1) {
+      periodicJobService.startUsing();
+      flushTask = periodicJobService.schedule(this::pollBrowseUpdateRequests, flushOnSeconds);
+    }
   }
 
   @Override
   protected void doStop() throws Exception {
-    flushTask.cancel();
-
-    periodicJobService.stopUsing();
+    if (flushOnCount > 1) {
+      flushTask.cancel();
+      periodicJobService.stopUsing();
+    }
   }
 
   @AllowConcurrentEvents
@@ -135,18 +155,6 @@ public class BrowseEventHandler
 
   @AllowConcurrentEvents
   @Subscribe
-  public void on(final ComponentDeletedEvent event) {
-    markRepositoryForTrimming(event);
-  }
-
-  @AllowConcurrentEvents
-  @Subscribe
-  public void on(final ComponentPurgedEvent event) {
-    markRepositoryForTrimming(event);
-  }
-
-  @AllowConcurrentEvents
-  @Subscribe
   public void on(final AssetDeletedEvent event) {
     markRepositoryForTrimming(event);
   }
@@ -157,17 +165,30 @@ public class BrowseEventHandler
     markRepositoryForTrimming(event);
   }
 
+  @AllowConcurrentEvents
+  @Subscribe
+  public void on(final ComponentDeletedEvent event) {
+    markRepositoryForTrimming(event);
+  }
+
+  @AllowConcurrentEvents
+  @Subscribe
+  public void on(final ComponentPurgedEvent event) {
+    markRepositoryForTrimming(event);
+  }
+
   /**
    * Marks asset as requiring updating in its browse tree.
    */
   private void markAssetAsPending(final AssetEvent event) {
 
-    // bump count if this is the first time we've seen this asset in this batch
+    // bump count if this is the first time we've seen this request key in this batch
     if (pendingAssets.put(requestKey(event), event.getRepository()) == null) {
       pendingCount.getAndIncrement();
     }
 
-    // if we're over the limit then reduce it by a page and trigger an asynchronous flush event
+    // if there are lots of pending requests then reduce count by a page and
+    // trigger an asynchronous flush event (which will actually do the work)
     if (pendingCount.getAndUpdate(c -> c >= flushOnCount ? c - flushOnCount : c) >= flushOnCount) {
       eventManager.post(new FlushEvent());
     }
@@ -179,10 +200,14 @@ public class BrowseEventHandler
   private void markRepositoryForTrimming(final ContentStoreEvent event) {
     repositoriesToTrim.add(event.getRepository());
     needsTrim.set(true);
+
+    if (noPurgeDelay) {
+      eventManager.post(new PurgeEvent());
+    }
   }
 
   /**
-   * Marker event that indicates another page of assets should be indexed.
+   * Marker event that indicates another page of components should be added to the browse tree.
    */
   private static class FlushEvent
   {
@@ -190,7 +215,15 @@ public class BrowseEventHandler
   }
 
   /**
-   * Asynchronous receiver of {@link FlushEvent}s.
+   * Marker event that indicates some repository browse trees need trimming of unused nodes.
+   */
+  private static class PurgeEvent
+  {
+    // this event is a marker only
+  }
+
+  /**
+   * Asynchronous receiver of {@link FlushEvent}s and {@link PurgeEvent}s.
    */
   private class FlushEventReceiver
       implements EventAware.Asynchronous
@@ -198,35 +231,45 @@ public class BrowseEventHandler
     @AllowConcurrentEvents
     @Subscribe
     public void on(final FlushEvent event) {
-      updatePageOfAssets();
+      flushPageOfAssets();
+    }
+
+    @AllowConcurrentEvents
+    @Subscribe
+    public void on(final PurgeEvent event) {
+      maybeTrimRepositories();
     }
   }
 
   /**
-   * Used by scheduled flush task to only attempt updates when there are pending changes.
+   * Used by scheduled flush task to poll for work.
    */
-  void pollBrowseTreeChanges() {
+  void pollBrowseUpdateRequests() {
     if (pendingCount.get() > 0) {
-      updatePageOfAssets();
+      flushPageOfAssets();
     }
-    if (needsTrim.getAndSet(false)) {
-      trimRepositories();
-    }
+
+    maybeTrimRepositories();
   }
 
   /**
    * Grabs a page of assets and updates the browse tree.
    */
-  void updatePageOfAssets() {
-
-    // remove page of assets and invert it to get mapping from repository to assets
+  void flushPageOfAssets() {
     Multimap<Repository, EntityId> requestsByRepository = ArrayListMultimap.create();
-    Iterator<Entry<String, Repository>> itr = pendingAssets.entrySet().iterator();
-    for (int i = 0; i < flushOnCount && itr.hasNext(); i++) {
-      Entry<String, Repository> entry = itr.next();
-      // these requests are scoped per-repository so it is safe to drop the format here
-      requestsByRepository.put(entry.getValue(), assetId(entry.getKey()));
-      itr.remove();
+
+    // only allow one thread to remove entries at a time while still allowing other threads to add entries
+    synchronized (flushMutex) {
+
+      // remove page of assets and invert it to get mapping from repository to assets
+      Iterator<Entry<String, Repository>> itr = pendingAssets.entrySet().iterator();
+      for (int i = 0; i < flushOnCount && itr.hasNext(); i++) {
+        Entry<String, Repository> entry = itr.next();
+
+        // these requests are scoped per-repository so it is safe to drop the format here
+        requestsByRepository.put(entry.getValue(), assetId(entry.getKey()));
+        itr.remove();
+      }
     }
 
     // deliver requests to the relevant repositories
@@ -238,11 +281,18 @@ public class BrowseEventHandler
   /**
    * Trims all pending repositories of dangling nodes.
    */
-  void trimRepositories() {
-    Iterator<Repository> itr = repositoriesToTrim.iterator();
-    while (itr.hasNext()) {
-      itr.next().optionalFacet(BrowseFacet.class).ifPresent(BrowseFacet::trimBrowseNodes);
-      itr.remove();
+  void maybeTrimRepositories() {
+    if (needsTrim.getAndSet(false)) {
+
+      // only allow one thread to remove entries at a time while still allowing other threads to add entries
+      synchronized (flushMutex) {
+
+        Iterator<Repository> itr = repositoriesToTrim.iterator();
+        while (itr.hasNext()) {
+          itr.next().optionalFacet(BrowseFacet.class).ifPresent(BrowseFacet::trimBrowseNodes);
+          itr.remove();
+        }
+      }
     }
   }
 
@@ -257,6 +307,6 @@ public class BrowseEventHandler
    * Extracts external asset id from request key; should only be done in the context of a repository/format.
    */
   private EntityId assetId(final String requestKey) {
-    return toExternalId(Integer.parseInt(requestKey.substring(requestKey.indexOf(':') + 1)));
+    return toExternalId(parseInt(requestKey.substring(requestKey.indexOf(':') + 1)));
   }
 }

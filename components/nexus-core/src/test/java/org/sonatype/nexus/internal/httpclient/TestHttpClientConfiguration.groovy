@@ -35,6 +35,8 @@ class TestHttpClientConfiguration
 
   Boolean normalizeUri
 
+  Boolean disableContentCompression;
+
   Boolean getNormalizeUri() {
     return Optional.ofNullable(normalizeUri)
   }

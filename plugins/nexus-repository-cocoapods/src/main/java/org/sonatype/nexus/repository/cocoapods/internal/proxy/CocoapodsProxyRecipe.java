@@ -60,6 +60,8 @@ import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
 import static org.sonatype.nexus.repository.cocoapods.internal.AssetKind.CDN_METADATA;
 import static org.sonatype.nexus.repository.cocoapods.internal.AssetKind.POD;
 import static org.sonatype.nexus.repository.cocoapods.internal.AssetKind.SPEC;
+import static org.sonatype.nexus.repository.cocoapods.internal.CocoapodsFormat.PACKAGE_NAME_KEY;
+import static org.sonatype.nexus.repository.cocoapods.internal.CocoapodsFormat.PACKAGE_VERSION_KEY;
 import static org.sonatype.nexus.repository.http.HttpHandlers.notFound;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
@@ -189,7 +191,8 @@ public class CocoapodsProxyRecipe
     createRoute(builder, createGetTokenMatcher("{metadataPrefix:.*}/CocoaPods-version.yml"), CDN_METADATA);
     createRoute(builder, createGetTokenMatcher("{metadataPrefix:.*}/deprecated_podspecs.txt"), CDN_METADATA);
     createRoute(builder, createGetTokenMatcher("{metadataPrefix:.*}/all_pods{subtree:.*}.txt"), CDN_METADATA);
-    createRoute(builder, createGetTokenMatcher("/pods/{remote_url:.*}"), POD);
+    createRoute(builder, createGetTokenMatcher(
+        String.format("/pods/{%s}/{%s}/{filename}", PACKAGE_NAME_KEY, PACKAGE_VERSION_KEY)), POD);
   }
 
   private void createRoute(final Router.Builder builder,

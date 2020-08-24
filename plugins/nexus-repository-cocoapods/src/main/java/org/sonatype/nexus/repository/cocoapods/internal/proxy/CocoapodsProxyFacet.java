@@ -15,17 +15,19 @@ package org.sonatype.nexus.repository.cocoapods.internal.proxy;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.cocoapods.CocoapodsFacet;
 import org.sonatype.nexus.repository.cocoapods.internal.AssetKind;
-import org.sonatype.nexus.repository.cocoapods.internal.pod.PodPathParser;
+import org.sonatype.nexus.repository.cocoapods.internal.PathUtils;
 import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.StorageTx;
@@ -33,18 +35,21 @@ import org.sonatype.nexus.repository.transaction.TransactionalTouchMetadata;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Payload;
+import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.sonatype.nexus.repository.cache.CacheControllerHolder.CONTENT;
 import static org.sonatype.nexus.repository.cocoapods.internal.AssetKind.SPEC;
 import static org.sonatype.nexus.repository.cocoapods.internal.CocoapodsFormat.CDN_METADATA_PREFIX;
+import static org.sonatype.nexus.repository.cocoapods.internal.CocoapodsFormat.PACKAGE_NAME_KEY;
+import static org.sonatype.nexus.repository.cocoapods.internal.CocoapodsFormat.PACKAGE_VERSION_KEY;
+import static org.sonatype.nexus.repository.cocoapods.internal.CocoapodsFormat.POD_REMOTE_ATTRIBUTE_NAME;
 import static org.sonatype.nexus.repository.cocoapods.internal.CocoapodsFormat.removeInitialSlashFromPath;
-import static org.sonatype.nexus.repository.cocoapods.internal.pod.PodsUtils.extractPodPath;
 
 /**
  * @since 3.19
@@ -56,14 +61,11 @@ public class CocoapodsProxyFacet
 {
   private static String ASSET_KIND_ERROR = "Received an invalid AssetKind of type: ";
 
-  private PodPathParser podPathParser;
-
-  private SpecTransformer specTransformer;
+  private SpecFileProcessor specFileProcessor;
 
   @Inject
-  public CocoapodsProxyFacet(final SpecTransformer specTransformer, final PodPathParser podPathParser) {
-    this.podPathParser = podPathParser;
-    this.specTransformer = specTransformer;
+  public CocoapodsProxyFacet(final SpecFileProcessor specFileProcessor) {
+    this.specFileProcessor = specFileProcessor;
   }
 
   private Content transformSpecFile(final Payload payload) throws IOException {
@@ -71,7 +73,7 @@ public class CocoapodsProxyFacet
       String specFile = IOUtils.toString(data, Charsets.UTF_8);
       try {
         return new Content(
-            new StringPayload(specTransformer.toProxiedSpec(specFile, URI.create(getRepository().getUrl() + "/")),
+            new StringPayload(specFileProcessor.toProxiedSpec(specFile, URI.create(getRepository().getUrl() + "/")),
                 "application/json"));
       }
       catch (InvalidSpecFileException e) {
@@ -107,7 +109,7 @@ public class CocoapodsProxyFacet
         }
       case SPEC:
       case POD:
-        ret = facet(CocoapodsFacet.class).get(extractPodPath(context));
+        ret = facet(CocoapodsFacet.class).get(path);
         break;
       default:
         throw new IllegalStateException(ASSET_KIND_ERROR + assetKind.name());
@@ -115,27 +117,23 @@ public class CocoapodsProxyFacet
     return ret;
   }
 
-  private boolean isComponentSupported(AssetKind assetKind) {
-    return assetKind.getCacheType() == CONTENT;
-  }
-
   @Override
   protected Content store(final Context context, final Content content) throws IOException {
     final String path = removeInitialSlashFromPath(context.getRequest().getPath());
     Content ret;
     AssetKind assetKind = context.getAttributes().require(AssetKind.class);
-    boolean toAttachComponent = isComponentSupported(assetKind);
+    CocoapodsFacet cocoapodsFacet = facet(CocoapodsFacet.class);
     switch (assetKind) {
       case CDN_METADATA:
-        ret = facet(CocoapodsFacet.class).getOrCreateAsset(CDN_METADATA_PREFIX + path, content, toAttachComponent);
+        ret = cocoapodsFacet.getOrCreateAsset(CDN_METADATA_PREFIX + path, content);
         cacheControllerHolder.getMetadataCacheController().invalidateCache();
         break;
       case SPEC:
-        ret = facet(CocoapodsFacet.class).getOrCreateAsset(path, content, toAttachComponent);
+        ret = storeSpecFile(content, path);
         cacheControllerHolder.getMetadataCacheController().invalidateCache();
         break;
       case POD:
-        ret = facet(CocoapodsFacet.class).getOrCreateAsset(extractPodPath(context), content, toAttachComponent);
+        ret = storePodFile(content, context);
         break;
       default:
         throw new IllegalStateException(ASSET_KIND_ERROR + assetKind.name());
@@ -154,7 +152,7 @@ public class CocoapodsProxyFacet
         ret = path;
         break;
       case POD:
-        ret = podPathParser.parse(extractPodPath(context)).getUri().toString();
+        ret = providePodExternalUri(context);
         break;
       default:
         throw new IllegalStateException(ASSET_KIND_ERROR + assetKind.name());
@@ -192,5 +190,49 @@ public class CocoapodsProxyFacet
   protected CacheController getCacheController(final Context context) {
     final AssetKind assetKind = context.getAttributes().require(AssetKind.class);
     return checkNotNull(cacheControllerHolder.get(assetKind.getCacheType()));
+  }
+
+  private String providePodExternalUri(final Context context) {
+    TokenMatcher.State state = context.getAttributes().require(TokenMatcher.State.class);
+    String packageName = state.getTokens().get(PACKAGE_NAME_KEY);
+    String packageVersion = state.getTokens().get(PACKAGE_VERSION_KEY);
+    String specAssetName = PathUtils.buildNxrmSpecFilePath(packageName, packageVersion);
+
+    return facet(CocoapodsFacet.class).getAssetFormatAttribute(specAssetName, POD_REMOTE_ATTRIBUTE_NAME);
+  }
+
+  private Content storeSpecFile(final Content content, final String path) throws IOException {
+    String specFile = IOUtils.toString(content.openInputStream(), StandardCharsets.UTF_8);
+    String remoteUri;
+    try {
+      remoteUri = specFileProcessor.extractExternalUri(specFile).toString();
+    }
+    catch (InvalidSpecFileException e) {
+      log.warn("Invalid spec file: {}; {}", path, e.getMessage());
+      return null;
+    }
+
+    Content contentToStore = new SpecFileContent(content.getContentType(), content.getAttributes(), specFile);
+
+    return facet(CocoapodsFacet.class).getOrCreateAsset(
+        path,
+        contentToStore,
+        ImmutableMap.of(POD_REMOTE_ATTRIBUTE_NAME, remoteUri));
+  }
+
+  private Content storePodFile(final Content content, final Context context) throws IOException {
+    final String path = removeInitialSlashFromPath(context.getRequest().getPath());
+
+    TokenMatcher.State state = context.getAttributes().require(TokenMatcher.State.class);
+    String packageName = state.getTokens().get(PACKAGE_NAME_KEY);
+    String packageVersion = state.getTokens().get(PACKAGE_VERSION_KEY);
+
+    return facet(CocoapodsFacet.class).getOrCreateAsset(path, content, packageName, packageVersion);
+  }
+
+  private static class SpecFileContent extends Content {
+    public SpecFileContent(final String contentType, final AttributesMap attributesMap, final String specFile) {
+      super(new StringPayload(specFile, contentType), attributesMap);
+    }
   }
 }

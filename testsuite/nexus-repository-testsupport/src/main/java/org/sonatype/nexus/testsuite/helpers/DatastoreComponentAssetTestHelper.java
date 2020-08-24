@@ -41,6 +41,7 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.joda.time.DateTime;
 
 import static java.time.LocalDate.now;
+import static org.apache.commons.lang.StringUtils.stripStart;
 import static org.apache.commons.lang3.StringUtils.endsWith;
 import static org.apache.commons.lang3.StringUtils.indexOf;
 import static org.apache.commons.lang3.StringUtils.startsWith;
@@ -212,5 +213,10 @@ public class DatastoreComponentAssetTestHelper
   @Override
   public NestedAttributesMap componentAttributes(final Repository repository, final String namespace, final String name, final String version) {
     return findComponent(repository, namespace, name, version).attributes();
+  }
+
+  @Override
+  public String adjustedPath(final String path) {
+    return "/" + stripStart(path, "/");
   }
 }

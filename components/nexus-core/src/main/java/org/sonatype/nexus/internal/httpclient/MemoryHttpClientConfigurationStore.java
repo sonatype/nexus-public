@@ -96,6 +96,10 @@ public class MemoryHttpClientConfigurationStore
     @Nullable
     private Boolean shouldNormalizeUri;
 
+    @Valid
+    @Nullable
+    private Boolean disableContentCompression;
+
     @Nullable
     public ConnectionConfiguration getConnection() {
       return connection;
@@ -155,6 +159,16 @@ public class MemoryHttpClientConfigurationStore
       this.shouldNormalizeUri = normalizeUri;
     }
 
+    @Override
+    public Boolean getDisableContentCompression() {
+      return disableContentCompression;
+    }
+
+    @Override
+    public void setDisableContentCompression(final Boolean disableContentCompression) {
+      this.disableContentCompression = disableContentCompression;
+    }
+
     public MemoryHttpClientConfiguration copy() {
       try {
         MemoryHttpClientConfiguration copy = (MemoryHttpClientConfiguration) clone();
@@ -172,6 +186,7 @@ public class MemoryHttpClientConfigurationStore
           copy.redirectStrategy = redirectStrategy;
         }
         copy.shouldNormalizeUri = shouldNormalizeUri;
+        copy.disableContentCompression = disableContentCompression;
         return copy;
       }
       catch (CloneNotSupportedException e) {

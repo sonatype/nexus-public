@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus</groupId>
     <artifactId>nexus-components</artifactId>
-    <version>3.27.0-SNAPSHOT</version>
+    <version>3.28.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-base</artifactId>
@@ -92,7 +92,7 @@
 
     <dependency>
       <groupId>org.apache.velocity</groupId>
-      <artifactId>velocity</artifactId>
+      <artifactId>velocity-engine-core</artifactId>
     </dependency>
 
     <dependency>

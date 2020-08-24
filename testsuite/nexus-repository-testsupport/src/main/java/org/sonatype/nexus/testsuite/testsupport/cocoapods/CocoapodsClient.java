@@ -16,7 +16,7 @@ import java.net.URI;
 
 import org.sonatype.nexus.testsuite.testsupport.FormatClientSupport;
 
-import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -34,7 +34,7 @@ public class CocoapodsClient
     super(httpClient, httpClientContext, repositoryBaseUri);
   }
 
-  public HttpResponse fetch(final String path) throws IOException {
+  public CloseableHttpResponse fetch(final String path) throws IOException {
     return execute(new HttpGet(resolve(path)));
   }
 }

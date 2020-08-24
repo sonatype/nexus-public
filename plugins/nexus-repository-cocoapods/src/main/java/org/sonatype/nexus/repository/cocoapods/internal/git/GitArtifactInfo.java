@@ -10,36 +10,45 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.cocoapods.internal.pod;
+package org.sonatype.nexus.repository.cocoapods.internal.git;
 
-import java.net.URI;
+import javax.annotation.Nullable;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * @since 3.19
  */
-public class PodInfo
+public class GitArtifactInfo
 {
-  private String name;
+  private String host;
 
-  private String version;
+  private String vendor;
 
-  private URI uri;
+  private String repository;
 
-  public PodInfo(final String name, final String version, final URI uri) {
-    this.name = name;
-    this.version = version;
-    this.uri = uri;
+  private String ref;
+
+  public GitArtifactInfo(final String host, final String vendor, final String repository, @Nullable final String ref) {
+    this.host = checkNotNull(host);
+    this.vendor = checkNotNull(vendor);
+    this.repository = checkNotNull(repository);
+    this.ref = ref;
   }
 
-  public String getName() {
-    return name;
+  public String getHost() {
+    return host;
   }
 
-  public String getVersion() {
-    return version;
+  public String getVendor() {
+    return vendor;
   }
 
-  public URI getUri() {
-    return uri;
+  public String getRepository() {
+    return repository;
+  }
+
+  public String getRef() {
+    return ref;
   }
 }

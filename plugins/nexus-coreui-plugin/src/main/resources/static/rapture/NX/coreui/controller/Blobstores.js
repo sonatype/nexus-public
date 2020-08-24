@@ -115,7 +115,11 @@ Ext.define('NX.coreui.controller.Blobstores', {
         },
         //Note that this component is from the Task UI
         'combobox[name=property_fromGroup]': {
-          change: me.fromGroupChanged
+          change: me.removeGroupMemberTaskFromGroupChanged
+        },
+        'combobox[name=property_moveRepositoryName]': {
+          beforeRender: me.moveRepositoryTaskLoadStores,
+          change: me.moveRepositoryTaskRepositoryNameChanged
         }
       }
     });
@@ -343,7 +347,7 @@ Ext.define('NX.coreui.controller.Blobstores', {
     );
   },
 
-  fromGroupChanged: function(groupComboBox, newVal, old) {
+  removeGroupMemberTaskFromGroupChanged: function(groupComboBox, newVal, old) {
     var members = groupComboBox.up().query('[name=property_memberToRemove]')[0];
     var selectedGroup = groupComboBox.getStore().getById(newVal);
     var data = Ext.Array.map(selectedGroup.data.attributes.group.members, function(m) {return {name: m, id: m};});
@@ -351,6 +355,28 @@ Ext.define('NX.coreui.controller.Blobstores', {
     members.getStore().setData(data);
     if(!old) {
       members.reset();
+    }
+  },
+
+  moveRepositoryTaskLoadStores: function() {
+    this.getStore('Repository').load();
+    this.getStore('Blobstore').load();
+  },
+
+  moveRepositoryTaskRepositoryNameChanged: function(moveRepoComboBox, newVal, old) {
+    var me = this,
+        repoStore = me.getStore('Repository'),
+        blobstoreStore = me.getStore('Blobstore');
+        blobstoresCombo = moveRepoComboBox.up().query('[name=property_moveTargetBlobstore]')[0];
+    var selectedRepo = repoStore.findRecord('name', newVal);
+    var currentBlobStore = selectedRepo.data.attributes.storage.blobStoreName;
+    var validBlobstores = blobstoreStore.getRange().
+        filter(function(item) { return item.data.name !== currentBlobStore; }).
+        map(function(item) { return { name: item.data.name, id: item.data.name }; } );
+    blobstoresCombo.setValue(null);
+    blobstoresCombo.getStore().setData(validBlobstores);
+    if (!old) {
+      blobstoresCombo.reset();
     }
   }
 });

@@ -10,34 +10,36 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.cocoapods.internal;
+package org.sonatype.nexus.orient.raw.internal;
+
+import javax.inject.Named;
+import javax.inject.Singleton;
+
+import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.storage.Component;
+import org.sonatype.nexus.repository.storage.ComponentDirector;
 
 /**
- * @since 3.19
+ * @since 3.10
  */
-public class CocoapodsConfig
+@Named("raw")
+@Singleton
+public class RawComponentDirector
+    implements ComponentDirector
 {
-  private String gitHubApiUri;
-
-  private String bitbucketApiUri;
-
-  private String gitlabApiUri;
-
-  public CocoapodsConfig(final String gitHubApiUri, final String bitbucketApiUri, final String gitlabApiUri) {
-    this.gitHubApiUri = gitHubApiUri;
-    this.bitbucketApiUri = bitbucketApiUri;
-    this.gitlabApiUri = gitlabApiUri;
+  @Override
+  public boolean allowMoveTo(final Repository destination) {
+    return true;
   }
 
-  public String getGitHubApiUri() {
-    return gitHubApiUri;
+  @Override
+  public boolean allowMoveTo(final Component component, final Repository destination) {
+    return true;
   }
 
-  public String getBitbucketApiUri() {
-    return bitbucketApiUri;
-  }
-
-  public String getGitlabApiUri() {
-    return gitlabApiUri;
+  @Override
+  public boolean allowMoveFrom(final Repository source) {
+    return true;
   }
 }
+

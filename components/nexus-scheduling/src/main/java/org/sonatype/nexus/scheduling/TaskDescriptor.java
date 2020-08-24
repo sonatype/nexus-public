@@ -82,4 +82,6 @@ public interface TaskDescriptor
    * @since 3.15
    */
   boolean isRecoverable();
+
+  boolean allowConcurrentRun();
 }

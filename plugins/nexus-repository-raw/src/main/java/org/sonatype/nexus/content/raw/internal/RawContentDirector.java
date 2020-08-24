@@ -10,22 +10,22 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.raw.internal;
+package org.sonatype.nexus.content.raw.internal;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.storage.Component;
-import org.sonatype.nexus.repository.storage.ComponentDirector;
+import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.director.ContentDirector;
 
 /**
- * @since 3.10
+ * @since 3.next
  */
 @Named("raw")
 @Singleton
-public class RawComponentDirector
-    implements ComponentDirector
+public class RawContentDirector
+    implements ContentDirector
 {
   @Override
   public boolean allowMoveTo(final Repository destination) {
@@ -42,4 +42,3 @@ public class RawComponentDirector
     return true;
   }
 }
-

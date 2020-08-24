@@ -53,5 +53,9 @@ public interface HttpClientConfiguration
 
   void setNormalizeUri(final Boolean normalizeUri);
 
+  Boolean getDisableContentCompression();
+
+  void setDisableContentCompression(final Boolean disableContentCompression);
+
   HttpClientConfiguration copy();
 }

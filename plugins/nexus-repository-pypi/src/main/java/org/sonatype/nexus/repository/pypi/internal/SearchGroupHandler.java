@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.pypi.internal;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -30,19 +29,13 @@ import org.sonatype.nexus.repository.http.HttpStatus;
 import org.sonatype.nexus.repository.view.ContentTypes;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Payload;
-import org.sonatype.nexus.repository.view.Request;
-import org.sonatype.nexus.repository.view.Request.Builder;
 import org.sonatype.nexus.repository.view.Response;
-import org.sonatype.nexus.repository.view.payloads.BytesPayload;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
-
-import com.google.common.io.ByteStreams;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.http.HttpMethods.POST;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiSearchUtils.buildSearchResponse;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiSearchUtils.parseSearchResponse;
-import static org.sonatype.nexus.repository.view.ViewUtils.copyLocalContextAttributes;
 
 /**
  * Support for merging PyPI XML-RPC search results together.
@@ -74,7 +67,7 @@ class SearchGroupHandler
     checkNotNull(context);
     checkNotNull(dispatched);
 
-    Context replayableContext = buildReplayableContext(context);
+    Context replayableContext = context.replayable();
     GroupFacet groupFacet = context.getRepository().facet(GroupFacet.class);
 
     Map<String, PyPiSearchResult> results = new LinkedHashMap<>();
@@ -107,30 +100,4 @@ class SearchGroupHandler
     }
   }
 
-  /**
-   * Builds a context that contains a request that can be "replayed" with its post body content. Since we're repeating
-   * the same post request to all the search endpoints, we need to have a new request instance with a payload we can
-   * read multiple times.
-   */
-  private Context buildReplayableContext(final Context context) throws IOException {
-    checkNotNull(context);
-    Request request = checkNotNull(context.getRequest());
-    Payload payload = checkNotNull(request.getPayload());
-    try (InputStream in = payload.openInputStream()) {
-      byte[] content = ByteStreams.toByteArray(in);
-      Context replayableContext = new Context(context.getRepository(),
-          new Builder()
-              .attributes(request.getAttributes())
-              .headers(request.getHeaders())
-              .action(request.getAction())
-              .path(request.getPath())
-              .parameters(request.getParameters())
-              .payload(new BytesPayload(content, payload.getContentType()))
-              .build());
-
-      copyLocalContextAttributes(context, replayableContext);
-
-      return replayableContext;
-    }
-  }
 }

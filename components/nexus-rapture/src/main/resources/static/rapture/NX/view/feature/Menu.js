@@ -21,7 +21,7 @@ Ext.define('NX.view.feature.Menu', {
   extend: 'Ext.tree.Panel',
   alias: 'widget.nx-feature-menu',
 
-  width: 242,
+  width: 300,
   ui: 'nx-feature-menu',
 
   stateful: true,

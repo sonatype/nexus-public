@@ -10,15 +10,20 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.cocoapods.internal.pod.git;
+package org.sonatype.nexus.repository.cocoapods.internal.git;
 
 import java.net.URI;
 
-import org.sonatype.nexus.repository.cocoapods.internal.CocoapodsConfig;
+import javax.annotation.Nullable;
+import javax.inject.Inject;
+import javax.inject.Named;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * @since 3.19
  */
+@Named
 public class GitApiHelper
 {
   private static final String GITHUB_API_GET_REPO_SNAPSHOT_URL_TEMPLATE = "%1$s/repos/%2$s/%3$s/tarball/%4$s";
@@ -29,10 +34,28 @@ public class GitApiHelper
 
   private static final String DEFAULT_BRANCH = "master";
 
-  private GitApiHelper() {}
+  private String githubApiUri;
 
-  public static URI buildApiUri(final GitArtifactInfo info, final CocoapodsConfig cocoapodsConfig) {
-    GitProviderConfig config = prepareConfig(info.getHost(), cocoapodsConfig);
+  private String bitbucketApiUri;
+
+  private String gitlabApiUri;
+
+  @Inject
+  public GitApiHelper(
+      @Named("${nexus.cocoapods.gitHubApiUri:-https://api.github.com}") final String githubApiUri,
+      @Named("${nexus.cocoapods.bitbucketApiUri:-https://bitbucket.org}") final String bitbucketApiUri,
+      @Named("${nexus.cocoapods.gitlabApiUri:-https://gitlab.com}") final String gitlabApiUri) {
+
+    this.githubApiUri = checkNotNull(githubApiUri);
+    this.bitbucketApiUri = checkNotNull(bitbucketApiUri);
+    this.gitlabApiUri = checkNotNull(gitlabApiUri);
+  }
+
+  public URI buildDownloadURI(final URI gitRepositoryUri, @Nullable final String ref)
+  {
+    GitArtifactInfo info = GitRepoUriParser.parseGitRepoUri(gitRepositoryUri, ref);
+
+    GitProviderConfig config = prepareConfig(info.getHost());
 
     String downloadLink = String.format(
         config.template,
@@ -44,22 +67,22 @@ public class GitApiHelper
     return URI.create(downloadLink);
   }
 
-  private static GitProviderConfig prepareConfig(String host, CocoapodsConfig cocoapodsConfig) {
+  private GitProviderConfig prepareConfig(final String host) {
     switch (host) {
       case GitConstants.GITHUB_HOST:
         return new GitProviderConfig(
             GITHUB_API_GET_REPO_SNAPSHOT_URL_TEMPLATE,
-            cocoapodsConfig.getGitHubApiUri(),
+            githubApiUri,
             "");
       case GitConstants.BITBUCKET_HOST:
         return new GitProviderConfig(
             BITBUCKET_API_GET_REPO_SNAPSHOT_URL_TEMPLATE,
-            cocoapodsConfig.getBitbucketApiUri(),
+            bitbucketApiUri,
             DEFAULT_BRANCH);
       case GitConstants.GITLAB_HOST:
         return new GitProviderConfig(
             GITLAB_API_GET_REPO_SNAPSHOT_URL_TEMPLATE,
-            cocoapodsConfig.getGitlabApiUri(),
+            gitlabApiUri,
             DEFAULT_BRANCH);
       default:
         throw new IllegalArgumentException("invalid host: " + host);
@@ -74,7 +97,7 @@ public class GitApiHelper
 
     String defaultBranch;
 
-    GitProviderConfig(String template, String apiUri, String defaultBranch) {
+    GitProviderConfig(final String template, final String apiUri, final String defaultBranch) {
       this.template = template;
       this.apiUri = apiUri;
       this.defaultBranch = defaultBranch;

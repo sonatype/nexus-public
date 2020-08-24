@@ -172,4 +172,10 @@ public abstract class TaskDescriptorSupport
   public boolean isRecoverable() {
     return requestRecovery;
   }
+
+  @Override
+  public boolean allowConcurrentRun() {
+    return true;
+  }
+
 }

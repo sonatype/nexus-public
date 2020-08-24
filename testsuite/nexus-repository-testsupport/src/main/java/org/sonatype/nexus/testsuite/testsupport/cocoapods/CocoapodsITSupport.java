@@ -30,8 +30,6 @@ public class CocoapodsITSupport
 
   protected static final String GITHUB_API_HOST = "localhost:" + REMOTE_PORT_GITHUB;
 
-  protected static final String GITHUB_SPECS_MASTER_REPO = "https://github.com/cocoapods/specs/";
-
   protected static final String NEXUS_PROPERTIES_FILE = "etc/nexus-default.properties";
 
   protected static final String POD_FILENAME = "test_pod-1.0.0.tar.gz";
@@ -52,18 +50,17 @@ public class CocoapodsITSupport
       + POD_NAME
       + "/"
       + POD_VERSION
-      + "/http/localhost:%s/"
-      + POD_GITHUB_API_PATH
+      + "/"
+      + POD_VERSION
       + ".tar.gz";
 
   protected static final String POD_HTTP_PATH = "pods/"
       + POD_NAME
       + "/"
       + POD_VERSION
-      + "/http/localhost:%s/"
-      + POD_REMOTE_HTTP_PATH;
+      + "/1.0.0.tar.gz";
 
-  protected static final String SPEC_PATH = "Specs/";
+  protected static final String SPEC_PATH = "Specs/0/0/b/test_pod/1.0.0/";
 
   protected static final String NESTED_PROXY_REPO_NAME = "nested-cocoapods-proxy";
 

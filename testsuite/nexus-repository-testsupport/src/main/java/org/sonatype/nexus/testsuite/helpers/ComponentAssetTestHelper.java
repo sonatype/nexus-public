@@ -116,6 +116,11 @@ public interface ComponentAssetTestHelper
    */
   NestedAttributesMap componentAttributes(Repository repository, String namespace, String name, String version);
 
+  /**
+   * Adjust {@code path} for differences between Orient and Datastore
+   */
+  String adjustedPath(final String path);
+
   static class AssetNotFoundException
       extends RuntimeException
   {

@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.cocoapods;
 
 import java.io.IOException;
+import java.util.Map;
 
 import javax.annotation.Nullable;
 
@@ -27,9 +28,25 @@ public interface CocoapodsFacet
     extends Facet
 {
   @Nullable
-  Content get(final String path);
+  Content get(final String assetPath);
 
-  Content getOrCreateAsset(final String path, final Content content, boolean toAttachComponent) throws IOException;
+  boolean delete(final String assetPath) throws IOException;
 
-  boolean delete(final String path) throws IOException;
+  Content getOrCreateAsset(final String assetPath,
+                           final Content content,
+                           final String componentName,
+                           final String componentVersion)
+      throws IOException;
+
+  Content getOrCreateAsset(final String assetPath,
+                           final Content content,
+                           @Nullable final Map<String, String> formatAttributes)
+      throws IOException;
+
+  Content getOrCreateAsset(final String assetPath,
+                           final Content content)
+      throws IOException;
+
+  @Nullable
+  <T> T getAssetFormatAttribute(final String assetPath, final String attributeName);
 }
