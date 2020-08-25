@@ -6,7 +6,7 @@ executors:
       - image: circleci/openjdk:8-jdk
     working_directory: ~/nexus-public
     environment:
-      MAVEN_OPTS: -Xmx2700m
+      MAVEN_OPTS: -Xmx2048m
       OPENSSL_CONF: /
 
 jobs:
