@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.maven.internal.orient;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -44,6 +43,7 @@ import org.sonatype.nexus.repository.maven.VersionPolicy;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.maven.internal.MavenModels;
 import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataRebuilder;
+import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils;
 import org.sonatype.nexus.repository.maven.internal.validation.MavenMetadataContentValidator;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
@@ -73,6 +73,7 @@ import org.apache.maven.model.Model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Boolean.TRUE;
+import static java.util.Collections.emptySet;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.*;
@@ -569,23 +570,19 @@ public class MavenFacetImpl
     }
   }
 
-
   @Override
   @TransactionalDeleteBlob
-  public Set<String> maybeDeleteOrFlagToRebuildMetadata(final Bucket bucket, final MavenPath path) throws IOException {
+  public Set<String> maybeDeleteOrFlagToRebuildMetadata(final Bucket bucket, final String groupId, final String artifactId, final String baseVersion)
+      throws IOException
+  {
+    checkNotNull(groupId);
+    final MavenPath path = MetadataUtils.metadataPath(groupId, artifactId, baseVersion);
     final StorageTx tx = UnitOfWork.currentTx();
     final Asset metadata = findAsset(tx, bucket, path);
-    final Set<String> deletePaths = Sets.newHashSet();
     if (metadata != null) {
       final Builder query = builder();
-      final NestedAttributesMap mavenAttrs = metadata.attributes().child(Maven2Format.NAME);
-      final String groupId = mavenAttrs.get(P_GROUP, String.class);
-      final String artifactId = mavenAttrs.get(P_NAME, String.class);
-      final String baseVersion = mavenAttrs.get(P_BASE_VERSION, String.class);
 
-      if (isNotEmpty(groupId)) {
-        query.where(P_GROUP).eq(groupId);
-      }
+      query.where(P_GROUP).eq(groupId);
       if (isNotEmpty(artifactId)) {
         query.and(P_NAME).eq(artifactId);
       }
@@ -595,27 +592,15 @@ public class MavenFacetImpl
 
       long count = tx.countComponents(query.build(), singletonList(getRepository()));
       if (count == 0) {
-        deletePaths.addAll(deleteWithHashes(this, path));
+        return deleteWithHashes(this, path);
       }
       else {
         addRebuildFlag(metadata);
         tx.saveAsset(metadata);
+        return emptySet();
       }
     }
-    return deletePaths;
-  }
-
-  @Override
-  @TransactionalDeleteBlob
-  public Set<String> maybeDeleteOrFlagToRebuildMetadata(final Collection<MavenPath> paths) throws IOException {
-    final StorageTx tx = UnitOfWork.currentTx();
-    final Bucket bucket = tx.findBucket(getRepository());
-
-    Set<String> deletedPaths = Sets.newHashSet();
-    for (MavenPath path : paths) {
-      deletedPaths.addAll(maybeDeleteOrFlagToRebuildMetadata(bucket, path));
-    }
-    return deletedPaths;
+    return emptySet();
   }
 
   private boolean deleteArtifact(final MavenPath path, final StorageTx tx) {
