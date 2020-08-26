@@ -117,7 +117,12 @@ Ext.define('NX.coreui.view.repository.facet.GroupFacet', {
           displayField: 'name',
           emptyText: 'Select...',
           queryMode: 'local',
-          valueField: 'name'
+          valueField: 'name',
+          triggers: {
+            clear: {
+              cls: 'x-form-clear-trigger', weight: -1, handler: Ext.form.field.ComboBox.prototype.clearValue,
+            }
+          }
         };
 
     var groupMembersConfig = {
