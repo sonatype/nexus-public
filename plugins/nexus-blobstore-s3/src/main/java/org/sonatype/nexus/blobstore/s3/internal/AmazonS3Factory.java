@@ -27,6 +27,7 @@ import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.auth.BasicSessionCredentials;
 import com.amazonaws.auth.STSAssumeRoleSessionCredentialsProvider;
+import com.amazonaws.metrics.AwsSdkMetrics;
 import com.amazonaws.regions.DefaultAwsRegionProviderChain;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
@@ -59,9 +60,17 @@ public class AmazonS3Factory
 
   private final int connectionPoolSize;
 
+  private final boolean cloudWatchMetricsEnabled;
+
+  private final String cloudWatchMetricsNamespace;
+
   @Inject
-  public AmazonS3Factory(@Named("${nexus.s3.connection.pool:--1}") final int connectionPoolSize) {
+  public AmazonS3Factory(@Named("${nexus.s3.connection.pool:--1}") final int connectionPoolSize,
+                         @Named("${nexus.s3.cloudwatchmetrics.enabled:-false}") final boolean cloudWatchMetricsEnabled,
+                         @Named("${nexus.s3.cloudwatchmetrics.namespace:-nexus-blobstore-s3}") final String cloudWatchMetricsNamespace) {
     this.connectionPoolSize = connectionPoolSize;
+    this.cloudWatchMetricsEnabled = cloudWatchMetricsEnabled;
+    this.cloudWatchMetricsNamespace = cloudWatchMetricsNamespace;
   }
 
   public AmazonS3 create(final BlobStoreConfiguration blobStoreConfiguration) {
@@ -73,12 +82,13 @@ public class AmazonS3Factory
     String signerType = blobStoreConfiguration.attributes(CONFIG_KEY).get(SIGNERTYPE_KEY, String.class);
     String forcePathStyle = blobStoreConfiguration.attributes(CONFIG_KEY).get(FORCE_PATH_STYLE_KEY, String.class);
 
+    AWSCredentialsProvider credentialsProvider = null;
     if (!isNullOrEmpty(accessKeyId) && !isNullOrEmpty(secretAccessKey)) {
       String sessionToken = blobStoreConfiguration.attributes(CONFIG_KEY).get(SESSION_TOKEN_KEY, String.class);
       AWSCredentials credentials = buildCredentials(accessKeyId, secretAccessKey, sessionToken);
 
       String assumeRole = blobStoreConfiguration.attributes(CONFIG_KEY).get(ASSUME_ROLE_KEY, String.class);
-      AWSCredentialsProvider credentialsProvider = buildCredentialsProvider(credentials, region, assumeRole);
+      credentialsProvider = buildCredentialsProvider(credentials, region, assumeRole);
 
       builder = builder.withCredentials(credentialsProvider);
     }
@@ -104,6 +114,18 @@ public class AmazonS3Factory
     builder = builder.withPathStyleAccessEnabled(Boolean.parseBoolean(forcePathStyle));
 
     builder.withBlobStoreConfig(blobStoreConfiguration);
+
+    if (cloudWatchMetricsEnabled) {
+      if (credentialsProvider != null) {
+          AwsSdkMetrics.setCredentialProvider(credentialsProvider);
+      }
+      AwsSdkMetrics.setMetricNameSpace(cloudWatchMetricsNamespace);
+      if (!isNullOrEmptyOrDefault(region)) {
+        AwsSdkMetrics.setRegion(region);
+      }
+      AwsSdkMetrics.enableDefaultMetrics();
+      log.info("CloudWatch metrics enabled using namespace {}", cloudWatchMetricsNamespace);
+    }
 
     return builder.build();
   }

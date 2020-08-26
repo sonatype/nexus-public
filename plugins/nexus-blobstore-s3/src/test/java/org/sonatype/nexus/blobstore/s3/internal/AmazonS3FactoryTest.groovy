@@ -24,7 +24,7 @@ class AmazonS3FactoryTest
     extends Specification
 {
 
-  AmazonS3Factory amazonS3Factory = new AmazonS3Factory(-1)
+  AmazonS3Factory amazonS3Factory = new AmazonS3Factory(-1, false, '')
 
   def config = new MockBlobStoreConfiguration()
 
