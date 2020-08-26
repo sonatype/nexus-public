@@ -27,9 +27,9 @@ import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.EntityAdapter;
+import org.sonatype.nexus.orient.maven.MavenFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
-import org.sonatype.nexus.orient.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.maven.internal.Maven2MavenPathParser;
@@ -77,7 +77,6 @@ import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_ARTIFACT_ID;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_GROUP_ID;
-import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
 import static org.sonatype.nexus.repository.maven.internal.orient.PurgeUnusedSnapshotsFacetImplTest.TestData.testData;
 import static org.sonatype.nexus.repository.storage.Asset.CHECKSUM;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
@@ -238,25 +237,25 @@ public class PurgeUnusedSnapshotsFacetImplTest
   private void assertAllMetadataDeletedOrFlaggedToRebuild() throws Exception {
     InOrder inOrder = inOrder(mavenFacet);
 
-    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("my.company", "foo", "1.0-SNAPSHOT"));
-    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("my.company", "foo", null));
-    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("my.company", null, null));
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, "my.company", "foo", "1.0-SNAPSHOT");
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, "my.company", "foo");
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, "my.company");
 
-    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("my.company", "bar", "2.0-SNAPSHOT"));
-    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("my.company", "bar", null));
-    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("my.company", null, null));
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, "my.company", "bar", "2.0-SNAPSHOT");
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, "my.company", "bar");
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, "my.company");
 
-    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("this.company", "baz", "3.0-SNAPSHOT"));
-    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("this.company", "baz", null));
-    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("this.company", null, null));
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, "this.company", "baz", "3.0-SNAPSHOT");
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, "this.company", "baz");
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, "this.company");
 
-    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("my.company", "foo", "0.1-SNAPSHOT"));
-    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("my.company", "foo", null));
-    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("my.company", null, null));
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, "my.company", "foo", "0.1-SNAPSHOT");
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, "my.company", "foo");
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, "my.company");
 
-    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("your.company", "biz", "1.0-SNAPSHOT"));
-    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("your.company", "biz", null));
-    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, metadataPath("your.company", null, null));
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, "your.company", "biz", "1.0-SNAPSHOT");
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, "your.company", "biz");
+    inOrder.verify(mavenFacet).maybeDeleteOrFlagToRebuildMetadata(bucket, "your.company");
 
     inOrder.verifyNoMoreInteractions();
   }

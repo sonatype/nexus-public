@@ -14,7 +14,6 @@ package org.sonatype.nexus.orient.maven;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
@@ -99,15 +98,30 @@ public interface MavenFacet
   boolean exists(final MavenPath path);
 
   /**
-   * @since 3.24
-   * @param path to the maven component that might need metadata rebuilt or deleted
+   * @since 3.next
+   * @param the tuple of group Id, artifact Id, and base Version
+   * @return paths there were deleted
    */
-  Set<String> maybeDeleteOrFlagToRebuildMetadata(final Bucket bucket, final MavenPath path) throws IOException;
+  Set<String> maybeDeleteOrFlagToRebuildMetadata(final Bucket bucket, final String groupId, final String artifactId, final String baseVersion)
+      throws IOException;
 
   /**
-   * @since 3.24
-   * @param paths to the maven components that might need metadata rebuilt or deleted
-   * @return paths there were delete
+   * @since 3.next
+   * @param the tuple of group Id, and artifact Id
+   * @return paths there were deleted
    */
-  Set<String> maybeDeleteOrFlagToRebuildMetadata(final Collection<MavenPath> paths) throws IOException;
+  default Set<String> maybeDeleteOrFlagToRebuildMetadata(final Bucket bucket, final String groupId, final String artifactId)
+      throws IOException{
+    return maybeDeleteOrFlagToRebuildMetadata(bucket, groupId, artifactId, null);
+  }
+
+  /**
+   * @since 3.next
+   * @param the group Id
+   * @return paths there were deleted
+   */
+  default Set<String> maybeDeleteOrFlagToRebuildMetadata(final Bucket bucket, final String groupId)
+      throws IOException{
+    return maybeDeleteOrFlagToRebuildMetadata(bucket, groupId, null, null);
+  }
 }

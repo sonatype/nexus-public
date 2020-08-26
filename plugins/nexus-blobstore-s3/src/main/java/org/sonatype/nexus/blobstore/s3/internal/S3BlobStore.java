@@ -156,7 +156,7 @@ public class S3BlobStore
   @Inject
   public S3BlobStore(final AmazonS3Factory amazonS3Factory,
                      final BlobIdLocationResolver blobIdLocationResolver,
-                     @Named("${nexus.s3.uploaderName:-parallelUploader}") final S3Uploader uploader,
+                     @Named("${nexus.s3.uploaderName:-producerConsumerUploader}") final S3Uploader uploader,
                      @Named("${nexus.s3.copierName:-parallelCopier}") final S3Copier copier,
                      @Named("${nexus.s3.preferExpire:-false}") final boolean preferExpire,
                      final S3BlobStoreMetricsStore storeMetrics,

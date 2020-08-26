@@ -29,7 +29,7 @@
 
   <properties>
     <bouncycastle.version>1.65</bouncycastle.version>
-    <apache-shiro.version>1.5.3</apache-shiro.version>
+    <apache-shiro.version>1.6.0</apache-shiro.version>
   </properties>
 
   <dependencyManagement>

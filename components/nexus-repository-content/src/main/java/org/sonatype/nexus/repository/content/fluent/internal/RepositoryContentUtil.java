@@ -25,7 +25,7 @@ import static java.util.stream.Collectors.toSet;
 /**
  * Utility methods used by both {@link FluentAssetsImpl} and {@link FluentComponentsImpl}
  *
- * @since 3.next
+ * @since 3.27
  */
 final class RepositoryContentUtil
 {

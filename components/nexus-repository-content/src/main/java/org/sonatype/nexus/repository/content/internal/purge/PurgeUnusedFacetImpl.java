@@ -52,6 +52,6 @@ public class PurgeUnusedFacetImpl
     int purgedComponents = componentStore.purgeNotRecentlyDownloaded(contentRepositoryId, numberOfDays);
     log.debug("Deleted {} unused components and their assets", purgedComponents);
 
-    log.info("Purged {} unused components from repository {}", getRepository().getName(), purgedComponents);
+    log.info("Purged {} unused components from repository {}", purgedComponents, getRepository().getName());
   }
 }

@@ -16,7 +16,7 @@ import java.util.Date;
 
 /**
  *
- * @since 3.next
+ * @since 3.27
  */
 public interface RepositoryMoveConfiguration
 {

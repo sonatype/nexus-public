@@ -41,7 +41,7 @@ public interface AuthorizingRepositoryManager
   /**
    * Returns the repository if the user has administrative read privileges.
    *
-   * @since 3.next
+   * @since 3.27
    */
   Optional<Repository> getRepositoryWithAdmin(String repositoryName);
 

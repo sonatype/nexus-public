@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.content.Component;
 /**
  * Event sent just before a {@link Component} is deleted.
  *
- * @since 3.next
+ * @since 3.27
  */
 public class ComponentPreDeleteEvent
     extends ComponentEvent
