@@ -35,6 +35,7 @@ import org.sonatype.nexus.common.app.ApplicationDirectories
 import org.sonatype.nexus.common.collect.NestedAttributesMap
 import org.sonatype.nexus.extdirect.DirectComponentSupport
 import org.sonatype.nexus.extdirect.model.StoreLoadParameters
+import org.sonatype.nexus.rapture.PasswordPlaceholder
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.security.RepositoryPermissionChecker
 import org.sonatype.nexus.security.privilege.ApplicationPermission
@@ -187,8 +188,14 @@ class BlobStoreComponent
   @ExceptionMetered
   @RequiresPermissions('nexus:blobstores:update')
   @Validate(groups = [Update, Default])
-  BlobStoreXO update(final @NotNull @Valid BlobStoreXO blobStore) {
-    return asBlobStoreXO(blobStoreManager.update(asConfiguration(blobStore)))
+  BlobStoreXO update(final @NotNull @Valid BlobStoreXO blobStoreXO) {
+    BlobStore blobStore = blobStoreManager.get(blobStoreXO.name)
+    if (PasswordPlaceholder.is(blobStoreXO?.attributes?.s3?.secretAccessKey)) {
+      //Did not update the password, just use the password we already have
+      blobStoreXO.attributes.s3.secretAccessKey =
+          blobStore.blobStoreConfiguration.attributes?.s3?.secretAccessKey
+    }
+    return asBlobStoreXO(blobStoreManager.update(asConfiguration(blobStoreXO)))
   }
 
   @DirectMethod
@@ -244,7 +251,7 @@ class BlobStoreComponent
     def blobStoreXO = new BlobStoreXO(
         name: blobStore.blobStoreConfiguration.name,
         type: blobStore.blobStoreConfiguration.type,
-        attributes: blobStore.blobStoreConfiguration.attributes,
+        attributes: filterAttributes(blobStore.blobStoreConfiguration.attributes),
         repositoryUseCount: repositoryManager.blobstoreUsageCount(blobStore.blobStoreConfiguration.name),
         blobStoreUseCount: blobStoreManager.blobStoreUsageCount(blobStore.blobStoreConfiguration.name),
         inUse: repositoryManager.isBlobstoreUsed(blobStore.blobStoreConfiguration.name),
@@ -290,6 +297,15 @@ class BlobStoreComponent
   List<FillPolicyXO> fillPolicies() {
     fillPolicies.collect { id, policy ->
       new FillPolicyXO(id: id, name: policy.name)
+    }
+  }
+
+  Map<String, Map<String, Object>> filterAttributes(Map<String, Map<String, Object>> attributes) {
+    if (attributes?.s3?.secretAccessKey != null) {
+      return [*:attributes, s3: [*:attributes.s3, secretAccessKey: PasswordPlaceholder.get()]]
+    }
+    else {
+      return attributes
     }
   }
 }

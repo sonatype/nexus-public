@@ -22,6 +22,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreMetrics
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup
 import org.sonatype.nexus.blobstore.group.BlobStoreGroupService
 import org.sonatype.nexus.common.app.ApplicationDirectories
+import org.sonatype.nexus.rapture.PasswordPlaceholder
 import org.sonatype.nexus.repository.manager.RepositoryManager
 
 import spock.lang.Specification
@@ -230,5 +231,29 @@ class BlobStoreComponentTest
       blobStoreXO.name == 'test'
       blobStoreXO.type == null
       0 * blobStore.getMetrics()
+  }
+
+  def 'updating a blobstore with the password placeholder does not alter the secret access key'() {
+    given: 'A blobstore update request'
+      def originalSecret = 'hello'
+      BlobStoreXO blobStoreXO = new BlobStoreXO(name: 'myblobs', type: 'S3',
+          attributes: [s3: [accessKeyId: 'test', secretAccessKey: PasswordPlaceholder.get()]])
+      BlobStoreConfiguration existingConfig = new MockBlobStoreConfiguration(name: 'myblobs', type: 'S3',
+          attributes: [s3: [accessKeyId: 'test', secretAccessKey: originalSecret]])
+      BlobStore blobStore = Mock()
+      1 * blobStoreManager.get('myblobs') >> blobStore
+      1 * blobStoreManager.newConfiguration() >> new MockBlobStoreConfiguration();
+
+    when: 'The blobstore is updated'
+      def updatedXO = blobStoreComponent.update(blobStoreXO)
+
+    then: 'The blobstore is updated with the original secret access key'
+      _ * blobStore.getBlobStoreConfiguration() >> existingConfig
+      _ * blobStore.getMetrics() >> Mock(BlobStoreMetrics)
+      1 * blobStoreManager.update(_) >> { args ->
+        assert args[0].attributes.s3.secretAccessKey == originalSecret
+        blobStore
+      }
+      updatedXO.attributes.s3.secretAccessKey == PasswordPlaceholder.get()
   }
 }
