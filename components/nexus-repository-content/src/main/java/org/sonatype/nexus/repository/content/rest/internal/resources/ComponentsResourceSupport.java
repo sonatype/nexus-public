@@ -37,7 +37,7 @@ import static org.sonatype.nexus.repository.content.rest.internal.resources.Comp
  * Support class for {@link ComponentsResource} which fetches and returns only components that the user is permitted
  * to view according to {@link ContentAuthHelper#checkPathPermissions(String, String, String...)}
  *
- * @since 3.next
+ * @since 3.27
  */
 abstract class ComponentsResourceSupport
     extends ComponentSupport

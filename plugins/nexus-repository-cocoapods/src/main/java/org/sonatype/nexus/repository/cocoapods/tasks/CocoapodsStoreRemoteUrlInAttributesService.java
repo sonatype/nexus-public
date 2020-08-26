@@ -35,7 +35,7 @@ import static org.sonatype.nexus.repository.cocoapods.upgrade.CocoapodsUpgrade_1
  * Instantiates the change download URL storage method task based on the existence of a marker
  * file created by the upgrade {@link CocoapodsUpgrade_1_1}.
  *
- * @since 3.next
+ * @since 3.27
  */
 @Named
 @Singleton

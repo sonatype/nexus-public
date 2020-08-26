@@ -28,7 +28,7 @@ import org.sonatype.nexus.orient.DatabaseUpgradeSupport;
 /**
  * Upgrade step to store remote api URI to the format attribute of the spec file
  *
- * @since 3.next
+ * @since 3.27
  */
 @Named
 @Singleton

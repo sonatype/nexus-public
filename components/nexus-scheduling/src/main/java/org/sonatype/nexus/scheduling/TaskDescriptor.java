@@ -46,7 +46,7 @@ public interface TaskDescriptor
   List<FormField> getFormFields();
 
   /**
-   * @since 3.next
+   * @since 3.27
    */
   TaskConfiguration createTaskConfiguration();
 

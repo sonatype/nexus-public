@@ -22,7 +22,7 @@ import org.apache.commons.lang.StringUtils;
 import static org.sonatype.nexus.repository.cocoapods.internal.git.GitConstants.GITHUB_POD_EXTENSION;
 
 /**
- * @since 3.next
+ * @since 3.27
  */
 public class PathUtils
 {

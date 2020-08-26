@@ -32,7 +32,7 @@ import static org.sonatype.nexus.common.text.Strings2.lower;
 /**
  * Support class for format content stores that send events.
  *
- * @since 3.next
+ * @since 3.27
  */
 public abstract class ContentStoreEventSupport<T extends ContentDataAccess>
     extends ContentStoreSupport<T>

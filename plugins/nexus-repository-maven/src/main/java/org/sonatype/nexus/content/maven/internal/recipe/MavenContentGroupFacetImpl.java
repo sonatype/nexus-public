@@ -73,7 +73,7 @@ import static java.util.stream.Collectors.toList;
 /**
  * Maven2 specific implementation of {@link GroupFacetImpl} using the content store.
  *
- * @since 3.next
+ * @since 3.27
  */
 @Named
 public class MavenContentGroupFacetImpl
