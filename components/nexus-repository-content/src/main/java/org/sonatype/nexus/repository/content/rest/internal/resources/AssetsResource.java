@@ -55,7 +55,7 @@ import static org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO.fromStri
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 
 /**
- * @since 3.next
+ * @since 3.27
  */
 @FeatureFlag(name = "nexus.datastore.enabled")
 @Named

@@ -40,7 +40,7 @@ import com.google.common.eventbus.Subscribe
 /**
  * Repository {@link Asset} {@link Webhook}.
  *
- * @since 3.next
+ * @since 3.27
  */
 @FeatureFlag(name = "nexus.datastore.enabled")
 @Named

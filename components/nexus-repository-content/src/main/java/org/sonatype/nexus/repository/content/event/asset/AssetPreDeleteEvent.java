@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.content.Asset;
 /**
  * Event sent just before an {@link Asset} is deleted.
  *
- * @since 3.next
+ * @since 3.27
  */
 public class AssetPreDeleteEvent
     extends AssetEvent

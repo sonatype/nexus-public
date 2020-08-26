@@ -42,7 +42,7 @@ import static com.google.common.base.Preconditions.checkNotNull
 /**
  * Repository {@link Component} {@link Webhook}.
  *
- * @since 3.next
+ * @since 3.27
  */
 @FeatureFlag(name = "nexus.datastore.enabled")
 @Named

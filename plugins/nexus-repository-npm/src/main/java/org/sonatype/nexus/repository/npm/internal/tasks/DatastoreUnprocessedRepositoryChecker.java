@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.npm.internal.tasks.ReindexNpmRepositoryManager.UnprocessedRepositoryChecker;
 
 /**
- * @since 3.next
+ * @since 3.27
  */
 @Named
 @Singleton

@@ -20,7 +20,7 @@ import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
 /**
  * Task descriptor for {@link CocoapodsStoreRemoteUrlInAttributesTask}.
  *
- * @since 3.next
+ * @since 3.27
  */
 @Named
 @Singleton

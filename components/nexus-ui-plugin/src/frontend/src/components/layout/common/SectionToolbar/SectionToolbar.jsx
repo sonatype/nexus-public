@@ -16,7 +16,7 @@ import classNames from 'classnames';
 import './SectionToolbar.scss';
 
 /**
- * @since 3.next
+ * @since 3.27
  *
  * This component must be used within a Section component.
  */

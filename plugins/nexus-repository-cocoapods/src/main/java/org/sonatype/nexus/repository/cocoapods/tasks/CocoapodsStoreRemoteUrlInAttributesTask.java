@@ -57,7 +57,7 @@ import static org.sonatype.nexus.repository.storage.Query.builder;
 /**
  * NEXUS-24835: Move download URL from pod asset name to the format attribute of the spec file".
  *
- * @since 3.next
+ * @since 3.27
  */
 @Named
 public class CocoapodsStoreRemoteUrlInAttributesTask

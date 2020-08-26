@@ -25,7 +25,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 /**
- * @since 3.next
+ * @since 3.27
  */
 @RunWith(JUnitParamsRunner.class)
 public class PathUtilsTest

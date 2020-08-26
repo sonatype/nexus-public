@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Event sent just before a large number of {@link Asset}s without components are purged.
  *
- * @since 3.next
+ * @since 3.27
  */
 public class AssetPrePurgeEvent
     extends ContentStoreEvent
