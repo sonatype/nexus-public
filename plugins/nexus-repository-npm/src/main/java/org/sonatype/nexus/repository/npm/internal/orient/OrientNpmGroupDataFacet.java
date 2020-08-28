@@ -28,11 +28,11 @@ import org.sonatype.nexus.common.io.Cooperation;
 import org.sonatype.nexus.common.io.CooperationFactory;
 import org.sonatype.nexus.common.stateguard.Guarded;
 import org.sonatype.nexus.repository.Facet.Exposed;
+import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.config.Configuration;
+import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.group.GroupFacetImpl;
-import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageId;
 import org.sonatype.nexus.repository.npm.internal.NpmPaths;
@@ -46,7 +46,6 @@ import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalTouchBlob;
-import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Payload;
@@ -54,7 +53,6 @@ import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
-import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.AllowConcurrentEvents;
@@ -84,16 +82,20 @@ import static org.sonatype.nexus.repository.view.Content.applyToAsset;
 import static org.sonatype.nexus.repository.view.Content.maintainLastModified;
 
 /**
- * NPM specific implementation of {@link GroupFacetImpl} allowing for {@link Cooperation}, merging and caching.
+ * NPM facet for npm data management in group repositories allowing for {@link Cooperation}, merging and caching.
+ * Use internally regular {@link GroupFacetImpl} in OSS mode and {@see GroupWriteFacetImpl} from nexus-group-deploy package
+ * in PRO mode which allows push in selected hosted repository through group.
  *
  * @since 3.15
  */
 @Named
 @Exposed
-public class OrientNpmGroupFacet
-    extends GroupFacetImpl
+public class OrientNpmGroupDataFacet
+    extends FacetSupport
 {
   private final boolean mergeMetadata;
+
+  private GroupFacet groupFacet;
 
   @Nullable
   private CooperationFactory.Builder cooperationBuilder;
@@ -102,13 +104,9 @@ public class OrientNpmGroupFacet
   private Cooperation packageRootCooperation;
 
   @Inject
-  public OrientNpmGroupFacet(
-      @Named("${nexus.npm.mergeGroupMetadata:-true}") final boolean mergeMetadata,
-      final RepositoryManager repositoryManager,
-      final ConstraintViolationFactory constraintViolationFactory,
-      @Named(GroupType.NAME) final Type groupType)
+  public OrientNpmGroupDataFacet(
+      @Named("${nexus.npm.mergeGroupMetadata:-true}") final boolean mergeMetadata)
   {
-    super(repositoryManager, constraintViolationFactory, groupType);
     this.mergeMetadata = mergeMetadata;
   }
 
@@ -138,6 +136,7 @@ public class OrientNpmGroupFacet
   @Override
   protected void doInit(final Configuration configuration) throws Exception {
     super.doInit(configuration);
+    this.groupFacet = getRepository().facet(GroupFacet.class);
     buildCooperation();
   }
 
@@ -204,7 +203,7 @@ public class OrientNpmGroupFacet
     npmContent.missingBlobInputStreamSupplier(
         (missingBlobException) -> buildMergedPackageRootOnMissingBlob(responses, context, missingBlobException));
 
-    return !isStale(npmContent) ? npmContent : null;
+    return !groupFacet.isStale(npmContent) ? npmContent : null;
   }
 
   /**
@@ -220,7 +219,7 @@ public class OrientNpmGroupFacet
 
     NpmContent npmContent = toContent(getRepository(), packageRootAsset);
     npmContent.fieldMatchers(rewriteTarballUrlMatcher(getRepository(), packageRootAsset.name()));
-    return !isStale(npmContent) ? npmContent : null;
+    return !groupFacet.isStale(npmContent) ? npmContent : null;
   }
 
   @Nullable
@@ -283,7 +282,7 @@ public class OrientNpmGroupFacet
 
     Asset asset = getAsset(tx, packageId);
     AttributesMap contentAttributes = maintainLastModified(asset, null);
-    maintainCacheInfo(contentAttributes);
+    groupFacet.maintainCacheInfo(contentAttributes);
     applyToAsset(asset, contentAttributes);
 
     savePackageRoot(tx, asset, result);
@@ -391,7 +390,7 @@ public class OrientNpmGroupFacet
 
   private boolean matchesRepository(final AssetEvent event) {
     // only make DB changes on the originating node, as orient will also replicate those for us
-    return event.isLocal() && member(event.getRepositoryName());
+    return event.isLocal() && groupFacet.member(event.getRepositoryName());
   }
 
   private void invalidatePackageRoot(final AssetEvent event) {
@@ -408,5 +407,9 @@ public class OrientNpmGroupFacet
     DateTime blobUpdated = updated.getAsset().blobUpdated();
     DateTime oneMinuteAgo = now().minusMinutes(1);
     return isNull(blobUpdated) || blobUpdated.isAfter(oneMinuteAgo);
+  }
+
+  public Iterable<Repository> members() {
+    return groupFacet.members();
   }
 }

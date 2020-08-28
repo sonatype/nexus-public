@@ -33,6 +33,8 @@ import org.sonatype.nexus.common.io.LocalCooperationFactory;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
+import org.sonatype.nexus.repository.group.GroupFacet;
+import org.sonatype.nexus.repository.group.GroupFacetImpl;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.npm.internal.NpmFormat;
 import org.sonatype.nexus.repository.npm.internal.NpmJsonUtils;
@@ -85,7 +87,7 @@ import static org.mockito.internal.verification.VerificationModeFactory.atMost;
 import static org.sonatype.nexus.repository.npm.internal.NpmJsonUtils.bytes;
 import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.VERSIONS;
 
-public class OrientNpmGroupFacetTest
+public class OrientNpmGroupDataFacetTest
     extends TestSupport
 {
   private static final NpmPackageId A = NpmPackageId.parse("a");
@@ -155,7 +157,9 @@ public class OrientNpmGroupFacetTest
 
   private CooperationFactory cooperationFactory = new LocalCooperationFactory();
 
-  private OrientNpmGroupFacet underTest;
+  private OrientNpmGroupDataFacet underTest;
+
+  private GroupFacet groupFacet;
 
   @Before
   public void setUp() throws Exception {
@@ -163,6 +167,7 @@ public class OrientNpmGroupFacetTest
 
     setupNpmGroupFacet();
     underTest.attach(groupRepository);
+    groupFacet.attach(groupRepository);
 
     when(state.getTokens()).thenReturn(ImmutableMap.of(NpmPaths.T_PACKAGE_NAME, "test"));
 
@@ -174,10 +179,11 @@ public class OrientNpmGroupFacetTest
     when(context.getRequest()).thenReturn(request);
     when(request.getPath()).thenReturn("/simple");
 
-    when(groupRepository.getName()).thenReturn(OrientNpmGroupFacetTest.class.getSimpleName() + "-group");
+    when(groupRepository.getName()).thenReturn(OrientNpmGroupDataFacetTest.class.getSimpleName() + "-group");
     when(groupRepository.getFormat()).thenReturn(new NpmFormat());
     when(groupRepository.facet(ConfigurationFacet.class)).thenReturn(configurationFacet);
     when(groupRepository.facet(StorageFacet.class)).thenReturn(storageFacet);
+    when(groupRepository.facet(GroupFacet.class)).thenReturn(groupFacet);
 
     when(packageRootAsset.formatAttributes()).thenReturn(new NestedAttributesMap("metadata", new HashMap<>()));
     when(packageRootAsset.attributes()).thenReturn(new NestedAttributesMap("content", new HashMap<>()));
@@ -197,6 +203,7 @@ public class OrientNpmGroupFacetTest
     when(missingAssetBlobException.getAsset()).thenReturn(asset);
 
     underTest.doInit(configuration);
+    groupFacet.init();
 
     UnitOfWork.beginBatch(storageTx);
   }
@@ -267,7 +274,7 @@ public class OrientNpmGroupFacetTest
   }
 
   @Test
-  public void whenSingleOrUnScopedResultShouldNotMerge() {
+  public void whenSingleOrUnScopedResultShouldNotMerge() throws Exception {
     assertThat(underTest.shouldServeFirstResult(createRandomMaps(1), A), equalTo(true));
     assertThat(underTest.shouldServeFirstResult(createRandomMaps(1), SCOPED), equalTo(true));
 
@@ -277,7 +284,7 @@ public class OrientNpmGroupFacetTest
   }
 
   @Test
-  public void whenMultipleResultShouldMerge() {
+  public void whenMultipleResultShouldMerge() throws Exception {
     assertThat(underTest.shouldServeFirstResult(createRandomMaps(2), A), equalTo(false));
     assertThat(underTest.shouldServeFirstResult(createRandomMaps(2), SCOPED), equalTo(false));
 
@@ -315,11 +322,13 @@ public class OrientNpmGroupFacetTest
   }
 
   private void setupNpmGroupFacet() {
-    underTest = spy(new OrientNpmGroupFacet(true, repositoryManager, constraintViolationFactory, new GroupType()));
+    underTest = spy(new OrientNpmGroupDataFacet(true));
+    groupFacet = spy(new GroupFacetImpl(repositoryManager, constraintViolationFactory, new GroupType()));
   }
 
   private void setupMergeDisabledNpmGroupFacet() {
-    underTest = spy(new OrientNpmGroupFacet(false, repositoryManager, constraintViolationFactory, new GroupType()));
+    underTest = spy(new OrientNpmGroupDataFacet(false));
+    groupFacet = spy(new GroupFacetImpl(repositoryManager, constraintViolationFactory, new GroupType()));
   }
 
   private int concurrentlyBuildPackageRoot(final boolean cooperationEnabled) throws Exception

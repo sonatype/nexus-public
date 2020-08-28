@@ -126,6 +126,10 @@ public abstract class NpmClientITSupport
     return repos.createNpmGroup(repositoryName + "-group", members);
   }
 
+  protected Repository createNpmGroupRepository(final String repositoryName, final Repository groupWriteMember, final String... members) {
+    return repos.createNpmGroup(repositoryName + "-group", groupWriteMember, members);
+  }
+
   protected NpmClient createNpmClient(final String repositoryName) {
     return npmClientFactory
         .createClient(resolveUrl(nexusUrl, "/repository/" + repositoryName + "/"), "admin", "admin123");

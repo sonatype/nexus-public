@@ -16,6 +16,7 @@ import javax.annotation.Nonnull
 import javax.inject.Named
 import javax.inject.Singleton
 
+import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.group.GroupHandler
 import org.sonatype.nexus.repository.storage.MissingAssetBlobException
 import org.sonatype.nexus.repository.storage.StorageFacet
@@ -25,12 +26,11 @@ import org.sonatype.nexus.repository.view.Status
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher.State
 import org.sonatype.nexus.transaction.Transactional
 
+import static NpmFacetUtils.errorInputStream
 import static java.util.Objects.isNull
 import static org.sonatype.nexus.repository.http.HttpStatus.OK
 import static org.sonatype.nexus.repository.npm.internal.NpmResponses.notFound
 import static org.sonatype.nexus.repository.npm.internal.NpmResponses.ok
-import static org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils.errorInputStream
-
 /**
  * Merge metadata results from all member repositories.
  *
@@ -56,10 +56,10 @@ class OrientNpmGroupPackageHandler
   private Response buildMergedPackageRoot(final Context context,
                                           final GroupHandler.DispatchedRepositories dispatched)
   {
-    OrientNpmGroupFacet groupFacet = (OrientNpmGroupFacet) getGroupFacet(context)
+    OrientNpmGroupDataFacet groupFacet = getNpmGroupFacet(context)
 
     // Dispatch requests to members to trigger update events and group cache invalidation when a member has changed
-    Map responses = getResponses(context, dispatched, groupFacet)
+    Map<Repository, Response> responses = getResponses(context, dispatched, groupFacet)
 
     NpmContent content = groupFacet.getFromCache(context)
 
@@ -91,7 +91,7 @@ class OrientNpmGroupPackageHandler
 
   private InputStream handleMissingBlob(final Context context,
                                         final Map responses,
-                                        final OrientNpmGroupFacet groupFacet,
+                                        final OrientNpmGroupDataFacet groupFacet,
                                         final MissingAssetBlobException e)
   {
     // why check the response? It might occur that the members don't have cache on their own and that their remote

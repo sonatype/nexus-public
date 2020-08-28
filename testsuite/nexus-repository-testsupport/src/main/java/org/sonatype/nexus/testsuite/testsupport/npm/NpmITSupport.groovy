@@ -56,6 +56,10 @@ class NpmITSupport
     return repos.createNpmGroup(repositoryName, members)
   }
 
+  Repository createNpmGroupRepository(String repositoryName, Repository writeable, String... members) {
+    return repos.createNpmGroup(repositoryName, writeable, members)
+  }
+
   Repository createNpmProxyRepository(final String name, final String remoteUrl,
                                       final Map<String, Object> authentication = [:])
   {
