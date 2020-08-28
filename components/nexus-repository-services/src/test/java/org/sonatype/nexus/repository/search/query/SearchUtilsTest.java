@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.search.query;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,7 @@ import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
@@ -35,6 +37,7 @@ import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
@@ -275,6 +278,26 @@ public class SearchUtilsTest
   public void testGetSortBuilders_byOtherField_whenNotSupported() throws Exception {
     List<SortBuilder> sortBuilders = underTest.getSortBuilders("otherfield", "asc", false);
     assertThat(sortBuilders.isEmpty(), is(true));
+  }
+
+  @Test
+  public void constructSameQueryForSameFilters() {
+    SearchFilter a1 = new SearchFilter("a", "1");
+    SearchFilter a2 = new SearchFilter("a", "2");
+    SearchFilter b1 = new SearchFilter("b", "1");
+    SearchFilter b2 = new SearchFilter("b", "2");
+    SearchFilter c1 = new SearchFilter("c", "1");
+
+    List<SearchFilter> forwards = newArrayList(a1, a2, b1, b2, c1);
+    List<SearchFilter> backward = newArrayList(c1, b2, b1, a2, a1);
+    List<SearchFilter> mixed = newArrayList(a1, c1 ,b1, b2, a2);
+
+    String forwardQuery = underTest.buildQuery(forwards).toString();
+    String backwardQuery = underTest.buildQuery(backward).toString();
+    String mixedQuery = underTest.buildQuery(mixed).toString();
+
+    assertThat(forwardQuery.equals(backwardQuery), is(true));
+    assertThat(forwardQuery.equals(mixedQuery), is(true));
   }
 
   private void assertSearchBuilder(SortBuilder sortBuilder, String field, String order) throws Exception {

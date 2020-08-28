@@ -526,12 +526,12 @@ public class SearchResourceTest
   public void testBuildQuery() {
     //the expected query
     QueryBuilder expected = boolQuery()
+        .must(queryStringQuery("random").field("arbitrary.param").lowercaseExpandedTerms(false))
+        .must(queryStringQuery("maven2").field("format").lowercaseExpandedTerms(false))
         .must(queryStringQuery("someKindOfStringQuery")
             .field("name.case_insensitive")
             .field("group.case_insensitive")
-            .field("_all"))
-        .must(queryStringQuery("maven2").field("format").lowercaseExpandedTerms(false))
-        .must(queryStringQuery("random").field("arbitrary.param").lowercaseExpandedTerms(false));
+            .field("_all"));
 
     String uri = "?format=maven2" +
         "&arbitrary.param=random" +
