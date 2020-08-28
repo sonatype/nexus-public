@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.npm.internal;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -45,6 +46,7 @@ import org.sonatype.nexus.repository.vulnerability.AuditRepositoryComponent;
 import org.sonatype.nexus.repository.vulnerability.ComponentValidation;
 import org.sonatype.nexus.repository.vulnerability.ComponentsVulnerability;
 import org.sonatype.nexus.repository.vulnerability.RepositoryComponentValidation;
+import org.sonatype.nexus.repository.vulnerability.SeverityLevel;
 import org.sonatype.nexus.repository.vulnerability.Vulnerability;
 import org.sonatype.nexus.repository.vulnerability.VulnerabilityList;
 import org.sonatype.nexus.repository.vulnerability.exceptions.ConfigurationException;
@@ -61,6 +63,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.gson.FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.function.UnaryOperator.identity;
+import static java.util.stream.Collectors.toMap;
+import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.createRepositoryPath;
 import static org.sonatype.nexus.repository.npm.internal.audit.model.NpmAuditError.ABSENT_PARSING_FILE;
 import static org.sonatype.nexus.repository.view.ContentTypes.APPLICATION_JSON;
 
@@ -209,13 +214,43 @@ public class NpmAuditFacet
       throws InterruptedException, ExecutionException, TimeoutException, TarballLoadingException
   {
     Set<AuditRepositoryComponent> repositoryComponents = getAuditRepositoryComponents(componentsToAnalyze);
+
+    /* Components found within the repository will have a valid hash */
+    final Set<AuditRepositoryComponent> validComponentsToScan = repositoryComponents.stream()
+        .filter(component -> component.getHash() != null)
+        .collect(Collectors.toSet());
+
     RepositoryComponentValidation componentValidation = new RepositoryComponentValidation(
-        getRepository().getName(), repositoryComponents);
+        getRepository().getName(), validComponentsToScan);
     /* post repository npm components to IQ Server
      * see com.sonatype.nexus.clm.vulnerability.RepositoryComponentVulnerabilityListener */
     eventManager.post(componentValidation);
 
-    return getVulnerabilityResult(componentValidation.getVulnerabilityResult());
+    final ComponentsVulnerability vulnerabilityResult = getVulnerabilityResult(
+        componentValidation.getVulnerabilityResult());
+
+    updateWithInvalidComponents(componentsToAnalyze, repositoryComponents, vulnerabilityResult);
+
+    return vulnerabilityResult;
+  }
+
+  private void updateWithInvalidComponents(final Set<AuditComponent> componentsToAnalyze,
+                                           final Set<AuditRepositoryComponent> repositoryComponents,
+                                           final ComponentsVulnerability vulnerabilityResult)
+  {
+    Map<String, AuditComponent> componentByRepoPath = componentsToAnalyze.stream()
+        .collect(toMap(component -> createRepositoryPath(component.getName(), component.getVersion()), identity()));
+    final Set<AuditComponent> componentsNotScanned = repositoryComponents.stream()
+        .filter(component -> component.getHash() == null)
+        .map(component -> componentByRepoPath.get(component.getPathname()))
+        .collect(Collectors.toSet());
+
+    for (AuditComponent auditComponent : componentsNotScanned) {
+      vulnerabilityResult.addVulnerability(auditComponent,
+          new Vulnerability(SeverityLevel.LOW, "Component not found",
+              null,
+              "This component can not be audited because it is not stored in the repository being scanned"));
+    }
   }
 
   private ComponentsVulnerability getComponentsVulnerabilityFromRemoteServer(
@@ -236,7 +271,10 @@ public class NpmAuditFacet
   {
     Stopwatch sw = Stopwatch.createStarted();
     Set<AuditRepositoryComponent> repositoryComponents = npmAuditTarballFacet.download(componentsToAnalyze);
-    log.debug("Downloaded {} npm packages in {}", repositoryComponents.size(), sw.stop());
+
+    final long failedToDownloadCount = repositoryComponents.stream().filter(c -> c.getHash() == null).count();
+    log.debug("Downloaded {} npm packages and failed to download {} npm packages in {}",
+        repositoryComponents.size() - failedToDownloadCount, failedToDownloadCount, sw.stop());
     return repositoryComponents;
   }
 

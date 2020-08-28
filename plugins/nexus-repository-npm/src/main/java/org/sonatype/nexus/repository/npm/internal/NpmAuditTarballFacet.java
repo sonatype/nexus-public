@@ -122,17 +122,8 @@ public class NpmAuditTarballFacet
         repositoryComponents.add(repositoryComponentFuture.get());
       }
     }
-    catch (InterruptedException e) {
+    catch (InterruptedException | ExecutionException e) {
       throw new RuntimeException(e);
-    }
-    catch (ExecutionException e) {
-      Throwable cause = e.getCause();
-      if (cause instanceof TarballLoadingException) {
-        throw new TarballLoadingException(cause.getMessage());
-      }
-      else {
-        throw new RuntimeException(e);
-      }
     }
     return repositoryComponents;
   }
@@ -166,9 +157,12 @@ public class NpmAuditTarballFacet
       String errorMsg = String.format("The %s repository is not supported", repositoryType);
       throw new UnsupportedOperationException(errorMsg);
     }
-    String hashsum = hashsumOpt.orElseThrow(() ->
-        new TarballLoadingException(String.format("Can't get hashsum for the %s package", auditComponent)));
-    return new AuditRepositoryComponent(auditComponent.getPackageType(), repositoryPath, hashsum);
+
+    if (!hashsumOpt.isPresent()) {
+      log.warn(String.format("Can't get hashsum for the %s package", auditComponent));
+      return new AuditRepositoryComponent(auditComponent.getPackageType(), repositoryPath, null);
+    }
+    return new AuditRepositoryComponent(auditComponent.getPackageType(), repositoryPath, hashsumOpt.get());
   }
 
   private Optional<String> getComponentHashsumForProxyRepo(final Repository repository, final Context context)
