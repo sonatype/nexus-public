@@ -14,7 +14,6 @@ package org.sonatype.nexus.repository.npm.internal.orient;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -50,6 +49,7 @@ import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
+import com.google.common.collect.Iterables;
 import com.google.common.eventbus.Subscribe;
 import org.apache.commons.io.IOUtils;
 
@@ -406,13 +406,13 @@ public class OrientNpmHostedFacetImpl
 
   @Override
   @TransactionalDeleteBlob
-  public Set<String> deleteTarball(final NpmPackageId packageId, final String tarballName) {
+  public Optional<String> deleteTarball(final NpmPackageId packageId, final String tarballName) {
     return deleteTarball(packageId, tarballName, true);
   }
 
   @Override
   @TransactionalDeleteBlob
-  public Set<String> deleteTarball(final NpmPackageId packageId, final String tarballName, final boolean deleteBlob) {
+  public Optional<String> deleteTarball(final NpmPackageId packageId, final String tarballName, final boolean deleteBlob) {
     checkNotNull(packageId);
     checkNotNull(tarballName);
     StorageTx tx = UnitOfWork.currentTx();
@@ -420,13 +420,13 @@ public class OrientNpmHostedFacetImpl
 
     Asset tarballAsset = NpmFacetUtils.findTarballAsset(tx, bucket, packageId, tarballName);
     if (tarballAsset == null) {
-      return Collections.emptySet();
+      return Optional.empty();
     }
     Component tarballComponent = tx.findComponentInBucket(tarballAsset.componentId(), bucket);
     if (tarballComponent == null) {
-      return Collections.emptySet();
+      return Optional.empty();
     }
-    return tx.deleteComponent(tarballComponent, deleteBlob);
+    return Optional.ofNullable(Iterables.getOnlyElement(tx.deleteComponent(tarballComponent, deleteBlob), null));
   }
 
   @Nullable

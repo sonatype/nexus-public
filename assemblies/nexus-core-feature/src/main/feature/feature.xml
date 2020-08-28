@@ -26,5 +26,6 @@
     <feature>nexus-default-role-plugin</feature>
     <feature>nexus-repository-raw</feature>
     <feature>nexus-repository-maven</feature>
+    <feature>nexus-repository-npm</feature>
   </feature>
 </features>
