@@ -67,5 +67,7 @@ public interface RepositoryMoveConfiguration
    */
   void setExecutingNodeId(String executingNodeId);
 
+  String getStatus();
 
+  void setStatus(String status);
 }

@@ -22,11 +22,13 @@ import org.sonatype.nexus.repository.Facet
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
+import org.sonatype.nexus.repository.group.GroupFacet
 import org.sonatype.nexus.repository.group.GroupHandler
 import org.sonatype.nexus.repository.http.HttpHandlers
 import org.sonatype.nexus.repository.npm.internal.NpmFormat
 import org.sonatype.nexus.repository.npm.internal.NpmGroupAuditHandler
 import org.sonatype.nexus.repository.npm.internal.NpmGroupAuditQuickHandler
+import org.sonatype.nexus.repository.npm.internal.NpmGroupWriteHandler
 import org.sonatype.nexus.repository.npm.internal.NpmHandlers
 import org.sonatype.nexus.repository.npm.internal.NpmPingHandler
 import org.sonatype.nexus.repository.npm.internal.NpmWhoamiHandler
@@ -40,6 +42,7 @@ import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler
 
 import static org.sonatype.nexus.repository.http.HttpMethods.GET
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD
+import static org.sonatype.nexus.repository.http.HttpMethods.PUT
 import static org.sonatype.nexus.repository.npm.internal.NpmPaths.*
 
 /**
@@ -55,7 +58,7 @@ class OrientNpmGroupRecipe
   public static final String NAME = 'npm-group'
 
   @Inject
-  Provider<OrientNpmGroupFacet> groupFacet
+  Provider<OrientNpmGroupDataFacet> npmGroupFacet
 
   @Inject
   Provider<NpmSearchIndexFacetGroup> npmSearchIndexFacet
@@ -65,6 +68,16 @@ class OrientNpmGroupRecipe
 
   @Inject
   OrientNpmGroupDistTagsHandler distTagsHandler
+
+  @Inject
+  Provider<GroupFacet> groupFacet
+
+  @Inject
+  @Named('groupWriteFacet')
+  Provider<GroupFacet> writeableGroupFacet
+
+  @Inject
+  NpmGroupWriteHandler groupWriteHandler
 
   @Inject
   GroupHandler tarballHandler
@@ -96,7 +109,8 @@ class OrientNpmGroupRecipe
 
   @Override
   void apply(@Nonnull final Repository repository) throws Exception {
-    repository.attach(groupFacet.get())
+    repository.attach(writeableGroupFacet.get() ?: groupFacet.get())
+    repository.attach(npmGroupFacet.get())
     repository.attach(storageFacet.get())
     repository.attach(attributesFacet.get())
     repository.attach(securityFacet.get())
@@ -184,6 +198,18 @@ class OrientNpmGroupRecipe
         .handler(unitOfWorkHandler)
         .handler(lastDownloadedHandler)
         .handler(distTagsHandler)
+        .create())
+
+    // PUT /packageName (npm publish)
+    builder.route(packageMatcher(PUT)
+        .handler(timingHandler)
+        .handler(securityHandler)
+        .handler(NpmHandlers.npmErrorHandler)
+        .handler(handlerContributor)
+        .handler(conditionalRequestHandler)
+        .handler(contentHeadersHandler)
+        .handler(unitOfWorkHandler)
+        .handler(groupWriteHandler)
         .create())
 
     createUserRoutes(builder)

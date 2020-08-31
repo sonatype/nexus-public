@@ -25,6 +25,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -61,7 +62,6 @@ import org.sonatype.nexus.repository.view.payloads.StreamPayload;
 import org.sonatype.nexus.repository.view.payloads.StreamPayload.InputStreamSupplier;
 import org.sonatype.nexus.thread.io.StreamCopier;
 
-import com.google.common.base.Supplier;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -145,7 +145,7 @@ public final class NpmFacetUtils
 
     final AssetBlob result = tx.createBlob(
         asset.name(),
-        content,
+        content::get,
         HASH_ALGORITHMS,
         null,
         assetKind.getContentType(),

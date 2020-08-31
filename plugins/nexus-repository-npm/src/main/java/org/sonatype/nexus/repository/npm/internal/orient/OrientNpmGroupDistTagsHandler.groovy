@@ -16,7 +16,7 @@ import javax.annotation.Nonnull
 import javax.inject.Named
 import javax.inject.Singleton
 
-import org.sonatype.nexus.repository.group.GroupFacetImpl
+import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.view.Context
 import org.sonatype.nexus.repository.view.Response
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher.State
@@ -44,10 +44,10 @@ class OrientNpmGroupDistTagsHandler
         context.repository.name,
         context.attributes.require(State.class).tokens
 
-    GroupFacetImpl groupFacet = getGroupFacet(context)
+    OrientNpmGroupDataFacet groupFacet = getNpmGroupFacet(context)
 
     // Dispatch requests to members to trigger update events and group cache invalidation when a member has changed
-    Map responses = getResponses(context, dispatched, groupFacet)
+    Map<Repository, Response> responses = getResponses(context, dispatched, groupFacet)
 
     if (isNull(responses) || responses.isEmpty()) {
       return notFound("Not found")

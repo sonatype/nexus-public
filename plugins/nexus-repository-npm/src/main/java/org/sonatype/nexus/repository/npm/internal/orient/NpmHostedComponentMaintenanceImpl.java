@@ -135,7 +135,10 @@ public class NpmHostedComponentMaintenanceImpl
       packageRoot.child(NpmMetadataUtils.TIME).remove(version.getKey());
       NpmMetadataUtils.maintainTime(packageRoot);
       NpmFacetUtils.savePackageRoot(UnitOfWork.currentTx(), packageRootAsset, packageRoot);
-      return getRepository().facet(OrientNpmHostedFacet.class).deleteTarball(packageId, tarballName, deleteBlob);
+      return getRepository().facet(OrientNpmHostedFacet.class)
+          .deleteTarball(packageId, tarballName, deleteBlob)
+          .map(Collections::singleton)
+          .orElseGet(Collections::emptySet);
     }
   }
 }

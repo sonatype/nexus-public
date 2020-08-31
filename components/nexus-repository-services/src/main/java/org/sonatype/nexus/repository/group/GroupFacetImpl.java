@@ -233,10 +233,8 @@ public class GroupFacetImpl
     }
   }
 
-  /**
-   * Returns {@code true} if the content is considered stale; otherwise {@code false}.
-   */
-  protected boolean isStale(@Nullable final Content content) {
+  @Override
+  public boolean isStale(@Nullable final Content content) {
     if (content == null) {
       return true;
     }
@@ -250,10 +248,8 @@ public class GroupFacetImpl
     return cacheController.isStale(cacheInfo);
   }
 
-  /**
-   * Maintains the latest cache information in the given content's attributes.
-   */
-  protected void maintainCacheInfo(final AttributesMap attributesMap) {
+  @Override
+  public void maintainCacheInfo(final AttributesMap attributesMap) {
     attributesMap.set(CacheInfo.class, cacheController.current());
   }
 }

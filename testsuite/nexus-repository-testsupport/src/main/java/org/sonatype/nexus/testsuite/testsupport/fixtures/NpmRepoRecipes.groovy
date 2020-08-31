@@ -51,6 +51,14 @@ trait NpmRepoRecipes
 
   @Nonnull
   Repository createNpmGroup(final String name,
+                            final Repository groupWriteMember,
+                            final String... members)
+  {
+    createRepository(createGroup(name, 'npm-group', groupWriteMember.getName(), members))
+  }
+
+  @Nonnull
+  Repository createNpmGroup(final String name,
                             final String... members)
   {
     createRepository(createGroup(name, 'npm-group', members))

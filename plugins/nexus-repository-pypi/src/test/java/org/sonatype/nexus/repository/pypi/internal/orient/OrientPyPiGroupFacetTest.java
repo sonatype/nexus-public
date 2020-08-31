@@ -114,7 +114,7 @@ public class OrientPyPiGroupFacetTest
   public void whenCacheTokenOsInvalidShouldBeStale() {
     underTest = new OrientPyPiGroupFacet(repositoryManager, constraintViolationFactory, new GroupType()) {
       @Override
-      protected boolean isStale(@Nullable final Content content) {
+      public boolean isStale(@Nullable final Content content) {
         return true;
       }
     };

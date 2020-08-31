@@ -14,8 +14,12 @@ package org.sonatype.nexus.repository.group;
 
 import java.util.List;
 
+import javax.annotation.Nullable;
+
+import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.view.Content;
 
 /**
  * Group facet.
@@ -38,7 +42,7 @@ public interface GroupFacet
 
   /**
    * Return list of all member repositories including transitive
-   * 
+   *
    * @since 3.6.1
    */
   List<Repository> allMembers();
@@ -57,4 +61,14 @@ public interface GroupFacet
    * Removes all entries from the group cache and the member caches.
    */
   void invalidateGroupCaches();
+
+  /**
+   * Returns {@code true} if the content is considered stale; otherwise {@code false}.
+   */
+  boolean isStale(@Nullable final Content content);
+
+  /**
+   * Maintains the latest cache information in the given content's attributes.
+   */
+  void maintainCacheInfo(final AttributesMap attributesMap);
 }

@@ -123,7 +123,8 @@ public class DatastoreComponentAssetTestHelper
 
   @Override
   public void removeAsset(final Repository repository, final String path) {
-    throw new UnsupportedOperationException();
+    ContentMaintenanceFacet contentMaintenanceFacet = repository.facet(ContentMaintenanceFacet.class);
+    findAssetByPath(repository, path).ifPresent(contentMaintenanceFacet::deleteAsset);
   }
 
   @Override

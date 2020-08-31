@@ -68,7 +68,7 @@ public interface NpmHostedFacet
    *
    * @return name of deleted asset(s).
    */
-  Set<String> deleteTarball(NpmPackageId packageId, String tarballName) throws IOException;
+  Optional<String> deleteTarball(NpmPackageId packageId, String tarballName) throws IOException;
 
   /**
    * Deletes given tarball, if exists, and maybe deletes the blob.
@@ -77,7 +77,7 @@ public interface NpmHostedFacet
    *
    * @since 3.9
    */
-  Set<String> deleteTarball(NpmPackageId packageId, String tarballName, boolean deleteBlob) throws IOException;
+  Optional<String> deleteTarball(NpmPackageId packageId, String tarballName, boolean deleteBlob) throws IOException;
 
   /**
    * Updates the package root.

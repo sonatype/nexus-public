@@ -275,13 +275,17 @@ Ext.define('NX.coreui.controller.Blobstores', {
   promoteToGroup: function(button) {
     var me = this,
         model = me.getList().getSelectionModel().getLastSelected();
-    NX.direct.coreui_Blobstore.promoteToGroup(model.get('name'), function (response) {
-      if (Ext.isObject(response) && response.success) {
-        NX.Messages.success(NX.I18n.format('Blobstore_BlobstoreFeature_Promote_Success', response.data.name));
-        me.getStore('Blobstore').load();
-        button.disable();
-      }
-    });
+    NX.Dialogs.askConfirmation(NX.I18n.get('Blobstore_BlobstoreFeature_Confirm_Title'),
+        NX.I18n.get('Blobstore_BlobstoreFeature_Confirm_Warning'),
+        function() {
+          NX.direct.coreui_Blobstore.promoteToGroup(model.get('name'), function(response) {
+            if (Ext.isObject(response) && response.success) {
+              NX.Messages.success(NX.I18n.format('Blobstore_BlobstoreFeature_Promote_Success', response.data.name));
+              me.getStore('Blobstore').load();
+              button.disable();
+            }
+          });
+        });
   },
 
   /**

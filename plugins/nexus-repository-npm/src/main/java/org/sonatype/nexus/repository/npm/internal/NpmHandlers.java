@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.npm.internal;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
@@ -165,8 +166,8 @@ public final class NpmHandlers
 
       NpmPackageId packageId = NpmPaths.packageId(state);
       String tarballName = NpmPaths.tarballName(state);
-      Set<String> deleted = repository.facet(NpmHostedFacet.class).deleteTarball(packageId, tarballName);
-      if (!deleted.isEmpty()) {
+      Optional<String> deleted = repository.facet(NpmHostedFacet.class).deleteTarball(packageId, tarballName);
+      if (deleted.isPresent()) {
         return NpmResponses.ok();
       }
       else {

@@ -47,6 +47,7 @@ import org.apache.http.Header;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.RedirectStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.TargetAuthenticationStrategy;
 import org.apache.http.message.BasicHeader;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -83,6 +84,8 @@ public class HttpClientFacetImpl
 
   private final Map<String, ContentCompressionStrategy> contentCompressionStrategies;
 
+  private final Map<String, TargetAuthenticationStrategy> authenticationStrategies;
+
   @VisibleForTesting
   static class Config
   {
@@ -111,13 +114,15 @@ public class HttpClientFacetImpl
                              final Map<String, AutoBlockConfiguration> autoBlockConfiguration,
                              final Map<String, RedirectStrategy> redirectStrategy,
                              final Map<String, NormalizationStrategy> normalizationStrategies,
-                             final Map<String, ContentCompressionStrategy> contentCompressionStrategies)
+                             final Map<String, ContentCompressionStrategy> contentCompressionStrategies,
+                             final Map<String, TargetAuthenticationStrategy> authenticationStrategies)
   {
     this.httpClientManager = checkNotNull(httpClientManager);
     this.autoBlockConfiguration = checkNotNull(autoBlockConfiguration);
     this.redirectStrategy = checkNotNull(redirectStrategy);
     this.normalizationStrategies = checkNotNull(normalizationStrategies);
     this.contentCompressionStrategies = checkNotNull(contentCompressionStrategies);
+    this.authenticationStrategies = checkNotNull(authenticationStrategies);
   }
 
   @VisibleForTesting
@@ -126,10 +131,11 @@ public class HttpClientFacetImpl
                       final Map<String, RedirectStrategy> redirectStrategy,
                       final Map<String, NormalizationStrategy> normalizationStrategy,
                       final Map<String, ContentCompressionStrategy> contentCompressionStrategies,
+                      final Map<String, TargetAuthenticationStrategy> authenticationStrategies,
                       final Config config)
   {
     this(httpClientManager, autoBlockConfiguration, redirectStrategy, normalizationStrategy,
-        contentCompressionStrategies);
+        contentCompressionStrategies, authenticationStrategies);
     this.config = checkNotNull(config);
     checkNotNull(autoBlockConfiguration.get(DEFAULT));
   }
@@ -284,6 +290,7 @@ public class HttpClientFacetImpl
     delegateConfig.setRedirectStrategy(getRedirectStrategy());
     setNormalizationStrategy(delegateConfig);
     setContentCompressionStrategy(delegateConfig);
+    setAuthenticationStrategy(delegateConfig);
     return delegateConfig;
   }
 
@@ -310,6 +317,11 @@ public class HttpClientFacetImpl
     ofNullable(contentCompressionStrategies.get(getRepository().getFormat().getValue()))
         .ifPresent(strategy -> delegateConfig
             .setDisableContentCompression(strategy.shouldDisableContentCompression(getRepository().getName())));
+  }
+
+  private void setAuthenticationStrategy(final HttpClientConfiguration delegateConfig) {
+    ofNullable(authenticationStrategies.get(getRepository().getFormat().getValue()))
+        .ifPresent(delegateConfig::setAuthenticationStrategy);
   }
 
   private void closeHttpClient() throws IOException {

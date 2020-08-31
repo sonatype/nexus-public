@@ -46,6 +46,13 @@ public interface RepositoryMoveStore
   void markMoveStarted(String sourceRepositoryName, String targetBlobstoreName);
 
   /**
+   * Mark a move operation as failed.
+   *
+   * @param sourceRepositoryName
+   */
+  void markMoveFailed(String sourceRepositoryName);
+
+  /**
    *
    * @param sourceRepositoryName
    */

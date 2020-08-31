@@ -46,6 +46,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
@@ -54,7 +55,6 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -73,7 +73,10 @@ public class OrientNpmGroupPackageHandlerTest
   private State state;
 
   @Mock
-  private OrientNpmGroupFacet groupFacet;
+  private OrientNpmGroupDataFacet orientGroupFacet;
+
+  @Mock
+  private GroupFacet groupFacet;
 
   @Mock
   private StorageFacet storageFacet;
@@ -115,11 +118,12 @@ public class OrientNpmGroupPackageHandlerTest
     when(context.getRepository()).thenReturn(group);
     when(context.getRequest()).thenReturn(request);
 
-    when(group.getName()).thenReturn(OrientNpmGroupFacetTest.class.getSimpleName() + "-group");
+    when(group.getName()).thenReturn(OrientNpmGroupDataFacetTest.class.getSimpleName() + "-group");
     when(group.facet(GroupFacet.class)).thenReturn(groupFacet);
+    when(group.facet(OrientNpmGroupDataFacet.class)).thenReturn(orientGroupFacet);
     when(group.facet(StorageFacet.class)).thenReturn(storageFacet);
 
-    when(groupFacet.buildPackageRoot(anyMap(), eq(context)))
+    when(orientGroupFacet.buildPackageRoot(anyMap(), eq(context)))
         .thenReturn(new Content(new BytesPayload("test".getBytes(), "")));
 
     when(viewFacet.dispatch(request, context))
@@ -144,67 +148,67 @@ public class OrientNpmGroupPackageHandlerTest
   @Test
   @SuppressWarnings("unchecked")
   public void shouldReturnPackageRootForSingleResponse() throws Exception {
-    when(groupFacet.members()).thenReturn(singletonList(proxy));
+    when(orientGroupFacet.members()).thenReturn(singletonList(proxy));
 
     Response response = underTest.doGet(context, dispatchedRepositories);
 
     assertThat(response.getStatus().getCode(), is(OK));
 
     verify(viewFacet).dispatch(eq(request), eq(context));
-    verify(groupFacet).buildPackageRoot(anyMap(), eq(context));
-    verify(groupFacet).getFromCache(eq(context));
+    verify(orientGroupFacet).buildPackageRoot(anyMap(), eq(context));
+    verify(orientGroupFacet).getFromCache(eq(context));
   }
 
   @Test
   @SuppressWarnings("unchecked")
   public void shouldReturnPackageRootMultipleResponses() throws Exception {
-    when(groupFacet.members()).thenReturn(asList(proxy, hosted));
+    when(orientGroupFacet.members()).thenReturn(asList(proxy, hosted));
 
     Response response = underTest.doGet(context, dispatchedRepositories);
 
     assertThat(response.getStatus().getCode(), is(OK));
 
     verify(viewFacet, times(2)).dispatch(eq(request), eq(context));
-    verify(groupFacet).buildPackageRoot(anyMap(), eq(context));
-    verify(groupFacet).getFromCache(eq(context));
+    verify(orientGroupFacet).buildPackageRoot(anyMap(), eq(context));
+    verify(orientGroupFacet).getFromCache(eq(context));
   }
 
   @Test
   public void shouldReturnFailureWhenNoResponse() throws Exception {
+    when(orientGroupFacet.members()).thenReturn(emptyList());
     Response response = underTest.doGet(context, dispatchedRepositories);
 
     assertThat(response.getStatus().getCode(), is(NOT_FOUND));
-    verify(groupFacet).getFromCache(eq(context));
+    verify(orientGroupFacet).getFromCache(eq(context));
   }
 
   @Test
   public void shouldReturnFromCache() throws Exception {
     NpmStreamPayload payload = new NpmStreamPayload(() -> new ByteArrayInputStream("test".getBytes()));
     NpmContent cacheContent = new NpmContent(payload);
-    when(groupFacet.getFromCache(eq(context))).thenReturn(cacheContent);
+    when(orientGroupFacet.members()).thenReturn(singletonList(proxy));
+    when(orientGroupFacet.getFromCache(eq(context))).thenReturn(cacheContent);
 
     Response response = underTest.doGet(context, dispatchedRepositories);
 
     assertThat(response.getStatus().getCode(), is(OK));
     assertThat(response.getPayload(), equalTo(cacheContent));
 
-    verify(viewFacet, never()).dispatch(eq(request), eq(context));
-    verify(groupFacet).getFromCache(eq(context));
+    verify(orientGroupFacet).getFromCache(eq(context));
 
     response = underTest.doGet(context, dispatchedRepositories);
     assertThat(response.getStatus().getCode(), is(OK));
     assertThat(response.getPayload(), equalTo(cacheContent));
 
-    verify(viewFacet, never()).dispatch(eq(request), eq(context));
-    verify(groupFacet, times(2)).getFromCache(eq(context));
+    verify(orientGroupFacet, times(2)).getFromCache(eq(context));
   }
 
   @Test
   public void shouldReturnMergedPackageRoot_When_CacheThrowsMissingBlobException() throws Exception {
-    when(groupFacet.getFromCache(eq(context))).thenReturn(createNpmContentWithMissingAssetBlob());
-    when(groupFacet.buildMergedPackageRootOnMissingBlob(any(), any(), any()))
+    when(orientGroupFacet.getFromCache(eq(context))).thenReturn(createNpmContentWithMissingAssetBlob());
+    when(orientGroupFacet.buildMergedPackageRootOnMissingBlob(any(), any(), any()))
         .thenReturn(new ByteArrayInputStream("test".getBytes()));
-    when(groupFacet.members()).thenReturn(asList(proxy, hosted));
+    when(orientGroupFacet.members()).thenReturn(asList(proxy, hosted));
 
     Response response = underTest.doGet(context, dispatchedRepositories);
     assertThat(response.getStatus().getCode(), is(OK));
@@ -216,9 +220,9 @@ public class OrientNpmGroupPackageHandlerTest
 
   @Test
   public void shouldReturn_When_CacheThrowsMissingBlobException_And_MembersReturnNoResponse() throws Exception {
-    when(groupFacet.getFromCache(eq(context))).thenReturn(createNpmContentWithMissingAssetBlob());
-    when(groupFacet.buildMergedPackageRootOnMissingBlob(any(), any(), any())).thenReturn(null);
-    when(groupFacet.members()).thenReturn(asList(proxy, hosted));
+    when(orientGroupFacet.getFromCache(eq(context))).thenReturn(createNpmContentWithMissingAssetBlob());
+    when(orientGroupFacet.buildMergedPackageRootOnMissingBlob(any(), any(), any())).thenReturn(null);
+    when(orientGroupFacet.members()).thenReturn(asList(proxy, hosted));
 
     when(viewFacet.dispatch(request, context))
         .thenReturn(new Response.Builder().status(success(NOT_FOUND)).build());
@@ -239,8 +243,9 @@ public class OrientNpmGroupPackageHandlerTest
     NpmContent content = mock(NpmContent.class);
     AttributesMap attributes = new AttributesMap();
     attributes.set(CONTENT_LAST_MODIFIED, "01-01-2020");
+    when(orientGroupFacet.members()).thenReturn(asList(proxy, hosted));
     when(content.getAttributes()).thenReturn(attributes);
-    when(groupFacet.getFromCache(eq(context))).thenReturn(content);
+    when(orientGroupFacet.getFromCache(eq(context))).thenReturn(content);
 
     Response response = underTest.doGet(context, dispatchedRepositories);
 

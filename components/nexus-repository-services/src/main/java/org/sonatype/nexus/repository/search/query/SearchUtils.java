@@ -25,7 +25,6 @@ import javax.inject.Singleton;
 import javax.ws.rs.core.UriInfo;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.rest.SearchMapping;
 import org.sonatype.nexus.repository.rest.SearchMappings;
@@ -40,9 +39,11 @@ import org.elasticsearch.search.sort.SortOrder;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.StreamSupport.stream;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.elasticsearch.search.sort.SortBuilders.fieldSort;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.GROUP;
 import static org.sonatype.nexus.repository.search.index.SearchConstants.NAME;
@@ -113,11 +114,13 @@ public class SearchUtils
    */
   public QueryBuilder buildQuery(final Collection<SearchFilter> searchFilters) {
     BoolQueryBuilder query = QueryBuilders.boolQuery();
-    searchFilters.stream().filter(searchFilter -> !Strings2.isBlank(searchFilter.getValue())).forEach(searchFilter -> {
-      SearchContribution searchContribution = searchContributions
-          .getOrDefault(searchFilter.getProperty(), defaultSearchContribution);
-
-      searchContribution.contribute(query, searchFilter.getProperty(), searchFilter.getValue());
+    searchFilters.stream()
+        .filter(searchFilter -> !isBlank(searchFilter.getValue()))
+        .sorted(comparing(SearchFilter::getProperty).thenComparing(SearchFilter::getValue))
+        .forEach(searchFilter -> {
+          SearchContribution searchContribution = searchContributions
+              .getOrDefault(searchFilter.getProperty(), defaultSearchContribution);
+          searchContribution.contribute(query, searchFilter.getProperty(), searchFilter.getValue());
     });
 
     log.debug("Query: {}", query);

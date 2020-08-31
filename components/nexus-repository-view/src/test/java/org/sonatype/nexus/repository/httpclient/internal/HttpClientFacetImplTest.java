@@ -128,7 +128,7 @@ public class HttpClientFacetImplTest
 
     underTest =
         new HttpClientFacetImpl(httpClientManager, autoBlockConfiguration, newHashMap(), normalizationStrategies,
-            contentCompressionStrategiesMap, config);
+            contentCompressionStrategiesMap, newHashMap(), config);
     underTest.attach(repository);
     underTest.installDependencies(eventManager);
     when(configurationFacet.readSection(configuration, CONFIG_KEY, Config.class)).thenReturn(config);
