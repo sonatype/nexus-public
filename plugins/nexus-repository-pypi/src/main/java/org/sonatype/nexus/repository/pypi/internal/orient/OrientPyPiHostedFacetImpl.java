@@ -188,9 +188,10 @@ public class OrientPyPiHostedFacetImpl
     savedIndex.formatAttributes().set(P_ASSET_KIND, AssetKind.INDEX.name());
 
     StorageFacet storageFacet = getRepository().facet(StorageFacet.class);
-    TempBlob tempBlob = storageFacet.createTempBlob(new ByteArrayInputStream(html.getBytes(UTF_8)), HASH_ALGORITHMS);
 
-    saveAsset(tx, savedIndex, tempBlob, TEXT_HTML, new AttributesMap());
+    try (TempBlob tempBlob = storageFacet.createTempBlob(new ByteArrayInputStream(html.getBytes(UTF_8)), HASH_ALGORITHMS)) {
+      saveAsset(tx, savedIndex, tempBlob, TEXT_HTML, new AttributesMap());
+    }
 
     return savedIndex;
   }
