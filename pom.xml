@@ -128,7 +128,12 @@
     <staging.progressTimeout>60</staging.progressTimeout>
 
     <it.includes>**/*IT.*</it.includes>
-    <it.excludedGroups>org.sonatype.goodies.testsupport.group.Perf,org.sonatype.goodies.testsupport.group.External,org.sonatype.goodies.testsupport.group.Unstable</it.excludedGroups>
+    <it.excludedGroups>
+      org.sonatype.goodies.testsupport.group.Perf,
+      org.sonatype.goodies.testsupport.group.External,
+      org.sonatype.goodies.testsupport.group.Unstable,
+      org.sonatype.nexus.content.testsuite.groups.SQLTestGroup
+    </it.excludedGroups>
     <clm.skip>true</clm.skip>
   </properties>
 
@@ -564,6 +569,12 @@
       <dependency>
         <groupId>org.sonatype.nexus</groupId>
         <artifactId>nexus-test-db</artifactId>
+        <version>3.28.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus</groupId>
+        <artifactId>nexus-testsupport</artifactId>
         <version>3.28.0-SNAPSHOT</version>
       </dependency>
 
