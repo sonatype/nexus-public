@@ -98,7 +98,7 @@ public interface MavenFacet
   boolean exists(final MavenPath path);
 
   /**
-   * @since 3.next
+   * @since 3.27
    * @param the tuple of group Id, artifact Id, and base Version
    * @return paths there were deleted
    */
@@ -106,7 +106,7 @@ public interface MavenFacet
       throws IOException;
 
   /**
-   * @since 3.next
+   * @since 3.27
    * @param the tuple of group Id, and artifact Id
    * @return paths there were deleted
    */
@@ -116,7 +116,7 @@ public interface MavenFacet
   }
 
   /**
-   * @since 3.next
+   * @since 3.27
    * @param the group Id
    * @return paths there were deleted
    */
