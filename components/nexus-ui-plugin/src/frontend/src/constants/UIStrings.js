@@ -27,6 +27,9 @@ export default {
 
   ERROR: {
     FIELD_REQUIRED: 'This field is required',
+    NAN: 'This field must contain a numeric value',
+    MIN: (min) => `This field must contain a value >= ${min}`,
+    MAX: (max) => `This field must contain a value <= ${max}`,
     LOAD_ERROR: 'An error occurred while loading the form',
     SAVE_ERROR: 'An error occurred while saving the form'
   },

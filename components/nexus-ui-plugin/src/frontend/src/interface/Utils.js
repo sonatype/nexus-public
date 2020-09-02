@@ -38,6 +38,22 @@ export default class Utils {
     return !Utils.isUri(str);
   }
 
+  static isInRange({value, min = -Infinity, max = Infinity}) {
+    if (isNaN(value)) {
+      return UIStrings.ERROR.NAN
+    }
+
+    const number = parseInt(value, 10);
+    if (min > number) {
+      return UIStrings.ERROR.MIN(min);
+    }
+    else if (max < number) {
+      return UIStrings.ERROR.MAX(max);
+    }
+
+    return null;
+  }
+
   /**
    * Builds a new xstate machine used to handle forms.
    * Typically the validation action, fetchData service, and saveData service should be implemented in withConfig.
@@ -175,10 +191,9 @@ export default class Utils {
         update: assign({
           data: ({data}, event) => ({...data, ...event.data}),
           isTouched: ({isTouched}, event) => {
-            return {
-              ...isTouched,
-              ...Object.fromEntries(Object.keys(event.data).map(key => [key, true]))
-            }
+            const result = {...isTouched};
+            Object.keys(event.data).forEach(key => result[key] = true);
+            return result;
           }
         }),
 
