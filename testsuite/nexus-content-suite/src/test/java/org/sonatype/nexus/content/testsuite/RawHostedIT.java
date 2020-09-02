@@ -44,8 +44,8 @@ import static org.hamcrest.Matchers.is;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STRICT_CONTENT_TYPE_VALIDATION;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.WRITE_POLICY;
-import static org.sonatype.nexus.repository.content.facet.WritePolicy.ALLOW_ONCE;
-import static org.sonatype.nexus.repository.content.facet.WritePolicy.DENY;
+import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW_ONCE;
+import static org.sonatype.nexus.repository.config.WritePolicy.DENY;
 
 @Category(SQLTestGroup.class)
 public class RawHostedIT

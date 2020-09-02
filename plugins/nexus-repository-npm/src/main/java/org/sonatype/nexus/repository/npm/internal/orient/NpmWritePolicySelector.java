@@ -17,7 +17,7 @@ import java.util.Objects;
 import org.sonatype.nexus.repository.npm.internal.NpmAttributes.AssetKind;
 
 import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.WritePolicy;
+import org.sonatype.nexus.repository.config.WritePolicy;
 import org.sonatype.nexus.repository.storage.WritePolicySelector;
 
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;

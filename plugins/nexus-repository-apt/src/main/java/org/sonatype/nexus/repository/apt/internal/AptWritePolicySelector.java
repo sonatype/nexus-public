@@ -13,7 +13,7 @@
 package org.sonatype.nexus.repository.apt.internal;
 
 import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.WritePolicy;
+import org.sonatype.nexus.repository.config.WritePolicy;
 import org.sonatype.nexus.repository.storage.WritePolicySelector;
 
 /**
