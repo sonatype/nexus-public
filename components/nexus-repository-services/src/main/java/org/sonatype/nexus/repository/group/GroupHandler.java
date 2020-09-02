@@ -50,6 +50,8 @@ public class GroupHandler
     extends ComponentSupport
     implements Handler
 {
+  public static final String IGNORE_FIREWALL = "IGNORE_FIREWALL";
+
   public static final String USE_DISPATCHED_RESPONSE = "USE_DISPATCHED_RESPONSE";
 
   public static final String INSUFFICIENT_LICENSE =
