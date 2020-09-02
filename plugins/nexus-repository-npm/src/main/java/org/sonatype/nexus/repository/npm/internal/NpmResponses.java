@@ -29,6 +29,7 @@ import com.google.common.collect.Maps;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.System.lineSeparator;
 import static org.sonatype.nexus.repository.http.HttpStatus.BAD_REQUEST;
+import static org.sonatype.nexus.repository.http.HttpStatus.FORBIDDEN;
 import static org.sonatype.nexus.repository.http.HttpStatus.NOT_FOUND;
 import static org.sonatype.nexus.repository.http.HttpStatus.UNAUTHORIZED;
 import static org.sonatype.nexus.repository.view.ContentTypes.APPLICATION_JSON;
@@ -49,8 +50,8 @@ public final class NpmResponses
   private static final Payload successPayload = statusPayload(true, null);
 
   private static Payload statusPayload(final boolean success, @Nullable final String error) {
-    NestedAttributesMap errorObject = new NestedAttributesMap("error", Maps.<String, Object>newHashMap());
-    errorObject.set("success", Boolean.valueOf(success));
+    NestedAttributesMap errorObject = new NestedAttributesMap("error", Maps.newHashMap());
+    errorObject.set("success", success);
     if (error != null) {
       errorObject.set("error", error);
     }
@@ -69,10 +70,7 @@ public final class NpmResponses
 
   @Nonnull
   public static Response notFound(@Nullable final String message) {
-    return new Response.Builder()
-        .status(Status.failure(NOT_FOUND, "Not Found"))
-        .payload(statusPayload(false, message))
-        .build();
+    return failureWithStatusPayload(NOT_FOUND, message);
   }
 
   @Nonnull
@@ -90,16 +88,23 @@ public final class NpmResponses
 
   @Nonnull
   public static Response badRequest(@Nullable final String message) {
-    return new Response.Builder()
-        .status(Status.failure(BAD_REQUEST))
-        .payload(statusPayload(false, message))
-        .build();
+    return failureWithStatusPayload(BAD_REQUEST, message);
   }
 
   @Nonnull
   public static Response badCredentials(@Nullable final String message) {
+    return failureWithStatusPayload(UNAUTHORIZED, message);
+  }
+
+  @Nonnull
+  public static Response forbidden(@Nullable final String message) {
+    return failureWithStatusPayload(FORBIDDEN, message);
+  }
+
+  @Nonnull
+  public static Response failureWithStatusPayload(final int code, @Nullable final String message) {
     return new Response.Builder()
-        .status(Status.failure(UNAUTHORIZED))
+        .status(Status.failure(code))
         .payload(statusPayload(false, message))
         .build();
   }
