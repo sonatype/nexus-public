@@ -17,6 +17,7 @@ import javax.inject.Inject
 import org.sonatype.nexus.common.collect.NestedAttributesMap
 import org.sonatype.nexus.common.log.LogManager
 import org.sonatype.nexus.repository.Repository
+import org.sonatype.nexus.repository.npm.security.NpmToken
 import org.sonatype.nexus.testsuite.testsupport.RepositoryITSupport
 
 import com.google.common.collect.ImmutableSet
@@ -42,6 +43,14 @@ class NpmITSupport
 
   NpmITSupport() {
     testData.addDirectory(resolveBaseFile("target/it-resources/npm"))
+  }
+
+  void enableNpmRealm() {
+    def config = realmManager.configuration
+    if (!config.realmNames.contains(NpmToken.NAME)) {
+      config.realmNames.add(NpmToken.NAME)
+      realmManager.configuration = config
+    }
   }
 
   Repository createNpmHostedRepository(String name, String writePolicy = 'ALLOW_ONCE') {
