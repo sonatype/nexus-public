@@ -118,20 +118,11 @@ public class SimpleApiRepositoryAdapter
     return new HostedStorageAttributes(blobStoreName, strictContentTypeValidation, writePolicy);
   }
 
-  protected GroupAttributes getGroupAttributes(final Repository repository) {
-    Collection<String> memberNames =
-        repository.getConfiguration().attributes("group").get("memberNames", new TypeToken<Collection<String>>()
-        {
-        });
-    return new GroupAttributes(memberNames);
-  }
-
-  protected GroupDeployAttributes getGroupDeployAttributes(final Repository repository) {
-    checkNotNull(repository);
-    GroupAttributes groupAttributes = getGroupAttributes(repository);
-    NestedAttributesMap group = repository.getConfiguration().attributes("group");
-    String groupWriteMember = group.get(GROUP_WRITE_MEMBER, String.class);
-    return new GroupDeployAttributes(groupAttributes.getMemberNames(), groupWriteMember);
+  protected GroupDeployAttributes getGroupAttributes(final Repository repository) {
+    NestedAttributesMap groupAttributes = repository.getConfiguration().attributes("group");
+    Collection<String> memberNames = groupAttributes.get("memberNames", new TypeToken<Collection<String>>() { });
+    String groupWriteMember = groupAttributes.get(GROUP_WRITE_MEMBER, String.class);
+    return new GroupDeployAttributes(memberNames, groupWriteMember);
   }
 
   protected CleanupPolicyAttributes getCleanupPolicyAttributes(final Repository repository) {

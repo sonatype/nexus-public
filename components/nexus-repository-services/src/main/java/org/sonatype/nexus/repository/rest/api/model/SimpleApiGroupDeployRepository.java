@@ -10,31 +10,33 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.npm.rest;
+package org.sonatype.nexus.repository.rest.api.model;
 
-import org.sonatype.nexus.repository.npm.internal.NpmFormat;
-import org.sonatype.nexus.repository.rest.api.model.GroupDeployAttributes;
-import org.sonatype.nexus.repository.rest.api.model.GroupDeployRepositoryApiRequest;
-import org.sonatype.nexus.repository.rest.api.model.StorageAttributes;
-
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * @since 3.22
+ * API Group Deploy Repository for simple formats which do not have custom attributes for groups.
+ *
+ * @since 3.next
  */
-@JsonIgnoreProperties({"format", "type"})
-public class NpmGroupRepositoryApiRequest
-    extends GroupDeployRepositoryApiRequest
+@JsonIgnoreProperties(value = {"format", "type", "url"}, allowGetters = true)
+public class SimpleApiGroupDeployRepository
+    extends SimpleApiGroupRepository
 {
-  @JsonCreator
-  public NpmGroupRepositoryApiRequest(
+  public SimpleApiGroupDeployRepository(
       @JsonProperty("name") final String name,
+      @JsonProperty("format") final String format,
+      @JsonProperty("url") final String url,
       @JsonProperty("online") final Boolean online,
       @JsonProperty("storage") final StorageAttributes storage,
       @JsonProperty("group") final GroupDeployAttributes group)
   {
-    super(name, NpmFormat.NAME, online, storage, group);
+    super(name, format, url, online, storage, group);
+  }
+
+  @Override
+  public GroupDeployAttributes getGroup() {
+    return (GroupDeployAttributes) super.getGroup();
   }
 }
