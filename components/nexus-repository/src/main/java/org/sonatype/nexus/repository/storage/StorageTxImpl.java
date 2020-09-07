@@ -44,9 +44,9 @@ import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.config.WritePolicy;
 import org.sonatype.nexus.repository.move.RepositoryMoveStore;
 import org.sonatype.nexus.repository.mime.ContentValidator;
-import org.sonatype.nexus.repository.move.RepositoryMoveStore;
 import org.sonatype.nexus.transaction.RetryController;
 
 import com.google.common.base.Supplier;

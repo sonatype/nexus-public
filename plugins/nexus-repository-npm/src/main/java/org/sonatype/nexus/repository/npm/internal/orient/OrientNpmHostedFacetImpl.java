@@ -429,7 +429,6 @@ public class OrientNpmHostedFacetImpl
     return Optional.ofNullable(Iterables.getOnlyElement(tx.deleteComponent(tarballComponent, deleteBlob), null));
   }
 
-  @Nullable
   @Override
   @TransactionalTouchBlob
   public Optional<Content> getDistTags(final NpmPackageId packageId) {

@@ -20,6 +20,8 @@ import org.sonatype.nexus.repository.rest.api.model.GroupAttributes;
 import org.sonatype.nexus.repository.rest.api.model.GroupDeployAttributes;
 import org.sonatype.nexus.repository.rest.api.model.GroupRepositoryApiRequest;
 
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.GROUP_WRITE_MEMBER;
+
 /**
  * @since 3.20
  */
@@ -39,7 +41,7 @@ public class GroupRepositoryApiRequestToConfigurationConverter<T extends GroupRe
       GroupDeployAttributes groupDeployAttributes = (GroupDeployAttributes) group;
       String writableMember = groupDeployAttributes.getWritableMember();
       if (writableMember != null && !writableMember.isEmpty()) {
-        configuration.attributes("group").set("groupWriteMember", writableMember);
+        configuration.attributes("group").set(GROUP_WRITE_MEMBER, writableMember);
       }
     }
     return configuration;

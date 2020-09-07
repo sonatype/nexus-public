@@ -47,6 +47,7 @@ import org.sonatype.nexus.repository.types.ProxyType;
 import com.google.common.reflect.TypeToken;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.config.ConfigurationConstants.GROUP_WRITE_MEMBER;
 
 /**
  * @since 3.20
@@ -129,7 +130,7 @@ public class SimpleApiRepositoryAdapter
     checkNotNull(repository);
     GroupAttributes groupAttributes = getGroupAttributes(repository);
     NestedAttributesMap group = repository.getConfiguration().attributes("group");
-    String groupWriteMember = group.get("groupWriteMember", String.class);
+    String groupWriteMember = group.get(GROUP_WRITE_MEMBER, String.class);
     return new GroupDeployAttributes(groupAttributes.getMemberNames(), groupWriteMember);
   }
 

@@ -19,7 +19,7 @@ import javax.inject.Singleton
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
 import org.sonatype.nexus.repository.config.Configuration
-import org.sonatype.nexus.repository.content.facet.WritePolicy
+import org.sonatype.nexus.repository.config.WritePolicy
 import org.sonatype.nexus.repository.manager.DefaultRepositoriesContributor
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.maven.LayoutPolicy

@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.storage.ComponentMaintenance
 import org.sonatype.nexus.repository.storage.StorageFacet
 import org.sonatype.nexus.repository.storage.StorageTx
-import org.sonatype.nexus.repository.storage.WritePolicy
+import org.sonatype.nexus.repository.config.WritePolicy
 import org.sonatype.nexus.testsuite.testsupport.RepositoryITSupport
 
 import org.apache.http.auth.AuthScope
@@ -30,7 +30,7 @@ import org.junit.experimental.categories.Category
 
 import static java.lang.Thread.sleep
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME
-import static org.sonatype.nexus.repository.storage.WritePolicy.ALLOW
+import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW
 
 /**
  * Support for PyPI ITs.

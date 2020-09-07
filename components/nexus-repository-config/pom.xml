@@ -55,8 +55,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.sonatype.goodies</groupId>
-      <artifactId>goodies-testsupport</artifactId>
+      <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-testsupport</artifactId>
       <scope>test</scope>
     </dependency>
 

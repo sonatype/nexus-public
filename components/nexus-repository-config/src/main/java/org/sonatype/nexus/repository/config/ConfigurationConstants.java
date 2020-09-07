@@ -30,4 +30,6 @@ public interface ConfigurationConstants
   String WRITE_POLICY_DEFAULT = "ALLOW";
 
   String STRICT_CONTENT_TYPE_VALIDATION = "strictContentTypeValidation";
+
+  String GROUP_WRITE_MEMBER = "groupWriteMember";
 }

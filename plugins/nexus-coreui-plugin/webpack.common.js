@@ -33,6 +33,15 @@ module.exports = {
         ]
       },
       {
+        test: /\.js$/,
+        include: /node_modules[\/\\]fuse\.js/,
+        use: [
+          {
+            loader: 'babel-loader'
+          }
+        ]
+      },
+      {
         test: /\.scss$/,
         use: [
           {

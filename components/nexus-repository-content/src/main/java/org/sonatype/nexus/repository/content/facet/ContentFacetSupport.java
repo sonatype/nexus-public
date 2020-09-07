@@ -32,6 +32,7 @@ import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
+import org.sonatype.nexus.repository.config.WritePolicy;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.ContentRepository;
@@ -57,7 +58,7 @@ import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.CONTENT_DATASTORE_NAME;
 import static org.sonatype.nexus.repository.config.ConfigurationConstants.STORAGE;
-import static org.sonatype.nexus.repository.content.facet.WritePolicy.ALLOW;
+import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW;
 import static org.sonatype.nexus.validation.ConstraintViolations.maybeAdd;
 import static org.sonatype.nexus.validation.ConstraintViolations.maybePropagate;
 

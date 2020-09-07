@@ -22,9 +22,9 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.hash.HashAlgorithm;
+import org.sonatype.nexus.repository.config.WritePolicy;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
-import org.sonatype.nexus.repository.content.facet.WritePolicy;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
@@ -43,8 +43,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
-import static org.sonatype.nexus.repository.content.facet.WritePolicy.ALLOW;
-import static org.sonatype.nexus.repository.content.facet.WritePolicy.ALLOW_ONCE;
+import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW;
+import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW_ONCE;
 import static org.sonatype.nexus.repository.content.npm.NpmContentFacet.metadataPath;
 import static org.sonatype.nexus.repository.content.npm.NpmContentFacet.tarballPath;
 

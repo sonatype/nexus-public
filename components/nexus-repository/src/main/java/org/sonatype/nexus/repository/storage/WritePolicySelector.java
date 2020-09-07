@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.storage;
 
+import org.sonatype.nexus.repository.config.WritePolicy;
+
 /**
  * Write policy selector.
  *

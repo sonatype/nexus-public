@@ -124,7 +124,7 @@ exports[`UserAccount renders correctly 1`] = `
             </span>
           </label>
           <div
-            class="nx-text-input pristine valid"
+            class="nx-text-input valid"
           >
             <div
               class="nx-text-input__box"
@@ -186,7 +186,7 @@ exports[`UserAccount renders correctly 1`] = `
             </span>
           </label>
           <div
-            class="nx-text-input pristine valid"
+            class="nx-text-input valid"
           >
             <div
               class="nx-text-input__box"
@@ -248,7 +248,7 @@ exports[`UserAccount renders correctly 1`] = `
             </span>
           </label>
           <div
-            class="nx-text-input pristine valid"
+            class="nx-text-input valid"
           >
             <div
               class="nx-text-input__box"
@@ -330,7 +330,7 @@ exports[`UserAccount renders correctly 1`] = `
             </span>
           </label>
           <div
-            class="nx-text-input pristine valid"
+            class="nx-text-input valid"
           >
             <div
               class="nx-text-input__box"
@@ -392,7 +392,7 @@ exports[`UserAccount renders correctly 1`] = `
             </span>
           </label>
           <div
-            class="nx-text-input pristine valid"
+            class="nx-text-input valid"
           >
             <div
               class="nx-text-input__box"
@@ -454,7 +454,7 @@ exports[`UserAccount renders correctly 1`] = `
             </span>
           </label>
           <div
-            class="nx-text-input pristine valid"
+            class="nx-text-input valid"
           >
             <div
               class="nx-text-input__box"
@@ -650,7 +650,7 @@ exports[`UserAccount renders correctly for an external user: externalUser 1`] = 
             </span>
           </label>
           <div
-            class="nx-text-input pristine valid disabled"
+            class="nx-text-input valid disabled"
           >
             <div
               class="nx-text-input__box"
@@ -714,7 +714,7 @@ exports[`UserAccount renders correctly for an external user: externalUser 1`] = 
             </span>
           </label>
           <div
-            class="nx-text-input pristine valid disabled"
+            class="nx-text-input valid disabled"
           >
             <div
               class="nx-text-input__box"
@@ -778,7 +778,7 @@ exports[`UserAccount renders correctly for an external user: externalUser 1`] = 
             </span>
           </label>
           <div
-            class="nx-text-input pristine valid disabled"
+            class="nx-text-input valid disabled"
           >
             <div
               class="nx-text-input__box"

@@ -17,7 +17,7 @@ import javax.inject.Provider
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
 import org.sonatype.nexus.repository.config.Configuration
-import org.sonatype.nexus.repository.content.facet.WritePolicy
+import org.sonatype.nexus.repository.config.WritePolicy
 import org.sonatype.nexus.repository.manager.RepositoryManager
 
 import groovy.transform.CompileStatic

@@ -61,7 +61,7 @@ exports[`LogViewer renders the log into the text area 1`] = `
           class="nxrm-section-toolbar"
         >
           <div
-            class="nx-text-input nxrm-log-viewer-mark-text pristine valid"
+            class="nx-text-input nxrm-log-viewer-mark-text valid"
           >
             <div
               class="nx-text-input__box"

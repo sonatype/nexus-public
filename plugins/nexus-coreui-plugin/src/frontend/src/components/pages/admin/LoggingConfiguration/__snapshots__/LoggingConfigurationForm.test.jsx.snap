@@ -134,7 +134,7 @@ exports[`LoggingConfigurationForm renders the resolved data 1`] = `
             </span>
           </label>
           <div
-            class="nx-text-input pristine valid disabled"
+            class="nx-text-input valid disabled"
           >
             <div
               class="nx-text-input__box"
@@ -320,7 +320,7 @@ exports[`LoggingConfigurationForm requires the name field when creating a new lo
             </span>
           </label>
           <div
-            class="nx-text-input pristine valid"
+            class="nx-text-input valid"
           >
             <div
               class="nx-text-input__box"

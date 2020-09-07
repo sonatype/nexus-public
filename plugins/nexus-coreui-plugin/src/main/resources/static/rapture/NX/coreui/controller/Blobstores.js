@@ -32,6 +32,7 @@ Ext.define('NX.coreui.controller.Blobstores', {
     'Blobstore'
   ],
   stores: [
+    'Repository',
     'Blobstore',
     'BlobstoreType',
     'BlobStoreQuotaType'
@@ -118,7 +119,6 @@ Ext.define('NX.coreui.controller.Blobstores', {
           change: me.removeGroupMemberTaskFromGroupChanged
         },
         'combobox[name=property_moveRepositoryName]': {
-          beforeRender: me.moveRepositoryTaskLoadStores,
           change: me.moveRepositoryTaskRepositoryNameChanged
         }
       }
@@ -362,25 +362,30 @@ Ext.define('NX.coreui.controller.Blobstores', {
     }
   },
 
-  moveRepositoryTaskLoadStores: function() {
-    this.getStore('Repository').load();
-    this.getStore('Blobstore').load();
-  },
-
   moveRepositoryTaskRepositoryNameChanged: function(moveRepoComboBox, newVal, old) {
-    var me = this,
-        repoStore = me.getStore('Repository'),
-        blobstoreStore = me.getStore('Blobstore');
-        blobstoresCombo = moveRepoComboBox.up().query('[name=property_moveTargetBlobstore]')[0];
-    var selectedRepo = repoStore.findRecord('name', newVal);
-    var currentBlobStore = selectedRepo.data.attributes.storage.blobStoreName;
-    var validBlobstores = blobstoreStore.getRange().
-        filter(function(item) { return item.data.name !== currentBlobStore; }).
-        map(function(item) { return { name: item.data.name, id: item.data.name }; } );
-    blobstoresCombo.setValue(null);
-    blobstoresCombo.getStore().setData(validBlobstores);
-    if (!old) {
-      blobstoresCombo.reset();
-    }
+    this.getStore('Repository').load({
+      scope: this,
+      callback: function() {
+        this.getStore('Blobstore').load({
+          scope: this,
+          callback: function() {
+            var me = this,
+                repoStore = me.getStore('Repository'),
+                blobstoreStore = me.getStore('Blobstore'),
+                blobstoresCombo = moveRepoComboBox.up().query('[name=property_moveTargetBlobstore]')[0],
+                selectedRepo = repoStore.findRecord('name', newVal),
+                currentBlobStore = selectedRepo.data.attributes.storage.blobStoreName,
+                validBlobstores = blobstoreStore.getRange().
+                    filter(function(item) { return item.data.name !== currentBlobStore; }).
+                    map(function(item) { return { name: item.data.name, id: item.data.name }; } );
+            blobstoresCombo.setValue(null);
+            blobstoresCombo.getStore().setData(validBlobstores);
+            if (!old) {
+              blobstoresCombo.reset();
+            }
+          }
+        });
+      }
+    });
   }
 });

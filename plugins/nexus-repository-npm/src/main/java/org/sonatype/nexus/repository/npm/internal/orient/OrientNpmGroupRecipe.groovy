@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.npm.internal.orient
 
 import javax.annotation.Nonnull
+import javax.annotation.Nullable
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Provider
@@ -43,7 +44,15 @@ import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler
 import static org.sonatype.nexus.repository.http.HttpMethods.GET
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD
 import static org.sonatype.nexus.repository.http.HttpMethods.PUT
-import static org.sonatype.nexus.repository.npm.internal.NpmPaths.*
+import static org.sonatype.nexus.repository.npm.internal.NpmPaths.auditMatcher
+import static org.sonatype.nexus.repository.npm.internal.NpmPaths.auditQuickMatcher
+import static org.sonatype.nexus.repository.npm.internal.NpmPaths.distTagsMatcher
+import static org.sonatype.nexus.repository.npm.internal.NpmPaths.packageMatcher
+import static org.sonatype.nexus.repository.npm.internal.NpmPaths.pingMatcher
+import static org.sonatype.nexus.repository.npm.internal.NpmPaths.searchIndexMatcher
+import static org.sonatype.nexus.repository.npm.internal.NpmPaths.searchV1Matcher
+import static org.sonatype.nexus.repository.npm.internal.NpmPaths.tarballMatcher
+import static org.sonatype.nexus.repository.npm.internal.NpmPaths.whoamiMatcher
 
 /**
  * npm group repository recipe.
@@ -99,6 +108,11 @@ class OrientNpmGroupRecipe
 
   @Inject
   NpmGroupAuditQuickHandler npmGroupAuditQuickHandler
+
+  @Inject
+  @Named("nexus.analytics.npmGroupDeployHandler")
+  @Nullable
+  Handler npmGroupDeployAnalyticsHandler
 
   @Inject
   OrientNpmGroupRecipe(@Named(GroupType.NAME) final Type type,
@@ -202,6 +216,7 @@ class OrientNpmGroupRecipe
 
     // PUT /packageName (npm publish)
     builder.route(packageMatcher(PUT)
+        .handler(npmGroupDeployAnalyticsHandler ?: { context -> context.proceed() } as Handler)
         .handler(timingHandler)
         .handler(securityHandler)
         .handler(NpmHandlers.npmErrorHandler)

@@ -171,12 +171,16 @@ class NpmClient
   }
 
   void publish(NestedAttributesMap packageRoot) {
-    HttpResponse response = put(
+    HttpResponse response = tryToPublish(packageRoot)
+    EntityUtils.consume(response.entity)
+    assert status(response) == OK || status(response) == CREATED
+  }
+
+  HttpResponse tryToPublish(final NestedAttributesMap packageRoot) {
+    return put(
         resolve(packageRoot.get('name', String)),
         packageRoot
     )
-    EntityUtils.consume(response.entity)
-    assert status(response) == OK || status(response) == CREATED
   }
 
   void publishRev(NestedAttributesMap packageRoot, String rev) {

@@ -19,9 +19,12 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.group.GroupHandler;
-import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Response;
+import org.sonatype.nexus.repository.view.Status;
+
+import static org.sonatype.nexus.repository.npm.internal.NpmResponses.failureWithStatusPayload;
+import static org.sonatype.nexus.repository.npm.internal.NpmResponses.forbidden;
 
 /**
  * Override certain behaviours of the standard group handler to be able to write to a group.
@@ -41,8 +44,14 @@ public class NpmGroupWriteHandler
   @Override
   public Response handle(@Nonnull final Context context) throws Exception {
     if (groupWriteHandler.get() != null) {
-      return groupWriteHandler.get().handle(context);
+      Response response = groupWriteHandler.get().handle(context);
+
+      Status status = response.getStatus();
+      if (status.isSuccessful()) {
+        return response;
+      }
+      return failureWithStatusPayload(status.getCode(), status.getMessage());
     }
-    return HttpResponses.forbidden(INSUFFICIENT_LICENSE);
+    return forbidden(INSUFFICIENT_LICENSE);
   }
 }

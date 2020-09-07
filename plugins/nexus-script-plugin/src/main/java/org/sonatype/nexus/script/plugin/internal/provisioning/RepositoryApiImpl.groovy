@@ -25,7 +25,7 @@ import org.sonatype.nexus.repository.config.Configuration
 import org.sonatype.nexus.repository.manager.RepositoryManager
 import org.sonatype.nexus.repository.maven.LayoutPolicy
 import org.sonatype.nexus.repository.maven.VersionPolicy
-import org.sonatype.nexus.repository.storage.WritePolicy
+import org.sonatype.nexus.repository.config.WritePolicy
 import org.sonatype.nexus.script.plugin.RepositoryApi
 
 import groovy.transform.CompileDynamic

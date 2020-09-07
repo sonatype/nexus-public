@@ -18,7 +18,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.maven.internal.orient.MavenWritePolicySelector;
 import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.WritePolicy;
+import org.sonatype.nexus.repository.config.WritePolicy;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -29,9 +29,9 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.OTHER;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
-import static org.sonatype.nexus.repository.storage.WritePolicy.ALLOW;
-import static org.sonatype.nexus.repository.storage.WritePolicy.ALLOW_ONCE;
-import static org.sonatype.nexus.repository.storage.WritePolicy.DENY;
+import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW;
+import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW_ONCE;
+import static org.sonatype.nexus.repository.config.WritePolicy.DENY;
 
 public class MavenWritePolicySelectorTest
     extends TestSupport
