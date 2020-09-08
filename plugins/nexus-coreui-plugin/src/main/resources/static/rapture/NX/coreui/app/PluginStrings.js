@@ -215,6 +215,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchDocker_Text: 'Docker',
     SearchDocker_Description: 'Search for components in Docker repositories',
 
+    // Browse -> Search -> R
+    SearchR_Text: 'R',
+    SearchR_Description: 'Search for components in R repositories',
+
     // Browse -> Search -> Raw
     SearchRaw_Text: 'Raw',
     SearchRaw_Description: 'Search for components in Raw repositories',

@@ -249,6 +249,12 @@ Ext.define('NX.coreui.app.PluginConfig', {
       }
     },
     {
+      id: 'NX.coreui.controller.SearchR',
+      active: function() {
+        return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-repository-r');
+      }
+    },
+    {
       id: 'NX.coreui.controller.SearchRaw',
       active: function () {
         return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-repository-raw');

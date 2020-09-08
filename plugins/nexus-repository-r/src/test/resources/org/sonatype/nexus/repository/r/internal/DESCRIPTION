@@ -1,0 +1,87 @@
+Package: ggplot2
+Version: 2.1.0
+Authors@R: c(
+    person("Hadley", "Wickham", , "hadley@rstudio.com", c("aut", "cre")),
+    person("Winston", "Chang", , "winston@rstudio.com", "aut"),
+    person("RStudio", role = "cph")
+    )
+Title: An Implementation of the Grammar of Graphics
+Description: An implementation of the grammar of graphics in R. It combines the
+    advantages of both base and lattice graphics: conditioning and shared axes
+    are handled automatically, and you can still build up a plot step by step
+    from multiple data sources. It also implements a sophisticated
+    multidimensional conditioning system and a consistent interface to map
+    data to aesthetic attributes. See http://ggplot2.org for more information,
+    documentation and examples.
+Depends: R (>= 3.1)
+Imports: digest, grid, gtable (>= 0.1.1), MASS, plyr (>= 1.7.1),
+        reshape2, scales (>= 0.3.0), stats
+Suggests: covr, ggplot2movies, hexbin, Hmisc, lattice, mapproj, maps,
+        maptools, mgcv, multcomp, nlme, testthat (>= 0.11.0), quantreg,
+        knitr, rpart, rmarkdown, svglite
+Enhances: sp
+License: GPL-2
+URL: http://ggplot2.org, https://github.com/hadley/ggplot2
+BugReports: https://github.com/hadley/ggplot2/issues
+LazyData: true
+Collate: 'ggproto.r' 'aaa-.r' 'aes-calculated.r'
+        'aes-colour-fill-alpha.r' 'aes-group-order.r'
+        'aes-linetype-size-shape.r' 'aes-position.r' 'utilities.r'
+        'aes.r' 'legend-draw.r' 'geom-.r' 'annotation-custom.r'
+        'annotation-logticks.r' 'geom-polygon.r' 'geom-map.r'
+        'annotation-map.r' 'geom-raster.r' 'annotation-raster.r'
+        'annotation.r' 'autoplot.r' 'bench.r' 'bin.R' 'coord-.r'
+        'coord-cartesian-.r' 'coord-fixed.r' 'coord-flip.r'
+        'coord-map.r' 'coord-munch.r' 'coord-polar.r'
+        'coord-quickmap.R' 'coord-transform.r' 'data.R' 'facet-.r'
+        'facet-grid-.r' 'facet-labels.r' 'facet-layout.r'
+        'facet-locate.r' 'facet-null.r' 'facet-viewports.r'
+        'facet-wrap.r' 'fortify-lm.r' 'fortify-map.r'
+        'fortify-multcomp.r' 'fortify-spatial.r' 'fortify.r' 'stat-.r'
+        'geom-abline.r' 'geom-rect.r' 'geom-bar.r' 'geom-bin2d.r'
+        'geom-blank.r' 'geom-boxplot.r' 'geom-path.r' 'geom-contour.r'
+        'geom-count.r' 'geom-crossbar.r' 'geom-segment.r'
+        'geom-curve.r' 'geom-defaults.r' 'geom-ribbon.r'
+        'geom-density.r' 'geom-density2d.r' 'geom-dotplot.r'
+        'geom-errorbar.r' 'geom-errorbarh.r' 'geom-freqpoly.r'
+        'geom-hex.r' 'geom-histogram.r' 'geom-hline.r' 'geom-jitter.r'
+        'geom-label.R' 'geom-linerange.r' 'geom-point.r'
+        'geom-pointrange.r' 'geom-quantile.r' 'geom-rug.r'
+        'geom-smooth.r' 'geom-spoke.r' 'geom-text.r' 'geom-tile.r'
+        'geom-violin.r' 'geom-vline.r' 'ggplot2.r' 'grob-absolute.r'
+        'grob-dotstack.r' 'grob-null.r' 'grouping.r' 'guide-colorbar.r'
+        'guide-legend.r' 'guides-.r' 'guides-axis.r' 'guides-grid.r'
+        'hexbin.R' 'labels.r' 'layer.r' 'limits.r' 'margins.R'
+        'panel.r' 'plot-build.r' 'plot-construction.r' 'plot-last.r'
+        'plot.r' 'position-.r' 'position-collide.r' 'position-dodge.r'
+        'position-fill.r' 'position-identity.r' 'position-jitter.r'
+        'position-jitterdodge.R' 'position-nudge.R' 'position-stack.r'
+        'quick-plot.r' 'range.r' 'save.r' 'scale-.r' 'scale-alpha.r'
+        'scale-brewer.r' 'scale-continuous.r' 'scale-date.r'
+        'scale-discrete-.r' 'scale-gradient.r' 'scale-grey.r'
+        'scale-hue.r' 'scale-identity.r' 'scale-linetype.r'
+        'scale-manual.r' 'scale-shape.r' 'scale-size.r' 'scale-type.R'
+        'scales-.r' 'stat-bin.r' 'stat-bin2d.r' 'stat-bindot.r'
+        'stat-binhex.r' 'stat-boxplot.r' 'stat-contour.r'
+        'stat-count.r' 'stat-density-2d.r' 'stat-density.r'
+        'stat-ecdf.r' 'stat-ellipse.R' 'stat-function.r'
+        'stat-identity.r' 'stat-qq.r' 'stat-quantile.r'
+        'stat-smooth-methods.r' 'stat-smooth.r' 'stat-sum.r'
+        'stat-summary-2d.r' 'stat-summary-bin.R' 'stat-summary-hex.r'
+        'stat-summary.r' 'stat-unique.r' 'stat-ydensity.r' 'summary.r'
+        'theme-defaults.r' 'theme-elements.r' 'theme.r'
+        'translate-qplot-ggplot.r' 'translate-qplot-lattice.r'
+        'utilities-break.r' 'utilities-grid.r' 'utilities-help.r'
+        'utilities-matrix.r' 'utilities-resolution.r'
+        'utilities-table.r' 'zxx.r' 'zzz.r'
+VignetteBuilder: knitr
+RoxygenNote: 5.0.1
+NeedsCompilation: no
+Packaged: 2016-02-29 20:47:22 UTC; hadley
+Author: Hadley Wickham [aut, cre],
+  Winston Chang [aut],
+  RStudio [cph]
+Maintainer: Hadley Wickham <hadley@rstudio.com>
+Repository: CRAN
+Date/Publication: 2016-03-01 15:47:24
+Built: R 3.3.0; ; 2016-05-05 12:00:56 UTC; unix
