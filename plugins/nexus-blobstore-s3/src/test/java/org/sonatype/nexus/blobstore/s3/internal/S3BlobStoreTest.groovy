@@ -410,6 +410,36 @@ class S3BlobStoreTest
       false                | { throw new SdkClientException("Fake error") }
   }
 
+  def "expiry test"(){
+    given: 'blob exists'
+      def expiryPreferredBlobStore = new S3BlobStore(amazonS3Factory, locationResolver, uploader, copier, true,
+          storeMetrics, dryRunPrefix, bucketManager)
+
+      def blobId = new BlobId('soft-delete-success')
+      def cfg = new MockBlobStoreConfiguration()
+      cfg.attributes = [s3: [bucket: 'mybucket', prefix: prefix]]
+      def pathPrefix = prefix ? (prefix + "/") : ""
+
+      expiryPreferredBlobStore.init(cfg)
+      expiryPreferredBlobStore.doStart()
+      def attributesS3Object = mockS3Object(attributesContents)
+      2 * s3.doesObjectExist('mybucket', pathPrefix + propertiesLocation(blobId)) >> true
+      2 * s3.getObject('mybucket', pathPrefix + propertiesLocation(blobId)) >> attributesS3Object
+
+    when: 'blob is deleted'
+      def deleted = expiryPreferredBlobStore.deleteHard(blobId)
+
+    then: 'the delete is not actual called'
+      deleted
+      0 * s3.deleteObject(_ as String, _ as String)
+
+    where:
+      prefix   | _
+      null     | _
+      ""       | _
+      "prefix" | _
+  }
+
   private mockS3Object(String contents) {
     S3Object s3Object = Mock()
     s3Object.getObjectContent() >> new S3ObjectInputStream(new ByteArrayInputStream(contents.bytes), null)
