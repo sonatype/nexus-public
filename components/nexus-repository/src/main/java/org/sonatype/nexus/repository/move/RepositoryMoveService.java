@@ -19,45 +19,10 @@ import org.sonatype.nexus.blobstore.api.BlobRef;
 
 /**
  *
- * @since 3.27
+ * @since 3.next
  */
-public interface RepositoryMoveStore
+public interface RepositoryMoveService
 {
-
-  /**
-   *
-   */
-  RepositoryMoveConfiguration newConfiguration();
-
-  /**
-   *
-   * @param sourceRepositoryName
-   * @return
-   * @throws Exception
-   */
-  @Nullable
-  RepositoryMoveConfiguration findBySourceRepoName(String sourceRepositoryName) throws Exception;
-
-  /**
-   *
-   * @param sourceRepositoryName
-   * @param targetBlobstoreName
-   */
-  void markMoveStarted(String sourceRepositoryName, String targetBlobstoreName);
-
-  /**
-   * Mark a move operation as failed.
-   *
-   * @param sourceRepositoryName
-   */
-  void markMoveFailed(String sourceRepositoryName);
-
-  /**
-   *
-   * @param sourceRepositoryName
-   */
-  void markMoveCompleted(String sourceRepositoryName);
-
   /**
    *
    * @param blobRef

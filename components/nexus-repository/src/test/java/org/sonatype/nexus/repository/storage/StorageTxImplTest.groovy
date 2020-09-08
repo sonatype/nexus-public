@@ -28,7 +28,7 @@ import org.sonatype.nexus.repository.IllegalOperationException
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.config.WritePolicy
 import org.sonatype.nexus.repository.mime.DefaultContentValidator
-import org.sonatype.nexus.repository.move.RepositoryMoveStore
+import org.sonatype.nexus.repository.move.RepositoryMoveService
 import org.sonatype.nexus.repository.view.ContentTypes
 
 import com.google.common.base.Supplier
@@ -79,7 +79,7 @@ extends TestSupport
   @Mock
   private ComponentFactory componentFactory
   @Mock
-  private Provider<RepositoryMoveStore> repositoryMoveStoreProvider;
+  private Provider<RepositoryMoveService> repositoryMoveStoreProvider;
   @Mock
   private Asset asset
   @Mock

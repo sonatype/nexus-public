@@ -44,8 +44,8 @@ import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.move.RepositoryMoveService;
 import org.sonatype.nexus.repository.config.WritePolicy;
-import org.sonatype.nexus.repository.move.RepositoryMoveStore;
 import org.sonatype.nexus.repository.mime.ContentValidator;
 import org.sonatype.nexus.transaction.RetryController;
 
@@ -118,7 +118,7 @@ public class StorageTxImpl
 
   private final ComponentFactory componentFactory;
 
-  private final Provider<RepositoryMoveStore> repositoryMoveStoreProvider;
+  private final Provider<RepositoryMoveService> repositoryMoveStoreProvider;
 
   private int retries = 0;
 
@@ -138,7 +138,7 @@ public class StorageTxImpl
                        final ContentValidator contentValidator,
                        final MimeRulesSource mimeRulesSource,
                        final ComponentFactory componentFactory,
-                       final Provider<RepositoryMoveStore> repositoryMoveStoreProvider)
+                       final Provider<RepositoryMoveService> repositoryMoveStoreProvider)
   {
     this.createdBy = checkNotNull(createdBy);
     this.createdByIp = checkNotNull(createdByIp);
