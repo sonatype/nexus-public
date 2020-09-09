@@ -267,6 +267,12 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchCocoapods_Text: 'Cocoapods',
     SearchCocoapods_Description: 'Search for components in Cocoapods repositories',
 
+    // Browse -> Search -> p2
+    SearchP2_Text: 'P2',
+    SearchP2_Description: 'Search for components in P2 repositories',
+    SearchP2_Group: 'P2 Repositories',
+    SearchP2_PluginName_FieldLabel: 'Plugin name',
+
     // Browse -> Search -> Conda
     SearchConda_Text: 'Conda',
     SearchConda_Description: 'Search for components in Conda repositories',

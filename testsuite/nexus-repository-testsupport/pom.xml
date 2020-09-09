@@ -69,6 +69,12 @@
 
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-repository-p2</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-repository-raw</artifactId>
       <scope>provided</scope>
     </dependency>
@@ -230,6 +236,7 @@
               org.sonatype.nexus.repository.maven.*;resolution:=optional,
               org.sonatype.nexus.repository.npm.*;resolution:=optional,
               org.sonatype.nexus.repository.pypi.*;resolution:=optional,
+              org.sonatype.nexus.repository.p2.*;resolution:=optional,
               org.sonatype.nexus.repository.rubygems.*;resolution:=optional,
               org.sonatype.nexus.repository.yum.*;resolution:=optional,
               org.sonatype.nexus.repository.search.*;resolution:=optional,
