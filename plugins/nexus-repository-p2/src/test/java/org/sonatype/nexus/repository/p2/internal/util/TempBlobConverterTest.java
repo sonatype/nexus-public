@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.repository.storage.TempBlob;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 import org.junit.Before;
 import org.junit.Test;

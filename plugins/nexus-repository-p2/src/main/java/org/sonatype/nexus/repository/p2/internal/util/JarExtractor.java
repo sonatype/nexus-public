@@ -12,14 +12,15 @@
  */
 package org.sonatype.nexus.repository.p2.internal.util;
 
-import org.sonatype.nexus.repository.p2.internal.exception.AttributeParsingException;
-import org.sonatype.nexus.repository.storage.TempBlob;
-
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
+
+import javax.annotation.Nullable;
+
+import org.sonatype.nexus.repository.p2.internal.exception.AttributeParsingException;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 /**
  * Utility methods for working with Jar (Jar Binks, worst character) files

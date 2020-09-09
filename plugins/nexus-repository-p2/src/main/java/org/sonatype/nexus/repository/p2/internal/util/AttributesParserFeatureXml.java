@@ -32,7 +32,7 @@ import org.sonatype.nexus.common.io.SafeXml;
 import org.sonatype.nexus.repository.p2.internal.exception.AttributeParsingException;
 import org.sonatype.nexus.repository.p2.internal.metadata.P2Attributes;
 import org.sonatype.nexus.repository.p2.internal.metadata.P2Attributes.Builder;
-import org.sonatype.nexus.repository.storage.TempBlob;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
