@@ -26,12 +26,12 @@ import org.sonatype.nexus.repository.npm.internal.NpmResponses;
 import org.sonatype.nexus.repository.npm.internal.NpmTokenFacet;
 import org.sonatype.nexus.repository.npm.internal.security.NpmTokenManager;
 import org.sonatype.nexus.repository.storage.StorageFacet;
-import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.view.ContentTypes;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.payloads.BytesPayload;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 import com.google.common.collect.Maps;
 

@@ -47,6 +47,8 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.move.RepositoryMoveService;
 import org.sonatype.nexus.repository.config.WritePolicy;
 import org.sonatype.nexus.repository.mime.ContentValidator;
+import org.sonatype.nexus.repository.move.RepositoryMoveStore;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.transaction.RetryController;
 
 import com.google.common.base.Supplier;
