@@ -18,7 +18,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
-import org.sonatype.nexus.repository.rest.api.AbstractRepositoriesApiResource;
+import org.sonatype.nexus.repository.rest.api.AbstractHostedRepositoriesApiResource;
 import org.sonatype.nexus.validation.Validate;
 
 import io.swagger.annotations.Api;
@@ -39,7 +39,7 @@ import static org.sonatype.nexus.rest.ApiDocConstants.REPOSITORY_UPDATED;
  */
 @Api(value = API_REPOSITORY_MANAGEMENT)
 public abstract class NpmHostedRepositoriesApiResource
-    extends AbstractRepositoriesApiResource<NpmHostedRepositoryApiRequest>
+    extends AbstractHostedRepositoriesApiResource<NpmHostedRepositoryApiRequest>
 {
 
   @ApiOperation("Create npm hosted repository")

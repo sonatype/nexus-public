@@ -19,7 +19,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
 import org.sonatype.nexus.repository.golang.rest.model.GolangProxyRepositoryApiRequest;
-import org.sonatype.nexus.repository.rest.api.AbstractRepositoriesApiResource;
+import org.sonatype.nexus.repository.rest.api.AbstractProxyRepositoriesApiResource;
 import org.sonatype.nexus.validation.Validate;
 
 import io.swagger.annotations.Api;
@@ -43,7 +43,7 @@ import static org.sonatype.nexus.rest.ApiDocConstants.REPOSITORY_UPDATED;
  */
 @Api(value = API_REPOSITORY_MANAGEMENT)
 public abstract class GolangProxyRepositoriesApiResource
-    extends AbstractRepositoriesApiResource<GolangProxyRepositoryApiRequest>
+    extends AbstractProxyRepositoriesApiResource<GolangProxyRepositoryApiRequest>
 {
   @ApiOperation("Create a Go proxy repository")
   @ApiResponses(value = {
