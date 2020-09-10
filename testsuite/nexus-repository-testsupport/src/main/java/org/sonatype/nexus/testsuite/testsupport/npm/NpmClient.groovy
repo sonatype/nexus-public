@@ -454,12 +454,12 @@ class NpmClient
     assert status(response) == stat
   }
 
-  void audit(final String packageLock) {
+  void audit(final String packageLock, final int stat = OK) {
       HttpResponse response = post(
           resolve("-/npm/v1/security/audits"),
           gzip(packageLock))
       EntityUtils.consume(response.entity)
-      assert status(response) == OK
+      assert status(response) == stat
   }
 
   private byte[] gzip(final String str) throws IOException {

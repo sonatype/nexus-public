@@ -44,6 +44,7 @@ import org.sonatype.nexus.repository.view.payloads.StringPayload;
 import org.sonatype.nexus.repository.vulnerability.AuditComponent;
 import org.sonatype.nexus.repository.vulnerability.AuditRepositoryComponent;
 import org.sonatype.nexus.repository.vulnerability.ComponentValidation;
+import org.sonatype.nexus.repository.vulnerability.ComponentValidationAvailable;
 import org.sonatype.nexus.repository.vulnerability.ComponentsVulnerability;
 import org.sonatype.nexus.repository.vulnerability.RepositoryComponentValidation;
 import org.sonatype.nexus.repository.vulnerability.SeverityLevel;
@@ -91,6 +92,8 @@ public class NpmAuditFacet
   // npm audit timeout in sec to wait for a response
   private final int timeout;
 
+  private int statusTimeout;
+
   private final EventManager eventManager;
 
   private final ReportCreator reportCreator;
@@ -110,12 +113,15 @@ public class NpmAuditFacet
   @Inject
   public NpmAuditFacet(
       @Named("${nexus.npm.audit.timeout:-600}") final int timeout,
+      @Named("${nexus.npm.audit.status_timeout:-20}") final int statusTimeout,
       final EventManager eventManager,
       final ReportCreator reportCreator,
       final CacheHelper cacheHelper)
   {
     checkArgument(timeout > 0, "nexus.npm.audit.timeout must be greater than 0");
     this.timeout = timeout;
+    checkArgument(statusTimeout > 0, "nexus.npm.audit.status_timeout must be greater than 0");
+    this.statusTimeout = statusTimeout;
     this.eventManager = checkNotNull(eventManager);
     this.reportCreator = checkNotNull(reportCreator);
     this.cacheHelper = checkNotNull(cacheHelper);
@@ -139,11 +145,24 @@ public class NpmAuditFacet
     if (payload == null) {
       throw new ConfigurationException(ABSENT_PARSING_FILE.getMessage());
     }
+    checkIqServerAvailable();
 
     PackageLock packageLock = parseRequest(payload);
     ComponentsVulnerability componentsVulnerability =
         analyzeComponents(packageLock.getComponents(), packageLock.getRoot().getApplicationId());
     return buildResponse(packageLock, componentsVulnerability);
+  }
+
+  private void checkIqServerAvailable() throws ExecutionException {
+    final ComponentValidationAvailable validationAvailable = new ComponentValidationAvailable();
+    eventManager.post(validationAvailable);
+
+    try {
+      validationAvailable.getResult().get(statusTimeout, SECONDS);
+    }
+    catch (InterruptedException | TimeoutException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private static PackageLock parseRequest(final Payload payload) throws PackageLockParsingException {
