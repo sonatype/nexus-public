@@ -29,7 +29,7 @@ import com.google.common.eventbus.Subscribe;
 import org.eclipse.sisu.inject.DefaultBeanLocator;
 import org.junit.Test;
 
-import static com.jayway.awaitility.Awaitility.await;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;

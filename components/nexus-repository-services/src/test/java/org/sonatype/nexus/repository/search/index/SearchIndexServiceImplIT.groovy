@@ -44,8 +44,8 @@ import org.junit.Test
 import org.mockito.Mock
 
 import static com.google.common.collect.DiscreteDomain.integers
-import static com.jayway.awaitility.Awaitility.await
 import static java.util.concurrent.TimeUnit.MINUTES
+import static org.awaitility.Awaitility.await
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery
 import static org.elasticsearch.index.query.QueryBuilders.queryStringQuery
@@ -169,7 +169,7 @@ class SearchIndexServiceImplIT
         searchIndexService.bulkDelete(repo, componentsByRepository.get(repo).collect { it.name as String }) })
 
     // wait for all documents to be removed
-    await().atMost(1, MINUTES).until({
+    await().atMost(1, MINUTES).untilAsserted({
         assertThat(Iterables.size(searchQueryService.browse(unrestricted(exampleQuery))), is(0)) })
   }
 
@@ -182,7 +182,7 @@ class SearchIndexServiceImplIT
     searchIndexService.bulkDelete(null, ContiguousSet.create(Range.closed(0, TEST_COMPONENT_COUNT), integers()).asList())
 
     // wait for all documents to be removed
-    await().atMost(1, MINUTES).until({
+    await().atMost(1, MINUTES).untilAsserted({
         assertThat(Iterables.size(searchQueryService.browse(unrestricted(exampleQuery))), is(0)) })
   }
 
@@ -230,7 +230,7 @@ class SearchIndexServiceImplIT
     })
 
     // wait for all documents to be indexed
-    await().atMost(1, MINUTES).until({
+    await().atMost(1, MINUTES).untilAsserted({
         assertThat(Iterables.size(searchQueryService.browse(unrestricted(exampleQuery))), is(TEST_COMPONENT_COUNT)) })
   }
 }

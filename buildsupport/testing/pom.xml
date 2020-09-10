@@ -72,9 +72,15 @@
       </dependency>
 
       <dependency>
-        <groupId>com.jayway.awaitility</groupId>
+        <groupId>org.awaitility</groupId>
         <artifactId>awaitility</artifactId>
-        <version>1.7.0</version>
+        <version>4.0.3</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>
