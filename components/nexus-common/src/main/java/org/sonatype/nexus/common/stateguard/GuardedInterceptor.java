@@ -20,6 +20,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
@@ -33,7 +34,7 @@ public class GuardedInterceptor
 {
   @Override
   public Object invoke(final MethodInvocation invocation) throws Throwable {
-    assert invocation != null;
+    checkNotNull(invocation);
 
     Object target = invocation.getThis();
     Method method = invocation.getMethod();

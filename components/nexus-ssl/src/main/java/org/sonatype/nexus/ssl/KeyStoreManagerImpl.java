@@ -201,7 +201,7 @@ public class KeyStoreManagerImpl
   }
 
   private void logTrustedCertificateAliases(final KeystoreInstance ks) {
-    assert ks != null;
+    checkNotNull(ks);
 
     if (log.isTraceEnabled()) {
       try {

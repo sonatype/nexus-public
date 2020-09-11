@@ -31,6 +31,8 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import org.apache.shiro.authz.Permission;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * Application {@link PrivilegeDescriptor}.
  *
@@ -91,7 +93,7 @@ public class ApplicationPrivilegeDescriptor
 
   @Override
   public Permission createPermission(final CPrivilege privilege) {
-    assert privilege != null;
+    checkNotNull(privilege);
     String domain = readProperty(privilege, P_DOMAIN, ALL);
     List<String> actions = readListProperty(privilege, P_ACTIONS, ALL);
     return new ApplicationPermission(domain, actions);
