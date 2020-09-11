@@ -26,7 +26,7 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
-import org.sonatype.nexus.orient.maven.MavenFacet;
+import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
@@ -163,10 +163,10 @@ public final class MavenFacetUtils
   }
 
   /**
-   * Performs a {@link MavenFacet#put(MavenPath, Payload)} for passed in {@link Content} and it's hashes too. Returns
+   * Performs a {@link OrientMavenFacet#put(MavenPath, Payload)} for passed in {@link Content} and it's hashes too. Returns
    * the put content.
    */
-  public static void putWithHashes(final MavenFacet mavenFacet,
+  public static void putWithHashes(final OrientMavenFacet mavenFacet,
                                    final MavenPath mavenPath,
                                    final Content content) throws IOException
   {
@@ -177,7 +177,7 @@ public final class MavenFacetUtils
     addHashes(mavenFacet, mavenPath, hashCodes, now);
   }
 
-  public static void addHashes(final MavenFacet mavenFacet,
+  public static void addHashes(final OrientMavenFacet mavenFacet,
                                 final MavenPath mavenPath,
                                 final Map<HashAlgorithm, HashCode> hashCodes,
                                 final DateTime now)
@@ -191,7 +191,7 @@ public final class MavenFacetUtils
   }
 
   /**
-   * Performs a {@link MavenFacet#put(MavenPath, Payload)} for passed in {@link Content} and it's hashes too. Returns
+   * Performs a {@link OrientMavenFacet#put(MavenPath, Payload)} for passed in {@link Content} and it's hashes too. Returns
    * the put content.
    *
    * @param mavenFacet facet to use for storing the hashes
@@ -202,7 +202,7 @@ public final class MavenFacetUtils
    * @return generated Content
    * @throws IOException
    */
-  public static Content putWithHashes(final MavenFacet mavenFacet,
+  public static Content putWithHashes(final OrientMavenFacet mavenFacet,
                                       final MavenPath mavenPath,
                                       final TempBlob tempBlob,
                                       final String contentType,
@@ -217,10 +217,10 @@ public final class MavenFacetUtils
   }
 
   /**
-   * Performs a {@link MavenFacet#delete(MavenPath...)} for passed in {@link MavenPath} and all it's hashes too.
+   * Performs a {@link OrientMavenFacet#delete(MavenPath...)} for passed in {@link MavenPath} and all it's hashes too.
    * Returns set of deleted paths.
    */
-  public static Set<String> deleteWithHashes(final MavenFacet mavenFacet, final MavenPath mavenPath) throws IOException {
+  public static Set<String> deleteWithHashes(final OrientMavenFacet mavenFacet, final MavenPath mavenPath) throws IOException {
     final ArrayList<MavenPath> paths = new ArrayList<>(HashType.values().length + 1);
     paths.add(mavenPath.main());
     for (HashType hashType : HashType.values()) {
@@ -230,11 +230,11 @@ public final class MavenFacetUtils
   }
 
   /**
-   * Performs a {@link MavenFacet#delete(MavenPath...)} for passed in list of {@link MavenPath} and all hashes
+   * Performs a {@link OrientMavenFacet#delete(MavenPath...)} for passed in list of {@link MavenPath} and all hashes
    *
    * @since 3.14
    */
-  public static void deleteWithHashes(final MavenFacet mavenFacet, final List<MavenPath> mavenPaths) throws IOException {
+  public static void deleteWithHashes(final OrientMavenFacet mavenFacet, final List<MavenPath> mavenPaths) throws IOException {
     final ArrayList<MavenPath> paths = new ArrayList<>();
     for (MavenPath path : mavenPaths) {
       paths.add(path.main());

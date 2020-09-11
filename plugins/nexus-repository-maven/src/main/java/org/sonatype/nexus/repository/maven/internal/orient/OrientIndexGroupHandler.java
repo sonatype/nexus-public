@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.maven.internal.orient;
 import javax.annotation.Nonnull;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.orient.maven.MavenFacet;
+import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.http.HttpResponses;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.view.Content;
@@ -36,7 +36,7 @@ public class OrientIndexGroupHandler
   @Override
   public Response handle(@Nonnull final Context context) throws Exception {
     MavenPath mavenPath = context.getAttributes().require(MavenPath.class);
-    MavenFacet mavenFacet = context.getRepository().facet(MavenFacet.class);
+    OrientMavenFacet mavenFacet = context.getRepository().facet(OrientMavenFacet.class);
     Content content = mavenFacet.get(mavenPath);
     if (content == null) {
       return HttpResponses.notFound(mavenPath.getPath());

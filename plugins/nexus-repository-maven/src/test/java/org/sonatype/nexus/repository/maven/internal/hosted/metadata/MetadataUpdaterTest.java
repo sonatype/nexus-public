@@ -20,7 +20,7 @@ import java.util.Map;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
-import org.sonatype.nexus.orient.maven.MavenFacet;
+import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
@@ -58,7 +58,7 @@ public class MetadataUpdaterTest
   private Repository repository;
 
   @Mock
-  private MavenFacet mavenFacet;
+  private OrientMavenFacet mavenFacet;
 
   @Mock
   private Content content;
@@ -84,7 +84,7 @@ public class MetadataUpdaterTest
     when(content.getAttributes()).thenReturn(contentAttributes);
 
     when(repository.getName()).thenReturn("name");
-    when(repository.facet(eq(MavenFacet.class))).thenReturn(mavenFacet);
+    when(repository.facet(eq(OrientMavenFacet.class))).thenReturn(mavenFacet);
     this.testSubject = new OrientMetadataUpdater(true, repository);
   }
 

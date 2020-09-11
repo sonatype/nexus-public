@@ -29,7 +29,7 @@ import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
-import org.sonatype.nexus.orient.maven.MavenFacet;
+import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.config.Configuration;
@@ -92,7 +92,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 import static org.sonatype.nexus.repository.storage.Query.builder;
 
 /**
- * A {@link MavenFacet} that persists Maven artifacts and metadata to a {@link StorageFacet}.
+ * A {@link OrientMavenFacet} that persists Maven artifacts and metadata to a {@link StorageFacet}.
  * <p/>
  * Structure for artifacts (CMA components and assets):
  * <ul>
@@ -111,7 +111,7 @@ import static org.sonatype.nexus.repository.storage.Query.builder;
 @Named
 public class MavenFacetImpl
     extends FacetSupport
-    implements MavenFacet
+    implements OrientMavenFacet
 {
   private static final ThreadLocal<Boolean> rebuilding = new ThreadLocal<>();
 

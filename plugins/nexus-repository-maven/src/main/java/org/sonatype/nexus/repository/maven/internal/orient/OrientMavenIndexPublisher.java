@@ -30,7 +30,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.orient.entity.AttachedEntityHelper;
-import org.sonatype.nexus.orient.maven.MavenFacet;
+import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
@@ -92,7 +92,7 @@ public final class OrientMavenIndexPublisher extends MavenIndexPublisher
 
   @Override
   protected MavenPathParser getMavenPathParser(final Repository repository) {
-    return repository.facet(MavenFacet.class).getMavenPathParser();
+    return repository.facet(OrientMavenFacet.class).getMavenPathParser();
   }
 
   @Override
@@ -105,7 +105,7 @@ public final class OrientMavenIndexPublisher extends MavenIndexPublisher
    */
   @Override
   protected boolean delete(final Repository repository, final String path) throws IOException {
-    MavenFacet mavenFacet = repository.facet(MavenFacet.class);
+    OrientMavenFacet mavenFacet = repository.facet(OrientMavenFacet.class);
     MavenPath mavenPath = getMavenPathParser(repository).parsePath(path);
     return !mavenFacet.delete(mavenPath).isEmpty();
   }
@@ -177,7 +177,7 @@ public final class OrientMavenIndexPublisher extends MavenIndexPublisher
     sqlParams.put(P_ASSET_KIND, AssetKind.ARTIFACT.name());
     return transform(
         tx.browse(SELECT_HOSTED_ARTIFACTS, sqlParams),
-        (ODocument document) -> toRecord(repository.facet(MavenFacet.class), document)
+        (ODocument document) -> toRecord(repository.facet(OrientMavenFacet.class), document)
     );
   }
 
@@ -185,7 +185,7 @@ public final class OrientMavenIndexPublisher extends MavenIndexPublisher
    * Converts orient SQL query result into Maven Indexer Reader {@link Record}. Should be invoked only with documents
    * belonging to components, but not checksums or signatures.
    */
-  private Record toRecord(final MavenFacet mavenFacet, final ODocument document) {
+  private Record toRecord(final OrientMavenFacet mavenFacet, final ODocument document) {
     checkNotNull(document); // sanity
     final String path = document.field("path", String.class);
     MavenPath mavenPath = mavenFacet.getMavenPathParser().parsePath(path);
@@ -223,21 +223,21 @@ public final class OrientMavenIndexPublisher extends MavenIndexPublisher
       final Record record,
       final EntryKey<Boolean> key,
       final MavenPath tocheck,
-      final MavenFacet mavenFacet)
+      final OrientMavenFacet mavenFacet)
   {
     record.put(key, mavenFacet.exists(tocheck));
   }
 
    /**
-   * NX3 {@link MavenFacet} backed {@link WritableResourceHandler} to be used by {@link IndexWriter}.
+   * NX3 {@link OrientMavenFacet} backed {@link WritableResourceHandler} to be used by {@link IndexWriter}.
    */
   static class Maven2WritableResourceHandler
       implements WritableResourceHandler
   {
-    private final MavenFacet mavenFacet;
+    private final OrientMavenFacet mavenFacet;
 
     Maven2WritableResourceHandler(final Repository repository) {
-      this.mavenFacet = repository.facet(MavenFacet.class);
+      this.mavenFacet = repository.facet(OrientMavenFacet.class);
     }
 
     @Override
@@ -253,20 +253,20 @@ public final class OrientMavenIndexPublisher extends MavenIndexPublisher
   }
 
   /**
-   * NX3 {@link MavenFacet} and {@link MavenPath} backed {@link WritableResource}.
+   * NX3 {@link OrientMavenFacet} and {@link MavenPath} backed {@link WritableResource}.
    */
   private static class Maven2WritableResource
       implements WritableResource
   {
     private final MavenPath mavenPath;
 
-    private final MavenFacet mavenFacet;
+    private final OrientMavenFacet mavenFacet;
 
     private final String contentType;
 
     private Path path;
 
-    private Maven2WritableResource(final MavenPath mavenPath, final MavenFacet mavenFacet, final String contenType) {
+    private Maven2WritableResource(final MavenPath mavenPath, final OrientMavenFacet mavenFacet, final String contenType) {
       this.mavenPath = mavenPath;
       this.mavenFacet = mavenFacet;
       this.contentType = contenType;

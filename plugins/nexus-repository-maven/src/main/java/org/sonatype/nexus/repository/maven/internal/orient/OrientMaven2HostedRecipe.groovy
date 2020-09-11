@@ -28,6 +28,7 @@ import org.sonatype.nexus.repository.maven.PurgeUnusedSnapshotsFacet
 import org.sonatype.nexus.repository.maven.RemoveSnapshotsFacet
 import org.sonatype.nexus.repository.maven.internal.Maven2Format
 import org.sonatype.nexus.repository.maven.internal.MavenSecurityFacet
+import org.sonatype.nexus.repository.maven.internal.VersionPolicyHandler
 import org.sonatype.nexus.repository.maven.internal.hosted.HostedHandler
 import org.sonatype.nexus.repository.maven.internal.hosted.MavenHostedIndexFacet
 import org.sonatype.nexus.repository.maven.internal.recipes.Maven2HostedRecipe
@@ -67,14 +68,14 @@ class OrientMaven2HostedRecipe
   Provider<MavenHostedComponentMaintenanceFacet> componentMaintenanceFacet
 
   @Inject
-  OrientVersionPolicyHandler versionPolicyHandler
+  VersionPolicyHandler versionPolicyHandler
 
   @Inject
   HostedHandler hostedHandler
 
   @Inject
   OrientArchetypeCatalogHandler archetypeCatalogHandler
-  
+
   @Inject
   Provider<RemoveSnapshotsFacet> removeSnapshotsFacet
 

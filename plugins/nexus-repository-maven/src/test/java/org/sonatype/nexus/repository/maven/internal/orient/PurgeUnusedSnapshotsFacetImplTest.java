@@ -27,7 +27,7 @@ import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.EntityAdapter;
-import org.sonatype.nexus.orient.maven.MavenFacet;
+import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
@@ -123,7 +123,7 @@ public class PurgeUnusedSnapshotsFacetImplTest
   PurgeUnusedSnapshotsFacetImpl purgeUnusedSnapshotsFacet;
 
   @Mock
-  MavenFacet mavenFacet;
+  OrientMavenFacet mavenFacet;
 
   @Mock
   Repository repository;
@@ -152,7 +152,7 @@ public class PurgeUnusedSnapshotsFacetImplTest
     purgeUnusedSnapshotsFacet.attach(repository);
 
     when(repository.getName()).thenReturn("test-repo");
-    when(repository.facet(MavenFacet.class)).thenReturn(mavenFacet);
+    when(repository.facet(OrientMavenFacet.class)).thenReturn(mavenFacet);
     when(storageTx.findBucket(repository)).thenReturn(bucket);
     when(storageTx.countComponents(any(Query.class), any())).thenReturn(NUMBER_OF_COMPONENTS);
     when(storageTx.getDb()).thenReturn(oDatabaseDocumentTx);

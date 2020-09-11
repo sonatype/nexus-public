@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.RepositoryTaskSupport;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.orient.maven.MavenFacet;
+import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.RemoveSnapshotsFacet;
 import org.sonatype.nexus.repository.maven.VersionPolicy;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
@@ -147,14 +147,14 @@ public class RemoveSnapshotsTaskTest
     verify(removeSnapshotsFacet, times(2)).removeSnapshots(any());
   }
 
-  private void verifyGroups(Repository... groups) {
+  private void verifyGroups(final Repository... groups) {
     for (Repository group : groups) {
       assertThat(taskUnderTest.hasBeenProcessed(group), is(true));
       verify(group, never()).facet(RemoveSnapshotsFacet.class); // groups should not have the facet executed against
     }
   }
 
-  private void verifyRepoProcessed(Repository repo, int numFacetExecutions) {
+  private void verifyRepoProcessed(final Repository repo, final int numFacetExecutions) {
     assertThat(taskUnderTest.hasBeenProcessed(repo), is(true));
     verify(repo, times(numFacetExecutions)).facet(RemoveSnapshotsFacet.class);
   }
@@ -169,7 +169,7 @@ public class RemoveSnapshotsTaskTest
     return repo;
   }
 
-  private Repository mockGroup(List<Repository> groupMembers) {
+  private Repository mockGroup(final List<Repository> groupMembers) {
     Repository group = mock(Repository.class);
     GroupFacet facet = mock(GroupFacet.class);
 

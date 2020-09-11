@@ -21,8 +21,9 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.hash.HashAlgorithm;
-import org.sonatype.nexus.orient.maven.MavenFacet;
+import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenHostedFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
@@ -106,7 +107,7 @@ public class MavenUploadHandler
   protected Content doPut(final Repository repository, final MavenPath mavenPath, final Payload payload)
       throws IOException
   {
-    MavenFacet mavenFacet = repository.facet(MavenFacet.class);
+    OrientMavenFacet mavenFacet = repository.facet(OrientMavenFacet.class);
     Content asset = mavenFacet.put(mavenPath, payload);
     putChecksumFiles(mavenFacet, mavenPath, asset);
     return asset;
@@ -123,7 +124,7 @@ public class MavenUploadHandler
     return repository.facet(StorageFacet.class).createTempBlob(payload, MavenPath.HashType.ALGORITHMS);
   }
 
-  private void putChecksumFiles(final MavenFacet facet, final MavenPath path, final Content content) throws IOException {
+  private void putChecksumFiles(final OrientMavenFacet facet, final MavenPath path, final Content content) throws IOException {
     DateTime dateTime = content.getAttributes().require(Content.CONTENT_LAST_MODIFIED, DateTime.class);
     Map<HashAlgorithm, HashCode> hashes = MavenFacetUtils.getHashAlgorithmFromContent(content.getAttributes());
     MavenFacetUtils.addHashes(facet, path, hashes, dateTime);

@@ -24,7 +24,7 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.stateguard.Guarded;
-import org.sonatype.nexus.orient.maven.MavenFacet;
+import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
@@ -251,15 +251,15 @@ public class PurgeUnusedSnapshotsFacetImpl
     try {
       Bucket bucket = tx.findBucket(getRepository());
 
-      getRepository().facet(MavenFacet.class).maybeDeleteOrFlagToRebuildMetadata(bucket, groupId, artifactId, baseVersion);
+      getRepository().facet(OrientMavenFacet.class).maybeDeleteOrFlagToRebuildMetadata(bucket, groupId, artifactId, baseVersion);
 
       //for GA metadata, if there are no other GAVs matching the GA, delete it, otherwise mark as invalid so it will
       //be rebuilt on request
-      getRepository().facet(MavenFacet.class).maybeDeleteOrFlagToRebuildMetadata(bucket, groupId, artifactId);
+      getRepository().facet(OrientMavenFacet.class).maybeDeleteOrFlagToRebuildMetadata(bucket, groupId, artifactId);
 
       //for G metadata, if there are no other GAs matching the G, delete it, otherwise mark as invalid so it will
       //be rebuilt on request
-      getRepository().facet(MavenFacet.class).maybeDeleteOrFlagToRebuildMetadata(bucket, groupId);
+      getRepository().facet(OrientMavenFacet.class).maybeDeleteOrFlagToRebuildMetadata(bucket, groupId);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

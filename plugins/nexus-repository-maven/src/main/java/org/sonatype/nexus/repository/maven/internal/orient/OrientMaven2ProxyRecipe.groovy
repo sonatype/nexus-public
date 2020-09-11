@@ -29,6 +29,7 @@ import org.sonatype.nexus.repository.maven.MavenPathParser
 import org.sonatype.nexus.repository.maven.RemoveSnapshotsFacet
 import org.sonatype.nexus.repository.maven.internal.Maven2Format
 import org.sonatype.nexus.repository.maven.internal.MavenSecurityFacet
+import org.sonatype.nexus.repository.maven.internal.VersionPolicyHandler
 import org.sonatype.nexus.repository.maven.internal.matcher.MavenNx2MetaFilesMatcher
 import org.sonatype.nexus.repository.maven.internal.recipes.Maven2ProxyRecipe
 import org.sonatype.nexus.repository.proxy.ProxyHandler
@@ -36,9 +37,9 @@ import org.sonatype.nexus.repository.purge.PurgeUnusedFacet
 import org.sonatype.nexus.repository.search.SearchFacet
 import org.sonatype.nexus.repository.types.ProxyType
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
-import org.sonatype.nexus.repository.view.Route.Builder
 import org.sonatype.nexus.repository.view.Router
 import org.sonatype.nexus.repository.view.ViewFacet
+import org.sonatype.nexus.repository.view.Route.Builder
 
 import static org.sonatype.nexus.repository.http.HttpHandlers.notFound
 
@@ -79,7 +80,7 @@ class OrientMaven2ProxyRecipe
   NegativeCacheHandler negativeCacheHandler
 
   @Inject
-  OrientVersionPolicyHandler versionPolicyHandler
+  VersionPolicyHandler versionPolicyHandler
 
   @Inject
   ProxyHandler proxyHandler

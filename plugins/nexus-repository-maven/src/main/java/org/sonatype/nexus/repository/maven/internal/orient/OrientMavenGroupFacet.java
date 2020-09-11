@@ -26,7 +26,7 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
-import org.sonatype.nexus.orient.maven.MavenFacet;
+import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.cache.CacheInfo;
@@ -86,7 +86,7 @@ public class OrientMavenGroupFacet
 
   private final ArchetypeCatalogMerger archetypeCatalogMerger;
 
-  private MavenFacet mavenFacet;
+  private OrientMavenFacet mavenFacet;
 
   @Inject
   public OrientMavenGroupFacet(
@@ -102,7 +102,7 @@ public class OrientMavenGroupFacet
   @Override
   protected void doInit(final Configuration configuration) throws Exception {
     super.doInit(configuration);
-    this.mavenFacet = facet(MavenFacet.class);
+    this.mavenFacet = facet(OrientMavenFacet.class);
   }
 
   /**

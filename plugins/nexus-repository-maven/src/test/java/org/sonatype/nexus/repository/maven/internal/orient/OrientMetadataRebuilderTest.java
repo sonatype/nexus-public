@@ -26,7 +26,7 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.orient.entity.AttachedEntityMetadata;
 import org.sonatype.nexus.orient.entity.EntityAdapter;
-import org.sonatype.nexus.orient.maven.MavenFacet;
+import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
@@ -84,7 +84,7 @@ public class OrientMetadataRebuilderTest
   private StorageFacet storageFacet;
 
   @Mock
-  private MavenFacet mavenFacet;
+  private OrientMavenFacet mavenFacet;
 
   @Mock
   private MavenPathParser mavenPathParser;
@@ -114,7 +114,7 @@ public class OrientMetadataRebuilderTest
 
     when(storageFacet.txSupplier()).thenReturn(() -> storageTx);
     when(repository.facet(StorageFacet.class)).thenReturn(storageFacet);
-    when(repository.facet(MavenFacet.class)).thenReturn(mavenFacet);
+    when(repository.facet(OrientMavenFacet.class)).thenReturn(mavenFacet);
     when(storageTx.findBucket(repository)).thenReturn(bucket);
     when(mavenFacet.getMavenPathParser()).thenReturn(mavenPathParser);
     when(mavenPathParser.parsePath(anyString())).thenReturn(mock(MavenPath.class));

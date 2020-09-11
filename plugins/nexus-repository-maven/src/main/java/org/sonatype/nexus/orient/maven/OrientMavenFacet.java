@@ -17,16 +17,13 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Facet;
-import org.sonatype.nexus.repository.maven.LayoutPolicy;
+import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
-import org.sonatype.nexus.repository.maven.MavenPathParser;
-import org.sonatype.nexus.repository.maven.VersionPolicy;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Bucket;
@@ -42,26 +39,9 @@ import com.google.common.hash.HashCode;
  * @since 3.0
  */
 @Facet.Exposed
-public interface MavenFacet
-    extends Facet
+public interface OrientMavenFacet
+    extends Facet, MavenFacet
 {
-  /**
-   * Returns the format specific {@link MavenPathParser}.
-   */
-  @Nonnull
-  MavenPathParser getMavenPathParser();
-
-  /**
-   * Returns the version policy in effect for this repository.
-   */
-  @Nonnull
-  VersionPolicy getVersionPolicy();
-
-  /**
-   * Returns the layout policy in effect for this repository.
-   */
-  LayoutPolicy layoutPolicy();
-
   // HTTP operations
 
   @Nullable
@@ -90,28 +70,26 @@ public interface MavenFacet
   Asset put(MavenPath path, AssetBlob assetBlob, AttributesMap contentAttributes) throws IOException;
 
   /**
-   * @since 3.14
-   *
-   * @param path of the asset to check
-   * @return true if it exists
-   */
-  boolean exists(final MavenPath path);
-
-  /**
    * @since 3.27
    * @param the tuple of group Id, artifact Id, and base Version
    * @return paths there were deleted
    */
-  Set<String> maybeDeleteOrFlagToRebuildMetadata(final Bucket bucket, final String groupId, final String artifactId, final String baseVersion)
-      throws IOException;
+  Set<String> maybeDeleteOrFlagToRebuildMetadata(
+      Bucket bucket,
+      String groupId,
+      String artifactId,
+      String baseVersion) throws IOException;
 
   /**
    * @since 3.27
    * @param the tuple of group Id, and artifact Id
    * @return paths there were deleted
    */
-  default Set<String> maybeDeleteOrFlagToRebuildMetadata(final Bucket bucket, final String groupId, final String artifactId)
-      throws IOException{
+  default Set<String> maybeDeleteOrFlagToRebuildMetadata(
+      final Bucket bucket,
+      final String groupId,
+      final String artifactId) throws IOException
+  {
     return maybeDeleteOrFlagToRebuildMetadata(bucket, groupId, artifactId, null);
   }
 

@@ -10,28 +10,32 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.content.maven.internal;
+package org.sonatype.nexus.repository.maven.internal;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.repository.http.HttpResponses;
+import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.VersionPolicy;
-import org.sonatype.nexus.repository.maven.internal.VersionPolicyValidator;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.Response;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD;
 
 /**
+ * Enforces the repository's version policy on all requests.
+ *
  * @since 3.25
  */
+@Named
 public class VersionPolicyHandler
     extends ComponentSupport
     implements Handler
@@ -39,29 +43,35 @@ public class VersionPolicyHandler
   private final VersionPolicyValidator versionPolicyValidator;
 
   @Inject
-  public VersionPolicyHandler(VersionPolicyValidator versionPolicyValidator) {
-    this.versionPolicyValidator = versionPolicyValidator;
+  public VersionPolicyHandler(final VersionPolicyValidator versionPolicyValidator) {
+    this.versionPolicyValidator = checkNotNull(versionPolicyValidator);
   }
 
   @Nonnull
   @Override
   public Response handle(@Nonnull final Context context) throws Exception {
-    String httpMethod = context.getRequest().getAction();
-    if (GET.equals(httpMethod) || HEAD.equals(httpMethod)) {
-      return context.proceed();
-    }
     final MavenPath path = context.getAttributes().require(MavenPath.class);
-    final MavenContentFacet mavenFacet = context.getRepository().facet(MavenContentFacet.class);
+    final MavenFacet mavenFacet = context.getRepository().facet(MavenFacet.class);
     final VersionPolicy versionPolicy = mavenFacet.getVersionPolicy();
     final Coordinates coordinates = path.getCoordinates();
     if (coordinates != null && !versionPolicyValidator.validArtifactPath(versionPolicy, coordinates)) {
-      return HttpResponses.badRequest("Repository version policy: " + versionPolicy + " does not allow version: " +
-          coordinates.getVersion());
+      return createResponse(context,
+          "Repository version policy: " + versionPolicy + " does not allow version: " + coordinates.getVersion());
     }
     if (!versionPolicyValidator.validMetadataPath(versionPolicy, path.main().getPath())) {
-      return HttpResponses.badRequest("Repository version policy: " + versionPolicy +
-          " does not allow metadata in path: " + path.getPath());
+      return createResponse(context,
+          "Repository version policy: " + versionPolicy + " does not allow metadata in path: " + path.getPath());
     }
     return context.proceed();
+  }
+
+  private static Response createResponse(final Context context, final String message) {
+    switch (context.getRequest().getAction()) {
+      case GET:
+      case HEAD:
+        return HttpResponses.notFound(message);
+      default:
+        return HttpResponses.badRequest(message);
+    }
   }
 }

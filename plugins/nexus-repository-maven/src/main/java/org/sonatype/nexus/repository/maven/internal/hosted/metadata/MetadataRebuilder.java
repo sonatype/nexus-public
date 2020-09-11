@@ -18,7 +18,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.orient.maven.MavenFacet;
+import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
@@ -51,7 +51,7 @@ public interface MetadataRebuilder
    * Don't put any {@link Transactional} annotation on this method because it will keep the transaction active
    * for the _entire_ duration of any request including those that rebuild the entire repository, which would
    * lead to excessive memory consumption. Callers may be annotated with {@link Transactional} as long as they
-   * only rebuild a limited subset of the repository, such as {@link MavenFacet#rebuildMetadata}.
+   * only rebuild a limited subset of the repository, such as {@link OrientMavenFacet#rebuildMetadata}.
    */
   boolean rebuildInTransaction(
       Repository repository,
