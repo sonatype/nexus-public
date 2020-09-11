@@ -25,7 +25,9 @@ import com.google.common.hash.HashCode;
  * be closed by the caller.
  *
  * @since 3.1
+ * @deprecated Use DB-agnostic implementation org.sonatype.nexus.repository.view.payloads.TempBlob
  */
+@Deprecated
 public class TempBlob
     extends org.sonatype.nexus.repository.view.payloads.TempBlob
 {
