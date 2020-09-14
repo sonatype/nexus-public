@@ -29,7 +29,7 @@ import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.orient.maven.MavenFacet;
+import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
@@ -90,7 +90,7 @@ public class MavenRestoreBlobStrategy
       return false;
     }
 
-    Optional<MavenFacet> mavenFacet = repository.optionalFacet(MavenFacet.class);
+    Optional<OrientMavenFacet> mavenFacet = repository.optionalFacet(OrientMavenFacet.class);
 
     if (!mavenFacet.isPresent()) {
       if (log.isWarnEnabled()) {
@@ -116,7 +116,7 @@ public class MavenRestoreBlobStrategy
   @Override
   @TransactionalTouchBlob
   protected boolean assetExists(@Nonnull final MavenRestoreBlobData data) throws IOException {
-    return data.getBlobData().getRepository().facet(MavenFacet.class).get(data.getMavenPath()) != null;
+    return data.getBlobData().getRepository().facet(OrientMavenFacet.class).get(data.getMavenPath()) != null;
   }
 
   @Override
@@ -143,7 +143,7 @@ public class MavenRestoreBlobStrategy
   protected void createAssetFromBlob(@Nonnull final AssetBlob assetBlob, @Nonnull final MavenRestoreBlobData data)
       throws IOException
   {
-    data.getBlobData().getRepository().facet(MavenFacet.class).put(data.getMavenPath(), assetBlob, null);
+    data.getBlobData().getRepository().facet(OrientMavenFacet.class).put(data.getMavenPath(), assetBlob, null);
   }
 
   @Override

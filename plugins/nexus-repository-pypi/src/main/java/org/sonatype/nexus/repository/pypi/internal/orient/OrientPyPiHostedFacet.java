@@ -18,8 +18,8 @@ import java.util.Map;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.pypi.internal.SignablePyPiPackage;
 import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.view.Content;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.repository.view.payloads.TempBlobPartPayload;
 
 /**

@@ -44,6 +44,13 @@
 
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-repository-r</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-repository-cocoapods</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
@@ -79,6 +86,13 @@
 
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-repository-p2</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-restore-apt</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
@@ -101,6 +115,21 @@
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-restore-pypi</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+    </dependency>
+
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-restore-p2</artifactId>
+      <classifier>features</classifier>
+      <type>xml</type>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-restore-r</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
     </dependency>

@@ -30,30 +30,18 @@ import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
-import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalTouchBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalTouchMetadata;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import static org.sonatype.nexus.repository.conda.internal.AssetKind.ARCH_CONDA_PACKAGE;
 import static org.sonatype.nexus.repository.conda.internal.AssetKind.ARCH_TAR_PACKAGE;
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.CHANNELDATA_JSON;
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.INDEX_HTML;
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.REPODATA2_JSON;
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.REPODATA_JSON;
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.REPODATA_JSON_BZ2;
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.RSS_XML;
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.arch;
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.buildArchAssetPath;
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.buildAssetPath;
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.buildCondaPackagePath;
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.matcherState;
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.name;
-import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.version;
+import static org.sonatype.nexus.repository.conda.internal.util.CondaPathUtils.*;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
 /**

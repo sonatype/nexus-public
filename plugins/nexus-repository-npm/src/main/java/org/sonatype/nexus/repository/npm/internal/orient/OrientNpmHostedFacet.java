@@ -18,7 +18,7 @@ import java.util.Map;
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.npm.internal.NpmHostedFacet;
 import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.TempBlob;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 /**
  * npm hosted facet.

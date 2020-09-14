@@ -28,8 +28,9 @@ import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.entity.EntityHelper;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
-import org.sonatype.nexus.orient.maven.MavenFacet;
+import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenHostedFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
@@ -42,9 +43,9 @@ import org.sonatype.nexus.repository.storage.ComponentMaintenance;
 import org.sonatype.nexus.repository.storage.Query;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
-import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.collect.Lists;
@@ -71,7 +72,7 @@ public class OrientMavenTestHelper
 {
   @Override
   public void verifyHashesExistAndCorrect(final Repository repository, final String path) throws Exception {
-    MavenFacet mavenFacet = repository.facet(MavenFacet.class);
+    OrientMavenFacet mavenFacet = repository.facet(OrientMavenFacet.class);
     MavenPath mavenPath = mavenFacet.getMavenPathParser().parsePath(path);
     UnitOfWork.begin(repository.facet(StorageFacet.class).txSupplier());
     try {
@@ -116,6 +117,7 @@ public class OrientMavenTestHelper
     }
   }
 
+  @Override
   public void deleteAssets(final Repository repository, final String version, final int expectedNumber) {
     List<Asset> assets = findAssets(repository, version);
     assertThat(assets, hasSize(expectedNumber));
@@ -157,7 +159,7 @@ public class OrientMavenTestHelper
       final String path,
       final Payload payload) throws IOException
   {
-    MavenFacet mavenFacet = repository.facet(MavenFacet.class);
+    OrientMavenFacet mavenFacet = repository.facet(OrientMavenFacet.class);
     StorageFacet storageFacet = repository.facet(StorageFacet.class);
 
     MavenPath mavenPath = mavenFacet.getMavenPathParser().parsePath(path);
@@ -175,7 +177,7 @@ public class OrientMavenTestHelper
 
   @Override
   public void write(final Repository repository, final String path, final Payload payload) throws IOException {
-    MavenFacet mavenFacet = repository.facet(MavenFacet.class);
+    OrientMavenFacet mavenFacet = repository.facet(OrientMavenFacet.class);
     MavenPath mavenPath = mavenFacet.getMavenPathParser().parsePath(path);
     UnitOfWork.begin(repository.facet(StorageFacet.class).txSupplier());
     try {
@@ -188,7 +190,7 @@ public class OrientMavenTestHelper
 
   @Override
   public Payload read(final Repository repository, final String path) throws IOException {
-    MavenFacet mavenFacet = repository.facet(MavenFacet.class);
+    OrientMavenFacet mavenFacet = repository.facet(OrientMavenFacet.class);
     MavenPath mavenPath = mavenFacet.getMavenPathParser().parsePath(path);
     UnitOfWork.begin(repository.facet(StorageFacet.class).txSupplier());
     try {

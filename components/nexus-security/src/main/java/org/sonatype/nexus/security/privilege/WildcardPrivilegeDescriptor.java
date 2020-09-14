@@ -30,6 +30,8 @@ import org.sonatype.nexus.security.privilege.rest.ApiPrivilegeWildcardRequest;
 import com.google.common.collect.ImmutableList;
 import org.apache.shiro.authz.Permission;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * Wildcard {@link PrivilegeDescriptor}.
  *
@@ -76,7 +78,7 @@ public class WildcardPrivilegeDescriptor
 
   @Override
   public Permission createPermission(final CPrivilege privilege) {
-    assert privilege != null;
+    checkNotNull(privilege);
     String pattern = readProperty(privilege, P_PATTERN);
     return new WildcardPermission2(pattern);
   }

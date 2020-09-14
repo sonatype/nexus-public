@@ -25,18 +25,19 @@ import org.sonatype.nexus.formfields.RepositoryCombobox;
 import org.sonatype.nexus.formfields.StringTextFormField;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.security.rest.ApiPrivilegeRepositoryAdmin;
 import org.sonatype.nexus.repository.security.rest.ApiPrivilegeRepositoryAdminRequest;
 import org.sonatype.nexus.security.config.CPrivilege;
 import org.sonatype.nexus.security.config.CPrivilegeBuilder;
 import org.sonatype.nexus.security.privilege.Privilege;
 import org.sonatype.nexus.security.privilege.PrivilegeDescriptor;
-import org.sonatype.nexus.repository.security.rest.ApiPrivilegeRepositoryAdmin;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import org.apache.shiro.authz.Permission;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Repository admin {@link PrivilegeDescriptor}.
@@ -113,7 +114,7 @@ public class RepositoryAdminPrivilegeDescriptor
 
   @Override
   public Permission createPermission(final CPrivilege privilege) {
-    assert privilege != null;
+    checkNotNull(privilege);
     String format = readProperty(privilege, P_FORMAT, ALL);
     String name = readProperty(privilege, P_REPOSITORY, ALL);
     List<String> actions = readListProperty(privilege, P_ACTIONS, ALL);

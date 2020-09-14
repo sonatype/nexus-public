@@ -22,7 +22,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static com.jayway.awaitility.Awaitility.await;
+import static org.awaitility.Awaitility.await;
 import static java.lang.Thread.State.WAITING;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.generate;

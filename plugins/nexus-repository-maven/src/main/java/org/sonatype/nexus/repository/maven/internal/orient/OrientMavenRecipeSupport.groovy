@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.RecipeSupport
 import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.http.HttpMethods
 import org.sonatype.nexus.repository.http.PartialFetchHandler
-import org.sonatype.nexus.orient.maven.MavenFacet
+import org.sonatype.nexus.orient.maven.OrientMavenFacet
 import org.sonatype.nexus.repository.maven.MavenPathParser
 import org.sonatype.nexus.repository.maven.internal.matcher.MavenArchetypeCatalogMatcher
 import org.sonatype.nexus.repository.maven.internal.matcher.MavenIndexMatcher
@@ -62,7 +62,7 @@ abstract class OrientMavenRecipeSupport
   Provider<AttributesFacet> attributesFacet
 
   @Inject
-  Provider<MavenFacet> mavenFacet
+  Provider<OrientMavenFacet> mavenFacet
 
   @Inject
   ExceptionHandler exceptionHandler

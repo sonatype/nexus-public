@@ -171,7 +171,7 @@ public class RolePermissionResolverImpl
    */
   @Nullable
   private PrivilegeDescriptor descriptor(final String privilegeType) {
-    assert privilegeType != null;
+    checkNotNull(privilegeType);
 
     for (PrivilegeDescriptor descriptor : privilegeDescriptors) {
       if (privilegeType.equals(descriptor.getType())) {
@@ -188,7 +188,7 @@ public class RolePermissionResolverImpl
    */
   @Nullable
   private Permission permission(final String privilegeId) {
-    assert privilegeId != null;
+    checkNotNull(privilegeId);
 
     Permission permission = permissionsCache.getIfPresent(privilegeId);
     if (permission == null) {

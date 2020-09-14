@@ -29,7 +29,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.MultipleFailures;
 import org.sonatype.nexus.orient.entity.AttachedEntityHelper;
-import org.sonatype.nexus.orient.maven.MavenFacet;
+import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
@@ -156,7 +156,7 @@ public class OrientMetadataRebuilder
     final StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get();
     UnitOfWork.beginBatch(tx);
     try {
-      return repository.facet(MavenFacet.class).exists(mavenPath);
+      return repository.facet(OrientMavenFacet.class).exists(mavenPath);
     }
     finally {
       UnitOfWork.end();
@@ -173,7 +173,7 @@ public class OrientMetadataRebuilder
 
     private final String sql;
 
-    private final MavenFacet mavenFacet;
+    private final OrientMavenFacet mavenFacet;
 
     public Worker(
         final Repository repository, // NOSONAR
@@ -188,10 +188,10 @@ public class OrientMetadataRebuilder
     )
     {
       super(repository, update, rebuildChecksums, groupId, artifactId, baseVersion, bufferSize, timeoutSeconds,
-          metadataUpdater, repository.facet(MavenFacet.class).getMavenPathParser());
+          metadataUpdater, repository.facet(OrientMavenFacet.class).getMavenPathParser());
       this.sqlParams = Maps.newHashMap();
       this.sql = buildSql(groupId, artifactId, baseVersion);
-      this.mavenFacet = repository.facet(MavenFacet.class);
+      this.mavenFacet = repository.facet(OrientMavenFacet.class);
     }
 
     /**
@@ -359,7 +359,7 @@ public class OrientMetadataRebuilder
     }
 
     try {
-      MavenFacetUtils.deleteWithHashes(repository.facet(MavenFacet.class), pathBatch);
+      MavenFacetUtils.deleteWithHashes(repository.facet(OrientMavenFacet.class), pathBatch);
     }
     catch (IOException e) {
       log.warn("Error encountered when deleting metadata: repository={}", repository);

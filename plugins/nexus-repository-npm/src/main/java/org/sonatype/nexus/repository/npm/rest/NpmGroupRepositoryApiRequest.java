@@ -13,8 +13,8 @@
 package org.sonatype.nexus.repository.npm.rest;
 
 import org.sonatype.nexus.repository.npm.internal.NpmFormat;
-import org.sonatype.nexus.repository.rest.api.model.GroupAttributes;
-import org.sonatype.nexus.repository.rest.api.model.GroupRepositoryApiRequest;
+import org.sonatype.nexus.repository.rest.api.model.GroupDeployAttributes;
+import org.sonatype.nexus.repository.rest.api.model.GroupDeployRepositoryApiRequest;
 import org.sonatype.nexus.repository.rest.api.model.StorageAttributes;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -26,14 +26,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 @JsonIgnoreProperties({"format", "type"})
 public class NpmGroupRepositoryApiRequest
-    extends GroupRepositoryApiRequest
+    extends GroupDeployRepositoryApiRequest
 {
   @JsonCreator
   public NpmGroupRepositoryApiRequest(
       @JsonProperty("name") final String name,
       @JsonProperty("online") final Boolean online,
       @JsonProperty("storage") final StorageAttributes storage,
-      @JsonProperty("group") final GroupAttributes group)
+      @JsonProperty("group") final GroupDeployAttributes group)
   {
     super(name, NpmFormat.NAME, online, storage, group);
   }

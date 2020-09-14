@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.maven.internal.orient;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -23,8 +24,9 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
+import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.orient.maven.MavenFacet;
+import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenHostedFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
@@ -38,7 +40,6 @@ import org.sonatype.nexus.repository.security.ContentPermissionChecker;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
-import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.upload.AssetUpload;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
@@ -49,6 +50,7 @@ import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.Payload;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.selector.VariableSource;
@@ -58,7 +60,9 @@ import org.apache.maven.model.Model;
 import org.apache.maven.model.Parent;
 import org.joda.time.DateTime;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -70,6 +74,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -93,11 +98,14 @@ public class MavenUploadHandlerTest
 
   private MavenUploadHandler underTest;
 
+  @Rule
+  public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
   @Mock
   Repository repository;
 
   @Mock
-  MavenFacet mavenFacet;
+  OrientMavenFacet mavenFacet;
 
   @Mock
   PartPayload jarPayload;
@@ -140,6 +148,7 @@ public class MavenUploadHandlerTest
 
     when(repository.getName()).thenReturn(REPO_NAME);
     when(repository.getFormat()).thenReturn(new Maven2Format());
+    when(repository.facet(OrientMavenFacet.class)).thenReturn(mavenFacet);
     when(repository.facet(MavenFacet.class)).thenReturn(mavenFacet);
     when(repository.facet(MavenHostedFacet.class)).thenReturn(mavenHostedFacet);
 
@@ -657,6 +666,27 @@ public class MavenUploadHandlerTest
       assertThat(e.getValidationErrors().get(0).getMessage(),
           is("Path is not allowed to have '.' or '..' segments: 'groupId/artifactId/version/artifactId-version./../g/a/v/a-v.jar'"));
     }
+  }
+
+  @Test
+  public void testHandle_ignoredFiles() throws IOException {
+    Content content = mock(Content.class);
+    AttributesMap attributesMap = mock(AttributesMap.class);
+    when(attributesMap.require(eq(Content.CONTENT_LAST_MODIFIED), eq(DateTime.class))).thenReturn(DateTime.now());
+    Map<HashAlgorithm, HashCode> checksums = Collections.singletonMap(
+        HashAlgorithm.SHA1,
+        HashCode.fromString("da39a3ee5e6b4b0d3255bfef95601890afd80709"));
+    when(attributesMap.require(eq(Content.CONTENT_HASH_CODES_MAP), eq(Content.T_CONTENT_HASH_CODES_MAP)))
+        .thenReturn(checksums);
+    when(content.getAttributes()).thenReturn(attributesMap);
+    when(mavenFacet.put(any(), any())).thenReturn(content);
+    File file = temporaryFolder.newFile("test.jar");
+
+    Content result = underTest.handle(repository, file, "group/artifact/1.0/artifact-1.0.jar");
+    assertThat(result, is(content));
+
+    result = underTest.handle(repository, file, "archetype-catalog.xml");
+    assertThat(result, nullValue());
   }
 
   private static void assertVariableSource(final VariableSource source,

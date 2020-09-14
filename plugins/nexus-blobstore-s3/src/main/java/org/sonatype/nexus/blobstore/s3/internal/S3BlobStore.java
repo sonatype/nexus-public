@@ -169,6 +169,7 @@ public class S3BlobStore
     this.uploader = checkNotNull(uploader);
     this.storeMetrics = checkNotNull(storeMetrics);
     this.bucketManager = checkNotNull(bucketManager);
+    this.preferExpire = preferExpire;
   }
 
   @Override

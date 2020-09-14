@@ -28,7 +28,7 @@ import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.orient.maven.MavenFacet;
+import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.Coordinates;
 import org.sonatype.nexus.repository.maven.internal.Maven2MavenPathParser;
@@ -92,7 +92,7 @@ public class MavenRestoreBlobStrategyTest
   Bucket bucket;
 
   @Mock
-  MavenFacet mavenFacet;
+  OrientMavenFacet mavenFacet;
 
   @Mock
   DryRunPrefix dryRunPrefix;
@@ -113,7 +113,7 @@ public class MavenRestoreBlobStrategyTest
 
     when(repositoryManager.get("test-repo")).thenReturn(repository);
     when(repository.optionalFacet(StorageFacet.class)).thenReturn(Optional.of(storageFacet));
-    when(repository.optionalFacet(MavenFacet.class)).thenReturn(Optional.of(mavenFacet));
+    when(repository.optionalFacet(OrientMavenFacet.class)).thenReturn(Optional.of(mavenFacet));
     when(storageFacet.txSupplier()).thenReturn(() -> storageTx);
 
     when(storageTx.findBucket(repository)).thenReturn(bucket);
@@ -128,7 +128,7 @@ public class MavenRestoreBlobStrategyTest
 
     when(nodeAccess.getId()).thenReturn("node");
 
-    when(repository.facet(MavenFacet.class)).thenReturn(mavenFacet);
+    when(repository.facet(OrientMavenFacet.class)).thenReturn(mavenFacet);
 
     when(blobStoreManager.get("test")).thenReturn(mock(BlobStore.class));
   }

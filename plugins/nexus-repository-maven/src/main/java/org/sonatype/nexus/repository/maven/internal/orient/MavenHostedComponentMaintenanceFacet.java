@@ -21,7 +21,7 @@ import javax.annotation.Nullable;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.orient.maven.MavenFacet;
+import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.maven.MavenHostedFacet;
 import org.sonatype.nexus.repository.storage.Bucket;
 import org.sonatype.nexus.repository.storage.Component;
@@ -65,7 +65,7 @@ public class MavenHostedComponentMaintenanceFacet
   protected DeletionProgress doBatchDelete(final List<EntityId> entityIds, final BooleanSupplier cancelledCheck) {
     try {
       List<String[]> gavs = collectGavs(entityIds);
-      MavenFacet mavenFacet = getRepository().facet(MavenFacet.class);
+      OrientMavenFacet mavenFacet = getRepository().facet(OrientMavenFacet.class);
       final StorageTx tx = UnitOfWork.currentTx();
       Bucket bucket = tx.findBucket(getRepository());
 

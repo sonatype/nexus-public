@@ -22,7 +22,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpResponses;
-import org.sonatype.nexus.orient.maven.MavenFacet;
+import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.maven.MavenHostedFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.view.Content;
@@ -65,7 +65,7 @@ public class OrientArchetypeCatalogHandler
    * Tries to get the catalog from hosted repository, and generate it if not present.
    */
   private Response doGet(final MavenPath path, final Repository repository) throws IOException {
-    MavenFacet mavenFacet = repository.facet(MavenFacet.class);
+    OrientMavenFacet mavenFacet = repository.facet(OrientMavenFacet.class);
     Content content = mavenFacet.get(path);
     if (content == null) {
       // try to generate it

@@ -29,7 +29,7 @@ import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
-import org.sonatype.nexus.orient.maven.MavenFacet;
+import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.config.Configuration;
@@ -52,7 +52,6 @@ import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.Query.Builder;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
-import org.sonatype.nexus.repository.storage.TempBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalDeleteBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreMetadata;
@@ -61,6 +60,7 @@ import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.BlobPayload;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
@@ -92,7 +92,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 import static org.sonatype.nexus.repository.storage.Query.builder;
 
 /**
- * A {@link MavenFacet} that persists Maven artifacts and metadata to a {@link StorageFacet}.
+ * A {@link OrientMavenFacet} that persists Maven artifacts and metadata to a {@link StorageFacet}.
  * <p/>
  * Structure for artifacts (CMA components and assets):
  * <ul>
@@ -111,7 +111,7 @@ import static org.sonatype.nexus.repository.storage.Query.builder;
 @Named
 public class MavenFacetImpl
     extends FacetSupport
-    implements MavenFacet
+    implements OrientMavenFacet
 {
   private static final ThreadLocal<Boolean> rebuilding = new ThreadLocal<>();
 

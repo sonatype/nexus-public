@@ -215,6 +215,10 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchDocker_Text: 'Docker',
     SearchDocker_Description: 'Search for components in Docker repositories',
 
+    // Browse -> Search -> R
+    SearchR_Text: 'R',
+    SearchR_Description: 'Search for components in R repositories',
+
     // Browse -> Search -> Raw
     SearchRaw_Text: 'Raw',
     SearchRaw_Description: 'Search for components in Raw repositories',
@@ -262,6 +266,12 @@ Ext.define('NX.coreui.app.PluginStrings', {
     // Browse -> Search -> Cocoapods
     SearchCocoapods_Text: 'Cocoapods',
     SearchCocoapods_Description: 'Search for components in Cocoapods repositories',
+
+    // Browse -> Search -> p2
+    SearchP2_Text: 'P2',
+    SearchP2_Description: 'Search for components in P2 repositories',
+    SearchP2_Group: 'P2 Repositories',
+    SearchP2_PluginName_FieldLabel: 'Plugin name',
 
     // Browse -> Search -> Conda
     SearchConda_Text: 'Conda',

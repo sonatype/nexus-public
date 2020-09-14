@@ -20,7 +20,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
-import org.sonatype.nexus.repository.rest.api.AbstractRepositoriesApiResource;
+import org.sonatype.nexus.repository.rest.api.AbstractProxyRepositoriesApiResource;
 import org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceV1;
 import org.sonatype.nexus.validation.Validate;
 
@@ -46,7 +46,7 @@ import static org.sonatype.nexus.rest.ApiDocConstants.REPOSITORY_UPDATED;
 @Path(RESOURCE_URI)
 @Api(value = API_REPOSITORY_MANAGEMENT)
 public class CondaProxyRepositoriesApiResource
-    extends AbstractRepositoriesApiResource<CondaProxyRepositoryApiRequest>
+    extends AbstractProxyRepositoriesApiResource<CondaProxyRepositoryApiRequest>
 {
   static final String RESOURCE_URI = RepositoriesApiResourceV1.RESOURCE_URI + "/conda/proxy";
 

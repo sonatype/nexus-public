@@ -56,6 +56,7 @@ import org.sonatype.nexus.repository.view.payloads.TempBlobPartPayload;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Sets;
 import org.apache.maven.model.Model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -64,6 +65,7 @@ import static java.lang.String.format;
 import static java.lang.String.join;
 import static java.util.Objects.requireNonNull;
 import static org.sonatype.nexus.common.text.Strings2.isBlank;
+import static org.sonatype.nexus.repository.maven.internal.Constants.ARCHETYPE_CATALOG_FILENAME;
 
 /**
  * Common base for maven upload handlers
@@ -96,6 +98,8 @@ public abstract class MavenUploadHandlerSupport
   private static final String ARTIFACT_ID_DISPLAY = "Artifact ID";
 
   private static final String GROUP_ID_DISPLAY = "Group ID";
+
+  private static final Set<String> ignoredPaths = Sets.newHashSet(ARCHETYPE_CATALOG_FILENAME);
 
   protected final Maven2MavenPathParser parser;
 
@@ -164,6 +168,11 @@ public abstract class MavenUploadHandlerSupport
 
   @Override
   public Content handle( final Repository repository, final File content, final String path) throws IOException {
+    if (ignoredPaths.contains(path)) {
+      log.debug("skipping {} as it is on the ignore list.", path);
+      return null;
+    }
+
     MavenPath mavenPath = parser.parsePath(path);
 
     ensurePermitted(repository.getName(), Maven2Format.NAME, mavenPath.getPath(), toMap(mavenPath.getCoordinates()));

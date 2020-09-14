@@ -27,8 +27,6 @@
   <packaging>feature</packaging>
 
   <properties>
-    <p2.format.version>1.1.12</p2.format.version>
-    <r.format.version>1.1.20</r.format.version>
     <helm.format.version>1.0.20</helm.format.version>
     <conan.format.version>1.0.21</conan.format.version>
   </properties>
@@ -53,40 +51,8 @@
 
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-repository-p2</artifactId>
-      <version>${p2.format.version}</version>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-repository-r</artifactId>
-      <version>${r.format.version}</version>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-restore-helm</artifactId>
       <version>${helm.format.version}</version>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-restore-p2</artifactId>
-      <version>${p2.format.version}</version>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-restore-r</artifactId>
-      <version>${r.format.version}</version>
       <classifier>features</classifier>
       <type>xml</type>
     </dependency>

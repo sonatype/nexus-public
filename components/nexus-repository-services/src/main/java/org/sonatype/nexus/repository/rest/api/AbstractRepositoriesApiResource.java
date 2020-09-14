@@ -19,6 +19,7 @@ import javax.inject.Inject;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -38,6 +39,8 @@ import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.validation.Validate;
 
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
@@ -141,9 +144,13 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
   @Path("/{repositoryName}")
   @RequiresAuthentication
   @Validate
-  public AbstractApiRepository getRepository(@PathParam("repositoryName") final String repositoryName)
+  @ApiOperation("Get repository")
+  public AbstractApiRepository getRepository(@ApiParam(hidden = true) @BeanParam final FormatAndType formatAndType,
+                                             @PathParam("repositoryName") final String repositoryName)
   {
     return authorizingRepositoryManager.getRepositoryWithAdmin(repositoryName)
+        .filter(r -> r.getType().getValue().equals(formatAndType.type()) &&
+            r.getFormat().getValue().equals(formatAndType.format()))
         .map(r -> convertersByFormat.getOrDefault(r.getFormat().toString(), defaultAdapter).adapt(r))
         .orElseThrow(() -> new WebApplicationMessageException(NOT_FOUND, "\"Repository not found\"", APPLICATION_JSON));
   }

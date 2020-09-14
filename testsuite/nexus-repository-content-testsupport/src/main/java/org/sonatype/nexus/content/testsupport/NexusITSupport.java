@@ -79,6 +79,7 @@ import org.ops4j.pax.exam.Option;
 import static org.ops4j.pax.exam.CoreOptions.maven;
 import static org.ops4j.pax.exam.CoreOptions.wrappedBundle;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFileExtend;
+import static org.ops4j.pax.exam.options.WrappedUrlProvisionOption.OverwriteMode.MERGE;
 
 /**
  * Support for Nexus integration tests.
@@ -123,7 +124,7 @@ public abstract class NexusITSupport
         editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.orient.enabled", "false"),
         // install common test-support features
         nexusFeature("org.sonatype.nexus.testsuite", "nexus-repository-content-testsupport"),
-        wrappedBundle(maven("com.jayway.awaitility", "awaitility").versionAsInProject())
+        wrappedBundle(maven("org.awaitility", "awaitility").versionAsInProject()).overwriteManifest(MERGE).imports("*")
     );
   }
 

@@ -284,13 +284,13 @@ public class StorageFacetImplIT
       String suffix = "order by name limit 1";
       List<Asset> results = Lists.newArrayList(tx.findAssets(whereClause, parameters, null, suffix));
       checkSize(results, 1);
-      assertThat((String) results.get(0).name(), is("asset1"));
+      assertThat(results.get(0).name(), is("asset1"));
 
       // ..in descending order by name with limit 1, should return asset2
       suffix = "order by name desc limit 1";
       results = Lists.newArrayList(tx.findAssets(whereClause, parameters, null, suffix));
       checkSize(results, 1);
-      assertThat((String) results.get(0).name(), is("asset2"));
+      assertThat(results.get(0).name(), is("asset2"));
     }
   }
 
@@ -316,8 +316,7 @@ public class StorageFacetImplIT
     // Get the asset and make sure it contains what we expect
     try (StorageTx tx = beginTX()) {
       Bucket bucket = tx.findBucket(testRepository1);
-      Asset asset = tx.findAsset(docId, bucket);
-      assert asset != null;
+      Asset asset = checkNotNull(tx.findAsset(docId, bucket));
 
       NestedAttributesMap outputMap = asset.attributes();
 

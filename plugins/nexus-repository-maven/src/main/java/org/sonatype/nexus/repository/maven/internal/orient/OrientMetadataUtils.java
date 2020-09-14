@@ -20,7 +20,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.hash.HashAlgorithm;
-import org.sonatype.nexus.orient.maven.MavenFacet;
+import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.maven.MavenPath;
@@ -68,7 +68,7 @@ public final class OrientMetadataUtils
    * True if content is available for a given path, false otherwise
    */
   public static boolean exists(final Repository repository, final MavenPath mavenPath) throws IOException {
-    return repository.facet(MavenFacet.class).exists(mavenPath);
+    return repository.facet(OrientMavenFacet.class).exists(mavenPath);
   }
 
   /**
@@ -76,7 +76,7 @@ public final class OrientMetadataUtils
    */
   @Nullable
   public static Metadata read(final Repository repository, final MavenPath mavenPath) throws IOException {
-    final Content content = repository.facet(MavenFacet.class).get(mavenPath);
+    final Content content = repository.facet(OrientMavenFacet.class).get(mavenPath);
     if (content == null) {
       return null;
     }
@@ -95,7 +95,7 @@ public final class OrientMetadataUtils
   public static void write(final Repository repository, final MavenPath mavenPath, final Metadata metadata)
       throws IOException
   {
-    MavenFacet mavenFacet = repository.facet(MavenFacet.class);
+    OrientMavenFacet mavenFacet = repository.facet(OrientMavenFacet.class);
     final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     MavenModels.writeMetadata(buffer, metadata);
     mavenFacet.put(mavenPath, new BytesPayload(buffer.toByteArray(),
@@ -118,7 +118,7 @@ public final class OrientMetadataUtils
     checkNotNull(repository);
     checkNotNull(mavenPath);
     try {
-      return MavenFacetUtils.deleteWithHashes(repository.facet(MavenFacet.class), mavenPath);
+      return MavenFacetUtils.deleteWithHashes(repository.facet(OrientMavenFacet.class), mavenPath);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -145,9 +145,9 @@ public final class OrientMetadataUtils
           Set<String> deletedPaths = Sets.newHashSet();
           final StorageTx tx = UnitOfWork.currentTx();
           Bucket bucket = tx.findBucket(repository);
-          deletedPaths.addAll(repository.facet(MavenFacet.class).maybeDeleteOrFlagToRebuildMetadata(bucket, groupId, artifactId, baseVersion));
-          deletedPaths.addAll(repository.facet(MavenFacet.class).maybeDeleteOrFlagToRebuildMetadata(bucket, groupId, artifactId));
-          deletedPaths.addAll(repository.facet(MavenFacet.class).maybeDeleteOrFlagToRebuildMetadata(bucket, groupId));
+          deletedPaths.addAll(repository.facet(OrientMavenFacet.class).maybeDeleteOrFlagToRebuildMetadata(bucket, groupId, artifactId, baseVersion));
+          deletedPaths.addAll(repository.facet(OrientMavenFacet.class).maybeDeleteOrFlagToRebuildMetadata(bucket, groupId, artifactId));
+          deletedPaths.addAll(repository.facet(OrientMavenFacet.class).maybeDeleteOrFlagToRebuildMetadata(bucket, groupId));
           return deletedPaths;
         });
   }

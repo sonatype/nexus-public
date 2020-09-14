@@ -41,11 +41,15 @@
     <module>nexus-repository-cocoapods</module>
     <module>nexus-repository-conda</module>
     <module>nexus-repository-pypi</module>
+    <module>nexus-repository-p2</module>
+    <module>nexus-repository-r</module>
     <module>nexus-repository-raw</module>
     <module>nexus-restore-apt</module>
     <module>nexus-restore-maven</module>
     <module>nexus-restore-npm</module>
     <module>nexus-restore-pypi</module>
+    <module>nexus-restore-p2</module>
+    <module>nexus-restore-r</module>
     <module>nexus-restore-raw</module>
     <module>nexus-script-plugin</module>
     <module>nexus-ssl-plugin</module>
@@ -305,6 +309,66 @@
       <dependency>
         <groupId>org.sonatype.nexus.plugins</groupId>
         <artifactId>nexus-restore-pypi</artifactId>
+        <version>3.28.0-SNAPSHOT</version>
+        <classifier>features</classifier>
+        <type>xml</type>
+      </dependency>
+
+      <!-- repository-p2 -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-repository-p2</artifactId>
+        <version>3.28.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-repository-p2</artifactId>
+        <version>3.28.0-SNAPSHOT</version>
+        <classifier>features</classifier>
+        <type>xml</type>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-restore-p2</artifactId>
+        <version>3.28.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-restore-p2</artifactId>
+        <version>3.28.0-SNAPSHOT</version>
+        <classifier>features</classifier>
+        <type>xml</type>
+      </dependency>
+
+      <!-- repository-r -->
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-repository-r</artifactId>
+        <version>3.28.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-repository-r</artifactId>
+        <version>3.28.0-SNAPSHOT</version>
+        <classifier>features</classifier>
+        <type>xml</type>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-restore-r</artifactId>
+        <version>3.28.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.sonatype.nexus.plugins</groupId>
+        <artifactId>nexus-restore-r</artifactId>
         <version>3.28.0-SNAPSHOT</version>
         <classifier>features</classifier>
         <type>xml</type>

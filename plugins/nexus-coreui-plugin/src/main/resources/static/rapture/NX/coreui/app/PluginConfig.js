@@ -249,6 +249,12 @@ Ext.define('NX.coreui.app.PluginConfig', {
       }
     },
     {
+      id: 'NX.coreui.controller.SearchR',
+      active: function() {
+        return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-repository-r');
+      }
+    },
+    {
       id: 'NX.coreui.controller.SearchRaw',
       active: function () {
         return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-repository-raw');
@@ -264,6 +270,12 @@ Ext.define('NX.coreui.app.PluginConfig', {
       id: 'NX.coreui.controller.SearchYum',
       active: function () {
         return NX.app.Application.bundleActive('com.sonatype.nexus.plugins.nexus-repository-yum');
+      }
+    },
+    {
+      id: 'NX.coreui.controller.SearchP2',
+      active: function () {
+        return NX.app.Application.bundleActive('org.sonatype.nexus.plugins.nexus-repository-p2');
       }
     },
     {

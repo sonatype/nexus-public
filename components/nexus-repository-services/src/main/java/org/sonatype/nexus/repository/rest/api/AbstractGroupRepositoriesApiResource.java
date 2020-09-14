@@ -17,6 +17,8 @@ import java.util.Set;
 
 import javax.inject.Inject;
 import javax.validation.ConstraintViolation;
+import javax.ws.rs.BeanParam;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -27,14 +29,18 @@ import org.sonatype.nexus.common.app.ApplicationVersion;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.group.GroupHandler;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
 import org.sonatype.nexus.repository.rest.api.model.GroupAttributes;
 import org.sonatype.nexus.repository.rest.api.model.GroupDeployAttributes;
 import org.sonatype.nexus.repository.rest.api.model.GroupRepositoryApiRequest;
+import org.sonatype.nexus.repository.rest.api.model.SimpleApiGroupRepository;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 import org.sonatype.nexus.validation.Validate;
 
 import com.google.common.collect.Sets;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -152,5 +158,17 @@ public abstract class AbstractGroupRepositoriesApiResource<T extends GroupReposi
         ));
       }
     }
+  }
+
+  @GET
+  @Path("/{repositoryName}")
+  @RequiresAuthentication
+  @Validate
+  @ApiOperation(value = "Get repository", response = SimpleApiGroupRepository.class)
+  @Override
+  public AbstractApiRepository getRepository(@ApiParam(hidden = true) @BeanParam final FormatAndType formatAndType,
+                                             @PathParam("repositoryName") final String repositoryName)
+  {
+    return super.getRepository(formatAndType, repositoryName);
   }
 }

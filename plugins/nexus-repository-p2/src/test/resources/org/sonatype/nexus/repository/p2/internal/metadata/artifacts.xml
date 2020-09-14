@@ -1,0 +1,52 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<?artifactRepository class='org.eclipse.equinox.internal.p2.artifact.repository.simple.SimpleArtifactRepository' version='1.0.0'?>
+<repository name='HelloWorld Artifacts' type='org.eclipse.equinox.p2.artifact.repository.simpleRepository' version='1.0.0'>
+  <properties size='4'>
+    <property name='publishPackFilesAsSiblings' value='true'/>
+    <property name='p2.compressed' value='false'/>
+    <property name='p2.timestamp' value='1222368069078'/>
+    <property name='eclipse.p2.force.threading' value='true'/>
+    <property name='p2.mirrorsURL' value='mirrors.xml'/>
+  </properties>
+  <mappings size='6'>
+    <rule filter='(&amp; (classifier=osgi.bundle) (format=packed))' output='${repoUrl}/plugins/${id}_${version}.jar.pack.gz'/>
+    <rule filter='(&amp; (classifier=osgi.bundle))' output='${repoUrl}/plugins/${id}_${version}.jar'/>
+    <rule filter='(&amp; (classifier=binary))' output='${repoUrl}/binary/${id}_${version}'/>
+    <rule filter='(&amp; (classifier=org.eclipse.update.feature))' output='${repoUrl}/features/${id}_${version}.jar'/>
+    <rule filter='(&amp; (classifier=test.txt) (format=packed))' output='${repoUrl}/plugins/${id}_${version}.txt.pack.gz'/>
+    <rule filter='(&amp; (classifier=test.txt))' output='${repoUrl}/plugins/${id}_${version}.txt'/>
+  </mappings>
+  <artifacts size='4'>
+    <artifact classifier='org.eclipse.update.feature' id='HelloWorldFeature' version='1.0.0'>
+      <properties size='2'>
+        <property name='artifact.size' value='0'/>
+        <property name='download.size' value='0'/>
+      </properties>
+    </artifact>
+    <artifact classifier='test.txt' id='HelloWorldText' version='1.0.0'>
+      <properties size='3'>
+        <property name='artifact.size' value='12'/>
+        <property name='download.size' value='12'/>
+        <property name='download.md5' value='ed076287532e86365e841e92bfc50d8c'/>
+      </properties>
+    </artifact>
+    <artifact classifier='test.txt' id='fail_to_canonical' version='1.0.0'>
+      <properties size='3'>
+        <property name='artifact.size' value='12'/>
+        <property name='download.size' value='12'/>
+        <property name='download.md5' value='ed076287532e86365e841e92bfc50d8c'/>
+      </properties>
+    </artifact>
+    <artifact classifier='test.txt' id='fail_to_canonical' version='1.0.0'>
+      <processing size='1'>
+        <step id='org.eclipse.equinox.p2.processing.Pack200Unpacker' required='true'/>
+      </processing>
+      <properties size='4'>
+        <property name='artifact.size' value='12'/>
+        <property name='download.size' value='12'/>
+        <property name='download.md5' value='ed076287532e86365e841e92bfc50d8c'/>
+        <property name='format' value='packed'/>
+      </properties>
+    </artifact>
+  </artifacts>
+</repository>

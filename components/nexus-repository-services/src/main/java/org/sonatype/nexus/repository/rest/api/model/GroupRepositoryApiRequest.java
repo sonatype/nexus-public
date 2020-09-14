@@ -32,12 +32,12 @@ public class GroupRepositoryApiRequest
   @ApiModelProperty
   @NotNull
   @Valid
-  private final StorageAttributes storage;
+  protected final StorageAttributes storage;
 
   @ApiModelProperty
   @NotNull
   @Valid
-  private final GroupAttributes group;
+  protected final GroupAttributes group;
 
   @JsonCreator
   public GroupRepositoryApiRequest(

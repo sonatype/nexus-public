@@ -60,7 +60,7 @@ public class ReflectionMBeanBuilder
     log.debug("Discovering managed members of type: {}", type);
 
     ManagedObject managedDescriptor = type.getAnnotation(ManagedObject.class);
-    assert managedDescriptor != null;
+    checkNotNull(managedDescriptor);
 
     // track attribute builders for getter/setter correlation
     Map<String,ReflectionMBeanAttribute.Builder> attributeBuilders = Maps.newHashMap();

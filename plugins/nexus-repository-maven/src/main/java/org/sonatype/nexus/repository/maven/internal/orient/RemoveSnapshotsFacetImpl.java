@@ -30,7 +30,7 @@ import org.sonatype.nexus.orient.entity.AttachedEntityHelper;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.Type;
-import org.sonatype.nexus.orient.maven.MavenFacet;
+import org.sonatype.nexus.repository.maven.MavenFacet;
 import org.sonatype.nexus.repository.maven.MavenHostedFacet;
 import org.sonatype.nexus.repository.maven.RemoveSnapshotsFacet;
 import org.sonatype.nexus.repository.maven.VersionPolicy;
@@ -102,7 +102,7 @@ public class RemoveSnapshotsFacetImpl
   public RemoveSnapshotsFacetImpl(
       final ComponentEntityAdapter componentEntityAdapter,
       @Named(GroupType.NAME) final Type groupType,
-      @Named("${nexus.removeSnapshots.batchSize:-500}") long batchSize)
+      @Named("${nexus.removeSnapshots.batchSize:-500}") final long batchSize)
   {
     this.componentEntityAdapter = checkNotNull(componentEntityAdapter);
     this.groupType = checkNotNull(groupType);
@@ -111,7 +111,7 @@ public class RemoveSnapshotsFacetImpl
 
   @Override
   @Guarded(by = STARTED)
-  public void removeSnapshots(RemoveSnapshotsConfig config)
+  public void removeSnapshots(final RemoveSnapshotsConfig config)
   {
     Repository repository = getRepository();
     String repositoryName = repository.getName();
@@ -262,7 +262,7 @@ public class RemoveSnapshotsFacetImpl
     return snapshotsToDelete;
   }
 
-  private boolean maybeCommit(StorageTx tx, long deleted) {
+  private boolean maybeCommit(final StorageTx tx, final long deleted) {
     if (deleted % batchSize == 0) {
       tx.commit();
       tx.begin();

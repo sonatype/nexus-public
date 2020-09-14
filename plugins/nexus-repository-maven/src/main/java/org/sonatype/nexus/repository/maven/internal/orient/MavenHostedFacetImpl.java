@@ -29,7 +29,7 @@ import javax.inject.Named;
 import org.sonatype.nexus.common.entity.EntityBatchEvent;
 import org.sonatype.nexus.common.entity.EntityEvent;
 import org.sonatype.nexus.orient.entity.AttachedEntityHelper;
-import org.sonatype.nexus.orient.maven.MavenFacet;
+import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.maven.MavenHostedFacet;
@@ -81,7 +81,7 @@ public class MavenHostedFacetImpl
 
   private final MetadataRebuilder metadataRebuilder;
   
-  private MavenFacet mavenFacet;
+  private OrientMavenFacet mavenFacet;
 
   private MavenPath archetypeCatalogMavenPath;
 
@@ -94,7 +94,7 @@ public class MavenHostedFacetImpl
   @Override
   protected void doInit(final Configuration configuration) throws Exception {
     super.doInit(configuration);
-    this.mavenFacet = facet(MavenFacet.class);
+    this.mavenFacet = facet(OrientMavenFacet.class);
     this.archetypeCatalogMavenPath = mavenFacet.getMavenPathParser()
         .parsePath("/" + Constants.ARCHETYPE_CATALOG_FILENAME);
   }

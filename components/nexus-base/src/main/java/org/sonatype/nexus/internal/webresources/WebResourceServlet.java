@@ -128,7 +128,7 @@ public class WebResourceServlet
       resource = ((Prepareable) resource).prepare();
       checkState(resource != null, "Prepared resource is null");
     }
-    assert resource != null;
+    checkNotNull(resource);
 
     String contentType = resource.getContentType();
     if (contentType == null) {

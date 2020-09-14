@@ -21,7 +21,7 @@ import javax.inject.Named;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.config.Configuration;
-import org.sonatype.nexus.orient.maven.MavenFacet;
+import org.sonatype.nexus.orient.maven.OrientMavenFacet;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.internal.Constants;
 import org.sonatype.nexus.repository.maven.LayoutPolicy;
@@ -45,12 +45,12 @@ import static org.sonatype.nexus.repository.maven.internal.orient.MavenFacetUtil
 public class MavenProxyFacet
     extends ProxyFacetSupport
 {
-  private MavenFacet mavenFacet;
+  private OrientMavenFacet mavenFacet;
 
   @Override
   protected void doInit(final Configuration configuration) throws Exception {
     super.doInit(configuration);
-    this.mavenFacet = facet(MavenFacet.class);
+    this.mavenFacet = facet(OrientMavenFacet.class);
   }
 
   @Override

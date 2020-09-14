@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.scheduling.PeriodicJobService.PeriodicJob;
 
-import com.jayway.awaitility.Awaitility;
+import org.awaitility.Awaitility;
 import org.junit.Before;
 import org.junit.Test;
 
