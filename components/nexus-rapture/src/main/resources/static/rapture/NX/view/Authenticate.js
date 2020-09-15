@@ -41,7 +41,7 @@ Ext.define('NX.view.Authenticate', {
     me.ui = 'nx-inset';
     me.title = NX.I18n.get('Authenticate_Title');
 
-    me.setWidth(NX.view.ModalDialog.SMALL_MODAL);
+    me.setWidth(NX.view.ModalDialog.MEDIUM_MODAL);
 
     if (!me.message) {
       me.message = NX.I18n.get('Authenticate_Help_Text');
