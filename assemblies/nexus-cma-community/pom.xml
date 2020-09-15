@@ -28,18 +28,9 @@
 
   <properties>
     <helm.format.version>1.0.20</helm.format.version>
-    <conan.format.version>1.0.21</conan.format.version>
   </properties>
 
   <dependencies>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-repository-conan</artifactId>
-      <version>${conan.format.version}</version>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
 
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>

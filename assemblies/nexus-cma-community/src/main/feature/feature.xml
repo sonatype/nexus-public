@@ -15,7 +15,6 @@
 -->
 <features xmlns="http://karaf.apache.org/xmlns/features/v1.2.1" name="${project.artifactId}">
   <feature name="${project.artifactId}" install="featureFlag:enabledByDefault:nexus.orient.store.content">
-    <feature>nexus-repository-conan</feature>
     <feature>nexus-restore-helm</feature>
   </feature>
 </features>
