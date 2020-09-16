@@ -231,6 +231,12 @@ Ext.define('NX.coreui.app.PluginStrings', {
     SearchGolang_Text: 'Go',
     SearchGolang_Description: 'Search for components in Go repositories',
 
+    // Browse -> Search -> Helm
+    SearchHelm_Text: 'Helm',
+    SearchHelm_Description: 'Search for components in Helm repositories',
+    SearchHelm_Group: 'Helm Repositories',
+    Repository_Facet_HelmFacet_Title: 'Helm Settings',
+
     // Browse -> Search -> npm
     SearchNpm_Text: 'npm',
     SearchNpm_Description: 'Search for components in npm repositories',

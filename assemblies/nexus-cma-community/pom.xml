@@ -27,26 +27,10 @@
   <packaging>feature</packaging>
 
   <properties>
-    <helm.format.version>1.0.20</helm.format.version>
   </properties>
 
   <dependencies>
 
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-repository-helm</artifactId>
-      <version>${helm.format.version}</version>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.plugins</groupId>
-      <artifactId>nexus-restore-helm</artifactId>
-      <version>${helm.format.version}</version>
-      <classifier>features</classifier>
-      <type>xml</type>
-    </dependency>
 
   </dependencies>
 
