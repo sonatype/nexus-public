@@ -15,6 +15,7 @@ package org.sonatype.repository.helm.internal.orient;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
@@ -27,8 +28,6 @@ import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.repository.helm.HelmAttributes;
 import org.sonatype.repository.helm.internal.AssetKind;
-
-import com.google.common.base.Supplier;
 
 /**
  * @since 3.next

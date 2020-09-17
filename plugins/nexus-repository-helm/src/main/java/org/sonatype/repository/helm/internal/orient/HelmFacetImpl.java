@@ -15,6 +15,7 @@ package org.sonatype.repository.helm.internal.orient;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
 
 import javax.annotation.Nullable;
@@ -37,8 +38,6 @@ import org.sonatype.nexus.repository.view.payloads.BlobPayload;
 import org.sonatype.repository.helm.HelmAttributes;
 import org.sonatype.repository.helm.internal.AssetKind;
 import org.sonatype.repository.helm.internal.HelmFormat;
-
-import com.google.common.base.Supplier;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singletonList;
