@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.npm.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -25,8 +26,6 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.mime.MimeRulesSource;
 import org.sonatype.nexus.repository.mime.ContentValidator;
 import org.sonatype.nexus.repository.mime.DefaultContentValidator;
-
-import com.google.common.base.Supplier;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

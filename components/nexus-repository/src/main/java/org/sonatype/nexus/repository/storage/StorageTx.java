@@ -31,7 +31,7 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.transaction.Transaction;
 import org.sonatype.nexus.transaction.TransactionalSession;
 
-import com.google.common.base.Supplier;
+import java.util.function.Supplier;
 import com.google.common.hash.HashCode;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;

@@ -34,7 +34,7 @@ import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.security.subject.FakeAlmightySubject;
 import org.sonatype.nexus.selector.VariableSource;
 
-import com.google.common.base.Supplier;
+import java.util.function.Supplier;
 import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.util.ThreadContext;
 import org.joda.time.DateTime;

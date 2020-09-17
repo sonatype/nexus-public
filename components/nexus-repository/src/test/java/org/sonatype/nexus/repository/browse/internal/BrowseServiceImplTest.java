@@ -49,7 +49,7 @@ import org.sonatype.nexus.selector.ConstantVariableResolver;
 import org.sonatype.nexus.selector.VariableSource;
 import org.sonatype.nexus.selector.VariableSourceBuilder;
 
-import com.google.common.base.Supplier;
+import java.util.function.Supplier;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Before;

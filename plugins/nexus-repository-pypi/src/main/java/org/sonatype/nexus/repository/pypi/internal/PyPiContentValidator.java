@@ -26,7 +26,7 @@ import org.sonatype.nexus.mime.MimeRulesSource;
 import org.sonatype.nexus.repository.mime.ContentValidator;
 import org.sonatype.nexus.repository.mime.DefaultContentValidator;
 
-import com.google.common.base.Supplier;
+import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.commons.lang.StringUtils.endsWith;

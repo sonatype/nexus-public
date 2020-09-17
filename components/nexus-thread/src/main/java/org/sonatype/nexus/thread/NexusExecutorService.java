@@ -14,13 +14,12 @@ package org.sonatype.nexus.thread;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Supplier;
 
 import org.sonatype.nexus.security.subject.CurrentSubjectSupplier;
 import org.sonatype.nexus.thread.internal.MDCAwareCallable;
 import org.sonatype.nexus.thread.internal.MDCAwareRunnable;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import org.apache.shiro.concurrent.SubjectAwareExecutorService;
 import org.apache.shiro.subject.Subject;
 
@@ -67,7 +66,7 @@ public class NexusExecutorService
   //
 
   public static NexusExecutorService forFixedSubject(final ExecutorService target, final Subject subject) {
-    return new NexusExecutorService(target, Suppliers.ofInstance(subject));
+    return new NexusExecutorService(target, () -> subject);
   }
 
   public static NexusExecutorService forCurrentSubject(final ExecutorService target) {

@@ -12,15 +12,14 @@
  */
 package org.sonatype.nexus.jmx;
 
+import java.util.function.Supplier;
+
 import javax.annotation.Nullable;
 import javax.management.AttributeNotFoundException;
 import javax.management.Descriptor;
 import javax.management.MBeanAttributeInfo;
 
 import org.sonatype.goodies.common.ComponentSupport;
-
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -125,7 +124,7 @@ public class SuppliedMBeanAttribute
     }
 
     public Builder value(@Nullable final Object value) {
-      this.supplier = Suppliers.ofInstance(value);
+      this.supplier = () -> value;
 
       // auto-set type if we can
       if (value != null) {

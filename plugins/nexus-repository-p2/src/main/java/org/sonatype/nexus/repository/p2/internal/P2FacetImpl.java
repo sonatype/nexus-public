@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.p2.internal;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 import javax.inject.Named;
@@ -41,7 +42,6 @@ import org.sonatype.nexus.repository.view.payloads.BlobPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
-import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 
 import static java.util.Collections.singletonList;

@@ -14,6 +14,7 @@ package org.sonatype.repository.conan.internal.security;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -27,8 +28,6 @@ import org.sonatype.nexus.repository.storage.DefaultContentValidator;
 import org.sonatype.nexus.repository.view.ContentTypes;
 import org.sonatype.repository.conan.internal.ConanFormat;
 import org.sonatype.repository.conan.internal.orient.utils.ConanFacetUtils;
-
-import com.google.common.base.Supplier;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

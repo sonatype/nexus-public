@@ -15,6 +15,7 @@ package org.sonatype.nexus.jmx.reflect;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 import javax.management.Descriptor;
@@ -25,7 +26,6 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.jmx.MBeanOperation;
 import org.sonatype.nexus.jmx.OperationKey;
 
-import com.google.common.base.Supplier;
 import com.thoughtworks.paranamer.BytecodeReadingParanamer;
 import com.thoughtworks.paranamer.Paranamer;
 

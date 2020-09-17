@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import org.sonatype.goodies.common.Time;
 import org.sonatype.goodies.testsupport.TestSupport;
@@ -57,7 +58,6 @@ import org.sonatype.nexus.repository.view.payloads.BytesPayload;
 import org.sonatype.nexus.transaction.UnitOfWork;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
-import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import org.junit.After;
 import org.junit.Before;

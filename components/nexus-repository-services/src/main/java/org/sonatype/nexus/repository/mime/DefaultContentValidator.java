@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -30,7 +31,6 @@ import org.sonatype.nexus.repository.InvalidContentException;
 import org.sonatype.nexus.repository.view.ContentTypes;
 
 import com.google.common.base.Strings;
-import com.google.common.base.Supplier;
 import com.google.common.collect.Sets;
 import com.google.common.net.MediaType;
 

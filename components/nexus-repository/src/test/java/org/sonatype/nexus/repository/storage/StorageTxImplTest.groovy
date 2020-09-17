@@ -31,7 +31,7 @@ import org.sonatype.nexus.repository.mime.DefaultContentValidator
 import org.sonatype.nexus.repository.move.RepositoryMoveService
 import org.sonatype.nexus.repository.view.ContentTypes
 
-import com.google.common.base.Supplier
+import java.util.function.Supplier
 import com.google.common.hash.HashCode
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx
 import com.orientechnologies.orient.core.tx.OTransaction
