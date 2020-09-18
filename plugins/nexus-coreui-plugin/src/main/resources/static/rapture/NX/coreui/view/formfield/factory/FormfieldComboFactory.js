@@ -43,6 +43,7 @@ Ext.define('NX.coreui.view.formfield.factory.FormfieldComboFactory', {
    * @returns {*} created combo (never null)
    */
   create: function (formField) { // NOSONAR
+
     var ST = Ext.data.SortTypes,
         item, filters,
         itemConfig = {
@@ -61,6 +62,16 @@ Ext.define('NX.coreui.view.formfield.factory.FormfieldComboFactory', {
           selectOnFocus: false,
           allowBlank: !formField.required
         };
+
+    if (formField.allowAutocomplete) {
+      itemConfig.editable = true;
+      itemConfig.mode = 'remote';
+      itemConfig.queryMode = 'remote';
+      itemConfig.autoSelect = false;
+      itemConfig.hideTrigger = false;
+      itemConfig.typeAhead = true;
+      itemConfig.minChars = 2;
+    }
 
     if (formField.initialValue != null) {
       itemConfig.listeners = {
@@ -134,5 +145,4 @@ Ext.define('NX.coreui.view.formfield.factory.FormfieldComboFactory', {
     });
     return item;
   }
-
 });

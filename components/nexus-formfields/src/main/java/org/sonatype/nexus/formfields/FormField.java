@@ -99,4 +99,8 @@ public interface FormField<T>
    * @since 3.1
    */
   Map<String,Object> getAttributes();
+
+  default boolean getAllowAutocomplete() {
+    return false;
+  }
 }

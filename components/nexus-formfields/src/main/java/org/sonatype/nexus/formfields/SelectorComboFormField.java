@@ -68,5 +68,4 @@ public class SelectorComboFormField
   public Map<String, String> getStoreFilters() {
     return null;
   }
-
 }

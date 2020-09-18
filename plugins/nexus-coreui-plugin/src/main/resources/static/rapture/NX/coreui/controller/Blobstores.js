@@ -371,17 +371,39 @@ Ext.define('NX.coreui.controller.Blobstores', {
           callback: function() {
             var me = this,
                 repoStore = me.getStore('Repository'),
-                blobstoreStore = me.getStore('Blobstore'),
-                blobstoresCombo = moveRepoComboBox.up().query('[name=property_moveTargetBlobstore]')[0],
-                selectedRepo = repoStore.findRecord('name', newVal),
-                currentBlobStore = selectedRepo.data.attributes.storage.blobStoreName,
-                validBlobstores = blobstoreStore.getRange().
-                    filter(function(item) { return item.data.name !== currentBlobStore; }).
-                    map(function(item) { return { name: item.data.name, id: item.data.name }; } );
-            blobstoresCombo.setValue(null);
-            blobstoresCombo.getStore().setData(validBlobstores);
-            if (!old) {
-              blobstoresCombo.reset();
+                selectedRepo = repoStore.findRecord('name', newVal);
+
+            if (selectedRepo) {
+              var blobstoreStore = me.getStore('Blobstore'),
+                  oldSelection,
+                  validSelection = false,
+                  blobstoresCombo = moveRepoComboBox.up().query('[name=property_moveTargetBlobstore]')[0],
+                  currentBlobStore = selectedRepo.data.attributes.storage.blobStoreName,
+                  validBlobstores = blobstoreStore.getRange().filter(function(item) {
+                    return item.data.name !== currentBlobStore;
+                  }).map(function(item) {
+                    return {name: item.data.name, id: item.data.name};
+                  });
+
+              // Check if selected value was valid, if not clean
+              oldSelection = blobstoresCombo.getValue()
+              for (var i = 0; i < validBlobstores.length; i++) {
+                if (validBlobstores[i].id === oldSelection) {
+                  oldSelection = blobstoresCombo.getValue()
+                  validSelection = true;
+                  break;
+                }
+              }
+
+              blobstoresCombo.getStore().setData(validBlobstores);
+              if (!old) {
+                blobstoresCombo.reset();
+              }
+              if (validSelection) {
+                blobstoresCombo.setValue(oldSelection);
+              } else {
+                blobstoresCombo.setValue(null);
+              }
             }
           }
         });

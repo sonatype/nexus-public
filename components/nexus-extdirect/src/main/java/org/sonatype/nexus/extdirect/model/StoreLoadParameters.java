@@ -34,6 +34,8 @@ public class StoreLoadParameters
 
   private List<Filter> filter;
 
+  private String query;
+
   public Integer getPage() {
     return page;
   }
@@ -84,6 +86,14 @@ public class StoreLoadParameters
 
   public void setSort(final List<Sort> sort) {
     this.sort = sort;
+  }
+
+  public String getQuery() {
+    return query;
+  }
+
+  public void setQuery(final String query) {
+    this.query = query;
   }
 
   @Override

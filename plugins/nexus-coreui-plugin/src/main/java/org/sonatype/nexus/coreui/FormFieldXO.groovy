@@ -95,6 +95,8 @@ class FormFieldXO
   @Nullable
   String nameMapping
 
+  boolean allowAutocomplete
+
   /**
    * Create transfer object from field source.
    *
@@ -125,6 +127,7 @@ class FormFieldXO
     if (source instanceof Selectable) {
       result.storeApi = source.storeApi
       result.storeFilters = source.storeFilters
+      result.allowAutocomplete = source.getAllowAutocomplete()
       result.idMapping = source.idMapping
       result.nameMapping = source.nameMapping
     }
