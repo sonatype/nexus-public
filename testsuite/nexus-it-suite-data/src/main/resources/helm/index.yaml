@@ -1,0 +1,36 @@
+apiVersion: '1.0'
+entries:
+  mongodb:
+  - appVersion: 4.0.10
+    created: 2019-09-18T12:38:38.917Z
+    description: NoSQL document-oriented database that stores JSON-like documents
+      with dynamic schemas, simplifying the integration of data in content-driven
+      applications.
+    digest: f2c4dbe8cdd019f97eb9c1843a1748e60d94ef9142c3722121649455c6a21a80
+    icon: https://bitnami.com/assets/stacks/mongodb/img/mongodb-stack-220x234.png
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: mongodb
+    sources:
+    - https://github.com/bitnami/bitnami-docker-mongodb
+    urls:
+    - mongodb-6.0.0.tgz
+    version: 6.0.0
+  - appVersion: 4.0.12
+    created: 2019-09-18T10:35:13.855Z
+    description: NoSQL document-oriented database that stores JSON-like documents
+      with dynamic schemas, simplifying the integration of data in content-driven
+      applications.
+    digest: 5b5550f485c8b489006c8d519d6d6b0799928aaac45ffc9b527a8f9fbb2234a6
+    icon: https://bitnami.com/assets/stacks/mongodb/img/mongodb-stack-220x234.png
+    maintainers:
+    - email: containers@bitnami.com
+      name: Bitnami
+    name: mongodb
+    sources:
+    - https://github.com/bitnami/bitnami-docker-mongodb
+    urls:
+    - mongodb-7.2.8.tgz
+    version: 7.2.8
+generated: 2019-09-18T12:38:50.332Z
