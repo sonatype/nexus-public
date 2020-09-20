@@ -19,6 +19,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
 import org.sonatype.nexus.common.app.FeatureFlag;
+import org.sonatype.nexus.repository.golang.GolangFormat;
 import org.sonatype.nexus.repository.golang.rest.model.GolangHostedRepositoryApiRequest;
 import org.sonatype.nexus.repository.rest.api.AbstractHostedRepositoriesApiResource;
 import org.sonatype.nexus.validation.Validate;
@@ -33,6 +34,7 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import static org.sonatype.nexus.common.app.FeatureFlags.FEATURE_GOLANG_HOSTED;
 import static org.sonatype.nexus.rest.ApiDocConstants.API_REPOSITORY_MANAGEMENT;
 import static org.sonatype.nexus.rest.ApiDocConstants.AUTHENTICATION_REQUIRED;
+import static org.sonatype.nexus.rest.ApiDocConstants.DISABLED_IN_HIGH_AVAILABILITY;
 import static org.sonatype.nexus.rest.ApiDocConstants.INSUFFICIENT_PERMISSIONS;
 import static org.sonatype.nexus.rest.ApiDocConstants.REPOSITORY_CREATED;
 import static org.sonatype.nexus.rest.ApiDocConstants.REPOSITORY_NOT_FOUND;
@@ -52,7 +54,8 @@ public abstract class GolangHostedRepositoriesApiResource
   @ApiResponses(value = {
       @ApiResponse(code = 201, message = REPOSITORY_CREATED),
       @ApiResponse(code = 401, message = AUTHENTICATION_REQUIRED),
-      @ApiResponse(code = 403, message = INSUFFICIENT_PERMISSIONS)
+      @ApiResponse(code = 403, message = INSUFFICIENT_PERMISSIONS),
+      @ApiResponse(code = 405, message = DISABLED_IN_HIGH_AVAILABILITY)
   })
   @POST
   @RequiresAuthentication
@@ -79,5 +82,10 @@ public abstract class GolangHostedRepositoriesApiResource
       @ApiParam(value = "Name of the repository to update") @PathParam("repositoryName") final String repositoryName)
   {
     return super.updateRepository(request, repositoryName);
+  }
+
+  @Override
+  public boolean isApiEnabled() {
+    return highAvailabilitySupportChecker.isSupported(GolangFormat.NAME);
   }
 }

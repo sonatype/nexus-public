@@ -21,6 +21,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
 import org.sonatype.nexus.repository.apt.api.AptProxyApiRepository;
+import org.sonatype.nexus.repository.apt.internal.AptFormat;
 import org.sonatype.nexus.repository.rest.api.AbstractProxyRepositoriesApiResource;
 import org.sonatype.nexus.repository.rest.api.FormatAndType;
 import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
@@ -35,6 +36,7 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication;
 
 import static org.sonatype.nexus.rest.ApiDocConstants.API_REPOSITORY_MANAGEMENT;
 import static org.sonatype.nexus.rest.ApiDocConstants.AUTHENTICATION_REQUIRED;
+import static org.sonatype.nexus.rest.ApiDocConstants.DISABLED_IN_HIGH_AVAILABILITY;
 import static org.sonatype.nexus.rest.ApiDocConstants.INSUFFICIENT_PERMISSIONS;
 import static org.sonatype.nexus.rest.ApiDocConstants.REPOSITORY_CREATED;
 import static org.sonatype.nexus.rest.ApiDocConstants.REPOSITORY_NOT_FOUND;
@@ -51,7 +53,8 @@ public abstract class AptProxyRepositoriesApiResource
   @ApiResponses(value = {
       @ApiResponse(code = 201, message = REPOSITORY_CREATED),
       @ApiResponse(code = 401, message = AUTHENTICATION_REQUIRED),
-      @ApiResponse(code = 403, message = INSUFFICIENT_PERMISSIONS)
+      @ApiResponse(code = 403, message = INSUFFICIENT_PERMISSIONS),
+      @ApiResponse(code = 405, message = DISABLED_IN_HIGH_AVAILABILITY)
   })
   @POST
   @RequiresAuthentication
@@ -89,5 +92,10 @@ public abstract class AptProxyRepositoriesApiResource
   public AbstractApiRepository getRepository(@ApiParam(hidden = true) @BeanParam final FormatAndType formatAndType,
                                              @PathParam("repositoryName") final String repositoryName) {
     return super.getRepository(formatAndType, repositoryName);
+  }
+
+  @Override
+  public boolean isApiEnabled() {
+    return highAvailabilitySupportChecker.isSupported(AptFormat.NAME);
   }
 }

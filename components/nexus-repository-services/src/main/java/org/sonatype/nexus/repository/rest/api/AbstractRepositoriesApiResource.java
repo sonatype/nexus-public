@@ -34,6 +34,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
 import org.sonatype.nexus.repository.rest.api.model.AbstractRepositoryApiRequest;
+import org.sonatype.nexus.repository.view.handlers.HighAvailabilitySupportChecker;
 import org.sonatype.nexus.rest.Resource;
 import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.rest.WebApplicationMessageException;
@@ -48,6 +49,7 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 /**
@@ -66,6 +68,13 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
   private Map<String, ApiRepositoryAdapter> convertersByFormat;
 
   private ApiRepositoryAdapter defaultAdapter;
+
+  protected HighAvailabilitySupportChecker highAvailabilitySupportChecker;
+
+  @Inject
+  public void setHighAvailabilitySupportChecker(final HighAvailabilitySupportChecker highAvailabilitySupportChecker) {
+    this.highAvailabilitySupportChecker = highAvailabilitySupportChecker;
+  }
 
   @Inject
   public void setAuthorizingRepositoryManager(final AuthorizingRepositoryManager authorizingRepositoryManager) {
@@ -91,6 +100,7 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
   @RequiresAuthentication
   @Validate
   public Response createRepository(@NotNull @Valid final T request) {
+    verifyAPIEnabled(request.getFormat());
     try {
       authorizingRepositoryManager.create(configurationAdapter.convert(request));
       return Response.status(Status.CREATED).build();
@@ -155,9 +165,24 @@ public abstract class AbstractRepositoriesApiResource<T extends AbstractReposito
         .orElseThrow(() -> new WebApplicationMessageException(NOT_FOUND, "\"Repository not found\"", APPLICATION_JSON));
   }
 
+  /**
+   * By default, the API is enabled in High Availability, otherwise it should be overridden by a format.
+   * @return {@code true} in case of API is enabled or {@code false} otherwise.
+   */
+  public boolean isApiEnabled() {
+    return true;
+  }
+
   private void ensureRepositoryNameMatches(final T request, final String repositoryName) {
     if (!repositoryName.equals(request.getName())) {
       throw new ValidationErrorsException("name", "Renaming a repository is not supported");
+    }
+  }
+
+  private void verifyAPIEnabled(final String format) {
+    if (!isApiEnabled()) {
+      String message = String.format("Format %s is disabled in High Availability", format);
+      throw new WebApplicationMessageException(METHOD_NOT_ALLOWED, message, APPLICATION_JSON);
     }
   }
 }
