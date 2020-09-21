@@ -803,7 +803,7 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
           NX.I18n.get('FolderInfo_Delete_Title'),
           NX.I18n.format('FolderInfo_Delete_Text', Ext.htmlEncode(model.folderName)),
           function() {
-            NX.direct.coreui_Component.deleteFolder(decodeURIComponent(model.path), model.repositoryName,
+            NX.direct.coreui_Component.deleteFolder(decodeURIComponent(model.path.replace(/\+/g, ' ')), model.repositoryName,
                 function(response) {
                   if (Ext.isObject(response) && response.success) {
                     NX.Messages.success(NX.I18n.format('FolderInfo_Delete_Success'));

@@ -1042,6 +1042,53 @@ public class BrowseNodeEntityAdapterTest
     }
   }
 
+  @Test
+  public void assetWithBackSlash() {
+    String name = "/bad\\path/foo.txt";
+    List<String> path = Splitter.on('/').omitEmptyStrings().splitToList(name);
+
+    try (ODatabaseDocumentTx db = database.getInstance().acquire()) {
+      Asset backSlashAsset = new Asset();
+      backSlashAsset.bucketId(EntityHelper.id(bucket));
+      backSlashAsset.componentId(EntityHelper.id(component));
+      backSlashAsset.attributes(new NestedAttributesMap(P_ATTRIBUTES, new HashMap<>()));
+      backSlashAsset.format(FORMAT_NAME);
+      backSlashAsset.name(name);
+      assetEntityAdapter.addEntity(db, backSlashAsset);
+
+      // create the asset multiple time to exercise the parent node index
+      // exercises the query BrowseNodeEntityAdapter.FIND_BY_PARENT_PATH
+      underTest.createAssetNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(path), backSlashAsset);
+      underTest.createAssetNode(db, REPOSITORY_NAME, FORMAT_NAME, toBrowsePaths(path), backSlashAsset);
+
+      // ensure that the child count is correct, i.e. leaf = false
+      // exercise the query BrowseNodeEntityAdapter.CHILD_COUNT
+      assertThat(underTest.getByPath(db, REPOSITORY_NAME, path.subList(0, 0), 1, "", emptyMap()),
+          contains(
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/")),
+                  hasProperty("name", is("bad\\path")),
+                  hasProperty("leaf", is(false)),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", nullValue()),
+                  hasProperty("path", is("bad\\path/")))
+          ));
+
+      assertThat(underTest.getByPath(db, REPOSITORY_NAME, path.subList(0, 1), 1, "", emptyMap()),
+          contains(
+              allOf(
+                  hasProperty("repositoryName", is(REPOSITORY_NAME)),
+                  hasProperty("parentPath", is("/bad\\path/")),
+                  hasProperty("name", is("foo.txt")),
+                  hasProperty("leaf", is(true)),
+                  hasProperty("componentId", nullValue()),
+                  hasProperty("assetId", is(EntityHelper.id(backSlashAsset))),
+                  hasProperty("path", is("bad\\path/foo.txt")))
+          ));
+    }
+  }
+
   private void createEntities(final ODatabaseDocumentTx db) {
     bucket = new Bucket();
     bucket.setRepositoryName(REPOSITORY_NAME);
