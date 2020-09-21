@@ -14,8 +14,8 @@ package org.sonatype.repository.helm.internal.content.store;
 
 import javax.inject.Named;
 
-import org.sonatype.repository.helm.internal.HelmFormat;
 import org.sonatype.nexus.repository.content.store.FormatStoreModule;
+import org.sonatype.repository.helm.internal.HelmFormat;
 
 /**
  * @since 3.next

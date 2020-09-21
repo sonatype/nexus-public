@@ -29,8 +29,8 @@ import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.transaction.TransactionModule;
 import org.sonatype.nexus.transaction.UnitOfWork;
-import org.sonatype.repository.helm.internal.orient.HelmFacet;
 import org.sonatype.repository.helm.internal.AssetKind;
+import org.sonatype.repository.helm.internal.orient.HelmFacet;
 import org.sonatype.repository.helm.internal.orient.metadata.IndexYamlBuilder;
 
 import com.google.inject.AbstractModule;

@@ -26,7 +26,6 @@ import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.view.Content;
-import org.sonatype.repository.helm.internal.AssetKind;
 import org.sonatype.repository.helm.internal.content.HelmContentFacet;
 import org.sonatype.repository.helm.internal.util.YamlParser;
 

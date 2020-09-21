@@ -29,7 +29,6 @@ import org.sonatype.repository.helm.internal.content.HelmContentFacet;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.repository.helm.internal.AssetKind.HELM_PACKAGE;
 import static org.sonatype.repository.helm.internal.AssetKind.HELM_PROVENANCE;
-import org.sonatype.repository.helm.internal.content.HelmContentFacet;
 
 /**
  * {@link HelmHostedFacet implementation}

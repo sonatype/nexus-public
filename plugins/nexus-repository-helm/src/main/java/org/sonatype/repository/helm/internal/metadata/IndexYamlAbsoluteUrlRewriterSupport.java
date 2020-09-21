@@ -18,12 +18,21 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+
+import javax.inject.Inject;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.repository.view.Content;
+import org.sonatype.repository.helm.internal.util.YamlParser;
 
 import org.apache.http.client.utils.URIBuilder;
 import org.yaml.snakeyaml.DumperOptions;
@@ -35,6 +44,9 @@ import org.yaml.snakeyaml.events.CollectionStartEvent;
 import org.yaml.snakeyaml.events.Event;
 import org.yaml.snakeyaml.events.ScalarEvent;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.emptyList;
+
 /**
  * Removes absolute URL entries from index.yaml
  *
@@ -43,6 +55,13 @@ import org.yaml.snakeyaml.events.ScalarEvent;
 public class IndexYamlAbsoluteUrlRewriterSupport
     extends ComponentSupport
 {
+  private final YamlParser yamlParser;
+
+  @Inject
+  public IndexYamlAbsoluteUrlRewriterSupport(final YamlParser yamlParser) {
+    this.yamlParser = checkNotNull(yamlParser);
+  }
+
   private static final String URLS = "urls";
 
   protected void updateUrls(final InputStream is,
@@ -96,5 +115,27 @@ public class IndexYamlAbsoluteUrlRewriterSupport
       log.error("Invalid URI in index.yaml", ex);
     }
     return scalarEvent;
+  }
+
+  @SuppressWarnings("unchecked")
+  public Optional<String> getFirstUrl(final Content indexYaml, final String chartName, final String chartVersion) {
+    checkNotNull(chartName);
+    checkNotNull(chartVersion);
+
+    try (InputStream inputStream = indexYaml.openInputStream()) {
+      Map<String, Object> index = yamlParser.load(inputStream);
+      Map<String, Object> entries = (Map<String, Object>) index.get("entries");
+      List<Map<String, Object>> charsOfName = (List<Map<String, Object>>) entries.getOrDefault(chartName, emptyList());
+      Optional<Map<String, Object>> chartOfVersion = charsOfName.stream()
+          .filter(chart -> Objects.equals(chartVersion, chart.get("version")))
+          .findFirst();
+
+      return chartOfVersion
+          .flatMap(chart -> ((List<String>) chart.get(URLS)).stream().findFirst());
+    }
+    catch (IOException e) {
+      log.error("Error reading index.yaml");
+      throw new UncheckedIOException(e);
+    }
   }
 }

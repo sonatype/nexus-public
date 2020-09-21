@@ -94,14 +94,6 @@ public class CreateIndexFacetImpl
   @Subscribe
   @Guarded(by = STARTED)
   @AllowConcurrentEvents
-  public void on(RepositoryDeletedEvent deletedEvent) {
-    log.debug("Deleting index.yaml for hosted repository {}", getRepository().getName());
-    deleteIndexYaml();
-  }
-
-  @Subscribe
-  @Guarded(by = STARTED)
-  @AllowConcurrentEvents
   public void on(AssetCreatedEvent created) {
     log.debug(UPDATING_INDEX_LOG, getRepository().getName());
     maybeInvalidateIndex(created);

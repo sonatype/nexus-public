@@ -18,11 +18,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.StorageFacet;
-import org.sonatype.nexus.repository.view.payloads.TempBlob;
+import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.repository.helm.internal.metadata.IndexYamlAbsoluteUrlRewriter;
+import org.sonatype.repository.helm.internal.util.YamlParser;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
@@ -31,13 +32,11 @@ import org.mockito.Mock;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.either;
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class IndexYamlAbsoluteUrlRewriterTest
@@ -58,7 +57,7 @@ public class IndexYamlAbsoluteUrlRewriterTest
   private IndexYamlAbsoluteUrlRewriter underTest;
 
   @Mock
-  private TempBlob tempBlob;
+  private Content tempContent;
 
   @Mock
   Repository repository;
@@ -69,31 +68,28 @@ public class IndexYamlAbsoluteUrlRewriterTest
   @Before
   public void setUp() throws Exception {
     setupRepositoryMock();
-    this.underTest = new IndexYamlAbsoluteUrlRewriter();
+    this.underTest = new IndexYamlAbsoluteUrlRewriter(new YamlParser());
   }
 
   @Test
   public void checkCustomUrls() throws Exception {
     setupIndexMock(INDEX_YAML_WITH_CUSTOM_URL);
-    TempBlob newTempBlob = underTest.removeUrlsFromIndexYamlAndWriteToTempBlob(tempBlob, repository);
-    assertThat(newTempBlob.get(), is(instanceOf(InputStream.class)));
-    checkThatAbsoluteUrlRemoved(newTempBlob.get());
+    Content newTempBlob = underTest.removeUrlsFromIndexYaml(tempContent);
+    checkThatAbsoluteUrlRemoved(newTempBlob.openInputStream());
   }
 
   @Test
   public void removeUrlsFromIndexYaml() throws Exception {
     setupIndexMock(INDEX_YAML);
-    TempBlob newTempBlob = underTest.removeUrlsFromIndexYamlAndWriteToTempBlob(tempBlob, repository);
-    assertThat(newTempBlob.get(), is(instanceOf(InputStream.class)));
-    checkThatAbsoluteUrlRemoved(newTempBlob.get());
+    Content newTempBlob = underTest.removeUrlsFromIndexYaml(tempContent);
+    checkThatAbsoluteUrlRemoved(newTempBlob.openInputStream());
   }
 
   @Test
   public void doNotModifyUrlsWhenAlreadyRelative() throws Exception {
     setupIndexMock(INDEX_YAML_NO_ABSOLUTE_URLS);
-    TempBlob newTempBlob = underTest.removeUrlsFromIndexYamlAndWriteToTempBlob(tempBlob, repository);
-    assertThat(newTempBlob.get(), is(instanceOf(InputStream.class)));
-    checkThatAbsoluteUrlRemoved(newTempBlob.get());
+    Content newTempBlob = underTest.removeUrlsFromIndexYaml(tempContent);
+    checkThatAbsoluteUrlRemoved(newTempBlob.openInputStream());
   }
 
   private void checkThatAbsoluteUrlRemoved(final InputStream is) throws Exception {
@@ -120,8 +116,8 @@ public class IndexYamlAbsoluteUrlRewriterTest
   @Test
   public void ensureNoExclamationMarksInYaml() throws Exception {
     setupIndexMock(INDEX_YAML);
-    TempBlob newTempBlob = underTest.removeUrlsFromIndexYamlAndWriteToTempBlob(tempBlob, repository);
-    BufferedReader reader = new BufferedReader(new InputStreamReader(tempBlob.get()));
+    Content newTempBlob = underTest.removeUrlsFromIndexYaml(tempContent);
+    BufferedReader reader = new BufferedReader(new InputStreamReader(newTempBlob.openInputStream()));
     String line;
     while ((line = reader.readLine()) != null) {
       line = line.trim();
@@ -131,8 +127,9 @@ public class IndexYamlAbsoluteUrlRewriterTest
   }
 
   private void setupIndexMock(final String indexYamlName) throws Exception {
-    when(tempBlob.get()).thenReturn(getClass().getResourceAsStream(indexYamlName));
-    when(tempBlob.getBlob()).thenReturn(mock(Blob.class));
+    when(tempContent.openInputStream()).thenReturn(getClass().getResourceAsStream(indexYamlName));
+    when(tempContent.getAttributes()).thenReturn(new AttributesMap());
+    when(tempContent.getContentType()).thenReturn("text/x-yaml");
   }
 
   private void setupRepositoryMock() {
@@ -140,8 +137,10 @@ public class IndexYamlAbsoluteUrlRewriterTest
     when(storageFacet.createTempBlob(any(InputStream.class), any(Iterable.class))).thenAnswer(args -> {
       InputStream inputStream = (InputStream) args.getArguments()[0];
       byte[] bytes = IOUtils.toByteArray(inputStream);
-      when(tempBlob.get()).thenReturn(new ByteArrayInputStream(bytes));
-      return tempBlob;
+      when(tempContent.openInputStream()).thenReturn(new ByteArrayInputStream(bytes));
+      when(tempContent.getAttributes()).thenReturn(new AttributesMap());
+      when(tempContent.getContentType()).thenReturn("text/x-yaml");
+      return tempContent;
     });
   }
 }

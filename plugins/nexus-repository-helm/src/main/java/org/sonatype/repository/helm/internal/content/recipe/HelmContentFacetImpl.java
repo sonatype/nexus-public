@@ -32,7 +32,7 @@ import org.sonatype.repository.helm.HelmAttributes;
 import org.sonatype.repository.helm.internal.AssetKind;
 import org.sonatype.repository.helm.internal.HelmFormat;
 import org.sonatype.repository.helm.internal.content.HelmContentFacet;
-import org.sonatype.repository.helm.internal.content.metadata.IndexYamlAbsoluteUrlRewriter;
+import org.sonatype.repository.helm.internal.metadata.IndexYamlAbsoluteUrlRewriter;
 import org.sonatype.repository.helm.internal.util.HelmAttributeParser;
 
 import com.google.common.collect.ImmutableList;
@@ -55,26 +55,24 @@ public class HelmContentFacetImpl
 
   private final HelmAttributeParser helmAttributeParser;
 
-  private final IndexYamlAbsoluteUrlRewriter indexYamlAbsoluteUrlRewriter;
+  private final IndexYamlAbsoluteUrlRewriter indexYamlRewriter;
 
   @Inject
   public HelmContentFacetImpl(
       @Named(HelmFormat.NAME) final FormatStoreManager formatStoreManager,
       final HelmAttributeParser helmAttributeParser,
-      final IndexYamlAbsoluteUrlRewriter indexYamlAbsoluteUrlRewriter)
+      final IndexYamlAbsoluteUrlRewriter indexYamlRewriter)
   {
     super(formatStoreManager);
     this.helmAttributeParser = checkNotNull(helmAttributeParser);
-    this.indexYamlAbsoluteUrlRewriter = checkNotNull(indexYamlAbsoluteUrlRewriter);
+    this.indexYamlRewriter = checkNotNull(indexYamlRewriter);
   }
 
   @Override
   protected WritePolicy writePolicy(final Asset asset) {
     WritePolicy writePolicy = super.writePolicy(asset);
-    if (writePolicy == ALLOW_ONCE) {
-      if (!Objects.equals(HELM_PACKAGE.name(), asset.kind())) {
-        writePolicy = WritePolicy.ALLOW;
-      }
+    if (writePolicy == ALLOW_ONCE && !Objects.equals(HELM_PACKAGE.name(), asset.kind())) {
+      writePolicy = WritePolicy.ALLOW;
     }
     return writePolicy;
   }
@@ -92,17 +90,15 @@ public class HelmContentFacetImpl
   @Override
   public Content putIndex(final String path, final Content content, final AssetKind assetKind)
   {
+    // save original metadata and return modified
     try (TempBlob blob = blobs().ingest(content, HASHING)) {
-      try (TempBlob newTempBlob = indexYamlAbsoluteUrlRewriter
-          .removeUrlsFromIndexYamlAndWriteToTempBlob(blob, getRepository())) {
-        return assets()
+        assets()
             .path(path)
             .kind(assetKind.name())
             .getOrCreate()
-            .attach(newTempBlob)
-            .markAsCached(content)
-            .download();
-      }
+            .attach(blob)
+            .markAsCached(content);
+      return indexYamlRewriter.removeUrlsFromIndexYaml(blob, content.getAttributes());
     }
   }
 

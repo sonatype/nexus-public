@@ -13,6 +13,7 @@
 package org.sonatype.repository.helm.internal.orient.proxy;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -22,6 +23,8 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
+import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
@@ -29,19 +32,20 @@ import org.sonatype.nexus.repository.proxy.ProxyFacetSupport;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
-import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalTouchBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalTouchMetadata;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Payload;
+import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.transaction.UnitOfWork;
 import org.sonatype.repository.helm.HelmAttributes;
-import org.sonatype.repository.helm.internal.orient.HelmFacet;
 import org.sonatype.repository.helm.internal.AssetKind;
 import org.sonatype.repository.helm.internal.metadata.IndexYamlAbsoluteUrlRewriter;
+import org.sonatype.repository.helm.internal.orient.HelmFacet;
 import org.sonatype.repository.helm.internal.util.HelmAttributeParser;
 import org.sonatype.repository.helm.internal.util.HelmPathUtils;
 
@@ -61,7 +65,7 @@ public class HelmProxyFacetImpl
 
   private final HelmAttributeParser helmAttributeParser;
 
-  private final IndexYamlAbsoluteUrlRewriter indexYamlAbsoluteUrlRewriter;
+  private final IndexYamlAbsoluteUrlRewriter indexYamlRewriter;
 
   private HelmFacet helmFacet;
 
@@ -74,7 +78,7 @@ public class HelmProxyFacetImpl
   {
     this.helmPathUtils = checkNotNull(helmPathUtils);
     this.helmAttributeParser = checkNotNull(helmAttributeParser);
-    this.indexYamlAbsoluteUrlRewriter = checkNotNull(indexYamlAbsoluteUrlRewriter);
+    this.indexYamlRewriter = checkNotNull(indexYamlAbsoluteUrlRewriter);
   }
 
   @Override
@@ -92,16 +96,17 @@ public class HelmProxyFacetImpl
   @Nullable
   @Override
   protected Content getCachedContent(final Context context) {
+    Content content = getAsset(getAssetPath(context));
     AssetKind assetKind = context.getAttributes().require(AssetKind.class);
-    switch (assetKind) {
-      case HELM_INDEX:
-        return getAsset(INDEX_YAML);
-      case HELM_PACKAGE:
-        TokenMatcher.State matcherState = helmPathUtils.matcherState(context);
-        return getAsset(helmPathUtils.filename(matcherState));
-      default:
-        throw new IllegalStateException("Received an invalid AssetKind of type: " + assetKind.name());
-    }
+    return assetKind == AssetKind.HELM_INDEX ? indexYamlRewriter.removeUrlsFromIndexYaml(content) : content;
+  }
+
+  @Nonnull
+  @Override
+  protected CacheController getCacheController(@Nonnull final Context context)
+  {
+    AssetKind assetKind = context.getAttributes().require(AssetKind.class);
+    return cacheControllerHolder.require(assetKind.getCacheType());
   }
 
   @Override
@@ -109,10 +114,9 @@ public class HelmProxyFacetImpl
     AssetKind assetKind = context.getAttributes().require(AssetKind.class);
     switch(assetKind) {
       case HELM_INDEX:
-        return putMetadata(INDEX_YAML, content, assetKind);
+        return putMetadata(getAssetPath(context), content, assetKind);
       case HELM_PACKAGE:
-        TokenMatcher.State matcherState = helmPathUtils.matcherState(context);
-        return putComponent(content, helmPathUtils.filename(matcherState), assetKind);
+        return putComponent(content, getAssetPath(context), assetKind);
       default:
         throw new IllegalStateException("Received an invalid AssetKind of type: " + assetKind.name());
     }
@@ -121,9 +125,9 @@ public class HelmProxyFacetImpl
   private Content putMetadata(final String path, final Content content, final AssetKind assetKind) throws IOException {
     StorageFacet storageFacet = facet(StorageFacet.class);
     try (TempBlob tempBlob = storageFacet.createTempBlob(content.openInputStream(), HASH_ALGORITHMS)) {
-      try (TempBlob newTempBlob = indexYamlAbsoluteUrlRewriter.removeUrlsFromIndexYamlAndWriteToTempBlob(tempBlob, getRepository()) ) {
-        return saveMetadataAsAsset(path, newTempBlob, content, assetKind);
-      }
+        // save original metadata and return modified
+        saveMetadataAsAsset(path, tempBlob, content, assetKind);
+        return indexYamlRewriter.removeUrlsFromIndexYaml(tempBlob, content.getAttributes());
     }
   }
 
@@ -200,8 +204,67 @@ public class HelmProxyFacetImpl
     tx.saveAsset(asset);
   }
 
+  private String getAssetPath(@Nonnull final Context context) {
+    AssetKind assetKind = context.getAttributes().require(AssetKind.class);
+    switch (assetKind) {
+      case HELM_INDEX:
+        return INDEX_YAML;
+      case HELM_PACKAGE:
+        TokenMatcher.State matcherState = helmPathUtils.matcherState(context);
+        return helmPathUtils.contentFilePath(matcherState, false);
+      default:
+        throw new IllegalStateException("Received an invalid AssetKind of type: " + assetKind.name());
+    }
+  }
+
   @Override
   protected String getUrl(@Nonnull final Context context) {
-    return context.getRequest().getPath().substring(1);
+    AssetKind assetKind = context.getAttributes().require(AssetKind.class);
+    switch (assetKind) {
+      case HELM_INDEX:
+        return INDEX_YAML;
+      case HELM_PACKAGE:
+        TokenMatcher.State matcherState = helmPathUtils.matcherState(context);
+        Optional<Content> indexOpt = Optional.ofNullable(getAsset(INDEX_YAML));
+        if (!indexOpt.isPresent()) {
+          log.info("Try to refetch index.yml file in repository: {}", getRepository().getName());
+          indexOpt = fetchIndexYamlContext(context);
+        }
+        if (!indexOpt.isPresent()) {
+          log.error("index.yml file is absent in repository: {}", getRepository().getName());
+          return null;
+        }
+        String filename = helmPathUtils.filename(matcherState);
+        return helmPathUtils.contentFileUrl(filename, indexOpt.get());
+      default:
+        throw new IllegalStateException("Received an invalid AssetKind of type: " + assetKind.name());
+    }
+  }
+
+  private Optional<Content> fetchIndexYamlContext(@Nonnull final Context context)
+  {
+    Context indexYamlContext = buildContextForRepositoryIndexYaml(context);
+    try {
+      // fetch index.yaml file and return original metadata
+      get(indexYamlContext);
+      return Optional.ofNullable(getAsset(INDEX_YAML));
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  private Context buildContextForRepositoryIndexYaml(final Context contextPackage) {
+    Repository repository = contextPackage.getRepository();
+
+    Request request = new Request.Builder()
+        .action(contextPackage.getRequest().getAction())
+        .path(INDEX_YAML)
+        .build();
+
+    Context indexYamlContext = new Context(repository, request);
+    indexYamlContext.getAttributes().backing().putAll(contextPackage.getAttributes().backing());
+    indexYamlContext.getAttributes().set(AssetKind.class, AssetKind.HELM_INDEX);
+    return indexYamlContext;
   }
 }

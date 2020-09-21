@@ -15,8 +15,6 @@ package org.sonatype.repository.helm.internal.content;
 import java.io.IOException;
 import java.util.Optional;
 
-import javax.annotation.Nullable;
-
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
