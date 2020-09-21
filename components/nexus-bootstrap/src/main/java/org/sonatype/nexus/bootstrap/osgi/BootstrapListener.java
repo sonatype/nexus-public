@@ -240,7 +240,7 @@ public class BootstrapListener
       properties.setProperty("nexus.quartz.jobstore.jdbc", "true");
       if (NEXUS_OSS_EDITION.equals(properties.getProperty(NEXUS_EDITION))) {
         properties.setProperty("nexus-exclude-features",
-            "nexus-cma-feature,nexus-cma-community," + properties.getProperty("nexus-exclude-features", ""));
+            "nexus-cma-feature," + properties.getProperty("nexus-exclude-features", ""));
       }
     }
   }
