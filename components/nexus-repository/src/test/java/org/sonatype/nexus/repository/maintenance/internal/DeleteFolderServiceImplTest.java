@@ -39,7 +39,6 @@ import org.sonatype.nexus.security.BreadActions;
 import org.sonatype.nexus.security.SecurityHelper;
 import org.sonatype.nexus.selector.VariableSource;
 
-import com.google.common.base.Suppliers;
 import org.apache.shiro.authz.UnauthorizedException;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -106,7 +105,7 @@ public class DeleteFolderServiceImplTest
     when(variableResolverAdapterManager.get("maven2")).thenReturn(assetVariableResolver);
     when(assetVariableResolver.fromAsset(any(Asset.class))).thenReturn(variableSource);
     when(repository.facet(StorageFacet.class)).thenReturn(storageFacet);
-    when(storageFacet.txSupplier()).thenReturn(Suppliers.ofInstance(storageTx));
+    when(storageFacet.txSupplier()).thenReturn(() -> storageTx);
     when(securityHelper.isPermitted(new RepositoryViewPermission(repository, BreadActions.DELETE)))
         .thenReturn(new boolean[]{false});
 

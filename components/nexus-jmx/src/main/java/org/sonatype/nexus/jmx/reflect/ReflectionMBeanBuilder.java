@@ -14,13 +14,13 @@ package org.sonatype.nexus.jmx.reflect;
 
 import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.jmx.MBeanBuilder;
 
 import com.google.common.base.Strings;
-import com.google.common.base.Supplier;
 import com.google.common.collect.Maps;
 
 import static com.google.common.base.Preconditions.checkNotNull;

@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.npm.internal;
 
+import java.util.function.Supplier;
+
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.repository.Repository;
@@ -24,7 +26,6 @@ import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.transaction.TransactionModule;
 
-import com.google.common.base.Supplier;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import org.junit.Before;

@@ -28,7 +28,7 @@ import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 
-import com.google.common.base.Supplier;
+import java.util.function.Supplier;
 
 /**
  * @since 3.19

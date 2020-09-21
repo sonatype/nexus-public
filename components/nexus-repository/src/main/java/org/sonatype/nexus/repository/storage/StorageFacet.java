@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.storage;
 
 import java.io.InputStream;
+import java.util.function.Supplier;
 
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
@@ -21,8 +22,6 @@ import org.sonatype.nexus.repository.config.WritePolicy;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.transaction.UnitOfWork;
-
-import com.google.common.base.Supplier;
 
 /**
  * Storage {@link Facet}, providing component and asset storage for a repository.

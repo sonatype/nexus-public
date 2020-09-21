@@ -27,7 +27,7 @@ import org.sonatype.nexus.repository.golang.GolangFormat;
 import org.sonatype.nexus.repository.mime.ContentValidator;
 import org.sonatype.nexus.repository.mime.DefaultContentValidator;
 
-import com.google.common.base.Supplier;
+import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

@@ -59,7 +59,6 @@ import org.sonatype.nexus.selector.VariableSource;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import org.apache.shiro.authz.AuthorizationException;
 import org.junit.Before;
@@ -159,7 +158,7 @@ public class OrientComponentHelperTest
     when(repository.facet(ComponentMaintenance.class)).thenReturn(componentMaintenance);
     when(repository.facet(StorageFacet.class)).thenReturn(storageFacet);
     when(variableResolverAdapterManager.get("testFormat")).thenReturn(assetVariableResolver);
-    when(storageFacet.txSupplier()).thenReturn(Suppliers.ofInstance(storageTx));
+    when(storageFacet.txSupplier()).thenReturn(() -> storageTx);
     when(componentFinders.get(any(String.class))).thenReturn(defaultComponentFinder);
   }
 

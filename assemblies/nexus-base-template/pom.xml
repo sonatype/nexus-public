@@ -107,14 +107,6 @@
 
     <dependency>
       <groupId>org.sonatype.nexus.assemblies</groupId>
-      <artifactId>nexus-community-feature</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-      <scope>runtime</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.assemblies</groupId>
       <artifactId>nexus-cma-feature</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
@@ -255,7 +247,6 @@
                 <feature>nexus-orient</feature>
                 <feature>nexus-datastore-mybatis</feature>
                 <feature>nexus-core-feature</feature>
-                <feature>nexus-community-feature</feature>
                 <feature>nexus-cma-feature</feature>
                 <feature>nexus-cma-community</feature>
                 <feature>nexus-oss-edition</feature>

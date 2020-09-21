@@ -1,0 +1,54 @@
+apiVersion: v1
+entries:
+  acs-engine-autoscaler:
+  - apiVersion: v1
+    appVersion: 2.1.1
+    created: '2019-11-06T16:57:53.298448000Z'
+    deprecated: true
+    description: DEPRECATED Scales worker nodes within agent pools
+    digest: 93f924d4498d588bcdda88c7401e27c6fa0f50ff0601e78885eca13eb683c1e2
+    home: https://github.com/wbuchwalter/Kubernetes-acs-engine-autoscaler
+    icon: https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png
+    name: acs-engine-autoscaler
+    sources:
+    - https://github.com/wbuchwalter/Kubernetes-acs-engine-autoscaler
+    urls:
+    - https://burdenbear.github.io/kube-charts-mirror/acs-engine-autoscaler-2.2.2.tgz
+    version: 2.2.2
+  - apiVersion: v1
+    appVersion: 2.1.1
+    created: '2018-12-11T02:55:17.969867000Z'
+    description: Scales worker nodes within agent pools
+    digest: 3232999ebabc42cd7c5475251b5cd2e0c6bf4363551cff13ebe3a78cee1dfba6
+    home: https://github.com/wbuchwalter/Kubernetes-acs-engine-autoscaler
+    icon: https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png
+    maintainers:
+    - email: ritazh@microsoft.com
+      name: ritazh
+    - email: wibuch@microsoft.com
+      name: wbuchwalter
+    name: acs-engine-autoscaler
+    sources:
+    - https://github.com/wbuchwalter/Kubernetes-acs-engine-autoscaler
+    urls:
+    - https://burdenbear.github.io/kube-charts-mirror/acs-engine-autoscaler-2.2.1.tgz
+    version: 2.2.1
+  - apiVersion: v1
+    appVersion: 2.1.1
+    created: '2018-11-28T23:56:19.641278000Z'
+    description: Scales worker nodes within agent pools
+    digest: 5904caae456eecd1fed0a5d58f4a6f46e1fe97f954c4467e49fc80f91d912a10
+    home: https://github.com/wbuchwalter/Kubernetes-acs-engine-autoscaler
+    icon: https://github.com/kubernetes/kubernetes/blob/master/logo/logo.png
+    maintainers:
+    - email: ritazh@microsoft.com
+      name: ritazh
+    - email: wibuch@microsoft.com
+      name: wbuchwalter
+    name: acs-engine-autoscaler
+    sources:
+    - https://github.com/wbuchwalter/Kubernetes-acs-engine-autoscaler
+    urls:
+    - https://burdenbear.github.io/kube-charts-mirror/acs-engine-autoscaler-2.2.0.tgz
+    version: 2.2.0
+generated: '2019-11-06T16:57:53.297933000Z'

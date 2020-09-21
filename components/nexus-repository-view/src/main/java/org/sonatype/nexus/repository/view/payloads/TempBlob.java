@@ -21,7 +21,7 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 
-import com.google.common.base.Supplier;
+import java.util.function.Supplier;
 import com.google.common.hash.HashCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

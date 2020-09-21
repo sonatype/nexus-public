@@ -31,5 +31,6 @@
     <feature>nexus-restore-p2</feature>
     <feature>nexus-restore-r</feature>
     <feature>nexus-restore-raw</feature>
+    <feature>nexus-restore-helm</feature>
   </feature>
 </features>

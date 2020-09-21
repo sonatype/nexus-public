@@ -108,7 +108,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
         '<a href="http://links.sonatype.com/products/insight/ac/home" target="_blank" rel="noopener" class="x-link">here</a>.</p>',
     AnalyzeApplicationWindow_Loading_Mask: 'Loading',
     AnalyzeApplicationWindow_No_Assets_Error_Title: 'Component has no application assets',
-    AnalyzeApplicationWindow_No_Assets_Error_Message: 'This component has no application assets or you do not have read permission for any of it\'s application assets',
+    AnalyzeApplicationWindow_No_Assets_Error_Message: 'This component has no application assets or you do not have read permission for any of its application assets',
 
     HealthCheckInfo_Most_Popular_Version_Label: 'Most popular version',
     HealthCheckInfo_Age_Label: 'Age',
@@ -230,6 +230,12 @@ Ext.define('NX.coreui.app.PluginStrings', {
     // Browse -> Search -> Go
     SearchGolang_Text: 'Go',
     SearchGolang_Description: 'Search for components in Go repositories',
+
+    // Browse -> Search -> Helm
+    SearchHelm_Text: 'Helm',
+    SearchHelm_Description: 'Search for components in Helm repositories',
+    SearchHelm_Group: 'Helm Repositories',
+    Repository_Facet_HelmFacet_Title: 'Helm Settings',
 
     // Browse -> Search -> npm
     SearchNpm_Text: 'npm',

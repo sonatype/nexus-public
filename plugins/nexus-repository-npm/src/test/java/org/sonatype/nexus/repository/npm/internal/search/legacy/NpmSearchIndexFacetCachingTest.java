@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.npm.internal.search.legacy;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.function.Supplier;
 
 import javax.inject.Inject;
 
@@ -42,7 +43,6 @@ import org.sonatype.nexus.repository.view.payloads.StringPayload;
 import org.sonatype.nexus.transaction.TransactionModule;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
-import com.google.common.base.Supplier;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;

@@ -14,6 +14,7 @@ package org.sonatype.nexus.jmx.internal;
 
 import java.lang.annotation.Annotation;
 import java.util.Hashtable;
+import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -28,7 +29,6 @@ import org.sonatype.nexus.jmx.reflect.ManagedObject;
 import org.sonatype.nexus.jmx.reflect.ReflectionMBeanBuilder;
 
 import com.google.common.base.Strings;
-import com.google.common.base.Supplier;
 import com.google.inject.Key;
 import org.eclipse.sisu.BeanEntry;
 import org.eclipse.sisu.EagerSingleton;

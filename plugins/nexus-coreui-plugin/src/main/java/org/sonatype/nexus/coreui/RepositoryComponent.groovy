@@ -156,7 +156,7 @@ class RepositoryComponent
   @Timed
   @ExceptionMetered
   List<RepositoryReferenceXO> readReferences(final @Nullable StoreLoadParameters parameters) {
-    return filter(parameters).collect { Repository repository ->
+    List<RepositoryReferenceXO> references = filter(parameters).collect { Repository repository ->
       new RepositoryReferenceXO(
           id: repository.name,
           name: repository.name,
@@ -167,6 +167,17 @@ class RepositoryComponent
           url: "${BaseUrlHolder.get()}/repository/${repository.name}/" // trailing slash is important
       )
     }
+    references = filterForAutocomplete(parameters, references)
+    return references
+  }
+
+  List<RepositoryReferenceXO> filterForAutocomplete(final @Nullable StoreLoadParameters parameters,
+                                                    final List<RepositoryReferenceXO> references) {
+    if (StringUtils.isNotEmpty(parameters.getQuery())) {
+      return references.stream().filter({ repo -> repo.getName().startsWith(parameters.getQuery()) }).
+          collect(Collectors.toList())
+    }
+    return references
   }
 
   /**

@@ -27,5 +27,6 @@
     <feature>nexus-repository-raw</feature>
     <feature>nexus-repository-maven</feature>
     <feature>nexus-repository-npm</feature>
+    <feature>nexus-repository-helm</feature>
   </feature>
 </features>

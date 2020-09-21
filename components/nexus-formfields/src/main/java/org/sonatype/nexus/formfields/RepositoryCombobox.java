@@ -187,6 +187,11 @@ public class RepositoryCombobox
     return this;
   }
 
+  @Override
+  public boolean getAllowAutocomplete() {
+    return true;
+  }
+
   /**
    * @since 3.0
    */
