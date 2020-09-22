@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.Format;
 /**
  * Conan repository format.
  *
- * @since 3.28
+ * @since 3.next
  */
 @Named(ConanFormat.NAME)
 @Singleton

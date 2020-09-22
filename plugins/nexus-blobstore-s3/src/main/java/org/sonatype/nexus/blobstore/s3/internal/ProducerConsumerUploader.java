@@ -64,7 +64,7 @@ import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.St
  * Uploads are published to a queue via the calling thread.
  * A pool of tasks consumes the upload requests and returns the {@link PartETag}
  *
- * @since 3.28
+ * @since 3.next
  */
 @Singleton
 @ManagedObject

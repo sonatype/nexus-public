@@ -41,7 +41,7 @@ import static org.apache.commons.compress.compressors.CompressorStreamFactory.GZ
 
 /**
  * Support for merging R PACKAGES.gz together.
- * @since 3.28
+ * @since 3.next
  */
 @Named
 @Singleton

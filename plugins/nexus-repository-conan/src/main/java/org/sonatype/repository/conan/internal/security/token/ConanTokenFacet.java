@@ -18,7 +18,7 @@ import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Response;
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 @Exposed
 public interface ConanTokenFacet

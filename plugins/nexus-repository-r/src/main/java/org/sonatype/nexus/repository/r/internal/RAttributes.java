@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.r.internal;
 /**
  * R format specific attributes. This is far from an exhaustive list but contains the most important ones.
  *
- * @since 3.28
+ * @since 3.next
  */
 public final class RAttributes
 {

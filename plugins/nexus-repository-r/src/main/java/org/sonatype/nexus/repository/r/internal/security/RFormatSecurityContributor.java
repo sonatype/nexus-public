@@ -23,7 +23,7 @@ import org.sonatype.nexus.repository.security.RepositoryFormatSecurityContributo
 /**
  * R format security resource.
  *
- * @since 3.28
+ * @since 3.next
  */
 @Named
 @Singleton

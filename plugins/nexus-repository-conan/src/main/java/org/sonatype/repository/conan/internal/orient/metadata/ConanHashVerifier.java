@@ -27,7 +27,7 @@ import static org.sonatype.repository.conan.internal.orient.utils.ConanFacetUtil
 /**
  * Responsible for looking up the hashes to verify against
  *
- * @since 3.28
+ * @since 3.next
  */
 public class ConanHashVerifier
     extends ComponentSupport

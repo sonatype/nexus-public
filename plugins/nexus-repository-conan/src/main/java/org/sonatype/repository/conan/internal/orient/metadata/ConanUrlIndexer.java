@@ -42,7 +42,7 @@ import static org.sonatype.repository.conan.internal.orient.proxy.v1.OrientConan
  * <p>
  * This class removes the absolute address so as to redirect back to this repository
  *
- * @since 3.28
+ * @since 3.next
  */
 @Singleton
 @Named

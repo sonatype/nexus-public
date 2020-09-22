@@ -63,7 +63,7 @@ import static org.sonatype.nexus.repository.npm.internal.NpmPaths.*;
 /**
  * npm hosted repository recipe.
  *
- * @since 3.28
+ * @since 3.next
  */
 @Named(NpmHostedRecipe.NAME)
 @Singleton

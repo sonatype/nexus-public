@@ -171,18 +171,16 @@ class TaskComponent
       validateScriptUpdate(task, taskXO)
     }
     Schedule schedule = asSchedule(taskXO)
-    TaskConfiguration config = scheduler.createTaskConfigurationInstance(taskXO.typeId)
-    config.apply(task.configuration)
-    config.enabled = taskXO.enabled
-    config.name = taskXO.name
+    task.configuration.enabled = taskXO.enabled
+    task.configuration.name = taskXO.name
     taskXO.properties.each { key, value ->
-      config.setString(key, value)
+      task.configuration.setString(key, value)
     }
-    config.setAlertEmail(taskXO.alertEmail)
-    config.setNotificationCondition(taskXO.notificationCondition)
-    config.setName(taskXO.name)
+    task.configuration.setAlertEmail(taskXO.alertEmail)
+    task.configuration.setNotificationCondition(taskXO.notificationCondition)
+    task.configuration.setName(taskXO.name)
 
-    task = scheduleTask { scheduler.scheduleTask(config, schedule) }
+    task = scheduleTask { scheduler.scheduleTask(task.configuration, schedule) }
 
     return asTaskXO(task)
   }

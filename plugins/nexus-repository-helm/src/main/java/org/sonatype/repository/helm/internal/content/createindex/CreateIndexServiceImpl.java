@@ -49,7 +49,7 @@ import static org.sonatype.repository.helm.internal.database.HelmProperties.VERS
 /**
  * Build index.yaml file for Helm Hosted
  *
- * @since 3.28
+ * @since 3.next
  */
 @Named
 @Singleton

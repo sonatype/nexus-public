@@ -52,7 +52,7 @@ import static org.sonatype.nexus.repository.npm.internal.NpmPaths.tokenMatcher;
 import static org.sonatype.nexus.repository.npm.internal.NpmPaths.userMatcher;
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 abstract class NpmRecipeSupport
     extends RecipeSupport

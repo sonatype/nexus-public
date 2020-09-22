@@ -27,7 +27,7 @@ import static org.sonatype.nexus.repository.http.HttpStatus.UNAUTHORIZED;
 import static org.sonatype.nexus.repository.view.ContentTypes.TEXT_PLAIN;
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 @Named
 public class ConanTokenFacetImpl

@@ -24,7 +24,7 @@ import org.sonatype.repository.helm.HelmAttributes;
 import org.sonatype.repository.helm.internal.database.HelmProperties;
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 @Named
 @Singleton

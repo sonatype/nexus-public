@@ -26,7 +26,7 @@ import org.apache.shiro.subject.Subject;
 import static org.sonatype.nexus.security.anonymous.AnonymousHelper.isAnonymous;
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 @Named
 @Singleton

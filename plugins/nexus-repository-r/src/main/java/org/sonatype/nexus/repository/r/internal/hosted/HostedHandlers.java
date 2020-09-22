@@ -28,7 +28,7 @@ import static org.sonatype.nexus.repository.r.internal.util.RPathUtils.getBasePa
 
 /**
  * R hosted handlers.
- * @since 3.28
+ * @since 3.next
  */
 @Named
 @Singleton

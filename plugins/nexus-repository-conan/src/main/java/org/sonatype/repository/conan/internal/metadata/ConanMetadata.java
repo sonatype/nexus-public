@@ -13,7 +13,7 @@
 package org.sonatype.repository.conan.internal.metadata;
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 public class ConanMetadata
 {

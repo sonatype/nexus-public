@@ -15,7 +15,7 @@
 /**
  * Repository "Settings" form for a R Hosted repository.
  *
- * @since 3.28
+ * @since 3.next
  */
 Ext.define('NX.coreui.view.repository.recipe.RHosted', {
   extend: 'NX.coreui.view.repository.RepositorySettingsForm',

@@ -28,7 +28,7 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REGEX_KEY;
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 @Named(ConanFormat.NAME)
 @Singleton

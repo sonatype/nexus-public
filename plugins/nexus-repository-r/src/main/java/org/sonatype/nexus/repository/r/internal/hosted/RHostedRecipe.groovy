@@ -38,7 +38,7 @@ import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher
 /**
  * R proxy repository recipe.
  *
- * @since 3.28
+ * @since 3.next
  */
 @Named(RHostedRecipe.NAME)
 @Singleton

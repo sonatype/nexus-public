@@ -23,7 +23,7 @@ import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_K
 import static org.sonatype.repository.helm.internal.AssetKind.HELM_PACKAGE;
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 public class HelmHostedWritePolicySelector
     implements WritePolicySelector

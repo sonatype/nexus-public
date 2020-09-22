@@ -24,7 +24,7 @@ import org.sonatype.repository.conan.internal.orient.common.UserController;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 @Named
 @Singleton

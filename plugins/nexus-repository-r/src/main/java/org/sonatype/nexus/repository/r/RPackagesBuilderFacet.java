@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.Facet;
  * <p>
  * TODO: Update this to support other PACKAGES files (not just PACKAGES.gz) when this work is done across the project.
  *
- * @since 3.28
+ * @since 3.next
  */
 @Facet.Exposed
 public interface RPackagesBuilderFacet

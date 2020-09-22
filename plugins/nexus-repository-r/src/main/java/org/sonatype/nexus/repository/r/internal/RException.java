@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.r.internal;
 /**
  * RException now with more R Exceptions
  *
- * @since 3.28
+ * @since 3.next
  */
 public class RException
     extends RuntimeException

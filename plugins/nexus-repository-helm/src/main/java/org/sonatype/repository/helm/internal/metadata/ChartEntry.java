@@ -20,7 +20,7 @@ import org.joda.time.DateTime;
 /**
  * Represents a chart entry in index.yaml
  *
- * @since 3.28
+ * @since 3.next
  */
 public class ChartEntry
 {

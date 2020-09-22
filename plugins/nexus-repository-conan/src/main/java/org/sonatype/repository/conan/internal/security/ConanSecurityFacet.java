@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 /**
  * Conan format security facet.
  *
- * @since 3.28
+ * @since 3.next
  */
 @Named
 public class ConanSecurityFacet

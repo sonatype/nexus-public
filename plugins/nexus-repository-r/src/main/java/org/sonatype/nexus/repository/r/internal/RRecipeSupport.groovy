@@ -47,7 +47,7 @@ import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher
 /**
  * Support for R recipes.
  *
- * @since 3.28
+ * @since 3.next
  */
 abstract class RRecipeSupport
     extends RecipeSupport

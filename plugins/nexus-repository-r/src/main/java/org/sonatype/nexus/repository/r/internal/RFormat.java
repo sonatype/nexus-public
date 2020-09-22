@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.Format;
 /**
  * R repository format.
  *
- * @since 3.28
+ * @since 3.next
  */
 @Named(RFormat.NAME)
 @Singleton

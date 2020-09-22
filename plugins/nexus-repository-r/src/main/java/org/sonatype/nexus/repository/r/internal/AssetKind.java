@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.cache.CacheControllerHolder.CacheType;
 /**
  * Asset kinds for R.
  *
- * @since 3.28
+ * @since 3.next
  */
 public enum AssetKind
 {

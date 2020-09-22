@@ -27,7 +27,7 @@ import io.swagger.annotations.ApiParam;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 public class AbstractProxyRepositoriesApiResource<T extends ProxyRepositoryApiRequest>
     extends AbstractRepositoriesApiResource<T>

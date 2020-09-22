@@ -60,7 +60,7 @@ import static org.sonatype.repository.helm.internal.AssetKind.HELM_INDEX
 import static org.sonatype.repository.helm.internal.AssetKind.HELM_PACKAGE
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 @Named(HelmProxyRecipe.NAME)
 @Singleton

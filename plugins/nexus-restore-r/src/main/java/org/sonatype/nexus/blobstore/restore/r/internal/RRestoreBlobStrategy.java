@@ -43,7 +43,7 @@ import static org.eclipse.aether.util.StringUtils.isEmpty;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 @Named(RFormat.NAME)
 @Singleton

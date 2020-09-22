@@ -15,7 +15,7 @@
 /**
  * Go repository search contribution.
  *
- * @since 3.28
+ * @since 3.next
  */
 Ext.define('NX.coreui.controller.SearchGolang', {
   extend: 'NX.app.Controller',

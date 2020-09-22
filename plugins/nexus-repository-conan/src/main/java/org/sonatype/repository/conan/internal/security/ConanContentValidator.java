@@ -32,7 +32,7 @@ import org.sonatype.repository.conan.internal.orient.utils.ConanFacetUtils;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 @Named(ConanFormat.NAME)
 @Singleton

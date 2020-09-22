@@ -51,7 +51,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Utility methods for getting attributes from yaml files, writing to yaml files
  *
- * @since 3.28
+ * @since 3.next
  */
 @Named
 @Singleton

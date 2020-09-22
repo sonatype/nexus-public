@@ -25,7 +25,7 @@ import org.sonatype.repository.conan.internal.ConanFormat;
 import com.google.common.collect.ImmutableList;
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 @Named(ConanFormat.NAME)
 @Singleton

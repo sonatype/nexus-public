@@ -43,7 +43,7 @@ import static org.sonatype.nexus.repository.r.internal.util.RPathUtils.getBasePa
  * ensure that we do not have race conditions when processing and rebuilding metadata, and also imposes a waiting period
  * to batch metadata updates.
  *
- * @since 3.28
+ * @since 3.next
  */
 @Named
 public class RPackagesBuilderFacetImpl

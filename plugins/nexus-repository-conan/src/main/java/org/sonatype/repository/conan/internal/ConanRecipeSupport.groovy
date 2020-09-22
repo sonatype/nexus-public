@@ -40,7 +40,7 @@ import org.sonatype.repository.conan.internal.security.ConanSecurityFacet
 /**
  * Support for Conan recipes.
  *
- * @since 3.28
+ * @since 3.next
  */
 abstract class ConanRecipeSupport
     extends RecipeSupport

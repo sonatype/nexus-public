@@ -29,7 +29,7 @@ import static org.sonatype.repository.conan.internal.AssetKind.DIGEST;
 import static org.sonatype.repository.conan.internal.AssetKind.DOWNLOAD_URL;
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 @Named
 @Singleton

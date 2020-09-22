@@ -31,7 +31,7 @@ import com.google.common.collect.ImmutableList;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 @Singleton
 @Named(ConanFormat.NAME)

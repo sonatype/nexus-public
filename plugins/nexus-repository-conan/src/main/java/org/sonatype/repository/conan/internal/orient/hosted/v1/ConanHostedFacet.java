@@ -68,7 +68,7 @@ import static org.sonatype.repository.conan.internal.orient.utils.ConanFacetUtil
 import static org.sonatype.repository.conan.internal.orient.utils.ConanFacetUtils.findComponent;
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 @Exposed
 @Named

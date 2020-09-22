@@ -27,7 +27,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 /**
  * A simple test client for Helm repositories.
  *
- * @since 3.28
+ * @since 3.next
  */
 public class HelmClient
     extends FormatClientSupport

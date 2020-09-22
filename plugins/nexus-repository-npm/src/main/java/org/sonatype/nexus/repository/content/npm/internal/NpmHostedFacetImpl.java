@@ -56,7 +56,7 @@ import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.META_R
 import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.selectVersionByTarballName;
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 @Named
 public class NpmHostedFacetImpl

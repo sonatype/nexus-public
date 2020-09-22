@@ -49,7 +49,7 @@ import static org.sonatype.nexus.repository.content.npm.NpmContentFacet.metadata
 import static org.sonatype.nexus.repository.content.npm.NpmContentFacet.tarballPath;
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 @Named(NpmFormat.NAME)
 public class NpmContentFacetImpl

@@ -50,7 +50,7 @@ import static org.sonatype.nexus.repository.storage.Query.builder;
 /**
  * Shared code between R facets.
  *
- * @since 3.28
+ * @since 3.next
  */
 public final class RFacetUtils
 {

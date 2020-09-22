@@ -28,7 +28,7 @@ import org.sonatype.repository.helm.internal.util.YamlParser;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 @Named
 public class IndexYamlBuilder

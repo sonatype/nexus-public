@@ -15,7 +15,7 @@
 /**
  * Repository "Settings" form for a Helm Proxy repository
  *
- * @since 3.28
+ * @since 3.next
  */
 Ext.define('NX.coreui.view.repository.recipe.HelmProxy', {
     extend: 'NX.coreui.view.repository.RepositorySettingsForm',

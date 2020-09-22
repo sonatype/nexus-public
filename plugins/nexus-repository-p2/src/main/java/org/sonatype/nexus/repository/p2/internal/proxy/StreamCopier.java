@@ -32,7 +32,7 @@ public interface StreamCopier
 
   /**
    *
-   * @since 3.28
+   * @since 3.next
    */
   @FunctionalInterface
   public interface StreamTransformer

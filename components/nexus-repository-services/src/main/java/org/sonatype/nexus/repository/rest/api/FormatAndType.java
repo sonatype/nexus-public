@@ -26,7 +26,7 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 /**
  * Extracts the format and type from the {@link UriInfo} path for use in resource handlers
  *
- * @since 3.28
+ * @since 3.next
  */
 public class FormatAndType
 {

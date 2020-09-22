@@ -18,7 +18,7 @@ import org.sonatype.nexus.repository.Facet.Exposed;
 /**
  * Facet interface for rebuilding Helm index.yaml files
  *
- * @since 3.28
+ * @since 3.next
  */
 @Exposed
 public interface CreateIndexFacet

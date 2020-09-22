@@ -49,7 +49,7 @@ import static org.sonatype.nexus.repository.r.internal.util.RPathUtils.getBasePa
 
 /**
  * {@link RHostedFacet} implementation.
- * @since 3.28
+ * @since 3.next
  */
 @Named
 public class RHostedFacetImpl

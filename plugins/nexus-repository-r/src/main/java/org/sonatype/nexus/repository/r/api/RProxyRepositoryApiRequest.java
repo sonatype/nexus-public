@@ -25,7 +25,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 @JsonIgnoreProperties({"format", "type"})
 public class RProxyRepositoryApiRequest

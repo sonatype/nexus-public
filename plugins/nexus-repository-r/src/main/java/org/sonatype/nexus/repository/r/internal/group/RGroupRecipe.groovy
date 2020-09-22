@@ -35,7 +35,7 @@ import org.sonatype.nexus.repository.view.ViewFacet
 
 /**
  * R group repository recipe.
- * @since 3.28
+ * @since 3.next
  */
 @Named(RGroupRecipe.NAME)
 @Singleton

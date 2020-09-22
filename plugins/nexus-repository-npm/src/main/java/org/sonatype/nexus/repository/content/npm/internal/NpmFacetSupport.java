@@ -62,7 +62,7 @@ import static org.sonatype.nexus.repository.view.ContentTypes.APPLICATION_JSON;
 import static org.sonatype.nexus.repository.view.Status.success;
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 public abstract class NpmFacetSupport
     extends FacetSupport

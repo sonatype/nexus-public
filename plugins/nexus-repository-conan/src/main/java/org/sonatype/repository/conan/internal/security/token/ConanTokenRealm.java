@@ -23,7 +23,7 @@ import org.sonatype.nexus.security.token.BearerTokenRealm;
 import org.eclipse.sisu.Description;
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 @Named
 @Singleton

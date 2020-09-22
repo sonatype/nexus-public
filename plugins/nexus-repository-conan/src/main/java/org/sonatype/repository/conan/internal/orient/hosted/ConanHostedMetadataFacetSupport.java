@@ -43,7 +43,7 @@ import static org.sonatype.repository.conan.internal.hosted.ConanHostedHelper.MA
 import static java.util.stream.Collectors.toMap;
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 public class ConanHostedMetadataFacetSupport
     extends FacetSupport

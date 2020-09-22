@@ -31,7 +31,7 @@ import org.sonatype.nexus.repository.storage.Component;
 import com.google.common.base.Splitter;
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 @Singleton
 @Named(P2Format.NAME)

@@ -28,7 +28,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * R places components at the same level as their assets.
  *
- * @since 3.28
+ * @since 3.next
  */
 @Singleton
 @Named(RFormat.NAME)

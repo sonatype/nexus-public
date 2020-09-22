@@ -12,7 +12,7 @@
  */
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 Ext.define('NX.coreui.controller.SearchR', {
   extend: 'NX.app.Controller',

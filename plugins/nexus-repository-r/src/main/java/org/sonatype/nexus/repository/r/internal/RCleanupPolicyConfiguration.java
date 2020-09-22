@@ -29,7 +29,7 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
 /**
  * Defines which cleanup policy fields to display for R.
  *
- * @since 3.28
+ * @since 3.next
  */
 @Named(RFormat.NAME)
 @Singleton

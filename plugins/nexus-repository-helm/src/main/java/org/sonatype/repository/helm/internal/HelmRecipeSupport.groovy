@@ -53,7 +53,7 @@ import static org.sonatype.repository.helm.internal.AssetKind.HELM_PACKAGE
 /**
  * Support for Helm recipes.
  *
- * @since 3.28
+ * @since 3.next
  */
 abstract class HelmRecipeSupport
     extends RecipeSupport

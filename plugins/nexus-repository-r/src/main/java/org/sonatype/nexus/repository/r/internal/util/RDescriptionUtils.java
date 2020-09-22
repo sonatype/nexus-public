@@ -38,7 +38,7 @@ import static org.sonatype.nexus.repository.r.internal.util.RMetadataUtils.parse
  *
  * @see <a href="https://cran.r-project.org/doc/manuals/r-release/R-exts.html#The-DESCRIPTION-file">DESCRIPTION</a>
  *
- * @since 3.28
+ * @since 3.next
  */
 public final class RDescriptionUtils
 {

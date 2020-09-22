@@ -30,7 +30,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Utility methods for working with Helm routes and paths.
  *
- * @since 3.28
+ * @since 3.next
  */
 @Named
 @Singleton

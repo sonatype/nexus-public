@@ -41,7 +41,7 @@ import org.xml.sax.SAXException;
 import static javax.xml.xpath.XPathConstants.NODE;
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 @Named
 @Singleton

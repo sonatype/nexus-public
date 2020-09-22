@@ -46,7 +46,7 @@ import static org.sonatype.nexus.repository.r.internal.util.RPathUtils.buildPath
 import static org.sonatype.nexus.repository.r.internal.util.RPathUtils.removeInitialSlashFromPath;
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 @Singleton
 @Named(RFormat.NAME)

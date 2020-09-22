@@ -21,7 +21,7 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.repository.helm.internal.database.HelmProperties;
 
 /**
- * @since 3.28
+ * @since 3.next
  */
 public class HelmAttributes
 {

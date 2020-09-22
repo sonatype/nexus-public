@@ -33,7 +33,7 @@ import static org.sonatype.repository.helm.internal.AssetKind.HELM_PROVENANCE;
 /**
  * {@link HelmHostedFacet implementation}
  *
- * @since 3.28
+ * @since 3.next
  */
 @Named
 public class HelmHostedFacetImpl

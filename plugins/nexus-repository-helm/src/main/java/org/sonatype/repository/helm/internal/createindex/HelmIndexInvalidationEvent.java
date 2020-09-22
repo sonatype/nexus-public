@@ -17,7 +17,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Event class for use when invalidating Helm index.yaml file
  *
- * @since 3.28
+ * @since 3.next
  */
 public class HelmIndexInvalidationEvent
 {

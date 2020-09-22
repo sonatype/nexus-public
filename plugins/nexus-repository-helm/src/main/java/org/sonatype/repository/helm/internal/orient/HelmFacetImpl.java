@@ -52,7 +52,7 @@ import static org.sonatype.repository.helm.internal.HelmFormat.HASH_ALGORITHMS;
 /**
  * {@link HelmFacet} implementation.
  *
- * @since 3.28
+ * @since 3.next
  */
 @Named
 public class HelmFacetImpl

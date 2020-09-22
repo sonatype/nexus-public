@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.npm.internal.NpmFormat;
 /**
  * Configures the content store bindings for the npm format.
  *
- * @since 3.28
+ * @since 3.next
  */
 @Named(NpmFormat.NAME)
 public class NpmStoreModule
