@@ -53,8 +53,9 @@ public class MergingGroupHandler
       or(new HasFacet(ProxyFacet.class), new HasFacet(GroupFacet.class));
 
   @Override
-  protected Response doGet(@Nonnull final Context context,
-                           @Nonnull final DispatchedRepositories dispatched) throws Exception
+  protected Response doGet(
+      @Nonnull final Context context,
+      @Nonnull final DispatchedRepositories dispatched) throws Exception
   {
     final MavenPath mavenPath = context.getAttributes().require(MavenPath.class);
     final MavenGroupFacet groupFacet = context.getRepository().facet(MavenGroupFacet.class);
@@ -63,6 +64,17 @@ public class MergingGroupHandler
     final List<Repository> members = groupFacet.members();
 
     Map<Repository, Response> passThroughResponses = ImmutableMap.of();
+
+    if (mavenPath.isSubordinate()) {
+      try {
+        MavenPath parentPath = mavenPath.subordinateOf();
+        context.getAttributes().set(MavenPath.class, parentPath);
+        doGet(context, new DispatchedRepositories());
+      }
+      finally {
+        context.getAttributes().set(MavenPath.class, mavenPath);
+      }
+    }
 
     if (!mavenPath.isHash()) {
       // pass request through to proxies/nested-groups before checking our group cache
