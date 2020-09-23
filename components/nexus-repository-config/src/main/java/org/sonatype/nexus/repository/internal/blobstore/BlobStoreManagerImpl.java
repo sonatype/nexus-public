@@ -412,11 +412,11 @@ public class BlobStoreManagerImpl
     destBlobStore.setBlobAttributes(blobId, srcBlobAttributes);
 
     ensureDeletedStateTransferred(blobId, srcBlobStore, destBlobStore, isSrcDelted);
-    log.info("Created blobId {} in blob store '{}'", blobId, destBlobStore.getBlobStoreConfiguration().getName());
+    log.debug("Created blobId {} in blob store '{}'", blobId, destBlobStore.getBlobStoreConfiguration().getName());
 
     try {
       srcBlobStore.deleteHard(blobId);
-      log.info("Removed blobId {} from blob store '{}'", blobId, srcBlobStore.getBlobStoreConfiguration().getName());
+      log.debug("Removed blobId {} from blob store '{}'", blobId, srcBlobStore.getBlobStoreConfiguration().getName());
     }
     catch (BlobStoreException e) {
       log.warn("Failed to remove blobId {} from blob store '{}'", blobId, srcBlobStore.getBlobStoreConfiguration().getName(), e);
