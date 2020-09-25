@@ -17,8 +17,9 @@ import java.util.Map;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.cleanup.config.CleanupPolicyConfiguration;
 import org.sonatype.nexus.cleanup.config.DefaultCleanupPolicyConfiguration;
+import org.sonatype.nexus.cleanup.internal.orient.search.elasticsearch.OrientCleanupComponentBrowse;
+import org.sonatype.nexus.cleanup.internal.orient.service.OrientCleanupPreviewHelperImpl;
 import org.sonatype.nexus.cleanup.internal.search.elasticsearch.CriteriaAppender;
-import org.sonatype.nexus.cleanup.internal.service.CleanupPreviewHelperImpl;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyCriteria;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyPreviewXO;
@@ -51,7 +52,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_BLOB_UPDATED_KEY;
 
-public class CleanupPreviewComponentTest
+public class CleanupPreviewComponentWithOrientTest
     extends TestSupport
 {
   private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -63,7 +64,7 @@ public class CleanupPreviewComponentTest
   private CleanupPolicy cleanupPolicy;
 
   @Mock
-  private CleanupComponentBrowse cleanupComponentBrowse;
+  private OrientCleanupComponentBrowse cleanupComponentBrowse;
 
   @Mock
   private RepositoryManager repositoryManager;
@@ -127,7 +128,7 @@ public class CleanupPreviewComponentTest
     when(cleanupPolicyStorage.newCleanupPolicy()).thenReturn(cleanupPolicy);
 
     underTest = new CleanupPreviewComponent(
-        () -> new CleanupPreviewHelperImpl(cleanupPolicyStorage, cleanupComponentBrowse), repositoryManager);
+        () -> new OrientCleanupPreviewHelperImpl(cleanupPolicyStorage, cleanupComponentBrowse), repositoryManager);
 
     when(configuration.getConfiguration()).thenReturn(ImmutableMap.of(LAST_BLOB_UPDATED_KEY, true));
   }

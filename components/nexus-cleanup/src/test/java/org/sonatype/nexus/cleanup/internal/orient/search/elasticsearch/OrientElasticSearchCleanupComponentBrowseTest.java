@@ -10,12 +10,16 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.cleanup.internal.search.elasticsearch;
+package org.sonatype.nexus.cleanup.internal.orient.search.elasticsearch;
 
 import java.util.List;
 import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
+import org.sonatype.nexus.cleanup.internal.search.elasticsearch.LastBlobUpdatedCriteriaAppender;
+import org.sonatype.nexus.cleanup.internal.search.elasticsearch.LastDownloadedCriteriaAppender;
+import org.sonatype.nexus.cleanup.internal.search.elasticsearch.PrereleaseCriteriaAppender;
+import org.sonatype.nexus.cleanup.internal.search.elasticsearch.RegexCriteriaAppender;
 import org.sonatype.nexus.cleanup.internal.storage.orient.OrientCleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
@@ -67,7 +71,7 @@ import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProdu
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.REGEX_KEY;
 import static org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder.repositoryQuery;
 
-public class ElasticSearchCleanupComponentBrowseTest
+public class OrientElasticSearchCleanupComponentBrowseTest
     extends TestSupport
 {
   private static final String REPO_NAME = "repoName";
@@ -99,11 +103,11 @@ public class ElasticSearchCleanupComponentBrowseTest
   @Mock
   private Timer timer;
 
-  private ElasticSearchCleanupComponentBrowse underTest;
+  private OrientElasticSearchCleanupComponentBrowse underTest;
 
   @Before
   public void setup() throws Exception {
-    underTest = new ElasticSearchCleanupComponentBrowse(ImmutableMap.of(
+    underTest = new OrientElasticSearchCleanupComponentBrowse(ImmutableMap.of(
         LAST_DOWNLOADED_KEY, new LastDownloadedCriteriaAppender(),
         LAST_BLOB_UPDATED_KEY, new LastBlobUpdatedCriteriaAppender(),
         IS_PRERELEASE_KEY, new PrereleaseCriteriaAppender(),

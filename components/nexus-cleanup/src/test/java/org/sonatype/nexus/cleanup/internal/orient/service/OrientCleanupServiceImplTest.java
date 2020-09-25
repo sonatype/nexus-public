@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.cleanup.internal.service;
+package org.sonatype.nexus.cleanup.internal.orient.service;
 
 import java.util.List;
 import java.util.Map;
@@ -18,7 +18,7 @@ import java.util.function.BooleanSupplier;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.cleanup.internal.method.CleanupMethod;
-import org.sonatype.nexus.cleanup.preview.CleanupComponentBrowse;
+import org.sonatype.nexus.cleanup.internal.orient.search.elasticsearch.OrientCleanupComponentBrowse;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
 import org.sonatype.nexus.common.entity.EntityId;
@@ -53,7 +53,7 @@ import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_BLOB_UPDATED_KEY;
 import static org.sonatype.nexus.repository.search.DefaultComponentMetadataProducer.LAST_DOWNLOADED_KEY;
 
-public class CleanupServiceImplTest
+public class OrientCleanupServiceImplTest
     extends TestSupport
 {
   private static final String POLICY_1_NAME = "policy1";
@@ -69,7 +69,7 @@ public class CleanupServiceImplTest
   private Repository repository1, repository2, repository3;
 
   @Mock
-  private CleanupComponentBrowse browseService;
+  private OrientCleanupComponentBrowse browseService;
 
   @Mock
   private CleanupPolicyStorage cleanupPolicyStorage;
@@ -98,11 +98,11 @@ public class CleanupServiceImplTest
   @Mock
   private DeletionProgress deletionProgress;
 
-  private CleanupServiceImpl underTest;
+  private OrientCleanupServiceImpl underTest;
 
   @Before
   public void setup() throws Exception {
-    underTest = new CleanupServiceImpl(repositoryManager, browseService, cleanupPolicyStorage, cleanupMethod,
+    underTest = new OrientCleanupServiceImpl(repositoryManager, browseService, cleanupPolicyStorage, cleanupMethod,
         new GroupType(), RETRY_LIMIT);
 
     setupRepository(repository1, POLICY_1_NAME);

@@ -12,10 +12,13 @@
  */
 package org.sonatype.nexus.testsuite.helpers;
 
+import java.io.InputStream;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import javax.annotation.Priority;
 import javax.inject.Inject;
@@ -34,9 +37,11 @@ import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
 import org.sonatype.nexus.repository.storage.ComponentMaintenance;
+import org.sonatype.nexus.repository.storage.Query;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 
+import com.google.common.collect.ImmutableList;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -142,6 +147,13 @@ public class OrientComponentAssetTestHelper
     }
   }
 
+  private List<Asset> findAssets(final Repository repository) {
+    try (StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get()) {
+      tx.begin();
+      return newArrayList(tx.browseAssets(tx.findBucket(repository)));
+    }
+  }
+
   private static Asset findAssetByNameNotNull(final Repository repository, final String name) {
     return findAssetByName(repository, name).orElseThrow(() -> new AssetNotFoundException(repository, name));
   }
@@ -190,6 +202,14 @@ public class OrientComponentAssetTestHelper
     else {
       return findComponent(repository, namespace, name, version).isPresent();
     }
+  }
+
+  @Override
+  public boolean componentExistsWithAssetPathMatching(final Repository repository, final Predicate<String> pathMatcher) {
+    return findAssets(repository).stream()
+      .filter(asset -> Objects.nonNull(asset.componentId()))
+      .map(Asset::name)
+      .anyMatch(pathMatcher);
   }
 
   private Optional<Component> findSnapshotComponent(
@@ -279,5 +299,53 @@ public class OrientComponentAssetTestHelper
   @Override
   public String adjustedPath(final String path) {
     return stripStart(path, "/");
+  }
+
+  @Override
+  public void setLastDownloadedTime(final Repository repository, final int minusSeconds) {
+    updateAssets(repository, asset -> asset.lastDownloaded(org.joda.time.DateTime.now().minusSeconds(minusSeconds)));
+  }
+
+  @Override
+  public void setLastDownloadedTime(final Repository repository, final int minusSeconds, final Predicate<String> pathMatcher) {
+    updateAssets(repository, asset -> {
+      if (pathMatcher.test(asset.name())) {
+        asset.lastDownloaded(org.joda.time.DateTime.now().minusSeconds(minusSeconds));
+      }
+    });
+  }
+
+  protected void updateAssets(final Repository repository, final Consumer<Asset> updater) {
+    try (StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get()) {
+      tx.begin();
+
+      Iterable<Asset> assets = tx.browseAssets(tx.findBucket(repository));
+
+      for (Asset asset : assets) {
+        updater.accept(asset);
+        tx.saveAsset(asset);
+      }
+
+      tx.commit();
+    }
+  }
+
+  @Override
+  public int countAssets(final Repository repository) {
+    try (StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get()) {
+      tx.begin();
+
+      return (int) tx.countAssets(Query.builder().where("1").eq("1").build(), ImmutableList.of(repository));
+    }
+  }
+
+  @Override
+  public Optional<InputStream> read(final Repository repository, final String path) {
+    return findAssetByName(repository, path).map(asset -> {
+      try (StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get()) {
+        tx.begin();
+        return tx.requireBlob(asset.blobRef()).getInputStream();
+      }
+    });
   }
 }

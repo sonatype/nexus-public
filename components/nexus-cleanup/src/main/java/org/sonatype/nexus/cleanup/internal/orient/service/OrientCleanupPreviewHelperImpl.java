@@ -10,17 +10,18 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.cleanup.internal.service;
+package org.sonatype.nexus.cleanup.internal.orient.service;
 
 import java.util.List;
 import java.util.function.BiFunction;
 
+import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.cleanup.preview.CleanupComponentBrowse;
+import org.sonatype.nexus.cleanup.internal.orient.search.elasticsearch.OrientCleanupComponentBrowse;
 import org.sonatype.nexus.cleanup.preview.CleanupPreviewHelper;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyCriteria;
@@ -46,7 +47,8 @@ import static java.util.stream.Collectors.toList;
  */
 @Named
 @Singleton
-public class CleanupPreviewHelperImpl
+@Priority(Integer.MAX_VALUE)
+public class OrientCleanupPreviewHelperImpl
     extends ComponentSupport
     implements CleanupPreviewHelper
 {
@@ -63,11 +65,11 @@ public class CleanupPreviewHelperImpl
 
   private final CleanupPolicyStorage cleanupPolicyStorage;
 
-  private final CleanupComponentBrowse cleanupComponentBrowse;
+  private final OrientCleanupComponentBrowse cleanupComponentBrowse;
 
   @Inject
-  public CleanupPreviewHelperImpl(final CleanupPolicyStorage cleanupPolicyStorage,
-                                  final CleanupComponentBrowse cleanupComponentBrowse)
+  public OrientCleanupPreviewHelperImpl(final CleanupPolicyStorage cleanupPolicyStorage,
+                                  final OrientCleanupComponentBrowse cleanupComponentBrowse)
   {
     this.cleanupPolicyStorage = checkNotNull(cleanupPolicyStorage);
     this.cleanupComponentBrowse = checkNotNull(cleanupComponentBrowse);

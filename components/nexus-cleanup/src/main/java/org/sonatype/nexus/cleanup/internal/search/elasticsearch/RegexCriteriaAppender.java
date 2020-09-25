@@ -16,6 +16,7 @@ import javax.inject.Named;
 
 import org.sonatype.goodies.common.ComponentSupport;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.RegexpQueryBuilder;
 
@@ -32,7 +33,8 @@ public class RegexCriteriaAppender
     extends ComponentSupport
     implements CriteriaAppender
 {
-  static final String DEFAULT_REGEX_MATCH_ON = "assets.name";
+  @VisibleForTesting
+  public static final String DEFAULT_REGEX_MATCH_ON = "assets.name";
 
   @Override
   public void append(final BoolQueryBuilder query, final String expression) {
