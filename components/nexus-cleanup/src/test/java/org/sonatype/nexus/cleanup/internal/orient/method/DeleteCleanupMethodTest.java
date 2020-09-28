@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.cleanup.internal.method;
+package org.sonatype.nexus.cleanup.internal.orient.method;
 
 import java.util.function.BooleanSupplier;
 
@@ -48,11 +48,11 @@ public class DeleteCleanupMethodTest
   @Mock
   private ComponentMaintenance componentMaintenance;
 
-  private DeleteCleanupMethod underTest;
+  private OrientDeleteCleanupMethod underTest;
 
   @Before
   public void setup() throws Exception {
-    underTest = new DeleteCleanupMethod(500);
+    underTest = new OrientDeleteCleanupMethod(500);
 
     when(cancelledCheck.getAsBoolean()).thenReturn(false);
     when(repository.facet(ComponentMaintenance.class)).thenReturn(componentMaintenance);

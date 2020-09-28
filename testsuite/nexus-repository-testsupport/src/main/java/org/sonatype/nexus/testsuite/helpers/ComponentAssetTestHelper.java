@@ -12,7 +12,10 @@
  */
 package org.sonatype.nexus.testsuite.helpers;
 
+import java.io.InputStream;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Repository;
@@ -97,9 +100,19 @@ public interface ComponentAssetTestHelper
   boolean componentExists(Repository repository, String namespace, String name, String version);
 
   /**
+   * Verify that a component with an asset that matches the path exists.
+   */
+  boolean componentExistsWithAssetPathMatching(Repository repository, Predicate<String> pathMatcher);
+
+  /**
    * Retrieve content type for a path within the repository.
    */
   String contentTypeFor(final String repositoryName, final String path);
+
+  /**
+   * Count the number of assets in the given repository.
+   */
+  int countAssets(Repository repository);
 
   /**
    * Count the number of components in the given repository.
@@ -117,9 +130,24 @@ public interface ComponentAssetTestHelper
   NestedAttributesMap componentAttributes(Repository repository, String namespace, String name, String version);
 
   /**
+   * Set the last downloaded time for all assets in a repository.
+   */
+  void setLastDownloadedTime(Repository repository, int minusSeconds);
+
+  /**
+   * Set the last downloaded time for any asset matching the pathMatcher in the given repository.
+   */
+  void setLastDownloadedTime(Repository repository, int minusSeconds, Predicate<String> pathMatcher);
+
+  /**
    * Adjust {@code path} for differences between Orient and Datastore
    */
   String adjustedPath(final String path);
+
+  /**
+   * Read an asset from the specified repository.
+   */
+  Optional<InputStream> read(Repository repository, String path);
 
   static class AssetNotFoundException
       extends RuntimeException

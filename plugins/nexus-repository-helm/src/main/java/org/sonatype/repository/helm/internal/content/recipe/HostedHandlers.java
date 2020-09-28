@@ -52,7 +52,7 @@ public class HostedHandlers
     }
     else {
       State state = context.getAttributes().require(State.class);
-      path = helmPathUtils.contentFilePath(state);
+      path = helmPathUtils.contentFilePath(state, true);
     }
     Content content = context.getRepository().facet(HelmHostedFacet.class).get(path);
 

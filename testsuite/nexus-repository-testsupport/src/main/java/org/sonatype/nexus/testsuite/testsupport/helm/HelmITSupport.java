@@ -22,7 +22,6 @@ import java.util.List;
 
 import javax.annotation.Nonnull;
 
-import org.sonatype.nexus.pax.exam.NexusPaxExamSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
@@ -50,7 +49,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 /**
  * Support class for Helm ITs.
  *
- * @since 1.0.0
+ * @since 3.next
  */
 @Category(HelmTestGroup.class)
 public class HelmITSupport

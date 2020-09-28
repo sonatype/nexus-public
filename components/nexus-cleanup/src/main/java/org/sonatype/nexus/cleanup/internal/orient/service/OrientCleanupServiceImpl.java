@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.cleanup.internal.service;
+package org.sonatype.nexus.cleanup.internal.orient.service;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,21 +20,22 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 
+import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.cleanup.internal.method.CleanupMethod;
-import org.sonatype.nexus.cleanup.preview.CleanupComponentBrowse;
+import org.sonatype.nexus.cleanup.internal.orient.search.elasticsearch.OrientCleanupComponentBrowse;
 import org.sonatype.nexus.cleanup.service.CleanupService;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicyStorage;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.storage.DefaultComponentMaintenanceImpl.DeletionProgress;
 import org.sonatype.nexus.repository.storage.StorageFacet;
+import org.sonatype.nexus.repository.task.DeletionProgress;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
@@ -50,7 +51,8 @@ import static java.util.Objects.nonNull;
  */
 @Named
 @Singleton
-public class CleanupServiceImpl
+@Priority(Integer.MAX_VALUE)
+public class OrientCleanupServiceImpl
     extends ComponentSupport
     implements CleanupService
 {
@@ -60,7 +62,7 @@ public class CleanupServiceImpl
 
   private final RepositoryManager repositoryManager;
 
-  private final CleanupComponentBrowse browseService;
+  private final OrientCleanupComponentBrowse browseService;
 
   private final CleanupPolicyStorage cleanupPolicyStorage;
 
@@ -71,8 +73,8 @@ public class CleanupServiceImpl
   private int cleanupRetryLimit;
 
   @Inject
-  public CleanupServiceImpl(final RepositoryManager repositoryManager,
-                            final CleanupComponentBrowse browseService,
+  public OrientCleanupServiceImpl(final RepositoryManager repositoryManager,
+                            final OrientCleanupComponentBrowse browseService,
                             final CleanupPolicyStorage cleanupPolicyStorage,
                             final CleanupMethod cleanupMethod,
                             final GroupType groupType,

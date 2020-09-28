@@ -74,7 +74,7 @@ public class HelmUploadHandler
     AssetKind assetKind = AssetKind.getAssetKindByFileName(fileName);
 
     if (assetKind != AssetKind.HELM_PROVENANCE && assetKind != AssetKind.HELM_PACKAGE) {
-      throw new IllegalArgumentException("Unsupported extension. ExtensioIndexYamlAbsoluteUrlRewriterTestn must be .tgz or .tgz.prov");
+      throw new IllegalArgumentException("Unsupported extension. Extension must be .tgz or .tgz.prov");
     }
 
     try (TempBlob tempBlob = storageFacet.createTempBlob(payload, HASH_ALGORITHMS)) {

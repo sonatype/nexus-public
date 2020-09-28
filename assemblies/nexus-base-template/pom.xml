@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.sonatype.nexus.assemblies</groupId>
     <artifactId>nexus-assemblies</artifactId>
-    <version>3.28.0-SNAPSHOT</version>
+    <version>3.29.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-base-template</artifactId>
@@ -108,14 +108,6 @@
     <dependency>
       <groupId>org.sonatype.nexus.assemblies</groupId>
       <artifactId>nexus-cma-feature</artifactId>
-      <classifier>features</classifier>
-      <type>xml</type>
-      <scope>runtime</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.nexus.assemblies</groupId>
-      <artifactId>nexus-cma-community</artifactId>
       <classifier>features</classifier>
       <type>xml</type>
       <scope>runtime</scope>
@@ -248,7 +240,6 @@
                 <feature>nexus-datastore-mybatis</feature>
                 <feature>nexus-core-feature</feature>
                 <feature>nexus-cma-feature</feature>
-                <feature>nexus-cma-community</feature>
                 <feature>nexus-oss-edition</feature>
               </installedFeatures>
             </configuration>

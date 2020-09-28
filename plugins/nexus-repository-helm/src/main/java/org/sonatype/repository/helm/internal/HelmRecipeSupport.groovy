@@ -40,9 +40,9 @@ import org.sonatype.nexus.repository.view.matchers.ActionMatcher
 import org.sonatype.nexus.repository.view.matchers.LiteralMatcher
 import org.sonatype.nexus.repository.view.matchers.logic.LogicMatchers
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher
-import org.sonatype.repository.helm.internal.orient.HelmFacet
 import org.sonatype.repository.helm.HelmRestoreFacet
 import org.sonatype.repository.helm.internal.orient.HelmComponentMaintenanceFacet
+import org.sonatype.repository.helm.internal.orient.HelmFacet
 import org.sonatype.repository.helm.internal.security.HelmSecurityFacet
 
 import static org.sonatype.nexus.repository.http.HttpMethods.GET

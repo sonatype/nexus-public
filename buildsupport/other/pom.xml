@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.buildsupport</groupId>
     <artifactId>nexus-buildsupport</artifactId>
-    <version>3.28.0-SNAPSHOT</version>
+    <version>3.29.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>nexus-buildsupport-other</artifactId>
@@ -82,13 +82,13 @@
       <dependency>
         <groupId>joda-time</groupId>
         <artifactId>joda-time</artifactId>
-        <version>2.10.5</version>
+        <version>2.10.6</version>
       </dependency>
 
       <dependency>
         <groupId>org.hdrhistogram</groupId>
         <artifactId>HdrHistogram</artifactId>
-        <version>2.1.6</version>
+        <version>2.1.12</version>
       </dependency>
 
       <dependency>
@@ -100,13 +100,13 @@
       <dependency>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>animal-sniffer-annotations</artifactId>
-        <version>1.14</version>
+        <version>1.19</version>
       </dependency>
 
       <dependency>
         <groupId>eu.bitwalker</groupId>
         <artifactId>UserAgentUtils</artifactId>
-        <version>1.19</version>
+        <version>1.21</version>
       </dependency>
 
       <dependency>
@@ -130,7 +130,7 @@
       <dependency>
         <groupId>commons-validator</groupId>
         <artifactId>commons-validator</artifactId>
-        <version>1.6</version>
+        <version>1.7</version>
         <exclusions>
           <exclusion>
             <groupId>commons-logging</groupId>
@@ -228,13 +228,13 @@
       <dependency>
         <groupId>org.freemarker</groupId>
         <artifactId>freemarker</artifactId>
-        <version>2.3.23</version>
+        <version>2.3.30</version>
       </dependency>
 
       <dependency>
         <groupId>org.mozilla</groupId>
         <artifactId>rhino</artifactId>
-        <version>1.7.7</version>
+        <version>1.7.13</version>
       </dependency>
 
       <dependency>

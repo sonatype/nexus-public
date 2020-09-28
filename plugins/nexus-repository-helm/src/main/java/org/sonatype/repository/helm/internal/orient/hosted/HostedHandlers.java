@@ -19,7 +19,6 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Handler;
-import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher.State;
 import org.sonatype.repository.helm.internal.AssetKind;
 import org.sonatype.repository.helm.internal.util.HelmPathUtils;
@@ -52,7 +51,7 @@ public class HostedHandlers
       path = "index.yaml";
     }
     else {
-      State state = context.getAttributes().require(TokenMatcher.State.class);
+      State state = context.getAttributes().require(State.class);
       path = helmPathUtils.filename(state);
     }
     Content content = context.getRepository().facet(HelmHostedFacet.class).get(path);
@@ -61,7 +60,7 @@ public class HostedHandlers
   };
 
   public final Handler upload = context -> {
-    State state = context.getAttributes().require(TokenMatcher.State.class);
+    State state = context.getAttributes().require(State.class);
     String path = helmPathUtils.buildAssetPath(state);
     AssetKind assetKind = context.getAttributes().require(AssetKind.class);
     context.getRepository().facet(HelmHostedFacet.class).upload(path, context.getRequest().getPayload(), assetKind);
@@ -69,7 +68,7 @@ public class HostedHandlers
   };
 
   public final Handler delete = context -> {
-    State state = context.getAttributes().require(TokenMatcher.State.class);
+    State state = context.getAttributes().require(State.class);
     String path = helmPathUtils.buildAssetPath(state);
 
     boolean deleted = context.getRepository().facet(HelmHostedFacet.class).delete(path);

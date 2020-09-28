@@ -46,13 +46,17 @@ public class FileBlobStoreDescriptorTest
   @Mock
   ApplicationDirectories applicationDirectories;
 
+  @Mock
+  FileBlobStorePathValidator fileBlobStorePathValidator;
+
   FileBlobStoreDescriptor descriptor;
 
   private static final int MAX_NAME_LENGTH = 255;
 
   @Before
   public void setup() {
-    descriptor = new FileBlobStoreDescriptor(quotaService, applicationDirectories, blobStoreUtil);
+    descriptor =
+        new FileBlobStoreDescriptor(quotaService, applicationDirectories, blobStoreUtil, fileBlobStorePathValidator);
     when(blobStoreUtil.validateFilePath(anyString(), anyInt())).thenReturn(true);
   }
 

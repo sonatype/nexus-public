@@ -12,6 +12,13 @@
  */
 package org.sonatype.nexus.testsuite.helpers;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.lang.reflect.Method;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -27,15 +35,20 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.time.DateHelper;
+import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
+import org.sonatype.nexus.repository.content.event.asset.AssetDownloadedEvent;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
+import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.maintenance.ContentMaintenanceFacet;
+import org.sonatype.nexus.repository.content.store.ContentStoreEvent;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 
 import org.joda.time.DateTime;
@@ -46,6 +59,7 @@ import static org.apache.commons.lang3.StringUtils.endsWith;
 import static org.apache.commons.lang3.StringUtils.indexOf;
 import static org.apache.commons.lang3.StringUtils.startsWith;
 import static org.apache.commons.lang3.StringUtils.substring;
+import static org.sonatype.nexus.datastore.api.DataStoreManager.CONTENT_DATASTORE_NAME;
 
 @Named
 @Singleton
@@ -58,6 +72,12 @@ public class DatastoreComponentAssetTestHelper
 
   @Inject
   private RepositoryManager repositoryManager;
+
+  @Inject
+  private DataSessionSupplier sessionSupplier;
+
+  @Inject
+  private EventManager eventManager;
 
   @Override
   public DateTime getBlobCreatedTime(final Repository repository, final String path) {
@@ -128,6 +148,11 @@ public class DatastoreComponentAssetTestHelper
   }
 
   @Override
+  public int countAssets(final Repository repository) {
+    return repository.facet(ContentFacet.class).assets().browse(Integer.MAX_VALUE, null).size();
+  }
+
+  @Override
   public int countComponents(final Repository repository) {
     return repository.facet(ContentFacet.class).components().browse(Integer.MAX_VALUE, null).size();
   }
@@ -187,6 +212,15 @@ public class DatastoreComponentAssetTestHelper
   }
 
   @Override
+  public boolean componentExistsWithAssetPathMatching(final Repository repository, final Predicate<String> pathMatcher) {
+    return repository.facet(ContentFacet.class).assets().browse(Integer.MAX_VALUE, null)
+        .stream()
+        .filter(asset -> asset.component().isPresent())
+        .map(FluentAsset::path)
+        .anyMatch(pathMatcher);
+  }
+
+  @Override
   public boolean assetWithComponentExists(final Repository repository, final String path, final String group, final String name) {
     Collection<FluentAsset> assets = repository.facet(ContentFacet.class).components().name(name).namespace(group)
         .find().map(FluentComponent::assets).orElse(Collections.emptyList());
@@ -219,5 +253,89 @@ public class DatastoreComponentAssetTestHelper
   @Override
   public String adjustedPath(final String path) {
     return "/" + stripStart(path, "/");
+  }
+
+  @Override
+  public void setLastDownloadedTime(final Repository repository, final int minusSeconds) {
+    int repositoryId = ((ContentFacetSupport) repository.facet(ContentFacet.class)).contentRepositoryId();
+
+    try (Connection connection = sessionSupplier.openConnection(CONTENT_DATASTORE_NAME);
+        PreparedStatement stmt = connection.prepareStatement("UPDATE " + repository.getFormat().getValue() + "_asset "
+            + "SET last_downloaded = DATEADD(SECOND, ?, CURRENT_TIMESTAMP) WHERE repository_id = ?")) {
+
+      stmt.setInt(1, -minusSeconds);
+      stmt.setInt(2, repositoryId);
+      stmt.execute();
+      if(stmt.getWarnings() != null) {
+        throw new RuntimeException("Failed to set download time: " + stmt.getWarnings());
+      }
+    }
+    catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
+
+    repository.facet(ContentFacet.class).assets().browse(Integer.MAX_VALUE, null).stream()
+        .forEach(asset -> sendEvent(repository, asset));
+  }
+
+  @Override
+  public void setLastDownloadedTime(final Repository repository, final int minusSeconds, final Predicate<String> pathMatcher) {
+    int repositoryId = ((ContentFacetSupport) repository.facet(ContentFacet.class)).contentRepositoryId();
+
+    List<String> pathes = repository.facet(ContentFacet.class).assets().browse(Integer.MAX_VALUE, null).stream()
+        .map(FluentAsset::path)
+        .filter(pathMatcher)
+        .collect(Collectors.toList());
+
+    try (Connection connection = sessionSupplier.openConnection(CONTENT_DATASTORE_NAME);
+        PreparedStatement stmt = connection.prepareStatement("UPDATE " + repository.getFormat().getValue() + "_asset "
+            + "SET last_downloaded = DATEADD(SECOND, ?, CURRENT_TIMESTAMP) "
+            + "WHERE repository_id = ? AND path = ?")) {
+
+      for (String path : pathes) {
+        stmt.setInt(1, -minusSeconds);
+        stmt.setInt(2, repositoryId);
+        stmt.setString(3, path);
+
+        stmt.execute();
+        if(stmt.getWarnings() != null) {
+          throw new RuntimeException("Failed to set download time: " + stmt.getWarnings());
+        }
+      }
+    }
+    catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
+
+    pathes.stream().map(path -> findAssetByPath(repository, path))
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .forEach(asset -> sendEvent(repository, asset));
+  }
+
+  @Override
+  public Optional<InputStream> read(final Repository repository, final String path) {
+    return findAssetByPath(repository, path).map(FluentAsset::download).map(content -> {
+      try {
+        return content.openInputStream();
+      }
+      catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+    });
+  }
+
+  private void sendEvent(final Repository repository, final FluentAsset asset) {
+    try {
+      asset.component().isPresent(); // prime it
+      AssetDownloadedEvent event = new AssetDownloadedEvent(asset);
+      Method method = ContentStoreEvent.class.getDeclaredMethod("setRepository", Repository.class);
+      method.setAccessible(true);
+      method.invoke(event, repository);
+      eventManager.post(event);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 }

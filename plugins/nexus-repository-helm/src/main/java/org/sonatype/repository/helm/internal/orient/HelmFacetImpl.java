@@ -13,7 +13,6 @@
 package org.sonatype.repository.helm.internal.orient;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
@@ -35,6 +34,7 @@ import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.BlobPayload;
+import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.repository.helm.HelmAttributes;
 import org.sonatype.repository.helm.internal.AssetKind;
 import org.sonatype.repository.helm.internal.HelmFormat;
@@ -148,6 +148,9 @@ public class HelmFacetImpl
    */
   @Override
   public Optional<Asset> findAsset(final StorageTx tx, final String assetName) {
+    if (assetName == null) {
+      return Optional.empty();
+    }
     Bucket bucket = tx.findBucket(getRepository());
     Asset asset = tx.findAssetWithProperty(P_NAME, assetName, bucket);
     return Optional.ofNullable(asset);
@@ -162,7 +165,7 @@ public class HelmFacetImpl
   @Nullable
   public Content saveAsset(final StorageTx tx,
                             final Asset asset,
-                            final Supplier<InputStream> contentSupplier,
+                            final TempBlob contentSupplier,
                             final Payload payload)
   {
     try {
@@ -187,7 +190,7 @@ public class HelmFacetImpl
   @Override
   public Content saveAsset(final StorageTx tx,
                            final Asset asset,
-                           final Supplier<InputStream> contentSupplier,
+                           final TempBlob contentSupplier,
                            @Nullable final String contentType,
                            @Nullable final AttributesMap contentAttributes) throws IOException
   {

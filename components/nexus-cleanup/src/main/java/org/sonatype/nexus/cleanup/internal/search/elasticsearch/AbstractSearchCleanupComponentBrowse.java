@@ -12,28 +12,17 @@
  */
 package org.sonatype.nexus.cleanup.internal.search.elasticsearch;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-
 import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.cleanup.preview.CleanupComponentBrowse;
 import org.sonatype.nexus.cleanup.storage.CleanupPolicy;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
 import org.sonatype.nexus.common.entity.EntityId;
-import org.sonatype.nexus.extdirect.model.PagedResponse;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.query.QueryOptions;
 import org.sonatype.nexus.repository.search.query.SearchQueryService;
-import org.sonatype.nexus.repository.storage.Component;
-import org.sonatype.nexus.repository.storage.StorageTx;
-import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
@@ -52,22 +41,15 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.common.collect.Iterables.transform;
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.StreamSupport.stream;
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
 import static org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder.unrestricted;
 
 /**
- * Finds components for cleanup using Elastic Search.
- *
- * @since 3.14
+ * @since 3.next
  */
-@Named
-@Singleton
-public class ElasticSearchCleanupComponentBrowse
+public abstract class AbstractSearchCleanupComponentBrowse
     extends ComponentSupport
-    implements CleanupComponentBrowse
 {
   private static final String NAME = "name";
 
@@ -83,17 +65,16 @@ public class ElasticSearchCleanupComponentBrowse
 
   private final Map<String, CriteriaAppender> criteriaAppenders;
 
-  @Inject
-  public ElasticSearchCleanupComponentBrowse(final Map<String, CriteriaAppender> criteriaAppenders,
-                                             final SearchQueryService searchQueryService,
-                                             final MetricRegistry metricRegistry)
+  protected AbstractSearchCleanupComponentBrowse(
+      final Map<String, CriteriaAppender> criteriaAppenders,
+      final SearchQueryService searchQueryService,
+      final MetricRegistry metricRegistry)
   {
     this.criteriaAppenders = checkNotNull(criteriaAppenders);
     this.searchQueryService = checkNotNull(searchQueryService);
     this.metricRegistry = checkNotNull(metricRegistry);
   }
 
-  @Override
   public Iterable<EntityId> browse(final CleanupPolicy policy, final Repository repository) {
     if (policy.getCriteria().isEmpty()) {
       return emptyList();
@@ -121,31 +102,7 @@ public class ElasticSearchCleanupComponentBrowse
     }
   }
 
-  @Override
-  public PagedResponse<Component> browseByPage(final CleanupPolicy policy,
-                                               final Repository repository,
-                                               final QueryOptions options)
-  {
-    checkNotNull(options.getStart());
-    checkNotNull(options.getLimit());
-
-    StorageTx tx = UnitOfWork.currentTx();
-
-    QueryBuilder query = convertPolicyToQuery(policy, options);
-
-    log.debug("Searching for components to cleanup using policy {}", policy);
-
-    SearchResponse searchResponse = invokeSearchByPage(policy, repository, options, query);
-
-    List<Component> components = stream(searchResponse.getHits().spliterator(), false)
-        .map(searchHit -> tx.findComponent(new DetachedEntityId(searchHit.getId())))
-        .filter(Objects::nonNull)
-        .collect(toList());
-
-    return new PagedResponse<>(searchResponse.getHits().getTotalHits(), components);
-  }
-
-  private SearchResponse invokeSearchByPage(final CleanupPolicy policy,
+  protected SearchResponse invokeSearchByPage(final CleanupPolicy policy,
                                             final Repository repository,
                                             final QueryOptions options,
                                             final QueryBuilder query)
@@ -181,7 +138,7 @@ public class ElasticSearchCleanupComponentBrowse
         ".timer";
   }
 
-  private QueryBuilder convertPolicyToQuery(final CleanupPolicy policy, final QueryOptions options) {
+  protected QueryBuilder convertPolicyToQuery(final CleanupPolicy policy, final QueryOptions options) {
     BoolQueryBuilder queryBuilder = convertPolicyToQuery(policy);
 
     if (isNullOrEmpty(options.getFilter())) {
@@ -219,4 +176,5 @@ public class ElasticSearchCleanupComponentBrowse
   private SortBuilder getSort(final String sortProperty, final String sortDirection) {
     return SortBuilders.fieldSort(sortProperty).order(SortOrder.valueOf(sortDirection.toUpperCase()));
   }
+
 }

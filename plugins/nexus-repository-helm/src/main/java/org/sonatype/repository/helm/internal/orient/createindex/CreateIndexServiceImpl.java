@@ -30,10 +30,10 @@ import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.repository.transaction.TransactionalStoreBlob;
 import org.sonatype.nexus.transaction.UnitOfWork;
-import org.sonatype.repository.helm.internal.orient.HelmFacet;
 import org.sonatype.repository.helm.internal.AssetKind;
 import org.sonatype.repository.helm.internal.metadata.ChartEntry;
 import org.sonatype.repository.helm.internal.metadata.ChartIndex;
+import org.sonatype.repository.helm.internal.orient.HelmFacet;
 import org.sonatype.repository.helm.internal.orient.metadata.IndexYamlBuilder;
 
 import org.joda.time.DateTime;

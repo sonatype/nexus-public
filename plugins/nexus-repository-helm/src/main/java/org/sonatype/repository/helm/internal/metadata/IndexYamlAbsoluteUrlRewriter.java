@@ -12,18 +12,23 @@
  */
 package org.sonatype.repository.helm.internal.metadata;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 
+import javax.annotation.Nullable;
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.storage.StorageFacet;
+import org.sonatype.nexus.common.collect.AttributesMap;
+import org.sonatype.nexus.repository.view.Content;
+import org.sonatype.nexus.repository.view.payloads.BytesPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.thread.io.StreamCopier;
+import org.sonatype.repository.helm.internal.util.YamlParser;
 
-
-import static org.sonatype.repository.helm.internal.HelmFormat.HASH_ALGORITHMS;
+import com.google.common.io.ByteStreams;
 
 /**
  * Removes absolute URL entries from index.yaml
@@ -35,18 +40,47 @@ import static org.sonatype.repository.helm.internal.HelmFormat.HASH_ALGORITHMS;
 public class IndexYamlAbsoluteUrlRewriter
     extends IndexYamlAbsoluteUrlRewriterSupport
 {
-  private StorageFacet storageFacet;
+  private static final String YAML_CONTENT_TYPE = "text/x-yaml";
 
-  public TempBlob removeUrlsFromIndexYamlAndWriteToTempBlob(final TempBlob index,
-                                                            final Repository repository)
-  {
-    storageFacet = repository.facet(StorageFacet.class);
-
-    return new StreamCopier<>(outputStream -> updateUrls(index.get(), outputStream),
-        this::createTempBlob).read();
+  @Inject
+  public IndexYamlAbsoluteUrlRewriter(final YamlParser yamlParser) {
+    super(yamlParser);
   }
 
-  private TempBlob createTempBlob(final InputStream is) {
-    return storageFacet.createTempBlob(is, HASH_ALGORITHMS);
+  @Nullable
+  public Content removeUrlsFromIndexYaml(final TempBlob index, final AttributesMap attributes) {
+    if (index == null) {
+      return null;
+    }
+
+    try (InputStream inputStream = index.get()) {
+      return new StreamCopier<>(outputStream -> updateUrls(inputStream, outputStream), input -> createContent(input, attributes)).read();
+    } catch (IOException ex) {
+      throw new UncheckedIOException(ex);
+    }
+  }
+
+  @Nullable
+  public Content removeUrlsFromIndexYaml(final Content index) {
+    if (index == null) {
+      return null;
+    }
+
+    try (InputStream inputStream = index.openInputStream()) {
+      return new StreamCopier<>(outputStream -> updateUrls(inputStream, outputStream), input -> createContent(input, index.getAttributes())).read();
+    } catch (IOException ex) {
+      throw new UncheckedIOException(ex);
+    }
+  }
+
+  private Content createContent(final InputStream input, final AttributesMap attributes) {
+    try {
+      Content content = new Content(new BytesPayload(ByteStreams.toByteArray(input), YAML_CONTENT_TYPE));
+      attributes.forEach(attr-> content.getAttributes().set(attr.getKey(), attr.getValue()));
+      return content;
+    } catch (IOException ex) {
+      log.error("Error rewriting urls in index.yaml", ex);
+      throw new UncheckedIOException(ex);
+    }
   }
 }

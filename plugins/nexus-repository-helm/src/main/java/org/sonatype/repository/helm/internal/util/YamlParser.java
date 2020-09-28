@@ -110,7 +110,7 @@ public class YamlParser
     }
 
     class TimeStampConstruct
-        extends Constructor.ConstructScalar
+        extends ConstructScalar
     {
       @Override
       public Object construct(Node nnode) {
@@ -159,6 +159,7 @@ public class YamlParser
     private class RepresentJodaDateTime
         extends RepresentDate
     {
+      @Override
       public Node representData(Object data) {
         DateTime date = (DateTime) data;
         return super.representData(new Date(date.getMillis()));
