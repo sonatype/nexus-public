@@ -12,8 +12,15 @@
  */
 package org.sonatype.nexus.repository.npm.internal;
 
-import org.sonatype.nexus.repository.Recipe;
-
-public interface NpmProxyRecipe extends Recipe
-{
+/**
+ * Internal exception thrown when resolving of tarball name to package version using package metadata fails.
+ *
+ * @since 3.0
+ *
+ */
+public class NonResolvableTarballNameException
+    extends RuntimeException {
+  public NonResolvableTarballNameException(final String message) {
+    super(message);
+  }
 }

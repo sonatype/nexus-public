@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.npm.orient.internal.search.legacy;
+package org.sonatype.nexus.repository.npm.internal.search.legacy;
 
 import java.io.IOException;
 
@@ -19,9 +19,6 @@ import javax.annotation.Nullable;
 import javax.inject.Named;
 
 import org.sonatype.nexus.repository.FacetSupport;
-import org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils;
-import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexFacet;
-import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexFilter;
 import org.sonatype.nexus.repository.npm.internal.NpmProxyFacet.ProxyTarget;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
 import org.sonatype.nexus.repository.view.Content;
@@ -44,13 +41,16 @@ public class NpmSearchIndexFacetProxy
     extends FacetSupport
     implements NpmSearchIndexFacet
 {
+
+  public static final String REPOSITORY_ROOT_ASSET = "-/all";
+
   @Nonnull
   @Override
   public Content searchIndex(@Nullable final DateTime since) throws IOException {
     try {
       final Request getRequest = new Request.Builder()
           .action(GET)
-          .path("/" + NpmFacetUtils.REPOSITORY_ROOT_ASSET)
+          .path("/" + REPOSITORY_ROOT_ASSET)
           .build();
       Context context = new Context(getRepository(), getRequest);
       context.getAttributes().set(ProxyTarget.class, ProxyTarget.SEARCH_INDEX);

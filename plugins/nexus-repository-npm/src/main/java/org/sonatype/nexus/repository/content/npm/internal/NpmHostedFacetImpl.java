@@ -102,7 +102,7 @@ public class NpmHostedFacetImpl
   {
     checkNotNull(packageId);
 
-    Optional<NestedAttributesMap> oldPackageRoot = loadPackageRoot(packageId);
+    Optional<NestedAttributesMap> oldPackageRoot = loadPackageRoot(packageId, content());
     if (revision != null) {
       oldPackageRoot.ifPresent(attr -> checkArgument(revision.equals(attr.get(META_REV, String.class))));
 
@@ -166,7 +166,7 @@ public class NpmHostedFacetImpl
     log.debug("Getting package: {}", packageId);
 
     try {
-      NestedAttributesMap packageRoot = loadPackageRoot(packageId).orElse(null);
+      NestedAttributesMap packageRoot = loadPackageRoot(packageId, content()).orElse(null);
 
       if (packageRoot == null) {
         return Optional.empty();
@@ -184,7 +184,7 @@ public class NpmHostedFacetImpl
   @Override
   public Optional<Content> getPackage(final NpmPackageId packageId) throws IOException {
     return content().get(packageId)
-        .map(NpmFacetSupport::toContent)
+        .map(NpmFacetSupport::toNpmContent)
         .map(content -> content.fieldMatchers(asList(
             missingRevFieldMatcher(() -> "1"),// TODO unclear when this situation might occur
             rewriteTarballUrlMatcher(getRepository().getName(), packageId.id()))))
@@ -254,7 +254,7 @@ public class NpmHostedFacetImpl
   {
     boolean update = false;
     NestedAttributesMap packageRoot = newPackageRoot;
-    NestedAttributesMap oldPackageRoot = loadPackageRoot(packageId).orElse(null);
+    NestedAttributesMap oldPackageRoot = loadPackageRoot(packageId, content()).orElse(null);
 
     if (oldPackageRoot != null) {
       String rev = revision;

@@ -78,17 +78,32 @@ public interface NpmContentFacet
    */
   Content put(NpmPackageId packageId, String version, Map<String, Object> npmAttributes, Payload content) throws IOException;
 
+
+  /**
+   * Upload the tarball associated with the given packageId, tarball name and version.
+   */
+  Content put(
+      NpmPackageId packageId,
+      String tarballName,
+      String version,
+      Map<String, Object> npmAttributes,
+      Payload content) throws IOException;
+
   /**
    * Upload the tarball associated with the given packageId and version.
    */
   Content put(NpmPackageId packageId, String version, Map<String, Object> npmAttributes, TempBlob tempBlob) throws IOException;
 
 
-  public static String metadataPath(final NpmPackageId packageId) {
+  static String metadataPath(final NpmPackageId packageId) {
     return '/' + packageId.id();
   }
 
-  public static String tarballPath(final NpmPackageId packageId, final String version) {
+  static String tarballPath(final NpmPackageId packageId, final String version) {
     return '/' + packageId.id() + "/-/" + packageId.name() + '-' + version + ".tgz";
+  }
+
+  static String tarballPath(final String id, final String tarballName) {
+    return '/' + id + "/-/" + tarballName;
   }
 }

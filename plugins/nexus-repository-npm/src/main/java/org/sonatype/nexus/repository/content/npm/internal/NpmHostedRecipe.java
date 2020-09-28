@@ -78,10 +78,6 @@ public class NpmHostedRecipe
 
   private final Provider<NpmSearchFacetHosted> npmSearchFacetProvider;
 
-  private final NpmWhoamiHandler npmWhoamiHandler;
-
-  private final NpmPingHandler pingHandler;
-
   @Inject
   public NpmHostedRecipe(
       @Named(HostedType.NAME) final Type type,
@@ -117,12 +113,10 @@ public class NpmHostedRecipe
         timingHandler, indexHtmlForwardHandler, securityHandler, partialFetchHandler, conditionalRequestHandler,
         contentHeadersHandler, lastDownloadedHandler, handlerContributor, tokenFacet, npmAuditFacetProvider,
         npmAuditTarballFacetProvider, lastAssetMaintenanceFacet, routingHandler, auditErrorHandler,
-        auditAnalyticsHandler);
+        auditAnalyticsHandler, npmWhoamiHandler, pingHandler);
     this.npmHostedFacetProvider = npmHostedFacet;
     this.npmSearchIndexFacetProvider = npmSearchIndexFacet;
     this.npmSearchFacetProvider = npmSearchFacet;
-    this.npmWhoamiHandler = npmWhoamiHandler;
-    this.pingHandler = pingHandler;
   }
 
   @Override
