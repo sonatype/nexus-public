@@ -16,7 +16,7 @@ import javax.annotation.Nonnull
 
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.config.Configuration
-import org.sonatype.nexus.testsuite.testsupport.fixtures.ConfigurationRecipes
+import org.sonatype.nexus.repository.config.WritePolicy
 
 import groovy.transform.CompileStatic;
 
@@ -37,6 +37,11 @@ trait RRepoRecipes
   @Nonnull
   Repository createRHosted(final String name) {
     createRepository(createHosted(name, 'r-hosted'))
+  }
+
+  @Nonnull
+  Repository createRHosted(final String name, final WritePolicy writePolicy) {
+    createRepository(createHosted(name, 'r-hosted', writePolicy.toString()))
   }
 
   @Nonnull

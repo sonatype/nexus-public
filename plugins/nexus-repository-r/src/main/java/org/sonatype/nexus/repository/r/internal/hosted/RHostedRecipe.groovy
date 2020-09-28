@@ -68,13 +68,13 @@ class RHostedRecipe
   void apply(@Nonnull final Repository repository) throws Exception {
     repository.attach(securityFacet.get())
     repository.attach(configure(viewFacet.get()))
+    repository.attach(storageFacet.get())
     repository.attach(httpClientFacet.get())
     repository.attach(componentMaintenanceFacet.get())
     repository.attach(hostedFacet.get())
     repository.attach(packagesBuilderFacet.get())
     repository.attach(rFacet.get())
     repository.attach(rRestoreFacet.get())
-    repository.attach(storageFacet.get())
     repository.attach(searchFacet.get())
     repository.attach(attributesFacet.get())
   }

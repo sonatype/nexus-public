@@ -21,6 +21,7 @@ import java.util.stream.StreamSupport;
 import javax.inject.Named;
 
 import org.sonatype.nexus.repository.FacetSupport;
+import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.r.RFacet;
 import org.sonatype.nexus.repository.r.RHostedFacet;
 import org.sonatype.nexus.repository.r.internal.util.RFacetUtils;
@@ -56,6 +57,12 @@ public class RHostedFacetImpl
     extends FacetSupport
     implements RHostedFacet
 {
+  @Override
+  protected void doInit(final Configuration configuration) throws Exception {
+    super.doInit(configuration);
+    getRepository().facet(StorageFacet.class).registerWritePolicySelector(new RWritePolicySelector());
+  }
+
   @Override
   @TransactionalTouchBlob
   public Content getStoredContent(final String contentPath) {
