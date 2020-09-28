@@ -262,7 +262,6 @@ public class DatastoreComponentAssetTestHelper
     try (Connection connection = sessionSupplier.openConnection(CONTENT_DATASTORE_NAME);
         PreparedStatement stmt = connection.prepareStatement("UPDATE " + repository.getFormat().getValue() + "_asset "
             + "SET last_downloaded = DATEADD(SECOND, ?, CURRENT_TIMESTAMP) WHERE repository_id = ?")) {
-
       stmt.setInt(1, -minusSeconds);
       stmt.setInt(2, repositoryId);
       stmt.execute();

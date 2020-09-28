@@ -20,8 +20,10 @@ import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
+import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.store.ComponentStore;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -67,5 +69,13 @@ public class DefaultMaintenanceFacet
 
   protected ContentFacet contentFacet() {
     return facet(ContentFacet.class);
+  }
+
+  @Override
+  public int deleteComponents(final int[] componentIds) {
+    ContentFacetSupport contentFacet = (ContentFacetSupport) contentFacet();
+    ComponentStore<?> componentStore = contentFacet.stores().componentStore;
+
+    return componentStore.purge(contentFacet.contentRepositoryId(), componentIds);
   }
 }

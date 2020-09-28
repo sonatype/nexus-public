@@ -171,6 +171,10 @@ public abstract class NexusPaxExamSupport
   @Inject
   protected TaskScheduler taskScheduler;
 
+  @Inject
+  @Named("nexus.orient.enabled")
+  private Boolean orientEnabled;
+
   private static final String POSTGRES_IMAGE = "postgres:12.3";
 
   private static final int POSTGRES_PORT = 5432;
@@ -668,6 +672,10 @@ public abstract class NexusPaxExamSupport
       //fallback to ORIENT if it is invalid
       return TestDatabase.ORIENT;
     }
+  }
+
+  protected boolean isNewDb() {
+    return !orientEnabled;
   }
 
   // -------------------------------------------------------------------------
