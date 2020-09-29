@@ -54,7 +54,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 /**
  * {@link P2Facet} implementation
  *
- * @since 3.next
+ * @since 3.28
  */
 @Named
 public class P2FacetImpl

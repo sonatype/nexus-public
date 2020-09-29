@@ -30,7 +30,7 @@ import static org.sonatype.nexus.repository.http.HttpResponses.ok;
 /**
  * Helm Hosted Handlers
  *
- * @since 3.next
+ * @since 3.28
  */
 @Named
 @Singleton

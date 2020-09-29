@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Each project consists of these element. They are grouped here for easier access throughout the code base
  *
- * @since 3.next
+ * @since 3.28
  */
 public class ConanCoords
 {

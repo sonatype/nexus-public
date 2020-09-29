@@ -30,7 +30,7 @@ import org.sonatype.repository.helm.internal.HelmFormat;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * @since 3.next
+ * @since 3.28
  */
 @Named(HelmFormat.NAME)
 @Singleton

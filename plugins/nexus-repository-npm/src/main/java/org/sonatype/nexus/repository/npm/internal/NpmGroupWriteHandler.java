@@ -29,7 +29,7 @@ import static org.sonatype.nexus.repository.npm.internal.NpmResponses.forbidden;
 /**
  * Override certain behaviours of the standard group handler to be able to write to a group.
  *
- * @since 3.next
+ * @since 3.28
  */
 @Named
 @Singleton

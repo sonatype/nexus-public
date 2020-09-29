@@ -18,7 +18,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * API Group Deploy Repository for simple formats which do not have custom attributes for groups.
  *
- * @since 3.next
+ * @since 3.28
  */
 @JsonIgnoreProperties(value = {"format", "type", "url"}, allowGetters = true)
 public class SimpleApiGroupDeployRepository

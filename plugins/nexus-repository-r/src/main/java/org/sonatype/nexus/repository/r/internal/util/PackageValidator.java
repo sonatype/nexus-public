@@ -20,7 +20,7 @@ import static org.sonatype.nexus.repository.r.internal.util.RPathUtils.isValidRe
 /**
  * Validator for repository packages
  *
- * @since 3.next
+ * @since 3.28
  */
 public final class PackageValidator
 {

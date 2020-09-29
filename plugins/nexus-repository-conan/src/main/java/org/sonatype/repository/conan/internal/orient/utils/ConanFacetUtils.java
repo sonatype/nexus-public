@@ -37,7 +37,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 import static org.sonatype.repository.conan.internal.orient.proxy.v1.OrientConanProxyHelper.getComponentVersion;
 
 /**
- * @since 3.next
+ * @since 3.28
  */
 public class ConanFacetUtils
 {

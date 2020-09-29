@@ -28,7 +28,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Utility methods for working with R metadata in general.
  *
- * @since 3.next
+ * @since 3.28
  */
 public final class RMetadataUtils
 {

@@ -27,7 +27,7 @@ import static org.sonatype.repository.conan.internal.metadata.ConanMetadata.STAT
 import static org.sonatype.repository.conan.internal.metadata.ConanMetadata.VERSION;
 
 /**
- * @since 3.next
+ * @since 3.28
  */
 public class ConanHostedHelper
 {

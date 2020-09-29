@@ -55,7 +55,7 @@ import static org.sonatype.repository.helm.internal.HelmFormat.HASH_ALGORITHMS;
 /**
  * Helm {@link ProxyFacet} implementation.
  *
- * @since 3.next
+ * @since 3.28
  */
 @Named
 public class HelmProxyFacetImpl

@@ -29,7 +29,7 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 /**
  * General P2 facet
  *
- * @since 3.next
+ * @since 3.28
  */
 @Facet.Exposed
 public interface P2Facet

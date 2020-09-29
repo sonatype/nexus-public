@@ -33,7 +33,7 @@ import com.google.common.io.ByteStreams;
 /**
  * Removes absolute URL entries from index.yaml
  *
- * @since 3.next
+ * @since 3.28
  */
 @Named
 @Singleton

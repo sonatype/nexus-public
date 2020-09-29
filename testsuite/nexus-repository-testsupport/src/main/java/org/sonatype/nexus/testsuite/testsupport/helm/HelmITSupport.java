@@ -49,7 +49,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 /**
  * Support class for Helm ITs.
  *
- * @since 3.next
+ * @since 3.28
  */
 @Category(HelmTestGroup.class)
 public class HelmITSupport

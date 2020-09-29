@@ -26,7 +26,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * Refer to R's {@code package_version} and {@code utils::compareVersions} functions for implementation details.
  *
- * @since 3.next
+ * @since 3.28
  */
 public class RPackageVersion
     implements Comparable<RPackageVersion>

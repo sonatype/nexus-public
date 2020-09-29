@@ -27,7 +27,7 @@ import io.swagger.annotations.ApiParam;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 
 /**
- * @since 3.next
+ * @since 3.28
  */
 public class AbstractHostedRepositoriesApiResource<T extends HostedRepositoryApiRequest>
     extends AbstractRepositoriesApiResource<T>

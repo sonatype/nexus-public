@@ -45,7 +45,7 @@ import static org.sonatype.repository.helm.internal.AssetKind.HELM_PROVENANCE
 /**
  * Helm Hosted Recipe
  *
- * @since 3.next
+ * @since 3.28
  */
 @Named(HelmHostedRecipe.NAME)
 @Singleton
