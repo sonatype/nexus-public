@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.view.Handler;
 /**
  * R common handlers.
  *
- * @since 3.next
+ * @since 3.28
  */
 @Named
 @Singleton

@@ -26,7 +26,7 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 /**
  * Utility methods for working with tgz files
  *
- * @since 3.next
+ * @since 3.28
  */
 @Named
 @Singleton

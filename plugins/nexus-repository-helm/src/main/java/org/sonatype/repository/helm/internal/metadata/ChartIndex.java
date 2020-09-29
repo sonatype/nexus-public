@@ -22,7 +22,7 @@ import org.joda.time.DateTime;
 /**
  * Object for storing attributes in a Helm index.yaml file
  *
- * @since 3.next
+ * @since 3.28
  */
 public final class ChartIndex
 {

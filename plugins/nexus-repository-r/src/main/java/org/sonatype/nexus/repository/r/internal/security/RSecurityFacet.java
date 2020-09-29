@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.security.VariableResolverAdapter;
 /**
  * R format security facet.
  *
- * @since 3.next
+ * @since 3.28
  */
 @Named
 public class RSecurityFacet

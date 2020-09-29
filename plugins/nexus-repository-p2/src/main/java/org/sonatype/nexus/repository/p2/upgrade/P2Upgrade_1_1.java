@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
  * Upgrade step to update {@code name} for p2 assets (remove redundant slash in start) and delete browse_node entries
  * for p2 repositories forcing them to be rebuilt by {@link org.sonatype.nexus.repository.browse.internal.RebuildBrowseNodesManager}.
  *
- * @since 3.next
+ * @since 3.28
  */
 @Named
 @Singleton

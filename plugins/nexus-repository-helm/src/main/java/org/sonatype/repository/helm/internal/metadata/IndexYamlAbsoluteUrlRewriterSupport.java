@@ -50,7 +50,7 @@ import static java.util.Collections.emptyList;
 /**
  * Removes absolute URL entries from index.yaml
  *
- * @since 3.next
+ * @since 3.28
  */
 public class IndexYamlAbsoluteUrlRewriterSupport
     extends ComponentSupport

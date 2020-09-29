@@ -18,7 +18,7 @@ import java.util.Optional;
 /**
  * Database property names for Helm asset attributes
  *
- * @since 3.next
+ * @since 3.28
  */
 public enum HelmProperties
 {

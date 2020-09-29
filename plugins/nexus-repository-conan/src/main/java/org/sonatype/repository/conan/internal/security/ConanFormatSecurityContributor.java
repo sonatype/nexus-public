@@ -23,7 +23,7 @@ import org.sonatype.repository.conan.internal.ConanFormat;
 /**
  * Conan format security resource.
  *
- * @since 3.next
+ * @since 3.28
  */
 @Named
 @Singleton

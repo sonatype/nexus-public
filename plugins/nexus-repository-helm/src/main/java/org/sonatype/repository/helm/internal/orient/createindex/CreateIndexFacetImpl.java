@@ -55,7 +55,7 @@ import static org.sonatype.repository.helm.internal.AssetKind.HELM_PACKAGE;
 /**
  * Facet for rebuilding Helm index.yaml files
  *
- * @since 3.next
+ * @since 3.28
  */
 @Named
 public class CreateIndexFacetImpl

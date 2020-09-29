@@ -17,7 +17,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Event dispatched when R metadata (PACKAGES files) should be invalidated and rebuilt.
  *
- * @since 3.next
+ * @since 3.28
  */
 public class RMetadataInvalidationEvent
 {

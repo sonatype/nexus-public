@@ -30,7 +30,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Shared code between P2 facets.
  *
- * @since 3.next
+ * @since 3.28
  */
 @Named
 public class P2TempBlobUtils

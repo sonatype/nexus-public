@@ -38,7 +38,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 /**
  * @since 1.1.next
  *
- * @since 3.next
+ * @since 3.28
  */
 @Named
 public class RRestoreFacetImpl
