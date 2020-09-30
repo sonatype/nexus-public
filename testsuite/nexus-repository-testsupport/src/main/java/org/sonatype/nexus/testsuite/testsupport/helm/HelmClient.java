@@ -20,6 +20,7 @@ import org.sonatype.nexus.testsuite.testsupport.FormatClientSupport;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -50,5 +51,12 @@ public class HelmClient
     final HttpPut put = new HttpPut(resolve);
     put.setEntity(entity);
     return execute(put);
+  }
+
+  public HttpResponse post(final String path, final HttpEntity entity) throws IOException {
+    final URI resolve = resolve(path);
+    final HttpPost post = new HttpPost(resolve);
+    post.setEntity(entity);
+    return execute(post);
   }
 }

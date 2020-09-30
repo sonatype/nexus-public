@@ -56,6 +56,20 @@ public class HelmHostedFacetImpl
   }
 
   @Override
+  public String getPath(final HelmAttributes attributes, final AssetKind assetKind)
+  {
+    if (assetKind != HELM_PACKAGE && assetKind != HELM_PROVENANCE) {
+      throw new IllegalArgumentException("Unsupported assetKind: " + assetKind);
+    }
+
+    String extension = assetKind.getExtension();
+    String name = attributes.getName();
+    String version = attributes.getVersion();
+
+    return String.format("/%s-%s%s", name, version, extension);
+  }
+
+  @Override
   public void upload(
       final String path,
       final Payload payload,

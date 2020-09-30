@@ -33,6 +33,8 @@ public interface HelmHostedFacet
 {
   Content get(String path);
 
+  String getPath(final HelmAttributes attributes, final AssetKind assetKind) throws IOException;
+
   void upload(final String path, final Payload payload, final AssetKind assetKind) throws IOException;
 
   Content upload(

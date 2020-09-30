@@ -30,6 +30,7 @@ import org.sonatype.nexus.repository.view.Route
 import org.sonatype.nexus.repository.view.Router
 import org.sonatype.nexus.repository.view.ViewFacet
 import org.sonatype.nexus.repository.view.matchers.ActionMatcher
+import org.sonatype.nexus.repository.view.matchers.LiteralMatcher
 import org.sonatype.nexus.repository.view.matchers.logic.LogicMatchers
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher
 import org.sonatype.repository.helm.internal.AssetKind
@@ -39,6 +40,7 @@ import org.sonatype.repository.helm.internal.orient.createindex.CreateIndexFacet
 
 import static org.sonatype.nexus.repository.http.HttpMethods.DELETE
 import static org.sonatype.nexus.repository.http.HttpMethods.PUT
+import static org.sonatype.nexus.repository.http.HttpMethods.POST
 import static org.sonatype.repository.helm.internal.AssetKind.HELM_PACKAGE
 import static org.sonatype.repository.helm.internal.AssetKind.HELM_PROVENANCE
 
@@ -120,6 +122,19 @@ class HelmHostedRecipe
           .create())
     }
 
+    builder.route(new Route.Builder().matcher(chartPushMatcher())
+        .handler(timingHandler)
+        .handler(securityHandler)
+        .handler(formatHighAvailabilitySupportHandler)
+        .handler(exceptionHandler)
+        .handler(handlerContributor)
+        .handler(conditionalRequestHandler)
+        .handler(partialFetchHandler)
+        .handler(contentHeadersHandler)
+        .handler(unitOfWorkHandler)
+        .handler(hostedHandlers.push)
+        .create())
+
     builder.route(new Route.Builder().matcher(chartDeleteMatcher())
         .handler(timingHandler)
         .handler(securityHandler)
@@ -138,6 +153,13 @@ class HelmHostedRecipe
     facet.configure(builder.create())
 
     return facet
+  }
+
+  static Matcher chartPushMatcher() {
+    LogicMatchers.and(
+        new ActionMatcher(POST),
+        new LiteralMatcher('/api/charts')
+    )
   }
 
   static Matcher chartUploadMatcher() {
