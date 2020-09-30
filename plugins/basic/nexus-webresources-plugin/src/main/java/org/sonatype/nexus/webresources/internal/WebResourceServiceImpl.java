@@ -140,31 +140,36 @@ public class WebResourceServiceImpl
     if (file != null) {
       resource = new FileWebResource(file, path, mimeSupport.guessMimeTypeFromPath(file.getName()), false);
       log.trace("Found dev-mode resource: {}", resource);
+      return resource;
     }
 
     // 2) second, look at "ordinary" resources, but only if devResource did not hit anything
-    if (resource == null) {
-      resource = resourcePaths.get(path);
-      if (resource != null) {
-        log.trace("Found bound resource: {}", resource);
-      }
+    resource = resourcePaths.get(path);
+    if (resource != null) {
+      log.trace("Found bound resource: {}", resource);
+      return resource;
     }
 
-    // 3) third, look into WAR embedded resources
-    if (resource == null) {
-      URL url;
-      try {
-        url = servletContextProvider.get().getResource(path);
-        if (url != null) {
-          resource = new UrlWebResource(url, path, mimeSupport.guessMimeTypeFromPath(path));
-          log.trace("Found servlet-context resource: {}", resource);
-        }
-      }
-      catch (MalformedURLException e) {
-        throw Throwables.propagate(e);
-      }
+    // 3) weed out the traversal requests, as the next check will potentially load files from anywhere
+    if (path.contains("..")) {
+      log.debug("Ignoring request that contains `..`: {}", path);
+      return null;
     }
 
-    return resource;
+    // 4) finally, look into WAR embedded resources
+    URL url;
+    try {
+      url = servletContextProvider.get().getResource(path);
+      if (url != null) {
+        resource = new UrlWebResource(url, path, mimeSupport.guessMimeTypeFromPath(path));
+        log.trace("Found servlet-context resource: {}", resource);
+        return resource;
+      }
+    }
+    catch (MalformedURLException e) {
+      throw Throwables.propagate(e);
+    }
+
+    return null;
   }
 }
