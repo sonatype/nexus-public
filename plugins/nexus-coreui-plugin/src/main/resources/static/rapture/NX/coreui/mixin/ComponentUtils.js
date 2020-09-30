@@ -34,53 +34,7 @@ Ext.define('NX.coreui.mixin.ComponentUtils', {
     var me = this,
         componentModel = me.fetchComponentModelFromView();
 
-    function doOpenAnalyzeWindow(response) {
-      var widget = Ext.widget('nx-coreui-component-analyze-window');
-      var form = widget.down('form');
-      form.getForm().setValues(response.data);
-      //I am setting the original value so it won't be marked dirty unless user touches it
-      form.down('textfield[name="reportLabel"]').originalValue = response.data.reportLabel;
-
-      var assetKeys = response.data.assetMap ? Ext.Object.getKeys(response.data.assetMap) : [];
-
-      if (assetKeys.length < 1) {
-        widget.close();
-        NX.Dialogs.showError(NX.I18n.get('AnalyzeApplicationWindow_No_Assets_Error_Title'),
-            NX.I18n.get('AnalyzeApplicationWindow_No_Assets_Error_Message'));
-      }
-      else if (assetKeys.length === 1) {
-        widget.down('combo[name="asset"]').setValue(response.data.selectedAsset);
-      }
-      else {
-        var data = [];
-        for (var i = 0; i < assetKeys.length; i++) {
-          data.push([assetKeys[i], response.data.assetMap[assetKeys[i]]]);
-        }
-        var combo = widget.down('combo[name="asset"]');
-        combo.getStore().loadData(data, false);
-        combo.setValue(response.data.selectedAsset);
-        combo.show();
-      }
-    }
-
-    me.getRootContainer().getEl().mask(NX.I18n.get('AnalyzeApplicationWindow_Loading_Mask'));
-    NX.direct.ahc_Component.getPredefinedValues(JSON.stringify(componentModel.getData()), function(response) {
-      me.getRootContainer().getEl().unmask();
-      if (Ext.isObject(response) && response.success) {
-        if (response.data.tosAccepted) {
-          doOpenAnalyzeWindow(response);
-        }
-        else {
-          Ext.widget('nx-coreui-healthcheck-eula', {
-            acceptFn: function() {
-              NX.direct.ahc_Component.acceptTermsOfService(function() {
-                doOpenAnalyzeWindow(response);
-              });
-            }
-          });
-        }
-      }
-    });
+    Ext.widget('nx-coreui-component-analyze-window', {component: componentModel.getData()});
   },
 
   updateAnalyzeButton: function(componentModel) {

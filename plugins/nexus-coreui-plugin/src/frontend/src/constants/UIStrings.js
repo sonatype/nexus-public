@@ -10,8 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-import { UIStrings } from 'nexus-ui-plugin';
-import React from 'react';
+import {UIStrings} from 'nexus-ui-plugin';
 
 export default {
   ...UIStrings,
@@ -206,5 +205,42 @@ export default {
     CREATED_PATH_LABEL: 'Path:',
     CREATED_DOWNLOAD_BUTTON: 'Download',
     AUTHENTICATE_TEXT: 'Downloading support ZIP requires validation of your credentials.'
+  },
+
+  HEALTHCHECK_EULA: {
+    HEADER: 'Nexus IQ Server Terms of Use',
+    BUTTONS: {
+      ACCEPT: 'I accept',
+      DECLINE: 'I do not accept'
+    }
+  },
+
+  ANALYZE_APPLICATION: {
+    HEADER: 'Analyze Application',
+    MAIN: 'Application analysis performs a deep inspection of this application, identifying potential risks.<br/> More information is available here <a href=\"http://links.sonatype.com/products/insight/ac/home\">here</a>',
+    EMAIL: {
+      LABEL: 'Email address',
+      DESCRIPTION: 'The address where the summary report will be sent'
+    },
+    PASSWORD: {
+      LABEL: 'Report password',
+      DESCRIPTION: 'A password to gain access to the detailed report'
+    },
+    PACKAGES: {
+      LABEL: 'Proprietary packages',
+      DESCRIPTION: 'A comma separated list of proprietary packages'
+    },
+    REPORT: {
+      LABEL: 'Report label',
+      DESCRIPTION: 'The name the report will be given'
+    },
+    SELECT_ASSET: {
+      LABEL: 'Select Asset',
+      DESCRIPTION: 'Select an asset to base the analysis on'
+    },
+    BUTTONS: {
+      ANALYZE: 'Analyze',
+      CANCEL: 'Cancel'
+    }
   }
 };

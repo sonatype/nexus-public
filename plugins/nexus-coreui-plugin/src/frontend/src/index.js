@@ -21,6 +21,12 @@ import SupportZip from "./components/pages/admin/SupportZip/SupportZip";
 import UIStrings from './constants/UIStrings';
 import UserAccount from "./components/pages/admin/UserAccount/UserAccount";
 import NuGetApiToken from "./components/pages/user/NuGetApiToken/NuGetApiToken";
+import AnalyzeApplication from "./components/pages/user/AnalyzeApplication/AnalyzeApplication";
+
+window.ReactComponents = {
+  ...window.ReactComponents,
+  AnalyzeApplication
+};
 
 window.plugins.push({
   id: 'nexus-coreui-plugin',
