@@ -71,7 +71,7 @@ public class RepoConversionTest
 
     repoToBeTreated.setRemoteStorage(remoteRepositoryStorage);
 
-    repoToBeTreated.setRemoteUrl("http://repo1.maven.org/maven2/");
+    repoToBeTreated.setRemoteUrl("https://repo1.maven.org/maven2/");
 
     getApplicationConfiguration().saveConfiguration();
 

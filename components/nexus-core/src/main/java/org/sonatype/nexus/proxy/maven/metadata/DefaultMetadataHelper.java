@@ -142,6 +142,22 @@ public class DefaultMetadataHelper
         DigestCalculatingInspector.DIGEST_SHA1_KEY);
   }
 
+  @Override
+  public String buildSh256(String path)
+      throws IOException
+  {
+    return getStorageItem(path, true).getRepositoryItemAttributes().get(
+        DigestCalculatingInspector.DIGEST_SHA256_KEY);
+  }
+
+  @Override
+  public String buildSh512(String path)
+      throws IOException
+  {
+    return getStorageItem(path, true).getRepositoryItemAttributes().get(
+        DigestCalculatingInspector.DIGEST_SHA512_KEY);
+  }
+
   private AbstractStorageItem getStorageItem(final String path, final boolean localOnly)
       throws IOException
   {

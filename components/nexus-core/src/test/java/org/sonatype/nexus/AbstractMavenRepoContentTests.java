@@ -171,7 +171,7 @@ public abstract class AbstractMavenRepoContentTests
         try {
           String path = file.getAbsolutePath().substring(from.getAbsolutePath().length());
 
-          FileUtils.copyFile(file, new File(to, path), false);
+          FileUtils.copyFile(file, new File(to, path), true);
         }
         catch (IOException e) {
           throw new IllegalStateException("Cannot copy dirtree.", e);

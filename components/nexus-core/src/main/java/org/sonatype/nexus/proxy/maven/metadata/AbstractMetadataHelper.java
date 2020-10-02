@@ -49,6 +49,10 @@ abstract public class AbstractMetadataHelper
 
   static final String SHA1_SUFFIX = ".sha1";
 
+  static final String SHA256_SUFFIX = ".sha256";
+
+  static final String SHA512_SUFFIX = ".sha512";
+
   static final String METADATA_SUFFIX = "/maven-metadata.xml";
 
   static final String APPROPRIATE_GAV_PATTERN = "^[\\d\\w\\.-]*$";
@@ -319,6 +323,12 @@ abstract public class AbstractMetadataHelper
       if (exists(path + SHA1_SUFFIX)) {
         remove(path + SHA1_SUFFIX);
       }
+      if (exists(path + SHA256_SUFFIX)) {
+        remove(path + SHA256_SUFFIX);
+      }
+      if (exists(path + SHA512_SUFFIX)) {
+        remove(path + SHA512_SUFFIX);
+      }
 
       return;
     }
@@ -330,6 +340,10 @@ abstract public class AbstractMetadataHelper
     store(buildMd5(path), path + MD5_SUFFIX);
 
     store(buildSh1(path), path + SHA1_SUFFIX);
+
+    store(buildSh256(path), path + SHA256_SUFFIX);
+
+    store(buildSh512(path), path + SHA512_SUFFIX);
   }
 
   protected boolean shouldBuildChecksum(String path) {
@@ -341,7 +355,8 @@ abstract public class AbstractMetadataHelper
   }
 
   protected boolean isChecksumFile(String path) {
-    if (getName(path).endsWith(MD5_SUFFIX) || getName(path).endsWith(SHA1_SUFFIX)) {
+    if (getName(path).endsWith(MD5_SUFFIX) || getName(path).endsWith(SHA1_SUFFIX) ||
+        getName(path).endsWith(SHA256_SUFFIX) || getName(path).endsWith(SHA512_SUFFIX)) {
       return true;
     }
     return false;
@@ -351,6 +366,12 @@ abstract public class AbstractMetadataHelper
       throws IOException;
 
   abstract public String buildSh1(String path)
+      throws IOException;
+
+  abstract public String buildSh256(String path)
+      throws IOException;
+
+  abstract public String buildSh512(String path)
       throws IOException;
 
   /**

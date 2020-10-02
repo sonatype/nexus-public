@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.sonatype.nexus.testsuite</groupId>
     <artifactId>nexus-testsuite</artifactId>
-    <version>2.14.16-01</version>
+    <version>2.14.19-01</version>
   </parent>
 
   <artifactId>nexus-legacy-testsuite</artifactId>
@@ -132,7 +132,7 @@
 
     <dependency>
       <groupId>org.bouncycastle</groupId>
-      <artifactId>bcprov-jdk15on</artifactId>
+      <artifactId>bcprov-jdk15to18</artifactId>
       <scope>test</scope>
     </dependency>
 

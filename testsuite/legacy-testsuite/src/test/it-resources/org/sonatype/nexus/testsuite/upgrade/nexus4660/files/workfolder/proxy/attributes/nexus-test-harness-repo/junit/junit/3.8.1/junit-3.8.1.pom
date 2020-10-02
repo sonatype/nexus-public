@@ -10,7 +10,7 @@
   <lastTouched>1321635241836</lastTouched>
   <lastRequested>1321635334916</lastRequested>
   <expired>false</expired>
-  <remoteUrl>http://repo1.maven.org/maven2/junit/junit/3.8.1/junit-3.8.1.pom</remoteUrl>
+  <remoteUrl>https://repo1.maven.org/maven2/junit/junit/3.8.1/junit-3.8.1.pom</remoteUrl>
   <attributes>
     <entry>
       <string>nexus</string>

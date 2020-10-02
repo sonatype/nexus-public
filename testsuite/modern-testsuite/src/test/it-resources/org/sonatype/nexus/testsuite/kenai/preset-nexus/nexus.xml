@@ -52,7 +52,7 @@
       </localStorage>
       <remoteStorage>
         <provider>apacheHttpClient3x</provider>
-        <url>http://repo1.maven.org/maven2/</url>
+        <url>https://repo1.maven.org/maven2/</url>
       </remoteStorage>
       <externalConfiguration>
         <proxyMode>ALLOW</proxyMode>

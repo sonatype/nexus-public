@@ -101,7 +101,7 @@ public class AnAbstractProxyRepositoryRetrieveRemoteItemMethodTest
     doReturn(repositoryItemUidFactory).when(abstractRepository).getRepositoryItemUidFactory();
     doReturn(localRepositoryStorage).when(abstractRepository).getLocalStorage();
     doReturn(remoteRepositoryStorage).when(abstractRepository).getRemoteStorage();
-    doReturn(ImmutableList.of("http://repo1.maven.org/maven2/")).when(abstractRepository)
+    doReturn(ImmutableList.of("https://repo1.maven.org/maven2/")).when(abstractRepository)
         .getRemoteUrls(any(ResourceStoreRequest.class));
 
     when(repositoryRegistry.getRepository(anyString())).thenReturn(abstractRepository);

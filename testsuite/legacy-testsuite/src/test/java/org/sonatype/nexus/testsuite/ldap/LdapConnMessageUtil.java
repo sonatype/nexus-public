@@ -15,7 +15,6 @@ package org.sonatype.nexus.testsuite.ldap;
 import java.io.IOException;
 
 import org.sonatype.nexus.integrationtests.RequestFacade;
-import org.sonatype.nexus.security.ldap.realms.api.LdapRealmPlexusResourceConst;
 import org.sonatype.nexus.security.ldap.realms.api.dto.LdapConnectionInfoDTO;
 import org.sonatype.nexus.security.ldap.realms.api.dto.LdapConnectionInfoResponse;
 import org.sonatype.nexus.test.utils.GroupMessageUtil;
@@ -181,15 +180,7 @@ public class LdapConnMessageUtil
     Assert.assertEquals(actual.getRealm(), expected.getRealm());
     Assert.assertEquals(actual.getSearchBase(), expected.getSearchBase());
     Assert.assertEquals(actual.getSystemUsername(), expected.getSystemUsername());
-
-    // if the expectedPassword == null then the actual should be null
-    // if its anything else the actual password should be "--FAKE-PASSWORD--"
-    if (expected.getSystemPassword() == null) {
-      Assert.assertNull(actual.getSystemPassword());
-    }
-    else {
-      Assert.assertEquals(actual.getSystemPassword(), LdapRealmPlexusResourceConst.FAKE_PASSWORD);
-    }
+    Assert.assertNull(actual.getSystemPassword());
 
     // also validate the file config
     this.validateLdapConfig(expected);

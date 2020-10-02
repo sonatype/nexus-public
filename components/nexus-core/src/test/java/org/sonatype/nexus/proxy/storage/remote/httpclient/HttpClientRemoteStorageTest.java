@@ -281,7 +281,7 @@ public class HttpClientRemoteStorageTest
 
     final ProxyRepository proxyMock = mock(ProxyRepository.class);
     when(proxyMock.getId()).thenReturn("foo");
-    when(proxyMock.getRemoteUrl()).thenReturn("http://repo1.maven.org/maven2/");
+    when(proxyMock.getRemoteUrl()).thenReturn("https://repo1.maven.org/maven2/");
     when(proxyMock.getRemoteStorageContext()).thenReturn(new DefaultRemoteStorageContext(null));
     
     assertThat(underTest.checkRemoteAvailability(0, proxyMock, new ResourceStoreRequest("/"), false), is(true));

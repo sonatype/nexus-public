@@ -22,7 +22,6 @@ import java.io.Reader;
 import java.util.HashMap;
 
 import org.sonatype.ldaptestsuite.LdapServer;
-import org.sonatype.nexus.security.ldap.realms.api.LdapRealmPlexusResourceConst;
 import org.sonatype.nexus.security.ldap.realms.api.dto.LdapConnectionInfoDTO;
 import org.sonatype.plexus.rest.resource.error.ErrorMessage;
 import org.sonatype.plexus.rest.resource.error.ErrorResponse;
@@ -123,14 +122,6 @@ public abstract class NexusLdapTestSupport
     Assert.assertEquals(expected.getRealm(), actual.getRealm());
     Assert.assertEquals(expected.getSearchBase(), actual.getSearchBase());
     Assert.assertEquals(expected.getSystemUsername(), actual.getSystemUsername());
-
-    // if the expectedPassword == null then the actual should be null
-    // if its anything else the actual password should be "--FAKE-PASSWORD--"
-    if (expected.getSystemPassword() == null) {
-      Assert.assertNull(actual.getSystemPassword());
-    }
-    else {
-      Assert.assertEquals(LdapRealmPlexusResourceConst.FAKE_PASSWORD, actual.getSystemPassword());
-    }
+    Assert.assertNull(actual.getSystemPassword());
   }
 }

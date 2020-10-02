@@ -144,18 +144,7 @@ public abstract class AbstractLdapRealmPlexusResource
     connInfo.setSearchBase(restConnInfo.getSearchBase());
     connInfo.setSystemUsername(restConnInfo.getSystemUsername());
     connInfo.setRealm(restConnInfo.getRealm());
-
-    // check if the request was sent with a password other then the FAKE one
-    // if we get the fake one we need to grab the real password from the configuration.
-    // if its something different we can update it.
-    if (FAKE_PASSWORD.equals(restConnInfo.getSystemPassword())) {
-      if (this.getConfiguration().readConnectionInfo() != null) {
-        connInfo.setSystemPassword(this.getConfiguration().readConnectionInfo().getSystemPassword());
-      }
-    }
-    else {
-      connInfo.setSystemPassword(restConnInfo.getSystemPassword());
-    }
+    connInfo.setSystemPassword(restConnInfo.getSystemPassword());
 
     return connInfo;
   }
@@ -170,13 +159,8 @@ public abstract class AbstractLdapRealmPlexusResource
       connInfo.setSearchBase(ldapConnInfo.getSearchBase());
       connInfo.setSystemUsername(ldapConnInfo.getSystemUsername());
       connInfo.setRealm(ldapConnInfo.getRealm());
-
-      // if the ldapConInfo password is set hide it by using a fake password
-      // if it is not set, we want to return an null.
-      if (StringUtils.isNotEmpty(ldapConnInfo.getSystemPassword())) {
-        connInfo.setSystemPassword(FAKE_PASSWORD);
-      }
-
+      //purposefully not setting systemPassword to FAKE_PASSWORD so user will be required to re-enter password for any
+      // actions see https://issues.sonatype.org/browse/NEXUS-23184
     }
     return connInfo;
   }

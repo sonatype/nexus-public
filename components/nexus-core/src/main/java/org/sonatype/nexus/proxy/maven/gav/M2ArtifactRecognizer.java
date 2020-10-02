@@ -21,7 +21,7 @@ public class M2ArtifactRecognizer
    * Is this item M2 Checksum?
    */
   public static boolean isChecksum(String path) {
-    return path.endsWith(".sha1") || path.endsWith(".md5");
+    return path.endsWith(".sha1") || path.endsWith(".sha256") || path.endsWith(".sha512") || path.endsWith(".md5");
   }
 
   /**
@@ -42,8 +42,9 @@ public class M2ArtifactRecognizer
    * Is this item M2 metadata?
    */
   public static boolean isMetadata(String path) {
-    return path.endsWith("maven-metadata.xml") || path.endsWith("maven-metadata.xml.sha1")
-        || path.endsWith("maven-metadata.xml.md5");
+    return path.endsWith("maven-metadata.xml") || path.endsWith("maven-metadata.xml.sha1") ||
+        path.endsWith("maven-metadata.xml.sha256") || path.endsWith("maven-metadata.xml.sha512") ||
+        path.endsWith("maven-metadata.xml.md5");
   }
 
   public static boolean isSignature(String path) {

@@ -21,6 +21,8 @@ import org.sonatype.nexus.proxy.walker.WalkerContext;
 import static org.sonatype.nexus.proxy.maven.ChecksumContentValidator.ATTR_REMOTE_HASH_EXPIRED;
 import static org.sonatype.nexus.proxy.maven.ChecksumContentValidator.ATTR_REMOTE_MD5;
 import static org.sonatype.nexus.proxy.maven.ChecksumContentValidator.ATTR_REMOTE_SHA1;
+import static org.sonatype.nexus.proxy.maven.ChecksumContentValidator.ATTR_REMOTE_SHA256;
+import static org.sonatype.nexus.proxy.maven.ChecksumContentValidator.ATTR_REMOTE_SHA512;
 
 public class ExpireCacheWalker
     extends AbstractFileWalkerProcessor
@@ -52,7 +54,8 @@ public class ExpireCacheWalker
       if (isMavenProxy) {
         // expire remote hashes when expiring maven proxy cache
         Attributes attributes = item.getRepositoryItemAttributes();
-        if (attributes.containsKey(ATTR_REMOTE_SHA1) || attributes.containsKey(ATTR_REMOTE_MD5)) {
+        if (attributes.containsKey(ATTR_REMOTE_SHA1) || attributes.containsKey(ATTR_REMOTE_SHA256) ||
+            attributes.containsKey(ATTR_REMOTE_SHA512) || attributes.containsKey(ATTR_REMOTE_MD5)) {
           attributes.put(ATTR_REMOTE_HASH_EXPIRED, "true");
         }
       }

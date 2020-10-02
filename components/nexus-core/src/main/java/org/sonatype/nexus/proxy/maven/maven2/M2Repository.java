@@ -324,6 +324,12 @@ public class M2Repository
           else if (request.getRequestPath().endsWith(".sha1")) {
             path = path.substring(0, path.length() - 5);
           }
+          else if (request.getRequestPath().endsWith(".sha256")) {
+            path = path.substring(0, path.length() - 7);
+          }
+          else if (request.getRequestPath().endsWith(".sha512")) {
+            path = path.substring(0, path.length() - 7);
+          }
           // we have to keep original reqest's flags: localOnly and remoteOnly are strange ones, so
           // we do a hack here
           // second, since we initiate a request for different path within a context of this request,
@@ -362,6 +368,12 @@ public class M2Repository
             String digest;
             if (request.getRequestPath().endsWith(".md5")) {
               digest = DigesterUtils.getMd5Digest(mdOutput.toByteArray());
+            }
+            else if (request.getRequestPath().endsWith(".sha256")) {
+              digest = DigesterUtils.getSha256Digest(mdOutput.toByteArray());
+            }
+            else if (request.getRequestPath().endsWith(".sha512")) {
+              digest = DigesterUtils.getSha512Digest(mdOutput.toByteArray());
             }
             else {
               digest = DigesterUtils.getSha1Digest(mdOutput.toByteArray());

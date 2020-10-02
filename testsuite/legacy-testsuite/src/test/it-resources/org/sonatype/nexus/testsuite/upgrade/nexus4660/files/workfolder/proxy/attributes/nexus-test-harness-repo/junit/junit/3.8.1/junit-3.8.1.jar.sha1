@@ -10,7 +10,7 @@
   <lastTouched>1321635242810</lastTouched>
   <lastRequested>1321635334974</lastRequested>
   <expired>false</expired>
-  <remoteUrl>http://repo1.maven.org/maven2/junit/junit/3.8.1/junit-3.8.1.jar.sha1</remoteUrl>
+  <remoteUrl>https://repo1.maven.org/maven2/junit/junit/3.8.1/junit-3.8.1.jar.sha1</remoteUrl>
   <attributes>
     <entry>
       <string>digest.sha1</string>

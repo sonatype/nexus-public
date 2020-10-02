@@ -158,9 +158,17 @@ public abstract class AbstractLocalRepositoryStorage
           new ChecksummingContentLocator(item.getContentLocator(), MessageDigest.getInstance("SHA1"),
               StorageFileItem.DIGEST_SHA1_KEY, item.getItemContext());
 
+      ChecksummingContentLocator sha256cl =
+          new ChecksummingContentLocator(sha1cl, MessageDigest.getInstance("SHA-256"),
+              StorageFileItem.DIGEST_SHA256_KEY, item.getItemContext());
+
+      ChecksummingContentLocator sha512cl =
+          new ChecksummingContentLocator(sha256cl, MessageDigest.getInstance("SHA-512"),
+              StorageFileItem.DIGEST_SHA512_KEY, item.getItemContext());
+
       // md5 is deprecated but still calculated
       ChecksummingContentLocator md5cl =
-          new ChecksummingContentLocator(sha1cl, MessageDigest.getInstance("MD5"),
+          new ChecksummingContentLocator(sha512cl, MessageDigest.getInstance("MD5"),
               StorageFileItem.DIGEST_MD5_KEY, item.getItemContext());
 
       item.setContentLocator(md5cl);

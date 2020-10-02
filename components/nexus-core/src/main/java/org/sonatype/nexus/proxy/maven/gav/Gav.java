@@ -37,7 +37,7 @@ public class Gav
    */
   public enum HashType
   {
-    sha1, md5
+    sha1, sha256, sha512, md5
   }
 
   /**
