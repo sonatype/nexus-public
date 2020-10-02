@@ -12,6 +12,10 @@
  */
 package org.sonatype.nexus.repository.pypi.internal;
 
+import java.util.List;
+
+import com.google.common.collect.ImmutableList;
+
 /**
  * PyPI format specific attributes. PyPI doesn't have a clear component/asset separation (it has a name under which
  * every possible package and archive regardless of version is grouped), so much of this is a best fit to our model.
@@ -154,4 +158,35 @@ public final class PyPiAttributes
   private PyPiAttributes() {
     // empty
   }
+
+  /**
+   * The supported format attributes for PyPI.
+   */
+  public static final List<String> SUPPORTED_ATTRIBUTES = ImmutableList.of(
+      P_NAME,
+      P_VERSION,
+      P_PYVERSION,
+      P_PLATFORM,
+      P_FILETYPE,
+      P_DESCRIPTION,
+      P_SUMMARY,
+      P_LICENSE,
+      P_KEYWORDS,
+      P_AUTHOR,
+      P_AUTHOR_EMAIL,
+      P_MAINTAINER,
+      P_MAINTAINER_EMAIL,
+      P_HOME_PAGE,
+      P_DOWNLOAD_URL,
+      P_CLASSIFIERS,
+      P_REQUIRES_DIST,
+      P_PROVIDES_EXTRA,
+      P_SUPPORTED_PLATFORM,
+      P_PROVIDES_DIST,
+      P_OBSOLETES_DIST,
+      P_REQUIRES_PYTHON,
+      P_REQUIRES_EXTERNAL,
+      P_PROJECT_URL,
+      P_GENERATOR
+  );
 }

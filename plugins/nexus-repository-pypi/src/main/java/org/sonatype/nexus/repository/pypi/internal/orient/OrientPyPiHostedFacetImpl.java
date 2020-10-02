@@ -67,6 +67,8 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.INDEX_PA
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.indexPath;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.normalizeName;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.packagesPath;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiStorageUtils.getNameAttributes;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiStorageUtils.validateMd5Hash;
 import static org.sonatype.nexus.repository.pypi.internal.orient.OrientPyPiDataUtils.HASH_ALGORITHMS;
 import static org.sonatype.nexus.repository.pypi.internal.orient.OrientPyPiDataUtils.copyAttributes;
 import static org.sonatype.nexus.repository.pypi.internal.orient.OrientPyPiDataUtils.findAsset;
@@ -290,18 +292,6 @@ public class OrientPyPiHostedFacetImpl
     return asset;
   }
 
-  private void validateMd5Hash(final Map<String, String> attributes, final TempBlob tempBlob) {
-    if (attributes.containsKey("md5_digest")) {
-      String expectedDigest = attributes.get("md5_digest");
-      HashCode hashCode = tempBlob.getHashes().get(MD5);
-      String hashValue = hashCode.toString();
-      if (!expectedDigest.equalsIgnoreCase(hashValue)) {
-        throw new IllegalOperationException(
-            "Digests do not match, found: " + hashValue + ", expected: " + expectedDigest);
-      }
-    }
-  }
-
   private Component findOrCreateComponent(
       final String name,
       final String version,
@@ -336,7 +326,7 @@ public class OrientPyPiHostedFacetImpl
     // See https://bugs.python.org/issue10510 for the "fixed" Python distutils issue.
     //
     component = tx.createComponent(bucket, getRepository().getFormat()).name(normalizedName).version(version);
-    setComponentName(component.formatAttributes(), name);
+    getNameAttributes(name).forEach((k,v) -> component.formatAttributes().set(k, v));
     component.formatAttributes().set(P_VERSION, version);
     return component;
   }
@@ -439,21 +429,6 @@ public class OrientPyPiHostedFacetImpl
     catch (IOException exception) {
       throw new RuntimeException(exception);
     }
-  }
-
-  /**
-   * We supply all variants of the name. According to pep-503 '-', '.' and '_' are to be treated equally.
-   * This allows searching for this component to be found using any combination of the substituted characters.
-   * When using only this technique and not parsing the actual metadata stored in the package, the original name
-   * (if it contained multiple special characters) would not be accounted for in search.
-   * @param attributes associated with the component
-   * @param name of the component to be saved
-   */
-  private void setComponentName(final NestedAttributesMap attributes, final String name) {
-    attributes.set(P_NAME, name);
-    attributes.set("name_dash", normalizeName(name, "-"));
-    attributes.set("name_dot", normalizeName(name, "."));
-    attributes.set("name_underscore", normalizeName(name, "_"));
   }
 
   @Override
