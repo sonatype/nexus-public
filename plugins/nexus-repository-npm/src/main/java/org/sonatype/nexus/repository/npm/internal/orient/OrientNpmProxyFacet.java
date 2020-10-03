@@ -15,6 +15,7 @@ package org.sonatype.nexus.repository.npm.internal.orient;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -66,6 +67,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.impl.client.HttpClientBuilder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
@@ -101,6 +103,14 @@ public class OrientNpmProxyFacet
     }
   }
 
+  protected Content fetch(String url, Context context, @Nullable Content stale) throws IOException {
+    // We need to handle redirects manually
+    // DefaultRedirectStrategy copies all headers from original request
+    // https://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/org/apache/http/impl/client/DefaultRedirectStrategy.html
+    HttpClient client = HttpClientBuilder.create().disableRedirectHandling().build();
+    return fetch(client, url, context, stale);
+  }
+
   /**
    * Execute http client request.
    */
@@ -108,8 +118,17 @@ public class OrientNpmProxyFacet
   protected HttpResponse execute(final Context context, final HttpClient client, final HttpRequestBase request)
       throws IOException
   {
+    boolean omitBearerToken = false;
+    URI uri = request.getURI();
+
+    if (StringUtils.isNotEmpty(uri.getQuery())) {
+      if (uri.getQuery().contains("X-Amz-Credential")) {
+        omitBearerToken = true;
+      }
+    }
+
     String bearerToken = getRepository().facet(HttpClientFacet.class).getBearerToken();
-    if (StringUtils.isNotBlank(bearerToken)) {
+    if (StringUtils.isNotBlank(bearerToken) && !omitBearerToken) {
       request.setHeader("Authorization", "Bearer " + bearerToken);
     }
     return super.execute(context, client, request);

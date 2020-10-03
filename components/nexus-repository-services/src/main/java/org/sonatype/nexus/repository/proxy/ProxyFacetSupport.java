@@ -23,6 +23,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.lang3.StringUtils;
 import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.common.io.Cooperation;
 import org.sonatype.nexus.common.io.CooperationFactory;
@@ -404,7 +405,10 @@ public abstract class ProxyFacetSupport
 
   protected Content fetch(String url, Context context, @Nullable Content stale) throws IOException {
     HttpClient client = httpClient.getHttpClient();
+    return fetch(client, url, context, stale);
+  }
 
+  protected Content fetch(HttpClient client, String url, Context context, @Nullable Content stale) throws IOException {
     checkState(config.remoteUrl.isAbsolute(),
         "Invalid remote URL '%s' for proxy repository %s, please fix your configuration", config.remoteUrl,
         getRepository().getName());
@@ -439,7 +443,8 @@ public abstract class ProxyFacetSupport
 
     final CacheInfo cacheInfo = getCacheController(context).current();
 
-    if (status.getStatusCode() == HttpStatus.SC_OK) {
+    int statusCode = status.getStatusCode();
+    if (statusCode == HttpStatus.SC_OK) {
       HttpEntity entity = response.getEntity();
       log.debug("Entity: {}", entity);
 
@@ -450,6 +455,15 @@ public abstract class ProxyFacetSupport
 
       result.getAttributes().set(CacheInfo.class, cacheInfo);
       return result;
+    }
+    else if (statusCode == HttpStatus.SC_MOVED_PERMANENTLY || statusCode == HttpStatus.SC_MOVED_TEMPORARILY) {
+      Header h = response.getLastHeader("Location");
+      if (h != null) {
+        String value = h.getValue();
+        if (StringUtils.isNotEmpty(value)) {
+          return fetch(value, context, stale);
+        }
+      }
     }
 
     try {

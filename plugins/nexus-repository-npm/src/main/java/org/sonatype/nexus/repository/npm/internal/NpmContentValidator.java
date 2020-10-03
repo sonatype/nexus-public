@@ -22,12 +22,14 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.apache.commons.lang3.StringUtils;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.mime.MimeRulesSource;
 import org.sonatype.nexus.repository.mime.ContentValidator;
 import org.sonatype.nexus.repository.mime.DefaultContentValidator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.repository.view.ContentTypes.APPLICATION_GZIP;
 
 /**
  * npm specific {@link ContentValidator} that "hints" default content validator for npm metadata and format
@@ -57,9 +59,13 @@ public class NpmContentValidator
                                      @Nullable final String declaredContentType) throws IOException
   {
     String name = contentName;
-    // if not tgz it is json package root
     if (name != null && !name.endsWith(".tgz")) {
-      name += ".json";
+      if (StringUtils.isNotEmpty(declaredContentType) && declaredContentType.equals(APPLICATION_GZIP)) {
+        name += ".tgz";
+      }
+      else {
+        name += ".json";
+      }
     }
     return defaultContentValidator.determineContentType(
         strictContentTypeValidation, contentSupplier, mimeRulesSource, name, declaredContentType
