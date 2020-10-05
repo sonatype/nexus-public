@@ -66,6 +66,7 @@ public class DatabaseServerImplTest
         ClassLoader.getSystemClassLoader(),
         false, false, false,
         "2424-2430", "2480-2490",
+        0,
         nodeAccess,
         new EntityHook(eventManager));
   }

@@ -12,7 +12,7 @@
  */
 
 /**
- * @since 3.next
+ * @since 3.28
  */
 Ext.define('NX.coreui.controller.SearchConan', {
   extend: 'NX.app.Controller',

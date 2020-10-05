@@ -47,7 +47,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
 /**
- * @since 3.next
+ * @since 3.28
  */
 @Named
 @Singleton

@@ -28,7 +28,7 @@ import com.google.common.collect.Iterables;
 /**
  * R Component and asset removing implementation
  *
- * @since 3.next
+ * @since 3.28
  */
 public class RComponentMaintenance
     extends DefaultComponentMaintenanceImpl

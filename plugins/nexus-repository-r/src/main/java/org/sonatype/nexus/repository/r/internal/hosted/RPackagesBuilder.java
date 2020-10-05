@@ -50,7 +50,7 @@ import static org.sonatype.nexus.repository.r.internal.RAttributes.P_VERSION;
  *
  * TODO: Add support for other metadata types (PACKAGES, PACKAGES.rds etc.)
  *
- * @since 3.next
+ * @since 3.28
  */
 public class RPackagesBuilder
 {

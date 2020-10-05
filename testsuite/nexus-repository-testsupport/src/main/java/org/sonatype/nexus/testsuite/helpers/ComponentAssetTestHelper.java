@@ -149,7 +149,13 @@ public interface ComponentAssetTestHelper
    */
   Optional<InputStream> read(Repository repository, String path);
 
-  static class AssetNotFoundException
+  /**
+   * Delete the blob associated with the asset with the specified path.
+   */
+  void deleteAssetBlob(Repository repository, String assetPath);
+
+
+  class AssetNotFoundException
       extends RuntimeException
   {
     AssetNotFoundException(final Repository repository, final String path) {
@@ -157,7 +163,7 @@ public interface ComponentAssetTestHelper
     }
   }
 
-  static class ComponentNotFoundException
+  class ComponentNotFoundException
       extends RuntimeException
   {
     ComponentNotFoundException(

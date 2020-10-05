@@ -840,54 +840,6 @@ Ext.define('NX.coreui.controller.ComponentAssetTree', {
     return this.getComponentInfo().componentModel;
   },
 
-  /**
-   * Analyze a component using the AHC service
-   *
-   * @private
-   */
-  analyzeAsset: function(button) {
-    var me = this,
-        componentInfo = me.getComponentInfo(),
-        win,
-        form,
-        formValues,
-        repositoryName,
-        assetId;
-
-    if (componentInfo) {
-      win = button.up('window');
-      form = button.up('form');
-      formValues = form.getForm().getValues();
-      repositoryName = componentInfo.componentModel.get('repositoryName');
-      assetId = form.down('combo[name="asset"]').getValue();
-      NX.direct.ahc_Component.analyzeAsset(repositoryName, assetId, formValues.emailAddress, formValues.password,
-          formValues.proprietaryPackages, formValues.reportLabel, function (response) {
-            if (Ext.isObject(response) && response.success) {
-              win.close();
-              NX.Messages.success(NX.I18n.get('ComponentDetails_Analyze_Success'));
-            }
-          });
-    }
-  },
-
-  /**
-   * When app changes, update the reportName as well
-   */
-  selectedApplicationChanged: function(combo) {
-    var me = this,
-        componentInfo = me.getComponentInfo(),
-        labelField;
-
-    if (componentInfo) {
-      labelField = me.getAnalyzeApplicationWindow().down('textfield[name="reportLabel"]');
-      if (!labelField.isDirty()) {
-        //I am setting the original value so it won't be marked dirty unless user touches it
-        labelField.originalValue = combo.getRawValue();
-        labelField.setValue(combo.getRawValue());
-      }
-    }
-  },
-
   removeNodeFromTree: function(node) {
     var me = this,
         panel = me.getComponentAssetTreePanel(),

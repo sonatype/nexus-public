@@ -29,8 +29,10 @@ import org.sonatype.nexus.repository.npm.internal.NpmAuditErrorHandler;
 import org.sonatype.nexus.repository.npm.internal.NpmAuditFacet;
 import org.sonatype.nexus.repository.npm.internal.NpmAuditTarballFacet;
 import org.sonatype.nexus.repository.npm.internal.NpmHandlers;
+import org.sonatype.nexus.repository.npm.internal.NpmPingHandler;
 import org.sonatype.nexus.repository.npm.internal.NpmSecurityFacet;
 import org.sonatype.nexus.repository.npm.internal.NpmTokenFacet;
+import org.sonatype.nexus.repository.npm.internal.NpmWhoamiHandler;
 import org.sonatype.nexus.repository.routing.RoutingRuleHandler;
 import org.sonatype.nexus.repository.security.SecurityHandler;
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet;
@@ -52,7 +54,7 @@ import static org.sonatype.nexus.repository.npm.internal.NpmPaths.tokenMatcher;
 import static org.sonatype.nexus.repository.npm.internal.NpmPaths.userMatcher;
 
 /**
- * @since 3.next
+ * @since 3.28
  */
 abstract class NpmRecipeSupport
     extends RecipeSupport
@@ -99,6 +101,10 @@ abstract class NpmRecipeSupport
 
   protected final Handler auditAnalyticsHandler;
 
+  protected final NpmWhoamiHandler npmWhoamiHandler;
+
+  protected final NpmPingHandler pingHandler;
+
   protected NpmRecipeSupport(
       final Type type,
       final Format format,
@@ -122,7 +128,9 @@ abstract class NpmRecipeSupport
       final Provider<LastAssetMaintenanceFacet> lastAssetMaintenanceFacet,
       final RoutingRuleHandler routingHandler,
       final NpmAuditErrorHandler auditErrorHandler,
-      @Nullable final Handler auditAnalyticsHandler)
+      @Nullable final Handler auditAnalyticsHandler,
+      final NpmWhoamiHandler npmWhoamiHandler,
+      final NpmPingHandler pingHandler)
   {
     super(type, format);
     this.securityFacet = checkNotNull(securityFacet);
@@ -146,6 +154,8 @@ abstract class NpmRecipeSupport
     this.routingHandler = checkNotNull(routingHandler);
     this.auditErrorHandler = checkNotNull(auditErrorHandler);
     this.auditAnalyticsHandler = Optional.ofNullable(auditAnalyticsHandler).orElse(Context::proceed);
+    this.npmWhoamiHandler = checkNotNull(npmWhoamiHandler);
+    this.pingHandler = checkNotNull(pingHandler);
   }
 
   /**

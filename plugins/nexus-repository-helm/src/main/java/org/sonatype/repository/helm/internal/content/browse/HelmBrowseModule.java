@@ -20,7 +20,7 @@ import org.sonatype.repository.helm.internal.HelmFormat;
 /**
  * Configures the browse bindings for the helm format.
  *
- * @since 3.next
+ * @since 3.28
  */
 @Named(HelmFormat.NAME)
 public class HelmBrowseModule

@@ -51,7 +51,7 @@ import static org.sonatype.nexus.repository.r.internal.util.RMetadataUtils.parse
 /**
  * Utility methods for working with R Packages.
  *
- * @since 3.next
+ * @since 3.28
  */
 public final class RPackagesUtils
 {

@@ -37,7 +37,7 @@ import org.sonatype.repository.helm.internal.HelmRecipeSupport
 /**
  * Helm proxy repository recipe.
  *
- * @since 3.next
+ * @since 3.28
  */
 @Named(HelmProxyRecipe.NAME)
 @Singleton

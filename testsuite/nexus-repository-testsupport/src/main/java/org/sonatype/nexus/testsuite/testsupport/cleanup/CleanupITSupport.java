@@ -32,15 +32,19 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.shiro.util.ThreadContext;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.junit.Before;
 import org.junit.experimental.categories.Category;
 
 import static com.google.common.collect.Iterables.size;
 import static com.google.common.collect.Sets.newLinkedHashSet;
+import static java.lang.String.format;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static org.awaitility.Awaitility.await;
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
+import static org.elasticsearch.index.query.QueryBuilders.existsQuery;
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
 import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 import static org.elasticsearch.index.query.QueryBuilders.rangeQuery;
@@ -74,9 +78,11 @@ public class CleanupITSupport
 
   protected static final int FIFTY_SECONDS = 50;
 
-  protected static final int TWO_SECONDS = 2;
+  protected static final int THREE_SECONDS = 3;
 
   private static final BoolQueryBuilder SEARCH_ALL = boolQuery().must(matchAllQuery());
+
+  private static final BoolQueryBuilder LAST_DOWNLOAD_SET = createLastDownloadQuery(boolQuery(), "1");
 
   @Inject
   private SearchTestHelper searchTestHelper;
@@ -129,10 +135,12 @@ public class CleanupITSupport
     addPolicyToRepository(testName.getMethodName(), repository);
   }
 
-  protected void setPolicyToBeRegex(final Repository repository, final String regex)
-      throws Exception
-  {
-    createOrUpdatePolicyWithCriteria(repository.getFormat().getValue(), ImmutableMap.of(REGEX_KEY, regex));
+  protected void setPolicyToBeRegex(final Repository repository, final String regex) throws Exception {
+    String updatedRegex = regex;
+    if (isNewDb() && regex.charAt(0) >= 'a' && regex.charAt(0) <= 'z') {
+      updatedRegex = '/' + regex;
+    }
+    createOrUpdatePolicyWithCriteria(repository.getFormat().getValue(), ImmutableMap.of(REGEX_KEY, updatedRegex));
     addPolicyToRepository(testName.getMethodName(), repository);
   }
 
@@ -249,13 +257,13 @@ public class CleanupITSupport
       final Supplier<Integer> artifactUploader,
       final int expectedCountAfterCleanup) throws Exception
   {
-    setPolicyToBeLastBlobUpdatedInSeconds(repository, TWO_SECONDS);
+    setPolicyToBeLastBlobUpdatedInSeconds(repository, THREE_SECONDS);
     runCleanupTask();
 
     assertThat(countComponents(testName.getMethodName()), is(startingCount));
 
     //Guarantee that the TWO_SECOND lastBlobUpdated time has passed
-    Thread.sleep(3000L);
+    Thread.sleep(4000L);
 
     int numberUploaded = artifactUploader.get();
     int totalComponents = startingCount + numberUploaded;
@@ -282,6 +290,8 @@ public class CleanupITSupport
     assertThat(countComponents(testName.getMethodName()), is(startingCount));
 
     setLastDownloadedTimes(testName.getMethodName(), ONE_HUNDRED_SECONDS);
+    await().untilAsserted(
+        () -> assertThat(size(searchTestHelper.queryService().browse(LAST_DOWNLOAD_SET)), is(startingCount)));
 
     int numberUploaded = artifactUploader.get();
     int totalComponents = startingCount + numberUploaded;
@@ -303,7 +313,7 @@ public class CleanupITSupport
       final Supplier<Integer> componentsToKeepArtifactUploader,
       final String... versionsOfComponentsToKeep) throws Exception
   {
-    setPolicyToBeLastBlobUpdatedInSeconds("policyLastBlobUpdated", repository, TWO_SECONDS);
+    setPolicyToBeLastBlobUpdatedInSeconds("policyLastBlobUpdated", repository, THREE_SECONDS);
     setPolicyToBeLastDownloadedInSeconds("policyLastDownloaded", repository, FIFTY_SECONDS);
 
     runCleanupTask();
@@ -311,13 +321,15 @@ public class CleanupITSupport
     assertThat(countComponents(testName.getMethodName()), is(startingCount));
 
     // Target first three by last blob update, a guarantee that the TWO_SECOND lastBlobUpdated time has passed
-    Thread.sleep(3000L);
+    Thread.sleep(4000L);
 
     // Deploy new ones to be targeted by last downloaded date/time
     int numberUploaded = lastDownloadedArtifactUploader.get();
 
     // Target all, but most specifically, the latest added components by updating their downloaded times
     setLastDownloadedTimes(testName.getMethodName(), ONE_HUNDRED_SECONDS);
+    await().untilAsserted(() -> assertThat(size(searchTestHelper.queryService().browse(LAST_DOWNLOAD_SET)),
+        is(startingCount + numberUploaded)));
 
     // Deploy new ones to proof that neither policies effected the latest added component
     int numberUploadedVersionsToKeep = componentsToKeepArtifactUploader.get();
@@ -381,7 +393,8 @@ public class CleanupITSupport
       final Supplier<Integer> artifactUploader,
       final int expectedCountAfterCleanup) throws Exception
   {
-    assertThat(countComponents(testName.getMethodName()), is(startingCount));
+    await()
+        .untilAsserted(() -> assertThat(size(searchTestHelper.queryService().browse(SEARCH_ALL)), is(startingCount)));
 
     int numberUploaded = artifactUploader.get();
     int totalComponents = startingCount + numberUploaded;
@@ -403,20 +416,22 @@ public class CleanupITSupport
       final int startingCount,
       final int countAfterCleanup) throws Exception
   {
-    setPolicyToBeMixed(repository, TWO_SECONDS, FIFTY_SECONDS, true);
+    setPolicyToBeMixed(repository, THREE_SECONDS, FIFTY_SECONDS, true);
 
     runCleanupTask();
 
     assertThat(countComponents(testName.getMethodName()), is(startingCount));
 
     //Guarantee that the TWO_SECOND lastBlobUpdated time has passed
-    Thread.sleep(TWO_SECONDS * 1000);
+    Thread.sleep(4000);
 
     runCleanupTask();
 
     assertThat(countComponents(testName.getMethodName()), is(startingCount));
 
     setLastDownloadedTimes(testName.getMethodName(), FIFTY_SECONDS);
+    await().untilAsserted(
+        () -> assertThat(size(searchTestHelper.queryService().browse(LAST_DOWNLOAD_SET)), is(startingCount)));
 
     waitForMixedSearch();
 
@@ -429,7 +444,7 @@ public class CleanupITSupport
     BoolQueryBuilder query = boolQuery().must(matchAllQuery());
 
     query.filter(rangeQuery(LAST_DOWNLOADED_KEY).lte("now-" + FIFTY_SECONDS + "s"))
-        .filter(rangeQuery(LAST_BLOB_UPDATED_KEY).lte("now-" + TWO_SECONDS + "s"))
+        .filter(rangeQuery(LAST_BLOB_UPDATED_KEY).lte("now-" + THREE_SECONDS + "s"))
         .must(matchQuery(IS_PRERELEASE_KEY, true));
 
     await().untilAsserted(
@@ -438,5 +453,25 @@ public class CleanupITSupport
 
   public static String randomName() {
     return RandomStringUtils.random(5, "abcdefghijklmnopqrstuvwxyz".toCharArray());
+  }
+
+  private static BoolQueryBuilder createLastDownloadQuery(final BoolQueryBuilder query, final String value) {
+    String NOW_MINUS_DAYS = "now-%ss";
+    BoolQueryBuilder neverDownloadDownloadBuilder = QueryBuilders.boolQuery();
+    neverDownloadDownloadBuilder.mustNot(existsQuery(LAST_BLOB_UPDATED_KEY));
+    neverDownloadDownloadBuilder.filter(rangeQuery(LAST_BLOB_UPDATED_KEY).lte(format(NOW_MINUS_DAYS, value)));
+
+    RangeQueryBuilder lastDownloadRangeBuilder = rangeQuery(LAST_BLOB_UPDATED_KEY).lte(format(NOW_MINUS_DAYS, value));
+
+    BoolQueryBuilder lastDownloadShouldBuilder = QueryBuilders.boolQuery();
+    lastDownloadShouldBuilder.must(lastDownloadRangeBuilder);
+
+    BoolQueryBuilder filterBuilder = QueryBuilders.boolQuery();
+    filterBuilder.should(lastDownloadShouldBuilder);
+    filterBuilder.should(neverDownloadDownloadBuilder);
+
+    query.filter(filterBuilder);
+
+    return query;
   }
 }

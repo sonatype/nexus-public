@@ -10,10 +10,22 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.npm.internal;
+package org.sonatype.nexus.content.pypi.internal.store;
 
-import org.sonatype.nexus.repository.Recipe;
+import javax.inject.Named;
 
-public interface NpmProxyRecipe extends Recipe
+import org.sonatype.nexus.repository.content.store.FormatStoreModule;
+import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
+
+/**
+ * @since 3.next
+ */
+@Named(PyPiFormat.NAME)
+public class PypiStoreModule
+    extends FormatStoreModule<PypiContentRepositoryDAO,
+    PypiComponentDAO,
+    PypiAssetDAO,
+    PypiAssetBlobDAO>
 {
+  // nothing to add...
 }

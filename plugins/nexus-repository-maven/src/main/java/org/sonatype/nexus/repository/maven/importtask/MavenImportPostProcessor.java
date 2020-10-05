@@ -27,7 +27,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
  * Provides some post processing capabilities for assets that could have hash files that need blobUpdated date to match
  * the imported asset blobUpdated Date
  *
- * @since 3.next
+ * @since 3.28
  */
 @Singleton
 @Named(Maven2Format.NAME)

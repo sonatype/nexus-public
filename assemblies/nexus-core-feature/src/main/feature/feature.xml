@@ -28,5 +28,6 @@
     <feature>nexus-repository-maven</feature>
     <feature>nexus-repository-npm</feature>
     <feature>nexus-repository-helm</feature>
+    <feature>nexus-repository-pypi</feature>
   </feature>
 </features>

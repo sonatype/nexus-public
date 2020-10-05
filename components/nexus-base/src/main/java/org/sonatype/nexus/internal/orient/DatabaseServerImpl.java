@@ -66,6 +66,7 @@ import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProto
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static java.util.function.Function.identity;
@@ -112,6 +113,8 @@ public class DatabaseServerImpl
 
   private final String httpPortRange;
 
+  private final int binaryMaxLengthKB;
+
   private OServer orientServer;
 
   @Inject
@@ -124,6 +127,7 @@ public class DatabaseServerImpl
                             @Named("${nexus.orient.dynamicPlugins:-false}") final boolean dynamicPlugins,
                             @Named("${nexus.orient.binaryListener.portRange:-2424-2430}") final String binaryPortRange,
                             @Named("${nexus.orient.httpListener.portRange:-2480-2490}") final String httpPortRange,
+                            @Named("${nexus.orient.network.binary.maxLengthKB:-0}") final int binaryMaxLengthKB,
                             final NodeAccess nodeAccess,
                             final EntityHook entityHook)
   {
@@ -136,6 +140,9 @@ public class DatabaseServerImpl
     this.binaryPortRange = binaryPortRange;
     this.httpPortRange = httpPortRange;
     this.entityHook = checkNotNull(entityHook);
+
+    checkArgument(binaryMaxLengthKB >= 0, "Must specify a non-negative integer");
+    this.binaryMaxLengthKB = binaryMaxLengthKB;
 
     if (nodeAccess.isClustered()) {
       this.binaryListenerEnabled = true; // clustered mode requires binary listener
@@ -287,6 +294,15 @@ public class DatabaseServerImpl
     // disable auto removal of servers, SharedHazelcastPlugin removes gracefully shutdown nodes but for crashes and
     // especially network partitions we don't want the write quorum getting lowered and endanger consistency 
     OGlobalConfiguration.DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS.setValue(-1);
+
+    if (binaryMaxLengthKB > 0) {
+      log.info("NETWORK_BINARY_MAX_CONTENT_LENGTH/{} Default:{} Overriding from Current:{} to New:{}",
+          OGlobalConfiguration.NETWORK_BINARY_MAX_CONTENT_LENGTH.getKey(),
+          OGlobalConfiguration.NETWORK_BINARY_MAX_CONTENT_LENGTH.getDefValue(),
+          OGlobalConfiguration.NETWORK_BINARY_MAX_CONTENT_LENGTH.getValue(),
+          binaryMaxLengthKB);
+      OGlobalConfiguration.NETWORK_BINARY_MAX_CONTENT_LENGTH.setValue(binaryMaxLengthKB);
+    }
 
     // Apply customizations to server configuration
     configCustomizers.forEach((it) -> it.apply(config));

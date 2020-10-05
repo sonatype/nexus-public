@@ -119,7 +119,7 @@ public class NpmSearchIndexFacetHosted
 
   private Optional<NestedAttributesMap> loadAndShrink(final NpmPackageId packageId) {
     try {
-      return loadPackageRoot(packageId).map(NpmSearchIndexFacetHosted::shrink);
+      return loadPackageRoot(packageId, content()).map(NpmSearchIndexFacetHosted::shrink);
     }
     catch (IOException e) {
       return Optional.empty();

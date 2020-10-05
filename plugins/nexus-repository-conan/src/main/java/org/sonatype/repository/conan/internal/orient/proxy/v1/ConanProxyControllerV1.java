@@ -23,7 +23,7 @@ import org.sonatype.repository.conan.internal.proxy.v1.ConanProxyHandlers;
 import static org.sonatype.repository.conan.internal.AssetKind.DIGEST;
 
 /**
- * @since 3.next
+ * @since 3.28
  */
 @Named
 @Singleton

@@ -26,7 +26,7 @@ import static org.sonatype.nexus.repository.r.internal.AssetKind.RDS_METADATA;
 /**
  * Utility methods for working with R routes and paths.
  *
- * @since 3.next
+ * @since 3.28
  */
 public final class RPathUtils
 {

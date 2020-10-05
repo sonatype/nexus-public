@@ -35,6 +35,8 @@ import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.tika.io.IOUtils;
 import org.junit.Assert;
 import org.junit.experimental.categories.Category;
@@ -49,7 +51,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 /**
  * Support class for Helm ITs.
  *
- * @since 3.next
+ * @since 3.28
  */
 @Category(HelmTestGroup.class)
 public class HelmITSupport
@@ -131,6 +133,13 @@ public class HelmITSupport
 
   protected HttpEntity fileToHttpEntity(String name) throws IOException {
     return new ByteArrayEntity(Files.readAllBytes(getFilePathByName(name)));
+  }
+
+  protected HttpEntity fileToMultipartHttpEntity(final String name) throws IOException {
+    return MultipartEntityBuilder
+        .create()
+        .addBinaryBody("chart", Files.readAllBytes(getFilePathByName(name)), ContentType.APPLICATION_OCTET_STREAM, name)
+        .build();
   }
 
   protected void checkYamlIncludesContent(InputStream is, String expectedContent) throws Exception {

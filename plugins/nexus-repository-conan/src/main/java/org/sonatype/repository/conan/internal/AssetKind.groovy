@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.cache.CacheControllerHolder.CacheType
 import static org.sonatype.nexus.repository.cache.CacheControllerHolder.METADATA
 
 /**
- * @since 3.next
+ * @since 3.28
  */
 enum AssetKind {
   DOWNLOAD_URL(METADATA, "download_urls"),

@@ -18,7 +18,7 @@ import org.sonatype.nexus.repository.storage.StorageTx;
 
 /**
  * Provides some post processing capabilities for assets on the import task
- * @since 3.next
+ * @since 3.28
  */
 public interface ImportPostProcessor
 {
