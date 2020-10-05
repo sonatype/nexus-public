@@ -128,8 +128,6 @@ public class ContentComponentHelper
       final String jexlExpression,
       final QueryOptions queryOptions)
   {
-    Repository repository = selectedRepositories.get(0);
-
     Set<Repository> previewRepositories = new LinkedHashSet<>();
     selectedRepositories.forEach(r -> {
       if (r.getType() instanceof GroupType) {
