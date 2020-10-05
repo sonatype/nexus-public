@@ -55,7 +55,8 @@ trait ConfigurationRecipes
                 blobStoreName: blobStoreName,
                 writePolicy  : writePolicy,
                 latestPolicy  : latestPolicy,
-                strictContentTypeValidation: strictContentTypeValidation
+                strictContentTypeValidation: strictContentTypeValidation,
+                dataStoreName: 'content'
             ] as Map
         ] as Map
     )
@@ -93,7 +94,8 @@ trait ConfigurationRecipes
         ] as Map<String, Object>,
         storage      : [
             blobStoreName              : blobStoreName,
-            strictContentTypeValidation: strictContentTypeValidation
+            strictContentTypeValidation: strictContentTypeValidation,
+            dataStoreName: 'content'
         ] as Map<String, Object>
     ]
     if (!authentication.isEmpty()) {
@@ -142,7 +144,8 @@ trait ConfigurationRecipes
             ] as Map<String, Object>,
             storage: [
                 blobStoreName: BlobStoreManager.DEFAULT_BLOBSTORE_NAME,
-                strictContentTypeValidation: true
+                strictContentTypeValidation: true,
+                dataStoreName: 'content'
             ] as Map<String, Object>
         ]
     )
@@ -154,6 +157,7 @@ trait ConfigurationRecipes
     config.recipeName = map.recipeName
     config.online = map.online
     config.attributes = map.attributes as Map
+
     return config
   }
 }
