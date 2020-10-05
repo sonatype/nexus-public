@@ -49,7 +49,7 @@ import static org.sonatype.nexus.repository.content.npm.NpmContentFacet.metadata
 import static org.sonatype.nexus.repository.content.npm.NpmContentFacet.tarballPath;
 
 /**
- * @since 3.next
+ * @since 3.28
  */
 @Named(NpmFormat.NAME)
 public class NpmContentFacetImpl
@@ -106,12 +106,31 @@ public class NpmContentFacetImpl
       final NpmPackageId packageId,
       final String version,
       final Map<String, Object> npmAttributes,
-      final Payload content) throws IOException
+      final Payload content)
+  {
+    return putTarball(packageId, version, npmAttributes, content, tarballPath(packageId, version));
+  }
+
+  @Override
+  public Content put(
+      final NpmPackageId packageId,
+      final String tarballName,
+      final String version,
+      final Map<String, Object> npmAttributes,
+      final Payload content)
+  {
+    return putTarball(packageId, version, npmAttributes, content, tarballPath(packageId.id(), tarballName));
+  }
+
+  private Content putTarball(
+      final NpmPackageId packageId,
+      final String version,
+      final Map<String, Object> npmAttributes,
+      final Payload content,
+      final String path)
   {
     try (TempBlob blob = blobs().ingest(content, HASHING)) {
       FluentComponent component = getOrCreateComponent(packageId, version);
-      String path = tarballPath(packageId, version);
-
       return save(content, component, AssetKind.TARBALL, npmAttributes, blob, path);
     }
   }

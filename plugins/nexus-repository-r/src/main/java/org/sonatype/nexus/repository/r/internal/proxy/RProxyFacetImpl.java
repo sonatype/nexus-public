@@ -51,7 +51,7 @@ import static org.sonatype.nexus.repository.r.internal.util.RPathUtils.extractRe
 /**
  * R {@link ProxyFacet} implementation.
  *
- * @since 3.next
+ * @since 3.28
  */
 @Named
 public class RProxyFacetImpl

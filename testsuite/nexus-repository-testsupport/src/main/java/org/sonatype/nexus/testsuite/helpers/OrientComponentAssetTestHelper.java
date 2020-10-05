@@ -348,4 +348,19 @@ public class OrientComponentAssetTestHelper
       }
     });
   }
+
+  @Override
+  public void deleteAssetBlob(final Repository repository, final String assetPath) {
+    StorageFacet storage = repository.facet(StorageFacet.class);
+    StorageTx tx = storage.txSupplier().get();
+    try {
+      tx.begin();
+
+      Asset packageRootAsset = tx.findAssetWithProperty("name", assetPath, tx.findBucket(repository));
+      storage.blobStore().delete(packageRootAsset.blobRef().getBlobId(), "test merge recovery");
+    }
+    finally {
+      tx.close();
+    }
+  }
 }

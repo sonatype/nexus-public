@@ -25,13 +25,15 @@ import org.sonatype.repository.helm.internal.AssetKind;
 /**
  * Helm Hosted Facet
  *
- * @since 3.next
+ * @since 3.28
  */
 @Exposed
 public interface HelmHostedFacet
     extends Facet
 {
   Content get(String path);
+
+  String getPath(final TempBlob tempBlob, final AssetKind assetKind) throws IOException;
 
   void upload(final String path, final Payload payload, final AssetKind assetKind) throws IOException;
 

@@ -46,7 +46,7 @@ import static org.sonatype.nexus.repository.view.ContentTypes.APPLICATION_JSON;
 import static org.sonatype.nexus.repository.view.Status.success;
 
 /**
- * @since 3.next
+ * @since 3.28
  */
 @Named
 @Singleton

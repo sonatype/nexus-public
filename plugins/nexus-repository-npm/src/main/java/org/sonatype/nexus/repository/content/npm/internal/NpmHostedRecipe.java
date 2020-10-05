@@ -63,7 +63,7 @@ import static org.sonatype.nexus.repository.npm.internal.NpmPaths.*;
 /**
  * npm hosted repository recipe.
  *
- * @since 3.next
+ * @since 3.28
  */
 @Named(NpmHostedRecipe.NAME)
 @Singleton
@@ -77,10 +77,6 @@ public class NpmHostedRecipe
   private final Provider<NpmSearchIndexFacetHosted> npmSearchIndexFacetProvider;
 
   private final Provider<NpmSearchFacetHosted> npmSearchFacetProvider;
-
-  private final NpmWhoamiHandler npmWhoamiHandler;
-
-  private final NpmPingHandler pingHandler;
 
   @Inject
   public NpmHostedRecipe(
@@ -117,12 +113,10 @@ public class NpmHostedRecipe
         timingHandler, indexHtmlForwardHandler, securityHandler, partialFetchHandler, conditionalRequestHandler,
         contentHeadersHandler, lastDownloadedHandler, handlerContributor, tokenFacet, npmAuditFacetProvider,
         npmAuditTarballFacetProvider, lastAssetMaintenanceFacet, routingHandler, auditErrorHandler,
-        auditAnalyticsHandler);
+        auditAnalyticsHandler, npmWhoamiHandler, pingHandler);
     this.npmHostedFacetProvider = npmHostedFacet;
     this.npmSearchIndexFacetProvider = npmSearchIndexFacet;
     this.npmSearchFacetProvider = npmSearchFacet;
-    this.npmWhoamiHandler = npmWhoamiHandler;
-    this.pingHandler = pingHandler;
   }
 
   @Override

@@ -30,9 +30,7 @@ import org.sonatype.nexus.repository.upload.ComponentUpload;
 import org.sonatype.nexus.repository.upload.UploadResponse;
 import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
-import org.sonatype.nexus.rest.ValidationErrorsException;
 import org.sonatype.nexus.transaction.UnitOfWork;
-import org.sonatype.repository.helm.HelmAttributes;
 import org.sonatype.repository.helm.HelmUploadHandlerSupport;
 import org.sonatype.repository.helm.internal.AssetKind;
 import org.sonatype.repository.helm.internal.orient.hosted.HelmHostedFacet;
@@ -46,7 +44,7 @@ import static org.sonatype.repository.helm.internal.HelmFormat.NAME;
 /**
  * Support helm upload for web page
  /**
- * @since 3.next
+ * @since 3.28
  */
 @Singleton
 @Named(NAME)
@@ -73,25 +71,8 @@ public class HelmUploadHandler
     String fileName = payload.getName() != null ? payload.getName() : StringUtils.EMPTY;
     AssetKind assetKind = AssetKind.getAssetKindByFileName(fileName);
 
-    if (assetKind != AssetKind.HELM_PROVENANCE && assetKind != AssetKind.HELM_PACKAGE) {
-      throw new IllegalArgumentException("Unsupported extension. Extension must be .tgz or .tgz.prov");
-    }
-
     try (TempBlob tempBlob = storageFacet.createTempBlob(payload, HASH_ALGORITHMS)) {
-      HelmAttributes attributesFromInputStream = helmPackageParser.getAttributes(assetKind, tempBlob.get());
-      String extension = assetKind.getExtension();
-      String name = attributesFromInputStream.getName();
-      String version = attributesFromInputStream.getVersion();
-
-      if (StringUtils.isBlank(name)) {
-        throw new ValidationErrorsException("Metadata is missing the name attribute");
-      }
-
-      if (StringUtils.isBlank(version)) {
-        throw new ValidationErrorsException("Metadata is missing the version attribute");
-      }
-
-      String path = String.format("%s-%s%s", name, version, extension);
+      String path = facet.getPath(tempBlob, assetKind);
 
       ensurePermitted(repository.getName(), NAME, path, Collections.emptyMap());
       try {

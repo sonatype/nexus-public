@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.storage.AssetBlob;
 import org.sonatype.nexus.repository.storage.Query;
 
 /**
- * @since 3.next
+ * @since 3.28
  */
 @Exposed
 public interface HelmRestoreFacet extends Facet

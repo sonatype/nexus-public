@@ -19,7 +19,7 @@ import org.sonatype.nexus.repository.p2.internal.metadata.P2Attributes;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 /**
- * @since 3.next
+ * @since 3.28
  */
 public interface AttributesParser
 {

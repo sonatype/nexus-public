@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -24,20 +23,17 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Function;
 
 import javax.annotation.Nonnull;
-import javax.inject.Inject;
-import javax.inject.Named;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
-import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.Facet.Exposed;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.group.GroupHandler;
 import org.sonatype.nexus.repository.npm.internal.NpmProxyFacet.ProxyTarget;
 import org.sonatype.nexus.repository.proxy.ProxyFacet;
-import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.view.Content;
@@ -51,30 +47,23 @@ import org.sonatype.nexus.repository.vulnerability.AuditRepositoryComponent;
 import org.sonatype.nexus.repository.vulnerability.exceptions.TarballLoadingException;
 import org.sonatype.nexus.thread.NexusExecutorService;
 import org.sonatype.nexus.thread.NexusThreadFactory;
-import org.sonatype.nexus.transaction.UnitOfWork;
-
-import com.google.common.hash.HashCode;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toList;
-import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.repository.group.GroupHandler.IGNORE_FIREWALL;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.npm.internal.NpmPaths.tarballMatcher;
 import static org.sonatype.nexus.repository.npm.internal.NpmProxyFacet.ProxyTarget.TARBALL;
-import static org.sonatype.nexus.repository.view.Content.CONTENT_HASH_CODES_MAP;
-import static org.sonatype.nexus.repository.view.Content.T_CONTENT_HASH_CODES_MAP;
 
 /**
  * Facet for saving/fetching npm package tarballs.
  *
  * @since 3.24
  */
-@Named
 @Exposed
-public class NpmAuditTarballFacet
+public abstract class NpmAuditTarballFacet
     extends FacetSupport
 {
   private final int maxConcurrentRequests;
@@ -83,13 +72,11 @@ public class NpmAuditTarballFacet
 
   private ExecutorService executor;
 
-  @Inject
-  public NpmAuditTarballFacet(
-      @Named("${nexus.npm.audit.maxConcurrentRequests:-10}") final int maxConcurrentRequests)
+  public NpmAuditTarballFacet(final int maxConcurrentRequests)
   {
     checkArgument(maxConcurrentRequests > 0, "nexus.npm.audit.maxConcurrentRequests must be greater than 0");
     this.maxConcurrentRequests = maxConcurrentRequests;
-    this.tarballGroupHandler = new TarballGroupHandler();
+    this.tarballGroupHandler = new TarballGroupHandler(this::getHashsum);
   }
 
   @Override
@@ -167,34 +154,19 @@ public class NpmAuditTarballFacet
     return new AuditRepositoryComponent(auditComponent.getPackageType(), repositoryPath, hashsumOpt.get());
   }
 
-  private Optional<String> getComponentHashsumForProxyRepo(final Repository repository, final Context context)
-      throws TarballLoadingException
-  {
-    try {
-      UnitOfWork.begin(repository.facet(StorageFacet.class).txSupplier());
-      Content content = repository.facet(ProxyFacet.class).get(context);
-      if (content != null) {
-        return getHashsum(content.getAttributes());
-      }
-    }
-    catch (IOException e) {
-      throw new TarballLoadingException(e.getMessage());
-    }
-    finally {
-      UnitOfWork.end();
-    }
+  protected abstract Optional<String> getComponentHashsumForProxyRepo(
+      final Repository repository,
+      final Context context) throws TarballLoadingException;
 
+  protected Optional<String> getComponentHashsum(Repository repository, Context context) throws IOException {
+    Content content = repository.facet(ProxyFacet.class).get(context);
+    if (content != null) {
+      return getHashsum(content.getAttributes());
+    }
     return Optional.empty();
   }
 
-  private static Optional<String> getHashsum(final AttributesMap attributes) {
-    Map<HashAlgorithm, HashCode> hashMap = attributes.get(CONTENT_HASH_CODES_MAP, T_CONTENT_HASH_CODES_MAP);
-    if (hashMap != null) {
-      HashCode hashCode = hashMap.get(SHA1);
-      return Optional.ofNullable(hashCode.toString());
-    }
-    return Optional.empty();
-  }
+  protected abstract Optional<String> getHashsum(final AttributesMap attributes);
 
   /**
    * This handler should do nothing cause it would never be used.
@@ -216,6 +188,12 @@ public class NpmAuditTarballFacet
   private static final class TarballGroupHandler
       extends GroupHandler
   {
+    private final Function<AttributesMap, Optional<String>> hashFetcher;
+
+    public TarballGroupHandler(Function<AttributesMap, Optional<String>> hashFetcher) {
+      this.hashFetcher = hashFetcher;
+    }
+
     public Optional<String> getTarballHashsum(final Context context) throws TarballLoadingException {
       DispatchedRepositories dispatched = context.getRequest().getAttributes()
           .getOrCreate(DispatchedRepositories.class);
@@ -223,7 +201,7 @@ public class NpmAuditTarballFacet
         Response response = super.doGet(context, dispatched);
         if (response.getPayload() instanceof Content) {
           Content content = (Content) response.getPayload();
-          return getHashsum(content.getAttributes());
+          return hashFetcher.apply(content.getAttributes());
         }
       }
       catch (Exception e) {

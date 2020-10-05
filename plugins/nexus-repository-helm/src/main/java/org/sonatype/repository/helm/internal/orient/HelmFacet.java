@@ -30,7 +30,7 @@ import org.sonatype.repository.helm.HelmAttributes;
 import org.sonatype.repository.helm.internal.AssetKind;
 
 /**
- * @since 3.next
+ * @since 3.28
  */
 @Facet.Exposed
 public interface HelmFacet

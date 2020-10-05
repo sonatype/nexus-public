@@ -15,13 +15,12 @@ package org.sonatype.nexus.repository.npm.internal.orient;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.util.function.BiFunction;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.Priority;
 import javax.inject.Named;
 
 import org.sonatype.nexus.blobstore.api.BlobRef;
@@ -29,6 +28,7 @@ import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
+import org.sonatype.nexus.repository.npm.internal.NonResolvableTarballNameException;
 import org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageId;
 import org.sonatype.nexus.repository.npm.internal.NpmPaths;
@@ -52,17 +52,12 @@ import org.sonatype.nexus.repository.transaction.TransactionalTouchMetadata;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Parameters;
-import org.sonatype.nexus.repository.view.Request;
-import org.sonatype.nexus.repository.view.Response;
-import org.sonatype.nexus.repository.view.ViewFacet;
 import org.sonatype.nexus.repository.view.ViewUtils;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -72,12 +67,11 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 import static java.util.Objects.nonNull;
-import static org.sonatype.nexus.repository.http.HttpMethods.GET;
-import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.P_NAME;
 import static org.sonatype.nexus.repository.npm.internal.NpmFieldFactory.rewriteTarballUrlMatcher;
 import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.DIST_TAGS;
-import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.VERSIONS;
-import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.merge;
+import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.findCachedVersionsRemovedFromRemote;
+import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.mergePackageRoots;
+import static org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils.retrievePackageRoot;
 import static org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils.errorInputStream;
 import static org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils.findRepositoryRootAsset;
 import static org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils.toContent;
@@ -88,6 +82,7 @@ import static org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils.to
  * @since 3.0
  */
 @Named
+@Priority(Integer.MAX_VALUE)
 public class OrientNpmProxyFacet
     extends ProxyFacetSupport implements NpmProxyFacet
 {
@@ -252,9 +247,8 @@ public class OrientNpmProxyFacet
     return url;
   }
 
-  @Override
   @TransactionalTouchMetadata
-  public void setCacheInfo(final Content content, final CacheInfo cacheInfo) throws IOException {
+  protected void setCacheInfo(final Content content, final CacheInfo cacheInfo) throws IOException {
     StorageTx tx = UnitOfWork.currentTx();
 
     Asset asset = Content.findAsset(tx, tx.findBucket(getRepository()), content);
@@ -270,7 +264,6 @@ public class OrientNpmProxyFacet
     tx.saveAsset(asset);
   }
 
-  @Override
   @Nullable
   @TransactionalTouchBlob
   public Content getPackageRoot(final Context context, final NpmPackageId packageId) throws IOException {
@@ -362,53 +355,17 @@ public class OrientNpmProxyFacet
                                                            final Asset asset) throws IOException
   {
     NestedAttributesMap existingPackageRoot = NpmFacetUtils.loadPackageRoot(tx, asset);
-    List<String> cachedVersions = findCachedVersionsRemovedFromRemote(existingPackageRoot, newPackageRoot, tx);
-    NestedAttributesMap mergedRoot = newPackageRoot;
-    if (!cachedVersions.isEmpty()) {
-      mergedRoot = merge(existingPackageRoot.getKey(), ImmutableList.of(existingPackageRoot, newPackageRoot));
-
-      removeVersionsNotCachedAndNotInNewRoot(mergedRoot, existingPackageRoot, cachedVersions);
-    }
-    return mergedRoot;
+    return mergePackageRoots(newPackageRoot, existingPackageRoot,
+        findCachedVersionsRemovedFromRemote(existingPackageRoot, newPackageRoot, componentExists(tx)));
   }
 
-  /*
-   * If a version exists in the old root but not in the new root then we need to check whether it is cached in NXRM, if
-   * not then it should be removed from the metadata.
-   */
-  private void removeVersionsNotCachedAndNotInNewRoot(final NestedAttributesMap newPackageRoot,
-                                                      final NestedAttributesMap existingPackageRoot,
-                                                      final List<String> cachedVersions)
-  {
-    for (String version : newPackageRoot.child(VERSIONS).keys()) {
-      if (!cachedVersions.contains(version) && !existingPackageRoot.child(VERSIONS).keys().contains(version)) {
-        newPackageRoot.child(VERSIONS).remove(version);
-      }
-    }
+  private BiFunction<NpmPackageId, String, Boolean> componentExists(final StorageTx tx) {
+    return (packageId, version) -> tx.componentExists(packageId.scope(), packageId.name(), version, getRepository());
   }
 
-  private List<String> findCachedVersionsRemovedFromRemote(final NestedAttributesMap cachedRoot,
-                                                           final NestedAttributesMap newPackageRoot,
-                                                           final StorageTx tx)
-  {
-    List<String> cachedVersionsRemovedFromRemote = new ArrayList<>();
-    Set<String> newVersions = newPackageRoot.child(VERSIONS).keys();
-    NpmPackageId packageId = NpmPackageId.parse((String) checkNotNull(newPackageRoot.get(P_NAME)));
-
-    for (String version : cachedRoot.child(VERSIONS).keys()) {
-      if (!newVersions.contains(version)
-          && tx.componentExists(packageId.scope(), packageId.name(), version, getRepository())) {
-
-        cachedVersionsRemovedFromRemote.add(version);
-      }
-    }
-    return cachedVersionsRemovedFromRemote;
-  }
-
-  @Override
   @Nullable
   @TransactionalTouchBlob
-  public Content getTarball(final NpmPackageId packageId, final String tarballName) throws IOException {
+  protected Content getTarball(final NpmPackageId packageId, final String tarballName) throws IOException {
     checkNotNull(packageId);
     checkNotNull(tarballName);
     StorageTx tx = UnitOfWork.currentTx();
@@ -454,10 +411,9 @@ public class OrientNpmProxyFacet
     return result;
   }
 
-  @Override
   @Nullable
   @TransactionalTouchBlob
-  public Content getRepositoryRoot() throws IOException {
+  protected Content getRepositoryRoot() throws IOException {
     StorageTx tx = UnitOfWork.currentTx();
 
     Asset asset = findRepositoryRootAsset(tx, tx.findBucket(getRepository()));
@@ -486,7 +442,7 @@ public class OrientNpmProxyFacet
                                                        final Context context) throws IOException
   {
     // ensure package root is up to date
-    retrievePackageRoot(packageId, context);
+    retrievePackageRoot(packageId, context, getRepository());
     // do the work in TX
     return retrievePackageVersionTx(packageId, tarballName);
   }
@@ -514,31 +470,6 @@ public class OrientNpmProxyFacet
   protected Asset findPackageRootAsset(final NpmPackageId packageId) {
     StorageTx tx = UnitOfWork.currentTx();
     return NpmFacetUtils.findPackageRootAsset(tx, tx.findBucket(getRepository()), packageId);
-  }
-
-  /**
-   * This method MUST NOT be called from within a TX, as it dispatches a new request! It fails with
-   * {@code java.lang.IllegalStateException}: "Transaction already in progress" otherwise!
-   */
-  private NestedAttributesMap retrievePackageRoot(final NpmPackageId packageId, final Context context)
-      throws IOException
-  {
-    try {
-      Request getRequest = new Request.Builder().action(GET).path("/" + packageId.id()).build();
-      Response response = getRepository().facet(ViewFacet.class).dispatch(getRequest, context);
-      if (response.getPayload() == null) {
-        throw new IOException("Could not retrieve package " + packageId);
-      }
-      final InputStream packageRootIn = response.getPayload().openInputStream();
-      return NpmFacetUtils.parse(() -> packageRootIn);
-    }
-    catch (IOException e) {
-      throw e;
-    }
-    catch (Exception e) {
-      Throwables.throwIfUnchecked(e);
-      throw new IOException(e);
-    }
   }
 
   private TokenMatcher.State matcherState(final Context context) {
@@ -584,18 +515,5 @@ public class OrientNpmProxyFacet
             e.getAsset().name(), getUrl(context)));
       }
     });
-  }
-
-  /**
-   * Internal exception thrown when resolving of tarball name to package version using package metadata fails.
-   *
-   * @see #retrievePackageVersionTx(NpmPackageId, String)
-   * @see #getUrl(Context)
-   * @see #fetch(Context, Content)
-   */
-  private static class NonResolvableTarballNameException extends RuntimeException {
-    public NonResolvableTarballNameException(final String message) {
-      super(message);
-    }
   }
 }

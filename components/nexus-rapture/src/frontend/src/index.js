@@ -44,6 +44,7 @@ axios.defaults.adapter = function(config) {
 
 // Declare an initial (empty) array for plugin configurations
 window.plugins = [];
+window.ReactComponents = {};
 
 // A function for the ExtJS codebase to call to register React plugins
 window.onStart = function() {

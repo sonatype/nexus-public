@@ -69,7 +69,7 @@ import static org.sonatype.repository.conan.internal.orient.utils.ConanFacetUtil
 import static org.sonatype.repository.conan.internal.orient.utils.ConanFacetUtils.findComponent;
 
 /**
- * @since 3.next
+ * @since 3.28
  */
 @Named
 public class ConanProxyFacet

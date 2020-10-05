@@ -56,37 +56,6 @@ public final class OrientPyPiDataUtils
   public static final List<HashAlgorithm> HASH_ALGORITHMS = ImmutableList.of(SHA1, SHA256, MD5);
 
   /**
-   * The supported format attributes for PyPI.
-   */
-  private static final List<String> SUPPORTED_ATTRIBUTES = ImmutableList.of(
-      P_NAME,
-      P_VERSION,
-      P_PYVERSION,
-      P_PLATFORM,
-      P_FILETYPE,
-      P_DESCRIPTION,
-      P_SUMMARY,
-      P_LICENSE,
-      P_KEYWORDS,
-      P_AUTHOR,
-      P_AUTHOR_EMAIL,
-      P_MAINTAINER,
-      P_MAINTAINER_EMAIL,
-      P_HOME_PAGE,
-      P_DOWNLOAD_URL,
-      P_CLASSIFIERS,
-      P_REQUIRES_DIST,
-      P_PROVIDES_EXTRA,
-      P_SUPPORTED_PLATFORM,
-      P_PROVIDES_DIST,
-      P_OBSOLETES_DIST,
-      P_REQUIRES_PYTHON,
-      P_REQUIRES_EXTERNAL,
-      P_PROJECT_URL,
-      P_GENERATOR
-  );
-
-  /**
    * Convert an asset blob to {@link Content}.
    *
    * @return content of asset blob

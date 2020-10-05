@@ -18,7 +18,7 @@ import org.sonatype.nexus.repository.view.payloads.TempBlob;
 /**
  * Build index.yaml file for Helm Hosted
  *
- * @since 3.next
+ * @since 3.28
  */
 public interface CreateIndexService
 {

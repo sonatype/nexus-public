@@ -129,7 +129,6 @@ public class ContentComponentHelper
       final QueryOptions queryOptions)
   {
     Repository repository = selectedRepositories.get(0);
-    String format = repository.getFormat().getValue();
 
     Set<Repository> previewRepositories = new LinkedHashSet<>();
     selectedRepositories.forEach(r -> {
@@ -141,27 +140,29 @@ public class ContentComponentHelper
       }
     });
 
-    SelectorSqlBuilder sqlBuilder = new SelectorSqlBuilder()
-        .propertyAlias("path", "path")
-        .propertyAlias("format", "'" + format + "'")
-        .parameterPrefix("#{" + FILTER_PARAMS + ".")
-        .parameterSuffix("}");
-
-    Selector selector = selectorFactory.createSelector(CselSelector.TYPE, jexlExpression);
-    selector.toSql(sqlBuilder);
-
-    String filterString = sqlBuilder.getQueryString();
-    Map<String, Object> filterParams = (Map) sqlBuilder.getQueryParameters();
-
-    if (queryOptions.getFilter() != null) {
-      filterString += " AND path LIKE #{" + FILTER_PARAMS + ".pathFilter}";
-      filterParams.put("pathFilter", "%" + queryOptions.getFilter() + "%");
-    }
-
     int numAssets = 0;
     List<AssetXO> assets = new ArrayList<>();
 
     for (Repository r : previewRepositories) {
+      String format = r.getFormat().getValue();
+
+      SelectorSqlBuilder sqlBuilder = new SelectorSqlBuilder()
+          .propertyAlias("path", "path")
+          .propertyAlias("format", "'" + format + "'")
+          .parameterPrefix("#{" + FILTER_PARAMS + ".")
+          .parameterSuffix("}");
+
+      Selector selector = selectorFactory.createSelector(CselSelector.TYPE, jexlExpression);
+      selector.toSql(sqlBuilder);
+
+      String filterString = sqlBuilder.getQueryString();
+      Map<String, Object> filterParams = (Map) sqlBuilder.getQueryParameters();
+
+      if (queryOptions.getFilter() != null) {
+        filterString += " AND path LIKE #{" + FILTER_PARAMS + ".pathFilter}";
+        filterParams.put("pathFilter", "%" + queryOptions.getFilter() + "%");
+      }
+
       FluentQuery<FluentAsset> assetQuery = r.facet(ContentFacet.class).assets()
           .byFilter(filterString, filterParams);
 
@@ -170,7 +171,7 @@ public class ContentComponentHelper
       int nextLimit = queryOptions.getLimit() - assets.size();
       if (nextLimit > 0) {
         assetQuery.browse(nextLimit, null).stream()
-            .map(asset -> toAssetXO(r.getName(), r.getName(), format, (Asset) asset))
+            .map(asset -> toAssetXO(r.getName(), r.getName(), format, asset))
             .collect(Collectors.toCollection(() -> assets));
       }
     }

@@ -22,6 +22,7 @@
   line-height: $nx-line-height;
   border-radius: $nx-border-radius;
   padding: $nx-spacing-xs $nx-spacing-l $nx-spacing-xs $nx-spacing-md;
+  margin-bottom: 28px;  // Aligns a select with other combobox elements that have a validation message below
   width: $nx-form-element-width-normal;
 
   -moz-appearance: none;

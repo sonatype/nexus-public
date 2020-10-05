@@ -23,6 +23,8 @@ Ext.define('NX.coreui.view.react.MainContainer', {
 
   reactView: undefined,
 
+  reactViewProps: null,
+
   scrollable: true,
 
   listeners: {
@@ -31,7 +33,7 @@ Ext.define('NX.coreui.view.react.MainContainer', {
   },
 
   initReactView: function() {
-    var reactElement = react.createElement(this.reactView);
+    var reactElement = react.createElement(this.reactView, this.reactViewProps, null);
     ReactDOM.render(reactElement, this.getEl().dom);
   },
 

@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.rest.api.RepositoriesApiResourceBeta;
 import io.swagger.annotations.Api;
 
 /**
- * @since 3.next
+ * @since 3.28
  * @deprecated - prefer to use {@link RProxyRepositoriesApiResourceV1 } instead of Beta.
  */
 @Named

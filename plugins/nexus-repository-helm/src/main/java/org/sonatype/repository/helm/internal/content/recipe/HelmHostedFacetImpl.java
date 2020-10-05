@@ -33,7 +33,7 @@ import static org.sonatype.repository.helm.internal.AssetKind.HELM_PROVENANCE;
 /**
  * {@link HelmHostedFacet implementation}
  *
- * @since 3.next
+ * @since 3.28
  */
 @Named
 public class HelmHostedFacetImpl
@@ -53,6 +53,20 @@ public class HelmHostedFacetImpl
   public Content get(final String path) {
     checkNotNull(path);
     return helmContentFacet.getAsset(path).orElse(null);
+  }
+
+  @Override
+  public String getPath(final HelmAttributes attributes, final AssetKind assetKind)
+  {
+    if (assetKind != HELM_PACKAGE && assetKind != HELM_PROVENANCE) {
+      throw new IllegalArgumentException("Unsupported assetKind: " + assetKind);
+    }
+
+    String extension = assetKind.getExtension();
+    String name = attributes.getName();
+    String version = attributes.getVersion();
+
+    return String.format("/%s-%s%s", name, version, extension);
   }
 
   @Override

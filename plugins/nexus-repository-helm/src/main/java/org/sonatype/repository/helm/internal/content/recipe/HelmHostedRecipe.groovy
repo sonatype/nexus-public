@@ -56,6 +56,7 @@ import static org.sonatype.nexus.repository.http.HttpMethods.DELETE
 import static org.sonatype.nexus.repository.http.HttpMethods.GET
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD
 import static org.sonatype.nexus.repository.http.HttpMethods.PUT
+import static org.sonatype.nexus.repository.http.HttpMethods.POST
 import static org.sonatype.repository.helm.internal.AssetKind.HELM_INDEX
 import static org.sonatype.repository.helm.internal.AssetKind.HELM_PACKAGE
 import static org.sonatype.repository.helm.internal.AssetKind.HELM_PROVENANCE
@@ -63,7 +64,7 @@ import static org.sonatype.repository.helm.internal.AssetKind.HELM_PROVENANCE
 /**
  * Helm Hosted Recipe
  *
- * @since 3.next
+ * @since 3.28
  */
 @Named(HelmHostedRecipe.NAME)
 @Singleton
@@ -211,6 +212,17 @@ class HelmHostedRecipe
           .create())
     }
 
+    builder.route(new Route.Builder().matcher(chartPushMatcher())
+        .handler(timingHandler)
+        .handler(securityHandler)
+        .handler(exceptionHandler)
+        .handler(handlerContributor)
+        .handler(conditionalRequestHandler)
+        .handler(partialFetchHandler)
+        .handler(contentHeadersHandler)
+        .handler(hostedHandlers.push)
+        .create())
+
     builder.route(new Route.Builder().matcher(chartDeleteMatcher())
         .handler(timingHandler)
         .handler(securityHandler)
@@ -231,6 +243,13 @@ class HelmHostedRecipe
 
   static Matcher chartUploadMatcher() {
     chartMethodMatcher(PUT)
+  }
+
+  static Matcher chartPushMatcher() {
+    LogicMatchers.and(
+        new ActionMatcher(POST),
+        new LiteralMatcher('/api/charts')
+    )
   }
 
   static Matcher provenanceUploadMatcher() {

@@ -32,12 +32,11 @@ import org.sonatype.nexus.repository.npm.internal.NpmHandlers
 import org.sonatype.nexus.repository.npm.internal.NpmNegativeCacheHandler
 import org.sonatype.nexus.repository.npm.internal.NpmPingHandler
 import org.sonatype.nexus.repository.npm.internal.NpmProxyCacheInvalidatorFacetImpl
-import org.sonatype.nexus.repository.npm.internal.NpmProxyHandler
-import org.sonatype.nexus.repository.npm.internal.NpmProxyRecipe
-import org.sonatype.nexus.repository.npm.internal.NpmWhoamiHandler
 import org.sonatype.nexus.repository.npm.internal.NpmProxyFacet.ProxyTarget
+import org.sonatype.nexus.repository.npm.internal.NpmProxyHandler
+import org.sonatype.nexus.repository.npm.internal.NpmWhoamiHandler
 import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchFacetProxy
-import org.sonatype.nexus.repository.npm.orient.internal.search.legacy.NpmSearchIndexFacetProxy
+import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexFacetProxy
 import org.sonatype.nexus.repository.purge.PurgeUnusedFacet
 import org.sonatype.nexus.repository.storage.SingleAssetComponentMaintenance
 import org.sonatype.nexus.repository.types.ProxyType
@@ -50,7 +49,15 @@ import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler
 
 import static org.sonatype.nexus.repository.http.HttpMethods.GET
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD
-import static org.sonatype.nexus.repository.npm.internal.NpmPaths.*
+import static org.sonatype.nexus.repository.npm.internal.NpmPaths.auditMatcher
+import static org.sonatype.nexus.repository.npm.internal.NpmPaths.auditQuickMatcher
+import static org.sonatype.nexus.repository.npm.internal.NpmPaths.distTagsMatcher
+import static org.sonatype.nexus.repository.npm.internal.NpmPaths.packageMatcher
+import static org.sonatype.nexus.repository.npm.internal.NpmPaths.pingMatcher
+import static org.sonatype.nexus.repository.npm.internal.NpmPaths.searchIndexMatcher
+import static org.sonatype.nexus.repository.npm.internal.NpmPaths.searchV1Matcher
+import static org.sonatype.nexus.repository.npm.internal.NpmPaths.tarballMatcher
+import static org.sonatype.nexus.repository.npm.internal.NpmPaths.whoamiMatcher
 
 /**
  * npm proxy repository recipe.
@@ -61,7 +68,6 @@ import static org.sonatype.nexus.repository.npm.internal.NpmPaths.*
 @Singleton
 class OrientNpmProxyRecipe
     extends OrientNpmRecipeSupport
-    implements NpmProxyRecipe
 {
   public static final String NAME = 'npm-proxy'
 
@@ -138,7 +144,7 @@ class OrientNpmProxyRecipe
     repository.attach(purgeUnusedFacet.get())
     repository.attach(npmAuditFacetProvider.get())
     repository.attach(npmAuditTarballFacetProvider.get())
-    repository.attach(npmProxyCacheInvalidatorFacet.get());
+    repository.attach(npmProxyCacheInvalidatorFacet.get())
   }
 
   /**

@@ -33,6 +33,9 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.blobstore.api.BlobStore;
+import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.event.EventManager;
@@ -60,6 +63,7 @@ import static org.apache.commons.lang3.StringUtils.indexOf;
 import static org.apache.commons.lang3.StringUtils.startsWith;
 import static org.apache.commons.lang3.StringUtils.substring;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.CONTENT_DATASTORE_NAME;
+import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
 
 @Named
 @Singleton
@@ -78,6 +82,9 @@ public class DatastoreComponentAssetTestHelper
 
   @Inject
   private EventManager eventManager;
+
+  @Inject
+  private BlobStoreManager blobStoreManager;
 
   @Override
   public DateTime getBlobCreatedTime(final Repository repository, final String path) {
@@ -262,7 +269,6 @@ public class DatastoreComponentAssetTestHelper
     try (Connection connection = sessionSupplier.openConnection(CONTENT_DATASTORE_NAME);
         PreparedStatement stmt = connection.prepareStatement("UPDATE " + repository.getFormat().getValue() + "_asset "
             + "SET last_downloaded = DATEADD(SECOND, ?, CURRENT_TIMESTAMP) WHERE repository_id = ?")) {
-
       stmt.setInt(1, -minusSeconds);
       stmt.setInt(2, repositoryId);
       stmt.execute();
@@ -337,5 +343,16 @@ public class DatastoreComponentAssetTestHelper
     catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @Override
+  public void deleteAssetBlob(final Repository repository, final String assetPath) {
+    BlobStore blobStore = blobStoreManager.get(DEFAULT_BLOBSTORE_NAME);
+    findAssetByPath(repository, assetPath)
+        .map(Asset::blob)
+        .map(Optional::get)
+        .map(AssetBlob::blobRef)
+        .map(BlobRef::getBlobId)
+        .ifPresent(blobId -> blobStore.delete(blobId, "test merge recovery"));
   }
 }

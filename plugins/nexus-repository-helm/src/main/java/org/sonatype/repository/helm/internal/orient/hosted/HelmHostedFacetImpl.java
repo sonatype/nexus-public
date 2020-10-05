@@ -41,11 +41,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.repository.helm.internal.AssetKind.HELM_PACKAGE;
 import static org.sonatype.repository.helm.internal.AssetKind.HELM_PROVENANCE;
 import static org.sonatype.repository.helm.internal.HelmFormat.HASH_ALGORITHMS;
+import static org.sonatype.repository.helm.internal.util.HelmAttributeParser.validateAttributes;
 
 /**
  * {@link HelmHostedFacetImpl implementation}
  *
- * @since 3.next
+ * @since 3.28
  */
 @Named
 public class HelmHostedFacetImpl
@@ -98,6 +99,23 @@ public class HelmHostedFacetImpl
     checkNotNull(path);
     try (TempBlob tempBlob = facet(StorageFacet.class).createTempBlob(payload, HASH_ALGORITHMS)) {
       upload(path, tempBlob, payload, assetKind);
+    }
+  }
+
+  @Override
+  public String getPath(final TempBlob tempBlob, final AssetKind assetKind) throws IOException
+  {
+    if (assetKind != HELM_PACKAGE && assetKind != HELM_PROVENANCE) {
+      throw new IllegalArgumentException("Unsupported assetKind: " + assetKind);
+    }
+
+    try (InputStream inputStream = tempBlob.get()) {
+      HelmAttributes attributes = validateAttributes(helmAttributeParser.getAttributes(assetKind, inputStream));
+      String extension = assetKind.getExtension();
+      String name = attributes.getName();
+      String version = attributes.getVersion();
+
+      return String.format("%s-%s%s", name, version, extension);
     }
   }
 
