@@ -25,6 +25,7 @@ import org.sonatype.nexus.repository.content.search.SearchFacet
 import org.sonatype.nexus.repository.http.PartialFetchHandler
 import org.sonatype.nexus.repository.pypi.internal.AssetKind
 import org.sonatype.nexus.repository.pypi.internal.PyPiSecurityFacet
+import org.sonatype.nexus.repository.routing.RoutingRuleHandler
 import org.sonatype.nexus.repository.security.SecurityHandler
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
 import org.sonatype.nexus.repository.view.Context
@@ -41,8 +42,7 @@ import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher
 
 import static org.sonatype.nexus.repository.http.HttpMethods.GET
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD
-import static java.lang.Boolean.parseBoolean;
-import static java.lang.System.getProperty;
+import static org.sonatype.nexus.repository.http.HttpMethods.POST
 
 /**
  * PyPI hosted repository support.
@@ -52,7 +52,6 @@ import static java.lang.System.getProperty;
 abstract class PyPiRecipeSupport
     extends RecipeSupport
 {
-
   @Inject
   Provider<BrowseFacet> browseFacet
 
@@ -76,6 +75,9 @@ abstract class PyPiRecipeSupport
 
   @Inject
   TimingHandler timingHandler
+
+  @Inject
+  RoutingRuleHandler routingHandler
 
   @Inject
   SecurityHandler securityHandler
@@ -106,6 +108,43 @@ abstract class PyPiRecipeSupport
   Closure assetKindHandler = { Context context, AssetKind value ->
     context.attributes.set(AssetKind, value)
     return context.proceed()
+  }
+
+  /**
+   * Matcher for index mapping. Handles normalized naming based on PEP503 " the only valid characters in a name are the
+   * ASCII alphabet, ASCII numbers, ., -, and _." https://www.python.org/dev/peps/pep-0503/#normalized-names
+   */
+  static Builder indexMatcher() {
+    new Builder().matcher(
+        LogicMatchers.and(
+            new ActionMatcher(GET, HEAD),
+            LogicMatchers.or(
+                new TokenMatcher('/simple/{name:[0-9a-zA-z\\._-]+}'),
+                new TokenMatcher('/simple/{name:[0-9a-zA-z\\._-]+}/')
+            )
+        ))
+  }
+
+  /**
+   * Matcher for index mapping.
+   */
+  static Builder rootIndexMatcher() {
+    new Builder().matcher(
+        LogicMatchers.and(
+            new ActionMatcher(GET, HEAD),
+            new TokenMatcher('/simple/')
+        ))
+  }
+
+  /**
+   * Matcher for search mapping.
+   */
+  static Builder searchMatcher() {
+    new Builder().matcher(
+        LogicMatchers.and(
+            new ActionMatcher(POST),
+            new TokenMatcher('/pypi')
+        ))
   }
 
   /**

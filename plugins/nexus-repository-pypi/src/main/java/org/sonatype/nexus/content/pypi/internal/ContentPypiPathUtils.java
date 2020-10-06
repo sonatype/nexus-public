@@ -17,7 +17,11 @@ package org.sonatype.nexus.content.pypi.internal;
  */
 public class ContentPypiPathUtils
 {
+  public static final String INDEX_PATH_PREFIX = "simple/";
+
   public static final String PACKAGE_PATH_PREFIX = "/packages/";
+
+  private ContentPypiPathUtils() {}
 
   /**
    * Builds a path to a package for a particular path.
@@ -28,5 +32,21 @@ public class ContentPypiPathUtils
     return pkg.startsWith("packages/") ? "/" + pkg : PACKAGE_PATH_PREFIX + pkg;
   }
 
-  private ContentPypiPathUtils(){}
+  /**
+   * Builds a path to the simple index for a particular name.
+   */
+  public static String indexPath(final String name) {
+    return "/" + buildIndexPath(name);
+  }
+
+  /**
+   * Builds a URI to the simple index for a particular name.
+   */
+  public static String indexUriPath(final String name) {
+    return buildIndexPath(name);
+  }
+
+  private static String buildIndexPath(final String name) {
+    return INDEX_PATH_PREFIX + name + (name.endsWith("/") ? "" : "/");
+  }
 }

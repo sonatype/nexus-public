@@ -12,8 +12,10 @@
  */
 package org.sonatype.nexus.content.pypi.internal;
 
+import java.io.InputStream;
 import java.util.Optional;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -70,12 +72,24 @@ public class PypiContentFacetImpl
   @Override
   public FluentAsset findOrCreateAsset(
       final String packagePath,
-      final FluentComponent component, final String assetKind)
+      final FluentComponent component,
+      final String assetKind)
   {
     return assets()
         .path(packagePath)
         .kind(assetKind)
         .component(component)
+        .getOrCreate();
+  }
+
+  @Override
+  public FluentAsset findOrCreateAsset(
+      final String packagePath,
+      final String assetKind)
+  {
+    return assets()
+        .path(packagePath)
+        .kind(assetKind)
         .getOrCreate();
   }
 
@@ -94,5 +108,10 @@ public class PypiContentFacetImpl
   public TempBlob getTempBlob(final Payload payload) {
     checkNotNull(payload);
     return blobs().ingest(payload, HASHING);
+  }
+
+  @Override
+  public TempBlob getTempBlob(final InputStream content, @Nullable final String contentType) {
+    return blobs().ingest(content, contentType, HASHING);
   }
 }
