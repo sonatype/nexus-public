@@ -15,19 +15,25 @@ package org.sonatype.nexus.repository.npm.internal.orient;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.BiFunction;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.Priority;
+import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
+import org.sonatype.nexus.repository.npm.internal.NonCatalogedVersionHelper;
 import org.sonatype.nexus.repository.npm.internal.NonResolvableTarballNameException;
+import org.sonatype.nexus.repository.npm.internal.NpmFieldMatcher;
 import org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageId;
 import org.sonatype.nexus.repository.npm.internal.NpmPaths;
@@ -84,6 +90,13 @@ import static org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils.to
 public class OrientNpmProxyFacet
     extends ProxyFacetSupport implements NpmProxyFacet
 {
+  private final NonCatalogedVersionHelper nonCatalogedVersionHelper;
+
+  @Inject
+  public OrientNpmProxyFacet(final NonCatalogedVersionHelper nonCatalogedVersionHelper) {
+    this.nonCatalogedVersionHelper = nonCatalogedVersionHelper;
+  }
+
   @Override
   @Nullable
   protected Content fetch(final Context context, final Content stale) throws IOException {
@@ -254,11 +267,20 @@ public class OrientNpmProxyFacet
     if (packageRootAsset == null) {
       return null;
     }
-
     return toContent(getRepository(), packageRootAsset)
-        .fieldMatchers(rewriteTarballUrlMatcher(getRepository(), packageId.id()))
+        .fieldMatchers(getFieldMatchers(packageId, packageRootAsset, context.getRepository()))
         .packageId(packageRootAsset.name())
         .missingBlobInputStreamSupplier(missingBlobException -> doGetOnMissingBlob(context, missingBlobException));
+  }
+
+  private List<NpmFieldMatcher> getFieldMatchers(final NpmPackageId packageId,
+                                                 final Asset packageRootAsset,
+                                                 final Repository repository)
+  {
+    List<NpmFieldMatcher> fieldMatchers = new ArrayList<>();
+    nonCatalogedVersionHelper.maybeAddExcludedVersionsFieldMatchers(fieldMatchers, packageRootAsset, repository);
+    fieldMatchers.add(rewriteTarballUrlMatcher(getRepository(), packageId.id()));
+    return fieldMatchers;
   }
 
   @TransactionalTouchMetadata
@@ -321,7 +343,7 @@ public class OrientNpmProxyFacet
     NpmFacetUtils.savePackageRoot(tx, asset, newPackageRoot);
 
     return toContent(getRepository(), asset)
-        .fieldMatchers(rewriteTarballUrlMatcher(getRepository(), packageId.id()))
+        .fieldMatchers(getFieldMatchers(packageId, asset, getRepository()))
         .revId(asset.name())
         .packageId(packageId.id());
   }

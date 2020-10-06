@@ -18,6 +18,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.json.UntypedObjectDeserializerSerializer;
+import org.sonatype.nexus.repository.npm.internal.NpmFieldFactory.SkipObjectNpmFieldDeserializer;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -61,7 +62,14 @@ public class NpmUntypedObjectDeserializerSerializer
     for (NpmFieldMatcher matcher : matchers) {
       if (matcher.matches(parser) && matcher.allowDeserializationOnMatched()) {
         // first matcher wins
-        return matcher.getDeserializer().deserialize(fieldName, defaultValueDeserialize(parser, context), parser, context, generator);
+        NpmFieldDeserializer deserializer = matcher.getDeserializer();
+        if(deserializer instanceof SkipObjectNpmFieldDeserializer) {
+          // Matchers with values of type array/object will fail getting the default value. Its an edge case not yet
+          // supported or needed. If we're skipping the object then we don't need the default value
+          return deserializer.deserialize(fieldName, null, parser, context, generator);
+        }
+        Object defaultValue = defaultValueDeserialize(parser, context);
+        return deserializer.deserialize(fieldName, defaultValue, parser, context, generator);
       }
     }
 
