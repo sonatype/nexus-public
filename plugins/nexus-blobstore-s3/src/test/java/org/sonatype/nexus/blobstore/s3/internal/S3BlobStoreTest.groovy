@@ -26,6 +26,9 @@ import org.sonatype.nexus.common.log.DryRunPrefix
 import com.amazonaws.SdkClientException
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model.AmazonS3Exception
+import com.amazonaws.services.s3.model.DeleteObjectsRequest
+import com.amazonaws.services.s3.model.DeleteObjectsResult
+import com.amazonaws.services.s3.model.DeleteObjectsResult.DeletedObject
 import com.amazonaws.services.s3.model.ObjectListing
 import com.amazonaws.services.s3.model.S3Object
 import com.amazonaws.services.s3.model.S3ObjectInputStream
@@ -59,7 +62,7 @@ class S3BlobStoreTest
 
   AmazonS3 s3 = Mock()
 
-  S3BlobStore blobStore = new S3BlobStore(amazonS3Factory, locationResolver, uploader, copier, false,
+  S3BlobStore blobStore = new S3BlobStore(amazonS3Factory, locationResolver, uploader, copier, false, false, false,
       storeMetrics, dryRunPrefix, bucketManager)
 
   def config = new MockBlobStoreConfiguration()
@@ -202,6 +205,9 @@ class S3BlobStoreTest
       _ * s3.doesObjectExist('mybucket', propertiesLocation(blobId)) >> true
       _ * s3.getObject('mybucket', propertiesLocation(blobId)) >> attributesS3Object
 
+      def deleteObjectsResult = Mock(DeleteObjectsResult.class)
+      _ * deleteObjectsResult.getDeletedObjects() >> [Mock(DeletedObject.class), Mock(DeletedObject.class)]
+
     when: 'blob is deleted with given lifecycle expiry days'
       cfg.attributes('s3').set('expiration', expiryDays)
       blobStore.init(cfg)
@@ -209,13 +215,13 @@ class S3BlobStoreTest
       blobStore.delete(blobId, 'just a test')
 
     then: 'blob is tagged or deleted correctly'
-      deletions * s3.deleteObject('mybucket', _)
+      deletions * s3.deleteObjects(_ as DeleteObjectsRequest) >> deleteObjectsResult
       tags * s3.setObjectTagging(_)
 
     where:
       expiryDays || deletions | tags
       -1         || 0         | 2
-      0          || 2         | 0
+      0          || 1         | 0
       1          || 0         | 2
       2          || 0         | 2
   }
@@ -412,7 +418,7 @@ class S3BlobStoreTest
 
   def "expiry test"(){
     given: 'blob exists'
-      def expiryPreferredBlobStore = new S3BlobStore(amazonS3Factory, locationResolver, uploader, copier, true,
+      def expiryPreferredBlobStore = new S3BlobStore(amazonS3Factory, locationResolver, uploader, copier, true, false, false,
           storeMetrics, dryRunPrefix, bucketManager)
 
       def blobId = new BlobId('soft-delete-success')
@@ -440,6 +446,71 @@ class S3BlobStoreTest
       "prefix" | _
   }
 
+  def "hard delete hard deletes when prefered"(){
+    given: 'blob exists'
+      def hardDeleteStore = new S3BlobStore(amazonS3Factory, locationResolver, uploader, copier, true, true, false,
+          storeMetrics, dryRunPrefix, bucketManager)
+
+      def blobId = new BlobId('soft-delete-success')
+      def cfg = new MockBlobStoreConfiguration()
+      cfg.attributes = [s3: [bucket: 'mybucket', prefix: prefix]]
+      def pathPrefix = prefix ? (prefix + "/") : ""
+
+      def deleteObjectsResult = Mock(DeleteObjectsResult.class)
+      _ * deleteObjectsResult.getDeletedObjects() >> [Mock(DeletedObject.class), Mock(DeletedObject.class)]
+
+      hardDeleteStore.init(cfg)
+      hardDeleteStore.doStart()
+      def attributesS3Object = mockS3Object(attributesContents)
+      1 * s3.doesObjectExist('mybucket', pathPrefix + propertiesLocation(blobId)) >> true
+      1 * s3.getObject('mybucket', pathPrefix + propertiesLocation(blobId)) >> attributesS3Object
+
+    when: 'blob is deleted'
+      def deleted = hardDeleteStore.deleteHard(blobId)
+
+    then: 'the blob and props are really deleted'
+      deleted
+      1 * s3.deleteObjects(_ as DeleteObjectsRequest) >> deleteObjectsResult
+
+    where:
+      prefix   | _
+      null     | _
+      ""       | _
+      "prefix" | _
+  }
+
+  def "regular delete hard deletes when prefered"(){
+    given: 'blob exists'
+      def hardDeleteStore = new S3BlobStore(amazonS3Factory, locationResolver, uploader, copier, true, true, false,
+          storeMetrics, dryRunPrefix, bucketManager)
+
+      def blobId = new BlobId('soft-delete-success')
+      def cfg = new MockBlobStoreConfiguration()
+      cfg.attributes = [s3: [bucket: 'mybucket', prefix: prefix]]
+      def pathPrefix = prefix ? (prefix + "/") : ""
+
+      def deleteObjectsResult = Mock(DeleteObjectsResult.class)
+      _ * deleteObjectsResult.getDeletedObjects() >> [Mock(DeletedObject.class), Mock(DeletedObject.class)]
+
+      hardDeleteStore.init(cfg)
+      hardDeleteStore.doStart()
+      def attributesS3Object = mockS3Object(attributesContents)
+      1 * s3.doesObjectExist('mybucket', pathPrefix + propertiesLocation(blobId)) >> true
+      1 * s3.getObject('mybucket', pathPrefix + propertiesLocation(blobId)) >> attributesS3Object
+
+    when: 'blob is deleted'
+      def deleted = hardDeleteStore.delete(blobId, "testDelete")
+
+    then: 'the blob and props are really deleted'
+      deleted
+      1 * s3.deleteObjects(_ as DeleteObjectsRequest) >> deleteObjectsResult
+
+    where:
+      prefix   | _
+      null     | _
+      ""       | _
+      "prefix" | _
+  }
   private mockS3Object(String contents) {
     S3Object s3Object = Mock()
     s3Object.getObjectContent() >> new S3ObjectInputStream(new ByteArrayInputStream(contents.bytes), null)

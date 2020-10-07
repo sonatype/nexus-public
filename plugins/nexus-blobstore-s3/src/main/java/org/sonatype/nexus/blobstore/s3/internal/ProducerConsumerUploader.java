@@ -49,6 +49,7 @@ import com.amazonaws.services.s3.model.PartETag;
 import com.amazonaws.services.s3.model.UploadPartRequest;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
+import com.codahale.metrics.annotation.Timed;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -84,15 +85,11 @@ public class ProducerConsumerUploader
 
   private final int threadCount;
 
-  private final Timer read;
-
   private final Timer readChunk;
-
-  private final Timer totalUpload;
 
   private final Timer uploadChunk;
 
-  private final Timer upload;
+  private final Timer multipartUpload;
 
   private final BlockingQueue<UploadBundle> waitingRequests;
 
@@ -110,11 +107,9 @@ public class ProducerConsumerUploader
     this.threadCount = (numberOfThreads > 0) ? numberOfThreads : Runtime.getRuntime().availableProcessors();
     this.waitingRequests = new LinkedBlockingQueue<>(threadCount);
 
-    totalUpload = registry.timer(MetricRegistry.name(S3BlobStore.class, METRIC_NAME, "totalUpload"));
-    readChunk = registry.timer(MetricRegistry.name(S3BlobStore.class, METRIC_NAME, "readPart"));
-    uploadChunk = registry.timer(MetricRegistry.name(S3BlobStore.class, METRIC_NAME, "uploadPart"));
-    read = registry.timer(MetricRegistry.name(S3BlobStore.class, METRIC_NAME, "readTime"));
-    upload = registry.timer(MetricRegistry.name(S3BlobStore.class, METRIC_NAME, "upload"));
+    readChunk = registry.timer(MetricRegistry.name(S3BlobStore.class, METRIC_NAME, "readChunk"));
+    uploadChunk = registry.timer(MetricRegistry.name(S3BlobStore.class, METRIC_NAME, "uploadChunk"));
+    multipartUpload = registry.timer(MetricRegistry.name(S3BlobStore.class, METRIC_NAME, "multiPartUpload"));
   }
 
   @Override
@@ -143,8 +138,9 @@ public class ProducerConsumerUploader
 
   @Override
   @Guarded(by = STARTED)
+  @Timed
   public void upload(final AmazonS3 s3, final String bucket, final String key, final InputStream contents) {
-    try (Timer.Context totalUploadContext = totalUpload.time()) {
+
       try (InputStream input = new BufferedInputStream(contents, chunkSize)) {
         log.debug("Starting upload to key {} in bucket {}", key, bucket);
         input.mark(chunkSize);
@@ -160,8 +156,7 @@ public class ProducerConsumerUploader
         else {
           InitiateMultipartUploadRequest initiateRequest = new InitiateMultipartUploadRequest(bucket, key);
           final String uploadId = s3.initiateMultipartUpload(initiateRequest).getUploadId();
-
-          try (Timer.Context uploadContext = upload.time()) {
+          try (Timer.Context uploadContext = multipartUpload.time()){
             List<PartETag> partETags = submitPartUploads(input, bucket, key, uploadId, s3);
 
             s3.completeMultipartUpload(new CompleteMultipartUploadRequest()
@@ -188,7 +183,6 @@ public class ProducerConsumerUploader
       catch (IOException | SdkClientException e) { // NOSONAR
         throw new BlobStoreException(format("Error uploading blob to bucket:%s key:%s", bucket, key), e, null);
       }
-    }
   }
 
   private List<PartETag> submitPartUploads(
@@ -203,14 +197,12 @@ public class ProducerConsumerUploader
 
     Optional<Chunk> optionalChunk;
     int chunkCount = 0;
-    try (Timer.Context readContext = read.time()) {
       while ((optionalChunk = parallelReader.readChunk(chunkSize)).isPresent()) {
         Chunk chunk = optionalChunk.get();
         chunkCount++;
         UploadPartRequest request = buildRequest(bucket, key, uploadId, chunk);
         waitingRequests.put(new UploadBundle(s3, request, tags));
       }
-    }
 
     List<PartETag> partETags = new ArrayList<>(chunkCount);
     for (int idx = 0; idx < chunkCount; idx++) {
