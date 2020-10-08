@@ -51,7 +51,7 @@ public class ReportCreator
 {
   private static final String N_A = "N/A";
 
-  private static final String APP_ID_ADVICE = "Please specify APP_ID in package-lock.json"
+  private static final String APP_ID_ADVICE = "Please specify an APP_ID following the instructions"
       + lineSeparator() + "https://links.sonatype.com/npm-audit";
 
   private static final Logger log = LoggerFactory.getLogger(ReportCreator.class);
