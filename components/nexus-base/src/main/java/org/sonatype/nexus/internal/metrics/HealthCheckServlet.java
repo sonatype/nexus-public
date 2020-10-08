@@ -22,7 +22,9 @@ import com.codahale.metrics.health.HealthCheckRegistry;
  *
  * @see HealthCheckMediator
  * @since 3.0
+ * @deprecated As of 3.29 this servlet has been superseded by org.sonatype.nexus.internal.status.StatusResource.check
  */
+@Deprecated
 @Singleton
 public class HealthCheckServlet
     extends com.codahale.metrics.servlets.HealthCheckServlet
