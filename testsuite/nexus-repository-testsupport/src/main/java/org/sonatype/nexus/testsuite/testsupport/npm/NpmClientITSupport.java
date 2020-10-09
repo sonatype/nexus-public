@@ -236,8 +236,11 @@ public abstract class NpmClientITSupport
 
   protected void verifyInstalled(final List<String> results, final String packageName) {
     assertThat(results.size(), is(greaterThan(0)));
-    assertThat(results.stream().anyMatch(s -> s.contains("+ " + packageName)), is(true));
-    assertThat(results.stream().anyMatch(s -> s.contains("added 1 package")), is(true));
+    assertThat(results.stream().anyMatch(s -> s.contains("added")), is(true));
+
+    final List<String> ls = npmCli.ls(packageName).get();
+    assertThat(ls.size(), is(greaterThan(0)));
+    assertThat(ls.stream().anyMatch(s -> s.contains(packageName)), is(true));
   }
 
   protected void verifyAudit(final List<String> results, final String verifyText) {
