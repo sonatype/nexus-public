@@ -345,7 +345,7 @@ public class NpmAuditFacet
   @Nullable
   public String maybeGetAppId(final Context context) {
     return context.getRequest().getHeaders().entries().stream()
-        .filter(entry -> entry.getValue().matches("app_id: .*"))
+        .filter(entry -> entry.getValue().matches("app_id:.*"))
         .map(getAppIdValue())
         .findFirst()
         .orElse(null);

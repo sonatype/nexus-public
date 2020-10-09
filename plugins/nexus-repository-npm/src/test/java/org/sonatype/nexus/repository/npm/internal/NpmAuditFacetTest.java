@@ -85,6 +85,19 @@ public class NpmAuditFacetTest
   }
 
   @Test
+  public void whenAppIdIsPresentInValueWithNoSpace() {
+    final ListMultimap multimap = ArrayListMultimap.create();
+    multimap.put("0", "app_id:bar");
+    headers = new Headers(multimap);
+    when(context.getRequest()).thenReturn(request);
+    when(request.getHeaders()).thenReturn(headers);
+
+    final String actual = underTest.maybeGetAppId(context);
+
+    assertThat(actual, is("bar"));
+  }
+
+  @Test
   public void whenAppIdIsNotPresent() {
     final ListMultimap multimap = ArrayListMultimap.create();
     multimap.put("0", "appid: bar");
