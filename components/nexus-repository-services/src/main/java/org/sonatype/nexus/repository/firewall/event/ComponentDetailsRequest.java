@@ -10,27 +10,40 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.metrics;
+package org.sonatype.nexus.repository.firewall.event;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
-import com.codahale.metrics.health.HealthCheckRegistry;
+import org.sonatype.goodies.packageurl.PackageUrl;
 
 /**
- * Customized {@link com.codahale.metrics.servlets.HealthCheckServlet} to support injection.
- *
- * @see HealthCheckMediator
- * @since 3.0
- * @deprecated As of 3.29 this servlet has been superseded by org.sonatype.nexus.internal.status.StatusResource.check
+ * @since 3.next
  */
-@Deprecated
-@Singleton
-public class HealthCheckServlet
-    extends com.codahale.metrics.servlets.HealthCheckServlet
+public class ComponentDetailsRequest
 {
-  @Inject
-  public HealthCheckServlet(final HealthCheckRegistry registry) {
-    super(registry);
+  private final CompletableFuture<Map<String, Date>> result = new CompletableFuture<>();
+
+  private final String name;
+
+  private final List<PackageUrl> packageUrls;
+
+  public ComponentDetailsRequest(final String name, final List<PackageUrl> packageUrls) {
+    this.name = name;
+    this.packageUrls = packageUrls;
+  }
+
+  public CompletableFuture<Map<String, Date>> getResult() {
+    return result;
+  }
+
+  public List<PackageUrl> getPackageUrls() {
+    return packageUrls;
+  }
+
+  public String getName() {
+    return name;
   }
 }

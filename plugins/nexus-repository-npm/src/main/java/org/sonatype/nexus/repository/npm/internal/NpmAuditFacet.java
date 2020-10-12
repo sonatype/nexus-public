@@ -15,14 +15,17 @@ package org.sonatype.nexus.repository.npm.internal;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
+import javax.annotation.Nullable;
 import javax.cache.Cache;
 import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.cache.expiry.Duration;
@@ -39,6 +42,7 @@ import org.sonatype.nexus.repository.npm.internal.audit.parser.PackageLock;
 import org.sonatype.nexus.repository.npm.internal.audit.parser.PackageLockParser;
 import org.sonatype.nexus.repository.npm.internal.audit.report.ReportCreator;
 import org.sonatype.nexus.repository.npm.internal.audit.report.ResponseReport;
+import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.StringPayload;
 import org.sonatype.nexus.repository.vulnerability.AuditComponent;
@@ -83,6 +87,8 @@ public class NpmAuditFacet
   private static final Logger logger = LoggerFactory.getLogger(NpmAuditFacet.class);
 
   public static final String QUICK_AUDIT_ATTR_NAME = "QUICK_AUDIT";
+
+  public static final String APP_ID = "app_id";
 
   private static final String CACHE_NAME = "npm-audit-data";
 
@@ -139,7 +145,7 @@ public class NpmAuditFacet
     maybeDestroyCache();
   }
 
-  public Payload audit(final Payload payload)
+  public Payload audit(final Payload payload, final String appId)
       throws ExecutionException, ConfigurationException, PackageLockParsingException, TarballLoadingException
   {
     if (payload == null) {
@@ -149,7 +155,7 @@ public class NpmAuditFacet
 
     PackageLock packageLock = parseRequest(payload);
     ComponentsVulnerability componentsVulnerability =
-        analyzeComponents(packageLock.getComponents(), packageLock.getRoot().getApplicationId());
+        analyzeComponents(packageLock.getComponents(), appId!= null ? appId : packageLock.getRoot().getApplicationId());
     return buildResponse(packageLock, componentsVulnerability);
   }
 
@@ -334,5 +340,24 @@ public class NpmAuditFacet
       cacheHelper.maybeDestroyCache(CACHE_NAME);
       cache = null;
     }
+  }
+
+  @Nullable
+  public String maybeGetAppId(final Context context) {
+    return context.getRequest().getHeaders().entries().stream()
+        .filter(entry -> entry.getValue().matches("app_id:.*"))
+        .map(getAppIdValue())
+        .findFirst()
+        .orElse(null);
+  }
+
+  private Function<Entry<String, String>, String> getAppIdValue() {
+    return entry -> {
+      final String[] split = entry.getValue().split(":");
+      if (split.length == 2) {
+        return split[1].trim();
+      }
+      return null;
+    };
   }
 }

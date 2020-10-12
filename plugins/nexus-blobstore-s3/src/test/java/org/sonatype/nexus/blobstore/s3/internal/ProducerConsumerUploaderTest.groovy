@@ -77,25 +77,17 @@ class ProducerConsumerUploaderTest
       MetricRegistry registry = Mock()
       Timer.Context context = Mock()
 
-      Timer totalUpload = Mock()
-      totalUpload.time() >> context
-      registry.timer('org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.uploader.totalUpload') >> totalUpload
+      Timer readChunk = Mock()
+      readChunk.time() >> context
+      registry.timer('org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.uploader.readChunk') >> readChunk
 
-      Timer read = Mock()
-      read.time() >> context
-      registry.timer('org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.uploader.readTime') >> read
+      Timer uploadChunk = Mock()
+      uploadChunk.time() >> context
+      registry.timer('org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.uploader.uploadChunk') >> uploadChunk
 
-      Timer upload = Mock()
-      upload.time() >> context
-      registry.timer('org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.uploader.upload') >> upload
-
-      Timer readPart = Mock()
-      readPart.time() >> context
-      registry.timer('org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.uploader.readPart') >> readPart
-
-      Timer uploadPart = Mock()
-      uploadPart.time() >> context
-      registry.timer('org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.uploader.uploadPart') >> uploadPart
+      Timer multiPartUpload = Mock()
+      multiPartUpload.time() >> context
+      registry.timer('org.sonatype.nexus.blobstore.s3.internal.S3BlobStore.uploader.multiPartUpload') >> multiPartUpload
 
     and: 'A producer/consumer uploader'
       ProducerConsumerUploader producerConsumerUploader = new ProducerConsumerUploader(100, 4, registry)
@@ -111,11 +103,9 @@ class ProducerConsumerUploaderTest
       4 * s3.uploadPart(_) >> new UploadPartResult()
       1 * s3.completeMultipartUpload(_)
       0 * s3.abortMultipartUpload(_)
-      1 * totalUpload.time()
-      1 * read.time()
-      1 * upload.time()
-      6 * readPart.time() //once for chunk to determine if multipart, 4 for the chunks, and once for the empty/end chunk
-      4 * uploadPart.time()
+      1 * multiPartUpload.time()
+      6 * readChunk.time() //once for chunk to determine if multipart, 4 for the chunks, and once for the empty/end chunk
+      4 * uploadChunk.time()
   }
 
   def 'upload aborts multipart uploads on error'() {

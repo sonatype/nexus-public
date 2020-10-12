@@ -15,6 +15,8 @@ package org.sonatype.nexus.blobstore.api;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -287,4 +289,13 @@ public interface BlobStore
    * @since 3.22
    */
   void shutdown() throws Exception;
+
+  /**
+   * Acts as a {@code BlobStore::hardDelete}, except it may be executed asynchronously.
+   *
+   * @since 3.next
+   */
+  default Future<Boolean> asyncDelete(BlobId blobId) {
+    return CompletableFuture.completedFuture(deleteHard(blobId));
+  }
 }

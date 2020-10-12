@@ -12,7 +12,10 @@
  */
 package org.sonatype.nexus.content.pypi;
 
+import java.io.InputStream;
 import java.util.Optional;
+
+import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.Facet;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
@@ -36,7 +39,12 @@ public interface PypiContentFacet
 
   FluentAsset findOrCreateAsset(
       String packagePath,
-      FluentComponent component, String assetKind);
+      FluentComponent component,
+      String assetKind);
+
+  FluentAsset findOrCreateAsset(
+      final String packagePath,
+      final String assetKind);
 
   FluentComponent findOrCreateComponent(
       String name,
@@ -44,4 +52,6 @@ public interface PypiContentFacet
       String normalizedName);
 
   TempBlob getTempBlob(Payload payload);
+
+  TempBlob getTempBlob(final InputStream content, @Nullable final String contentType);
 }

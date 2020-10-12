@@ -32,6 +32,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.Mock;
 
+import static java.util.OptionalInt.empty;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
@@ -111,6 +112,24 @@ public class InternalIdsTest
     assertThat(internalComponentId(fluentAsset).getAsInt(), is(7));
     assertThat(internalAssetBlobId(asset).getAsInt(), is(8));
     assertThat(internalAssetBlobId(fluentAsset).getAsInt(), is(8));
+  }
+
+  @Test
+  public void shouldFetchComponentIdFromComponentWhenComponentIdIsNullOnAsset() {
+    ComponentData component = new ComponentData();
+    component.componentId = 2;
+    AssetData asset = new AssetData();
+    asset.assetId = 3;
+
+    Asset fluentAsset = new FluentAssetImpl(contentFacet, asset);
+
+    assertThat(internalComponentId(asset), is(empty()));
+    assertThat(internalComponentId(fluentAsset), is(empty()));
+
+    asset.setComponent(component);
+    asset.componentId = null;
+    assertThat(internalComponentId(asset).getAsInt(), is(component.componentId));
+    assertThat(internalComponentId(fluentAsset).getAsInt(), is(component.componentId));
   }
 
   private static void checkIllegalState(final IntSupplier underTest) {

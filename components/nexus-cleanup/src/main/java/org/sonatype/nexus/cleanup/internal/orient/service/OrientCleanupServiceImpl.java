@@ -105,7 +105,7 @@ public class OrientCleanupServiceImpl
     try {
       findPolicies(repository).forEach(p -> {
         deleted.addAndGet(deleteByPolicy(repository, p, cancelledCheck));
-        log.info("{} components cleaned up for repository {}", deleted, repository.getName());
+        log.info("{} components cleaned up for repository {} in total", deleted, repository.getName());
       });
       return deleted.get();
     }

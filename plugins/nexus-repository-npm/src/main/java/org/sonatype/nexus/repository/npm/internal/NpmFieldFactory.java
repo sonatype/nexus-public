@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.npm.internal;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -46,6 +47,8 @@ public class NpmFieldFactory
     }
   };
 
+  public static final NpmFieldDeserializer SKIP_OBJECT_DESERIALIZER = new SkipObjectNpmFieldDeserializer();
+
   public static final NpmFieldMatcher REMOVE_ID_MATCHER = removeFieldMatcher(META_ID, "/" + META_ID);
 
   public static final NpmFieldMatcher REMOVE_REV_MATCHER = removeFieldMatcher(META_REV, "/" + META_REV);
@@ -53,12 +56,20 @@ public class NpmFieldFactory
   public static final List<NpmFieldMatcher> REMOVE_DEFAULT_FIELDS_MATCHERS = asList(REMOVE_ID_MATCHER,
       REMOVE_REV_MATCHER);
 
+  public static final String DIST_TAGS_LATEST = "/dist-tags/latest";
+
+  public static final String LATEST = "latest";
+
   private NpmFieldFactory() {
     // factory constructor
   }
 
-  private static NpmFieldMatcher removeFieldMatcher(final String fieldName, final String pathRegex) {
+  public static NpmFieldMatcher removeFieldMatcher(final String fieldName, final String pathRegex) {
     return new NpmFieldMatcher(fieldName, pathRegex, NULL_DESERIALIZER);
+  }
+
+  public static NpmFieldMatcher removeObjectFieldMatcher(final String fieldName, final String pathRegex) {
+    return new NpmFieldMatcher(fieldName, pathRegex, SKIP_OBJECT_DESERIALIZER);
   }
 
   public static NpmFieldUnmatcher missingFieldMatcher(final String fieldName,
@@ -102,5 +113,55 @@ public class NpmFieldFactory
         return rewriteTarballUrl(repositoryName, packageId, super.deserializeValue(defaultValue).toString());
       }
     };
+  }
+
+  /**
+   * Rewrites the dist-tags/latest field with the latest, cataloged version
+   *
+   * @since 3.next
+   */
+  public static NpmFieldMatcher rewriteLatest(final List<String> nonCatalogedVersions, final List<String> allVersions) {
+    return new NpmFieldMatcher(LATEST, DIST_TAGS_LATEST, latestFieldDeserializer(nonCatalogedVersions, allVersions));
+  }
+
+  private static NpmFieldDeserializer latestFieldDeserializer(final List<String> nonCatalogedVersions,
+                                                              final List<String> allVersions)
+  {
+    return new NpmFieldDeserializer()
+    {
+      @Override
+      public Object deserialize(final String fieldName,
+                                final Object defaultValue,
+                                final JsonParser parser,
+                                final DeserializationContext context,
+                                final JsonGenerator generator) throws IOException
+      {
+        String overrideDefaultValue = (String) defaultValue;
+        if (nonCatalogedVersions.contains(defaultValue)) {
+          for (int i = allVersions.size() - 1; i >= 0; i--) {
+            String next = allVersions.get(i);
+            if (!nonCatalogedVersions.contains(next)) {
+              overrideDefaultValue = next;
+              break;
+            }
+          }
+        }
+        return super.deserialize(fieldName, overrideDefaultValue, parser, context, generator);
+      }
+    };
+  }
+
+  public static class SkipObjectNpmFieldDeserializer extends NpmFieldDeserializer
+  {
+    @Override
+    public Object deserialize(final String fieldName,
+                              final Object defaultValue,
+                              final JsonParser parser,
+                              final DeserializationContext context,
+                              final JsonGenerator generator) throws IOException
+    {
+      parser.skipChildren();
+      return null;
+    }
   }
 }
