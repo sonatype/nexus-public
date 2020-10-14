@@ -34,6 +34,7 @@ import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.npm.internal.NonCatalogedVersionHelper;
 import org.sonatype.nexus.repository.npm.internal.NonResolvableTarballNameException;
 import org.sonatype.nexus.repository.npm.internal.NpmFieldMatcher;
+import org.sonatype.nexus.repository.npm.internal.NpmAuditFacet;
 import org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageId;
 import org.sonatype.nexus.repository.npm.internal.NpmPaths;
@@ -88,7 +89,8 @@ import static org.sonatype.nexus.repository.npm.internal.orient.NpmFacetUtils.to
 @Named
 @Priority(Integer.MAX_VALUE)
 public class OrientNpmProxyFacet
-    extends ProxyFacetSupport implements NpmProxyFacet
+    extends ProxyFacetSupport
+    implements NpmProxyFacet
 {
   private final NonCatalogedVersionHelper nonCatalogedVersionHelper;
 
@@ -518,5 +520,12 @@ public class OrientNpmProxyFacet
             e.getAsset().name(), getUrl(context)));
       }
     });
+  }
+
+  @Override
+  public void invalidateProxyCaches() {
+    super.invalidateProxyCaches();
+    final NpmAuditFacet npmAuditFacet = getRepository().facet(NpmAuditFacet.class);
+    npmAuditFacet.clearCache();
   }
 }
