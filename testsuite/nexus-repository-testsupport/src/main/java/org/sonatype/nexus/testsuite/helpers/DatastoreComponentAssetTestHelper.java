@@ -19,6 +19,9 @@ import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -62,8 +65,8 @@ import static org.apache.commons.lang3.StringUtils.endsWith;
 import static org.apache.commons.lang3.StringUtils.indexOf;
 import static org.apache.commons.lang3.StringUtils.startsWith;
 import static org.apache.commons.lang3.StringUtils.substring;
-import static org.sonatype.nexus.datastore.api.DataStoreManager.CONTENT_DATASTORE_NAME;
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
+import static org.sonatype.nexus.datastore.api.DataStoreManager.CONTENT_DATASTORE_NAME;
 
 @Named
 @Singleton
@@ -266,10 +269,12 @@ public class DatastoreComponentAssetTestHelper
   public void setLastDownloadedTime(final Repository repository, final int minusSeconds) {
     int repositoryId = ((ContentFacetSupport) repository.facet(ContentFacet.class)).contentRepositoryId();
 
+    Timestamp time = Timestamp.from(LocalDateTime.now().minusSeconds(minusSeconds).toInstant(ZoneOffset.UTC));
+
     try (Connection connection = sessionSupplier.openConnection(CONTENT_DATASTORE_NAME);
         PreparedStatement stmt = connection.prepareStatement("UPDATE " + repository.getFormat().getValue() + "_asset "
-            + "SET last_downloaded = DATEADD(SECOND, ?, CURRENT_TIMESTAMP) WHERE repository_id = ?")) {
-      stmt.setInt(1, -minusSeconds);
+            + "SET last_downloaded = ? WHERE repository_id = ?")) {
+      stmt.setTimestamp(1, time);
       stmt.setInt(2, repositoryId);
       stmt.execute();
       if(stmt.getWarnings() != null) {
@@ -293,13 +298,15 @@ public class DatastoreComponentAssetTestHelper
         .filter(pathMatcher)
         .collect(Collectors.toList());
 
+    Timestamp time = Timestamp.from(LocalDateTime.now().minusSeconds(minusSeconds).toInstant(ZoneOffset.UTC));
+
     try (Connection connection = sessionSupplier.openConnection(CONTENT_DATASTORE_NAME);
         PreparedStatement stmt = connection.prepareStatement("UPDATE " + repository.getFormat().getValue() + "_asset "
-            + "SET last_downloaded = DATEADD(SECOND, ?, CURRENT_TIMESTAMP) "
+            + "SET last_downloaded = ? "
             + "WHERE repository_id = ? AND path = ?")) {
 
       for (String path : pathes) {
-        stmt.setInt(1, -minusSeconds);
+        stmt.setTimestamp(1, time);
         stmt.setInt(2, repositoryId);
         stmt.setString(3, path);
 
