@@ -12,12 +12,8 @@
  */
 package org.sonatype.nexus.repository.pypi.internal.orient;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -51,9 +47,8 @@ import org.sonatype.nexus.repository.view.payloads.StringPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlobPartPayload;
 
 import com.google.common.base.Strings;
-import com.google.common.io.CharStreams;
-import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.index.query.QueryBuilder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -65,6 +60,7 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.name;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.path;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiSearchUtils.buildSearchResponse;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiSearchUtils.parseSearchRequest;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiStorageUtils.addAttribute;
 import static org.sonatype.nexus.repository.pypi.internal.orient.OrientPyPiDataUtils.HASH_ALGORITHMS;
 import static org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder.unrestricted;
 
@@ -167,24 +163,6 @@ public final class OrientPyPiHostedHandlers
   {
     StorageFacet storageFacet = repository.facet(StorageFacet.class);
     return new TempBlobPartPayload(payload, storageFacet.createTempBlob(payload, HASH_ALGORITHMS));
-  }
-
-  /**
-   * Adds the attribute from the payload to the attribute map. If an attribute with the same name already exists, the
-   * content is concatenated with a newline.
-   */
-  private void addAttribute(final Map<String, String> attributes, final PartPayload payload) throws IOException {
-    checkNotNull(attributes);
-    checkNotNull(payload);
-    try (Reader reader = new BufferedReader(new InputStreamReader(payload.openInputStream(), StandardCharsets.UTF_8))) {
-      String fieldName = payload.getFieldName();
-      String newValue = CharStreams.toString(reader);
-      String oldValue = attributes.get(payload.getFieldName());
-      if (oldValue != null && !oldValue.isEmpty()) {
-        newValue = oldValue + "\n" + newValue;
-      }
-      attributes.put(fieldName, newValue);
-    }
   }
 
   /**

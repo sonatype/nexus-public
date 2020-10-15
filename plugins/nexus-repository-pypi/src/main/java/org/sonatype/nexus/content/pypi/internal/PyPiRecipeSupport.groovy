@@ -20,10 +20,10 @@ import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.RecipeSupport
 import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.content.browse.BrowseFacet
-import org.sonatype.nexus.repository.content.maintenance.LastAssetMaintenanceFacet
 import org.sonatype.nexus.repository.content.search.SearchFacet
 import org.sonatype.nexus.repository.http.PartialFetchHandler
 import org.sonatype.nexus.repository.pypi.internal.AssetKind
+import org.sonatype.nexus.repository.pypi.internal.PyPiIndexFacet
 import org.sonatype.nexus.repository.pypi.internal.PyPiSecurityFacet
 import org.sonatype.nexus.repository.routing.RoutingRuleHandler
 import org.sonatype.nexus.repository.security.SecurityHandler
@@ -43,7 +43,6 @@ import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher
 import static org.sonatype.nexus.repository.http.HttpMethods.GET
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD
 import static org.sonatype.nexus.repository.http.HttpMethods.POST
-
 /**
  * PyPI hosted repository support.
  *
@@ -68,7 +67,10 @@ abstract class PyPiRecipeSupport
   Provider<SearchFacet> searchFacet
 
   @Inject
-  Provider<LastAssetMaintenanceFacet> lastAssetMaintenanceFacet
+  Provider<PyPiLastAssetMaintenanceFacet> lastAssetMaintenanceFacet
+
+  @Inject
+  Provider<PyPiIndexFacet> indexFacet
 
   @Inject
   ExceptionHandler exceptionHandler
@@ -155,6 +157,17 @@ abstract class PyPiRecipeSupport
         LogicMatchers.and(
             new ActionMatcher(GET, HEAD),
             new TokenMatcher('{path:\\/packages\\/[^/].+\\/[^/]+\\/[^/]+}')
+        ))
+  }
+
+  /**
+   * Matcher for base mapping.
+   */
+  static Builder baseMatcher() {
+    new Builder().matcher(
+        LogicMatchers.and(
+            new ActionMatcher(POST),
+            new TokenMatcher('/')
         ))
   }
 }

@@ -14,34 +14,62 @@ package org.sonatype.nexus.content.pypi.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
+import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
+import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.content.pypi.PypiContentFacet;
 import org.sonatype.nexus.repository.Facet.Exposed;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.fluent.FluentComponents;
 import org.sonatype.nexus.repository.pypi.internal.AssetKind;
+import org.sonatype.nexus.repository.pypi.internal.PyPiAttributes;
+import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
+import org.sonatype.nexus.repository.pypi.internal.PyPiIndexFacet;
 import org.sonatype.nexus.repository.pypi.internal.PyPiInfoUtils;
+import org.sonatype.nexus.repository.pypi.internal.PyPiLink;
+import org.sonatype.nexus.repository.pypi.internal.SignablePyPiPackage;
 import org.sonatype.nexus.repository.view.Content;
+import org.sonatype.nexus.repository.view.Payload;
+import org.sonatype.nexus.repository.view.payloads.BytesPayload;
+import org.sonatype.nexus.repository.view.payloads.StringPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.repository.view.payloads.TempBlobPartPayload;
 
+import org.apache.commons.lang.StringUtils;
+
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.sonatype.nexus.content.pypi.internal.ContentPypiPathUtils.INDEX_PATH_PREFIX;
+import static org.sonatype.nexus.content.pypi.internal.ContentPypiPathUtils.indexPath;
 import static org.sonatype.nexus.content.pypi.internal.ContentPypiPathUtils.packagesPath;
+import static org.sonatype.nexus.content.pypi.internal.PyPiDataUtils.copyFormatAttributes;
+import static org.sonatype.nexus.content.pypi.internal.PyPiDataUtils.getMd5;
 import static org.sonatype.nexus.content.pypi.internal.PyPiDataUtils.setFormatAttribute;
+import static org.sonatype.nexus.repository.pypi.internal.AssetKind.ROOT_INDEX;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_NAME;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_SUMMARY;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_VERSION;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.buildIndexPage;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiIndexUtils.buildRootIndexPage;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.normalizeName;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiStorageUtils.mayAddEtag;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiStorageUtils.validateMd5Hash;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
-import static org.sonatype.nexus.repository.view.Content.CONTENT_ETAG;
+import static org.sonatype.nexus.repository.view.ContentTypes.TEXT_HTML;
 
 /**
  * @since 3.next
@@ -51,6 +79,28 @@ import static org.sonatype.nexus.repository.view.Content.CONTENT_ETAG;
 public class PyPiHostedFacet
     extends FacetSupport
 {
+  private final TemplateHelper templateHelper;
+
+  @Inject
+  public PyPiHostedFacet(final TemplateHelper templateHelper) {
+    this.templateHelper = templateHelper;
+  }
+
+  public FluentAsset upload(final SignablePyPiPackage pyPiPackage) throws IOException {
+    FluentAsset savedPiPyPackage;
+    Map<String, String> attributes = pyPiPackage.getAttributes();
+    try (
+        TempBlobPartPayload wheelPayload = pyPiPackage.getWheelPayload();
+        TempBlobPartPayload gpgPayload = pyPiPackage.getGpgSignature()) {
+      savedPiPyPackage = storeWheelAndSignaturePayloads(wheelPayload, gpgPayload, attributes);
+    }
+    catch (Exception e) {
+      log.info("Unable to store wheel and gpg signature", e);
+      throw e;
+    }
+    return savedPiPyPackage;
+  }
+
   public FluentAsset upload(final String filename,
                             final Map<String, String> attributes,
                             final TempBlobPartPayload payload)
@@ -84,14 +134,108 @@ public class PyPiHostedFacet
     }
 
     Content content = asset.download();
-    mayAddEtag(content.getAttributes(), blob.checksums().get(HashAlgorithm.SHA1.toString()));
+    mayAddEtag(content.getAttributes(), blob.checksums().get(HashAlgorithm.SHA1.name()));
     return content;
+  }
+
+  public Content getRootIndex() {
+    FluentAsset asset = facet(PypiContentFacet.class).getAsset(INDEX_PATH_PREFIX).orElseGet(this::createRootIndex);
+    return asset.download();
+  }
+
+  public Content getIndex(final String name) {
+    checkNotNull(name);
+
+    PypiContentFacet contentFacet = facet(PypiContentFacet.class);
+    // If we don't even have a single component entry, then nothing has been uploaded yet
+    if (!contentFacet.isComponentExists(name)) {
+      return null;
+    }
+
+    String indexPath = indexPath(name);
+    FluentAsset savedIndex = contentFacet.getAsset(indexPath).orElseGet(() -> createIndexAsset(name, indexPath));
+    return savedIndex.download();
   }
 
   public Map<String, String> extractMetadata(final TempBlob tempBlob) throws IOException {
     try (InputStream in = tempBlob.get()) {
       return PyPiInfoUtils.extractMetadata(in);
     }
+  }
+
+  private FluentAsset createRootIndex() {
+    Collection<PyPiLink> links = findAllLinks();
+    FluentAsset asset = createRootIndexAsset();
+
+    String rootIndexHtml = buildRootIndexPage(templateHelper, links);
+    try (TempBlob tempBlob = facet(PypiContentFacet.class).getTempBlob(new StringPayload(rootIndexHtml, TEXT_HTML))) {
+      return asset.attach(tempBlob);
+    }
+  }
+
+  protected FluentAsset createRootIndexAsset() {
+    return facet(PypiContentFacet.class).assets()
+        .path(INDEX_PATH_PREFIX).getOrCreate()
+        .kind(ROOT_INDEX.name());
+  }
+
+  protected Collection<PyPiLink> findAllLinks() {
+    Map<String, PyPiLink> links = new TreeMap<>();
+    FluentComponents components = facet(PypiContentFacet.class).components();
+
+    components.browse(Integer.MAX_VALUE, null).stream()
+        .forEach(c -> links.put(c.name(), new PyPiLink(c.name(), c.name() + "/")));
+    return links.values();
+  }
+
+  private FluentAsset createIndexAsset(final String name, final String indexPath)
+  {
+    String html = buildIndex(name);
+    Payload indexPayload = new BytesPayload(html.getBytes(UTF_8), TEXT_HTML);
+    PypiContentFacet contentFacet = facet(PypiContentFacet.class);
+
+    try (TempBlob tempBlob = contentFacet.getTempBlob(indexPayload)) {
+      return facet(PypiContentFacet.class)
+          .findOrCreateAsset(indexPath, AssetKind.INDEX.name())
+          .attach(tempBlob);
+    }
+  }
+
+  private String buildIndex(final String name) {
+    List<FluentAsset> assets = facet(PypiContentFacet.class).assetsByComponentName(name);
+
+    List<PyPiLink> links = assets.stream()
+        .map(this::buildPyPiLink)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .collect(Collectors.toList());
+
+    return buildIndexPage(templateHelper, name, links);
+  }
+
+  private Optional<PyPiLink> buildPyPiLink(FluentAsset asset) {
+    AttributesMap pypiAttributes = asset.attributes().child(PyPiFormat.NAME);
+    String path = asset.path();
+    String file = path.substring(path.lastIndexOf('/') + 1);
+    Optional<String> md5 = getMd5(asset);
+    if (!md5.isPresent()) {
+      return Optional.empty();
+    }
+    String link = String.format("../../%s#md5=%s", path, md5.get());
+    String dataRequiresPython = pypiAttributes.get(PyPiAttributes.P_REQUIRES_PYTHON, String.class, StringUtils.EMPTY);
+
+    return Optional.of(new PyPiLink(file, link, dataRequiresPython));
+  }
+
+  private FluentAsset storeWheelAndSignaturePayloads(final TempBlobPartPayload wheelPayload,
+                                                     @Nullable final TempBlobPartPayload gpgPayload,
+                                                     final Map<String, String> attributes)
+  {
+    FluentAsset wheelAsset = savePyPiWheelPayload(wheelPayload.getName(), attributes, wheelPayload);
+    if (gpgPayload != null) {
+      storeGpgSignaturePayload(gpgPayload, attributes.get(P_NAME), attributes.get(P_VERSION));
+    }
+    return wheelAsset;
   }
 
   private FluentAsset savePyPiWheelPayload(
@@ -109,16 +253,23 @@ public class PyPiHostedFacet
 
     validateMd5Hash(attributes, tempBlob);
 
+    PyPiIndexFacet indexFacet = facet(PyPiIndexFacet.class);
+    // A package has been added or redeployed and therefore the cached index is no longer relevant
+    indexFacet.deleteIndex(name);
+
     PypiContentFacet contentFacet = facet(PypiContentFacet.class);
+    if (!contentFacet.isComponentExists(name)) {
+      indexFacet.deleteRootIndex();
+    }
 
     FluentComponent component = contentFacet.findOrCreateComponent(name, version, normalizedName);
-    PyPiDataUtils.setFormatAttribute(component, P_SUMMARY, attributes.get(P_SUMMARY));
-    PyPiDataUtils.setFormatAttribute(component, P_VERSION, version);
+    setFormatAttribute(component, P_SUMMARY, attributes.get(P_SUMMARY));
+    setFormatAttribute(component, P_VERSION, version);
     //TODO If null, delete root metadata. Need to use IndexFacet
 
     FluentAsset asset = contentFacet.findOrCreateAsset(packagePath, component, AssetKind.PACKAGE.name());
     setFormatAttribute(asset, P_ASSET_KIND, AssetKind.PACKAGE.name());
-    PyPiDataUtils.copyFormatAttributes(asset, attributes);
+    copyFormatAttributes(asset, attributes);
 
     return asset.attach(tempBlob).markAsCached(wheelPayload);
   }
@@ -129,8 +280,10 @@ public class PyPiHostedFacet
   {
     PypiContentFacet contentFacet = facet(PypiContentFacet.class);
 
-    FluentComponent component = contentFacet.findOrCreateComponent(name, version, normalizeName(name));
-    //TODO If null, delete root metadata. Need to use IndexFacet
+    FluentComponent component = contentFacet.components().name(name).version(version).find().orElseGet(() -> {
+      facet(PyPiIndexFacet.class).deleteRootIndex();
+      return contentFacet.findOrCreateComponent(name, version, normalizeName(name));
+    });
 
     FluentAsset asset = contentFacet.findOrCreateAsset(
         createPackagePath(name, version, gpgPayload.getName()),
@@ -138,15 +291,5 @@ public class PyPiHostedFacet
         AssetKind.PACKAGE_SIGNATURE.name());
     asset.attach(gpgPayload.getTempBlob()).markAsCached(gpgPayload);
     return asset.download();
-  }
-
-  private void mayAddEtag(final AttributesMap attributesMap, final String hashCode) {
-    if (attributesMap.contains(CONTENT_ETAG)) {
-      return;
-    }
-
-    if (hashCode != null) {
-      attributesMap.set(CONTENT_ETAG, "{SHA1{" + hashCode + "}}");
-    }
   }
 }

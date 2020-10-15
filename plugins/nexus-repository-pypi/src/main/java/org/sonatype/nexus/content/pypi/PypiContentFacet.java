@@ -13,6 +13,7 @@
 package org.sonatype.nexus.content.pypi;
 
 import java.io.InputStream;
+import java.util.List;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -33,25 +34,29 @@ public interface PypiContentFacet
 {
   Iterable<FluentAsset> browseAssets();
 
-  Optional<FluentAsset> getAsset(String path);
+  Optional<FluentAsset> getAsset(final String path);
 
-  boolean delete(String path);
+  boolean delete(final String path);
 
   FluentAsset findOrCreateAsset(
-      String packagePath,
-      FluentComponent component,
-      String assetKind);
+      final String packagePath,
+      final FluentComponent component,
+      final String assetKind);
 
   FluentAsset findOrCreateAsset(
       final String packagePath,
       final String assetKind);
 
-  FluentComponent findOrCreateComponent(
-      String name,
-      String version,
-      String normalizedName);
+  boolean isComponentExists(final String name);
 
-  TempBlob getTempBlob(Payload payload);
+  List<FluentAsset> assetsByComponentName(final String name);
+
+  FluentComponent findOrCreateComponent(
+      final String name,
+      final String version,
+      final String normalizedName);
+
+  TempBlob getTempBlob(final Payload payload);
 
   TempBlob getTempBlob(final InputStream content, @Nullable final String contentType);
 }

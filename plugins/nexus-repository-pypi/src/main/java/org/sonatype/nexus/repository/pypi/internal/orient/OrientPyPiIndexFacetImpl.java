@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.pypi.internal.orient;
 
+import javax.annotation.Priority;
 import javax.inject.Named;
 
 import org.sonatype.nexus.repository.FacetSupport;
@@ -33,6 +34,7 @@ import static org.sonatype.nexus.repository.pypi.internal.orient.OrientPyPiDataU
  * @since 3.16
  */
 @Named
+@Priority(Integer.MAX_VALUE)
 public class OrientPyPiIndexFacetImpl
     extends FacetSupport
     implements PyPiIndexFacet

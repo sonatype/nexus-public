@@ -12,17 +12,28 @@
  */
 package org.sonatype.nexus.repository.pypi.internal;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.sonatype.nexus.common.collect.AttributesMap;
 import org.sonatype.nexus.repository.IllegalOperationException;
+import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 import com.google.common.hash.HashCode;
+import com.google.common.io.CharStreams;
+import org.apache.commons.lang.StringUtils;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_NAME;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.normalizeName;
+import static org.sonatype.nexus.repository.view.Content.CONTENT_ETAG;
 
 /**
  * @since 3.next
@@ -40,6 +51,34 @@ public class PyPiStorageUtils
         throw new IllegalOperationException(
             "Digests do not match, found: " + hashValue + ", expected: " + expectedDigest);
       }
+    }
+  }
+
+  /**
+   * Adds the attribute from the payload to the attribute map. If an attribute with the same name already exists, the
+   * content is concatenated with a newline.
+   */
+  public static void addAttribute(final Map<String, String> attributes, final PartPayload payload) throws IOException {
+    checkNotNull(attributes);
+    checkNotNull(payload);
+    try (Reader reader = new BufferedReader(new InputStreamReader(payload.openInputStream(), StandardCharsets.UTF_8))) {
+      String fieldName = payload.getFieldName();
+      String newValue = CharStreams.toString(reader);
+      String oldValue = attributes.get(payload.getFieldName());
+      if (StringUtils.isNotBlank(oldValue)) {
+        newValue = oldValue + "\n" + newValue;
+      }
+      attributes.put(fieldName, newValue);
+    }
+  }
+
+  public static void mayAddEtag(final AttributesMap attributesMap, final String hashCode) {
+    if (attributesMap.contains(CONTENT_ETAG)) {
+      return;
+    }
+
+    if (hashCode != null) {
+      attributesMap.set(CONTENT_ETAG, "{SHA1{" + hashCode + "}}");
     }
   }
 
