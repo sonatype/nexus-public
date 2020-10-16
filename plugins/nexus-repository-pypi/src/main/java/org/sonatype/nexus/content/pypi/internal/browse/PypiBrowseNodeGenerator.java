@@ -12,11 +12,21 @@
  */
 package org.sonatype.nexus.content.pypi.internal.browse;
 
+import java.util.List;
+
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.content.pypi.internal.ContentPypiPathUtils;
+import org.sonatype.nexus.repository.browse.node.BrowsePath;
+import org.sonatype.nexus.repository.browse.node.BrowsePathBuilder;
+import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.browse.DefaultBrowseNodeGenerator;
 import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
+
+import com.google.common.base.Splitter;
+
+import static org.sonatype.nexus.repository.browse.node.BrowsePath.SLASH_CHAR;
 
 /**
  * @since 3.next
@@ -26,4 +36,12 @@ import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
 public class PypiBrowseNodeGenerator
     extends DefaultBrowseNodeGenerator
 {
+  @Override
+  public List<BrowsePath> computeAssetPaths(final Asset asset) {
+    if (ContentPypiPathUtils.INDEX_PATH_PREFIX.equals(asset.path())) {
+      List<String> pathSegments = Splitter.on(SLASH_CHAR).omitEmptyStrings().splitToList(asset.path());
+      return BrowsePathBuilder.fromPaths(pathSegments, true);
+    }
+    return super.computeAssetPaths(asset);
+  }
 }
