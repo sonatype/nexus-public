@@ -25,4 +25,9 @@ public class AssetUploadedEvent
   public AssetUploadedEvent(final Asset asset) {
     super(asset);
   }
+
+  @Override
+  public String toString() {
+    return "AssetUploadedEvent{} " + super.toString();
+  }
 }

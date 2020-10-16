@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.content.event.asset;
 
+import java.util.Arrays;
+
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.store.ContentStoreEvent;
 
@@ -34,5 +36,12 @@ public class AssetPrePurgeEvent
 
   public int[] getAssetIds() {
     return assetIds; // NOSONAR
+  }
+
+  @Override
+  public String toString() {
+    return "AssetPrePurgeEvent{" +
+        "assetIds=" + Arrays.toString(assetIds) +
+        "} " + super.toString();
   }
 }

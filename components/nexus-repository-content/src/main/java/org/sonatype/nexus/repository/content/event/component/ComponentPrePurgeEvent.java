@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.content.event.component;
 
+import java.util.Arrays;
+
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.store.ContentStoreEvent;
 
@@ -34,5 +36,12 @@ public class ComponentPrePurgeEvent
 
   public int[] getComponentIds() {
     return componentIds; // NOSONAR
+  }
+
+  @Override
+  public String toString() {
+    return "ComponentPrePurgeEvent{" +
+        "componentIds=" + Arrays.toString(componentIds) +
+        "} " + super.toString();
   }
 }

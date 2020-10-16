@@ -103,4 +103,15 @@ public class ComponentData
   public String nextContinuationToken() {
     return Integer.toString(componentId);
   }
+
+  @Override
+  public String toString() {
+    return "ComponentData{" +
+        "componentId=" + componentId +
+        ", namespace='" + namespace + '\'' +
+        ", name='" + name + '\'' +
+        ", kind='" + kind + '\'' +
+        ", version='" + version + '\'' +
+        "} " + super.toString();
+  }
 }

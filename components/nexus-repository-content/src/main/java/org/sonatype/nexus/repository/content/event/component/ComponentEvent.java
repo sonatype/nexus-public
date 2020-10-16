@@ -36,4 +36,11 @@ public class ComponentEvent
   public Component getComponent() {
     return component;
   }
+
+  @Override
+  public String toString() {
+    return "ComponentEvent{" +
+        "component=" + component +
+        "} " + super.toString();
+  }
 }

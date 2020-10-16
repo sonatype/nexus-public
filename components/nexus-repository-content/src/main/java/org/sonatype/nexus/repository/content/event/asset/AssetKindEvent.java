@@ -25,4 +25,9 @@ public class AssetKindEvent
   public AssetKindEvent(final Asset asset) {
     super(asset);
   }
+
+  @Override
+  public String toString() {
+    return "AssetKindEvent{} " + super.toString();
+  }
 }

@@ -48,4 +48,11 @@ public class ContentRepositoryData
   public void setConfigRepositoryId(final EntityId configRepositoryId) {
     this.configRepositoryId = checkNotNull(configRepositoryId);
   }
+
+  @Override
+  public String toString() {
+    return "ContentRepositoryData{" +
+        "configRepositoryId=" + configRepositoryId +
+        "} " + super.toString();
+  }
 }

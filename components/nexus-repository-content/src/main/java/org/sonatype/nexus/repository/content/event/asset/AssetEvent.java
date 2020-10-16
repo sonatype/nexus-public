@@ -36,4 +36,11 @@ public class AssetEvent
   public Asset getAsset() {
     return asset;
   }
+
+  @Override
+  public String toString() {
+    return "AssetEvent{" +
+        "asset=" + asset +
+        "} " + super.toString();
+  }
 }
