@@ -13,9 +13,12 @@
 package org.sonatype.nexus.content.pypi.internal;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -23,15 +26,22 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.content.pypi.PypiContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpResponses;
+import org.sonatype.nexus.repository.pypi.internal.PyPiSearchResult;
 import org.sonatype.nexus.repository.pypi.internal.SignablePyPiPackage;
+import org.sonatype.nexus.repository.search.query.SearchQueryService;
 import org.sonatype.nexus.repository.view.Content;
+import org.sonatype.nexus.repository.view.ContentTypes;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Handler;
 import org.sonatype.nexus.repository.view.PartPayload;
+import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher.State;
+import org.sonatype.nexus.repository.view.payloads.StringPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlobPartPayload;
+
+import org.elasticsearch.index.query.QueryBuilder;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -41,6 +51,9 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiConstants.FIELD_CO
 import static org.sonatype.nexus.repository.pypi.internal.PyPiConstants.GPG_SIGNATURE;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.name;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.path;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiSearchUtils.buildSearchResponse;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiSearchUtils.parseSearchRequest;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiSearchUtils.pypiSearch;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiStorageUtils.addAttribute;
 
 /**
@@ -51,7 +64,12 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiStorageUtils.addAt
 public class PyPiHostedHandlers
     extends ComponentSupport
 {
+  private final SearchQueryService searchQueryService;
 
+  @Inject
+  public PyPiHostedHandlers(final SearchQueryService searchQueryService) {
+    this.searchQueryService = checkNotNull(searchQueryService);
+  }
   /**
    * Handle request for package.
    */
@@ -133,5 +151,24 @@ public class PyPiHostedHandlers
   {
     PypiContentFacet contentFacet = repository.facet(PypiContentFacet.class);
     return new TempBlobPartPayload(payload,  contentFacet.getTempBlob(payload));
+  }
+
+  /**
+   * Handle request for search.
+   */
+  final Handler search() {
+    return getSearchHandler(searchQueryService);
+  }
+
+  public static Handler getSearchHandler(final SearchQueryService searchQueryService) {
+    return context -> {
+      Payload payload = checkNotNull(context.getRequest().getPayload());
+      try (InputStream is = payload.openInputStream()) {
+        QueryBuilder query = parseSearchRequest(context.getRepository().getName(), is);
+        List<PyPiSearchResult> results = pypiSearch(query, searchQueryService);
+        String response = buildSearchResponse(results);
+        return HttpResponses.ok(new StringPayload(response, ContentTypes.APPLICATION_XML));
+      }
+    };
   }
 }

@@ -91,6 +91,16 @@ class PyPiHostedRecipe
         .handler(hostedHandlers.getIndex)
         .create())
 
+    builder.route(searchMatcher()
+        .handler(timingHandler)
+        .handler(assetKindHandler.rcurry(AssetKind.SEARCH))
+        .handler(securityHandler)
+        .handler(exceptionHandler)
+        .handler(conditionalRequestHandler)
+        .handler(contentHeadersHandler)
+        .handler(hostedHandlers.search())
+        .create())
+
     builder.route(packagesMatcher()
         .handler(timingHandler)
         .handler(assetKindHandler.rcurry(AssetKind.PACKAGE))

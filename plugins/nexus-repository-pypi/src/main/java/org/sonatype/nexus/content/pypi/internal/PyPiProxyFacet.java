@@ -80,7 +80,6 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiInfoUtils.extractM
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.isSearchRequest;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.matcherState;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.name;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.normalizeName;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.path;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 import static org.sonatype.nexus.repository.view.ContentTypes.TEXT_HTML;
@@ -234,8 +233,7 @@ public class PyPiProxyFacet
 
     String name = checkNotNull(attributes.get(P_NAME));
     String version = checkNotNull(attributes.get(P_VERSION));
-    String normalizedName = normalizeName(name);
-    FluentComponent component = content().findOrCreateComponent(name, version, normalizedName);
+    FluentComponent component = content().findOrCreateComponent(name, version, name);
     String summary = attributes.get(P_SUMMARY);
     if (summary != null) {
       component.withAttribute(P_SUMMARY, summary);

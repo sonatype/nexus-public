@@ -44,7 +44,7 @@ import static org.sonatype.nexus.repository.http.HttpMethods.GET
 import static org.sonatype.nexus.repository.http.HttpMethods.HEAD
 import static org.sonatype.nexus.repository.http.HttpMethods.POST
 /**
- * PyPI hosted repository support.
+ * PyPI repository support.
  *
  * @since 3.next
  */
