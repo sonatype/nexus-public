@@ -184,7 +184,7 @@ public class NpmProxyRecipe
     repository.attach(searchFacet.get());
     repository.attach(npmSearchIndexFacetProxy.get());
     repository.attach(npmSearchFacet.get());
-    repository.attach(lastAssetMaintenanceFacet.get());
+    repository.attach(contentMaintenanceFacetProvider.get());
     repository.attach(purgeUnusedFacet.get());
     repository.attach(npmAuditFacetProvider.get());
     repository.attach(npmAuditTarballFacetProvider.get());
