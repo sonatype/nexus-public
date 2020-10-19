@@ -36,7 +36,7 @@ public class PypiBrowseNodeGeneratorTest
     when(asset.path()).thenReturn("/simple/");
     when(asset.component()).thenReturn(Optional.empty());
     List<BrowsePath> actualPaths = underTest.computeAssetPaths(asset);
-    List<BrowsePath> expected = ImmutableList.of(createBrowsePath("simple", "/simple"));
+    List<BrowsePath> expected = ImmutableList.of(createBrowsePath("simple", "/simple/"));
     Assert.assertEquals(expected, actualPaths);
   }
 
