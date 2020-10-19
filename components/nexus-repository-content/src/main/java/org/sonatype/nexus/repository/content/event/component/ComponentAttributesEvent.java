@@ -61,4 +61,13 @@ public class ComponentAttributesEvent
   public <T> Optional<T> getValue() {
     return ofNullable((T) value);
   }
+
+  @Override
+  public String toString() {
+    return "ComponentAttributesEvent{" +
+        "change=" + change +
+        ", key='" + key + '\'' +
+        ", value=" + value +
+        "} " + super.toString();
+  }
 }

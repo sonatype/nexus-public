@@ -71,13 +71,14 @@ Ext.define('NX.coreui.view.repository.facet.NugetGroupFacet', {
         var repositories = JSON.parse(response.responseText);
         Ext.each(repositories, function(repository) {
           if (repository.format === me.format) {
-            nugetRepositories = nugetRepositories.concat(getRemoteToRepositories(repository.name, repositories, []));
+            nugetRepositories = nugetRepositories.concat(
+                getNugetVersionToRepositories(repository.name, repositories, []));
           }
         });
       }
     });
 
-    function getRemoteToRepositories(repositoryName, repositories, groupParents) {
+    function getNugetVersionToRepositories(repositoryName, repositories, groupParents) {
       var repository = repositories
           .filter(function(repository) {
             return repository.name === repositoryName;
@@ -88,13 +89,13 @@ Ext.define('NX.coreui.view.repository.facet.NugetGroupFacet', {
         groupParents.push(repository.name);
         result.push({
           repositories: groupParents,
-          remoteUrl: repository.proxy.remoteUrl
+          nugetVersion: repository.nugetProxy.nugetVersion
         });
       }
       else if (repository.group) {
         groupParents.push(repository.name);
         Ext.each(repository.group.memberNames, function(repositoryGroupMember) {
-          result = result.concat(getRemoteToRepositories(repositoryGroupMember, repositories, groupParents));
+          result = result.concat(getNugetVersionToRepositories(repositoryGroupMember, repositories, groupParents));
         });
       }
 
@@ -199,13 +200,12 @@ Ext.define('NX.coreui.view.repository.facet.NugetGroupFacet', {
 
     // return undefined if {repositoryName} belongs to hosted
     function isNugetV3Version(repositoryName) {
-      var indexString = "index.json";
       return nugetRepositories
           .filter(function(repository) {
             return repository.repositories.includes(repositoryName);
           })
           .map(function(repository) {
-            return Ext.String.endsWith(repository.remoteUrl, indexString);
+            return repository.nugetVersion === 'V3';
           })[0];
     }
 

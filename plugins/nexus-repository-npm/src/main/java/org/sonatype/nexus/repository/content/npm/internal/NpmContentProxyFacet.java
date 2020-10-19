@@ -37,6 +37,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentComponentBuilder;
 import org.sonatype.nexus.repository.content.npm.NpmContentFacet;
 import org.sonatype.nexus.repository.httpclient.HttpClientFacet;
 import org.sonatype.nexus.repository.npm.internal.NonResolvableTarballNameException;
+import org.sonatype.nexus.repository.npm.internal.NpmAuditFacet;
 import org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageId;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageParser;
@@ -463,5 +464,12 @@ public class NpmContentProxyFacet
 
     // when we have no blob ref, just throw the original runtime exception
     throw e;
+  }
+
+  @Override
+  public void invalidateProxyCaches() {
+    super.invalidateProxyCaches();
+    final NpmAuditFacet npmAuditFacet = getRepository().facet(NpmAuditFacet.class);
+    npmAuditFacet.clearCache();
   }
 }

@@ -57,7 +57,7 @@ public class NpmAuditFacetTest
   @Before
   public void setUp() throws Exception {
 
-    underTest = new NpmAuditFacet(1, 1, eventManager, reportCreator, cacheHelper);
+    underTest = new NpmAuditFacet(1, 1, 12, eventManager, reportCreator, cacheHelper);
   }
 
   @Test

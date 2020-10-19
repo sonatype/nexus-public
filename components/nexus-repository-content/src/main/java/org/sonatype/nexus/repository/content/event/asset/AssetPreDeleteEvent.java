@@ -25,4 +25,9 @@ public class AssetPreDeleteEvent
   public AssetPreDeleteEvent(final Asset asset) {
     super(asset);
   }
+
+  @Override
+  public String toString() {
+    return "AssetPreDeleteEvent{} " + super.toString();
+  }
 }

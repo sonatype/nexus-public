@@ -80,6 +80,10 @@ public class ErrorPageFilter
     }
     catch (Exception e) {
       ErrorPageServlet.attachCause(request, e);
+      if (resp.isCommitted()) {
+        log.debug("Response is committed, cannot change status", e);
+        return;
+      }
       response.setHeader(X_FRAME_OPTIONS, xFrameOptions.getValueForPath(request.getPathInfo()));
       response.sendError(SC_INTERNAL_SERVER_ERROR);
     }

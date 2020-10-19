@@ -61,4 +61,13 @@ public class AssetAttributesEvent
   public <T> Optional<T> getValue() {
     return ofNullable((T) value);
   }
+
+  @Override
+  public String toString() {
+    return "AssetAttributesEvent{" +
+        "change=" + change +
+        ", key='" + key + '\'' +
+        ", value=" + value +
+        "} " + super.toString();
+  }
 }

@@ -154,4 +154,18 @@ public class AssetBlobData
   public String nextContinuationToken() {
     return Integer.toString(assetBlobId);
   }
+
+  @Override
+  public String toString() {
+    return "AssetBlobData{" +
+        "assetBlobId=" + assetBlobId +
+        ", blobRef=" + blobRef +
+        ", blobSize=" + blobSize +
+        ", contentType='" + contentType + '\'' +
+        ", checksums=" + checksums +
+        ", blobCreated=" + blobCreated +
+        ", createdBy='" + createdBy + '\'' +
+        ", createdByIp='" + createdByIp + '\'' +
+        '}';
+  }
 }

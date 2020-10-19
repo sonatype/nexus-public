@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.npm.rest;
 
+import javax.ws.rs.BeanParam;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -19,6 +21,8 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
 import org.sonatype.nexus.repository.rest.api.AbstractProxyRepositoriesApiResource;
+import org.sonatype.nexus.repository.rest.api.FormatAndType;
+import org.sonatype.nexus.repository.rest.api.model.AbstractApiRepository;
 import org.sonatype.nexus.validation.Validate;
 
 import io.swagger.annotations.Api;
@@ -72,5 +76,16 @@ public abstract class NpmProxyRepositoriesApiResource
       @ApiParam(value = "Name of the repository to update") @PathParam("repositoryName") final String repositoryName)
   {
     return super.updateRepository(request, repositoryName);
+  }
+
+  @GET
+  @Path("/{repositoryName}")
+  @RequiresAuthentication
+  @Validate
+  @Override
+  @ApiOperation(value = "Get repository", response = NpmProxyApiRepository.class)
+  public AbstractApiRepository getRepository(@ApiParam(hidden = true) @BeanParam final FormatAndType formatAndType,
+                                             @PathParam("repositoryName") final String repositoryName) {
+    return super.getRepository(formatAndType, repositoryName);
   }
 }

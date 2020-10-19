@@ -25,4 +25,9 @@ public class AssetDownloadedEvent
   public AssetDownloadedEvent(final Asset asset) {
     super(asset);
   }
+
+  @Override
+  public String toString() {
+    return "AssetDownloadedEvent{} " + super.toString();
+  }
 }

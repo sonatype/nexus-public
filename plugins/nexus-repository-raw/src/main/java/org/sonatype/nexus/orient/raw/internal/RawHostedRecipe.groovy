@@ -20,6 +20,7 @@ import javax.inject.Provider
 import javax.inject.Singleton
 
 import org.sonatype.nexus.content.raw.internal.recipe.ContentDispositionHandler
+import org.sonatype.nexus.content.raw.internal.recipe.RawIndexHtmlForwardHandler
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.RecipeSupport
 import org.sonatype.nexus.repository.Repository
@@ -40,11 +41,11 @@ import org.sonatype.nexus.repository.view.ConfigurableViewFacet
 import org.sonatype.nexus.repository.view.Route
 import org.sonatype.nexus.repository.view.Router
 import org.sonatype.nexus.repository.view.ViewFacet
+import org.sonatype.nexus.repository.view.handlers.BrowseUnsupportedHandler
 import org.sonatype.nexus.repository.view.handlers.ConditionalRequestHandler
 import org.sonatype.nexus.repository.view.handlers.ContentHeadersHandler
 import org.sonatype.nexus.repository.view.handlers.ExceptionHandler
 import org.sonatype.nexus.repository.view.handlers.HandlerContributor
-import org.sonatype.nexus.repository.view.handlers.IndexHtmlForwardHandler
 import org.sonatype.nexus.repository.view.handlers.LastDownloadedHandler
 import org.sonatype.nexus.repository.view.handlers.TimingHandler
 import org.sonatype.nexus.repository.view.matchers.ActionMatcher
@@ -94,7 +95,7 @@ class RawHostedRecipe
   TimingHandler timingHandler
 
   @Inject
-  IndexHtmlForwardHandler indexHtmlForwardHandler
+  RawIndexHtmlForwardHandler indexHtmlForwardHandler
 
   @Inject
   SecurityHandler securityHandler
@@ -122,6 +123,9 @@ class RawHostedRecipe
 
   @Inject
   ContentDispositionHandler contentDispositionHandler
+
+  @Inject
+  BrowseUnsupportedHandler browseUnsupportedHandler
 
   @Inject
   RawHostedRecipe(@Named(HostedType.NAME) final Type type,
@@ -154,6 +158,7 @@ class RawHostedRecipe
         .matcher(and(new ActionMatcher(HttpMethods.GET), new SuffixMatcher('/')))
         .handler(timingHandler)
         .handler(indexHtmlForwardHandler)
+        .handler(browseUnsupportedHandler)
         .create()
     )
 

@@ -22,14 +22,12 @@ import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.http.HttpHandlers
+import org.sonatype.nexus.repository.pypi.internal.AssetKind
 import org.sonatype.nexus.repository.pypi.internal.PyPiFormat
 import org.sonatype.nexus.repository.types.HostedType
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
 import org.sonatype.nexus.repository.view.Router
 import org.sonatype.nexus.repository.view.ViewFacet
-
-import org.sonatype.nexus.repository.pypi.internal.AssetKind
-
 /**
  * PyPI hosted repository recipe.
  *
@@ -61,6 +59,7 @@ class PyPiHostedRecipe
     repository.attach(searchFacet.get())
     repository.attach(contentFacet.get())
     repository.attach(browseFacet.get())
+    repository.attach(indexFacet.get())
     repository.attach(lastAssetMaintenanceFacet.get())
   }
 
@@ -69,6 +68,38 @@ class PyPiHostedRecipe
    */
   private ViewFacet configure(final ConfigurableViewFacet facet) {
     Router.Builder builder = new Router.Builder()
+
+    builder.route(rootIndexMatcher()
+        .handler(timingHandler)
+        .handler(assetKindHandler.rcurry(AssetKind.ROOT_INDEX))
+        .handler(securityHandler)
+        .handler(exceptionHandler)
+        .handler(conditionalRequestHandler)
+        .handler(partialFetchHandler)
+        .handler(contentHeadersHandler)
+        .handler(hostedHandlers.getRootIndex)
+        .create())
+
+    builder.route(indexMatcher()
+        .handler(timingHandler)
+        .handler(assetKindHandler.rcurry(AssetKind.INDEX))
+        .handler(securityHandler)
+        .handler(exceptionHandler)
+        .handler(conditionalRequestHandler)
+        .handler(partialFetchHandler)
+        .handler(contentHeadersHandler)
+        .handler(hostedHandlers.getIndex)
+        .create())
+
+    builder.route(searchMatcher()
+        .handler(timingHandler)
+        .handler(assetKindHandler.rcurry(AssetKind.SEARCH))
+        .handler(securityHandler)
+        .handler(exceptionHandler)
+        .handler(conditionalRequestHandler)
+        .handler(contentHeadersHandler)
+        .handler(hostedHandlers.search())
+        .create())
 
     builder.route(packagesMatcher()
         .handler(timingHandler)
@@ -81,6 +112,17 @@ class PyPiHostedRecipe
         .handler(contentHeadersHandler)
         .handler(lastDownloadedHandler)
         .handler(hostedHandlers.getPackage)
+        .create())
+
+    builder.route(baseMatcher()
+        .handler(timingHandler)
+        .handler(assetKindHandler.rcurry(AssetKind.PACKAGE))
+        .handler(securityHandler)
+        .handler(exceptionHandler)
+        .handler(handlerContributor)
+        .handler(conditionalRequestHandler)
+        .handler(contentHeadersHandler)
+        .handler(hostedHandlers.postContent)
         .create())
 
     addBrowseUnsupportedRoute(builder)

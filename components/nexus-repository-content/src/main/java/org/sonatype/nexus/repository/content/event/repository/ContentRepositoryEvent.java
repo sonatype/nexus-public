@@ -36,4 +36,11 @@ public class ContentRepositoryEvent
   public ContentRepository getContentRepository() {
     return contentRepository;
   }
+
+  @Override
+  public String toString() {
+    return "ContentRepositoryEvent{" +
+        "contentRepository=" + contentRepository +
+        "} " + super.toString();
+  }
 }

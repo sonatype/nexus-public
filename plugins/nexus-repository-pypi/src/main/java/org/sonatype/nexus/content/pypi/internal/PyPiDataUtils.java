@@ -14,6 +14,7 @@ package org.sonatype.nexus.content.pypi.internal;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.annotation.Nullable;
 
@@ -25,6 +26,7 @@ import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
 import com.google.common.base.Strings;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.SUPPORTED_ATTRIBUTES;
 
 /**
@@ -95,5 +97,10 @@ public class PyPiDataUtils
     }
     formatAttributes.put(key, value);
     fluentAttributes.withAttribute(PyPiFormat.NAME, formatAttributes);
+  }
+
+  public static Optional<String> getMd5(FluentAsset asset) {
+    checkNotNull(asset);
+    return asset.blob().map(b -> b.checksums().get(MD5.name()));
   }
 }

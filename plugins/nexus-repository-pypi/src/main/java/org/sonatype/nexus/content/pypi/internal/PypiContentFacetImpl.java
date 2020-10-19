@@ -12,8 +12,11 @@
  */
 package org.sonatype.nexus.content.pypi.internal;
 
+import java.util.List;
+import java.util.Map;
 import java.io.InputStream;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -24,12 +27,14 @@ import org.sonatype.nexus.content.pypi.PypiContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.fluent.FluentQuery;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
@@ -94,6 +99,20 @@ public class PypiContentFacetImpl
   }
 
   @Override
+  public boolean isComponentExists(final String name) {
+    return componentsByName(name).count() > 0;
+  }
+
+  @Override
+  public List<FluentAsset> assetsByComponentName(String name) {
+    return componentsByName(name)
+        .browse(Integer.MAX_VALUE, null)
+        .stream()
+        .flatMap(component -> component.assets().stream())
+        .collect(Collectors.toList());
+  }
+
+  @Override
   public FluentComponent findOrCreateComponent(
       final String name,
       final String version,
@@ -113,5 +132,11 @@ public class PypiContentFacetImpl
   @Override
   public TempBlob getTempBlob(final InputStream content, @Nullable final String contentType) {
     return blobs().ingest(content, contentType, HASHING);
+  }
+
+  private FluentQuery<FluentComponent> componentsByName(final String name) {
+    String filter = "name = #{filterParams.nameParam}";
+    Map<String, Object> params = ImmutableMap.of("nameParam", name);
+    return  facet(PypiContentFacet.class).components().byFilter(filter, params);
   }
 }

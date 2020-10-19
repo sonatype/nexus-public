@@ -162,4 +162,18 @@ public class AssetData
   public String nextContinuationToken() {
     return Integer.toString(assetId);
   }
+
+  @Override
+  public String toString() {
+    return "AssetData{" +
+        "assetId=" + assetId +
+        ", path='" + path + '\'' +
+        ", kind='" + kind + '\'' +
+        ", componentId=" + componentId +
+        ", component=" + component +
+        ", assetBlobId=" + assetBlobId +
+        ", assetBlob=" + assetBlob +
+        ", lastDownloaded=" + lastDownloaded +
+        "} " + super.toString();
+  }
 }

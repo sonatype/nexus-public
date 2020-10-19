@@ -17,7 +17,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.Format;
-import org.sonatype.nexus.repository.search.IndexSettingsContributorSupport;
+import org.sonatype.nexus.repository.search.index.IndexSettingsContributorSupport;
 
 /**
  * @since 3.1

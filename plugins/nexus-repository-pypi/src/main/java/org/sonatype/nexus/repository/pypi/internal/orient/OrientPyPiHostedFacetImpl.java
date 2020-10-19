@@ -25,11 +25,9 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
-import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.template.TemplateHelper;
 import org.sonatype.nexus.repository.FacetSupport;
-import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.pypi.internal.AssetKind;
 import org.sonatype.nexus.repository.pypi.internal.PyPiAttributes;
 import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
@@ -52,7 +50,7 @@ import org.sonatype.nexus.repository.view.payloads.TempBlobPartPayload;
 import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
-import com.google.common.hash.HashCode;
+import org.apache.commons.lang.StringUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -67,8 +65,9 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.INDEX_PA
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.indexPath;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.normalizeName;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.packagesPath;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiStorageUtils.getNameAttributes;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiStorageUtils.mayAddEtag;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiStorageUtils.validateMd5Hash;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiStorageUtils.getNameAttributes;
 import static org.sonatype.nexus.repository.pypi.internal.orient.OrientPyPiDataUtils.HASH_ALGORITHMS;
 import static org.sonatype.nexus.repository.pypi.internal.orient.OrientPyPiDataUtils.copyAttributes;
 import static org.sonatype.nexus.repository.pypi.internal.orient.OrientPyPiDataUtils.findAsset;
@@ -78,7 +77,6 @@ import static org.sonatype.nexus.repository.pypi.internal.orient.OrientPyPiDataU
 import static org.sonatype.nexus.repository.pypi.internal.orient.OrientPyPiDataUtils.saveAsset;
 import static org.sonatype.nexus.repository.pypi.internal.orient.OrientPyPiDataUtils.toContent;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
-import static org.sonatype.nexus.repository.view.Content.CONTENT_ETAG;
 import static org.sonatype.nexus.repository.view.ContentTypes.TEXT_HTML;
 
 /**
@@ -205,7 +203,7 @@ public class OrientPyPiHostedFacetImpl
       String path = asset.name();
       String file = path.substring(path.lastIndexOf('/') + 1);
       String link = String.format("../../%s#md5=%s", path, asset.getChecksum(MD5));
-      String dataRequiresPython = (String) pypiAttributes.get(PyPiAttributes.P_REQUIRES_PYTHON, "");
+      String dataRequiresPython = pypiAttributes.get(PyPiAttributes.P_REQUIRES_PYTHON, String.class, StringUtils.EMPTY);
       links.add(new PyPiLink(file, link, dataRequiresPython));
     }
 
@@ -223,18 +221,8 @@ public class OrientPyPiHostedFacetImpl
       return null;
     }
     Content content = toContent(asset, tx.requireBlob(asset.requireBlobRef()));
-    mayAddEtag(content.getAttributes(), asset.getChecksum(HashAlgorithm.SHA1));
+    mayAddEtag(content.getAttributes(), String.valueOf(asset.getChecksum(HashAlgorithm.SHA1)));
     return content;
-  }
-
-  private void mayAddEtag(final AttributesMap attributesMap, final HashCode hashCode) {
-    if (attributesMap.contains(CONTENT_ETAG)) {
-      return;
-    }
-
-    if (hashCode != null) {
-      attributesMap.set(CONTENT_ETAG, "{SHA1{" + hashCode + "}}");
-    }
   }
 
   @TransactionalStoreBlob

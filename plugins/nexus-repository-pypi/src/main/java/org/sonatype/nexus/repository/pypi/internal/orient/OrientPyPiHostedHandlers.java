@@ -12,7 +12,6 @@
  */
 package org.sonatype.nexus.repository.pypi.internal.orient;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -31,12 +30,9 @@ import javax.inject.Singleton;
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpResponses;
-import org.sonatype.nexus.repository.pypi.internal.PyPiAttributes;
-import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
 import org.sonatype.nexus.repository.pypi.internal.PyPiSearchResult;
 import org.sonatype.nexus.repository.pypi.internal.SignablePyPiPackage;
 import org.sonatype.nexus.repository.search.query.SearchQueryService;
-import org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.ContentTypes;
@@ -51,9 +47,10 @@ import org.sonatype.nexus.repository.view.payloads.StringPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlobPartPayload;
 
 import com.google.common.base.Strings;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.index.query.QueryBuilder;
 import com.google.common.io.CharStreams;
 import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.search.SearchHit;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -65,8 +62,9 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.name;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.path;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiSearchUtils.buildSearchResponse;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiSearchUtils.parseSearchRequest;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiStorageUtils.addAttribute;
+import static org.sonatype.nexus.repository.pypi.internal.PyPiSearchUtils.pypiSearch;
 import static org.sonatype.nexus.repository.pypi.internal.orient.OrientPyPiDataUtils.HASH_ALGORITHMS;
-import static org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder.unrestricted;
 
 /**
  * PyPI hosted handlers.
@@ -170,43 +168,18 @@ public final class OrientPyPiHostedHandlers
   }
 
   /**
-   * Adds the attribute from the payload to the attribute map. If an attribute with the same name already exists, the
-   * content is concatenated with a newline.
-   */
-  private void addAttribute(final Map<String, String> attributes, final PartPayload payload) throws IOException {
-    checkNotNull(attributes);
-    checkNotNull(payload);
-    try (Reader reader = new BufferedReader(new InputStreamReader(payload.openInputStream(), StandardCharsets.UTF_8))) {
-      String fieldName = payload.getFieldName();
-      String newValue = CharStreams.toString(reader);
-      String oldValue = attributes.get(payload.getFieldName());
-      if (oldValue != null && !oldValue.isEmpty()) {
-        newValue = oldValue + "\n" + newValue;
-      }
-      attributes.put(fieldName, newValue);
-    }
-  }
-
-  /**
    * Handle request for search.
    */
   public Handler search() {
+    return getSearchHandler(searchQueryService);
+  }
+
+  public static Handler getSearchHandler(final SearchQueryService searchQueryService) {
     return context -> {
       Payload payload = checkNotNull(context.getRequest().getPayload());
       try (InputStream is = payload.openInputStream()) {
         QueryBuilder query = parseSearchRequest(context.getRepository().getName(), is);
-        List<PyPiSearchResult> results = new ArrayList<>();
-        for (SearchHit hit : searchQueryService.browse(unrestricted(query))) {
-          Map<String, Object> source = hit.getSource();
-          Map<String, Object> formatAttributes = (Map<String, Object>) source.getOrDefault(
-              MetadataNodeEntityAdapter.P_ATTRIBUTES, Collections.emptyMap());
-          Map<String, Object> pypiAttributes = (Map<String, Object>) formatAttributes.getOrDefault(PyPiFormat.NAME,
-              Collections.emptyMap());
-          String name = Strings.nullToEmpty((String) pypiAttributes.get(PyPiAttributes.P_NAME));
-          String version = Strings.nullToEmpty((String) pypiAttributes.get(PyPiAttributes.P_VERSION));
-          String summary = Strings.nullToEmpty((String) pypiAttributes.get(PyPiAttributes.P_SUMMARY));
-          results.add(new PyPiSearchResult(name, version, summary));
-        }
+        List<PyPiSearchResult> results = pypiSearch(query, searchQueryService);
         String response = buildSearchResponse(results);
         return HttpResponses.ok(new StringPayload(response, ContentTypes.APPLICATION_XML));
       }
