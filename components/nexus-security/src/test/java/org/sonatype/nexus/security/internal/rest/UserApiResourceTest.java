@@ -244,6 +244,14 @@ public class UserApiResourceTest
   }
 
   @Test
+  public void testDeleteLdapUser() throws Exception {
+    when(securitySystem.getUser(any())).thenReturn(createLdapUser());
+    thrown.expect(matchWeb(Status.BAD_REQUEST, "Non-local user cannot be deleted."));
+
+    underTest.deleteUser("tanderson");
+  }
+
+  @Test
   public void testUpdateUser_mismatch() throws Exception {
     User user = createUser();
     thrown.expect(matchWeb(Status.BAD_REQUEST, "The path's userId does not match the body"));
@@ -348,6 +356,20 @@ public class UserApiResourceTest
     user.setUserId("jsmith");
     user.setVersion(1);
     user.setSource(UserManager.DEFAULT_SOURCE);
+    user.setRoles(Collections.singleton(new RoleIdentifier(UserManager.DEFAULT_SOURCE, "nx-admin")));
+    return user;
+  }
+
+  private User createLdapUser() {
+    User user = new User();
+    user.setEmailAddress("thomas@example.org");
+    user.setFirstName("Thomas");
+    user.setLastName("Anderson");
+    user.setReadOnly(false);
+    user.setStatus(UserStatus.disabled);
+    user.setUserId("tanderson");
+    user.setVersion(1);
+    user.setSource("LDAP");
     user.setRoles(Collections.singleton(new RoleIdentifier(UserManager.DEFAULT_SOURCE, "nx-admin")));
     return user;
   }

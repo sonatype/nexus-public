@@ -37,6 +37,9 @@ public final class NexusSecurityApiConstants
 
   public static final String INVALID_PERMISSIONS = "The user does not have permission to perform the operation.";
 
+  public static final String NON_LOCAL_USER_CANNOT_BE_DELETED =
+      "There was problem deleting a user. Consult the response body for more details";
+
   static final String USER_NOT_FOUND = "User not found in the system.";
 
   static final String USER_OR_SOURCE_NOT_FOUND = "User or user source not found in the system.";
