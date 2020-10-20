@@ -38,6 +38,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreNotFoundException;
 import org.sonatype.nexus.blobstore.api.BlobStoreUpdatedEvent;
+import org.sonatype.nexus.blobstore.api.ChangeRepositoryBlobstoreDataService;
 import org.sonatype.nexus.blobstore.file.FileBlobStoreConfigurationBuilder;
 import org.sonatype.nexus.common.app.FreezeService;
 import org.sonatype.nexus.common.event.EventAware;
@@ -90,6 +91,8 @@ public class BlobStoreManagerImpl
 
   private final Provider<RepositoryManager> repositoryManagerProvider;
 
+  private final ChangeRepositoryBlobstoreDataService changeRepositoryBlobstoreDataService;
+
   @Inject
   public BlobStoreManagerImpl(final EventManager eventManager, //NOSONAR
                               final BlobStoreConfigurationStore store,
@@ -98,7 +101,8 @@ public class BlobStoreManagerImpl
                               final FreezeService freezeService,
                               final Provider<RepositoryManager> repositoryManagerProvider,
                               final NodeAccess nodeAccess,
-                              @Nullable @Named("${nexus.blobstore.provisionDefaults}") final Boolean provisionDefaults)
+                              @Nullable @Named("${nexus.blobstore.provisionDefaults}") final Boolean provisionDefaults,
+                              @Nullable final ChangeRepositoryBlobstoreDataService changeRepositoryBlobstoreDataService)
   {
     this.eventManager = checkNotNull(eventManager);
     this.store = checkNotNull(store);
@@ -106,6 +110,7 @@ public class BlobStoreManagerImpl
     this.blobStorePrototypes = checkNotNull(blobStorePrototypes);
     this.freezeService = checkNotNull(freezeService);
     this.repositoryManagerProvider = checkNotNull(repositoryManagerProvider);
+    this.changeRepositoryBlobstoreDataService = changeRepositoryBlobstoreDataService;
 
     if (provisionDefaults != null) {
       // explicit true/false setting, so honour that
@@ -286,12 +291,22 @@ public class BlobStoreManagerImpl
   @Guarded(by = STARTED)
   public void delete(final String name) throws Exception {
     checkNotNull(name);
-    if (!repositoryManagerProvider.get().isBlobstoreUsed(name)) {
+    if (blobstoreInChangeRepoTaskCount(name) > 0) {
+      throw new IllegalStateException("BlobStore " + name + " is in use by a Change Repository Blob Store task");
+    }
+    else if (!repositoryManagerProvider.get().isBlobstoreUsed(name)) {
       forceDelete(name);
     }
     else {
       throw new IllegalStateException("BlobStore " + name + " is in use and cannot be deleted");
     }
+  }
+
+  private int blobstoreInChangeRepoTaskCount(final String blobStoreName) {
+    if (changeRepositoryBlobstoreDataService != null) {
+      return changeRepositoryBlobstoreDataService.changeRepoTaskUsingBlobstoreCount(blobStoreName);
+    }
+    return 0;
   }
 
   @Override

@@ -19,6 +19,7 @@ import org.sonatype.nexus.blobstore.BlobStoreDescriptor
 import org.sonatype.nexus.blobstore.MockBlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
+import org.sonatype.nexus.blobstore.api.ChangeRepositoryBlobstoreDataService
 import org.sonatype.nexus.common.app.FreezeService
 import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.common.node.NodeAccess
@@ -30,6 +31,7 @@ import org.hamcrest.Matchers
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.ExpectedException
 import org.junit.rules.TemporaryFolder
 import org.mockito.ArgumentCaptor
 import org.mockito.Mock
@@ -78,6 +80,9 @@ class BlobStoreManagerImplTest
   @Mock
   NodeAccess nodeAccess
 
+  @Mock
+  ChangeRepositoryBlobstoreDataService changeRepositoryBlobstoreDataService
+
   BlobStoreManagerImpl underTest
 
   @Before
@@ -89,7 +94,7 @@ class BlobStoreManagerImplTest
   private BlobStoreManagerImpl newBlobStoreManager(Boolean provisionDefaults = null) {
     spy(new BlobStoreManagerImpl(eventManager, store, [test: descriptor, File: descriptor],
         [test: provider, File: provider], freezeService, { -> repositoryManager } as Provider,
-         nodeAccess, provisionDefaults))
+         nodeAccess, provisionDefaults, changeRepositoryBlobstoreDataService))
   }
 
   @Test
@@ -208,6 +213,19 @@ class BlobStoreManagerImplTest
     verify(freezeService).checkWritable("Unable to delete a BlobStore while database is frozen.")
   }
 
+  @Test(expected = IllegalStateException.class)
+  void 'Can not delete an existing BlobStore used in a move task'() {
+    BlobStoreConfiguration configuration = createConfig('test')
+    BlobStore blobStore = mock(BlobStore)
+    doReturn(blobStore).when(underTest).blobStore('test')
+    doThrow(InvalidStateException).when(blobStore).stop()
+    when(store.list()).thenReturn([configuration])
+    when(blobStore.getBlobStoreConfiguration()).thenReturn(configuration)
+    when(changeRepositoryBlobstoreDataService.changeRepoTaskUsingBlobstoreCount("test")).thenReturn(1);
+
+    underTest.delete(configuration.getName())
+  }
+
   @Test
   void 'All BlobStores are stopped with the manager is stopped'() {
     BlobStore blobStore = mock(BlobStore)
@@ -241,7 +259,7 @@ class BlobStoreManagerImplTest
   void 'Can successfully create new blob stores concurrently'() {
     // avoid newBlobStoreManager method because it returns a spy that throws NPE accessing the stores field
     underTest = new BlobStoreManagerImpl(eventManager, store, [test: descriptor, File: descriptor],
-        [test: provider, File: provider], freezeService, { -> repositoryManager } as Provider, nodeAccess, true)
+        [test: provider, File: provider], freezeService, { -> repositoryManager } as Provider, nodeAccess, true, changeRepositoryBlobstoreDataService)
 
     BlobStore blobStore = mock(BlobStore)
     when(provider.get()).thenReturn(blobStore)

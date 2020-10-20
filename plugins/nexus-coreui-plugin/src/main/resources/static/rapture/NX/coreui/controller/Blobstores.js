@@ -180,12 +180,14 @@ Ext.define('NX.coreui.controller.Blobstores', {
 
       if (model) {
         var inUse = model.get('inUse');
-        if (inUse) {
+        var taskUseCount = model.get('taskUseCount');
+        if (inUse || taskUseCount > 0) {
           var repositoryUseCount = model.get('repositoryUseCount');
           var blobStoreUseCount = model.get('blobStoreUseCount');
           me.showInfo(NX.I18n.format('Blobstore_BlobstoreFeature_Delete_Disabled_Message',
-                     Ext.util.Format.plural(repositoryUseCount, 'repository', 'repositories'),
-                     Ext.util.Format.plural(blobStoreUseCount, 'other blob store', 'other blob stores')));
+              Ext.util.Format.plural(repositoryUseCount, 'repository', 'repositories'),
+              Ext.util.Format.plural(blobStoreUseCount, 'other blob store', 'other blob stores'),
+              Ext.util.Format.plural(taskUseCount, 'task', 'tasks')));
           return false;
         }
 
