@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.ListIterator;
+import java.util.function.UnaryOperator;
 
 import javax.annotation.Nonnull;
 
@@ -49,8 +50,9 @@ public class Context
 
   private ListIterator<Handler> handlers;
 
-  public Context(final Repository repository,
-                 final Request request)
+  public Context(
+      final Repository repository,
+      final Request request)
   {
     this.repository = checkNotNull(repository);
     this.request = checkNotNull(request);
@@ -71,8 +73,8 @@ public class Context
   /**
    * Invokes the next handler in the handler chain.
    *
-   * Interceptor-style handlers should invoke this from their {@link Handler#handle(Context)}
-   * method and return the result.
+   * Interceptor-style handlers should invoke this from their {@link Handler#handle(Context)} method and return the
+   * result.
    */
   @Nonnull
   public Response proceed() throws Exception {
@@ -124,6 +126,40 @@ public class Context
 
       return replayableContext;
     }
+  }
+
+  /**
+   * Builds a context that contains a request that can be "replayed" with its post body content. We need to have a new
+   * request instance with a payload we can read multiple times.
+   */
+  public Context copy(
+      final UnaryOperator<AttributesMap> attributesCustomizer,
+      final UnaryOperator<Request.Builder> requestCustomizer) throws IOException
+  {
+    final Request.Builder builder = new Builder()
+        .attributes(request.getAttributes())
+        .headers(request.getHeaders())
+        .action(request.getAction())
+        .path(request.getPath())
+        .parameters(request.getParameters());
+
+    if (request.getPayload() != null) {
+      final Payload payload = request.getPayload();
+      try (InputStream in = payload.openInputStream()) {
+        byte[] content = IOUtils.toByteArray(in);
+        builder.payload(new BytesPayload(content, payload.getContentType()));
+      }
+    }
+
+    final Request newRequest = requestCustomizer.apply(builder).build();
+
+    final Context contextCopy = new Context(repository, newRequest);
+
+    final AttributesMap newAttributes = attributesCustomizer.apply(attributes);
+    contextCopy.getAttributes().clear();
+    newAttributes.forEach(e -> contextCopy.getAttributes().set(e.getKey(), e.getValue()));
+
+    return contextCopy;
   }
 
   //
