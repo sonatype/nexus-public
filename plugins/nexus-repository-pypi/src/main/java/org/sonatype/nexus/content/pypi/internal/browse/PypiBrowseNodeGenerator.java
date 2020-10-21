@@ -38,7 +38,7 @@ public class PypiBrowseNodeGenerator
 {
   @Override
   public List<BrowsePath> computeAssetPaths(final Asset asset) {
-    if (ContentPypiPathUtils.INDEX_PATH_PREFIX.equals(asset.path())) {
+    if (ContentPypiPathUtils.indexPath().equals(asset.path())) {
       List<String> pathSegments = Splitter.on(SLASH_CHAR).omitEmptyStrings().splitToList(asset.path());
       return BrowsePathBuilder.fromPaths(pathSegments, true);
     }

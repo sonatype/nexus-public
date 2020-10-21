@@ -53,7 +53,6 @@ import org.apache.commons.lang.StringUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.sonatype.nexus.content.pypi.internal.ContentPypiPathUtils.INDEX_PATH_PREFIX;
 import static org.sonatype.nexus.content.pypi.internal.ContentPypiPathUtils.indexPath;
 import static org.sonatype.nexus.content.pypi.internal.ContentPypiPathUtils.packagesPath;
 import static org.sonatype.nexus.content.pypi.internal.PyPiDataUtils.copyFormatAttributes;
@@ -139,7 +138,7 @@ public class PyPiHostedFacet
   }
 
   public Content getRootIndex() {
-    FluentAsset asset = facet(PypiContentFacet.class).getAsset(INDEX_PATH_PREFIX).orElseGet(this::createRootIndex);
+    FluentAsset asset = facet(PypiContentFacet.class).getAsset(indexPath()).orElseGet(this::createRootIndex);
     return asset.download();
   }
 
@@ -175,7 +174,7 @@ public class PyPiHostedFacet
 
   protected FluentAsset createRootIndexAsset() {
     return facet(PypiContentFacet.class).assets()
-        .path(INDEX_PATH_PREFIX).getOrCreate()
+        .path(indexPath()).getOrCreate()
         .kind(ROOT_INDEX.name());
   }
 

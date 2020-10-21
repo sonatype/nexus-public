@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.pypi.internal.orient;
+package org.sonatype.nexus.content.pypi.internal;
 
 import java.util.Map;
 
@@ -30,31 +30,31 @@ import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.sonatype.nexus.content.pypi.internal.ContentPypiPathUtils.indexPath;
 import static org.sonatype.nexus.repository.pypi.internal.AssetKind.ROOT_INDEX;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiGroupUtils.lazyMergeResult;
-import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.INDEX_PATH_PREFIX;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.name;
 
 /**
  * Support for merging PyPI simple indexes together.
  *
- * @since 3.1
+ * @since 3.next
  */
 @Named
 @Singleton
-class OrientPyPiIndexGroupHandler
+class PyPiIndexGroupHandler
     extends GroupHandler
 {
   private final TemplateHelper templateHelper;
 
   @Inject
-  public OrientPyPiIndexGroupHandler(final TemplateHelper templateHelper) {
+  public PyPiIndexGroupHandler(final TemplateHelper templateHelper) {
     this.templateHelper = checkNotNull(templateHelper);
   }
 
   @Override
   protected Response doGet(@Nonnull final Context context,
-                           @Nonnull final GroupHandler.DispatchedRepositories dispatched)
+                           @Nonnull final DispatchedRepositories dispatched)
       throws Exception
   {
     checkNotNull(context);
@@ -62,14 +62,14 @@ class OrientPyPiIndexGroupHandler
 
     String name;
     AssetKind assetKind = context.getAttributes().get(AssetKind.class);
-    if (ROOT_INDEX.equals(assetKind)) {
-      name = INDEX_PATH_PREFIX;
+    if (ROOT_INDEX == assetKind) {
+      name = indexPath();
     }
     else {
-      name = name(context.getAttributes().require(TokenMatcher.State.class));
+      name = "/" + name(context.getAttributes().require(TokenMatcher.State.class));
     }
 
-    OrientPyPiGroupFacet groupFacet = context.getRepository().facet(OrientPyPiGroupFacet.class);
+    PyPiGroupFacet groupFacet = context.getRepository().facet(PyPiGroupFacet.class);
     Content content = groupFacet.getFromCache(name, assetKind);
 
     Map<Repository, Response> memberResponses = getAll(context, groupFacet.members(), dispatched);

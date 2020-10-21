@@ -57,7 +57,6 @@ import org.apache.http.entity.InputStreamEntity;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonMap;
-import static org.sonatype.nexus.content.pypi.internal.ContentPypiPathUtils.INDEX_PATH_PREFIX;
 import static org.sonatype.nexus.content.pypi.internal.ContentPypiPathUtils.indexPath;
 import static org.sonatype.nexus.content.pypi.internal.ContentPypiPathUtils.indexUriPath;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
@@ -108,7 +107,7 @@ public class PyPiProxyFacet
     TokenMatcher.State state = matcherState(context);
     switch (assetKind) {
       case ROOT_INDEX:
-        return content().getAsset(INDEX_PATH_PREFIX).map(FluentAsset::download).orElse(null);
+        return content().getAsset(indexPath()).map(FluentAsset::download).orElse(null);
       case INDEX:
         return rewriteIndex(name(state));
       case PACKAGE:
@@ -268,7 +267,7 @@ public class PyPiProxyFacet
     try (InputStream inputStream = content.openInputStream()) {
       List<PyPiLink> links = makeRootIndexRelative(inputStream);
       String indexPage = buildRootIndexPage(templateHelper, links);
-      return storeHtmlPage(content, indexPage, ROOT_INDEX, INDEX_PATH_PREFIX);
+      return storeHtmlPage(content, indexPage, ROOT_INDEX, indexPath());
     }
   }
 

@@ -19,7 +19,6 @@ import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.pypi.internal.PyPiIndexFacet;
 
-import static org.sonatype.nexus.content.pypi.internal.ContentPypiPathUtils.INDEX_PATH_PREFIX;
 import static org.sonatype.nexus.content.pypi.internal.ContentPypiPathUtils.indexPath;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.normalizeName;
 
@@ -35,7 +34,7 @@ public class PyPiIndexFacetImpl
 {
   @Override
   public void deleteRootIndex() {
-    content().delete(INDEX_PATH_PREFIX);
+    content().delete(indexPath());
   }
 
   @Override
