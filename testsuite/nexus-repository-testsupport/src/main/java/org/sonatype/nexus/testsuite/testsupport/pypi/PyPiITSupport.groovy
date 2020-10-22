@@ -16,9 +16,6 @@ import javax.inject.Inject
 
 import org.sonatype.nexus.common.log.LogManager
 import org.sonatype.nexus.repository.Repository
-import org.sonatype.nexus.repository.storage.ComponentMaintenance
-import org.sonatype.nexus.repository.storage.StorageFacet
-import org.sonatype.nexus.repository.storage.StorageTx
 import org.sonatype.nexus.repository.config.WritePolicy
 import org.sonatype.nexus.testsuite.testsupport.RepositoryITSupport
 
@@ -29,7 +26,6 @@ import org.apache.http.impl.client.BasicCredentialsProvider
 import org.junit.experimental.categories.Category
 
 import static java.lang.Thread.sleep
-import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME
 import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW
 
 /**
@@ -82,6 +78,9 @@ class PyPiITSupport
   @Inject
   protected LogManager logManager
 
+  @Inject
+  protected PyPiTestHelper pyPiTestHelper
+
   public PyPiITSupport() {
     testData.addDirectory(resolveBaseFile("target/it-resources/pypi"))
   }
@@ -124,22 +123,5 @@ class PyPiITSupport
 
   void deleteAsset(final Repository repository, final String assetName) {
     componentAssetTestHelper.removeAsset(repository, assetName);
-  }
-
-  void deleteComponent(final Repository repository, final String componentName) {
-    def maintenanceFacet = repository.facet(ComponentMaintenance.class)
-    StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get()
-
-    def componentId = null
-    try {
-      tx.begin()
-      componentId = tx.findComponentWithProperty(P_NAME, componentName,
-          tx.findBucket(repository)).getEntityMetadata().getId()
-    }
-    finally {
-      tx.close()
-    }
-
-    maintenanceFacet.deleteComponent(componentId)
   }
 }

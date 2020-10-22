@@ -59,6 +59,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonMap;
 import static org.sonatype.nexus.content.pypi.internal.ContentPypiPathUtils.indexPath;
 import static org.sonatype.nexus.content.pypi.internal.ContentPypiPathUtils.indexUriPath;
+import static org.sonatype.nexus.content.pypi.internal.PyPiDataUtils.setLastModified;
 import static org.sonatype.nexus.repository.http.HttpMethods.GET;
 import static org.sonatype.nexus.repository.pypi.internal.AssetKind.INDEX;
 import static org.sonatype.nexus.repository.pypi.internal.AssetKind.PACKAGE;
@@ -279,6 +280,7 @@ public class PyPiProxyFacet
   {
     try (ByteArrayInputStream stream = new ByteArrayInputStream(indexPage.getBytes(UTF_8))) {
       TempBlob tempBlob = content().getTempBlob(stream, content.getContentType());
+      setLastModified(content);
       return content().findOrCreateAsset(indexPathPrefix, rootIndex.name())
           .withAttribute(PyPiFormat.NAME, singletonMap(P_ASSET_KIND, rootIndex.name()))
           .attach(tempBlob)

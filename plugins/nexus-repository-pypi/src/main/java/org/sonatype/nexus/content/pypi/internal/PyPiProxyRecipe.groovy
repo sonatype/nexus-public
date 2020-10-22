@@ -84,6 +84,7 @@ class PyPiProxyRecipe
     repository.attach(purgeUnusedFacet.get())
     repository.attach(browseFacet.get())
     repository.attach(lastAssetMaintenanceFacet.get())
+    repository.attach(indexFacet.get())
   }
 
   /**

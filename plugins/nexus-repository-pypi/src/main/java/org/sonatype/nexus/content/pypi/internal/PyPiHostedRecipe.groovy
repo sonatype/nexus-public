@@ -28,6 +28,7 @@ import org.sonatype.nexus.repository.types.HostedType
 import org.sonatype.nexus.repository.view.ConfigurableViewFacet
 import org.sonatype.nexus.repository.view.Router
 import org.sonatype.nexus.repository.view.ViewFacet
+
 /**
  * PyPI hosted repository recipe.
  *
@@ -77,6 +78,7 @@ class PyPiHostedRecipe
         .handler(conditionalRequestHandler)
         .handler(partialFetchHandler)
         .handler(contentHeadersHandler)
+        .handler(lastDownloadedHandler)
         .handler(hostedHandlers.getRootIndex)
         .create())
 
@@ -88,6 +90,7 @@ class PyPiHostedRecipe
         .handler(conditionalRequestHandler)
         .handler(partialFetchHandler)
         .handler(contentHeadersHandler)
+        .handler(lastDownloadedHandler)
         .handler(hostedHandlers.getIndex)
         .create())
 

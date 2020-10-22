@@ -12,9 +12,9 @@
  */
 package org.sonatype.nexus.content.pypi.internal;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
-import java.io.InputStream;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -66,11 +66,13 @@ public class PypiContentFacetImpl
 
   @Override
   public Optional<FluentAsset> getAsset(final String path) {
+    checkNotNull(path);
     return assets().path(path).find();
   }
 
   @Override
   public boolean delete(final String path) {
+    checkNotNull(path);
     return assets().path(path).find().map(FluentAsset::delete).orElse(false);
   }
 
@@ -80,6 +82,10 @@ public class PypiContentFacetImpl
       final FluentComponent component,
       final String assetKind)
   {
+    checkNotNull(packagePath);
+    checkNotNull(component);
+    checkNotNull(assetKind);
+
     return assets()
         .path(packagePath)
         .kind(assetKind)
@@ -92,6 +98,9 @@ public class PypiContentFacetImpl
       final String packagePath,
       final String assetKind)
   {
+    checkNotNull(packagePath);
+    checkNotNull(assetKind);
+
     return assets()
         .path(packagePath)
         .kind(assetKind)
@@ -118,6 +127,10 @@ public class PypiContentFacetImpl
       final String version,
       final String normalizedName)
   {
+    checkNotNull(name);
+    checkNotNull(version);
+    checkNotNull(normalizedName);
+
     FluentComponent component = components().name(normalizedName).version(version).getOrCreate();
     copyFormatAttributes(component, getNameAttributes(name));
     return component;
@@ -137,6 +150,6 @@ public class PypiContentFacetImpl
   private FluentQuery<FluentComponent> componentsByName(final String name) {
     String filter = "name = #{filterParams.nameParam}";
     Map<String, Object> params = ImmutableMap.of("nameParam", name);
-    return  facet(PypiContentFacet.class).components().byFilter(filter, params);
+    return facet(PypiContentFacet.class).components().byFilter(filter, params);
   }
 }

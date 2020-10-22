@@ -22,12 +22,15 @@ import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAttributes;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
+import org.sonatype.nexus.repository.view.Content;
 
 import com.google.common.base.Strings;
+import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.SUPPORTED_ATTRIBUTES;
+import static org.sonatype.nexus.repository.view.Content.CONTENT_LAST_MODIFIED;
 
 /**
  * @since 3.next
@@ -97,6 +100,12 @@ public class PyPiDataUtils
     }
     formatAttributes.put(key, value);
     fluentAttributes.withAttribute(PyPiFormat.NAME, formatAttributes);
+  }
+
+  static void setLastModified(final Content content) {
+    if (!content.getAttributes().contains(CONTENT_LAST_MODIFIED)) {
+      content.getAttributes().set(CONTENT_LAST_MODIFIED, DateTime.now());
+    }
   }
 
   public static Optional<String> getMd5(FluentAsset asset) {

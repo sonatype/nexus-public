@@ -152,8 +152,11 @@ public class PyPiHostedFacet
     }
 
     String indexPath = indexPath(name);
-    FluentAsset savedIndex = contentFacet.getAsset(indexPath).orElseGet(() -> createIndexAsset(name, indexPath));
-    return savedIndex.download();
+    FluentAsset indexAsset = contentFacet.findOrCreateAsset(indexPath, AssetKind.INDEX.name());
+    if (indexAsset.blob().isPresent()) {
+      return indexAsset.download();
+    }
+    return indexAsset.attach(createIndexBlob(name)).download();
   }
 
   public Map<String, String> extractMetadata(final TempBlob tempBlob) throws IOException {
@@ -182,22 +185,16 @@ public class PyPiHostedFacet
     Map<String, PyPiLink> links = new TreeMap<>();
     FluentComponents components = facet(PypiContentFacet.class).components();
 
-    components.browse(Integer.MAX_VALUE, null).stream()
+    components.browse(Integer.MAX_VALUE, null)
         .forEach(c -> links.put(c.name(), new PyPiLink(c.name(), c.name() + "/")));
     return links.values();
   }
 
-  private FluentAsset createIndexAsset(final String name, final String indexPath)
-  {
+  private TempBlob createIndexBlob(final String name) {
     String html = buildIndex(name);
     Payload indexPayload = new BytesPayload(html.getBytes(UTF_8), TEXT_HTML);
     PypiContentFacet contentFacet = facet(PypiContentFacet.class);
-
-    try (TempBlob tempBlob = contentFacet.getTempBlob(indexPayload)) {
-      return facet(PypiContentFacet.class)
-          .findOrCreateAsset(indexPath, AssetKind.INDEX.name())
-          .attach(tempBlob);
-    }
+    return contentFacet.getTempBlob(indexPayload);
   }
 
   private String buildIndex(final String name) {
@@ -214,13 +211,13 @@ public class PyPiHostedFacet
 
   private Optional<PyPiLink> buildPyPiLink(FluentAsset asset) {
     AttributesMap pypiAttributes = asset.attributes().child(PyPiFormat.NAME);
-    String path = asset.path();
-    String file = path.substring(path.lastIndexOf('/') + 1);
+    String uri = asset.path().startsWith("/") ? asset.path().substring(1) : asset.path();
+    String file = uri.substring(uri.lastIndexOf('/') + 1);
     Optional<String> md5 = getMd5(asset);
     if (!md5.isPresent()) {
       return Optional.empty();
     }
-    String link = String.format("../../%s#md5=%s", path, md5.get());
+    String link = String.format("../../%s#md5=%s", uri, md5.get());
     String dataRequiresPython = pypiAttributes.get(PyPiAttributes.P_REQUIRES_PYTHON, String.class, StringUtils.EMPTY);
 
     return Optional.of(new PyPiLink(file, link, dataRequiresPython));
