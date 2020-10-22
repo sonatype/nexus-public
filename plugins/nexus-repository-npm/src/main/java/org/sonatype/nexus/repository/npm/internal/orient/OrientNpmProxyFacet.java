@@ -126,12 +126,6 @@ public class OrientNpmProxyFacet
   }
 
   @Override
-  public void invalidateProxyCaches() {
-    super.invalidateProxyCaches();
-    nonCatalogedVersionHelper.clearCache();
-  }
-
-  @Override
   protected Content getCachedContent(final Context context) throws IOException
   {
     ProxyTarget proxyTarget = context.getAttributes().require(ProxyTarget.class);
@@ -533,5 +527,6 @@ public class OrientNpmProxyFacet
     super.invalidateProxyCaches();
     final NpmAuditFacet npmAuditFacet = getRepository().facet(NpmAuditFacet.class);
     npmAuditFacet.clearCache();
+    nonCatalogedVersionHelper.clearCache();
   }
 }
