@@ -61,7 +61,7 @@ class OrientNpmGroupPackageHandler
     // Dispatch requests to members to trigger update events and group cache invalidation when a member has changed
     Map<Repository, Response> responses = getResponses(context, dispatched, groupFacet)
 
-    NpmContent content = groupFacet.getFromCache(context)
+    NpmContent content = groupFacet.getFromCache(responses, context)
 
     // first check cached content against itself only
     if (isNull(content)) {

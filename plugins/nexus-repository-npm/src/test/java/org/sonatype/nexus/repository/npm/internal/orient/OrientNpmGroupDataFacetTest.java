@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.npm.internal.orient;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -48,13 +49,11 @@ import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.repository.view.Content;
-import org.sonatype.nexus.repository.view.ContentTypes;
 import org.sonatype.nexus.repository.view.Context;
 import org.sonatype.nexus.repository.view.Request;
 import org.sonatype.nexus.repository.view.Response;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher;
 import org.sonatype.nexus.repository.view.matchers.token.TokenMatcher.State;
-import org.sonatype.nexus.repository.view.payloads.BytesPayload;
 import org.sonatype.nexus.transaction.UnitOfWork;
 import org.sonatype.nexus.validation.ConstraintViolationFactory;
 
@@ -370,7 +369,7 @@ public class OrientNpmGroupDataFacetTest
   }
 
   private Content toContent(final NestedAttributesMap packageRoot) {
-    Content content = new Content(new BytesPayload(bytes(packageRoot), ContentTypes.APPLICATION_JSON));
+    Content content = new NpmContent(new NpmStreamPayload(() -> new ByteArrayInputStream(bytes(packageRoot))));
     content.getAttributes().set(NestedAttributesMap.class, packageRoot);
     return content;
   }

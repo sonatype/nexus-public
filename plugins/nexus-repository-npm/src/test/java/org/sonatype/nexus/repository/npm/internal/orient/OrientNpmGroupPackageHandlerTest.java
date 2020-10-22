@@ -156,7 +156,7 @@ public class OrientNpmGroupPackageHandlerTest
 
     verify(viewFacet).dispatch(eq(request), eq(context));
     verify(orientGroupFacet).buildPackageRoot(anyMap(), eq(context));
-    verify(orientGroupFacet).getFromCache(eq(context));
+    verify(orientGroupFacet).getFromCache(any(), eq(context));
   }
 
   @Test
@@ -170,7 +170,7 @@ public class OrientNpmGroupPackageHandlerTest
 
     verify(viewFacet, times(2)).dispatch(eq(request), eq(context));
     verify(orientGroupFacet).buildPackageRoot(anyMap(), eq(context));
-    verify(orientGroupFacet).getFromCache(eq(context));
+    verify(orientGroupFacet).getFromCache(any(), eq(context));
   }
 
   @Test
@@ -179,7 +179,7 @@ public class OrientNpmGroupPackageHandlerTest
     Response response = underTest.doGet(context, dispatchedRepositories);
 
     assertThat(response.getStatus().getCode(), is(NOT_FOUND));
-    verify(orientGroupFacet).getFromCache(eq(context));
+    verify(orientGroupFacet).getFromCache(any(), eq(context));
   }
 
   @Test
@@ -187,25 +187,25 @@ public class OrientNpmGroupPackageHandlerTest
     NpmStreamPayload payload = new NpmStreamPayload(() -> new ByteArrayInputStream("test".getBytes()));
     NpmContent cacheContent = new NpmContent(payload);
     when(orientGroupFacet.members()).thenReturn(singletonList(proxy));
-    when(orientGroupFacet.getFromCache(eq(context))).thenReturn(cacheContent);
+    when(orientGroupFacet.getFromCache(any(), eq(context))).thenReturn(cacheContent);
 
     Response response = underTest.doGet(context, dispatchedRepositories);
 
     assertThat(response.getStatus().getCode(), is(OK));
     assertThat(response.getPayload(), equalTo(cacheContent));
 
-    verify(orientGroupFacet).getFromCache(eq(context));
+    verify(orientGroupFacet).getFromCache(any(), eq(context));
 
     response = underTest.doGet(context, dispatchedRepositories);
     assertThat(response.getStatus().getCode(), is(OK));
     assertThat(response.getPayload(), equalTo(cacheContent));
 
-    verify(orientGroupFacet, times(2)).getFromCache(eq(context));
+    verify(orientGroupFacet, times(2)).getFromCache(any(), eq(context));
   }
 
   @Test
   public void shouldReturnMergedPackageRoot_When_CacheThrowsMissingBlobException() throws Exception {
-    when(orientGroupFacet.getFromCache(eq(context))).thenReturn(createNpmContentWithMissingAssetBlob());
+    when(orientGroupFacet.getFromCache(any(), eq(context))).thenReturn(createNpmContentWithMissingAssetBlob());
     when(orientGroupFacet.buildMergedPackageRootOnMissingBlob(any(), any(), any()))
         .thenReturn(new ByteArrayInputStream("test".getBytes()));
     when(orientGroupFacet.members()).thenReturn(asList(proxy, hosted));
@@ -220,7 +220,7 @@ public class OrientNpmGroupPackageHandlerTest
 
   @Test
   public void shouldReturn_When_CacheThrowsMissingBlobException_And_MembersReturnNoResponse() throws Exception {
-    when(orientGroupFacet.getFromCache(eq(context))).thenReturn(createNpmContentWithMissingAssetBlob());
+    when(orientGroupFacet.getFromCache(any(), eq(context))).thenReturn(createNpmContentWithMissingAssetBlob());
     when(orientGroupFacet.buildMergedPackageRootOnMissingBlob(any(), any(), any())).thenReturn(null);
     when(orientGroupFacet.members()).thenReturn(asList(proxy, hosted));
 
@@ -245,7 +245,7 @@ public class OrientNpmGroupPackageHandlerTest
     attributes.set(CONTENT_LAST_MODIFIED, "01-01-2020");
     when(orientGroupFacet.members()).thenReturn(asList(proxy, hosted));
     when(content.getAttributes()).thenReturn(attributes);
-    when(orientGroupFacet.getFromCache(eq(context))).thenReturn(content);
+    when(orientGroupFacet.getFromCache(any(), eq(context))).thenReturn(content);
 
     Response response = underTest.doGet(context, dispatchedRepositories);
 

@@ -126,6 +126,12 @@ public class OrientNpmProxyFacet
   }
 
   @Override
+  public void invalidateProxyCaches() {
+    super.invalidateProxyCaches();
+    nonCatalogedVersionHelper.clearCache();
+  }
+
+  @Override
   protected Content getCachedContent(final Context context) throws IOException
   {
     ProxyTarget proxyTarget = context.getAttributes().require(ProxyTarget.class);

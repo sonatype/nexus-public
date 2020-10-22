@@ -106,4 +106,8 @@ public class NpmStreamPayload
         .disable(AUTO_CLOSE_TARGET)
         .readAndWrite(input, new BufferedOutputStream(output));
   }
+
+  public List<NpmFieldMatcher> getFieldMatchers() {
+    return fieldMatchers;
+  }
 }
