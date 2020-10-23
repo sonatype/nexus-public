@@ -18,19 +18,24 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
+import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.IllegalOperationException;
 import org.sonatype.nexus.repository.view.PartPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.hash.HashCode;
 import com.google.common.io.CharStreams;
 import org.apache.commons.lang.StringUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
+import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
+import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_NAME;
 import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.normalizeName;
 import static org.sonatype.nexus.repository.view.Content.CONTENT_ETAG;
@@ -40,6 +45,8 @@ import static org.sonatype.nexus.repository.view.Content.CONTENT_ETAG;
  */
 public class PyPiStorageUtils
 {
+  public static final List<HashAlgorithm> HASH_ALGORITHMS = ImmutableList.of(SHA1, SHA256, MD5);
+
   private final static String MD5_ATTRIBUTE_NAME = "md5_digest";
 
   public static void validateMd5Hash(final Map<String, String> attributes, final TempBlob tempBlob) {

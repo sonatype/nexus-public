@@ -15,10 +15,10 @@ package org.sonatype.nexus.testsuite.testsupport.pypi;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.content.pypi.PypiContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.maintenance.ContentMaintenanceFacet;
+import org.sonatype.nexus.repository.pypi.datastore.PypiContentFacet;
 
 import org.junit.Assert;
 
