@@ -147,18 +147,21 @@ public class NpmAuditFacet
     maybeDestroyCache();
   }
 
-  public Payload audit(final Payload payload, final String appId)
+  public Payload audit(final Payload payload, final Context context)
       throws ExecutionException, ConfigurationException, PackageLockParsingException, TarballLoadingException
   {
     if (payload == null) {
       throw new ConfigurationException(ABSENT_PARSING_FILE.getMessage());
     }
+    final String applicationIdFromHeader = maybeGetAppIdFromHeader(context);
+
     checkIqServerAvailable();
 
     PackageLock packageLock = parseRequest(payload);
+    final String applicationId = applicationIdFromHeader != null ? applicationIdFromHeader : packageLock.getRoot().getApplicationId();
     ComponentsVulnerability componentsVulnerability =
-        analyzeComponents(packageLock.getComponents(), appId!= null ? appId : packageLock.getRoot().getApplicationId());
-    return buildResponse(packageLock, componentsVulnerability);
+        analyzeComponents(packageLock.getComponents(applicationId), applicationId);
+    return buildResponse(packageLock, componentsVulnerability, applicationId);
   }
 
   private void checkIqServerAvailable() throws ExecutionException {
@@ -323,9 +326,10 @@ public class NpmAuditFacet
 
   private StringPayload buildResponse(
       final PackageLock packageLock,
-      final ComponentsVulnerability componentsVulnerability)
+      final ComponentsVulnerability componentsVulnerability,
+      final String applicationId)
   {
-    ResponseReport responseReport = reportCreator.buildResponseReport(componentsVulnerability, packageLock);
+    ResponseReport responseReport = reportCreator.buildResponseReport(componentsVulnerability, packageLock, applicationId);
     String responseReportString = gson.toJson(responseReport);
     log.trace("npm audit report: {}", responseReportString);
     log.debug("Build report with metadata: {}", responseReport.getMetadata());
@@ -351,7 +355,7 @@ public class NpmAuditFacet
   }
 
   @Nullable
-  public String maybeGetAppId(final Context context) {
+  public String maybeGetAppIdFromHeader(final Context context) {
     return context.getRequest().getHeaders().entries().stream()
         .filter(entry -> entry.getValue().matches("app_id:.*"))
         .map(getAppIdValue())

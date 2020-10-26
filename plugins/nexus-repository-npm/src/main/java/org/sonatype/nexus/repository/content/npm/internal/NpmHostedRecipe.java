@@ -93,7 +93,7 @@ public class NpmHostedRecipe
       final Provider<NpmHostedFacet> npmHostedFacet,
       final Provider<NpmSearchIndexFacetHosted> npmSearchIndexFacet,
       final Provider<NpmSearchFacetHosted> npmSearchFacet,
-      final Provider<LastAssetMaintenanceFacet> lastAssetMaintenanceFacet,
+      final Provider<NpmHostedMaintenanceFacet> maintenanceFacetProvider,
       final ExceptionHandler exceptionHandler,
       final TimingHandler timingHandler,
       final IndexHtmlForwardHandler indexHtmlForwardHandler,
@@ -112,7 +112,7 @@ public class NpmHostedRecipe
     super(type, format, securityFacet, viewFacet, contentFacet, searchFacet, browseFacet, exceptionHandler,
         timingHandler, indexHtmlForwardHandler, securityHandler, partialFetchHandler, conditionalRequestHandler,
         contentHeadersHandler, lastDownloadedHandler, handlerContributor, tokenFacet, npmAuditFacetProvider,
-        npmAuditTarballFacetProvider, lastAssetMaintenanceFacet, routingHandler, auditErrorHandler,
+        npmAuditTarballFacetProvider, maintenanceFacetProvider, routingHandler, auditErrorHandler,
         auditAnalyticsHandler, npmWhoamiHandler, pingHandler);
     this.npmHostedFacetProvider = npmHostedFacet;
     this.npmSearchIndexFacetProvider = npmSearchIndexFacet;
@@ -129,7 +129,7 @@ public class NpmHostedRecipe
     repository.attach(npmSearchIndexFacetProvider.get());
     repository.attach(npmSearchFacetProvider.get());
     repository.attach(contentFacet.get());
-    repository.attach(lastAssetMaintenanceFacet.get());
+    repository.attach(contentMaintenanceFacetProvider.get());
   }
 
   /**

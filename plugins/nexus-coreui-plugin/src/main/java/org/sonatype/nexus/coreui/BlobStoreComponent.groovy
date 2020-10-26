@@ -42,6 +42,7 @@ import org.sonatype.nexus.security.privilege.ApplicationPermission
 import org.sonatype.nexus.validation.Validate
 import org.sonatype.nexus.validation.group.Create
 import org.sonatype.nexus.validation.group.Update
+import org.sonatype.nexus.blobstore.api.ChangeRepositoryBlobstoreDataService
 
 import com.codahale.metrics.annotation.ExceptionMetered
 import com.codahale.metrics.annotation.Timed
@@ -88,6 +89,10 @@ class BlobStoreComponent
 
   @Inject
   Map<String, FillPolicy> fillPolicies
+
+  @Nullable
+  @Inject
+  ChangeRepositoryBlobstoreDataService changeRepositoryBlobstoreDataService;
 
   @DirectMethod
   @Timed
@@ -207,6 +212,9 @@ class BlobStoreComponent
     if (repositoryManager.isBlobstoreUsed(name)) {
       throw new BlobStoreException("Blob store (${name}) is in use by at least one repository", null)
     }
+    if (blobstoreInChangeRepoTaskCount(name) > 0) {
+      throw new BlobStoreException("Blob store (${name}) is in use by a Change Repository Blob Store task", null)
+    }
     blobStoreManager.delete(name)
   }
 
@@ -253,6 +261,7 @@ class BlobStoreComponent
         type: blobStore.blobStoreConfiguration.type,
         attributes: filterAttributes(blobStore.blobStoreConfiguration.attributes),
         repositoryUseCount: repositoryManager.blobstoreUsageCount(blobStore.blobStoreConfiguration.name),
+        taskUseCount: blobstoreInChangeRepoTaskCount(blobStore.blobStoreConfiguration.name),
         blobStoreUseCount: blobStoreManager.blobStoreUsageCount(blobStore.blobStoreConfiguration.name),
         inUse: repositoryManager.isBlobstoreUsed(blobStore.blobStoreConfiguration.name),
         promotable: blobStoreManager.isPromotable(blobStore.blobStoreConfiguration.name),
@@ -275,6 +284,13 @@ class BlobStoreComponent
       blobStoreXO.unavailable = true
     }
     return blobStoreXO
+  }
+
+  int blobstoreInChangeRepoTaskCount(final String blobStoreName) {
+    if (changeRepositoryBlobstoreDataService != null) {
+      return changeRepositoryBlobstoreDataService.changeRepoTaskUsingBlobstoreCount(blobStoreName);
+    }
+    return 0;
   }
 
   @DirectMethod

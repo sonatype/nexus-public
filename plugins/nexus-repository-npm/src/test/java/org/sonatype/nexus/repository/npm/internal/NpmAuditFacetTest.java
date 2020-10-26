@@ -66,7 +66,7 @@ public class NpmAuditFacetTest
     when(context.getRequest()).thenReturn(request);
     when(request.getHeaders()).thenReturn(headers);
 
-    final String actual = underTest.maybeGetAppId(context);
+    final String actual = underTest.maybeGetAppIdFromHeader(context);
 
     assertThat(actual, is(nullValue()));
   }
@@ -79,7 +79,7 @@ public class NpmAuditFacetTest
     when(context.getRequest()).thenReturn(request);
     when(request.getHeaders()).thenReturn(headers);
 
-    final String actual = underTest.maybeGetAppId(context);
+    final String actual = underTest.maybeGetAppIdFromHeader(context);
 
     assertThat(actual, is("bar"));
   }
@@ -92,7 +92,7 @@ public class NpmAuditFacetTest
     when(context.getRequest()).thenReturn(request);
     when(request.getHeaders()).thenReturn(headers);
 
-    final String actual = underTest.maybeGetAppId(context);
+    final String actual = underTest.maybeGetAppIdFromHeader(context);
 
     assertThat(actual, is("bar"));
   }
@@ -105,7 +105,7 @@ public class NpmAuditFacetTest
     when(context.getRequest()).thenReturn(request);
     when(request.getHeaders()).thenReturn(headers);
 
-    final String actual = underTest.maybeGetAppId(context);
+    final String actual = underTest.maybeGetAppIdFromHeader(context);
 
     assertThat(actual, is(nullValue()));
   }
@@ -120,7 +120,7 @@ public class NpmAuditFacetTest
     when(context.getRequest()).thenReturn(request);
     when(request.getHeaders()).thenReturn(headers);
 
-    final String actual = underTest.maybeGetAppId(context);
+    final String actual = underTest.maybeGetAppIdFromHeader(context);
 
     assertThat(actual, is("baz"));
   }

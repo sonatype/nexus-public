@@ -19,6 +19,7 @@ import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.blobstore.api.BlobStoreException
 import org.sonatype.nexus.blobstore.api.BlobStoreManager
 import org.sonatype.nexus.blobstore.api.BlobStoreMetrics
+import org.sonatype.nexus.blobstore.api.ChangeRepositoryBlobstoreDataService
 import org.sonatype.nexus.blobstore.group.BlobStoreGroup
 import org.sonatype.nexus.blobstore.group.BlobStoreGroupService
 import org.sonatype.nexus.common.app.ApplicationDirectories
@@ -40,15 +41,17 @@ class BlobStoreComponentTest
   BlobStoreManager blobStoreManager = Mock()
 
   ApplicationDirectories applicationDirectories = Mock()
-  
+
   RepositoryManager repositoryManager = Mock()
 
   BlobStoreGroupService blobStoreGroupService = Mock()
 
+  ChangeRepositoryBlobstoreDataService changeRepositoryBlobstoreDataService = Mock()
+
   @Subject
   BlobStoreComponent blobStoreComponent = new BlobStoreComponent(blobStoreManager: blobStoreManager,
       applicationDirectories: applicationDirectories, repositoryManager: repositoryManager,
-      blobStoreGroupService: { blobStoreGroupService })
+      blobStoreGroupService: { blobStoreGroupService }, changeRepositoryBlobstoreDataService: changeRepositoryBlobstoreDataService)
 
   def 'Read types returns descriptor data'() {
     given: 'A blobstore descriptor'
@@ -94,7 +97,7 @@ class BlobStoreComponentTest
 
     when: 'Attempting to remove an used blobstore'
       blobStoreComponent.remove('used')
-      
+
     then: 'It aint'
       thrown BlobStoreException
       1 * repositoryManager.isBlobstoreUsed('used') >> true
@@ -255,5 +258,15 @@ class BlobStoreComponentTest
         blobStore
       }
       updatedXO.attributes.s3.secretAccessKey == PasswordPlaceholder.get()
+  }
+
+  def 'Remove blobstore does not remove blobstores part of a move repository task'() {
+    when: 'Attempting to remove an used blobstore'
+      blobStoreComponent.remove('used_in_move')
+
+    then: 'It aint'
+      thrown BlobStoreException
+      1 * changeRepositoryBlobstoreDataService.changeRepoTaskUsingBlobstoreCount('used_in_move') >> 2
+      0 * blobStoreManager.delete('used_in_move')
   }
 }

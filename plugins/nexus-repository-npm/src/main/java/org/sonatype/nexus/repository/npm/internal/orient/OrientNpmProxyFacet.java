@@ -527,5 +527,6 @@ public class OrientNpmProxyFacet
     super.invalidateProxyCaches();
     final NpmAuditFacet npmAuditFacet = getRepository().facet(NpmAuditFacet.class);
     npmAuditFacet.clearCache();
+    nonCatalogedVersionHelper.clearCache();
   }
 }

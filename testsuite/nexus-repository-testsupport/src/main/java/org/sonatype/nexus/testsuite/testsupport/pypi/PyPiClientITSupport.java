@@ -22,11 +22,14 @@ import com.sonatype.nexus.docker.testsupport.framework.DockerContainerConfig;
 import com.sonatype.nexus.docker.testsupport.pypi.PyPiCommandLineITSupport;
 
 import org.sonatype.nexus.testsuite.testsupport.FormatClientITSupport;
+import org.sonatype.nexus.testsuite.testsupport.RepositoryITSupport;
 import org.sonatype.nexus.testsuite.testsupport.utility.SearchTestHelper;
 
 import org.apache.http.HttpResponse;
 import org.junit.After;
 import org.junit.Before;
+import org.ops4j.pax.exam.Configuration;
+import org.ops4j.pax.exam.Option;
 
 import static com.google.common.io.Files.write;
 import static java.lang.String.format;
@@ -38,6 +41,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFileExtend;
 import static org.sonatype.nexus.common.io.NetworkHelper.findLocalHostAddress;
 import static org.sonatype.nexus.repository.http.HttpStatus.OK;
 import static org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder.unrestricted;
@@ -69,6 +73,19 @@ public abstract class PyPiClientITSupport
    * @return DockerContainerConfig
    */
   protected abstract DockerContainerConfig createTestConfig() throws Exception;
+
+  @Configuration
+  public static Option[] configureNexus() {
+    Option[] nexusBase = options(
+        RepositoryITSupport.configureNexus(),
+        nexusFeature("org.sonatype.nexus.testsuite", "nexus-docker-testsupport"),
+        withHttps(resolveBaseFile(format("target/it-resources/ssl/%s.jks", DOCKER_HOST_NAME))));
+
+    if (getValidTestDatabase().isUseContentStore()) {
+      return options(nexusBase, editConfigurationFileExtend(NEXUS_PROPERTIES_FILE, "nexus.datastore.enabled", "true"));
+    }
+    return nexusBase;
+  }
 
   /**
    * This initialize method will add the PyPi resources test data directory and create the {@link #pyPiCli}.

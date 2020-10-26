@@ -21,7 +21,7 @@ import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.RecipeSupport;
 import org.sonatype.nexus.repository.Type;
 import org.sonatype.nexus.repository.content.browse.BrowseFacet;
-import org.sonatype.nexus.repository.content.maintenance.LastAssetMaintenanceFacet;
+import org.sonatype.nexus.repository.content.maintenance.ContentMaintenanceFacet;
 import org.sonatype.nexus.repository.content.npm.NpmContentFacet;
 import org.sonatype.nexus.repository.content.search.SearchFacet;
 import org.sonatype.nexus.repository.http.PartialFetchHandler;
@@ -93,7 +93,7 @@ abstract class NpmRecipeSupport
 
   protected final Provider<NpmAuditTarballFacet> npmAuditTarballFacetProvider;
 
-  protected final Provider<LastAssetMaintenanceFacet> lastAssetMaintenanceFacet;
+  protected final Provider<? extends ContentMaintenanceFacet> contentMaintenanceFacetProvider;
 
   protected final RoutingRuleHandler routingHandler;
 
@@ -125,7 +125,7 @@ abstract class NpmRecipeSupport
       final Provider<NpmTokenFacet> tokenFacet,
       final Provider<NpmAuditFacet> npmAuditFacetProvider,
       final Provider<NpmAuditTarballFacet> npmAuditTarballFacetProvider,
-      final Provider<LastAssetMaintenanceFacet> lastAssetMaintenanceFacet,
+      final Provider<? extends ContentMaintenanceFacet> maintenanceFacetProvider,
       final RoutingRuleHandler routingHandler,
       final NpmAuditErrorHandler auditErrorHandler,
       @Nullable final Handler auditAnalyticsHandler,
@@ -150,7 +150,7 @@ abstract class NpmRecipeSupport
     this.tokenFacet = checkNotNull(tokenFacet);
     this.npmAuditFacetProvider = checkNotNull(npmAuditFacetProvider);
     this.npmAuditTarballFacetProvider = checkNotNull(npmAuditTarballFacetProvider);
-    this.lastAssetMaintenanceFacet = checkNotNull(lastAssetMaintenanceFacet);
+    this.contentMaintenanceFacetProvider = checkNotNull(maintenanceFacetProvider);
     this.routingHandler = checkNotNull(routingHandler);
     this.auditErrorHandler = checkNotNull(auditErrorHandler);
     this.auditAnalyticsHandler = Optional.ofNullable(auditAnalyticsHandler).orElse(Context::proceed);

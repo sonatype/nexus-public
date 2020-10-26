@@ -12,17 +12,21 @@
  */
 package org.sonatype.nexus.repository.npm.internal
 
+import javax.cache.Cache
+import javax.cache.configuration.MutableConfiguration
+
 import org.sonatype.nexus.blobstore.api.Blob
 import org.sonatype.nexus.blobstore.api.BlobId
 import org.sonatype.nexus.blobstore.api.BlobRef
 import org.sonatype.nexus.blobstore.api.BlobStore
+import org.sonatype.nexus.cache.CacheHelper
 import org.sonatype.nexus.capability.CapabilityReference
 import org.sonatype.nexus.capability.CapabilityRegistry
 import org.sonatype.nexus.common.collect.NestedAttributesMap
 import org.sonatype.nexus.common.event.EventManager
 import org.sonatype.nexus.repository.Repository
 import org.sonatype.nexus.repository.config.Configuration
-import org.sonatype.nexus.repository.firewall.event.ComponentDetailsRequest
+import org.sonatype.nexus.repository.firewall.event.ComponentVersionsRequest
 import org.sonatype.nexus.repository.storage.Asset
 import org.sonatype.nexus.repository.storage.StorageFacet
 
@@ -35,6 +39,7 @@ import static java.lang.Boolean.FALSE
 import static java.lang.Boolean.TRUE
 import static org.hamcrest.Matchers.equalTo
 import static org.junit.Assert.assertThat
+import static org.sonatype.nexus.repository.npm.internal.NonCatalogedVersionHelper.CACHE_NAME
 import static org.sonatype.nexus.repository.npm.internal.NonCatalogedVersionHelper.REMOVE_NON_CATALOGED_KEY
 import static org.sonatype.nexus.repository.npm.internal.NpmFormat.NAME
 
@@ -42,8 +47,9 @@ class NonCatalogedVersionHelperTest
     extends Specification
 {
 
-  public static final String PACKAGE_NAME = 'my_package'
-  public static final String PACKAGE_NAME_WITH_NAMESPACE = '@sonatype/my_package'
+  public static final String PACKAGE_NAME = '@sonatype/my_package'
+
+  public static final long CACHE_DURATION = 72
 
   @Unroll
   def "It will add field matchers for non cataloged versions only"() {
@@ -52,12 +58,16 @@ class NonCatalogedVersionHelperTest
         get(_) >> [Mock(CapabilityReference)]
       }
       EventManager eventManager = Mock() {
-        1 * post(_ as ComponentDetailsRequest) >> { ComponentDetailsRequest r -> r.getResult().complete(versionDates) }
+        1 * post(_ as ComponentVersionsRequest) >> { ComponentVersionsRequest r -> r.getResult().complete(catalogedVersions) }
       }
       def previousVersionLimit = 5
       def componentDetailsTimeout = 10
+      CacheHelper cacheHelper = Mock() {
+        maybeCreateCache(CACHE_NAME, _ as MutableConfiguration) >> Mock(Cache)
+      }
       def nonCatalogedVersionHelper = new NonCatalogedVersionHelper(eventManager, capabilityRegistry,
-          previousVersionLimit, componentDetailsTimeout)
+          cacheHelper, previousVersionLimit, componentDetailsTimeout, CACHE_DURATION)
+      nonCatalogedVersionHelper.doStart()
       Repository repo = Mock(Repository) {
         getName() >> 'myrepo'
         getConfiguration() >> Mock(Configuration) {
@@ -87,26 +97,66 @@ class NonCatalogedVersionHelperTest
 
 
     where:
-      // @formatter:off
-      expectedSize | expectedMatchers  | packageName                 | latest | versions       | versionDates
-      0            | []                | PACKAGE_NAME                | '1.0'  | ['1.0']        | ['pkg:npm/my_package@1.0': new Date()]
-      0            | []                | PACKAGE_NAME                | '1.0'  | ['1.0']        | ['pkg:npm/my_package@1.0': new Date()]
-      0            | []                | PACKAGE_NAME                | '1.1'  | ['1.0', '1.1'] | ['pkg:npm/my_package@1.0': new Date(), 'pkg:npm/my_package@1.1': new Date()]
-      2            | ['1.1', 'latest'] | PACKAGE_NAME                | '1.1'  | ['1.0', '1.1'] | ['pkg:npm/my_package@1.0': new Date(), 'pkg:npm/my_package@1.1': null]
-      0            | []                | PACKAGE_NAME                | '1.1'  | ['1.0', '1.1'] | [:]
-      // These demonstrate workaround works for CLM-16740
-      2            | ['1.1', 'latest'] | PACKAGE_NAME_WITH_NAMESPACE | '1.1'  | ['1.0', '1.1'] | ['pkg:npm/%2540sonatype/my_package@1.0': new Date(), 'pkg:npm/%2540sonatype/my_package@1.1': null]
-      2            | ['1.1', 'latest'] | PACKAGE_NAME_WITH_NAMESPACE | '1.1'  | ['1.0', '1.1'] | ['pkg:npm/%40sonatype/my_package@1.0': new Date(), 'pkg:npm/%40sonatype/my_package@1.1': null]
-      // @formatter:on
+      expectedSize | expectedMatchers  | packageName  | latest | versions       | catalogedVersions
+      0            | []                | PACKAGE_NAME | '1.0'  | ['1.0']        | ['1.0']
+      0            | []                | PACKAGE_NAME | '1.0'  | ['1.0']        | ['1.0']
+      0            | []                | PACKAGE_NAME | '1.1'  | ['1.0', '1.1'] | ['1.0', '1.1']
+      2            | ['1.1', 'latest'] | PACKAGE_NAME | '1.1'  | ['1.0', '1.1'] | ['1.0']
+      0            | []                | PACKAGE_NAME | '1.1'  | ['1.0', '1.1'] | []
   }
 
-  byte[] packageJson(List<String> versions, final String latest) {
-    new JsonBuilder([
-        name       : PACKAGE_NAME,
-        'dist-tags': [latest: latest],
-        versions   : versions.collectEntries { [(it): {}] },
-        '_ref'     : PACKAGE_NAME
-    ]).toPrettyString().bytes
+  def "It will only request details for non-cached versions"() {
+    given:
+      CapabilityRegistry capabilityRegistry = Mock() {
+        get(_) >> [Mock(CapabilityReference)]
+      }
+      EventManager eventManager = Mock() {
+        requests * post(_ as ComponentVersionsRequest) >> { ComponentVersionsRequest r ->
+          r.getResult().complete(catalogedVersions)
+        }
+      }
+      def previousVersionLimit = 5
+      def componentDetailsTimeout = 10
+      Cache <String, Date> cache = Mock(Cache) {
+        get('pkg:npm/%40sonatype/my_package') >> versions
+      }
+      CacheHelper cacheHelper = Mock() {
+        maybeCreateCache(CACHE_NAME, _ as MutableConfiguration) >> cache
+      }
+      def nonCatalogedVersionHelper = new NonCatalogedVersionHelper(eventManager, capabilityRegistry,
+          cacheHelper, previousVersionLimit, componentDetailsTimeout, CACHE_DURATION)
+      nonCatalogedVersionHelper.doStart()
+      Repository repo = Mock(Repository) {
+        getName() >> 'myrepo'
+        getConfiguration() >> Mock(Configuration) {
+          attributes(NAME) >> new NestedAttributesMap('npm', [(REMOVE_NON_CATALOGED_KEY): TRUE])
+        }
+        facet(StorageFacet) >> Mock(StorageFacet) {
+          blobStore() >> Mock(BlobStore) {
+            get(_ as BlobId) >> Mock(Blob) {
+              getInputStream() >> new ByteArrayInputStream(packageJson(['1.0', '1.1'], '1.1'))
+            }
+          }
+        }
+      }
+      Asset packageRoot = Mock() {
+        blobRef() >> Mock(BlobRef) {
+          getBlobId() >> Mock(BlobId)
+        }
+        name() >> PACKAGE_NAME
+      }
+      List<NpmFieldMatcher> matchers = []
+    when:
+      nonCatalogedVersionHelper.maybeAddExcludedVersionsFieldMatchers(matchers, packageRoot, repo)
+    then:
+      matchers.size() == expectedSize
+      def matcherFieldNames = matchers.collect { it.getFieldName() }
+      matcherFieldNames == expectedMatchers
+
+    where:
+      expectedSize | expectedMatchers | requests | expectedRequestSize | versions       | catalogedVersions
+      2            | ['1.1', 'latest']| 1        | 1                   | ['1.0']        | ['1.0']
+      0            | []               | 0        | 0                   | ['1.0', '1.1'] | ['1.0', '1.1']
   }
 
   @Unroll
@@ -116,8 +166,12 @@ class NonCatalogedVersionHelperTest
       EventManager eventManager = Mock()
       def previousVersionLimit = 5
       def componentDetailsTimeout = 10
+      CacheHelper cacheHelper = Mock() {
+        maybeCreateCache(CACHE_NAME, _ as MutableConfiguration) >> Mock(Cache)
+      }
       def nonCatalogedVersionHelper = new NonCatalogedVersionHelper(eventManager, capabilityRegistry,
-          previousVersionLimit, componentDetailsTimeout)
+          cacheHelper, previousVersionLimit, componentDetailsTimeout, CACHE_DURATION)
+      nonCatalogedVersionHelper.doStart()
       Repository repo = Mock(Repository) {
         getName() >> 'myrepo'
         getConfiguration() >> Mock(Configuration) {
@@ -130,7 +184,7 @@ class NonCatalogedVersionHelperTest
       nonCatalogedVersionHelper.maybeAddExcludedVersionsFieldMatchers(matchers, packageRoot, repo)
     then:
       0 * packageRoot.blobRef()
-      0 * eventManager.post(_ as ComponentDetailsRequest)
+      0 * eventManager.post(_ as ComponentVersionsRequest)
       capabilityRegistryInvocations * capabilityRegistry.get(_) >> firewallCapibilities
 
     where:
@@ -153,5 +207,14 @@ class NonCatalogedVersionHelperTest
       5 | ['a', 'b', 'c', 'd', 'e', 'f']      | ['b', 'c', 'd', 'e', 'f']
       5 | ['a', 'b', 'c', 'd', 'e', 'f', 'g'] | ['c', 'd', 'e', 'f', 'g']
       2 | ['a', 'b', 'c', 'd', 'e', 'f', 'g'] | ['f', 'g']
+  }
+
+  byte[] packageJson(List<String> versions, final String latest) {
+    new JsonBuilder([
+        name       : PACKAGE_NAME,
+        'dist-tags': [latest: latest],
+        versions   : versions.collectEntries { [(it): {}] },
+        '_ref'     : PACKAGE_NAME
+    ]).toPrettyString().bytes
   }
 }

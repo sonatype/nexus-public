@@ -39,6 +39,7 @@ import org.sonatype.nexus.rest.WebApplicationMessageException;
 import org.sonatype.nexus.security.SecuritySystem;
 import org.sonatype.nexus.security.authz.NoSuchAuthorizationManagerException;
 import org.sonatype.nexus.security.config.AdminPasswordFileManager;
+import org.sonatype.nexus.security.role.Role;
 import org.sonatype.nexus.security.role.RoleIdentifier;
 import org.sonatype.nexus.security.user.NoSuchUserManagerException;
 import org.sonatype.nexus.security.user.User;
@@ -92,7 +93,7 @@ public class UserApiResource
       criteria.setLimit(100);
     }
 
-    return securitySystem.searchUsers(criteria).stream().map(u -> fromUser(u))
+    return securitySystem.searchUsers(criteria).stream().map(this::fromUser)
         .collect(Collectors.toList());
   }
 
@@ -163,6 +164,10 @@ public class UserApiResource
     try {
       user = securitySystem.getUser(userId);
 
+      if (!UserManager.DEFAULT_SOURCE.equals(user.getSource()) && !"SAML".equals(user.getSource())) {
+        throw createWebException(Status.BAD_REQUEST, "Non-local user cannot be deleted.");
+      }
+
       securitySystem.deleteUser(userId, user.getSource());
     }
     catch (NoSuchUserManagerException e) {
@@ -217,9 +222,9 @@ public class UserApiResource
     Predicate<RoleIdentifier> isLocal = r -> UserManager.DEFAULT_SOURCE.equals(r.getSource());
 
     Set<String> internalRoles =
-        user.getRoles().stream().filter(isLocal).map(role -> role.getRoleId()).collect(Collectors.toSet());
+        user.getRoles().stream().filter(isLocal).map(RoleIdentifier::getRoleId).collect(Collectors.toSet());
     Set<String> externalRoles =
-        user.getRoles().stream().filter(isLocal.negate()).map(role -> role.getRoleId()).collect(Collectors.toSet());
+        user.getRoles().stream().filter(isLocal.negate()).map(RoleIdentifier::getRoleId).collect(Collectors.toSet());
 
     return new ApiUser(user.getUserId(), user.getFirstName(), user.getLastName(), user.getEmailAddress(),
         user.getSource(), ApiUserStatus.convert(user.getStatus()), isReadOnly(user), internalRoles, externalRoles);
@@ -230,7 +235,7 @@ public class UserApiResource
 
     Set<String> localRoles;
     try {
-      localRoles = securitySystem.listRoles(UserManager.DEFAULT_SOURCE).stream().map(r -> r.getRoleId())
+      localRoles = securitySystem.listRoles(UserManager.DEFAULT_SOURCE).stream().map(Role::getRoleId)
           .collect(Collectors.toSet());
       for (String roleId : roleIds) {
         if (!localRoles.contains(roleId)) {

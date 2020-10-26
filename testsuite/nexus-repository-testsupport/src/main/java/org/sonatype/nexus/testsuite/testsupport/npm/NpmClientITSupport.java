@@ -38,8 +38,10 @@ import org.junit.After;
 import org.junit.Before;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 
 /**
@@ -165,7 +167,7 @@ public abstract class NpmClientITSupport
     List<String> results = npmCli.publish(directory);
 
     assertThat(results.size(), is(greaterThan(0)));
-    assertThat(results.stream().anyMatch(s -> s.contains("+ " + name + "@" + version)), is(true));
+    assertThat(results, hasItem(containsString("+ " + name + "@" + version)));
   }
 
   protected void configurePackageJson(
@@ -236,31 +238,31 @@ public abstract class NpmClientITSupport
 
   protected void verifyInstalled(final List<String> results, final String packageName) {
     assertThat(results.size(), is(greaterThan(0)));
-    assertThat(results.stream().anyMatch(s -> s.contains("added")), is(true));
+    assertThat(results, hasItem(containsString("added")));
 
     final List<String> ls = npmCli.ls(packageName).get();
     assertThat(ls.size(), is(greaterThan(0)));
-    assertThat(ls.stream().anyMatch(s -> s.contains(packageName)), is(true));
+    assertThat(ls, hasItem(containsString(packageName)));
   }
 
   protected void verifyAudit(final List<String> results, final String verifyText) {
     assertThat(results.size(), is(greaterThan(0)));
-    assertThat(results.stream().anyMatch(s -> s.contains(verifyText)), is(true));
+    assertThat(results, hasItem(containsString(verifyText)));
   }
 
   protected void verifyUpdated(final List<String> results, final String packageName) {
     assertThat(results.size(), is(greaterThan(0)));
-    assertThat(results.stream().anyMatch(s -> s.contains("+ " + packageName)), is(true));
-    assertThat(results.stream().anyMatch(s -> s.contains("updated 1 package")), is(true));
+    assertThat(results, hasItem(containsString("+ " + packageName)));
+    assertThat(results, hasItem(containsString("updated 1 package")));
   }
 
   protected void verifyNotUpdated(final List<String> results, final String packageName) {
     assertThat(results.size(), is(greaterThan(0)));
-    assertThat(results.stream().anyMatch(s -> s.contains("No matching version found for " + packageName)), is(true));
+    assertThat(results, hasItem(containsString("No matching version found for " + packageName)));
   }
 
   protected void verifyNotFound(final List<String> results) {
-    assertThat(results.stream().anyMatch(s -> s.contains("npm ERR! code E404")), is(true));
+    assertThat(results, hasItem(containsString("npm ERR! code E404")));
   }
 
   protected void verifyDeprecation(final String repository,

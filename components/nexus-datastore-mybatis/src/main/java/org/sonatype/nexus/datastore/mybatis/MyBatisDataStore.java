@@ -550,7 +550,7 @@ public class MyBatisDataStore
       XMLMapperBuilder xmlParser = new XMLMapperBuilder(
           new ByteArrayInputStream(xml.getBytes(UTF_8)),
           mybatisConfig,
-          mapperXmlPath(templateType) + "${" + placeholder + '=' + prefix + '}',
+          accessType.getName(),
           mybatisConfig.getSqlFragments(),
           accessType.getName());
 

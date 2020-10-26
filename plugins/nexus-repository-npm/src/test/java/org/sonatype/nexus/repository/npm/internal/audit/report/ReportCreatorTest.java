@@ -79,7 +79,7 @@ public class ReportCreatorTest
 
   @Test
   public void testReport() throws IOException {
-    ResponseReport responseReport = underTest.buildResponseReport(dummyReport, packageLock);
+    ResponseReport responseReport = underTest.buildResponseReport(dummyReport, packageLock, packageLock.getRoot().getApplicationId());
     String expectedResponse = Resources.toString(getResource(NPM_AUDIT_RESPONSE), UTF_8);
     assertEquals(StringUtils.deleteWhitespace(expectedResponse),
         StringUtils.deleteWhitespace(gson.toJson(responseReport)));

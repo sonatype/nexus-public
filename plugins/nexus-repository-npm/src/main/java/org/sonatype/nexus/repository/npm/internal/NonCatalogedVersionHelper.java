@@ -12,29 +12,39 @@
  */
 package org.sonatype.nexus.repository.npm.internal;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Predicate;
 
+import javax.cache.Cache;
+import javax.cache.configuration.Factory;
+import javax.cache.configuration.MutableConfiguration;
+import javax.cache.expiry.CreatedExpiryPolicy;
+import javax.cache.expiry.Duration;
+import javax.cache.expiry.ExpiryPolicy;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.goodies.packageurl.PackageUrl;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.cache.CacheHelper;
 import org.sonatype.nexus.capability.CapabilityReference;
 import org.sonatype.nexus.capability.CapabilityReferenceFilterBuilder;
 import org.sonatype.nexus.capability.CapabilityReferenceFilterBuilder.CapabilityReferenceFilter;
 import org.sonatype.nexus.capability.CapabilityRegistry;
 import org.sonatype.nexus.capability.CapabilityType;
+import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.event.EventManager;
+import org.sonatype.nexus.common.stateguard.Guarded;
+import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.firewall.event.ComponentDetailsRequest;
+import org.sonatype.nexus.repository.firewall.event.ComponentVersionsRequest;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 
@@ -45,6 +55,8 @@ import static java.lang.Boolean.TRUE;
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toList;
+import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SERVICES;
+import static org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport.State.STARTED;
 import static org.sonatype.nexus.repository.npm.internal.NpmFieldFactory.removeObjectFieldMatcher;
 import static org.sonatype.nexus.repository.npm.internal.NpmFieldFactory.rewriteLatest;
 import static org.sonatype.nexus.repository.npm.internal.NpmFormat.NAME;
@@ -55,8 +67,9 @@ import static org.sonatype.nexus.repository.npm.internal.NpmFormat.NAME;
  */
 @Named
 @Singleton
+@ManagedLifecycle(phase = SERVICES)
 public class NonCatalogedVersionHelper
-    extends ComponentSupport
+    extends StateGuardLifecycleSupport
 {
   public static final String REMOVE_NON_CATALOGED_KEY = "removeNonCataloged";
 
@@ -64,33 +77,82 @@ public class NonCatalogedVersionHelper
 
   public static final String REPOSITORY_KEY = "repository";
 
+  public static final String CACHE_NAME = "NPM_CATALOGED_VERSIONS";
+
+  private static final Class<? extends ArrayList> LIST_CLASS = new ArrayList<String>().getClass();
+
   private final int limit;
 
   private final EventManager eventManager;
 
-  private final int componentDetailsTimeout;
+  private final int componentVersionsTimeout;
 
   private final CapabilityRegistry capabilityRegistry;
+
+  private final CacheHelper cacheHelper;
+
+  private Cache<String, List<String>> npmCatalogedVersions;
+
+  private final long cacheDuration;
 
   @Inject
   public NonCatalogedVersionHelper(final EventManager eventManager,
                                    final CapabilityRegistry capabilityRegistry,
+                                   final CacheHelper cacheHelper,
                                    @Named("${nexus.npm.firewall.check_last_limit:-5}") final int checkLastLimit,
-                                   @Named("${nexus.npm.firewall.component_details_timeout:-10}")
-                                   final int componentDetailsTimeout)
+                                   @Named("${nexus.npm.firewall.component_versions_timeout:-10}")
+                                   final int componentVersionsTimeout,
+                                   @Named("${nexus.npm.firewall.component_versions_cache_duration:-72}")
+                                   final long cacheDuration)
   {
     this.eventManager = eventManager;
     this.capabilityRegistry = capabilityRegistry;
-    checkArgument(checkLastLimit > 0, "Invalid npm firewall check last version limit: %s", checkLastLimit);
+    this.cacheHelper = cacheHelper;
+    checkArgument(cacheDuration > 0, "nexus.npm.firewall.component_versions_cache_duration must be > 0. Value was %s", checkLastLimit);
+    this.cacheDuration = cacheDuration;
+    checkArgument(checkLastLimit > 0, "nexus.npm.firewall.check_last_limit must be > 0. Value was %s", checkLastLimit);
     this.limit = checkLastLimit;
-    checkArgument(componentDetailsTimeout > 0, "Invalid npm firewall component details timeout: %s", componentDetailsTimeout);
-    this.componentDetailsTimeout = componentDetailsTimeout;
+    checkArgument(componentVersionsTimeout > 0, "nexus.npm.firewall.component_versions_timeout must be > 0. Value was %s", componentVersionsTimeout);
+    this.componentVersionsTimeout = componentVersionsTimeout;
   }
 
+  @Override
+  protected void doStart() {
+    maybeCreateCache();
+  }
 
+  private void maybeCreateCache() {
+    Duration duration = new Duration(TimeUnit.HOURS, cacheDuration);
+    Factory<ExpiryPolicy> expiryPolicyFactory = CreatedExpiryPolicy.factoryOf(duration);
+    MutableConfiguration<String, List<String>> config = new MutableConfiguration<String, List<String>>()
+        .setStoreByValue(false)
+        .setExpiryPolicyFactory(expiryPolicyFactory)
+        .setManagementEnabled(true)
+        .setStatisticsEnabled(true);
+    npmCatalogedVersions = cacheHelper.maybeCreateCache(CACHE_NAME, config);
+  }
+
+  @Override
+  protected void doStop() {
+    maybeDestroyCache();
+  }
+
+  private void maybeDestroyCache() {
+    if(npmCatalogedVersions != null) {
+      cacheHelper.maybeDestroyCache(CACHE_NAME);
+      npmCatalogedVersions = null;
+    }
+  }
+
+  public void clearCache() {
+    maybeDestroyCache();
+    maybeCreateCache();
+  }
+
+  @Guarded(by = STARTED)
   public void maybeAddExcludedVersionsFieldMatchers(final List<NpmFieldMatcher> fieldMatchers,
-                                                     final Asset packageRootAsset,
-                                                     final Repository repository)
+                                                    final Asset packageRootAsset,
+                                                    final Repository repository)
   {
     Boolean removeNonCatalogedVersions = repository.getConfiguration()
         .attributes(NAME)
@@ -148,22 +210,19 @@ public class NonCatalogedVersionHelper
   private List<String> nonCatalogedVersions(final String packageName, final List<String> versions) {
     try {
       PackageNameParser parser = new PackageNameParser(packageName);
-      List<PackageUrl> packageUrls = versions.stream()
-          .map(v -> PackageUrl.builder().type(NAME).namespace(parser.namespace).name(parser.name).version(v).build())
-          .collect(toList());
-      final ComponentDetailsRequest componentDetailsRequest = new ComponentDetailsRequest(parser.name, packageUrls);
-      eventManager.post(componentDetailsRequest);
-      final Map<String, Date> catalogDates = componentDetailsRequest.getResult().get(componentDetailsTimeout, SECONDS);
-      List<String> nonCatalogedVersions = packageUrls.stream()
-          .filter(p -> {
-            String pUrl = p.toString();
-            // replace is a workaround due to CLM-16740
-            String key = catalogDates.containsKey(pUrl) ? pUrl : pUrl.replace("%40", "%2540");
-            return catalogDates.containsKey(key) && catalogDates.get(key) == null;
-          })
-          .map(PackageUrl::getVersion)
-          .collect(toList());
-      log.trace("Non-cataloged version for component {} => {}", parser.name, nonCatalogedVersions);
+      PackageUrl packageUrl = PackageUrl.builder().type(NAME).namespace(parser.namespace).name(parser.name).build();
+      List<String> cachedVersions = npmCatalogedVersions.get(packageUrl.toString());
+      if (cachedVersions != null && versions.stream().noneMatch(notCataloged(cachedVersions))) {
+        return emptyList();
+      }
+      final ComponentVersionsRequest componentVersionsRequest = new ComponentVersionsRequest(packageUrl);
+      eventManager.post(componentVersionsRequest);
+      final List<String> catalogedVersions = componentVersionsRequest.getResult().get(componentVersionsTimeout, SECONDS);
+      npmCatalogedVersions.put(packageUrl.toString(), catalogedVersions);
+      List<String> nonCatalogedVersions = versions.stream().filter(notCataloged(catalogedVersions)).collect(toList());
+      if (noneAreCataloged(versions, nonCatalogedVersions)) {
+        return emptyList();
+      }
       return nonCatalogedVersions;
     }
     catch (InterruptedException | TimeoutException | ExecutionException e) {
@@ -172,9 +231,16 @@ public class NonCatalogedVersionHelper
     }
   }
 
+  private boolean noneAreCataloged(final List<String> versions, final List<String> nonCatalogedVersions) {
+    return versions.size() == nonCatalogedVersions.size();
+  }
+
+  private Predicate<String> notCataloged(final List<String> catalogedVersions) {
+    return version -> !catalogedVersions.contains(version);
+  }
+
   private static class PackageNameParser
   {
-
     final String namespace;
 
     final String name;

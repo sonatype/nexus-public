@@ -14,8 +14,11 @@ package org.sonatype.nexus.repository.npm.internal.orient;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -33,6 +36,7 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.group.GroupFacet;
 import org.sonatype.nexus.repository.group.GroupFacetImpl;
+import org.sonatype.nexus.repository.npm.internal.NpmFieldMatcher;
 import org.sonatype.nexus.repository.npm.internal.NpmMetadataUtils;
 import org.sonatype.nexus.repository.npm.internal.NpmPackageId;
 import org.sonatype.nexus.repository.npm.internal.NpmPaths;
@@ -55,6 +59,7 @@ import org.sonatype.nexus.transaction.Transactional;
 import org.sonatype.nexus.transaction.UnitOfWork;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Sets;
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
 import com.orientechnologies.common.concur.ONeedRetryException;
@@ -93,6 +98,8 @@ import static org.sonatype.nexus.repository.view.Content.maintainLastModified;
 public class OrientNpmGroupDataFacet
     extends FacetSupport
 {
+  private static final Set<String> SKIP_MATCHERS = Sets.newHashSet("tarball", "_rev");
+
   private final boolean mergeMetadata;
 
   private GroupFacet groupFacet;
@@ -199,26 +206,12 @@ public class OrientNpmGroupDataFacet
     }
 
     NpmContent npmContent = toContent(getRepository(), packageRootAsset);
-    npmContent.fieldMatchers(rewriteTarballUrlMatcher(getRepository(), packageRootAsset.name()));
+    List<NpmFieldMatcher> fieldMatchers = getMemberFieldMatchers(responses);
+    fieldMatchers.add(rewriteTarballUrlMatcher(getRepository(), packageRootAsset.name()));
+    npmContent.fieldMatchers(fieldMatchers);
     npmContent.missingBlobInputStreamSupplier(
         (missingBlobException) -> buildMergedPackageRootOnMissingBlob(responses, context, missingBlobException));
 
-    return !groupFacet.isStale(npmContent) ? npmContent : null;
-  }
-
-  /**
-   * @see #getFromCache(Map, Context)
-   */
-  @Nullable
-  public NpmContent getFromCache(final Context context) throws IOException
-  {
-    Asset packageRootAsset = getPackageRootAssetFromCache(context);
-    if (isNull(packageRootAsset)) {
-      return null;
-    }
-
-    NpmContent npmContent = toContent(getRepository(), packageRootAsset);
-    npmContent.fieldMatchers(rewriteTarballUrlMatcher(getRepository(), packageRootAsset.name()));
     return !groupFacet.isStale(npmContent) ? npmContent : null;
   }
 
@@ -266,12 +259,32 @@ public class OrientNpmGroupDataFacet
 
     NpmMetadataUtils.rewriteTarballUrl(context.getRepository().getName(), result);
 
-    return saveToCache(packageId, result);
+    List<NpmFieldMatcher> proxyFieldMatchers = getMemberFieldMatchers(responses);
+    return saveToCache(packageId, result, proxyFieldMatchers);
   }
 
-  protected Content saveToCache(final NpmPackageId packageId, final NestedAttributesMap result) throws IOException {
+  private List<NpmFieldMatcher> getMemberFieldMatchers(final Map<Repository, Response> responses) {
+    return responses.entrySet().stream()
+        .flatMap(e -> {
+          NpmContent npmContent = (NpmContent) e.getValue().getPayload();
+          if (npmContent != null && npmContent.getFieldMatchers() != null) {
+            return npmContent.getFieldMatchers().stream();
+          }
+          return Stream.empty();
+        })
+        // exclude tarball rewriting which is already done in the group
+        .filter(npmFieldMatcher -> !SKIP_MATCHERS.contains(npmFieldMatcher.getFieldName()))
+        .collect(toList());
+  }
+
+  protected Content saveToCache(final NpmPackageId packageId,
+                                final NestedAttributesMap result,
+                                final List<NpmFieldMatcher> proxyFieldMatchers) throws IOException {
     Asset packageRootAsset = savePackageRootToCache(packageId, result);
-    return toContent(getRepository(), packageRootAsset).fieldMatchers(REMOVE_DEFAULT_FIELDS_MATCHERS);
+    List<NpmFieldMatcher> fieldMatchers = new ArrayList<>();
+    fieldMatchers.addAll(REMOVE_DEFAULT_FIELDS_MATCHERS);
+    fieldMatchers.addAll(proxyFieldMatchers);
+    return toContent(getRepository(), packageRootAsset).fieldMatchers(fieldMatchers);
   }
 
   @TransactionalStoreBlob

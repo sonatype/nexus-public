@@ -164,7 +164,7 @@ public class NpmContentFacetImpl
 
   @Override
   public boolean delete(final NpmPackageId packageId, final String version) throws IOException {
-    boolean assetDeleted = maybeDeleteAsset(metadataPath(packageId));
+    boolean assetDeleted = maybeDeleteAsset(tarballPath(packageId, version));
 
     if (assetDeleted) {
       maybeDeleteComponent(packageId, version);
