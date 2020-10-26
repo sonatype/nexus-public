@@ -17,6 +17,7 @@ import java.util.Set;
 import javax.inject.Named;
 
 import org.sonatype.nexus.repository.content.Asset;
+import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.maintenance.ContentMaintenanceFacet;
 import org.sonatype.nexus.repository.content.maintenance.LastAssetMaintenanceFacet;
 import org.sonatype.nexus.repository.pypi.internal.AssetKind;
@@ -45,6 +46,15 @@ public class PyPiLastAssetMaintenanceFacet
       facet.deleteIndex(asset.attributes(PyPiFormat.NAME).get(P_NAME, String.class));
     }
     return super.deleteAsset(asset);
+  }
+
+  @Override
+  public Set<String> deleteComponent(final Component component) {
+    PyPiIndexFacet facet = getRepository().facet(PyPiIndexFacet.class);
+    facet.deleteRootIndex();
+    facet.deleteIndex(component.name());
+
+    return super.deleteComponent(component);
   }
 
   private boolean assetKindIsPackage(final Asset asset) {

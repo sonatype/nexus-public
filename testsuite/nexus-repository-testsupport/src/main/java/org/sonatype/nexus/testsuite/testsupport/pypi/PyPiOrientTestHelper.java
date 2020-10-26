@@ -43,14 +43,14 @@ public class PyPiOrientTestHelper
   private ComponentAssetTestHelper componentAssetTestHelper;
 
   @Override
-  public void deleteComponent(final Repository repository, final String componentName)
+  public void deleteComponent(final Repository repository, final String name, final String version)
   {
     ComponentMaintenance maintenanceFacet = repository.facet(ComponentMaintenance.class);
 
     EntityId componentId;
     try (StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get()) {
       tx.begin();
-      Component component = tx.findComponentWithProperty(P_NAME, componentName, tx.findBucket(repository));
+      Component component = tx.findComponentWithProperty(P_NAME, name, tx.findBucket(repository));
       Assert.assertNotNull(component);
       Assert.assertNotNull(component.getEntityMetadata());
       componentId = component.getEntityMetadata().getId();
