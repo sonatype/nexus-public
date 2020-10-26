@@ -88,6 +88,13 @@ public class NpmCommandLineITSupport
     return execNpm("install " + packageName).orElse(emptyList());
   }
 
+  /**
+   * Installs a package globally. Useful becuase npm v7 doesn't allow installs outside of a project unless its global
+   */
+  public List<String> globalInstall(final String packageName) {
+    return execNpm("install -g " + packageName).orElse(emptyList());
+  }
+
   public List<String> audit() {
     return execNpm("audit").orElse(emptyList());
   }
