@@ -362,4 +362,11 @@ public class DatastoreComponentAssetTestHelper
         .map(BlobRef::getBlobId)
         .ifPresent(blobId -> blobStore.delete(blobId, "test merge recovery"));
   }
+
+  @Override
+  public BlobRef getBlobRefOfAsset(final Repository repository, final String path) {
+    Optional<FluentAsset> optionalAsset = findAssetByPath(repository, path);
+    return optionalAsset.map(FluentAsset::blob).orElse(null).filter(Objects::nonNull).map(AssetBlob::blobRef)
+        .orElse(null);
+  }
 }

@@ -26,6 +26,7 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.EntityHelper;
@@ -362,5 +363,11 @@ public class OrientComponentAssetTestHelper
     finally {
       tx.close();
     }
+  }
+
+  @Override
+  public BlobRef getBlobRefOfAsset(final Repository repository, final String path) {
+    Optional<Asset> optionalAsset = findAssetByName(repository, path);
+    return optionalAsset.map(Asset::blobRef).orElse(null);
   }
 }

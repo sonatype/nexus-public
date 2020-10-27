@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Repository;
 
@@ -154,6 +155,10 @@ public interface ComponentAssetTestHelper
    */
   void deleteAssetBlob(Repository repository, String assetPath);
 
+  /**
+   * Obtains a blob ref of an asset in the given repo with the specified path.
+   */
+  BlobRef getBlobRefOfAsset(Repository repository, String path);
 
   class AssetNotFoundException
       extends RuntimeException
