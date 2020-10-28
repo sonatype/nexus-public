@@ -29,6 +29,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
@@ -36,6 +37,7 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonatype.nexus.repository.content.AttributeChange.OVERLAY;
 import static org.sonatype.nexus.repository.maven.MavenPath.SignatureType.GPG;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_ARTIFACT_ID;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
@@ -50,8 +52,6 @@ import static org.sonatype.nexus.repository.maven.internal.Maven2Format.NAME;
 public class MavenAttributesHelperTest
     extends TestSupport
 {
-  private static final String ARTIFACT = "ARTIFACT";
-
   private static final String PACKAGING = "PACKAGING";
 
   private static final String POM_NAME = "aPom";
@@ -86,7 +86,7 @@ public class MavenAttributesHelperTest
 
     MavenAttributesHelper.setMavenAttributes(fluentComponent, coordinates);
 
-    verify(fluentComponent).withAttribute(eq(NAME), attributesValueCaptor.capture());
+    verify(fluentComponent).attributes(eq(OVERLAY), eq(NAME), attributesValueCaptor.capture());
 
     assertGroupArtifactVersionSet(4, attributesValueCaptor.getValue());
   }
@@ -97,7 +97,7 @@ public class MavenAttributesHelperTest
 
     MavenAttributesHelper.setMavenAttributes(fluentAsset, mavenPath);
 
-    verify(fluentAsset).withAttribute(eq(NAME), attributesValueCaptor.capture());
+    verify(fluentAsset).attributes(eq(OVERLAY), eq(NAME), attributesValueCaptor.capture());
     Map<String, String> map = attributesValueCaptor.getValue();
     assertGroupArtifactVersionSet(6, map);
     assertThat(map, hasEntry(P_CLASSIFIER, coordinates.getClassifier()));
@@ -111,9 +111,9 @@ public class MavenAttributesHelperTest
 
     MavenAttributesHelper.setPomAttributes(fluentComponent, model);
 
-    verify(fluentComponent).withAttribute(eq(NAME), attributesValueCaptor.capture());
+    verify(fluentComponent).attributes(eq(OVERLAY), eq(NAME), attributesValueCaptor.capture());
     Map<String, String> map = attributesValueCaptor.getValue();
-    assertGroupArtifactVersionSet(7, map);
+    assertThat(map.entrySet(), hasSize(3));
     assertThat(map, hasEntry(P_PACKAGING, PACKAGING));
     assertThat(map, hasEntry(P_POM_NAME, POM_NAME));
     assertThat(map, hasEntry(P_POM_DESCRIPTION, POM_DESCRIPTION));
@@ -125,7 +125,7 @@ public class MavenAttributesHelperTest
 
     MavenAttributesHelper.setPomAttributes(fluentComponent, model);
 
-    verify(fluentComponent).withAttribute(eq(NAME), attributesValueCaptor.capture());
+    verify(fluentComponent).attributes(eq(OVERLAY), eq(NAME), attributesValueCaptor.capture());
     Map<String, String> map = attributesValueCaptor.getValue();
     assertFalse(map.containsKey(P_POM_NAME));
     assertFalse(map.containsKey(P_POM_DESCRIPTION));
@@ -137,7 +137,7 @@ public class MavenAttributesHelperTest
 
     MavenAttributesHelper.setPomAttributes(fluentComponent, model);
 
-    verify(fluentComponent).withAttribute(eq(NAME), attributesValueCaptor.capture());
+    verify(fluentComponent).attributes(eq(OVERLAY), eq(NAME), attributesValueCaptor.capture());
     Map<String, String> map = attributesValueCaptor.getValue();
     assertThat(map, hasEntry(P_PACKAGING, "jar"));
   }

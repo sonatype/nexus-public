@@ -24,6 +24,7 @@ import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.apache.maven.model.Model;
 
 import static java.util.Optional.ofNullable;
+import static org.sonatype.nexus.repository.content.AttributeChange.OVERLAY;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.ARTIFACT;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.ARTIFACT_SUBORDINATE;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.OTHER;
@@ -59,7 +60,7 @@ final class MavenAttributesHelper
     mavenAttributes.put(P_ARTIFACT_ID, coordinates.getArtifactId());
     mavenAttributes.put(P_VERSION, coordinates.getVersion());
     mavenAttributes.put(P_BASE_VERSION, coordinates.getBaseVersion());
-    component.withAttribute(NAME, mavenAttributes);
+    component.attributes(OVERLAY, NAME, mavenAttributes);
   }
 
   static void setMavenAttributes(final FluentAsset asset, final MavenPath mavenPath) {
@@ -73,15 +74,15 @@ final class MavenAttributesHelper
       ofNullable(coordinates.getClassifier()).ifPresent(value -> mavenAttributes.put(P_CLASSIFIER, value));
       mavenAttributes.put(P_EXTENSION, coordinates.getExtension());
     }
-    asset.withAttribute(NAME, mavenAttributes);
+    asset.attributes(OVERLAY, NAME, mavenAttributes);
   }
 
   static void setPomAttributes(final FluentComponent component, final Model model) {
-    Map<String, Object> pomAttributes = new HashMap<>(component.attributes(NAME).backing());
+    Map<String, String> pomAttributes = new HashMap<>();
     pomAttributes.put(P_PACKAGING, getPackaging(model));
     ofNullable(model.getName()).ifPresent(name -> pomAttributes.put(P_POM_NAME, name));
     ofNullable(model.getDescription()).ifPresent(desc -> pomAttributes.put(P_POM_DESCRIPTION, desc));
-    component.withAttribute(NAME, pomAttributes);
+    component.attributes(OVERLAY, NAME, pomAttributes);
   }
 
   static String getPackaging(Model model) {
