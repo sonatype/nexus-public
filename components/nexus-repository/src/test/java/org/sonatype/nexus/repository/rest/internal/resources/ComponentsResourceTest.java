@@ -18,6 +18,7 @@ import java.util.Collections;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
 
 import org.sonatype.nexus.common.entity.ContinuationTokenHelper;
 import org.sonatype.nexus.common.entity.DetachedEntityId;
@@ -271,6 +272,7 @@ public class ComponentsResourceTest
   @Test
   public void uploadComponent() throws Exception {
     HttpServletRequest request = mock(HttpServletRequest.class);
+    when(request.getContentType()).thenReturn(MediaType.MULTIPART_FORM_DATA);
 
     UploadResponse uploadResponse = new UploadResponse(new DetachedEntityId(COMPONENT_ID), emptyList());
     when(uploadManager.handle(mavenReleases, request)).thenReturn(uploadResponse);
