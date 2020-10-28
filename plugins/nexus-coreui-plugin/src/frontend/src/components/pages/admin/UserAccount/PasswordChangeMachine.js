@@ -63,8 +63,10 @@ export default Utils.buildFormMachine({
     logSaveSuccess: () => ExtJS.showSuccessMessage('Password changed'),
     logSaveError: (error) => {
       if (Array.isArray(error.saveError)) {
-        const message = error.saveError.map(e => e.message).join('\\n');
-        ExtJS.showErrorMessage(message);
+        const message = error.saveError.filter(e => e.id !== "authToken").map(e => e.message).join('\\n');
+        if (message) {
+          ExtJS.showErrorMessage(message);
+        }
       }
       else {
         ExtJS.showErrorMessage('Change password failed');
