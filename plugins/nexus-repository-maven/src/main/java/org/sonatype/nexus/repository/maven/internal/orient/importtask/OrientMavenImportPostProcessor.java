@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.maven.importtask;
+package org.sonatype.nexus.repository.maven.internal.orient.importtask;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -31,7 +31,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
  */
 @Singleton
 @Named(Maven2Format.NAME)
-public class MavenImportPostProcessor
+public class OrientMavenImportPostProcessor
     implements ImportPostProcessor
 {
   private static final String MD_5_EXTENSION = ".md5";

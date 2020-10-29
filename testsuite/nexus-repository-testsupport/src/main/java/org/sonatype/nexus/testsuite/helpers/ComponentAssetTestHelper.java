@@ -48,7 +48,7 @@ public interface ComponentAssetTestHelper
    * @param repository the containing repository
    * @param path the path of the asset
    */
-  DateTime getUpdatedTime(Repository repository, String path);
+  DateTime getBlobUpdatedTime(Repository repository, String path);
 
   /**
    * Get the last downloaded time for a path in the given repository.
@@ -129,6 +129,13 @@ public interface ComponentAssetTestHelper
    * Retrieve the attributes for the component
    */
   NestedAttributesMap componentAttributes(Repository repository, String namespace, String name, String version);
+
+  /**
+   * Retrieve the attributes for the component.
+   *
+   * NOTE: this is intended for formats which do not have versions (e.g. raw)
+   */
+  NestedAttributesMap componentAttributes(Repository repository, String namespace, String name);
 
   /**
    * Set the last downloaded time for all assets in a repository.

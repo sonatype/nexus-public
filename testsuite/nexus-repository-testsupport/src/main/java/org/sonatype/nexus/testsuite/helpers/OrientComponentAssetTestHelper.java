@@ -91,7 +91,7 @@ public class OrientComponentAssetTestHelper
   }
 
   @Override
-  public DateTime getUpdatedTime(final Repository repository, final String path) {
+  public DateTime getBlobUpdatedTime(final Repository repository, final String path) {
     return findAssetByName(repository, path).map(Asset::blobUpdated).orElse(null);
   }
 
@@ -280,6 +280,15 @@ public class OrientComponentAssetTestHelper
         .orElseThrow(() -> new ComponentNotFoundException(repository, namespace, name, version));
   }
 
+  @Override
+  public NestedAttributesMap componentAttributes(
+      final Repository repository,
+      final String namespace,
+      final String name)
+  {
+    return componentAttributes(repository, namespace, name, null);
+  }
+
   private Optional<Component> findComponent(
       final Repository repository,
       final String namespace,
@@ -289,7 +298,8 @@ public class OrientComponentAssetTestHelper
     return findComponents(repository).stream()
         .filter(c -> Objects.equals(namespace, c.group()))
         .filter(c -> name.equals(c.name()))
-        .filter(c -> version.equals(c.version())).findAny();
+        .filter(c -> version == null || version.equals(c.version()))
+        .findAny();
   }
 
   @Override
@@ -308,7 +318,11 @@ public class OrientComponentAssetTestHelper
   }
 
   @Override
-  public void setLastDownloadedTime(final Repository repository, final int minusSeconds, final Predicate<String> pathMatcher) {
+  public void setLastDownloadedTime(
+      final Repository repository,
+      final int minusSeconds,
+      final Predicate<String> pathMatcher)
+  {
     updateAssets(repository, asset -> {
       if (pathMatcher.test(asset.name())) {
         asset.lastDownloaded(org.joda.time.DateTime.now().minusSeconds(minusSeconds));
