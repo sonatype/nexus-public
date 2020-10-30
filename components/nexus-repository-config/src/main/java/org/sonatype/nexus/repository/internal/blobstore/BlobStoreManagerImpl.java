@@ -394,7 +394,8 @@ public class BlobStoreManagerImpl
   public boolean isPromotable(final String blobStoreName) {
     BlobStore blobStore = get(blobStoreName);
     return blobStore != null && blobStore.isGroupable() && blobStore.isWritable() &&
-        !store.findParent(blobStore.getBlobStoreConfiguration().getName()).isPresent();
+        !store.findParent(blobStore.getBlobStoreConfiguration().getName()).isPresent() &&
+        blobstoreInChangeRepoTaskCount(blobStoreName) == 0;
   }
 
   @Override
