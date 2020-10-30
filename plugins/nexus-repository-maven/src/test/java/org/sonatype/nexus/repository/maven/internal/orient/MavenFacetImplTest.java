@@ -174,6 +174,10 @@ public class MavenFacetImplTest
     asset.formatAttributes().set(P_ASSET_KIND, REPOSITORY_METADATA.name());
     asset.attributes().child(CHECKSUM).set(HashType.SHA1.getExt(),
         HashAlgorithm.SHA1.function().hashString("foobar", StandardCharsets.UTF_8).toString());
+    asset.attributes().child(CHECKSUM).set(HashType.SHA256.getExt(),
+        HashAlgorithm.SHA256.function().hashString("foobar", StandardCharsets.UTF_8).toString());
+    asset.attributes().child(CHECKSUM).set(HashType.SHA512.getExt(),
+        HashAlgorithm.SHA512.function().hashString("foobar", StandardCharsets.UTF_8).toString());
     asset.attributes().child(CHECKSUM).set(HashType.MD5.getExt(),
         HashAlgorithm.MD5.function().hashString("foobar", StandardCharsets.UTF_8).toString());
     asset.attributes().child(CONTENT).set(P_LAST_MODIFIED, new Date());

@@ -37,13 +37,15 @@ public class MavenPath
   public enum HashType
   {
     SHA1("sha1", HashAlgorithm.SHA1),
+    SHA256("sha256", HashAlgorithm.SHA256),
+    SHA512("sha512", HashAlgorithm.SHA512),
     MD5("md5", HashAlgorithm.MD5);
 
     /**
      * {@link HashAlgorithm}s corresponding to {@link HashType}s.
      */
     public static final List<HashAlgorithm> ALGORITHMS = ImmutableList
-        .of(SHA1.getHashAlgorithm(), MD5.getHashAlgorithm());
+        .of(SHA1.getHashAlgorithm(), MD5.getHashAlgorithm(), SHA256.getHashAlgorithm(), SHA512.getHashAlgorithm());
 
     private final String ext;
 

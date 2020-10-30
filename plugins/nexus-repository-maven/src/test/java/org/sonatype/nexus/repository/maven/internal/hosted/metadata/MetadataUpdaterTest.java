@@ -71,6 +71,8 @@ public class MetadataUpdaterTest
 
   private final Map<HashAlgorithm, HashCode> hashes = ImmutableMap.of(
       HashAlgorithm.SHA1, HashAlgorithm.SHA1.function().hashString("sha1", StandardCharsets.UTF_8),
+      HashAlgorithm.SHA256, HashAlgorithm.SHA256.function().hashString("sha256", StandardCharsets.UTF_8),
+      HashAlgorithm.SHA512, HashAlgorithm.SHA512.function().hashString("sha512", StandardCharsets.UTF_8),
       HashAlgorithm.MD5, HashAlgorithm.MD5.function().hashString("md5", StandardCharsets.UTF_8)
   );
 
@@ -178,6 +180,7 @@ public class MetadataUpdaterTest
     verify(mavenFacet, times(0)).get(eq(mavenPath));
     verify(mavenFacet, times(0)).put(eq(mavenPath), any(Payload.class));
     verify(mavenFacet, times(1))
-        .delete(eq(mavenPath), eq(mavenPath.hash(HashType.SHA1)), eq(mavenPath.hash(HashType.MD5)));
+        .delete(eq(mavenPath), eq(mavenPath.hash(HashType.SHA1)), eq(mavenPath.hash(HashType.SHA256)),
+            eq(mavenPath.hash(HashType.SHA512)), eq(mavenPath.hash(HashType.MD5)));
   }
 }

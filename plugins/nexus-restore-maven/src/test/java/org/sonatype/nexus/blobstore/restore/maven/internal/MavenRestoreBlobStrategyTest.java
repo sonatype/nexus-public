@@ -171,6 +171,9 @@ public class MavenRestoreBlobStrategyTest
     Map<HashAlgorithm, HashCode> expectedHashes = Maps.newHashMap();
     expectedHashes.put(HashAlgorithm.MD5, HashAlgorithm.MD5.function().hashBytes(blobBytes));
     expectedHashes.put(HashAlgorithm.SHA1, HashAlgorithm.SHA1.function().hashBytes(blobBytes));
+    expectedHashes.put(HashAlgorithm.SHA256, HashAlgorithm.SHA256.function().hashBytes(blobBytes));
+    expectedHashes.put(HashAlgorithm.SHA512, HashAlgorithm.SHA512.function().hashBytes(blobBytes));
+
     ArgumentCaptor<AssetBlob> assetBlobCaptor = ArgumentCaptor.forClass(AssetBlob.class);
 
     underTest.restore(properties, blob, "test", false);

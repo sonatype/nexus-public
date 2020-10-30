@@ -234,6 +234,8 @@ public class DatastoreMetadataRebuilder
       metadataBuilder.addArtifactVersion(mavenPath);
       if (rebuildChecksums) {
         mayUpdateChecksum(mavenPath, HashType.SHA1);
+        mayUpdateChecksum(mavenPath, HashType.SHA256);
+        mayUpdateChecksum(mavenPath, HashType.SHA512);
         mayUpdateChecksum(mavenPath, HashType.MD5);
       }
       final String packaging =
