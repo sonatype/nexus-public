@@ -86,7 +86,9 @@ public class OrientMavenFacetUtilsTest
 
     HashSet<String> expectedPaths = new HashSet<>(Arrays.asList(
         "groupId/artifactId/version/artifactId-version.jar.sha1",
+        "groupId/artifactId/version/artifactId-version.jar.sha256",
         "groupId/artifactId/version/artifactId-version.jar.md5",
+        "groupId/artifactId/version/artifactId-version.jar.sha512",
         "groupId/artifactId/version/artifactId-version.jar"));
     assertEquals(expectedPaths, getPathWithHashes(path));
   }

@@ -243,6 +243,10 @@ public class ComponentsResource
     if (!uploadConfiguration.isEnabled()) {
       throw new WebApplicationException(NOT_FOUND);
     }
+    if (request.getContentType() == null || !request.getContentType().startsWith("multipart/")) {
+      throw new WebApplicationMessageException(Status.BAD_REQUEST, "\"Expected multipart Content-Type\"",
+          MediaType.APPLICATION_JSON);
+    }
 
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryId);
 

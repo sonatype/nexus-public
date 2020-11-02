@@ -25,7 +25,6 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -91,8 +90,11 @@ public class DatastoreComponentAssetTestHelper
 
   @Override
   public DateTime getBlobCreatedTime(final Repository repository, final String path) {
-    return findAssetByPathNotNull(repository, path).blob().map(AssetBlob::blobCreated)
-        .map(DateHelper::toDateTime).orElse(null);
+    return findAssetByPathNotNull(repository, path)
+        .blob()
+        .map(AssetBlob::blobCreated)
+        .map(DateHelper::toDateTime)
+        .orElse(null);
   }
 
   @Override
@@ -101,14 +103,17 @@ public class DatastoreComponentAssetTestHelper
   }
 
   @Override
-  public DateTime getUpdatedTime(final Repository repository, final String path) {
+  public DateTime getBlobUpdatedTime(final Repository repository, final String path) {
     // AssetBlobs are immutable so the created time is the equivalent of the old updated time.
     return getBlobCreatedTime(repository, path);
   }
 
   @Override
   public DateTime getLastDownloadedTime(final Repository repository, final String path) {
-    return findAssetByPathNotNull(repository, path).lastDownloaded().map(DateHelper::toDateTime).orElse(null);
+    return findAssetByPathNotNull(repository, path)
+        .lastDownloaded()
+        .map(DateHelper::toDateTime)
+        .orElse(null);
   }
 
   @Override
@@ -122,28 +127,49 @@ public class DatastoreComponentAssetTestHelper
     repository.facet(ContentMaintenanceFacet.class).deleteComponent(component);
   }
 
-  private static Component findComponent(
+  private static FluentComponent findComponent(
       final Repository repository,
       final String namespace,
       final String name,
       final String version)
   {
-    return repository.facet(ContentFacet.class).components().name(name).namespace(namespace).version(version).find()
+    return repository.facet(ContentFacet.class).components()
+        .name(name)
+        .namespace(namespace)
+        .version(version)
+        .find()
         .orElseThrow(() -> new ComponentNotFoundException(repository, namespace, name, version));
   }
 
-  private static Asset findAssetByPathNotNull(final Repository repository, final String path) {
+  private static FluentComponent findComponent(
+      final Repository repository,
+      final String namespace,
+      final String name)
+  {
+    return repository.facet(ContentFacet.class).components()
+        .name(name)
+        .namespace(namespace)
+        .find()
+        .orElseThrow(() -> new ComponentNotFoundException(repository, namespace, name, null));
+  }
+
+  private Asset findAssetByPathNotNull(final Repository repository, final String path) {
     return findAssetByPath(repository, path).orElseThrow(() -> new AssetNotFoundException(repository, path));
   }
 
-  private static Optional<FluentAsset> findAssetByPath(final Repository repository, final String path) {
-    return repository.facet(ContentFacet.class).assets().path('/' + path).find();
+  private Optional<FluentAsset> findAssetByPath(final Repository repository, final String path) {
+    return repository.facet(ContentFacet.class).assets()
+        .path(adjustedPath(path))
+        .find();
   }
 
   @Override
   public List<String> findAssetPaths(final String repositoryName) {
-    return repositoryManager.get(repositoryName).facet(ContentFacet.class).assets().browse(Integer.MAX_VALUE, null)
-        .stream().map(Asset::path).collect(Collectors.toList());
+    return repositoryManager.get(repositoryName).facet(ContentFacet.class).assets()
+        .browse(Integer.MAX_VALUE, null)
+        .stream()
+        .map(Asset::path)
+        .collect(Collectors.toList());
   }
 
   @Override
@@ -169,7 +195,7 @@ public class DatastoreComponentAssetTestHelper
 
   @Override
   public NestedAttributesMap attributes(final Repository repository, final String path) {
-    return findAssetByPath(repository, path).map(FluentAsset::attributes).orElse(null);
+    return findAssetByPathNotNull(repository, path).attributes();
   }
 
   @Override
@@ -214,40 +240,57 @@ public class DatastoreComponentAssetTestHelper
   }
 
   @Override
-  public boolean componentExists(final Repository repository, final String namespace, final String name, final String version) {
-    Optional<FluentComponent> component = repository.facet(ContentFacet.class).components().name(name).version(version)
-        .find().filter(c -> Objects.equals(c.namespace(), namespace));
+  public boolean componentExists(
+      final Repository repository,
+      final String namespace,
+      final String name,
+      final String version)
+  {
+    FluentComponent component = findComponent(repository, namespace, name, version);
 
-    return component.isPresent();
+    return Objects.equals(component.namespace(), namespace);
   }
 
   @Override
-  public boolean componentExistsWithAssetPathMatching(final Repository repository, final Predicate<String> pathMatcher) {
+  public boolean componentExistsWithAssetPathMatching(
+      final Repository repository,
+      final Predicate<String> pathMatcher)
+  {
     return repository.facet(ContentFacet.class).assets().browse(Integer.MAX_VALUE, null)
         .stream()
         .filter(asset -> asset.component().isPresent())
         .map(FluentAsset::path)
+        .map(this::adjustedPath)
         .anyMatch(pathMatcher);
-  }
-
-  @Override
-  public boolean assetWithComponentExists(final Repository repository, final String path, final String group, final String name) {
-    Collection<FluentAsset> assets = repository.facet(ContentFacet.class).components().name(name).namespace(group)
-        .find().map(FluentComponent::assets).orElse(Collections.emptyList());
-    return assets.stream().anyMatch(asset -> Objects.equals(asset.path(), path));
   }
 
   @Override
   public boolean assetWithComponentExists(
       final Repository repository,
       final String path,
-      final String group,
+      final String namespace,
+      final String name)
+  {
+    Collection<FluentAsset> assets = findComponent(repository, namespace, this.adjustedPath(name)).assets();
+
+    return assets.stream()
+        .map(FluentAsset::path)
+        .anyMatch(adjustedPath(path)::equals);
+  }
+
+  @Override
+  public boolean assetWithComponentExists(
+      final Repository repository,
+      final String path,
+      final String namespace,
       final String name,
       final String version)
   {
-    Collection<FluentAsset> assets = repository.facet(ContentFacet.class).components().name(name).namespace(group)
-        .version(version).find().map(FluentComponent::assets).orElse(Collections.emptyList());
-    return assets.stream().anyMatch(asset -> Objects.equals(asset.path(), path));
+    Collection<FluentAsset> assets = findComponent(repository, namespace, name, version).assets();
+
+    return assets.stream()
+        .map(FluentAsset::path)
+        .anyMatch(adjustedPath(path)::equals);
   }
 
   @Override
@@ -256,8 +299,22 @@ public class DatastoreComponentAssetTestHelper
   }
 
   @Override
-  public NestedAttributesMap componentAttributes(final Repository repository, final String namespace, final String name, final String version) {
+  public NestedAttributesMap componentAttributes(
+      final Repository repository,
+      final String namespace,
+      final String name,
+      final String version)
+  {
     return findComponent(repository, namespace, name, version).attributes();
+  }
+
+  @Override
+  public NestedAttributesMap componentAttributes(
+      final Repository repository,
+      final String namespace,
+      final String name)
+  {
+    return findComponent(repository, namespace, adjustedPath(name)).attributes();
   }
 
   @Override
@@ -290,7 +347,11 @@ public class DatastoreComponentAssetTestHelper
   }
 
   @Override
-  public void setLastDownloadedTime(final Repository repository, final int minusSeconds, final Predicate<String> pathMatcher) {
+  public void setLastDownloadedTime(
+      final Repository repository,
+      final int minusSeconds,
+      final Predicate<String> pathMatcher)
+  {
     int repositoryId = ((ContentFacetSupport) repository.facet(ContentFacet.class)).contentRepositoryId();
 
     List<String> pathes = repository.facet(ContentFacet.class).assets().browse(Integer.MAX_VALUE, null).stream()
@@ -328,14 +389,16 @@ public class DatastoreComponentAssetTestHelper
 
   @Override
   public Optional<InputStream> read(final Repository repository, final String path) {
-    return findAssetByPath(repository, path).map(FluentAsset::download).map(content -> {
-      try {
-        return content.openInputStream();
-      }
-      catch (IOException e) {
-        throw new UncheckedIOException(e);
-      }
-    });
+    return findAssetByPath(repository, path)
+        .map(FluentAsset::download)
+        .map(content -> {
+          try {
+            return content.openInputStream();
+          }
+          catch (IOException e) {
+            throw new UncheckedIOException(e);
+          }
+        });
   }
 
   private void sendEvent(final Repository repository, final FluentAsset asset) {
@@ -361,5 +424,12 @@ public class DatastoreComponentAssetTestHelper
         .map(AssetBlob::blobRef)
         .map(BlobRef::getBlobId)
         .ifPresent(blobId -> blobStore.delete(blobId, "test merge recovery"));
+  }
+
+  @Override
+  public BlobRef getBlobRefOfAsset(final Repository repository, final String path) {
+    Optional<FluentAsset> optionalAsset = findAssetByPath(repository, path);
+    return optionalAsset.map(FluentAsset::blob).orElse(null).filter(Objects::nonNull).map(AssetBlob::blobRef)
+        .orElse(null);
   }
 }

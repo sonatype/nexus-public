@@ -84,6 +84,10 @@ public class OrientMavenTestHelper
         Content contentHash = mavenFacet.get(mavenPath.hash(hashType));
         String storageHash = hashCodes.get(hashType.getHashAlgorithm()).toString();
         assertThat(storageHash, notNullValue());
+        // Maven deployer does not create these hashes by default yet but we are storing the calculated values in the asset attributes
+        if(contentHash == null && hashType  == HashType.SHA256 ||  hashType  == HashType.SHA512) {
+          continue;
+        }
         try (InputStream is = contentHash.openInputStream()) {
           String mavenHash = CharStreams.toString(new InputStreamReader(is, StandardCharsets.UTF_8));
           assertThat(storageHash, equalTo(mavenHash));

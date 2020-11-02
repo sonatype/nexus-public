@@ -64,7 +64,7 @@ class BlobStoreManagerImplTest
 
   @Mock
   BlobStoreConfigurationStore store
-  
+
   @Mock
   BlobStoreDescriptor descriptor
 
@@ -172,7 +172,7 @@ class BlobStoreManagerImplTest
     BlobStore blobStore = mock(BlobStore)
     when(provider.get()).thenReturn(blobStore)
     BlobStoreConfiguration configuration = createConfig('test')
-    
+
     BlobStore createdBlobStore = underTest.create(configuration)
 
     assert createdBlobStore == blobStore
@@ -189,9 +189,9 @@ class BlobStoreManagerImplTest
     doReturn(blobStore).when(underTest).blobStore('test')
     when(store.list()).thenReturn([configuration])
     when(blobStore.getBlobStoreConfiguration()).thenReturn(configuration)
-    
+
     underTest.delete(configuration.getName())
-    
+
     verify(blobStore).shutdown()
     verify(store).delete(configuration)
     verify(freezeService).checkWritable("Unable to delete a BlobStore while database is frozen.")
@@ -325,6 +325,20 @@ class BlobStoreManagerImplTest
     when(blobStore.getBlobStoreConfiguration()).thenReturn(new MockBlobStoreConfiguration(name: blobStoreName))
     when(store.findParent(blobStoreName)).thenReturn(Optional.empty())
     assert !underTest.isPromotable(blobStoreName)
+  }
+
+  @Test
+  void 'It is not promotable when the store is in use by a task'() {
+    def blobStoreName = 'child'
+    def blobStore = mock(BlobStore)
+    underTest.track(blobStoreName, blobStore)
+    when(changeRepositoryBlobstoreDataService.changeRepoTaskUsingBlobstoreCount('child')).thenReturn(1)
+    when(blobStore.isGroupable()).thenReturn(true)
+    when(blobStore.isWritable()).thenReturn(true)
+    when(blobStore.getBlobStoreConfiguration()).thenReturn(new MockBlobStoreConfiguration(name: blobStoreName))
+    when(store.findParent(blobStoreName)).thenReturn(Optional.empty())
+    assert !underTest.isPromotable(blobStoreName)
+
   }
 
   @Test

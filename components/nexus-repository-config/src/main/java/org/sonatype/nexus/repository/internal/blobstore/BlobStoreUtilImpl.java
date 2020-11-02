@@ -19,16 +19,23 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.BlobStoreUtil;
+import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
+
+import com.google.common.hash.HashCode;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.size;
+import static java.util.function.Function.identity;
 import static org.apache.commons.io.FilenameUtils.separatorsToSystem;
 
 /**
@@ -71,5 +78,14 @@ public class BlobStoreUtilImpl
       pathParent = path.getParent();
     }
     return !fileNames.stream().anyMatch(fileOrDirectory -> fileOrDirectory.length() > maxLength);
+  }
+
+  @Override
+  public Map<HashAlgorithm, HashCode> toHashObjects(final Map<String, String> checksums) {
+    return checksums.keySet().stream()
+        .map(HashAlgorithm::getHashAlgorithm)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .collect(Collectors.toMap(identity(), alg -> HashCode.fromString(checksums.get(alg.name()))));
   }
 }

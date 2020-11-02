@@ -14,7 +14,6 @@ package org.sonatype.nexus.content.maven.internal.recipe;
 
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -24,7 +23,6 @@ import javax.inject.Named;
 import javax.validation.constraints.NotNull;
 
 import org.sonatype.nexus.common.event.EventManager;
-import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.content.maven.internal.event.RebuildMavenArchetypeCatalogEvent;
 import org.sonatype.nexus.repository.config.Configuration;
@@ -54,14 +52,11 @@ import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singletonList;
-import static org.sonatype.nexus.common.hash.HashAlgorithm.MD5;
-import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.content.maven.MavenMetadataRebuildFacet.METADATA_REBUILD_KEY;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenArchetypeCatalogFacetImpl.MAVEN_ARCHETYPE_KIND;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.assetKind;
@@ -90,8 +85,6 @@ public class MavenContentFacetImpl
   private static final char ASSET_PATH_PREFIX = '/';
 
   private static final String CONFIG_KEY = "maven";
-
-  private static final List<HashAlgorithm> HASHING = ImmutableList.of(SHA1, MD5);
 
   private final Map<String, MavenPathParser> mavenPathParsers;
 
@@ -194,7 +187,7 @@ public class MavenContentFacetImpl
   public Content put(final MavenPath mavenPath, final Payload content) throws IOException {
     log.debug("PUT {} : {}", getRepository().getName(), mavenPath);
 
-    try (TempBlob blob = blobs().ingest(content, HASHING)) {
+    try (TempBlob blob = blobs().ingest(content, HashType.ALGORITHMS)) {
       if (isMetadataAndValidationEnabled(mavenPath)) {
         validate(mavenPath, blob);
       }

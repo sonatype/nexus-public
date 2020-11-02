@@ -16,7 +16,7 @@ import org.sonatype.nexus.repository.Repository;
 
 public interface PyPiTestHelper
 {
-  void deleteComponent(final Repository repository, final String componentName);
+  void deleteComponent(final Repository repository, final String name, final String version);
 
   boolean isRootIndexExist(final Repository repository);
 }

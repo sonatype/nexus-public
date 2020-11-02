@@ -182,11 +182,17 @@ public abstract class ProxyFacetSupport
     );
 
     // normalize URL path to contain trailing slash
-    if (!config.remoteUrl.getPath().endsWith("/")) {
-      config.remoteUrl = config.remoteUrl.resolve(config.remoteUrl.getPath() + "/");
-    }
+    config.remoteUrl = normalizeURLPath(config.remoteUrl);
 
     log.debug("Config: {}", config);
+  }
+
+  protected URI normalizeURLPath(final URI remoteURI) {
+    // normalize URL path to contain trailing slash
+    if (!remoteURI.getPath().endsWith("/")) {
+      return remoteURI.resolve(remoteURI.getPath() + "/");
+    }
+    return remoteURI;
   }
 
   @Override

@@ -12,6 +12,12 @@
  */
 package org.sonatype.nexus.blobstore;
 
+import java.util.Map;
+
+import org.sonatype.nexus.common.hash.HashAlgorithm;
+
+import com.google.common.hash.HashCode;
+
 /**
  * Blob store utilities.
  *
@@ -34,4 +40,6 @@ public interface BlobStoreUtil {
    * @return True if valid, false otherwise
    */
   boolean validateFilePath(String filePath, int maxLength);
+
+  Map<HashAlgorithm, HashCode> toHashObjects(final Map<String, String> checksums);
 }

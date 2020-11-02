@@ -25,9 +25,11 @@ import javax.validation.ConstraintViolationException;
 import org.sonatype.nexus.common.app.FrozenException;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.extdirect.model.Response;
+import org.sonatype.nexus.rest.ValidationErrorsException;
 
 import com.softwarementors.extjs.djn.api.RegisteredMethod;
 import org.apache.commons.collections.ListUtils;
+import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authz.UnauthenticatedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,8 +48,8 @@ public class ExtDirectExceptionHandler
 {
   private static final Logger log = LoggerFactory.getLogger(ExtDirectExceptionHandler.class);
 
-  private static final List<Class<Throwable>> SUPPRESSED_EXCEPTIONS = ListUtils
-      .unmodifiableList(Arrays.asList(UnauthenticatedException.class));
+  private static final List<Class<Throwable>> SUPPRESSED_EXCEPTIONS = ListUtils.unmodifiableList(
+      Arrays.asList(UnauthenticatedException.class, AuthenticationException.class, ValidationErrorsException.class));
 
   public Response handleException(final RegisteredMethod method, final Throwable e) {
     // debug logging for sanity (without stacktrace for suppressed exception)
@@ -86,6 +88,6 @@ public class ExtDirectExceptionHandler
   }
 
   private boolean isSuppressedException(final Throwable e) {
-    return SUPPRESSED_EXCEPTIONS.stream().anyMatch(ex -> ex.isInstance(e));
+    return SUPPRESSED_EXCEPTIONS.stream().anyMatch(ex -> ex.isInstance(e) || ex.isInstance(e.getCause()));
   }
 }

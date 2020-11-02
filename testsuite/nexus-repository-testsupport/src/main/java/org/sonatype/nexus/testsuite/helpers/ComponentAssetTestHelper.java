@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.Repository;
 
@@ -47,7 +48,7 @@ public interface ComponentAssetTestHelper
    * @param repository the containing repository
    * @param path the path of the asset
    */
-  DateTime getUpdatedTime(Repository repository, String path);
+  DateTime getBlobUpdatedTime(Repository repository, String path);
 
   /**
    * Get the last downloaded time for a path in the given repository.
@@ -130,6 +131,13 @@ public interface ComponentAssetTestHelper
   NestedAttributesMap componentAttributes(Repository repository, String namespace, String name, String version);
 
   /**
+   * Retrieve the attributes for the component.
+   *
+   * NOTE: this is intended for formats which do not have versions (e.g. raw)
+   */
+  NestedAttributesMap componentAttributes(Repository repository, String namespace, String name);
+
+  /**
    * Set the last downloaded time for all assets in a repository.
    */
   void setLastDownloadedTime(Repository repository, int minusSeconds);
@@ -154,6 +162,10 @@ public interface ComponentAssetTestHelper
    */
   void deleteAssetBlob(Repository repository, String assetPath);
 
+  /**
+   * Obtains a blob ref of an asset in the given repo with the specified path.
+   */
+  BlobRef getBlobRefOfAsset(Repository repository, String path);
 
   class AssetNotFoundException
       extends RuntimeException

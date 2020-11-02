@@ -29,9 +29,10 @@ trait RawRepoRecipes
 
   @Nonnull
   Repository createRawHosted(final String name,
-                             final String writePolicy = "ALLOW")
+                             final String writePolicy = "ALLOW",
+                             final boolean strictContentTypeValidation = true)
   {
-    createRepository(createHosted(name, 'raw-hosted', writePolicy))
+    createRepository(createHosted(name, 'raw-hosted', writePolicy, strictContentTypeValidation))
   }
 
   @Nonnull

@@ -51,7 +51,7 @@ class NestedAttributesMapTest
   }
 
   @Test
-  void 'qualifiedKey w/o parent returns key'() {
+  void 'qualifiedKey without parent returns key'() {
     assert "foo" == underTest.qualifiedKey
   }
 

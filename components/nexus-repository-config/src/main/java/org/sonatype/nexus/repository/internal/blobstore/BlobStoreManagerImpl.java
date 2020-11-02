@@ -394,7 +394,8 @@ public class BlobStoreManagerImpl
   public boolean isPromotable(final String blobStoreName) {
     BlobStore blobStore = get(blobStoreName);
     return blobStore != null && blobStore.isGroupable() && blobStore.isWritable() &&
-        !store.findParent(blobStore.getBlobStoreConfiguration().getName()).isPresent();
+        !store.findParent(blobStore.getBlobStoreConfiguration().getName()).isPresent() &&
+        blobstoreInChangeRepoTaskCount(blobStoreName) == 0;
   }
 
   @Override
@@ -414,7 +415,7 @@ public class BlobStoreManagerImpl
   }
 
   @Override
-  public void moveBlob(final BlobId blobId, final BlobStore srcBlobStore, final BlobStore destBlobStore) {
+  public Blob moveBlob(final BlobId blobId, final BlobStore srcBlobStore, final BlobStore destBlobStore) {
     checkNotNull(srcBlobStore);
     checkNotNull(destBlobStore);
 
@@ -423,7 +424,7 @@ public class BlobStoreManagerImpl
 
     Map<String, String> headers = srcBlobAttributes.getHeaders();
     InputStream srcInputStream = inputStreamOfBlob(srcBlobStore, blobId);
-    destBlobStore.create(srcInputStream, headers, blobId);
+    Blob newBlob = destBlobStore.create(srcInputStream, headers, blobId);
     destBlobStore.setBlobAttributes(blobId, srcBlobAttributes);
 
     ensureDeletedStateTransferred(blobId, srcBlobStore, destBlobStore, isSrcDelted);
@@ -436,6 +437,7 @@ public class BlobStoreManagerImpl
     catch (BlobStoreException e) {
       log.warn("Failed to remove blobId {} from blob store '{}'", blobId, srcBlobStore.getBlobStoreConfiguration().getName(), e);
     }
+    return newBlob;
   }
 
   /**

@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.rest.internal.resources;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.MediaType;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.repository.Format;
@@ -83,6 +84,7 @@ public class ComponentsResourceTest
   @Test
   public void uploadComponent() throws Exception {
     HttpServletRequest request = mock(HttpServletRequest.class);
+    when(request.getContentType()).thenReturn(MediaType.MULTIPART_FORM_DATA);
 
     UploadResponse uploadResponse = new UploadResponse(emptyList());
     when(uploadManager.handle(testRepo, request)).thenReturn(uploadResponse);
