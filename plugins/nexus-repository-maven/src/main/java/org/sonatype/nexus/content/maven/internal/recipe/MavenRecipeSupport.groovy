@@ -17,7 +17,7 @@ import javax.inject.Provider
 
 import org.sonatype.nexus.content.maven.MavenArchetypeCatalogFacet
 import org.sonatype.nexus.content.maven.MavenContentFacet
-import org.sonatype.nexus.content.maven.MavenMetadataRebuildFacet
+import org.sonatype.nexus.content.maven.MavenMetadataRebuildContentFacet
 import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.RecipeSupport
 import org.sonatype.nexus.repository.Type
@@ -109,7 +109,7 @@ abstract class MavenRecipeSupport
   Provider<MavenArchetypeCatalogFacet> mavenArchetypeCatalogFacet
 
   @Inject
-  Provider<MavenMetadataRebuildFacet> mavenMetadataRebuildFacet
+  Provider<MavenMetadataRebuildContentFacet> mavenMetadataRebuildFacet
 
   @Inject
   Provider<LastAssetMaintenanceFacet> lastAssetMaintenanceFacet

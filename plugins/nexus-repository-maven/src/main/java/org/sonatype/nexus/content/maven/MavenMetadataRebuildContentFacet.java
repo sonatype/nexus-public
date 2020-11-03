@@ -15,13 +15,14 @@ package org.sonatype.nexus.content.maven;
 import java.io.IOException;
 
 import org.sonatype.nexus.repository.Facet;
+import org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet;
 
 /**
  * @since 3.26
  */
 @Facet.Exposed
-public interface MavenMetadataRebuildFacet
-    extends Facet
+public interface MavenMetadataRebuildContentFacet
+    extends MavenMetadataRebuildFacet
 {
   String METADATA_REBUILD_KEY = "forceRebuild";
 
@@ -30,11 +31,4 @@ public interface MavenMetadataRebuildFacet
       final boolean update,
       final boolean rebuildChecksums)
       throws IOException;
-
-  void rebuildMetadata(
-      final String groupId,
-      final String artifactId,
-      final String baseVersion,
-      final boolean rebuildChecksums,
-      final boolean update);
 }

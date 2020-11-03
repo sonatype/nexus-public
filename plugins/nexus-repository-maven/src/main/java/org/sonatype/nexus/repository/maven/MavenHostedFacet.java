@@ -16,8 +16,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
-import javax.annotation.Nullable;
-
 import org.sonatype.nexus.repository.Facet;
 
 /**
@@ -27,42 +25,8 @@ import org.sonatype.nexus.repository.Facet;
  */
 @Facet.Exposed
 public interface MavenHostedFacet
-    extends Facet
+    extends MavenMetadataRebuildFacet
 {
-  /**
-   * Rebuilds/updates Maven metadata. The parameters depend each on previous, and if any of those are set (ie. G, GA or
-   * GAV), the metadata will be updated. Rebuild is possible only against repository as whole, not a sub-part of it.
-   *
-   * @param groupId     scope the work to given groupId.
-   * @param artifactId  scope the work to given artifactId (groupId must be given).
-   * @param baseVersion scope the work to given baseVersion (groupId and artifactId must be given).
-   * @param rebuildChecksums  whether or not checksums should be checked and corrected if found                     
-   *                           missing or incorrect 
-   */
-  void rebuildMetadata(@Nullable String groupId,
-                       @Nullable String artifactId,
-                       @Nullable String baseVersion,
-                       boolean rebuildChecksums);
-
-  /**
-   * Rebuilds/updates Maven metadata. The parameters depend each on previous, and if any of those are set (ie. G, GA or
-   * GAV), the metadata will be updated. Rebuild is possible only against repository as whole, not a sub-part of it.
-   *
-   * @param groupId     scope the work to given groupId.
-   * @param artifactId  scope the work to given artifactId (groupId must be given).
-   * @param baseVersion scope the work to given baseVersion (groupId and artifactId must be given).
-   * @param rebuildChecksums  whether or not checksums should be checked and corrected if found
-   *                           missing or incorrect
-   * @param update      whether to update or replace metadata
-   *
-   * @since 3.22
-   */
-  void rebuildMetadata(@Nullable String groupId,
-                       @Nullable String artifactId,
-                       @Nullable String baseVersion,
-                       boolean rebuildChecksums,
-                       boolean update);
-
   /**
    * Rebuilds archetype catalog for given repository. Returns the number of archetypes hosted.
    */
