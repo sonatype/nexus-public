@@ -104,22 +104,24 @@ public class BlobTx
   /**
    * Create an asset blob by copying the source blob. Throws an exception if the blob has already been deleted.
    *
-   * @param blobId      blobId of a blob already present in the blobstore
+   * @param blobRef     blobRef of a blob already present in the blobstore
    * @param headers     a map of headers to be applied to the resulting blob
    * @param hashes      the algorithms and precalculated hashes of the content
    * @return {@link AssetBlob}
    * @since 3.1
    */
-  public AssetBlob createByCopying(final BlobId blobId,
+  public AssetBlob createByCopying(final BlobRef blobRef,
                                    final Map<String, String> headers,
                                    final Map<HashAlgorithm, HashCode> hashes,
                                    final boolean hashesVerified)
   {
     checkArgument(!Strings2.isBlank(headers.get(BlobStore.CONTENT_TYPE_HEADER)), "Blob content type is required");
-    // This might be a place where we might consider passing in a BlobRef instead of a BlobId, for a post-fabric world
-    // where repositories could be writing/reading from multiple blob stores.
+
+    if (!blobRef.getStore().equals(blobStore.getBlobStoreConfiguration().getName())) {
+      throw new MissingBlobException(blobRef);
+    }
     return createAssetBlob(
-        store -> store.copy(blobId, headers),
+        store -> store.copy(blobRef.getBlobId(), headers),
         hashes,
         hashesVerified,
         headers.get(BlobStore.CONTENT_TYPE_HEADER));

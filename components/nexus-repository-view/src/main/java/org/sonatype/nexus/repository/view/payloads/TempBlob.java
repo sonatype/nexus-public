@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.util.Map;
 
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreException;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
@@ -65,6 +66,13 @@ public class TempBlob
    */
   public Blob getBlob() {
     return blob;
+  }
+
+  public BlobRef getBlobRef(final String node) {
+    return new BlobRef(
+        node,
+        blobStore.getBlobStoreConfiguration().getName(),
+        getBlob().getId().asUniqueString());
   }
 
   /**

@@ -18,6 +18,7 @@ import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.blobstore.api.Blob
 import org.sonatype.nexus.blobstore.api.BlobId
 import org.sonatype.nexus.blobstore.api.BlobMetrics
+import org.sonatype.nexus.blobstore.api.BlobRef
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
 import org.sonatype.nexus.common.hash.HashAlgorithm
@@ -133,10 +134,10 @@ class BlobTxTest
     when(blobMetrics.getContentSize()).thenReturn(blobSize)
     when(blobMetrics.getSha1Hash()).thenReturn('356a192b7913b04c54574d18c28d46e6395428ab')
 
-    BlobId blobId = new BlobId('blobid')
+    BlobRef blobRef = new BlobRef('node', 'blobStoreConfiguration', 'blobid')
     Blob blob = mock(Blob.class)
     when(blob.getMetrics()).thenReturn(blobMetrics)
-    when(blob.getId()).thenReturn(blobId)
+    when(blob.getId()).thenReturn(blobRef.getBlobId())
 
     BlobStore blobStore = [
         getBlobStoreConfiguration: { blobStoreConfiguration },
@@ -145,7 +146,7 @@ class BlobTxTest
     ] as BlobStore
 
     BlobTx testSubject = new BlobTx(nodeAccess, blobStore)
-    AssetBlob assetBlob = testSubject.createByCopying(blobId, headers, hashes, true)
+    AssetBlob assetBlob = testSubject.createByCopying(blobRef, headers, hashes, true)
 
     assertThat(assetBlob.contentType, is(equalTo(contentType)))
     assertThat(assetBlob.size, is(equalTo(blobSize)))
