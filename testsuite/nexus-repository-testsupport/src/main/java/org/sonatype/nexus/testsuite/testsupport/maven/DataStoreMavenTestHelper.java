@@ -104,8 +104,11 @@ public class DataStoreMavenTestHelper
     for (HashType hashType : HashType.values()) {
       String expectedHashContent = expectedHashCodes.get(hashType.getHashAlgorithm().name());
       Optional<Content> maybeStoredHashContent = mavenContentFacet.get(mavenPath.hash(hashType));
+      // Maven deployer does not create these hashes by default yet but we are storing the calculated values in the asset attributes
+      if(!maybeStoredHashContent.isPresent() && (hashType  == HashType.SHA256 ||  hashType  == HashType.SHA512) ) {
+        continue;
+      }
       assertTrue(maybeStoredHashContent.isPresent());
-
       try (InputStream inputStream = maybeStoredHashContent.get().openInputStream()) {
         String storedHashContent = IOUtils.toString(new InputStreamReader(inputStream, UTF_8));
         assertThat(storedHashContent, equalTo(expectedHashContent));
