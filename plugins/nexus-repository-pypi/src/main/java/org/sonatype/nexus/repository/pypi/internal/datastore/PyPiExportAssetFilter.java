@@ -10,14 +10,29 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.filter.export;
+package org.sonatype.nexus.repository.pypi.internal.datastore;
 
-import org.sonatype.nexus.repository.storage.Asset;
+import javax.inject.Named;
+import javax.inject.Singleton;
+
+import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+import org.sonatype.nexus.repository.export.ExportAssetFilter;
+import org.sonatype.nexus.repository.pypi.internal.PyPiExportAssetFilterSupport;
+import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
 
 /**
- * @since 3.25
+ * Filter to exclude indexes from export, as they need to be regenerated on import
+ *
+ * @since 3.next
  */
-public interface ExportAssetFilter
+@Singleton
+@Named(PyPiFormat.NAME)
+public class PyPiExportAssetFilter
+    extends PyPiExportAssetFilterSupport
+    implements ExportAssetFilter
 {
-  boolean shouldSkipAsset(Asset asset);
+  @Override
+  public boolean shouldSkipAsset(final FluentAsset asset) {
+    return shouldSkipAsset(asset.path(), asset.kind());
+  }
 }

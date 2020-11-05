@@ -10,18 +10,16 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.pypi.internal.export;
+package org.sonatype.nexus.repository.pypi.internal.orient;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.goodies.common.ComponentSupport;
-import org.sonatype.nexus.repository.filter.export.ExportAssetFilter;
-import org.sonatype.nexus.repository.pypi.internal.AssetKind;
+import org.sonatype.nexus.repository.filter.export.OrientExportAssetFilter;
+import org.sonatype.nexus.repository.pypi.internal.PyPiExportAssetFilterSupport;
 import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
 import org.sonatype.nexus.repository.storage.Asset;
 
-import static org.sonatype.nexus.logging.task.TaskLoggingMarkers.TASK_LOG_ONLY;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_KIND;
 
 /**
@@ -31,30 +29,13 @@ import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_K
  */
 @Singleton
 @Named(PyPiFormat.NAME)
-public class PyPiExportAssetFilter
-    extends ComponentSupport
-    implements ExportAssetFilter
+public class PyPiOrientExportAssetFilter
+    extends PyPiExportAssetFilterSupport
+    implements OrientExportAssetFilter
 {
   @Override
   public boolean shouldSkipAsset(final Asset asset) {
-    String assetKindName = null;
-    try {
-      assetKindName = asset.formatAttributes().get(P_ASSET_KIND).toString();
-      AssetKind assetKind = AssetKind.valueOf(assetKindName);
-      switch (assetKind) {
-        case INDEX:
-        case ROOT_INDEX:
-        case SEARCH:
-          log.trace("PyPI asset {} is NOT allowed for processing, will skip.", asset.name());
-          return true;
-      }
-    }
-    catch (Exception e) {
-      log.error(TASK_LOG_ONLY, "PyPI asset {} has invalid assetkind '{}'. Will skip for export.", asset.name(),
-          assetKindName, log.isDebugEnabled() ? e : "");
-      return true;
-    }
-    log.trace("PyPI asset {} is allowed for processing.", asset.name());
-    return false;
+    String assetKindName = asset.formatAttributes().get(P_ASSET_KIND).toString();
+    return shouldSkipAsset(asset.name(), assetKindName);
   }
 }

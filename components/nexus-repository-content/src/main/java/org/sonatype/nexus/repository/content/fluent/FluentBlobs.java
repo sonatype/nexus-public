@@ -15,10 +15,12 @@ package org.sonatype.nexus.repository.content.fluent;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
@@ -48,4 +50,12 @@ public interface FluentBlobs
    * @since 3.next
    */
   Blob ingest(Path sourceFile, Map<String, String> headers, HashCode sha1, long size);
+
+  /**
+   * Fetches the Blob associated with the specified BlobRef or Optional.empty() if
+   * no such Blob exists.
+   *
+   * @since 3.next
+   */
+  Optional<Blob> blob(BlobRef blobRef);
 }

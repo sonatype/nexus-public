@@ -19,6 +19,7 @@ import java.util.function.Predicate;
 
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
 
 import org.joda.time.DateTime;
@@ -166,6 +167,11 @@ public interface ComponentAssetTestHelper
    * Obtains a blob ref of an asset in the given repo with the specified path.
    */
   BlobRef getBlobRefOfAsset(Repository repository, String path);
+
+  /**
+   * Gets the id of the component associated with the specified asset and repository.
+   */
+  EntityId getComponentId(Repository repository, String assetPath);
 
   class AssetNotFoundException
       extends RuntimeException
