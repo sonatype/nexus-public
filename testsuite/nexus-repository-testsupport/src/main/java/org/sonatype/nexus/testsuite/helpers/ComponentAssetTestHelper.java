@@ -94,6 +94,11 @@ public interface ComponentAssetTestHelper
   /**
    * Verify that a component with the given name and version exists for the specified repository.
    */
+  boolean componentExists(Repository repository, String name);
+
+  /**
+   * Verify that a component with the given name and version exists for the specified repository.
+   */
   boolean componentExists(Repository repository, String name, String version);
 
   /**

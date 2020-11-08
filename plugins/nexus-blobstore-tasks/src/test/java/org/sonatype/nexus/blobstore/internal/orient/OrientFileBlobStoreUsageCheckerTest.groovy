@@ -10,12 +10,13 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.internal
+package org.sonatype.nexus.blobstore.internal.orient
 
 import org.sonatype.goodies.testsupport.TestSupport
 import org.sonatype.nexus.blobstore.api.BlobId
 import org.sonatype.nexus.blobstore.api.BlobStore
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration
+import org.sonatype.nexus.blobstore.internal.orient.OrientFileBlobStoreUsageChecker
 import org.sonatype.nexus.orient.testsupport.DatabaseInstanceRule
 
 import com.orientechnologies.orient.core.metadata.schema.OSchema
@@ -29,7 +30,7 @@ import static org.hamcrest.CoreMatchers.equalTo
 import static org.junit.Assert.assertThat
 import static org.mockito.Mockito.when
 
-class FileBlobStoreUsageCheckerTest
+class OrientFileBlobStoreUsageCheckerTest
     extends TestSupport
 {
   static final String ASSET = 'asset'
@@ -51,7 +52,7 @@ class FileBlobStoreUsageCheckerTest
   @Mock
   BlobStoreConfiguration blobStoreConfiguration
 
-  FileBlobStoreUsageChecker underTest
+  OrientFileBlobStoreUsageChecker underTest
 
   @Before
   void setUp() {
@@ -66,7 +67,7 @@ class FileBlobStoreUsageCheckerTest
     when(blobStore.blobStoreConfiguration).thenReturn(blobStoreConfiguration)
     when(blobStoreConfiguration.name).thenReturn(DEFAULT)
 
-    underTest = new FileBlobStoreUsageChecker(configDatabase.instanceProvider)
+    underTest = new OrientFileBlobStoreUsageChecker(configDatabase.instanceProvider)
   }
 
   @Test

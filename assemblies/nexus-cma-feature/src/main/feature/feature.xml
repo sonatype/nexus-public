@@ -15,7 +15,6 @@
 -->
 <features xmlns="http://karaf.apache.org/xmlns/features/v1.2.1" name="${project.artifactId}">
   <feature name="${project.artifactId}" install="featureFlag:enabledByDefault:nexus.orient.store.content">
-    <feature>nexus-blobstore-tasks</feature>
     <feature>nexus-repository-apt</feature>
     <feature>nexus-repository-cocoapods</feature>
     <feature>nexus-repository-conan</feature>

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.restore;
+package org.sonatype.nexus.blobstore.restore.orient;
 
 import java.io.InputStream;
 import java.util.HashSet;
@@ -57,11 +57,11 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
-import static org.sonatype.nexus.blobstore.restore.DefaultIntegrityCheckStrategy.*;
+import static org.sonatype.nexus.blobstore.restore.orient.DefaultOrientIntegrityCheckStrategy.*;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_BLOB_REF;
 
-public class DefaultIntegrityCheckStrategyTest
+public class DefaultOrientIntegrityCheckStrategyTest
     extends TestSupport
 {
   private static final HashCode TEST_HASH1 = HashCode.fromString("aa");
@@ -89,13 +89,13 @@ public class DefaultIntegrityCheckStrategyTest
   @Mock
   private Logger logger;
 
-  private DefaultIntegrityCheckStrategy defaultIntegrityCheckStrategy;
+  private DefaultOrientIntegrityCheckStrategy orientDefaultIntegrityCheckStrategy;
 
   private Set<Asset> assets;
 
   @Before
   public void setup() throws Exception {
-    defaultIntegrityCheckStrategy = spy(new TestIntegrityCheckFacet());
+    orientDefaultIntegrityCheckStrategy = spy(new TestOrientIntegrityCheckFacet());
 
     checkFailed = false;
 
@@ -121,9 +121,9 @@ public class DefaultIntegrityCheckStrategyTest
     // stub attribute load to fail
     when(blobStore.getBlobAttributes(new BlobId("blob"))).thenReturn(null);
 
-    defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL, CHECK_FAILED_HANDLER);
+    orientDefaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL, CHECK_FAILED_HANDLER);
 
-    verify(defaultIntegrityCheckStrategy, never()).checkAsset(any(), any());
+    verify(orientDefaultIntegrityCheckStrategy, never()).checkAsset(any(), any());
     verify(logger).error(BLOB_PROPERTIES_MISSING_FOR_ASSET, asset.name());
 
     assertThat(checkFailed, is(true));
@@ -137,9 +137,9 @@ public class DefaultIntegrityCheckStrategyTest
     BlobAttributes blobAttributes = getMockBlobAttribues("name", "sha1", true);
     when(blobStore.getBlobAttributes(new BlobId("blob"))).thenReturn(blobAttributes);
 
-    defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL, CHECK_FAILED_HANDLER);
+    orientDefaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL, CHECK_FAILED_HANDLER);
 
-    verify(defaultIntegrityCheckStrategy, never()).checkAsset(any(), any());
+    verify(orientDefaultIntegrityCheckStrategy, never()).checkAsset(any(), any());
     verify(logger).warn(BLOB_PROPERTIES_MARKED_AS_DELETED, asset.name());
 
     assertThat(checkFailed, is(true));
@@ -154,9 +154,9 @@ public class DefaultIntegrityCheckStrategyTest
     IllegalStateException ex = new IllegalStateException(format("Missing property: %s", P_BLOB_REF));
     when(asset.requireBlobRef()).thenThrow(ex);
 
-    defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL, CHECK_FAILED_HANDLER);
+    orientDefaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL, CHECK_FAILED_HANDLER);
 
-    verify(defaultIntegrityCheckStrategy, never()).checkAsset(any(), any());
+    verify(orientDefaultIntegrityCheckStrategy, never()).checkAsset(any(), any());
     verify(logger).error(ERROR_ACCESSING_BLOB, asset.toString(), ex.getMessage(), null);
 
     assertThat(checkFailed, is(true));
@@ -171,9 +171,9 @@ public class DefaultIntegrityCheckStrategyTest
     NullPointerException ex = new NullPointerException(format("Missing property: %s", P_BLOB_REF));
     when(asset.requireBlobRef()).thenThrow(ex);
 
-    defaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL, CHECK_FAILED_HANDLER);
+    orientDefaultIntegrityCheckStrategy.check(repository, blobStore, NO_CANCEL, CHECK_FAILED_HANDLER);
 
-    verify(defaultIntegrityCheckStrategy, never()).checkAsset(any(), any());
+    verify(orientDefaultIntegrityCheckStrategy, never()).checkAsset(any(), any());
     verify(logger).error(ERROR_PROCESSING_ASSET, asset.toString(), ex);
 
     assertThat(checkFailed, is(true));
@@ -285,7 +285,7 @@ public class DefaultIntegrityCheckStrategyTest
     when(blobStore.getBlobAttributes(any())).thenReturn(blobAttributes);
     when(blobStore.get(new BlobId(blobId))).thenReturn(mockBlob);
 
-    defaultIntegrityCheckStrategy.check(repository, blobStore, cancel, CHECK_FAILED_HANDLER);
+    orientDefaultIntegrityCheckStrategy.check(repository, blobStore, cancel, CHECK_FAILED_HANDLER);
 
     verify(logger).info(startsWith("Checking integrity of assets"), anyString(), anyString());
 
@@ -338,8 +338,8 @@ public class DefaultIntegrityCheckStrategyTest
   }
 
   // The whole point of the integrity checker is to log, so we need to run verifications against a mock logger
-  private class TestIntegrityCheckFacet
-      extends DefaultIntegrityCheckStrategy
+  private class TestOrientIntegrityCheckFacet
+      extends DefaultOrientIntegrityCheckStrategy
   {
     @Override
     protected Logger createLogger() {

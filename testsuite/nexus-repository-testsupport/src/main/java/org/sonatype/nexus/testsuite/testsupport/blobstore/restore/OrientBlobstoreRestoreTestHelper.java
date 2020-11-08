@@ -67,18 +67,6 @@ public class OrientBlobstoreRestoreTestHelper
 
   private static final String DELETE_COMPONENTS_SQL = "DELETE FROM component";
 
-  private static final String TYPE_ID = "blobstore.rebuildComponentDB";
-
-  private static final String BLOB_STORE_NAME_FIELD_ID = "blobstoreName";
-
-  private static final String RESTORE_BLOBS = "restoreBlobs";
-
-  private static final String UNDELETE_BLOBS = "undeleteBlobs";
-
-  private static final String INTEGRITY_CHECK = "integrityCheck";
-
-  private static final String DRY_RUN = "dryRun";
-
   @Inject
   @Named(DatabaseInstanceNames.COMPONENT)
   private Provider<DatabaseInstance> componentDb;
@@ -102,12 +90,12 @@ public class OrientBlobstoreRestoreTestHelper
   }
 
   @Override
-  public void runRestoreMetadataTaskWithTimeout(final long timeout) {
+  public void runRestoreMetadataTaskWithTimeout(final long timeout, final boolean dryRun) {
     TaskConfiguration config = taskScheduler.createTaskConfigurationInstance(TYPE_ID);
     config.setEnabled(true);
     config.setName("restore");
     config.setString(BLOB_STORE_NAME_FIELD_ID, "default");
-    config.setBoolean(DRY_RUN, false);
+    config.setBoolean(DRY_RUN, dryRun);
     config.setBoolean(RESTORE_BLOBS, true);
     config.setBoolean(UNDELETE_BLOBS, false);
     config.setBoolean(INTEGRITY_CHECK, false);
@@ -118,36 +106,31 @@ public class OrientBlobstoreRestoreTestHelper
 
   @Override
   public void runRestoreMetadataTask() {
-    runRestoreMetadataTaskWithTimeout(10);
+    runRestoreMetadataTaskWithTimeout(10, false);
   }
 
-  @Override
   public void assertComponentNotInRepository(final Repository repository, final String name) {
     Component component = findComponent(repository, name);
     assertThat(component, nullValue());
   }
 
-  @Override
   public void assertComponentNotInRepository(final Repository repository, final String name, final String version) {
     Query query = getQuery(name, version);
     Component component = findComponent(repository, query);
     assertThat(component, nullValue());
   }
 
-  @Override
   public void assertComponentInRepository(final Repository repository, final String name) {
     Component component = findComponent(repository, name);
     assertThat(component, notNullValue());
   }
 
-  @Override
   public void assertComponentInRepository(final Repository repository, final String name, final String version) {
     Query query = getQuery(name, version);
     Component component = findComponent(repository, query);
     assertThat(component, notNullValue());
   }
 
-  @Override
   public void assertAssetNotInRepository(final Repository repository, final String... names) {
     for (String name : names) {
       Asset asset = findAsset(repository, name);
@@ -155,7 +138,6 @@ public class OrientBlobstoreRestoreTestHelper
     }
   }
 
-  @Override
   public void assertAssetInRepository(final Repository repository, final String name) {
     Asset asset = findAsset(repository, name);
     assertThat(asset, notNullValue());
@@ -178,7 +160,6 @@ public class OrientBlobstoreRestoreTestHelper
     }
   }
 
-  @Override
   public void assertComponentWithGAVInRepository(final Repository repository,
                                                  final String group,
                                                  final String name,
@@ -189,7 +170,6 @@ public class OrientBlobstoreRestoreTestHelper
     assertThat(component, notNullValue());
   }
 
-  @Override
   public void assertComponentWithGAVNotInRepository(final Repository repository,
                                                     final String group,
                                                     final String name,
@@ -200,7 +180,6 @@ public class OrientBlobstoreRestoreTestHelper
     assertThat(component, nullValue());
   }
 
-  @Override
   public void assertAssetAssociatedWithComponent(final Repository repository,
                                                  @Nullable final String group,
                                                  final String name,
@@ -216,7 +195,6 @@ public class OrientBlobstoreRestoreTestHelper
     }
   }
 
-  @Override
   public void assertAssetAssociatedWithComponent(final Repository repository, final String name, final String path) {
     Component component = findComponent(repository, name);
     assertThat(component, notNullValue());

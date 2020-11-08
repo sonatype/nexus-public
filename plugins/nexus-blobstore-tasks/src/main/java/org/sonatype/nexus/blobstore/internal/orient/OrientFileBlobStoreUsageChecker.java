@@ -10,11 +10,12 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.internal;
+package org.sonatype.nexus.blobstore.internal.orient;
 
 import java.util.List;
 import java.util.function.Supplier;
 
+import javax.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
@@ -24,6 +25,7 @@ import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
+import org.sonatype.nexus.common.app.FeatureFlag;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.repository.storage.ComponentDatabase;
 
@@ -39,7 +41,9 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
  */
 @Named
 @Singleton
-public class FileBlobStoreUsageChecker
+@Priority(Integer.MAX_VALUE)
+@FeatureFlag(name = "nexus.orient.store.content")
+public class OrientFileBlobStoreUsageChecker
     implements BlobStoreUsageChecker
 {
   private static final String ANY_NODE = "%";
@@ -51,7 +55,7 @@ public class FileBlobStoreUsageChecker
   private final Supplier<ODatabaseDocumentTx> txSupplier;
 
   @Inject
-  public FileBlobStoreUsageChecker(@Named(ComponentDatabase.NAME) final Provider<DatabaseInstance> databaseInstanceProvider)
+  public OrientFileBlobStoreUsageChecker(@Named(ComponentDatabase.NAME) final Provider<DatabaseInstance> databaseInstanceProvider)
   {
     this.txSupplier = () -> databaseInstanceProvider.get().acquire();
   }

@@ -20,6 +20,7 @@ import java.util.Properties;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStore;
+import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
@@ -52,9 +53,9 @@ import static org.mockito.Mockito.when;
  */
 public class P2RestoreBlobStrategyTest extends TestSupport
 {
-  private static final String TEST_BLOB_STORE_NAME = "test";
-
   private static final String PACKAGE_PATH = "https/download.eclipse.org/releases/2019-12/201912181000/plugins/org.eclipse.core.resources_3.13.600.v20191122-2104.jar";
+
+  private static final String TEST_BLOB_STORE_NAME = "test";
 
   @Mock
   RepositoryManager repositoryManager;
@@ -87,6 +88,9 @@ public class P2RestoreBlobStrategyTest extends TestSupport
   BlobStore blobStore;
 
   @Mock
+  BlobStoreConfiguration blobStoreConfiguration;
+
+  @Mock
   StorageTx storageTx;
 
   private byte[] blobBytes = "blobbytes".getBytes();
@@ -108,9 +112,14 @@ public class P2RestoreBlobStrategyTest extends TestSupport
     when(restoreBlobData.getBlobName()).thenReturn(PACKAGE_PATH);
     when(restoreBlobData.getRepository()).thenReturn(repository);
     when(restoreBlobData.getBlob()).thenReturn(blob);
-    when(storageFacet.txSupplier()).thenReturn(() -> storageTx);
-    when(blobStoreManager.get(TEST_BLOB_STORE_NAME)).thenReturn(blobStore);
+    when(restoreBlobData.getBlobStore()).thenReturn(blobStore);
     when(restoreBlobData.getRepository()).thenReturn(repository);
+
+    when(storageFacet.txSupplier()).thenReturn(() -> storageTx);
+
+    when(blobStoreManager.get(TEST_BLOB_STORE_NAME)).thenReturn(blobStore);
+    when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
+    when(blobStoreConfiguration.getName()).thenReturn(TEST_BLOB_STORE_NAME);
 
     properties.setProperty("@BlobStore.created-by", "anonymous");
     properties.setProperty("size", "894185");
@@ -150,7 +159,7 @@ public class P2RestoreBlobStrategyTest extends TestSupport
 
   @Test
   public void testPackageIsRestored() throws IOException {
-    restoreBlobStrategy.restore(properties, blob, TEST_BLOB_STORE_NAME, false);
+    restoreBlobStrategy.restore(properties, blob, blobStore, false);
     verify(p2RestoreFacet).assetExists(PACKAGE_PATH);
     verify(p2RestoreFacet).restore(any(AssetBlob.class), eq(PACKAGE_PATH));
     verifyNoMoreInteractions(p2RestoreFacet);
@@ -159,7 +168,7 @@ public class P2RestoreBlobStrategyTest extends TestSupport
   @Test
   public void testRestoreIsSkipIfPackageExists() {
     when(p2RestoreFacet.assetExists(PACKAGE_PATH)).thenReturn(true);
-    restoreBlobStrategy.restore(properties, blob, TEST_BLOB_STORE_NAME, false);
+    restoreBlobStrategy.restore(properties, blob, blobStore, false);
 
     verify(p2RestoreFacet).assetExists(PACKAGE_PATH);
     verify(p2RestoreFacet).componentRequired(PACKAGE_PATH);

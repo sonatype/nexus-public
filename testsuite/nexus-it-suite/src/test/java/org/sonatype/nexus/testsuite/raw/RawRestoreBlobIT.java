@@ -13,23 +13,17 @@
 package org.sonatype.nexus.testsuite.raw;
 
 import java.io.File;
-import java.util.Properties;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 
 import org.sonatype.goodies.httpfixture.server.fluent.Behaviours;
 import org.sonatype.goodies.httpfixture.server.fluent.Server;
 import org.sonatype.goodies.httpfixture.server.jetty.behaviour.Content;
-import org.sonatype.nexus.blobstore.api.Blob;
-import org.sonatype.nexus.blobstore.restore.RestoreBlobStrategy;
+import org.sonatype.nexus.content.testsuite.groups.OrientAndSQLTestGroup;
 import org.sonatype.nexus.content.testsuite.groups.OrientTestGroup;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.http.HttpStatus;
-import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.AssetEntityAdapter;
-import org.sonatype.nexus.repository.storage.StorageFacet;
-import org.sonatype.nexus.repository.storage.StorageTx;
+import org.sonatype.nexus.testsuite.helpers.ComponentAssetTestHelper;
 import org.sonatype.nexus.testsuite.testsupport.blobstore.restore.BlobstoreRestoreTestHelper;
 import org.sonatype.nexus.testsuite.testsupport.raw.RawClient;
 import org.sonatype.nexus.testsuite.testsupport.raw.RawITSupport;
@@ -38,14 +32,14 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import static org.apache.commons.lang3.StringUtils.prependIfMissing;
 import static org.apache.http.entity.ContentType.TEXT_PLAIN;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
-import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
-import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
-import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
+import static org.junit.Assert.assertTrue;
+import static org.sonatype.nexus.repository.http.HttpStatus.OK;
 
-@Category(OrientTestGroup.class)
 public class RawRestoreBlobIT
     extends RawITSupport
 {
@@ -66,11 +60,10 @@ public class RawRestoreBlobIT
   private RawClient proxyClient;
 
   @Inject
-  private BlobstoreRestoreTestHelper testHelper;
+  private BlobstoreRestoreTestHelper restoreTestHelper;
 
   @Inject
-  @Named("raw")
-  private RestoreBlobStrategy restoreBlobStrategy;
+  private ComponentAssetTestHelper componentAssetTestHelper;
 
   @Before
   public void setup() throws Exception {
@@ -85,77 +78,81 @@ public class RawRestoreBlobIT
 
     File testFile = resolveTestFile(TEST_CONTENT);
     assertThat(hostedClient.put(TEST_CONTENT, TEXT_PLAIN, testFile), is(HttpStatus.CREATED));
-    assertThat(proxyClient.get(TEST_CONTENT).getStatusLine().getStatusCode(), is(HttpStatus.OK));
+    assertThat(proxyClient.get(TEST_CONTENT).getStatusLine().getStatusCode(), is(OK));
   }
 
+  @Category(OrientAndSQLTestGroup.class)
   @Test
   public void testMetadataRestoreWhenBothAssetsAndComponentsAreMissing() throws Exception {
-    verifyMetadataRestored(testHelper::simulateComponentAndAssetMetadataLoss);
+    verifyMetadataRestored(restoreTestHelper::simulateComponentAndAssetMetadataLoss);
   }
 
+  @Category(OrientAndSQLTestGroup.class)
   @Test
   public void testMetadataRestoreWhenOnlyAssetsAreMissing() throws Exception {
-    verifyMetadataRestored(testHelper::simulateAssetMetadataLoss);
+    verifyMetadataRestored(restoreTestHelper::simulateAssetMetadataLoss);
   }
 
+  @Category(OrientTestGroup.class)
   @Test
   public void testMetadataRestoreWhenOnlyComponentsAreMissing() throws Exception {
-    verifyMetadataRestored(testHelper::simulateComponentMetadataLoss);
+    verifyMetadataRestored(restoreTestHelper::simulateComponentMetadataLoss);
   }
 
-  @Test
-  public void testNotDryRunRestore()
-  {
-    runBlobRestore(false);
-    testHelper.assertAssetNotInRepository(proxyRepository, TEST_CONTENT);
-  }
-
+  @Category(OrientAndSQLTestGroup.class)
   @Test
   public void testDryRunRestore()
   {
-    runBlobRestore(true);
-    testHelper.assertAssetInRepository(proxyRepository, TEST_CONTENT);
+    assertTrue(componentAssetTestHelper.assetExists(proxyRepository, TEST_CONTENT));
+    restoreTestHelper.simulateComponentAndAssetMetadataLoss();
+    assertFalse(componentAssetTestHelper.assetExists(proxyRepository, TEST_CONTENT));
+    restoreTestHelper.runRestoreMetadataTaskWithTimeout(10, true);
+    assertFalse(componentAssetTestHelper.assetExists(proxyRepository, TEST_CONTENT));
   }
 
-  private void runBlobRestore(final boolean isDryRun) {
-    Asset asset;
-    Blob blob;
-    try (StorageTx tx = getStorageTx(proxyRepository)) {
-      tx.begin();
-      asset = tx.findAssetWithProperty(AssetEntityAdapter.P_NAME, TEST_CONTENT, tx.findBucket(proxyRepository));
-      blob = tx.getBlob(asset.blobRef());
-    }
-    testHelper.simulateComponentMetadataLoss();
-    Properties properties = new Properties();
-    properties.setProperty(HEADER_PREFIX + REPO_NAME_HEADER, proxyRepository.getName());
-    properties.setProperty(HEADER_PREFIX + BLOB_NAME_HEADER, asset.name());
-
-    restoreBlobStrategy.restore(properties, blob, HEADER_PREFIX + BLOB_NAME_HEADER, isDryRun);
+  @Category(OrientAndSQLTestGroup.class)
+  @Test
+  public void testNotDryRunRestore()
+  {
+    assertTrue(componentAssetTestHelper.assetExists(proxyRepository, TEST_CONTENT));
+    restoreTestHelper.simulateComponentAndAssetMetadataLoss();
+    assertFalse(componentAssetTestHelper.assetExists(proxyRepository, TEST_CONTENT));
+    restoreTestHelper.runRestoreMetadataTaskWithTimeout(10, false);
+    assertTrue(componentAssetTestHelper.assetExists(proxyRepository, TEST_CONTENT));
   }
 
   private void verifyMetadataRestored(final Runnable metadataLossSimulation) throws Exception {
     metadataLossSimulation.run();
 
-    testHelper.runRestoreMetadataTask();
+    restoreTestHelper.runRestoreMetadataTask();
 
-    testHelper.assertComponentInRepository(hostedRepository, TEST_CONTENT);
-    testHelper.assertComponentInRepository(proxyRepository, TEST_CONTENT);
+    assertTrue(componentAssetTestHelper.assetExists(proxyRepository, TEST_CONTENT));
+    assertTrue(componentAssetTestHelper.assetExists(hostedRepository, TEST_CONTENT));
 
-    testHelper.assertAssetMatchesBlob(hostedRepository, TEST_CONTENT);
-    testHelper.assertAssetMatchesBlob(proxyRepository, TEST_CONTENT);
+    assertTrue(componentExists(hostedRepository, TEST_CONTENT));
+    assertTrue(componentExists(proxyRepository, TEST_CONTENT));
 
-    testHelper.assertAssetAssociatedWithComponent(hostedRepository, TEST_CONTENT, TEST_CONTENT);
-    testHelper.assertAssetAssociatedWithComponent(proxyRepository, TEST_CONTENT, TEST_CONTENT);
+    restoreTestHelper.assertAssetMatchesBlob(hostedRepository, TEST_CONTENT);
+    restoreTestHelper.assertAssetMatchesBlob(proxyRepository, TEST_CONTENT);
 
-    assertThat(hostedClient.get(TEST_CONTENT).getStatusLine().getStatusCode(), is(HttpStatus.OK));
-    assertThat(proxyClient.get(TEST_CONTENT).getStatusLine().getStatusCode(), is(HttpStatus.OK));
+    assertTrue(assetWithComponentExists(hostedRepository, TEST_CONTENT, "/", TEST_CONTENT));
+    assertTrue(assetWithComponentExists(proxyRepository, TEST_CONTENT, "/", TEST_CONTENT));
+
+    assertThat(hostedClient.get(TEST_CONTENT).getStatusLine().getStatusCode(), is(OK));
+    assertThat(proxyClient.get(TEST_CONTENT).getStatusLine().getStatusCode(), is(OK));
+  }
+
+  private boolean componentExists(final Repository repository, final String name) {
+    return componentAssetTestHelper.componentExists(repository, name)
+        || componentAssetTestHelper.componentExists(repository, prependIfMissing(name, "/"));
+  }
+
+  private boolean assetWithComponentExists(final Repository repository, final String path, final String group, final String name) {
+    return componentAssetTestHelper.assetWithComponentExists(repository, path, group, name)
+        || componentAssetTestHelper.assetWithComponentExists(hostedRepository, prependIfMissing(path, "/"), group, prependIfMissing(name, "/"));
   }
 
   private Content resolveFile(final String filename) {
     return Behaviours.file(testData.resolveFile(filename));
-  }
-
-  private static StorageTx getStorageTx(final Repository repository) {
-    return repository.facet(StorageFacet.class).txSupplier().get();
   }
 }

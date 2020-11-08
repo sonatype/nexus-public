@@ -10,12 +10,15 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.restore;
+package org.sonatype.nexus.blobstore.restore.datastore;
 
 import java.util.Objects;
+import java.util.Optional;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
+import javax.annotation.Nullable;
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -26,25 +29,28 @@ import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobMetrics;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
+import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.StorageFacet;
-import org.sonatype.nexus.repository.storage.StorageTx;
-import org.sonatype.nexus.transaction.Transactional;
-import org.sonatype.nexus.transaction.UnitOfWork;
+import org.sonatype.nexus.repository.content.Asset;
+import org.sonatype.nexus.repository.content.AssetBlob;
+import org.sonatype.nexus.repository.content.facet.ContentFacet;
+import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+import org.sonatype.nexus.repository.content.fluent.FluentAssets;
 
-import com.google.common.hash.HashCode;
+import org.apache.commons.lang.StringUtils;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.BLOB_NAME_HEADER;
 import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
+import static org.sonatype.nexus.repository.storage.Asset.CHECKSUM;
 
 /**
  * Default {@link IntegrityCheckStrategy} which checks name and SHA1 checksum
  *
- * @since 3.6.1
+ * @since 3.next
  */
 @Named(DefaultIntegrityCheckStrategy.DEFAULT_NAME)
 @Singleton
@@ -54,98 +60,131 @@ public class DefaultIntegrityCheckStrategy
 {
   public static final String NAME_MISMATCH = "Name does not match on asset! Metadata name: '{}', Blob name: '{}'";
 
-  static final String DEFAULT_NAME = "default";
+  public static final String DEFAULT_NAME = "default";
 
   static final String BLOB_PROPERTIES_MISSING_FOR_ASSET = "Blob properties missing for asset '{}'.";
 
   static final String BLOB_DATA_MISSING_FOR_ASSET = "Blob data missing for asset '{}'.";
 
-  static final String BLOB_PROPERTIES_MARKED_AS_DELETED = "Blob properties marked as deleted for asset '{}'. Will be removed on next compact.";
+  static final String BLOB_PROPERTIES_MARKED_AS_DELETED =
+      "Blob properties marked as deleted for asset '{}'. Will be removed on next compact.";
 
   static final String SHA1_MISMATCH = "SHA1 does not match on asset '{}'! Metadata SHA1: '{}', Blob SHA1: '{}'";
 
   static final String ASSET_SHA1_MISSING = "Asset is missing SHA1 hash code";
 
-  static final String ASSET_NAME_MISSING = "Asset is missing name";
-
   static final String BLOB_NAME_MISSING = "Blob properties is missing name";
 
-  static final String ERROR_ACCESSING_BLOB = "Error accessing blob for asset '{}'. Exception: {}";
+  static final String ERROR_ACCESSING_BLOB = "Error accessing blob for asset '{}'";
+
+  static final String ASSET_NAME_MISSING = "Asset is missing name";
 
   static final String ERROR_PROCESSING_ASSET = "Error processing asset '{}'";
 
-  static final String ERROR_PROCESSING_ASSET_WITH_EX = ERROR_PROCESSING_ASSET + ". Exception: {}";
+  static final String ERROR_PROCESSING_ASSET_WITH_EX = ERROR_PROCESSING_ASSET + ". {} Exception: {}";
 
   static final String CANCEL_WARNING = "Cancelling blob integrity check";
+
+  static final String BLOB_METRICS_MISSING_SHA1 = "Blob metrics are missing SHA1 hash code";
+
+  static final String ASSET_INTEGRITY_CHECK_FAILED = "Asset integrity check failed for {}";
+
+  private final int browseBatchSize;
+
+  @Inject
+  public DefaultIntegrityCheckStrategy(
+      @Named("${nexus.blobstore.restore.integrityCheck.batchSize:-1000}") final int browseBatchSize)
+  {
+    checkArgument(browseBatchSize > 0);
+    this.browseBatchSize = browseBatchSize;
+  }
 
   @Override
   public void check(
       final Repository repository,
       final BlobStore blobStore,
-      final Supplier<Boolean> isCancelled,
-      final Consumer<Asset> integrityCheckFailedHandler)
+      final BooleanSupplier isCancelled,
+      @Nullable final Consumer<Asset> integrityCheckFailedHandler)
   {
     log.info("Checking integrity of assets in repository '{}' with blob store '{}'", repository.getName(),
         blobStore.getBlobStoreConfiguration().getName());
-    ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60);
+
     long processed = 0;
-    long failedCounter = 0;
+    long failures = 0;
 
-    for (Asset asset : getAssets(repository)) {
-      boolean failed = false;
-      try {
-        if (isCancelled.get()) {
-          log.warn(CANCEL_WARNING);
-          progressLogger.flush();
-          return;
+    try (ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60)) {
+      FluentAssets fluentAssets = repository.facet(ContentFacet.class).assets();
+      Continuation<FluentAsset> assets = fluentAssets.browse(browseBatchSize, null);
+      while (!assets.isEmpty()) {
+        for (FluentAsset asset : assets) {
+          if (isCancelled.getAsBoolean()) {
+            log.warn(CANCEL_WARNING);
+            return;
+          }
+
+          log.debug("Checking asset {}", asset.path());
+          boolean failed = checkAsset(asset, blobStore);
+
+          if (failed) {
+            failures++;
+            if (integrityCheckFailedHandler != null) {
+              integrityCheckFailedHandler.accept(asset);
+            }
+          }
+
+          progressLogger
+              .info("Elapsed time: {}, processed: {}, failed integrity check: {}", progressLogger.getElapsed(),
+                  ++processed, failures);
         }
 
-        log.debug("checking asset {}", asset);
-        BlobRef blobRef = asset.requireBlobRef();
-        BlobId blobId = blobRef.getBlobId();
-
-        BlobAttributes blobAttributes = blobStore.getBlobAttributes(blobId);
-
-        if (blobAttributes == null) {
-          log.error(BLOB_PROPERTIES_MISSING_FOR_ASSET, asset.name());
-          failed = true;
-        }
-        else if (blobAttributes.isDeleted()) {
-          log.warn(BLOB_PROPERTIES_MARKED_AS_DELETED, asset.name());
-          failed = true;
-        }
-        else if (!blobDataExists(blobStore.get(blobId))){
-          log.error(BLOB_DATA_MISSING_FOR_ASSET, asset.name());
-          failed = true;
-        }
-        else if (!checkAsset(blobAttributes, asset)) {
-          failed = true;
-        }
+        assets = fluentAssets.browse(browseBatchSize, assets.nextContinuationToken());
       }
-      catch (IllegalStateException e) {
-        // thrown by requireBlobRef
-        log.error(ERROR_ACCESSING_BLOB, asset.toString(), e.getMessage(), log.isDebugEnabled() ? e : null);
-        failed = true;
-      }
-      catch (IllegalArgumentException e) {
-        // thrown by checkAsset inner methods
-        log.error(ERROR_PROCESSING_ASSET_WITH_EX, asset.toString(), e.getMessage(), log.isDebugEnabled() ? e : null);
-        failed = true;
-      }
-      catch (Exception e) {
-        log.error(ERROR_PROCESSING_ASSET, asset.toString(), e);
-        failed = true;
-      }
-      if (failed) {
-        failedCounter++;
-        if (integrityCheckFailedHandler != null) {
-          integrityCheckFailedHandler.accept(asset);
-        }
-      }
-      progressLogger
-          .info("Elapsed time: {}, processed: {}, failed integrity check: {}", progressLogger.getElapsed(), ++processed, failedCounter);
     }
-    progressLogger.flush();
+  }
+
+  private boolean checkAsset(final Asset asset, final BlobStore blobStore) {
+    try {
+      Optional<BlobId> blobId = asset
+          .blob()
+          .map(AssetBlob::blobRef)
+          .map(BlobRef::getBlobId);
+
+      if (!blobId.isPresent()) {
+        log.error(ERROR_ACCESSING_BLOB, asset.path());
+        return true;
+      }
+
+      BlobAttributes blobAttributes = blobStore.getBlobAttributes(blobId.get());
+
+      if (blobAttributes == null) {
+        log.error(BLOB_PROPERTIES_MISSING_FOR_ASSET, asset.path());
+        return true;
+      }
+      else if (blobAttributes.isDeleted()) {
+        log.warn(BLOB_PROPERTIES_MARKED_AS_DELETED, asset.path());
+        return true;
+      }
+      else if (!blobDataExists(blobStore.get(blobId.get()))) {
+        log.error(BLOB_DATA_MISSING_FOR_ASSET, asset.path());
+        return true;
+      }
+      else if (!checkAssetIntegrity(blobAttributes, asset)) {
+        log.error(ASSET_INTEGRITY_CHECK_FAILED, asset.path());
+        return true;
+      }
+      else {
+        return false;
+      }
+    }
+    catch (IllegalArgumentException e) {
+      // thrown by checkAsset inner methods
+      log.error(ERROR_PROCESSING_ASSET_WITH_EX, asset.toString(), e.getMessage(), log.isDebugEnabled() ? e : null);
+      return true;
+    }
+    catch (Exception e) {
+      log.error(ERROR_PROCESSING_ASSET, asset.toString(), e);
+      return true;
+    }
   }
 
   /**
@@ -155,7 +194,7 @@ public class DefaultIntegrityCheckStrategy
    * @param asset          the {@link Asset}
    * @return true if asset integrity is intact, false otherwise
    */
-  protected boolean checkAsset(final BlobAttributes blobAttributes, final Asset asset) {
+  protected boolean checkAssetIntegrity(final BlobAttributes blobAttributes, final Asset asset) {
     checkArgument(blobAttributes.getProperties() != null, "Blob attributes are missing properties");
 
     return checkSha1(blobAttributes, asset) && checkName(blobAttributes, asset);
@@ -169,7 +208,7 @@ public class DefaultIntegrityCheckStrategy
     String blobSha1 = getBlobSha1(blobAttributes);
 
     if (!Objects.equals(assetSha1, blobSha1)) {
-      log.error(SHA1_MISMATCH, asset.name(), assetSha1, blobSha1);
+      log.error(SHA1_MISMATCH, asset.path(), assetSha1, blobSha1);
       return false;
     }
 
@@ -183,7 +222,7 @@ public class DefaultIntegrityCheckStrategy
     BlobMetrics metrics = blobAttributes.getMetrics();
     checkArgument(metrics != null, "Blob attributes are missing metrics");
     String blobSha1 = metrics.getSha1Hash();
-    checkArgument(blobSha1 != null, "Blob metrics are missing SHA1 hash code");
+    checkArgument(blobSha1 != null, BLOB_METRICS_MISSING_SHA1);
     return blobSha1;
   }
 
@@ -191,23 +230,22 @@ public class DefaultIntegrityCheckStrategy
    * Get the SHA1 from the {@link Asset}
    */
   protected String getAssetSha1(final Asset asset) {
-    HashCode assetSha1HashCode = asset.getChecksum(SHA1);
-    checkArgument(assetSha1HashCode != null, ASSET_SHA1_MISSING);
-    return assetSha1HashCode.toString();
+    return asset.blob()
+        .map(assetBlob -> assetBlob.checksums().get(SHA1.name()))
+        .orElseThrow(() -> new IllegalArgumentException(ASSET_SHA1_MISSING));
   }
 
   /**
    * returns true if the name matches, false otherwise
    */
   private boolean checkName(final BlobAttributes blobAttributes, final Asset asset) {
-    String assetName = getAssetName(asset);
     String blobName = getBlobName(blobAttributes);
 
     checkArgument(blobName != null, BLOB_NAME_MISSING);
-    checkArgument(assetName != null, ASSET_NAME_MISSING);
+    checkArgument(asset.path() != null, ASSET_NAME_MISSING);
 
-    if (!Objects.equals(assetName, blobName)) {
-      log.error(NAME_MISMATCH, blobName, assetName);
+    if (!StringUtils.equals(asset.path(), blobName)) {
+      log.error(NAME_MISMATCH, blobName, asset.path());
       return false;
     }
 
@@ -232,22 +270,5 @@ public class DefaultIntegrityCheckStrategy
    */
   protected String getBlobName(final BlobAttributes blobAttributes) {
     return blobAttributes.getProperties().getProperty(HEADER_PREFIX + BLOB_NAME_HEADER);
-  }
-
-  /**
-   * Get the name from the {@link Asset}
-   */
-  protected String getAssetName(final Asset asset) {
-    return asset.name();
-  }
-
-  private Iterable<Asset> getAssets(final Repository repository) {
-    return Transactional.operation
-        .withDb(repository.facet(StorageFacet.class).txSupplier())
-        .call(() -> {
-          final StorageTx tx = UnitOfWork.currentTx();
-          return tx.browseAssets(tx.findBucket(repository));
-        });
-
   }
 }

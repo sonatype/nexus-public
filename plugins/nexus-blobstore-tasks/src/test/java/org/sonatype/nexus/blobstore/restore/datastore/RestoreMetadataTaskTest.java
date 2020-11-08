@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.restore;
+package org.sonatype.nexus.blobstore.restore.datastore;
 
 import java.net.URL;
 import java.nio.file.Paths;
@@ -23,19 +23,18 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobAttributes;
 import org.sonatype.nexus.blobstore.api.BlobId;
+import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.blobstore.file.FileBlobAttributes;
-import org.sonatype.nexus.blobstore.file.FileBlobStore;
+import org.sonatype.nexus.blobstore.restore.RestoreBlobStrategy;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.repository.Format;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.maintenance.MaintenanceService;
+import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
-import org.sonatype.nexus.repository.storage.BucketStore;
-import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.repository.types.GroupType;
 import org.sonatype.nexus.scheduling.TaskConfiguration;
 
@@ -63,21 +62,18 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
-import static org.sonatype.nexus.blobstore.restore.DefaultIntegrityCheckStrategy.DEFAULT_NAME;
-import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
-import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.DRY_RUN;
-import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.INTEGRITY_CHECK;
-import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.RESTORE_BLOBS;
-import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.TYPE_ID;
-import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.UNDELETE_BLOBS;
+import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
+import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.DRY_RUN;
+import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.INTEGRITY_CHECK;
+import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.RESTORE_BLOBS;
+import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.TYPE_ID;
+import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor.UNDELETE_BLOBS;
+import static org.sonatype.nexus.blobstore.restore.datastore.DefaultIntegrityCheckStrategy.DEFAULT_NAME;
 
 public class RestoreMetadataTaskTest
     extends TestSupport
 {
-
   public static final String BLOBSTORE_NAME = "test";
-
-  RestoreMetadataTask underTest;
 
   @Mock
   BlobStoreManager blobStoreManager;
@@ -92,7 +88,7 @@ public class RestoreMetadataTaskTest
   Repository repository;
 
   @Mock
-  FileBlobStore fileBlobStore;
+  BlobStore blobStore;
 
   @Mock
   Blob blob;
@@ -107,19 +103,15 @@ public class RestoreMetadataTaskTest
   DryRunPrefix dryRunPrefix;
 
   @Mock
-  StorageTx storageTx;
-
-  @Mock
   DefaultIntegrityCheckStrategy defaultIntegrityCheckStrategy;
 
   @Mock
   IntegrityCheckStrategy testIntegrityCheckStrategy;
 
   @Mock
-  BucketStore bucketStore;
-
-  @Mock
   MaintenanceService maintenanceService;
+
+  RestoreMetadataTask underTest;
 
   Map<String, IntegrityCheckStrategy> integrityCheckStrategies;
 
@@ -137,7 +129,7 @@ public class RestoreMetadataTaskTest
 
     underTest =
         new RestoreMetadataTask(blobStoreManager, repositoryManager, ImmutableMap.of("maven2", restoreBlobStrategy),
-            blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies, bucketStore, maintenanceService);
+            blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies, maintenanceService);
 
     reset(integrityCheckStrategies); // reset this mock so we more easily verify calls
 
@@ -155,11 +147,11 @@ public class RestoreMetadataTaskTest
     blobAttributes = new FileBlobAttributes(Paths.get(resource.toURI()));
     blobAttributes.load();
     blobId = new BlobId("86e20baa-0bca-4915-a7dc-9a4f34e72321");
-    when(fileBlobStore.getBlobIdStream()).thenReturn(Stream.of(blobId));
-    when(blobStoreManager.get(BLOBSTORE_NAME)).thenReturn(fileBlobStore);
+    when(blobStore.getBlobIdStream()).thenReturn(Stream.of(blobId));
+    when(blobStoreManager.get(BLOBSTORE_NAME)).thenReturn(blobStore);
 
-    when(fileBlobStore.get(blobId, true)).thenReturn(blob);
-    when(fileBlobStore.getBlobAttributes(blobId)).thenReturn(blobAttributes);
+    when(blobStore.get(blobId, true)).thenReturn(blob);
+    when(blobStore.getBlobAttributes(blobId)).thenReturn(blobAttributes);
 
     when(dryRunPrefix.get()).thenReturn("");
   }
@@ -174,8 +166,8 @@ public class RestoreMetadataTaskTest
     underTest.execute();
 
     ArgumentCaptor<Properties> propertiesArgumentCaptor = ArgumentCaptor.forClass(Properties.class);
-    verify(restoreBlobStrategy).restore(propertiesArgumentCaptor.capture(), eq(blob), eq(BLOBSTORE_NAME), eq(false));
-    verify(fileBlobStore).undelete(blobstoreUsageChecker, blobId, blobAttributes, false);
+    verify(restoreBlobStrategy).restore(propertiesArgumentCaptor.capture(), eq(blob), eq(blobStore), eq(false));
+    verify(blobStore).undelete(blobstoreUsageChecker, blobId, blobAttributes, false);
     Properties properties = propertiesArgumentCaptor.getValue();
 
     assertThat(properties.getProperty("@BlobStore.blob-name"), is("org/codehaus/plexus/plexus/3.1/plexus-3.1.pom"));
@@ -190,8 +182,8 @@ public class RestoreMetadataTaskTest
 
     underTest.execute();
 
-    verify(restoreBlobStrategy).restore(any(), eq(blob), eq(BLOBSTORE_NAME), eq(false));
-    verify(fileBlobStore, never()).undelete(any(), any(), any(), eq(false));
+    verify(restoreBlobStrategy).restore(any(), eq(blob), eq(blobStore), eq(false));
+    verify(blobStore, never()).undelete(any(), any(), any(), eq(false));
   }
 
   @SuppressWarnings("deprecation")
@@ -207,7 +199,7 @@ public class RestoreMetadataTaskTest
     underTest.execute();
 
     verify(restoreBlobStrategy, never()).restore(any(), any(), any());
-    verify(fileBlobStore).undelete(any(), any(), any(), eq(false));
+    verify(blobStore).undelete(any(), any(), any(), eq(false));
   }
 
   @Test
@@ -220,7 +212,7 @@ public class RestoreMetadataTaskTest
 
     underTest.execute();
 
-    verifyZeroInteractions(blobStoreManager);
+    verifyZeroInteractions(blobStore);
   }
 
   @Test
@@ -282,7 +274,7 @@ public class RestoreMetadataTaskTest
     underTest.execute();
 
     verifyZeroInteractions(defaultIntegrityCheckStrategy);
-    verify(testIntegrityCheckStrategy).check(eq(repository), eq(fileBlobStore), any(), any());
+    verify(testIntegrityCheckStrategy).check(eq(repository), eq(blobStore), any(), any());
   }
 
   @Test
@@ -291,9 +283,9 @@ public class RestoreMetadataTaskTest
     configuration.setBoolean(UNDELETE_BLOBS, true);
     configuration.setBoolean(INTEGRITY_CHECK, false);
     underTest.configure(configuration);
-    
+
     underTest.execute();
-    
+
     verify(restoreBlobStrategy).after(true, repository);
   }
 
@@ -331,13 +323,13 @@ public class RestoreMetadataTaskTest
 
     RestoreMetadataTask underTest =
         new RestoreMetadataTask(blobStoreManager, repositoryManager, ImmutableMap.of("maven2", restoreBlobStrategy),
-            blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies, bucketStore, maintenanceService)
+            blobstoreUsageChecker, dryRunPrefix, integrityCheckStrategies, maintenanceService)
         {
-      @Override
-      public boolean isCanceled() {
-        return true;
-      }
-    };
+          @Override
+          public boolean isCanceled() {
+            return true;
+          }
+        };
 
     underTest.configure(configuration);
 
@@ -367,14 +359,14 @@ public class RestoreMetadataTaskTest
     Repository repository2 = mock(Repository.class);
 
     BlobId blobId2 = new BlobId("86e20baa-0bca-4915-a7dc-9a4f34e72322");
-    when(fileBlobStore.get(blobId2, true)).thenReturn(blob);
-    when(fileBlobStore.getBlobAttributes(blobId2)).thenReturn(blobAttributes2);
+    when(blobStore.get(blobId2, true)).thenReturn(blob);
+    when(blobStore.getBlobAttributes(blobId2)).thenReturn(blobAttributes2);
     when(blobAttributes2.getProperties()).thenReturn(properties);
     when(properties.getProperty(HEADER_PREFIX + REPO_NAME_HEADER)).thenReturn("maven-central2");
     when(repositoryManager.get("maven-central2")).thenReturn(repository2);
     when(repository2.getFormat()).thenReturn(mavenFormat);
 
-    when(fileBlobStore.getBlobIdStream()).thenReturn(Stream.of(blobId, blobId2));
+    when(blobStore.getBlobIdStream()).thenReturn(Stream.of(blobId, blobId2));
 
     configuration.setBoolean(RESTORE_BLOBS, true);
     configuration.setBoolean(UNDELETE_BLOBS, true);
@@ -395,10 +387,10 @@ public class RestoreMetadataTaskTest
 
     BlobId exceptionBlobId = new BlobId("86e20baa-0bca-4915-a7dc-9a4f34e72322");
     Blob exceptionBlob = mock(Blob.class);
-    when(fileBlobStore.get(exceptionBlobId, true)).thenReturn(exceptionBlob);
-    when(fileBlobStore.getBlobAttributes(exceptionBlobId)).thenReturn(blobAttributes2);
+    when(blobStore.get(exceptionBlobId, true)).thenReturn(exceptionBlob);
+    when(blobStore.getBlobAttributes(exceptionBlobId)).thenReturn(blobAttributes2);
     BlobStoreConfiguration blobStoreConfiguration = mock(BlobStoreConfiguration.class);
-    when(fileBlobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
+    when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
     when(blobAttributes2.getProperties()).thenReturn(properties2);
     when(properties2.getProperty(HEADER_PREFIX + REPO_NAME_HEADER)).thenReturn("maven-central2");
     when(repositoryManager.get("maven-central2")).thenReturn(repository2);
@@ -406,21 +398,21 @@ public class RestoreMetadataTaskTest
 
     doThrow(new RuntimeException())
         .when(restoreBlobStrategy)
-        .restore(properties2, exceptionBlob, BLOBSTORE_NAME, false);
+        .restore(properties2, exceptionBlob, blobStore, false);
 
     BlobAttributes blobAttributes3 = mock(BlobAttributes.class);
     Properties properties3 = mock(Properties.class);
     Repository repository3 = mock(Repository.class);
 
     BlobId blobId3 = new BlobId("86e20baa-0bca-4915-a7dc-9a4f34e72324");
-    when(fileBlobStore.get(blobId3, true)).thenReturn(blob);
-    when(fileBlobStore.getBlobAttributes(blobId3)).thenReturn(blobAttributes3);
+    when(blobStore.get(blobId3, true)).thenReturn(blob);
+    when(blobStore.getBlobAttributes(blobId3)).thenReturn(blobAttributes3);
     when(blobAttributes3.getProperties()).thenReturn(properties3);
     when(properties3.getProperty(HEADER_PREFIX + REPO_NAME_HEADER)).thenReturn("maven-central2");
     when(repositoryManager.get("maven-central2")).thenReturn(repository3);
     when(repository3.getFormat()).thenReturn(mavenFormat);
 
-    when(fileBlobStore.getBlobIdStream()).thenReturn(Stream.of(blobId, exceptionBlobId, blobId3));
+    when(blobStore.getBlobIdStream()).thenReturn(Stream.of(blobId, exceptionBlobId, blobId3));
 
     configuration.setBoolean(RESTORE_BLOBS, true);
     configuration.setBoolean(UNDELETE_BLOBS, true);
@@ -429,7 +421,7 @@ public class RestoreMetadataTaskTest
 
     underTest.execute();
 
-    verify(restoreBlobStrategy).restore(properties2, exceptionBlob, BLOBSTORE_NAME, false);
+    verify(restoreBlobStrategy).restore(properties2, exceptionBlob, blobStore, false);
     verify(restoreBlobStrategy).after(true, repository);
     verify(restoreBlobStrategy, times(0)).after(true, repository2);
     verify(restoreBlobStrategy).after(true, repository3);

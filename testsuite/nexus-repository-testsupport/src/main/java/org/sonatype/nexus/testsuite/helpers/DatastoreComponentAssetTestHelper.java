@@ -207,6 +207,12 @@ public class DatastoreComponentAssetTestHelper
   }
 
   @Override
+  public boolean componentExists(final Repository repository, final String name) {
+    List<FluentComponent> components = browseComponents(repository);
+    return components.stream().anyMatch(comp -> comp.name().equals(name));
+  }
+
+  @Override
   public boolean componentExists(final Repository repository, final String name, final String version) {
     if (endsWith(version, SNAPSHOT_VERSION_SUFFIX)) {
       return findSnapshotComponent(repository, name, version).isPresent();

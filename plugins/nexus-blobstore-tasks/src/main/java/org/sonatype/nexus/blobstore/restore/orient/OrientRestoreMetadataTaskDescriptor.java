@@ -10,32 +10,22 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.restore;
+package org.sonatype.nexus.blobstore.restore.orient;
 
-import java.util.List;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.formfields.FormField;
+import org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescriptor;
 
-import org.junit.Before;
-import org.junit.Test;
-
-import static org.hamcrest.Matchers.hasSize;
-import static org.junit.Assert.assertThat;
-
-public class RestoreMetadataTaskDescriptorTest
-    extends TestSupport
+/**
+ * @since 3.4
+ */
+@Named
+@Singleton
+public class OrientRestoreMetadataTaskDescriptor
+    extends BaseRestoreMetadataTaskDescriptor
 {
-  RestoreMetadataTaskDescriptor underTest;
-
-  @Before
-  public void setup() {
-    underTest = new RestoreMetadataTaskDescriptor();
-  }
-
-  @Test
-  public void testGetFormFields() {
-    List<FormField> formField = underTest.getFormFields();
-    assertThat(formField, hasSize(5));
+  public OrientRestoreMetadataTaskDescriptor() {
+    super(OrientRestoreMetadataTask.class);
   }
 }

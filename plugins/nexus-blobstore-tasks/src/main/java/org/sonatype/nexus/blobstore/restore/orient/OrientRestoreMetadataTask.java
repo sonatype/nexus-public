@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.restore;
+package org.sonatype.nexus.blobstore.restore.orient;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -28,6 +28,7 @@ import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
+import org.sonatype.nexus.blobstore.restore.RestoreBlobStrategy;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.logging.task.ProgressLogIntervalHelper;
 import org.sonatype.nexus.repository.Repository;
@@ -44,18 +45,18 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Optional.ofNullable;
 import static org.sonatype.nexus.blobstore.api.BlobAttributesConstants.HEADER_PREFIX;
 import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
-import static org.sonatype.nexus.blobstore.restore.DefaultIntegrityCheckStrategy.DEFAULT_NAME;
-import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
-import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.DRY_RUN;
-import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.INTEGRITY_CHECK;
-import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.RESTORE_BLOBS;
-import static org.sonatype.nexus.blobstore.restore.RestoreMetadataTaskDescriptor.UNDELETE_BLOBS;
+import static org.sonatype.nexus.blobstore.restore.orient.DefaultOrientIntegrityCheckStrategy.DEFAULT_NAME;
+import static org.sonatype.nexus.blobstore.restore.orient.OrientRestoreMetadataTaskDescriptor.BLOB_STORE_NAME_FIELD_ID;
+import static org.sonatype.nexus.blobstore.restore.orient.OrientRestoreMetadataTaskDescriptor.DRY_RUN;
+import static org.sonatype.nexus.blobstore.restore.orient.OrientRestoreMetadataTaskDescriptor.INTEGRITY_CHECK;
+import static org.sonatype.nexus.blobstore.restore.orient.OrientRestoreMetadataTaskDescriptor.RESTORE_BLOBS;
+import static org.sonatype.nexus.blobstore.restore.orient.OrientRestoreMetadataTaskDescriptor.UNDELETE_BLOBS;
 
 /**
  * @since 3.4
  */
 @Named
-public class RestoreMetadataTask
+public class OrientRestoreMetadataTask
     extends TaskSupport
     implements Cancelable
 {
@@ -65,34 +66,35 @@ public class RestoreMetadataTask
 
   private final Map<String, RestoreBlobStrategy> restoreBlobStrategies;
 
-  private final Map<String, IntegrityCheckStrategy> integrityCheckStrategies;
+  private final Map<String, OrientIntegrityCheckStrategy> integrityCheckStrategies;
 
   private final BlobStoreUsageChecker blobStoreUsageChecker;
 
   private final DryRunPrefix dryRunPrefix;
 
-  private final IntegrityCheckStrategy defaultIntegrityCheckStrategy;
+  private final OrientIntegrityCheckStrategy defaultOrientIntegrityCheckStrategy;
 
   private final BucketStore bucketStore;
 
   private final MaintenanceService maintenanceService;
 
   @Inject
-  public RestoreMetadataTask(final BlobStoreManager blobStoreManager,
-                             final RepositoryManager repositoryManager,
-                             final Map<String, RestoreBlobStrategy> restoreBlobStrategies,
-                             final BlobStoreUsageChecker blobStoreUsageChecker,
-                             final DryRunPrefix dryRunPrefix,
-                             final Map<String, IntegrityCheckStrategy> integrityCheckStrategies,
-                             final BucketStore bucketStore,
-                             final MaintenanceService maintenanceService)
+  public OrientRestoreMetadataTask(
+      final BlobStoreManager blobStoreManager,
+      final RepositoryManager repositoryManager,
+      final Map<String, RestoreBlobStrategy> restoreBlobStrategies,
+      final BlobStoreUsageChecker blobStoreUsageChecker,
+      final DryRunPrefix dryRunPrefix,
+      final Map<String, OrientIntegrityCheckStrategy> integrityCheckStrategies,
+      final BucketStore bucketStore,
+      final MaintenanceService maintenanceService)
   {
     this.blobStoreManager = checkNotNull(blobStoreManager);
     this.repositoryManager = checkNotNull(repositoryManager);
     this.restoreBlobStrategies = checkNotNull(restoreBlobStrategies);
     this.blobStoreUsageChecker = checkNotNull(blobStoreUsageChecker);
     this.dryRunPrefix = checkNotNull(dryRunPrefix);
-    this.defaultIntegrityCheckStrategy = checkNotNull(integrityCheckStrategies.get(DEFAULT_NAME));
+    this.defaultOrientIntegrityCheckStrategy = checkNotNull(integrityCheckStrategies.get(DEFAULT_NAME));
     this.integrityCheckStrategies = checkNotNull(integrityCheckStrategies);
     this.bucketStore = checkNotNull(bucketStore);
     this.maintenanceService = checkNotNull(maintenanceService);
@@ -118,7 +120,11 @@ public class RestoreMetadataTask
     return null;
   }
 
-  private void restore(final String blobStoreName, final boolean restore, final boolean undelete, final boolean dryRun) // NOSONAR
+  private void restore(
+      final String blobStoreName,
+      final boolean restore,
+      final boolean undelete,
+      final boolean dryRun) // NOSONAR
   {
     if (!restore && !undelete) {
       log.warn("No repair/restore operations selected");
@@ -128,7 +134,6 @@ public class RestoreMetadataTask
     String logPrefix = dryRun ? dryRunPrefix.get() : "";
     BlobStore store = blobStoreManager.get(blobStoreName);
 
-    ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60);
     long processed = 0;
     long undeleted = 0;
     boolean updateAssets = !dryRun && restore;
@@ -137,41 +142,43 @@ public class RestoreMetadataTask
     if (dryRun) {
       log.info("{}Actions will be logged, but no changes will be made.", logPrefix);
     }
-    for (BlobId blobId : (Iterable<BlobId>)store.getBlobIdStream()::iterator) {
-      try {
-        Optional<Context> context = buildContext(blobStoreName, store, blobId);
-        if (context.isPresent()) {
-          Context c =  context.get();
-          if (restore && c.restoreBlobStrategy != null && !c.blobAttributes.isDeleted()) {
-            c.restoreBlobStrategy.restore(c.properties, c.blob, c.blobStoreName, dryRun);
-          }
-          if (undelete &&
-              store.undelete(blobStoreUsageChecker, c.blobId, c.blobAttributes, dryRun))
-          {
-            undeleted++;
+
+    try (ProgressLogIntervalHelper progressLogger = new ProgressLogIntervalHelper(log, 60)) {
+      for (BlobId blobId : (Iterable<BlobId>) store.getBlobIdStream()::iterator) {
+        try {
+          Optional<Context> context = buildContext(blobStoreName, store, blobId);
+          if (context.isPresent()) {
+            Context c = context.get();
+            if (restore && c.restoreBlobStrategy != null && !c.blobAttributes.isDeleted()) {
+              c.restoreBlobStrategy.restore(c.properties, c.blob, c.blobStore, dryRun);
+            }
+            if (undelete &&
+                store.undelete(blobStoreUsageChecker, c.blobId, c.blobAttributes, dryRun)) {
+              undeleted++;
+            }
+
+            if (updateAssets) {
+              touchedRepositories.add(c.repository);
+            }
           }
 
-          if (updateAssets) {
-            touchedRepositories.add(c.repository);
+          processed++;
+
+          progressLogger
+              .info("{}Elapsed time: {}, processed: {}, un-deleted: {}", logPrefix, progressLogger.getElapsed(),
+                  processed, undeleted);
+
+          if (isCanceled()) {
+            break;
           }
         }
-
-        processed++;
-
-        progressLogger.info("{}Elapsed time: {}, processed: {}, un-deleted: {}", logPrefix, progressLogger.getElapsed(),
-                            processed, undeleted);
-
-        if (isCanceled()) {
-          break;
+        catch (Exception e) {
+          log.error("Error restoring blob {}", blobId, e);
         }
-      } catch (Exception e) {
-        log.error("Error restoring blob {}", blobId, e);
       }
     }
 
     updateAssets(touchedRepositories, updateAssets);
-
-    progressLogger.flush();
   }
 
   private void updateAssets(final Set<Repository> repositories, final boolean updateAssets) {
@@ -201,7 +208,7 @@ public class RestoreMetadataTask
     StreamSupport.stream(repositoryManager.browseForBlobStore(blobStoreId).spliterator(), false)
         .filter(r -> !(r.getType() instanceof GroupType))
         .forEach(repository -> integrityCheckStrategies
-            .getOrDefault(repository.getFormat().getValue(), defaultIntegrityCheckStrategy)
+            .getOrDefault(repository.getFormat().getValue(), defaultOrientIntegrityCheckStrategy)
             .check(repository, blobStore, this::isCanceled, this::integrityCheckFailedHandler)
         );
   }
@@ -221,15 +228,16 @@ public class RestoreMetadataTask
   private Optional<Context> buildContext(final String blobStoreName, final BlobStore blobStore, final BlobId blobId)
   {
     return Optional.of(new Context(blobStoreName, blobStore, blobId))
-        .map(c -> c.blob(c.blobStore.get(c.blobId, true)))
-        .map(c -> c.blobAttributes(c.blobStore.getBlobAttributes(c.blobId)))
-        .map(c -> c.properties(c.blobAttributes.getProperties()))
-        .map(c -> c.repositoryName(c.properties.getProperty(HEADER_PREFIX + REPO_NAME_HEADER)))
-        .map(c -> c.repository(repositoryManager.get(c.repositoryName)))
-        .map(c -> c.restoreBlobStrategy(restoreBlobStrategies.get(c.repository.getFormat().getValue())));
+        .map(context -> context.blob(context.blobStore.get(context.blobId, true)))
+        .map(context -> context.blobAttributes(context.blobStore.getBlobAttributes(context.blobId)))
+        .map(context -> context.properties(context.blobAttributes.getProperties()))
+        .map(context -> context.repositoryName(context.properties.getProperty(HEADER_PREFIX + REPO_NAME_HEADER)))
+        .map(context -> context.repository(repositoryManager.get(context.repositoryName)))
+        .map(context -> context.restoreBlobStrategy(restoreBlobStrategies.get(context.repository.getFormat().getValue())));
   }
 
-  private static class Context {
+  private static class Context
+  {
     final String blobStoreName;
 
     final BlobStore blobStore;

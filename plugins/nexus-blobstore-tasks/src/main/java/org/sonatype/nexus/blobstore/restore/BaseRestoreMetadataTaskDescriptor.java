@@ -12,39 +12,66 @@
  */
 package org.sonatype.nexus.blobstore.restore;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
-
 import org.sonatype.goodies.i18n.I18N;
 import org.sonatype.goodies.i18n.MessageBundle;
 import org.sonatype.nexus.formfields.CheckboxFormField;
 import org.sonatype.nexus.formfields.ComboboxFormField;
 import org.sonatype.nexus.scheduling.TaskDescriptorSupport;
+import org.sonatype.nexus.scheduling.TaskSupport;
 
 import static org.sonatype.nexus.formfields.FormField.MANDATORY;
 import static org.sonatype.nexus.formfields.FormField.OPTIONAL;
 
 /**
- * @since 3.4
+ * @since 3.next
  */
-@Named
-@Singleton
-public class RestoreMetadataTaskDescriptor
+public abstract class BaseRestoreMetadataTaskDescriptor
     extends TaskDescriptorSupport
 {
-  static final String TYPE_ID = "blobstore.rebuildComponentDB";
+  public static final String TYPE_ID = "blobstore.rebuildComponentDB";
 
-  static final String BLOB_STORE_NAME_FIELD_ID = "blobstoreName";
+  public static final String BLOB_STORE_NAME_FIELD_ID = "blobstoreName";
 
-  static final String RESTORE_BLOBS = "restoreBlobs";
+  public static final String RESTORE_BLOBS = "restoreBlobs";
 
-  static final String UNDELETE_BLOBS = "undeleteBlobs";
+  public static final String UNDELETE_BLOBS = "undeleteBlobs";
 
-  static final String INTEGRITY_CHECK = "integrityCheck";
+  public static final String INTEGRITY_CHECK = "integrityCheck";
 
-  static final String DRY_RUN = "dryRun";
+  public static final String DRY_RUN = "dryRun";
 
-  private interface Messages extends MessageBundle {
+  private static final Messages messages = I18N.create(Messages.class);
+
+  public BaseRestoreMetadataTaskDescriptor(final Class<? extends TaskSupport> restoreMetadataTaskClass) {
+    super(TYPE_ID,
+        restoreMetadataTaskClass,
+        messages.name(),
+        VISIBLE,
+        EXPOSED,
+        new ComboboxFormField<String>(
+            BLOB_STORE_NAME_FIELD_ID,
+            messages.blobstoreNameLabel(),
+            messages.blobstoreNameHelpText(),
+            MANDATORY
+        ).withStoreApi("coreui_Blobstore.read").withIdMapping("name"),
+        new CheckboxFormField(DRY_RUN,
+            messages.dryRunLabel(),
+            messages.dryRunHelpText(), OPTIONAL).withInitialValue(false),
+        new CheckboxFormField(RESTORE_BLOBS,
+            messages.restoreBlobsLabel(),
+            messages.restoreBlobsHelpText(), OPTIONAL).withInitialValue(true),
+        new CheckboxFormField(UNDELETE_BLOBS,
+            messages.undeleteBlobsLabel(),
+            messages.undeleteBlobsHelpText(), OPTIONAL).withInitialValue(true),
+        new CheckboxFormField(INTEGRITY_CHECK,
+            messages.integrityCheckLabel(),
+            messages.integrityCheckHelpText(), OPTIONAL).withInitialValue(true)
+    );
+  }
+
+  private interface Messages
+      extends MessageBundle
+  {
     @DefaultMessage("Repair - Reconcile component database from blob store")
     String name();
 
@@ -77,34 +104,5 @@ public class RestoreMetadataTaskDescriptor
 
     @DefaultMessage("Verify integrity between asset metadata and blob properties")
     String integrityCheckHelpText();
-  }
-
-  private static final Messages messages = I18N.create(Messages.class);
-
-  RestoreMetadataTaskDescriptor() {
-    super(TYPE_ID,
-        RestoreMetadataTask.class,
-        messages.name(),
-        VISIBLE,
-        EXPOSED,
-        new ComboboxFormField<String>(
-            BLOB_STORE_NAME_FIELD_ID,
-            messages.blobstoreNameLabel(),
-            messages.blobstoreNameHelpText(),
-            MANDATORY
-        ).withStoreApi("coreui_Blobstore.read").withIdMapping("name"),
-        new CheckboxFormField(DRY_RUN,
-            messages.dryRunLabel(),
-            messages.dryRunHelpText(), OPTIONAL).withInitialValue(false),
-        new CheckboxFormField(RESTORE_BLOBS,
-            messages.restoreBlobsLabel(),
-            messages.restoreBlobsHelpText(), OPTIONAL).withInitialValue(true),
-        new CheckboxFormField(UNDELETE_BLOBS,
-            messages.undeleteBlobsLabel(),
-            messages.undeleteBlobsHelpText(), OPTIONAL).withInitialValue(true),
-        new CheckboxFormField(INTEGRITY_CHECK,
-            messages.integrityCheckLabel(),
-            messages.integrityCheckHelpText(), OPTIONAL).withInitialValue(true)
-    );
   }
 }

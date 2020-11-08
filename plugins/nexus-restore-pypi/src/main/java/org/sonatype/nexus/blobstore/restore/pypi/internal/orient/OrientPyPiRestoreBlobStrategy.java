@@ -21,7 +21,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
-import org.sonatype.nexus.blobstore.restore.BaseRestoreBlobStrategy;
+import org.sonatype.nexus.blobstore.restore.orient.OrientBaseRestoreBlobStrategy;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
 import org.sonatype.nexus.blobstore.restore.pypi.internal.PyPiRestoreBlobData;
 import org.sonatype.nexus.blobstore.restore.pypi.internal.PyPiRestoreBlobDataFactory;
@@ -52,7 +52,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 @Named("pypi")
 @Singleton
 public class OrientPyPiRestoreBlobStrategy
-    extends BaseRestoreBlobStrategy<PyPiRestoreBlobData>
+    extends OrientBaseRestoreBlobStrategy<PyPiRestoreBlobData>
 {
   private final OrientPyPiRepairIndexComponent pyPiRepairIndexComponent;
 

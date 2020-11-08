@@ -10,19 +10,21 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.restore;
+package org.sonatype.nexus.blobstore.restore.datastore;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
+
+import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.content.Asset;
 
 /**
  * Strategy for checking the integrity of the assets in a repository against its blobstore
  *
- * @since 3.6.1
+ * @since 3.next
  */
 public interface IntegrityCheckStrategy
 {
@@ -37,6 +39,6 @@ public interface IntegrityCheckStrategy
   void check(
       final Repository repository,
       final BlobStore blobStore,
-      final Supplier<Boolean> isCancelled,
-      final Consumer<Asset> integrityCheckFailedHandler);
+      final BooleanSupplier isCancelled,
+      @Nullable final Consumer<Asset> integrityCheckFailedHandler);
 }

@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.restore;
+package org.sonatype.nexus.blobstore.restore.orient;
 
 import java.io.IOException;
 import java.util.List;
@@ -21,7 +21,10 @@ import javax.annotation.Nonnull;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
+import org.sonatype.nexus.blobstore.restore.RestoreBlobStrategy;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.EntityMetadata;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
@@ -56,7 +59,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
  *
  * @since 3.6.1
  */
-public abstract class BaseRestoreBlobStrategy<T>
+public abstract class OrientBaseRestoreBlobStrategy<T>
     extends ComponentSupport
     implements RestoreBlobStrategy
 {
@@ -68,10 +71,10 @@ public abstract class BaseRestoreBlobStrategy<T>
 
   private DryRunPrefix dryRunPrefix;
 
-  public BaseRestoreBlobStrategy(final NodeAccess nodeAccess,
-                                 final RepositoryManager repositoryManager,
-                                 final BlobStoreManager blobStoreManager,
-                                 final DryRunPrefix dryRunPrefix)
+  public OrientBaseRestoreBlobStrategy(final NodeAccess nodeAccess,
+                                       final RepositoryManager repositoryManager,
+                                       final BlobStoreManager blobStoreManager,
+                                       final DryRunPrefix dryRunPrefix)
   {
     this.nodeAccess = checkNotNull(nodeAccess);
     this.repositoryManager = checkNotNull(repositoryManager);
@@ -82,10 +85,10 @@ public abstract class BaseRestoreBlobStrategy<T>
   @Override
   public void restore(final Properties properties,
                       final Blob blob,
-                      final String blobStoreName,
+                      final BlobStore blobStore,
                       final boolean isDryRun)
   {
-    RestoreBlobData blobData = new RestoreBlobData(blob, properties, blobStoreName, repositoryManager);
+    RestoreBlobData blobData = new RestoreBlobData(blob, properties, blobStore, repositoryManager);
     Optional<StorageFacet> storageFacet = blobData.getRepository().optionalFacet(StorageFacet.class);
     T restoreData = createRestoreData(blobData);
 
@@ -94,14 +97,14 @@ public abstract class BaseRestoreBlobStrategy<T>
     }
     else {
       log.debug("Skipping asset, blob store: {}, repository: {}, blob name: {}, blob id: {}",
-          blobStoreName, blobData.getRepository().getName(), blobData.getBlobName(), blob.getId());
+          blobStore.getBlobStoreConfiguration().getName(), blobData.getRepository().getName(), blobData.getBlobName(), blob.getId());
     }
   }
 
   private void doRestore(StorageFacet storageFacet, RestoreBlobData blobData, T restoreData, boolean isDryRun) {
     String logPrefix = isDryRun ? dryRunPrefix.get() : "";
     String path = getAssetPath(restoreData);
-    String blobStoreName = blobData.getBlobStoreName();
+    String blobStoreName = blobData.getBlobStore().getBlobStoreConfiguration().getName();
     String repoName = blobData.getRepository().getName();
     String blobName = blobData.getBlobName();
     Blob blob = blobData.getBlob();
@@ -149,7 +152,7 @@ public abstract class BaseRestoreBlobStrategy<T>
     List<HashAlgorithm> hashTypes = getHashAlgorithms();
 
     AssetBlob assetBlob = new AssetBlob(nodeAccess,
-        blobStoreManager.get(blobData.getBlobStoreName()),
+        blobData.getBlobStore(),
         blobStore -> blob,
         blobData.getProperty(HEADER_PREFIX + CONTENT_TYPE_HEADER),
         hash(hashTypes, blob.getInputStream()), true);
@@ -273,9 +276,7 @@ public abstract class BaseRestoreBlobStrategy<T>
   /**
    * Return the repository for the provided restore data
    */
-  protected Repository getRepository(@Nonnull final T data) {
-    return null;
-  }
+  protected abstract Repository getRepository(@Nonnull final T data);
  // -- END ABSTRACT METHODS ---
   /**
    * Create the metadata asset
