@@ -10,82 +10,79 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.maven.internal.orient.importtask;
+package org.sonatype.nexus.repository.maven.internal.content.importtask;
+
+import java.time.OffsetDateTime;
+import java.util.Optional;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.importtask.ImportPostProcessor;
+import org.sonatype.nexus.repository.content.Asset;
+import org.sonatype.nexus.repository.content.facet.ContentFacet;
+import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+import org.sonatype.nexus.repository.content.importtask.ImportPostProcessor;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
-import org.sonatype.nexus.repository.storage.Asset;
-import org.sonatype.nexus.repository.storage.StorageTx;
-
-import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
 /**
  * Provides some post processing capabilities for assets that could have hash files that need blobUpdated date to match
  * the imported asset blobUpdated Date
  *
- * @since 3.28
+ * @since 3.next
  */
 @Singleton
 @Named(Maven2Format.NAME)
-public class OrientMavenImportPostProcessor
+public class MavenImportPostProcessor
+    extends ComponentSupport
     implements ImportPostProcessor
 {
   @Override
   public void attributePostProcessing(
-      final Asset asset, final StorageTx tx, final Repository repository)
+      final Repository repository, final Asset asset)
   {
     for (HashType type : HashType.values()) {
-      updateHashFile('.' + type.getExt(), asset, tx, repository);
+      updateHashFile('.' + type.getExt(), asset, repository);
     }
   }
 
   private void updateHashFile(
       final String hashFileExtension,
       final Asset asset,
-      final StorageTx tx,
       final Repository repository)
   {
-    Asset hashAsset = tx.findAssetWithProperty(P_NAME, asset.name() + hashFileExtension, tx.findBucket(repository));
+    Optional<FluentAsset> hashAsset = repository.facet(ContentFacet.class).assets()
+        .path(asset.path() + hashFileExtension)
+        .find();
 
-    if (hashAsset != null) {
-      updateHashFileDates(hashAsset, asset, tx);
+    if (hashAsset.isPresent()) {
+      updateHashFileDates(hashAsset.get(), asset);
     }
   }
 
-  private void updateHashFileDates(
-      final Asset hashAsset, final Asset asset,
-      final StorageTx tx)
-  {
-    boolean assetTouched = false;
-
-    if (hashAsset.blobUpdated() == null ||
-        (hashAsset.blobUpdated() != null && !hashAsset.blobUpdated().equals(asset.blobUpdated()))) {
-      hashAsset.blobUpdated(asset.blobUpdated());
-      assetTouched = true;
+  private void updateHashFileDates(final FluentAsset hashAsset, final Asset asset) {
+    Optional<OffsetDateTime> lastDownloaded = hashAsset.lastDownloaded();
+    if (!lastDownloaded.isPresent() ||
+        !lastDownloaded.get().equals(asset.lastDownloaded().orElse(null))) {
+      hashAsset.lastDownloaded(asset.lastDownloaded().orElse(null));
     }
-    if (hashAsset.blobCreated() == null ||
-        (hashAsset.blobCreated() != null && !hashAsset.blobCreated().equals(asset.blobCreated()))) {
-      hashAsset.blobCreated(asset.blobCreated());
-      assetTouched = true;
-    }
-    if (hashAsset.lastDownloaded() == null ||
-        (hashAsset.lastDownloaded() != null && !hashAsset.lastDownloaded().equals(asset.lastDownloaded()))) {
-      hashAsset.lastDownloaded(asset.lastDownloaded());
-      assetTouched = true;
+    if (!hashAsset.created().equals(asset.created())) {
+      hashAsset.created(asset.created());
     }
     if (hashAsset.lastUpdated() == null ||
         (hashAsset.lastUpdated() != null && !hashAsset.lastUpdated().equals(asset.lastUpdated()))) {
       hashAsset.lastUpdated(asset.lastUpdated());
-      assetTouched = true;
     }
 
-    if (assetTouched) {
-      tx.saveAsset(hashAsset);
-    }
+    hashAsset.blob().ifPresent(blob -> {
+      asset.blob().ifPresent(assetBlob -> {
+        if (blob.blobCreated() == null ||
+            (blob.blobCreated() != null && !blob.blobCreated().equals(assetBlob.blobCreated()))) {
+          hashAsset.blobCreated(assetBlob.blobCreated());
+        }
+      });
+    });
   }
 }

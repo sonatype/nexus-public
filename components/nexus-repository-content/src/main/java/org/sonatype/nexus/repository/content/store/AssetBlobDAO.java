@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import java.time.OffsetDateTime;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -68,4 +69,11 @@ public interface AssetBlobDAO
    * @return {@code true} if the asset blob was deleted
    */
   boolean deleteAssetBlob(@Param("blobRef") BlobRef blobRef);
+
+  /**
+   * Generally it is recommended that this method not be called and let stores manage this value.
+   *
+   * @since 3.next
+   */
+  void setBlobCreated(@Param("blobRef") BlobRef blobRef, @Param("blobCreated") OffsetDateTime blobCreated);
 }

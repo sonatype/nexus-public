@@ -59,4 +59,9 @@
     DELETE FROM ${format}_asset_blob WHERE blob_ref = #{blobRef};
   </delete>
 
+  <update id="setBlobCreated">
+    UPDATE ${format}_asset_blob SET blob_created = #{blobCreated}
+     WHERE blob_ref = #{blobRef};
+  </update>
+
 </mapper>

@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
+import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.hash.MultiHashingInputStream;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
@@ -64,6 +65,11 @@ public class FluentBlobsImpl
   public FluentBlobsImpl(final ContentFacetSupport facet, final BlobStore blobStore) {
     this.facet = checkNotNull(facet);
     this.blobStore = checkNotNull(blobStore);
+  }
+
+  @Override
+  public BlobStoreMetrics getMetrics() {
+    return blobStore.getMetrics();
   }
 
   @Override

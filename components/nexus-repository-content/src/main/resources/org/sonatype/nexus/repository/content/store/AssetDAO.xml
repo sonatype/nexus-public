@@ -120,9 +120,16 @@
   </select>
 
   <insert id="createAsset" useGeneratedKeys="true" keyProperty="assetId" parameterType="AssetData">
-    INSERT INTO ${format}_asset (repository_id, path, kind, component_id, asset_blob_id, last_downloaded, attributes)
-        VALUES (#{repositoryId}, #{path}, #{kind}, #{componentId}, #{assetBlobId}, #{lastDownloaded}, #{attributes});
+    INSERT INTO ${format}_asset (repository_id, path, kind, component_id, asset_blob_id, last_updated, last_downloaded,
+                                 attributes)
+        VALUES (#{repositoryId}, #{path}, #{kind}, #{componentId}, #{assetBlobId}, #{lastUpdated}, #{lastDownloaded},
+                #{attributes});
   </insert>
+
+  <update id="created">
+    UPDATE ${format}_asset SET created = #{created}
+     WHERE <include refid="assetMatch"/>;
+  </update>
 
   <select id="readAsset" resultMap="assetResult">
     SELECT * FROM ${format}_asset WHERE <include refid="assetMatch"/>;
@@ -154,6 +161,16 @@
   <update id="markAsDownloaded" parameterType="AssetData">
     UPDATE ${format}_asset SET last_downloaded = CURRENT_TIMESTAMP, last_updated = CURRENT_TIMESTAMP
         WHERE <include refid="assetMatch"/>;
+  </update>
+
+  <update id="lastDownloaded">
+    UPDATE ${format}_asset SET last_downloaded = #{lastDownloaded}
+     WHERE <include refid="assetMatch"/>;
+  </update>
+
+  <update id="lastUpdated">
+    UPDATE ${format}_asset SET last_updated = #{lastUpdated}
+     WHERE <include refid="assetMatch"/>;
   </update>
 
   <delete id="deleteAsset" parameterType="AssetData">

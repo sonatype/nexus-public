@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -237,6 +238,7 @@ public class ExampleContentTestSupport
     asset.setPath(paths.get(random.nextInt(paths.size())));
     asset.setKind("test");
     asset.setAttributes(newAttributes("asset"));
+    asset.setLastUpdated(OffsetDateTime.now());
     return asset;
   }
 

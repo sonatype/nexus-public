@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import java.time.OffsetDateTime;
+
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.time.UTC;
 import org.sonatype.nexus.datastore.api.DataSession;
@@ -28,6 +30,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.sonatype.nexus.testcommon.matchers.NexusMatchers.time;
 
 /**
  * Test {@link AssetBlobDAO}.
@@ -116,6 +119,22 @@ public class AssetBlobDAOTest
       assertThat(dao.browseUnusedAssetBlobs(1, null), emptyIterable());
 
       assertFalse(dao.deleteAssetBlob(new BlobRef("test-node", "test-store", "test-blob")));
+    }
+  }
+
+  @Test
+  public void testBlob() {
+    AssetBlobData assetBlob1 = randomAssetBlob();
+    BlobRef blobRef1 = assetBlob1.blobRef();
+
+    try (DataSession<?> session = sessionRule.openSession("content")) {
+      AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
+      dao.createAssetBlob(assetBlob1);
+
+      OffsetDateTime blobCreated = OffsetDateTime.now().minusDays(1);
+      dao.setBlobCreated(blobRef1, blobCreated);
+
+      assertThat(dao.readAssetBlob(blobRef1).get().blobCreated(), time(blobCreated));
     }
   }
 }

@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
@@ -37,6 +38,7 @@ import org.sonatype.nexus.repository.content.event.asset.AssetPrePurgeEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetPurgedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetUploadedEvent;
 import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryDeletedEvent;
+import org.sonatype.nexus.repository.content.fluent.internal.FluentAssetImpl;
 import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.inject.assistedinject.Assisted;
@@ -310,5 +312,41 @@ public class AssetStore<T extends AssetDAO>
       commitChangesSoFar();
     }
     return purged;
+  }
+
+  /**
+   * Generally it is recommended that this method not be called and let stores manage this value automatically.
+   *
+   * Sets the created time of the asset associated with the ID to the specified time.
+   *
+   * @since 3.next
+   */
+  @Transactional
+  public void created(final FluentAssetImpl asset, final OffsetDateTime created) {
+    dao().created(InternalIds.internalAssetId(asset), created);
+  }
+
+  /**
+   * Generally it is recommended that this method not be called and let stores manage this value automatically.
+   *
+   * Sets the last download time of the asset associated with the ID to the specified time.
+   *
+   * @since 3.next
+   */
+  @Transactional
+  public void lastDownloaded(final Asset asset, final OffsetDateTime lastDownloaded) {
+    dao().lastDownloaded(InternalIds.internalAssetId(asset), lastDownloaded);
+  }
+
+  /**
+   * Generally it is recommended that this method not be called and let stores manage this value automatically.
+   *
+   * Sets the last updated time of the asset associated with the ID to the specified time.
+   *
+   * @since 3.next
+   */
+  @Transactional
+  public void lastUpdated(final Asset asset, final OffsetDateTime lastUpdated) {
+    dao().lastUpdated(InternalIds.internalAssetId(asset), lastUpdated);
   }
 }

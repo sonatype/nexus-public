@@ -113,7 +113,7 @@ public class UploadManagerImpl
   {
     UploadHandler uploadHandler = getUploadHandler(repository);
 
-    return uploadHandler.handle(repository, content, path);
+    return uploadHandler.handle(repository, content, path.charAt(0) == '/' ? path : '/' + path);
   }
 
   private ComponentUpload create(final Repository repository, final HttpServletRequest request)

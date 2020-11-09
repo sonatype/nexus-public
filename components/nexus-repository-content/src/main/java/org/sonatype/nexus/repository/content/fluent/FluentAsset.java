@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.fluent;
 
+import java.time.OffsetDateTime;
 import java.util.Map;
 
 import org.sonatype.nexus.blobstore.api.Blob;
@@ -100,4 +101,38 @@ public interface FluentAsset
    * Deletes this asset.
    */
   boolean delete();
+
+  /**
+   * Generally it is recommended that this method not be called and let stores manage this value.
+   *
+   * @since 3.next
+   */
+  void blobCreated(OffsetDateTime blobCreated);
+
+  /**
+   * Generally it is recommended that this method not be called and let stores manage this value automatically.
+   *
+   * Sets the created time of the asset associated with the ID to the specified time.
+   *
+   * @since 3.next
+   */
+  void created(OffsetDateTime created);
+
+  /**
+   * Generally it is recommended that this method not be called and let stores manage this value automatically.
+   *
+   * Sets the last download time of the asset associated with the ID to the specified time.
+   *
+   * @since 3.next
+   */
+  void lastDownloaded(OffsetDateTime lastDownloaded);
+
+  /**
+   * Generally it is recommended that this method not be called and let stores manage this value automatically.
+   *
+   * Sets the last updated time of the asset associated with the ID to the specified time.
+   *
+   * @since 3.next
+   */
+  void lastUpdated(OffsetDateTime lastUpdated);
 }

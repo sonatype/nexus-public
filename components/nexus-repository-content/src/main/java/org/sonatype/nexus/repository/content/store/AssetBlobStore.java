@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import java.time.OffsetDateTime;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -87,5 +88,15 @@ public class AssetBlobStore<T extends AssetBlobDAO>
   @Transactional
   public boolean deleteAssetBlob(final BlobRef blobRef) {
     return dao().deleteAssetBlob(blobRef);
+  }
+
+  /**
+   * Generally it is recommended that this method not be called and let stores manage this value.
+   *
+   * @since 3.next
+   */
+  @Transactional
+  public void setBlobCreated(final AssetBlob blob, final OffsetDateTime blobCreated) {
+    dao().setBlobCreated(blob.blobRef(), blobCreated);
   }
 }

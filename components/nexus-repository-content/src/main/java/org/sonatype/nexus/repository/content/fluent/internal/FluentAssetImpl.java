@@ -119,6 +119,11 @@ public class FluentAssetImpl
   }
 
   @Override
+  public void created(final OffsetDateTime lastUpdated) {
+    facet.stores().assetStore.created(this, lastUpdated);
+  }
+
+  @Override
   public OffsetDateTime lastUpdated() {
     return asset.lastUpdated();
   }
@@ -307,5 +312,20 @@ public class FluentAssetImpl
     else {
       withoutAttribute(CONTENT);
     }
+  }
+
+  @Override
+  public void blobCreated(final OffsetDateTime blobCreated) {
+    blob().ifPresent(assetBlob -> facet.stores().assetBlobStore.setBlobCreated(assetBlob, blobCreated));
+  }
+
+  @Override
+  public void lastDownloaded(final OffsetDateTime lastDownloaded) {
+    facet.stores().assetStore.lastDownloaded(this, lastDownloaded);
+  }
+
+  @Override
+  public void lastUpdated(final OffsetDateTime lastUpdated) {
+    facet.stores().assetStore.lastUpdated(this, lastUpdated);
   }
 }
