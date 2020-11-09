@@ -57,7 +57,7 @@ import org.apache.maven.model.Model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singletonList;
-import static org.sonatype.nexus.content.maven.MavenMetadataRebuildFacet.METADATA_REBUILD_KEY;
+import static org.sonatype.nexus.content.maven.MavenMetadataRebuildContentFacet.METADATA_REBUILD_KEY;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenArchetypeCatalogFacetImpl.MAVEN_ARCHETYPE_KIND;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.assetKind;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.getPackaging;

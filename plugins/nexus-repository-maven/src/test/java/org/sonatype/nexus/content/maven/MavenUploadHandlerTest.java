@@ -109,7 +109,7 @@ public class MavenUploadHandlerTest
   TempBlob tempBlob;
 
   @Mock
-  MavenMetadataRebuildFacet mavenMetadataRebuildFacet;
+  MavenMetadataRebuildContentFacet mavenMetadataRebuildFacet;
 
   @Mock
   private ContentPermissionChecker contentPermissionChecker;
@@ -135,7 +135,7 @@ public class MavenUploadHandlerTest
     when(repository.getName()).thenReturn(REPO_NAME);
     when(repository.getFormat()).thenReturn(new Maven2Format());
     when(repository.facet(MavenContentFacet.class)).thenReturn(mavenFacet);
-    when(repository.facet(MavenMetadataRebuildFacet.class)).thenReturn(mavenMetadataRebuildFacet);
+    when(repository.facet(MavenMetadataRebuildContentFacet.class)).thenReturn(mavenMetadataRebuildFacet);
 
     FluentBlobs blobs = mock(FluentBlobs.class);
     when(mavenFacet.blobs()).thenReturn(blobs);

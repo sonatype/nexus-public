@@ -175,7 +175,7 @@ public abstract class NexusPaxExamSupport
   @Named("nexus.orient.enabled")
   private Boolean orientEnabled;
 
-  private static final String POSTGRES_IMAGE = "postgres:12.3";
+  private static final String POSTGRES_IMAGE = "docker-all.repo.sonatype.com/postgres:12.3";
 
   private static final int POSTGRES_PORT = 5432;
 

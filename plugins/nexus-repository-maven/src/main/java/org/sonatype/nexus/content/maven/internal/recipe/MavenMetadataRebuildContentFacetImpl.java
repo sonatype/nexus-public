@@ -19,7 +19,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.sonatype.nexus.content.maven.MavenContentFacet;
-import org.sonatype.nexus.content.maven.MavenMetadataRebuildFacet;
+import org.sonatype.nexus.content.maven.MavenMetadataRebuildContentFacet;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
@@ -29,6 +29,7 @@ import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataRebu
 import org.sonatype.nexus.repository.types.ProxyType;
 import org.sonatype.nexus.repository.view.Payload;
 
+import com.google.common.base.Strings;
 import org.apache.maven.artifact.repository.metadata.Metadata;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -39,9 +40,9 @@ import static org.sonatype.nexus.repository.maven.internal.Constants.METADATA_FI
  * @since 3.26
  */
 @Named
-public class MavenMetadataRebuildFacetImpl
+public class MavenMetadataRebuildContentFacetImpl
     extends FacetSupport
-    implements MavenMetadataRebuildFacet
+    implements MavenMetadataRebuildContentFacet
 {
   private MavenContentFacet mavenContentFacet;
 
@@ -50,7 +51,7 @@ public class MavenMetadataRebuildFacetImpl
   private static final ThreadLocal<Boolean> rebuilding = new ThreadLocal<>();
 
   @Inject
-  public MavenMetadataRebuildFacetImpl(final MetadataRebuilder metadataRebuilder)
+  public MavenMetadataRebuildContentFacetImpl(final MetadataRebuilder metadataRebuilder)
   {
     this.metadataRebuilder = checkNotNull(metadataRebuilder);
   }
@@ -92,6 +93,19 @@ public class MavenMetadataRebuildFacetImpl
     String groupId = Optional.ofNullable(metadata).map(Metadata::getGroupId).orElse(null);
     String artifactId = Optional.ofNullable(metadata).map(Metadata::getArtifactId).orElse(null);
     String baseVersion = Optional.ofNullable(metadata).map(Metadata::getVersion).orElse(null);
+    rebuildMetadata(groupId, artifactId, baseVersion, rebuildChecksums, update);
+  }
+
+  @Override
+  public void rebuildMetadata(
+      final String groupId,
+      final String artifactId,
+      final String baseVersion,
+      final boolean rebuildChecksums)
+  {
+    final boolean update = !Strings.isNullOrEmpty(groupId)
+        || !Strings.isNullOrEmpty(artifactId)
+        || !Strings.isNullOrEmpty(baseVersion);
     rebuildMetadata(groupId, artifactId, baseVersion, rebuildChecksums, update);
   }
 

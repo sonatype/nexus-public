@@ -10,31 +10,29 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.content.maven;
+package org.sonatype.nexus.repository.pypi.internal.datastore;
 
-import java.io.IOException;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-import org.sonatype.nexus.repository.Facet;
+import org.sonatype.nexus.repository.content.fluent.FluentAsset;
+import org.sonatype.nexus.repository.export.ExportAssetFilter;
+import org.sonatype.nexus.repository.pypi.internal.PyPiExportAssetFilterSupport;
+import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
 
 /**
- * @since 3.26
+ * Filter to exclude indexes from export, as they need to be regenerated on import
+ *
+ * @since 3.next
  */
-@Facet.Exposed
-public interface MavenMetadataRebuildFacet
-    extends Facet
+@Singleton
+@Named(PyPiFormat.NAME)
+public class PyPiExportAssetFilter
+    extends PyPiExportAssetFilterSupport
+    implements ExportAssetFilter
 {
-  String METADATA_REBUILD_KEY = "forceRebuild";
-
-  void maybeRebuildMavenMetadata(
-      final String path,
-      final boolean update,
-      final boolean rebuildChecksums)
-      throws IOException;
-
-  void rebuildMetadata(
-      final String groupId,
-      final String artifactId,
-      final String baseVersion,
-      final boolean rebuildChecksums,
-      final boolean update);
+  @Override
+  public boolean shouldSkipAsset(final FluentAsset asset) {
+    return shouldSkipAsset(asset.path(), asset.kind());
+  }
 }

@@ -22,6 +22,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.hash.MultiHashingInputStream;
@@ -116,6 +117,11 @@ public class FluentBlobsImpl
     maybePut(newHeaders, headers, CREATED_BY_IP_HEADER, clientInfo.map(ClientInfo::getRemoteIP).orElse(SYSTEM));
 
     return blobStore.create(sourceFile, newHeaders.build(), size, sha1);
+  }
+
+  @Override
+  public Optional<Blob> blob(final BlobRef blobRef) {
+    return ofNullable(blobStore.get(blobRef.getBlobId()));
   }
 
   private void maybePut(

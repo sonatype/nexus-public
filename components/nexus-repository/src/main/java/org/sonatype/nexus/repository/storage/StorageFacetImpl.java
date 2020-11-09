@@ -309,7 +309,8 @@ public class StorageFacetImpl
             contentValidatorSelector.validator(getRepository()),
             mimeRulesSourceSelector.ruleSource(getRepository()),
             componentFactory,
-            repositoryMoveStoreProvider
+            repositoryMoveStoreProvider,
+            nodeAccess
         )
     );
   }

@@ -40,6 +40,7 @@ import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.Continuation;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.common.time.DateHelper;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
@@ -54,12 +55,14 @@ import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.maintenance.ContentMaintenanceFacet;
 import org.sonatype.nexus.repository.content.store.ContentStoreEvent;
+import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 
 import org.joda.time.DateTime;
 
 import static java.time.LocalDate.now;
 import static org.apache.commons.lang.StringUtils.stripStart;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.endsWith;
 import static org.apache.commons.lang3.StringUtils.indexOf;
 import static org.apache.commons.lang3.StringUtils.startsWith;
@@ -429,7 +432,17 @@ public class DatastoreComponentAssetTestHelper
   @Override
   public BlobRef getBlobRefOfAsset(final Repository repository, final String path) {
     Optional<FluentAsset> optionalAsset = findAssetByPath(repository, path);
-    return optionalAsset.map(FluentAsset::blob).orElse(null).filter(Objects::nonNull).map(AssetBlob::blobRef)
-        .orElse(null);
+    return optionalAsset.flatMap(FluentAsset::blob).map(AssetBlob::blobRef).orElse(null);
+  }
+
+  @Override
+  public EntityId getComponentId(final Repository repository, final String assetPath) {
+    Optional<Component> component = findAssetByPath(repository, assetPath)
+        .flatMap(FluentAsset::component);
+    return component
+        .map(InternalIds::internalComponentId)
+        .map(InternalIds::toExternalId)
+        .orElseThrow(() -> new ComponentNotFoundException(repository, component.map(Component::namespace).orElse(EMPTY),
+            component.map(Component::name).orElse(EMPTY), component.map(Component::version).orElse(EMPTY)));
   }
 }

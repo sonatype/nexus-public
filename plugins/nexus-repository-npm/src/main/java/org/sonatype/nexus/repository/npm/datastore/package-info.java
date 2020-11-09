@@ -10,24 +10,8 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.npm.export;
+@FeatureFlag(name = "nexus.datastore.enabled")
 
-import javax.inject.Named;
-import javax.inject.Singleton;
+package org.sonatype.nexus.repository.npm.datastore;
 
-import org.sonatype.nexus.repository.filter.export.ExportAssetFilter;
-import org.sonatype.nexus.repository.npm.internal.NpmFormat;
-import org.sonatype.nexus.repository.storage.Asset;
-
-/**
- * @since 3.25
- */
-@Singleton
-@Named(NpmFormat.NAME)
-public class NpmExportAssetFilter implements ExportAssetFilter
-{
-  @Override
-  public boolean shouldSkipAsset(final Asset asset) {
-    return (!asset.name().endsWith(".tgz"));
-  }
-}
+import org.sonatype.nexus.common.app.FeatureFlag;

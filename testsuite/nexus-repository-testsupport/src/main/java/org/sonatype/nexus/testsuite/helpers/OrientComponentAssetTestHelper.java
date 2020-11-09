@@ -384,4 +384,9 @@ public class OrientComponentAssetTestHelper
     Optional<Asset> optionalAsset = findAssetByName(repository, path);
     return optionalAsset.map(Asset::blobRef).orElse(null);
   }
+
+  @Override
+  public EntityId getComponentId(final Repository repository, final String assetPath) {
+    return findAssetByNameNotNull(repository, assetPath).componentId();
+  }
 }

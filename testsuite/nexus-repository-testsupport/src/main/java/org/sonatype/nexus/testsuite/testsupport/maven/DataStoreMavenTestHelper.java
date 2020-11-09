@@ -28,7 +28,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.common.time.DateHelper;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
-import org.sonatype.nexus.content.maven.MavenMetadataRebuildFacet;
+import org.sonatype.nexus.content.maven.MavenMetadataRebuildContentFacet;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
@@ -104,8 +104,11 @@ public class DataStoreMavenTestHelper
     for (HashType hashType : HashType.values()) {
       String expectedHashContent = expectedHashCodes.get(hashType.getHashAlgorithm().name());
       Optional<Content> maybeStoredHashContent = mavenContentFacet.get(mavenPath.hash(hashType));
+      // Maven deployer does not create these hashes by default yet but we are storing the calculated values in the asset attributes
+      if(!maybeStoredHashContent.isPresent() && (hashType  == HashType.SHA256 ||  hashType  == HashType.SHA512) ) {
+        continue;
+      }
       assertTrue(maybeStoredHashContent.isPresent());
-
       try (InputStream inputStream = maybeStoredHashContent.get().openInputStream()) {
         String storedHashContent = IOUtils.toString(new InputStreamReader(inputStream, UTF_8));
         assertThat(storedHashContent, equalTo(expectedHashContent));
@@ -146,7 +149,7 @@ public class DataStoreMavenTestHelper
       final boolean rebuildChecksums,
       final boolean update)
   {
-    repository.facet(MavenMetadataRebuildFacet.class)
+    repository.facet(MavenMetadataRebuildContentFacet.class)
         .rebuildMetadata(groupId, artifactId, baseVersion, rebuildChecksums, update);
   }
 

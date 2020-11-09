@@ -10,35 +10,25 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.maven;
+package org.sonatype.nexus.content.maven;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Set;
 
 import org.sonatype.nexus.repository.Facet;
+import org.sonatype.nexus.repository.maven.MavenMetadataRebuildFacet;
 
 /**
- * Maven hosted facet, present on all Maven hosted-type repositories.
- *
- * @since 3.0
+ * @since 3.26
  */
 @Facet.Exposed
-public interface MavenHostedFacet
+public interface MavenMetadataRebuildContentFacet
     extends MavenMetadataRebuildFacet
 {
-  /**
-   * Rebuilds archetype catalog for given repository. Returns the number of archetypes hosted.
-   */
-  int rebuildArchetypeCatalog() throws IOException;
+  String METADATA_REBUILD_KEY = "forceRebuild";
 
-  /**
-   * Delete metadata associated with the Maven artifact, and rebuild metadata to account for the deletion.
-   */
-  Set<String> deleteMetadata(String groupId, String artifactId, String baseVersion);
-
-  /**
-   * Delete metadata associated with the Maven artifact, and rebuild metadata to account for the deletion.
-   */
-  void deleteMetadata(List<String[]> gavs);
+  void maybeRebuildMavenMetadata(
+      final String path,
+      final boolean update,
+      final boolean rebuildChecksums)
+      throws IOException;
 }

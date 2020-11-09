@@ -10,14 +10,16 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.repository.filter.export;
+package org.sonatype.nexus.repository.export;
 
-import org.sonatype.nexus.repository.storage.Asset;
+import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 
 /**
- * @since 3.25
+ * Used to determine assets that should be skipped during export.
+ *
+ * @since 3.next
  */
 public interface ExportAssetFilter
 {
-  boolean shouldSkipAsset(Asset asset);
+  boolean shouldSkipAsset(FluentAsset asset);
 }
