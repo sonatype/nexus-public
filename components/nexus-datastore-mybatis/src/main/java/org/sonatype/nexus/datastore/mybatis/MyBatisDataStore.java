@@ -38,6 +38,7 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.sql.DataSource;
 
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.entity.Continuation;
@@ -264,6 +265,12 @@ public class MyBatisDataStore
   @Override
   public Connection openConnection() throws SQLException {
     return dataSource.getConnection();
+  }
+
+  @Guarded(by = STARTED)
+  @Override
+  public DataSource getDataSource() {
+    return dataSource;
   }
 
   @Override
