@@ -84,13 +84,13 @@ public abstract class BaseRestoreMetadataTaskDescriptor
     @DefaultMessage("Restore blob metadata")
     String restoreBlobsLabel();
 
-    @DefaultMessage("Restore missing metadata for blobs found in the blob store.")
+    @DefaultMessage("Restore missing metadata for blobs found in the blob store")
     String restoreBlobsHelpText();
 
     @DefaultMessage("Un-delete referenced blobs")
     String undeleteBlobsLabel();
 
-    @DefaultMessage("Un-delete blobs which still have metadata referencing them.")
+    @DefaultMessage("Un-delete blobs which still have metadata referencing them")
     String undeleteBlobsHelpText();
 
     @DefaultMessage("Dry Run")
