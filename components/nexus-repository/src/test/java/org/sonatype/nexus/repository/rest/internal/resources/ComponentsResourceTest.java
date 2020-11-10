@@ -191,7 +191,7 @@ public class ComponentsResourceTest
 
     underTest = new ComponentsResource(repositoryManagerRESTAdapter, browseService, componentEntityAdapter,
         maintenanceService, continuationTokenHelper, uploadManager, uploadConfiguration,
-        new ComponentXOFactory(emptySet()), ImmutableSet.of(componentsResourceExtension));
+        new ComponentXOFactory(emptySet()), ImmutableSet.of(componentsResourceExtension), null);
   }
 
   @Test

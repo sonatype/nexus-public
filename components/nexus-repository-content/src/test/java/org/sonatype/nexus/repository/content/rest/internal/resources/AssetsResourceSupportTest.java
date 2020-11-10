@@ -101,7 +101,7 @@ public class AssetsResourceSupportTest
     mockRepository();
     mockContentFacet();
     mockFluentAssets();
-    underTest = new AssetsResource(repositoryManagerRESTAdapter, maintenanceService, contentAuthHelper);
+    underTest = new AssetsResource(repositoryManagerRESTAdapter, maintenanceService, contentAuthHelper, null);
   }
 
   @Test

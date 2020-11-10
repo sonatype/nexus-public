@@ -109,7 +109,7 @@ public class ComponentsResourceSupportTest
     mockFluentComponents();
 
     underTest = new ComponentsResource(repositoryManagerRESTAdapter, maintenanceService,
-        uploadManager, uploadConfiguration, componentXOFactory, contentAuthHelper);
+        uploadManager, uploadConfiguration, componentXOFactory, contentAuthHelper, null);
   }
 
   @Test
