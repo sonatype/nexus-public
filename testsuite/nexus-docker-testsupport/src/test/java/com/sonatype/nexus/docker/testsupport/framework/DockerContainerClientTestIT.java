@@ -21,11 +21,11 @@ import static org.junit.Assert.assertTrue;
 
 public class DockerContainerClientTestIT
 {
-  private static final String IMAGE_HELLO_WORLD = "hello-world";
+  private static final String IMAGE_HELLO_WORLD = "docker-all.repo.sonatype.com/hello-world";
 
-  private static final String IMAGE_DOCKER = "docker";
+  private static final String IMAGE_DOCKER = "docker-all.repo.sonatype.com/docker";
 
-  private static final String IMAGE_CENTOS = "centos";
+  private static final String IMAGE_CENTOS = "docker-all.repo.sonatype.com/centos";
 
   private DockerContainerClient underTest;
 

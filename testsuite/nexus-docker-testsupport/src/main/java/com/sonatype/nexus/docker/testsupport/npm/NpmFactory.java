@@ -22,7 +22,7 @@ import com.sonatype.nexus.docker.testsupport.framework.DockerContainerConfig.Bui
  */
 public class NpmFactory
 {
-  private static final String IMAGE_NODE = "node";
+  private static final String IMAGE_NODE = "docker-all.repo.sonatype.com/node";
 
   private NpmFactory() {
   }
