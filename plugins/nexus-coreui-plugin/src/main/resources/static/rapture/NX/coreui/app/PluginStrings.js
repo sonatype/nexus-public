@@ -1255,7 +1255,7 @@ Ext.define('NX.coreui.app.PluginStrings', {
     Task_TaskSettingsForm_NotificationCondition_FailureItem: 'Failure',
     Task_TaskSettingsForm_NotificationCondition_SuccessFailureItem: 'Success or Failure',
     Task_TaskScheduleFieldSet_Recurrence_FieldLabel: 'Task frequency',
-    Task_TaskScheduleFieldSet_Recurrence_HelpText: 'The frequency this task will run. Manual - this task can only be run manually. Once - run the task once at the specified date/time. Daily - run the task every day at the specified time. Weekly - run the task every week on the specified day at the specified time. Monthly - run the task every month on the specified day(s) and time. Advanced - run the task using the supplied cron string',
+    Task_TaskScheduleFieldSet_Recurrence_HelpText: 'The frequency this task will run. Manual - this task can only be run manually. Once - run the task once at the specified date/time. Daily - run the task every day at the specified time. Weekly - run the task every week on the specified day at the specified time. Monthly - run the task every month on the specified day(s) and time. Advanced - run the task using the supplied cron string.',
     Task_TaskScheduleFieldSet_Recurrence_EmptyText: 'Select a frequency',
     Task_TaskScheduleFieldSet_Recurrence_ManualItem: 'Manual',
     Task_TaskScheduleFieldSet_Recurrence_OnceItem: 'Once',
