@@ -328,4 +328,9 @@ public class FluentAssetImpl
   public void lastUpdated(final OffsetDateTime lastUpdated) {
     facet.stores().assetStore.lastUpdated(this, lastUpdated);
   }
+
+  @Override
+  public String toString() {
+    return asset.toString();
+  }
 }
