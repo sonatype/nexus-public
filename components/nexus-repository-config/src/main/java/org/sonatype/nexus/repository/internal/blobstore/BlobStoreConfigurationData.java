@@ -23,6 +23,7 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.HasEntityId;
 import org.sonatype.nexus.common.entity.HasName;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -43,6 +44,8 @@ public class BlobStoreConfigurationData
 
   private static final String WRITABLE = "writable";
 
+  // do not serialize EntityId, it can be generated on the fly
+  @JsonIgnore
   private EntityId id;
 
   private String name;

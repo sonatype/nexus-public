@@ -10,31 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.entity;
+@FeatureFlag(name = "nexus.datastore.enabled")
+package org.sonatype.nexus.internal.datastore;
 
-import javax.annotation.Nonnull;
-
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-
-/**
- * Entity identifier.
- *
- * @since 3.0
- */
-@JsonDeserialize(as=EntityUUID.class)
-public interface EntityId
-{
-  /**
-   * External identifier for entity.
-   */
-  @Nonnull
-  String getValue();
-
-  /**
-   * Returns human-readable representation for logging.
-   *
-   * @see #getValue() for the external representation.
-   */
-  @Override
-  String toString();
-}
+import org.sonatype.nexus.common.app.FeatureFlag;

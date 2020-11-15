@@ -10,31 +10,31 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.entity;
+package org.sonatype.nexus.supportzip;
 
-import javax.annotation.Nonnull;
-
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import java.io.File;
+import java.io.IOException;
 
 /**
- * Entity identifier.
+ * Should be used by the Support ZIP to export DB data.
  *
- * @since 3.0
+ * @since 3.next
  */
-@JsonDeserialize(as=EntityUUID.class)
-public interface EntityId
+public interface ExportData
 {
   /**
-   * External identifier for entity.
+   * Export DB data to a binary file.
+   *
+   * @param file where data will be stored.
+   * @throws IOException for any issue during writing a file.
    */
-  @Nonnull
-  String getValue();
+  void export(final File file) throws IOException;
 
   /**
-   * Returns human-readable representation for logging.
+   * Restore serialized data to the DB.
    *
-   * @see #getValue() for the external representation.
+   * @param file file where data will be restored.
+   * @throws IOException            for any issue during reading a file.
    */
-  @Override
-  String toString();
+  void restore(final File file) throws IOException;
 }

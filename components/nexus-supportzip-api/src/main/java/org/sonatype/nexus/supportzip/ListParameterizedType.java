@@ -10,40 +10,40 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.common.entity;
+package org.sonatype.nexus.supportzip;
 
-import java.util.UUID;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Objects;
 
 /**
- * {@link EntityId} backed by a {@link UUID}.
+ * Represents a parameterized type for a List&lt;T&gt;.
  *
- * @since 3.19
+ * @since 3.next
  */
-public class EntityUUID
-    implements EntityId
+public class ListParameterizedType
+    implements ParameterizedType
 {
-  @JsonProperty("value")
-  private final UUID id;
+  private final Type type;
 
-  public EntityUUID() {
-    this.id = UUID.randomUUID();
-  }
-
-  public EntityUUID(final UUID id) {
-    this.id = checkNotNull(id);
-  }
-
-  public UUID uuid() {
-    return id;
+  public ListParameterizedType(final Type type) {
+    this.type = type;
   }
 
   @Override
-  public String getValue() {
-    return id.toString();
+  public Type[] getActualTypeArguments() {
+    return new Type[]{type};
+  }
+
+  @Override
+  public Type getRawType() {
+    return ArrayList.class;
+  }
+
+  @Override
+  public Type getOwnerType() {
+    return null;
   }
 
   @Override
@@ -51,24 +51,15 @@ public class EntityUUID
     if (this == o) {
       return true;
     }
-    if (o instanceof EntityUUID) {
-      return id.equals(((EntityUUID) o).id);
+    if (o == null || getClass() != o.getClass()) {
+      return false;
     }
-    if (o instanceof EntityId) {
-      return getValue().equals(((EntityId) o).getValue());
-    }
-    return false;
+    ListParameterizedType that = (ListParameterizedType) o;
+    return Objects.equals(type, that.type);
   }
 
   @Override
   public int hashCode() {
-    return getValue().hashCode();
-  }
-
-  @Override
-  public String toString() {
-    return getClass().getSimpleName() + "{" +
-        "id='" + id + '\'' +
-        '}';
+    return Objects.hash(type);
   }
 }

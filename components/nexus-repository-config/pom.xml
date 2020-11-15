@@ -50,6 +50,11 @@
 
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
+      <artifactId>nexus-supportzip-api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-orient</artifactId>
       <optional>true</optional>
     </dependency>
