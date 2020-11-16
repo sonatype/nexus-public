@@ -17,6 +17,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.importtask.ImportPostProcessor;
+import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.StorageTx;
@@ -34,16 +35,13 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 public class OrientMavenImportPostProcessor
     implements ImportPostProcessor
 {
-  private static final String MD_5_EXTENSION = ".md5";
-
-  private static final String SHA_1_EXTENSION = ".sha1";
-
   @Override
   public void attributePostProcessing(
       final Asset asset, final StorageTx tx, final Repository repository)
   {
-    updateHashFile(MD_5_EXTENSION, asset, tx, repository);
-    updateHashFile(SHA_1_EXTENSION, asset, tx, repository);
+    for (HashType type : HashType.values()) {
+      updateHashFile('.' + type.getExt(), asset, tx, repository);
+    }
   }
 
   private void updateHashFile(

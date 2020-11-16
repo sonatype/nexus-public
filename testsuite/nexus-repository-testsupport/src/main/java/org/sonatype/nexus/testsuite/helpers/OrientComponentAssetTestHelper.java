@@ -177,6 +177,12 @@ public class OrientComponentAssetTestHelper
   }
 
   @Override
+  public boolean componentExists(final Repository repository, final String name) {
+    return findComponents(repository).stream()
+        .anyMatch(c -> name.equals(c.name()));
+  }
+
+  @Override
   public boolean componentExists(final Repository repository, final String name, final String version) {
     if (version.endsWith(SNAPSHOT_VERSION_SUFFIX)) {
       Optional<Component> component = findSnapshotComponent(repository, name, version);

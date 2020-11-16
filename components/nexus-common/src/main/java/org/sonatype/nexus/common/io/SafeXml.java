@@ -19,8 +19,11 @@ import javax.xml.parsers.SAXParserFactory;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.sax.SAXTransformerFactory;
+import javax.xml.validation.Validator;
 
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXNotRecognizedException;
+import org.xml.sax.SAXNotSupportedException;
 
 import static javax.xml.stream.XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES;
 import static javax.xml.stream.XMLInputFactory.SUPPORT_DTD;
@@ -109,5 +112,12 @@ public final class SafeXml
     SAXParserFactory factory = newSaxParserFactory();
     factory.setFeature(APACHE_DISALLOW_DOCTYPE_DECL, true);
     return factory;
+  }
+
+  public static void configureValidator(Validator validator)
+      throws SAXNotRecognizedException, SAXNotSupportedException
+  {
+    validator.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+    validator.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
   }
 }

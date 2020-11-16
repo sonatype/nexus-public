@@ -23,8 +23,8 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
-import org.sonatype.nexus.blobstore.restore.BaseRestoreBlobStrategy;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
+import org.sonatype.nexus.blobstore.restore.orient.OrientBaseRestoreBlobStrategy;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.log.DryRunPrefix;
 import org.sonatype.nexus.common.node.NodeAccess;
@@ -44,7 +44,7 @@ import static org.eclipse.aether.util.StringUtils.isEmpty;
 @Named(P2Format.NAME)
 @Singleton
 public class P2RestoreBlobStrategy
-    extends BaseRestoreBlobStrategy<P2RestoreBlobData>
+    extends OrientBaseRestoreBlobStrategy<P2RestoreBlobData>
 {
   @Inject
   public P2RestoreBlobStrategy(final NodeAccess nodeAccess,
@@ -105,7 +105,7 @@ public class P2RestoreBlobStrategy
   protected Query getComponentQuery(final P2RestoreBlobData data) throws IOException {
     P2RestoreFacet facet = getRestoreFacet(data);
     RestoreBlobData blobData = data.getBlobData();
-    return facet.getComponentQuery(blobData.getBlob(), blobData.getBlobName(), blobData.getBlobStoreName());
+    return facet.getComponentQuery(blobData.getBlob(), blobData.getBlobName(), blobData.getBlobStore().getBlobStoreConfiguration().getName());
   }
 
   @Override

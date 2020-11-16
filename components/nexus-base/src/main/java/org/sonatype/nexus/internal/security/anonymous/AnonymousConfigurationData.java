@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.internal.security.anonymous;
 
+import java.util.Objects;
+
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
 
 /**
@@ -66,6 +68,25 @@ public class AnonymousConfigurationData
     catch (CloneNotSupportedException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    AnonymousConfigurationData that = (AnonymousConfigurationData) o;
+    return enabled == that.enabled &&
+        Objects.equals(userId, that.userId) &&
+        Objects.equals(realmName, that.realmName);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(enabled, userId, realmName);
   }
 
   @Override

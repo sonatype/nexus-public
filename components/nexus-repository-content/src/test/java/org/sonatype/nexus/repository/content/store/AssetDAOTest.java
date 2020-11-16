@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.store;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -149,6 +150,7 @@ public class AssetDAOTest
       duplicate.setPath(asset1.path());
       duplicate.setKind(asset1.kind());
       duplicate.setAttributes(newAttributes("duplicate"));
+      duplicate.setLastUpdated(OffsetDateTime.now());
       dao.createAsset(duplicate);
 
       session.getTransaction().commit();
@@ -776,6 +778,36 @@ public class AssetDAOTest
               allOf(samePath(asset3), sameAttributes(asset3)), allOf(samePath(asset4), sameAttributes(asset4))));
 
       session.getTransaction().commit();
+    }
+  }
+
+  @Test
+  public void testSetLastDownloaded() {
+    AssetData asset1 = randomAsset(repositoryId);
+
+    try (DataSession<?> session = sessionRule.openSession("content")) {
+      AssetDAO dao = session.access(TestAssetDAO.class);
+      dao.createAsset(asset1);
+
+      OffsetDateTime dateTime = OffsetDateTime.now(ZoneOffset.UTC).minusDays(1);
+      dao.lastDownloaded(asset1.assetId, dateTime);
+
+      assertThat(dao.readAsset(asset1.assetId).get().lastDownloaded().orElse(null), is(dateTime));
+    }
+  }
+
+  @Test
+  public void testLastUpdated() {
+    AssetData asset1 = randomAsset(repositoryId);
+
+    try (DataSession<?> session = sessionRule.openSession("content")) {
+      AssetDAO dao = session.access(TestAssetDAO.class);
+      dao.createAsset(asset1);
+
+      OffsetDateTime dateTime = OffsetDateTime.now(ZoneOffset.UTC).minusDays(1);
+      dao.lastUpdated(asset1.assetId, dateTime);
+
+      assertThat(dao.readAsset(asset1.assetId).get().lastUpdated(), is(dateTime));
     }
   }
 

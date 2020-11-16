@@ -77,7 +77,7 @@ public class ComponentsResourceTest
     when(uploadConfiguration.isEnabled()).thenReturn(true);
 
     underTest = new ComponentsResource(repositoryManagerRESTAdapter, maintenanceService, uploadManager,
-        uploadConfiguration, componentXOFactory, contentAuthHelper);
+        uploadConfiguration, componentXOFactory, contentAuthHelper, null);
   }
 
   @SuppressWarnings("java:S2699")

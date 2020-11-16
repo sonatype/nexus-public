@@ -14,6 +14,8 @@ package org.sonatype.nexus.common.entity;
 
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -24,7 +26,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class EntityUUID
     implements EntityId
 {
+  @JsonProperty("value")
   private final UUID id;
+
+  public EntityUUID() {
+    this.id = UUID.randomUUID();
+  }
 
   public EntityUUID(final UUID id) {
     this.id = checkNotNull(id);

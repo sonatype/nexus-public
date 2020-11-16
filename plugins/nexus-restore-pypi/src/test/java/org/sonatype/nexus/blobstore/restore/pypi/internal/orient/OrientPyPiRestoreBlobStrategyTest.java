@@ -19,6 +19,7 @@ import java.util.Properties;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStore;
+import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
 import org.sonatype.nexus.blobstore.restore.pypi.internal.PyPiRestoreBlobData;
@@ -56,7 +57,6 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA256;
 public class OrientPyPiRestoreBlobStrategyTest
     extends TestSupport
 {
-
   private static final String TEST_BLOB_STORE_NAME = "test";
 
   public static final String PACKAGE_PATH = "packages/sampleproject/1.2.0/sampleproject-1.2.0.tar.gz";
@@ -94,6 +94,9 @@ public class OrientPyPiRestoreBlobStrategyTest
 
   @Mock
   BlobStore blobStore;
+
+  @Mock
+  BlobStoreConfiguration blobStoreConfiguration;
 
   @Mock
   OrientPyPiRepairIndexComponent pyPiRepairIndexComponent;
@@ -152,7 +155,9 @@ public class OrientPyPiRestoreBlobStrategyTest
 
     when(blob.getInputStream()).thenReturn(new ByteArrayInputStream(blobBytes));
 
-    when(blobStoreManager.get(TEST_BLOB_STORE_NAME)).thenReturn(blobStore);
+    when(blobStoreConfiguration.getName()).thenReturn(TEST_BLOB_STORE_NAME);
+
+    when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
 
     when(pyPiRestoreBlobDataFactory.create(any())).thenReturn(pyPiRestoreBlobData);
     when(pyPiRestoreBlobData.getBlobData()).thenReturn(restoreBlobData);
@@ -163,7 +168,7 @@ public class OrientPyPiRestoreBlobStrategyTest
     when(restoreBlobData.getRepository()).thenReturn(repository);
     when(pyPiRestoreBlobData.getBlobData().getBlobName()).thenReturn(PACKAGE_PATH);
 
-    underTest.restore(packageProps, blob, TEST_BLOB_STORE_NAME, false);
+    underTest.restore(packageProps, blob, blobStore, false);
 
     verify(pyPiFacet).assetExists(PACKAGE_PATH);
     verify(pyPiFacet).put(eq(PACKAGE_PATH), any(AssetBlob.class));
@@ -176,7 +181,7 @@ public class OrientPyPiRestoreBlobStrategyTest
     when(restoreBlobData.getRepository()).thenReturn(repository);
     when(pyPiRestoreBlobData.getBlobData().getBlobName()).thenReturn(INDEX_PATH);
 
-    underTest.restore(indexProps, blob, TEST_BLOB_STORE_NAME, false);
+    underTest.restore(indexProps, blob, blobStore, false);
 
     verify(pyPiFacet).assetExists(INDEX_PATH);
     verify(pyPiFacet).put(eq(INDEX_PATH), any(AssetBlob.class));
@@ -188,7 +193,7 @@ public class OrientPyPiRestoreBlobStrategyTest
   public void testRestoreSkipNotFacet() {
     when(repository.optionalFacet(StorageFacet.class)).thenReturn(Optional.empty());
 
-    underTest.restore(indexProps, blob, TEST_BLOB_STORE_NAME, false);
+    underTest.restore(indexProps, blob, blobStore, false);
 
     verifyNoMoreInteractions(pyPiFacet);
   }
@@ -199,7 +204,7 @@ public class OrientPyPiRestoreBlobStrategyTest
     when(pyPiRestoreBlobData.getBlobData().getBlobName()).thenReturn(PACKAGE_PATH);
     when(pyPiFacet.assetExists(PACKAGE_PATH)).thenReturn(true);
 
-    underTest.restore(packageProps, blob, TEST_BLOB_STORE_NAME, false);
+    underTest.restore(packageProps, blob, blobStore, false);
 
     verify(pyPiFacet).assetExists(PACKAGE_PATH);
 

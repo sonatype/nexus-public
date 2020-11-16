@@ -19,6 +19,7 @@ import java.util.Properties;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStore;
+import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
 import org.sonatype.nexus.common.log.DryRunPrefix;
@@ -68,6 +69,9 @@ public class AptRestoreBlobStrategyTest
   BlobStoreManager blobStoreManager;
 
   @Mock
+  BlobStoreConfiguration blobStoreConfiguration;
+
+  @Mock
   Repository repository;
 
   @Mock
@@ -108,6 +112,8 @@ public class AptRestoreBlobStrategyTest
     when(storageFacet.txSupplier()).thenReturn(() -> storageTx);
     when(blob.getInputStream()).thenReturn(new ByteArrayInputStream(blobBytes));
     when(blobStoreManager.get(TEST_BLOB_STORE_NAME)).thenReturn(blobStore);
+    when(blobStoreConfiguration.getName()).thenReturn(TEST_BLOB_STORE_NAME);
+    when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
     when(restoreBlobData.getRepository()).thenReturn(repository);
 
     properties.setProperty("@BlobStore.created-by", "anonymous");
@@ -143,7 +149,7 @@ public class AptRestoreBlobStrategyTest
 
   @Test
   public void testPackageIsRestored() throws Exception {
-    underTest.restore(properties, blob, TEST_BLOB_STORE_NAME, false);
+    underTest.restore(properties, blob, blobStore, false);
     verify(aptRestoreFacet).assetExists(PACKAGE_PATH);
     verify(aptRestoreFacet).restore(any(AssetBlob.class), eq(PACKAGE_PATH));
     verifyNoMoreInteractions(aptRestoreFacet);
@@ -152,7 +158,7 @@ public class AptRestoreBlobStrategyTest
   @Test
   public void testRestoreIsSkip_IfPackageExists() {
     when(aptRestoreFacet.assetExists(PACKAGE_PATH)).thenReturn(true);
-    underTest.restore(properties, blob, TEST_BLOB_STORE_NAME, false);
+    underTest.restore(properties, blob, blobStore, false);
 
     verify(aptRestoreFacet).assetExists(PACKAGE_PATH);
     verify(aptRestoreFacet).componentRequired(PACKAGE_PATH);

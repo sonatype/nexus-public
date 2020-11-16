@@ -13,6 +13,7 @@
 package org.sonatype.nexus.repository.content.rest.internal.resources;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -37,6 +38,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.maintenance.MaintenanceService;
 import org.sonatype.nexus.repository.content.rest.internal.resources.doc.AssetsResourceDoc;
 import org.sonatype.nexus.repository.rest.api.AssetXO;
+import org.sonatype.nexus.repository.rest.api.AssetXODescriptor;
 import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO;
 import org.sonatype.nexus.repository.rest.api.RepositoryManagerRESTAdapter;
 import org.sonatype.nexus.repository.selector.ContentAuthHelper;
@@ -75,15 +77,19 @@ public class AssetsResource
 
   private final MaintenanceService maintenanceService;
 
+  private final Map<String, AssetXODescriptor> assetDescriptors;
+
   @Inject
   public AssetsResource(
       final RepositoryManagerRESTAdapter repositoryManagerRESTAdapter,
       final MaintenanceService maintenanceService,
-      final ContentAuthHelper contentAuthHelper)
+      final ContentAuthHelper contentAuthHelper,
+      final Map<String, AssetXODescriptor> assetDescriptors)
   {
     super(contentAuthHelper);
     this.repositoryManagerRESTAdapter = checkNotNull(repositoryManagerRESTAdapter);
     this.maintenanceService = checkNotNull(maintenanceService);
+    this.assetDescriptors = assetDescriptors;
   }
 
   @GET
@@ -94,7 +100,7 @@ public class AssetsResource
   {
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryId);
     List<FluentAsset> assets = browse(repository,continuationToken);
-    return new Page<>(toAssetXOs(repository, assets), nextContinuationToken(assets));
+    return new Page<>(toAssetXOs(repository, assets, this.assetDescriptors), nextContinuationToken(assets));
   }
 
   @GET
@@ -104,7 +110,7 @@ public class AssetsResource
     RepositoryItemIDXO repositoryItemIDXO = fromString(id);
     Repository repository = repositoryManagerRESTAdapter.getRepository(repositoryItemIDXO.getRepositoryId());
     Asset asset = getAsset(id, repository, new DetachedEntityId(repositoryItemIDXO.getId()));
-    return fromAsset(asset, repository);
+    return fromAsset(asset, repository, this.assetDescriptors);
   }
 
   @DELETE
@@ -133,9 +139,10 @@ public class AssetsResource
     }
   }
 
-  private static List<AssetXO> toAssetXOs(final Repository repository, final List<FluentAsset> assets) {
+  private static List<AssetXO> toAssetXOs(final Repository repository, final List<FluentAsset> assets,
+                                          final Map<String, AssetXODescriptor> assetDescriptors) {
     return assets.stream()
-        .map(asset -> fromAsset(asset, repository))
+        .map(asset -> fromAsset(asset, repository, assetDescriptors))
         .collect(toList());
   }
 

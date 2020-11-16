@@ -22,42 +22,29 @@ import org.sonatype.nexus.repository.Repository;
  */
 public interface BlobstoreRestoreTestHelper
 {
+  String TYPE_ID = "blobstore.rebuildComponentDB";
+
+  String BLOB_STORE_NAME_FIELD_ID = "blobstoreName";
+
+  String RESTORE_BLOBS = "restoreBlobs";
+
+  String UNDELETE_BLOBS = "undeleteBlobs";
+
+  String INTEGRITY_CHECK = "integrityCheck";
+
+  String DRY_RUN = "dryRun";
+
   void simulateComponentAndAssetMetadataLoss();
 
   void simulateAssetMetadataLoss();
 
   void simulateComponentMetadataLoss();
 
-  void runRestoreMetadataTaskWithTimeout(long timeout);
+  void runRestoreMetadataTaskWithTimeout(long timeout, boolean dryRun);
 
   void runRestoreMetadataTask();
 
-  void assertComponentNotInRepository(Repository repository, String name);
-
-  void assertComponentNotInRepository(Repository repository, String name, String version);
-
-  void assertComponentInRepository(Repository repository, String name);
-
-  void assertComponentInRepository(Repository repository, String name, String version);
-
-  void assertAssetNotInRepository(Repository repository, String... names);
-
-  void assertAssetInRepository(Repository repository, String name);
-
   void assertAssetMatchesBlob(Repository repository, String name);
-
-  void assertComponentWithGAVInRepository(Repository repository, String group, String name, String version);
-
-  void assertComponentWithGAVNotInRepository(Repository repository, String group, String name, String version);
-
-  void assertAssetAssociatedWithComponent(
-      Repository repository,
-      @Nullable String group,
-      String name,
-      String version,
-      String... paths);
-
-  void assertAssetAssociatedWithComponent(Repository repository, String name, String path);
 
   void assertAssetMatchesBlob(Repository repository, String... names);
 }

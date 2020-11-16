@@ -20,6 +20,7 @@ import java.util.Properties;
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobStore;
+import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
 import org.sonatype.nexus.common.log.DryRunPrefix;
@@ -86,6 +87,9 @@ public class RRestoreBlobStrategyTest
   BlobStore blobStore;
 
   @Mock
+  private BlobStoreConfiguration blobStoreConfiguration;
+
+  @Mock
   StorageTx storageTx;
 
   private byte[] blobBytes = "blobbytes".getBytes();
@@ -109,8 +113,10 @@ public class RRestoreBlobStrategyTest
     when(restoreBlobData.getRepository()).thenReturn(repository);
     when(restoreBlobData.getBlob()).thenReturn(blob);
     when(storageFacet.txSupplier()).thenReturn(() -> storageTx);
-    when(blobStoreManager.get(TEST_BLOB_STORE_NAME)).thenReturn(blobStore);
     when(restoreBlobData.getRepository()).thenReturn(repository);
+
+    when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
+    when(blobStoreConfiguration.getName()).thenReturn(TEST_BLOB_STORE_NAME);
 
     properties.setProperty("@BlobStore.created-by", "anonymous");
     properties.setProperty("size", "1330");
@@ -145,7 +151,7 @@ public class RRestoreBlobStrategyTest
 
   @Test
   public void testPackageIsRestored() throws Exception {
-    restoreBlobStrategy.restore(properties, blob, TEST_BLOB_STORE_NAME, false);
+    restoreBlobStrategy.restore(properties, blob, blobStore, false);
     verify(rRestoreFacet).assetExists(ARCHIVE_PATH);
     verify(rRestoreFacet).restore(any(AssetBlob.class), eq(ARCHIVE_PATH));
     verifyNoMoreInteractions(rRestoreFacet);
@@ -154,7 +160,7 @@ public class RRestoreBlobStrategyTest
   @Test
   public void testRestoreIsSkipIfPackageExists() {
     when(rRestoreFacet.assetExists(ARCHIVE_PATH)).thenReturn(true);
-    restoreBlobStrategy.restore(properties, blob, TEST_BLOB_STORE_NAME, false);
+    restoreBlobStrategy.restore(properties, blob, blobStore, false);
 
     verify(rRestoreFacet).assetExists(ARCHIVE_PATH);
     verify(rRestoreFacet).componentRequired(ARCHIVE_PATH);

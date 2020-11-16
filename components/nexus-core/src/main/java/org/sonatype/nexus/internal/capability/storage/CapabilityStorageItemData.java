@@ -17,6 +17,8 @@ import java.util.Map;
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.common.entity.HasEntityId;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 /**
  * {@link CapabilityStorageItem} data.
  *
@@ -25,6 +27,8 @@ import org.sonatype.nexus.common.entity.HasEntityId;
 public class CapabilityStorageItemData
     implements HasEntityId, CapabilityStorageItem
 {
+  // do not serialize EntityId, it can be generated on the fly
+  @JsonIgnore
   private EntityId id;
 
   private int version;

@@ -75,7 +75,10 @@ final class EntityExecutor
       throw new FrozenException(commandType + " is not allowed while the application is frozen");
     }
     if (commandType == INSERT && parameter instanceof HasEntityId) {
-      generateEntityId((HasEntityId) parameter);
+      HasEntityId entityId = (HasEntityId) parameter;
+      if (entityId.allowGenerate()) {
+        generateEntityId(entityId);
+      }
     }
     try {
       return delegate.update(ms, parameter);

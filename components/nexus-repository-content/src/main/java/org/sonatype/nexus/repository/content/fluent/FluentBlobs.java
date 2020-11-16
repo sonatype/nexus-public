@@ -21,6 +21,7 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobRef;
+import org.sonatype.nexus.blobstore.api.BlobStoreMetrics;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
@@ -58,4 +59,9 @@ public interface FluentBlobs
    * @since 3.next
    */
   Optional<Blob> blob(BlobRef blobRef);
+
+  /**
+   * @since 3.next
+   */
+  BlobStoreMetrics getMetrics();
 }

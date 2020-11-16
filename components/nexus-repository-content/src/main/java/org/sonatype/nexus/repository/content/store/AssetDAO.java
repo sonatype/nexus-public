@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.repository.content.store;
 
+import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
@@ -216,4 +217,31 @@ public interface AssetDAO
    * @since 3.26
    */
   int purgeSelectedAssets(@Param("assetIds") Integer[] assetIds);
+
+  /**
+   * Generally it is recommended that this method not be called and let stores manage this value automatically.
+   *
+   * Sets the created time of the asset associated with the ID to the specified time.
+   *
+   * @since 3.next
+   */
+  void created(@Param("assetId") int assetId, @Param("created") OffsetDateTime created);
+
+  /**
+   * Generally it is recommended that this method not be called and let stores manage this value automatically.
+   *
+   * Sets the last download time of the asset associated with the ID to the specified time.
+   *
+   * @since 3.next
+   */
+  void lastDownloaded(@Param("assetId") int assetId, @Param("lastDownloaded") OffsetDateTime lastDownloaded);
+
+  /**
+   * Generally it is recommended that this method not be called and let stores manage this value automatically.
+   *
+   * Sets the last updated time of the asset associated with the ID to the specified time.
+   *
+   * @since 3.next
+   */
+  void lastUpdated(@Param("assetId") int assetId, @Param("lastUpdated") OffsetDateTime lastUpdated);
 }

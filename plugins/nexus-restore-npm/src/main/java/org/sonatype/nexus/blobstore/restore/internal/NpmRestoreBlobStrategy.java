@@ -21,7 +21,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
-import org.sonatype.nexus.blobstore.restore.BaseRestoreBlobStrategy;
+import org.sonatype.nexus.blobstore.restore.orient.OrientBaseRestoreBlobStrategy;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
 import org.sonatype.nexus.blobstore.restore.internal.NpmRestoreBlobData.NpmType;
 import org.sonatype.nexus.common.log.DryRunPrefix;
@@ -51,7 +51,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 @Named("npm")
 @Singleton
 public class NpmRestoreBlobStrategy
-    extends BaseRestoreBlobStrategy<NpmRestoreBlobData>
+    extends OrientBaseRestoreBlobStrategy<NpmRestoreBlobData>
 {
   private final NpmRepairPackageRootComponent npmRepairPackageRootComponent;
 

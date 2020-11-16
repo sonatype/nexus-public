@@ -27,7 +27,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  */
 public class PyPiClientITConfigFactory
 {
-  private static final String IMAGE_PYTHON = "python";
+  private static final String IMAGE_PYTHON = "docker-all.repo.sonatype.com/python";
 
   private PyPiClientITConfigFactory() {
   }

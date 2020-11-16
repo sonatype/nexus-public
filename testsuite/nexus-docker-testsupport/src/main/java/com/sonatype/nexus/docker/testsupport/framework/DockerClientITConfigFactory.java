@@ -30,7 +30,7 @@ import static java.util.stream.Collectors.toMap;
  */
 public class DockerClientITConfigFactory
 {
-  private static final String IMAGE_NGINX = "nginx";
+  private static final String IMAGE_NGINX = "docker-all.repo.sonatype.com/nginx";
 
   private DockerClientITConfigFactory() {
   }

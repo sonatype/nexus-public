@@ -22,6 +22,7 @@ import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobStore;
+import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.log.DryRunPrefix;
@@ -56,6 +57,8 @@ import static org.mockito.Mockito.when;
 public class MavenRestoreBlobStrategyTest
     extends TestSupport
 {
+  private static final String TEST_BLOB_STORE_NAME = "test";
+
   MavenRestoreBlobStrategy underTest;
 
   @Mock
@@ -78,6 +81,12 @@ public class MavenRestoreBlobStrategyTest
 
   @Mock
   Blob blob;
+
+  @Mock
+  BlobStore blobStore;
+
+  @Mock
+  BlobStoreConfiguration blobStoreConfiguration;
 
   @Mock
   Repository repository;
@@ -128,15 +137,18 @@ public class MavenRestoreBlobStrategyTest
 
     when(nodeAccess.getId()).thenReturn("node");
 
-    when(repository.facet(OrientMavenFacet.class)).thenReturn(mavenFacet);
 
-    when(blobStoreManager.get("test")).thenReturn(mock(BlobStore.class));
+    when(blobStoreConfiguration.getName()).thenReturn(TEST_BLOB_STORE_NAME);
+
+    when(blobStore.getBlobStoreConfiguration()).thenReturn(blobStoreConfiguration);
+
+    when(repository.facet(OrientMavenFacet.class)).thenReturn(mavenFacet);
   }
 
   @SuppressWarnings("deprecation")
   @Test
   public void testRestore() throws Exception {
-    underTest.restore(properties, blob, "test");
+    underTest.restore(properties, blob, blobStore);
     verify(mavenFacet).get(mavenPath);
     verify(mavenFacet).put(eq(mavenPath), any(), eq(null));
     verifyNoMoreInteractions(mavenFacet);
@@ -146,7 +158,7 @@ public class MavenRestoreBlobStrategyTest
   @Test
   public void testRestoreSkipNotFacet() {
     when(repository.optionalFacet(StorageFacet.class)).thenReturn(Optional.empty());
-    underTest.restore(properties, blob, "test");
+    underTest.restore(properties, blob, blobStore);
     verifyNoMoreInteractions(mavenFacet);
   }
 
@@ -154,14 +166,14 @@ public class MavenRestoreBlobStrategyTest
   @Test
   public void testRestoreSkipExistingContent() throws Exception {
     when(mavenFacet.get(mavenPath)).thenReturn(mock(Content.class));
-    underTest.restore(properties, blob, "test");
+    underTest.restore(properties, blob, blobStore);
     verify(mavenFacet).get(mavenPath);
     verifyNoMoreInteractions(mavenFacet);
   }
 
   @Test
   public void testRestoreDryRun() throws Exception {
-    underTest.restore(properties, blob, "test", true);
+    underTest.restore(properties, blob, blobStore, true);
     verify(mavenFacet).get(mavenPath);
     verifyNoMoreInteractions(mavenFacet);
   }
@@ -176,7 +188,7 @@ public class MavenRestoreBlobStrategyTest
 
     ArgumentCaptor<AssetBlob> assetBlobCaptor = ArgumentCaptor.forClass(AssetBlob.class);
 
-    underTest.restore(properties, blob, "test", false);
+    underTest.restore(properties, blob, blobStore, false);
     verify(mavenFacet).get(mavenPath);
     verify(mavenFacet).put(eq(mavenPath), assetBlobCaptor.capture(), eq(null));
 

@@ -22,7 +22,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
-import org.sonatype.nexus.blobstore.restore.BaseRestoreBlobStrategy;
+import org.sonatype.nexus.blobstore.restore.orient.OrientBaseRestoreBlobStrategy;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
 import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.common.log.DryRunPrefix;
@@ -50,7 +50,7 @@ import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_
 @Named("maven2")
 @Singleton
 public class MavenRestoreBlobStrategy
-    extends BaseRestoreBlobStrategy<MavenRestoreBlobData>
+    extends OrientBaseRestoreBlobStrategy<MavenRestoreBlobData>
 {
   private final MavenPathParser mavenPathParser;
 
@@ -83,7 +83,7 @@ public class MavenRestoreBlobStrategy
             "Skipping blob in repository named {}, because no maven coordinates found for blob named {} in blob store named {} and the blob not maven metadata",
             repository.getName(),
             blobData.getBlobName(),
-            blobData.getBlobStoreName());
+            blobData.getBlobStore().getBlobStoreConfiguration().getName());
       }
       return false;
     }

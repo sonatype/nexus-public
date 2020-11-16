@@ -26,7 +26,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  */
 public class CondaClientITConfigFactory
 {
-  private static final String IMAGE_CONDA = "continuumio/miniconda3";
+  private static final String IMAGE_CONDA = "docker-all.repo.sonatype.com/continuumio/miniconda3";
 
   private CondaClientITConfigFactory() {
   }

@@ -17,6 +17,8 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.sql.DataSource;
+
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.stateguard.InvalidStateException;
 import org.sonatype.nexus.common.stateguard.StateGuardModule;
@@ -73,6 +75,11 @@ public class DataStoreSupportTest
     @Override
     public Connection openConnection() {
       return mock(Connection.class);
+    }
+
+    @Override
+    public DataSource getDataSource() {
+      return mock(DataSource.class);
     }
 
     @Override

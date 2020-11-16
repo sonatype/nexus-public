@@ -95,7 +95,7 @@ public class AssetsResourceTest
     continuationTokenHelper = new AssetContinuationTokenHelper(assetEntityAdapter);
 
     underTest = new AssetsResource(browseService, repositoryManagerRESTAdapter, assetEntityAdapter, maintenanceService,
-        continuationTokenHelper);
+        continuationTokenHelper, null);
   }
 
   AssetXO buildAssetXO(String id, String path, String downloadUrl) {

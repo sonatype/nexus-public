@@ -73,9 +73,9 @@ public class HttpResponses
         .payload(payload)
         .build();
   }
-  
+
   // Accepted: 202
-  
+
   public static Response accepted() {
     return new Response.Builder()
         .status(Status.success(ACCEPTED))

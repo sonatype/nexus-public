@@ -15,6 +15,7 @@ package org.sonatype.nexus.blobstore.restore;
 import java.util.Properties;
 
 import org.sonatype.nexus.blobstore.api.Blob;
+import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.repository.Repository;
 
 /**
@@ -26,8 +27,8 @@ public interface RestoreBlobStrategy
    * @deprecated since 3.6
    */
   @Deprecated
-  default void restore(Properties properties, Blob blob, String blobStoreName) {
-    restore(properties, blob, blobStoreName, false);
+  default void restore(Properties properties, Blob blob, BlobStore blobStore) {
+    restore(properties, blob, blobStore, false);
   }
 
   /**
@@ -35,10 +36,10 @@ public interface RestoreBlobStrategy
    *
    * @param properties associated with the blob being restore
    * @param blob being restored
-   * @param blobStoreName of the blob store where the blob will be stored
+   * @param blobStore the blob store where the blob will be stored
    * @param isDryRun if {@code true}, no lasting changes will be made, only logged
    */
-  void restore(Properties properties, Blob blob, String blobStoreName, boolean isDryRun);
+  void restore(Properties properties, Blob blob, BlobStore blobStore, boolean isDryRun);
 
   /**
    * Runs after all blobs have been restored to the database.
