@@ -19,7 +19,7 @@ import org.sonatype.nexus.selector.VariableSource;
 /**
  * Generate a variable source from a persisted asset, to be used for content selector evaluation
  *
- * @since 3.29
+ * @since 3.next
  */
 public interface AssetVariableResolver
     extends VariableResolverAdapter

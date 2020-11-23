@@ -15,7 +15,7 @@ package org.sonatype.nexus.repository.pypi.datastore.internal.store;
 import org.sonatype.nexus.repository.content.store.AssetBlobDAO;
 
 /**
- * @since 3.29
+ * @since 3.next
  */
 public interface PypiAssetBlobDAO
     extends AssetBlobDAO

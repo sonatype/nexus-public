@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.export.ExportAssetFilter;
 import org.sonatype.nexus.repository.npm.internal.NpmFormat;
 
 /**
- * @since 3.29
+ * @since 3.next
  */
 @Singleton
 @Named(NpmFormat.NAME)

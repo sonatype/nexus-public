@@ -90,7 +90,7 @@ import static org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearch
 /**
  * npm {@link ProxyFacet} implementation.
  *
- * @since 3.29
+ * @since 3.next
  */
 @Named
 public class NpmContentProxyFacet

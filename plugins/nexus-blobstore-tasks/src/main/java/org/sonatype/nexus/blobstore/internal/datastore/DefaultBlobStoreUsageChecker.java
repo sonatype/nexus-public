@@ -38,7 +38,7 @@ import static java.util.stream.StreamSupport.stream;
 /**
  * Check if a blob is referenced in the corresponding metadata for NewDB
  *
- * @since 3.29
+ * @since 3.next
  */
 @Named
 @Singleton

@@ -13,7 +13,7 @@
 package org.sonatype.nexus.blobstore.api;
 
 /**
- * @since 3.29
+ * @since 3.next
  */
 public interface ChangeRepositoryBlobstoreDataService
 {

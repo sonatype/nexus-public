@@ -61,7 +61,7 @@ public interface DataStore<S extends DataSession<?>>
   Connection openConnection() throws SQLException;
 
   /**
-   * @since 3.29
+   * @since 3.next
    */
   DataSource getDataSource();
 

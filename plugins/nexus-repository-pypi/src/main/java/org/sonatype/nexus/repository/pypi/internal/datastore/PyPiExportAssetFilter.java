@@ -23,7 +23,7 @@ import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
 /**
  * Filter to exclude indexes from export, as they need to be regenerated on import
  *
- * @since 3.29
+ * @since 3.next
  */
 @Singleton
 @Named(PyPiFormat.NAME)

@@ -32,7 +32,7 @@ import org.sonatype.nexus.repository.view.ViewFacet
 /**
  * PyPI hosted repository recipe.
  *
- * @since 3.29
+ * @since 3.next
  */
 @Named(PyPiHostedRecipe.NAME)
 @Singleton

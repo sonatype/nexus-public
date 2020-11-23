@@ -25,7 +25,7 @@ import org.sonatype.nexus.repository.view.handlers.IndexHtmlForwardHandler;
  * Handler which will forward current request to {@code {request.path}/index.html} or {@code {request.path}/index.htm}.
  * If there are no index.html and index.htm files then just proceed to avoid 404 error
  *
- * @since 3.29
+ * @since 3.next
  */
 @Named
 @Singleton

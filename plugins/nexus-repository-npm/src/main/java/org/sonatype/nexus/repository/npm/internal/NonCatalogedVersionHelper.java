@@ -63,7 +63,7 @@ import static org.sonatype.nexus.repository.npm.internal.NpmFormat.NAME;
 
 /**
  *
- * @since 3.29
+ * @since 3.next
  */
 @Named
 @Singleton

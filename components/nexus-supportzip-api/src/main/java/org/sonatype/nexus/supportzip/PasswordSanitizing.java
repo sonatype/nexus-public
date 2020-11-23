@@ -33,7 +33,7 @@ import com.google.common.collect.ImmutableList;
 /**
  * Should be used to hide sensitive data like password in the {@link Map}.
  *
- * @since 3.29
+ * @since 3.next
  */
 @Named
 @Singleton

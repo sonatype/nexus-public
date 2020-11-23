@@ -24,7 +24,7 @@ import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.P_NAME;
 import static org.sonatype.nexus.repository.npm.internal.NpmAttributes.P_VERSION;
 
 /**
- * @since 3.29
+ * @since 3.next
  */
 @Named(NpmFormat.NAME)
 public class NpmAssetXODescriptor

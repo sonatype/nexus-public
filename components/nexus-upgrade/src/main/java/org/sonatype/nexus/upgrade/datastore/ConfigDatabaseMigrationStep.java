@@ -13,7 +13,7 @@
 package org.sonatype.nexus.upgrade.datastore;
 
 /**
- * @since 3.29
+ * @since 3.next
  */
 public interface ConfigDatabaseMigrationStep
     extends DatabaseMigrationStep

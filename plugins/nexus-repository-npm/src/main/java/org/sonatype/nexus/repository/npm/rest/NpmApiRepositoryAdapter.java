@@ -23,7 +23,7 @@ import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 import org.sonatype.nexus.repository.types.ProxyType;
 
 /**
- * @since 3.29
+ * @since 3.next
  */
 @Named(NpmFormat.NAME)
 public class NpmApiRepositoryAdapter

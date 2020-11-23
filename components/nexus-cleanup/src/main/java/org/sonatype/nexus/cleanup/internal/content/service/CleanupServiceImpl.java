@@ -44,7 +44,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.nonNull;
 
 /**
- * @since 3.29
+ * @since 3.next
  */
 @Named
 @Singleton

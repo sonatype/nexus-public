@@ -93,7 +93,7 @@ public class AssetBlobStore<T extends AssetBlobDAO>
   /**
    * Generally it is recommended that this method not be called and let stores manage this value.
    *
-   * @since 3.29
+   * @since 3.next
    */
   @Transactional
   public void setBlobCreated(final AssetBlob blob, final OffsetDateTime blobCreated) {

@@ -31,7 +31,7 @@ import org.sonatype.nexus.repository.maven.internal.Maven2Format;
  * Provides some post processing capabilities for assets that could have hash files that need blobUpdated date to match
  * the imported asset blobUpdated Date
  *
- * @since 3.29
+ * @since 3.next
  */
 @Singleton
 @Named(Maven2Format.NAME)

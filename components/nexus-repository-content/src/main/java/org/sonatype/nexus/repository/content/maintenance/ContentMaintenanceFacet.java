@@ -45,7 +45,7 @@ public interface ContentMaintenanceFacet
    * @param componentIds  the componentIds to delete
    * @return number of components purged
    *
-   * @since 3.29
+   * @since 3.next
    */
   int deleteComponents(int[] componentIds);
 }

@@ -48,7 +48,7 @@ public interface FluentBlobs
   /**
    * Ingests a blob from a {@code sourceFile} via hard-linking.
    *
-   * @since 3.29
+   * @since 3.next
    */
   Blob ingest(Path sourceFile, Map<String, String> headers, HashCode sha1, long size);
 
@@ -56,12 +56,12 @@ public interface FluentBlobs
    * Fetches the Blob associated with the specified BlobRef or Optional.empty() if
    * no such Blob exists.
    *
-   * @since 3.29
+   * @since 3.next
    */
   Optional<Blob> blob(BlobRef blobRef);
 
   /**
-   * @since 3.29
+   * @since 3.next
    */
   BlobStoreMetrics getMetrics();
 }

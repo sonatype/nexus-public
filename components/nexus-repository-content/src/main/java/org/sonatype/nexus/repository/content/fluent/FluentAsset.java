@@ -105,7 +105,7 @@ public interface FluentAsset
   /**
    * Generally it is recommended that this method not be called and let stores manage this value.
    *
-   * @since 3.29
+   * @since 3.next
    */
   void blobCreated(OffsetDateTime blobCreated);
 
@@ -114,7 +114,7 @@ public interface FluentAsset
    *
    * Sets the created time of the asset associated with the ID to the specified time.
    *
-   * @since 3.29
+   * @since 3.next
    */
   void created(OffsetDateTime created);
 
@@ -123,7 +123,7 @@ public interface FluentAsset
    *
    * Sets the last download time of the asset associated with the ID to the specified time.
    *
-   * @since 3.29
+   * @since 3.next
    */
   void lastDownloaded(OffsetDateTime lastDownloaded);
 
@@ -132,7 +132,7 @@ public interface FluentAsset
    *
    * Sets the last updated time of the asset associated with the ID to the specified time.
    *
-   * @since 3.29
+   * @since 3.next
    */
   void lastUpdated(OffsetDateTime lastUpdated);
 }

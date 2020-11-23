@@ -28,7 +28,7 @@ import org.flywaydb.core.api.output.MigrateResult;
 /**
  * Support class for upgrade managers.
  *
- * @since 3.29
+ * @since 3.next
  */
 abstract class UpgradeManagerSupport<E extends DatabaseMigrationStep>
     extends ComponentSupport

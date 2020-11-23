@@ -75,7 +75,7 @@ class BlobStoreXO
   boolean promotable
 
   /**
-   * @since 3.29
+   * @since 3.next
    */
   int taskUseCount
 

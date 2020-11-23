@@ -24,7 +24,7 @@ import com.google.gson.stream.JsonToken;
 /**
  * Parses metadata to extract values without loading the entire model into memory
  *
- * @since 3.29
+ * @since 3.next
  */
 public class MetadataVersionParser
 {

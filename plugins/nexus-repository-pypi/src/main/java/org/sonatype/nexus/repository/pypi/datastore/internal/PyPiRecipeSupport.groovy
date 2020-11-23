@@ -46,7 +46,7 @@ import static org.sonatype.nexus.repository.http.HttpMethods.POST
 /**
  * PyPI repository support.
  *
- * @since 3.29
+ * @since 3.next
  */
 abstract class PyPiRecipeSupport
     extends RecipeSupport

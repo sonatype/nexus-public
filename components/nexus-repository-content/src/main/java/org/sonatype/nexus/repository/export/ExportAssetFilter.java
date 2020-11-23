@@ -17,7 +17,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 /**
  * Used to determine assets that should be skipped during export.
  *
- * @since 3.29
+ * @since 3.next
  */
 public interface ExportAssetFilter
 {

@@ -24,7 +24,7 @@ import org.sonatype.nexus.upgrade.datastore.ContentDatabaseMigrationStep;
 /**
  * Upgrade manager for the Content database
  *
- * @since 3.29
+ * @since 3.next
  */
 @Named
 @Singleton

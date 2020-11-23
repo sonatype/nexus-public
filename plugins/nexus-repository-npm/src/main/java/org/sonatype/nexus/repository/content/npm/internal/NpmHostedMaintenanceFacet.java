@@ -45,7 +45,7 @@ import static java.util.Collections.*;
  * This handles the deletes of Npm components and assets. A key piece of functionality is removing the dist tags for
  * version of packages from the root when they are removed.
  *
- * @since 3.29
+ * @since 3.next
  */
 @Named
 public class NpmHostedMaintenanceFacet

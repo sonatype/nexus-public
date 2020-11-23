@@ -41,7 +41,7 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.normaliz
 import static org.sonatype.nexus.repository.view.Content.CONTENT_ETAG;
 
 /**
- * @since 3.29
+ * @since 3.next
  */
 public class PyPiStorageUtils
 {

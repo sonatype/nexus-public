@@ -17,7 +17,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
 
 /**
- * @since 3.29
+ * @since 3.next
  */
 public class NpmAttributes
 {

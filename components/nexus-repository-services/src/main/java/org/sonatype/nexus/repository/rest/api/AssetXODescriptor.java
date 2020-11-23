@@ -19,7 +19,7 @@ import javax.inject.Named;
 /**
  * Descriptor for the {@link AssetXO} class
  *
- * @since 3.29
+ * @since 3.next
  */
 @Named
 public interface AssetXODescriptor

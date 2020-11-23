@@ -17,7 +17,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 /**
- * @since 3.29
+ * @since 3.next
  */
 public interface DatabaseMigrationStep
 {

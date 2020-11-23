@@ -21,7 +21,7 @@ import org.flywaydb.core.api.migration.JavaMigration;
 /**
  * Wrapper for {@link DatabaseMigrationStep} for Flyway
  *
- * @since 3.29
+ * @since 3.next
  */
 public class NexusJavaMigration implements JavaMigration
 {

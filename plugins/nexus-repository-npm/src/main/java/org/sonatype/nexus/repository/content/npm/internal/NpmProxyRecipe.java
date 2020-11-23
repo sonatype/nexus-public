@@ -85,7 +85,7 @@ import static org.sonatype.nexus.repository.npm.internal.NpmProxyFacet.ProxyTarg
 /**
  * npm proxy repository recipe.
  *
- * @since 3.29
+ * @since 3.next
  */
 @Named(NpmProxyRecipe.NAME)
 @Singleton

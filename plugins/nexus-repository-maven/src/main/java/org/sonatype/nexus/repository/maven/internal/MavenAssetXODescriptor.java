@@ -27,7 +27,7 @@ import static org.sonatype.nexus.repository.maven.internal.Attributes.P_CLASSIFI
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_EXTENSION;
 
 /**
- * @since 3.29
+ * @since 3.next
  */
 @Named(Maven2Format.NAME)
 public class MavenAssetXODescriptor

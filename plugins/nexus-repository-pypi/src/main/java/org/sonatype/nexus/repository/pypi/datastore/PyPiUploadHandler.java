@@ -52,7 +52,7 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_ARCHI
 import static org.sonatype.nexus.repository.view.ContentTypes.TEXT_PLAIN;
 
 /**
- * @since 3.29
+ * @since 3.next
  */
 @Named(PyPiFormat.NAME)
 @Singleton

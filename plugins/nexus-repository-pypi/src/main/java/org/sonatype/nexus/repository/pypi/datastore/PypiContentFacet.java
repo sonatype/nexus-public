@@ -26,7 +26,7 @@ import org.sonatype.nexus.repository.view.Payload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 
 /**
- * @since 3.29
+ * @since 3.next
  */
 @Facet.Exposed
 public interface PypiContentFacet

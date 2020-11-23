@@ -14,7 +14,7 @@
 /**
  * Cleanup services.
  *
- * @since 3.29
+ * @since 3.next
  */
 @FeatureFlag(name = "nexus.datastore.enabled")
 package org.sonatype.nexus.cleanup.internal.content;

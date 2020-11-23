@@ -69,7 +69,7 @@ import static org.sonatype.nexus.repository.view.Content.CONTENT_LAST_MODIFIED;
 /**
  * PyPi specific implementation of {@link GroupFacetImpl} allowing for {@link Cooperation}, merging and caching
  *
- * @since 3.29
+ * @since 3.next
  */
 @Named
 @Exposed
