@@ -38,6 +38,7 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreManager;
+import org.sonatype.nexus.common.collect.ImmutableNestedAttributesMap;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.common.entity.EntityId;
@@ -58,6 +59,7 @@ import org.sonatype.nexus.repository.content.store.ContentStoreEvent;
 import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 
+import com.google.common.collect.ImmutableMap;
 import org.joda.time.DateTime;
 
 import static java.time.LocalDate.now;
@@ -69,6 +71,7 @@ import static org.apache.commons.lang3.StringUtils.startsWith;
 import static org.apache.commons.lang3.StringUtils.substring;
 import static org.sonatype.nexus.blobstore.api.BlobStoreManager.DEFAULT_BLOBSTORE_NAME;
 import static org.sonatype.nexus.datastore.api.DataStoreManager.CONTENT_DATASTORE_NAME;
+import static org.sonatype.nexus.repository.content.AttributeChange.OVERLAY;
 
 @Named
 @Singleton
@@ -450,5 +453,17 @@ public class DatastoreComponentAssetTestHelper
         .map(InternalIds::toExternalId)
         .orElseThrow(() -> new ComponentNotFoundException(repository, component.map(Component::namespace).orElse(EMPTY),
             component.map(Component::name).orElse(EMPTY), component.map(Component::version).orElse(EMPTY)));
+  }
+
+  @Override
+  public NestedAttributesMap getAttributes(final Repository repository) {
+    NestedAttributesMap attr = repository.facet(ContentFacet.class).attributes();
+    return new ImmutableNestedAttributesMap(attr.getParent(), attr.getKey(), attr.backing());
+  }
+
+  @Override
+  public void modifyAttributes(final Repository repository, String child1, final String child2, final int value) {
+    repository.facet(ContentFacet.class)
+        .attributes(OVERLAY, child1, ImmutableMap.of(child2, ImmutableMap.of(Integer.class, value)));
   }
 }

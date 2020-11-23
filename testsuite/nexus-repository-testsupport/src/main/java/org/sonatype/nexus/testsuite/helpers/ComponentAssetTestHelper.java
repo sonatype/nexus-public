@@ -178,6 +178,10 @@ public interface ComponentAssetTestHelper
    */
   EntityId getComponentId(Repository repository, String assetPath);
 
+  NestedAttributesMap getAttributes(Repository repository);
+
+  void modifyAttributes(final Repository repository, String child1, final String child2, final int value);
+
   class AssetNotFoundException
       extends RuntimeException
   {

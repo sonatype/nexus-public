@@ -197,6 +197,12 @@
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>org.quartz-scheduler</groupId>
+      <artifactId>quartz</artifactId>
+    </dependency>
+
   </dependencies>
 
   <build>
@@ -247,6 +253,7 @@
               org.sonatype.nexus.repository.yum.*;resolution:=optional,
               org.sonatype.nexus.repository.search.*;resolution:=optional,
               org.sonatype.nexus.repository.storage.*;resolution:=optional,
+              org.sonatype.nexus.repository.attributes.*;resolution:=optional,
               org.sonatype.nexus.repository.vulnerability.*;resolution:=optional,
               org.sonatype.nexus.testsuite.testsupport.cleanup.*;resolution:=optional,
               *

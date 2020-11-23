@@ -34,6 +34,7 @@ import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.DatabaseInstanceNames;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.attributes.AttributesFacet;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;
@@ -394,5 +395,16 @@ public class OrientComponentAssetTestHelper
   @Override
   public EntityId getComponentId(final Repository repository, final String assetPath) {
     return findAssetByNameNotNull(repository, assetPath).componentId();
+  }
+
+  @Override
+  public NestedAttributesMap getAttributes(final Repository repository) {
+    return repository.facet(AttributesFacet.class).getAttributes();
+  }
+
+  @Override
+  public void modifyAttributes(final Repository repository, String child1, final String child2, final int value) {
+    AttributesFacet facet = repository.facet(AttributesFacet.class);
+    facet.modifyAttributes(attribute -> attribute.child(child1).child(child2).set(Integer.class, value));
   }
 }
