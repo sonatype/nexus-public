@@ -93,7 +93,7 @@ public class OrientComponentAssetTestHelper
 
   @Override
   public DateTime getBlobUpdatedTime(final Repository repository, final String path) {
-    return findAssetByName(repository, path).map(Asset::blobUpdated).orElse(null);
+    return findAssetByNameNoBucketFind(repository, path).map(Asset::blobUpdated).orElse(null);
   }
 
   @Override
@@ -164,6 +164,13 @@ public class OrientComponentAssetTestHelper
     try (StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get()) {
       tx.begin();
       return Optional.ofNullable(tx.findAssetWithProperty(P_NAME, name, tx.findBucket(repository)));
+    }
+  }
+
+  private static Optional<Asset> findAssetByNameNoBucketFind(final Repository repository, final String name) {
+    try (StorageTx tx = repository.facet(StorageFacet.class).txSupplier().get()) {
+      tx.begin();
+      return Optional.ofNullable(tx.findAssetWithProperty(P_NAME, name));
     }
   }
 
