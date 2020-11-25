@@ -62,4 +62,11 @@ public interface MavenContentFacet
    * @return The paths of the assets deleted
    */
   Set<String> deleteWithHashes(MavenPath path) throws IOException;
+
+  /**
+   * Update component attributes when {@code path} corresponds to a Maven POM
+   *
+   * @param path for which the corresponding component attributes may be updated
+   */
+  void maybeUpdateComponentAttributes(MavenPath path) throws IOException;
 }
