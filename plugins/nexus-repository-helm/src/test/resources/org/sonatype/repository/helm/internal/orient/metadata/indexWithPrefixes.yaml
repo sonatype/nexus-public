@@ -1,0 +1,25 @@
+apiVersion: v1
+entries:
+  adwerx/awx:
+    - name: adwerx/awx
+      version: "2.2.3"
+      description: "AWX provides a web-based user interface, REST API, and task engine built on top of Ansible. It is the upstream project for Tower, a commercial derivative of AWX."
+      appVersion: "8.0.0"
+      digest: 18333d5cbfd4363064b19716d025089165e5c6dfd87f5e78f4242e31a9514e2d
+      urls:
+        - https://repo.chartcenter.io/adwerx/awx-2.2.3.tgz
+    - name: adwerx/awx
+      version: "0.1.0"
+      description: "Add chart for deploying distributed Ansible AWX application."
+      appVersion: "1.0"
+      digest: 684dcd6a6e30a4e827ce879be1cca19251bff2d97467c702f645b2727581196d
+      urls:
+        - https://repo.chartcenter.io/adwerx/awx-0.1.0.tgz
+    - name: adwerx/awx
+      version: "2.0.0-rc1"
+      description: "Helm chart for deploying Ansible AWX"
+      appVersion: "7.0.0"
+      digest: 712916a97bc19e9eef06cfa7df018dffcf6c9a75fd29a6f76329a42554c5b746
+      urls:
+        - https://repo.chartcenter.io/adwerx/awx-2.0.0-rc1.tgz
+generated: '2019-11-06T16:57:53.297933000Z'

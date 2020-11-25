@@ -75,7 +75,7 @@ public class YamlParserTest
     underTest.write(os, createChartIndex());
 
     assertThat(os, is(notNullValue()));
-    assertEquals(StringUtils.normalizeSpace(os.toString()), StringUtils.normalizeSpace(expectedResult));
+    assertEquals(StringUtils.normalizeSpace(expectedResult), StringUtils.normalizeSpace(os.toString()));
   }
 
   private List<String> getKeywords() {

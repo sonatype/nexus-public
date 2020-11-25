@@ -13,7 +13,6 @@
 package org.sonatype.nexus.testsuite.testsupport.helm;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,14 +36,11 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.tika.io.IOUtils;
 import org.junit.Assert;
 import org.junit.experimental.categories.Category;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.sonatype.nexus.repository.storage.MetadataNodeEntityAdapter.P_NAME;
 
@@ -94,9 +90,13 @@ public class HelmITSupport
 
   public static final String MONGO_PATH_FULL_728_TARGZ = format("%s/%s", PKG_PATH, MONGO_PKG_FILE_NAME_728_TGZ);
 
-  public static final String YAML_MONGO_600_STRING_DATA = "urls:\n    - mongodb-6.0.0.tgz\n    version: 6.0.0";
+  public static final String YAML_MONGO_600_URL = "urls:\n    - mongodb-6.0.0.tgz";
 
-  public static final String YAML_MONGO_728_STRING_DATA = "urls:\n    - mongodb-7.2.8.tgz\n    version: 7.2.8";
+  public static final String YAML_MONGO_600_VERSION = "urls:\n    - mongodb-6.0.0.tgz";
+
+  public static final String YAML_MONGO_728_URL = "version: 7.2.8";
+
+  public static final String YAML_MONGO_728_VERSION = "version: 7.2.8";
 
   public HelmITSupport() {
     testData.addDirectory(resolveBaseFile("target/it-resources/helm"));
@@ -140,11 +140,6 @@ public class HelmITSupport
         .create()
         .addBinaryBody("chart", Files.readAllBytes(getFilePathByName(name)), ContentType.APPLICATION_OCTET_STREAM, name)
         .build();
-  }
-
-  protected void checkYamlIncludesContent(InputStream is, String expectedContent) throws Exception {
-    String downloadedPackageData = IOUtils.toString(is);
-    assertThat(downloadedPackageData, containsString(expectedContent));
   }
 
   private Path getFilePathByName(String fileName) {

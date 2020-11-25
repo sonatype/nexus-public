@@ -15,6 +15,11 @@ package org.sonatype.repository.helm.internal.metadata;
 import java.util.List;
 import java.util.Map;
 
+import org.sonatype.repository.helm.internal.util.JodaDateTimeDeserializer;
+import org.sonatype.repository.helm.internal.util.JodaDateTimeSerializer;
+
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.joda.time.DateTime;
 
 /**
@@ -24,9 +29,12 @@ import org.joda.time.DateTime;
  */
 public class ChartEntry
 {
-  private String description;
+  private String apiVersion;
   private String name;
+  private String description;
   private String version;
+  @JsonSerialize(using = JodaDateTimeSerializer.class)
+  @JsonDeserialize(using = JodaDateTimeDeserializer.class)
   private DateTime created;
   private String appVersion;
   private String digest;
@@ -34,6 +42,14 @@ public class ChartEntry
   private List<String> urls;
   private List<String> sources;
   private List<Map<String, String>> maintainers;
+
+  public String getApiVersion() {
+    return apiVersion;
+  }
+
+  public void setApiVersion(final String apiVersion) {
+    this.apiVersion = apiVersion;
+  }
 
   public String getName() { return this.name; }
 

@@ -17,7 +17,6 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 
 import javax.annotation.Nullable;
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -26,7 +25,6 @@ import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.nexus.repository.view.payloads.BytesPayload;
 import org.sonatype.nexus.repository.view.payloads.TempBlob;
 import org.sonatype.nexus.thread.io.StreamCopier;
-import org.sonatype.repository.helm.internal.util.YamlParser;
 
 import com.google.common.io.ByteStreams;
 
@@ -41,11 +39,6 @@ public class IndexYamlAbsoluteUrlRewriter
     extends IndexYamlAbsoluteUrlRewriterSupport
 {
   private static final String YAML_CONTENT_TYPE = "text/x-yaml";
-
-  @Inject
-  public IndexYamlAbsoluteUrlRewriter(final YamlParser yamlParser) {
-    super(yamlParser);
-  }
 
   @Nullable
   public Content removeUrlsFromIndexYaml(final TempBlob index, final AttributesMap attributes) {

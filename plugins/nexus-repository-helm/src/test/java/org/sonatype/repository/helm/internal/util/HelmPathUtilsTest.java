@@ -43,7 +43,7 @@ public class HelmPathUtilsTest
 
   @Before
   public void setUp() throws Exception {
-    underTest = new HelmPathUtils(new IndexYamlAbsoluteUrlRewriter(new YamlParser()));
+    underTest = new HelmPathUtils(new IndexYamlAbsoluteUrlRewriter());
   }
 
   @Test

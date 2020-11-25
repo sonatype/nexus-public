@@ -17,6 +17,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.sonatype.repository.helm.internal.util.JodaDateTimeDeserializer;
+import org.sonatype.repository.helm.internal.util.JodaDateTimeSerializer;
+
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.joda.time.DateTime;
 
 /**
@@ -28,6 +33,8 @@ public final class ChartIndex
 {
   private String apiVersion;
   private Map<String, List<ChartEntry>> entries;
+  @JsonSerialize(using = JodaDateTimeSerializer.class)
+  @JsonDeserialize(using = JodaDateTimeDeserializer.class)
   private DateTime generated;
 
   public ChartIndex() {
