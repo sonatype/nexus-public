@@ -12,8 +12,11 @@
  */
 package org.sonatype.nexus.content.testsuite.helm;
 
+import java.nio.charset.Charset;
+
 import org.sonatype.goodies.httpfixture.server.fluent.Server;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
+import org.sonatype.nexus.content.testsupport.FormatClientSupport;
 import org.sonatype.nexus.content.testsupport.helm.HelmClient;
 import org.sonatype.nexus.content.testsupport.helm.HelmContentITSupport;
 import org.sonatype.nexus.repository.Repository;
@@ -24,6 +27,7 @@ import org.apache.http.HttpResponse;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -64,7 +68,8 @@ public class HelmContentProxyIT
     HttpResponse httpResponse = client.fetch(YAML_FILE_NAME, CONTENT_TYPE_YAML);
 
     assertThat(status(httpResponse), is(HttpStatus.OK));
-    assertThat(bytes(httpResponse), is(Files.toByteArray(testData.resolveFile(YAML_FILE_NAME))));
+    assertThat(FormatClientSupport.asString(httpResponse),
+        is(FileUtils.readFileToString(testData.resolveFile(YAML_FILE_NAME), Charset.defaultCharset())));
   }
 
   @Test

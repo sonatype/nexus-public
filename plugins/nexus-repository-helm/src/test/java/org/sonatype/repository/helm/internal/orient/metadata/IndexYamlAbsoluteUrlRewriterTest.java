@@ -23,19 +23,23 @@ import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.storage.StorageFacet;
 import org.sonatype.nexus.repository.view.Content;
 import org.sonatype.repository.helm.internal.metadata.IndexYamlAbsoluteUrlRewriter;
-import org.sonatype.repository.helm.internal.util.YamlParser;
 
+import com.google.common.io.CharStreams;
+import com.google.common.io.Resources;
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static java.nio.charset.Charset.defaultCharset;
+import static org.apache.commons.lang3.StringUtils.deleteWhitespace;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.either;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
@@ -47,6 +51,8 @@ public class IndexYamlAbsoluteUrlRewriterTest
   private static final String INDEX_YAML_NO_ABSOLUTE_URLS = "indexWithRelativeUrls.yaml";
 
   private static final String INDEX_YAML_WITH_CUSTOM_URL = "index.yaml";
+
+  private static final String INDEX_YAML_PREFIXES = "indexWithPrefixes.yaml";
 
   private static final String INDEX_YAML_URL_NODE = "url";
 
@@ -68,7 +74,7 @@ public class IndexYamlAbsoluteUrlRewriterTest
   @Before
   public void setUp() throws Exception {
     setupRepositoryMock();
-    this.underTest = new IndexYamlAbsoluteUrlRewriter(new YamlParser());
+    this.underTest = new IndexYamlAbsoluteUrlRewriter();
   }
 
   @Test
@@ -90,6 +96,20 @@ public class IndexYamlAbsoluteUrlRewriterTest
     setupIndexMock(INDEX_YAML_NO_ABSOLUTE_URLS);
     Content newTempBlob = underTest.removeUrlsFromIndexYaml(tempContent);
     checkThatAbsoluteUrlRemoved(newTempBlob.openInputStream());
+  }
+
+  @Test
+  public void modifyUrlsWithPrefixes() throws Exception {
+    setupIndexMock(INDEX_YAML_PREFIXES);
+    Content newTempBlob = underTest.removeUrlsFromIndexYaml(tempContent);
+    try (InputStream is = newTempBlob.openInputStream();
+         InputStreamReader inputStreamReader = new InputStreamReader(is, defaultCharset())) {
+      String actual = deleteWhitespace(CharStreams.toString(inputStreamReader));
+      String expected = deleteWhitespace(Resources.toString(
+          Resources.getResource(getClass(), "indexWithPrefixesExpected.yaml"), defaultCharset()));
+      assertEquals(expected, actual);
+      checkThatAbsoluteUrlRemoved(IOUtils.toInputStream(String.join("\n", actual), defaultCharset()));
+    }
   }
 
   private void checkThatAbsoluteUrlRemoved(final InputStream is) throws Exception {

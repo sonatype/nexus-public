@@ -22,30 +22,26 @@ import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-
-import javax.inject.Inject;
+import java.util.stream.Collectors;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.view.Content;
-import org.sonatype.repository.helm.internal.util.YamlParser;
 
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.utils.URIBuilder;
-import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.SafeConstructor;
-import org.yaml.snakeyaml.emitter.Emitter;
-import org.yaml.snakeyaml.events.CollectionEndEvent;
-import org.yaml.snakeyaml.events.CollectionStartEvent;
-import org.yaml.snakeyaml.events.Event;
-import org.yaml.snakeyaml.events.ScalarEvent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Collections.emptyList;
 
 /**
  * Removes absolute URL entries from index.yaml
@@ -55,83 +51,66 @@ import static java.util.Collections.emptyList;
 public class IndexYamlAbsoluteUrlRewriterSupport
     extends ComponentSupport
 {
-  private final YamlParser yamlParser;
+  private final ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory()
+      .disable(Feature.WRITE_DOC_START_MARKER)
+      .configure(YAMLGenerator.Feature.MINIMIZE_QUOTES, true)
+      .configure(Feature.ALWAYS_QUOTE_NUMBERS_AS_STRINGS, true))
+      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+      .setSerializationInclusion(Include.NON_NULL)
+      .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
 
-  @Inject
-  public IndexYamlAbsoluteUrlRewriterSupport(final YamlParser yamlParser) {
-    this.yamlParser = checkNotNull(yamlParser);
-  }
-
-  private static final String URLS = "urls";
-
-  protected void updateUrls(final InputStream is,
-                            final OutputStream os)
+  protected void updateUrls(
+      final InputStream is,
+      final OutputStream os)
   {
     try (Reader reader = new InputStreamReader(is);
          Writer writer = new OutputStreamWriter(os)) {
-      Yaml yaml = new Yaml(new SafeConstructor());
-      Emitter emitter = new Emitter(writer, new DumperOptions());
-      boolean rewrite = false;
-      for (Event event : yaml.parse(reader)) {
-        if (event instanceof ScalarEvent) {
-          ScalarEvent scalarEvent = (ScalarEvent) event;
-          if (rewrite) {
-            event = maybeSetAbsoluteUrlAsRelative(scalarEvent);
-          }
-          else if (URLS.equals(scalarEvent.getValue())) {
-            rewrite = true;
-          }
-        }
-        else if (event instanceof CollectionStartEvent) {
-          // NOOP
-        }
-        else if (event instanceof CollectionEndEvent) {
-          rewrite = false;
-        }
-        emitter.emit(event);
-      }
+      ChartIndex chartIndex = objectMapper.readValue(reader, ChartIndex.class);
+      chartIndex.getEntries().values().stream()
+          .flatMap(Collection::stream)
+          .forEach(this::rewriteUrls);
+      writer.write(objectMapper.writeValueAsString(chartIndex));
     }
     catch (IOException ex) {
       log.error("Error rewriting urls in index.yaml", ex);
     }
   }
 
-  protected Event maybeSetAbsoluteUrlAsRelative(ScalarEvent scalarEvent) {
-    String oldUrl = scalarEvent.getValue();
+  private void rewriteUrls(final ChartEntry chartEntry) {
+    List<String> urls = chartEntry.getUrls().stream()
+        .map(oldUrl -> rewriteUrl(oldUrl, chartEntry.getName(), chartEntry.getVersion()))
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .collect(Collectors.toList());
+    chartEntry.setUrls(urls);
+  }
+
+  private Optional<String> rewriteUrl(final String oldUrl, final String name, final String version) {
     try {
       URI uri = new URIBuilder(oldUrl).build();
-      if (uri.isAbsolute()) {
-        String fileName = uri.getPath();
-        // Rewrite absolute paths to relative
-        if (!fileName.isEmpty()) {
-          fileName = Paths.get(fileName).getFileName().toString();
-        }
-        scalarEvent = new ScalarEvent(scalarEvent.getAnchor(), scalarEvent.getTag(),
-            scalarEvent.getImplicit(), fileName, scalarEvent.getStartMark(),
-            scalarEvent.getEndMark(), scalarEvent.getStyle());
-      }
+      String fileExtension = FilenameUtils.getExtension(uri.getPath());
+      return Optional.of(StringUtils.isNoneBlank(name, version, fileExtension)
+          ? name + "-" + version + "." + fileExtension
+          : uri.getPath());
     }
     catch (URISyntaxException ex) {
       log.error("Invalid URI in index.yaml", ex);
+      return Optional.empty();
     }
-    return scalarEvent;
   }
 
-  @SuppressWarnings("unchecked")
   public Optional<String> getFirstUrl(final Content indexYaml, final String chartName, final String chartVersion) {
     checkNotNull(chartName);
     checkNotNull(chartVersion);
 
     try (InputStream inputStream = indexYaml.openInputStream()) {
-      Map<String, Object> index = yamlParser.load(inputStream);
-      Map<String, Object> entries = (Map<String, Object>) index.get("entries");
-      List<Map<String, Object>> charsOfName = (List<Map<String, Object>>) entries.getOrDefault(chartName, emptyList());
-      Optional<Map<String, Object>> chartOfVersion = charsOfName.stream()
-          .filter(chart -> Objects.equals(chartVersion, chart.get("version")))
+      ChartIndex chartIndex = objectMapper.readValue(inputStream, ChartIndex.class);
+      return chartIndex.getEntries().values().stream()
+          .flatMap(Collection::stream)
+          .filter(chart -> chartName.equals(chart.getName()))
+          .filter(chart -> chartVersion.equals(chart.getVersion()))
+          .flatMap(chart -> chart.getUrls().stream())
           .findFirst();
-
-      return chartOfVersion
-          .flatMap(chart -> ((List<String>) chart.get(URLS)).stream().findFirst());
     }
     catch (IOException e) {
       log.error("Error reading index.yaml");

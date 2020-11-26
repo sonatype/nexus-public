@@ -29,6 +29,7 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.config.WritePolicy;
 import org.sonatype.nexus.repository.content.Asset;
+import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.RepositoryContent;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
@@ -246,6 +247,21 @@ public class MavenContentFacetImpl
       component.kind(getPackaging(model));
       setPomAttributes(component, model);
       publishEvents(component);
+    }
+  }
+
+  public void maybeUpdateComponentAttributes(final MavenPath mavenPath) throws IOException
+  {
+    if (mavenPath.isPom()) {
+      Optional<FluentAsset> optAsset = assets().path(assetPath(mavenPath)).find();
+      if (optAsset.isPresent()) {
+        FluentAsset asset = optAsset.get();
+        Model model = readModel(asset.download().openInputStream());
+        FluentComponent component = createOrGetComponent(mavenPath);
+        component.kind(getPackaging(model));
+        setPomAttributes(component, model);
+        publishEvents(component);
+      }
     }
   }
 
