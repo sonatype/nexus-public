@@ -31,7 +31,7 @@ import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_K
  * {@link ContentMaintenanceFacet} for PyPI where components should be deleted along with their last asset
  * and associated index file.
  *
- * @since 3.next
+ * @since 3.29
  */
 @Named
 public class PyPiLastAssetMaintenanceFacet

@@ -38,7 +38,7 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.name;
 /**
  * Support for merging PyPI simple indexes together.
  *
- * @since 3.next
+ * @since 3.29
  */
 @Named
 @Singleton

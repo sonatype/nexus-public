@@ -25,7 +25,7 @@ import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.UPGRADE;
 /**
  * Default datastore {@link UpgradeService}.
  *
- * @since 3.next
+ * @since 3.29
  */
 @Named
 @ManagedLifecycle(phase = UPGRADE)

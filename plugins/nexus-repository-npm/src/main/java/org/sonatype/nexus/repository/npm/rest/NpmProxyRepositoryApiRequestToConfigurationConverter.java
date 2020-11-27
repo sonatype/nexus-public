@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 import static org.sonatype.nexus.repository.npm.rest.NpmAttributes.REMOVE_NON_CATALOGED;
 
 /**
- * @since 3.next
+ * @since 3.29
  */
 @Named
 public class NpmProxyRepositoryApiRequestToConfigurationConverter

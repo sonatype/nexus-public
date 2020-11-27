@@ -20,7 +20,7 @@ import java.util.Objects;
 /**
  * Represents a parameterized type for a List&lt;T&gt;.
  *
- * @since 3.next
+ * @since 3.29
  */
 public class ListParameterizedType
     implements ParameterizedType

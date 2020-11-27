@@ -25,7 +25,7 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_VERSI
 import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.P_PLATFORM;
 
 /**
- * @since 3.next
+ * @since 3.29
  */
 @Named(PyPiFormat.NAME)
 public class PyPiAssetXODescriptor

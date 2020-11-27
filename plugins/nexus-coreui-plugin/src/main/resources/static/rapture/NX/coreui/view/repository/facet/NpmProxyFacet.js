@@ -15,7 +15,7 @@
 /**
  * Configuration specific to npm proxy repos
  *
- * @since 3.next
+ * @since 3.29
  */
 Ext.define('NX.coreui.view.repository.facet.NpmProxyFacet', {
   extend: 'Ext.form.FieldContainer',

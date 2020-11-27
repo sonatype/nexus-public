@@ -21,7 +21,7 @@ import org.sonatype.nexus.common.log.LoggerLevel;
 /**
  * Configures Flyway loggers.
  *
- * @since 3.next
+ * @since 3.29
  */
 @Singleton
 @Named

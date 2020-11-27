@@ -46,7 +46,7 @@ import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
 import static org.sonatype.nexus.repository.search.query.RepositoryQueryBuilder.unrestricted;
 
 /**
- * @since 3.next
+ * @since 3.29
  */
 public abstract class AbstractSearchCleanupComponentBrowse
     extends ComponentSupport

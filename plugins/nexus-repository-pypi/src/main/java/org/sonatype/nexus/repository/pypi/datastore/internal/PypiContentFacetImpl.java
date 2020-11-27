@@ -43,7 +43,7 @@ import static org.sonatype.nexus.repository.pypi.datastore.internal.PyPiDataUtil
 import static org.sonatype.nexus.repository.pypi.internal.PyPiStorageUtils.getNameAttributes;
 
 /**
- * @since 3.next
+ * @since 3.29
  */
 @Named(PyPiFormat.NAME)
 public class PypiContentFacetImpl

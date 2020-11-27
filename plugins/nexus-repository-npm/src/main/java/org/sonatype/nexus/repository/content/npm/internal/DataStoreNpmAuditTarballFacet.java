@@ -32,7 +32,7 @@ import static org.sonatype.nexus.common.hash.HashAlgorithm.SHA1;
 /**
  * Data store {@link NpmAuditTarballFacet}
  *
- * @since 3.next
+ * @since 3.29
  */
 @Named
 public class DataStoreNpmAuditTarballFacet

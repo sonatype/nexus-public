@@ -25,7 +25,7 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiPathUtils.normaliz
 /**
  * {@link PyPiIndexFacet} implementation.
  *
- * @since 3.next
+ * @since 3.29
  */
 @Named
 public class PyPiIndexFacetImpl

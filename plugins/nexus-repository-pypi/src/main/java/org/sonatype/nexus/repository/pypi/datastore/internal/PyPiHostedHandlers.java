@@ -57,7 +57,7 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiSearchUtils.pypiSe
 import static org.sonatype.nexus.repository.pypi.internal.PyPiStorageUtils.addAttribute;
 
 /**
- * @since 3.next
+ * @since 3.29
  */
 @Named
 @Singleton

@@ -23,7 +23,7 @@ import static org.apache.commons.lang3.StringUtils.stripStart;
 /**
  * Adapts persisted assets to variable resolvers.
  *
- * @since 3.next
+ * @since 3.29
  */
 public abstract class AssetVariableResolverSupport
     extends VariableResolverAdapterSupport
