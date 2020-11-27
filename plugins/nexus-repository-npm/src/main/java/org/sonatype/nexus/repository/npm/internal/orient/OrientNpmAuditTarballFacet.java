@@ -38,7 +38,7 @@ import static org.sonatype.nexus.repository.view.Content.T_CONTENT_HASH_CODES_MA
 /**
  * Orient {@link NpmAuditTarballFacet}
  *
- * @since 3.next
+ * @since 3.29
  */
 @Named
 @Priority(Integer.MAX_VALUE)

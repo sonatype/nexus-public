@@ -23,7 +23,7 @@ import static org.sonatype.nexus.formfields.FormField.MANDATORY;
 import static org.sonatype.nexus.formfields.FormField.OPTIONAL;
 
 /**
- * @since 3.next
+ * @since 3.29
  */
 public abstract class BaseRestoreMetadataTaskDescriptor
     extends TaskDescriptorSupport

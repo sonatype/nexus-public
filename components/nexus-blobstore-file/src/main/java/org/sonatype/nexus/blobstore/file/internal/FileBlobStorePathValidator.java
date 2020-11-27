@@ -44,7 +44,7 @@ import static org.sonatype.nexus.blobstore.file.FileBlobStore.CONFIG_KEY;
 import static org.sonatype.nexus.blobstore.file.FileBlobStore.PATH_KEY;
 
 /**
- * @since 3.next
+ * @since 3.29
  */
 @Named("File Blob Stores Path")
 @Singleton

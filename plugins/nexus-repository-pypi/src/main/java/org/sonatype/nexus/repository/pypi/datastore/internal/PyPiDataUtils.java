@@ -33,7 +33,7 @@ import static org.sonatype.nexus.repository.pypi.internal.PyPiAttributes.SUPPORT
 import static org.sonatype.nexus.repository.view.Content.CONTENT_LAST_MODIFIED;
 
 /**
- * @since 3.next
+ * @since 3.29
  */
 public class PyPiDataUtils
 {

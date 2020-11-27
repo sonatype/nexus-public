@@ -42,7 +42,7 @@ import static java.util.stream.StreamSupport.stream;
 /**
  * Finds components for cleanup using Elastic Search.
  *
- * @since 3.next
+ * @since 3.29
  */
 @Named
 @Singleton

@@ -71,7 +71,7 @@ import static org.sonatype.nexus.repository.storage.AssetEntityAdapter.P_ASSET_K
 import static org.sonatype.nexus.repository.view.ContentTypes.TEXT_HTML;
 
 /**
- * @since 3.next
+ * @since 3.29
  */
 @Named
 @Exposed

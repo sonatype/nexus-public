@@ -319,7 +319,7 @@ public class AssetStore<T extends AssetDAO>
    *
    * Sets the created time of the asset associated with the ID to the specified time.
    *
-   * @since 3.next
+   * @since 3.29
    */
   @Transactional
   public void created(final FluentAssetImpl asset, final OffsetDateTime created) {
@@ -331,7 +331,7 @@ public class AssetStore<T extends AssetDAO>
    *
    * Sets the last download time of the asset associated with the ID to the specified time.
    *
-   * @since 3.next
+   * @since 3.29
    */
   @Transactional
   public void lastDownloaded(final Asset asset, final OffsetDateTime lastDownloaded) {
@@ -343,7 +343,7 @@ public class AssetStore<T extends AssetDAO>
    *
    * Sets the last updated time of the asset associated with the ID to the specified time.
    *
-   * @since 3.next
+   * @since 3.29
    */
   @Transactional
   public void lastUpdated(final Asset asset, final OffsetDateTime lastUpdated) {

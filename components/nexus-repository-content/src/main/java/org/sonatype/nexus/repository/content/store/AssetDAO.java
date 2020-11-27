@@ -223,7 +223,7 @@ public interface AssetDAO
    *
    * Sets the created time of the asset associated with the ID to the specified time.
    *
-   * @since 3.next
+   * @since 3.29
    */
   void created(@Param("assetId") int assetId, @Param("created") OffsetDateTime created);
 
@@ -232,7 +232,7 @@ public interface AssetDAO
    *
    * Sets the last download time of the asset associated with the ID to the specified time.
    *
-   * @since 3.next
+   * @since 3.29
    */
   void lastDownloaded(@Param("assetId") int assetId, @Param("lastDownloaded") OffsetDateTime lastDownloaded);
 
@@ -241,7 +241,7 @@ public interface AssetDAO
    *
    * Sets the last updated time of the asset associated with the ID to the specified time.
    *
-   * @since 3.next
+   * @since 3.29
    */
   void lastUpdated(@Param("assetId") int assetId, @Param("lastUpdated") OffsetDateTime lastUpdated);
 }

@@ -73,7 +73,7 @@ public interface AssetBlobDAO
   /**
    * Generally it is recommended that this method not be called and let stores manage this value.
    *
-   * @since 3.next
+   * @since 3.29
    */
   void setBlobCreated(@Param("blobRef") BlobRef blobRef, @Param("blobCreated") OffsetDateTime blobCreated);
 }

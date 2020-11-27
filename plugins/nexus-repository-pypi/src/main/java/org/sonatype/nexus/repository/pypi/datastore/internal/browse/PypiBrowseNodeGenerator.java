@@ -29,7 +29,7 @@ import com.google.common.base.Splitter;
 import static org.sonatype.nexus.repository.browse.node.BrowsePath.SLASH_CHAR;
 
 /**
- * @since 3.next
+ * @since 3.29
  */
 @Singleton
 @Named(PyPiFormat.NAME)

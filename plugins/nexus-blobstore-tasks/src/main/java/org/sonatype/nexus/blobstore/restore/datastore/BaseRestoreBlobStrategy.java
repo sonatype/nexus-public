@@ -33,7 +33,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Provides the common logic for metadata restoration from a blob. Subclasses will implement the format-specific
  * restoration mechanisms
  *
- * @since 3.next
+ * @since 3.29
  */
 public abstract class BaseRestoreBlobStrategy<T extends RestoreBlobData>
     extends ComponentSupport

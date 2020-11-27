@@ -17,7 +17,7 @@ import javax.annotation.Nullable;
 import org.sonatype.nexus.repository.Facet;
 
 /**
- * @since 3.next
+ * @since 3.29
  */
 @Facet.Exposed
 public interface MavenMetadataRebuildFacet

@@ -118,7 +118,7 @@ public class NpmFieldFactory
   /**
    * Rewrites the dist-tags/latest field with the latest, cataloged version
    *
-   * @since 3.next
+   * @since 3.29
    */
   public static NpmFieldMatcher rewriteLatest(final List<String> nonCatalogedVersions, final List<String> allVersions) {
     return new NpmFieldMatcher(LATEST, DIST_TAGS_LATEST, latestFieldDeserializer(nonCatalogedVersions, allVersions));
