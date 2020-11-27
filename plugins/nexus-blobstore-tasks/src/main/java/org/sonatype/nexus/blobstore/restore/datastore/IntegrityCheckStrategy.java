@@ -24,7 +24,7 @@ import org.sonatype.nexus.repository.content.Asset;
 /**
  * Strategy for checking the integrity of the assets in a repository against its blobstore
  *
- * @since 3.next
+ * @since 3.29
  */
 public interface IntegrityCheckStrategy
 {

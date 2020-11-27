@@ -319,7 +319,7 @@ public class ComponentStore<T extends ComponentDAO>
    * @param componentIds ids of the components to purge
    * @return number of purged components
    *
-   * @since 3.next
+   * @since 3.29
    */
   @Transactional
   public int purge(final int repositoryId, final int[] componentIds) {

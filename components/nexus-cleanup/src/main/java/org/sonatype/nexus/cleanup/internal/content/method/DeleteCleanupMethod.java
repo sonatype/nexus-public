@@ -28,7 +28,7 @@ import org.sonatype.nexus.repository.task.DeletionProgress;
 /**
  * Provides a delete mechanism for cleanup
  *
- * @since 3.next
+ * @since 3.29
  */
 @Named
 public class DeleteCleanupMethod

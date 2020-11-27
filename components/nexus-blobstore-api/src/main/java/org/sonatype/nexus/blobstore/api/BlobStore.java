@@ -293,7 +293,7 @@ public interface BlobStore
   /**
    * Acts as a {@code BlobStore::hardDelete}, except it may be executed asynchronously.
    *
-   * @since 3.next
+   * @since 3.29
    */
   default Future<Boolean> asyncDelete(BlobId blobId) {
     return CompletableFuture.completedFuture(deleteHard(blobId));

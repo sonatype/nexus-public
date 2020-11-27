@@ -27,7 +27,7 @@ import org.sonatype.nexus.supportzip.datastore.JsonExporter;
 /**
  * Write/Read {@link Configuration} data to/from a JSON file.
  *
- * @since 3.next
+ * @since 3.29
  */
 @Named("configurationExport")
 @Singleton

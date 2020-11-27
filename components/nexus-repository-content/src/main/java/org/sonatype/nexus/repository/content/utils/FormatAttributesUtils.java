@@ -22,7 +22,7 @@ import org.sonatype.nexus.repository.content.fluent.FluentAttributes;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 
 /**
- * @since 3.next
+ * @since 3.29
  */
 public class FormatAttributesUtils
 {

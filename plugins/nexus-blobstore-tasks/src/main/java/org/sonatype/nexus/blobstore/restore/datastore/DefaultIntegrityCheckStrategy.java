@@ -50,7 +50,7 @@ import static org.sonatype.nexus.repository.storage.Asset.CHECKSUM;
 /**
  * Default {@link IntegrityCheckStrategy} which checks name and SHA1 checksum
  *
- * @since 3.next
+ * @since 3.29
  */
 @Named(DefaultIntegrityCheckStrategy.DEFAULT_NAME)
 @Singleton

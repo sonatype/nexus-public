@@ -37,7 +37,7 @@ import org.sonatype.nexus.repository.view.ViewFacet
 /**
  * PyPI proxy repository recipe.
  *
- * @since 3.next
+ * @since 3.29
  */
 @Named(PyPiProxyRecipe.NAME)
 @Singleton

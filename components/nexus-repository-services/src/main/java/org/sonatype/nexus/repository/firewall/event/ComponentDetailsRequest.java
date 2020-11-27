@@ -20,7 +20,7 @@ import java.util.concurrent.CompletableFuture;
 import org.sonatype.goodies.packageurl.PackageUrl;
 
 /**
- * @since 3.next
+ * @since 3.29
  */
 public class ComponentDetailsRequest
 {

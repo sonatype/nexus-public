@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 /**
  * A Flyway callback which trace logs the actions being performed.
  *
- * @since 3.next
+ * @since 3.29
  */
 public class TraceLoggingCallback
     extends BaseCallback

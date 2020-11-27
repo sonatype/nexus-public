@@ -18,7 +18,7 @@ import org.sonatype.nexus.repository.content.browse.store.FormatBrowseModule;
 import org.sonatype.nexus.repository.pypi.internal.PyPiFormat;
 
 /**
- * @since 3.next
+ * @since 3.29
  */
 @Named(PyPiFormat.NAME)
 public class PypiBrowseModule

@@ -51,7 +51,7 @@ import static org.sonatype.nexus.blobstore.restore.BaseRestoreMetadataTaskDescri
 import static org.sonatype.nexus.blobstore.restore.datastore.DefaultIntegrityCheckStrategy.DEFAULT_NAME;
 
 /**
- * @since 3.next
+ * @since 3.29
  */
 @Named
 public class RestoreMetadataTask
