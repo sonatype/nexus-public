@@ -205,7 +205,7 @@ public abstract class NpmAuditTarballFacet
         }
       }
       catch (Exception e) {
-        throw new TarballLoadingException(e.getMessage());
+        throw new TarballLoadingException(e.getMessage(), e);
       }
 
       return Optional.empty();
