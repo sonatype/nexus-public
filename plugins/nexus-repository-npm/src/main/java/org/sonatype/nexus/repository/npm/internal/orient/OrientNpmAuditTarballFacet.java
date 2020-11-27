@@ -52,6 +52,7 @@ public class OrientNpmAuditTarballFacet
     super(maxConcurrentRequests);
   }
 
+  @Override
   protected Optional<String> getComponentHashsumForProxyRepo(final Repository repository, final Context context)
       throws TarballLoadingException
   {
@@ -60,7 +61,7 @@ public class OrientNpmAuditTarballFacet
       return getComponentHashsum(repository, context);
     }
     catch (IOException e) {
-      throw new TarballLoadingException(e.getMessage());
+      throw new TarballLoadingException(e.getMessage(), e);
     }
     finally {
       UnitOfWork.end();

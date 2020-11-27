@@ -53,7 +53,7 @@ public class DataStoreNpmAuditTarballFacet
       return getComponentHashsum(repository, context);
     }
     catch (IOException e) {
-      throw new TarballLoadingException(e.getMessage());
+      throw new TarballLoadingException(e.getMessage(), e);
     }
   }
 
