@@ -328,11 +328,8 @@ public class MavenContentGroupFacetImpl
     if (!asset.component().isPresent() && member(repository)) {
       final String path = asset.path();
       final MavenPath mavenPath = getRepository().facet(MavenContentFacet.class).getMavenPathParser().parsePath(path);
-      final FluentAsset fluentAsset = getRepository().facet(ContentFacet.class).assets().with(asset);
       // only trigger eviction on a fresh main metadata artifact (which may go on to evict its hashes)
-      if (!mavenPath.isHash() && !fluentAsset.isStale(cacheController)) {
-        fluentAsset.markAsStale();
-
+      if (!mavenPath.isHash()) {
         if (delete) {
           try {
             getRepository().facet(MavenContentFacet.class).deleteWithHashes(mavenPath);
@@ -343,6 +340,8 @@ public class MavenContentGroupFacetImpl
                 getRepository().getName(), mavenPath.getPath(), e);
           }
         }
+        getRepository().facet(ContentFacet.class).assets().path(mavenPath.main().getPath()).find()
+            .ifPresent(FluentAsset::markAsStale);
       }
     }
   }
