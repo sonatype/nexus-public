@@ -94,11 +94,12 @@ public abstract class NpmAuditTarballFacet
     executor = null;
   }
 
-  public Set<AuditRepositoryComponent> download(final Set<AuditComponent> auditComponents)
-      throws TarballLoadingException
+  public Set<AuditRepositoryComponent> download(
+      final Context originalContext,
+      final Set<AuditComponent> auditComponents) throws TarballLoadingException
   {
     List<Callable<AuditRepositoryComponent>> tasks = new ArrayList<>();
-    auditComponents.forEach(auditComponent -> tasks.add(() -> download(auditComponent)));
+    auditComponents.forEach(auditComponent -> tasks.add(() -> download(originalContext, auditComponent)));
     // submit task to execute
     List<Future<AuditRepositoryComponent>> repositoryComponentFutures = tasks.stream()
         .map(executor::submit)
@@ -116,7 +117,10 @@ public abstract class NpmAuditTarballFacet
     return repositoryComponents;
   }
 
-  private AuditRepositoryComponent download(final AuditComponent auditComponent) throws TarballLoadingException {
+  private AuditRepositoryComponent download(
+      final Context originalContext,
+      final AuditComponent auditComponent) throws TarballLoadingException
+  {
     checkNotNull(auditComponent);
     String packageName = auditComponent.getName();
     String packageVersion = auditComponent.getVersion();
@@ -127,6 +131,7 @@ public abstract class NpmAuditTarballFacet
         .build();
     Repository repository = getRepository();
     Context context = new Context(repository, request);
+    context.getAttributes().backing().putAll(originalContext.getAttributes().backing());
     Matcher tarballMatcher = tarballMatcher(GET)
         .handler(new EmptyHandler()).create().getMatcher();
     tarballMatcher.matches(context);
@@ -158,7 +163,7 @@ public abstract class NpmAuditTarballFacet
       final Repository repository,
       final Context context) throws TarballLoadingException;
 
-  protected Optional<String> getComponentHashsum(Repository repository, Context context) throws IOException {
+  protected Optional<String> getComponentHashsum(final Repository repository, final Context context) throws IOException {
     Content content = repository.facet(ProxyFacet.class).get(context);
     if (content != null) {
       return getHashsum(content.getAttributes());
@@ -190,7 +195,7 @@ public abstract class NpmAuditTarballFacet
   {
     private final Function<AttributesMap, Optional<String>> hashFetcher;
 
-    public TarballGroupHandler(Function<AttributesMap, Optional<String>> hashFetcher) {
+    public TarballGroupHandler(final Function<AttributesMap, Optional<String>> hashFetcher) {
       this.hashFetcher = hashFetcher;
     }
 

@@ -32,11 +32,11 @@ import org.sonatype.nexus.repository.npm.internal.NpmHandlers
 import org.sonatype.nexus.repository.npm.internal.NpmNegativeCacheHandler
 import org.sonatype.nexus.repository.npm.internal.NpmPingHandler
 import org.sonatype.nexus.repository.npm.internal.NpmProxyCacheInvalidatorFacetImpl
-import org.sonatype.nexus.repository.npm.internal.NpmProxyFacet.ProxyTarget
 import org.sonatype.nexus.repository.npm.internal.NpmProxyHandler
 import org.sonatype.nexus.repository.npm.internal.NpmWhoamiHandler
-import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchFacetProxy
+import org.sonatype.nexus.repository.npm.internal.NpmProxyFacet.ProxyTarget
 import org.sonatype.nexus.repository.npm.internal.search.legacy.NpmSearchIndexFacetProxy
+import org.sonatype.nexus.repository.npm.internal.search.v1.NpmSearchFacetProxy
 import org.sonatype.nexus.repository.purge.PurgeUnusedFacet
 import org.sonatype.nexus.repository.storage.SingleAssetComponentMaintenance
 import org.sonatype.nexus.repository.types.ProxyType
@@ -200,6 +200,7 @@ class OrientNpmProxyRecipe
     builder.route(auditMatcher()
         .handler(auditAnalyticsHandler ?: { context -> context.proceed() } as Handler)
         .handler(timingHandler)
+        .handler(securityHandler)
         .handler(unitOfWorkHandler)
         .handler(auditErrorHandler)
         .handler(auditHandler)
@@ -208,6 +209,7 @@ class OrientNpmProxyRecipe
     // POST /-/npm/v1/security/audits/quick
     builder.route(auditQuickMatcher()
         .handler(timingHandler)
+        .handler(securityHandler)
         .handler(unitOfWorkHandler)
         .handler(auditErrorHandler)
         .handler(auditQuickHandler)
