@@ -160,7 +160,7 @@ public class NpmAuditFacet
     PackageLock packageLock = parseRequest(payload);
     final String applicationId = applicationIdFromHeader != null ? applicationIdFromHeader : packageLock.getRoot().getApplicationId();
     ComponentsVulnerability componentsVulnerability =
-        analyzeComponents(packageLock.getComponents(applicationId), applicationId);
+        analyzeComponents(context, packageLock.getComponents(applicationId), applicationId);
     return buildResponse(packageLock, componentsVulnerability, applicationId);
   }
 
@@ -187,6 +187,7 @@ public class NpmAuditFacet
   }
 
   private ComponentsVulnerability analyzeComponents(
+      final Context originalContext,
       final Set<AuditComponent> componentsToAnalyze,
       final String applicationId) throws ExecutionException, TarballLoadingException
   {
@@ -220,7 +221,7 @@ public class NpmAuditFacet
             vulnerabilities = getComponentsVulnerabilityFromRemoteServer(auditComponents, applicationId);
           }
           else {
-            vulnerabilities = getComponentsVulnerabilityFromRemoteServer(auditComponents);
+            vulnerabilities = getComponentsVulnerabilityFromRemoteServer(originalContext, auditComponents);
           }
           componentsVulnerability.addComponentsVulnerabilities(vulnerabilities);
           if (cache != null) {
@@ -245,10 +246,12 @@ public class NpmAuditFacet
   }
 
   private ComponentsVulnerability getComponentsVulnerabilityFromRemoteServer(
+      final Context originalContext,
       final Set<AuditComponent> componentsToAnalyze)
       throws InterruptedException, ExecutionException, TimeoutException, TarballLoadingException
   {
-    Set<AuditRepositoryComponent> repositoryComponents = getAuditRepositoryComponents(componentsToAnalyze);
+    Set<AuditRepositoryComponent> repositoryComponents =
+        getAuditRepositoryComponents(originalContext, componentsToAnalyze);
 
     /* Components found within the repository will have a valid hash */
     final Set<AuditRepositoryComponent> validComponentsToScan = repositoryComponents.stream()
@@ -301,11 +304,13 @@ public class NpmAuditFacet
     return getVulnerabilityResult(componentValidation.getVulnerabilityResult());
   }
 
-  private Set<AuditRepositoryComponent> getAuditRepositoryComponents(final Set<AuditComponent> componentsToAnalyze)
-      throws TarballLoadingException
+  private Set<AuditRepositoryComponent> getAuditRepositoryComponents(
+      final Context originalContext,
+      final Set<AuditComponent> componentsToAnalyze) throws TarballLoadingException
   {
     Stopwatch sw = Stopwatch.createStarted();
-    Set<AuditRepositoryComponent> repositoryComponents = npmAuditTarballFacet.download(componentsToAnalyze);
+    Set<AuditRepositoryComponent> repositoryComponents =
+        npmAuditTarballFacet.download(originalContext, componentsToAnalyze);
 
     final long failedToDownloadCount = repositoryComponents.stream().filter(c -> c.getHash() == null).count();
     log.debug("Downloaded {} npm packages and failed to download {} npm packages in {}",

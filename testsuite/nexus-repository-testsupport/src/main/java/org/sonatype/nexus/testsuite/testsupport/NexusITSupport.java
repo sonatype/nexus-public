@@ -129,7 +129,8 @@ public abstract class NexusITSupport
   @Inject
   private AnonymousManager anonymousManager;
 
-  protected SecurityRule securityRule = new SecurityRule(() -> securitySystem, () -> selectorManager, () -> anonymousManager);
+  @Rule
+  public SecurityRule securityRule = new SecurityRule(() -> securitySystem, () -> selectorManager, () -> anonymousManager);
 
   @Configuration
   public static Option[] configureNexus() {

@@ -242,6 +242,7 @@ public class NpmProxyRecipe
     builder.route(auditMatcher()
         .handler(auditAnalyticsHandler != null ? auditAnalyticsHandler : Context::proceed)
         .handler(timingHandler)
+        .handler(securityHandler)
         .handler(auditErrorHandler)
         .handler(auditHandler)
         .create());
@@ -249,6 +250,7 @@ public class NpmProxyRecipe
     // POST /-/npm/v1/security/audits/quick
     builder.route(auditQuickMatcher()
         .handler(timingHandler)
+        .handler(securityHandler)
         .handler(auditErrorHandler)
         .handler(auditQuickHandler)
         .create());
@@ -305,7 +307,7 @@ public class NpmProxyRecipe
     return facet;
   }
 
-  Handler proxyTargetHandler(ProxyTarget value) {
+  Handler proxyTargetHandler(final ProxyTarget value) {
     return (context) -> {
       context.getAttributes().set(ProxyTarget.class, value);
       return context.proceed();

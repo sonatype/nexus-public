@@ -14,6 +14,7 @@ package org.sonatype.nexus.testsuite.testsupport.npm;
 
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
@@ -142,11 +143,17 @@ public abstract class NpmClientITSupport
   }
 
   protected void initializeNpmrc(final String registryUrl) throws Exception {
+    initializeNpmrc(registryUrl, "admin", "admin123");
+  }
+
+  protected void initializeNpmrc(final String registryUrl, final String username, final String password) throws Exception {
     npmCli = new NpmCommandLineITSupport(createTestConfig());
     npmCli.execNpmConfig("registry ", registryUrl);
     npmCli.execNpmConfig("email", "my@example.com");
     npmCli.execNpmConfig("always-auth", "true");
-    npmCli.execNpmConfig("_auth",  "YWRtaW46YWRtaW4xMjM=");
+
+    String auth = Base64.getUrlEncoder().encodeToString((username + ":" + password).getBytes());
+    npmCli.execNpmConfig("_auth",  auth);
   }
 
   protected void configureAndPublish(final Repository repository,
@@ -237,27 +244,22 @@ public abstract class NpmClientITSupport
   }
 
   protected void verifyInstalled(final List<String> results, final String packageName) {
-    assertThat(results.size(), is(greaterThan(0)));
     assertThat(results, hasItem(containsString("added")));
 
     final List<String> ls = npmCli.ls(packageName).get();
-    assertThat(ls.size(), is(greaterThan(0)));
     assertThat(ls, hasItem(containsString(packageName)));
   }
 
   protected void verifyAudit(final List<String> results, final String verifyText) {
-    assertThat(results.size(), is(greaterThan(0)));
     assertThat(results, hasItem(containsString(verifyText)));
   }
 
   protected void verifyUpdated(final List<String> results, final String packageName) {
-    assertThat(results.size(), is(greaterThan(0)));
     assertThat(results, hasItem(containsString("+ " + packageName)));
     assertThat(results, hasItem(containsString("updated 1 package")));
   }
 
   protected void verifyNotUpdated(final List<String> results, final String packageName) {
-    assertThat(results.size(), is(greaterThan(0)));
     assertThat(results, hasItem(containsString("No matching version found for " + packageName)));
   }
 

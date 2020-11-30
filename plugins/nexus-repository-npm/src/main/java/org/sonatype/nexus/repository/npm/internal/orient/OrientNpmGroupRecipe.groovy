@@ -173,6 +173,7 @@ class OrientNpmGroupRecipe
     builder.route(auditMatcher()
         .handler(auditAnalyticsHandler ?: { context -> context.proceed() } as Handler)
         .handler(timingHandler)
+        .handler(securityHandler)
         .handler(unitOfWorkHandler)
         .handler(auditErrorHandler)
         .handler(npmGroupAuditHandler)
