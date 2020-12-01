@@ -66,7 +66,7 @@ class MavenHostedRecipe
     repository.attach(browseFacet.get())
     repository.attach(mavenArchetypeCatalogFacet.get())
     repository.attach(mavenIndexFacet.get())
-    repository.attach(lastAssetMaintenanceFacet.get())
+    repository.attach(mavenMaintenanceFacet.get())
   }
 
   private ViewFacet configure(final ConfigurableViewFacet facet) {

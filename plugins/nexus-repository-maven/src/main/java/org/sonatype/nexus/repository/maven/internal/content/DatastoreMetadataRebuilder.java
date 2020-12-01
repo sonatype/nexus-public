@@ -47,6 +47,7 @@ import org.sonatype.nexus.transaction.Transactional;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.hash.HashCode;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -262,7 +263,7 @@ public class DatastoreMetadataRebuilder
   }
 
   @Override
-  public void deleteMetadata(final Repository repository, final List<String[]> gavs) {
+  public Set<String> deleteMetadata(final Repository repository, final List<String[]> gavs) {
     checkNotNull(repository);
     checkNotNull(gavs);
 
@@ -276,14 +277,19 @@ public class DatastoreMetadataRebuilder
     }
 
     MavenContentFacet mavenContentFacet = repository.facet(MavenContentFacet.class);
+    Set<String> deletedPaths = Sets.newHashSet();
     try {
       for (MavenPath mavenPath : mavenPaths) {
-        mavenContentFacet.delete(mavenPath);
+        if (mavenContentFacet.delete(mavenPath)) {
+          deletedPaths.add(mavenPath.getPath());
+        }
       }
     }
     catch (IOException e) {
       log.warn("Error encountered when deleting metadata: repository={}", repository);
       throw new RuntimeException(e);
     }
+
+    return deletedPaths;
   }
 }

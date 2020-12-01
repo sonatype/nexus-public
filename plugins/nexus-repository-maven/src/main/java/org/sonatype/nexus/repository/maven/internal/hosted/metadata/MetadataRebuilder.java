@@ -66,7 +66,9 @@ public interface MetadataRebuilder
    *
    * @param repository The repository whose metadata needs rebuilding (Maven2 format, Hosted type only).
    * @param gavs       A list of gavs for which metadata will be deleted
+   * @return The paths of the assets deleted
+   *
    * @since 3.14
    */
-  void deleteMetadata(Repository repository, List<String[]> gavs);
+  Set<String> deleteMetadata(Repository repository, List<String[]> gavs);
 }

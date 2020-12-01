@@ -22,7 +22,6 @@ import org.sonatype.nexus.repository.Format
 import org.sonatype.nexus.repository.RecipeSupport
 import org.sonatype.nexus.repository.Type
 import org.sonatype.nexus.repository.content.browse.BrowseFacet
-import org.sonatype.nexus.repository.content.maintenance.LastAssetMaintenanceFacet
 import org.sonatype.nexus.repository.content.search.SearchFacet
 import org.sonatype.nexus.repository.http.PartialFetchHandler
 import org.sonatype.nexus.repository.maven.MavenPathParser
@@ -112,7 +111,7 @@ abstract class MavenRecipeSupport
   Provider<MavenMetadataRebuildContentFacet> mavenMetadataRebuildFacet
 
   @Inject
-  Provider<LastAssetMaintenanceFacet> lastAssetMaintenanceFacet
+  Provider<MavenMaintenanceFacet> mavenMaintenanceFacet
 
   protected MavenRecipeSupport(final Type type, final Format format) {
     super(type, format)

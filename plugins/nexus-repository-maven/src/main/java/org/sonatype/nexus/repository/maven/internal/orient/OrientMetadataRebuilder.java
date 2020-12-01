@@ -351,7 +351,7 @@ public class OrientMetadataRebuilder
   }
 
   @Override
-  public void deleteMetadata(final Repository repository, final List<String []> gavs) {
+  public Set<String> deleteMetadata(final Repository repository, final List<String []> gavs) {
     checkNotNull(repository);
     checkNotNull(gavs);
 
@@ -361,7 +361,7 @@ public class OrientMetadataRebuilder
     }
 
     try {
-      MavenFacetUtils.deleteWithHashes(repository.facet(OrientMavenFacet.class), pathBatch);
+      return MavenFacetUtils.deleteWithHashes(repository.facet(OrientMavenFacet.class), pathBatch);
     }
     catch (IOException e) {
       log.warn("Error encountered when deleting metadata: repository={}", repository);
