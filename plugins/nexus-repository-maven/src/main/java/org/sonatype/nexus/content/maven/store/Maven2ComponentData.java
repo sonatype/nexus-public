@@ -11,15 +11,23 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-package org.sonatype.nexus.content.maven.internal.store;
+package org.sonatype.nexus.content.maven.store;
 
-import org.sonatype.nexus.repository.content.store.AssetDAO;
+import org.sonatype.nexus.repository.content.store.ComponentData;
 
 /**
- * @since 3.25
+ * @since 3.next
  */
-public interface Maven2AssetDAO
-    extends AssetDAO
+public class Maven2ComponentData
+    extends ComponentData
 {
-  // nothing to add...
+  private String baseVersion;
+
+  public String getBaseVersion() {
+    return baseVersion;
+  }
+
+  public void setBaseVersion(final String baseVersion) {
+    this.baseVersion = baseVersion;
+  }
 }

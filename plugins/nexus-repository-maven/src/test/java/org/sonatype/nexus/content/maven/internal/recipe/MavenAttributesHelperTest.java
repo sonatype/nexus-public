@@ -17,6 +17,8 @@ import java.util.Map;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
+import org.sonatype.nexus.content.maven.store.Maven2ComponentData;
+import org.sonatype.nexus.content.maven.store.Maven2ComponentStore;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.maven.MavenPath;
@@ -32,9 +34,11 @@ import org.mockito.Mock;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.repository.content.AttributeChange.OVERLAY;
@@ -61,6 +65,9 @@ public class MavenAttributesHelperTest
   @Captor
   private ArgumentCaptor<Map<String, String>> attributesValueCaptor;
 
+  @Captor
+  private ArgumentCaptor<Maven2ComponentData> componentDataValueCaptor;
+
   @Mock
   private FluentComponent fluentComponent;
 
@@ -73,6 +80,9 @@ public class MavenAttributesHelperTest
   @Mock
   private Model model;
 
+  @Mock
+  private Maven2ComponentStore componentStore;
+
   private Coordinates coordinates;
 
   @Before
@@ -83,10 +93,17 @@ public class MavenAttributesHelperTest
 
   @Test
   public void shouldPutComponentAttributesInAMap() {
-
-    MavenAttributesHelper.setMavenAttributes(fluentComponent, coordinates);
+    mockComponent();
+    MavenAttributesHelper.setMavenAttributes(componentStore, fluentComponent, coordinates, 1);
 
     verify(fluentComponent).attributes(eq(OVERLAY), eq(NAME), attributesValueCaptor.capture());
+    verify(componentStore, only()).updateBaseVersion(componentDataValueCaptor.capture());
+
+    Maven2ComponentData componentData = componentDataValueCaptor.getValue();
+    assertEquals(coordinates.getGroupId(), componentData.namespace());
+    assertEquals(coordinates.getArtifactId(), componentData.name());
+    assertEquals(coordinates.getVersion(), componentData.version());
+    assertEquals(coordinates.getBaseVersion(), componentData.getBaseVersion());
 
     assertGroupArtifactVersionSet(4, attributesValueCaptor.getValue());
   }
@@ -163,5 +180,11 @@ public class MavenAttributesHelperTest
     map.put(P_VERSION, coordinates.getVersion());
     map.put(P_BASE_VERSION, coordinates.getBaseVersion());
     return new NestedAttributesMap(NAME, map);
+  }
+
+  private void mockComponent() {
+    when(fluentComponent.namespace()).thenReturn(coordinates.getGroupId());
+    when(fluentComponent.name()).thenReturn(coordinates.getArtifactId());
+    when(fluentComponent.version()).thenReturn(coordinates.getVersion());
   }
 }
