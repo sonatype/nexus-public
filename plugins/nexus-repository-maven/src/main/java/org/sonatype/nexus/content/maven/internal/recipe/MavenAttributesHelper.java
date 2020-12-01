@@ -15,6 +15,9 @@ package org.sonatype.nexus.content.maven.internal.recipe;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.sonatype.nexus.content.maven.store.Maven2ComponentData;
+import org.sonatype.nexus.content.maven.store.Maven2ComponentStore;
+import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.maven.MavenPath;
@@ -54,13 +57,18 @@ final class MavenAttributesHelper
     //no-op
   }
 
-  static void setMavenAttributes(final FluentComponent component, final Coordinates coordinates) {
+  static void setMavenAttributes(final Maven2ComponentStore componentStore,
+                                 final FluentComponent component,
+                                 final Coordinates coordinates,
+                                 final int repositoryId)
+  {
     Map<String, String> mavenAttributes = new HashMap<>();
     mavenAttributes.put(P_GROUP_ID, coordinates.getGroupId());
     mavenAttributes.put(P_ARTIFACT_ID, coordinates.getArtifactId());
     mavenAttributes.put(P_VERSION, coordinates.getVersion());
     mavenAttributes.put(P_BASE_VERSION, coordinates.getBaseVersion());
     component.attributes(OVERLAY, NAME, mavenAttributes);
+    fillInBaseVersionColumn(componentStore, component, repositoryId, coordinates.getBaseVersion());
   }
 
   static void setMavenAttributes(final FluentAsset asset, final MavenPath mavenPath) {
@@ -113,5 +121,22 @@ final class MavenAttributesHelper
     else {
       return OTHER.name();
     }
+  }
+
+  /**
+   * base_version column can be used to improve query speed and memory usage in some maven tasks.
+   */
+  private static void fillInBaseVersionColumn(final Maven2ComponentStore componentStore,
+                                              final Component component,
+                                              final int repositoryId,
+                                              final String baseVersion)
+  {
+    Maven2ComponentData componentData = new Maven2ComponentData();
+    componentData.setNamespace(component.namespace());
+    componentData.setName(component.name());
+    componentData.setVersion(component.version());
+    componentData.setRepositoryId(repositoryId);
+    componentData.setBaseVersion(baseVersion);
+    componentStore.updateBaseVersion(componentData);
   }
 }

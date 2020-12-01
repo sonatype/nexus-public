@@ -11,15 +11,15 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-package org.sonatype.nexus.content.maven.internal.store;
+package org.sonatype.nexus.content.maven.store;
 
-import org.sonatype.nexus.repository.content.store.ComponentDAO;
+import org.sonatype.nexus.repository.content.store.AssetBlobDAO;
 
 /**
  * @since 3.25
  */
-public interface Maven2ComponentDAO
-    extends ComponentDAO
+public interface Maven2AssetBlobDAO
+    extends AssetBlobDAO
 {
   // nothing to add...
 }

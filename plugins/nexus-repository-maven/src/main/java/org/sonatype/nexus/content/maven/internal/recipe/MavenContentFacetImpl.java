@@ -25,6 +25,7 @@ import javax.validation.constraints.NotNull;
 import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.content.maven.internal.event.RebuildMavenArchetypeCatalogEvent;
+import org.sonatype.nexus.content.maven.store.Maven2ComponentStore;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.config.WritePolicy;
@@ -229,7 +230,8 @@ public class MavenContentFacetImpl
         .version(coordinates.getVersion())
         .getOrCreate();
     if (isNewRepositoryContent(component)) {
-      MavenAttributesHelper.setMavenAttributes(component, coordinates);
+      MavenAttributesHelper.setMavenAttributes(
+          (Maven2ComponentStore) stores().componentStore, component, coordinates, contentRepositoryId());
     }
     return component;
   }

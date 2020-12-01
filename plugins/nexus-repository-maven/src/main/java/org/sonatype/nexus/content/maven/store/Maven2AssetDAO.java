@@ -11,24 +11,15 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 
-package org.sonatype.nexus.content.maven.internal.store;
+package org.sonatype.nexus.content.maven.store;
 
-import javax.inject.Named;
-
-import org.sonatype.nexus.repository.content.store.FormatStoreModule;
-import org.sonatype.nexus.repository.maven.internal.Maven2Format;
+import org.sonatype.nexus.repository.content.store.AssetDAO;
 
 /**
- * Configures the content store bindings for a maven format.
- *
  * @since 3.25
  */
-@Named(Maven2Format.NAME)
-public class Maven2StoreModule
-    extends FormatStoreModule<Maven2ContentRepositoryDAO,
-                              Maven2ComponentDAO,
-                              Maven2AssetDAO,
-                              Maven2AssetBlobDAO>
+public interface Maven2AssetDAO
+    extends AssetDAO
 {
   // nothing to add...
 }
