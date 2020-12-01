@@ -12,8 +12,7 @@
  */
 import React from 'react';
 import {faKey} from "@fortawesome/free-solid-svg-icons";
-import {Code, ExtJS, FieldWrapper, NxButton, NxFontAwesomeIcon} from 'nexus-ui-plugin';
-import {NxModal} from '@sonatype/react-shared-components';
+import {Code, ExtJS, FieldWrapper, NxButton, NxFontAwesomeIcon, NxModal} from 'nexus-ui-plugin';
 
 import UIStrings from '../../../../constants/UIStrings';
 import './NugetApiToken.scss';
@@ -43,7 +42,7 @@ export default function NuGetApiTokenModal({apiKey, onCloseClick}) {
         <span> {UIStrings.NUGET_API_KEY.DETAILS.AUTO_CLOSE}</span> <br/>
       </p>
     </div>
-    <footer className="nx-modal-footer">
+    <footer className="nx-footer">
       <NxButton onClick={onCloseClick}>
         {UIStrings.NUGET_API_KEY.CLOSE }
       </NxButton>

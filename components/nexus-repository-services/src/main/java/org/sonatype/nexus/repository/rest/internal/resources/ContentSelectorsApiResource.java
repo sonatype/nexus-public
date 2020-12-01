@@ -102,10 +102,10 @@ public class ContentSelectorsApiResource
   public void updateContentSelector(@PathParam("name") final String name,
                                     @Valid final ContentSelectorApiUpdateRequest request)
   {
-    selectorFactory.validateSelector(CselSelector.TYPE, request.getExpression());
     SelectorConfiguration configuration = findConfigurationByNameOrThrowNotFound(name);
 
-    configuration.setType(CselSelector.TYPE);
+    selectorFactory.validateSelector(configuration.getType(), request.getExpression());
+
     configuration.setDescription(request.getDescription());
     configuration.setAttributes(singletonMap(EXPRESSION, request.getExpression()));
     selectorManager.update(configuration);

@@ -55,6 +55,10 @@ export default function UserAccountSettings({service}) {
     });
   }
 
+  function retry() {
+    send('RETRY');
+  }
+
   let error = null;
   if (context.error instanceof Array) {
     error = (
@@ -76,7 +80,7 @@ export default function UserAccountSettings({service}) {
   }
 
   return <Section>
-    <NxLoadWrapper loading={isLoading}>
+    <NxLoadWrapper loading={isLoading} retryHandler={retry}>
       {hasData && <>
         {isSaving && <NxSubmitMask message={UIStrings.SAVING}/>}
         {error}

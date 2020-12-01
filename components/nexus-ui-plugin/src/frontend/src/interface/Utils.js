@@ -13,11 +13,31 @@
 import {assign, Machine} from "xstate";
 import ExtJS from "./ExtJS";
 import UIStrings from "../constants/UIStrings";
+import {equals} from 'ramda';
+
+const FIELD_ID = 'FIELD ';
+const PARAMETER_ID = 'PARAMETER ';
 
 /**
  * @since 3.22
  */
 export default class Utils {
+  /**
+   * Constant for ascending sorts
+   * @since 3.next
+   */
+  static get ASC() {
+    return 'asc';
+  }
+
+  /**
+   * Constant for descending sorts
+   * @since 3.next
+   */
+  static get DESC() {
+    return 'desc';
+  }
+
   static urlFromPath(path) {
     return NX.app.baseUrl + path;
   }
@@ -73,7 +93,7 @@ export default class Utils {
    * });
    *
    * @param id [required] a unique identifier for this machine
-   * @param loading [optional] the initial state of the machine
+   * @param initial [optional] the initial state to start in, defaults to 'loading'
    * @param stateAfterSave [optional] the state to put the machine in after successful save, default of 'loaded'
    * @param config [optional] a function used to change the config of the machine
    * @return {StateMachine<any, any, AnyEventObject>}
@@ -88,6 +108,7 @@ export default class Utils {
         isTouched: {},
         loadError: null,
         saveError: null,
+        saveErrorData: {},
         validationErrors: {},
       },
 
@@ -98,7 +119,7 @@ export default class Utils {
             src: 'fetchData',
             onDone: {
               target: 'loaded',
-              actions: ['setData', 'validate']
+              actions: ['setData', 'postProcessData', 'validate']
             },
             onError: {
               target: 'loadError',
@@ -134,7 +155,7 @@ export default class Utils {
             src: 'saveData',
             onDone: {
               target: stateAfterSave,
-              actions: ['clearSaveError', 'setSavedData', 'logSaveSuccess', 'onSaveSuccess']
+              actions: ['clearDirtyFlag', 'clearSaveError', 'setSavedData', 'logSaveSuccess', 'onSaveSuccess']
             },
 
             onError: {
@@ -147,6 +168,11 @@ export default class Utils {
         loadError: {
           type: 'final'
         }
+      },
+      on: {
+        RETRY: {
+          target: initial
+        }
       }
     };
 
@@ -156,15 +182,39 @@ export default class Utils {
           data: (_, event) => event.data?.data,
           pristineData: (_, event) => event.data?.data
         }),
-
+        postProcessData: () => {},
         setDirtyFlag: ({isPristine}) => ExtJS.setDirtyStatus(id, !isPristine),
         clearDirtyFlag: () => ExtJS.setDirtyStatus(id, false),
 
         setSaveError: assign({
-          saveError: (_, event) => event.data?.response?.data
+          saveErrorData: ({data}) => data,
+          saveError: (_, event) => {
+            const data = event.data?.response?.data;
+            return data instanceof String ? data : null;
+          },
+          saveErrors: (_, event) => {
+            const data = event.data?.response?.data;
+            if (data instanceof Array) {
+              let saveErrors = {};
+              data.forEach(({id, message}) => {
+                if (id.startsWith(FIELD_ID)) {
+                  saveErrors[id.replace(FIELD_ID, '')] = message;
+                }
+                else if (id.startsWith(PARAMETER_ID)) {
+                  saveErrors[id.replace(PARAMETER_ID, '')] = message;
+                }
+                else {
+                  saveErrors[id] = message;
+                }
+              });
+              return saveErrors;
+            }
+          }
         }),
         clearSaveError: assign({
-          saveError: () => undefined
+          saveErrorData: () => ({}),
+          saveError: () => undefined,
+          saveErrors: () => ({})
         }),
         logSaveError: (_, event) => {
           console.log(`Load Error: ${event.data?.message}`);
@@ -199,7 +249,7 @@ export default class Utils {
 
         setIsPristine: assign({
           isPristine: ({data, pristineData}) => Object.keys(pristineData).every(
-              key => pristineData[key] === data[key])
+              key => equals(pristineData[key], data[key]))
         }),
 
         setSavedData: assign({
@@ -213,6 +263,135 @@ export default class Utils {
           const isValid = !Utils.isInvalid(validationErrors);
           return !isPristine && isValid;
         }
+      },
+
+      services: {
+        fetchData: () => Promise.resolve({data: {}})
+      }
+    };
+
+    return Machine(config(DEFAULT_CONFIG), options(DEFAULT_OPTIONS));
+  }
+
+  /**
+   * Builds a new xstate machine used to handle item lists.
+   *
+   * Utils.buildListMachine({
+   *   id: 'MyMachine',
+   *   config: (config) => ({
+   *     ...config,
+   *     states: {
+   *       ...config.states,
+   *       loaded: {
+   *         ...config.states.loaded,
+   *         on: {
+   *           ...config.states.loaded.on,
+   *           SORT_BY_NAME: {
+   *             target: 'loaded',
+   *             actions: ['setSortByName']
+   *           }
+   *         }
+   *       }
+   *     }
+   *   }),
+   *   config: (config) => ({
+   *     actions: {
+   *       setSortByName: assign({
+   *         sortField: 'name',
+   *         sortDirection: Utils.nextSortDirection('name')
+   *       }),
+   *       filterData: assign({
+   *         data: ({filter, data, pristineData}, _) =>
+   *         pristineData.filter(({name}) => name.toLowerCase().indexOf(filter.toLowerCase()) !== -1)
+   *       })
+   *     },
+   *     services: {
+   *       fetchData: () => axios.get(url)
+   *     }
+   *   })
+   * });
+   *
+   * @param id [required] a unique identifier for this machine
+   * @param sortField [optional] field to sort on, defaults to 'name'
+   * @param initial [optional] the initial state to start in, defaults to 'loading'
+   * @param config [optional] a function used to change the config of the machine
+   * @param options [optional] a function used to change the options of the machine
+   * @return {StateMachine<any, any, AnyEventObject>}
+   */
+  static buildListMachine({id, initial = 'loading', sortField = 'name', config = (config) => config, options = (options) => options}) {
+    const DEFAULT_CONFIG = {
+      id,
+      initial: initial,
+
+      context: {
+        data: [],
+        pristineData: [],
+        sortField: sortField,
+        sortDirection: Utils.ASC,
+        filter: '',
+        error: ''
+      },
+
+      states: {
+        loading: {
+          id: 'loading',
+          initial: 'fetch',
+          states: {
+            'fetch': {
+              invoke: {
+                src: 'fetchData',
+                onDone: {
+                  target: '#loaded',
+                  actions: ['setData']
+                },
+                onError: {
+                  target: '#error',
+                  actions: ['setError']
+                }
+              }
+            }
+          }
+        },
+        loaded: {
+          id: 'loaded',
+          entry: ['filterData', 'sortData'],
+          on: {
+            FILTER: {
+              target: 'loaded',
+              actions: ['setFilter']
+            }
+          }
+        },
+        error: {
+          id: 'error'
+        }
+      }
+    };
+
+    const DEFAULT_OPTIONS = {
+      actions: {
+        setData: assign({
+          data: (_, {data}) => data.data,
+          pristineData: (_, {data}) => data.data
+        }),
+
+        setError: assign({
+          error: (_, event) => event.data.message
+        }),
+
+        setFilter: assign({
+          filter: (_, {filter}) => filter
+        }),
+
+        clearFilter: assign({
+          filter: () => ''
+        }),
+
+        filterData: () => {},
+
+        sortData: assign({
+          data: Utils.sortDataByFieldAndDirection
+        })
       },
 
       services: {
@@ -243,13 +422,20 @@ export default class Utils {
    * @return {{name: *, validationErrors: (*|[]), isPristine: boolean, value: (*|string)}}
    */
   static fieldProps(name, current, defaultValue = '') {
-    const {data, isTouched, validationErrors} = current.context;
+    const {data = {}, isTouched = {}, validationErrors = {}, saveErrors = {}, saveErrorData = {}} = current.context;
+    let errors = null;
+    if (name in isTouched && validationErrors[name]) {
+      errors = validationErrors[name];
+    }
+    else if (saveErrors[name] && saveErrorData[name] === data[name]) {
+      errors = saveErrors[name];
+    }
     return {
       name,
       value: (data && data[name]) || defaultValue,
       isPristine: name in isTouched ? !isTouched[name] : true,
       validatable: true,
-      validationErrors: (name in isTouched) ? validationErrors[name] : []
+      validationErrors: errors
     };
   }
 
@@ -269,6 +455,51 @@ export default class Utils {
   static discardTooltip({isPristine}) {
     if (isPristine) {
       return UIStrings.PRISTINE_TOOLTIP;
+    }
+  }
+
+  /**
+   * @since 3.next
+   * @param fieldName
+   * @return a function that can be used with assign to set the next sort direction based on the current context
+   */
+  static nextSortDirection(fieldName) {
+    return ({sortField, sortDirection}) => {
+      if (sortField !== fieldName) {
+        return this.ASC;
+      }
+      else if (sortDirection === this.ASC) {
+        return this.DESC
+      }
+      else {
+        return this.ASC;
+      }
+    }
+  }
+
+  /**
+   * @since 3.next
+   * @return the data sorted by the field and direction
+   */
+  static sortDataByFieldAndDirection({sortField, sortDirection, data}) {
+    return (data.slice().sort((a, b) => {
+      const dir = sortDirection === Utils.ASC ? 1 : -1;
+      return a[sortField] > b[sortField] ? dir : -dir;
+    }));
+  }
+
+  /**
+   * Determine the sort direction for use with the NxTable columns
+   * @param fieldName
+   * @param context {sortField, sortDirection}
+   * @return {null | 'asc' | 'desc'}
+   */
+  static getSortDirection(fieldName, {sortField, sortDirection}) {
+    if (sortField === fieldName) {
+      return sortDirection;
+    }
+    else {
+      return null;
     }
   }
 }

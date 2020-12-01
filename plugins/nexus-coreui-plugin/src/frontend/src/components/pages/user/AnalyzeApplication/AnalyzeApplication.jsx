@@ -51,10 +51,14 @@ export default function AnalyzeApplication(props) {
     send('EULA_DECLINED');
   }
 
+  function retry() {
+    send('RETRY');
+  }
+
   // This is needed to allow ExtJs to rerender the window 'after' React has rendered its components onto the DOM
   setTimeout(() => { props.rerender()}, 100);
 
-  return <NxLoadWrapper loading={isLoading}>
+  return <NxLoadWrapper loading={isLoading} retryHandler={retry}>
       {showEula && <HealthCheckEula onDecline={handleDecline} onAccept={handleAccept}/>}
       {showAnalyze && <AnalyzeApplicationModal componentModel={state.context.componentModel} onAnalyzed={handleAnalyzed} onCancel={handleCancel}/>}
     </NxLoadWrapper>

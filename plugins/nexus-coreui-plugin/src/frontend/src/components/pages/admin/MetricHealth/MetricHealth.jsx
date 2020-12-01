@@ -28,10 +28,11 @@ import {
   Page,
   PageHeader,
   PageTitle,
-  Section
+  Section,
+  Utils
 } from 'nexus-ui-plugin';
 
-import MetricHealthMachine, {ASC} from './MetricHealthMachine';
+import MetricHealthMachine from './MetricHealthMachine';
 
 import UIStrings from "../../../../constants/UIStrings";
 
@@ -41,16 +42,9 @@ export default function MetricHealth() {
   const data = current.context.data;
   const error = current.context.error;
 
-  const nameSortDir = getSortDirection('name', current.context.sortField, current.context.sortDirection);
-  const messageSortDir = getSortDirection('message', current.context.sortField, current.context.sortDirection);
-  const errorSortDir = getSortDirection('error', current.context.sortField, current.context.sortDirection);
-
-  function getSortDirection(fieldName, sortField, sortDirection) {
-    if (sortField !== fieldName) {
-      return null;
-    }
-    return sortDirection === ASC ? 'asc' : 'desc';
-  }
+  const nameSortDir = Utils.getSortDirection('name', current.context);
+  const messageSortDir = Utils.getSortDirection('message', current.context);
+  const errorSortDir = Utils.getSortDirection('error', current.context);
 
   return <Page>
     <PageHeader><PageTitle icon={faMedkit} {...UIStrings.METRIC_HEALTH.MENU}/></PageHeader>

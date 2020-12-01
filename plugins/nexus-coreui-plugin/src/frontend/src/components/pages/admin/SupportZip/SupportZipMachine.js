@@ -77,7 +77,16 @@ export default Machine(
           }
         },
         haSupportZipsCreated: {},
-        error: {}
+        error: {
+          on: {
+            RETRY: {
+              target: 'creatingSupportZips'
+            },
+            RETRY_HA: {
+              target: 'creatingHaSupportZips'
+            }
+          }
+        }
       },
     },
     {

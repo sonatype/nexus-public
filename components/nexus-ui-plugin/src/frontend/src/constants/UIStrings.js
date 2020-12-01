@@ -17,10 +17,13 @@ export default {
   SETTINGS: {
     CANCEL_BUTTON_LABEL: 'Cancel',
     DISCARD_BUTTON_LABEL: 'Discard',
-    SAVE_BUTTON_LABEL: 'Save'
+    SAVE_BUTTON_LABEL: 'Save',
+    DELETE_BUTTON_LABEL: 'Delete'
   },
 
   SAVING: 'Saving...',
+  FILTER: 'Filter',
+  CLOSE: 'Close',
 
   PRISTINE_TOOLTIP: 'There are no changes',
   INVALID_TOOLTIP: 'Validation errors are present',
@@ -28,10 +31,12 @@ export default {
   ERROR: {
     FIELD_REQUIRED: 'This field is required',
     NAN: 'This field must contain a numeric value',
-    MIN: (min) => `This field must contain a value >= ${min}`,
-    MAX: (max) => `This field must contain a value <= ${max}`,
+    MIN: (min) => `The minimum value for this field is ${min}`,
+    MAX: (max) => `The maximum value for this field is ${max}`,
     LOAD_ERROR: 'An error occurred while loading the form',
-    SAVE_ERROR: 'An error occurred while saving the form'
+    SAVE_ERROR: 'An error occurred while saving the form',
+    INVALID_NAME_CHARS: 'Only letters, digits, underscores(_), hyphens(-), and dots(.) are allowed and may not start with underscore or dot.',
+    MAX_CHARS: (max) => `This field has a limit of ${max} characters`
   },
 
   SAVE_SUCCESS: 'The form was saved successfully',

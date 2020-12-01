@@ -52,7 +52,7 @@ export default class {
     if (isDirty && window.dirty.indexOf(key) === -1) {
       window.dirty.push(key);
     }
-    else {
+    else if (!isDirty) {
       window.dirty = window.dirty.filter(it => it !== key);
     }
   }

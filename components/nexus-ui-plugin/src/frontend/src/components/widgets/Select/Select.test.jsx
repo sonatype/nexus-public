@@ -29,7 +29,9 @@ describe('Select', () => {
   });
 
   it('renders the first error message', () => {
-    const {queryByText} = render(<Select validationErrors={[UIStrings.ERROR.FIELD_REQUIRED, "ERROR_MESSAGE"]} />);
+    const {queryByText} = render(
+        <Select validatable validationErrors={[UIStrings.ERROR.FIELD_REQUIRED, "ERROR_MESSAGE"]}/>
+    );
 
     expect(queryByText(UIStrings.ERROR.FIELD_REQUIRED)).toBeInTheDocument();
     expect(queryByText("ERROR_MESSAGE")).not.toBeInTheDocument();

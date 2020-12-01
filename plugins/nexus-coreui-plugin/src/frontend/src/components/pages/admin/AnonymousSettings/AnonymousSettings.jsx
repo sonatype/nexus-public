@@ -14,9 +14,9 @@ import React from 'react';
 import {useMachine} from '@xstate/react';
 import {
   ContentBody,
-  Checkbox,
   FieldWrapper,
   NxButton,
+  NxCheckbox,
   NxLoadWrapper,
   NxTooltip,
   Page,
@@ -57,20 +57,24 @@ export default function AnonymousSettings() {
     send('SAVE');
   }
 
+  function retry() {
+    send('RETRY');
+  }
+
   return <Page>
     <PageHeader><PageTitle icon={faUser} {...UIStrings.ANONYMOUS_SETTINGS.MENU}/></PageHeader>
     <ContentBody className='nxrm-anonymous-settings'>
       <Section>
-        <NxLoadWrapper loading={isLoading}>
+        <NxLoadWrapper loading={isLoading} retryHandler={retry}>
           {hasData && <>
             <FieldWrapper labelText={UIStrings.ANONYMOUS_SETTINGS.ENABLED_CHECKBOX_LABEL}>
-              <Checkbox
+              <NxCheckbox
                   checkboxId='enabled'
                   isChecked={data.enabled}
                   onChange={handleInputChange}
               >
                 {UIStrings.ANONYMOUS_SETTINGS.ENABLED_CHECKBOX_DESCRIPTION}
-              </Checkbox>
+              </NxCheckbox>
             </FieldWrapper>
             <FieldWrapper labelText={UIStrings.ANONYMOUS_SETTINGS.USERNAME_TEXTFIELD_LABEL}>
               <Textfield

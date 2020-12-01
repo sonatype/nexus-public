@@ -124,7 +124,7 @@ export default function LogViewer() {
             <span>{UIStrings.LOG_VIEWER.INSERT_MARK}</span>
           </NxButton>
 
-          <div className="spacer" />
+          <div className="nxrm-spacer" />
 
           <label htmlFor="period">{UIStrings.LOG_VIEWER.REFRESH.TEXT}</label>
           <SelectAction>

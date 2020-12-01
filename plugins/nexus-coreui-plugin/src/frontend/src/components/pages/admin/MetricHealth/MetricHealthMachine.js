@@ -11,10 +11,8 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import {assign, Machine} from 'xstate';
-import Axios from 'axios';
-
-export const ASC = 1;
-export const DESC = -1;
+import Axios from 'axios'
+import {Utils} from 'nexus-ui-plugin';
 
 export default Machine(
     {
@@ -24,7 +22,7 @@ export default Machine(
         data: [],
         pristineData: [],
         sortField: 'name',
-        sortDirection: ASC,
+        sortDirection: Utils.ASC,
         error: ''
       },
 
@@ -73,36 +71,19 @@ export default Machine(
         }),
         setSortByName: assign({
           sortField: 'name',
-          sortDirection: ({sortField, sortDirection}) => {
-            if (sortField !== 'name') {
-              return ASC;
-            }
-            return sortDirection === ASC ? DESC : ASC
-          }
+          sortDirection: Utils.nextSortDirection('name')
         }),
         setSortByMessage: assign({
           sortField: 'message',
-          sortDirection: ({sortField, sortDirection}) => {
-            if (sortField !== 'message') {
-              return ASC;
-            }
-            return sortDirection === ASC ? DESC : ASC
-          }
+          sortDirection: Utils.nextSortDirection('message')
         }),
         setSortByError: assign({
           sortField: 'error',
-          sortDirection: ({sortField, sortDirection}) => {
-            if (sortField !== 'error') {
-              return ASC;
-            }
-            return sortDirection === ASC ? DESC : ASC
-          }
+          sortDirection: Utils.nextSortDirection('error')
         }),
         sortData: assign({
-          data: ({sortField, sortDirection, pristineData}) => (pristineData.slice().sort((a, b) => {
-            return a[sortField] > b[sortField] ? sortDirection : -sortDirection;
-          }))
-        })
+          data: Utils.sortDataByFieldAndDirection
+        }),
       },
       services: {
         fetchMetricHealth: () => Axios.get('/service/rest/internal/ui/status-check')

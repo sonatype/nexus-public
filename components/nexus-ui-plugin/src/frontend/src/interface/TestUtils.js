@@ -29,11 +29,19 @@ export default class Utils {
 
   static async changeField(fieldSelector, value) {
     fireEvent.change(fieldSelector(), {
+      currentTarget: {
+        name: fieldSelector().name,
+        value
+      },
       target: {
         name: fieldSelector().name,
         value
       }
     });
-    await wait(() => expect(fieldSelector()).toHaveValue(value));
+    try {
+      await wait(() => expect(fieldSelector()).toHaveValue(value));
+    } catch(error) {
+      throw new Error(`${fieldSelector().name} with value ${fieldSelector().value} did not match the expected value \n ${error.message}`);
+    }
   }
 }

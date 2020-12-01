@@ -27,9 +27,20 @@ export default function SupportZip() {
   const isCreated = current.matches('supportZipsCreated');
   const isHaZipsCreated = current.matches('haSupportZipsCreated');
   const {params, response, createError} = current.context;
+  const isHa = ExtJS.state().isClustered();
+
+  function retry() {
+    if (isHa) {
+      send({type: 'RETRY_HA'});
+    }
+    else {
+      send({type: 'RETRY'});
+    }
+  }
 
   function setParams({target}) {
-    send('UPDATE', {
+    send({
+      type: 'UPDATE',
       params: {
         ...params,
         [target.id]: target.checked
@@ -60,8 +71,8 @@ export default function SupportZip() {
     <ContentBody className="nxrm-support-zip">
       <Section>
         {!(isCreated || isHaZipsCreated) &&
-        <NxLoadWrapper loading={isLoading} error={createError ? `${createError}` : null}>
-          <SupportZipForm params={params} setParams={setParams} submit={submit} clustered={ExtJS.state().isClustered()} hazips={hazips}/>
+        <NxLoadWrapper loading={isLoading} error={createError ? `${createError}` : null} retryHandler={retry}>
+          <SupportZipForm params={params} setParams={setParams} submit={submit} clustered={isHa} hazips={hazips}/>
         </NxLoadWrapper>
         }
         {isCreated && <SupportZipResponse response={response} download={download}/>}

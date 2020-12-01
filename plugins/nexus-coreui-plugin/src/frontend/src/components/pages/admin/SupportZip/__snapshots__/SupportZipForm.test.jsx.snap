@@ -10,26 +10,26 @@ exports[`SupportZipForm renders support zip form 1`] = `
       Support ZIP creation may take a few minutes to complete.
     </p>
   </div>
-  <div
-    class="nxrm-checkbox-group"
+  <fieldset
+    class="nx-fieldset"
   >
-    <label
-      class="nxrm-checkbox-group-label"
+    <legend
+      class="nx-label"
     >
       Contents:
-    </label>
+    </legend>
     <label
-      class="nx-checkbox tm-checked"
+      class="nx-radio-checkbox nx-checkbox tm-checked"
     >
       <input
         checked=""
-        class="nx-checkbox__input"
+        class="nx-radio-checkbox__input nx-checkbox__input"
         id="systemInformation"
         readonly=""
         type="checkbox"
       />
       <span
-        class="nx-checkbox__box"
+        class="nx-radio-checkbox__control nx-checkbox__box"
       >
         <svg
           aria-hidden="true"
@@ -48,43 +48,43 @@ exports[`SupportZipForm renders support zip form 1`] = `
         </svg>
       </span>
       <span
-        class="nx-checkbox__content"
+        class="nx-radio-checkbox__content nx-checkbox__content"
       >
         System information report
       </span>
     </label>
     <label
-      class="nx-checkbox tm-unchecked"
+      class="nx-radio-checkbox nx-checkbox tm-unchecked"
     >
       <input
-        class="nx-checkbox__input"
+        class="nx-radio-checkbox__input nx-checkbox__input"
         id="threadDump"
         readonly=""
         type="checkbox"
       />
       <span
-        class="nx-checkbox__box"
+        class="nx-radio-checkbox__control nx-checkbox__box"
       >
          
       </span>
       <span
-        class="nx-checkbox__content"
+        class="nx-radio-checkbox__content nx-checkbox__content"
       >
         JVM thread-dump
       </span>
     </label>
     <label
-      class="nx-checkbox tm-checked"
+      class="nx-radio-checkbox nx-checkbox tm-checked"
     >
       <input
         checked=""
-        class="nx-checkbox__input"
+        class="nx-radio-checkbox__input nx-checkbox__input"
         id="configuration"
         readonly=""
         type="checkbox"
       />
       <span
-        class="nx-checkbox__box"
+        class="nx-radio-checkbox__control nx-checkbox__box"
       >
         <svg
           aria-hidden="true"
@@ -103,43 +103,43 @@ exports[`SupportZipForm renders support zip form 1`] = `
         </svg>
       </span>
       <span
-        class="nx-checkbox__content"
+        class="nx-radio-checkbox__content nx-checkbox__content"
       >
         Configuration files
       </span>
     </label>
     <label
-      class="nx-checkbox tm-unchecked"
+      class="nx-radio-checkbox nx-checkbox tm-unchecked"
     >
       <input
-        class="nx-checkbox__input"
+        class="nx-radio-checkbox__input nx-checkbox__input"
         id="security"
         readonly=""
         type="checkbox"
       />
       <span
-        class="nx-checkbox__box"
+        class="nx-radio-checkbox__control nx-checkbox__box"
       >
          
       </span>
       <span
-        class="nx-checkbox__content"
+        class="nx-radio-checkbox__content nx-checkbox__content"
       >
         Security configuration files
       </span>
     </label>
     <label
-      class="nx-checkbox tm-checked"
+      class="nx-radio-checkbox nx-checkbox tm-checked"
     >
       <input
         checked=""
-        class="nx-checkbox__input"
+        class="nx-radio-checkbox__input nx-checkbox__input"
         id="log"
         readonly=""
         type="checkbox"
       />
       <span
-        class="nx-checkbox__box"
+        class="nx-radio-checkbox__control nx-checkbox__box"
       >
         <svg
           aria-hidden="true"
@@ -158,43 +158,43 @@ exports[`SupportZipForm renders support zip form 1`] = `
         </svg>
       </span>
       <span
-        class="nx-checkbox__content"
+        class="nx-radio-checkbox__content nx-checkbox__content"
       >
         Log files
       </span>
     </label>
     <label
-      class="nx-checkbox tm-unchecked"
+      class="nx-radio-checkbox nx-checkbox tm-unchecked"
     >
       <input
-        class="nx-checkbox__input"
+        class="nx-radio-checkbox__input nx-checkbox__input"
         id="taskLog"
         readonly=""
         type="checkbox"
       />
       <span
-        class="nx-checkbox__box"
+        class="nx-radio-checkbox__control nx-checkbox__box"
       >
          
       </span>
       <span
-        class="nx-checkbox__content"
+        class="nx-radio-checkbox__content nx-checkbox__content"
       >
         Task log files
       </span>
     </label>
     <label
-      class="nx-checkbox tm-checked"
+      class="nx-radio-checkbox nx-checkbox tm-checked"
     >
       <input
         checked=""
-        class="nx-checkbox__input"
+        class="nx-radio-checkbox__input nx-checkbox__input"
         id="auditLog"
         readonly=""
         type="checkbox"
       />
       <span
-        class="nx-checkbox__box"
+        class="nx-radio-checkbox__control nx-checkbox__box"
       >
         <svg
           aria-hidden="true"
@@ -213,43 +213,43 @@ exports[`SupportZipForm renders support zip form 1`] = `
         </svg>
       </span>
       <span
-        class="nx-checkbox__content"
+        class="nx-radio-checkbox__content nx-checkbox__content"
       >
         Audit log files
       </span>
     </label>
     <label
-      class="nx-checkbox tm-unchecked"
+      class="nx-radio-checkbox nx-checkbox tm-unchecked"
     >
       <input
-        class="nx-checkbox__input"
+        class="nx-radio-checkbox__input nx-checkbox__input"
         id="metrics"
         readonly=""
         type="checkbox"
       />
       <span
-        class="nx-checkbox__box"
+        class="nx-radio-checkbox__control nx-checkbox__box"
       >
          
       </span>
       <span
-        class="nx-checkbox__content"
+        class="nx-radio-checkbox__content nx-checkbox__content"
       >
         System and component metrics
       </span>
     </label>
     <label
-      class="nx-checkbox tm-checked"
+      class="nx-radio-checkbox nx-checkbox tm-checked"
     >
       <input
         checked=""
-        class="nx-checkbox__input"
+        class="nx-radio-checkbox__input nx-checkbox__input"
         id="jmx"
         readonly=""
         type="checkbox"
       />
       <span
-        class="nx-checkbox__box"
+        class="nx-radio-checkbox__control nx-checkbox__box"
       >
         <svg
           aria-hidden="true"
@@ -268,52 +268,52 @@ exports[`SupportZipForm renders support zip form 1`] = `
         </svg>
       </span>
       <span
-        class="nx-checkbox__content"
+        class="nx-radio-checkbox__content nx-checkbox__content"
       >
         JMX information
       </span>
     </label>
-  </div>
-  <div
-    class="nxrm-checkbox-group"
+  </fieldset>
+  <fieldset
+    class="nx-fieldset"
   >
-    <label
-      class="nxrm-checkbox-group-label"
+    <legend
+      class="nx-legend"
     >
       Options:
-    </label>
+    </legend>
     <label
-      class="nx-checkbox tm-unchecked"
+      class="nx-radio-checkbox nx-checkbox tm-unchecked"
     >
       <input
-        class="nx-checkbox__input"
+        class="nx-radio-checkbox__input nx-checkbox__input"
         id="limitFileSizes"
         readonly=""
         type="checkbox"
       />
       <span
-        class="nx-checkbox__box"
+        class="nx-radio-checkbox__control nx-checkbox__box"
       >
          
       </span>
       <span
-        class="nx-checkbox__content"
+        class="nx-radio-checkbox__content nx-checkbox__content"
       >
         Limit files in the ZIP archive to 30 MB apiece
       </span>
     </label>
     <label
-      class="nx-checkbox tm-checked"
+      class="nx-radio-checkbox nx-checkbox tm-checked"
     >
       <input
         checked=""
-        class="nx-checkbox__input"
+        class="nx-radio-checkbox__input nx-checkbox__input"
         id="limitZipSize"
         readonly=""
         type="checkbox"
       />
       <span
-        class="nx-checkbox__box"
+        class="nx-radio-checkbox__control nx-checkbox__box"
       >
         <svg
           aria-hidden="true"
@@ -332,12 +332,12 @@ exports[`SupportZipForm renders support zip form 1`] = `
         </svg>
       </span>
       <span
-        class="nx-checkbox__content"
+        class="nx-radio-checkbox__content nx-checkbox__content"
       >
         Limit the ZIP archive to 20 MB
       </span>
     </label>
-  </div>
+  </fieldset>
   <button
     class="nx-btn nx-btn--primary"
     type="submit"

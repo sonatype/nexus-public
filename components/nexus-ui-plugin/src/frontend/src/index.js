@@ -12,6 +12,7 @@
  */
 
 import './styles/_nx-overrides.scss';
+import './styles/_global.scss';
 
 export { default as UIStrings } from './constants/UIStrings';
 
@@ -33,11 +34,11 @@ export { default as PageHeader } from './components/layout/common/PageHeader/Pag
 export { default as PageTitle } from './components/layout/common/PageTitle/PageTitle';
 
 export { default as Alert } from './components/widgets/Alert/Alert';
-export { default as Checkbox } from './components/widgets/Checkbox/Checkbox';
-export { default as CheckboxGroup } from './components/widgets/CheckboxGroup/CheckboxGroup';
+export { default as CheckboxControlledWrapper } from './components/widgets/CheckboxControlledWrapper/CheckboxControlledWrapper';
 export { default as Code } from './components/widgets/Code/Code';
 export { default as FieldErrorMessage } from './components/widgets/FieldErrorMessage/FieldErrorMessage';
 export { default as FieldWrapper } from './components/widgets/FieldWrapper/FieldWrapper';
+export { default as HelpTile } from './components/widgets/HelpTile/HelpTile';
 export { default as Information } from './components/widgets/Information/Information';
 export { default as Select } from './components/widgets/Select/Select';
 export { default as Textarea } from './components/widgets/Textarea/Textarea';
@@ -48,18 +49,22 @@ export { default as TokenMachine } from './components/machines/TokenMachine';
 // Direct RSC exports
 export {
   NxButton,
+  NxCheckbox,
   NxErrorAlert,
   NxFilterInput,
   NxFontAwesomeIcon,
+  NxInfoAlert,
   NxLoadingSpinner,
   NxLoadWrapper,
+  NxModal,
+  NxStatefulTabs,
   NxSubmitMask,
+  NxSuccessAlert,
   NxTabs,
   NxTabList,
   NxTab,
   NxTabPanel,
   NxTable,
-  NxStatefulTabs,
   NxTableBody,
   NxTableCell,
   NxTableHead,

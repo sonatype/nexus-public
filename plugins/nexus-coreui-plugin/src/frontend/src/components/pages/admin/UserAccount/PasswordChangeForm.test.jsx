@@ -11,7 +11,6 @@
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
 import React from 'react';
-import {act} from 'react-dom/test-utils';
 import {fireEvent, wait} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import TestUtils from 'nexus-ui-plugin/src/frontend/src/interface/TestUtils';
@@ -93,9 +92,9 @@ describe('PasswordChangeForm', () => {
     expect(changePasswordButton()).not.toHaveClass('disabled');
     expect(discardButton()).not.toHaveClass('disabled');
 
-    await act(async () => fireEvent.click(changePasswordButton()));
+    fireEvent.click(changePasswordButton());
 
-    expect(Axios.put).toHaveBeenCalledTimes(1);
+    await wait(() => expect(Axios.put).toHaveBeenCalledTimes(1));
     expect(Axios.put).toHaveBeenCalledWith(
         `/service/rest/internal/ui/user/admin/password`,
         {
@@ -122,9 +121,9 @@ describe('PasswordChangeForm', () => {
     expect(changePasswordButton()).not.toHaveClass('disabled');
     expect(discardButton()).not.toHaveClass('disabled');
 
-    await act(async () => fireEvent.click(discardButton()));
+    fireEvent.click(discardButton());
 
-    expect(passwordCurrent()).toHaveValue('');
+    await wait(() => expect(passwordCurrent()).toHaveValue(''));
     expect(passwordNew()).toHaveValue('');
     expect(passwordNewConfirm()).toHaveValue('');
     expect(changePasswordButton()).toHaveClass('disabled');
