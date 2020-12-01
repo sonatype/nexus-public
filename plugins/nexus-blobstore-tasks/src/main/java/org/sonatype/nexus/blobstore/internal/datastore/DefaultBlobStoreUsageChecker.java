@@ -12,28 +12,25 @@
  */
 package org.sonatype.nexus.blobstore.internal.datastore;
 
-import java.util.function.Function;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.sonatype.nexus.blobstore.api.Blob;
 import org.sonatype.nexus.blobstore.api.BlobId;
 import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.api.BlobStoreUsageChecker;
 import org.sonatype.nexus.common.app.FeatureFlag;
-import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
-import org.sonatype.nexus.repository.content.store.AssetBlobStore;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
 
 import com.codahale.metrics.annotation.Timed;
-import com.google.common.annotations.VisibleForTesting;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.stream.StreamSupport.stream;
+import static java.util.Optional.of;
+import static org.sonatype.nexus.blobstore.api.BlobStore.REPO_NAME_HEADER;
 
 /**
  * Check if a blob is referenced in the corresponding metadata for NewDB
@@ -46,41 +43,28 @@ import static java.util.stream.StreamSupport.stream;
 public class DefaultBlobStoreUsageChecker
     implements BlobStoreUsageChecker
 {
-  private static final String ANY_NODE = "%";
-
   private final RepositoryManager repositoryManager;
-
-  private final Function<Repository, AssetBlobStore<?>> getAssetBlobStore;
 
   @Inject
   public DefaultBlobStoreUsageChecker(final RepositoryManager repositoryManager)
   {
-    this(repositoryManager, DefaultBlobStoreUsageChecker::getAssetBlobStore);
-  }
-
-  @VisibleForTesting
-  DefaultBlobStoreUsageChecker(
-      final RepositoryManager repositoryManager,
-      Function<Repository, AssetBlobStore<?>> getAssetBlobStore)
-  {
     this.repositoryManager = checkNotNull(repositoryManager);
-    this.getAssetBlobStore = checkNotNull(getAssetBlobStore);
-  }
-
-  private static AssetBlobStore<?> getAssetBlobStore(final Repository repository) {
-    return ((ContentFacetSupport) repository.facet(ContentFacet.class)).stores().assetBlobStore;
   }
 
   @Override
   @Timed
-  public boolean test(final BlobStore blobStore, final BlobId blobId, final String blobName)
-  {
-    String blobStoreId = blobStore.getBlobStoreConfiguration().getName();
-    BlobRef blobRef = new BlobRef(ANY_NODE, blobStoreId, blobId.asUniqueString());
-
-    return stream(repositoryManager.browseForBlobStore(blobStoreId).spliterator(), false)
-        .filter(repository -> repository.facet(ContentFacet.class).assets().path(blobName).find().isPresent())
-        .map(getAssetBlobStore)
-        .anyMatch(assetBlobStore -> assetBlobStore.readAssetBlob(blobRef).isPresent());
+  public boolean test(final BlobStore blobStore, final BlobId blobId, final String blobName) {
+    return of(blobId)
+        .map(blobStore::get)
+        .map(Blob::getHeaders)
+        .map(headers -> headers.get(REPO_NAME_HEADER))
+        .map(repositoryManager::get)
+        .map(repository -> (ContentFacetSupport) repository.facet(ContentFacet.class))
+        .flatMap(contentFacetSupport -> {
+          String blobStoreName = blobStore.getBlobStoreConfiguration().getName();
+          BlobRef blobRef = new BlobRef(contentFacetSupport.nodeName(), blobStoreName, blobId.asUniqueString());
+          return contentFacetSupport.stores().assetBlobStore.readAssetBlob(blobRef);
+        })
+        .isPresent();
   }
 }
