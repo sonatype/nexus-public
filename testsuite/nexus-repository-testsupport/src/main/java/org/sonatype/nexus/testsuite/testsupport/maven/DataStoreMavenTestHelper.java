@@ -35,6 +35,7 @@ import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.maintenance.ContentMaintenanceFacet;
 import org.sonatype.nexus.repository.content.store.InternalIds;
 import org.sonatype.nexus.repository.maven.MavenPath;
 import org.sonatype.nexus.repository.maven.MavenPath.HashType;
@@ -158,7 +159,10 @@ public class DataStoreMavenTestHelper
     MavenContentFacet mavenContentFacet = repository.facet(MavenContentFacet.class);
     List<FluentComponent> components = findComponents(mavenContentFacet, version).collect(Collectors.toList());
     assertThat(components, hasSize(expectedNumber));
-    components.stream().map(FluentComponent::assets).forEach(assets -> deleteAll(mavenContentFacet, assets));
+    ContentMaintenanceFacet contentMaintenanceFacet = repository.facet(ContentMaintenanceFacet.class);
+    for (FluentComponent component : components) {
+      contentMaintenanceFacet.deleteComponent(component);
+    }
   }
 
   @Override

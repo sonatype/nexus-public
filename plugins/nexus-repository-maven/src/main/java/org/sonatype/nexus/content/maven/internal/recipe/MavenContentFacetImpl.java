@@ -30,7 +30,6 @@ import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.config.WritePolicy;
 import org.sonatype.nexus.repository.content.Asset;
-import org.sonatype.nexus.repository.content.AssetBlob;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.RepositoryContent;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
@@ -38,6 +37,7 @@ import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentAssetBuilder;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
+import org.sonatype.nexus.repository.content.maintenance.ContentMaintenanceFacet;
 import org.sonatype.nexus.repository.content.store.FormatStoreManager;
 import org.sonatype.nexus.repository.maven.LayoutPolicy;
 import org.sonatype.nexus.repository.maven.MavenPath;
@@ -46,7 +46,6 @@ import org.sonatype.nexus.repository.maven.MavenPath.HashType;
 import org.sonatype.nexus.repository.maven.MavenPathParser;
 import org.sonatype.nexus.repository.maven.VersionPolicy;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
-import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataRebuilder;
 import org.sonatype.nexus.repository.maven.internal.validation.MavenMetadataContentValidator;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.types.ProxyType;
@@ -58,8 +57,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Collections.singletonList;
-import static org.sonatype.nexus.content.maven.MavenMetadataRebuildContentFacet.METADATA_REBUILD_KEY;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenArchetypeCatalogFacetImpl.MAVEN_ARCHETYPE_KIND;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.assetKind;
 import static org.sonatype.nexus.content.maven.internal.recipe.MavenAttributesHelper.getPackaging;
@@ -69,10 +66,8 @@ import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW;
 import static org.sonatype.nexus.repository.config.WritePolicy.ALLOW_ONCE;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_INDEX;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.AssetKind.REPOSITORY_METADATA;
-import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
 import static org.sonatype.nexus.repository.maven.internal.Constants.METADATA_FILENAME;
 import static org.sonatype.nexus.repository.maven.internal.MavenModels.readModel;
-import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
 
 /**
  * A {@link MavenContentFacet} that persists to a {@link ContentFacet}.
@@ -100,8 +95,6 @@ public class MavenContentFacetImpl
 
   private MavenPathParser mavenPathParser;
 
-  private MetadataRebuilder metadataRebuilder;
-
   static class Config
   {
     @NotNull(groups = {HostedType.ValidationGroup.class, ProxyType.ValidationGroup.class})
@@ -125,15 +118,13 @@ public class MavenContentFacetImpl
       final Map<String, MavenPathParser> mavenPathParsers,
       final MavenMetadataContentValidator metadataValidator,
       final EventManager eventManager,
-      @Named("${nexus.maven.metadata.validation.enabled:-true}") final boolean metadataValidationEnabled,
-      final MetadataRebuilder metadataRebuilder)
+      @Named("${nexus.maven.metadata.validation.enabled:-true}") final boolean metadataValidationEnabled)
   {
     super(formatStoreManager);
     this.mavenPathParsers = checkNotNull(mavenPathParsers);
     this.metadataValidator = metadataValidator;
     this.eventManager = eventManager;
     this.metadataValidationEnabled = metadataValidationEnabled;
-    this.metadataRebuilder = checkNotNull(metadataRebuilder);
   }
 
   @Override
@@ -360,38 +351,7 @@ public class MavenContentFacetImpl
     if (component.assets().isEmpty()) {
       component.delete();
       publishEvents(component);
-      deleteMetadataAndAddRebuildFlagOrDeleteParentMetadata(component.namespace(), component.name(),
-          component.attributes(Maven2Format.NAME).get(P_BASE_VERSION, String.class));
-    }
-  }
-
-  private void deleteMetadataAndAddRebuildFlagOrDeleteParentMetadata(
-      final String groupId,
-      final String artifactId,
-      final String baseVersion)
-  {
-    metadataRebuilder.deleteMetadata(getRepository(), singletonList(new String[]{groupId, artifactId, baseVersion}));
-
-    boolean isGroupArtifactEmpty = components().versions(groupId, artifactId).isEmpty();
-    if (isGroupArtifactEmpty) {
-      metadataRebuilder.deleteMetadata(getRepository(), singletonList(new String[]{groupId, artifactId, null}));
-    }
-    else {
-      assets()
-          .path(assetPath(metadataPath(groupId, artifactId, null)))
-          .find()
-          .ifPresent(asset -> asset.withAttribute(METADATA_REBUILD_KEY, true));
-    }
-
-    boolean isGroupEmpty = components().names(groupId).isEmpty();
-    if (isGroupEmpty) {
-      metadataRebuilder.deleteMetadata(getRepository(), singletonList(new String[]{groupId, null, null}));
-    }
-    else {
-      assets()
-          .path(assetPath(metadataPath(groupId, null, null)))
-          .find()
-          .ifPresent(asset -> asset.withAttribute(METADATA_REBUILD_KEY, true));
+      ((MavenMaintenanceFacet) repository().facet(ContentMaintenanceFacet.class)).deleteMetadata(component);
     }
   }
 }

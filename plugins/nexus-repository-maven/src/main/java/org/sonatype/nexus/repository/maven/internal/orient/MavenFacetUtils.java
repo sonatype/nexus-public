@@ -234,7 +234,7 @@ public final class MavenFacetUtils
    *
    * @since 3.14
    */
-  public static void deleteWithHashes(final OrientMavenFacet mavenFacet, final List<MavenPath> mavenPaths) throws IOException {
+  public static Set<String> deleteWithHashes(final OrientMavenFacet mavenFacet, final List<MavenPath> mavenPaths) throws IOException {
     final ArrayList<MavenPath> paths = new ArrayList<>();
     for (MavenPath path : mavenPaths) {
       paths.add(path.main());
@@ -242,7 +242,7 @@ public final class MavenFacetUtils
         paths.add(path.main().hash(hashType));
       }
     }
-    mavenFacet.delete(paths.toArray(new MavenPath[paths.size()]));
+    return mavenFacet.delete(paths.toArray(new MavenPath[paths.size()]));
   }
 
   /**

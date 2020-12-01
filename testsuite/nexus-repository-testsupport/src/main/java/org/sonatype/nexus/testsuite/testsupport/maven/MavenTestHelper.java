@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.util.Optional;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -24,6 +25,7 @@ import javax.inject.Named;
 import org.sonatype.goodies.testsupport.TestData;
 import org.sonatype.nexus.common.app.BaseUrlHolder;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
+import org.sonatype.nexus.content.maven.MavenMetadataRebuildContentFacet;
 import org.sonatype.nexus.pax.exam.NexusPaxExamSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.maven.MavenPath;
@@ -54,6 +56,11 @@ public abstract class MavenTestHelper
 
   public Payload read(final Repository repository, final String path) throws IOException {
     MavenContentFacet mavenFacet = repository.facet(MavenContentFacet.class);
+    Optional<MavenMetadataRebuildContentFacet> metadataRebuildFacet =
+        repository.optionalFacet(MavenMetadataRebuildContentFacet.class);
+    if (metadataRebuildFacet.isPresent()) {
+      metadataRebuildFacet.get().maybeRebuildMavenMetadata(path, false, true);
+    }
     MavenPath mavenPath = mavenFacet.getMavenPathParser().parsePath(path);
     return mavenFacet.get(mavenPath).orElse(null);
   }
@@ -84,7 +91,7 @@ public abstract class MavenTestHelper
         new URL(nexusUrl, "/repository/" + deployRepositoryName));
   }
 
-  protected void mvnDeploy(
+  public void mvnDeploy(
       final TestData testData,
       final String project,
       final String group,
