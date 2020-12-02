@@ -208,7 +208,7 @@ public abstract class MavenITSupport
     Repository proxy = repositoryManager.get(repositoryName);
     checkNotNull(proxy);
     checkArgument(ProxyType.NAME.equals(proxy.getType().getValue()));
-    org.sonatype.nexus.repository.config.Configuration proxyConfiguration = proxy.getConfiguration();
+    org.sonatype.nexus.repository.config.Configuration proxyConfiguration = proxy.getConfiguration().copy();
     proxyConfiguration.attributes("proxy").set("remoteUrl", remoteUrl);
     proxyConfiguration.attributes(STORAGE).set(STRICT_CONTENT_TYPE_VALIDATION, true);
     return repositoryManager.update(proxyConfiguration);
