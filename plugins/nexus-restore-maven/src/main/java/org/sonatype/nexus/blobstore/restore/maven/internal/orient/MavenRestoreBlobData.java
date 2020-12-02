@@ -10,33 +10,23 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.blobstore.restore.maven.internal;
+package org.sonatype.nexus.blobstore.restore.maven.internal.orient;
 
-import java.util.Properties;
-
-import org.sonatype.nexus.blobstore.api.Blob;
-import org.sonatype.nexus.blobstore.api.BlobStore;
 import org.sonatype.nexus.blobstore.restore.RestoreBlobData;
-import org.sonatype.nexus.repository.manager.RepositoryManager;
+import org.sonatype.nexus.blobstore.restore.RestoreBlobDataSupport;
 import org.sonatype.nexus.repository.maven.MavenPath;
-import org.sonatype.nexus.repository.maven.MavenPathParser;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-public class MavenRestoreBlobData
-    extends RestoreBlobData
+/**
+ * @since 3.6.1
+ */
+public final class MavenRestoreBlobData
+    extends RestoreBlobDataSupport
 {
   private final MavenPath mavenPath;
 
-  public MavenRestoreBlobData(
-      final Blob blob,
-      final Properties blobProperties,
-      final BlobStore blobStore,
-      final RepositoryManager repositoryManager,
-      final MavenPathParser mavenPathParser)
-  {
-    super(blob, blobProperties, blobStore, repositoryManager);
-    this.mavenPath = checkNotNull(mavenPathParser).parsePath(getBlobName());
+  public MavenRestoreBlobData(final RestoreBlobData blobData, final MavenPath mavenPath) {
+    super(blobData);
+    this.mavenPath = mavenPath;
   }
 
   public MavenPath getMavenPath() {

@@ -23,6 +23,8 @@
     <feature>nexus-task-log-cleanup</feature>
     <feature>nexus-blobstore-s3</feature>
     <feature>nexus-blobstore-tasks</feature>
+    <feature>nexus-restore-raw</feature>
+    <feature>nexus-restore-maven</feature>
     <feature>nexus-onboarding-plugin</feature>
     <feature>nexus-default-role-plugin</feature>
     <feature>nexus-repository-raw</feature>

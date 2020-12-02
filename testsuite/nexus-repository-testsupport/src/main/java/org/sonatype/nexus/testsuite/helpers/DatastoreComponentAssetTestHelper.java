@@ -26,7 +26,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -258,9 +257,13 @@ public class DatastoreComponentAssetTestHelper
       final String name,
       final String version)
   {
-    FluentComponent component = findComponent(repository, namespace, name, version);
-
-    return Objects.equals(component.namespace(), namespace);
+    if (endsWith(version, SNAPSHOT_VERSION_SUFFIX)) {
+      return findSnapshotComponent(repository, name, version).isPresent();
+    }
+    else {
+      List<FluentComponent> components = browseComponents(repository);
+      return components.stream().anyMatch(comp -> comp.namespace().equals(namespace) && comp.name().equals(name) && comp.version().equals(version));
+    }
   }
 
   @Override
@@ -431,8 +434,7 @@ public class DatastoreComponentAssetTestHelper
   public void deleteAssetBlob(final Repository repository, final String assetPath) {
     BlobStore blobStore = blobStoreManager.get(DEFAULT_BLOBSTORE_NAME);
     findAssetByPath(repository, assetPath)
-        .map(Asset::blob)
-        .map(Optional::get)
+        .flatMap(Asset::blob)
         .map(AssetBlob::blobRef)
         .map(BlobRef::getBlobId)
         .ifPresent(blobId -> blobStore.delete(blobId, "test merge recovery"));
