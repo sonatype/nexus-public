@@ -443,7 +443,15 @@ public abstract class ProxyFacetSupport
 
     mayThrowBypassHttpErrorException(response);
 
-    final CacheInfo cacheInfo = getCacheController(context).current();
+    final CacheInfo cacheInfo;
+
+    try {
+      cacheInfo = getCacheController(context).current();
+    } catch (Exception e) {
+      log.trace("Exception getting cache controller for context", e);
+      HttpClientUtils.closeQuietly(response);
+      throw e;
+    }
 
     if (status.getStatusCode() == HttpStatus.SC_OK) {
       HttpEntity entity = response.getEntity();
