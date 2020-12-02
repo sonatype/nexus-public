@@ -161,7 +161,7 @@ export default function RoutingRulesForm({itemId, onDone}) {
                       {/*This nx-label is required to ensure the button is at the correct height*/}
                       <label className="nx-label">
                         <Textfield
-                            aria-labelledby="matchers-label"
+                            aria-label={ROUTING_RULES.FORM.MATCHER_LABEL(index)}
                             aria-describedby="matchers-description"
                             className="nx-text-input--long"
                             {...Utils.fieldProps(`matchers[${index}]`, current)}

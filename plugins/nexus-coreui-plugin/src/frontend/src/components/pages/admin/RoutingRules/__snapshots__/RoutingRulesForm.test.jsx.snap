@@ -402,7 +402,11 @@ exports[`RoutingRulesForm renders the resolved data 1`] = `
             class="nx-label"
             id="matchers-label"
           >
-            Matchers
+            <span
+              class="nx-label__text"
+            >
+              Matchers
+            </span>
           </div>
           <p
             class="nx-p"
@@ -427,10 +431,10 @@ exports[`RoutingRulesForm renders the resolved data 1`] = `
                   >
                     <input
                       aria-describedby="matchers-description"
-                      aria-labelledby="matchers-label"
+                      aria-label="Matcher 0"
                       class="nx-text-input__input"
-                      id="matcher-0"
-                      name="matcher-0"
+                      id="matchers[0]"
+                      name="matchers[0]"
                       type="text"
                       value=".*"
                     />

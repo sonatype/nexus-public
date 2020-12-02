@@ -215,6 +215,7 @@ rel="noopener noreferrer">check the documentation</a>.
       },
       MODE_DESCRIPTION: 'requests when their path matches any of the following matchers',
       MATCHERS_LABEL: 'Matchers',
+      MATCHER_LABEL: (index) => `Matcher ${index}`,
       MATCHERS_DESCRIPTION: 'Enter regular expressions that will be used to identify request paths to allow or block (depending on above mode)',
       NAME_IS_NONE_ERROR: 'Rule must not be named None',
       DELETE_MATCHER_BUTTON: 'Delete this matcher',
