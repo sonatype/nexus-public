@@ -133,7 +133,7 @@ exports[`LogViewer renders the log into the text area 1`] = `
             </span>
           </button>
           <div
-            class="spacer"
+            class="nxrm-spacer"
           />
           <label
             for="period"

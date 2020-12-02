@@ -22,7 +22,7 @@ import {getFirstValidationError, hasValidationErrors} from "@sonatype/react-shar
 /**
  * @since 3.21
  */
-export default function Select({value, children, className, name, id, validationErrors, ...rest}) {
+export default function Select({value, children, className, name, id, isPristine, validatable, validationErrors, ...rest}) {
   const isInvalid = hasValidationErrors(validationErrors);
   const classes = classNames('nxrm-select', className, {
     'invalid': isInvalid
@@ -32,7 +32,7 @@ export default function Select({value, children, className, name, id, validation
     <select id={id || name} name={name} className={classes} value={value} {...rest}>
       {children}
     </select>
-    {isInvalid ? <FieldErrorMessage message={getFirstValidationError(validationErrors)}/> : null}
+    {!isPristine && validatable && isInvalid ? <FieldErrorMessage message={getFirstValidationError(validationErrors)}/> : null}
   </>;
 }
 

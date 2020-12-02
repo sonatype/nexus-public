@@ -58,6 +58,11 @@ export default Machine({
       }
     }
   },
+  on: {
+    RETRY: {
+      target: 'loading'
+    }
+  }
 }, {
   guards: {
     shouldShowEula: context => context.pristineData.tosAccepted === false

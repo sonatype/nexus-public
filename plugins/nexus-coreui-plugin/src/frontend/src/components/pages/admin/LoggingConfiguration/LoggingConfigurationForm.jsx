@@ -83,11 +83,15 @@ export default function LoggingConfigurationForm({itemId, onDone}) {
     send('RESET');
   }
 
+  function retry() {
+    send('RETRY');
+  }
+
   return <Page className="nxrm-logging-configuration">
     <PageHeader><PageTitle icon={faScroll} {...UIStrings.LOGGING.MENU}/></PageHeader>
     <ContentBody>
       <Section className="nxrm-logging-configuration-form" onKeyPress={handleEnter}>
-        <NxLoadWrapper loading={isLoading} error={loadError ? `${loadError}` : null}>
+        <NxLoadWrapper loading={isLoading} error={loadError ? `${loadError}` : null} retryHandler={retry}>
       {hasData && <>
         {saveError && <NxErrorAlert>{UIStrings.LOGGING.MESSAGES.SAVE_ERROR} {saveError}</NxErrorAlert>}
         {isSaving && <NxSubmitMask message={UIStrings.SAVING}/>}
@@ -95,6 +99,7 @@ export default function LoggingConfigurationForm({itemId, onDone}) {
 
         <FieldWrapper labelText={UIStrings.LOGGING.NAME_LABEL}>
           <Textfield
+              className="nx-text-input--long"
               {...Utils.fieldProps('name', current)}
               disabled={pristineData.name}
               onChange={update}/>

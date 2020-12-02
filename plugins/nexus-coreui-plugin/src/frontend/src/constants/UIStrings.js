@@ -15,6 +15,8 @@ import {UIStrings} from 'nexus-ui-plugin';
 export default {
   ...UIStrings,
 
+  FORMAT_PLACEHOLDER: 'Format',
+
   ANONYMOUS_SETTINGS: {
     MENU: {
       text: 'Anonymous Access',
@@ -28,6 +30,53 @@ export default {
       LOAD_ERROR: 'An error occurred while loading Anonymous settings, see console for more details',
       SAVE_SUCCESS: 'Anonymous security settings updated',
       SAVE_ERROR: 'An error occurred while updating Anonymous settings, see console for more details'
+    }
+  },
+
+  CONTENT_SELECTORS: {
+    MENU: {
+      text: 'Content Selectors'
+    },
+
+    EMPTY_MESSAGE: 'No content selectors were found',
+
+    HELP_TITLE: 'What is a content selector?',
+    HELP_TEXT: `\
+Content selectors provide a means for you to select specific content from your repositories. \
+Repository content is evaluated against expressions written in CSEL (Content Selector Expression Language). \
+For more information, <a href="http://links.sonatype.com/products/nxrm3/docs/content-selector" target="_blank" rel="noopener noreferrer">check the documentation</a>.\
+`,
+
+    CREATE_BUTTON: 'Create Selector',
+    FILTER_PLACEHOLDER: 'Filter',
+
+    NAME_LABEL: 'Name',
+    TYPE_LABEL: 'Type',
+    DESCRIPTION_LABEL: 'Description',
+    EXPRESSION_LABEL: 'Search Expression',
+    EXPRESSION_DESCRIPTION: 'Use the following query to identify repository content',
+
+    PREVIEW: {
+      TITLE: 'Preview Content Selector Results',
+      REPOSITORY_LABEL: 'Preview Repository',
+      REPOSITORY_DESCRIPTION: 'Select a repository to evaluate the content selector and see the content that would be available',
+      BUTTON: 'Preview',
+      RESULTS: 'Preview Results',
+      NAME_COLUMN: 'Name',
+      EMPTY: 'No content in repositories matched the expression'
+    },
+
+    MESSAGES: {
+      DUPLICATE_ERROR: (name) => `Another content selector named ${name} already exists`,
+      SAVE_ERROR: 'An error occurred while saving the content selector',
+      DELETE_ERROR: (name) => `Content selector ${name} is in use and cannot be deleted`,
+
+      CONFIRM_DELETE: {
+        TITLE: 'Delete Content Selector',
+        MESSAGE: (name) => `Delete the content selector named ${name}?`,
+        YES: 'Delete',
+        NO: 'Cancel'
+      }
     }
   },
 
@@ -94,13 +143,115 @@ export default {
     MARK_PLACEHOLDER: 'Marker to insert into log'
   },
 
+  ROUTING_RULES: {
+    MENU: {
+      text: 'Routing Rules',
+      description: 'Restrict which requests are handled by repositories'
+    },
+
+    LIST: {
+      PREVIEW_BUTTON: 'Global Routing Preview',
+      CREATE_BUTTON: 'Create Routing Rule',
+      FILTER_PLACEHOLDER: 'Filter by Name or Description',
+      NAME_LABEL: 'Name',
+      DESCRIPTION_LABEL: 'Description',
+      USED_BY_LABEL: 'Used By',
+      NEEDS_ASSIGNMENT: '0 repositories, assign it to a repository',
+      USED_BY: (count) => count === 1 ? '1 repository' : `${count} repositories`,
+      EMPTY_LIST: 'There are no routing rules created yet',
+      HELP_TITLE: 'What is a routing rule?',
+      HELP_TEXT: `\
+Routes are like filters you can apply to groups in terms of security access and general component retrieval. \
+They can be used to reduce the number of repositories within a group accessed in order to retrieve a component. \
+For more information, <a href="http://links.sonatype.com/products/nxrm3/docs/routing-rule" target="_blank" \
+rel="noopener noreferrer">check the documentation</a>.
+`
+    },
+
+    PREVIEW: {
+      TITLE: 'Global Routing Preview',
+      REPOSITORIES_LABEL: 'Repositories',
+      REPOSITORIES_DESCRIPTION: 'Choose a set of repositories to test against',
+      REPOSITORIES: {
+        ALL: 'All Repositories',
+        GROUPS: 'All Group Repositories',
+        PROXIES: 'All Proxy Repositories'
+      },
+      PATH_LABEL: 'Path',
+      PATH_DESCRIPTION: 'Enter a request path to check if it would be blocked or allowed. Requests always start with a leading slash.',
+      COLUMNS: {
+        REPOSITORY: 'Repository',
+        TYPE: 'Type',
+        FORMAT: 'Format',
+        RULE: 'Routing Rule',
+        STATUS: 'Status'
+      },
+      NO_RULE: 'None',
+      EMPTY_PREVIEW: 'No results found or preview was not yet submitted',
+      DETAILS_TITLE: (ruleName) => `Routing Rule Details for ${ruleName}`
+    },
+
+    FORM: {
+      CREATE_TITLE: 'Create Routing Rule',
+      EDIT_TITLE: 'Edit Routing Rule',
+      UNUSED: `To use this rule, <a href="#admin/repository/repositories">assign it to a repository</a>`,
+      USED_BY: (repositoryNames) => {
+        const repositoryLinks = repositoryNames.map(name =>
+            `<a href="#admin/repository/repositories:${window.encodeURIComponent(name)}">${name}</a>`);
+        const repository = repositoryNames.length === 1 ? 'repository' : 'repositories';
+        return `This rule is in use by ${repositoryNames.length} ${repository} (${repositoryLinks.join(', ')})`;
+      },
+      SAVE_ERROR: 'An error occured while saving the routing rule',
+      NAME_LABEL: 'Name',
+      DESCRIPTION_LABEL: 'Description',
+      MODE_LABEL: 'Mode',
+      MODE: {
+        ALLOW: 'Allow',
+        BLOCK: 'Block'
+      },
+      PREVIEW: {
+        ALLOWED: 'This request would be allowed',
+        BLOCKED: 'This request would be blocked'
+      },
+      MODE_DESCRIPTION: 'requests when their path matches any of the following matchers',
+      MATCHERS_LABEL: 'Matchers',
+      MATCHER_LABEL: (index) => `Matcher ${index}`,
+      MATCHERS_DESCRIPTION: 'Enter regular expressions that will be used to identify request paths to allow or block (depending on above mode)',
+      NAME_IS_NONE_ERROR: 'Rule must not be named None',
+      DELETE_MATCHER_BUTTON: 'Delete this matcher',
+      ADD_MATCHER_BUTTON: 'Add Another Matcher',
+      CREATE_BUTTON: 'Create Routing Rule',
+      CANNOT_DELETE: (repositoryNames) => `\
+This rule is in use by ${repositoryNames.length} ${repositoryNames.length === 1 ? 'repository' : 'repositories'} \
+(${repositoryNames.join(', ')})`
+    },
+
+    MESSAGES: {
+      CONFIRM_DELETE: {
+        TITLE: 'Delete Routing Rule',
+        MESSAGE: (name) => `Delete the routing rule named ${name}`,
+        YES: 'Delete',
+        NO: 'Cancel'
+      },
+      DELETE_ERROR: (name) => `Unable to delete routing rule named ${name}`
+    },
+
+    ALLOWED: 'Allowed',
+    BLOCKED: 'Blocked',
+
+    PATH_LABEL: 'Path',
+    PATH_DESCRIPTION: 'Enter a request path to check if it would be blocked or allowed. Requests always start with a leading slash.',
+    TEST_BUTTON: 'Test'
+  },
+
   SYSTEM_INFORMATION: {
     MENU: {
       text: 'System Information'
     },
     ACTIONS: {
       download: 'Download as JSON'
-    }
+    },
+    LOAD_ERROR: 'An error occurred while fetching the system information'
   },
 
   SUPPORT_REQUEST: {
@@ -160,8 +311,8 @@ export default {
       ERROR: 'Failed to Reset API Key'
     },
     DETAILS: {
-      MAIN: 'Your NuGet API Key enables pushing packages using nuget.exe.' ,
-      WARNING:'Keep this key secret!' ,
+      MAIN: 'Your NuGet API Key enables pushing packages using nuget.exe.',
+      WARNING: 'Keep this key secret!',
       API_KEY_TEXT: 'Your NuGet API Key is:',
       REGISTER_TEXT: 'You can register this key for a given repository with the following command:',
       REGISTER_COMMAND: 'nuget setapikey {0} -source {1}',
@@ -241,6 +392,78 @@ export default {
     BUTTONS: {
       ANALYZE: 'Analyze',
       CANCEL: 'Cancel'
+    }
+  },
+
+  CLEANUP_POLICIES: {
+    MENU: {
+      text: 'Cleanup Policies',
+      description: 'Manage component removal configuration'
+    },
+
+    CREATE_TITLE: 'Create Cleanup Policy',
+    EDIT_TITLE: 'Edit Cleanup Policy',
+
+    HELP_TITLE: 'What is a cleanup policy?',
+    HELP_TEXT: `\
+Cleanup policies can be used to remove content from your repositories. These policies will execute at the configured frequency. \
+Once created, a cleanup policy must be assigned to a repository from \
+<a href="#admin/repository/repositories">the repository configuration screen</a>. For more information, check \
+<a href="http://links.sonatype.com/products/nxrm3/docs/cleanup-policy" target="_blank" rel="noopener noreferrer">the documentation</a>.\
+`,
+    EMPTY_MESSAGE: 'No cleanup policies were found',
+    CREATE_BUTTON: 'Create Cleanup Policy',
+    FILTER_PLACEHOLDER: 'Filter',
+
+    NAME_LABEL: 'Name',
+    FORMAT_LABEL: 'Format',
+    NOTES_LABEL: 'Notes',
+    CRITERIA_LABEL: 'Cleanup Criteria',
+    LAST_UPDATED_LABEL: 'Component Age',
+    LAST_DOWNLOADED_LABEL: 'Component Usage',
+    RELEASE_TYPE_LABEL: 'Release Type',
+    ASSET_NAME_LABEL: 'Asset Name Matcher',
+    FORMAT_SELECT: 'Select a format...',
+    RELEASE_TYPE_SELECT: 'Select a release type...',
+    REPOSITORY_SELECT: 'Select a repository...',
+
+    NAME_DESCRIPTION: 'Use a unique name for the cleanup policy',
+    FORMAT_DESCRIPTION: 'The format that this cleanup policy can be applied to',
+    LAST_UPDATED_DESCRIPTION: 'Remove components that were published over:',
+    LAST_DOWNLOADED_DESCRIPTION: "Remove components that haven't been downloaded in:",
+    RELEASE_TYPE_DESCRIPTION: 'Remove components that are of the following release type:',
+    ASSET_NAME_DESCRIPTION: 'Remove components that have at least one asset name matching the following regular expression pattern:',
+
+    LAST_UPDATED_SUFFIX: 'days ago',
+    LAST_DOWNLOADED_SUFFIX: 'days',
+
+    RELEASE_TYPE_RELEASE: 'Release Versions',
+    RELEASE_TYPE_PRERELEASE: 'Pre-Release / Snapshot Versions',
+
+    PREVIEW: {
+      TITLE: 'Cleanup policy preview',
+      REPOSITORY_LABEL: 'Preview Repository',
+      REPOSITORY_DESCRIPTION: 'Select a repository to preview what might get cleaned up if this policy was applied',
+      BUTTON: 'Preview',
+      RESULTS: 'Preview Results',
+      NAME_COLUMN: 'Name',
+      GROUP_COLUMN: 'Group',
+      VERSION_COLUMN: 'Version',
+      EMPTY: 'No assets in repository matched the criteria'
+    },
+
+    MESSAGES: {
+      SAVE_ERROR: 'An error occurred while saving the cleanup policy',
+      DELETE_ERROR: (name) => `Cleanup policy ${name} is in use and cannot be deleted`,
+
+      CONFIRM_DELETE: {
+        TITLE: 'Delete cleanup policy',
+        MESSAGE: (inUseCount) => inUseCount ?
+            `This Cleanup Policy is used by ${inUseCount} repositories` :
+            'This Cleanup Policy is not used by any repository',
+        YES: 'Delete',
+        NO: 'Cancel'
+      }
     }
   }
 };

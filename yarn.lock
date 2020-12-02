@@ -1153,10 +1153,10 @@
   resolved "https://registry.yarnpkg.com/@sheerun/mutationobserver-shim/-/mutationobserver-shim-0.3.3.tgz#5405ee8e444ed212db44e79351f0c70a582aae25"
   integrity sha512-DetpxZw1fzPD5xUBrIAoplLChO2VB8DlL5Gg+I1IR9b2wPqYIca2WSUxL5g1vLeR4MsQq1NeWriXAVffV+U1Fw==
 
-"@sonatype/react-shared-components@=1.2.1":
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/@sonatype/react-shared-components/-/react-shared-components-1.2.1.tgz#4669b1eb3075c2ddb8a31edec0886f0d08091b0c"
-  integrity sha512-b1/UUPXhaLRwJmBCgvpmZbu6PlzfhPBXNcPkl7Le2FzYborDAL1LeUL4MHFpSyuJBDddkZiYv8v0kiw4bx6agA==
+"@sonatype/react-shared-components@=2.0.6":
+  version "2.0.6"
+  resolved "https://registry.yarnpkg.com/@sonatype/react-shared-components/-/react-shared-components-2.0.6.tgz#e20f900ebeddd935929e2dbf9f0019d8237e9ccd"
+  integrity sha512-/GuvSvt2XGfwQo9PFQfHf1jx+wlp4nGsUgyhKNPedfdeYTfzE+AaltT5F6cMACJhQK0jqUxus6o0HApN5PCjDQ==
   dependencies:
     "@fortawesome/fontawesome-svg-core" "1.2.17"
     "@fortawesome/free-solid-svg-icons" "=5.8.1"
@@ -7099,6 +7099,11 @@ ramda@0.26.1:
   version "0.26.1"
   resolved "https://registry.yarnpkg.com/ramda/-/ramda-0.26.1.tgz#8d41351eb8111c55353617fc3bbffad8e4d35d06"
   integrity sha512-hLWjpy7EnsDBb0p+Z3B7rPi3GDeRG5ZtiI33kJhTt+ORCd38AbAIjB/9zRIUoeTbE/AVX5ZkU7m6bznsvrf8eQ==
+
+ramda@=0.27.1:
+  version "0.27.1"
+  resolved "https://registry.yarnpkg.com/ramda/-/ramda-0.27.1.tgz#66fc2df3ef873874ffc2da6aa8984658abacf5c9"
+  integrity sha512-PgIdVpn5y5Yns8vqb8FzBUEYn98V3xcPgawAkkgj0YJ0qDsnHCiNmZYfOGMgOvoB0eWFLpYbhxUR3mxfDIMvpw==
 
 randomatic@^3.0.0:
   version "3.1.1"

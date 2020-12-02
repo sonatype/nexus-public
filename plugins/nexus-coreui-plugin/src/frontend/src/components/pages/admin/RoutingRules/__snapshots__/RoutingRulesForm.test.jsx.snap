@@ -1,0 +1,645 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`RoutingRulesForm renders a loading spinner 1`] = `
+<div>
+  <main
+    class="nx-page-main nxrm-routing-rules"
+  >
+    <div
+      class="nx-alert nx-alert--info"
+    >
+      <svg
+        aria-hidden="true"
+        class="svg-inline--fa fa-info-circle fa-w-16 nx-icon"
+        data-icon="info-circle"
+        data-prefix="fas"
+        focusable="false"
+        role="img"
+        viewBox="0 0 512 512"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 110c23.196 0 42 18.804 42 42s-18.804 42-42 42-42-18.804-42-42 18.804-42 42-42zm56 254c0 6.627-5.373 12-12 12h-88c-6.627 0-12-5.373-12-12v-24c0-6.627 5.373-12 12-12h12v-64h-12c-6.627 0-12-5.373-12-12v-24c0-6.627 5.373-12 12-12h64c6.627 0 12 5.373 12 12v100h12c6.627 0 12 5.373 12 12v24z"
+          fill="currentColor"
+        />
+      </svg>
+      <div
+        class="nx-alert__content"
+      >
+        <span>
+          To use this rule, 
+          <a
+            href="#admin/repository/repositories"
+          >
+            assign it to a repository
+          </a>
+        </span>
+      </div>
+    </div>
+    <div
+      class="nxrm-page-header"
+    >
+      <div
+        class="nx-page-title"
+      >
+        <h1
+          class="nx-h1 nx-feature-name"
+        >
+          <span>
+            Edit Routing Rule
+          </span>
+        </h1>
+      </div>
+    </div>
+    <div
+      class="nxrm-content-body"
+    >
+      <div
+        class="nxrm-section nx-tile nxrm-routing-rules-form"
+      >
+        <div
+          class="nx-loading-spinner"
+        >
+          <svg
+            aria-hidden="true"
+            class="svg-inline--fa fa-circle-notch fa-w-16 fa-spin nx-loading-spinner__icon nx-icon"
+            data-icon="circle-notch"
+            data-prefix="fas"
+            focusable="false"
+            role="img"
+            viewBox="0 0 512 512"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M288 39.056v16.659c0 10.804 7.281 20.159 17.686 23.066C383.204 100.434 440 171.518 440 256c0 101.689-82.295 184-184 184-101.689 0-184-82.295-184-184 0-84.47 56.786-155.564 134.312-177.219C216.719 75.874 224 66.517 224 55.712V39.064c0-15.709-14.834-27.153-30.046-23.234C86.603 43.482 7.394 141.206 8.003 257.332c.72 137.052 111.477 246.956 248.531 246.667C393.255 503.711 504 392.788 504 256c0-115.633-79.14-212.779-186.211-240.236C302.678 11.889 288 23.456 288 39.056z"
+              fill="currentColor"
+            />
+          </svg>
+          <span>
+            Loading…
+          </span>
+        </div>
+      </div>
+      <div
+        class="nxrm-section nx-tile nxrm-routing-rules-preview"
+      >
+        <div
+          class="nx-form-row"
+        >
+          <div
+            class="nx-form-group"
+          >
+            <label
+              class="nx-label"
+              for="path"
+            >
+              <span
+                class="nx-label"
+              >
+                Path
+              </span>
+            </label>
+            <p
+              class="nx-p"
+            >
+              Enter a request path to check if it would be blocked or allowed. Requests always start with a leading slash.
+            </p>
+            <div
+              class="nx-form-row"
+            >
+              <div
+                class="nx-form-group"
+              >
+                <label
+                  class="nx-label nxrm-path"
+                >
+                  <div
+                    class="nx-text-input"
+                  >
+                    <div
+                      class="nx-text-input__box"
+                    >
+                      <input
+                        class="nx-text-input__input"
+                        id="path"
+                        name="path"
+                        type="text"
+                        value=""
+                      />
+                      <svg
+                        aria-hidden="true"
+                        class="svg-inline--fa fa-check fa-w-16 nx-icon nx-icon--valid nx-icon"
+                        data-icon="check"
+                        data-prefix="fas"
+                        focusable="false"
+                        role="img"
+                        viewBox="0 0 512 512"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                      <svg
+                        aria-hidden="true"
+                        class="svg-inline--fa fa-exclamation-circle fa-w-16 nx-icon nx-icon--invalid nx-icon"
+                        data-icon="exclamation-circle"
+                        data-prefix="fas"
+                        focusable="false"
+                        role="img"
+                        viewBox="0 0 512 512"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </div>
+                    <div
+                      class="nx-text-input__invalid-message"
+                    />
+                  </div>
+                </label>
+              </div>
+              <div
+                class="nx-btn-bar"
+              >
+                <button
+                  class="nx-btn nx-btn--primary"
+                >
+                  Test
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+`;
+
+exports[`RoutingRulesForm renders the resolved data 1`] = `
+<div>
+  <main
+    class="nx-page-main nxrm-routing-rules"
+  >
+    <div
+      class="nx-alert nx-alert--info"
+    >
+      <svg
+        aria-hidden="true"
+        class="svg-inline--fa fa-info-circle fa-w-16 nx-icon"
+        data-icon="info-circle"
+        data-prefix="fas"
+        focusable="false"
+        role="img"
+        viewBox="0 0 512 512"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 110c23.196 0 42 18.804 42 42s-18.804 42-42 42-42-18.804-42-42 18.804-42 42-42zm56 254c0 6.627-5.373 12-12 12h-88c-6.627 0-12-5.373-12-12v-24c0-6.627 5.373-12 12-12h12v-64h-12c-6.627 0-12-5.373-12-12v-24c0-6.627 5.373-12 12-12h64c6.627 0 12 5.373 12 12v100h12c6.627 0 12 5.373 12 12v24z"
+          fill="currentColor"
+        />
+      </svg>
+      <div
+        class="nx-alert__content"
+      >
+        <span>
+          To use this rule, 
+          <a
+            href="#admin/repository/repositories"
+          >
+            assign it to a repository
+          </a>
+        </span>
+      </div>
+    </div>
+    <div
+      class="nxrm-page-header"
+    >
+      <div
+        class="nx-page-title"
+      >
+        <h1
+          class="nx-h1 nx-feature-name"
+        >
+          <span>
+            Edit Routing Rule
+          </span>
+        </h1>
+      </div>
+    </div>
+    <div
+      class="nxrm-content-body"
+    >
+      <div
+        class="nxrm-section nx-tile nxrm-routing-rules-form"
+      >
+        <div
+          class="nx-form-group"
+        >
+          <label
+            class="nx-label"
+            for="name"
+          >
+            <span
+              class="nx-label__text"
+            >
+              Name
+            </span>
+          </label>
+          <div
+            class="nx-text-input pristine valid"
+          >
+            <div
+              class="nx-text-input__box"
+            >
+              <input
+                class="nx-text-input__input"
+                id="name"
+                name="name"
+                type="text"
+                value="allow-all"
+              />
+              <svg
+                aria-hidden="true"
+                class="svg-inline--fa fa-check fa-w-16 nx-icon nx-icon--valid nx-icon"
+                data-icon="check"
+                data-prefix="fas"
+                focusable="false"
+                role="img"
+                viewBox="0 0 512 512"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
+                  fill="currentColor"
+                />
+              </svg>
+              <svg
+                aria-hidden="true"
+                class="svg-inline--fa fa-exclamation-circle fa-w-16 nx-icon nx-icon--invalid nx-icon"
+                data-icon="exclamation-circle"
+                data-prefix="fas"
+                focusable="false"
+                role="img"
+                viewBox="0 0 512 512"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
+                  fill="currentColor"
+                />
+              </svg>
+            </div>
+            <div
+              class="nx-text-input__invalid-message"
+            />
+          </div>
+        </div>
+        <div
+          class="nx-form-group"
+        >
+          <label
+            class="nx-label nx-label--optional"
+            for="description"
+          >
+            <span
+              class="nx-label__text"
+            >
+              Description
+            </span>
+          </label>
+          <div
+            class="nx-text-input nx-text-input--long pristine valid"
+          >
+            <div
+              class="nx-text-input__box"
+            >
+              <input
+                class="nx-text-input__input"
+                id="description"
+                name="description"
+                type="text"
+                value="Allow all requests"
+              />
+              <svg
+                aria-hidden="true"
+                class="svg-inline--fa fa-check fa-w-16 nx-icon nx-icon--valid nx-icon"
+                data-icon="check"
+                data-prefix="fas"
+                focusable="false"
+                role="img"
+                viewBox="0 0 512 512"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
+                  fill="currentColor"
+                />
+              </svg>
+              <svg
+                aria-hidden="true"
+                class="svg-inline--fa fa-exclamation-circle fa-w-16 nx-icon nx-icon--invalid nx-icon"
+                data-icon="exclamation-circle"
+                data-prefix="fas"
+                focusable="false"
+                role="img"
+                viewBox="0 0 512 512"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
+                  fill="currentColor"
+                />
+              </svg>
+            </div>
+            <div
+              class="nx-text-input__invalid-message"
+            />
+          </div>
+        </div>
+        <div
+          class="nx-form-group"
+        >
+          <label
+            class="nx-label"
+            for="mode"
+          >
+            <span
+              class="nx-label__text"
+            >
+              Mode
+            </span>
+          </label>
+          <select
+            class="nxrm-select"
+            id="mode"
+            name="mode"
+          >
+            <option
+              value="ALLOW"
+            >
+              Allow
+            </option>
+            <option
+              value="BLOCK"
+            >
+              Block
+            </option>
+          </select>
+          <span>
+            requests when their path matches any of the following matchers
+          </span>
+        </div>
+        <div
+          class="nx-form-group"
+        >
+          <div
+            class="nx-label"
+            id="matchers-label"
+          >
+            <span
+              class="nx-label__text"
+            >
+              Matchers
+            </span>
+          </div>
+          <p
+            class="nx-p"
+            id="matchers-description"
+          >
+            Enter regular expressions that will be used to identify request paths to allow or block (depending on above mode)
+          </p>
+          <div
+            class="nx-form-row"
+          >
+            <div
+              class="nx-form-group"
+            >
+              <label
+                class="nx-label"
+              >
+                <div
+                  class="nx-text-input nx-text-input--long pristine valid"
+                >
+                  <div
+                    class="nx-text-input__box"
+                  >
+                    <input
+                      aria-describedby="matchers-description"
+                      aria-label="Matcher 0"
+                      class="nx-text-input__input"
+                      id="matchers[0]"
+                      name="matchers[0]"
+                      type="text"
+                      value=".*"
+                    />
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-check fa-w-16 nx-icon nx-icon--valid nx-icon"
+                      data-icon="check"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 512 512"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    <svg
+                      aria-hidden="true"
+                      class="svg-inline--fa fa-exclamation-circle fa-w-16 nx-icon nx-icon--invalid nx-icon"
+                      data-icon="exclamation-circle"
+                      data-prefix="fas"
+                      focusable="false"
+                      role="img"
+                      viewBox="0 0 512 512"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </div>
+                  <div
+                    class="nx-text-input__invalid-message"
+                  />
+                </div>
+              </label>
+            </div>
+          </div>
+          <div
+            class="add-matcher"
+          >
+            <button
+              class="nx-btn nx-btn--tertiary"
+            >
+              <svg
+                aria-hidden="true"
+                class="svg-inline--fa fa-plus fa-w-14 nx-icon"
+                data-icon="plus"
+                data-prefix="fas"
+                focusable="false"
+                role="img"
+                viewBox="0 0 448 512"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M416 208H272V64c0-17.67-14.33-32-32-32h-32c-17.67 0-32 14.33-32 32v144H32c-17.67 0-32 14.33-32 32v32c0 17.67 14.33 32 32 32h144v144c0 17.67 14.33 32 32 32h32c17.67 0 32-14.33 32-32V304h144c17.67 0 32-14.33 32-32v-32c0-17.67-14.33-32-32-32z"
+                  fill="currentColor"
+                />
+              </svg>
+              <span>
+                Add Another Matcher
+              </span>
+            </button>
+          </div>
+        </div>
+        <div
+          class="nxrm-footer nx-footer"
+        >
+          <button
+            class="nx-btn disabled nx-btn--primary"
+            title="There are no changes"
+            type="submit"
+          >
+            Save
+          </button>
+          <button
+            class="nx-btn"
+          >
+            Cancel
+          </button>
+          <button
+            class="nx-btn nx-btn--tertiary"
+            title=""
+          >
+            <svg
+              aria-hidden="true"
+              class="svg-inline--fa fa-trash fa-w-14 nx-icon"
+              data-icon="trash"
+              data-prefix="fas"
+              focusable="false"
+              role="img"
+              viewBox="0 0 448 512"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16zM53.2 467a48 48 0 0 0 47.9 45h245.8a48 48 0 0 0 47.9-45L416 128H32z"
+                fill="currentColor"
+              />
+            </svg>
+            <span>
+              Delete
+            </span>
+          </button>
+        </div>
+      </div>
+      <div
+        class="nxrm-section nx-tile nxrm-routing-rules-preview"
+      >
+        <div
+          class="nx-form-row"
+        >
+          <div
+            class="nx-form-group"
+          >
+            <label
+              class="nx-label"
+              for="path"
+            >
+              <span
+                class="nx-label"
+              >
+                Path
+              </span>
+            </label>
+            <p
+              class="nx-p"
+            >
+              Enter a request path to check if it would be blocked or allowed. Requests always start with a leading slash.
+            </p>
+            <div
+              class="nx-form-row"
+            >
+              <div
+                class="nx-form-group"
+              >
+                <label
+                  class="nx-label nxrm-path"
+                >
+                  <div
+                    class="nx-text-input"
+                  >
+                    <div
+                      class="nx-text-input__box"
+                    >
+                      <input
+                        class="nx-text-input__input"
+                        id="path"
+                        name="path"
+                        type="text"
+                        value=""
+                      />
+                      <svg
+                        aria-hidden="true"
+                        class="svg-inline--fa fa-check fa-w-16 nx-icon nx-icon--valid nx-icon"
+                        data-icon="check"
+                        data-prefix="fas"
+                        focusable="false"
+                        role="img"
+                        viewBox="0 0 512 512"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                      <svg
+                        aria-hidden="true"
+                        class="svg-inline--fa fa-exclamation-circle fa-w-16 nx-icon nx-icon--invalid nx-icon"
+                        data-icon="exclamation-circle"
+                        data-prefix="fas"
+                        focusable="false"
+                        role="img"
+                        viewBox="0 0 512 512"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </div>
+                    <div
+                      class="nx-text-input__invalid-message"
+                    />
+                  </div>
+                </label>
+              </div>
+              <div
+                class="nx-btn-bar"
+              >
+                <button
+                  class="nx-btn nx-btn--primary"
+                >
+                  Test
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+`;

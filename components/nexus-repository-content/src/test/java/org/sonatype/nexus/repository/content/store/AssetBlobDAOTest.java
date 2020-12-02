@@ -123,6 +123,30 @@ public class AssetBlobDAOTest
   }
 
   @Test
+  public void testBrowseAll() {
+    AssetBlobData assetBlob1 = randomAssetBlob();
+    AssetBlobData assetBlob2 = randomAssetBlob();
+
+    BlobRef blobRef1 = assetBlob1.blobRef();
+
+    try (DataSession<?> session = sessionRule.openSession("content")) {
+      AssetBlobDAO dao = session.access(TestAssetBlobDAO.class);
+
+      dao.createAssetBlob(assetBlob1);
+
+      assertThat(dao.browseAssetBlobs(1, null), contains(sameBlob(assetBlob1)));
+
+      dao.createAssetBlob(assetBlob2);
+
+      assertThat(dao.browseAssetBlobs(2, null), contains(sameBlob(assetBlob1), sameBlob(assetBlob2)));
+
+      dao.deleteAssetBlob(blobRef1);
+
+      assertThat(dao.browseAssetBlobs(2, null), contains(sameBlob(assetBlob2)));
+    }
+  }
+
+  @Test
   public void testBlob() {
     AssetBlobData assetBlob1 = randomAssetBlob();
     BlobRef blobRef1 = assetBlob1.blobRef();

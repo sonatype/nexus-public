@@ -14,10 +14,10 @@ exports[`SupportZipResponse renders support zip response 1`] = `
       You can reference this file on the filesystem or download the file from your browser.
     </p>
     <div
-      class="field-wrapper"
+      class="nx-form-group"
     >
       <label
-        class="field-wrapper-label nx-label"
+        class="nx-label"
         for="name"
       >
         <span
@@ -77,10 +77,10 @@ exports[`SupportZipResponse renders support zip response 1`] = `
       </div>
     </div>
     <div
-      class="field-wrapper"
+      class="nx-form-group"
     >
       <label
-        class="field-wrapper-label nx-label"
+        class="nx-label"
         for="size"
       >
         <span
@@ -140,10 +140,10 @@ exports[`SupportZipResponse renders support zip response 1`] = `
       </div>
     </div>
     <div
-      class="field-wrapper"
+      class="nx-form-group"
     >
       <label
-        class="field-wrapper-label nx-label"
+        class="nx-label"
         for="file"
       >
         <span
@@ -203,7 +203,7 @@ exports[`SupportZipResponse renders support zip response 1`] = `
       </div>
     </div>
     <div
-      class="nxrm-section-footer nx-tile-footer"
+      class="nxrm-footer nx-footer"
     >
       <button
         class="nx-btn nx-btn--primary"

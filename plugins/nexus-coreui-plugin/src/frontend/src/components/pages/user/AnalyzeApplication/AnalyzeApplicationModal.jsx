@@ -55,7 +55,11 @@ export default function AnalyzeApplicationModal(props) {
     send('CANCEL');
   }
 
-  return <NxLoadWrapper loading={isLoading}>
+  function retry() {
+    send('RETRY');
+  }
+
+  return <NxLoadWrapper loading={isLoading} retryHandler={retry}>
       <header className="nx-modal-header">
         <h2 className="nx-h2">
           <NxFontAwesomeIcon icon={faKey} fixedWidth/>
@@ -66,59 +70,49 @@ export default function AnalyzeApplicationModal(props) {
       <div className="nx-modal-content">
         <p dangerouslySetInnerHTML={{__html: UIStrings.ANALYZE_APPLICATION.MAIN}}></p>
         <div className="nx-form-row">
-          <div className="nx-form-group">
-            <FieldWrapper
-                labelText={UIStrings.ANALYZE_APPLICATION.EMAIL.LABEL}
-                descriptionText={UIStrings.ANALYZE_APPLICATION.EMAIL.DESCRIPTION}>
-              <Textfield {...Utils.fieldProps('emailAddress', state)} onChange={handleUpdate}/>
-            </FieldWrapper>
-          </div>
-          <div className="nx-form-group">
-            <FieldWrapper
-                labelText={UIStrings.ANALYZE_APPLICATION.PASSWORD.LABEL}
-                descriptionText={UIStrings.ANALYZE_APPLICATION.PASSWORD.DESCRIPTION}>
-              <Textfield {...Utils.fieldProps('password', state)} type='password' onChange={handleUpdate}/>
-            </FieldWrapper>
-          </div>
+          <FieldWrapper
+              labelText={UIStrings.ANALYZE_APPLICATION.EMAIL.LABEL}
+              descriptionText={UIStrings.ANALYZE_APPLICATION.EMAIL.DESCRIPTION}>
+            <Textfield {...Utils.fieldProps('emailAddress', state)} onChange={handleUpdate}/>
+          </FieldWrapper>
+          <FieldWrapper
+              labelText={UIStrings.ANALYZE_APPLICATION.PASSWORD.LABEL}
+              descriptionText={UIStrings.ANALYZE_APPLICATION.PASSWORD.DESCRIPTION}>
+            <Textfield {...Utils.fieldProps('password', state)} type='password' onChange={handleUpdate}/>
+          </FieldWrapper>
         </div>
 
         <div className='nx-form-row'>
-          <div className='nx-form-group'>
-            <FieldWrapper
-                labelText={UIStrings.ANALYZE_APPLICATION.PACKAGES.LABEL}
-                descriptionText={UIStrings.ANALYZE_APPLICATION.PACKAGES.DESCRIPTION}
-                isOptional>
-              <Textfield {...Utils.fieldProps('packages', state)} onChange={handleUpdate}
-                         className='nx-text-input--long'/>
-            </FieldWrapper>
-          </div>
+          <FieldWrapper
+              labelText={UIStrings.ANALYZE_APPLICATION.PACKAGES.LABEL}
+              descriptionText={UIStrings.ANALYZE_APPLICATION.PACKAGES.DESCRIPTION}
+              isOptional>
+            <Textfield {...Utils.fieldProps('packages', state)} onChange={handleUpdate}
+                       className='nx-text-input--long'/>
+          </FieldWrapper>
         </div>
 
         {assetMap &&
         <div className='nx-form-row'>
-          <div className='nx-form-group'>
-            <FieldWrapper
-                labelText={UIStrings.ANALYZE_APPLICATION.SELECT_ASSET.LABEL}
-                descriptionText={UIStrings.ANALYZE_APPLICATION.SELECT_ASSET.DESCRIPTION}>
-              <Select {...Utils.fieldProps('selectedAsset', state)} disabled={!enableAssetSelection}
-                      onChange={handleAssetChange}>
-                {Object.entries(assetMap).map(([key, value]) =>
-                    <option key={key} value={key}>{value}</option>
-                )}
-              </Select>
-            </FieldWrapper>
-          </div>
-          <div className='nx-form-group'>
-            <FieldWrapper
-                labelText={UIStrings.ANALYZE_APPLICATION.REPORT.LABEL}
-                descriptionText={UIStrings.ANALYZE_APPLICATION.REPORT.DESCRIPTION}>
-              <Textfield {...Utils.fieldProps('reportLabel', state)} onChange={handleUpdate}/>
-            </FieldWrapper>
-          </div>
+          <FieldWrapper
+              labelText={UIStrings.ANALYZE_APPLICATION.SELECT_ASSET.LABEL}
+              descriptionText={UIStrings.ANALYZE_APPLICATION.SELECT_ASSET.DESCRIPTION}>
+            <Select {...Utils.fieldProps('selectedAsset', state)} disabled={!enableAssetSelection}
+                    onChange={handleAssetChange}>
+              {Object.entries(assetMap).map(([key, value]) =>
+                  <option key={key} value={key}>{value}</option>
+              )}
+            </Select>
+          </FieldWrapper>
+          <FieldWrapper
+              labelText={UIStrings.ANALYZE_APPLICATION.REPORT.LABEL}
+              descriptionText={UIStrings.ANALYZE_APPLICATION.REPORT.DESCRIPTION}>
+            <Textfield {...Utils.fieldProps('reportLabel', state)} onChange={handleUpdate}/>
+          </FieldWrapper>
         </div>
         }
       </div>
-      <footer className="nx-modal-footer">
+      <footer className="nx-footer">
         <NxButton variant="primary" className={Utils.isInvalid(validationErrors) && 'disabled'}
                   onClick={handleAnalyze}>
           {UIStrings.ANALYZE_APPLICATION.BUTTONS.ANALYZE}

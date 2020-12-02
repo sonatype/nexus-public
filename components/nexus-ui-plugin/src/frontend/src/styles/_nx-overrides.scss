@@ -30,4 +30,8 @@
     -moz-box-sizing: content-box;
     -webkit-box-sizing: content-box;
   }
+
+  .nx-footer {
+    background-color: transparent; // undo the color set by extjs
+  }
 }

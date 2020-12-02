@@ -52,7 +52,7 @@ exports[`NuGetApiToken renders correctly: baseline 1`] = `
            
         </p>
         <div
-          class="nxrm-section-footer nx-tile-footer"
+          class="nxrm-footer nx-footer"
         >
           <button
             class="nx-btn nx-btn--primary"
@@ -142,7 +142,7 @@ exports[`NuGetApiToken renders correctly: nugetKeyPresent 1`] = `
            
         </p>
         <div
-          class="nxrm-section-footer nx-tile-footer"
+          class="nxrm-footer nx-footer"
         >
           <button
             class="nx-btn nx-btn--primary"
@@ -177,7 +177,7 @@ exports[`NuGetApiToken renders correctly: nugetKeyPresent 1`] = `
         <div
           class="nx-modal-backdrop"
         >
-          <div
+          <section
             class="nx-modal nx-modal--wide"
             id="nuget-api-key-modal"
           >
@@ -228,10 +228,11 @@ exports[`NuGetApiToken renders correctly: nugetKeyPresent 1`] = `
                 <br />
               </p>
               <div
-                class="field-wrapper"
+                class="nx-form-group"
               >
                 <label
-                  class="field-wrapper-label nx-label"
+                  class="nx-label"
+                  for="nuget-api-key"
                 >
                   <span
                     class="nx-label__text"
@@ -248,10 +249,11 @@ exports[`NuGetApiToken renders correctly: nugetKeyPresent 1`] = `
                 </textarea>
               </div>
               <div
-                class="field-wrapper"
+                class="nx-form-group"
               >
                 <label
-                  class="field-wrapper-label nx-label"
+                  class="nx-label"
+                  for="nuget-example-command"
                 >
                   <span
                     class="nx-label__text"
@@ -277,7 +279,7 @@ exports[`NuGetApiToken renders correctly: nugetKeyPresent 1`] = `
               </p>
             </div>
             <footer
-              class="nx-modal-footer"
+              class="nx-footer"
             >
               <button
                 class="nx-btn"
@@ -285,7 +287,7 @@ exports[`NuGetApiToken renders correctly: nugetKeyPresent 1`] = `
                 Close
               </button>
             </footer>
-          </div>
+          </section>
         </div>
       </div>
     </div>

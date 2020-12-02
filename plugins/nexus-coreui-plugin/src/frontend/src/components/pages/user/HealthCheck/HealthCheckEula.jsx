@@ -51,7 +51,7 @@ export default function HealthCheckEula(props) {
       <p dangerouslySetInnerHTML={{__html: iframe}} />
     </div>
 
-    <footer className="nx-modal-footer">
+    <footer className="nx-footer">
       <NxButton variant="primary" onClick={handleEulaAccept}>
         {UIStrings.HEALTHCHECK_EULA.BUTTONS.ACCEPT}
       </NxButton>

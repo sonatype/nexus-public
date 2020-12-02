@@ -12,93 +12,97 @@
  */
 import React from 'react';
 import UIStrings from '../../../../constants/UIStrings';
-import {Checkbox, CheckboxGroup, NxButton, NxFontAwesomeIcon} from "nexus-ui-plugin";
+import {NxButton, NxCheckbox, NxFontAwesomeIcon} from 'nexus-ui-plugin';
 import {faFileArchive} from '@fortawesome/free-solid-svg-icons';
 
 export default function SupportZipForm({params, setParams, submit, clustered, hazips}) {
   return <>
     <div dangerouslySetInnerHTML={{__html: UIStrings.SUPPORT_ZIP.DESCRIPTION}}/>
-    <CheckboxGroup labelText={'Contents:'}>
-      <Checkbox
+    <fieldset className="nx-fieldset">
+      <legend className="nx-label">
+        Contents:
+      </legend>
+      <NxCheckbox
         checkboxId='systemInformation'
         isChecked={params.systemInformation}
         onChange={setParams}
       >
         {UIStrings.SUPPORT_ZIP.REPORT_LABEL}
-      </Checkbox>
-      <Checkbox
+      </NxCheckbox>
+      <NxCheckbox
         checkboxId='threadDump'
         isChecked={params.threadDump}
         onChange={setParams}
       >
        {UIStrings.SUPPORT_ZIP.DUMP_LABEL}
-      </Checkbox>
-      <Checkbox
+      </NxCheckbox>
+      <NxCheckbox
         checkboxId='configuration'
         isChecked={params.configuration}
         onChange={setParams}
       >
         {UIStrings.SUPPORT_ZIP.CONFIGURATION_LABEL}
-      </Checkbox>
-      <Checkbox
+      </NxCheckbox>
+      <NxCheckbox
         checkboxId='security'
         isChecked={params.security}
         onChange={setParams}
       >
         {UIStrings.SUPPORT_ZIP.SECURITY_LABEL}
-      </Checkbox>
-      <Checkbox
+      </NxCheckbox>
+      <NxCheckbox
         checkboxId='log'
         isChecked={params.log}
         onChange={setParams}
       >
         {UIStrings.SUPPORT_ZIP.LOGFILES_LABEL}
-      </Checkbox>
-      <Checkbox
+      </NxCheckbox>
+      <NxCheckbox
         checkboxId='taskLog'
         isChecked={params.taskLog}
         onChange={setParams}
       >
         {UIStrings.SUPPORT_ZIP.TASKLOGFILES_LABEL}
-      </Checkbox>
-      <Checkbox
+      </NxCheckbox>
+      <NxCheckbox
         checkboxId='auditLog'
         isChecked={params.auditLog}
         onChange={setParams}
       >
         {UIStrings.SUPPORT_ZIP.AUDITLOGFILES_LABEL}
-      </Checkbox>
-      <Checkbox
+      </NxCheckbox>
+      <NxCheckbox
         checkboxId='metrics'
         isChecked={params.metrics}
         onChange={setParams}
       >
         {UIStrings.SUPPORT_ZIP.METRICS_LABEL}
-      </Checkbox>
-      <Checkbox
+      </NxCheckbox>
+      <NxCheckbox
         checkboxId='jmx'
         isChecked={params.jmx}
         onChange={setParams}
        >
         {UIStrings.SUPPORT_ZIP.JMX_LABEL}
-       </Checkbox>
-    </CheckboxGroup>
-    <CheckboxGroup labelText={'Options:'}>
-      <Checkbox
+       </NxCheckbox>
+    </fieldset>
+    <fieldset className="nx-fieldset">
+      <legend className="nx-legend">Options:</legend>
+      <NxCheckbox
         checkboxId='limitFileSizes'
         isChecked={params.limitFileSizes}
         onChange={setParams}
        >
         {UIStrings.SUPPORT_ZIP.LIMITFILESIZES_LABEL}
-       </Checkbox>
-      <Checkbox
+       </NxCheckbox>
+      <NxCheckbox
         checkboxId='limitZipSize'
         isChecked={params.limitZipSize}
         onChange={setParams}
        >
         {UIStrings.SUPPORT_ZIP.LIMITZIPSIZE_LABEL}
-       </Checkbox>
-    </CheckboxGroup>
+       </NxCheckbox>
+    </fieldset>
     <NxButton variant='primary' onClick={submit} type='submit'>
       <NxFontAwesomeIcon icon={faFileArchive}/>
       <span>Create support ZIP</span>

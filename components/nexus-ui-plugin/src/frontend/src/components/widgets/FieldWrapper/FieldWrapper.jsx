@@ -15,22 +15,22 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
-import './FieldWrapper.scss';
-
 export default function FieldWrapper({labelText, descriptionText, isOptional, children}) {
-  const fieldName = React.Children.only(children).props.name;
-  const classes = classNames('field-wrapper-label', 'nx-label', {
+  const firstChildProps = React.Children.toArray(children)[0].props;
+  const fieldName = firstChildProps.id || firstChildProps.name;
+  const classes = classNames('nx-label', {
     'nx-label--optional': isOptional
   });
 
-  return <div className='field-wrapper'>
+  return <div className='nx-form-group'>
     {labelText ? <label htmlFor={fieldName} className={classes}><span className="nx-label__text">{labelText}</span></label> : null}
-    {descriptionText ? <span className='field-wrapper-description'>{descriptionText}</span> : null}
+    {descriptionText ? <p className='nx-p'>{descriptionText}</p> : null}
     {children}
   </div>;
 };
 
 FieldWrapper.propTypes = {
-  labelText: PropTypes.string,
-  descriptionText: PropTypes.string
+  descriptionText: PropTypes.string,
+  isOptional: PropTypes.bool,
+  labelText: PropTypes.string.isRequired
 };

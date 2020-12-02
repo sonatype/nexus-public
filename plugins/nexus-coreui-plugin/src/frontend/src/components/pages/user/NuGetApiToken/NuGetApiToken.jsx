@@ -13,7 +13,7 @@
 import React from 'react';
 import {useMachine} from '@xstate/react';
 import {NxButton, NxLoadWrapper, Page, PageHeader, PageTitle, Section, SectionFooter, ContentBody} from 'nexus-ui-plugin';
-import {NxFontAwesomeIcon, NxModal} from '@sonatype/react-shared-components';
+import {NxFontAwesomeIcon} from '@sonatype/react-shared-components';
 import {faKey, faLock} from '@fortawesome/free-solid-svg-icons';
 
 import NuGetApiTokenMachine from './NuGetApiTokenMachine';
@@ -38,11 +38,15 @@ export default function NuGetApiToken() {
     send('HIDE');
   }
 
+  function retry() {
+    send('RETRY');
+  }
+
   return <Page>
     <PageHeader><PageTitle icon={faKey} {...UIStrings.NUGET_API_KEY.MENU}/></PageHeader>
     <ContentBody>
       <Section>
-        <NxLoadWrapper isLoading={isLoading}>
+        <NxLoadWrapper isLoading={isLoading} retryHandler={retry}>
           <p> {UIStrings.NUGET_API_KEY.INSTRUCTIONS} </p>
           <SectionFooter>
             <NxButton variant='primary' onClick={handleAccessKey}>

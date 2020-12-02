@@ -10,13 +10,16 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
+import ContentSelectors from './components/pages/admin/ContentSelectors/ContentSelectors';
 import AnonymousSettings from './components/pages/admin/AnonymousSettings/AnonymousSettings';
 import LoggingConfiguration from './components/pages/admin/LoggingConfiguration/LoggingConfiguration';
 import LogViewer from "./components/pages/admin/LogViewer/LogViewer";
+import RoutingRules from "./components/pages/admin/RoutingRules/RoutingRules";
 import SystemInformation from './components/pages/admin/SystemInformation/SystemInformation';
 import SupportRequest from './components/pages/admin/SupportRequest/SupportRequest';
 import MetricHealth from "./components/pages/admin/MetricHealth/MetricHealth";
 import SupportZip from "./components/pages/admin/SupportZip/SupportZip";
+import CleanupPolicies from "./components/pages/admin/CleanupPolicies/CleanupPolicies";
 
 import UIStrings from './constants/UIStrings';
 import UserAccount from "./components/pages/admin/UserAccount/UserAccount";
@@ -32,6 +35,28 @@ window.plugins.push({
   id: 'nexus-coreui-plugin',
 
   features: [
+    {
+      mode: 'admin',
+      path: '/Repository/Selectors',
+      ...UIStrings.CONTENT_SELECTORS.MENU,
+      view: ContentSelectors,
+      iconCls: 'x-fa fa-layer-group',
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        permissions: ['nexus:selectors:read']
+      }
+    },
+    {
+      mode: 'admin',
+      ...UIStrings.ROUTING_RULES.MENU,
+      path: '/Repository/RoutingRules',
+      view: RoutingRules,
+      iconCls: 'x-fa fa-map-signs',
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        permissions: ['nexus:*']
+      }
+    },
     {
       mode: 'admin',
       path: '/Security/Anonymous',
@@ -132,5 +157,16 @@ window.plugins.push({
         permissions: ['nexus:logging:read']
       }
     },
+    {
+      mode: 'admin',
+      path: '/Repository/CleanupPolicies',
+      ...UIStrings.CLEANUP_POLICIES.MENU,
+      view: CleanupPolicies,
+      iconCls: 'x-fa fa-broom',
+      visibility: {
+        bundle: 'org.sonatype.nexus.plugins.nexus-coreui-plugin',
+        permissions: ['nexus:*']
+      }
+    }
   ]
 });
