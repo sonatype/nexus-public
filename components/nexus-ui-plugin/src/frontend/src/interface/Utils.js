@@ -143,14 +143,14 @@ export default class Utils {
             },
             RESET: {
               target: 'loaded',
-              actions: ['reset']
+              actions: ['reset', 'clearSaveError']
             }
-          },
-
-          exit: 'clearSaveError'
+          }
         },
 
         saving: {
+          entry: 'clearSaveError',
+
           invoke: {
             src: 'saveData',
             onDone: {

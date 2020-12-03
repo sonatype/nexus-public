@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.security.anonymous;
+package org.sonatype.nexus.internal.security.realm;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,39 +20,38 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
+import org.sonatype.nexus.security.realm.RealmConfiguration;
 import org.sonatype.nexus.supportzip.ExportData;
 import org.sonatype.nexus.supportzip.datastore.JsonExporter;
 
 /**
- * Write/Read {@link AnonymousConfiguration} data to/from a JSON file.
+ * Write/Read {@link RealmConfiguration} data to/from a JSON file.
  *
- * @since 3.29
+ * @since 3.next
  */
-@Named("anonymousConfigurationExport")
+@Named("realmConfigurationExport")
 @Singleton
-public class AnonymousConfigurationExport
+public class RealmConfigurationExport
     extends JsonExporter
     implements ExportData
 {
-  private final AnonymousConfigurationStore anonymousConfigurationStore;
+  private final RealmConfigurationStoreImpl configuration;
 
   @Inject
-  public AnonymousConfigurationExport(final AnonymousConfigurationStore anonymousConfigurationStore) {
-    this.anonymousConfigurationStore = anonymousConfigurationStore;
+  public RealmConfigurationExport(final RealmConfigurationStoreImpl configuration) {
+    this.configuration = configuration;
   }
 
   @Override
   public void export(final File file) throws IOException {
-    log.debug("Export AnonymousConfiguration data to {}", file);
-    AnonymousConfiguration configuration = anonymousConfigurationStore.load();
-    exportObjectToJson(configuration, file);
+    log.debug("Export RealmConfiguration data to {}", file);
+    exportObjectToJson(configuration.load(), file);
   }
 
   @Override
   public void restore(final File file) throws IOException {
-    log.debug("Restoring AnonymousConfiguration data from {}", file);
-    Optional<AnonymousConfigurationData> configuration = importObjectFromJson(file, AnonymousConfigurationData.class);
-    configuration.ifPresent(anonymousConfigurationStore::save);
+    log.debug("Restoring RealmConfiguration data from {}", file);
+    Optional<RealmConfigurationData> realmConfiguration = importObjectFromJson(file, RealmConfigurationData.class);
+    realmConfiguration.ifPresent(configuration::save);
   }
 }

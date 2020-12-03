@@ -25,6 +25,8 @@ import java.util.function.Function;
 
 import javax.annotation.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -45,6 +47,7 @@ public class AttributesMap
 {
   private static final Logger log = LoggerFactory.getLogger(AttributesMap.class);
 
+  @JsonProperty
   protected final Map<String, Object> backing;
 
   public AttributesMap(final Map<String, Object> backing) {
@@ -328,6 +331,7 @@ public class AttributesMap
   /**
    * Check if attributes contains any values.
    */
+  @JsonIgnore
   public boolean isEmpty() {
     return backing.isEmpty();
   }

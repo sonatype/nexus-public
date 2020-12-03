@@ -22,6 +22,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
+import static org.sonatype.nexus.supportzip.PasswordSanitizing.REPLACEMENT;
 
 /**
  * Tests for {@link PasswordSanitizing}
@@ -52,7 +53,7 @@ public class PasswordSanitizingTest
     Map<String, String> expected = ImmutableMap.of(
         "name", "John",
         "lastName", "Doe",
-        "password", "**REDACTED**");
+        "password", REPLACEMENT);
     assertThat(sanitized, is(expected));
   }
 }

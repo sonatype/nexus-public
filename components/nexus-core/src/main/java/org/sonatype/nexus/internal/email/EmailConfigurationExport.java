@@ -10,7 +10,7 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.security.anonymous;
+package org.sonatype.nexus.internal.email;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,39 +20,39 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
+import org.sonatype.nexus.email.EmailConfiguration;
 import org.sonatype.nexus.supportzip.ExportData;
 import org.sonatype.nexus.supportzip.datastore.JsonExporter;
 
 /**
- * Write/Read {@link AnonymousConfiguration} data to/from a JSON file.
+ * Write/Read {@link EmailConfiguration} data to/from a JSON file.
  *
- * @since 3.29
+ * @since 3.next
  */
-@Named("anonymousConfigurationExport")
+@Named("emailConfigurationExport")
 @Singleton
-public class AnonymousConfigurationExport
+public class EmailConfigurationExport
     extends JsonExporter
     implements ExportData
 {
-  private final AnonymousConfigurationStore anonymousConfigurationStore;
+  private final EmailConfigurationStore store;
 
   @Inject
-  public AnonymousConfigurationExport(final AnonymousConfigurationStore anonymousConfigurationStore) {
-    this.anonymousConfigurationStore = anonymousConfigurationStore;
+  public EmailConfigurationExport(final EmailConfigurationStore store) {
+    this.store = store;
   }
 
   @Override
   public void export(final File file) throws IOException {
-    log.debug("Export AnonymousConfiguration data to {}", file);
-    AnonymousConfiguration configuration = anonymousConfigurationStore.load();
+    log.debug("Export EmailConfiguration data to {}", file);
+    EmailConfiguration configuration = store.load();
     exportObjectToJson(configuration, file);
   }
 
   @Override
   public void restore(final File file) throws IOException {
-    log.debug("Restoring AnonymousConfiguration data from {}", file);
-    Optional<AnonymousConfigurationData> configuration = importObjectFromJson(file, AnonymousConfigurationData.class);
-    configuration.ifPresent(anonymousConfigurationStore::save);
+    log.debug("Restoring EmailConfiguration data from {}", file);
+    Optional<EmailConfigurationData> configuration = importObjectFromJson(file, EmailConfigurationData.class);
+    configuration.ifPresent(store::save);
   }
 }

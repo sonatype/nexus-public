@@ -12,6 +12,8 @@
  */
 package org.sonatype.nexus.repository.content.store.example;
 
+import java.util.Optional;
+
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.entity.Continuation;
@@ -51,4 +53,13 @@ public interface TestAssetDAO
    * @param asset the asset to update
    */
   void updateAssetFlag(TestAssetData asset);
+
+  /**
+   * Retrieves an asset located at the given path in the content data store.
+   *
+   * @param repositoryId the repository containing the asset
+   * @param path the path of the asset
+   * @return asset if it was found
+   */
+  Optional<TestAssetData> readPathTest(@Param("repositoryId") int repositoryId, @Param("path") String path);
 }

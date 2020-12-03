@@ -18,6 +18,8 @@ import javax.annotation.Nullable;
 
 import org.sonatype.nexus.security.config.CUserRoleMapping;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import static com.google.common.collect.Sets.newHashSet;
 import static org.sonatype.nexus.common.text.Strings2.lower;
 import static org.sonatype.nexus.security.config.SecuritySourceUtil.isCaseInsensitiveSource;
@@ -110,6 +112,7 @@ public class CUserRoleMappingData
   /**
    * Returns lower-case userId if we need to use case-insensitive search.
    */
+  @JsonIgnore
   @Nullable
   public String getUserLo() {
     return isCaseInsensitiveSource(source) ? lower(this.userId) : null;

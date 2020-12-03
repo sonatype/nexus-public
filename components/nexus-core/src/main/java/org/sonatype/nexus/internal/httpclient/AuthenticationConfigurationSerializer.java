@@ -23,13 +23,14 @@ import org.sonatype.nexus.security.PasswordHelper;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * {@link AuthenticationConfiguration} serializer.
- *
+ * <p>
  * Encrypts sensitive data.
  *
  * @since 3.0
@@ -50,6 +51,35 @@ public class AuthenticationConfigurationSerializer
                         final SerializerProvider provider)
       throws IOException
   {
+    serialize(value, jgen);
+    jgen.writeEndObject();
+  }
+
+  @Override
+  public void serializeWithType(final AuthenticationConfiguration value,
+                                final JsonGenerator jgen,
+                                final SerializerProvider provider,
+                                final TypeSerializer typeSer)
+      throws IOException
+  {
+    serialize(value, jgen);
+    if (value instanceof UsernameAuthenticationConfiguration) {
+      jgen.writeStringField(typeSer.getPropertyName(), UsernameAuthenticationConfiguration.TYPE);
+    }
+    else if (value instanceof NtlmAuthenticationConfiguration) {
+      jgen.writeStringField(typeSer.getPropertyName(), NtlmAuthenticationConfiguration.TYPE);
+    }
+    else if (value instanceof BearerTokenAuthenticationConfiguration) {
+      jgen.writeStringField(typeSer.getPropertyName(), BearerTokenAuthenticationConfiguration.TYPE);
+    }
+    else {
+      // be foolproof, if new type added but this class is not updated
+      throw new JsonGenerationException("Unsupported type:" + value.getClass().getName(), jgen);
+    }
+    jgen.writeEndObject();
+  }
+
+  private void serialize(final AuthenticationConfiguration value, final JsonGenerator jgen) throws IOException {
     jgen.writeStartObject();
     jgen.writeStringField("type", value.getType());
     if (value instanceof UsernameAuthenticationConfiguration) {
@@ -72,6 +102,5 @@ public class AuthenticationConfigurationSerializer
       // be foolproof, if new type added but this class is not updated
       throw new JsonGenerationException("Unsupported type:" + value.getClass().getName());
     }
-    jgen.writeEndObject();
   }
 }
