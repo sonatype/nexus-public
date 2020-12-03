@@ -281,7 +281,7 @@ public abstract class ContentFacetSupport
   }
 
   public final void checkAttachAllowed(final Asset asset) {
-    if (!asset.blob().isPresent()) {
+    if (!asset.hasBlob()) {
       if (!writePolicy(asset).checkCreateAllowed()) {
         throwNotAllowed(asset, " is read-only");
       }
@@ -292,7 +292,7 @@ public abstract class ContentFacetSupport
   }
 
   public final void checkDeleteAllowed(final Asset asset) {
-    if (asset.blob().isPresent() && !writePolicy(asset).checkDeleteAllowed()) {
+    if (asset.hasBlob() && !writePolicy(asset).checkDeleteAllowed()) {
       throwNotAllowed(asset, " cannot be deleted");
     }
   }
