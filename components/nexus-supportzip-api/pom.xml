@@ -27,10 +27,21 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>bundle</packaging>
 
+  <properties>
+    <jackson-datatype.version>2.11.3</jackson-datatype.version>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.sonatype.nexus</groupId>
       <artifactId>nexus-common</artifactId>
+    </dependency>
+
+    <!-- deserialize Java 8 date time types e.g OffsetDateTime -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
+      <version>${jackson-datatype.version}</version>
     </dependency>
 
     <dependency>

@@ -10,63 +10,64 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.security.anonymous;
+package org.sonatype.nexus.internal.security.realm;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
 
-import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
+import org.sonatype.nexus.security.realm.RealmConfiguration;
 import org.sonatype.nexus.supportzip.datastore.JsonExporter;
 
+import com.google.common.collect.ImmutableList;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Tests validity of Serialization/Deserialization AnonymousConfigurationData by {@link AnonymousConfigurationExport}
+ * Tests validity of Serialization/Deserialization {@link RealmConfiguration} by {@link RealmConfigurationExport}
  */
-public class AnonymousConfigurationExportTest
+public class RealmConfigurationExportTest
 {
   private final JsonExporter jsonExporter = new JsonExporter();
 
-  private File binFile;
+  private File jsonFile;
 
   @Before
   public void setup() throws IOException {
-    binFile = File.createTempFile("AnonymousConfiguration", ".json");
+    jsonFile = File.createTempFile("RealmConfiguration", ".json");
   }
 
   @After
   public void tearDown() {
-    binFile.delete();
+    jsonFile.delete();
   }
 
   @Test
   public void testExportImportToJson() throws Exception {
-    AnonymousConfiguration configuration = buildAnonymousConfiguration();
-    AnonymousConfigurationStore configurationStore = mock(AnonymousConfigurationStore.class);
-    when(configurationStore.load()).thenReturn(configuration);
+    RealmConfiguration configuration = createRealmConfiguration();
 
-    AnonymousConfigurationExport exporter = new AnonymousConfigurationExport(configurationStore);
-    exporter.export(binFile);
-    Optional<AnonymousConfigurationData> importedItem =
-        jsonExporter.importObjectFromJson(binFile, AnonymousConfigurationData.class);
-    assertTrue(importedItem.isPresent());
-    assertThat(importedItem.get(), is(configuration));
+    RealmConfigurationStoreImpl source = mock(RealmConfigurationStoreImpl.class);
+    when(source.load()).thenReturn(configuration);
+
+    RealmConfigurationExport exporter = new RealmConfigurationExport(source);
+    exporter.export(jsonFile);
+    Optional<RealmConfigurationData> importedData =
+        jsonExporter.importObjectFromJson(jsonFile, RealmConfigurationData.class);
+
+    assertTrue(importedData.isPresent());
+    assertThat(importedData.get().getRealmNames(), containsInAnyOrder("MockRealmA", "MockRealmB"));
   }
 
-  private AnonymousConfiguration buildAnonymousConfiguration() {
-    AnonymousConfiguration configuration = new AnonymousConfigurationData();
-    configuration.setUserId("userId");
-    configuration.setRealmName("realName");
-    configuration.setEnabled(true);
+  private RealmConfiguration createRealmConfiguration() {
+    RealmConfigurationData configuration = new RealmConfigurationData();
+    configuration.setRealmNames(ImmutableList.of("MockRealmA", "MockRealmB"));
 
     return configuration;
   }

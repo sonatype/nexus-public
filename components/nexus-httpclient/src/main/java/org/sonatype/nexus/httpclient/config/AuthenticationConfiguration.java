@@ -14,6 +14,9 @@ package org.sonatype.nexus.httpclient.config;
 
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.collect.ImmutableMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -23,6 +26,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  * @since 3.0
  */
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.NAME,
+    property = "type")
+@JsonSubTypes({
+    @Type(value = BearerTokenAuthenticationConfiguration.class, name = BearerTokenAuthenticationConfiguration.TYPE),
+    @Type(value = NtlmAuthenticationConfiguration.class, name = NtlmAuthenticationConfiguration.TYPE),
+    @Type(value = UsernameAuthenticationConfiguration.class, name = UsernameAuthenticationConfiguration.TYPE)
+})
 public abstract class AuthenticationConfiguration
     implements Cloneable
 {

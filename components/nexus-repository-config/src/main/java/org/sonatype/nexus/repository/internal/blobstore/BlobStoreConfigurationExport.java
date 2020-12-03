@@ -10,49 +10,48 @@
  * of Sonatype, Inc. Apache Maven is a trademark of the Apache Software Foundation. M2eclipse is a trademark of the
  * Eclipse Foundation. All other trademarks are the property of their respective owners.
  */
-package org.sonatype.nexus.internal.security.anonymous;
+package org.sonatype.nexus.repository.internal.blobstore;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Optional;
+import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
+import org.sonatype.nexus.blobstore.api.BlobStoreConfiguration;
 import org.sonatype.nexus.supportzip.ExportData;
 import org.sonatype.nexus.supportzip.datastore.JsonExporter;
 
 /**
- * Write/Read {@link AnonymousConfiguration} data to/from a JSON file.
+ * Write/Read {@link BlobStoreConfiguration} data to/from a JSON file.
  *
- * @since 3.29
+ * @since 3.next
  */
-@Named("anonymousConfigurationExport")
+@Named("blobStoreConfigurationExport")
 @Singleton
-public class AnonymousConfigurationExport
+public class BlobStoreConfigurationExport
     extends JsonExporter
     implements ExportData
 {
-  private final AnonymousConfigurationStore anonymousConfigurationStore;
+  private final BlobStoreConfigurationStore configurationStore;
 
   @Inject
-  public AnonymousConfigurationExport(final AnonymousConfigurationStore anonymousConfigurationStore) {
-    this.anonymousConfigurationStore = anonymousConfigurationStore;
+  public BlobStoreConfigurationExport(final BlobStoreConfigurationStore configurationStore) {
+    this.configurationStore = configurationStore;
   }
 
   @Override
   public void export(final File file) throws IOException {
-    log.debug("Export AnonymousConfiguration data to {}", file);
-    AnonymousConfiguration configuration = anonymousConfigurationStore.load();
-    exportObjectToJson(configuration, file);
+    log.debug("Export BlobStoreConfiguration data to {}", file);
+    List<BlobStoreConfiguration> configurations = configurationStore.list();
+    exportToJson(configurations, file);
   }
 
   @Override
   public void restore(final File file) throws IOException {
-    log.debug("Restoring AnonymousConfiguration data from {}", file);
-    Optional<AnonymousConfigurationData> configuration = importObjectFromJson(file, AnonymousConfigurationData.class);
-    configuration.ifPresent(anonymousConfigurationStore::save);
+    log.debug("Restoring BlobStoreConfiguration data from {}", file);
+    importFromJson(file, BlobStoreConfigurationData.class).forEach(configurationStore::create);
   }
 }

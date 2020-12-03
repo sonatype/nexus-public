@@ -20,18 +20,25 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.goodies.common.Time;
 import org.sonatype.nexus.common.io.SanitizingJsonOutputStream;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.io.ByteStreams;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 
 import static org.sonatype.nexus.supportzip.PasswordSanitizing.REPLACEMENT;
 import static org.sonatype.nexus.supportzip.PasswordSanitizing.SENSITIVE_FIELD_NAMES;
@@ -47,6 +54,14 @@ public class JsonExporter
     extends ComponentSupport
 {
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+  static {
+    OBJECT_MAPPER.registerModule(new JavaTimeModule());
+    OBJECT_MAPPER.registerModule(new SimpleModule()
+        .addSerializer(Time.class, new SecondsSerializer())
+        .addDeserializer(Time.class, new SecondsDeserializer()));
+    OBJECT_MAPPER.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+  }
 
   /**
    * Export data to the JSON file and hide sensitive fields.
@@ -93,9 +108,13 @@ public class JsonExporter
   public <T> List<T> importFromJson(final File file, final Class<T> clazz) throws IOException {
     try (FileInputStream inputStream = new FileInputStream(file)) {
       String jsonData = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-      JavaType type = OBJECT_MAPPER.getTypeFactory().constructCollectionType(List.class, clazz);
-      return OBJECT_MAPPER.readValue(jsonData, type);
+      if (StringUtils.isNotBlank(jsonData)) {
+        JavaType type = OBJECT_MAPPER.getTypeFactory().constructCollectionType(List.class, clazz);
+        return OBJECT_MAPPER.readValue(jsonData, type);
+      }
     }
+
+    return Collections.emptyList();
   }
 
   /**
@@ -103,13 +122,16 @@ public class JsonExporter
    *
    * @param file  file where data will be read.
    * @param clazz the type of imported data.
-   * @return {@link T} object.
+   * @return {@link T} object or {@link Optional#empty} is case of an empty JSON file.
    * @throws IOException for any issue during reading a file.
    */
-  public <T> T importObjectFromJson(final File file, final Class<T> clazz) throws IOException {
+  public <T> Optional<T> importObjectFromJson(final File file, final Class<T> clazz) throws IOException {
     try (FileInputStream inputStream = new FileInputStream(file)) {
       String jsonData = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-      return OBJECT_MAPPER.readValue(jsonData, clazz);
+      if (StringUtils.isNotBlank(jsonData)) {
+        return Optional.of(OBJECT_MAPPER.readValue(jsonData, clazz));
+      }
     }
+    return Optional.empty();
   }
 }
