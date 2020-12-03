@@ -20,6 +20,8 @@ import org.sonatype.nexus.common.entity.HasName;
 import org.sonatype.nexus.repository.routing.RoutingMode;
 import org.sonatype.nexus.repository.routing.RoutingRule;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * {@link RoutingRule} data.
  *
@@ -64,6 +66,7 @@ public class RoutingRuleData
   }
 
   @Override
+  @JsonProperty("description")
   public String description() {
     return description;
   }
@@ -79,6 +82,7 @@ public class RoutingRuleData
    * blocked and when BLOCK any request which matches one of the matchers should be blocked.
    */
   @Override
+  @JsonProperty("mode")
   public RoutingMode mode() {
     return mode;
   }
@@ -107,6 +111,7 @@ public class RoutingRuleData
    * @return the list of regex matchers which this RoutingRule uses
    */
   @Override
+  @JsonProperty("matchers")
   public List<String> matchers() {
     return matchers;
   }

@@ -35,6 +35,8 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.io.ByteStreams;
 import org.apache.commons.io.IOUtils;
@@ -46,7 +48,7 @@ import static org.sonatype.nexus.supportzip.PasswordSanitizing.SENSITIVE_FIELD_N
 /**
  * Export/Import data to/from the JSON by replacing sensitive data.
  *
- * @since 3.29
+ * @since 3.next
  */
 @Named
 @Singleton
@@ -56,10 +58,12 @@ public class JsonExporter
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   static {
-    OBJECT_MAPPER.registerModule(new JavaTimeModule());
     OBJECT_MAPPER.registerModule(new SimpleModule()
         .addSerializer(Time.class, new SecondsSerializer())
         .addDeserializer(Time.class, new SecondsDeserializer()));
+    OBJECT_MAPPER.registerModule(new JavaTimeModule());
+    OBJECT_MAPPER.registerModule(new JodaModule());
+    OBJECT_MAPPER.registerModule(new Jdk8Module());
     OBJECT_MAPPER.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
   }
 

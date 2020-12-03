@@ -16,6 +16,8 @@ import org.sonatype.nexus.common.entity.HasStringId;
 import org.sonatype.nexus.common.text.Strings2;
 import org.sonatype.nexus.security.config.CUser;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 /**
  * {@link CUser} data.
  *
@@ -73,6 +75,7 @@ public class CUserData
     return version;
   }
 
+  @JsonIgnore
   @Override
   public boolean isActive() {
     return STATUS_ACTIVE.equals(status) || STATUS_CHANGE_PASSWORD.equals(status);

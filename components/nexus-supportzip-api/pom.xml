@@ -28,7 +28,7 @@
   <packaging>bundle</packaging>
 
   <properties>
-    <jackson-datatype.version>2.11.3</jackson-datatype.version>
+    <jackson2.version>2.11.2</jackson2.version>
   </properties>
 
   <dependencies>
@@ -37,11 +37,18 @@
       <artifactId>nexus-common</artifactId>
     </dependency>
 
-    <!-- deserialize Java 8 date time types e.g OffsetDateTime -->
+    <!-- serialize/deserialize Java 8 date time types e.g OffsetDateTime -->
     <dependency>
       <groupId>com.fasterxml.jackson.datatype</groupId>
       <artifactId>jackson-datatype-jsr310</artifactId>
-      <version>${jackson-datatype.version}</version>
+      <version>${jackson2.version}</version>
+    </dependency>
+
+    <!-- serialize/deserialize Java 8 data types like Optional -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jdk8</artifactId>
+      <version>${jackson2.version}</version>
     </dependency>
 
     <dependency>

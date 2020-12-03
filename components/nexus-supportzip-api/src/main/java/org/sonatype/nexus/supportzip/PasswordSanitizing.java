@@ -44,6 +44,7 @@ public class PasswordSanitizing<T extends Map<String, ?>>
       "applicationPassword",
       "password",
       "systemPassword",
+      "keyStorePassword",
       "secret",
       "secretAccessKey",
       "sessionToken",
