@@ -41,7 +41,9 @@ import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyIterable;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -633,6 +635,41 @@ public class AssetDAOTest
 
       assertThat(dao.browseFlaggedAssets(repositoryId, 10, null),
           contains(allOf(samePath(asset1), sameAttributes(asset1))));
+    }
+  }
+
+  @Test
+  public void testReadPathTest() {
+    TestAssetData asset1 = randomAsset(repositoryId);
+    TestAssetData asset2 = randomAsset(repositoryId);
+    asset2.setPath(asset1.path() + "/2"); // make sure paths are different
+
+    try (DataSession<?> session = sessionRule.openSession("content")) {
+      TestAssetDAO dao = session.access(TestAssetDAO.class);
+
+      // our bespoke schema will be applied automatically via 'extendSchema'...
+
+      dao.createAsset(asset1);
+      dao.createAsset(asset2);
+
+      asset2.setTestFlag(true);
+      dao.updateAssetFlag(asset2);
+
+      TestAssetData test1 = dao.readPathTest(repositoryId, asset1.path()).orElse(null);
+      TestAssetData test2 = dao.readPathTest(repositoryId, asset2.path()).orElse(null);
+      assertThat(test1, notNullValue());
+      assertThat(test1.getTestFlag(), equalTo(false));
+      assertThat(test2, notNullValue());
+      assertThat(test2.getTestFlag(), equalTo(true));
+
+      Continuation<Asset> continuation = dao.browseFlaggedAssets(repositoryId, 10, null);
+      assertThat(continuation.size(), equalTo(1));
+      TestAssetData test3 = continuation.stream()
+          .filter(obj -> obj instanceof TestAssetData)
+          .map(obj -> (TestAssetData) obj)
+          .findFirst()
+          .orElseThrow(() -> new IllegalStateException("Expect asset not found"));
+      assertThat(test3.getTestFlag(), equalTo(true));
     }
   }
 
