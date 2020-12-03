@@ -104,6 +104,11 @@ public class FluentAssetImpl
   }
 
   @Override
+  public boolean hasBlob() {
+    return asset.hasBlob();
+  }
+
+  @Override
   public Optional<OffsetDateTime> lastDownloaded() {
     return asset.lastDownloaded();
   }

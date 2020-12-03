@@ -95,6 +95,13 @@ public class AssetData
   }
 
   /**
+   * Set the internal reference to the blob
+   */
+  public void setAssetBlobId(final Integer assetBlobId) {
+    this.assetBlobId = assetBlobId;
+  }
+
+  /**
    * Sets the asset path; asset paths must start with a slash.
    */
   public void setPath(final String path) {
@@ -135,6 +142,11 @@ public class AssetData
       this.assetBlobId = null;
     }
     this.assetBlob = assetBlob;
+  }
+
+  @Override
+  public boolean hasBlob() {
+    return assetBlobId != null;
   }
 
   /**

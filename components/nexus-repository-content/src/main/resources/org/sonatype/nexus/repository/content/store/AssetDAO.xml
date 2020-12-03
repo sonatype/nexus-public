@@ -70,6 +70,7 @@
   </sql>
 
   <resultMap id="assetResult" type="AssetData">
+    <result property="assetBlobId" column="asset_blob_id"/>
     <association property="component" column="component_id" select="fetchComponent" fetchType="lazy"/>
     <association property="assetBlob" column="asset_blob_id" select="fetchAssetBlob" fetchType="lazy"/>
   </resultMap>
