@@ -30,7 +30,7 @@
   <properties>
     <jackson2.version>2.11.2</jackson2.version>
     <jaxb.version>2.3.3</jaxb.version>
-    <resteasy.version>3.13.2.Final</resteasy.version>
+    <resteasy.version>3.13.0.Final</resteasy.version>
     <swagger.version>1.6.2</swagger.version>
     <snakeyaml.version>1.26</snakeyaml.version>
   </properties>
