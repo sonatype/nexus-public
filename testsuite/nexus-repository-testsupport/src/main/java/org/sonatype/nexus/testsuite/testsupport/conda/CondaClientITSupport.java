@@ -36,6 +36,7 @@ import static java.lang.Boolean.TRUE;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 
@@ -114,7 +115,7 @@ public abstract class CondaClientITSupport
 
     String terminalPackage = condaPackageToTerminalPackage(packageName);
 
-    assertThat(installed, hasItem(terminalPackage));
+    assertThat(installed, hasItem(containsString(terminalPackage)));
 
     return installed.stream()
         .filter(row -> row.contains(terminalPackage))
