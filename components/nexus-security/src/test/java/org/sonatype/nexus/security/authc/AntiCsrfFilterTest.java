@@ -15,11 +15,14 @@ package org.sonatype.nexus.security.authc;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.sonatype.goodies.testsupport.TestSupport;
 
+import org.apache.shiro.subject.Subject;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -48,7 +51,12 @@ public class AntiCsrfFilterTest
 
   @Before
   public void setup() throws IOException {
-    underTest = new AntiCsrfFilter(antiCrsfHelper);
+    underTest = new AntiCsrfFilter(antiCrsfHelper) {
+      @Override
+      protected Subject getSubject(final ServletRequest request, final ServletResponse response) {
+        return null;
+      }
+    };
     when(httpServletResponse.getWriter()).thenReturn(printWriter);
   }
 
