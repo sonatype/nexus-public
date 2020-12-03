@@ -36,6 +36,7 @@ import static java.lang.Boolean.TRUE;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 
 /**
@@ -110,11 +111,14 @@ public abstract class CondaClientITSupport
     List<String> installed = listInstalled.stream()
         .map(this::getTerminalPackage)
         .collect(toList());
-    Optional<String> curlRow = installed.stream()
-        .filter(row -> row.contains(condaPackageToTerminalPackage(packageName)))
+
+    String terminalPackage = condaPackageToTerminalPackage(packageName);
+
+    assertThat(installed, hasItem(terminalPackage));
+
+    return installed.stream()
+        .filter(row -> row.contains(terminalPackage))
         .findFirst();
-    assertThat(curlRow.isPresent(), is(TRUE));
-    return curlRow;
   }
 
   public void checkRepositoryCachedPackageFormat(final Repository condaRepository,
