@@ -13,8 +13,8 @@
 /**
  * @since 3.next
  */
-Ext.define('NX.coreui.view.repository.facet.DefaultUploadFacet', {
-  alias: 'widget.nx-coreui-upload-facets-default',
+Ext.define('NX.coreui.view.upload.facet.DefaultUploadFacet', {
+  alias: 'widget.nx-coreui-upload-facet-default',
   requires: [
     'NX.I18n'
   ],

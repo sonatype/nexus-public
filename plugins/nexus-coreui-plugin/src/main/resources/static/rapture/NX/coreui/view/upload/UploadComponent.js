@@ -22,11 +22,16 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
     alias: 'widget.nx-coreui-upload-component',
     requires: [
       'NX.I18n',
-      'Ext.util.Cookies'
+      'Ext.util.Cookies',
+      'NX.coreui.view.upload.facet.DefaultUploadFacet'
+    ],
+    uses: [
+      'NX.coreui.view.upload.facet.Maven2UploadFacet'
     ],
   /**
-   * Facet for describing upload page per format, if not specified DefaultUploadFacet will be used
-   * @alias nx-coreui-upload-facets-{format}
+   * Facet for describing upload page per format, if not specified DefaultUploadFacet will be used.
+   * Also facet class should be added in uses section upper.
+   * @alias nx-coreui-upload-facet-{format}
    * @type {DefaultUploadFacet}
    */
   uploadFacet: undefined,
@@ -43,9 +48,9 @@ Ext.define('NX.coreui.view.upload.UploadComponent', {
 
     loadRecord: function(uploadDefinition, repository) {
       var me = this;
-      var formatXtype = 'nx-coreui-upload-facets-' + repository.get('format');
+      var formatXtype = 'nx-coreui-upload-facet-' + repository.get('format');
       var facetNameByAlias = Ext.ClassManager.getNameByAlias('widget.' + formatXtype);
-      var uploadFacetAlias = facetNameByAlias ? formatXtype : 'nx-coreui-upload-facets-default';
+      var uploadFacetAlias = facetNameByAlias ? formatXtype : 'nx-coreui-upload-facet-default';
 
       me.uploadFacet = Ext.create({
         xtype: uploadFacetAlias,
