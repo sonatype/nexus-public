@@ -17,13 +17,13 @@
  *
  * @since 3.next
  */
-Ext.define('NX.coreui.view.repository.facet.Maven2UploadFacet', {
-  extend: 'NX.coreui.view.repository.facet.DefaultUploadFacet',
-  alias: 'widget.nx-coreui-upload-facets-maven2',
+Ext.define('NX.coreui.view.upload.facet.Maven2UploadFacet', {
+  extend: 'NX.coreui.view.upload.facet.DefaultUploadFacet',
+  alias: 'widget.nx-coreui-upload-facet-maven2',
   requires: [
     'NX.I18n',
     'Ext.util.Cookies',
-    'NX.coreui.view.repository.facet.DefaultUploadFacet'
+    'NX.coreui.view.upload.facet.DefaultUploadFacet'
   ],
 
   constructor: function(defaultUploadFacet) {
