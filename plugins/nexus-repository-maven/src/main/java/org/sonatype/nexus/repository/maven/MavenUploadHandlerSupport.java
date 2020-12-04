@@ -167,13 +167,15 @@ public abstract class MavenUploadHandlerSupport
   }
 
   @Override
-  public Content handle( final Repository repository, final File content, final String path) throws IOException {
+  public Content handle(final Repository repository, final File content, final String path) throws IOException {
     if (ignoredPaths.contains(path)) {
       log.debug("skipping {} as it is on the ignore list.", path);
       return null;
     }
 
     MavenPath mavenPath = parser.parsePath(path);
+
+    validateVersionPolicy(repository, mavenPath);
 
     ensurePermitted(repository.getName(), Maven2Format.NAME, mavenPath.getPath(), toMap(mavenPath.getCoordinates()));
 
@@ -246,8 +248,11 @@ public abstract class MavenUploadHandlerSupport
   protected void validateVersionPolicy(final Repository repository, final MavenPath mavenPath) {
     VersionPolicy versionPolicy = getVersionPolicy(repository);
 
-    if (!versionPolicyValidator
-        .validArtifactPath(versionPolicy, mavenPath.getCoordinates())) {
+    boolean valid = parser.isRepositoryMetadata(mavenPath) ?
+        versionPolicyValidator.validMetadataPath(versionPolicy, mavenPath.main().getPath()) :
+        versionPolicyValidator.validArtifactPath(versionPolicy, mavenPath.getCoordinates());
+
+    if (!valid) {
       throw new ValidationErrorsException(
           format("Version policy mismatch, cannot upload %s content to %s repositories for file '%s'",
               versionPolicy.equals(VersionPolicy.RELEASE) ? VersionPolicy.SNAPSHOT.name() : VersionPolicy.RELEASE.name(),
