@@ -13,6 +13,7 @@
 package org.sonatype.nexus.content.maven;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -54,6 +55,13 @@ public interface MavenContentFacet
    * @return True if asset was deleted or false if not.
    */
   boolean delete(MavenPath path) throws IOException;
+
+  /**
+   * Deletes the assets at the specified paths.
+   *
+   * @since 3.next
+   */
+  boolean delete(final List<String> paths);
 
   /**
    * Delete the specified maven asset and its hashes

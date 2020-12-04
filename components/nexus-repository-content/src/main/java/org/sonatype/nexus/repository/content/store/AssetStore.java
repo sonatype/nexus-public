@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.content.store;
 
 import java.time.OffsetDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -259,6 +260,18 @@ public class AssetStore<T extends AssetDAO>
     return dao().readPath(repositoryId, path)
         .map(this::deleteAsset)
         .orElse(false);
+  }
+
+  /**
+   * Deletes the assets located at the given paths in the content data store.
+   *
+   * @param repositoryId the repository containing the assets
+   * @param paths the paths of the assets to delete
+   * @return {@code true} if any of the assets were deleted
+   */
+  @Transactional
+  public boolean deleteAssetsByPaths(final int repositoryId, final List<String> paths) {
+    return dao().deleteAssetsByPaths(repositoryId, paths);
   }
 
   /**

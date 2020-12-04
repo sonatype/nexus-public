@@ -12,7 +12,10 @@
  */
 package org.sonatype.nexus.content.maven.internal.recipe;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -21,14 +24,17 @@ import javax.inject.Named;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacet;
+import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.maintenance.LastAssetMaintenanceFacet;
+import org.sonatype.nexus.repository.content.store.ComponentStore;
 import org.sonatype.nexus.repository.maven.internal.Maven2Format;
 import org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataRebuilder;
 
 import com.google.common.collect.Sets;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.lang3.StringUtils.prependIfMissing;
 import static org.sonatype.nexus.content.maven.MavenMetadataRebuildContentFacet.METADATA_REBUILD_KEY;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;
@@ -53,23 +59,60 @@ public class MavenMaintenanceFacet
     return Sets.union(super.deleteComponent(component), deleteMetadata(component));
   }
 
-  public Set<String> deleteMetadata(final Component component) {
-    return deleteMetadata(component.namespace(), component.name(),
-        component.attributes(Maven2Format.NAME).get(P_BASE_VERSION, String.class));
+  @Override
+  public int deleteComponents(final int[] componentIds) {
+    Set<List<String>> gavs = collectGavs(componentIds);
+
+    int deletedCount = super.deleteComponents(componentIds);
+
+    if (!gavs.isEmpty()) {
+      List<String[]> metadataLocations = gavs.stream()
+          .flatMap(gav -> getMetadataLocations(gav.get(0), gav.get(1), gav.get(2)).stream())
+          .collect(toList());
+
+      metadataRebuilder.deleteMetadata(getRepository(), metadataLocations);
+    }
+    return deletedCount;
   }
 
-  private Set<String> deleteMetadata(final String groupId, final String artifactId, final String baseVersion) {
+  private Set<List<String>> collectGavs(final int[] componentIds) {
+    ContentFacetSupport contentFacet = (ContentFacetSupport) contentFacet();
+    ComponentStore<?> componentStore = contentFacet.stores().componentStore;
+    return Arrays.stream(componentIds)
+        .mapToObj(componentStore::readComponent)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .map(this::collectGav)
+        .map(Arrays::asList)
+        .collect(toSet());
+  }
+
+  public Set<String> deleteMetadata(final Component component) {
+    String[] gav = collectGav(component);
+    return metadataRebuilder.deleteMetadata(getRepository(), getMetadataLocations(gav[0], gav[1], gav[2]));
+  }
+
+  private String[] collectGav(Component component) {
+    return new String[]{
+        component.namespace(), component.name(),
+        component.attributes(Maven2Format.NAME).get(P_BASE_VERSION, String.class)
+    };
+  }
+
+  private List<String[]> getMetadataLocations(
+      final String groupId,
+      final String artifactId,
+      final String baseVersion)
+  {
     Repository repository = getRepository();
     ContentFacet contentFacet = repository.facet(ContentFacet.class);
 
-    Set<String> deletedPaths = Sets.newHashSet();
-    List<String[]> gavCoordinate = singletonList(new String[]{groupId, artifactId, baseVersion});
-    deletedPaths.addAll(metadataRebuilder.deleteMetadata(repository, gavCoordinate));
+    List<String[]> metadataCoordinates = new ArrayList<>();
+    metadataCoordinates.add(new String[]{groupId, artifactId, baseVersion});
 
     boolean isGroupArtifactEmpty = contentFacet.components().versions(groupId, artifactId).isEmpty();
     if (isGroupArtifactEmpty) {
-      List<String[]> gaCoordinate = singletonList(new String[]{groupId, artifactId, null});
-      deletedPaths.addAll(metadataRebuilder.deleteMetadata(repository, gaCoordinate));
+      metadataCoordinates.add(new String[]{groupId, artifactId, null});
     }
     else {
       contentFacet.assets()
@@ -80,8 +123,7 @@ public class MavenMaintenanceFacet
 
     boolean isGroupEmpty = contentFacet.components().names(groupId).isEmpty();
     if (isGroupEmpty) {
-      List<String[]> gCoordinate = singletonList(new String[]{groupId, null, null});
-      deletedPaths.addAll(metadataRebuilder.deleteMetadata(repository, gCoordinate));
+      metadataCoordinates.add(new String[]{groupId, null, null});
     }
     else {
       contentFacet.assets()
@@ -89,7 +131,6 @@ public class MavenMaintenanceFacet
           .find()
           .ifPresent(asset -> asset.withAttribute(METADATA_REBUILD_KEY, true));
     }
-
-    return deletedPaths;
+    return metadataCoordinates;
   }
 }

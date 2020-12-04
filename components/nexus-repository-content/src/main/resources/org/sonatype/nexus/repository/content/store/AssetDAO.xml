@@ -191,6 +191,13 @@
         <if test="limit gt 0"> LIMIT #{limit})</if>;
   </delete>
 
+  <delete id="deleteAssetsByPaths">
+    DELETE FROM ${format}_asset WHERE repository_id = #{repositoryId} AND path IN
+    <foreach item="path" index="index" collection="paths" open="(" separator="," close=")">
+      #{path}
+    </foreach>;
+  </delete>
+
   <select id="selectNotRecentlyDownloaded" resultType="int">
     SELECT asset_id FROM ${format}_asset
         WHERE repository_id = #{repositoryId} AND component_id IS NULL
