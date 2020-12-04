@@ -689,6 +689,20 @@ public class MavenUploadHandlerTest
     assertThat(result, nullValue());
   }
 
+  @Test(expected = ValidationErrorsException.class)
+  public void testHandle_snapshot_asset() throws IOException {
+    when(versionPolicyValidator.validArtifactPath(any(), any())).thenReturn(false);
+    File file = temporaryFolder.newFile("artifact-1.0-20201124.222716-1.jar");
+    Content result = underTest.handle(repository, file, "group/artifact/1.0-SNAPSHOT/artifact-1.0-20201124.222716-1.jar");
+  }
+
+  @Test(expected = ValidationErrorsException.class)
+  public void testHandle_snapshot_metadata() throws IOException {
+    when(versionPolicyValidator.validMetadataPath(any(), any())).thenReturn(false);
+    File file = temporaryFolder.newFile("maven-metadata.xml");
+    Content result = underTest.handle(repository, file, "group/artifact/1.0-SNAPSHOT/maven-metadata.xml");
+  }
+
   private static void assertVariableSource(final VariableSource source,
                                            final String path,
                                            final String groupId,

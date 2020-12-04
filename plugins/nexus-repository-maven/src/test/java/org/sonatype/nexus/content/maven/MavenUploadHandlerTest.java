@@ -12,6 +12,7 @@
  */
 package org.sonatype.nexus.content.maven;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -55,7 +56,9 @@ import org.apache.maven.model.Model;
 import org.apache.maven.model.Parent;
 import org.joda.time.DateTime;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -89,6 +92,9 @@ public class MavenUploadHandlerTest
   private static final String REPO_NAME = "maven-hosted";
 
   private MavenUploadHandler underTest;
+
+  @Rule
+  public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock
   Repository repository;
@@ -649,6 +655,20 @@ public class MavenUploadHandlerTest
       assertThat(e.getValidationErrors().get(0).getMessage(),
           is("Path is not allowed to have '.' or '..' segments: 'groupId/artifactId/version/artifactId-version./../g/a/v/a-v.jar'"));
     }
+  }
+
+  @Test(expected = ValidationErrorsException.class)
+  public void testHandle_snapshot_asset() throws IOException {
+    when(versionPolicyValidator.validArtifactPath(any(), any())).thenReturn(false);
+    File file = temporaryFolder.newFile("artifact-1.0-20201124.222716-1.jar");
+    Content result = underTest.handle(repository, file, "group/artifact/1.0-SNAPSHOT/artifact-1.0-20201124.222716-1.jar");
+  }
+
+  @Test(expected = ValidationErrorsException.class)
+  public void testHandle_snapshot_metadata() throws IOException {
+    when(versionPolicyValidator.validMetadataPath(any(), any())).thenReturn(false);
+    File file = temporaryFolder.newFile("maven-metadata.xml");
+    Content result = underTest.handle(repository, file, "group/artifact/1.0-SNAPSHOT/maven-metadata.xml");
   }
 
   private static void assertVariableSource(final VariableSource source,
