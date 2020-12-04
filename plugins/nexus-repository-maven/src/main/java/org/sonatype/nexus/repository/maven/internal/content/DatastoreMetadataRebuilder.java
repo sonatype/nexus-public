@@ -51,6 +51,7 @@ import com.google.common.collect.Sets;
 import com.google.common.hash.HashCode;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.apache.commons.lang3.StringUtils.prependIfMissing;
 import static org.sonatype.nexus.repository.maven.internal.hosted.metadata.MetadataUtils.metadataPath;
 import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 
@@ -62,6 +63,8 @@ import static org.sonatype.nexus.scheduling.CancelableHelper.checkCancellation;
 public class DatastoreMetadataRebuilder
     extends AbstractMetadataRebuilder
 {
+  private static final String PATH_PREFIX = "/";
+
   @Inject
   public DatastoreMetadataRebuilder(
       @Named("${nexus.maven.metadata.rebuild.bufferSize:-1000}") final int bufferSize,
@@ -253,11 +256,11 @@ public class DatastoreMetadataRebuilder
     {
       return repository.facet(ContentFacet.class)
           .assets()
-          .path("/" + mavenPath.getPath())
+          .path(PATH_PREFIX + mavenPath.getPath())
           .find()
           .flatMap(Asset::blob)
           .map(AssetBlob::checksums)
-          .map(checksums -> checksums.get(hashType.name()))
+          .map(checksums -> checksums.get(hashType.name().toLowerCase()))
           .map(HashCode::fromString);
     }
   }
@@ -267,29 +270,20 @@ public class DatastoreMetadataRebuilder
     checkNotNull(repository);
     checkNotNull(gavs);
 
-    List<MavenPath> mavenPaths = Lists.newArrayList();
+    List<String> paths = Lists.newArrayList();
     for (String[] gav : gavs) {
       MavenPath mavenPath = metadataPath(gav[0], gav[1], gav[2]);
-      mavenPaths.add(mavenPath.main());
+      paths.add(prependIfMissing(mavenPath.main().getPath(), PATH_PREFIX));
       for (HashType hashType : HashType.values()) {
-        mavenPaths.add(mavenPath.main().hash(hashType));
+        paths.add(prependIfMissing(mavenPath.main().hash(hashType).getPath(), PATH_PREFIX));
       }
     }
 
     MavenContentFacet mavenContentFacet = repository.facet(MavenContentFacet.class);
     Set<String> deletedPaths = Sets.newHashSet();
-    try {
-      for (MavenPath mavenPath : mavenPaths) {
-        if (mavenContentFacet.delete(mavenPath)) {
-          deletedPaths.add(mavenPath.getPath());
-        }
-      }
+    if (mavenContentFacet.delete(paths)) {
+      deletedPaths.addAll(paths);
     }
-    catch (IOException e) {
-      log.warn("Error encountered when deleting metadata: repository={}", repository);
-      throw new RuntimeException(e);
-    }
-
     return deletedPaths;
   }
 }

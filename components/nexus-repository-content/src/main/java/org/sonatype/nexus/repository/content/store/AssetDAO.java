@@ -14,6 +14,7 @@ package org.sonatype.nexus.repository.content.store;
 
 import java.time.OffsetDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -179,6 +180,16 @@ public interface AssetDAO
    * @return {@code true} if any assets were deleted
    */
   boolean deleteAssets(@Param("repositoryId") int repositoryId, @Param("limit") int limit);
+
+  /**
+   * Deletes assets with at the specified paths in the given repository from the content data store.
+   *
+   * @param repositoryId the repository containing the assets
+   * @param paths        a list of asset paths
+   * @return {@code true} if any assets were deleted
+   * @since 3.next
+   */
+  boolean deleteAssetsByPaths(@Param("repositoryId") int repositoryId, @Param("paths") List<String> paths);
 
   /**
    * Selects assets without a component in the given repository last downloaded more than given number of days ago.

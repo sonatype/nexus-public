@@ -14,6 +14,7 @@ package org.sonatype.nexus.content.maven.internal.recipe;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -26,6 +27,7 @@ import org.sonatype.nexus.common.event.EventManager;
 import org.sonatype.nexus.content.maven.MavenContentFacet;
 import org.sonatype.nexus.content.maven.internal.event.RebuildMavenArchetypeCatalogEvent;
 import org.sonatype.nexus.content.maven.store.Maven2ComponentStore;
+import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.config.Configuration;
 import org.sonatype.nexus.repository.config.ConfigurationFacet;
 import org.sonatype.nexus.repository.config.WritePolicy;
@@ -310,6 +312,13 @@ public class MavenContentFacetImpl
       maybeDeleteComponent(mavenPath.getCoordinates());
     }
     return assetIsDeleted;
+  }
+
+  @Override
+  public boolean delete(final List<String> paths) {
+    Repository repository = getRepository();
+    log.trace("DELETE {} assets at {}", repository.getName(), paths);
+    return stores().assetStore.deleteAssetsByPaths(contentRepositoryId(), paths);
   }
 
   @Override

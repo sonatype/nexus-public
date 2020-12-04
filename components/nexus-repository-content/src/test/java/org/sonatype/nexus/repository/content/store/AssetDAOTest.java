@@ -35,6 +35,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static com.google.common.collect.Sets.newHashSet;
+import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.summingInt;
 import static java.util.stream.Collectors.toList;
@@ -704,6 +705,42 @@ public class AssetDAOTest
       dao.deleteAssets(repositoryId, -1);
 
       assertThat(browseAssets(dao, repositoryId, null, 100, null).size(), is(0));
+    }
+  }
+
+  @Test
+  public void testDeletePaths() {
+
+    AssetData asset1 = randomAsset(repositoryId);
+    AssetData asset2 = randomAsset(repositoryId);
+    AssetData asset3 = randomAsset(repositoryId);
+    AssetData asset4 = randomAsset(repositoryId);
+    AssetData asset5 = randomAsset(repositoryId);
+
+    // make sure paths are different
+    asset2.setPath(asset1.path() + "/2");
+    asset3.setPath(asset1.path() + "/3");
+    asset4.setPath(asset1.path() + "/4");
+    asset5.setPath(asset1.path() + "/5");
+
+    try (DataSession<?> session = sessionRule.openSession("content")) {
+      AssetDAO dao = session.access(TestAssetDAO.class);
+
+      dao.createAsset(asset1);
+      dao.createAsset(asset2);
+      dao.createAsset(asset3);
+      dao.createAsset(asset4);
+      dao.createAsset(asset5);
+
+      assertThat(countAssets(dao, repositoryId), is(5));
+
+      dao.deleteAssetsByPaths(repositoryId, asList(asset1.path(), asset2.path(), asset3.path()));
+
+      assertThat(browseAssets(dao, repositoryId, null, 5, null).size(), is(2));
+
+      dao.deleteAssetsByPaths(repositoryId, asList(asset4.path(), asset5.path()));
+
+      assertThat(browseAssets(dao, repositoryId, null, 5, null).size(), is(0));
     }
   }
 
