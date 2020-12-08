@@ -28,7 +28,8 @@ import org.sonatype.nexus.repository.config.internal.ConfigurationData;
 import org.sonatype.nexus.repository.routing.RoutingRule;
 import org.sonatype.nexus.repository.routing.RoutingRuleStore;
 import org.sonatype.nexus.repository.routing.internal.RoutingRuleData;
-import org.sonatype.nexus.supportzip.ExportData;
+import org.sonatype.nexus.supportzip.ExportConfigData;
+import org.sonatype.nexus.supportzip.ImportData;
 import org.sonatype.nexus.supportzip.datastore.JsonExporter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -45,7 +46,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Singleton
 public class ConfigurationExport
     extends JsonExporter
-    implements ExportData
+    implements ExportConfigData, ImportData
 {
   private final ConfigurationStore configurationStore;
 

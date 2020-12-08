@@ -21,7 +21,8 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.sonatype.nexus.security.anonymous.AnonymousConfiguration;
-import org.sonatype.nexus.supportzip.ExportData;
+import org.sonatype.nexus.supportzip.ExportSecurityData;
+import org.sonatype.nexus.supportzip.ImportData;
 import org.sonatype.nexus.supportzip.datastore.JsonExporter;
 
 /**
@@ -33,7 +34,7 @@ import org.sonatype.nexus.supportzip.datastore.JsonExporter;
 @Singleton
 public class AnonymousConfigurationExport
     extends JsonExporter
-    implements ExportData
+    implements ExportSecurityData, ImportData
 {
   private final AnonymousConfigurationStore anonymousConfigurationStore;
 
