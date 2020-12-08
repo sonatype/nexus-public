@@ -30,7 +30,7 @@ import org.sonatype.nexus.repository.query.QueryOptions;
 import org.sonatype.nexus.repository.rest.api.ComponentXO;
 import org.sonatype.nexus.repository.rest.api.ComponentXOFactory;
 import org.sonatype.nexus.repository.rest.api.RepositoryItemIDXO;
-import org.sonatype.nexus.repository.rest.cma.ComponentUploadExtension;
+import org.sonatype.nexus.repository.rest.ComponentUploadExtension;
 import org.sonatype.nexus.repository.rest.cma.ComponentsResourceExtension;
 import org.sonatype.nexus.repository.storage.Asset;
 import org.sonatype.nexus.repository.storage.Component;

@@ -19,6 +19,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -26,11 +28,14 @@ import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.goodies.common.ComponentSupport;
+import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.repository.Repository;
+import org.sonatype.nexus.repository.rest.ComponentUploadExtension;
 import org.sonatype.nexus.repository.rest.internal.resources.ComponentUploadUtils;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.upload.AssetUpload;
 import org.sonatype.nexus.repository.upload.ComponentUpload;
+import org.sonatype.nexus.repository.upload.UploadProcessor;
 import org.sonatype.nexus.repository.upload.UploadDefinition;
 import org.sonatype.nexus.repository.upload.UploadHandler;
 import org.sonatype.nexus.repository.upload.UploadManager;
@@ -61,14 +66,23 @@ public class UploadManagerImpl
 
   private final UploadComponentMultipartHelper multipartHelper;
 
+  private final UploadProcessor uploadComponentProcessor;
+
+  private final Set<ComponentUploadExtension> componentUploadExtensions;
+
   @Inject
-  public UploadManagerImpl(final Map<String, UploadHandler> uploadHandlers,
-                           final UploadComponentMultipartHelper multipartHelper)
+  public UploadManagerImpl(
+      final Map<String, UploadHandler> uploadHandlers,
+      final UploadComponentMultipartHelper multipartHelper,
+      final UploadProcessor uploadComponentProcessor,
+      final Set<ComponentUploadExtension> componentsUploadExtensions)
   {
     this.uploadHandlers = checkNotNull(uploadHandlers);
     this.uploadDefinitions = Collections
         .unmodifiableList(uploadHandlers.values().stream().map(UploadHandler::getDefinition).collect(toList()));
     this.multipartHelper = checkNotNull(multipartHelper);
+    this.uploadComponentProcessor = checkNotNull(uploadComponentProcessor);
+    this.componentUploadExtensions = checkNotNull(componentsUploadExtensions);
   }
 
   @Override
@@ -90,7 +104,22 @@ public class UploadManagerImpl
     logUploadDetails(upload, repository);
 
     try {
-      return uploadHandler.handle(repository, uploadHandler.getValidatingComponentUpload(upload).getComponentUpload());
+      componentUploadExtensions.forEach(componentUploadExtension -> componentUploadExtension.validate(upload));
+
+      UploadResponse uploadResponse =
+          uploadHandler.handle(repository, uploadHandler.getValidatingComponentUpload(upload).getComponentUpload());
+
+      for (ComponentUploadExtension componentUploadExtension : componentUploadExtensions) {
+        List<EntityId> componentIds = uploadResponse.getContents().stream()
+            .map(uploadComponentProcessor::extractId)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(toList());
+        componentUploadExtension.apply(repository, upload, componentIds);
+      }
+
+      return uploadResponse;
+
     }
     finally {
       for (AssetUpload assetUpload : upload.getAssetUploads()) {

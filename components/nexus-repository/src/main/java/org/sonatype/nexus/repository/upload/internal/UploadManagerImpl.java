@@ -28,7 +28,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.repository.Repository;
-import org.sonatype.nexus.repository.rest.cma.ComponentUploadExtension;
+import org.sonatype.nexus.repository.rest.ComponentUploadExtension;
 import org.sonatype.nexus.repository.rest.internal.resources.ComponentUploadUtils;
 import org.sonatype.nexus.repository.types.HostedType;
 import org.sonatype.nexus.repository.upload.AssetUpload;
