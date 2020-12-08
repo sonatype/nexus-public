@@ -30,7 +30,8 @@ import org.sonatype.nexus.security.config.CRole;
 import org.sonatype.nexus.security.config.CUser;
 import org.sonatype.nexus.security.config.CUserRoleMapping;
 import org.sonatype.nexus.security.config.SecurityConfiguration;
-import org.sonatype.nexus.supportzip.ExportData;
+import org.sonatype.nexus.supportzip.ExportSecurityData;
+import org.sonatype.nexus.supportzip.ImportData;
 import org.sonatype.nexus.supportzip.datastore.JsonExporter;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -49,7 +50,7 @@ import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 @Singleton
 public class SecurityUserExport
     extends JsonExporter
-    implements ExportData
+    implements ExportSecurityData, ImportData
 {
   private final SecurityConfiguration configuration;
 

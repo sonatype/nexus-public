@@ -22,7 +22,8 @@ import javax.inject.Singleton;
 
 import org.sonatype.nexus.security.config.CRole;
 import org.sonatype.nexus.security.config.SecurityConfiguration;
-import org.sonatype.nexus.supportzip.ExportData;
+import org.sonatype.nexus.supportzip.ExportSecurityData;
+import org.sonatype.nexus.supportzip.ImportData;
 import org.sonatype.nexus.supportzip.datastore.JsonExporter;
 
 /**
@@ -34,7 +35,7 @@ import org.sonatype.nexus.supportzip.datastore.JsonExporter;
 @Singleton
 public class RoleExport
     extends JsonExporter
-    implements ExportData
+    implements ExportSecurityData, ImportData
 {
   private final SecurityConfiguration configuration;
 

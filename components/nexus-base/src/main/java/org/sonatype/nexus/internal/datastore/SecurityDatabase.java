@@ -24,7 +24,7 @@ import javax.inject.Singleton;
 
 import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.internal.orient.DatabaseManagerImpl;
-import org.sonatype.nexus.supportzip.ExportConfigData;
+import org.sonatype.nexus.supportzip.ExportSecurityData;
 import org.sonatype.nexus.supportzip.GeneratedContentSourceSupport;
 import org.sonatype.nexus.supportzip.SupportBundle;
 import org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type;
@@ -33,13 +33,13 @@ import org.sonatype.nexus.supportzip.SupportBundleCustomizer;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Add {@link SupportBundle} to export {@link Type#CONFIG} data to serialized files.
+ * Add {@link SupportBundle} to export {@link Type#SECURITY} data to serialized files.
  *
- * @since 3.29
+ * @since 3.next
  */
 @Named
 @Singleton
-public class ConfigDatabase
+public class SecurityDatabase
     extends ComponentSupport
     implements SupportBundleCustomizer
 {
@@ -47,22 +47,22 @@ public class ConfigDatabase
 
   private static final String FILE_SUFFIX = ".json";
 
-  private final Map<String, ExportConfigData> exportDataByName;
+  private final Map<String, ExportSecurityData> exportDataByName;
 
   @Inject
-  public ConfigDatabase(final Map<String, ExportConfigData> exportDataByName) {
+  public SecurityDatabase(final Map<String, ExportSecurityData> exportDataByName) {
     this.exportDataByName = checkNotNull(exportDataByName);
   }
 
   @Override
   public void customize(final SupportBundle supportBundle) {
-    for (Entry<String, ExportConfigData> exporterEntry : exportDataByName.entrySet()) {
+    for (Entry<String, ExportSecurityData> exporterEntry : exportDataByName.entrySet()) {
       supportBundle.add(getExporter(exporterEntry.getKey() + FILE_SUFFIX, exporterEntry.getValue()));
     }
   }
 
-  private GeneratedContentSourceSupport getExporter(final String fileName, final ExportConfigData exporter) {
-    return new GeneratedContentSourceSupport(Type.CONFIG, PATH.resolve(fileName).toString())
+  private GeneratedContentSourceSupport getExporter(final String fileName, final ExportSecurityData exporter) {
+    return new GeneratedContentSourceSupport(Type.SECURITY, PATH.resolve(fileName).toString())
     {
       @Override
       protected void generate(final File file) throws Exception {

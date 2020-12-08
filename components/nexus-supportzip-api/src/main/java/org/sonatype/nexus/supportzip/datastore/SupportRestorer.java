@@ -26,14 +26,15 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.common.app.ApplicationDirectories;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
-import org.sonatype.nexus.supportzip.ExportData;
+import org.sonatype.nexus.supportzip.ImportData;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Integer.MAX_VALUE;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.RESTORE;
 
 /**
- * Restore {@code DataStoreManager#CONFIG_DATASTORE_NAME} data from JSON files.
+ * Restore {@link org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type#CONFIG} and
+ * {@link org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type#SECURITY} data from JSON files.
  *
  * @since 3.next
  */
@@ -48,15 +49,15 @@ public class SupportRestorer
 
   private final ApplicationDirectories applicationDirectories;
 
-  private final Map<String, ExportData> exportDataByName;
+  private final Map<String, ImportData> importDataByName;
 
   @Inject
   public SupportRestorer(
       final ApplicationDirectories applicationDirectories,
-      final Map<String, ExportData> exportDataByName)
+      final Map<String, ImportData> importDataByName)
   {
     this.applicationDirectories = checkNotNull(applicationDirectories);
-    this.exportDataByName = checkNotNull(exportDataByName);
+    this.importDataByName = checkNotNull(importDataByName);
   }
 
   @Override
@@ -66,12 +67,12 @@ public class SupportRestorer
 
   private void maybeRestore() throws IOException {
     Path dbDir = applicationDirectories.getWorkDirectory("db").toPath();
-    for (Entry<String, ExportData> exporterEntry : exportDataByName.entrySet()) {
-      String fileName = exporterEntry.getKey() + FILE_SUFFIX;
+    for (Entry<String, ImportData> importerEntry : importDataByName.entrySet()) {
+      String fileName = importerEntry.getKey() + FILE_SUFFIX;
       File file = dbDir.resolve(fileName).toFile();
-      ExportData exportData = exporterEntry.getValue();
+      ImportData importer = importerEntry.getValue();
       if (file.exists()) {
-        exportData.restore(file);
+        importer.restore(file);
       }
       else {
         log.warn("Can't find {} file to restore data", file);

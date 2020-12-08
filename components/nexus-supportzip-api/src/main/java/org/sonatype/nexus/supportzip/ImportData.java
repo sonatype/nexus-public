@@ -16,25 +16,17 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * Should be used by the Support ZIP to export DB data.
+ * Should be used by the Support ZIP to restore data to a DB.
  *
- * @since 3.29
+ * @since 3.next
  */
-public interface ExportData
+public interface ImportData
 {
-  /**
-   * Export DB data to a binary file.
-   *
-   * @param file where data will be stored.
-   * @throws IOException for any issue during writing a file.
-   */
-  void export(final File file) throws IOException;
-
   /**
    * Restore serialized data to the DB.
    *
    * @param file file where data will be restored.
-   * @throws IOException            for any issue during reading a file.
+   * @throws IOException for any issue during reading a file.
    */
   void restore(final File file) throws IOException;
 }
