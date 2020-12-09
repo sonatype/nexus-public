@@ -38,7 +38,7 @@ import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
- * @since 3.29
+ * @since 3.next
  */
 @Named
 @Singleton

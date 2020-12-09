@@ -18,7 +18,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -77,7 +76,7 @@ import static org.sonatype.nexus.cleanup.storage.CleanupPolicyReleaseType.PREREL
 import static org.sonatype.nexus.rest.APIConstants.INTERNAL_API_PREFIX;
 
 /**
- * @since 3.29
+ * @since 3.next
  */
 @Named
 @Singleton
@@ -280,9 +279,9 @@ public class CleanupPolicyResource
     handleCriteria(cleanupFormatConfiguration, criteriaMap, REGEX_KEY, cleanupPolicyXO.getCriteriaAssetRegex(),
         "Asset name regex", cleanupPolicyXO.getFormat());
     handleCriteria(cleanupFormatConfiguration, criteriaMap, LAST_BLOB_UPDATED_KEY,
-        toSeconds(cleanupPolicyXO.getCriteriaLastBlobUpdated()), "Published before", cleanupPolicyXO.getFormat());
+        cleanupPolicyXO.getCriteriaLastBlobUpdated(), "Published before", cleanupPolicyXO.getFormat());
     handleCriteria(cleanupFormatConfiguration, criteriaMap, LAST_DOWNLOADED_KEY,
-        toSeconds(cleanupPolicyXO.getCriteriaLastDownloaded()), "Last downloaded before", cleanupPolicyXO.getFormat());
+        cleanupPolicyXO.getCriteriaLastDownloaded(), "Last downloaded before", cleanupPolicyXO.getFormat());
     if (cleanupPolicyXO.getCriteriaReleaseType() != null) {
       handleCriteria(cleanupFormatConfiguration, criteriaMap, IS_PRERELEASE_KEY,
           PRERELEASES.equals(cleanupPolicyXO.getCriteriaReleaseType()), "Release type", cleanupPolicyXO.getFormat());
@@ -310,14 +309,4 @@ public class CleanupPolicyResource
       }
     }
   }
-
-  private static Long toSeconds(final Long days) {
-    if (days == null) {
-      return null;
-    }
-    else {
-      return TimeUnit.DAYS.toSeconds(days);
-    }
-  }
 }
-

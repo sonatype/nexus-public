@@ -13,9 +13,7 @@
 package org.sonatype.nexus.repository.content.store.internal;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -36,6 +34,8 @@ import org.sonatype.nexus.repository.content.event.asset.AssetUploadedEvent;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
 import com.google.common.eventbus.Subscribe;
+
+import static java.lang.String.format;
 
 /**
  * Repository asset auditor.
@@ -99,15 +99,9 @@ public class AssetAuditor
 
       if (event instanceof AssetAttributesEvent){
         AssetAttributesEvent attributesEvent = (AssetAttributesEvent) event;
-
-        attributes.put("attribute.changes", attributesEvent.getChanges()
-            .stream().map(change -> {
-              Map<String, Object> entry = new HashMap<>();
-              entry.put("operation", change.getOperation());
-              entry.put("key", change.getKey());
-              entry.put("value", change.getValue());
-              return entry;
-            }).collect(Collectors.toList()));
+        attributes.put("attribute.change", attributesEvent.getChange());
+        attributes.put("attribute.key", attributesEvent.getKey());
+        attributes.put("attribute.value", attributesEvent.getValue());
       }
 
       record(data);

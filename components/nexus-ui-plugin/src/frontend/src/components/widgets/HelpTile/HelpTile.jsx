@@ -17,7 +17,7 @@ import './HelpTile.scss';
 import classNames from "classnames";
 
 /**
- * @since 3.29
+ * @since 3.next
  */
 export default function HelpTile({className, ...attrs}) {
   const classes = classNames('nxrm-help-tile', 'nx-tile', className);

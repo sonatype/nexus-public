@@ -44,7 +44,7 @@ import static org.sonatype.nexus.security.user.UserManager.DEFAULT_SOURCE;
 /**
  * Write/Read {@link CRole} data to/from a JSON file.
  *
- * @since 3.29
+ * @since 3.next
  */
 @Named("securityUserExport")
 @Singleton

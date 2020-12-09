@@ -27,7 +27,6 @@ import org.sonatype.nexus.datastore.api.ContentDataAccess;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
-import org.sonatype.nexus.repository.content.AttributeChangeSet;
 import org.sonatype.nexus.repository.content.event.asset.AssetAttributesEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
@@ -84,7 +83,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.sonatype.nexus.datastore.mybatis.CombUUID.combUUID;
-import static org.sonatype.nexus.repository.content.AttributeOperation.SET;
+import static org.sonatype.nexus.repository.content.AttributeChange.SET;
 
 /**
  * Test {@link FormatStoreManager}.
@@ -304,7 +303,7 @@ public class FormatStoreManagerTest
     asset.setKind("jar");
     asset.setAssetBlob(assetBlob);
 
-    assetStore.updateAssetAttributes(asset, new AttributeChangeSet(SET, "test-key", "test-asset"));
+    assetStore.updateAssetAttributes(asset, SET, "test-key", "test-asset");
     assetStore.updateAssetKind(asset);
     assetStore.updateAssetBlobLink(asset);
     assetStore.markAsDownloaded(asset);

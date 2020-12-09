@@ -17,7 +17,7 @@ package org.sonatype.nexus.repository.content;
  *
  * @since 3.21
  */
-public enum AttributeOperation
+public enum AttributeChange
 {
   /**
    * Sets the attribute under the key, overwriting any existing value.

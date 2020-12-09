@@ -22,7 +22,7 @@ import org.sonatype.nexus.transaction.Transactional;
 import com.google.inject.assistedinject.Assisted;
 
 /**
- * @since 3.29
+ * @since 3.next
  */
 public class Maven2ComponentStore
     extends ComponentStore<Maven2ComponentDAO>

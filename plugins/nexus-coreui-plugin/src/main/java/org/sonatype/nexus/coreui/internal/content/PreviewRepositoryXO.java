@@ -13,7 +13,7 @@
 package org.sonatype.nexus.coreui.internal.content;
 
 /**
- * @since 3.29
+ * @since 3.next
  */
 public class PreviewRepositoryXO
 {

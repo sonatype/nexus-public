@@ -23,7 +23,7 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
-import org.sonatype.nexus.repository.content.AttributeOperation;
+import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.event.component.ComponentAttributesEvent;
 import org.sonatype.nexus.repository.content.event.component.ComponentCreatedEvent;
@@ -218,7 +218,7 @@ public class ComponentStore<T extends ComponentDAO>
    */
   @Transactional
   public void updateComponentAttributes(final Component component,
-                                        final AttributeOperation change,
+                                        final AttributeChange change,
                                         final String key,
                                         final @Nullable Object value)
   {

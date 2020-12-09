@@ -15,7 +15,7 @@ package org.sonatype.nexus.cleanup.internal.rest;
 import java.util.Set;
 
 /**
- * @since 3.29
+ * @since 3.next
  */
 public class CleanupPolicyFormatXO
 {

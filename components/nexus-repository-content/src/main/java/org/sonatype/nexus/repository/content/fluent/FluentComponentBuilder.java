@@ -36,7 +36,7 @@ public interface FluentComponentBuilder
   /**
    * Set {@code kind} only if a value is present.
    *
-   * @since 3.29
+   * @since 3.next
    */
   FluentComponentBuilder kind(Optional<String> optionalKind);
 

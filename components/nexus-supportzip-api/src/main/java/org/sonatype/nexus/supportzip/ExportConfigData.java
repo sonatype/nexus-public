@@ -19,7 +19,7 @@ import java.io.IOException;
  * Should be used by the Support ZIP to export
  * {@link org.sonatype.nexus.supportzip.SupportBundle.ContentSource.Type#CONFIG} DB data.
  *
- * @since 3.29
+ * @since 3.next
  */
 public interface ExportConfigData
 {

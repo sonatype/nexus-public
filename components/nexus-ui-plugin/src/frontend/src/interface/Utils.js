@@ -24,7 +24,7 @@ const PARAMETER_ID = 'PARAMETER ';
 export default class Utils {
   /**
    * Constant for ascending sorts
-   * @since 3.29
+   * @since 3.next
    */
   static get ASC() {
     return 'asc';
@@ -32,7 +32,7 @@ export default class Utils {
 
   /**
    * Constant for descending sorts
-   * @since 3.29
+   * @since 3.next
    */
   static get DESC() {
     return 'desc';
@@ -459,7 +459,7 @@ export default class Utils {
   }
 
   /**
-   * @since 3.29
+   * @since 3.next
    * @param fieldName
    * @return a function that can be used with assign to set the next sort direction based on the current context
    */
@@ -478,7 +478,7 @@ export default class Utils {
   }
 
   /**
-   * @since 3.29
+   * @since 3.next
    * @return the data sorted by the field and direction
    */
   static sortDataByFieldAndDirection({sortField, sortDirection, data}) {

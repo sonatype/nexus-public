@@ -42,7 +42,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.sonatype.nexus.repository.content.AttributeOperation.OVERLAY;
+import static org.sonatype.nexus.repository.content.AttributeChange.OVERLAY;
 import static org.sonatype.nexus.repository.maven.MavenPath.SignatureType.GPG;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_ARTIFACT_ID;
 import static org.sonatype.nexus.repository.maven.internal.Attributes.P_BASE_VERSION;

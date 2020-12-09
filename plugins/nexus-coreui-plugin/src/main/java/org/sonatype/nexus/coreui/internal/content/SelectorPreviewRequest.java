@@ -16,7 +16,7 @@ import org.sonatype.nexus.repository.security.RepositorySelector;
 import org.sonatype.nexus.selector.CselSelector;
 
 /**
- * @since 3.29
+ * @since 3.next
  */
 public class SelectorPreviewRequest
 {

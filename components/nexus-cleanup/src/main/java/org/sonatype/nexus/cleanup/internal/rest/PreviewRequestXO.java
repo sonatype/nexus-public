@@ -18,7 +18,7 @@ import org.sonatype.nexus.cleanup.storage.CleanupPolicyReleaseType;
 import org.sonatype.nexus.cleanup.storage.config.CleanupPolicyAssetNamePattern;
 
 /**
- * @since 3.29
+ * @since 3.next
  */
 public class PreviewRequestXO
 {

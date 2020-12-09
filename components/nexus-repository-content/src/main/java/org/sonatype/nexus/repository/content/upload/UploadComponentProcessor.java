@@ -27,7 +27,7 @@ import org.sonatype.nexus.repository.view.Content;
 /**
  * Content implementation for {@link UploadProcessor}
  *
- * @since 3.29
+ * @since 3.next
  */
 @Named
 @Singleton

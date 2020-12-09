@@ -18,7 +18,7 @@ import {NxCheckbox} from "@sonatype/react-shared-components";
 import PropTypes from "prop-types";
 
 /**
- * @since 3.29
+ * @since 3.next
  */
 export default function CheckboxControlledWrapper({isChecked, children, onChange}) {
   const [checked, setChecked] = useState(!!isChecked),

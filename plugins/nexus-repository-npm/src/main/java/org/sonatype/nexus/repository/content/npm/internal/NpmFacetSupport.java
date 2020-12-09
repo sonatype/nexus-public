@@ -34,6 +34,7 @@ import org.sonatype.nexus.common.hash.HashAlgorithm;
 import org.sonatype.nexus.repository.FacetSupport;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.content.Asset;
+import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.fluent.FluentComponentBuilder;
@@ -189,7 +190,7 @@ public abstract class NpmFacetSupport
 
     byte[] bytes = NpmJsonUtils.bytes(packageRoot);
     FluentAsset asset = content().put(packageId, new StreamPayload(() -> new ByteArrayInputStream(bytes), bytes.length, MediaType.APPLICATION_JSON));
-    asset.withAttribute(NpmAttributes.P_NPM_LAST_MODIFIED, date);
+    asset.attributes(AttributeChange.SET, NpmAttributes.P_NPM_LAST_MODIFIED, date);
   }
 
   protected Iterable<String> findPackageTarballComponents(final NpmPackageId packageId) {

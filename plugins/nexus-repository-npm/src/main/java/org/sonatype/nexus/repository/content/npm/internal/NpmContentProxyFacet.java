@@ -30,6 +30,7 @@ import org.sonatype.nexus.blobstore.api.BlobRef;
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.repository.MissingBlobException;
 import org.sonatype.nexus.repository.cache.CacheController;
+import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.facet.ContentProxyFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponentBuilder;
@@ -406,7 +407,8 @@ public class NpmContentProxyFacet
     packageRoot.remove("_attachments");
     Date date = maintainTime(packageRoot).toDate();
     NpmStreamPayload payload = new NpmStreamPayload(() -> new ByteArrayInputStream(bytes(packageRoot)));
-    return contentFacet().put(packageId, new NpmContent(payload, content)).withAttribute(P_NPM_LAST_MODIFIED, date);
+    return contentFacet().put(packageId, new NpmContent(payload, content))
+        .attributes(AttributeChange.SET, P_NPM_LAST_MODIFIED, date);
   }
 
   /*

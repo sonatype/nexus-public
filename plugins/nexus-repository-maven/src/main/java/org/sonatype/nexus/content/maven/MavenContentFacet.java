@@ -59,7 +59,7 @@ public interface MavenContentFacet
   /**
    * Deletes the assets at the specified paths.
    *
-   * @since 3.29
+   * @since 3.next
    */
   boolean delete(final List<String> paths);
 

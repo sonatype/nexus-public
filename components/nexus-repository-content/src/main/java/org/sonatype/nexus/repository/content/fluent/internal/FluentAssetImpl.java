@@ -28,12 +28,10 @@ import org.sonatype.nexus.repository.cache.CacheController;
 import org.sonatype.nexus.repository.cache.CacheInfo;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
-import org.sonatype.nexus.repository.content.AttributeChangeSet;
-import org.sonatype.nexus.repository.content.AttributeOperation;
+import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.facet.ContentFacetSupport;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
-import org.sonatype.nexus.repository.content.fluent.FluentAttributes;
 import org.sonatype.nexus.repository.content.store.AssetBlobData;
 import org.sonatype.nexus.repository.content.store.AssetData;
 import org.sonatype.nexus.repository.content.store.WrappedContent;
@@ -58,7 +56,7 @@ import static org.sonatype.nexus.common.time.DateHelper.toOffsetDateTime;
 import static org.sonatype.nexus.repository.cache.CacheInfo.CACHE;
 import static org.sonatype.nexus.repository.cache.CacheInfo.CACHE_TOKEN;
 import static org.sonatype.nexus.repository.cache.CacheInfo.INVALIDATED;
-import static org.sonatype.nexus.repository.content.AttributeOperation.OVERLAY;
+import static org.sonatype.nexus.repository.content.AttributeChange.OVERLAY;
 import static org.sonatype.nexus.repository.view.Content.CONTENT;
 import static org.sonatype.nexus.repository.view.Content.CONTENT_ETAG;
 import static org.sonatype.nexus.repository.view.Content.CONTENT_LAST_MODIFIED;
@@ -136,14 +134,8 @@ public class FluentAssetImpl
   }
 
   @Override
-  public FluentAsset attributes(final AttributeOperation change, final String key, final Object value) {
-    facet.stores().assetStore.updateAssetAttributes(asset, new AttributeChangeSet(change, key, value));
-    return this;
-  }
-
-  @Override
-  public FluentAsset attributes(final AttributeChangeSet changes) {
-    facet.stores().assetStore.updateAssetAttributes(asset, changes);
+  public FluentAsset attributes(final AttributeChange change, final String key, final Object value) {
+    facet.stores().assetStore.updateAssetAttributes(asset, change, key, value);
     return this;
   }
 
@@ -206,25 +198,19 @@ public class FluentAssetImpl
   @Override
   public FluentAsset markAsCached(final Payload content) {
     if (content instanceof Content) {
-      AttributeChangeSet changes = new AttributeChangeSet();
       AttributesMap contentAttributes = ((Content) content).getAttributes();
       CacheInfo cacheInfo = contentAttributes.get(CacheInfo.class);
       if (cacheInfo != null) {
-        markAsCached(changes, cacheInfo);
+        markAsCached(cacheInfo);
       }
-      cacheContentHeaders(changes, contentAttributes);
-      attributes(changes);
+      cacheContentHeaders(contentAttributes);
     }
     return this;
   }
 
   @Override
   public FluentAsset markAsCached(final CacheInfo cacheInfo) {
-    return markAsCached(this, cacheInfo);
-  }
-
-  private static <A extends FluentAttributes<A>> A markAsCached(final A attributes, final CacheInfo cacheInfo) {
-    return attributes.withAttribute(CACHE, cacheInfo.toMap());
+    return withAttribute(CACHE, cacheInfo.toMap());
   }
 
   @Override
@@ -316,7 +302,7 @@ public class FluentAssetImpl
    *
    * @see ProxyFacetSupport#fetch
    */
-  private static void cacheContentHeaders(final FluentAttributes<?> attributes, final AttributesMap contentAttributes) {
+  private void cacheContentHeaders(final AttributesMap contentAttributes) {
     ImmutableMap.Builder<String, String> headerBuilder = ImmutableMap.builder();
     if (contentAttributes.contains(CONTENT_LAST_MODIFIED)) {
       headerBuilder.put(CONTENT_LAST_MODIFIED, contentAttributes.get(CONTENT_LAST_MODIFIED).toString());
@@ -326,10 +312,10 @@ public class FluentAssetImpl
     }
     Map<String, String> contentHeaders = headerBuilder.build();
     if (!contentHeaders.isEmpty()) {
-      attributes.withAttribute(CONTENT, contentHeaders);
+      withAttribute(CONTENT, contentHeaders);
     }
     else {
-      attributes.withoutAttribute(CONTENT);
+      withoutAttribute(CONTENT);
     }
   }
 

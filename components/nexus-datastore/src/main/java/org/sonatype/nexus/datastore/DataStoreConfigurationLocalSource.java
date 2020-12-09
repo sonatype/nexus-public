@@ -124,10 +124,8 @@ public class DataStoreConfigurationLocalSource
           storeProperties.load();
 
           // quick sanity check that the filename matches the content
-          String dsNameProperty = storeProperties.getProperty(NAME_KEY);
-          checkArgument(storeName.equals(dsNameProperty),
-              "Incorrect data store configuration in the %s Should be [%s] but found [%s]",
-              storeProperties.getFile().getAbsolutePath(), storeName, dsNameProperty);
+          checkArgument(storeName.equals(storeProperties.getProperty(NAME_KEY)),
+              "%s is for a different data store", storeProperties);
         }
       }
       catch (IOException e) {

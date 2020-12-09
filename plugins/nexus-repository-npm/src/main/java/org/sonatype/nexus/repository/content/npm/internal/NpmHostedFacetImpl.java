@@ -27,6 +27,7 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.common.collect.NestedAttributesMap;
 import org.sonatype.nexus.common.text.Strings2;
+import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.fluent.FluentAsset;
 import org.sonatype.nexus.repository.content.fluent.FluentComponent;
 import org.sonatype.nexus.repository.content.npm.NpmContentFacet;
@@ -328,10 +329,10 @@ public class NpmHostedFacetImpl
         final boolean deprecated = !Strings2.isBlank(deprecationMessage);
         if (deprecated && !deprecationMessage
             .equals(tarballComponent.attributes().get(NpmAttributes.P_DEPRECATED, String.class))) {
-          tarballComponent.withAttribute(NpmAttributes.P_DEPRECATED, deprecationMessage);
+          tarballComponent.attributes(AttributeChange.SET, NpmAttributes.P_DEPRECATED, deprecationMessage);
         }
         else if (!deprecated && tarballComponent.attributes().contains(NpmAttributes.P_DEPRECATED)) {
-          tarballComponent.withoutAttribute(NpmAttributes.P_DEPRECATED);
+          tarballComponent.attributes(AttributeChange.REMOVE, NpmAttributes.P_DEPRECATED, null);
         }
       });
     }

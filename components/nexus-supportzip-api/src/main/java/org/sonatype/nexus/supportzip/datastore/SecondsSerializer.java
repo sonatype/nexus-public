@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 /**
  * {@link Time} in seconds serializer.
  *
- * @since 3.29
+ * @since 3.next
  */
 public class SecondsSerializer
     extends StdSerializer<Time>

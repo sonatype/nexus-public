@@ -13,7 +13,6 @@
 package org.sonatype.nexus.cleanup.internal.rest;
 
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Pattern;
@@ -37,7 +36,7 @@ import static org.sonatype.nexus.validation.constraint.NamePatternConstants.MESS
 import static org.sonatype.nexus.validation.constraint.NamePatternConstants.REGEX;
 
 /**
- * @since 3.29
+ * @since 3.next
  */
 public class CleanupPolicyXO
 {
@@ -52,9 +51,9 @@ public class CleanupPolicyXO
 
   private String notes;
 
-  private Long criteriaLastBlobUpdated; // days
+  private Integer criteriaLastBlobUpdated;
 
-  private Long criteriaLastDownloaded; // days
+  private Integer criteriaLastDownloaded;
 
   private CleanupPolicyReleaseType criteriaReleaseType;
 
@@ -79,11 +78,11 @@ public class CleanupPolicyXO
     return criteriaReleaseType;
   }
 
-  public Long getCriteriaLastBlobUpdated() {
+  public Integer getCriteriaLastBlobUpdated() {
     return criteriaLastBlobUpdated;
   }
 
-  public Long getCriteriaLastDownloaded() {
+  public Integer getCriteriaLastDownloaded() {
     return criteriaLastDownloaded;
   }
 
@@ -111,11 +110,11 @@ public class CleanupPolicyXO
     this.criteriaAssetRegex = criteriaAssetRegex;
   }
 
-  public void setCriteriaLastBlobUpdated(final Long criteriaLastBlobUpdated) {
+  public void setCriteriaLastBlobUpdated(final Integer criteriaLastBlobUpdated) {
     this.criteriaLastBlobUpdated = criteriaLastBlobUpdated;
   }
 
-  public void setCriteriaLastDownloaded(final Long criteriaLastDownloaded) {
+  public void setCriteriaLastDownloaded(final Integer criteriaLastDownloaded) {
     this.criteriaLastDownloaded = criteriaLastDownloaded;
   }
 
@@ -133,21 +132,21 @@ public class CleanupPolicyXO
     xo.setFormat(cleanupPolicy.getFormat().equals(ALL_CLEANUP_POLICY_FORMAT) ? ALL_FORMATS : cleanupPolicy.getFormat());
     xo.setNotes(cleanupPolicy.getNotes());
     xo.setCriteriaAssetRegex(cleanupPolicy.getCriteria().get(REGEX_KEY));
-    xo.setCriteriaLastBlobUpdated(toDays(getNullableLong(cleanupPolicy.getCriteria(), LAST_BLOB_UPDATED_KEY)));
-    xo.setCriteriaLastDownloaded(toDays(getNullableLong(cleanupPolicy.getCriteria(), LAST_DOWNLOADED_KEY)));
+    xo.setCriteriaLastBlobUpdated(getNullableInteger(cleanupPolicy.getCriteria(), LAST_BLOB_UPDATED_KEY));
+    xo.setCriteriaLastDownloaded(getNullableInteger(cleanupPolicy.getCriteria(), LAST_DOWNLOADED_KEY));
     xo.setCriteriaReleaseType(getNullableReleaseType(cleanupPolicy.getCriteria()));
     xo.setInUseCount(inUseCount);
     return xo;
   }
 
-  private static Long getNullableLong(final Map<String, String> map, final String key) {
+  private static Integer getNullableInteger(final Map<String, String> map, final String key) {
     String value = map.get(key);
 
     if (value == null) {
       return null;
     }
 
-    return Long.valueOf(value);
+    return Integer.valueOf(value);
   }
 
   private static CleanupPolicyReleaseType getNullableReleaseType(final Map<String, String> map) {
@@ -158,14 +157,5 @@ public class CleanupPolicyXO
     }
 
     return Boolean.parseBoolean(value) ? PRERELEASES : RELEASES;
-  }
-
-  private static Long toDays(final Long seconds) {
-    if (seconds == null) {
-      return null;
-    }
-    else {
-      return TimeUnit.SECONDS.toDays(seconds);
-    }
   }
 }

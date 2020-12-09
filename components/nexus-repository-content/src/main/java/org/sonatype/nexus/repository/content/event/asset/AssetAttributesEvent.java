@@ -12,12 +12,15 @@
  */
 package org.sonatype.nexus.repository.content.event.asset;
 
-import java.util.List;
+import java.util.Optional;
+
+import javax.annotation.Nullable;
 
 import org.sonatype.nexus.repository.content.Asset;
-import org.sonatype.nexus.repository.content.AttributeChangeSet.AttributeChange;
+import org.sonatype.nexus.repository.content.AttributeChange;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Optional.ofNullable;
 
 /**
  * Event sent whenever an {@link Asset}'s attributes change.
@@ -27,24 +30,44 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class AssetAttributesEvent
     extends AssetUpdatedEvent
 {
-  private final List<AttributeChange> changes;
+  private final AttributeChange change;
+
+  private final String key;
+
+  @Nullable
+  private final Object value;
 
   public AssetAttributesEvent(
       final Asset asset,
-      final List<AttributeChange> changes)
+      final AttributeChange change,
+      final String key,
+      @Nullable final Object value)
   {
     super(asset);
-    this.changes = checkNotNull(changes);
+    this.change = checkNotNull(change);
+    this.key = checkNotNull(key);
+    this.value = value;
   }
 
-  public List<AttributeChange> getChanges() {
-    return changes;
+  public AttributeChange getChange() {
+    return change;
+  }
+
+  public String getKey() {
+    return key;
+  }
+
+  @SuppressWarnings("unchecked")
+  public <T> Optional<T> getValue() {
+    return ofNullable((T) value);
   }
 
   @Override
   public String toString() {
     return "AssetAttributesEvent{" +
-        "changes=" + changes +
+        "change=" + change +
+        ", key='" + key + '\'' +
+        ", value=" + value +
         "} " + super.toString();
   }
 }

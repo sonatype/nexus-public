@@ -21,14 +21,13 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 import org.sonatype.nexus.common.collect.AttributesMap;
-import org.sonatype.nexus.repository.content.AttributeChangeSet.AttributeChange;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Lists.newArrayList;
 
 /**
- * Helper for applying {@link AttributeOperation}s to repository content.
+ * Helper for applying {@link AttributeChange}s to repository content.
  *
  * @since 3.24
  */
@@ -43,7 +42,7 @@ public class AttributesHelper
    */
   public static boolean applyAttributeChange(
       final RepositoryContent content,
-      final AttributeOperation change,
+      final AttributeChange change,
       final String key,
       @Nullable final Object value)
   {
@@ -52,19 +51,10 @@ public class AttributesHelper
 
   /**
    * Apply a change request to the given {@link AttributesMap}.
-   *
-   * @since 3.29
-   */
-  public static boolean applyAttributeChange(final AttributesMap attributes, final AttributeChange change) {
-    return applyAttributeChange(attributes, change.getOperation(), change.getKey(), change.getValue());
-  }
-
-  /**
-   * Apply a change request to the given {@link AttributesMap}.
    */
   public static boolean applyAttributeChange(
       final AttributesMap attributes,
-      final AttributeOperation change,
+      final AttributeChange change,
       final String key,
       @Nullable final Object value)
   {

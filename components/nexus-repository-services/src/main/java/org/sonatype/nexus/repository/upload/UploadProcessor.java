@@ -20,7 +20,7 @@ import org.sonatype.nexus.repository.view.Content;
 /**
  * Process uploaded content
  *
- * @since 3.29
+ * @since 3.next
  */
 public interface UploadProcessor
 {

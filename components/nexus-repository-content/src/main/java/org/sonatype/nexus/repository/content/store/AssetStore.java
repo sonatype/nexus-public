@@ -27,7 +27,7 @@ import org.sonatype.nexus.common.entity.Continuation;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
 import org.sonatype.nexus.repository.content.Asset;
 import org.sonatype.nexus.repository.content.AssetBlob;
-import org.sonatype.nexus.repository.content.AttributeChangeSet;
+import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.event.asset.AssetAttributesEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
@@ -194,20 +194,18 @@ public class AssetStore<T extends AssetDAO>
    */
   @Transactional
   public void updateAssetAttributes(final Asset asset,
-                                    final AttributeChangeSet changeSet)
+                                    final AttributeChange change,
+                                    final String key,
+                                    final @Nullable Object value)
   {
     // reload latest attributes, apply change, then update database if necessary
     dao().readAssetAttributes(asset).ifPresent(attributes -> {
       ((AssetData) asset).setAttributes(attributes);
 
-      boolean changesApplied = changeSet.getChanges().stream()
-          .map(change -> applyAttributeChange(attributes, change))
-          .reduce((a, b) -> a || b)
-          .orElse(false);
-      if (changesApplied) {
+      if (applyAttributeChange(attributes, change, key, value)) {
         dao().updateAssetAttributes(asset);
 
-        postCommitEvent(() -> new AssetAttributesEvent(asset, changeSet.getChanges()));
+        postCommitEvent(() -> new AssetAttributesEvent(asset, change, key, value));
       }
     });
   }

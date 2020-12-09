@@ -13,8 +13,8 @@
 package org.sonatype.nexus.repository.content.event;
 
 import org.sonatype.goodies.testsupport.TestSupport;
-import org.sonatype.nexus.repository.content.AttributeChangeSet;
-import org.sonatype.nexus.repository.content.AttributeOperation;
+import org.sonatype.nexus.repository.content.AttributeChange;
+import org.sonatype.nexus.repository.content.Component;
 import org.sonatype.nexus.repository.content.event.asset.AssetAttributesEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetCreatedEvent;
 import org.sonatype.nexus.repository.content.event.asset.AssetDeletedEvent;
@@ -48,9 +48,7 @@ public class StoreEventTest
 
   @Test
   public void shouldHaveMeaningfulToString() {
-    assertEquals(
-        "AssetAttributesEvent{changes=[AttributeChange{operation=SET, key='key', value=value} ]} AssetEvent{asset=AssetData{assetId=null, path='null', kind='null', componentId=1, component=ComponentData{componentId=1, namespace='null', name='null', kind='null', version='null'} AbstractRepositoryContent{repositoryId=null, attributes=NestedAttributesMap{parent=null, key='attributes', backing={}}, created=null, lastUpdated=null}, assetBlobId=null, assetBlob=null, lastDownloaded=null} AbstractRepositoryContent{repositoryId=1, attributes=NestedAttributesMap{parent=null, key='attributes', backing={}}, created=null, lastUpdated=null}} ContentStoreEvent{contentRepositoryId=1, repository=null}",
-        new AssetAttributesEvent(asset, new AttributeChangeSet(AttributeOperation.SET, "key", "value").getChanges()).toString());
+    assertEquals("AssetAttributesEvent{change=SET, key='key', value=value} AssetEvent{asset=AssetData{assetId=null, path='null', kind='null', componentId=1, component=ComponentData{componentId=1, namespace='null', name='null', kind='null', version='null'} AbstractRepositoryContent{repositoryId=null, attributes=NestedAttributesMap{parent=null, key='attributes', backing={}}, created=null, lastUpdated=null}, assetBlobId=null, assetBlob=null, lastDownloaded=null} AbstractRepositoryContent{repositoryId=1, attributes=NestedAttributesMap{parent=null, key='attributes', backing={}}, created=null, lastUpdated=null}} ContentStoreEvent{contentRepositoryId=1, repository=null}", new AssetAttributesEvent(asset, AttributeChange.SET, "key", "value").toString());
     assertEquals("AssetCreatedEvent{} AssetEvent{asset=AssetData{assetId=null, path='null', kind='null', componentId=1, component=ComponentData{componentId=1, namespace='null', name='null', kind='null', version='null'} AbstractRepositoryContent{repositoryId=null, attributes=NestedAttributesMap{parent=null, key='attributes', backing={}}, created=null, lastUpdated=null}, assetBlobId=null, assetBlob=null, lastDownloaded=null} AbstractRepositoryContent{repositoryId=1, attributes=NestedAttributesMap{parent=null, key='attributes', backing={}}, created=null, lastUpdated=null}} ContentStoreEvent{contentRepositoryId=1, repository=null}", new AssetCreatedEvent(asset).toString());
     assertEquals("AssetDeletedEvent{} AssetEvent{asset=AssetData{assetId=null, path='null', kind='null', componentId=1, component=ComponentData{componentId=1, namespace='null', name='null', kind='null', version='null'} AbstractRepositoryContent{repositoryId=null, attributes=NestedAttributesMap{parent=null, key='attributes', backing={}}, created=null, lastUpdated=null}, assetBlobId=null, assetBlob=null, lastDownloaded=null} AbstractRepositoryContent{repositoryId=1, attributes=NestedAttributesMap{parent=null, key='attributes', backing={}}, created=null, lastUpdated=null}} ContentStoreEvent{contentRepositoryId=1, repository=null}", new AssetDeletedEvent(asset).toString());
     assertEquals("AssetDownloadedEvent{} AssetEvent{asset=AssetData{assetId=null, path='null', kind='null', componentId=1, component=ComponentData{componentId=1, namespace='null', name='null', kind='null', version='null'} AbstractRepositoryContent{repositoryId=null, attributes=NestedAttributesMap{parent=null, key='attributes', backing={}}, created=null, lastUpdated=null}, assetBlobId=null, assetBlob=null, lastDownloaded=null} AbstractRepositoryContent{repositoryId=1, attributes=NestedAttributesMap{parent=null, key='attributes', backing={}}, created=null, lastUpdated=null}} ContentStoreEvent{contentRepositoryId=1, repository=null}", new AssetDownloadedEvent(asset).toString());

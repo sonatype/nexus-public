@@ -21,7 +21,7 @@ import javax.inject.Named;
 
 import org.sonatype.nexus.common.entity.EntityId;
 import org.sonatype.nexus.datastore.api.DataSessionSupplier;
-import org.sonatype.nexus.repository.content.AttributeOperation;
+import org.sonatype.nexus.repository.content.AttributeChange;
 import org.sonatype.nexus.repository.content.ContentRepository;
 import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryAttributesEvent;
 import org.sonatype.nexus.repository.content.event.repository.ContentRepositoryCreatedEvent;
@@ -88,7 +88,7 @@ public class ContentRepositoryStore<T extends ContentRepositoryDAO>
    */
   @Transactional
   public void updateContentRepositoryAttributes(final ContentRepository contentRepository,
-                                                final AttributeOperation change,
+                                                final AttributeChange change,
                                                 final String key,
                                                 final @Nullable Object value)
   {

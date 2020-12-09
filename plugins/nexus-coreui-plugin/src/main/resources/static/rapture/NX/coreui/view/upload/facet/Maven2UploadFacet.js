@@ -15,7 +15,7 @@
 /**
  * Upload Component Facet for maven2 format
  *
- * @since 3.29
+ * @since 3.next
  */
 Ext.define('NX.coreui.view.upload.facet.Maven2UploadFacet', {
   extend: 'NX.coreui.view.upload.facet.DefaultUploadFacet',
